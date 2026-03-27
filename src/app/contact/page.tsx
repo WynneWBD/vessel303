@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHero from '@/components/PageHero';
+import ContactForm from '@/components/ContactForm';
 
 export const metadata: Metadata = {
   title: '联系我们 | VESSEL 微宿®',
@@ -65,137 +66,7 @@ export default function ContactPage() {
           {/* ── Contact Form ── */}
           <div className="lg:col-span-2">
             <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-6 font-medium">在线留言</div>
-            <form className="space-y-5">
-              {/* Inquiry type */}
-              <div>
-                <label className="block text-white/50 text-xs tracking-wider mb-2">咨询类型 *</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {['索取资料', '咨询报价', '合作代理', '定制服务'].map((type, i) => (
-                    <label key={type} className="flex items-center gap-2 cursor-pointer group">
-                      <input
-                        type="radio"
-                        name="inquiryType"
-                        value={type}
-                        defaultChecked={i === 0}
-                        className="accent-[#c9a84c]"
-                      />
-                      <span className="text-sm text-white/60 group-hover:text-white/80 transition-colors tracking-wider">
-                        {type}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Name + Phone */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-white/50 text-xs tracking-wider mb-2">姓名 *</label>
-                  <input
-                    type="text"
-                    placeholder="您的姓名"
-                    className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
-                  />
-                </div>
-                <div>
-                  <label className="block text-white/50 text-xs tracking-wider mb-2">联系电话 *</label>
-                  <input
-                    type="tel"
-                    placeholder="+86 138 0000 0000"
-                    className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
-                  />
-                </div>
-              </div>
-
-              {/* Email + Company */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-white/50 text-xs tracking-wider mb-2">邮箱</label>
-                  <input
-                    type="email"
-                    placeholder="your@email.com"
-                    className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20"
-                  />
-                </div>
-                <div>
-                  <label className="block text-white/50 text-xs tracking-wider mb-2">公司名称</label>
-                  <input
-                    type="text"
-                    placeholder="公司/组织名称"
-                    className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
-                  />
-                </div>
-              </div>
-
-              {/* Country + Project type */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-white/50 text-xs tracking-wider mb-2">所在国家/城市</label>
-                  <input
-                    type="text"
-                    placeholder="如：中国·广州"
-                    className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
-                  />
-                </div>
-                <div>
-                  <label className="block text-white/50 text-xs tracking-wider mb-2">项目类型</label>
-                  <select className="w-full bg-[#111] border border-white/15 text-white/70 text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60">
-                    <option value="">请选择项目类型</option>
-                    <option>文旅度假营地</option>
-                    <option>精品酒店民宿</option>
-                    <option>商业空间</option>
-                    <option>公共设施</option>
-                    <option>其他</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Quantity + Remarks */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-white/50 text-xs tracking-wider mb-2">订购数量（台）</label>
-                  <input
-                    type="number"
-                    placeholder="预计采购数量"
-                    min="1"
-                    className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
-                  />
-                </div>
-                <div>
-                  <label className="block text-white/50 text-xs tracking-wider mb-2">产品型号偏好</label>
-                  <select className="w-full bg-[#111] border border-white/15 text-white/70 text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60">
-                    <option value="">请选择</option>
-                    <option>E7 Gen6 · 38.8㎡</option>
-                    <option>E6 Gen6 · 29.6㎡</option>
-                    <option>E3 Gen6 · 19㎡</option>
-                    <option>V9 Gen6 · 38㎡</option>
-                    <option>V5 Gen5 · 24.8㎡</option>
-                    <option>S5 Gen5 · 29.6㎡</option>
-                    <option>暂未确定</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Remarks */}
-              <div>
-                <label className="block text-white/50 text-xs tracking-wider mb-2">备注</label>
-                <textarea
-                  rows={4}
-                  placeholder="请描述您的项目概况、特殊需求或其他问题..."
-                  className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 resize-none tracking-wider"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-[#c9a84c] text-[#0a0a0a] font-bold text-sm py-4 hover:bg-[#b8973b] transition-colors tracking-[0.2em] uppercase"
-              >
-                提交咨询
-              </button>
-              <p className="text-white/20 text-xs text-center tracking-wider">
-                提交后专业顾问将在 24 小时内与您取得联系
-              </p>
-            </form>
+            <ContactForm />
           </div>
 
           {/* ── Contact Info Sidebar ── */}
