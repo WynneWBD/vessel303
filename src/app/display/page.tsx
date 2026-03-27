@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 
 const slides = [
@@ -79,6 +79,10 @@ export default function DisplayPage() {
   const [transitioning, setTransitioning] = useState(false);
   const [paused, setPaused] = useState(false);
 
+  // Touch tracking
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+
   const goTo = useCallback((index: number) => {
     if (transitioning) return;
     setTransitioning(true);
@@ -108,21 +112,44 @@ export default function DisplayPage() {
   // Keyboard navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') { setPaused(true); prev(); }
+      if (e.key === 'ArrowLeft')  { setPaused(true); prev(); }
       if (e.key === 'ArrowRight') { setPaused(true); next(); }
-      if (e.key === ' ') setPaused((p) => !p);
+      if (e.key === ' ')           setPaused((p) => !p);
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [prev, next]);
 
+  // Touch handlers
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    // Only handle horizontal swipes (horizontal movement > vertical, and at least 40px)
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+      setPaused(true);
+      dx < 0 ? next() : prev();
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
+
   const slide = slides[current];
-  const idx = String(current + 1).padStart(2, '0');
+  const idx   = String(current + 1).padStart(2, '0');
   const total = String(slides.length).padStart(2, '0');
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-black select-none">
-
+    <div
+      className="relative overflow-hidden bg-black select-none"
+      style={{ width: '100vw', height: '100vh' }}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       {/* Background image */}
       <div
         className="absolute inset-0 transition-opacity duration-700"
@@ -133,145 +160,245 @@ export default function DisplayPage() {
           src={slide.image}
           alt={slide.model}
           fill
-          className="object-cover"
+          className="object-cover object-center"
           priority
           sizes="100vw"
         />
         {/* Overlay gradients */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-black/20" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/88 via-black/55 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/35" />
       </div>
 
-      {/* Top bar — thin gold line */}
+      {/* Top gold line */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-[#c9a84c] via-[#c9a84c]/40 to-transparent z-10" />
 
-      {/* Main content */}
+      {/* ── Main content ── */}
       <div
-        className="absolute inset-0 flex flex-col justify-center px-16 z-10 transition-opacity duration-500"
-        style={{ opacity: transitioning ? 0 : 1 }}
+        className="absolute inset-0 z-10 flex flex-col justify-center transition-opacity duration-500"
+        style={{
+          opacity: transitioning ? 0 : 1,
+          padding: 'clamp(1.5rem, 5vw, 6rem)',
+          paddingBottom: 'clamp(5rem, 12vh, 10rem)',
+        }}
       >
         {/* Series badge */}
-        <div className="flex items-center gap-3 mb-6">
-          <span className="text-[#c9a84c] text-xs tracking-[0.4em] uppercase font-bold border border-[#c9a84c]/50 px-3 py-1">
+        <div className="flex items-center gap-3 mb-[clamp(0.5rem,1.5vh,1.5rem)]">
+          <span
+            className="text-[#c9a84c] font-bold uppercase border border-[#c9a84c]/50 tracking-[0.4em]"
+            style={{ fontSize: 'clamp(0.55rem, 1vw, 0.8rem)', padding: 'clamp(2px,0.4vh,5px) clamp(6px,0.8vw,12px)' }}
+          >
             {slide.gen}
           </span>
-          <span className="text-white/40 text-xs tracking-[0.3em] uppercase">{slide.tag}</span>
+          <span
+            className="text-white/40 uppercase tracking-[0.3em]"
+            style={{ fontSize: 'clamp(0.55rem, 1vw, 0.8rem)' }}
+          >
+            {slide.tag}
+          </span>
         </div>
 
         {/* Model + size */}
-        <div className="flex items-end gap-8 mb-5">
-          <h1 className="text-[10rem] font-black leading-none tracking-tight text-white"
-              style={{ textShadow: '0 0 80px rgba(201,168,76,0.3)' }}>
+        <div className="flex items-end gap-[clamp(0.75rem,2vw,2rem)] mb-[clamp(0.5rem,1.5vh,1.5rem)]">
+          <h1
+            className="font-black leading-none tracking-tight text-white"
+            style={{
+              fontSize: 'clamp(3.5rem, 14vw, 12rem)',
+              textShadow: '0 0 80px rgba(201,168,76,0.25)',
+            }}
+          >
             {slide.model}
           </h1>
-          <div className="mb-6">
-            <div className="text-[#c9a84c] text-4xl font-black tracking-wider">{slide.size}</div>
-            <div className="text-white/40 text-sm tracking-[0.3em] mt-1">{slide.capacity}</div>
+          <div style={{ marginBottom: 'clamp(0.5rem, 1.5vw, 1.5rem)' }}>
+            <div
+              className="text-[#c9a84c] font-black tracking-wider"
+              style={{ fontSize: 'clamp(1.2rem, 3.5vw, 3rem)' }}
+            >
+              {slide.size}
+            </div>
+            <div
+              className="text-white/40 tracking-[0.3em] mt-1"
+              style={{ fontSize: 'clamp(0.6rem, 1.2vw, 0.875rem)' }}
+            >
+              {slide.capacity}
+            </div>
           </div>
         </div>
 
         {/* Tagline */}
-        <p className="text-white/70 text-2xl font-light tracking-[0.15em] mb-10 max-w-2xl">
+        <p
+          className="text-white/70 font-light tracking-[0.12em] max-w-[min(42rem,70vw)]"
+          style={{
+            fontSize: 'clamp(0.85rem, 2.2vw, 1.75rem)',
+            marginBottom: 'clamp(1rem, 3vh, 2.5rem)',
+          }}
+        >
           {slide.tagline}
         </p>
 
         {/* Features */}
-        <div className="flex gap-0">
+        <div className="flex flex-wrap gap-y-3" style={{ gap: 'clamp(0.5rem, 1.5vw, 0px)' }}>
           {slide.features.map((f, i) => (
             <div key={i} className="flex items-center">
-              <div className="flex items-center gap-3 pr-8">
-                <div className="w-1 h-8 bg-[#c9a84c]" />
-                <span className="text-white text-lg tracking-wider font-medium">{f}</span>
+              <div className="flex items-center" style={{ gap: 'clamp(0.4rem, 0.8vw, 0.75rem)', paddingRight: 'clamp(0.75rem, 2vw, 2rem)' }}>
+                <div
+                  className="bg-[#c9a84c] shrink-0"
+                  style={{ width: 'clamp(2px, 0.25vw, 4px)', height: 'clamp(1.2rem, 2.5vh, 2rem)' }}
+                />
+                <span
+                  className="text-white font-medium tracking-wider whitespace-nowrap"
+                  style={{ fontSize: 'clamp(0.7rem, 1.6vw, 1.2rem)' }}
+                >
+                  {f}
+                </span>
               </div>
               {i < slide.features.length - 1 && (
-                <div className="w-px h-6 bg-white/15 mr-8" />
+                <div
+                  className="bg-white/15 shrink-0"
+                  style={{ width: '1px', height: 'clamp(1rem, 2vh, 1.5rem)', marginRight: 'clamp(0.75rem, 2vw, 2rem)' }}
+                />
               )}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Bottom bar */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 flex items-end justify-between px-16 pb-12">
-
-        {/* Left: counter + dots + pause hint */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-3">
+      {/* ── Bottom bar ── */}
+      <div
+        className="absolute bottom-0 left-0 right-0 z-20 flex items-end justify-between"
+        style={{
+          padding: `0 clamp(1.5rem, 5vw, 6rem) clamp(1.2rem, 3.5vh, 3rem)`,
+        }}
+      >
+        {/* Left: dots + counter */}
+        <div className="flex flex-col" style={{ gap: 'clamp(0.4rem, 1vh, 1rem)' }}>
+          <div className="flex items-center" style={{ gap: 'clamp(0.4rem, 0.8vw, 0.75rem)' }}>
             {slides.map((_, i) => (
               <button
                 key={i}
                 onClick={() => { setPaused(true); goTo(i); }}
                 className={`transition-all duration-300 ${
                   i === current
-                    ? 'w-8 h-1 bg-[#c9a84c]'
-                    : 'w-4 h-px bg-white/30 hover:bg-white/50'
+                    ? 'bg-[#c9a84c]'
+                    : 'bg-white/30 hover:bg-white/50'
                 }`}
+                style={{
+                  width:  i === current ? 'clamp(1.2rem, 2.5vw, 2rem)' : 'clamp(0.6rem, 1.2vw, 1rem)',
+                  height: i === current ? 'clamp(2px, 0.3vh, 4px)' : '1px',
+                }}
               />
             ))}
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-[#c9a84c] text-4xl font-black tracking-wider tabular-nums">{idx}</span>
-            <span className="text-white/25 text-lg">/</span>
-            <span className="text-white/25 text-lg tracking-wider tabular-nums">{total}</span>
+          <div className="flex items-baseline" style={{ gap: 'clamp(0.25rem, 0.5vw, 0.5rem)' }}>
+            <span
+              className="text-[#c9a84c] font-black tracking-wider tabular-nums"
+              style={{ fontSize: 'clamp(1.4rem, 4vw, 3rem)' }}
+            >
+              {idx}
+            </span>
+            <span
+              className="text-white/25"
+              style={{ fontSize: 'clamp(0.7rem, 1.5vw, 1.25rem)' }}
+            >
+              /
+            </span>
+            <span
+              className="text-white/25 tracking-wider tabular-nums"
+              style={{ fontSize: 'clamp(0.7rem, 1.5vw, 1.25rem)' }}
+            >
+              {total}
+            </span>
             {paused && (
-              <span className="ml-4 text-white/25 text-xs tracking-[0.2em] uppercase">已暂停</span>
+              <span
+                className="text-white/25 uppercase tracking-[0.2em]"
+                style={{ fontSize: 'clamp(0.5rem, 0.9vw, 0.7rem)', marginLeft: 'clamp(0.5rem, 1vw, 1rem)' }}
+              >
+                已暂停
+              </span>
             )}
           </div>
         </div>
 
         {/* Right: price + logo */}
         <div
-          className="flex flex-col items-end gap-3 transition-opacity duration-500"
-          style={{ opacity: transitioning ? 0 : 1 }}
+          className="flex flex-col items-end transition-opacity duration-500"
+          style={{
+            opacity: transitioning ? 0 : 1,
+            gap: 'clamp(0.4rem, 1vh, 0.75rem)',
+          }}
         >
           <div className="text-right">
-            <div className="text-white/30 text-xs tracking-[0.3em] uppercase mb-1">参考价格</div>
-            <div className="text-[#c9a84c] text-3xl font-black tracking-wider">{slide.price}</div>
+            <div
+              className="text-white/30 uppercase tracking-[0.3em]"
+              style={{ fontSize: 'clamp(0.5rem, 0.9vw, 0.7rem)', marginBottom: '0.15rem' }}
+            >
+              参考价格
+            </div>
+            <div
+              className="text-[#c9a84c] font-black tracking-wider"
+              style={{ fontSize: 'clamp(1rem, 2.8vw, 2rem)' }}
+            >
+              {slide.price}
+            </div>
           </div>
-          <div className="w-px h-8 bg-white/10 self-center" />
+          <div
+            className="bg-white/10 self-center"
+            style={{ width: '1px', height: 'clamp(1rem, 2vh, 2rem)' }}
+          />
           <div className="text-right">
-            <div className="text-white font-black text-xl tracking-[0.25em] uppercase leading-none">VESSEL</div>
-            <div className="text-white/40 text-xs tracking-[0.3em] mt-0.5">微宿®</div>
+            <div
+              className="text-white font-black uppercase leading-none tracking-[0.25em]"
+              style={{ fontSize: 'clamp(0.75rem, 1.8vw, 1.4rem)' }}
+            >
+              VESSEL
+            </div>
+            <div
+              className="text-white/40 tracking-[0.3em] mt-0.5"
+              style={{ fontSize: 'clamp(0.5rem, 0.9vw, 0.7rem)' }}
+            >
+              微宿®
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Side nav arrows (hover to reveal) */}
+      {/* Side nav arrows */}
       <button
         onClick={() => { setPaused(true); prev(); }}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center text-white/20 hover:text-[#c9a84c] hover:bg-white/5 transition-all duration-200"
+        className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center text-white/20 hover:text-[#c9a84c] hover:bg-white/5 transition-all duration-200"
+        style={{ width: 'clamp(2.5rem, 5vw, 4rem)', height: 'clamp(2.5rem, 5vw, 4rem)' }}
         aria-label="上一张"
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg style={{ width: 'clamp(1rem, 2vw, 1.5rem)', height: 'clamp(1rem, 2vw, 1.5rem)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
         </svg>
       </button>
       <button
         onClick={() => { setPaused(true); next(); }}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center text-white/20 hover:text-[#c9a84c] hover:bg-white/5 transition-all duration-200"
+        className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center text-white/20 hover:text-[#c9a84c] hover:bg-white/5 transition-all duration-200"
+        style={{ width: 'clamp(2.5rem, 5vw, 4rem)', height: 'clamp(2.5rem, 5vw, 4rem)' }}
         aria-label="下一张"
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg style={{ width: 'clamp(1rem, 2vw, 1.5rem)', height: 'clamp(1rem, 2vw, 1.5rem)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
         </svg>
       </button>
 
       {/* Progress bar */}
       {!paused && (
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-white/5 z-30">
+        <div className="absolute bottom-0 left-0 right-0 z-30" style={{ height: '2px', background: 'rgba(255,255,255,0.05)' }}>
           <div
             key={current}
-            className="h-full bg-[#c9a84c]/60"
             style={{
-              animation: `progress ${INTERVAL}ms linear`,
-              transformOrigin: 'left',
+              height: '100%',
+              background: 'rgba(201,168,76,0.6)',
+              animation: `dp-progress ${INTERVAL}ms linear`,
             }}
           />
         </div>
       )}
 
       <style>{`
-        @keyframes progress {
+        @keyframes dp-progress {
           from { width: 0% }
           to   { width: 100% }
         }
