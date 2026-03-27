@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
+import { useT } from '@/contexts/LanguageContext';
+import { i18n } from '@/lib/i18n';
 
 const slides = [
   {
@@ -75,6 +77,7 @@ const slides = [
 const INTERVAL = 5000;
 
 export default function DisplayPage() {
+  const t = useT();
   const [current, setCurrent] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -312,7 +315,7 @@ export default function DisplayPage() {
                 className="text-white/25 uppercase tracking-[0.2em]"
                 style={{ fontSize: 'clamp(0.5rem, 0.9vw, 0.7rem)', marginLeft: 'clamp(0.5rem, 1vw, 1rem)' }}
               >
-                已暂停
+                {t(i18n.display.paused)}
               </span>
             )}
           </div>
@@ -331,7 +334,7 @@ export default function DisplayPage() {
               className="text-white/30 uppercase tracking-[0.3em]"
               style={{ fontSize: 'clamp(0.5rem, 0.9vw, 0.7rem)', marginBottom: '0.15rem' }}
             >
-              参考价格
+              {t(i18n.display.refPrice)}
             </div>
             <div
               className="text-[#c9a84c] font-black tracking-wider"
@@ -366,7 +369,7 @@ export default function DisplayPage() {
         onClick={() => { setPaused(true); prev(); }}
         className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center text-white/20 hover:text-[#c9a84c] hover:bg-white/5 transition-all duration-200"
         style={{ width: 'clamp(2.5rem, 5vw, 4rem)', height: 'clamp(2.5rem, 5vw, 4rem)' }}
-        aria-label="上一张"
+        aria-label="prev"
       >
         <svg style={{ width: 'clamp(1rem, 2vw, 1.5rem)', height: 'clamp(1rem, 2vw, 1.5rem)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
@@ -376,7 +379,7 @@ export default function DisplayPage() {
         onClick={() => { setPaused(true); next(); }}
         className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center text-white/20 hover:text-[#c9a84c] hover:bg-white/5 transition-all duration-200"
         style={{ width: 'clamp(2.5rem, 5vw, 4rem)', height: 'clamp(2.5rem, 5vw, 4rem)' }}
-        aria-label="下一张"
+        aria-label="next"
       >
         <svg style={{ width: 'clamp(1rem, 2vw, 1.5rem)', height: 'clamp(1rem, 2vw, 1.5rem)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />

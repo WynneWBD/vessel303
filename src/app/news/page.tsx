@@ -1,12 +1,10 @@
-import type { Metadata } from 'next';
+'use client';
+
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHero from '@/components/PageHero';
-
-export const metadata: Metadata = {
-  title: '新闻活动 | VESSEL 微宿®',
-  description: 'VESSEL 微宿® 最新动态、行业资讯与品牌活动。',
-};
+import { useT } from '@/contexts/LanguageContext';
+import { i18n } from '@/lib/i18n';
 
 const newsItems = [
   {
@@ -92,6 +90,7 @@ function Placeholder({ label, className }: { label: string; className?: string }
 }
 
 export default function NewsPage() {
+  const t = useT();
   const featured = newsItems.find((n) => n.featured);
   const rest = newsItems.filter((n) => !n.featured);
 
@@ -100,11 +99,11 @@ export default function NewsPage() {
       <Navbar />
 
       <PageHero
-        label="新闻活动"
+        label={t(i18n.news.heroLabel)}
         title="VESSEL 微宿®"
-        titleGold="最新动态"
-        subtitle="产品发布、行业资讯、品牌合作、展会活动，全面了解 VESSEL 最新进展"
-        breadcrumb={[{ label: '首页', href: '/' }, { label: '新闻活动' }]}
+        titleGold={t(i18n.news.heroTitleGold)}
+        subtitle={t(i18n.news.heroSubtitle)}
+        breadcrumb={[{ label: t(i18n.productDetail.home), href: '/' }, { label: t(i18n.nav.news) }]}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -120,7 +119,7 @@ export default function NewsPage() {
                   : 'border-white/15 text-white/40 hover:border-white/30 hover:text-white/60'
               }`}
             >
-              {cat}
+              {i === 0 ? t(i18n.news.filterAll) : cat}
             </button>
           ))}
         </div>
@@ -135,7 +134,7 @@ export default function NewsPage() {
                   <span className="bg-[#c9a84c] text-[#0a0a0a] text-[10px] font-bold px-2 py-1 tracking-wider">
                     {featured.tag}
                   </span>
-                  <span className="text-[#c9a84c] text-xs px-2 py-0.5 border border-[#c9a84c]/30">置顶</span>
+                  <span className="text-[#c9a84c] text-xs px-2 py-0.5 border border-[#c9a84c]/30">{t(i18n.news.topBadge)}</span>
                   <span className="text-white/25 text-xs">{featured.date}</span>
                 </div>
                 <h2 className="text-xl sm:text-2xl font-black text-white mb-4 leading-snug group-hover:text-[#c9a84c] transition-colors tracking-wider">
@@ -143,7 +142,7 @@ export default function NewsPage() {
                 </h2>
                 <p className="text-white/50 text-sm leading-relaxed mb-6">{featured.preview}</p>
                 <div className="flex items-center gap-2 text-[#c9a84c] text-sm">
-                  <span>阅读全文</span>
+                  <span>{t(i18n.news.readFull)}</span>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
@@ -181,7 +180,7 @@ export default function NewsPage() {
                 </h3>
                 <p className="text-white/40 text-xs leading-relaxed line-clamp-3">{item.preview}</p>
                 <div className="mt-4 flex items-center gap-1 text-[#c9a84c]/60 text-xs group-hover:text-[#c9a84c] transition-colors">
-                  <span>阅读更多</span>
+                  <span>{t(i18n.news.readMore)}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
@@ -194,7 +193,7 @@ export default function NewsPage() {
         {/* Load more */}
         <div className="mt-10 text-center">
           <button className="border border-white/20 text-white/50 text-sm px-8 py-3 hover:border-[#c9a84c]/40 hover:text-[#c9a84c] transition-colors tracking-wider">
-            加载更多资讯
+            {t(i18n.news.loadMore)}
           </button>
         </div>
       </div>

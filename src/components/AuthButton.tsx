@@ -3,16 +3,19 @@
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useState } from 'react';
+import { useT } from '@/contexts/LanguageContext';
+import { i18n } from '@/lib/i18n';
 
-const ROLE_LABELS: Record<string, string> = {
-  buyer: '采购商',
-  agent: '代理商',
-  individual: '个人',
+const ROLE_LABELS: Record<string, { en: string; zh: string }> = {
+  buyer:      { en: 'Buyer',      zh: '采购商' },
+  agent:      { en: 'Agent',      zh: '代理商' },
+  individual: { en: 'Individual', zh: '个人' },
 };
 
 export default function AuthButton() {
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
+  const t = useT();
 
   if (status === 'loading') {
     return <div className="w-7 h-7 bg-white/5 animate-pulse" />;
@@ -24,13 +27,14 @@ export default function AuthButton() {
         href="/login"
         className="text-sm px-4 py-2 border border-[#c9a84c]/50 text-[#c9a84c] hover:bg-[#c9a84c] hover:text-[#0a0a0a] transition-all duration-200 tracking-wider font-medium"
       >
-        登录
+        {t(i18n.nav.signIn)}
       </Link>
     );
   }
 
   const user = session.user as typeof session.user & { role?: string };
-  const roleLabel = ROLE_LABELS[user.role ?? ''] ?? '用户';
+  const rolePair = ROLE_LABELS[user.role ?? ''] ?? { en: 'User', zh: '用户' };
+  const roleLabel = t(rolePair);
   const initial = (user.name ?? user.email ?? '?')[0].toUpperCase();
 
   return (
@@ -62,13 +66,13 @@ export default function AuthButton() {
               <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              展厅展示模式
+              {t(i18n.nav.displayMode)}
             </Link>
             <button
               onClick={() => { setOpen(false); signOut({ callbackUrl: '/' }); }}
               className="w-full text-left px-4 py-2.5 text-white/50 hover:text-white hover:bg-white/5 text-xs tracking-wider transition-colors"
             >
-              退出登录
+              {t(i18n.nav.signOut)}
             </button>
           </div>
         </>

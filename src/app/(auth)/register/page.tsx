@@ -4,17 +4,20 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
+import { useT } from '@/contexts/LanguageContext';
+import { i18n } from '@/lib/i18n';
 
 type Role = 'buyer' | 'agent' | 'individual';
 
-const ROLES: { value: Role; label: string; desc: string }[] = [
-  { value: 'buyer', label: '采购商', desc: '计划采购产品用于商业项目' },
-  { value: 'agent', label: '代理商', desc: '希望代理销售 VESSEL 产品' },
-  { value: 'individual', label: '个人用户', desc: '个人旅居或度假使用' },
-];
-
 export default function RegisterPage() {
+  const t = useT();
   const router = useRouter();
+
+  const ROLES: { value: Role; label: string; desc: string }[] = [
+    { value: 'buyer' as Role, label: t(i18n.auth.roleBuyer), desc: t(i18n.auth.roleBuyerDesc) },
+    { value: 'agent' as Role, label: t(i18n.auth.roleAgent), desc: t(i18n.auth.roleAgentDesc) },
+    { value: 'individual' as Role, label: t(i18n.auth.roleIndividual), desc: t(i18n.auth.roleIndividualDesc) },
+  ];
 
   const [form, setForm] = useState({ name: '', email: '', password: '', role: '' as Role | '' });
   const [error, setError] = useState('');
@@ -29,7 +32,7 @@ export default function RegisterPage() {
     setError('');
 
     if (!form.role) {
-      setError('请选择您的身份');
+      setError(t(i18n.auth.roleError));
       return;
     }
 
@@ -44,7 +47,7 @@ export default function RegisterPage() {
     const data = await res.json();
 
     if (!res.ok) {
-      setError(data.error ?? '注册失败，请重试');
+      setError(data.error ?? t(i18n.auth.registerError));
       setLoading(false);
       return;
     }
@@ -77,8 +80,8 @@ export default function RegisterPage() {
         <Link href="/" className="inline-block">
           <span className="text-[#c9a84c] text-xs tracking-[0.4em] uppercase font-bold">VESSEL 微宿®</span>
         </Link>
-        <h1 className="text-white text-2xl font-black mt-3 tracking-wider">创建账号</h1>
-        <p className="text-white/35 text-sm mt-1 tracking-wider">注册后查看完整产品价格与资料</p>
+        <h1 className="text-white text-2xl font-black mt-3 tracking-wider">{t(i18n.auth.registerTitle)}</h1>
+        <p className="text-white/35 text-sm mt-1 tracking-wider">{t(i18n.auth.registerSubtitle)}</p>
       </div>
 
       <div className="bg-[#0f0f0f] border border-white/8 p-8">
@@ -93,19 +96,19 @@ export default function RegisterPage() {
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
-          使用 Google 账号注册
+          {t(i18n.auth.googleRegBtn)}
         </button>
 
         <div className="flex items-center gap-3 mb-6">
           <div className="flex-1 h-px bg-white/8" />
-          <span className="text-white/20 text-xs tracking-wider">或填写信息注册</span>
+          <span className="text-white/20 text-xs tracking-wider">{t(i18n.auth.orFill)}</span>
           <div className="flex-1 h-px bg-white/8" />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Role selection */}
           <div>
-            <label className="block text-white/40 text-xs tracking-wider mb-2">选择您的身份 *</label>
+            <label className="block text-white/40 text-xs tracking-wider mb-2">{t(i18n.auth.roleLabel)}</label>
             <div className="grid grid-cols-3 gap-2">
               {ROLES.map(r => (
                 <button
@@ -128,19 +131,19 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-white/40 text-xs tracking-wider mb-1.5">姓名</label>
+            <label className="block text-white/40 text-xs tracking-wider mb-1.5">{t(i18n.auth.nameLabel)}</label>
             <input
               type="text"
               value={form.name}
               onChange={e => set('name', e.target.value)}
               required
-              placeholder="您的姓名"
+              placeholder={t(i18n.auth.namePlaceholder)}
               className="w-full bg-[#1a1a1a] border border-white/10 focus:border-[#c9a84c]/60 outline-none text-white text-sm px-4 py-3 tracking-wider placeholder:text-white/20 transition-colors"
             />
           </div>
 
           <div>
-            <label className="block text-white/40 text-xs tracking-wider mb-1.5">邮箱地址</label>
+            <label className="block text-white/40 text-xs tracking-wider mb-1.5">{t(i18n.auth.emailLabel)}</label>
             <input
               type="email"
               value={form.email}
@@ -153,7 +156,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-white/40 text-xs tracking-wider mb-1.5">密码</label>
+            <label className="block text-white/40 text-xs tracking-wider mb-1.5">{t(i18n.auth.passwordLabel)}</label>
             <input
               type="password"
               value={form.password}
@@ -176,15 +179,15 @@ export default function RegisterPage() {
             disabled={loading}
             className="w-full bg-[#c9a84c] text-[#0a0a0a] font-bold text-sm py-3 tracking-wider hover:bg-[#d4b55a] disabled:opacity-50 transition-colors mt-2"
           >
-            {loading ? '注册中...' : '创建账号'}
+            {loading ? t(i18n.auth.registering) : t(i18n.auth.registerBtn)}
           </button>
         </form>
       </div>
 
       <p className="text-center text-white/30 text-sm mt-6 tracking-wider">
-        已有账号？{' '}
+        {t(i18n.auth.hasAccount)}{' '}
         <Link href="/login" className="text-[#c9a84c] hover:text-[#d4b55a] transition-colors">
-          立即登录
+          {t(i18n.auth.loginLink)}
         </Link>
       </p>
     </div>

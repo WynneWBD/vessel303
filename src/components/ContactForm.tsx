@@ -1,11 +1,26 @@
 'use client';
 
 import { useState } from 'react';
+import { useT } from '@/contexts/LanguageContext';
+import { i18n } from '@/lib/i18n';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
-const INQUIRY_TYPES = ['索取资料', '咨询报价', '合作代理', '定制服务'] as const;
-const PROJECT_TYPES = ['文旅度假营地', '精品酒店民宿', '商业空间', '公共设施', '其他'];
+const INQUIRY_TYPES_DATA = [
+  { value: '索取资料', key: i18n.form.inquiry1 },
+  { value: '咨询报价', key: i18n.form.inquiry2 },
+  { value: '合作代理', key: i18n.form.inquiry3 },
+  { value: '定制服务', key: i18n.form.inquiry4 },
+] as const;
+
+const PROJECT_TYPES_DATA = [
+  { value: '文旅度假营地', key: i18n.form.project1 },
+  { value: '精品酒店民宿', key: i18n.form.project2 },
+  { value: '商业空间', key: i18n.form.project3 },
+  { value: '公共设施', key: i18n.form.project4 },
+  { value: '其他', key: i18n.form.project5 },
+];
+
 const MODELS = [
   'E7 Gen6 · 38.8㎡',
   'E6 Gen6 · 29.6㎡',
@@ -13,10 +28,10 @@ const MODELS = [
   'V9 Gen6 · 38㎡',
   'V5 Gen5 · 24.8㎡',
   'S5 Gen5 · 29.6㎡',
-  '暂未确定',
 ];
 
 export default function ContactForm() {
+  const t = useT();
   const [form, setForm] = useState({
     inquiryType: '索取资料',
     name: '',
@@ -41,13 +56,12 @@ export default function ContactForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    // Email validation
     if (!form.email.trim()) {
-      setEmailError('请填写邮箱地址');
+      setEmailError(t(i18n.form.emailRequired));
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      setEmailError('请输入有效的邮箱地址');
+      setEmailError(t(i18n.form.emailInvalid));
       return;
     }
 
@@ -62,13 +76,13 @@ export default function ContactForm() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setErrorMsg(data.error ?? '提交失败，请稍后再试');
+        setErrorMsg(data.error ?? t(i18n.form.submitFailed));
         setStatus('error');
       } else {
         setStatus('success');
       }
     } catch {
-      setErrorMsg('网络错误，请检查连接后重试');
+      setErrorMsg(t(i18n.form.networkError));
       setStatus('error');
     }
   }
@@ -81,11 +95,11 @@ export default function ContactForm() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">提交成功</div>
-        <h3 className="text-white text-xl font-black mb-3 tracking-wider">感谢您的咨询</h3>
+        <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.form.successBadge)}</div>
+        <h3 className="text-white text-xl font-black mb-3 tracking-wider">{t(i18n.form.successTitle)}</h3>
         <p className="text-white/45 text-sm leading-relaxed max-w-sm tracking-wider">
-          我们已收到您的留言，专业顾问将在 24 小时内与您联系。
-          {form.email && ' 确认邮件已发送至您的邮箱。'}
+          {t(i18n.form.successMsg)}
+          {form.email && ' ' + t(i18n.form.successEmail)}
         </p>
         <button
           onClick={() => {
@@ -97,7 +111,7 @@ export default function ContactForm() {
           }}
           className="mt-8 text-xs border border-white/15 text-white/40 hover:border-[#c9a84c]/40 hover:text-[#c9a84c] px-5 py-2 transition-all tracking-wider"
         >
-          再次提交
+          {t(i18n.form.resubmit)}
         </button>
       </div>
     );
@@ -107,20 +121,20 @@ export default function ContactForm() {
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Inquiry type */}
       <div>
-        <label className="block text-white/50 text-xs tracking-wider mb-2">咨询类型 *</label>
+        <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.inquiryTypeLabel)}</label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {INQUIRY_TYPES.map((type) => (
-            <label key={type} className="flex items-center gap-2 cursor-pointer group">
+          {INQUIRY_TYPES_DATA.map((type) => (
+            <label key={type.value} className="flex items-center gap-2 cursor-pointer group">
               <input
                 type="radio"
                 name="inquiryType"
-                value={type}
-                checked={form.inquiryType === type}
-                onChange={() => set('inquiryType', type)}
+                value={type.value}
+                checked={form.inquiryType === type.value}
+                onChange={() => set('inquiryType', type.value)}
                 className="accent-[#c9a84c]"
               />
               <span className="text-sm text-white/60 group-hover:text-white/80 transition-colors tracking-wider">
-                {type}
+                {t(type.key)}
               </span>
             </label>
           ))}
@@ -130,24 +144,24 @@ export default function ContactForm() {
       {/* Name + Phone */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-white/50 text-xs tracking-wider mb-2">姓名 *</label>
+          <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.nameLabel)}</label>
           <input
             type="text"
             required
             value={form.name}
             onChange={(e) => set('name', e.target.value)}
-            placeholder="您的姓名"
+            placeholder={t(i18n.form.namePlaceholder)}
             className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
           />
         </div>
         <div>
-          <label className="block text-white/50 text-xs tracking-wider mb-2">联系电话 *</label>
+          <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.phoneLabel)}</label>
           <input
             type="tel"
             required
             value={form.phone}
             onChange={(e) => set('phone', e.target.value)}
-            placeholder="+86 138 0000 0000"
+            placeholder={t(i18n.form.phonePlaceholder)}
             className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
           />
         </div>
@@ -157,13 +171,13 @@ export default function ContactForm() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-white/50 text-xs tracking-wider mb-2">
-            邮箱 <span className="text-red-400">*</span>
+            {t(i18n.form.emailLabel)}
           </label>
           <input
             type="email"
             value={form.email}
             onChange={(e) => set('email', e.target.value)}
-            placeholder="your@email.com"
+            placeholder={t(i18n.form.emailPlaceholder)}
             className={`w-full bg-[#111] border text-white text-sm px-4 py-3 focus:outline-none placeholder-white/20 tracking-wider ${emailError ? 'border-red-500/60 focus:border-red-500/80' : 'border-white/15 focus:border-[#c9a84c]/60'}`}
           />
           {emailError && (
@@ -171,12 +185,12 @@ export default function ContactForm() {
           )}
         </div>
         <div>
-          <label className="block text-white/50 text-xs tracking-wider mb-2">公司名称</label>
+          <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.companyLabel)}</label>
           <input
             type="text"
             value={form.company}
             onChange={(e) => set('company', e.target.value)}
-            placeholder="公司/组织名称"
+            placeholder={t(i18n.form.companyPlaceholder)}
             className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
           />
         </div>
@@ -185,24 +199,24 @@ export default function ContactForm() {
       {/* Country + Project type */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-white/50 text-xs tracking-wider mb-2">所在国家/城市</label>
+          <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.locationLabel)}</label>
           <input
             type="text"
             value={form.location}
             onChange={(e) => set('location', e.target.value)}
-            placeholder="如：中国·广州"
+            placeholder={t(i18n.form.locationPlaceholder)}
             className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
           />
         </div>
         <div>
-          <label className="block text-white/50 text-xs tracking-wider mb-2">项目类型</label>
+          <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.projectTypeLabel)}</label>
           <select
             value={form.projectType}
             onChange={(e) => set('projectType', e.target.value)}
             className="w-full bg-[#111] border border-white/15 text-white/70 text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60"
           >
-            <option value="">请选择项目类型</option>
-            {PROJECT_TYPES.map((t) => <option key={t}>{t}</option>)}
+            <option value="">{t(i18n.form.projectTypePlaceholder)}</option>
+            {PROJECT_TYPES_DATA.map((p) => <option key={p.value} value={p.value}>{t(p.key)}</option>)}
           </select>
         </div>
       </div>
@@ -210,37 +224,38 @@ export default function ContactForm() {
       {/* Quantity + Model */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-white/50 text-xs tracking-wider mb-2">订购数量（台）</label>
+          <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.quantityLabel)}</label>
           <input
             type="number"
             min="1"
             value={form.quantity}
             onChange={(e) => set('quantity', e.target.value)}
-            placeholder="预计采购数量"
+            placeholder={t(i18n.form.quantityPlaceholder)}
             className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
           />
         </div>
         <div>
-          <label className="block text-white/50 text-xs tracking-wider mb-2">产品型号偏好</label>
+          <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.modelLabel)}</label>
           <select
             value={form.model}
             onChange={(e) => set('model', e.target.value)}
             className="w-full bg-[#111] border border-white/15 text-white/70 text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60"
           >
-            <option value="">请选择</option>
+            <option value="">{t(i18n.form.modelPlaceholder)}</option>
             {MODELS.map((m) => <option key={m}>{m}</option>)}
+            <option value="暂未确定">{t(i18n.form.modelUnknown)}</option>
           </select>
         </div>
       </div>
 
       {/* Remarks */}
       <div>
-        <label className="block text-white/50 text-xs tracking-wider mb-2">备注</label>
+        <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.remarksLabel)}</label>
         <textarea
           rows={4}
           value={form.remarks}
           onChange={(e) => set('remarks', e.target.value)}
-          placeholder="请描述您的项目概况、特殊需求或其他问题..."
+          placeholder={t(i18n.form.remarksPlaceholder)}
           className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 resize-none tracking-wider"
         />
       </div>
@@ -256,10 +271,10 @@ export default function ContactForm() {
         disabled={status === 'loading'}
         className="w-full bg-[#c9a84c] text-[#0a0a0a] font-bold text-sm py-4 hover:bg-[#b8973b] disabled:opacity-60 transition-colors tracking-[0.2em] uppercase"
       >
-        {status === 'loading' ? '提交中...' : '提交咨询'}
+        {status === 'loading' ? t(i18n.form.submitting) : t(i18n.form.submitBtn)}
       </button>
       <p className="text-white/20 text-xs text-center tracking-wider">
-        提交后专业顾问将在 24 小时内与您取得联系
+        {t(i18n.form.submitNote)}
       </p>
     </form>
   );

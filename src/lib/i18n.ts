@@ -1,0 +1,491 @@
+type BiLang = { en: string; zh: string };
+
+function b(en: string, zh: string): BiLang {
+  return { en, zh };
+}
+
+export const i18n = {
+  nav: {
+    products:         b('Products', '产品系列'),
+    cases:            b('Cases', '项目案例'),
+    about:            b('About', '关于我们'),
+    news:             b('News', '新闻活动'),
+    contact:          b('Contact', '联系我们'),
+    gen6Label:        b('Gen6 · Latest', 'Gen6 · 最新系列'),
+    gen5Label:        b('Gen5 · Classic', 'Gen5 · 经典系列'),
+    allProducts:      b('All Products →', '查看全部产品 →'),
+    scenarioTourism:  b('Tourism & Resort', '文旅度假营地'),
+    scenarioCommercial: b('Commercial Space', '商业空间案例'),
+    scenarioPublic:   b('Public Facilities', '公共设施案例'),
+    allCases:         b('All Cases →', '全部案例 →'),
+    purchaseBtn:      b('Purchase Inquiry', '采购咨询'),
+    bookingBtn:       b('Book a Camp', '预订营地'),
+    displayMode:      b('Showroom Mode', '展厅展示模式'),
+    signOut:          b('Sign Out', '退出登录'),
+    signIn:           b('Sign In', '登录'),
+  },
+  footer: {
+    ctaTitle:         b('Ready to start your tourism architecture project?', '准备好开始您的文旅建筑项目了吗？'),
+    ctaSubtitle:      b('Our professional team provides 1-on-1 consulting', '专业团队为您提供一对一方案咨询服务'),
+    phoneBtn:         b('Call Us', '电话咨询'),
+    messageBtn:       b('Leave a Message', '在线留言'),
+    brandTagline:     b('VESSEL® · Smart Prefab Architecture for Tourism', '微宿®·文旅智能装配建筑'),
+    brandDesc:        b(
+      'One-stop resort camp solution. 8 years in tourism architecture, EU+US certified, 30+ countries.',
+      '高端度假营地一站式解决方案服务商，8年深耕文旅建筑赛道，欧盟+美国双认证，全球30+国家交付。'
+    ),
+    productsHeading:  b('Products', '产品系列'),
+    allProducts:      b('All Products', '全部产品'),
+    companyHeading:   b('Company', '公司'),
+    contactHeading:   b('Contact Us', '联系我们'),
+    workHours:        b('Mon–Fri 9:00–18:00', '工作日 9:00–18:00'),
+    address:          b(
+      'No.253 Xingyebei Rd, Shishan Town, Nanhai District, Foshan, Guangdong',
+      '广东省佛山市南海区狮山镇兴业北路253号'
+    ),
+    copyright:        b(
+      '© 2025 VESSEL® · 303 Industries. All rights reserved.',
+      '© 2025 VESSEL 微宿® · 303 Industries. 保留所有权利。'
+    ),
+    privacy:          b('Privacy Policy', '隐私政策'),
+    terms:            b('Terms of Use', '使用条款'),
+  },
+  home: {
+    heroBadge:        b('Smart Prefab Architecture · Global Leader in Tourism', '文旅智能装配建筑 · 全球领导品牌'),
+    heroTitle1:       b('Tourism Prefab', '文旅装配式建筑'),
+    heroTitle2:       b('Global Leader', '全球领导品牌'),
+    badge1:           b('EU Certified', '欧盟建筑认证'),
+    badge2:           b('US Certified', '美国建筑认证'),
+    badge3:           b('30+ Countries', '全球30+国家'),
+    badge4:           b('300+ Projects', '300+项目交付'),
+    heroSubtitle:     b(
+      'From planning and design to delivery and operation, VESSEL provides turnkey smart prefab architecture solutions for tourism resorts.',
+      '从规划设计到交付运营，VESSEL 提供一站式文旅智能装配建筑整体解决方案'
+    ),
+    scrollDown:       b('Scroll Down', '向下滚动'),
+    b2bLabel:         b('Enterprise / B2B', '企业采购 / B2B'),
+    b2bTitle:         b('Purchase Now', '我要采购'),
+    b2bSub:           b('Bulk Order · Project Dev · Brand Partnership', '批量定制 · 项目开发 · 品牌合作'),
+    b2bBtn:           b('Inquire Now', '立即咨询'),
+    b2cLabel:         b('Individual / B2C', '个人预订 / B2C'),
+    b2cTitle:         b('View Camps', '查看营地'),
+    b2cSub:           b('Weekend Getaway · Long Stay · Premium Vacation', '周边游 · 长居体验 · 品质度假'),
+    b2cBtn:           b('Explore Camps', '探索营地'),
+    certLabel:        b('Certifications', '权威认证'),
+    certTitle:        b('EU + US Dual Architecture Certification', '欧盟 + 美国双重建筑认证'),
+    certSubtitle:     b(
+      'VESSEL products are certified by multi-national architectural authorities, enabling direct export to 30+ countries without re-certification.',
+      'VESSEL 产品通过多国权威建筑认证机构审核，可直接出口全球30+国家，无需二次认证'
+    ),
+    certHighlight:    b(
+      '✦ EU CE + US IBC Dual Certification — direct market entry into EU and North America, dramatically reducing export compliance costs.',
+      '✦ 欧盟 CE 认证 + 美国 IBC 认证双重加持 — 产品可直接进入欧美市场，无需本地重新认证，大幅降低出口合规成本'
+    ),
+    productsLabel:    b('Flagship Products', '旗舰产品系列'),
+    productsTitle:    b('Gen6 6th Generation Prefab Architecture', 'Gen6 第六代装配建筑'),
+    productsSubtitle: b(
+      'VESSEL Gen6 uses all-new modular assembly technology with factory precision of ±0.5mm, delivering globally within 45 days.',
+      'VESSEL Gen6 系列采用全新模块化装配工艺，工厂预制精度达 ±0.5mm，45天完成生产并交付全球'
+    ),
+    inquireBtn:       b('Purchase Inquiry', '采购询价'),
+    learnMore:        b('Learn More', '了解更多'),
+    statsLabel:       b('Global Reach', '全球规模'),
+    stat1Val:         b('300+', '300+'),
+    stat1Title:       b('Projects Delivered', '全球交付项目'),
+    stat1Sub:         b('Across 30+ countries and regions', '遍布30余个国家与地区'),
+    stat2Val:         b('30+', '30+'),
+    stat2Title:       b('Export Countries', '出口国家地区'),
+    stat2Sub:         b('Coverage across all continents', '欧美亚非全域覆盖'),
+    stat3Val:         b('8M+', '8M+'),
+    stat3Title:       b('Followers', '全网粉丝关注'),
+    stat3Sub:         b('Brand influence across all platforms', '全平台品牌影响力'),
+    stat4Val:         b('8 Yrs', '8年'),
+    stat4Title:       b('Brand Heritage', '品牌沉淀'),
+    stat4Sub:         b('Focused on tourism prefab architecture', '专注文旅装配建筑'),
+    scenariosLabel:   b('Applications', '应用场景'),
+    scenariosTitle:   b('Versatile Scenarios, Infinite Possibilities', '多元场景，无限可能'),
+    scenariosSubtitle: b(
+      'VESSEL smart prefab architecture is deployed worldwide across diverse scenarios, meeting various climate and usage requirements.',
+      'VESSEL 文旅智能装配建筑广泛应用于全球各类场景，满足不同气候与使用需求'
+    ),
+    tourismTitle:     b('Tourism Resort', '文旅度假'),
+    tourismSub:       b('Scenic Area · Mountain Camp · Coastal Resort', '旅游景区 · 山地营地 · 海滨度假'),
+    tourismDesc:      b(
+      'Leveraging natural landscapes, VESSEL enables rapid construction of premium resort camps, maximizing land value with 80% shorter build time vs traditional construction.',
+      '以自然景观为依托，快速建设高品质度假营地，实现土地价值最大化，建设周期比传统缩短80%。'
+    ),
+    commercialTitle:  b('Commercial Space', '商业空间'),
+    commercialSub:    b('Retail · Office · F&B', '零售展示 · 办公园区 · 餐饮空间'),
+    commercialDesc:   b(
+      'Flexible modular design gives commercial spaces unlimited possibilities — rapid deployment, easy relocation, adapting to dynamic market needs.',
+      '灵活模块化设计赋予商业空间无限可能，快速部署、随时迁移，适应瞬息万变的商业需求。'
+    ),
+    publicTitle:      b('Public Facilities', '公共设施'),
+    publicSub:        b('Emergency · Medical · Public Service', '应急安置 · 医疗站点 · 公共服务'),
+    publicDesc:       b(
+      'Meets public emergency and welfare needs. Rapidly deployable to disaster zones, remote areas, or temporary event venues with high efficiency.',
+      '满足公共应急与民生服务需求，可快速部署于灾区、边远地区或临时活动场所，高效可靠。'
+    ),
+    slogan:           b('Redefine Natural Dwelling', '重构自然的栖居'),
+    aboutLabel:       b('About VESSEL', '关于微宿'),
+    aboutTitle:       b('Founder of Space-Themed Luxury Camp Resorts', '高端度假营地一站式解决方案服务商'),
+    aboutDesc:        b(
+      "VESSEL® is the founder of space-themed luxury camp resorts. Since 2018, we have delivered 300+ projects across China and exported to 30+ countries. Our self-owned factory (28,800㎡) achieves a monthly production capacity of 150 units, with 150+ national patents.",
+      'VESSEL 微宿®，文旅智能建筑高端营地开创者。自2018年创立，已在全国落地300余个项目，出口远销30余国，自建工厂28800㎡，月产能150台，累计获得国家专利150余件。'
+    ),
+    learnAbout:       b('Learn About VESSEL', '了解 VESSEL'),
+  },
+  about: {
+    heroLabel:        b('About Us', '关于我们'),
+    heroTitleGold:    b('Founder of Luxury Camp Resorts', '高端度假营地开创者'),
+    heroSubtitle:     b(
+      'Prefab technology leading the future of tourism dwelling, reshaping the boundaries of travel experience through architecture.',
+      '装配式科技领跑未来旅居，用建筑重塑文旅体验边界'
+    ),
+    missionLabel:     b('Brand Mission', '品牌使命'),
+    missionTitle1:    b('Luxury Camp Resort', '高端度假营地'),
+    missionTitle2:    b('One-Stop Solution Provider', '一站式解决方案服务商'),
+    missionMain:      b(
+      "VESSEL® is dedicated to becoming the one-stop solution provider for luxury camp resorts, leading China's innovative tourism category onto the global stage. Our products focus on the core values of smart prefab tourism architecture: rapid delivery, long-lasting durability, high aesthetics, and low maintenance cost.",
+      'VESSEL 微宿® 致力于成为高端度假营地一站式解决方案服务商，带领中国文旅创新品类走向全球。我们的产品专注于文旅智能装配建筑的本质价值：快速交付、经久耐用、高颜值、低运维成本。'
+    ),
+    missionSub:       b(
+      'Founded in 2018, we have served tourism developers in 30+ countries over 8 years, completing over 300 premium camp projects, establishing ourselves as the industry benchmark brand.',
+      '创立于 2018 年，8 年间我们服务了全球 30+ 国家的文旅开发者，打造了超过 300 个高端营地项目，成为行业标杆品牌。'
+    ),
+    stat1Val:         b('300+', '300+'),
+    stat1:            b('Projects Delivered', '全球交付项目'),
+    stat2Val:         b('30+', '30+'),
+    stat2:            b('Export Countries', '出口国家地区'),
+    stat3Val:         b('28,800㎡', '28,800㎡'),
+    stat3:            b('Factory Area', '自有工厂面积'),
+    stat4Val:         b('150+/mo', '150台+/月'),
+    stat4:            b('Monthly Capacity', '月交付能力'),
+    stat5Val:         b('150+', '150+'),
+    stat5:            b('Patents', '自主研发专利'),
+    stat6Val:         b('8M+', '800万+'),
+    stat6:            b('Followers', '全网粉丝关注'),
+    rdLabel:          b('R&D Capability', '自主研发设计能力'),
+    rdTitle:          b('Our Creativity', '我们的创造力'),
+    rd1Title:         b('Industrial Manufacturing', '工业级制造'),
+    rd1Desc:          b(
+      '28,800㎡ self-owned factory, precision control ±0.5mm, monthly capacity over 150 units, full QC throughout.',
+      '28,800㎡ 自有工厂，精度控制 ±0.5mm，月产能超 150 台，全程质检把控。'
+    ),
+    rd2Title:         b('Independent R&D', '自主研发'),
+    rd2Desc:          b(
+      '150+ self-developed patents covering structure, materials, smart control, waterproofing and other core technologies.',
+      '150+ 自主研发专利，覆盖结构、材料、智能控制、防水系统等核心技术领域。'
+    ),
+    rd3Title:         b('Global Presence', '全球布局'),
+    rd3Desc:          b(
+      'Products cover 30+ countries across 6 continents, with offices in Taiwan, Japan, UK, Slovakia, New Zealand, Saudi Arabia.',
+      '产品已覆盖 6 大洲 30+ 国家，在台湾、日本、英国、斯洛伐克、新西兰、沙特设有办事处。'
+    ),
+    timelineLabel:    b('Brand History', '品牌历程'),
+    timelineTitle:    b('VESSEL® Journey of Exploration', 'VESSEL 微宿® 探索之旅'),
+    globalLabel:      b('China Leading, Global Presence', '中国领先，全球布局'),
+    globalTitle:      b('30+ Countries Across 6 Continents', '全球 6 大洲 30+ 国家'),
+    globalSubtitle:   b(
+      'As of 2025, VESSEL has delivered 300+ projects nationally and exported to 30+ countries across 100+ cities.',
+      '截至 2025 年，微宿已在全国落地 300 余个项目，出口至全球 30+ 国家，覆盖 100+ 城市'
+    ),
+    honorsLabel:      b('Brand Honors', '品牌荣誉'),
+    honorsTitle:      b('R&D Strength Certified', '研发实力认证'),
+    partnersLabel:    b('Strategic Partners', '战略合作'),
+    partnersTitle:    b('Our Partners', '合作伙伴'),
+    founderLabel:     b('Brand Founder', '品牌创始人'),
+    founderTitle:     b('Wang Shuaibin', '王帅斌'),
+    founderRole:      b('Founder / Chief Designer', '创始人 / 总设计师'),
+    founderBio:       b(
+      "With a solid international architecture background and deep understanding of China's tourism market, Wang Shuaibin founded VESSEL® in 2018, integrating industrial precision manufacturing with architectural aesthetics, pioneering a new category of premium prefab tourism architecture in China.",
+      '王帅斌以扎实的国际建筑学背景和对中国文旅市场的深刻理解，于 2018 年创立 VESSEL 微宿®，将工业化精密制造与建筑美学融为一体，开创了中国高端装配式文旅建筑的全新品类。'
+    ),
+  },
+  contact: {
+    heroLabel:        b('Contact Us', '联系我们'),
+    heroTitleGold:    b('Premium Service', '尊享服务'),
+    heroSubtitle:     b(
+      'Purchase Inquiry · Project Partnership · Agency · Custom — Professional team serving you throughout',
+      '采购咨询 · 项目合作 · 代理加盟 · 定制服务，专业团队全程服务'
+    ),
+    formLabel:        b('Online Message', '在线留言'),
+    contactLabel:     b('Contact Info', '联系方式'),
+    phoneLabel:       b('China Hotline', '国内服务热线'),
+    workHours:        b('Mon–Fri 9:00–18:00', '工作日 9:00–18:00'),
+    waLabel:          b('WhatsApp / International', 'WhatsApp / 国际'),
+    emailLabel:       b('Email', '电子邮箱'),
+    addressLabel:     b('HQ Address', '总部地址'),
+    wechatLabel:      b('Scan WeChat QR', '微信扫码咨询'),
+    wechatSub:        b('Scan to chat instantly', '扫一扫，立即咨询'),
+    officesLabel:     b('Global Offices', '全球办事处'),
+    operating:        b('Active', '运营中'),
+    building:         b('Coming Soon', '筹建中'),
+    faqLabel:         b('FAQ', '常见问题'),
+    faqTitle:         b('FAQ', 'FAQ'),
+    faq1Q:            b('What materials are the products made of?', '产品由哪些材料组成？'),
+    faq1A:            b(
+      'VESSEL uses five core structural materials: high-strength hot-dip galvanized steel frame, corrosion-resistant fluorocarbon-coated aluminum panels, low-radiation LOW-E insulating glass, high-thermal-performance thermal-break windows & doors, and rigid polyurethane spray insulation.',
+      '采用「微宿五大结构主材」：高强度热镀锌钢骨架、耐腐蚀氟碳喷涂铝板、低辐射 LOW-E 中空玻璃、高热工性能断桥门窗、绝热喷涂硬质聚氨酯。'
+    ),
+    faq2Q:            b('What are the Gen6 upgrades?', '第六代产品有哪些升级亮点？'),
+    faq2A:            b(
+      'Gen6 key upgrades: interlocked physical waterproof roof (replacing sealant waterproofing), underfloor mechanical level (equipment bay), glue-free assembly (reduced VOC), and new VIIE Gen6 smart system.',
+      '第六代主要升级：锁扣式物理防水屋顶（取代胶水防水）、设备层架构（底部设备仓）、无胶装配工艺（减少VOC），以及全新 VIIE Gen6 智控系统。'
+    ),
+    faq3Q:            b('Which models are available?', '目前有哪些型号可选？'),
+    faq3A:            b(
+      'Gen6: V9 (38㎡), E7 (38.8㎡), E6 (29.6㎡), E3 (19㎡); Gen5: V5 (24.8㎡), S5 (29.6㎡). Full customization supported.',
+      'Gen6 系列：V9（38㎡）、E7（38.8㎡）、E6（29.6㎡）、E3（19㎡）；Gen5 系列：V5（24.8㎡）、S5（29.6㎡）等，支持全系定制。'
+    ),
+    faq4Q:            b('Can products adapt to extreme climates?', '产品能适应极端气候吗？'),
+    faq4A:            b(
+      'Tested for -32°C (Russia extreme cold) to 55°C (Saudi extreme heat). With thermal-break windows and polyurethane insulation, comfortable use all year round.',
+      '经测试，可适用 -32℃（俄罗斯严寒环境）至 55℃（沙特高温环境），配合断桥门窗和聚氨酯喷涂隔热层，四季均可舒适使用。'
+    ),
+    faq5Q:            b('How is it transported? What is the HS code?', '如何运输？海关编码是什么？'),
+    faq5A:            b(
+      'Transported via 40ft Flat Rack Container, compliant with international shipping standards. HS Code: 9406.90 (Prefabricated Buildings).',
+      '通过 40 尺平架集装箱（Flat Rack Container）运输，符合国际海运规范。海关商品编码：HS 9406.90（预制建筑物）。'
+    ),
+    faq6Q:            b('How long does production take? How is installation done?', '生产周期多久？安装方式？'),
+    faq6A:            b(
+      'Standard production cycle is 45 days. Ready to use upon delivery — just connect utilities. No traditional construction needed. Professional team installs on-site in ~2 hours.',
+      '标准生产周期 45 天。出厂即成品，现场接通水电即可使用，无需传统建筑施工，专业团队现场安装约 2 小时完成。'
+    ),
+  },
+  products: {
+    heroLabel:        b('Products', '产品中心'),
+    heroTitleGold:    b('Smart Prefab Architecture', '文旅智能装配建筑'),
+    heroSubtitle:     b(
+      '45-Day Factory Production | 2-Hour On-site Install | EU+US Certified | 30+ Countries Delivered',
+      '45天工厂预制 | 2小时落地安装 | 欧盟+美国双认证 | 全球30+国家交付'
+    ),
+    specSize:         b('Size Range', '尺寸范围'),
+    specSizeVal:      b('19㎡ — 38.8㎡', '19㎡ — 38.8㎡'),
+    specProd:         b('Production Cycle', '标准生产周期'),
+    specProdVal:      b('45 Days', '45天'),
+    specInstall:      b('Installation', '安装时间'),
+    specInstallVal:   b('2 Hours', '2小时'),
+    specTemp:         b('Temperature Range', '适用温度'),
+    specTempVal:      b('-32°C to 55°C', '-32℃ 至 55℃'),
+    specTransport:    b('Transport', '运输方式'),
+    specTransportVal: b('40ft Flat Rack Container', '40尺平架集装箱'),
+    specHS:           b('HS Code', '海关编码'),
+    specHSVal:        b('HS 9406.90', 'HS 9406.90'),
+    gen6Label:        b('6th Generation · Latest', '第六代 · 最新系列'),
+    gen6Title:        b('Gen6 Series', 'Gen6 系列'),
+    gen5Label:        b('5th Generation · Classic', '第五代 · 经典系列'),
+    gen5Title:        b('Gen5 Series', 'Gen5 系列'),
+    productCount:     b('{n} Models', '{n} 款产品'),
+    tableTitle:       b('Gen6 Comparison', 'Gen6 系列对比'),
+    tableLabel:       b('Model Selection Guide', '选型参考'),
+    thModel:          b('Model', '型号'),
+    thSize:           b('Dimensions', '尺寸'),
+    thArea:           b('Floor Area', '面积'),
+    thPower:          b('Power', '电功率'),
+    thCapacity:       b('Capacity', '容纳人数'),
+    thScenario:       b('Scenario', '适用场景'),
+    detailLink:       b('Details →', '详情 →'),
+    viewDetail:       b('View Details →', '查看详情 →'),
+    faq1Q:            b('How long is production?', '生产周期多久？'),
+    faq1A:            b(
+      'Standard 45 days. Rush options available.',
+      '标准生产周期 45 天，可根据项目排期协商加急方案。'
+    ),
+    faq2Q:            b('What climates are supported?', '适用哪些气候？'),
+    faq2A:            b(
+      'Tested for -32°C (Russia) to 55°C (Saudi Arabia).',
+      '产品经测试，可适用 -32℃（俄罗斯）至 55℃（沙特）极端气候条件。'
+    ),
+    faq3Q:            b('How is it transported?', '如何运输？'),
+    faq3A:            b(
+      'Via 40ft Flat Rack Container, HS 9406.90.',
+      '通过 40 尺平架集装箱运输，符合国际海运规范，海关编码 HS 9406.90。'
+    ),
+  },
+  productDetail: {
+    breadcrumbProducts: b('Products', '产品'),
+    specArea:           b('Floor Area', '建筑面积'),
+    specDimensions:     b('Dimensions', '外形尺寸'),
+    specPower:          b('Power', '额定功率'),
+    specCapacity:       b('Capacity', '容纳人数'),
+    specWeight:         b('Weight', '自重'),
+    deliveryStrip:      b('45-Day Delivery · 2-Hour Install · Free Port Shipping', '45天交付 · 2小时安装 · 全球包邮至港口'),
+    inquireBtn:         b('Inquire for Price', '立即咨询报价'),
+    otherProducts:      b('Other Products', '查看其他产品'),
+    priceLabel:         b('Reference Price', '参考价格'),
+    loginToView:        b('Login to View Price', '登录查看价格'),
+    priceNote:          b(
+      'Includes basic assembly. Excludes shipping and on-site installation. Contact consultant for exact quote.',
+      '含基础装配，不含运输及现场安装费用。具体报价请联系顾问。'
+    ),
+    designLabel:        b('Design Philosophy', '设计理念'),
+    featuresLabel:      b('Core Features', '核心特性'),
+    featuresTitle:      b('6 Design Highlights', '六大设计亮点'),
+    spacesLabel:        b('Space Layout', '空间配置'),
+    spacesTitle:        b('Functional Zone Planning', '功能区域规划'),
+    materialsLabel:     b('Five Core Materials', '五大结构主材'),
+    materialsTitle:     b('Industrial-Grade Build Standard', '工业级建造标准'),
+    materialsNote:      b(
+      'Ready to use upon delivery — just connect utilities. No traditional construction needed.',
+      '出厂即成品，现场接通水电即可使用，无需传统建筑施工'
+    ),
+    specsLabel:         b('Full Specifications', '完整规格参数'),
+    prevProduct:        b('Previous', '上一款'),
+    nextProduct:        b('Next', '下一款'),
+    home:               b('Home', '首页'),
+    startCoop:          b('Start Cooperation', '开始合作'),
+    interested:         b('Interested in {model} {gen}?', '对 {model} {gen} 感兴趣？'),
+    consultDesc:        b(
+      'Fill in the inquiry form, and our professional consultant will contact you within 24 hours with a customized plan and quote.',
+      '填写需求表单，专业顾问将在 24 小时内联系您，提供定制方案与报价'
+    ),
+    prevProductLabel:   b('Previous Product', '上一个产品'),
+    nextProductLabel:   b('Next Product', '下一个产品'),
+    specModel:          b('Model', '型号'),
+    specLength:         b('Length', '外形长度'),
+    specWidth:          b('Width', '外形宽度'),
+    specHeight:         b('Height', '外形高度'),
+    specFloorArea:      b('Floor Area', '建筑面积'),
+    specSeries:         b('Series', '系列'),
+  },
+  cases: {
+    heroLabel:          b('Project Cases', '项目案例'),
+    heroTitle1:         b('300+ Premium Camps', '全国 300+ 高端营地'),
+    heroTitleGold:      b('Project Delivery Cases', '项目交付案例'),
+    heroSubtitle:       b(
+      'Tourism resorts, commercial spaces, public facilities — spanning 30+ countries',
+      '覆盖文旅度假、商业空间、公共设施，遍布全球30余个国家与地区'
+    ),
+    stat1Val:           b('300+', '300+'),
+    stat1:              b('Projects Delivered', '全球交付项目'),
+    stat2Val:           b('30+', '30+'),
+    stat2:              b('Export Countries', '出口国家地区'),
+    stat3Val:           b('100+', '100+'),
+    stat3:              b('Cities Covered', '覆盖城市'),
+    stat4Val:           b('8 Yrs', '8年'),
+    stat4:              b('Brand Heritage', '品牌积累'),
+    filterAll:          b('All Cases', '全部案例'),
+    filterTourism:      b('Tourism Resort', '文旅度假'),
+    filterCommercial:   b('Commercial', '商业空间'),
+    filterPublic:       b('Public', '公共设施'),
+    filterOverseas:     b('Overseas', '境外项目'),
+    viewDetail:         b('View Project Details', '查看项目详情'),
+    ctaBadge:           b('Start Your Project', '开启您的项目'),
+    ctaTitle:           b('Interested in developing a premium camp?', '有意向开发高端营地项目？'),
+    ctaSubtitle:        b(
+      'Our consultants have served 300+ camp investors with full-cycle support from site selection to operation.',
+      '我们的项目顾问已服务 300+ 营地投资人，提供从选址、规划到建设、运营的全流程支持'
+    ),
+    ctaBtn1:            b('Book a Consultant', '预约项目顾问'),
+    specArea:           b('Site Area', '占地面积'),
+    specInvestment:     b('Investment', '投资规模'),
+    specUnits:          b('Units Purchased', '采购数量'),
+    specProducts:       b('Products', '采购产品'),
+  },
+  news: {
+    heroLabel:          b('News & Events', '新闻活动'),
+    heroTitleGold:      b('Latest Updates', '最新动态'),
+    heroSubtitle:       b(
+      'Product launches, industry insights, brand partnerships, trade shows — stay updated with VESSEL.',
+      '产品发布、行业资讯、品牌合作、展会活动，全面了解 VESSEL 最新进展'
+    ),
+    filterAll:          b('All News', '全部资讯'),
+    topBadge:           b('Pinned', '置顶'),
+    readMore:           b('Read More', '阅读更多'),
+    readFull:           b('Read Full Article', '阅读全文'),
+    loadMore:           b('Load More', '加载更多资讯'),
+  },
+  display: {
+    refPrice:           b('Reference Price', '参考价格'),
+    paused:             b('Paused', '已暂停'),
+  },
+  auth: {
+    loginTitle:         b('Sign In', '登录账号'),
+    loginSubtitle:      b('Sign in to view full product pricing', '登录后查看完整产品价格'),
+    googleBtn:          b('Continue with Google', '使用 Google 账号登录'),
+    orEmail:            b('or use email', '或使用邮箱'),
+    emailLabel:         b('Email', '邮箱地址'),
+    passwordLabel:      b('Password', '密码'),
+    loginBtn:           b('Sign In', '登录'),
+    signingIn:          b('Signing in...', '登录中...'),
+    loginError:         b('Incorrect email or password', '邮箱或密码错误，请重试'),
+    noAccount:          b("Don't have an account?", '还没有账号？'),
+    registerLink:       b('Register now', '立即注册'),
+    registerTitle:      b('Create Account', '创建账号'),
+    registerSubtitle:   b('Register to view full pricing and resources', '注册后查看完整产品价格与资料'),
+    googleRegBtn:       b('Continue with Google', '使用 Google 账号注册'),
+    orFill:             b('or fill in details', '或填写信息注册'),
+    roleLabel:          b('Select your role *', '选择您的身份 *'),
+    roleBuyer:          b('Buyer', '采购商'),
+    roleBuyerDesc:      b('Plan to purchase for commercial projects', '计划采购产品用于商业项目'),
+    roleAgent:          b('Agent', '代理商'),
+    roleAgentDesc:      b('Interested in distributing VESSEL products', '希望代理销售 VESSEL 产品'),
+    roleIndividual:     b('Individual', '个人用户'),
+    roleIndividualDesc: b('Personal stay or vacation use', '个人旅居或度假使用'),
+    nameLabel:          b('Full Name', '姓名'),
+    namePlaceholder:    b('Your name', '您的姓名'),
+    roleError:          b('Please select your role', '请选择您的身份'),
+    registerError:      b('Registration failed, please try again', '注册失败，请重试'),
+    registerBtn:        b('Create Account', '创建账号'),
+    registering:        b('Creating...', '注册中...'),
+    hasAccount:         b('Already have an account?', '已有账号？'),
+    loginLink:          b('Sign in', '立即登录'),
+  },
+  form: {
+    inquiryTypeLabel:   b('Inquiry Type *', '咨询类型 *'),
+    nameLabel:          b('Name *', '姓名 *'),
+    phoneLabel:         b('Phone *', '联系电话 *'),
+    emailLabel:         b('Email *', '邮箱 *'),
+    companyLabel:       b('Company', '公司名称'),
+    locationLabel:      b('Country / City', '所在国家/城市'),
+    projectTypeLabel:   b('Project Type', '项目类型'),
+    quantityLabel:      b('Quantity (units)', '订购数量（台）'),
+    modelLabel:         b('Preferred Model', '产品型号偏好'),
+    remarksLabel:       b('Remarks', '备注'),
+    namePlaceholder:    b('Your name', '您的姓名'),
+    phonePlaceholder:   b('+86 138 0000 0000', '+86 138 0000 0000'),
+    emailPlaceholder:   b('your@email.com', 'your@email.com'),
+    companyPlaceholder: b('Company / Organization', '公司/组织名称'),
+    locationPlaceholder: b('e.g. Guangzhou, China', '如：中国·广州'),
+    projectTypePlaceholder: b('Select project type', '请选择项目类型'),
+    quantityPlaceholder: b('Estimated quantity', '预计采购数量'),
+    modelPlaceholder:   b('Select model', '请选择'),
+    remarksPlaceholder: b(
+      'Describe your project, special requirements or questions...',
+      '请描述您的项目概况、特殊需求或其他问题...'
+    ),
+    submitBtn:          b('Submit Inquiry', '提交咨询'),
+    submitting:         b('Submitting...', '提交中...'),
+    submitNote:         b(
+      'Our consultant will contact you within 24 hours after submission',
+      '提交后专业顾问将在 24 小时内与您取得联系'
+    ),
+    successBadge:       b('Submitted', '提交成功'),
+    successTitle:       b('Thank you for your inquiry', '感谢您的咨询'),
+    successMsg:         b(
+      'We have received your message. Our consultant will contact you within 24 hours.',
+      '我们已收到您的留言，专业顾问将在 24 小时内与您联系。'
+    ),
+    successEmail:       b('Confirmation email sent to your inbox.', '确认邮件已发送至您的邮箱。'),
+    resubmit:           b('Submit Again', '再次提交'),
+    emailRequired:      b('Email is required', '请填写邮箱地址'),
+    emailInvalid:       b('Please enter a valid email address', '请输入有效的邮箱地址'),
+    networkError:       b('Network error, please check connection', '网络错误，请检查连接后重试'),
+    submitFailed:       b('Submission failed, please try again', '提交失败，请稍后再试'),
+    inquiry1:           b('Get Materials', '索取资料'),
+    inquiry2:           b('Price Inquiry', '咨询报价'),
+    inquiry3:           b('Agency', '合作代理'),
+    inquiry4:           b('Custom Service', '定制服务'),
+    project1:           b('Tourism Resort Camp', '文旅度假营地'),
+    project2:           b('Boutique Hotel & Inn', '精品酒店民宿'),
+    project3:           b('Commercial Space', '商业空间'),
+    project4:           b('Public Facilities', '公共设施'),
+    project5:           b('Other', '其他'),
+    modelUnknown:       b('Not Yet Decided', '暂未确定'),
+    successEmailNote:   b('A confirmation email has been sent to your inbox.', '确认邮件已发送至您的邮箱。'),
+  },
+};
+
+export type I18n = typeof i18n;

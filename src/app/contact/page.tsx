@@ -1,63 +1,45 @@
-import type { Metadata } from 'next';
+'use client';
+
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHero from '@/components/PageHero';
 import ContactForm from '@/components/ContactForm';
-
-export const metadata: Metadata = {
-  title: '联系我们 | VESSEL 微宿®',
-  description: '联系 VESSEL 微宿® — 采购咨询、项目合作、代理加盟，400-8090-303，全球30+国家服务。',
-};
+import { useT } from '@/contexts/LanguageContext';
+import { i18n } from '@/lib/i18n';
 
 const officeLocations = [
-  { city: '台湾·台中', status: '运营中' },
-  { city: '日本', status: '运营中' },
-  { city: '英国·Manchester', status: '运营中' },
-  { city: '斯洛伐克', status: '运营中' },
-  { city: '新西兰', status: '运营中' },
-  { city: '沙特阿拉伯', status: '运营中' },
-  { city: '德国', status: '筹建中' },
-  { city: '澳大利亚', status: '筹建中' },
-];
-
-const faqs = [
-  {
-    q: '产品由哪些材料组成？',
-    a: '采用「微宿五大结构主材」：高强度热镀锌钢骨架、耐腐蚀氟碳喷涂铝板、低辐射 LOW-E 中空玻璃、高热工性能断桥门窗、绝热喷涂硬质聚氨酯。',
-  },
-  {
-    q: '第六代产品有哪些升级亮点？',
-    a: '第六代主要升级：锁扣式物理防水屋顶（取代胶水防水）、设备层架构（底部设备仓）、无胶装配工艺（减少VOC），以及全新 VIIE Gen6 智控系统。',
-  },
-  {
-    q: '目前有哪些型号可选？',
-    a: 'Gen6 系列：V9（38㎡）、E7（38.8㎡）、E6（29.6㎡）、E3（19㎡）；Gen5 系列：V5（24.8㎡）、S5（29.6㎡）等，支持全系定制。',
-  },
-  {
-    q: '产品能适应极端气候吗？',
-    a: '经测试，可适用 -32℃（俄罗斯严寒环境）至 55℃（沙特高温环境），配合断桥门窗和聚氨酯喷涂隔热层，四季均可舒适使用。',
-  },
-  {
-    q: '如何运输？海关编码是什么？',
-    a: '通过 40 尺平架集装箱（Flat Rack Container）运输，符合国际海运规范。海关商品编码：HS 9406.90（预制建筑物）。',
-  },
-  {
-    q: '生产周期多久？安装方式？',
-    a: '标准生产周期 45 天。出厂即成品，现场接通水电即可使用，无需传统建筑施工，专业团队现场安装约 2 小时完成。',
-  },
+  { city: '台湾·台中', status: 'operating' as const },
+  { city: '日本', status: 'operating' as const },
+  { city: '英国·Manchester', status: 'operating' as const },
+  { city: '斯洛伐克', status: 'operating' as const },
+  { city: '新西兰', status: 'operating' as const },
+  { city: '沙特阿拉伯', status: 'operating' as const },
+  { city: '德国', status: 'building' as const },
+  { city: '澳大利亚', status: 'building' as const },
 ];
 
 export default function ContactPage() {
+  const t = useT();
+
+  const faqs = [
+    { q: t(i18n.contact.faq1Q), a: t(i18n.contact.faq1A) },
+    { q: t(i18n.contact.faq2Q), a: t(i18n.contact.faq2A) },
+    { q: t(i18n.contact.faq3Q), a: t(i18n.contact.faq3A) },
+    { q: t(i18n.contact.faq4Q), a: t(i18n.contact.faq4A) },
+    { q: t(i18n.contact.faq5Q), a: t(i18n.contact.faq5A) },
+    { q: t(i18n.contact.faq6Q), a: t(i18n.contact.faq6A) },
+  ];
+
   return (
     <main className="bg-[#0a0a0a] text-white">
       <Navbar />
 
       <PageHero
-        label="联系我们"
+        label={t(i18n.contact.heroLabel)}
         title="VESSEL 微宿®"
-        titleGold="尊享服务"
-        subtitle="采购咨询 · 项目合作 · 代理加盟 · 定制服务，专业团队全程服务"
-        breadcrumb={[{ label: '首页', href: '/' }, { label: '联系我们' }]}
+        titleGold={t(i18n.contact.heroTitleGold)}
+        subtitle={t(i18n.contact.heroSubtitle)}
+        breadcrumb={[{ label: t(i18n.productDetail.home), href: '/' }, { label: t(i18n.nav.contact) }]}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -65,14 +47,14 @@ export default function ContactPage() {
 
           {/* ── Contact Form ── */}
           <div className="lg:col-span-2">
-            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-6 font-medium">在线留言</div>
+            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-6 font-medium">{t(i18n.contact.formLabel)}</div>
             <ContactForm />
           </div>
 
           {/* ── Contact Info Sidebar ── */}
           <div className="space-y-6">
             <div>
-              <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-6 font-medium">联系方式</div>
+              <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-6 font-medium">{t(i18n.contact.contactLabel)}</div>
               <div className="space-y-4">
                 <div className="flex items-start gap-4 p-4 bg-[#111] border border-white/8">
                   <div className="w-8 h-8 flex items-center justify-center bg-[#c9a84c]/10 shrink-0">
@@ -81,11 +63,11 @@ export default function ContactPage() {
                     </svg>
                   </div>
                   <div>
-                    <div className="text-white/30 text-[10px] tracking-wider mb-1">国内服务热线</div>
+                    <div className="text-white/30 text-[10px] tracking-wider mb-1">{t(i18n.contact.phoneLabel)}</div>
                     <a href="tel:4008090303" className="text-white font-bold tracking-wider hover:text-[#c9a84c] transition-colors">
                       400-8090-303
                     </a>
-                    <div className="text-white/25 text-xs mt-0.5">工作日 9:00–18:00</div>
+                    <div className="text-white/25 text-xs mt-0.5">{t(i18n.contact.workHours)}</div>
                   </div>
                 </div>
 
@@ -96,7 +78,7 @@ export default function ContactPage() {
                     </svg>
                   </div>
                   <div>
-                    <div className="text-white/30 text-[10px] tracking-wider mb-1">WhatsApp / 国际</div>
+                    <div className="text-white/30 text-[10px] tracking-wider mb-1">{t(i18n.contact.waLabel)}</div>
                     <a href="tel:+8618024176679" className="text-white font-bold tracking-wider hover:text-[#c9a84c] transition-colors">
                       +86 180-2417-6679
                     </a>
@@ -110,7 +92,7 @@ export default function ContactPage() {
                     </svg>
                   </div>
                   <div>
-                    <div className="text-white/30 text-[10px] tracking-wider mb-1">电子邮箱</div>
+                    <div className="text-white/30 text-[10px] tracking-wider mb-1">{t(i18n.contact.emailLabel)}</div>
                     <a href="mailto:wynne@303vessel.cn" className="text-white/70 text-sm hover:text-[#c9a84c] transition-colors break-all">
                       wynne@303vessel.cn
                     </a>
@@ -125,7 +107,7 @@ export default function ContactPage() {
                     </svg>
                   </div>
                   <div>
-                    <div className="text-white/30 text-[10px] tracking-wider mb-1">总部地址</div>
+                    <div className="text-white/30 text-[10px] tracking-wider mb-1">{t(i18n.contact.addressLabel)}</div>
                     <div className="text-white/60 text-sm leading-relaxed">
                       广东省佛山市南海区<br />
                       狮山镇兴业北路253号
@@ -137,28 +119,28 @@ export default function ContactPage() {
 
             {/* QR code placeholder */}
             <div className="p-5 bg-[#111] border border-white/8 text-center">
-              <div className="text-white/30 text-xs tracking-wider mb-3">微信扫码咨询</div>
+              <div className="text-white/30 text-xs tracking-wider mb-3">{t(i18n.contact.wechatLabel)}</div>
               <div className="w-28 h-28 mx-auto bg-[#1a1a1a] flex items-center justify-center">
                 <span className="text-white/15 text-xs">企业微信二维码</span>
               </div>
-              <div className="text-white/20 text-xs mt-2">扫一扫，立即咨询</div>
+              <div className="text-white/20 text-xs mt-2">{t(i18n.contact.wechatSub)}</div>
             </div>
 
             {/* Global offices */}
             <div>
-              <div className="text-white/30 text-xs tracking-[0.25em] uppercase mb-4">全球办事处</div>
+              <div className="text-white/30 text-xs tracking-[0.25em] uppercase mb-4">{t(i18n.contact.officesLabel)}</div>
               <div className="grid grid-cols-2 gap-2">
                 {officeLocations.map((loc) => (
                   <div key={loc.city} className="flex items-center justify-between px-3 py-2 bg-[#111] border border-white/5 text-xs">
                     <span className="text-white/50 tracking-wider">{loc.city}</span>
                     <span
                       className={`text-[10px] px-1.5 py-0.5 ${
-                        loc.status === '运营中'
+                        loc.status === 'operating'
                           ? 'text-[#27ae60] bg-[#27ae60]/10'
                           : 'text-white/30 bg-white/5'
                       }`}
                     >
-                      {loc.status}
+                      {loc.status === 'operating' ? t(i18n.contact.operating) : t(i18n.contact.building)}
                     </span>
                   </div>
                 ))}
@@ -170,8 +152,8 @@ export default function ContactPage() {
         {/* ── FAQ ── */}
         <div className="mt-20">
           <div className="text-center mb-10">
-            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">常见问题</div>
-            <h2 className="text-2xl font-black text-white">FAQ</h2>
+            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.contact.faqLabel)}</div>
+            <h2 className="text-2xl font-black text-white">{t(i18n.contact.faqTitle)}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {faqs.map((faq, i) => (

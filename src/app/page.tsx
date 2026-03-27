@@ -1,12 +1,17 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { useT } from '@/contexts/LanguageContext';
+import { i18n } from '@/lib/i18n';
 
 /* ─────────────────────────────────────────────
    HERO
 ───────────────────────────────────────────── */
 function HeroSection() {
+  const t = useT();
   return (
     <section
       id="hero"
@@ -44,24 +49,24 @@ function HeroSection() {
         <div className="inline-flex items-center gap-2 mb-8 px-4 py-1.5 border border-[#c9a84c]/40 bg-[#c9a84c]/5 rounded-full">
           <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] animate-pulse" />
           <span className="text-[#c9a84c] text-xs tracking-[0.2em] font-medium uppercase">
-            文旅智能装配建筑 · 全球领导品牌
+            {t(i18n.home.heroBadge)}
           </span>
         </div>
 
         {/* Main Headline */}
         <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight leading-tight mb-4">
-          <span className="text-white">文旅装配式建筑</span>
+          <span className="text-white">{t(i18n.home.heroTitle1)}</span>
           <br />
-          <span className="text-gold-gradient">全球领导品牌</span>
+          <span className="text-gold-gradient">{t(i18n.home.heroTitle2)}</span>
         </h1>
 
         {/* Subtitle */}
         <div className="flex flex-wrap items-center justify-center gap-4 mb-6 mt-6">
           {[
-            { icon: '🇪🇺', text: '欧盟建筑认证' },
-            { icon: '🇺🇸', text: '美国建筑认证' },
-            { icon: '🌍', text: '全球30+国家' },
-            { icon: '🏗️', text: '300+项目交付' },
+            { icon: '🇪🇺', text: t(i18n.home.badge1) },
+            { icon: '🇺🇸', text: t(i18n.home.badge2) },
+            { icon: '🌍', text: t(i18n.home.badge3) },
+            { icon: '🏗️', text: t(i18n.home.badge4) },
           ].map((item) => (
             <div
               key={item.text}
@@ -74,7 +79,7 @@ function HeroSection() {
         </div>
 
         <p className="text-white/50 text-sm sm:text-base tracking-wider mb-12 max-w-xl mx-auto">
-          从规划设计到交付运营，VESSEL 提供一站式文旅智能装配建筑整体解决方案
+          {t(i18n.home.heroSubtitle)}
         </p>
 
         {/* Dual CTA — B2B / B2C */}
@@ -83,14 +88,14 @@ function HeroSection() {
           {/* B2B CTA */}
           <div className="flex-1 group relative overflow-hidden border border-[#c9a84c]/60 bg-[#c9a84c]/5 hover:bg-[#c9a84c]/10 transition-all duration-300 p-6 text-left cursor-pointer">
             <div className="absolute top-0 right-0 w-24 h-24 bg-[#c9a84c]/5 rounded-full -translate-y-12 translate-x-12 group-hover:bg-[#c9a84c]/10 transition-all" />
-            <div className="text-[#c9a84c] text-[10px] tracking-[0.3em] uppercase mb-2 font-medium">企业采购 / B2B</div>
-            <div className="text-white text-xl font-bold mb-1 tracking-wider">我要采购</div>
-            <div className="text-white/50 text-xs mb-4 tracking-wider">批量定制 · 项目开发 · 品牌合作</div>
+            <div className="text-[#c9a84c] text-[10px] tracking-[0.3em] uppercase mb-2 font-medium">{t(i18n.home.b2bLabel)}</div>
+            <div className="text-white text-xl font-bold mb-1 tracking-wider">{t(i18n.home.b2bTitle)}</div>
+            <div className="text-white/50 text-xs mb-4 tracking-wider">{t(i18n.home.b2bSub)}</div>
             <a
               href="#procurement"
               className="inline-flex items-center gap-2 bg-[#c9a84c] text-[#0a0a0a] text-sm font-bold px-6 py-2.5 hover:bg-[#b8973b] transition-colors tracking-wider"
             >
-              立即咨询
+              {t(i18n.home.b2bBtn)}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
@@ -100,14 +105,14 @@ function HeroSection() {
           {/* B2C CTA */}
           <div className="flex-1 group relative overflow-hidden border border-white/20 bg-white/3 hover:bg-white/6 transition-all duration-300 p-6 text-left cursor-pointer">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/3 rounded-full -translate-y-12 translate-x-12 group-hover:bg-white/5 transition-all" />
-            <div className="text-white/40 text-[10px] tracking-[0.3em] uppercase mb-2 font-medium">个人预订 / B2C</div>
-            <div className="text-white text-xl font-bold mb-1 tracking-wider">查看营地</div>
-            <div className="text-white/50 text-xs mb-4 tracking-wider">周边游 · 长居体验 · 品质度假</div>
+            <div className="text-white/40 text-[10px] tracking-[0.3em] uppercase mb-2 font-medium">{t(i18n.home.b2cLabel)}</div>
+            <div className="text-white text-xl font-bold mb-1 tracking-wider">{t(i18n.home.b2cTitle)}</div>
+            <div className="text-white/50 text-xs mb-4 tracking-wider">{t(i18n.home.b2cSub)}</div>
             <a
               href="#booking"
               className="inline-flex items-center gap-2 border border-white/40 text-white text-sm font-medium px-6 py-2.5 hover:border-[#c9a84c] hover:text-[#c9a84c] transition-colors tracking-wider"
             >
-              探索营地
+              {t(i18n.home.b2cBtn)}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
@@ -118,7 +123,7 @@ function HeroSection() {
 
       {/* Scroll indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40">
-        <span className="text-white text-[10px] tracking-[0.3em] uppercase">向下滚动</span>
+        <span className="text-white text-[10px] tracking-[0.3em] uppercase">{t(i18n.home.scrollDown)}</span>
         <div className="w-px h-8 bg-gradient-to-b from-white to-transparent animate-pulse" />
       </div>
     </section>
@@ -129,6 +134,7 @@ function HeroSection() {
    CERTIFICATIONS
 ───────────────────────────────────────────── */
 function CertificationsSection() {
+  const t = useT();
   const certs = [
     {
       region: '欧盟认证',
@@ -168,12 +174,12 @@ function CertificationsSection() {
     <section id="certifications" className="py-20 bg-[#080808] border-t border-[#c9a84c]/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">权威认证</div>
+          <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.home.certLabel)}</div>
           <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
-            欧盟 + 美国双重建筑认证
+            {t(i18n.home.certTitle)}
           </h2>
           <p className="text-white/40 text-sm tracking-wider max-w-xl mx-auto">
-            VESSEL 产品通过多国权威建筑认证机构审核，可直接出口全球30+国家，无需二次认证
+            {t(i18n.home.certSubtitle)}
           </p>
         </div>
 
@@ -219,11 +225,11 @@ function CertificationsSection() {
         {/* Highlight bar */}
         <div className="mt-8 p-4 border border-[#c9a84c]/20 bg-[#c9a84c]/5 flex flex-col sm:flex-row items-center justify-center gap-4 text-center">
           <span className="text-[#c9a84c] text-sm font-semibold tracking-wider">
-            ✦ 欧盟 CE 认证 + 美国 IBC 认证双重加持
+            {t(i18n.home.certHighlight).split(' — ')[0]}
           </span>
           <span className="hidden sm:block text-white/20">|</span>
           <span className="text-white/50 text-sm tracking-wider">
-            产品可直接进入欧美市场，无需本地重新认证，大幅降低出口合规成本
+            {t(i18n.home.certHighlight).split(' — ')[1]}
           </span>
         </div>
       </div>
@@ -235,6 +241,7 @@ function CertificationsSection() {
    PRODUCTS
 ───────────────────────────────────────────── */
 function ProductsSection() {
+  const t = useT();
   const products = [
     {
       model: 'E7 Gen6',
@@ -276,12 +283,12 @@ function ProductsSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div className="text-center mb-16">
-          <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">旗舰产品系列</div>
+          <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.home.productsLabel)}</div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-4">
-            Gen6 第六代装配建筑
+            {t(i18n.home.productsTitle)}
           </h2>
           <p className="text-white/40 text-sm tracking-wider max-w-2xl mx-auto">
-            VESSEL Gen6 系列采用全新模块化装配工艺，工厂预制精度达 ±0.5mm，45天完成生产并交付全球
+            {t(i18n.home.productsSubtitle)}
           </p>
         </div>
 
@@ -367,13 +374,13 @@ function ProductsSection() {
                       border: `1px solid ${product.accentColor}40`,
                     }}
                   >
-                    采购询价
+                    {t(i18n.home.inquireBtn)}
                   </a>
                   <a
                     href="#products"
                     className="flex-1 text-center border border-white/15 text-white/60 text-sm py-2.5 hover:border-white/30 hover:text-white transition-all duration-200 tracking-wider"
                   >
-                    了解更多
+                    {t(i18n.home.learnMore)}
                   </a>
                 </div>
               </div>
@@ -389,11 +396,12 @@ function ProductsSection() {
    STATS
 ───────────────────────────────────────────── */
 function StatsSection() {
+  const t = useT();
   const stats = [
-    { number: '300+', unit: '', label: '全球交付项目', sub: '遍布30余个国家与地区' },
-    { number: '30+', unit: '', label: '出口国家地区', sub: '欧美亚非全域覆盖' },
-    { number: '800', unit: '万+', label: '全网粉丝关注', sub: '全平台品牌影响力' },
-    { number: '8', unit: '年', label: '品牌沉淀', sub: '专注文旅装配建筑' },
+    { number: t(i18n.home.stat1Val), unit: '', label: t(i18n.home.stat1Title), sub: t(i18n.home.stat1Sub) },
+    { number: t(i18n.home.stat2Val), unit: '', label: t(i18n.home.stat2Title), sub: t(i18n.home.stat2Sub) },
+    { number: t(i18n.home.stat3Val), unit: '', label: t(i18n.home.stat3Title), sub: t(i18n.home.stat3Sub) },
+    { number: t(i18n.home.stat4Val), unit: '', label: t(i18n.home.stat4Title), sub: t(i18n.home.stat4Sub) },
   ];
 
   return (
@@ -439,6 +447,7 @@ function StatsSection() {
    SCENARIOS
 ───────────────────────────────────────────── */
 function ScenariosSection() {
+  const t = useT();
   const scenarios = [
     {
       icon: (
@@ -449,9 +458,9 @@ function ScenariosSection() {
             points="9 22 9 12 15 12 15 22" />
         </svg>
       ),
-      title: '文旅度假',
-      subtitle: '旅游景区 · 山地营地 · 海滨度假',
-      desc: '以自然景观为依托，快速建设高品质度假营地，实现土地价值最大化，建设周期比传统缩短80%。',
+      title: t(i18n.home.tourismTitle),
+      subtitle: t(i18n.home.tourismSub),
+      desc: t(i18n.home.tourismDesc),
       tags: ['景区度假村', '精品民宿群落', '自然营地集群', '山地旅居基地'],
     },
     {
@@ -461,9 +470,9 @@ function ScenariosSection() {
             d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
         </svg>
       ),
-      title: '商业空间',
-      subtitle: '零售展示 · 办公园区 · 餐饮空间',
-      desc: '灵活模块化设计赋予商业空间无限可能，快速部署、随时迁移，适应瞬息万变的商业需求。',
+      title: t(i18n.home.commercialTitle),
+      subtitle: t(i18n.home.commercialSub),
+      desc: t(i18n.home.commercialDesc),
       tags: ['快闪零售空间', '创意办公园区', '品牌体验中心', '户外餐饮集合'],
     },
     {
@@ -474,9 +483,9 @@ function ScenariosSection() {
           <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} />
         </svg>
       ),
-      title: '公共设施',
-      subtitle: '应急安置 · 医疗站点 · 公共服务',
-      desc: '满足公共应急与民生服务需求，可快速部署于灾区、边远地区或临时活动场所，高效可靠。',
+      title: t(i18n.home.publicTitle),
+      subtitle: t(i18n.home.publicSub),
+      desc: t(i18n.home.publicDesc),
       tags: ['应急安置单元', '移动医疗站点', '边境服务设施', '展会临时场馆'],
     },
   ];
@@ -486,12 +495,12 @@ function ScenariosSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div className="text-center mb-16">
-          <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">应用场景</div>
+          <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.home.scenariosLabel)}</div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-4">
-            多元场景，无限可能
+            {t(i18n.home.scenariosTitle)}
           </h2>
           <p className="text-white/40 text-sm tracking-wider max-w-2xl mx-auto">
-            VESSEL 文旅智能装配建筑广泛应用于全球各类场景，满足不同气候与使用需求
+            {t(i18n.home.scenariosSubtitle)}
           </p>
         </div>
 
@@ -540,6 +549,7 @@ function ScenariosSection() {
    ABOUT / BRAND STORY
 ───────────────────────────────────────────── */
 function AboutSection() {
+  const t = useT();
   return (
     <section id="about" className="py-24 bg-[#0a0a0a] relative overflow-hidden">
       {/* Background accent */}
@@ -554,32 +564,15 @@ function AboutSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
 
           <div>
-            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-4 font-medium">品牌故事</div>
+            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-4 font-medium">{t(i18n.home.aboutLabel)}</div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-6 leading-tight">
-              用建筑重塑
+              {t(i18n.home.slogan)}
               <br />
-              <span className="text-gold-gradient">文旅体验边界</span>
+              <span className="text-gold-gradient">{t(i18n.home.aboutTitle)}</span>
             </h2>
             <p className="text-white/50 text-sm leading-loose mb-6">
-              VESSEL 微宿创立于2018年，专注于高端文旅智能装配建筑的研发与全球推广。8年间，我们坚持以工业精度做建筑，以设计美学做旅宿，打造出深受全球文旅开发商信赖的建筑解决方案。
+              {t(i18n.home.aboutDesc)}
             </p>
-            <p className="text-white/50 text-sm leading-loose mb-8">
-              我们拒绝"太空舱式"噱头，专注文旅智能装配建筑的本质价值：<strong className="text-white/70">快速交付、经久耐用、高颜值、低运维成本</strong>，帮助业主实现文旅资产的最大化收益。
-            </p>
-
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { label: '研发团队', value: '75人' },
-                { label: '专利技术', value: '80+项' },
-                { label: '出口认证', value: '欧盟+美国' },
-                { label: '年产能', value: '3000+套' },
-              ].map((item) => (
-                <div key={item.label} className="border border-white/8 p-4 bg-[#111]">
-                  <div className="text-[#c9a84c] text-xl font-black mb-1">{item.value}</div>
-                  <div className="text-white/40 text-xs tracking-wider">{item.label}</div>
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Visual side */}
@@ -592,7 +585,7 @@ function AboutSection() {
               {/* Center block */}
               <div className="absolute inset-16 bg-[#111] border border-[#c9a84c]/20 flex flex-col items-center justify-center p-8 text-center">
                 <div className="text-[#c9a84c] text-4xl font-black mb-2">8</div>
-                <div className="text-white/60 text-sm tracking-[0.2em] mb-4">年品牌沉淀</div>
+                <div className="text-white/60 text-sm tracking-[0.2em] mb-4">{t(i18n.home.stat4Title)}</div>
                 <div className="gold-divider w-12 mx-auto mb-4" />
                 <div className="text-[#c9a84c] font-black text-2xl mb-1">VESSEL</div>
                 <div className="text-white/30 text-xs tracking-widest">微宿·文旅智能装配建筑</div>
@@ -618,6 +611,7 @@ function AboutSection() {
    INNOVATION
 ───────────────────────────────────────────── */
 function InnovationSection() {
+  const t = useT();
   const innovations = [
     {
       icon: (
@@ -695,7 +689,7 @@ function InnovationSection() {
                 className="inline-flex items-center gap-1.5 text-xs tracking-wider transition-colors"
                 style={{ color: `${item.color}80` }}
               >
-                了解更多
+                {t(i18n.home.learnMore)}
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
@@ -712,6 +706,7 @@ function InnovationSection() {
    NEWS PREVIEW
 ───────────────────────────────────────────── */
 function NewsPreviewSection() {
+  const t = useT();
   const news = [
     {
       tag: '要闻',
@@ -738,8 +733,8 @@ function NewsPreviewSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-10">
           <div>
-            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-2 font-medium">最新动态</div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white">新闻活动</h2>
+            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-2 font-medium">{t(i18n.home.aboutLabel)}</div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white">{t(i18n.nav.news)}</h2>
           </div>
           <Link
             href="/news"

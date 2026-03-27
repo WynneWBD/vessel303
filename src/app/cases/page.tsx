@@ -1,12 +1,10 @@
-import type { Metadata } from 'next';
+'use client';
+
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHero from '@/components/PageHero';
-
-export const metadata: Metadata = {
-  title: '项目案例 | VESSEL 微宿®',
-  description: 'VESSEL 微宿® 全国300+高端营地交付案例，覆盖文旅度假、商业空间、公共设施等场景。',
-};
+import { useT } from '@/contexts/LanguageContext';
+import { i18n } from '@/lib/i18n';
 
 const cases = [
   {
@@ -98,16 +96,18 @@ function Placeholder({ label, className }: { label: string; className?: string }
 }
 
 export default function CasesPage() {
+  const t = useT();
+
   return (
     <main className="bg-[#0a0a0a] text-white">
       <Navbar />
 
       <PageHero
-        label="项目案例"
-        title="全国 300+ 高端营地"
-        titleGold="项目交付案例"
-        subtitle="覆盖文旅度假、商业空间、公共设施，遍布全球30余个国家与地区"
-        breadcrumb={[{ label: '首页', href: '/' }, { label: '项目案例' }]}
+        label={t(i18n.cases.heroLabel)}
+        title={t(i18n.cases.heroTitle1)}
+        titleGold={t(i18n.cases.heroTitleGold)}
+        subtitle={t(i18n.cases.heroSubtitle)}
+        breadcrumb={[{ label: t(i18n.productDetail.home), href: '/' }, { label: t(i18n.nav.cases) }]}
       />
 
       {/* Stats bar */}
@@ -115,10 +115,10 @@ export default function CasesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex flex-wrap gap-8 justify-center">
             {[
-              ['300+', '全球交付项目'],
-              ['30+', '出口国家地区'],
-              ['100+', '覆盖城市'],
-              ['8年', '品牌积累'],
+              [t(i18n.cases.stat1Val), t(i18n.cases.stat1)],
+              [t(i18n.cases.stat2Val), t(i18n.cases.stat2)],
+              [t(i18n.cases.stat3Val), t(i18n.cases.stat3)],
+              [t(i18n.cases.stat4Val), t(i18n.cases.stat4)],
             ].map(([num, label]) => (
               <div key={label} className="text-center">
                 <div className="text-[#c9a84c] text-2xl font-black">{num}</div>
@@ -134,7 +134,13 @@ export default function CasesPage() {
 
         {/* Filter tabs */}
         <div className="flex flex-wrap gap-3 mb-10">
-          {['全部案例', '文旅度假', '商业空间', '公共设施', '境外项目'].map((tab, i) => (
+          {[
+            t(i18n.cases.filterAll),
+            t(i18n.cases.filterTourism),
+            t(i18n.cases.filterCommercial),
+            t(i18n.cases.filterPublic),
+            t(i18n.cases.filterOverseas),
+          ].map((tab, i) => (
             <button
               key={tab}
               className={`text-sm px-4 py-1.5 border tracking-wider transition-colors ${
@@ -194,10 +200,10 @@ export default function CasesPage() {
                   {/* Project specs */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                     {[
-                      { label: '占地面积', value: c.area },
-                      { label: '投资规模', value: c.investment },
-                      { label: '采购数量', value: c.units },
-                      { label: '采购产品', value: c.products },
+                      { label: t(i18n.cases.specArea), value: c.area },
+                      { label: t(i18n.cases.specInvestment), value: c.investment },
+                      { label: t(i18n.cases.specUnits), value: c.units },
+                      { label: t(i18n.cases.specProducts), value: c.products },
                     ].map((spec) => (
                       <div key={spec.label} className="bg-[#0a0a0a] px-3 py-2 border border-white/5">
                         <div className="text-white/25 text-[10px] tracking-wider mb-0.5">{spec.label}</div>
@@ -210,7 +216,7 @@ export default function CasesPage() {
                     href="#"
                     className="inline-flex items-center gap-2 text-[#c9a84c] text-xs hover:underline tracking-wider"
                   >
-                    查看项目详情
+                    {t(i18n.cases.viewDetail)}
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
@@ -223,17 +229,17 @@ export default function CasesPage() {
 
         {/* CTA */}
         <div className="mt-16 text-center p-12 border border-[#c9a84c]/15 bg-[#c9a84c]/3">
-          <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3">开启您的项目</div>
-          <h2 className="text-2xl font-black text-white mb-3">有意向开发高端营地项目？</h2>
+          <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3">{t(i18n.cases.ctaBadge)}</div>
+          <h2 className="text-2xl font-black text-white mb-3">{t(i18n.cases.ctaTitle)}</h2>
           <p className="text-white/40 text-sm mb-8 tracking-wider">
-            我们的项目顾问已服务 300+ 营地投资人，提供从选址、规划到建设、运营的全流程支持
+            {t(i18n.cases.ctaSubtitle)}
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <a
               href="/contact"
               className="bg-[#c9a84c] text-[#0a0a0a] font-bold text-sm px-8 py-3 hover:bg-[#b8973b] transition-colors tracking-wider"
             >
-              预约项目顾问
+              {t(i18n.cases.ctaBtn1)}
             </a>
             <a
               href="tel:4008090303"

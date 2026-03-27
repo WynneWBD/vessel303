@@ -1,12 +1,10 @@
-import type { Metadata } from 'next';
+'use client';
+
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHero from '@/components/PageHero';
-
-export const metadata: Metadata = {
-  title: '关于我们 | VESSEL 微宿®',
-  description: 'VESSEL 微宿® — 高端度假营地开创者。创立于2018年，300+项目交付，30+出口国家，广东省高新技术企业。',
-};
+import { useT } from '@/contexts/LanguageContext';
+import { i18n } from '@/lib/i18n';
 
 function Placeholder({ label, className }: { label: string; className?: string }) {
   return (
@@ -49,16 +47,18 @@ const partners = [
 ];
 
 export default function AboutPage() {
+  const t = useT();
+
   return (
     <main className="bg-[#0a0a0a] text-white">
       <Navbar />
 
       <PageHero
-        label="关于我们"
+        label={t(i18n.about.heroLabel)}
         title="VESSEL 微宿®"
-        titleGold="高端度假营地开创者"
-        subtitle="装配式科技领跑未来旅居，用建筑重塑文旅体验边界"
-        breadcrumb={[{ label: '首页', href: '/' }, { label: '关于我们' }]}
+        titleGold={t(i18n.about.heroTitleGold)}
+        subtitle={t(i18n.about.heroSubtitle)}
+        breadcrumb={[{ label: t(i18n.productDetail.home), href: '/' }, { label: t(i18n.nav.about) }]}
       />
 
       {/* ── Mission ── */}
@@ -66,25 +66,25 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
-              <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-4 font-medium">品牌使命</div>
+              <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-4 font-medium">{t(i18n.about.missionLabel)}</div>
               <h2 className="text-3xl sm:text-4xl font-black text-white mb-6 leading-tight">
-                高端度假营地<br />
-                <span className="text-gold-gradient">一站式解决方案服务商</span>
+                {t(i18n.about.missionTitle1)}<br />
+                <span className="text-gold-gradient">{t(i18n.about.missionTitle2)}</span>
               </h2>
               <p className="text-white/50 text-sm leading-loose mb-4">
-                VESSEL 微宿® 致力于成为高端度假营地一站式解决方案服务商，带领中国文旅创新品类走向全球。我们的产品专注于文旅智能装配建筑的本质价值：<strong className="text-white/70">快速交付、经久耐用、高颜值、低运维成本</strong>。
+                {t(i18n.about.missionMain)}
               </p>
               <p className="text-white/50 text-sm leading-loose mb-8">
-                创立于 2018 年，8 年间我们服务了全球 30+ 国家的文旅开发者，打造了超过 300 个高端营地项目，成为行业标杆品牌。
+                {t(i18n.about.missionSub)}
               </p>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { v: '300+', l: '全球交付项目' },
-                  { v: '30+', l: '出口国家地区' },
-                  { v: '28,800㎡', l: '自有工厂面积' },
-                  { v: '150台+', l: '月交付能力' },
-                  { v: '100+', l: '自主研发专利' },
-                  { v: '800万+', l: '全网粉丝关注' },
+                  { v: t(i18n.about.stat1Val), l: t(i18n.about.stat1) },
+                  { v: t(i18n.about.stat2Val), l: t(i18n.about.stat2) },
+                  { v: t(i18n.about.stat3Val), l: t(i18n.about.stat3) },
+                  { v: t(i18n.about.stat4Val), l: t(i18n.about.stat4) },
+                  { v: t(i18n.about.stat5Val), l: t(i18n.about.stat5) },
+                  { v: t(i18n.about.stat6Val), l: t(i18n.about.stat6) },
                 ].map((item) => (
                   <div key={item.l} className="bg-[#111] border border-white/8 p-4">
                     <div className="text-[#c9a84c] text-xl font-black mb-0.5">{item.v}</div>
@@ -108,25 +108,25 @@ export default function AboutPage() {
       <section className="py-20 bg-[#080808] border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">自主研发设计能力</div>
-            <h2 className="text-3xl font-black text-white">我们的创造力</h2>
+            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.about.rdLabel)}</div>
+            <h2 className="text-3xl font-black text-white">{t(i18n.about.rdTitle)}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
                 icon: '🏭',
-                title: '工业级制造',
-                desc: '28,800㎡ 自有工厂，精度控制 ±0.5mm，月产能超 150 台，全程质检把控。',
+                title: t(i18n.about.rd1Title),
+                desc: t(i18n.about.rd1Desc),
               },
               {
                 icon: '🔬',
-                title: '自主研发',
-                desc: '100+ 自主研发专利，覆盖结构、材料、智能控制、防水系统等核心技术领域。',
+                title: t(i18n.about.rd2Title),
+                desc: t(i18n.about.rd2Desc),
               },
               {
                 icon: '🌏',
-                title: '全球布局',
-                desc: '产品已覆盖 6 大洲 30+ 国家，在台湾、日本、英国、斯洛伐克、新西兰、沙特设有办事处。',
+                title: t(i18n.about.rd3Title),
+                desc: t(i18n.about.rd3Desc),
               },
             ].map((item) => (
               <div key={item.title} className="bg-[#111] border border-white/8 p-8 text-center">
@@ -143,8 +143,8 @@ export default function AboutPage() {
       <section className="py-20 border-b border-white/5">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">品牌历程</div>
-            <h2 className="text-3xl font-black text-white">VESSEL 微宿® 探索之旅</h2>
+            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.about.timelineLabel)}</div>
+            <h2 className="text-3xl font-black text-white">{t(i18n.about.timelineTitle)}</h2>
           </div>
           <div className="relative">
             {/* Vertical line */}
@@ -181,10 +181,10 @@ export default function AboutPage() {
       <section className="py-20 bg-[#080808] border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">中国领先，全球布局</div>
-            <h2 className="text-3xl font-black text-white mb-3">全球 6 大洲 30+ 国家</h2>
+            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.about.globalLabel)}</div>
+            <h2 className="text-3xl font-black text-white mb-3">{t(i18n.about.globalTitle)}</h2>
             <p className="text-white/40 text-sm tracking-wider max-w-xl mx-auto">
-              截至 2025 年，微宿已在全国落地 300 余个项目，出口至全球 30+ 国家，覆盖 100+ 城市
+              {t(i18n.about.globalSubtitle)}
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-10">
@@ -214,8 +214,8 @@ export default function AboutPage() {
       <section className="py-20 border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">品牌荣誉</div>
-            <h2 className="text-3xl font-black text-white">研发实力认证</h2>
+            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.about.honorsLabel)}</div>
+            <h2 className="text-3xl font-black text-white">{t(i18n.about.honorsTitle)}</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {honors.map((honor) => (
@@ -236,8 +236,8 @@ export default function AboutPage() {
       <section className="py-20 bg-[#080808] border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">战略合作</div>
-            <h2 className="text-3xl font-black text-white">合作伙伴</h2>
+            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.about.partnersLabel)}</div>
+            <h2 className="text-3xl font-black text-white">{t(i18n.about.partnersTitle)}</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {partners.map((p) => (
@@ -255,15 +255,15 @@ export default function AboutPage() {
       <section className="py-20 border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">品牌创始人</div>
-            <h2 className="text-3xl font-black text-white">王帅斌</h2>
+            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.about.founderLabel)}</div>
+            <h2 className="text-3xl font-black text-white">{t(i18n.about.founderTitle)}</h2>
           </div>
           <div className="max-w-3xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
               <Placeholder label="王帅斌 创始人照片" className="aspect-[3/4]" />
               <div className="md:col-span-2">
-                <div className="text-[#c9a84c] font-bold text-lg mb-1 tracking-wider">王帅斌</div>
-                <div className="text-white/40 text-sm mb-5 tracking-wider">创始人 / 总设计师</div>
+                <div className="text-[#c9a84c] font-bold text-lg mb-1 tracking-wider">{t(i18n.about.founderTitle)}</div>
+                <div className="text-white/40 text-sm mb-5 tracking-wider">{t(i18n.about.founderRole)}</div>
                 <ul className="space-y-2 mb-5">
                   {[
                     '英国邓迪大学建筑学硕士',
@@ -279,7 +279,7 @@ export default function AboutPage() {
                   ))}
                 </ul>
                 <p className="text-white/40 text-sm leading-relaxed">
-                  王帅斌以扎实的国际建筑学背景和对中国文旅市场的深刻理解，于 2018 年创立 VESSEL 微宿®，将工业化精密制造与建筑美学融为一体，开创了中国高端装配式文旅建筑的全新品类。
+                  {t(i18n.about.founderBio)}
                 </p>
               </div>
             </div>

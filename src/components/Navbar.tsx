@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import AuthButton from './AuthButton';
+import LanguageToggle from './LanguageToggle';
+import { useT } from '@/contexts/LanguageContext';
+import { i18n } from '@/lib/i18n';
 
 interface DropdownItem {
   label: string;
@@ -17,45 +20,11 @@ interface NavLink {
   dropdown?: DropdownItem[];
 }
 
-const navLinks: NavLink[] = [
-  {
-    label: '产品系列',
-    href: '/products',
-    dropdown: [
-      // Gen6
-      { group: 'Gen6 · 最新系列', label: 'E7 Gen6', sub: '38.8㎡ 旗舰款', href: '/products/e7' },
-      { label: 'E6 Gen6', sub: '29.6㎡ 明星款', href: '/products/e6' },
-      { label: 'E3 Gen6', sub: '19㎡ mini款', href: '/products/e3' },
-      { label: 'V9 Gen6', sub: '38㎡ 家居款', href: '/products/v9' },
-      // Gen5
-      { group: 'Gen5 · 经典系列', label: 'V5 Gen5', sub: '24.8㎡ 全景款', href: '/products/v5' },
-      { label: 'S5 Gen5', sub: '29.6㎡ 天光款', href: '/products/s5' },
-      // All
-      { group: '', label: '查看全部产品 →', href: '/products' },
-    ],
-  },
-  {
-    label: '项目案例',
-    href: '/cases',
-    dropdown: [
-      { label: '文旅度假营地', href: '/scenarios/tourism' },
-      { label: '商业空间案例', href: '/scenarios/commercial' },
-      { label: '公共设施案例', href: '/scenarios/public' },
-      { label: '全部案例 →', href: '/cases' },
-    ],
-  },
-  { label: '关于我们', href: '/about' },
-  { label: '新闻活动', href: '/news' },
-  { label: '联系我们', href: '/contact' },
-];
-
 function ProductsDropdown({ items }: { items: DropdownItem[] }) {
-  // Split into groups
-  const gen6 = items.filter(i => (i.group === 'Gen6 · 最新系列' || (!i.group && i.href.match(/\/(e[0-9]|v9)/))) && i.group !== '');
-  // Easier: just use index-based splitting
   const gen6Items = items.slice(0, 4);
   const gen5Items = items.slice(4, 6);
   const allLink = items[6];
+  const t = useT();
 
   return (
     <div className="absolute top-full left-0 mt-1 w-[440px] bg-[#111] border border-[#c9a84c]/20 shadow-2xl shadow-black/60 z-50">
@@ -64,7 +33,7 @@ function ProductsDropdown({ items }: { items: DropdownItem[] }) {
         {/* Gen6 */}
         <div className="p-3">
           <div className="text-[#c9a84c]/60 text-[10px] tracking-[0.3em] uppercase font-medium px-2 pb-2 border-b border-white/5 mb-1">
-            Gen6 · 最新系列
+            {t(i18n.nav.gen6Label)}
           </div>
           {gen6Items.map((item) => (
             <Link
@@ -82,7 +51,7 @@ function ProductsDropdown({ items }: { items: DropdownItem[] }) {
         {/* Gen5 */}
         <div className="p-3">
           <div className="text-white/30 text-[10px] tracking-[0.3em] uppercase font-medium px-2 pb-2 border-b border-white/5 mb-1">
-            Gen5 · 经典系列
+            {t(i18n.nav.gen5Label)}
           </div>
           {gen5Items.map((item) => (
             <Link
@@ -98,7 +67,6 @@ function ProductsDropdown({ items }: { items: DropdownItem[] }) {
           ))}
         </div>
       </div>
-      {/* Footer link */}
       {allLink && (
         <div className="border-t border-white/5">
           <Link
@@ -136,6 +104,36 @@ export default function Navbar() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
+  const t = useT();
+
+  const navLinks: NavLink[] = [
+    {
+      label: t(i18n.nav.products),
+      href: '/products',
+      dropdown: [
+        { group: 'gen6', label: 'E7 Gen6', sub: '38.8㎡ Flagship', href: '/products/e7' },
+        { label: 'E6 Gen6', sub: '29.6㎡ Star', href: '/products/e6' },
+        { label: 'E3 Gen6', sub: '19㎡ Mini', href: '/products/e3' },
+        { label: 'V9 Gen6', sub: '38㎡ Home', href: '/products/v9' },
+        { group: 'gen5', label: 'V5 Gen5', sub: '24.8㎡ Panorama', href: '/products/v5' },
+        { label: 'S5 Gen5', sub: '29.6㎡ Skylight', href: '/products/s5' },
+        { group: '', label: t(i18n.nav.allProducts), href: '/products' },
+      ],
+    },
+    {
+      label: t(i18n.nav.cases),
+      href: '/cases',
+      dropdown: [
+        { label: t(i18n.nav.scenarioTourism), href: '/scenarios/tourism' },
+        { label: t(i18n.nav.scenarioCommercial), href: '/scenarios/commercial' },
+        { label: t(i18n.nav.scenarioPublic), href: '/scenarios/public' },
+        { label: t(i18n.nav.allCases), href: '/cases' },
+      ],
+    },
+    { label: t(i18n.nav.about), href: '/about' },
+    { label: t(i18n.nav.news), href: '/news' },
+    { label: t(i18n.nav.contact), href: '/contact' },
+  ];
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 40);
@@ -216,7 +214,7 @@ export default function Navbar() {
                     onMouseEnter={() => setOpenDropdown(link.label)}
                     onMouseLeave={() => setOpenDropdown(null)}
                   >
-                    {link.label === '产品系列'
+                    {link.label === t(i18n.nav.products)
                       ? <ProductsDropdown items={link.dropdown} />
                       : <SimpleDropdown items={link.dropdown} />
                     }
@@ -226,20 +224,21 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* CTA Buttons */}
+          {/* CTA + Toggle */}
           <div className="hidden lg:flex items-center gap-2 shrink-0">
             <Link
               href="/contact"
               className="text-white text-sm font-semibold px-3.5 py-2 border border-white/50 hover:bg-white hover:text-[#0a0a0a] transition-all duration-200 tracking-wider whitespace-nowrap"
             >
-              采购咨询
+              {t(i18n.nav.purchaseBtn)}
             </Link>
             <Link
               href="/contact#c-end"
               className="text-white/75 text-sm font-medium px-3.5 py-2 border border-white/20 hover:border-[#c9a84c] hover:text-[#c9a84c] transition-all duration-200 tracking-wider whitespace-nowrap"
             >
-              预订营地
+              {t(i18n.nav.bookingBtn)}
             </Link>
+            <LanguageToggle />
             <AuthButton />
           </div>
 
@@ -247,7 +246,7 @@ export default function Navbar() {
           <button
             className="lg:hidden text-white/80 hover:text-white p-2"
             onClick={() => setIsOpen(!isOpen)}
-            aria-label="切换菜单"
+            aria-label="Toggle menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isOpen ? (
@@ -262,7 +261,7 @@ export default function Navbar() {
         {/* Mobile Menu */}
         <div
           className={`lg:hidden overflow-hidden transition-all duration-300 ${
-            isOpen ? 'max-h-[640px] opacity-100' : 'max-h-0 opacity-0'
+            isOpen ? 'max-h-[700px] opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
           <div className="py-4 border-t border-white/10 space-y-0.5">
@@ -318,17 +317,18 @@ export default function Navbar() {
                 className="flex-1 text-center bg-[#0a0a0a] text-white text-sm font-semibold py-3 border border-white/60 tracking-wider"
                 onClick={() => setIsOpen(false)}
               >
-                采购咨询
+                {t(i18n.nav.purchaseBtn)}
               </Link>
               <Link
                 href="/contact#c-end"
                 className="flex-1 text-center bg-transparent text-white/80 text-sm py-3 border border-white/25 tracking-wider"
                 onClick={() => setIsOpen(false)}
               >
-                预订营地
+                {t(i18n.nav.bookingBtn)}
               </Link>
             </div>
-            <div className="pt-3 flex justify-center">
+            <div className="pt-3 flex items-center justify-between px-1">
+              <LanguageToggle />
               <AuthButton />
             </div>
           </div>
