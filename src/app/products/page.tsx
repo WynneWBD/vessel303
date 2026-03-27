@@ -4,14 +4,15 @@ import type { Metadata } from 'next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHero from '@/components/PageHero';
-import { products, gen6Products, gen5Products } from '@/lib/products';
+import { getAllProducts } from '@/lib/db-products';
+import type { ProductData } from '@/lib/products';
 
 export const metadata: Metadata = {
   title: '全部产品 | VESSEL 微宿®',
   description: 'VESSEL 微宿® Gen6/Gen5 全系列文旅智能装配建筑产品，包括E7、E6、E3、V9、V5、S5等型号。',
 };
 
-function ProductCard({ product }: { product: (typeof products)[0] }) {
+function ProductCard({ product }: { product: ProductData }) {
   return (
     <Link
       href={`/products/${product.slug}`}
@@ -87,7 +88,11 @@ function ProductCard({ product }: { product: (typeof products)[0] }) {
   );
 }
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const allProducts = await getAllProducts();
+  const gen6Products = allProducts.filter((p) => p.series === 'Gen6');
+  const gen5Products = allProducts.filter((p) => p.series === 'Gen5');
+
   return (
     <main className="bg-[#0a0a0a] text-white">
       <Navbar />

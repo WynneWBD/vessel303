@@ -4,11 +4,12 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { getProduct, products } from '@/lib/products';
+import { getProductBySlug } from '@/lib/db-products';
 import { auth } from '@/auth';
 
-export async function generateStaticParams() {
-  return products.map((p) => ({ slug: p.slug }));
+// Slugs are stable — no DB call needed at build time
+export function generateStaticParams() {
+  return ['e7', 'e6', 'e3', 'v9', 'v5', 's5'].map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
@@ -17,7 +18,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProduct(slug);
+  const product = await getProductBySlug(slug);
   if (!product) return {};
   return {
     title: `${product.model} ${product.gen} | VESSEL 微宿®`,
@@ -31,14 +32,15 @@ export default async function ProductDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = getProduct(slug);
+  const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const session = await auth();
+  const [session, prevProduct, nextProduct] = await Promise.all([
+    auth(),
+    product.prev ? getProductBySlug(product.prev) : Promise.resolve(null),
+    product.next ? getProductBySlug(product.next) : Promise.resolve(null),
+  ]);
   const isLoggedIn = !!session?.user;
-
-  const prevProduct = product.prev ? getProduct(product.prev) : null;
-  const nextProduct = product.next ? getProduct(product.next) : null;
 
   return (
     <main className="bg-[#0a0a0a] text-white">
