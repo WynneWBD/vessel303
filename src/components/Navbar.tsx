@@ -4,26 +4,34 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import AuthButton from './AuthButton';
 
+interface DropdownItem {
+  label: string;
+  href: string;
+  sub?: string;
+  group?: string;
+}
+
 interface NavLink {
   label: string;
   href: string;
-  dropdown?: Array<{ label: string; href: string; sub?: string }>;
+  dropdown?: DropdownItem[];
 }
 
 const navLinks: NavLink[] = [
-  { label: '微宿 E7 Gen6', href: '/products/e7' },
-  { label: '微宿 V9 Gen6', href: '/products/v9' },
-  { label: '微宿 E6 Gen6', href: '/products/e6' },
   {
-    label: '更多产品',
+    label: '产品系列',
     href: '/products',
     dropdown: [
-      { label: 'E7 Gen6', sub: '38.8㎡ 旗舰版', href: '/products/e7' },
-      { label: 'E6 Gen6', sub: '29.6㎡ 明星版', href: '/products/e6' },
-      { label: 'E3 Gen6', sub: '19㎡ mini版', href: '/products/e3' },
-      { label: 'V9 Gen6', sub: '38㎡ 家居版', href: '/products/v9' },
-      { label: 'V5 Gen5', sub: '24.8㎡ 全景版', href: '/products/v5' },
-      { label: 'S5 Gen5', sub: '29.6㎡ 天光版', href: '/products/s5' },
+      // Gen6
+      { group: 'Gen6 · 最新系列', label: 'E7 Gen6', sub: '38.8㎡ 旗舰款', href: '/products/e7' },
+      { label: 'E6 Gen6', sub: '29.6㎡ 明星款', href: '/products/e6' },
+      { label: 'E3 Gen6', sub: '19㎡ mini款', href: '/products/e3' },
+      { label: 'V9 Gen6', sub: '38㎡ 家居款', href: '/products/v9' },
+      // Gen5
+      { group: 'Gen5 · 经典系列', label: 'V5 Gen5', sub: '24.8㎡ 全景款', href: '/products/v5' },
+      { label: 'S5 Gen5', sub: '29.6㎡ 天光款', href: '/products/s5' },
+      // All
+      { group: '', label: '查看全部产品 →', href: '/products' },
     ],
   },
   {
@@ -33,7 +41,7 @@ const navLinks: NavLink[] = [
       { label: '文旅度假营地', href: '/scenarios/tourism' },
       { label: '商业空间案例', href: '/scenarios/commercial' },
       { label: '公共设施案例', href: '/scenarios/public' },
-      { label: '全部案例', href: '/cases' },
+      { label: '全部案例 →', href: '/cases' },
     ],
   },
   { label: '关于我们', href: '/about' },
@@ -41,20 +49,81 @@ const navLinks: NavLink[] = [
   { label: '联系我们', href: '/contact' },
 ];
 
-function DropdownMenu({ items }: { items: NonNullable<NavLink['dropdown']> }) {
+function ProductsDropdown({ items }: { items: DropdownItem[] }) {
+  // Split into groups
+  const gen6 = items.filter(i => (i.group === 'Gen6 · 最新系列' || (!i.group && i.href.match(/\/(e[0-9]|v9)/))) && i.group !== '');
+  // Easier: just use index-based splitting
+  const gen6Items = items.slice(0, 4);
+  const gen5Items = items.slice(4, 6);
+  const allLink = items[6];
+
   return (
-    <div className="absolute top-full left-0 mt-1 min-w-[200px] bg-[#111] border border-[#c9a84c]/20 shadow-2xl shadow-black/60 z-50">
+    <div className="absolute top-full left-0 mt-1 w-[440px] bg-[#111] border border-[#c9a84c]/20 shadow-2xl shadow-black/60 z-50">
+      <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-[#c9a84c]/60 to-transparent" />
+      <div className="grid grid-cols-2 divide-x divide-white/5">
+        {/* Gen6 */}
+        <div className="p-3">
+          <div className="text-[#c9a84c]/60 text-[10px] tracking-[0.3em] uppercase font-medium px-2 pb-2 border-b border-white/5 mb-1">
+            Gen6 · 最新系列
+          </div>
+          {gen6Items.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex items-center justify-between px-2 py-2.5 text-white/65 hover:text-[#c9a84c] hover:bg-[#c9a84c]/5 transition-colors rounded group"
+            >
+              <span className="text-sm tracking-wider font-medium">{item.label}</span>
+              {item.sub && (
+                <span className="text-white/25 text-[11px] group-hover:text-[#c9a84c]/50 ml-2 shrink-0">{item.sub}</span>
+              )}
+            </Link>
+          ))}
+        </div>
+        {/* Gen5 */}
+        <div className="p-3">
+          <div className="text-white/30 text-[10px] tracking-[0.3em] uppercase font-medium px-2 pb-2 border-b border-white/5 mb-1">
+            Gen5 · 经典系列
+          </div>
+          {gen5Items.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex items-center justify-between px-2 py-2.5 text-white/65 hover:text-[#c9a84c] hover:bg-[#c9a84c]/5 transition-colors rounded group"
+            >
+              <span className="text-sm tracking-wider font-medium">{item.label}</span>
+              {item.sub && (
+                <span className="text-white/25 text-[11px] group-hover:text-[#c9a84c]/50 ml-2 shrink-0">{item.sub}</span>
+              )}
+            </Link>
+          ))}
+        </div>
+      </div>
+      {/* Footer link */}
+      {allLink && (
+        <div className="border-t border-white/5">
+          <Link
+            href={allLink.href}
+            className="block px-5 py-2.5 text-[#c9a84c]/70 hover:text-[#c9a84c] hover:bg-[#c9a84c]/5 text-xs tracking-[0.2em] transition-colors text-center"
+          >
+            {allLink.label}
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SimpleDropdown({ items }: { items: DropdownItem[] }) {
+  return (
+    <div className="absolute top-full left-0 mt-1 min-w-[180px] bg-[#111] border border-[#c9a84c]/20 shadow-2xl shadow-black/60 z-50">
       <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-[#c9a84c]/60 to-transparent" />
       {items.map((item) => (
         <Link
           key={item.href}
           href={item.href}
-          className="flex items-center justify-between px-4 py-3 text-white/65 hover:text-[#c9a84c] hover:bg-[#c9a84c]/5 transition-colors text-sm border-b border-white/5 last:border-0 group"
+          className="flex items-center justify-between px-4 py-2.5 text-white/65 hover:text-[#c9a84c] hover:bg-[#c9a84c]/5 transition-colors text-sm border-b border-white/5 last:border-0 tracking-wider"
         >
-          <span className="tracking-wider">{item.label}</span>
-          {item.sub && (
-            <span className="text-white/25 text-xs group-hover:text-[#c9a84c]/50 ml-3">{item.sub}</span>
-          )}
+          {item.label}
         </Link>
       ))}
     </div>
@@ -74,7 +143,6 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (navRef.current && !navRef.current.contains(e.target as Node)) {
@@ -111,34 +179,34 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden lg:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-0.5 mx-4">
             {navLinks.map((link) => (
-              <div key={link.href} className="relative">
+              <div key={link.label} className="relative">
                 {link.dropdown ? (
                   <button
-                    className="flex items-center gap-1 text-white/65 hover:text-[#c9a84c] text-sm font-medium tracking-wider px-3 py-2 transition-colors duration-200 group"
+                    className="flex items-center gap-1 text-white/65 hover:text-[#c9a84c] text-sm font-medium tracking-wide px-2.5 py-2 transition-colors duration-200 whitespace-nowrap relative group"
                     onMouseEnter={() => setOpenDropdown(link.label)}
                     onMouseLeave={() => setOpenDropdown(null)}
                     onClick={() => setOpenDropdown(openDropdown === link.label ? null : link.label)}
                   >
                     {link.label}
                     <svg
-                      className={`w-3 h-3 transition-transform ${openDropdown === link.label ? 'rotate-180' : ''}`}
+                      className={`w-3 h-3 shrink-0 transition-transform ${openDropdown === link.label ? 'rotate-180' : ''}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
-                    <span className="absolute -bottom-0.5 left-3 w-0 h-px bg-[#c9a84c] transition-all duration-200 group-hover:w-[calc(100%-24px)]" />
+                    <span className="absolute bottom-0 left-2.5 w-0 h-px bg-[#c9a84c] transition-all duration-200 group-hover:w-[calc(100%-20px)]" />
                   </button>
                 ) : (
                   <Link
                     href={link.href}
-                    className="text-white/65 hover:text-[#c9a84c] text-sm font-medium tracking-wider px-3 py-2 transition-colors duration-200 relative group block"
+                    className="text-white/65 hover:text-[#c9a84c] text-sm font-medium tracking-wide px-2.5 py-2 transition-colors duration-200 whitespace-nowrap relative group block"
                   >
                     {link.label}
-                    <span className="absolute -bottom-0.5 left-3 w-0 h-px bg-[#c9a84c] transition-all duration-200 group-hover:w-[calc(100%-24px)]" />
+                    <span className="absolute bottom-0 left-2.5 w-0 h-px bg-[#c9a84c] transition-all duration-200 group-hover:w-[calc(100%-20px)]" />
                   </Link>
                 )}
 
@@ -148,7 +216,10 @@ export default function Navbar() {
                     onMouseEnter={() => setOpenDropdown(link.label)}
                     onMouseLeave={() => setOpenDropdown(null)}
                   >
-                    <DropdownMenu items={link.dropdown} />
+                    {link.label === '产品系列'
+                      ? <ProductsDropdown items={link.dropdown} />
+                      : <SimpleDropdown items={link.dropdown} />
+                    }
                   </div>
                 )}
               </div>
@@ -156,16 +227,16 @@ export default function Navbar() {
           </div>
 
           {/* CTA Buttons */}
-          <div className="hidden lg:flex items-center gap-3 shrink-0">
+          <div className="hidden lg:flex items-center gap-2 shrink-0">
             <Link
               href="/contact"
-              className="bg-[#0a0a0a] text-white text-sm font-semibold px-4 py-2 border border-white/60 hover:bg-white hover:text-[#0a0a0a] transition-all duration-200 tracking-wider"
+              className="text-white text-sm font-semibold px-3.5 py-2 border border-white/50 hover:bg-white hover:text-[#0a0a0a] transition-all duration-200 tracking-wider whitespace-nowrap"
             >
               采购咨询
             </Link>
             <Link
               href="/contact"
-              className="bg-transparent text-white/80 text-sm font-medium px-4 py-2 border border-white/25 hover:border-[#c9a84c] hover:text-[#c9a84c] transition-all duration-200 tracking-wider"
+              className="text-white/75 text-sm font-medium px-3.5 py-2 border border-white/20 hover:border-[#c9a84c] hover:text-[#c9a84c] transition-all duration-200 tracking-wider whitespace-nowrap"
             >
               预订营地
             </Link>
@@ -191,12 +262,12 @@ export default function Navbar() {
         {/* Mobile Menu */}
         <div
           className={`lg:hidden overflow-hidden transition-all duration-300 ${
-            isOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
+            isOpen ? 'max-h-[640px] opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
           <div className="py-4 border-t border-white/10 space-y-0.5">
             {navLinks.map((link) => (
-              <div key={link.href}>
+              <div key={link.label}>
                 {link.dropdown ? (
                   <>
                     <button
