@@ -561,7 +561,7 @@ function AboutSection() {
               <span className="text-gold-gradient">文旅体验边界</span>
             </h2>
             <p className="text-white/50 text-sm leading-loose mb-6">
-              VESSEL 微宿创立于2016年，专注于高端文旅智能装配建筑的研发与全球推广。8年间，我们坚持以工业精度做建筑，以设计美学做旅宿，打造出深受全球文旅开发商信赖的建筑解决方案。
+              VESSEL 微宿创立于2018年，专注于高端文旅智能装配建筑的研发与全球推广。8年间，我们坚持以工业精度做建筑，以设计美学做旅宿，打造出深受全球文旅开发商信赖的建筑解决方案。
             </p>
             <p className="text-white/50 text-sm leading-loose mb-8">
               我们拒绝"太空舱式"噱头，专注文旅智能装配建筑的本质价值：<strong className="text-white/70">快速交付、经久耐用、高颜值、低运维成本</strong>，帮助业主实现文旅资产的最大化收益。
@@ -569,7 +569,7 @@ function AboutSection() {
 
             <div className="grid grid-cols-2 gap-4">
               {[
-                { label: '研发团队', value: '120+人' },
+                { label: '研发团队', value: '75人' },
                 { label: '专利技术', value: '80+项' },
                 { label: '出口认证', value: '欧盟+美国' },
                 { label: '年产能', value: '3000+套' },
