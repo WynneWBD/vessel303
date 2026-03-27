@@ -5,7 +5,7 @@ import { z } from 'zod';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM = 'onboarding@resend.dev';
-const NOTIFY_TO = 'wynne@303vessel.cn';
+const NOTIFY_TO = 'wynnewbd@gmail.com';
 
 // B端咨询类型
 const B_END_TYPES = new Set(['咨询报价', '合作代理', '定制服务']);
