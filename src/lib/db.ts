@@ -7,7 +7,7 @@ export const pool =
   globalForPg.pgPool ??
   new Pool({
     connectionString: process.env.POSTGRES_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    ssl: { rejectUnauthorized: false }, // Neon requires SSL in all environments
   });
 
 if (process.env.NODE_ENV !== 'production') globalForPg.pgPool = pool;
