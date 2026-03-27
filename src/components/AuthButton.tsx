@@ -53,7 +53,17 @@ export default function AuthButton() {
       {open && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 w-36 bg-[#111] border border-white/10 z-40 py-1">
+          <div className="absolute right-0 top-full mt-2 w-44 bg-[#111] border border-white/10 z-40 py-1">
+            <Link
+              href="/display"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 px-4 py-2.5 text-white/50 hover:text-[#c9a84c] hover:bg-white/5 text-xs tracking-wider transition-colors border-b border-white/5"
+            >
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              展厅展示模式
+            </Link>
             <button
               onClick={() => { setOpen(false); signOut({ callbackUrl: '/' }); }}
               className="w-full text-left px-4 py-2.5 text-white/50 hover:text-white hover:bg-white/5 text-xs tracking-wider transition-colors"
