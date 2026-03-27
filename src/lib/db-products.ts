@@ -56,6 +56,16 @@ function rowToProduct(row: ProductRow): ProductData {
     features: row.features,
     spaces: row.spaces,
     materials: row.materials,
+    area: 0,
+    generation: (row.series === 'Gen6' ? 6 : 5) as 5 | 6,
+    productType: 'standard' as const,
+    badge_en: row.badge,
+    tags_cn: [],
+    tags_en: [],
+    features_cn: [],
+    features_en: [],
+    price_range_cn: row.price_display,
+    price_range_en: row.price_display,
   };
 }
 

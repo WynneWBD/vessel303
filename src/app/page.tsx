@@ -136,38 +136,10 @@ function HeroSection() {
 function CertificationsSection() {
   const t = useT();
   const certs = [
-    {
-      region: '欧盟认证',
-      flag: '🇪🇺',
-      name: 'CE Mark',
-      desc: '欧洲建筑产品法规（CPR）认证',
-      standard: 'EN 1337 / EN 13501',
-      color: '#003399',
-    },
-    {
-      region: '美国认证',
-      flag: '🇺🇸',
-      name: 'ICC / IBC',
-      desc: '美国国际建筑规范认证',
-      standard: 'IBC 2021 / ASTM E119',
-      color: '#c9a84c',
-    },
-    {
-      region: '中国认证',
-      flag: '🇨🇳',
-      name: '国家建筑标准',
-      desc: '中国装配式建筑国家标准认证',
-      standard: 'GB/T 51231-2016',
-      color: '#c0392b',
-    },
-    {
-      region: '国际质量',
-      flag: '🌐',
-      name: 'ISO 9001',
-      desc: '质量管理体系国际认证',
-      standard: 'ISO 9001:2015',
-      color: '#27ae60',
-    },
+    { region: t(i18n.home.certEuRegion), flag: '🇪🇺', name: 'CE Mark', desc: t(i18n.home.certEuDesc), standard: 'EN 1337 / EN 13501', color: '#003399' },
+    { region: t(i18n.home.certUsRegion), flag: '🇺🇸', name: 'ICC / IBC', desc: t(i18n.home.certUsDesc), standard: 'IBC 2021 / ASTM E119', color: '#c9a84c' },
+    { region: t(i18n.home.certCnRegion), flag: '🇨🇳', name: '国家建筑标准', desc: t(i18n.home.certCnDesc), standard: 'GB/T 51231-2016', color: '#c0392b' },
+    { region: t(i18n.home.certIsoRegion), flag: '🌐', name: 'ISO 9001', desc: t(i18n.home.certIsoDesc), standard: 'ISO 9001:2015', color: '#27ae60' },
   ];
 
   return (
@@ -244,37 +216,22 @@ function ProductsSection() {
   const t = useT();
   const products = [
     {
-      model: 'E7 Gen6',
-      tag: '旗舰款',
-      size: '38㎡',
-      title: '旗舰大空间',
-      desc: '集居住、工作、休闲于一体的顶配装配式建筑，适合高端度假营地与精品酒店。',
-      features: ['双卧室设计', '全屋智能系统', '落地玻璃幕墙', '独立卫浴×2'],
-      image: '/images/e7-gen6.jpg',
-      accentColor: '#c9a84c',
-      badge: '畅销 No.1',
+      model: 'E7 Gen6', tag: t(i18n.home.homeProd1Tag), size: '38㎡',
+      title: t(i18n.home.homeProd1Title), desc: t(i18n.home.homeProd1Desc),
+      features: [t(i18n.home.homeProd1F1), t(i18n.home.homeProd1F2), t(i18n.home.homeProd1F3), t(i18n.home.homeProd1F4)],
+      image: '/images/e7-gen6.jpg', accentColor: '#c9a84c', badge: t(i18n.home.homeProd1Badge),
     },
     {
-      model: 'E6 Gen6',
-      tag: '明星款',
-      size: '30㎡',
-      title: '轻奢现代空间',
-      desc: '精致紧凑的文旅智能装配建筑，极简美学与功能性的完美融合，全球最受欢迎单品。',
-      features: ['开放式设计', '智能温控系统', '环绕景观窗', '精品卫浴'],
-      image: '/images/e6-gen6.jpg',
-      accentColor: '#4a8fc9',
-      badge: '全球最畅销',
+      model: 'E6 Gen6', tag: t(i18n.home.homeProd2Tag), size: '30㎡',
+      title: t(i18n.home.homeProd2Title), desc: t(i18n.home.homeProd2Desc),
+      features: [t(i18n.home.homeProd2F1), t(i18n.home.homeProd2F2), t(i18n.home.homeProd2F3), t(i18n.home.homeProd2F4)],
+      image: '/images/e6-gen6.jpg', accentColor: '#4a8fc9', badge: t(i18n.home.homeProd2Badge),
     },
     {
-      model: 'V9 Gen6',
-      tag: '长居款',
-      size: '38㎡',
-      title: '长居生活空间',
-      desc: '专为长期居住优化的文旅智能装配建筑，具备完整家居功能与超强保温隔热性能。',
-      features: ['完整厨房配置', '超强隔热系统', '储能太阳能板', '双层隔音墙'],
-      image: '/images/v9-gen6.jpg',
-      accentColor: '#4ac97a',
-      badge: '长居首选',
+      model: 'V9 Gen6', tag: t(i18n.home.homeProd3Tag), size: '38㎡',
+      title: t(i18n.home.homeProd3Title), desc: t(i18n.home.homeProd3Desc),
+      features: [t(i18n.home.homeProd3F1), t(i18n.home.homeProd3F2), t(i18n.home.homeProd3F3), t(i18n.home.homeProd3F4)],
+      image: '/images/v9-gen6.jpg', accentColor: '#4ac97a', badge: t(i18n.home.homeProd3Badge),
     },
   ];
 
@@ -461,7 +418,7 @@ function ScenariosSection() {
       title: t(i18n.home.tourismTitle),
       subtitle: t(i18n.home.tourismSub),
       desc: t(i18n.home.tourismDesc),
-      tags: ['景区度假村', '精品民宿群落', '自然营地集群', '山地旅居基地'],
+      tags: [t(i18n.home.tourismTag1), t(i18n.home.tourismTag2), t(i18n.home.tourismTag3), t(i18n.home.tourismTag4)],
     },
     {
       icon: (
@@ -473,7 +430,7 @@ function ScenariosSection() {
       title: t(i18n.home.commercialTitle),
       subtitle: t(i18n.home.commercialSub),
       desc: t(i18n.home.commercialDesc),
-      tags: ['快闪零售空间', '创意办公园区', '品牌体验中心', '户外餐饮集合'],
+      tags: [t(i18n.home.commercialTag1), t(i18n.home.commercialTag2), t(i18n.home.commercialTag3), t(i18n.home.commercialTag4)],
     },
     {
       icon: (
@@ -486,7 +443,7 @@ function ScenariosSection() {
       title: t(i18n.home.publicTitle),
       subtitle: t(i18n.home.publicSub),
       desc: t(i18n.home.publicDesc),
-      tags: ['应急安置单元', '移动医疗站点', '边境服务设施', '展会临时场馆'],
+      tags: [t(i18n.home.publicTag1), t(i18n.home.publicTag2), t(i18n.home.publicTag3), t(i18n.home.publicTag4)],
     },
   ];
 
@@ -588,7 +545,7 @@ function AboutSection() {
                 <div className="text-white/60 text-sm tracking-[0.2em] mb-4">{t(i18n.home.stat4Title)}</div>
                 <div className="gold-divider w-12 mx-auto mb-4" />
                 <div className="text-[#c9a84c] font-black text-2xl mb-1">VESSEL</div>
-                <div className="text-white/30 text-xs tracking-widest">微宿·文旅智能装配建筑</div>
+                <div className="text-white/30 text-xs tracking-widest">{t(i18n.home.brandWatermark)}</div>
               </div>
               {/* Corner dots */}
               {[
@@ -619,11 +576,7 @@ function InnovationSection() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
       ),
-      tag: '智能控制',
-      title: '智能全屋空间交互',
-      desc: '第六代 VIIE 智能控制系统，AI 语音 + App 远程双控，一键切换照明、遮帘、空调、日夜模式，与华为全屋智能深度融合。',
-      link: '/about',
-      color: '#c9a84c',
+      tag: t(i18n.home.innov1Tag), title: t(i18n.home.innov1Title), desc: t(i18n.home.innov1Desc), link: '/about', color: '#c9a84c',
     },
     {
       icon: (
@@ -631,11 +584,7 @@ function InnovationSection() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>
       ),
-      tag: '绿色能源',
-      title: '新能源零碳系统',
-      desc: '屋顶光伏储能 + 空气能热泵集成方案，支持离网运营，年均减碳 3.2 吨/台，帮助营地实现绿色运营目标与碳中和认证。',
-      link: '/about',
-      color: '#4ac97a',
+      tag: t(i18n.home.innov2Tag), title: t(i18n.home.innov2Title), desc: t(i18n.home.innov2Desc), link: '/about', color: '#4ac97a',
     },
     {
       icon: (
@@ -643,11 +592,7 @@ function InnovationSection() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
         </svg>
       ),
-      tag: '环保技术',
-      title: '污水生物处理技术',
-      desc: '集成式微生物污水处理系统，无需市政排污管网，净化后达到国家一级 A 排放标准，彻底解决山地/湖滨/草原营地的排污难题。',
-      link: '/about',
-      color: '#4a8fc9',
+      tag: t(i18n.home.innov3Tag), title: t(i18n.home.innov3Title), desc: t(i18n.home.innov3Desc), link: '/about', color: '#4a8fc9',
     },
   ];
 
@@ -655,12 +600,12 @@ function InnovationSection() {
     <section className="py-24 bg-[#0a0a0a] border-t border-[#c9a84c]/8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-14">
-          <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">创新故事</div>
+          <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.home.innovLabel)}</div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-4">
-            三大核心技术突破
+            {t(i18n.home.innovTitle)}
           </h2>
           <p className="text-white/40 text-sm tracking-wider max-w-xl mx-auto">
-            VESSEL 持续投入研发，以工业精度与前沿科技重新定义装配式文旅建筑的技术标准
+            {t(i18n.home.innovSubtitle)}
           </p>
         </div>
 
@@ -740,7 +685,7 @@ function NewsPreviewSection() {
             href="/news"
             className="text-[#c9a84c]/70 text-sm hover:text-[#c9a84c] transition-colors tracking-wider hidden sm:flex items-center gap-1"
           >
-            查看全部
+            {t(i18n.home.viewAll)}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
@@ -774,7 +719,7 @@ function NewsPreviewSection() {
         </div>
 
         <div className="mt-6 text-center sm:hidden">
-          <Link href="/news" className="text-[#c9a84c]/70 text-sm tracking-wider">查看全部新闻 →</Link>
+          <Link href="/news" className="text-[#c9a84c]/70 text-sm tracking-wider">{t(i18n.home.viewAllNews)}</Link>
         </div>
       </div>
     </section>

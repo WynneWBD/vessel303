@@ -1,4 +1,4 @@
-export type ProductSlug = 'e7' | 'e6' | 'e3' | 'v9' | 'v5' | 's5';
+export type ProductSlug = 'e7' | 'e6' | 'e3' | 'v9' | 'v5' | 's5' | 'e7-gen5';
 
 export interface ProductFeature { title: string; desc: string }
 export interface ProductSpace { name: string; desc: string }
@@ -30,6 +30,23 @@ export interface ProductData {
   priceDisplay: string;
   /** Price teaser shown to guests */
   priceHidden: string;
+  /** Numeric area for filtering */
+  area: number;
+  /** Product generation number */
+  generation: 5 | 6;
+  /** Product type for filtering */
+  productType: 'compact' | 'standard' | 'luxury';
+  /** Badge in English */
+  badge_en: string;
+  /** Tags */
+  tags_cn: string[];
+  tags_en: string[];
+  /** 3 key features */
+  features_cn: string[];
+  features_en: string[];
+  /** Price range strings */
+  price_range_cn: string;
+  price_range_en: string;
   prev?: ProductSlug;
   next?: ProductSlug;
 }
@@ -97,6 +114,12 @@ export const products: ProductData[] = [
     accentColor: '#c9a84c',
     priceDisplay: '¥ 488,000 起',
     priceHidden: 'XX万起',
+    area: 38.8, generation: 6, productType: 'luxury',
+    badge_en: 'New Flagship',
+    tags_cn: ['大空间', '智能'], tags_en: ['Spacious', 'Smart'],
+    features_cn: ['飞翼式门檐', '开放式社交空间', '多类型收纳柜'],
+    features_en: ['Wing-type door canopy', 'Open social space', 'Multi-type storage cabinets'],
+    price_range_cn: '¥ 488,000 起', price_range_en: 'From ¥488,000',
     next: 'e6',
   },
   {
@@ -161,6 +184,12 @@ export const products: ProductData[] = [
     accentColor: '#c9a84c',
     priceDisplay: '¥ 388,000 起',
     priceHidden: 'XX万起',
+    area: 29.6, generation: 6, productType: 'standard',
+    badge_en: 'Star Model',
+    tags_cn: ['旅居版', '快速部署'], tags_en: ['Glamping', 'Fast Deploy'],
+    features_cn: ['270°环幕视野', '四大功能分区', '灵活切换大床/双床'],
+    features_en: ['270° panoramic view', '4 functional zones', 'King/twin flexible config'],
+    price_range_cn: '¥ 388,000 起', price_range_en: 'From ¥388,000',
     prev: 'e7',
     next: 'e3',
   },
@@ -216,6 +245,12 @@ export const products: ProductData[] = [
     accentColor: '#c9a84c',
     priceDisplay: '¥ 228,000 起',
     priceHidden: 'XX万起',
+    area: 19, generation: 6, productType: 'compact',
+    badge_en: 'Entry Choice',
+    tags_cn: ['迷你', '经济'], tags_en: ['Mini', 'Economical'],
+    features_cn: ['内嵌式门廊', '270°环幕视野', '一车可运两台'],
+    features_en: ['Integrated hallway', '270° panoramic view', '2 units per truck'],
+    price_range_cn: '¥ 228,000 起', price_range_en: 'From ¥228,000',
     prev: 'e6',
     next: 'v9',
   },
@@ -280,6 +315,12 @@ export const products: ProductData[] = [
     accentColor: '#c9a84c',
     priceDisplay: '¥ 458,000 起',
     priceHidden: 'XX万起',
+    area: 38, generation: 6, productType: 'luxury',
+    badge_en: 'Long-stay Choice',
+    tags_cn: ['家居版', '旗舰'], tags_en: ['Residential', 'Flagship'],
+    features_cn: ['17㎡落地景观窗', '180°全景玻璃', 'VIIE智能系统'],
+    features_en: ['17㎡ floor-to-ceiling windows', '180° panoramic glass', 'VIIE smart system'],
+    price_range_cn: '¥ 458,000 起', price_range_en: 'From ¥458,000',
     prev: 'e3',
     next: 'v5',
   },
@@ -335,6 +376,12 @@ export const products: ProductData[] = [
     accentColor: '#c9a84c',
     priceDisplay: '¥ 288,000 起',
     priceHidden: 'XX万起',
+    area: 24.8, generation: 5, productType: 'compact',
+    badge_en: 'Couples Retreat',
+    tags_cn: ['全景', '轻量'], tags_en: ['Panoramic', 'Lightweight'],
+    features_cn: ['超广角全景玻璃', '精品内嵌吧台', '6吨轻量化设计'],
+    features_en: ['Ultra-wide panoramic glass', 'Built-in premium bar', '6-ton lightweight design'],
+    price_range_cn: '¥ 288,000 起', price_range_en: 'From ¥288,000',
     prev: 'v9',
     next: 's5',
   },
@@ -390,7 +437,65 @@ export const products: ProductData[] = [
     accentColor: '#c9a84c',
     priceDisplay: '¥ 328,000 起',
     priceHidden: 'XX万起',
+    area: 28, generation: 5, productType: 'standard',
+    badge_en: 'Classic Legend',
+    tags_cn: ['科幻风格', '星空天窗'], tags_en: ['Futuristic', 'Starry skylight'],
+    features_cn: ['3.3米全景阳台', '1.68㎡星空天窗', '飞船造型'],
+    features_en: ['3.3m panoramic balcony', '1.68㎡ starry skylight', 'Spaceship silhouette'],
+    price_range_cn: '¥ 328,000 起', price_range_en: 'From ¥328,000',
     prev: 'v5',
+    next: 'e7-gen5',
+  },
+  {
+    slug: 'e7-gen5' as ProductSlug,
+    model: 'E7',
+    gen: 'Gen5',
+    series: 'Gen5',
+    tag: '豪华经典',
+    size: '38㎡',
+    tagline: '38㎡ 豪华第五代经典',
+    tagline2: '礼宾级旅居，不过时的经典',
+    dimensions: { length: 11400, width: 3400, height: 3400 },
+    floorArea: '38㎡',
+    power: '16/24kW',
+    weight: '约9吨',
+    capacity: '2-4人',
+    zones: ['入户玄关', '270°环幕客厅', '主卧室', '礼宾空间', '卫浴间'],
+    designPhilosophy: '以礼宾级行政空间为核心设计语言，270°环幕客厅提供全方位景观体验，全屋电动窗帘与智能系统实现极致旅居享受。',
+    features: [
+      { title: '270°环幕客厅', desc: '270°全景环绕设计，将户外风景最大限度引入室内。' },
+      { title: '礼宾级空间', desc: '行政礼宾级内饰，匹配高端度假营地定位。' },
+      { title: '全屋电动窗帘', desc: '全屋电动遮帘，一键调节私密与观景模式。' },
+      { title: '第五代经典设计', desc: '历经市场考验的成熟设计，广受全球采购商认可。' },
+    ],
+    spaces: [
+      { name: '270°环幕客厅', desc: '全景环绕玻璃，开阔视野无遮挡。' },
+      { name: '礼宾行政空间', desc: '高规格内饰，彰显品位。' },
+      { name: '主卧室', desc: '舒适主卧，电动遮帘系统。' },
+      { name: '卫浴间', desc: '独立卫浴，干湿分离。' },
+    ],
+    materials: [
+      { title: '热镀锌钢结构', spec: '壁厚4.75mm' },
+      { title: '氟碳铝板', spec: '43μm耐候涂层' },
+      { title: '断桥隔热门窗', spec: '优越热工性能' },
+      { title: 'LOW-E 玻璃', spec: '节能隔热' },
+    ],
+    image: '/images/e7-gen6.jpg',
+    badge: '豪华经典',
+    accentColor: '#c9a84c',
+    priceDisplay: '¥ 368,000 起',
+    priceHidden: 'XX万起',
+    area: 38,
+    generation: 5 as const,
+    productType: 'luxury' as const,
+    badge_en: 'Luxury Classic',
+    tags_cn: ['舒适', '行业开创者'],
+    tags_en: ['Comfort', 'Industry Pioneer'],
+    features_cn: ['270°环幕客厅', '礼宾级行政空间', '全屋电动窗帘'],
+    features_en: ['270° encircling living room', 'Concierge-level space', 'Full electric curtains'],
+    price_range_cn: '¥ 368,000 起',
+    price_range_en: 'From ¥368,000',
+    prev: 's5',
   },
 ];
 
