@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import SessionProviderWrapper from "@/components/SessionProviderWrapper";
 
 export const metadata: Metadata = {
   title: "VESSEL 微宿 | 文旅智能装配建筑 全球领导品牌",
@@ -22,7 +23,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-[#0a0a0a]">{children}</body>
+      <body className="min-h-full flex flex-col bg-[#0a0a0a]">
+        <SessionProviderWrapper>{children}</SessionProviderWrapper>
+      </body>
     </html>
   );
 }

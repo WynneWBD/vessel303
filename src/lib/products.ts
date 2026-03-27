@@ -26,6 +26,10 @@ export interface ProductData {
   image: string;
   badge: string;
   accentColor: string;
+  /** Price shown to logged-in users */
+  priceDisplay: string;
+  /** Price teaser shown to guests */
+  priceHidden: string;
   prev?: ProductSlug;
   next?: ProductSlug;
 }
@@ -91,6 +95,8 @@ export const products: ProductData[] = [
     image: '/images/e7-gen6.jpg',
     badge: '畅销 No.1',
     accentColor: '#c9a84c',
+    priceDisplay: '¥ 488,000 起',
+    priceHidden: 'XX万起',
     next: 'e6',
   },
   {
@@ -153,6 +159,8 @@ export const products: ProductData[] = [
     image: '/images/e6-gen6.jpg',
     badge: '全球最畅销',
     accentColor: '#c9a84c',
+    priceDisplay: '¥ 388,000 起',
+    priceHidden: 'XX万起',
     prev: 'e7',
     next: 'e3',
   },
@@ -206,6 +214,8 @@ export const products: ProductData[] = [
     image: '/images/e6-gen6.jpg',
     badge: '入门首选',
     accentColor: '#e07b4a',
+    priceDisplay: '¥ 228,000 起',
+    priceHidden: 'XX万起',
     prev: 'e6',
     next: 'v9',
   },
@@ -268,6 +278,8 @@ export const products: ProductData[] = [
     image: '/images/v9-gen6.jpg',
     badge: '长居首选',
     accentColor: '#c9a84c',
+    priceDisplay: '¥ 458,000 起',
+    priceHidden: 'XX万起',
     prev: 'e3',
     next: 'v5',
   },
@@ -321,6 +333,8 @@ export const products: ProductData[] = [
     image: '/images/v9-gen6.jpg',
     badge: '两人度假',
     accentColor: '#7a9ec9',
+    priceDisplay: '¥ 288,000 起',
+    priceHidden: 'XX万起',
     prev: 'v9',
     next: 's5',
   },
@@ -374,6 +388,8 @@ export const products: ProductData[] = [
     image: '/images/e6-gen6.jpg',
     badge: '景观首选',
     accentColor: '#c97a9e',
+    priceDisplay: '¥ 328,000 起',
+    priceHidden: 'XX万起',
     prev: 'v5',
   },
 ];

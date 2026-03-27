@@ -5,6 +5,7 @@ import type { Metadata } from 'next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { getProduct, products } from '@/lib/products';
+import { auth } from '@/auth';
 
 export async function generateStaticParams() {
   return products.map((p) => ({ slug: p.slug }));
@@ -32,6 +33,9 @@ export default async function ProductDetailPage({
   const { slug } = await params;
   const product = getProduct(slug);
   if (!product) notFound();
+
+  const session = await auth();
+  const isLoggedIn = !!session?.user;
 
   const prevProduct = product.prev ? getProduct(product.prev) : null;
   const nextProduct = product.next ? getProduct(product.next) : null;
@@ -138,6 +142,37 @@ export default async function ProductDetailPage({
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* ── Price Block ── */}
+        <section className="py-10 border-b border-white/5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-2 font-medium">参考价格</div>
+              {isLoggedIn ? (
+                <div className="text-3xl font-black text-[#c9a84c] tracking-wider">
+                  {product.priceDisplay}
+                </div>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <div className="text-3xl font-black text-white/20 tracking-wider blur-[6px] select-none">
+                    {product.priceHidden}
+                  </div>
+                  <Link
+                    href="/login"
+                    className="text-xs px-4 py-2 border border-[#c9a84c]/40 text-[#c9a84c] hover:bg-[#c9a84c] hover:text-[#0a0a0a] transition-all tracking-wider"
+                  >
+                    登录查看价格
+                  </Link>
+                </div>
+              )}
+            </div>
+            {isLoggedIn && (
+              <p className="text-white/25 text-xs tracking-wider max-w-xs">
+                含基础装配，不含运输及现场安装费用。具体报价请联系顾问。
+              </p>
+            )}
+          </div>
+        </section>
 
         {/* ── Design Philosophy ── */}
         <section className="py-20 border-b border-white/5">

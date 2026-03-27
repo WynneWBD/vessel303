@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import AuthButton from './AuthButton';
 
 interface NavLink {
   label: string;
@@ -168,6 +169,7 @@ export default function Navbar() {
             >
               预订营地
             </Link>
+            <AuthButton />
           </div>
 
           {/* Mobile Toggle */}
@@ -254,6 +256,9 @@ export default function Navbar() {
               >
                 预订营地
               </Link>
+            </div>
+            <div className="pt-3 flex justify-center">
+              <AuthButton />
             </div>
           </div>
         </div>
