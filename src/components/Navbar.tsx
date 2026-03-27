@@ -235,7 +235,7 @@ export default function Navbar() {
               采购咨询
             </Link>
             <Link
-              href="/contact"
+              href="/contact#c-end"
               className="text-white/75 text-sm font-medium px-3.5 py-2 border border-white/20 hover:border-[#c9a84c] hover:text-[#c9a84c] transition-all duration-200 tracking-wider whitespace-nowrap"
             >
               预订营地
@@ -321,7 +321,7 @@ export default function Navbar() {
                 采购咨询
               </Link>
               <Link
-                href="/contact"
+                href="/contact#c-end"
                 className="flex-1 text-center bg-transparent text-white/80 text-sm py-3 border border-white/25 tracking-wider"
                 onClick={() => setIsOpen(false)}
               >
