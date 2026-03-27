@@ -7,19 +7,19 @@ import ContactForm from '@/components/ContactForm';
 import { useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
 
-const officeLocations = [
-  { city: '台湾·台中', status: 'operating' as const },
-  { city: '日本', status: 'operating' as const },
-  { city: '英国·Manchester', status: 'operating' as const },
-  { city: '斯洛伐克', status: 'operating' as const },
-  { city: '新西兰', status: 'operating' as const },
-  { city: '沙特阿拉伯', status: 'operating' as const },
-  { city: '德国', status: 'building' as const },
-  { city: '澳大利亚', status: 'building' as const },
-];
-
 export default function ContactPage() {
   const t = useT();
+
+  const officeLocations = [
+    { city: t(i18n.contact.city0), status: 'operating' as const },
+    { city: t(i18n.contact.city1), status: 'operating' as const },
+    { city: t(i18n.contact.city2), status: 'operating' as const },
+    { city: t(i18n.contact.city3), status: 'operating' as const },
+    { city: t(i18n.contact.city4), status: 'operating' as const },
+    { city: t(i18n.contact.city5), status: 'operating' as const },
+    { city: t(i18n.contact.city6), status: 'building' as const },
+    { city: t(i18n.contact.city7), status: 'building' as const },
+  ];
 
   const faqs = [
     { q: t(i18n.contact.faq1Q), a: t(i18n.contact.faq1A) },

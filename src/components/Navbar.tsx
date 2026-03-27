@@ -183,8 +183,6 @@ export default function Navbar() {
                 {link.dropdown ? (
                   <button
                     className="flex items-center gap-1 text-white/65 hover:text-[#c9a84c] text-sm font-medium tracking-wide px-2.5 py-2 transition-colors duration-200 whitespace-nowrap relative group"
-                    onMouseEnter={() => setOpenDropdown(link.label)}
-                    onMouseLeave={() => setOpenDropdown(null)}
                     onClick={() => setOpenDropdown(openDropdown === link.label ? null : link.label)}
                   >
                     {link.label}
@@ -210,10 +208,7 @@ export default function Navbar() {
 
                 {/* Dropdown */}
                 {link.dropdown && openDropdown === link.label && (
-                  <div
-                    onMouseEnter={() => setOpenDropdown(link.label)}
-                    onMouseLeave={() => setOpenDropdown(null)}
-                  >
+                  <div>
                     {link.label === t(i18n.nav.products)
                       ? <ProductsDropdown items={link.dropdown} />
                       : <SimpleDropdown items={link.dropdown} />

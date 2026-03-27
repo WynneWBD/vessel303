@@ -14,40 +14,57 @@ function Placeholder({ label, className }: { label: string; className?: string }
   );
 }
 
-const milestones = [
-  { year: '2018', month: '5月', event: '三零三设计工作室创立微宿品牌' },
-  { year: '2018', month: '7月', event: '首台样板钢结构框架完成' },
-  { year: '2018', month: '8月', event: '佛山三水首家生产基地成立' },
-  { year: '2018', month: '12月', event: '全球第一台微宿装配式建筑面世' },
-  { year: '2020', month: '', event: '产品出口东南亚，开拓国际市场' },
-  { year: '2021', month: '', event: '获欧盟 CE 建筑认证，进入欧洲市场' },
-  { year: '2022', month: '', event: '获美国 IBC 建筑认证，进入北美市场' },
-  { year: '2023', month: '', event: '全球交付项目突破 200 个' },
-  { year: '2024', month: '', event: '与华为 HUAWEI 战略签约，推进智能化升级' },
-  { year: '2024', month: '', event: '第六代 Gen6 全系列正式发布' },
-  { year: '2025', month: '', event: '全球项目突破 300 个，覆盖 30+ 国家' },
-];
-
-const honors = [
-  '广东省高新技术企业认证',
-  '100+ 自主研发专利',
-  '欧盟 CE 建筑产品认证',
-  '美国 IBC 国际建筑规范认证',
-  'ISO 9001:2015 质量管理体系认证',
-  '中国装配式建筑优秀案例',
-  '圣彼得堡国际经济论坛展示企业',
-  '广交会官方参展品牌',
-];
-
-const partners = [
-  { name: '华为 HUAWEI', desc: '全屋智能系统战略合作伙伴' },
-  { name: '南海狮山文旅', desc: '文旅开发战略合作' },
-  { name: 'NESSEL Housing', desc: '社会住房国际合作' },
-  { name: '圣彼得堡国际经济论坛', desc: '官方合作展示品牌' },
-];
-
 export default function AboutPage() {
   const t = useT();
+
+  const milestones = [
+    { year: '2018', month_zh: '5月', month_en: 'May', event: t(i18n.about.timeline0) },
+    { year: '2018', month_zh: '7月', month_en: 'Jul', event: t(i18n.about.timeline1) },
+    { year: '2018', month_zh: '8月', month_en: 'Aug', event: t(i18n.about.timeline2) },
+    { year: '2018', month_zh: '12月', month_en: 'Dec', event: t(i18n.about.timeline3) },
+    { year: '2020', month_zh: '', month_en: '', event: t(i18n.about.timeline4) },
+    { year: '2021', month_zh: '', month_en: '', event: t(i18n.about.timeline5) },
+    { year: '2022', month_zh: '', month_en: '', event: t(i18n.about.timeline6) },
+    { year: '2023', month_zh: '', month_en: '', event: t(i18n.about.timeline7) },
+    { year: '2024', month_zh: '', month_en: '', event: t(i18n.about.timeline8) },
+    { year: '2024', month_zh: '', month_en: '', event: t(i18n.about.timeline9) },
+    { year: '2025', month_zh: '', month_en: '', event: t(i18n.about.timeline10) },
+  ];
+
+  const honors = [
+    t(i18n.about.honor0),
+    t(i18n.about.honor1),
+    t(i18n.about.honor2),
+    t(i18n.about.honor3),
+    t(i18n.about.honor4),
+    t(i18n.about.honor5),
+    t(i18n.about.honor6),
+    t(i18n.about.honor7),
+  ];
+
+  const partners = [
+    { name: '华为 HUAWEI', desc: t(i18n.about.partnerDesc0) },
+    { name: '南海狮山文旅', desc: t(i18n.about.partnerDesc1) },
+    { name: 'NESSEL Housing', desc: t(i18n.about.partnerDesc2) },
+    { name: '圣彼得堡国际经济论坛', desc: t(i18n.about.partnerDesc3) },
+  ];
+
+  const globalRegions = [
+    { region: t(i18n.about.region0), countries: t(i18n.about.region0Countries) },
+    { region: t(i18n.about.region1), countries: t(i18n.about.region1Countries) },
+    { region: t(i18n.about.region2), countries: t(i18n.about.region2Countries) },
+    { region: t(i18n.about.region3), countries: t(i18n.about.region3Countries) },
+    { region: t(i18n.about.region4), countries: t(i18n.about.region4Countries) },
+    { region: t(i18n.about.region5), countries: t(i18n.about.region5Countries) },
+  ];
+
+  const founderCreds = [
+    t(i18n.about.founderCred0),
+    t(i18n.about.founderCred1),
+    t(i18n.about.founderCred2),
+    t(i18n.about.founderCred3),
+    t(i18n.about.founderCred4),
+  ];
 
   return (
     <main className="bg-[#0a0a0a] text-white">
@@ -157,7 +174,7 @@ export default function AboutPage() {
                   <div className="w-[72px] shrink-0 text-right">
                     <span className="text-[#c9a84c] text-xs font-bold tracking-wider">
                       {m.year}
-                      {m.month && <span className="text-[#c9a84c]/60 ml-1">{m.month}</span>}
+                      {m.month_zh && <span className="text-[#c9a84c]/60 ml-1">{m.month_zh}</span>}
                     </span>
                   </div>
                   {/* Dot */}
@@ -188,14 +205,7 @@ export default function AboutPage() {
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-10">
-            {[
-              { region: '亚洲', countries: '中国、日本、韩国、东南亚' },
-              { region: '欧洲', countries: '英国、斯洛伐克、德国、法国' },
-              { region: '北美洲', countries: '美国、加拿大、墨西哥' },
-              { region: '大洋洲', countries: '新西兰、澳大利亚' },
-              { region: '中东', countries: '沙特、迪拜、卡塔尔' },
-              { region: '非洲', countries: '南非、肯尼亚' },
-            ].map((item) => (
+            {globalRegions.map((item) => (
               <div key={item.region} className="bg-[#111] border border-white/8 p-4 text-center">
                 <div className="text-[#c9a84c] font-bold mb-1 tracking-wider text-sm">{item.region}</div>
                 <div className="text-white/30 text-xs leading-relaxed">{item.countries}</div>
@@ -204,7 +214,7 @@ export default function AboutPage() {
           </div>
           <div className="p-6 border border-[#c9a84c]/15 bg-[#c9a84c]/3 text-center">
             <div className="text-white/50 text-sm tracking-wider">
-              全球办事处：台湾·台中 · 日本 · 英国·Manchester · 斯洛伐克 · 新西兰 · 沙特及更多地区
+              {t(i18n.about.globalOfficesNote)}
             </div>
           </div>
         </div>
@@ -265,13 +275,7 @@ export default function AboutPage() {
                 <div className="text-[#c9a84c] font-bold text-lg mb-1 tracking-wider">{t(i18n.about.founderTitle)}</div>
                 <div className="text-white/40 text-sm mb-5 tracking-wider">{t(i18n.about.founderRole)}</div>
                 <ul className="space-y-2 mb-5">
-                  {[
-                    '英国邓迪大学建筑学硕士',
-                    '英国皇家建筑师协会 RIBA Part Ⅱ 认证',
-                    '美国圣路易斯华盛顿大学建筑学硕士',
-                    '曾任职纽约 SOM 建筑师事务所',
-                    'VESSEL 微宿® 品牌创始人兼总设计师',
-                  ].map((item) => (
+                  {founderCreds.map((item) => (
                     <li key={item} className="flex items-center gap-2 text-white/60 text-sm">
                       <span className="text-[#c9a84c] text-xs">▸</span>
                       {item}
