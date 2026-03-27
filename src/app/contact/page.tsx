@@ -111,8 +111,8 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="text-white/30 text-[10px] tracking-wider mb-1">电子邮箱</div>
-                    <a href="mailto:vessel.sale@303industries.cn" className="text-white/70 text-sm hover:text-[#c9a84c] transition-colors break-all">
-                      vessel.sale@303industries.cn
+                    <a href="mailto:wynne@303vessel.cn" className="text-white/70 text-sm hover:text-[#c9a84c] transition-colors break-all">
+                      wynne@303vessel.cn
                     </a>
                   </div>
                 </div>
