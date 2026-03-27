@@ -14,7 +14,7 @@ const schema = z.object({
   inquiryType: z.string().min(1, '请选择咨询类型'),
   name: z.string().min(1, '请填写姓名'),
   phone: z.string().min(1, '请填写联系电话'),
-  email: z.string().email('邮箱格式不正确').optional().or(z.literal('')),
+  email: z.string().email('邮箱格式不正确').min(1, '请填写邮箱地址'),
   company: z.string().optional().default(''),
   location: z.string().optional().default(''),
   projectType: z.string().optional().default(''),

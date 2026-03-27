@@ -31,13 +31,26 @@ export default function ContactForm() {
   });
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   function set(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    if (field === 'email') setEmailError('');
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Email validation
+    if (!form.email.trim()) {
+      setEmailError('请填写邮箱地址');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      setEmailError('请输入有效的邮箱地址');
+      return;
+    }
+
     setStatus('loading');
     setErrorMsg('');
 
@@ -143,14 +156,19 @@ export default function ContactForm() {
       {/* Email + Company */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-white/50 text-xs tracking-wider mb-2">邮箱</label>
+          <label className="block text-white/50 text-xs tracking-wider mb-2">
+            邮箱 <span className="text-red-400">*</span>
+          </label>
           <input
             type="email"
             value={form.email}
             onChange={(e) => set('email', e.target.value)}
             placeholder="your@email.com"
-            className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20"
+            className={`w-full bg-[#111] border text-white text-sm px-4 py-3 focus:outline-none placeholder-white/20 tracking-wider ${emailError ? 'border-red-500/60 focus:border-red-500/80' : 'border-white/15 focus:border-[#c9a84c]/60'}`}
           />
+          {emailError && (
+            <p className="text-red-400/80 text-xs tracking-wider mt-1">{emailError}</p>
+          )}
         </div>
         <div>
           <label className="block text-white/50 text-xs tracking-wider mb-2">公司名称</label>
