@@ -7,16 +7,19 @@ import { useT } from '@/contexts/LanguageContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
 import PageHero from '@/components/PageHero';
-import type { ProductData } from '@/lib/products';
+import type { CatalogProduct, ProductSeriesCode } from '@/lib/products';
 
 type SizeFilter = 'all' | 'small' | 'medium' | 'large';
 type TypeFilter = 'all' | 'compact' | 'standard' | 'luxury';
 type GenFilter = 'all' | 6 | 5;
+type SeriesFilter = 'all' | ProductSeriesCode;
 type SortKey = 'default' | 'price_asc' | 'price_desc' | 'area_asc' | 'area_desc';
 type ViewMode = 'grid' | 'list';
 
+const SERIES_LIST: SeriesFilter[] = ['all', 'E3', 'E5', 'E6', 'E7', 'V3', 'V5', 'V7', 'V9', 'S5'];
+
 interface Props {
-  products: ProductData[];
+  products: CatalogProduct[];
 }
 
 function Select({
@@ -49,12 +52,11 @@ function Select({
   );
 }
 
-function GridCard({ product, t, lang }: { product: ProductData; t: ReturnType<typeof useT>; lang: 'en' | 'zh' }) {
+function GridCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType<typeof useT>; lang: 'en' | 'zh' }) {
   const tags = lang === 'en' ? product.tags_en : product.tags_cn;
   const features = lang === 'en' ? product.features_en : product.features_cn;
-  const badge = lang === 'en' ? product.badge_en : product.badge;
-  const hasDetailPage = product.slug !== 'e7-gen5';
-  const href = hasDetailPage ? `/products/${product.slug}` : '/contact';
+  const badge = lang === 'en' ? product.badge_en : product.badge_cn;
+  const href = product.detailSlug ? `/products/${product.detailSlug}` : '/contact';
 
   return (
     <div className="group flex flex-col bg-[#111] border border-white/8 hover:border-[#c9a84c]/40 transition-all duration-300 overflow-hidden">
@@ -62,7 +64,7 @@ function GridCard({ product, t, lang }: { product: ProductData; t: ReturnType<ty
       <div className="relative aspect-video overflow-hidden bg-[#0d0d0d]">
         <Image
           src={product.image}
-          alt={`${product.model} ${product.gen}`}
+          alt={lang === 'en' ? product.name_en : product.name_cn}
           fill
           loading="lazy"
           className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
@@ -88,13 +90,21 @@ function GridCard({ product, t, lang }: { product: ProductData; t: ReturnType<ty
             {badge}
           </span>
         </div>
+        {/* Bottom-right: Custom indicator */}
+        {product.isCustom && (
+          <div className="absolute bottom-3 right-3">
+            <span className="text-[10px] px-2 py-1 bg-white/10 text-white/60 tracking-wider border border-white/20">
+              {lang === 'en' ? 'Custom' : '定制'}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Content */}
       <div className="p-5 flex flex-col flex-1">
         {/* Model name */}
-        <h3 className="text-white text-lg font-black tracking-wider mb-2">
-          VESSEL {product.model} {product.gen}
+        <h3 className="text-white text-base font-black tracking-wider mb-1 leading-snug">
+          {lang === 'en' ? product.name_en : product.name_cn}
         </h3>
 
         {/* Tags */}
@@ -145,12 +155,11 @@ function GridCard({ product, t, lang }: { product: ProductData; t: ReturnType<ty
   );
 }
 
-function ListCard({ product, t, lang }: { product: ProductData; t: ReturnType<typeof useT>; lang: 'en' | 'zh' }) {
+function ListCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType<typeof useT>; lang: 'en' | 'zh' }) {
   const tags = lang === 'en' ? product.tags_en : product.tags_cn;
   const features = lang === 'en' ? product.features_en : product.features_cn;
-  const badge = lang === 'en' ? product.badge_en : product.badge;
-  const hasDetailPage = product.slug !== 'e7-gen5';
-  const href = hasDetailPage ? `/products/${product.slug}` : '/contact';
+  const badge = lang === 'en' ? product.badge_en : product.badge_cn;
+  const href = product.detailSlug ? `/products/${product.detailSlug}` : '/contact';
 
   return (
     <div className="group flex bg-[#111] border border-white/8 hover:border-[#c9a84c]/30 transition-all duration-300 overflow-hidden">
@@ -158,7 +167,7 @@ function ListCard({ product, t, lang }: { product: ProductData; t: ReturnType<ty
       <div className="relative w-[240px] shrink-0 overflow-hidden bg-[#0d0d0d]">
         <Image
           src={product.image}
-          alt={`${product.model} ${product.gen}`}
+          alt={lang === 'en' ? product.name_en : product.name_cn}
           fill
           loading="lazy"
           className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
@@ -179,13 +188,20 @@ function ListCard({ product, t, lang }: { product: ProductData; t: ReturnType<ty
               <div className="text-[#c9a84c] text-[10px] tracking-[0.25em] uppercase mb-1">
                 {product.gen} · {product.size}
               </div>
-              <h3 className="text-white text-xl font-black tracking-wider">
-                VESSEL {product.model} {product.gen}
+              <h3 className="text-white text-lg font-black tracking-wider leading-snug">
+                {lang === 'en' ? product.name_en : product.name_cn}
               </h3>
             </div>
-            <span className="text-[10px] font-bold px-2 py-1 bg-black/60 text-white tracking-wider shrink-0">
-              {product.gen}
-            </span>
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              <span className="text-[10px] font-bold px-2 py-1 bg-black/60 text-white tracking-wider">
+                {product.gen}
+              </span>
+              {product.isCustom && (
+                <span className="text-[10px] px-2 py-0.5 border border-white/20 text-white/50 tracking-wider">
+                  {lang === 'en' ? 'Custom' : '定制'}
+                </span>
+              )}
+            </div>
           </div>
 
           {tags && tags.length > 0 && (
@@ -233,6 +249,7 @@ export default function ProductsPageContent({ products }: Props) {
   const t = useT();
   const { lang } = useLanguage();
 
+  const [seriesFilter, setSeriesFilter] = useState<SeriesFilter>('all');
   const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [genFilter, setGenFilter] = useState<GenFilter>('all');
@@ -242,22 +259,22 @@ export default function ProductsPageContent({ products }: Props) {
   const filtered = useMemo(() => {
     let list = [...products];
 
+    if (seriesFilter !== 'all') list = list.filter((p) => p.productSeries === seriesFilter);
     if (sizeFilter === 'small')  list = list.filter((p) => p.area <= 25);
     if (sizeFilter === 'medium') list = list.filter((p) => p.area > 25 && p.area <= 35);
     if (sizeFilter === 'large')  list = list.filter((p) => p.area > 35);
-
     if (typeFilter !== 'all') list = list.filter((p) => p.productType === typeFilter);
     if (genFilter !== 'all')  list = list.filter((p) => p.generation === genFilter);
 
     switch (sortKey) {
-      case 'price_asc':  list.sort((a, b) => a.area - b.area); break; // approximate by area
+      case 'price_asc':  list.sort((a, b) => a.area - b.area); break;
       case 'price_desc': list.sort((a, b) => b.area - a.area); break;
       case 'area_asc':   list.sort((a, b) => a.area - b.area); break;
       case 'area_desc':  list.sort((a, b) => b.area - a.area); break;
     }
 
     return list;
-  }, [products, sizeFilter, typeFilter, genFilter, sortKey]);
+  }, [products, seriesFilter, sizeFilter, typeFilter, genFilter, sortKey]);
 
   const sizeOptions = [
     { value: 'all', label: t(i18n.products.filterSizeAll) },
@@ -320,8 +337,27 @@ export default function ProductsPageContent({ products }: Props) {
 
       {/* Sticky filter bar */}
       <div className="sticky top-[72px] z-30 bg-[#0a0a0a]/95 backdrop-blur-sm border-b border-white/8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-2">
+
+          {/* Row 1: Series quick filter */}
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+            {SERIES_LIST.map((s) => (
+              <button
+                key={s}
+                onClick={() => setSeriesFilter(s)}
+                className={`shrink-0 text-xs font-bold px-3 py-1.5 tracking-widest border transition-all duration-150 ${
+                  seriesFilter === s
+                    ? 'bg-[#c9a84c] text-[#0a0a0a] border-[#c9a84c]'
+                    : 'bg-transparent text-[#c9a84c]/80 border-[#c9a84c]/40 hover:border-[#c9a84c] hover:text-[#c9a84c]'
+                }`}
+              >
+                {s === 'all' ? (lang === 'en' ? 'ALL' : '全部') : s}
+              </button>
+            ))}
+          </div>
+
+          {/* Row 2: Dropdowns + sort + view */}
+          <div className="flex flex-wrap items-center gap-2 mt-1">
             <Select
               value={sizeFilter}
               onChange={(v) => setSizeFilter(v as SizeFilter)}
@@ -341,10 +377,8 @@ export default function ProductsPageContent({ products }: Props) {
               active={genFilter !== 'all'}
             />
 
-            {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Sort */}
             <Select
               value={sortKey}
               onChange={(v) => setSortKey(v as SortKey)}
@@ -378,7 +412,7 @@ export default function ProductsPageContent({ products }: Props) {
           </div>
 
           {/* Count */}
-          <div className="mt-2 text-white/35 text-xs tracking-wider">
+          <div className="mt-1.5 text-white/35 text-xs tracking-wider">
             {t(i18n.products.foundCount).replace('{n}', String(filtered.length))}
           </div>
         </div>
@@ -391,17 +425,15 @@ export default function ProductsPageContent({ products }: Props) {
             {t(i18n.products.noResults)}
           </div>
         ) : viewMode === 'grid' ? (
-          <div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 transition-opacity duration-150"
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 transition-opacity duration-150">
             {filtered.map((p) => (
-              <GridCard key={p.slug} product={p} t={t} lang={lang} />
+              <GridCard key={p.id} product={p} t={t} lang={lang} />
             ))}
           </div>
         ) : (
           <div className="space-y-4 transition-opacity duration-150">
             {filtered.map((p) => (
-              <ListCard key={p.slug} product={p} t={t} lang={lang} />
+              <ListCard key={p.id} product={p} t={t} lang={lang} />
             ))}
           </div>
         )}
