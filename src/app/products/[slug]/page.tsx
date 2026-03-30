@@ -3,12 +3,16 @@ import type { Metadata } from 'next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { getProductBySlug } from '@/lib/db-products';
+import { catalogProducts } from '@/lib/products';
 import { auth } from '@/auth';
 import ProductDetailContent from '@/components/pages/ProductDetailContent';
+import CatalogProductDetailContent from '@/components/pages/CatalogProductDetailContent';
 
-// Slugs are stable — no DB call needed at build time
+// All catalog product ids + legacy DB slugs
 export function generateStaticParams() {
-  return ['e7', 'e6', 'e3', 'v9', 'v5', 's5'].map((slug) => ({ slug }));
+  const legacySlugs = ['e7', 'e6', 'e3', 'v9', 'v5', 's5'];
+  const catalogIds = catalogProducts.map((p) => p.id);
+  return [...new Set([...legacySlugs, ...catalogIds])].map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
@@ -17,6 +21,17 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+
+  // Catalog product (static data — no DB needed)
+  const catalogProduct = catalogProducts.find((p) => p.id === slug);
+  if (catalogProduct) {
+    return {
+      title: `${catalogProduct.name_en} | VESSEL 微宿®`,
+      description: `${catalogProduct.name_cn} · ${catalogProduct.size} · ${catalogProduct.features_cn.join('，')}`,
+    };
+  }
+
+  // Legacy DB product
   const product = await getProductBySlug(slug);
   if (!product) return {};
   return {
@@ -31,6 +46,24 @@ export default async function ProductDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+
+  // ── 1. Catalog product (static, no DB) ──────────────────
+  const catalogProduct = catalogProducts.find((p) => p.id === slug);
+  if (catalogProduct) {
+    const session = await auth();
+    return (
+      <>
+        <Navbar />
+        <CatalogProductDetailContent
+          product={catalogProduct}
+          isLoggedIn={!!session?.user}
+        />
+        <Footer />
+      </>
+    );
+  }
+
+  // ── 2. Legacy rich DB product ────────────────────────────
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
