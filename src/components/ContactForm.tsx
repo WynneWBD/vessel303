@@ -269,7 +269,7 @@ export default function ContactForm() {
       <button
         type="submit"
         disabled={status === 'loading'}
-        className="w-full bg-[#c9a84c] text-[#0a0a0a] font-bold text-sm py-4 hover:bg-[#b8973b] disabled:opacity-60 transition-colors tracking-[0.2em] uppercase"
+        className="w-full bg-[#c9a84c] text-[#1C1A18] font-bold text-sm py-4 hover:bg-[#b8973b] disabled:opacity-60 transition-colors tracking-[0.2em] uppercase"
       >
         {status === 'loading' ? t(i18n.form.submitting) : t(i18n.form.submitBtn)}
       </button>

@@ -95,7 +95,7 @@ export default function NewsPage() {
   const rest = newsItems.filter((n) => !n.featured);
 
   return (
-    <main className="bg-white text-[#1A1A1A]">
+    <main className="bg-[#FAF7F2] text-[#2C2A28]">
       <Navbar />
 
       <PageHero
@@ -116,7 +116,7 @@ export default function NewsPage() {
               className={`text-sm px-4 py-1.5 border tracking-wider transition-colors ${
                 i === 0
                   ? 'border-[#c9a84c] text-[#c9a84c] bg-[#c9a84c]/5'
-                  : 'border-[#D8D4CE] text-[#888888] hover:border-[#BBBBBB] hover:text-[#555555]'
+                  : 'border-[#D8D4CE] text-[#6B6560] hover:border-[#BBBBBB] hover:text-[#555555]'
               }`}
             >
               {i === 0 ? t(i18n.news.filterAll) : cat}
@@ -131,16 +131,16 @@ export default function NewsPage() {
               <Placeholder label={featured.title} className="h-64 lg:h-auto" />
               <div className="p-8 lg:p-10 flex flex-col justify-center">
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="bg-[#c9a84c] text-[#0a0a0a] text-[10px] font-bold px-2 py-1 tracking-wider">
+                  <span className="bg-[#c9a84c] text-[#1C1A18] text-[10px] font-bold px-2 py-1 tracking-wider">
                     {featured.tag}
                   </span>
                   <span className="text-[#c9a84c] text-xs px-2 py-0.5 border border-[#c9a84c]/30">{t(i18n.news.topBadge)}</span>
                   <span className="text-[#AAAAAA] text-xs">{featured.date}</span>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-black text-[#1A1A1A] mb-4 leading-snug group-hover:text-[#c9a84c] transition-colors tracking-wider">
+                <h2 className="text-xl sm:text-2xl font-black text-[#2C2A28] mb-4 leading-snug group-hover:text-[#c9a84c] transition-colors tracking-wider">
                   {featured.title}
                 </h2>
-                <p className="text-[#666666] text-sm leading-relaxed mb-6">{featured.preview}</p>
+                <p className="text-[#6B6560] text-sm leading-relaxed mb-6">{featured.preview}</p>
                 <div className="flex items-center gap-2 text-[#c9a84c] text-sm">
                   <span>{t(i18n.news.readFull)}</span>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,10 +175,10 @@ export default function NewsPage() {
                   </span>
                   <span className="text-[#AAAAAA] text-xs">{item.date}</span>
                 </div>
-                <h3 className="text-[#1A1A1A] font-bold text-sm mb-2 leading-snug group-hover:text-[#c9a84c] transition-colors tracking-wider line-clamp-2">
+                <h3 className="text-[#2C2A28] font-bold text-sm mb-2 leading-snug group-hover:text-[#c9a84c] transition-colors tracking-wider line-clamp-2">
                   {item.title}
                 </h3>
-                <p className="text-[#888888] text-xs leading-relaxed line-clamp-3">{item.preview}</p>
+                <p className="text-[#6B6560] text-xs leading-relaxed line-clamp-3">{item.preview}</p>
                 <div className="mt-4 flex items-center gap-1 text-[#c9a84c]/60 text-xs group-hover:text-[#c9a84c] transition-colors">
                   <span>{t(i18n.news.readMore)}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -192,7 +192,7 @@ export default function NewsPage() {
 
         {/* Load more */}
         <div className="mt-10 text-center">
-          <button className="border border-[#D0CCC6] text-[#666666] text-sm px-8 py-3 hover:border-[#c9a84c]/40 hover:text-[#c9a84c] transition-colors tracking-wider">
+          <button className="border border-[#D0CCC6] text-[#6B6560] text-sm px-8 py-3 hover:border-[#c9a84c]/40 hover:text-[#c9a84c] transition-colors tracking-wider">
             {t(i18n.news.loadMore)}
           </button>
         </div>

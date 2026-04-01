@@ -99,7 +99,7 @@ export default function CasesPage() {
   const t = useT();
 
   return (
-    <main className="bg-white text-[#1A1A1A]">
+    <main className="bg-[#FAF7F2] text-[#2C2A28]">
       <Navbar />
 
       <PageHero
@@ -111,7 +111,7 @@ export default function CasesPage() {
       />
 
       {/* Stats bar */}
-      <div className="bg-white border-b border-[#c9a84c]/10">
+      <div className="bg-[#FAF7F2] border-b border-[#c9a84c]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex flex-wrap gap-8 justify-center">
             {[
@@ -122,7 +122,7 @@ export default function CasesPage() {
             ].map(([num, label]) => (
               <div key={label} className="text-center">
                 <div className="text-[#c9a84c] text-2xl font-black">{num}</div>
-                <div className="text-[#888888] text-xs tracking-wider">{label}</div>
+                <div className="text-[#6B6560] text-xs tracking-wider">{label}</div>
               </div>
             ))}
           </div>
@@ -146,7 +146,7 @@ export default function CasesPage() {
               className={`text-sm px-4 py-1.5 border tracking-wider transition-colors ${
                 i === 0
                   ? 'border-[#c9a84c] text-[#c9a84c] bg-[#c9a84c]/5'
-                  : 'border-[#D8D4CE] text-[#888888] hover:border-[#BBBBBB] hover:text-[#555555]'
+                  : 'border-[#D8D4CE] text-[#6B6560] hover:border-[#BBBBBB] hover:text-[#555555]'
               }`}
             >
               {tab}
@@ -186,8 +186,8 @@ export default function CasesPage() {
                           </span>
                         ))}
                       </div>
-                      <h3 className="text-xl font-black text-[#1A1A1A] tracking-wider mb-1">{c.name}</h3>
-                      <div className="flex items-center gap-3 text-sm text-[#888888]">
+                      <h3 className="text-xl font-black text-[#2C2A28] tracking-wider mb-1">{c.name}</h3>
+                      <div className="flex items-center gap-3 text-sm text-[#6B6560]">
                         <span>📍 {c.location}</span>
                         <span>·</span>
                         <span>{c.type}</span>
@@ -195,7 +195,7 @@ export default function CasesPage() {
                     </div>
                   </div>
 
-                  <p className="text-[#666666] text-sm leading-relaxed mb-5">{c.desc}</p>
+                  <p className="text-[#6B6560] text-sm leading-relaxed mb-5">{c.desc}</p>
 
                   {/* Project specs */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
@@ -230,20 +230,20 @@ export default function CasesPage() {
         {/* CTA */}
         <div className="mt-16 text-center p-12 border border-[#c9a84c]/15 bg-[#c9a84c]/3">
           <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3">{t(i18n.cases.ctaBadge)}</div>
-          <h2 className="text-2xl font-black text-[#1A1A1A] mb-3">{t(i18n.cases.ctaTitle)}</h2>
-          <p className="text-[#888888] text-sm mb-8 tracking-wider">
+          <h2 className="text-2xl font-black text-[#2C2A28] mb-3">{t(i18n.cases.ctaTitle)}</h2>
+          <p className="text-[#6B6560] text-sm mb-8 tracking-wider">
             {t(i18n.cases.ctaSubtitle)}
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <a
               href="/contact"
-              className="bg-[#c9a84c] text-[#0a0a0a] font-bold text-sm px-8 py-3 hover:bg-[#b8973b] transition-colors tracking-wider"
+              className="bg-[#c9a84c] text-[#1C1A18] font-bold text-sm px-8 py-3 hover:bg-[#b8973b] transition-colors tracking-wider"
             >
               {t(i18n.cases.ctaBtn1)}
             </a>
             <a
               href="tel:4008090303"
-              className="border border-[#999999] text-[#1A1A1A] text-sm px-8 py-3 hover:border-[#c9a84c] hover:text-[#c9a84c] transition-colors tracking-wider"
+              className="border border-[#999999] text-[#2C2A28] text-sm px-8 py-3 hover:border-[#c9a84c] hover:text-[#c9a84c] transition-colors tracking-wider"
             >
               400-8090-303
             </a>

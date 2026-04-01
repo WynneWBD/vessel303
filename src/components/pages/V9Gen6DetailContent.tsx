@@ -139,7 +139,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
   const active = GALLERY[activeIdx]!;
 
   return (
-    <div className="bg-[#0a0a0a] text-white min-h-screen">
+    <div className="bg-[#1C1A18] text-white min-h-screen">
 
       {/* ── Breadcrumb ──────────────────────────────────────────────────── */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-3">
@@ -259,7 +259,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                       <div key={g.id} className="border border-white/8">
                         <button
                           onClick={() => toggle(g.id)}
-                          className="w-full flex items-center justify-between px-4 py-3 bg-[#111] hover:bg-[#141414] transition-colors text-left"
+                          className="w-full flex items-center justify-between px-4 py-3 bg-[#221F1C] hover:bg-[#141414] transition-colors text-left"
                         >
                           <span className="text-sm font-semibold tracking-wider text-white/80">
                             {lang === 'en' ? g.en : g.cn}
@@ -467,7 +467,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
             <div className="grid grid-cols-2 gap-3">
               <Link
                 href="/contact"
-                className="py-3 text-center text-[11px] font-bold tracking-[0.2em] uppercase bg-[#c9a84c] text-[#0a0a0a] hover:bg-[#b8973d] transition-colors"
+                className="py-3 text-center text-[11px] font-bold tracking-[0.2em] uppercase bg-[#c9a84c] text-[#1C1A18] hover:bg-[#b8973d] transition-colors"
               >
                 {lang === 'en' ? 'Inquire Now' : '立即咨询'}
               </Link>
@@ -506,13 +506,13 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                       placeholder={lang === 'en' ? ph_en : ph_cn}
                       value={form[k]}
                       onChange={set(k)}
-                      className="w-full bg-[#0a0a0a] border border-white/10 px-3 py-2.5 text-[11px] text-white placeholder-white/20 outline-none focus:border-[#c9a84c]/40 tracking-wider"
+                      className="w-full bg-[#1C1A18] border border-white/10 px-3 py-2.5 text-[11px] text-white placeholder-white/20 outline-none focus:border-[#c9a84c]/40 tracking-wider"
                     />
                   ))}
                   <select
                     value={form.quantity}
                     onChange={set('quantity')}
-                    className="w-full bg-[#0a0a0a] border border-white/10 px-3 py-2.5 text-[11px] text-white/60 outline-none focus:border-[#c9a84c]/40 tracking-wider cursor-pointer"
+                    className="w-full bg-[#1C1A18] border border-white/10 px-3 py-2.5 text-[11px] text-white/60 outline-none focus:border-[#c9a84c]/40 tracking-wider cursor-pointer"
                   >
                     {['1', '2–5', '6–10', '11–20', '20+'].map(q => (
                       <option key={q} value={q} className="bg-[#111]">
@@ -525,7 +525,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                     placeholder={lang === 'en' ? 'Project description / requirements' : '项目描述 / 需求说明'}
                     value={form.remarks}
                     onChange={set('remarks')}
-                    className="w-full bg-[#0a0a0a] border border-white/10 px-3 py-2.5 text-[11px] text-white placeholder-white/20 outline-none focus:border-[#c9a84c]/40 tracking-wider resize-none"
+                    className="w-full bg-[#1C1A18] border border-white/10 px-3 py-2.5 text-[11px] text-white placeholder-white/20 outline-none focus:border-[#c9a84c]/40 tracking-wider resize-none"
                   />
                   {status === 'error' && (
                     <p className="text-red-400 text-[11px] tracking-wider">
@@ -535,7 +535,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                   <button
                     type="submit"
                     disabled={status === 'sending'}
-                    className="w-full py-3 bg-[#c9a84c] text-[#0a0a0a] text-[11px] font-bold tracking-[0.2em] uppercase hover:bg-[#b8973d] transition-colors disabled:opacity-50"
+                    className="w-full py-3 bg-[#c9a84c] text-[#1C1A18] text-[11px] font-bold tracking-[0.2em] uppercase hover:bg-[#b8973d] transition-colors disabled:opacity-50"
                   >
                     {status === 'sending'
                       ? (lang === 'en' ? 'Sending...' : '提交中...')
@@ -561,7 +561,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                 <Link
                   key={p.id}
                   href={p.detailSlug ? `/products/${p.detailSlug}` : `/products/${p.id}`}
-                  className="group block bg-[#111] border border-white/8 hover:border-[#c9a84c]/40 overflow-hidden transition-all duration-300"
+                  className="group block bg-[#221F1C] border border-white/8 hover:border-[#c9a84c]/40 overflow-hidden transition-all duration-300"
                 >
                   <div className="relative aspect-video overflow-hidden bg-[#0d0d0d]">
                     <Image
@@ -573,7 +573,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                       sizes="(max-width: 640px) 50vw, 25vw"
                     />
                     <div className="absolute bottom-2 left-2">
-                      <span className="text-[10px] font-bold px-2 py-0.5 bg-[#c9a84c] text-[#0a0a0a]">
+                      <span className="text-[10px] font-bold px-2 py-0.5 bg-[#c9a84c] text-[#1C1A18]">
                         {lang === 'en' ? p.badge_en : p.badge_cn}
                       </span>
                     </div>

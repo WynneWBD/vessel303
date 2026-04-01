@@ -31,7 +31,7 @@ export default function ContactPage() {
   ];
 
   return (
-    <main className="bg-white text-[#1A1A1A]">
+    <main className="bg-[#FAF7F2] text-[#2C2A28]">
       <Navbar />
 
       <PageHero
@@ -64,7 +64,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="text-[#999999] text-[10px] tracking-wider mb-1">{t(i18n.contact.phoneLabel)}</div>
-                    <a href="tel:4008090303" className="text-[#1A1A1A] font-bold tracking-wider hover:text-[#c9a84c] transition-colors">
+                    <a href="tel:4008090303" className="text-[#2C2A28] font-bold tracking-wider hover:text-[#c9a84c] transition-colors">
                       400-8090-303
                     </a>
                     <div className="text-[#AAAAAA] text-xs mt-0.5">{t(i18n.contact.workHours)}</div>
@@ -79,7 +79,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="text-[#999999] text-[10px] tracking-wider mb-1">{t(i18n.contact.waLabel)}</div>
-                    <a href="tel:+8618024176679" className="text-[#1A1A1A] font-bold tracking-wider hover:text-[#c9a84c] transition-colors">
+                    <a href="tel:+8618024176679" className="text-[#2C2A28] font-bold tracking-wider hover:text-[#c9a84c] transition-colors">
                       +86 180-2417-6679
                     </a>
                   </div>
@@ -132,7 +132,7 @@ export default function ContactPage() {
               <div className="grid grid-cols-2 gap-2">
                 {officeLocations.map((loc) => (
                   <div key={loc.city} className="flex items-center justify-between px-3 py-2 bg-white border border-[#F0EDE8] text-xs">
-                    <span className="text-[#666666] tracking-wider">{loc.city}</span>
+                    <span className="text-[#6B6560] tracking-wider">{loc.city}</span>
                     <span
                       className={`text-[10px] px-1.5 py-0.5 ${
                         loc.status === 'operating'
@@ -153,7 +153,7 @@ export default function ContactPage() {
         <div className="mt-20">
           <div className="text-center mb-10">
             <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.contact.faqLabel)}</div>
-            <h2 className="text-2xl font-black text-[#1A1A1A]">{t(i18n.contact.faqTitle)}</h2>
+            <h2 className="text-2xl font-black text-[#2C2A28]">{t(i18n.contact.faqTitle)}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {faqs.map((faq, i) => (
@@ -161,8 +161,8 @@ export default function ContactPage() {
                 <div className="flex items-start gap-3">
                   <span className="text-[#c9a84c] font-black text-lg shrink-0 leading-none mt-0.5">Q</span>
                   <div>
-                    <div className="text-[#1A1A1A] font-semibold text-sm mb-2 tracking-wider">{faq.q}</div>
-                    <div className="text-[#666666] text-sm leading-relaxed">{faq.a}</div>
+                    <div className="text-[#2C2A28] font-semibold text-sm mb-2 tracking-wider">{faq.q}</div>
+                    <div className="text-[#6B6560] text-sm leading-relaxed">{faq.a}</div>
                   </div>
                 </div>
               </div>

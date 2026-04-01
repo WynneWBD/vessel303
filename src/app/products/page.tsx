@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function ProductsPage() {
   return (
-    <main className="bg-[#0a0a0a] text-white">
+    <main className="bg-[#1C1A18] text-white">
       <Navbar />
       <ProductsPageContent products={catalogProducts} />
       <Footer />

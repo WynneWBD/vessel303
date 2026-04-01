@@ -86,7 +86,7 @@ function GridCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
         </div>
         {/* Bottom-left: Badge */}
         <div className="absolute bottom-3 left-3">
-          <span className="text-[10px] font-bold px-2.5 py-1 bg-[#c9a84c] text-[#0a0a0a] tracking-wider">
+          <span className="text-[10px] font-bold px-2.5 py-1 bg-[#c9a84c] text-[#1C1A18] tracking-wider">
             {badge}
           </span>
         </div>
@@ -145,7 +145,7 @@ function GridCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
           {/* CTA */}
           <Link
             href={href}
-            className="block text-center text-xs py-2.5 font-semibold tracking-wider bg-white text-[#c9a84c] border border-[#c9a84c]/30 hover:bg-[#c9a84c] hover:text-[#0a0a0a] transition-all duration-200"
+            className="block text-center text-xs py-2.5 font-semibold tracking-wider bg-white text-[#c9a84c] border border-[#c9a84c]/30 hover:bg-[#c9a84c] hover:text-[#1C1A18] transition-all duration-200"
           >
             {t(i18n.products.viewDetails)}
           </Link>
@@ -174,7 +174,7 @@ function ListCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
           sizes="240px"
         />
         <div className="absolute bottom-2 left-2">
-          <span className="text-[10px] font-bold px-2 py-1 bg-[#c9a84c] text-[#0a0a0a] tracking-wider">
+          <span className="text-[10px] font-bold px-2 py-1 bg-[#c9a84c] text-[#1C1A18] tracking-wider">
             {badge}
           </span>
         </div>
@@ -235,7 +235,7 @@ function ListCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
           </div>
           <Link
             href={href}
-            className="text-xs px-5 py-2 font-semibold tracking-wider bg-white text-[#c9a84c] border border-[#c9a84c]/30 hover:bg-[#c9a84c] hover:text-[#0a0a0a] transition-all duration-200"
+            className="text-xs px-5 py-2 font-semibold tracking-wider bg-white text-[#c9a84c] border border-[#c9a84c]/30 hover:bg-[#c9a84c] hover:text-[#1C1A18] transition-all duration-200"
           >
             {t(i18n.products.viewDetails)}
           </Link>
@@ -347,7 +347,7 @@ export default function ProductsPageContent({ products }: Props) {
                 onClick={() => setSeriesFilter(s)}
                 className={`shrink-0 text-xs font-bold px-3 py-1.5 tracking-widest border transition-all duration-150 ${
                   seriesFilter === s
-                    ? 'bg-[#c9a84c] text-[#0a0a0a] border-[#c9a84c]'
+                    ? 'bg-[#c9a84c] text-[#1C1A18] border-[#c9a84c]'
                     : 'bg-transparent text-[#c9a84c]/80 border-[#c9a84c]/40 hover:border-[#c9a84c] hover:text-[#c9a84c]'
                 }`}
               >
@@ -391,7 +391,7 @@ export default function ProductsPageContent({ products }: Props) {
               <button
                 onClick={() => setViewMode('grid')}
                 title={t(i18n.products.gridView)}
-                className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-[#c9a84c] text-[#0a0a0a]' : 'text-[#888888] hover:text-[#444444]'}`}
+                className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-[#c9a84c] text-[#1C1A18]' : 'text-[#888888] hover:text-[#444444]'}`}
               >
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16">
                   <rect x="0" y="0" width="6" height="6" /><rect x="10" y="0" width="6" height="6" />
@@ -401,7 +401,7 @@ export default function ProductsPageContent({ products }: Props) {
               <button
                 onClick={() => setViewMode('list')}
                 title={t(i18n.products.listView)}
-                className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-[#c9a84c] text-[#0a0a0a]' : 'text-[#888888] hover:text-[#444444]'}`}
+                className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-[#c9a84c] text-[#1C1A18]' : 'text-[#888888] hover:text-[#444444]'}`}
               >
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16">
                   <rect x="0" y="0" width="16" height="3" /><rect x="0" y="6" width="16" height="3" />

@@ -214,7 +214,7 @@ export default async function ScenarioPage({
   const otherScenarios = scenarios.filter((s) => s.slug !== scenario.slug);
 
   return (
-    <main className="bg-[#0a0a0a] text-white">
+    <main className="bg-[#1C1A18] text-white">
       <Navbar />
 
       <PageHero
@@ -255,7 +255,7 @@ export default async function ScenarioPage({
       </section>
 
       {/* ── Features ── */}
-      <section className="py-20 bg-[#080808] border-b border-white/5">
+      <section className="py-20 bg-[#151310] border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div
@@ -306,9 +306,9 @@ export default async function ScenarioPage({
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               {scenario.process.map((step) => (
-                <div key={step.step} className="relative bg-[#111] border border-white/8 p-5 text-center group">
+                <div key={step.step} className="relative bg-[#221F1C] border border-white/8 p-5 text-center group">
                   <div
-                    className="w-14 h-14 rounded-full flex items-center justify-center font-black text-lg mx-auto mb-4 border-2 bg-[#0a0a0a]"
+                    className="w-14 h-14 rounded-full flex items-center justify-center font-black text-lg mx-auto mb-4 border-2 bg-[#1C1A18]"
                     style={{ borderColor: scenario.accentColor, color: scenario.accentColor }}
                   >
                     {step.step}
@@ -323,7 +323,7 @@ export default async function ScenarioPage({
       </section>
 
       {/* ── Recommended Products ── */}
-      <section className="py-16 bg-[#080808] border-b border-white/5">
+      <section className="py-16 bg-[#151310] border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
             <div
@@ -403,7 +403,7 @@ export default async function ScenarioPage({
               <Link
                 key={s.slug}
                 href={`/scenarios/${s.slug}`}
-                className="group flex items-center gap-4 p-6 bg-[#111] border border-white/8 hover:border-[#c9a84c]/30 transition-all"
+                className="group flex items-center gap-4 p-6 bg-[#221F1C] border border-white/8 hover:border-[#c9a84c]/30 transition-all"
               >
                 <div
                   className="w-12 h-12 flex items-center justify-center shrink-0 text-lg font-black"
@@ -427,7 +427,7 @@ export default async function ScenarioPage({
       </section>
 
       {/* ── CTA ── */}
-      <div className="border-t border-white/5 bg-[#080808] py-16">
+      <div className="border-t border-white/5 bg-[#151310] py-16">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <div
             className="text-xs tracking-[0.3em] uppercase mb-4 font-medium"
@@ -445,7 +445,7 @@ export default async function ScenarioPage({
             <Link
               href="/contact"
               className="text-sm font-bold px-8 py-3 tracking-wider transition-colors"
-              style={{ background: scenario.accentColor, color: '#0a0a0a' }}
+              style={{ background: scenario.accentColor, color: '#1C1A18' }}
             >
               立即咨询方案
             </Link>

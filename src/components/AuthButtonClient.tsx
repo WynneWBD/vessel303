@@ -19,7 +19,7 @@ export default function AuthButtonClient({ name, roleLabel, initial }: Props) {
         className="flex items-center gap-2 group"
       >
         {/* Avatar */}
-        <div className="w-7 h-7 bg-[#c9a84c] text-[#0a0a0a] flex items-center justify-center text-xs font-black">
+        <div className="w-7 h-7 bg-[#c9a84c] text-[#1C1A18] flex items-center justify-center text-xs font-black">
           {initial}
         </div>
         <div className="hidden sm:block text-left">

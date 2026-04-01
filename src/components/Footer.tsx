@@ -50,7 +50,7 @@ export default function Footer() {
   ];
 
   return (
-    <footer id="contact" className="bg-[#060606] border-t border-[#c9a84c]/15">
+    <footer id="contact" className="bg-[#1C1A18] border-t border-[#c9a84c]/15">
       {/* CTA bar */}
       <div className="bg-[#c9a84c]/5 border-b border-[#c9a84c]/15 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -65,7 +65,7 @@ export default function Footer() {
           <div className="flex gap-3">
             <a
               href="tel:4008090303"
-              className="bg-[#c9a84c] text-[#0a0a0a] font-bold text-sm px-6 py-3 hover:bg-[#b8973b] transition-colors tracking-wider"
+              className="bg-[#c9a84c] text-[#1C1A18] font-bold text-sm px-6 py-3 hover:bg-[#b8973b] transition-colors tracking-wider"
             >
               {t(i18n.footer.phoneBtn)}
             </a>

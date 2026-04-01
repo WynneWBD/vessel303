@@ -8,7 +8,7 @@ export default function LanguageToggle() {
       <button
         onClick={() => setLang('en')}
         className={`px-2.5 py-1.5 transition-all duration-150 ${
-          lang === 'en' ? 'bg-[#c9a84c] text-[#0a0a0a] font-bold' : 'text-white/40 hover:text-white/70'
+          lang === 'en' ? 'bg-[#c9a84c] text-[#1C1A18] font-bold' : 'text-white/40 hover:text-white/70'
         }`}
       >
         EN
@@ -17,7 +17,7 @@ export default function LanguageToggle() {
       <button
         onClick={() => setLang('zh')}
         className={`px-2.5 py-1.5 transition-all duration-150 ${
-          lang === 'zh' ? 'bg-[#c9a84c] text-[#0a0a0a] font-bold' : 'text-white/40 hover:text-white/70'
+          lang === 'zh' ? 'bg-[#c9a84c] text-[#1C1A18] font-bold' : 'text-white/40 hover:text-white/70'
         }`}
       >
         中

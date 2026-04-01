@@ -40,7 +40,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
           className="object-cover object-center"
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1C1A18] via-[#1C1A18]/50 to-transparent" />
 
         {/* Breadcrumb */}
         <div className="absolute top-6 left-0 right-0">
@@ -63,7 +63,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
         <div className="absolute bottom-8 left-0 right-0">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-[10px] font-bold px-2.5 py-1 bg-[#c9a84c] text-[#0a0a0a] tracking-wider">
+              <span className="text-[10px] font-bold px-2.5 py-1 bg-[#c9a84c] text-[#1C1A18] tracking-wider">
                 {badge}
               </span>
               {product.isCustom && (
@@ -194,7 +194,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
             {/* CTA */}
             <Link
               href="/contact"
-              className="block text-center py-4 font-bold tracking-[0.2em] uppercase text-sm bg-[#c9a84c] text-[#0a0a0a] hover:bg-[#b8973d] transition-colors duration-200"
+              className="block text-center py-4 font-bold tracking-[0.2em] uppercase text-sm bg-[#c9a84c] text-[#1C1A18] hover:bg-[#b8973d] transition-colors duration-200"
             >
               {t(i18n.productDetail.inquireBtn)}
             </Link>

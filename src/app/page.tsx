@@ -13,9 +13,10 @@ import { i18n } from '@/lib/i18n';
 function HeroSection() {
   const t = useT();
   return (
+    <>
     <section
       id="hero"
-      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#0a0a0a] hero-grid"
+      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1C1A18] hero-grid"
     >
       {/* Real hero background image */}
       <Image
@@ -27,7 +28,7 @@ function HeroSection() {
         sizes="100vw"
       />
       {/* Dark overlay so text remains readable */}
-      <div className="absolute inset-0 bg-[#0a0a0a]/75 pointer-events-none" />
+      <div className="absolute inset-0 bg-[#1C1A18]/75 pointer-events-none" />
       {/* Gold ambient glow */}
       <div
         className="absolute inset-0 pointer-events-none"
@@ -93,7 +94,7 @@ function HeroSection() {
             <div className="text-white/50 text-xs mb-4 tracking-wider">{t(i18n.home.b2bSub)}</div>
             <a
               href="#procurement"
-              className="inline-flex items-center gap-2 bg-[#c9a84c] text-[#0a0a0a] text-sm font-bold px-6 py-2.5 hover:bg-[#b8973b] transition-colors tracking-wider"
+              className="inline-flex items-center gap-2 bg-[#c9a84c] text-[#1C1A18] text-sm font-bold px-6 py-2.5 hover:bg-[#b8973b] transition-colors tracking-wider"
             >
               {t(i18n.home.b2bBtn)}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,6 +128,9 @@ function HeroSection() {
         <div className="w-px h-8 bg-gradient-to-b from-white to-transparent animate-pulse" />
       </div>
     </section>
+    {/* Hero → content gradient transition */}
+    <div className="h-20 bg-gradient-to-b from-[#1C1A18] to-[#FAF7F2]" />
+    </>
   );
 }
 
@@ -143,14 +147,14 @@ function CertificationsSection() {
   ];
 
   return (
-    <section id="certifications" className="py-20 bg-[#F8F6F2] border-t border-[#c9a84c]/10">
+    <section id="certifications" className="py-20 bg-[#FAF7F2] border-t border-[#c9a84c]/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.home.certLabel)}</div>
-          <h2 className="text-3xl sm:text-4xl font-black text-[#1A1A1A] mb-3">
+          <h2 className="text-3xl sm:text-4xl font-black text-[#2C2A28] mb-3">
             {t(i18n.home.certTitle)}
           </h2>
-          <p className="text-[#888888] text-sm tracking-wider max-w-xl mx-auto">
+          <p className="text-[#6B6560] text-sm tracking-wider max-w-xl mx-auto">
             {t(i18n.home.certSubtitle)}
           </p>
         </div>
@@ -171,8 +175,8 @@ function CertificationsSection() {
               <div className="text-[#c9a84c] text-[10px] tracking-[0.2em] uppercase mb-1 font-medium">
                 {cert.region}
               </div>
-              <div className="text-[#1A1A1A] text-lg font-bold mb-1 tracking-wider">{cert.name}</div>
-              <div className="text-[#666666] text-xs mb-3 leading-relaxed">{cert.desc}</div>
+              <div className="text-[#2C2A28] text-lg font-bold mb-1 tracking-wider">{cert.name}</div>
+              <div className="text-[#6B6560] text-xs mb-3 leading-relaxed">{cert.desc}</div>
               <div
                 className="inline-block text-[10px] px-2 py-1 font-mono tracking-wider border"
                 style={{ color: cert.color, borderColor: `${cert.color}40` }}
@@ -200,7 +204,7 @@ function CertificationsSection() {
             {t(i18n.home.certHighlight).split(' — ')[0]}
           </span>
           <span className="hidden sm:block text-[#BBBBBB]">|</span>
-          <span className="text-[#666666] text-sm tracking-wider">
+          <span className="text-[#6B6560] text-sm tracking-wider">
             {t(i18n.home.certHighlight).split(' — ')[1]}
           </span>
         </div>
@@ -241,10 +245,10 @@ function ProductsSection() {
 
         <div className="text-center mb-16">
           <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.home.productsLabel)}</div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#1A1A1A] mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#2C2A28] mb-4">
             {t(i18n.home.productsTitle)}
           </h2>
-          <p className="text-[#888888] text-sm tracking-wider max-w-2xl mx-auto">
+          <p className="text-[#6B6560] text-sm tracking-wider max-w-2xl mx-auto">
             {t(i18n.home.productsSubtitle)}
           </p>
         </div>
@@ -285,7 +289,7 @@ function ProductsSection() {
                   </span>
                 </div>
                 <div className="absolute top-3 right-3">
-                  <span className="text-[10px] font-bold px-2 py-1 tracking-wider bg-[#c9a84c]/90 text-[#0a0a0a]">
+                  <span className="text-[10px] font-bold px-2 py-1 tracking-wider bg-[#c9a84c]/90 text-[#1C1A18]">
                     {product.badge}
                   </span>
                 </div>
@@ -306,15 +310,15 @@ function ProductsSection() {
               <div className="p-6 flex flex-col flex-1">
                 <div className="mb-3">
                   <div className="text-[#c9a84c] text-[10px] tracking-[0.25em] uppercase mb-1">{product.model} · {product.size}</div>
-                  <h3 className="text-[#1A1A1A] text-xl font-bold tracking-wide">{product.title}</h3>
+                  <h3 className="text-[#2C2A28] text-xl font-bold tracking-wide">{product.title}</h3>
                 </div>
 
-                <p className="text-[#666666] text-sm leading-relaxed mb-4 flex-1">{product.desc}</p>
+                <p className="text-[#6B6560] text-sm leading-relaxed mb-4 flex-1">{product.desc}</p>
 
                 {/* Features */}
                 <ul className="grid grid-cols-2 gap-1.5 mb-5">
                   {product.features.map((f) => (
-                    <li key={f} className="flex items-center gap-1.5 text-xs text-[#666666]">
+                    <li key={f} className="flex items-center gap-1.5 text-xs text-[#6B6560]">
                       <span style={{ color: product.accentColor }} className="text-[10px]">▸</span>
                       {f}
                     </li>
@@ -335,7 +339,7 @@ function ProductsSection() {
                   </a>
                   <a
                     href="#products"
-                    className="flex-1 text-center border border-[#D8D4CE] text-[#555555] text-sm py-2.5 hover:border-[#BBBBBB] hover:text-[#1A1A1A] transition-all duration-200 tracking-wider"
+                    className="flex-1 text-center border border-[#D8D4CE] text-[#555555] text-sm py-2.5 hover:border-[#BBBBBB] hover:text-[#2C2A28] transition-all duration-200 tracking-wider"
                   >
                     {t(i18n.home.learnMore)}
                   </a>
@@ -366,7 +370,7 @@ function StatsSection() {
       id="stats"
       className="py-20 relative overflow-hidden"
       style={{
-        background: 'linear-gradient(180deg, #F8F6F2 0%, #F2EFE8 50%, #F8F6F2 100%)',
+        background: 'linear-gradient(180deg, #FAF7F2 0%, #F2EFE8 50%, #FAF7F2 100%)',
       }}
     >
       {/* Gold horizontal lines */}
@@ -390,8 +394,8 @@ function StatsSection() {
                   <span className="text-xl sm:text-2xl font-bold text-[#c9a84c]/80 mb-1">{stat.unit}</span>
                 )}
               </div>
-              <div className="text-[#1A1A1A] font-semibold tracking-wider mb-1 text-sm sm:text-base">{stat.label}</div>
-              <div className="text-[#888888] text-xs tracking-wider">{stat.sub}</div>
+              <div className="text-[#2C2A28] font-semibold tracking-wider mb-1 text-sm sm:text-base">{stat.label}</div>
+              <div className="text-[#6B6560] text-xs tracking-wider">{stat.sub}</div>
             </div>
           ))}
         </div>
@@ -448,15 +452,15 @@ function ScenariosSection() {
   ];
 
   return (
-    <section id="cases" className="py-24 bg-[#F8F6F2]">
+    <section id="cases" className="py-24 bg-[#FAF7F2]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div className="text-center mb-16">
           <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.home.scenariosLabel)}</div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#1A1A1A] mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#2C2A28] mb-4">
             {t(i18n.home.scenariosTitle)}
           </h2>
-          <p className="text-[#888888] text-sm tracking-wider max-w-2xl mx-auto">
+          <p className="text-[#6B6560] text-sm tracking-wider max-w-2xl mx-auto">
             {t(i18n.home.scenariosSubtitle)}
           </p>
         </div>
@@ -479,8 +483,8 @@ function ScenariosSection() {
                 <div className="text-[#c9a84c] text-[10px] tracking-[0.2em] uppercase mb-1 font-medium">
                   {scene.subtitle}
                 </div>
-                <h3 className="text-[#1A1A1A] text-2xl font-bold mb-3 tracking-wide">{scene.title}</h3>
-                <p className="text-[#666666] text-sm leading-relaxed mb-5">{scene.desc}</p>
+                <h3 className="text-[#2C2A28] text-2xl font-bold mb-3 tracking-wide">{scene.title}</h3>
+                <p className="text-[#6B6560] text-sm leading-relaxed mb-5">{scene.desc}</p>
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-2">
@@ -522,12 +526,12 @@ function AboutSection() {
 
           <div>
             <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-4 font-medium">{t(i18n.home.aboutLabel)}</div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#1A1A1A] mb-6 leading-tight">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#2C2A28] mb-6 leading-tight">
               {t(i18n.home.slogan)}
               <br />
               <span className="text-gold-gradient">{t(i18n.home.aboutTitle)}</span>
             </h2>
-            <p className="text-[#666666] text-sm leading-loose mb-6">
+            <p className="text-[#6B6560] text-sm leading-loose mb-6">
               {t(i18n.home.aboutDesc)}
             </p>
           </div>
@@ -601,10 +605,10 @@ function InnovationSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-14">
           <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.home.innovLabel)}</div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#1A1A1A] mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#2C2A28] mb-4">
             {t(i18n.home.innovTitle)}
           </h2>
-          <p className="text-[#888888] text-sm tracking-wider max-w-xl mx-auto">
+          <p className="text-[#6B6560] text-sm tracking-wider max-w-xl mx-auto">
             {t(i18n.home.innovSubtitle)}
           </p>
         </div>
@@ -626,8 +630,8 @@ function InnovationSection() {
               >
                 {item.tag}
               </div>
-              <h3 className="text-[#1A1A1A] text-xl font-bold mb-3 tracking-wide">{item.title}</h3>
-              <p className="text-[#666666] text-sm leading-relaxed mb-5">{item.desc}</p>
+              <h3 className="text-[#2C2A28] text-xl font-bold mb-3 tracking-wide">{item.title}</h3>
+              <p className="text-[#6B6560] text-sm leading-relaxed mb-5">{item.desc}</p>
 
               <Link
                 href={item.link}
@@ -674,12 +678,12 @@ function NewsPreviewSection() {
   ];
 
   return (
-    <section className="py-20 bg-[#F8F6F2] border-t border-[#F0EDE8]">
+    <section className="py-20 bg-[#FAF7F2] border-t border-[#F0EDE8]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-10">
           <div>
             <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-2 font-medium">{t(i18n.home.aboutLabel)}</div>
-            <h2 className="text-2xl sm:text-3xl font-black text-[#1A1A1A]">{t(i18n.nav.news)}</h2>
+            <h2 className="text-2xl sm:text-3xl font-black text-[#2C2A28]">{t(i18n.nav.news)}</h2>
           </div>
           <Link
             href="/news"
@@ -709,10 +713,10 @@ function NewsPreviewSection() {
                   </span>
                   <span className="text-[#AAAAAA] text-xs">{item.date}</span>
                 </div>
-                <h3 className="text-[#1A1A1A] font-bold text-sm mb-2 leading-snug group-hover:text-[#c9a84c] transition-colors tracking-wider">
+                <h3 className="text-[#2C2A28] font-bold text-sm mb-2 leading-snug group-hover:text-[#c9a84c] transition-colors tracking-wider">
                   {item.title}
                 </h3>
-                <p className="text-[#888888] text-xs leading-relaxed line-clamp-2">{item.preview}</p>
+                <p className="text-[#6B6560] text-xs leading-relaxed line-clamp-2">{item.preview}</p>
               </div>
             </Link>
           ))}
@@ -732,7 +736,7 @@ function NewsPreviewSection() {
 ───────────────────────────────────────────── */
 export default function Home() {
   return (
-    <main className="bg-white text-[#1A1A1A]">
+    <main className="bg-[#FAF7F2] text-[#2C2A28]">
       <Navbar />
       <HeroSection />
       <CertificationsSection />

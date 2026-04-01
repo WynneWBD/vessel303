@@ -67,7 +67,7 @@ export default function AboutPage() {
   ];
 
   return (
-    <main className="bg-white text-[#1A1A1A]">
+    <main className="bg-[#FAF7F2] text-[#2C2A28]">
       <Navbar />
 
       <PageHero
@@ -84,14 +84,14 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
               <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-4 font-medium">{t(i18n.about.missionLabel)}</div>
-              <h2 className="text-3xl sm:text-4xl font-black text-[#1A1A1A] mb-6 leading-tight">
+              <h2 className="text-3xl sm:text-4xl font-black text-[#2C2A28] mb-6 leading-tight">
                 {t(i18n.about.missionTitle1)}<br />
                 <span className="text-gold-gradient">{t(i18n.about.missionTitle2)}</span>
               </h2>
-              <p className="text-[#666666] text-sm leading-loose mb-4">
+              <p className="text-[#6B6560] text-sm leading-loose mb-4">
                 {t(i18n.about.missionMain)}
               </p>
-              <p className="text-[#666666] text-sm leading-loose mb-8">
+              <p className="text-[#6B6560] text-sm leading-loose mb-8">
                 {t(i18n.about.missionSub)}
               </p>
               <div className="grid grid-cols-2 gap-3">
@@ -105,7 +105,7 @@ export default function AboutPage() {
                 ].map((item) => (
                   <div key={item.l} className="bg-white border border-[#E8E4DE] p-4">
                     <div className="text-[#c9a84c] text-xl font-black mb-0.5">{item.v}</div>
-                    <div className="text-[#888888] text-xs tracking-wider">{item.l}</div>
+                    <div className="text-[#6B6560] text-xs tracking-wider">{item.l}</div>
                   </div>
                 ))}
               </div>
@@ -122,11 +122,11 @@ export default function AboutPage() {
       </section>
 
       {/* ── R&D Capability ── */}
-      <section className="py-20 bg-[#F8F6F2] border-b border-[#F0EDE8]">
+      <section className="py-20 bg-[#FAF7F2] border-b border-[#F0EDE8]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.about.rdLabel)}</div>
-            <h2 className="text-3xl font-black text-[#1A1A1A]">{t(i18n.about.rdTitle)}</h2>
+            <h2 className="text-3xl font-black text-[#2C2A28]">{t(i18n.about.rdTitle)}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
@@ -148,8 +148,8 @@ export default function AboutPage() {
             ].map((item) => (
               <div key={item.title} className="bg-white border border-[#E8E4DE] p-8 text-center">
                 <div className="text-4xl mb-4">{item.icon}</div>
-                <h3 className="text-[#1A1A1A] font-bold text-lg mb-3 tracking-wider">{item.title}</h3>
-                <p className="text-[#666666] text-sm leading-relaxed">{item.desc}</p>
+                <h3 className="text-[#2C2A28] font-bold text-lg mb-3 tracking-wider">{item.title}</h3>
+                <p className="text-[#6B6560] text-sm leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -161,7 +161,7 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.about.timelineLabel)}</div>
-            <h2 className="text-3xl font-black text-[#1A1A1A]">{t(i18n.about.timelineTitle)}</h2>
+            <h2 className="text-3xl font-black text-[#2C2A28]">{t(i18n.about.timelineTitle)}</h2>
           </div>
           <div className="relative">
             {/* Vertical line */}
@@ -195,12 +195,12 @@ export default function AboutPage() {
       </section>
 
       {/* ── Global Layout ── */}
-      <section className="py-20 bg-[#F8F6F2] border-b border-[#F0EDE8]">
+      <section className="py-20 bg-[#FAF7F2] border-b border-[#F0EDE8]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.about.globalLabel)}</div>
-            <h2 className="text-3xl font-black text-[#1A1A1A] mb-3">{t(i18n.about.globalTitle)}</h2>
-            <p className="text-[#888888] text-sm tracking-wider max-w-xl mx-auto">
+            <h2 className="text-3xl font-black text-[#2C2A28] mb-3">{t(i18n.about.globalTitle)}</h2>
+            <p className="text-[#6B6560] text-sm tracking-wider max-w-xl mx-auto">
               {t(i18n.about.globalSubtitle)}
             </p>
           </div>
@@ -213,7 +213,7 @@ export default function AboutPage() {
             ))}
           </div>
           <div className="p-6 border border-[#c9a84c]/15 bg-[#c9a84c]/3 text-center">
-            <div className="text-[#666666] text-sm tracking-wider">
+            <div className="text-[#6B6560] text-sm tracking-wider">
               {t(i18n.about.globalOfficesNote)}
             </div>
           </div>
@@ -225,7 +225,7 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.about.honorsLabel)}</div>
-            <h2 className="text-3xl font-black text-[#1A1A1A]">{t(i18n.about.honorsTitle)}</h2>
+            <h2 className="text-3xl font-black text-[#2C2A28]">{t(i18n.about.honorsTitle)}</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {honors.map((honor) => (
@@ -235,7 +235,7 @@ export default function AboutPage() {
                     <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <p className="text-[#666666] text-xs leading-relaxed group-hover:text-[#444444] transition-colors">{honor}</p>
+                <p className="text-[#6B6560] text-xs leading-relaxed group-hover:text-[#444444] transition-colors">{honor}</p>
               </div>
             ))}
           </div>
@@ -243,18 +243,18 @@ export default function AboutPage() {
       </section>
 
       {/* ── Partners ── */}
-      <section className="py-20 bg-[#F8F6F2] border-b border-[#F0EDE8]">
+      <section className="py-20 bg-[#FAF7F2] border-b border-[#F0EDE8]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.about.partnersLabel)}</div>
-            <h2 className="text-3xl font-black text-[#1A1A1A]">{t(i18n.about.partnersTitle)}</h2>
+            <h2 className="text-3xl font-black text-[#2C2A28]">{t(i18n.about.partnersTitle)}</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {partners.map((p) => (
               <div key={p.name} className="bg-white border border-[#E8E4DE] p-6 text-center">
                 <Placeholder label={`${p.name} Logo`} className="w-24 h-10 mx-auto mb-4" />
-                <div className="text-[#1A1A1A] font-bold tracking-wider mb-1">{p.name}</div>
-                <div className="text-[#888888] text-xs">{p.desc}</div>
+                <div className="text-[#2C2A28] font-bold tracking-wider mb-1">{p.name}</div>
+                <div className="text-[#6B6560] text-xs">{p.desc}</div>
               </div>
             ))}
           </div>
@@ -266,14 +266,14 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.about.founderLabel)}</div>
-            <h2 className="text-3xl font-black text-[#1A1A1A]">{t(i18n.about.founderTitle)}</h2>
+            <h2 className="text-3xl font-black text-[#2C2A28]">{t(i18n.about.founderTitle)}</h2>
           </div>
           <div className="max-w-3xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
               <Placeholder label="王帅斌 创始人照片" className="aspect-[3/4]" />
               <div className="md:col-span-2">
                 <div className="text-[#c9a84c] font-bold text-lg mb-1 tracking-wider">{t(i18n.about.founderTitle)}</div>
-                <div className="text-[#888888] text-sm mb-5 tracking-wider">{t(i18n.about.founderRole)}</div>
+                <div className="text-[#6B6560] text-sm mb-5 tracking-wider">{t(i18n.about.founderRole)}</div>
                 <ul className="space-y-2 mb-5">
                   {founderCreds.map((item) => (
                     <li key={item} className="flex items-center gap-2 text-[#555555] text-sm">
@@ -282,7 +282,7 @@ export default function AboutPage() {
                     </li>
                   ))}
                 </ul>
-                <p className="text-[#888888] text-sm leading-relaxed">
+                <p className="text-[#6B6560] text-sm leading-relaxed">
                   {t(i18n.about.founderBio)}
                 </p>
               </div>

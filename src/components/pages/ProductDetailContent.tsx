@@ -29,7 +29,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
           sizes="100vw"
         />
         {/* Dark gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/60 to-[#0a0a0a]/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1C1A18] via-[#1C1A18]/60 to-[#1C1A18]/20" />
         {/* Gold glow */}
         <div
           className="absolute inset-0 pointer-events-none"
@@ -89,7 +89,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
           <div className="flex items-center gap-3">
             <span
               className="text-xs px-3 py-1 font-bold tracking-wider"
-              style={{ background: `${product.accentColor}`, color: '#0a0a0a' }}
+              style={{ background: `${product.accentColor}`, color: '#1C1A18' }}
             >
               {product.badge}
             </span>
@@ -101,7 +101,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
             <Link
               href="/contact"
               className="text-sm font-bold px-6 py-2.5 tracking-wider transition-colors"
-              style={{ background: product.accentColor, color: '#0a0a0a' }}
+              style={{ background: product.accentColor, color: '#1C1A18' }}
             >
               {t(i18n.productDetail.inquireBtn)}
             </Link>
@@ -133,7 +133,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
                   </div>
                   <Link
                     href="/login"
-                    className="text-xs px-4 py-2 border border-[#c9a84c]/40 text-[#c9a84c] hover:bg-[#c9a84c] hover:text-[#0a0a0a] transition-all tracking-wider"
+                    className="text-xs px-4 py-2 border border-[#c9a84c]/40 text-[#c9a84c] hover:bg-[#c9a84c] hover:text-[#1C1A18] transition-all tracking-wider"
                   >
                     {t(i18n.productDetail.loginToView)}
                   </Link>
@@ -302,7 +302,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
             <Link
               href="/contact"
               className="text-sm font-bold px-8 py-3 tracking-wider transition-colors"
-              style={{ background: product.accentColor, color: '#0a0a0a' }}
+              style={{ background: product.accentColor, color: '#1C1A18' }}
             >
               {t(i18n.productDetail.inquireBtn)}
             </Link>

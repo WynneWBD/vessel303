@@ -8,7 +8,8 @@ interface PageHeroProps {
 
 export default function PageHero({ label, title, titleGold, subtitle, breadcrumb }: PageHeroProps) {
   return (
-    <section className="relative pt-32 pb-20 bg-[#0a0a0a] overflow-hidden">
+    <>
+    <section className="relative pt-32 pb-20 bg-[#1C1A18] overflow-hidden">
       {/* Grid */}
       <div
         className="absolute inset-0 pointer-events-none hero-grid opacity-60"
@@ -21,7 +22,7 @@ export default function PageHero({ label, title, titleGold, subtitle, breadcrumb
         }}
       />
       {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#0a0a0a] to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#1C1A18] to-transparent pointer-events-none" />
 
       {/* Corner accents */}
       <div className="absolute top-24 left-6 w-10 h-10 border-t border-l border-[#c9a84c]/25" />
@@ -72,5 +73,8 @@ export default function PageHero({ label, title, titleGold, subtitle, breadcrumb
         <div className="mt-8 w-16 h-0.5 bg-gradient-to-r from-[#c9a84c] to-transparent" />
       </div>
     </section>
+    {/* Hero → content gradient transition */}
+    <div className="h-20 bg-gradient-to-b from-[#1C1A18] to-[#FAF7F2]" />
+    </>
   );
 }

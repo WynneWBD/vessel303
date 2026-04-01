@@ -25,7 +25,7 @@ export default function AuthButton() {
     return (
       <Link
         href="/login"
-        className="text-sm px-4 py-2 border border-[#c9a84c]/50 text-[#c9a84c] hover:bg-[#c9a84c] hover:text-[#0a0a0a] transition-all duration-200 tracking-wider font-medium"
+        className="text-sm px-4 py-2 border border-[#c9a84c]/50 text-[#c9a84c] hover:bg-[#c9a84c] hover:text-[#1C1A18] transition-all duration-200 tracking-wider font-medium"
       >
         {t(i18n.nav.signIn)}
       </Link>
@@ -40,7 +40,7 @@ export default function AuthButton() {
   return (
     <div className="relative">
       <button onClick={() => setOpen(v => !v)} className="flex items-center gap-2">
-        <div className="w-7 h-7 bg-[#c9a84c] text-[#0a0a0a] flex items-center justify-center text-xs font-black shrink-0">
+        <div className="w-7 h-7 bg-[#c9a84c] text-[#1C1A18] flex items-center justify-center text-xs font-black shrink-0">
           {initial}
         </div>
         <div className="hidden sm:block text-left">

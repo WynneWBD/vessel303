@@ -111,7 +111,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#c9a84c] text-[#0a0a0a] font-bold text-sm py-3 tracking-wider hover:bg-[#d4b55a] disabled:opacity-50 transition-colors mt-2"
+            className="w-full bg-[#c9a84c] text-[#1C1A18] font-bold text-sm py-3 tracking-wider hover:bg-[#d4b55a] disabled:opacity-50 transition-colors mt-2"
           >
             {loading ? t(i18n.auth.signingIn) : t(i18n.auth.loginBtn)}
           </button>
