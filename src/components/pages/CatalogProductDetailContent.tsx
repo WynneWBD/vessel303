@@ -29,9 +29,9 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
   const typeLabel = TYPE_LABEL[product.productType] ?? TYPE_LABEL.standard;
 
   return (
-    <main className="bg-[#0a0a0a] text-white">
+    <main className="bg-white text-[#1A1A1A]">
       {/* ── Hero image ── */}
-      <section className="relative h-[400px] sm:h-[500px] overflow-hidden bg-[#111]">
+      <section className="relative h-[400px] sm:h-[500px] overflow-hidden bg-white">
         <Image
           src={product.image}
           alt={name}
@@ -45,7 +45,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
         {/* Breadcrumb */}
         <div className="absolute top-6 left-0 right-0">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-2 text-xs text-white/40 tracking-wider">
+            <div className="flex items-center gap-2 text-xs text-[#888888] tracking-wider">
               <Link href="/" className="hover:text-[#c9a84c] transition-colors">
                 {t(i18n.productDetail.home)}
               </Link>
@@ -54,7 +54,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
                 {t(i18n.productDetail.breadcrumbProducts)}
               </Link>
               <span>/</span>
-              <span className="text-white/60">{name}</span>
+              <span className="text-[#555555]">{name}</span>
             </div>
           </div>
         </div>
@@ -67,14 +67,14 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
                 {badge}
               </span>
               {product.isCustom && (
-                <span className="text-[10px] px-2.5 py-1 border border-white/30 text-white/60 tracking-wider">
+                <span className="text-[10px] px-2.5 py-1 border border-[#BBBBBB] text-[#555555] tracking-wider">
                   {lang === 'en' ? 'Custom Case' : '定制案例'}
                 </span>
               )}
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-wide leading-tight">
               <span className="text-[#c9a84c]">VESSEL</span>
-              <span className="text-white ml-3">{name}</span>
+              <span className="text-[#1A1A1A] ml-3">{name}</span>
             </h1>
           </div>
         </div>
@@ -93,7 +93,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
                 {tags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-xs px-3 py-1.5 bg-white/5 text-white/60 border border-white/10 tracking-wider"
+                    className="text-xs px-3 py-1.5 bg-white/5 text-[#555555] border border-[#E0DCD6] tracking-wider"
                   >
                     {tag}
                   </span>
@@ -122,7 +122,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
                 <div className="text-[#c9a84c] text-xs tracking-[0.2em] uppercase mb-2">
                   {lang === 'en' ? 'Custom Case · Real Project' : '定制案例 · 真实落地项目'}
                 </div>
-                <p className="text-white/55 text-sm leading-relaxed">
+                <p className="text-[#5A5A5A] text-sm leading-relaxed">
                   {lang === 'en'
                     ? 'This is a real custom delivery case. VESSEL can customize interior layout, exterior finish, structure, and systems based on local building codes and climate conditions. Contact us to discuss your specific requirements.'
                     : '这是一个真实落地的定制交付案例。VESSEL 可根据当地建筑法规、气候条件，对内部布局、外观饰面、结构及系统进行全面定制。欢迎联系我们探讨您的具体需求。'}
@@ -131,7 +131,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
             )}
 
             {/* 4 param grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/8 border border-white/8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/8 border border-[#E8E4DE]">
               {[
                 {
                   label: t(i18n.productDetail.specArea),
@@ -150,9 +150,9 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
                   value: lang === 'en' ? typeLabel.en : typeLabel.cn,
                 },
               ].map(({ label, value }) => (
-                <div key={label} className="bg-[#111] p-5">
-                  <div className="text-white/35 text-[10px] tracking-[0.2em] uppercase mb-2">{label}</div>
-                  <div className="text-white font-bold text-lg tracking-wider">{value}</div>
+                <div key={label} className="bg-white p-5">
+                  <div className="text-[#888888] text-[10px] tracking-[0.2em] uppercase mb-2">{label}</div>
+                  <div className="text-[#1A1A1A] font-bold text-lg tracking-wider">{value}</div>
                 </div>
               ))}
             </div>
@@ -161,25 +161,25 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
           {/* Right: price + CTA */}
           <div className="space-y-5">
             {/* Price card */}
-            <div className="bg-[#111] border border-white/8 p-6">
+            <div className="bg-white border border-[#E8E4DE] p-6">
               <div className="text-[#c9a84c] text-[10px] tracking-[0.25em] uppercase mb-4">
                 {t(i18n.productDetail.priceLabel)}
               </div>
               {isLoggedIn ? (
-                <div className="text-white/50 text-sm tracking-wider">
+                <div className="text-[#666666] text-sm tracking-wider">
                   {lang === 'en'
                     ? 'Contact our consultant for a customized quote.'
                     : '请联系顾问获取定制报价。'}
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-white/40 text-sm">
+                <div className="flex items-center gap-2 text-[#888888] text-sm">
                   <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                   <span className="tracking-wider">{t(i18n.productDetail.loginToView)}</span>
                 </div>
               )}
-              <p className="mt-4 text-white/30 text-xs leading-relaxed">
+              <p className="mt-4 text-[#999999] text-xs leading-relaxed">
                 {t(i18n.productDetail.priceNote)}
               </p>
             </div>

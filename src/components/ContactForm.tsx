@@ -96,8 +96,8 @@ export default function ContactForm() {
           </svg>
         </div>
         <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.form.successBadge)}</div>
-        <h3 className="text-white text-xl font-black mb-3 tracking-wider">{t(i18n.form.successTitle)}</h3>
-        <p className="text-white/45 text-sm leading-relaxed max-w-sm tracking-wider">
+        <h3 className="text-[#1A1A1A] text-xl font-black mb-3 tracking-wider">{t(i18n.form.successTitle)}</h3>
+        <p className="text-[#666666] text-sm leading-relaxed max-w-sm tracking-wider">
           {t(i18n.form.successMsg)}
           {form.email && ' ' + t(i18n.form.successEmail)}
         </p>
@@ -109,7 +109,7 @@ export default function ContactForm() {
               company: '', location: '', projectType: '', quantity: '', model: '', remarks: '',
             });
           }}
-          className="mt-8 text-xs border border-white/15 text-white/40 hover:border-[#c9a84c]/40 hover:text-[#c9a84c] px-5 py-2 transition-all tracking-wider"
+          className="mt-8 text-xs border border-[#D8D4CE] text-[#888888] hover:border-[#c9a84c]/40 hover:text-[#c9a84c] px-5 py-2 transition-all tracking-wider"
         >
           {t(i18n.form.resubmit)}
         </button>
@@ -121,7 +121,7 @@ export default function ContactForm() {
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Inquiry type */}
       <div>
-        <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.inquiryTypeLabel)}</label>
+        <label className="block text-[#666666] text-xs tracking-wider mb-2">{t(i18n.form.inquiryTypeLabel)}</label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {INQUIRY_TYPES_DATA.map((type) => (
             <label key={type.value} className="flex items-center gap-2 cursor-pointer group">
@@ -133,7 +133,7 @@ export default function ContactForm() {
                 onChange={() => set('inquiryType', type.value)}
                 className="accent-[#c9a84c]"
               />
-              <span className="text-sm text-white/60 group-hover:text-white/80 transition-colors tracking-wider">
+              <span className="text-sm text-[#555555] group-hover:text-[#333333] transition-colors tracking-wider">
                 {t(type.key)}
               </span>
             </label>
@@ -144,25 +144,25 @@ export default function ContactForm() {
       {/* Name + Phone */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.nameLabel)}</label>
+          <label className="block text-[#666666] text-xs tracking-wider mb-2">{t(i18n.form.nameLabel)}</label>
           <input
             type="text"
             required
             value={form.name}
             onChange={(e) => set('name', e.target.value)}
             placeholder={t(i18n.form.namePlaceholder)}
-            className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
+            className="w-full bg-white border border-[#D8D4CE] text-[#1A1A1A] text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
           />
         </div>
         <div>
-          <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.phoneLabel)}</label>
+          <label className="block text-[#666666] text-xs tracking-wider mb-2">{t(i18n.form.phoneLabel)}</label>
           <input
             type="tel"
             required
             value={form.phone}
             onChange={(e) => set('phone', e.target.value)}
             placeholder={t(i18n.form.phonePlaceholder)}
-            className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
+            className="w-full bg-white border border-[#D8D4CE] text-[#1A1A1A] text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
           />
         </div>
       </div>
@@ -170,7 +170,7 @@ export default function ContactForm() {
       {/* Email + Company */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-white/50 text-xs tracking-wider mb-2">
+          <label className="block text-[#666666] text-xs tracking-wider mb-2">
             {t(i18n.form.emailLabel)}
           </label>
           <input
@@ -178,20 +178,20 @@ export default function ContactForm() {
             value={form.email}
             onChange={(e) => set('email', e.target.value)}
             placeholder={t(i18n.form.emailPlaceholder)}
-            className={`w-full bg-[#111] border text-white text-sm px-4 py-3 focus:outline-none placeholder-white/20 tracking-wider ${emailError ? 'border-red-500/60 focus:border-red-500/80' : 'border-white/15 focus:border-[#c9a84c]/60'}`}
+            className={`w-full bg-white border text-[#1A1A1A] text-sm px-4 py-3 focus:outline-none placeholder-white/20 tracking-wider ${emailError ? 'border-red-500/60 focus:border-red-500/80' : 'border-[#D8D4CE] focus:border-[#c9a84c]/60'}`}
           />
           {emailError && (
             <p className="text-red-400/80 text-xs tracking-wider mt-1">{emailError}</p>
           )}
         </div>
         <div>
-          <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.companyLabel)}</label>
+          <label className="block text-[#666666] text-xs tracking-wider mb-2">{t(i18n.form.companyLabel)}</label>
           <input
             type="text"
             value={form.company}
             onChange={(e) => set('company', e.target.value)}
             placeholder={t(i18n.form.companyPlaceholder)}
-            className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
+            className="w-full bg-white border border-[#D8D4CE] text-[#1A1A1A] text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
           />
         </div>
       </div>
@@ -199,21 +199,21 @@ export default function ContactForm() {
       {/* Country + Project type */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.locationLabel)}</label>
+          <label className="block text-[#666666] text-xs tracking-wider mb-2">{t(i18n.form.locationLabel)}</label>
           <input
             type="text"
             value={form.location}
             onChange={(e) => set('location', e.target.value)}
             placeholder={t(i18n.form.locationPlaceholder)}
-            className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
+            className="w-full bg-white border border-[#D8D4CE] text-[#1A1A1A] text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
           />
         </div>
         <div>
-          <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.projectTypeLabel)}</label>
+          <label className="block text-[#666666] text-xs tracking-wider mb-2">{t(i18n.form.projectTypeLabel)}</label>
           <select
             value={form.projectType}
             onChange={(e) => set('projectType', e.target.value)}
-            className="w-full bg-[#111] border border-white/15 text-white/70 text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60"
+            className="w-full bg-white border border-[#D8D4CE] text-[#444444] text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60"
           >
             <option value="">{t(i18n.form.projectTypePlaceholder)}</option>
             {PROJECT_TYPES_DATA.map((p) => <option key={p.value} value={p.value}>{t(p.key)}</option>)}
@@ -224,22 +224,22 @@ export default function ContactForm() {
       {/* Quantity + Model */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.quantityLabel)}</label>
+          <label className="block text-[#666666] text-xs tracking-wider mb-2">{t(i18n.form.quantityLabel)}</label>
           <input
             type="number"
             min="1"
             value={form.quantity}
             onChange={(e) => set('quantity', e.target.value)}
             placeholder={t(i18n.form.quantityPlaceholder)}
-            className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
+            className="w-full bg-white border border-[#D8D4CE] text-[#1A1A1A] text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 tracking-wider"
           />
         </div>
         <div>
-          <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.modelLabel)}</label>
+          <label className="block text-[#666666] text-xs tracking-wider mb-2">{t(i18n.form.modelLabel)}</label>
           <select
             value={form.model}
             onChange={(e) => set('model', e.target.value)}
-            className="w-full bg-[#111] border border-white/15 text-white/70 text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60"
+            className="w-full bg-white border border-[#D8D4CE] text-[#444444] text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60"
           >
             <option value="">{t(i18n.form.modelPlaceholder)}</option>
             {MODELS.map((m) => <option key={m}>{m}</option>)}
@@ -250,13 +250,13 @@ export default function ContactForm() {
 
       {/* Remarks */}
       <div>
-        <label className="block text-white/50 text-xs tracking-wider mb-2">{t(i18n.form.remarksLabel)}</label>
+        <label className="block text-[#666666] text-xs tracking-wider mb-2">{t(i18n.form.remarksLabel)}</label>
         <textarea
           rows={4}
           value={form.remarks}
           onChange={(e) => set('remarks', e.target.value)}
           placeholder={t(i18n.form.remarksPlaceholder)}
-          className="w-full bg-[#111] border border-white/15 text-white text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 resize-none tracking-wider"
+          className="w-full bg-white border border-[#D8D4CE] text-[#1A1A1A] text-sm px-4 py-3 focus:outline-none focus:border-[#c9a84c]/60 placeholder-white/20 resize-none tracking-wider"
         />
       </div>
 
@@ -273,7 +273,7 @@ export default function ContactForm() {
       >
         {status === 'loading' ? t(i18n.form.submitting) : t(i18n.form.submitBtn)}
       </button>
-      <p className="text-white/20 text-xs text-center tracking-wider">
+      <p className="text-[#BBBBBB] text-xs text-center tracking-wider">
         {t(i18n.form.submitNote)}
       </p>
     </form>

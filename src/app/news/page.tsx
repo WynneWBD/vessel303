@@ -83,8 +83,8 @@ const categories = ['全部资讯', '要闻', '行业资讯', '品牌合作', '�
 
 function Placeholder({ label, className }: { label: string; className?: string }) {
   return (
-    <div className={`bg-[#1a1a1a] flex items-center justify-center ${className}`}>
-      <span className="text-white/15 text-xs tracking-wider">{label}</span>
+    <div className={`bg-[#E8E4DE] flex items-center justify-center ${className}`}>
+      <span className="text-[#CCCCCC] text-xs tracking-wider">{label}</span>
     </div>
   );
 }
@@ -95,7 +95,7 @@ export default function NewsPage() {
   const rest = newsItems.filter((n) => !n.featured);
 
   return (
-    <main className="bg-[#0a0a0a] text-white">
+    <main className="bg-white text-[#1A1A1A]">
       <Navbar />
 
       <PageHero
@@ -116,7 +116,7 @@ export default function NewsPage() {
               className={`text-sm px-4 py-1.5 border tracking-wider transition-colors ${
                 i === 0
                   ? 'border-[#c9a84c] text-[#c9a84c] bg-[#c9a84c]/5'
-                  : 'border-white/15 text-white/40 hover:border-white/30 hover:text-white/60'
+                  : 'border-[#D8D4CE] text-[#888888] hover:border-[#BBBBBB] hover:text-[#555555]'
               }`}
             >
               {i === 0 ? t(i18n.news.filterAll) : cat}
@@ -127,7 +127,7 @@ export default function NewsPage() {
         {/* Featured article */}
         {featured && (
           <a href={featured.href} className="group block mb-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 bg-[#111] border border-[#c9a84c]/20 hover:border-[#c9a84c]/40 transition-all overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-2 bg-white border border-[#c9a84c]/20 hover:border-[#c9a84c]/40 transition-all overflow-hidden">
               <Placeholder label={featured.title} className="h-64 lg:h-auto" />
               <div className="p-8 lg:p-10 flex flex-col justify-center">
                 <div className="flex items-center gap-3 mb-4">
@@ -135,12 +135,12 @@ export default function NewsPage() {
                     {featured.tag}
                   </span>
                   <span className="text-[#c9a84c] text-xs px-2 py-0.5 border border-[#c9a84c]/30">{t(i18n.news.topBadge)}</span>
-                  <span className="text-white/25 text-xs">{featured.date}</span>
+                  <span className="text-[#AAAAAA] text-xs">{featured.date}</span>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-black text-white mb-4 leading-snug group-hover:text-[#c9a84c] transition-colors tracking-wider">
+                <h2 className="text-xl sm:text-2xl font-black text-[#1A1A1A] mb-4 leading-snug group-hover:text-[#c9a84c] transition-colors tracking-wider">
                   {featured.title}
                 </h2>
-                <p className="text-white/50 text-sm leading-relaxed mb-6">{featured.preview}</p>
+                <p className="text-[#666666] text-sm leading-relaxed mb-6">{featured.preview}</p>
                 <div className="flex items-center gap-2 text-[#c9a84c] text-sm">
                   <span>{t(i18n.news.readFull)}</span>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,7 +158,7 @@ export default function NewsPage() {
             <a
               key={item.id}
               href={item.href}
-              className="group block bg-[#111] border border-white/8 hover:border-[#c9a84c]/30 transition-all duration-300 overflow-hidden"
+              className="group block bg-white border border-[#E8E4DE] hover:border-[#c9a84c]/30 transition-all duration-300 overflow-hidden"
             >
               <Placeholder label={item.title} className="h-44" />
               <div className="p-5">
@@ -173,12 +173,12 @@ export default function NewsPage() {
                   >
                     {item.tag}
                   </span>
-                  <span className="text-white/25 text-xs">{item.date}</span>
+                  <span className="text-[#AAAAAA] text-xs">{item.date}</span>
                 </div>
-                <h3 className="text-white font-bold text-sm mb-2 leading-snug group-hover:text-[#c9a84c] transition-colors tracking-wider line-clamp-2">
+                <h3 className="text-[#1A1A1A] font-bold text-sm mb-2 leading-snug group-hover:text-[#c9a84c] transition-colors tracking-wider line-clamp-2">
                   {item.title}
                 </h3>
-                <p className="text-white/40 text-xs leading-relaxed line-clamp-3">{item.preview}</p>
+                <p className="text-[#888888] text-xs leading-relaxed line-clamp-3">{item.preview}</p>
                 <div className="mt-4 flex items-center gap-1 text-[#c9a84c]/60 text-xs group-hover:text-[#c9a84c] transition-colors">
                   <span>{t(i18n.news.readMore)}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -192,7 +192,7 @@ export default function NewsPage() {
 
         {/* Load more */}
         <div className="mt-10 text-center">
-          <button className="border border-white/20 text-white/50 text-sm px-8 py-3 hover:border-[#c9a84c]/40 hover:text-[#c9a84c] transition-colors tracking-wider">
+          <button className="border border-[#D0CCC6] text-[#666666] text-sm px-8 py-3 hover:border-[#c9a84c]/40 hover:text-[#c9a84c] transition-colors tracking-wider">
             {t(i18n.news.loadMore)}
           </button>
         </div>

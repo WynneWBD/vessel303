@@ -89,8 +89,8 @@ const cases = [
 
 function Placeholder({ label, className }: { label: string; className?: string }) {
   return (
-    <div className={`bg-[#1a1a1a] flex items-center justify-center ${className}`}>
-      <span className="text-white/15 text-xs tracking-wider">{label}</span>
+    <div className={`bg-[#E8E4DE] flex items-center justify-center ${className}`}>
+      <span className="text-[#CCCCCC] text-xs tracking-wider">{label}</span>
     </div>
   );
 }
@@ -99,7 +99,7 @@ export default function CasesPage() {
   const t = useT();
 
   return (
-    <main className="bg-[#0a0a0a] text-white">
+    <main className="bg-white text-[#1A1A1A]">
       <Navbar />
 
       <PageHero
@@ -111,7 +111,7 @@ export default function CasesPage() {
       />
 
       {/* Stats bar */}
-      <div className="bg-[#111] border-b border-[#c9a84c]/10">
+      <div className="bg-white border-b border-[#c9a84c]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex flex-wrap gap-8 justify-center">
             {[
@@ -122,7 +122,7 @@ export default function CasesPage() {
             ].map(([num, label]) => (
               <div key={label} className="text-center">
                 <div className="text-[#c9a84c] text-2xl font-black">{num}</div>
-                <div className="text-white/35 text-xs tracking-wider">{label}</div>
+                <div className="text-[#888888] text-xs tracking-wider">{label}</div>
               </div>
             ))}
           </div>
@@ -146,7 +146,7 @@ export default function CasesPage() {
               className={`text-sm px-4 py-1.5 border tracking-wider transition-colors ${
                 i === 0
                   ? 'border-[#c9a84c] text-[#c9a84c] bg-[#c9a84c]/5'
-                  : 'border-white/15 text-white/40 hover:border-white/30 hover:text-white/60'
+                  : 'border-[#D8D4CE] text-[#888888] hover:border-[#BBBBBB] hover:text-[#555555]'
               }`}
             >
               {tab}
@@ -159,7 +159,7 @@ export default function CasesPage() {
           {cases.map((c, i) => (
             <div
               key={c.id}
-              className="group bg-[#111] border border-white/8 hover:border-[#c9a84c]/25 transition-all duration-300 overflow-hidden"
+              className="group bg-white border border-[#E8E4DE] hover:border-[#c9a84c]/25 transition-all duration-300 overflow-hidden"
             >
               <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
                 {/* Image placeholder */}
@@ -173,7 +173,7 @@ export default function CasesPage() {
                   <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                     <div>
                       <div className="flex items-center gap-3 mb-2">
-                        <span className="text-[10px] font-mono text-white/30 tracking-[0.2em]">
+                        <span className="text-[10px] font-mono text-[#999999] tracking-[0.2em]">
                           CASE {String(i + 1).padStart(3, '0')}
                         </span>
                         {c.tags.map((tag) => (
@@ -186,8 +186,8 @@ export default function CasesPage() {
                           </span>
                         ))}
                       </div>
-                      <h3 className="text-xl font-black text-white tracking-wider mb-1">{c.name}</h3>
-                      <div className="flex items-center gap-3 text-sm text-white/40">
+                      <h3 className="text-xl font-black text-[#1A1A1A] tracking-wider mb-1">{c.name}</h3>
+                      <div className="flex items-center gap-3 text-sm text-[#888888]">
                         <span>📍 {c.location}</span>
                         <span>·</span>
                         <span>{c.type}</span>
@@ -195,7 +195,7 @@ export default function CasesPage() {
                     </div>
                   </div>
 
-                  <p className="text-white/50 text-sm leading-relaxed mb-5">{c.desc}</p>
+                  <p className="text-[#666666] text-sm leading-relaxed mb-5">{c.desc}</p>
 
                   {/* Project specs */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
@@ -205,9 +205,9 @@ export default function CasesPage() {
                       { label: t(i18n.cases.specUnits), value: c.units },
                       { label: t(i18n.cases.specProducts), value: c.products },
                     ].map((spec) => (
-                      <div key={spec.label} className="bg-[#0a0a0a] px-3 py-2 border border-white/5">
-                        <div className="text-white/25 text-[10px] tracking-wider mb-0.5">{spec.label}</div>
-                        <div className="text-white/70 text-xs font-semibold tracking-wider">{spec.value}</div>
+                      <div key={spec.label} className="bg-[#F8F6F2] px-3 py-2 border border-[#E8E4DE]">
+                        <div className="text-[#AAAAAA] text-[10px] tracking-wider mb-0.5">{spec.label}</div>
+                        <div className="text-[#444444] text-xs font-semibold tracking-wider">{spec.value}</div>
                       </div>
                     ))}
                   </div>
@@ -230,8 +230,8 @@ export default function CasesPage() {
         {/* CTA */}
         <div className="mt-16 text-center p-12 border border-[#c9a84c]/15 bg-[#c9a84c]/3">
           <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3">{t(i18n.cases.ctaBadge)}</div>
-          <h2 className="text-2xl font-black text-white mb-3">{t(i18n.cases.ctaTitle)}</h2>
-          <p className="text-white/40 text-sm mb-8 tracking-wider">
+          <h2 className="text-2xl font-black text-[#1A1A1A] mb-3">{t(i18n.cases.ctaTitle)}</h2>
+          <p className="text-[#888888] text-sm mb-8 tracking-wider">
             {t(i18n.cases.ctaSubtitle)}
           </p>
           <div className="flex flex-wrap justify-center gap-4">
@@ -243,7 +243,7 @@ export default function CasesPage() {
             </a>
             <a
               href="tel:4008090303"
-              className="border border-white/30 text-white text-sm px-8 py-3 hover:border-[#c9a84c] hover:text-[#c9a84c] transition-colors tracking-wider"
+              className="border border-[#999999] text-[#1A1A1A] text-sm px-8 py-3 hover:border-[#c9a84c] hover:text-[#c9a84c] transition-colors tracking-wider"
             >
               400-8090-303
             </a>
