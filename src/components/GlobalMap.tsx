@@ -5,6 +5,15 @@ import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { CAMPS } from '@/data/camps'
 
+function hashOffset(str: string, salt: number): number {
+  let hash = salt
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i)
+    hash |= 0
+  }
+  return (hash % 100) / 1000
+}
+
 export default function GlobalMap() {
   useEffect(() => {
     // Fix leaflet default icon path issue in Next.js
@@ -25,16 +34,19 @@ export default function GlobalMap() {
       minZoom={2}
       maxZoom={16}
       zoomControl={false}
+      maxBounds={[[-85, -180], [85, 180]]}
+      maxBoundsViscosity={1.0}
       style={{ height: 'calc(100vh - 56px)', width: '100%' }}
     >
       <TileLayer
         attribution='&copy; <a href="https://carto.com/">CARTO</a>'
         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        noWrap={true}
       />
       {CAMPS.map((camp, i) => (
         <CircleMarker
           key={i}
-          center={[camp.lat, camp.lng]}
+          center={[camp.lat + hashOffset(camp.name, 1), camp.lng + hashOffset(camp.name, 2)]}
           radius={Math.max(5, Math.sqrt(camp.total) * 1.2)}
           pathOptions={{
             fillColor: '#C9A84C',
