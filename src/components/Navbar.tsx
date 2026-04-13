@@ -130,7 +130,14 @@ export default function Navbar() {
         { label: t(i18n.nav.allCases), href: '/cases' },
       ],
     },
-    { label: t(i18n.nav.about), href: '/about' },
+    {
+      label: t(i18n.nav.about),
+      href: '/about',
+      dropdown: [
+        { label: t(i18n.nav.about), href: '/about' },
+        { label: t(i18n.nav.globalPresence), href: '/global' },
+      ],
+    },
     { label: t(i18n.nav.news), href: '/news' },
     { label: t(i18n.nav.contact), href: '/contact' },
   ];

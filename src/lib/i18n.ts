@@ -23,6 +23,7 @@ export const i18n = {
     displayMode:      b('Showroom Mode', '展厅展示模式'),
     signOut:          b('Sign Out', '退出登录'),
     signIn:           b('Sign In', '登录'),
+    globalPresence:   b('Global Presence', '全球部署'),
   },
   footer: {
     ctaTitle:         b('Ready to start your tourism architecture project?', '准备好开始您的文旅建筑项目了吗？'),
