@@ -1,15 +1,10 @@
 import { CAMPS } from '@/data/camps'
 
-function computeStats() {
-  const publicCamps = CAMPS.filter((c) => c.region !== '内部')
-  const countries = new Set(publicCamps.map((c) => c.country)).size
-  const campCount = publicCamps.length
-  const totalDevices = publicCamps.reduce((sum, c) => sum + c.total, 0)
-  return { countries, campCount, totalDevices }
-}
+const campCount = CAMPS.length
+const countries = new Set(CAMPS.filter(c => c.region !== '内部').map(c => c.country)).size
+const totalDevices = CAMPS.reduce((s, c) => s + c.total, 0).toLocaleString()
 
 export default function GlobalMapStats() {
-  const { countries, campCount, totalDevices } = computeStats()
 
   return (
     <div
@@ -76,7 +71,7 @@ export default function GlobalMapStats() {
         <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.1)' }} />
         <div style={{ textAlign: 'center' }}>
           <span style={{ color: '#C9A84C', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
-            {totalDevices.toLocaleString()}
+            {totalDevices}
           </span>
           <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, marginLeft: 4 }}>
             台设备
