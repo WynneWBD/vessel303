@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, Popup, ScaleControl } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { CAMPS } from '@/data/camps'
 
@@ -29,20 +29,18 @@ export default function GlobalMap() {
 
   return (
     <MapContainer
-      center={[30, 80]}
-      zoom={2.5}
+      center={[35, 105]}
+      zoom={4}
       minZoom={2}
       maxZoom={16}
-      zoomControl={false}
-      maxBounds={[[-85, -180], [85, 180]]}
-      maxBoundsViscosity={1.0}
-      style={{ height: 'calc(100vh - 56px)', width: '100%' }}
+      style={{ height: 'calc(100vh - 56px)', width: '100%', background: '#a8c8f0' }}
     >
       <TileLayer
         attribution='&copy; <a href="https://carto.com/">CARTO</a>'
         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         noWrap={true}
       />
+      <ScaleControl position="bottomleft" imperial={false} />
       {CAMPS.map((camp, i) => (
         <CircleMarker
           key={i}
