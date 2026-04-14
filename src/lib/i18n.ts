@@ -54,7 +54,7 @@ export const i18n = {
   home: {
     // === HERO ===
     heroTagline:      b('Redefine Natural Dwelling', '重构自然的栖居'),
-    heroHeadline:     b('Architecture Without\nBoundaries', '建筑\n无界'),
+    heroHeadline:     b('Architecture Without\nBoundaries', '建 筑 无 界'),
     heroSubtitle:     b(
       'VESSEL creates smart prefab architecture that dissolves the boundary between technology and nature. Delivered complete. Anywhere on Earth.',
       'VESSEL 创造智能装配建筑，消弭科技与自然的边界。出厂即成品，落地即生活。'

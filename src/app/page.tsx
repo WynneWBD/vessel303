@@ -17,11 +17,11 @@ function HeroSection() {
       <div className="absolute inset-0 bg-[#111114]/55" />
 
       <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
-        <p className="text-sm sm:text-base tracking-[0.25em] uppercase text-[#2A5C5A] mb-10 font-medium">
+        <p className="text-sm sm:text-base tracking-[0.25em] uppercase text-white/50 mb-10 font-medium">
           {t(i18n.home.heroTagline)}
         </p>
 
-        <h1 className="text-6xl sm:text-7xl lg:text-8xl font-light text-white mb-10 leading-[1.08] whitespace-pre-line font-[family-name:var(--font-heading)]">
+        <h1 className="text-6xl sm:text-7xl lg:text-8xl font-light text-white mb-10 leading-[1.08] tracking-[0.15em] font-[family-name:var(--font-heading)]">
           {t(i18n.home.heroHeadline)}
         </h1>
 
