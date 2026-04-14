@@ -11,7 +11,7 @@ function SocialIcon({ href, label, children }: { href: string; label: string; ch
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
-      className="w-9 h-9 flex items-center justify-center border border-white/15 text-white/50 hover:border-[#c9a84c]/60 hover:text-[#c9a84c] transition-all duration-200"
+      className="w-9 h-9 flex items-center justify-center border border-white/15 text-white/50 hover:border-[#2A5C5A]/60 hover:text-[#2A5C5A] transition-all duration-200"
     >
       {children}
     </a>
@@ -50,9 +50,9 @@ export default function Footer() {
   ];
 
   return (
-    <footer id="contact" className="bg-[#1C1A18] border-t border-[#c9a84c]/15">
+    <footer id="contact" className="bg-[#111114] border-t border-[#2A5C5A]/15">
       {/* CTA bar */}
-      <div className="bg-[#c9a84c]/5 border-b border-[#c9a84c]/15 py-8">
+      <div className="bg-[#2A5C5A]/5 border-b border-[#2A5C5A]/15 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
             <div className="text-white font-bold text-lg tracking-wider mb-1">
@@ -65,13 +65,13 @@ export default function Footer() {
           <div className="flex gap-3">
             <a
               href="tel:4008090303"
-              className="bg-[#c9a84c] text-[#1C1A18] font-bold text-sm px-6 py-3 hover:bg-[#b8973b] transition-colors tracking-wider"
+              className="bg-[#2A5C5A] text-white font-bold text-sm px-6 py-3 hover:bg-[#1E4442] transition-colors tracking-wider"
             >
               {t(i18n.footer.phoneBtn)}
             </a>
             <Link
               href="/contact"
-              className="border border-[#c9a84c]/40 text-[#c9a84c] text-sm px-6 py-3 hover:bg-[#c9a84c]/10 transition-colors tracking-wider"
+              className="border border-[#2A5C5A]/40 text-[#2A5C5A] text-sm px-6 py-3 hover:bg-[#2A5C5A]/10 transition-colors tracking-wider"
             >
               {t(i18n.footer.messageBtn)}
             </Link>
@@ -85,7 +85,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <div className="mb-4">
-              <div className="text-[#c9a84c] font-black text-2xl tracking-[0.25em] uppercase mb-1">VESSEL</div>
+              <div className="text-[#F0F0F0] font-black text-2xl tracking-[0.25em] uppercase mb-1">VESSEL</div>
               <div className="text-white/30 text-xs tracking-[0.3em]">{t(i18n.footer.brandTagline)}</div>
             </div>
             <p className="text-white/35 text-xs leading-relaxed mb-5 max-w-xs">
@@ -112,17 +112,17 @@ export default function Footer() {
                 <li key={name}>
                   <Link
                     href={href}
-                    className="flex items-center gap-2 text-white/40 hover:text-[#c9a84c] transition-colors text-sm group"
+                    className="flex items-center gap-2 text-white/40 hover:text-[#2A5C5A] transition-colors text-sm group"
                   >
-                    <span className="text-[#c9a84c]/30 group-hover:text-[#c9a84c] transition-colors">›</span>
+                    <span className="text-[#2A5C5A]/30 group-hover:text-[#2A5C5A] transition-colors">›</span>
                     <span className="tracking-wider">{name}</span>
                     <span className="text-white/20 text-xs">{desc}</span>
                   </Link>
                 </li>
               ))}
               <li>
-                <Link href="/products" className="flex items-center gap-2 text-white/40 hover:text-[#c9a84c] transition-colors text-sm group">
-                  <span className="text-[#c9a84c]/30 group-hover:text-[#c9a84c] transition-colors">›</span>
+                <Link href="/products" className="flex items-center gap-2 text-white/40 hover:text-[#2A5C5A] transition-colors text-sm group">
+                  <span className="text-[#2A5C5A]/30 group-hover:text-[#2A5C5A] transition-colors">›</span>
                   <span className="tracking-wider">{t(i18n.footer.allProducts)}</span>
                 </Link>
               </li>
@@ -137,9 +137,9 @@ export default function Footer() {
                 <li key={href}>
                   <Link
                     href={href}
-                    className="flex items-center gap-2 text-white/40 hover:text-[#c9a84c] transition-colors text-sm group"
+                    className="flex items-center gap-2 text-white/40 hover:text-[#2A5C5A] transition-colors text-sm group"
                   >
-                    <span className="text-[#c9a84c]/30 group-hover:text-[#c9a84c] transition-colors">›</span>
+                    <span className="text-[#2A5C5A]/30 group-hover:text-[#2A5C5A] transition-colors">›</span>
                     <span className="tracking-wider">{label}</span>
                   </Link>
                 </li>
@@ -152,26 +152,26 @@ export default function Footer() {
             <h4 className="text-white text-xs font-semibold tracking-[0.25em] mb-5 uppercase">{t(i18n.footer.contactHeading)}</h4>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
-                <svg className="w-4 h-4 text-[#c9a84c] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-[#2A5C5A] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
                 <div>
-                  <a href="tel:4008090303" className="text-white/60 text-sm hover:text-[#c9a84c] transition-colors font-medium tracking-wider">
+                  <a href="tel:4008090303" className="text-white/60 text-sm hover:text-[#2A5C5A] transition-colors font-medium tracking-wider">
                     400-8090-303
                   </a>
                   <div className="text-white/25 text-xs mt-0.5">{t(i18n.footer.workHours)}</div>
                 </div>
               </li>
               <li className="flex items-start gap-3">
-                <svg className="w-4 h-4 text-[#c9a84c] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-[#2A5C5A] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                <a href="mailto:vessel.sale@303industries.cn" className="text-white/50 text-xs hover:text-[#c9a84c] transition-colors break-all">
+                <a href="mailto:vessel.sale@303industries.cn" className="text-white/50 text-xs hover:text-[#2A5C5A] transition-colors break-all">
                   vessel.sale@303industries.cn
                 </a>
               </li>
               <li className="flex items-start gap-3">
-                <svg className="w-4 h-4 text-[#c9a84c] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-[#2A5C5A] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
