@@ -14,21 +14,18 @@ function HeroSection() {
   return (
     <section className="relative h-screen min-h-[700px] flex items-center justify-center overflow-hidden bg-[#111114]">
       <Image src="/images/homepage/hero-bg.jpg" alt="VESSEL architecture in mountain landscape" fill priority sizes="100vw" className="object-cover" />
-      <div className="absolute inset-0 bg-[#111114]/60" />
+      <div className="absolute inset-0 bg-[#111114]/55" />
 
       <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
-        <p className="text-xs tracking-[0.35em] uppercase text-[#2A5C5A] mb-8 font-medium">
+        <p className="text-sm sm:text-base tracking-[0.25em] uppercase text-[#2A5C5A] mb-10 font-medium">
           {t(i18n.home.heroTagline)}
         </p>
 
-        <h1
-          className="text-5xl sm:text-6xl lg:text-7xl font-light text-white mb-8 leading-[1.1] whitespace-pre-line"
-          style={{ fontFamily: 'var(--font-heading)' }}
-        >
+        <h1 className="text-6xl sm:text-7xl lg:text-8xl font-light text-white mb-10 leading-[1.08] whitespace-pre-line font-[family-name:var(--font-heading)]">
           {t(i18n.home.heroHeadline)}
         </h1>
 
-        <p className="text-white/60 text-base sm:text-lg leading-relaxed mb-12 max-w-2xl mx-auto">
+        <p className="text-white/55 text-base sm:text-lg leading-relaxed mb-12 max-w-2xl mx-auto">
           {t(i18n.home.heroSubtitle)}
         </p>
 
@@ -43,9 +40,7 @@ function HeroSection() {
       </div>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/20 animate-bounce">
-        <svg width="20" height="28" viewBox="0 0 20 28" fill="none">
-          <path d="M10 0v20M3 13l7 7 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        <svg width="20" height="28" viewBox="0 0 20 28" fill="none"><path d="M10 0v20M3 13l7 7 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
       </div>
     </section>
   );
@@ -87,45 +82,76 @@ function CredentialsBar() {
 function CertificationsSection() {
   const t = useT();
   const certs = [
-    { name: t(i18n.home.certEuName), std: t(i18n.home.certEuStd), desc: t(i18n.home.certEuDesc), region: 'EU' },
-    { name: t(i18n.home.certUsName), std: t(i18n.home.certUsStd), desc: t(i18n.home.certUsDesc), region: 'US' },
-    { name: t(i18n.home.certIsoName), std: t(i18n.home.certIsoStd), desc: t(i18n.home.certIsoDesc), region: 'INTL' },
-    { name: t(i18n.home.certAuName), std: t(i18n.home.certAuStd), desc: t(i18n.home.certAuDesc), region: 'AU/NZ' },
+    {
+      region: 'EU',
+      name: t(i18n.home.certEuName),
+      std: t(i18n.home.certEuStd),
+      desc: t(i18n.home.certEuDesc),
+      icon: (
+        <svg viewBox="0 0 40 40" fill="none" className="w-10 h-10">
+          <circle cx="20" cy="20" r="18" stroke="#2A5C5A" strokeWidth="1.5" />
+          <text x="20" y="24" textAnchor="middle" fill="#2A5C5A" fontSize="12" fontWeight="500" fontFamily="var(--font-heading)">CE</text>
+        </svg>
+      ),
+    },
+    {
+      region: 'US',
+      name: t(i18n.home.certUsName),
+      std: t(i18n.home.certUsStd),
+      desc: t(i18n.home.certUsDesc),
+      icon: (
+        <svg viewBox="0 0 40 40" fill="none" className="w-10 h-10">
+          <rect x="2" y="6" width="36" height="28" rx="2" stroke="#2A5C5A" strokeWidth="1.5" />
+          <path d="M2 14h36" stroke="#2A5C5A" strokeWidth="1" />
+          <text x="20" y="29" textAnchor="middle" fill="#2A5C5A" fontSize="9" fontWeight="500" fontFamily="var(--font-heading)">IBC</text>
+        </svg>
+      ),
+    },
+    {
+      region: 'INTL',
+      name: t(i18n.home.certIsoName),
+      std: t(i18n.home.certIsoStd),
+      desc: t(i18n.home.certIsoDesc),
+      icon: (
+        <svg viewBox="0 0 40 40" fill="none" className="w-10 h-10">
+          <circle cx="20" cy="20" r="14" stroke="#2A5C5A" strokeWidth="1.5" />
+          <path d="M14 20l4 4 8-8" stroke="#2A5C5A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ),
+    },
+    {
+      region: 'AU/NZ',
+      name: t(i18n.home.certAuName),
+      std: t(i18n.home.certAuStd),
+      desc: t(i18n.home.certAuDesc),
+      icon: (
+        <svg viewBox="0 0 40 40" fill="none" className="w-10 h-10">
+          <path d="M20 4l4 8h9l-7 5 3 9-9-6-9 6 3-9-7-5h9l4-8z" stroke="#2A5C5A" strokeWidth="1.5" strokeLinejoin="round" />
+        </svg>
+      ),
+    },
   ];
   return (
     <section className="bg-[#111114] py-24 lg:py-32">
       <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#2A5C5A] mb-4 font-medium">
-            {t(i18n.home.certLabel)}
-          </p>
-          <h2
-            className="text-3xl lg:text-4xl font-light text-[#F0F0F0]"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
+        <div className="text-center mb-6">
+          <p className="text-xs tracking-[0.3em] uppercase text-[#2A5C5A] mb-4 font-medium">{t(i18n.home.certLabel)}</p>
+          <h2 className="text-3xl lg:text-4xl font-light text-[#F0F0F0] mb-4 font-[family-name:var(--font-heading)]">
             {t(i18n.home.certTitle)}
           </h2>
+          <p className="text-sm text-[#8A8580] max-w-xl mx-auto">{t(i18n.home.certSubtitle)}</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#333]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
           {certs.map((c) => (
-            <div key={c.region} className="bg-[#111114] p-8 flex flex-col">
-              <div className="text-[#2A5C5A] text-xs tracking-[0.2em] font-medium mb-4 uppercase">{c.region}</div>
-              <div
-                className="text-[#F0F0F0] text-lg font-medium mb-1"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
-                {c.name}
-              </div>
+            <div key={c.region} className="border border-[#2A2A2E] p-8 hover:border-[#2A5C5A]/40 transition-colors">
+              <div className="mb-6">{c.icon}</div>
+              <div className="text-[#F0F0F0] text-lg font-medium mb-2 font-[family-name:var(--font-heading)]">{c.name}</div>
               <div className="text-[#A67C5B] text-xs tracking-wider font-mono mb-4">{c.std}</div>
-              <p className="text-[#8A8580] text-sm leading-relaxed flex-1">{c.desc}</p>
+              <p className="text-[#8A8580] text-sm leading-relaxed">{c.desc}</p>
             </div>
           ))}
         </div>
-
-        <p className="text-center text-sm text-[#A67C5B] mt-10 tracking-wider">
-          {t(i18n.home.certNote)}
-        </p>
       </div>
     </section>
   );
@@ -374,35 +400,28 @@ function ManufacturingSection() {
 function ScenariosSection() {
   const t = useT();
   const scenes = [
-    { title: t(i18n.home.scen1Title), desc: t(i18n.home.scen1Desc) },
-    { title: t(i18n.home.scen2Title), desc: t(i18n.home.scen2Desc) },
-    { title: t(i18n.home.scen3Title), desc: t(i18n.home.scen3Desc) },
+    { title: t(i18n.home.scen1Title), desc: t(i18n.home.scen1Desc), img: '/images/homepage/scene-tourism.jpg' },
+    { title: t(i18n.home.scen2Title), desc: t(i18n.home.scen2Desc), img: '/images/homepage/scene-commercial.jpg' },
+    { title: t(i18n.home.scen3Title), desc: t(i18n.home.scen3Desc), img: '/images/homepage/scene-public.jpg' },
   ];
   return (
     <section className="bg-[#F5F0EB] py-24 lg:py-32">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-16">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#2A5C5A] mb-4 font-medium">
-            {t(i18n.home.scenLabel)}
-          </p>
-          <h2
-            className="text-3xl lg:text-4xl font-light text-[#1A1A1E]"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            {t(i18n.home.scenTitle)}
-          </h2>
+          <p className="text-xs tracking-[0.3em] uppercase text-[#2A5C5A] mb-4 font-medium">{t(i18n.home.scenLabel)}</p>
+          <h2 className="text-3xl lg:text-4xl font-light text-[#1A1A1E] font-[family-name:var(--font-heading)]">{t(i18n.home.scenTitle)}</h2>
         </div>
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-5">
           {scenes.map((s) => (
-            <div key={s.title} className="border border-[#E5E0DA] p-8 hover:border-[#2A5C5A]/40 transition-colors">
-              <div className="h-0.5 bg-[#2A5C5A] w-8 mb-6" />
-              <h3
-                className="text-xl font-medium text-[#1A1A1E] mb-3"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
-                {s.title}
-              </h3>
-              <p className="text-sm text-[#8A8580] leading-relaxed">{s.desc}</p>
+            <div key={s.title} className="group overflow-hidden border border-[#E5E0DA] hover:border-[#2A5C5A]/40 transition-colors">
+              <div className="relative aspect-[16/10] overflow-hidden">
+                <Image src={s.img} alt={s.title} fill sizes="(max-width: 1024px) 100vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+              </div>
+              <div className="p-7">
+                <div className="h-0.5 bg-[#2A5C5A] w-8 mb-5" />
+                <h3 className="text-xl font-medium text-[#1A1A1E] mb-2 font-[family-name:var(--font-heading)]">{s.title}</h3>
+                <p className="text-sm text-[#8A8580] leading-relaxed">{s.desc}</p>
+              </div>
             </div>
           ))}
         </div>
