@@ -52,153 +52,102 @@ export const i18n = {
     terms:            b('Terms of Use', '使用条款'),
   },
   home: {
-    heroBadge:        b('Smart Prefab Architecture · Global Leader in Tourism', '文旅智能装配建筑 · 全球领导品牌'),
-    heroTitle1:       b('Tourism Prefab', '文旅装配式建筑'),
-    heroTitle2:       b('Global Leader', '全球领导品牌'),
-    badge1:           b('EU Certified', '欧盟建筑认证'),
-    badge2:           b('US Certified', '美国建筑认证'),
-    badge3:           b('30+ Countries', '全球30+国家'),
-    badge4:           b('300+ Projects', '300+项目交付'),
+    // === HERO SECTION ===
+    heroTagline:      b('Redefine Natural Dwelling', '重构自然的栖居'),
     heroSubtitle:     b(
-      'From planning and design to delivery and operation, VESSEL provides turnkey smart prefab architecture solutions for tourism resorts.',
-      '从规划设计到交付运营，VESSEL 提供一站式文旅智能装配建筑整体解决方案'
+      'VESSEL creates smart prefab architecture that dissolves the boundary between technology and nature. Delivered complete. Anywhere on Earth.',
+      'VESSEL 创造智能装配建筑，消弭科技与自然的边界。出厂即成品，落地即生活。'
     ),
-    scrollDown:       b('Scroll Down', '向下滚动'),
-    b2bLabel:         b('Enterprise / B2B', '企业采购 / B2B'),
-    b2bTitle:         b('Purchase Now', '我要采购'),
-    b2bSub:           b('Bulk Order · Project Dev · Brand Partnership', '批量定制 · 项目开发 · 品牌合作'),
-    b2bBtn:           b('Inquire Now', '立即咨询'),
-    b2cLabel:         b('Individual / B2C', '个人预订 / B2C'),
-    b2cTitle:         b('View Camps', '查看营地'),
-    b2cSub:           b('Weekend Getaway · Long Stay · Premium Vacation', '周边游 · 长居体验 · 品质度假'),
-    b2cBtn:           b('Explore Camps', '探索营地'),
-    certLabel:        b('Certifications', '权威认证'),
-    certTitle:        b('EU + US Dual Architecture Certification', '欧盟 + 美国双重建筑认证'),
-    certSubtitle:     b(
-      'VESSEL products are certified by multi-national architectural authorities, enabling direct export to 30+ countries without re-certification.',
-      'VESSEL 产品通过多国权威建筑认证机构审核，可直接出口全球30+国家，无需二次认证'
+    heroCta:          b('Explore Products', '探索产品'),
+    heroCtaSecondary: b('Get in Touch', '联系我们'),
+
+    // === CREDENTIALS BAR ===
+    credStat1:        b('300+', '300+'),
+    credLabel1:       b('Projects Delivered', '交付项目'),
+    credStat2:        b('30+', '30+'),
+    credLabel2:       b('Countries', '覆盖国家'),
+    credStat3:        b('150+', '150+'),
+    credLabel3:       b('Patents', '自主专利'),
+    credStat4:        b('28,800㎡', '28,800㎡'),
+    credLabel4:       b('Factory', '自有工厂'),
+    credCerts:        b('EU CE · US IBC · ISO 9001 Certified', '欧盟CE · 美国IBC · ISO 9001 认证'),
+
+    // === PHILOSOPHY SECTION ===
+    philoLabel:       b('Our Philosophy', '品牌理念'),
+    philoTitle:       b('Where Technology Disappears Into Landscape', '当科技消融于风景'),
+    philoBody:        b(
+      'Since 2018, VESSEL has pioneered space-themed prefab architecture — merging futuristic design with the warmth of natural dwelling. Every unit ships complete from our factory, ready to inhabit the moment it touches ground.',
+      '自2018年创立以来，VESSEL 以科幻美学与自然栖居的融合开创了太空主题装配建筑品类。每一台产品从工厂出发时已是成品，落地即可入住。'
     ),
-    certHighlight:    b(
-      '✦ EU CE + US IBC Dual Certification — direct market entry into EU and North America, dramatically reducing export compliance costs.',
-      '✦ 欧盟 CE 认证 + 美国 IBC 认证双重加持 — 产品可直接进入欧美市场，无需本地重新认证，大幅降低出口合规成本'
+
+    // === FLAGSHIP PRODUCT ===
+    flagshipLabel:    b('Flagship', '旗舰产品'),
+    flagshipModel:    b('VESSEL · E7 Gen6', 'VESSEL · E7 Gen6'),
+    flagshipTitle:    b('The Industry-Defining Space', '重新定义行业标准'),
+    flagshipSpec1:    b('38.8㎡', '38.8㎡'),
+    flagshipSpec1L:   b('Floor Area', '建筑面积'),
+    flagshipSpec2:    b('270°', '270°'),
+    flagshipSpec2L:   b('Panoramic View', '环幕视野'),
+    flagshipSpec3:    b('Gen6 VIIE', 'Gen6 VIIE'),
+    flagshipSpec3L:   b('Smart System', '智能系统'),
+    flagshipCta:      b('View Details', '查看详情'),
+
+    // === TECHNOLOGY TRIPTYCH ===
+    techLabel:        b('Core Technology', '核心技术'),
+    tech1Tag:         b('VIIE', 'VIIE'),
+    tech1Title:       b('Intelligent Interactive Experience', '智能交互体验'),
+    tech1Body:        b(
+      'AI voice + App dual control. One-touch scenes for lighting, climate, curtains. Compatible with global smart home ecosystems including Huawei HarmonyOS.',
+      'AI语音 + App远程双控，一键切换照明、温控、遮帘场景，兼容全球智能家居生态，深度融合华为鸿蒙系统。'
     ),
-    productsLabel:    b('Flagship Products', '旗舰产品系列'),
-    productsTitle:    b('Gen6 6th Generation Prefab Architecture', 'Gen6 第六代装配建筑'),
-    productsSubtitle: b(
-      'VESSEL Gen6 uses all-new modular assembly technology with factory precision of ±0.5mm, delivering globally within 45 days.',
-      'VESSEL Gen6 系列采用全新模块化装配工艺，工厂预制精度达 ±0.5mm，45天完成生产并交付全球'
+    tech2Tag:         b('VOLS', 'VOLS'),
+    tech2Title:       b('Off-Grid Living System', '离网生活系统'),
+    tech2Body:        b(
+      'Rooftop solar + 100kWh battery storage. Integrated water purification and VSRB bio-wastewater treatment. Complete independence from municipal infrastructure.',
+      '屋顶光伏 + 100kWh储能电池，集成净水与VSRB生物污水处理系统，完全脱离市政基础设施独立运行。'
     ),
-    inquireBtn:       b('Purchase Inquiry', '采购询价'),
+    tech3Tag:         b('VIPC', 'VIPC'),
+    tech3Title:       b('Integral Pre-fab Construction', '整装预制工艺'),
+    tech3Body:        b(
+      'Factory precision ±0.5mm. Ships whole via 40ft flat rack container. Survives multiple transports without deformation. On-site in 2 hours.',
+      '工厂预制精度±0.5mm，40尺框架柜整体运输，经受多次吊装运输不变形，现场2小时落地安装。'
+    ),
+
+    // === PROJECTS GRID ===
+    projLabel:        b('Global Presence', '全球实践'),
+    projTitle:        b('Deployed Across 6 Continents', '部署覆盖六大洲'),
+    projCta:          b('View All Projects', '查看全部项目'),
+
+    // === FACTORY / MANUFACTURING ===
+    mfgLabel:         b('Manufacturing', '智造实力'),
+    mfgTitle:         b('28,800㎡ of Precision', '28,800㎡ 精密智造'),
+    mfgBody:          b(
+      '150+ units per month. 150+ patents. Every VESSEL is built with automotive-grade precision in our Foshan factory — then shipped complete to anywhere on Earth.',
+      '月产能150+台，150+项自主专利。每一台VESSEL都在佛山工厂以汽车级精度制造——然后整体运往世界任何角落。'
+    ),
+
+    // === SCENARIOS ===
+    scenLabel:        b('Applications', '应用场景'),
+    scenTitle:        b('One Architecture, Infinite Contexts', '一种建筑，无限场景'),
+    scen1Title:       b('Tourism & Resort', '文旅度假'),
+    scen1Desc:        b('Premium camp resorts, boutique hotels, nature retreats', '高端度假营地、精品酒店、自然旅居'),
+    scen2Title:       b('Commercial Space', '商业空间'),
+    scen2Desc:        b('Pop-up retail, brand experience centers, creative offices', '快闪零售、品牌体验中心、创意办公'),
+    scen3Title:       b('Public & Emergency', '公共服务'),
+    scen3Desc:        b('Emergency housing, mobile medical, border facilities', '应急安置、移动医疗、边境服务设施'),
+
+    // === CTA ===
+    ctaTitle:         b('Start Your Project', '开启您的项目'),
+    ctaBody:          b(
+      'From site consultation to global delivery — our team has supported 300+ projects across 30+ countries.',
+      '从选址咨询到全球交付——我们的团队已支持30+国家的300+个项目。'
+    ),
+    ctaBtn:           b('Contact Us', '联系我们'),
+
+    // === SHARED ===
     learnMore:        b('Learn More', '了解更多'),
-    statsLabel:       b('Global Reach', '全球规模'),
-    stat1Val:         b('300+', '300+'),
-    stat1Title:       b('Projects Delivered', '全球交付项目'),
-    stat1Sub:         b('Across 30+ countries and regions', '遍布30余个国家与地区'),
-    stat2Val:         b('30+', '30+'),
-    stat2Title:       b('Export Countries', '出口国家地区'),
-    stat2Sub:         b('Coverage across all continents', '欧美亚非全域覆盖'),
-    stat3Val:         b('8M+', '8M+'),
-    stat3Title:       b('Followers', '全网粉丝关注'),
-    stat3Sub:         b('Brand influence across all platforms', '全平台品牌影响力'),
-    stat4Val:         b('8 Yrs', '8年'),
-    stat4Title:       b('Brand Heritage', '品牌沉淀'),
-    stat4Sub:         b('Focused on tourism prefab architecture', '专注文旅装配建筑'),
-    scenariosLabel:   b('Applications', '应用场景'),
-    scenariosTitle:   b('Versatile Scenarios, Infinite Possibilities', '多元场景，无限可能'),
-    scenariosSubtitle: b(
-      'VESSEL smart prefab architecture is deployed worldwide across diverse scenarios, meeting various climate and usage requirements.',
-      'VESSEL 文旅智能装配建筑广泛应用于全球各类场景，满足不同气候与使用需求'
-    ),
-    tourismTitle:     b('Tourism Resort', '文旅度假'),
-    tourismSub:       b('Scenic Area · Mountain Camp · Coastal Resort', '旅游景区 · 山地营地 · 海滨度假'),
-    tourismDesc:      b(
-      'Leveraging natural landscapes, VESSEL enables rapid construction of premium resort camps, maximizing land value with 80% shorter build time vs traditional construction.',
-      '以自然景观为依托，快速建设高品质度假营地，实现土地价值最大化，建设周期比传统缩短80%。'
-    ),
-    commercialTitle:  b('Commercial Space', '商业空间'),
-    commercialSub:    b('Retail · Office · F&B', '零售展示 · 办公园区 · 餐饮空间'),
-    commercialDesc:   b(
-      'Flexible modular design gives commercial spaces unlimited possibilities — rapid deployment, easy relocation, adapting to dynamic market needs.',
-      '灵活模块化设计赋予商业空间无限可能，快速部署、随时迁移，适应瞬息万变的商业需求。'
-    ),
-    publicTitle:      b('Public Facilities', '公共设施'),
-    publicSub:        b('Emergency · Medical · Public Service', '应急安置 · 医疗站点 · 公共服务'),
-    publicDesc:       b(
-      'Meets public emergency and welfare needs. Rapidly deployable to disaster zones, remote areas, or temporary event venues with high efficiency.',
-      '满足公共应急与民生服务需求，可快速部署于灾区、边远地区或临时活动场所，高效可靠。'
-    ),
-    slogan:           b('Redefine Natural Dwelling', '重构自然的栖居'),
-    aboutLabel:       b('About VESSEL', '关于微宿'),
-    aboutTitle:       b('Founder of Space-Themed Luxury Camp Resorts', '高端度假营地一站式解决方案服务商'),
-    aboutDesc:        b(
-      "VESSEL® is the founder of space-themed luxury camp resorts. Since 2018, we have delivered 300+ projects across China and exported to 30+ countries. Our self-owned factory (28,800㎡) achieves a monthly production capacity of 150 units, with 150+ national patents.",
-      'VESSEL 微宿®，文旅智能建筑高端营地开创者。自2018年创立，已在全国落地300余个项目，出口远销30余国，自建工厂28800㎡，月产能150台，累计获得国家专利150余件。'
-    ),
-    learnAbout:       b('Learn About VESSEL', '了解 VESSEL'),
-    // Certifications section
-    certEuRegion:       b('EU Certification', '欧盟认证'),
-    certEuDesc:         b('European Construction Products Regulation (CPR)', '欧洲建筑产品法规（CPR）认证'),
-    certUsRegion:       b('US Certification', '美国认证'),
-    certUsDesc:         b('International Building Code Certification', '美国国际建筑规范认证'),
-    certCnRegion:       b('China Standard', '中国认证'),
-    certCnDesc:         b('China Prefab Architecture National Standard', '中国装配式建筑国家标准认证'),
-    certIsoRegion:      b('International Quality', '国际质量'),
-    certIsoDesc:        b('Quality Management System International Certification', '质量管理体系国际认证'),
-    // Innovation section
-    innovLabel:         b('Innovation Story', '创新故事'),
-    innovTitle:         b('3 Core Technology Breakthroughs', '三大核心技术突破'),
-    innovSubtitle:      b('VESSEL continuously invests in R&D, redefining prefab tourism architecture standards with industrial precision and frontier technology.', 'VESSEL 持续投入研发，以工业精度与前沿科技重新定义装配式文旅建筑的技术标准'),
-    innov1Tag:          b('Smart Control', '智能控制'),
-    innov1Title:        b('AI Full-Home Interaction', '智能全屋空间交互'),
-    innov1Desc:         b('VIIE Gen6 smart control system. AI voice + App dual control. One-touch lighting, curtains, AC, day/night mode. Deep integration with Huawei Smart Home.', '第六代 VIIE 智能控制系统，AI 语音 + App 远程双控，一键切换照明、遮帘、空调、日夜模式，与华为全屋智能深度融合。'),
-    innov2Tag:          b('Clean Energy', '绿色能源'),
-    innov2Title:        b('Zero-Carbon Energy System', '新能源零碳系统'),
-    innov2Desc:         b('Rooftop photovoltaic storage + air-source heat pump integration. Off-grid capable. Average 3.2 tons CO₂ reduction per unit per year.', '屋顶光伏储能 + 空气能热泵集成方案，支持离网运营，年均减碳 3.2 吨/台，帮助营地实现绿色运营目标与碳中和认证。'),
-    innov3Tag:          b('Eco Tech', '环保技术'),
-    innov3Title:        b('Bio-Wastewater Treatment', '污水生物处理技术'),
-    innov3Desc:         b('Integrated microbial wastewater treatment system. No municipal sewer required. Output meets China Grade 1A standard — solves mountain/lakeside/grassland camp drainage.', '集成式微生物污水处理系统，无需市政排污管网，净化后达到国家一级 A 排放标准，彻底解决山地/湖滨/草原营地的排污难题。'),
-    // Products section (homepage cards)
-    homeProd1Tag:       b('Flagship', '旗舰款'),
-    homeProd1Title:     b('Flagship Grand Space', '旗舰大空间'),
-    homeProd1Desc:      b('The ultimate prefab architecture combining living, work, and leisure. Perfect for premium resort camps and boutique hotels.', '集居住、工作、休闲于一体的顶配装配式建筑，适合高端度假营地与精品酒店。'),
-    homeProd1F1:        b('Dual bedroom design', '双卧室设计'),
-    homeProd1F2:        b('Full-home smart system', '全屋智能系统'),
-    homeProd1F3:        b('Floor-to-ceiling glass curtain wall', '落地玻璃幕墙'),
-    homeProd1F4:        b('2× en-suite bathrooms', '独立卫浴×2'),
-    homeProd1Badge:     b('Best Seller #1', '畅销 No.1'),
-    homeProd2Tag:       b('Star Model', '明星款'),
-    homeProd2Title:     b('Light-Luxury Modern Space', '轻奢现代空间'),
-    homeProd2Desc:      b("Refined and compact smart tourism architecture. Perfect blend of minimalist aesthetics and functionality. World's most popular model.", '精致紧凑的文旅智能装配建筑，极简美学与功能性的完美融合，全球最受欢迎单品。'),
-    homeProd2F1:        b('Open-plan design', '开放式设计'),
-    homeProd2F2:        b('Smart climate control', '智能温控系统'),
-    homeProd2F3:        b('Panoramic wrap windows', '环绕景观窗'),
-    homeProd2F4:        b('Premium bathroom', '精品卫浴'),
-    homeProd2Badge:     b("World's Best Seller", '全球最畅销'),
-    homeProd3Tag:       b('Long-stay', '长居款'),
-    homeProd3Title:     b('Long-Stay Living Space', '长居生活空间'),
-    homeProd3Desc:      b('Optimized for extended living with full home functionality and superior thermal insulation performance.', '专为长期居住优化的文旅智能装配建筑，具备完整家居功能与超强保温隔热性能。'),
-    homeProd3F1:        b('Full kitchen setup', '完整厨房配置'),
-    homeProd3F2:        b('Super insulation system', '超强隔热系统'),
-    homeProd3F3:        b('Solar energy storage', '储能太阳能板'),
-    homeProd3F4:        b('Double acoustic walls', '双层隔音墙'),
-    homeProd3Badge:     b('Long-stay Choice', '长居首选'),
-    // Scenarios section tags
-    tourismTag1:        b('Scenic Resort', '景区度假村'),
-    tourismTag2:        b('Boutique Inn Cluster', '精品民宿群落'),
-    tourismTag3:        b('Nature Camp', '自然营地集群'),
-    tourismTag4:        b('Mountain Base', '山地旅居基地'),
-    commercialTag1:     b('Pop-up Retail', '快闪零售空间'),
-    commercialTag2:     b('Creative Office', '创意办公园区'),
-    commercialTag3:     b('Brand Experience', '品牌体验中心'),
-    commercialTag4:     b('Outdoor F&B', '户外餐饮集合'),
-    publicTag1:         b('Emergency Housing', '应急安置单元'),
-    publicTag2:         b('Mobile Medical', '移动医疗站点'),
-    publicTag3:         b('Border Facility', '边境服务设施'),
-    publicTag4:         b('Event Venue', '展会临时场馆'),
-    // News / footer strings
-    viewAll:            b('View All', '查看全部'),
-    viewAllNews:        b('View All News →', '查看全部新闻 →'),
-    brandWatermark:     b('微宿 · Smart Prefab Architecture', '微宿·文旅智能装配建筑'),
+    inquireBtn:       b('Inquire Now', '立即咨询'),
+    scrollDown:       b('Scroll', '向下'),
   },
   about: {
     heroLabel:        b('About Us', '关于我们'),
