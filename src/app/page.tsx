@@ -82,54 +82,10 @@ function CredentialsBar() {
 function CertificationsSection() {
   const t = useT();
   const certs = [
-    {
-      region: 'EU',
-      name: t(i18n.home.certEuName),
-      std: t(i18n.home.certEuStd),
-      desc: t(i18n.home.certEuDesc),
-      icon: (
-        <svg viewBox="0 0 40 40" fill="none" className="w-10 h-10">
-          <circle cx="20" cy="20" r="18" stroke="#2A5C5A" strokeWidth="1.5" />
-          <text x="20" y="24" textAnchor="middle" fill="#2A5C5A" fontSize="12" fontWeight="500" fontFamily="var(--font-heading)">CE</text>
-        </svg>
-      ),
-    },
-    {
-      region: 'US',
-      name: t(i18n.home.certUsName),
-      std: t(i18n.home.certUsStd),
-      desc: t(i18n.home.certUsDesc),
-      icon: (
-        <svg viewBox="0 0 40 40" fill="none" className="w-10 h-10">
-          <rect x="2" y="6" width="36" height="28" rx="2" stroke="#2A5C5A" strokeWidth="1.5" />
-          <path d="M2 14h36" stroke="#2A5C5A" strokeWidth="1" />
-          <text x="20" y="29" textAnchor="middle" fill="#2A5C5A" fontSize="9" fontWeight="500" fontFamily="var(--font-heading)">IBC</text>
-        </svg>
-      ),
-    },
-    {
-      region: 'INTL',
-      name: t(i18n.home.certIsoName),
-      std: t(i18n.home.certIsoStd),
-      desc: t(i18n.home.certIsoDesc),
-      icon: (
-        <svg viewBox="0 0 40 40" fill="none" className="w-10 h-10">
-          <circle cx="20" cy="20" r="14" stroke="#2A5C5A" strokeWidth="1.5" />
-          <path d="M14 20l4 4 8-8" stroke="#2A5C5A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-    },
-    {
-      region: 'AU/NZ',
-      name: t(i18n.home.certAuName),
-      std: t(i18n.home.certAuStd),
-      desc: t(i18n.home.certAuDesc),
-      icon: (
-        <svg viewBox="0 0 40 40" fill="none" className="w-10 h-10">
-          <path d="M20 4l4 8h9l-7 5 3 9-9-6-9 6 3-9-7-5h9l4-8z" stroke="#2A5C5A" strokeWidth="1.5" strokeLinejoin="round" />
-        </svg>
-      ),
-    },
+    { badge: 'CE', name: t(i18n.home.certEuName), std: t(i18n.home.certEuStd), desc: t(i18n.home.certEuDesc) },
+    { badge: 'IBC', name: t(i18n.home.certUsName), std: t(i18n.home.certUsStd), desc: t(i18n.home.certUsDesc) },
+    { badge: 'ISO', name: t(i18n.home.certIsoName), std: t(i18n.home.certIsoStd), desc: t(i18n.home.certIsoDesc) },
+    { badge: 'AS', name: t(i18n.home.certAuName), std: t(i18n.home.certAuStd), desc: t(i18n.home.certAuDesc) },
   ];
   return (
     <section className="bg-[#111114] py-24 lg:py-32">
@@ -142,13 +98,15 @@ function CertificationsSection() {
           <p className="text-sm text-[#8A8580] max-w-xl mx-auto">{t(i18n.home.certSubtitle)}</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
           {certs.map((c) => (
-            <div key={c.region} className="border border-[#2A2A2E] p-8 hover:border-[#2A5C5A]/40 transition-colors">
-              <div className="mb-6">{c.icon}</div>
-              <div className="text-[#F0F0F0] text-lg font-medium mb-2 font-[family-name:var(--font-heading)]">{c.name}</div>
-              <div className="text-[#A67C5B] text-xs tracking-wider font-mono mb-4">{c.std}</div>
-              <p className="text-[#8A8580] text-sm leading-relaxed">{c.desc}</p>
+            <div key={c.badge} className="border border-[#2A2A2E] p-8 hover:border-[#2A5C5A]/40 transition-colors text-center">
+              <div className="w-16 h-16 mx-auto mb-6 border border-[#2A5C5A]/60 rounded-full flex items-center justify-center">
+                <span className="text-[#2A5C5A] text-sm font-semibold tracking-wider font-[family-name:var(--font-heading)]">{c.badge}</span>
+              </div>
+              <div className="text-[#F0F0F0] text-base font-medium mb-2 font-[family-name:var(--font-heading)]">{c.name}</div>
+              <div className="text-[#A67C5B] text-[11px] tracking-wider font-mono mb-4">{c.std}</div>
+              <p className="text-[#8A8580] text-xs leading-relaxed">{c.desc}</p>
             </div>
           ))}
         </div>
