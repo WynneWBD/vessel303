@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { MapContainer, TileLayer, CircleMarker, Popup, ScaleControl } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { CAMPS } from '@/data/camps'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 function hashOffset(str: string, salt: number): number {
   let hash = salt
@@ -15,6 +16,9 @@ function hashOffset(str: string, salt: number): number {
 }
 
 export default function GlobalMap() {
+  const { lang } = useLanguage()
+  const en = lang === 'en'
+
   useEffect(() => {
     // Fix leaflet default icon path issue in Next.js
     // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -70,12 +74,12 @@ export default function GlobalMap() {
                 {camp.country}{camp.province && camp.province !== '—' ? ` · ${camp.province}` : ''}
               </div>
               <div style={{ color: '#444', fontSize: 12, marginBottom: 2 }}>
-                设备总量：<strong>{camp.total}</strong> 台
-                {camp.online > 0 && <span style={{ color: '#2a9d2a' }}>（在线 {camp.online}）</span>}
+                {en ? 'Devices: ' : '设备总量：'}<strong>{camp.total}</strong>{en ? '' : ' 台'}
+                {camp.online > 0 && <span style={{ color: '#2a9d2a' }}>{en ? ` · Online: ${camp.online}` : `（在线 ${camp.online}）`}</span>}
               </div>
               {camp.models && (
                 <div style={{ color: '#888', fontSize: 11, marginTop: 4 }}>
-                  型号：{camp.models}
+                  {en ? 'Models: ' : '型号：'}{camp.models}
                 </div>
               )}
             </div>
