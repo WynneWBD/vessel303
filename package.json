@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@fontsource/dm-sans": "^5.2.8",
+    "@fontsource/inter": "^5.2.8",
     "bcryptjs": "^3.0.3",
     "leaflet": "^1.9.4",
     "next": "16.2.1",

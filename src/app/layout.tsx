@@ -1,7 +1,22 @@
 import type { Metadata } from "next";
+import { DM_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import SessionProviderWrapper from "@/components/SessionProviderWrapper";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "700"],
+  variable: "--font-heading",
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-body",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "VESSEL® | Smart Prefab Architecture for Tourism Resorts",
@@ -22,8 +37,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-[#FAF7F2]">
+    <html lang="en" className={`h-full antialiased ${dmSans.variable} ${inter.variable}`}>
+      <body className="min-h-full flex flex-col bg-[#F5F0EB]">
         <LanguageProvider>
           <SessionProviderWrapper>{children}</SessionProviderWrapper>
         </LanguageProvider>
