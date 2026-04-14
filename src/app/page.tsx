@@ -21,7 +21,7 @@ function HeroSection() {
           {t(i18n.home.heroTagline)}
         </p>
 
-        <h1 className="text-6xl sm:text-7xl lg:text-8xl font-light text-white mb-10 leading-[1.08] tracking-[0.15em] font-[family-name:var(--font-heading)]">
+        <h1 className="text-6xl sm:text-7xl lg:text-8xl font-normal text-white mb-10 leading-[1.08] tracking-[0.15em] font-[family-name:var(--font-heading)]">
           {t(i18n.home.heroHeadline)}
         </h1>
 
@@ -82,10 +82,55 @@ function CredentialsBar() {
 function CertificationsSection() {
   const t = useT();
   const certs = [
-    { badge: 'CE', name: t(i18n.home.certEuName), std: t(i18n.home.certEuStd), desc: t(i18n.home.certEuDesc) },
-    { badge: 'IBC', name: t(i18n.home.certUsName), std: t(i18n.home.certUsStd), desc: t(i18n.home.certUsDesc) },
-    { badge: 'ISO', name: t(i18n.home.certIsoName), std: t(i18n.home.certIsoStd), desc: t(i18n.home.certIsoDesc) },
-    { badge: 'AS', name: t(i18n.home.certAuName), std: t(i18n.home.certAuStd), desc: t(i18n.home.certAuDesc) },
+    {
+      name: t(i18n.home.certEuName),
+      std: t(i18n.home.certEuStd),
+      desc: t(i18n.home.certEuDesc),
+      icon: (
+        <svg viewBox="0 0 68 48" className="h-12 w-auto" aria-label="CE Mark">
+          <g fill="#2A5C5A">
+            <path d="M24 0C10.745 0 0 10.745 0 24s10.745 24 24 24c6.34 0 12.121-2.461 16.416-6.478l-3.182-3.65C33.657 41.263 29.015 43.2 24 43.2 13.69 43.2 5.4 34.31 5.4 24S13.69 4.8 24 4.8c5.015 0 9.657 1.937 13.234 5.328l3.182-3.65C36.121 2.461 30.34 0 24 0z"/>
+            <path d="M68 0H41.5v4.8H62.6V21.6H44.5v4.8H62.6V43.2H41.5V48H68z"/>
+          </g>
+        </svg>
+      ),
+    },
+    {
+      name: t(i18n.home.certUsName),
+      std: t(i18n.home.certUsStd),
+      desc: t(i18n.home.certUsDesc),
+      icon: (
+        <svg viewBox="0 0 80 48" className="h-12 w-auto" aria-label="IBC Certification">
+          <rect x="0" y="4" width="80" height="40" rx="4" fill="none" stroke="#2A5C5A" strokeWidth="2"/>
+          <text x="40" y="30" textAnchor="middle" fill="#2A5C5A" fontSize="18" fontWeight="600" fontFamily="var(--font-heading), sans-serif" letterSpacing="0.08em">IBC</text>
+        </svg>
+      ),
+    },
+    {
+      name: t(i18n.home.certIsoName),
+      std: t(i18n.home.certIsoStd),
+      desc: t(i18n.home.certIsoDesc),
+      icon: (
+        <svg viewBox="0 0 48 48" className="h-12 w-auto" aria-label="ISO 9001">
+          <circle cx="24" cy="24" r="22" fill="none" stroke="#2A5C5A" strokeWidth="2"/>
+          <circle cx="24" cy="24" r="15" fill="none" stroke="#2A5C5A" strokeWidth="1.2"/>
+          <ellipse cx="24" cy="24" rx="8" ry="15" fill="none" stroke="#2A5C5A" strokeWidth="1.2"/>
+          <line x1="2" y1="24" x2="46" y2="24" stroke="#2A5C5A" strokeWidth="1.2"/>
+          <line x1="24" y1="2" x2="24" y2="46" stroke="#2A5C5A" strokeWidth="1.2"/>
+        </svg>
+      ),
+    },
+    {
+      name: t(i18n.home.certAuName),
+      std: t(i18n.home.certAuStd),
+      desc: t(i18n.home.certAuDesc),
+      icon: (
+        <svg viewBox="0 0 48 48" className="h-12 w-auto" aria-label="AS/NZS Compliance">
+          <path d="M24 2L6 12v14c0 11.1 7.68 21.48 18 24 10.32-2.52 18-12.9 18-24V12L24 2z" fill="none" stroke="#2A5C5A" strokeWidth="2"/>
+          <path d="M16 24l6 6 10-12" fill="none" stroke="#2A5C5A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ),
+    },
   ];
   return (
     <section className="bg-[#111114] py-24 lg:py-32">
@@ -95,18 +140,16 @@ function CertificationsSection() {
           <h2 className="text-3xl lg:text-4xl font-light text-[#F0F0F0] mb-4 font-[family-name:var(--font-heading)]">
             {t(i18n.home.certTitle)}
           </h2>
-          <p className="text-sm text-[#8A8580] max-w-xl mx-auto">{t(i18n.home.certSubtitle)}</p>
+          <p className="text-sm text-[#8A8580] max-w-2xl mx-auto">{t(i18n.home.certSubtitle)}</p>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
-          {certs.map((c) => (
-            <div key={c.badge} className="border border-[#2A2A2E] p-8 hover:border-[#2A5C5A]/40 transition-colors text-center">
-              <div className="w-16 h-16 mx-auto mb-6 border border-[#2A5C5A]/60 rounded-full flex items-center justify-center">
-                <span className="text-[#2A5C5A] text-sm font-semibold tracking-wider font-[family-name:var(--font-heading)]">{c.badge}</span>
-              </div>
+          {certs.map((c, i) => (
+            <div key={i} className="border border-[#2A2A2E] hover:border-[#2A5C5A]/40 transition-colors p-8 flex flex-col items-center text-center">
+              <div className="mb-6 h-12 flex items-center">{c.icon}</div>
               <div className="text-[#F0F0F0] text-base font-medium mb-2 font-[family-name:var(--font-heading)]">{c.name}</div>
               <div className="text-[#A67C5B] text-[11px] tracking-wider font-mono mb-4">{c.std}</div>
-              <p className="text-[#8A8580] text-xs leading-relaxed">{c.desc}</p>
+              <p className="text-[#6A6560] text-xs leading-relaxed">{c.desc}</p>
             </div>
           ))}
         </div>
