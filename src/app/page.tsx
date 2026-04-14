@@ -7,47 +7,42 @@ import Footer from '@/components/Footer';
 import { useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
 
-// ─── Hero ──────────────────────────────────────────────────────────────────
+// ─── Hero ────────────────────────────────────────────────
 
 function HeroSection() {
   const t = useT();
   return (
-    <section className="relative h-screen min-h-[640px] flex items-center justify-center overflow-hidden bg-[#111114]">
-      <Image
-        src="/images/homepage/hero-bg.jpg"
-        alt="VESSEL architecture"
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover"
-      />
-      <div className="absolute inset-0 bg-[#111114]/65" />
+    <section className="relative h-screen min-h-[700px] flex items-center justify-center overflow-hidden bg-[#111114]">
+      <Image src="/images/homepage/hero-bg.jpg" alt="VESSEL architecture in mountain landscape" fill priority sizes="100vw" className="object-cover" />
+      <div className="absolute inset-0 bg-[#111114]/60" />
 
-      <div className="relative z-10 text-center px-6 max-w-3xl mx-auto">
-        <p className="text-xs tracking-[0.35em] uppercase text-[#2A5C5A] mb-6 font-medium">
+      <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
+        <p className="text-xs tracking-[0.35em] uppercase text-[#2A5C5A] mb-8 font-medium">
           {t(i18n.home.heroTagline)}
         </p>
-        <p className="text-white/70 text-base sm:text-lg leading-relaxed mb-10 max-w-xl mx-auto">
+
+        <h1
+          className="text-5xl sm:text-6xl lg:text-7xl font-light text-white mb-8 leading-[1.1] whitespace-pre-line"
+          style={{ fontFamily: 'var(--font-heading)' }}
+        >
+          {t(i18n.home.heroHeadline)}
+        </h1>
+
+        <p className="text-white/60 text-base sm:text-lg leading-relaxed mb-12 max-w-2xl mx-auto">
           {t(i18n.home.heroSubtitle)}
         </p>
+
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link
-            href="/products"
-            className="bg-[#2A5C5A] text-white px-8 py-3.5 text-sm tracking-wider hover:bg-[#1E4543] transition-colors"
-          >
+          <Link href="/products" className="bg-[#2A5C5A] text-white px-10 py-4 text-sm tracking-wider hover:bg-[#1E4543] transition-colors">
             {t(i18n.home.heroCta)}
           </Link>
-          <Link
-            href="/contact"
-            className="border border-white/30 text-white/80 px-8 py-3.5 text-sm tracking-wider hover:border-white/60 transition-colors"
-          >
+          <Link href="/contact" className="border border-white/30 text-white/80 px-10 py-4 text-sm tracking-wider hover:border-white/60 transition-colors">
             {t(i18n.home.heroCtaSecondary)}
           </Link>
         </div>
       </div>
 
-      {/* Scroll arrow */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/25 animate-bounce">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/20 animate-bounce">
         <svg width="20" height="28" viewBox="0 0 20 28" fill="none">
           <path d="M10 0v20M3 13l7 7 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -56,7 +51,7 @@ function HeroSection() {
   );
 }
 
-// ─── Credentials Bar ───────────────────────────────────────────────────────
+// ─── Credentials Bar ─────────────────────────────────────
 
 function CredentialsBar() {
   const t = useT();
@@ -67,14 +62,14 @@ function CredentialsBar() {
     { val: t(i18n.home.credStat4), label: t(i18n.home.credLabel4) },
   ];
   return (
-    <section className="bg-[#111114] py-16 border-y border-[#2A2A2E]">
+    <section className="bg-[#111114] py-16 border-y border-[#333]">
       <div className="max-w-5xl mx-auto px-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-[#2A2A2E]">
+        <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-[#333]">
           {stats.map((s) => (
             <div key={s.label} className="text-center py-6 px-4">
               <div
                 className="text-5xl lg:text-6xl font-light text-[#F0F0F0] tracking-tight mb-2"
-                style={{ fontFamily: 'var(--font-heading)' }}
+                style={{ fontFamily: 'var(--font-heading)', fontFeatureSettings: '"tnum"' }}
               >
                 {s.val}
               </div>
@@ -82,15 +77,61 @@ function CredentialsBar() {
             </div>
           ))}
         </div>
-        <p className="text-center text-xs tracking-[0.2em] text-[#2A5C5A] mt-8 uppercase">
-          {t(i18n.home.credCerts)}
+      </div>
+    </section>
+  );
+}
+
+// ─── Certifications ──────────────────────────────────────
+
+function CertificationsSection() {
+  const t = useT();
+  const certs = [
+    { name: t(i18n.home.certEuName), std: t(i18n.home.certEuStd), desc: t(i18n.home.certEuDesc), region: 'EU' },
+    { name: t(i18n.home.certUsName), std: t(i18n.home.certUsStd), desc: t(i18n.home.certUsDesc), region: 'US' },
+    { name: t(i18n.home.certIsoName), std: t(i18n.home.certIsoStd), desc: t(i18n.home.certIsoDesc), region: 'INTL' },
+    { name: t(i18n.home.certAuName), std: t(i18n.home.certAuStd), desc: t(i18n.home.certAuDesc), region: 'AU/NZ' },
+  ];
+  return (
+    <section className="bg-[#111114] py-24 lg:py-32">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="text-center mb-16">
+          <p className="text-xs tracking-[0.3em] uppercase text-[#2A5C5A] mb-4 font-medium">
+            {t(i18n.home.certLabel)}
+          </p>
+          <h2
+            className="text-3xl lg:text-4xl font-light text-[#F0F0F0]"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
+            {t(i18n.home.certTitle)}
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#333]">
+          {certs.map((c) => (
+            <div key={c.region} className="bg-[#111114] p-8 flex flex-col">
+              <div className="text-[#2A5C5A] text-xs tracking-[0.2em] font-medium mb-4 uppercase">{c.region}</div>
+              <div
+                className="text-[#F0F0F0] text-lg font-medium mb-1"
+                style={{ fontFamily: 'var(--font-heading)' }}
+              >
+                {c.name}
+              </div>
+              <div className="text-[#A67C5B] text-xs tracking-wider font-mono mb-4">{c.std}</div>
+              <p className="text-[#8A8580] text-sm leading-relaxed flex-1">{c.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-center text-sm text-[#A67C5B] mt-10 tracking-wider">
+          {t(i18n.home.certNote)}
         </p>
       </div>
     </section>
   );
 }
 
-// ─── Philosophy ────────────────────────────────────────────────────────────
+// ─── Philosophy ──────────────────────────────────────────
 
 function PhilosophySection() {
   const t = useT();
@@ -108,18 +149,10 @@ function PhilosophySection() {
             >
               {t(i18n.home.philoTitle)}
             </h2>
-            <p className="text-base text-[#4A4744] leading-relaxed">
-              {t(i18n.home.philoBody)}
-            </p>
+            <p className="text-base text-[#4A4744] leading-relaxed">{t(i18n.home.philoBody)}</p>
           </div>
           <div className="relative aspect-[4/3] overflow-hidden">
-            <Image
-              src="/images/homepage/story-01.jpg"
-              alt="VESSEL philosophy"
-              fill
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              className="object-cover"
-            />
+            <Image src="/images/homepage/story-01.jpg" alt="VESSEL philosophy" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
           </div>
         </div>
       </div>
@@ -127,7 +160,7 @@ function PhilosophySection() {
   );
 }
 
-// ─── Flagship Product ──────────────────────────────────────────────────────
+// ─── Flagship ────────────────────────────────────────────
 
 function FlagshipSection() {
   const t = useT();
@@ -144,17 +177,20 @@ function FlagshipSection() {
         </p>
         <p className="text-sm text-[#8A8580] tracking-wider mb-4">{t(i18n.home.flagshipModel)}</p>
         <h2
-          className="text-3xl lg:text-5xl font-light text-[#F0F0F0] mb-12 leading-tight max-w-2xl"
+          className="text-3xl lg:text-5xl font-light text-[#F0F0F0] mb-6 leading-tight max-w-2xl"
           style={{ fontFamily: 'var(--font-heading)' }}
         >
           {t(i18n.home.flagshipTitle)}
         </h2>
+        <p className="text-sm text-[#8A8580] mb-12 max-w-2xl leading-relaxed">
+          {t(i18n.home.flagshipWhy)}
+        </p>
 
-        <div className="grid grid-cols-3 divide-x divide-[#2A2A2E] mb-16 max-w-xl">
+        <div className="flex gap-12 mb-16">
           {specs.map((s) => (
-            <div key={s.label} className="px-6 first:pl-0">
+            <div key={s.label} className="pr-12 border-r border-[#333] last:border-0 last:pr-0">
               <div
-                className="text-4xl font-light text-[#F0F0F0] mb-1"
+                className="text-3xl lg:text-4xl font-light text-[#F0F0F0] mb-1 whitespace-nowrap"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 {s.val}
@@ -165,13 +201,7 @@ function FlagshipSection() {
         </div>
 
         <div className="relative aspect-[16/9] overflow-hidden bg-[#1A1A1E] mb-10">
-          <Image
-            src="/images/e7-gen6.jpg"
-            alt="VESSEL E7 Gen6"
-            fill
-            sizes="(max-width: 1280px) 100vw, 1152px"
-            className="object-cover"
-          />
+          <Image src="/images/e7-gen6.jpg" alt="VESSEL E7 Gen6" fill sizes="(max-width: 1280px) 100vw, 1152px" className="object-cover" />
         </div>
 
         <Link
@@ -188,79 +218,69 @@ function FlagshipSection() {
   );
 }
 
-// ─── Technology Triptych ───────────────────────────────────────────────────
+// ─── Technology (3-column grid with images) ──────────────
 
-interface TechCardProps {
-  tag: string;
-  title: string;
-  body: string;
-  abbr: string;
-}
-
-function TechCard({ tag, title, body, abbr }: TechCardProps) {
+function TechnologySection() {
+  const t = useT();
+  const techs = [
+    { tag: t(i18n.home.tech1Tag), title: t(i18n.home.tech1Title), body: t(i18n.home.tech1Body), img: '/images/homepage/tech-viie.jpg' },
+    { tag: t(i18n.home.tech2Tag), title: t(i18n.home.tech2Title), body: t(i18n.home.tech2Body), img: '/images/homepage/tech-vols.jpg' },
+    { tag: t(i18n.home.tech3Tag), title: t(i18n.home.tech3Title), body: t(i18n.home.tech3Body), img: '/images/homepage/tech-vipc.jpg' },
+  ];
   return (
-    <section className="bg-[#111114] min-h-[80vh] flex items-center">
-      <div className="max-w-6xl mx-auto px-6 py-24 w-full">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <div>
-            <p className="text-xs tracking-[0.3em] uppercase text-[#2A5C5A] mb-6 font-medium">{tag}</p>
-            <h3
-              className="text-2xl lg:text-3xl font-light text-[#F0F0F0] mb-8 leading-snug"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              {title}
-            </h3>
-            <p className="text-base text-[#8A8580] leading-relaxed">{body}</p>
-          </div>
-          <div className="flex items-center justify-center lg:justify-end">
-            <span
-              className="font-light text-[#2A2A2E] leading-none select-none"
-              style={{ fontFamily: 'var(--font-heading)', fontSize: '120px' }}
-            >
-              {abbr}
-            </span>
-          </div>
+    <section className="bg-[#111114] py-24 lg:py-32">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="text-center mb-16">
+          <p className="text-xs tracking-[0.3em] uppercase text-[#2A5C5A] mb-4 font-medium">
+            {t(i18n.home.techLabel)}
+          </p>
+          <h2
+            className="text-3xl lg:text-4xl font-light text-[#F0F0F0]"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
+            {t(i18n.home.techTitle)}
+          </h2>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-px bg-[#333]">
+          {techs.map((tech) => (
+            <div key={tech.tag} className="bg-[#111114] flex flex-col">
+              <div className="relative aspect-[16/10] bg-[#1A1A1E] overflow-hidden">
+                <Image
+                  src={tech.img}
+                  alt={tech.title}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 33vw"
+                  className="object-cover opacity-80"
+                />
+              </div>
+              <div className="p-8">
+                <p className="text-[#2A5C5A] text-xs tracking-[0.3em] font-medium mb-4 uppercase">{tech.tag}</p>
+                <h3
+                  className="text-xl font-medium text-[#F0F0F0] mb-4"
+                  style={{ fontFamily: 'var(--font-heading)' }}
+                >
+                  {tech.title}
+                </h3>
+                <p className="text-sm text-[#8A8580] leading-relaxed">{tech.body}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
   );
 }
 
-function TechnologySection() {
-  const t = useT();
-  const techs = [
-    { tag: t(i18n.home.tech1Tag), title: t(i18n.home.tech1Title), body: t(i18n.home.tech1Body), abbr: 'VIIE' },
-    { tag: t(i18n.home.tech2Tag), title: t(i18n.home.tech2Title), body: t(i18n.home.tech2Body), abbr: 'VOLS' },
-    { tag: t(i18n.home.tech3Tag), title: t(i18n.home.tech3Title), body: t(i18n.home.tech3Body), abbr: 'VIPC' },
-  ];
-  return (
-    <>
-      <div className="bg-[#111114] pt-24 pb-0">
-        <div className="max-w-6xl mx-auto px-6">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#2A5C5A] font-medium">
-            {t(i18n.home.techLabel)}
-          </p>
-        </div>
-      </div>
-      {techs.map((tech, i) => (
-        <div key={tech.abbr}>
-          {i > 0 && <div className="h-px bg-[#2A2A2E]" />}
-          <TechCard {...tech} />
-        </div>
-      ))}
-    </>
-  );
-}
-
-// ─── Projects Grid ─────────────────────────────────────────────────────────
+// ─── Projects Grid ───────────────────────────────────────
 
 const REGIONS = [
-  { label: 'Asia', desc: 'China · Taiwan · Japan · Korea · Southeast Asia' },
-  { label: 'Europe', desc: 'Russia · Slovakia · Austria · Germany · Ireland' },
-  { label: 'Americas', desc: 'USA · Mexico · Brazil · Argentina' },
-  { label: 'Middle East', desc: 'UAE · Saudi Arabia · Libya · Cyprus' },
-  { label: 'Oceania', desc: 'Australia · New Zealand' },
-  { label: 'Africa', desc: 'Tanzania · Emerging markets' },
+  { label: 'Asia', desc: 'China · Taiwan · Japan · Korea · SE Asia', img: '/images/homepage/region-asia.jpg' },
+  { label: 'Europe', desc: 'Russia · Slovakia · Austria · Germany · Ireland', img: '/images/homepage/region-europe.jpg' },
+  { label: 'Americas', desc: 'USA · Mexico · Brazil · Argentina', img: '/images/homepage/region-americas.jpg' },
+  { label: 'Middle East', desc: 'UAE · Saudi Arabia · Libya · Cyprus', img: '/images/homepage/region-mideast.jpg' },
+  { label: 'Oceania', desc: 'Australia · New Zealand', img: '/images/homepage/region-oceania.jpg' },
+  { label: 'Africa', desc: 'Tanzania · Emerging markets', img: '/images/homepage/region-africa.jpg' },
 ];
 
 function ProjectsSection() {
@@ -280,16 +300,26 @@ function ProjectsSection() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-12">
           {REGIONS.map((r) => (
-            <div key={r.label} className="bg-[#E5E0DA] p-6 aspect-[4/3] flex flex-col justify-end">
-              <p
-                className="text-lg font-medium text-[#1A1A1E] mb-1"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
-                {r.label}
-              </p>
-              <p className="text-xs text-[#8A8580] leading-relaxed">{r.desc}</p>
+            <div key={r.label} className="relative aspect-[4/3] overflow-hidden group">
+              <Image
+                src={r.img}
+                alt={r.label}
+                fill
+                sizes="(max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="absolute bottom-0 left-0 p-5">
+                <p
+                  className="text-white text-lg font-medium mb-0.5"
+                  style={{ fontFamily: 'var(--font-heading)' }}
+                >
+                  {r.label}
+                </p>
+                <p className="text-white/60 text-xs">{r.desc}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -310,7 +340,7 @@ function ProjectsSection() {
   );
 }
 
-// ─── Manufacturing ─────────────────────────────────────────────────────────
+// ─── Manufacturing ───────────────────────────────────────
 
 function ManufacturingSection() {
   const t = useT();
@@ -328,18 +358,10 @@ function ManufacturingSection() {
             >
               {t(i18n.home.mfgTitle)}
             </h2>
-            <p className="text-base text-[#8A8580] leading-relaxed">
-              {t(i18n.home.mfgBody)}
-            </p>
+            <p className="text-base text-[#8A8580] leading-relaxed">{t(i18n.home.mfgBody)}</p>
           </div>
           <div className="relative aspect-[4/3] overflow-hidden bg-[#1A1A1E]">
-            <Image
-              src="/images/homepage/factory-01.jpg"
-              alt="VESSEL factory"
-              fill
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              className="object-cover"
-            />
+            <Image src="/images/homepage/factory-01.jpg" alt="VESSEL factory" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
           </div>
         </div>
       </div>
@@ -347,7 +369,7 @@ function ManufacturingSection() {
   );
 }
 
-// ─── Scenarios ─────────────────────────────────────────────────────────────
+// ─── Scenarios ───────────────────────────────────────────
 
 function ScenariosSection() {
   const t = useT();
@@ -370,13 +392,9 @@ function ScenariosSection() {
             {t(i18n.home.scenTitle)}
           </h2>
         </div>
-
         <div className="grid lg:grid-cols-3 gap-6">
           {scenes.map((s) => (
-            <div
-              key={s.title}
-              className="border border-[#E5E0DA] p-8 hover:border-[#2A5C5A]/40 transition-colors"
-            >
+            <div key={s.title} className="border border-[#E5E0DA] p-8 hover:border-[#2A5C5A]/40 transition-colors">
               <div className="h-0.5 bg-[#2A5C5A] w-8 mb-6" />
               <h3
                 className="text-xl font-medium text-[#1A1A1E] mb-3"
@@ -393,7 +411,7 @@ function ScenariosSection() {
   );
 }
 
-// ─── Final CTA ─────────────────────────────────────────────────────────────
+// ─── CTA ─────────────────────────────────────────────────
 
 function CtaSection() {
   const t = useT();
@@ -406,9 +424,7 @@ function CtaSection() {
         >
           {t(i18n.home.ctaTitle)}
         </h2>
-        <p className="text-base text-[#8A8580] mb-10 leading-relaxed">
-          {t(i18n.home.ctaBody)}
-        </p>
+        <p className="text-base text-[#8A8580] mb-10 leading-relaxed">{t(i18n.home.ctaBody)}</p>
         <Link
           href="/contact"
           className="inline-block bg-[#2A5C5A] text-white px-10 py-4 text-sm tracking-wider hover:bg-[#1E4543] transition-colors"
@@ -420,7 +436,7 @@ function CtaSection() {
   );
 }
 
-// ─── Page ──────────────────────────────────────────────────────────────────
+// ─── Page ────────────────────────────────────────────────
 
 export default function HomePage() {
   return (
@@ -428,6 +444,7 @@ export default function HomePage() {
       <Navbar />
       <HeroSection />
       <CredentialsBar />
+      <CertificationsSection />
       <PhilosophySection />
       <FlagshipSection />
       <TechnologySection />

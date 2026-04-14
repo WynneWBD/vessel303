@@ -52,8 +52,9 @@ export const i18n = {
     terms:            b('Terms of Use', '使用条款'),
   },
   home: {
-    // === HERO SECTION ===
+    // === HERO ===
     heroTagline:      b('Redefine Natural Dwelling', '重构自然的栖居'),
+    heroHeadline:     b('Architecture Without\nBoundaries', '建筑\n无界'),
     heroSubtitle:     b(
       'VESSEL creates smart prefab architecture that dissolves the boundary between technology and nature. Delivered complete. Anywhere on Earth.',
       'VESSEL 创造智能装配建筑，消弭科技与自然的边界。出厂即成品，落地即生活。'
@@ -68,11 +69,27 @@ export const i18n = {
     credLabel2:       b('Countries', '覆盖国家'),
     credStat3:        b('150+', '150+'),
     credLabel3:       b('Patents', '自主专利'),
-    credStat4:        b('28,800㎡', '28,800㎡'),
-    credLabel4:       b('Factory', '自有工厂'),
-    credCerts:        b('EU CE · US IBC · ISO 9001 Certified', '欧盟CE · 美国IBC · ISO 9001 认证'),
+    credStat4:        b('28,800', '28,800'),
+    credLabel4:       b('m² Factory', 'm² 工厂'),
 
-    // === PHILOSOPHY SECTION ===
+    // === CERTIFICATIONS ===
+    certLabel:        b('Global Compliance', '全球资质认证'),
+    certTitle:        b('Certified for the World\'s Most Demanding Markets', '通过全球最严苛市场的建筑认证'),
+    certEuName:       b('EU CE Mark', '欧盟 CE 认证'),
+    certEuStd:        b('EN 1337 · CPR', 'EN 1337 · CPR'),
+    certEuDesc:       b('Construction Products Regulation — direct market access to 27 EU member states', '建筑产品法规——直接进入27个欧盟成员国市场'),
+    certUsName:       b('US IBC', '美国 IBC 认证'),
+    certUsStd:        b('IBC 2021 · ASTM', 'IBC 2021 · ASTM'),
+    certUsDesc:       b('International Building Code — compliant for US and IBC-adopting countries', '国际建筑规范——符合美国及采用IBC标准的国家'),
+    certIsoName:      b('ISO 9001:2015', 'ISO 9001:2015'),
+    certIsoStd:       b('Quality Management', '质量管理体系'),
+    certIsoDesc:      b('International quality management system certification', '国际质量管理体系认证'),
+    certAuName:       b('AU/NZ Compliance', '澳新合规认证'),
+    certAuStd:        b('NZS 2208 · AS 4666', 'NZS 2208 · AS 4666'),
+    certAuDesc:       b('Safety glazing and glass compliance for Australian & NZ markets', '澳大利亚及新西兰市场安全玻璃合规认证'),
+    certNote:         b('Only 2-3 Chinese manufacturers hold simultaneous EU + US building certifications', '国内同时持有欧盟+美国建筑认证的企业仅2-3家'),
+
+    // === PHILOSOPHY ===
     philoLabel:       b('Our Philosophy', '品牌理念'),
     philoTitle:       b('Where Technology Disappears Into Landscape', '当科技消融于风景'),
     philoBody:        b(
@@ -80,7 +97,7 @@ export const i18n = {
       '自2018年创立以来，VESSEL 以科幻美学与自然栖居的融合开创了太空主题装配建筑品类。每一台产品从工厂出发时已是成品，落地即可入住。'
     ),
 
-    // === FLAGSHIP PRODUCT ===
+    // === FLAGSHIP ===
     flagshipLabel:    b('Flagship', '旗舰产品'),
     flagshipModel:    b('VESSEL · E7 Gen6', 'VESSEL · E7 Gen6'),
     flagshipTitle:    b('The Industry-Defining Space', '重新定义行业标准'),
@@ -88,12 +105,14 @@ export const i18n = {
     flagshipSpec1L:   b('Floor Area', '建筑面积'),
     flagshipSpec2:    b('270°', '270°'),
     flagshipSpec2L:   b('Panoramic View', '环幕视野'),
-    flagshipSpec3:    b('Gen6 VIIE', 'Gen6 VIIE'),
+    flagshipSpec3:    b('VIIE', 'VIIE'),
     flagshipSpec3L:   b('Smart System', '智能系统'),
     flagshipCta:      b('View Details', '查看详情'),
+    flagshipWhy:      b('Featured on CCTV National News upon launch in 2019. The one-bedroom-one-living layout became the industry paradigm.', '2019年发布即登上央视新闻直播间，一室一厅布局已成为行业经典范式。'),
 
-    // === TECHNOLOGY TRIPTYCH ===
+    // === TECHNOLOGY ===
     techLabel:        b('Core Technology', '核心技术'),
+    techTitle:        b('Three Systems. Total Independence.', '三大技术体系，完全自主'),
     tech1Tag:         b('VIIE', 'VIIE'),
     tech1Title:       b('Intelligent Interactive Experience', '智能交互体验'),
     tech1Body:        b(
@@ -103,22 +122,22 @@ export const i18n = {
     tech2Tag:         b('VOLS', 'VOLS'),
     tech2Title:       b('Off-Grid Living System', '离网生活系统'),
     tech2Body:        b(
-      'Rooftop solar + 100kWh battery storage. Integrated water purification and VSRB bio-wastewater treatment. Complete independence from municipal infrastructure.',
-      '屋顶光伏 + 100kWh储能电池，集成净水与VSRB生物污水处理系统，完全脱离市政基础设施独立运行。'
+      'Rooftop solar + 100kWh battery storage. Integrated water purification and VSRB bio-wastewater treatment. Zero dependence on municipal infrastructure.',
+      '屋顶光伏 + 100kWh储能电池，集成净水与VSRB生物污水处理系统，完全脱离市政基础设施。'
     ),
     tech3Tag:         b('VIPC', 'VIPC'),
     tech3Title:       b('Integral Pre-fab Construction', '整装预制工艺'),
     tech3Body:        b(
-      'Factory precision ±0.5mm. Ships whole via 40ft flat rack container. Survives multiple transports without deformation. On-site in 2 hours.',
-      '工厂预制精度±0.5mm，40尺框架柜整体运输，经受多次吊装运输不变形，现场2小时落地安装。'
+      'Factory precision ±0.5mm. Ships whole via 40ft flat rack. Survives repeated transport without deformation. On-site in 2 hours.',
+      '工厂精度±0.5mm，40尺框架柜整体运输，多次吊装不变形，现场2小时安装。'
     ),
 
-    // === PROJECTS GRID ===
+    // === PROJECTS ===
     projLabel:        b('Global Presence', '全球实践'),
     projTitle:        b('Deployed Across 6 Continents', '部署覆盖六大洲'),
     projCta:          b('View All Projects', '查看全部项目'),
 
-    // === FACTORY / MANUFACTURING ===
+    // === MANUFACTURING ===
     mfgLabel:         b('Manufacturing', '智造实力'),
     mfgTitle:         b('28,800㎡ of Precision', '28,800㎡ 精密智造'),
     mfgBody:          b(
