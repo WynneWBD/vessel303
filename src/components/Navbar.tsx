@@ -107,35 +107,13 @@ export default function Navbar() {
   const t = useT();
 
   const navLinks: NavLink[] = [
-    {
-      label: t(i18n.nav.products),
-      href: '/products',
-      dropdown: [
-        { group: 'gen6', label: 'E7 Gen6', sub: '38.8㎡ Flagship', href: '/products/e7' },
-        { label: 'E6 Gen6', sub: '29.6㎡ Star', href: '/products/e6' },
-        { label: 'E3 Gen6', sub: '19㎡ Mini', href: '/products/e3' },
-        { label: 'V9 Gen6', sub: '38㎡ Home', href: '/products/v9' },
-        { group: 'gen5', label: 'V5 Gen5', sub: '24.8㎡ Panorama', href: '/products/v5' },
-        { label: 'S5 Gen5', sub: '29.6㎡ Skylight', href: '/products/s5' },
-        { group: '', label: t(i18n.nav.allProducts), href: '/products' },
-      ],
-    },
-    {
-      label: t(i18n.nav.cases),
-      href: '/cases',
-      dropdown: [
-        { label: t(i18n.nav.scenarioTourism), href: '/scenarios/tourism' },
-        { label: t(i18n.nav.scenarioCommercial), href: '/scenarios/commercial' },
-        { label: t(i18n.nav.scenarioPublic), href: '/scenarios/public' },
-        { label: t(i18n.nav.allCases), href: '/cases' },
-      ],
-    },
+    { label: t(i18n.nav.products), href: '/products' },
+    { label: t(i18n.nav.cases), href: '/global' },
     {
       label: t(i18n.nav.about),
       href: '/about',
       dropdown: [
         { label: t(i18n.nav.about), href: '/about' },
-        { label: t(i18n.nav.globalPresence), href: '/global' },
       ],
     },
     { label: t(i18n.nav.news), href: '/news' },
