@@ -56,8 +56,8 @@ export const i18n = {
     heroTagline:      b('Redefine Natural Dwelling', '重构自然的栖居'),
     heroHeadline:     b('Architecture Without\nBoundaries', '建 筑 无 界'),
     heroSubtitle:     b(
-      'Pioneering space-themed prefab architecture that merges futuristic design with natural dwelling. Factory-complete. Ready anywhere on Earth.',
-      '以科幻美学与自然栖居的融合，开创太空主题装配建筑品类。出厂即成品，落地即生活。'
+      'Live with nature. Factory-complete. Ready anywhere on Earth.',
+      '与自然共生而居。出厂即成品，落地即生活。'
     ),
     heroCta:          b('Explore Products', '探索产品'),
     heroCtaSecondary: b('Get in Touch', '联系我们'),
@@ -87,7 +87,7 @@ export const i18n = {
     certAuName:       b('AU/NZ Compliance', '澳新合规认证'),
     certAuStd:        b('NZS 2208 · AS 4666', 'NZS 2208 · AS 4666'),
     certAuDesc:       b('Safety glazing and glass compliance for Australian & NZ markets', '澳大利亚及新西兰市场安全玻璃合规认证'),
-    certSubtitle:     b('Among the very few Chinese manufacturers certified for both EU and US building codes', '微宿是国内极少数同时持有欧盟与美国建筑安全认证的制造商'),
+    certSubtitle:     b('Among the very few manufacturers worldwide holding both EU CE and US IBC building certifications', '微宿是国内极少数同时持有欧美建筑安全双认证的制造商'),
 
     // === PHILOSOPHY ===
     philoLabel:       b('Our Philosophy', '品牌理念'),

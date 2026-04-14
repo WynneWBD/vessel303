@@ -17,9 +17,12 @@ function HeroSection() {
       <div className="absolute inset-0 bg-[#111114]/55" />
 
       <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
-        <p className="text-sm sm:text-base tracking-[0.25em] uppercase text-white/50 mb-10 font-medium">
-          {t(i18n.home.heroTagline)}
-        </p>
+        <div className="mb-10">
+          <p className="text-base sm:text-lg tracking-[0.15em] text-white/70 font-light font-[family-name:var(--font-heading)]">
+            {t(i18n.home.heroTagline)}
+          </p>
+          <div className="w-12 h-px bg-[#2A5C5A] mx-auto mt-4" />
+        </div>
 
         <h1 className="text-6xl sm:text-7xl lg:text-8xl font-normal text-white mb-10 leading-[1.08] tracking-[0.15em] font-[family-name:var(--font-heading)]">
           {t(i18n.home.heroHeadline)}
@@ -87,11 +90,9 @@ function CertificationsSection() {
       std: t(i18n.home.certEuStd),
       desc: t(i18n.home.certEuDesc),
       icon: (
-        <svg viewBox="0 0 68 48" className="h-12 w-auto" aria-label="CE Mark">
-          <g fill="#2A5C5A">
-            <path d="M24 0C10.745 0 0 10.745 0 24s10.745 24 24 24c6.34 0 12.121-2.461 16.416-6.478l-3.182-3.65C33.657 41.263 29.015 43.2 24 43.2 13.69 43.2 5.4 34.31 5.4 24S13.69 4.8 24 4.8c5.015 0 9.657 1.937 13.234 5.328l3.182-3.65C36.121 2.461 30.34 0 24 0z"/>
-            <path d="M68 0H41.5v4.8H62.6V21.6H44.5v4.8H62.6V43.2H41.5V48H68z"/>
-          </g>
+        <svg viewBox="0 0 190 140" className="h-10 w-auto" fill="#F0F0F0">
+          <path d="M70 0C31.3 0 0 31.3 0 70c0 38.7 31.3 70 70 70 18.4 0 35.2-7.1 47.7-18.8l-10.5-11.3C97.4 119.4 84.2 125 70 125c-30.4 0-55-24.6-55-55s24.6-55 55-55c14.2 0 27.4 5.6 37.2 15.1l10.5-11.3C105.2 7.1 88.4 0 70 0z"/>
+          <path d="M190 0h-80v15h65v47.5h-55v15h55V125h-65v15h80z"/>
         </svg>
       ),
     },
@@ -100,9 +101,9 @@ function CertificationsSection() {
       std: t(i18n.home.certUsStd),
       desc: t(i18n.home.certUsDesc),
       icon: (
-        <svg viewBox="0 0 80 48" className="h-12 w-auto" aria-label="IBC Certification">
-          <rect x="0" y="4" width="80" height="40" rx="4" fill="none" stroke="#2A5C5A" strokeWidth="2"/>
-          <text x="40" y="30" textAnchor="middle" fill="#2A5C5A" fontSize="18" fontWeight="600" fontFamily="var(--font-heading), sans-serif" letterSpacing="0.08em">IBC</text>
+        <svg viewBox="0 0 120 48" className="h-10 w-auto">
+          <rect x="1" y="1" width="118" height="46" rx="6" fill="none" stroke="#F0F0F0" strokeWidth="2"/>
+          <text x="60" y="32" textAnchor="middle" fill="#F0F0F0" fontSize="22" fontWeight="600" letterSpacing="0.1em" style={{fontFamily: 'var(--font-heading), sans-serif'}}>IBC</text>
         </svg>
       ),
     },
@@ -111,12 +112,9 @@ function CertificationsSection() {
       std: t(i18n.home.certIsoStd),
       desc: t(i18n.home.certIsoDesc),
       icon: (
-        <svg viewBox="0 0 48 48" className="h-12 w-auto" aria-label="ISO 9001">
-          <circle cx="24" cy="24" r="22" fill="none" stroke="#2A5C5A" strokeWidth="2"/>
-          <circle cx="24" cy="24" r="15" fill="none" stroke="#2A5C5A" strokeWidth="1.2"/>
-          <ellipse cx="24" cy="24" rx="8" ry="15" fill="none" stroke="#2A5C5A" strokeWidth="1.2"/>
-          <line x1="2" y1="24" x2="46" y2="24" stroke="#2A5C5A" strokeWidth="1.2"/>
-          <line x1="24" y1="2" x2="24" y2="46" stroke="#2A5C5A" strokeWidth="1.2"/>
+        <svg viewBox="0 0 160 48" className="h-10 w-auto">
+          <text x="80" y="34" textAnchor="middle" fill="#F0F0F0" fontSize="28" fontWeight="300" letterSpacing="0.05em" style={{fontFamily: 'var(--font-heading), sans-serif'}}>ISO</text>
+          <line x1="0" y1="44" x2="160" y2="44" stroke="#2A5C5A" strokeWidth="2"/>
         </svg>
       ),
     },
@@ -125,9 +123,9 @@ function CertificationsSection() {
       std: t(i18n.home.certAuStd),
       desc: t(i18n.home.certAuDesc),
       icon: (
-        <svg viewBox="0 0 48 48" className="h-12 w-auto" aria-label="AS/NZS Compliance">
-          <path d="M24 2L6 12v14c0 11.1 7.68 21.48 18 24 10.32-2.52 18-12.9 18-24V12L24 2z" fill="none" stroke="#2A5C5A" strokeWidth="2"/>
-          <path d="M16 24l6 6 10-12" fill="none" stroke="#2A5C5A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <svg viewBox="0 0 48 48" className="h-10 w-auto" fill="none" stroke="#F0F0F0" strokeWidth="2">
+          <path d="M24 4L8 14v12c0 10 6.8 19.4 16 22 9.2-2.6 16-12 16-22V14L24 4z"/>
+          <path d="M16 24l6 6 10-12" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       ),
     },
@@ -135,7 +133,7 @@ function CertificationsSection() {
   return (
     <section className="bg-[#111114] py-24 lg:py-32">
       <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center mb-6">
+        <div className="text-center mb-16">
           <p className="text-xs tracking-[0.3em] uppercase text-[#2A5C5A] mb-4 font-medium">{t(i18n.home.certLabel)}</p>
           <h2 className="text-3xl lg:text-4xl font-light text-[#F0F0F0] mb-4 font-[family-name:var(--font-heading)]">
             {t(i18n.home.certTitle)}
@@ -143,12 +141,12 @@ function CertificationsSection() {
           <p className="text-sm text-[#8A8580] max-w-2xl mx-auto">{t(i18n.home.certSubtitle)}</p>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
           {certs.map((c, i) => (
-            <div key={i} className="border border-[#2A2A2E] hover:border-[#2A5C5A]/40 transition-colors p-8 flex flex-col items-center text-center">
-              <div className="mb-6 h-12 flex items-center">{c.icon}</div>
+            <div key={i} className="text-center group">
+              <div className="h-14 flex items-center justify-center mb-6 opacity-60 group-hover:opacity-100 transition-opacity">{c.icon}</div>
               <div className="text-[#F0F0F0] text-base font-medium mb-2 font-[family-name:var(--font-heading)]">{c.name}</div>
-              <div className="text-[#A67C5B] text-[11px] tracking-wider font-mono mb-4">{c.std}</div>
+              <div className="text-[#A67C5B] text-[11px] tracking-wider font-mono mb-3">{c.std}</div>
               <p className="text-[#6A6560] text-xs leading-relaxed">{c.desc}</p>
             </div>
           ))}
