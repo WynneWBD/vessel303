@@ -119,14 +119,6 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
                   {en ? 'Units Deployed' : '台设备'}
                 </span>
               </div>
-              {camp.online > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#2a9d2a', flexShrink: 0 }} />
-                  <span style={{ color: '#6A9A6A', fontSize: 12 }}>
-                    {en ? `${camp.online} online` : `${camp.online} 台在线`}
-                  </span>
-                </div>
-              )}
             </div>
 
             {/* Model pills */}
