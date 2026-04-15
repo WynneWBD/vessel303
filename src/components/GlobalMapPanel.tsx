@@ -181,8 +181,10 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
 
             {/* Bottom actions */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <Link
-                href="/products"
+              <a
+                href="https://en.303vessel.cn/products_list.html"
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{
                   display: 'block', textAlign: 'center',
                   background: '#2A5C5A', color: '#F0F0F0',
@@ -191,7 +193,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
                 }}
               >
                 {en ? 'Explore Products' : '查看产品系列'}
-              </Link>
+              </a>
               <a
                 href="https://en.303vessel.cn/contact.html"
                 target="_blank"
