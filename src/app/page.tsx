@@ -300,12 +300,12 @@ function TechnologySection() {
 // ─── Projects Grid ───────────────────────────────────────
 
 const REGIONS = [
-  { label: 'Asia', desc: 'China · Taiwan · Japan · Korea · SE Asia', img: '/images/homepage/region-asia.jpg' },
+  { label: 'Asia', desc: 'China · Taiwan · Japan · Korea · SE Asia', img: '/images/products/region-asia-huawei.jpg' },
   { label: 'Europe', desc: 'Russia · Slovakia · Austria · Germany · Ireland', img: '/images/products/region-europe-russia.jpg' },
-  { label: 'Americas', desc: 'USA · Mexico · Brazil · Argentina', img: '/images/homepage/region-americas.jpg' },
+  { label: 'Americas', desc: 'USA · Mexico · Brazil · Argentina', img: '/images/products/region-americas.jpg' },
   { label: 'Middle East', desc: 'UAE · Saudi Arabia · Libya · Cyprus', img: '/images/homepage/region-mideast.jpg' },
   { label: 'Oceania', desc: 'Australia · New Zealand', img: '/images/homepage/region-oceania.jpg' },
-  { label: 'Africa', desc: 'Tanzania · Emerging markets', img: '/images/homepage/region-africa.jpg' },
+  { label: 'Africa', desc: 'Tanzania · Emerging markets', img: '/images/products/region-africa.jpg' },
 ];
 
 function ProjectsSection() {
