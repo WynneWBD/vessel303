@@ -302,6 +302,7 @@ export default function GlobalMapML({
           showcasePopup.remove()
         })
 
+        console.log(`[VESSEL MAP] Showcase marker "${project.id}": setLngLat([${project.coordinates[0]}, ${project.coordinates[1]}]) — lng=${project.coordinates[0]}, lat=${project.coordinates[1]}`)
         new Marker({ element: el, anchor: 'center' })
           .setLngLat(project.coordinates)
           .addTo(map)
