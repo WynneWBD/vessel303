@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
@@ -9,12 +10,40 @@ import { i18n } from '@/lib/i18n';
 
 // ─── Hero ────────────────────────────────────────────────
 
+const HERO_IMAGES = [
+  '/images/hero/homepage_banner-01.jpg',
+  '/images/hero/homepage_banner-02.png',
+  '/images/hero/homepage_banner-03.jpg',
+  '/images/hero/homepage_banner-04.jpg',
+  '/images/hero/homepage_banner-05.jpg',
+];
+
 function HeroSection() {
   const t = useT();
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % HERO_IMAGES.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <section className="relative h-screen min-h-[700px] flex items-center justify-center overflow-hidden bg-[#111114]">
-      <Image src="/images/homepage/hero-bg.jpg" alt="VESSEL architecture in mountain landscape" fill priority sizes="100vw" className="object-cover" />
-      <div className="absolute inset-0 bg-[#111114]/55" />
+      {/* Carousel images */}
+      {HERO_IMAGES.map((src, i) => (
+        <Image
+          key={src}
+          src={src}
+          alt="VESSEL architecture"
+          fill
+          priority={i === 0}
+          sizes="100vw"
+          className={`object-cover transition-opacity duration-1000 ${i === current ? 'opacity-100' : 'opacity-0'}`}
+        />
+      ))}
+      <div className="absolute inset-0 bg-black/50" />
 
       <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
         <div className="mb-10">
