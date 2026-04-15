@@ -6,7 +6,7 @@ import type { Camp } from '@/data/camps'
 import GlobalMapPanel from './GlobalMapPanel'
 import { useLanguage } from '@/contexts/LanguageContext'
 
-const GlobalMapDynamic = dynamic(() => import('./GlobalMap'), { ssr: false })
+const GlobalMapDynamic = dynamic(() => import('./GlobalMapML'), { ssr: false })
 
 export default function GlobalMapView() {
   const [selectedCamp, setSelectedCamp] = useState<Camp | null>(null)
