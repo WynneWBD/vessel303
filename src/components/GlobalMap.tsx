@@ -8,10 +8,8 @@ import type { Camp } from '@/data/camps'
 
 const DEALER_COUNTRIES = ['俄罗斯', '台湾', '沙特阿拉伯', '阿联酋', '韩国', '美国']
 
-// Tile layers — MapTiler streets, language param switches labels
-const MAPTILER_KEY = '7tbP0DIfmG9T8qWYxh5M'
-const TILE_EN = `https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=${MAPTILER_KEY}&language=en`
-const TILE_ZH = `https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=${MAPTILER_KEY}&language=zh`
+// CartoDB dark base map — used for both EN and ZH
+const TILE_CARTO = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
 
 // VESSEL HQ — Foshan Nanhai Shishan, Guangdong
 const HQ = {
@@ -48,9 +46,9 @@ const MAP_CSS = `
   display: block;
   pointer-events: none;
 }
-/* Dim MapTiler tile layer */
+/* Dim CartoDB dark base map */
 .vessel-map .leaflet-tile-pane {
-  filter: brightness(0.6) contrast(1.15) saturate(0.8);
+  filter: brightness(0.85) saturate(0.75);
 }
 /* HQ permanent tooltip */
 .vessel-hq-tooltip {
@@ -181,11 +179,8 @@ export default function GlobalMap({ onCampSelect, onMapClick, flyTarget, lang }:
       style={{ height: '100%', width: '100%', background: '#b8c4be' }}
     >
       <TileLayer
-        key={isZh ? 'tile-zh' : 'tile-en'}
-        attribution="&copy; <a href='https://www.maptiler.com/copyright/'>MapTiler</a> &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>"
-        url={isZh ? TILE_ZH : TILE_EN}
-        tileSize={512}
-        zoomOffset={-1}
+        attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        url={TILE_CARTO}
         noWrap={true}
       />
       <ScaleControl position="bottomleft" imperial={false} />
