@@ -77,13 +77,17 @@ function MapClickHandler({
   return null
 }
 
+const TILE_EN = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+const TILE_ZH = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+
 interface Props {
   onCampSelect?: (camp: Camp) => void
   onMapClick?: () => void
   flyTarget?: [number, number] | null
+  lang?: string
 }
 
-export default function GlobalMap({ onCampSelect, onMapClick, flyTarget }: Props) {
+export default function GlobalMap({ onCampSelect, onMapClick, flyTarget, lang }: Props) {
   const [mounted, setMounted] = useState(false)
   const suppressMapClick = useRef(false)
 
@@ -139,8 +143,9 @@ export default function GlobalMap({ onCampSelect, onMapClick, flyTarget }: Props
       style={{ height: '100%', width: '100%', background: '#b8c4be' }}
     >
       <TileLayer
+        key={lang === 'zh' ? 'tile-zh' : 'tile-en'}
         attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        url={lang === 'zh' ? TILE_ZH : TILE_EN}
         noWrap={true}
       />
       <ScaleControl position="bottomleft" imperial={false} />

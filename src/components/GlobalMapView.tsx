@@ -35,6 +35,7 @@ export default function GlobalMapView() {
           onCampSelect={handleCampSelect}
           onMapClick={handleClose}
           flyTarget={selectedCamp ? [selectedCamp.lat, selectedCamp.lng] : null}
+          lang={lang}
         />
       </div>
       <GlobalMapPanel camp={selectedCamp} lang={lang} onClose={handleClose} />
