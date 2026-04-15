@@ -13,7 +13,8 @@ import {
 } from '@maptiler/sdk'
 import '@maptiler/sdk/dist/maptiler-sdk.css'
 import { CAMPS } from '@/data/camps'
-import type { Camp } from '@/data/camps'
+import { SHOWCASE_PROJECTS } from '@/data/showcaseProjects'
+import type { ShowcaseProject } from '@/data/showcaseProjects'
 
 maptilerConfig.apiKey = '7tbP0DIfmG9T8qWYxh5M'
 
@@ -35,7 +36,6 @@ function hashOffset(str: string, salt: number): number {
   return (hash % 100) / 1000
 }
 
-// Injected once into <head>
 const MARKER_CSS = `
 @keyframes vesselPulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(227, 111, 44, 0.55); }
@@ -44,6 +44,10 @@ const MARKER_CSS = `
 @keyframes hq-pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.65; }
+}
+@keyframes showcase-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.5), 0 0 0 0 rgba(227,111,44,0.4); }
+  60%       { box-shadow: 0 0 0 10px rgba(255,255,255,0), 0 0 0 18px rgba(227,111,44,0); }
 }
 .vessel-hq-star {
   animation: hq-pulse 2s ease-in-out infinite;
@@ -67,9 +71,26 @@ const MARKER_CSS = `
   font-family: -apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
   pointer-events: none;
 }
+/* Showcase project pin — larger, white border, pulsing */
+.vessel-showcase-pin {
+  width: 26px;
+  height: 26px;
+  background: #E36F2C;
+  border: 3px solid #FFFFFF;
+  border-radius: 50%;
+  cursor: pointer;
+  box-sizing: border-box;
+  animation: showcase-ring 2.4s ease-out infinite;
+  transition: transform 0.18s ease;
+  position: relative;
+  z-index: 10;
+}
+.vessel-showcase-pin:hover {
+  transform: scale(1.3);
+}
 /* Camp name hover popup */
 .vessel-camp-popup .maplibregl-popup-content {
-  background: rgba(240,240,240,0.95);
+  background: rgba(240,240,240,0.96);
   color: #1A1A1E;
   border-radius: 3px;
   padding: 4px 8px;
@@ -80,9 +101,9 @@ const MARKER_CSS = `
   border: none;
 }
 .vessel-camp-popup .maplibregl-popup-tip {
-  border-top-color: rgba(240,240,240,0.95);
+  border-top-color: rgba(240,240,240,0.96);
 }
-/* Hide MapLibre default controls border */
+/* MapLibre control buttons — dark theme */
 .maplibregl-ctrl-group {
   background: rgba(26,26,26,0.85) !important;
   border: 1px solid rgba(255,255,255,0.1) !important;
@@ -100,23 +121,32 @@ const MARKER_CSS = `
 `
 
 interface Props {
-  onCampSelect?: (camp: Camp) => void
+  onShowcaseSelect?: (project: ShowcaseProject) => void
   onMapClick?: () => void
   flyTarget?: [number, number] | null  // [lat, lng] — Leaflet convention from parent
+  resetViewKey?: number  // increment to fly back to global default view
   lang?: string
 }
 
-export default function GlobalMapML({ onCampSelect, onMapClick, flyTarget, lang }: Props) {
+export default function GlobalMapML({
+  onShowcaseSelect,
+  onMapClick,
+  flyTarget,
+  resetViewKey,
+  lang,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MaptilerMap | null>(null)
   const suppressClick = useRef(false)
   const hqLabelRef = useRef<HTMLDivElement | null>(null)
   const prevFlyKey = useRef('')
+  const prevResetKey = useRef(resetViewKey ?? 0)
+  const isZhRef = useRef(lang === 'zh')
 
   // Keep callbacks current without re-initializing the map
-  const onCampSelectRef = useRef(onCampSelect)
+  const onShowcaseSelectRef = useRef(onShowcaseSelect)
   const onMapClickRef = useRef(onMapClick)
-  useEffect(() => { onCampSelectRef.current = onCampSelect }, [onCampSelect])
+  useEffect(() => { onShowcaseSelectRef.current = onShowcaseSelect }, [onShowcaseSelect])
   useEffect(() => { onMapClickRef.current = onMapClick }, [onMapClick])
 
   const isZh = lang === 'zh'
@@ -125,7 +155,6 @@ export default function GlobalMapML({ onCampSelect, onMapClick, flyTarget, lang 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
 
-    // Inject animation + marker CSS once
     const cssId = 'vessel-mapml-css'
     if (!document.getElementById(cssId)) {
       const style = document.createElement('style')
@@ -137,15 +166,15 @@ export default function GlobalMapML({ onCampSelect, onMapClick, flyTarget, lang 
     const map = new MaptilerMap({
       container: containerRef.current,
       style: MapStyle.STREETS.DARK,
-      center: isZh ? [105, 30] : [10, 20],
-      zoom: isZh ? 3 : 2,
+      center: isZhRef.current ? [105, 30] : [10, 20],
+      zoom: isZhRef.current ? 3 : 2,
       minZoom: 1.5,
       maxZoom: 16,
       renderWorldCopies: false,
     })
     mapRef.current = map
 
-    // Hover popup for camp name
+    // Hover popup for regular camp name
     const hoverPopup = new Popup({
       closeButton: false,
       closeOnClick: false,
@@ -155,10 +184,10 @@ export default function GlobalMapML({ onCampSelect, onMapClick, flyTarget, lang 
 
     map.on('load', () => {
       // ── Language ──────────────────────────────────────────────────────
-      map.setLanguage(isZh ? Language.CHINESE : Language.ENGLISH)
+      map.setLanguage(isZhRef.current ? Language.CHINESE : Language.ENGLISH)
 
-      // ── Camp GeoJSON source ───────────────────────────────────────────
-      const features: GeoJSON.Feature<GeoJSON.Point>[] = CAMPS.map((camp, i) => ({
+      // ── Regular camp GeoJSON ──────────────────────────────────────────
+      const campFeatures: GeoJSON.Feature<GeoJSON.Point>[] = CAMPS.map((camp, i) => ({
         type: 'Feature',
         geometry: {
           type: 'Point',
@@ -177,10 +206,10 @@ export default function GlobalMapML({ onCampSelect, onMapClick, flyTarget, lang 
 
       map.addSource('camps', {
         type: 'geojson',
-        data: { type: 'FeatureCollection', features },
+        data: { type: 'FeatureCollection', features: campFeatures },
       })
 
-      // ── Camp circle layer ─────────────────────────────────────────────
+      // Regular camp circles (below showcase markers)
       map.addLayer({
         id: 'camps-layer',
         type: 'circle',
@@ -188,22 +217,20 @@ export default function GlobalMapML({ onCampSelect, onMapClick, flyTarget, lang 
         paint: {
           'circle-radius': ['get', 'radius'],
           'circle-color': '#E36F2C',
-          'circle-opacity': 0.88,
-          // Dealers get dashed-look via thicker warm-tone stroke
+          'circle-opacity': 0.85,
           'circle-stroke-width': ['case', ['boolean', ['get', 'isDealer'], false], 2.5, 1.5],
-          'circle-stroke-color': ['case', ['boolean', ['get', 'isDealer'], false], '#A67C5B', 'rgba(255,255,255,0.25)'],
+          'circle-stroke-color': ['case', ['boolean', ['get', 'isDealer'], false], '#A67C5B', 'rgba(255,255,255,0.22)'],
           'circle-stroke-opacity': 1,
         },
       })
 
-      // ── Hover: cursor + name popup ────────────────────────────────────
+      // Hover: cursor + name popup
       map.on('mouseenter', 'camps-layer', (e) => {
         map.getCanvas().style.cursor = 'pointer'
-        const features = (e as { features?: { geometry: unknown; properties: Record<string, unknown> }[] }).features
-        if (features?.length) {
-          const geom = features[0].geometry as GeoJSON.Point
-          const coords = geom.coordinates as [number, number]
-          const name = (features[0].properties?.name ?? '') as string
+        const feats = (e as { features?: { geometry: unknown; properties: Record<string, unknown> }[] }).features
+        if (feats?.length) {
+          const coords = (feats[0].geometry as GeoJSON.Point).coordinates as [number, number]
+          const name = (feats[0].properties?.name ?? '') as string
           hoverPopup.setLngLat(coords).setText(name).addTo(map)
         }
       })
@@ -212,19 +239,12 @@ export default function GlobalMapML({ onCampSelect, onMapClick, flyTarget, lang 
         hoverPopup.remove()
       })
 
-      // ── Click: select camp ────────────────────────────────────────────
-      map.on('click', 'camps-layer', (e) => {
+      // Click regular camp — suppress background dismiss, show tooltip only
+      map.on('click', 'camps-layer', () => {
         suppressClick.current = true
-        const features = (e as { features?: { properties: Record<string, unknown> }[] }).features
-        if (features?.length) {
-          const idx = features[0].properties?.index as number
-          if (typeof idx === 'number') {
-            onCampSelectRef.current?.(CAMPS[idx])
-          }
-        }
       })
 
-      // ── Click: background dismiss ─────────────────────────────────────
+      // Background click — close detail panel
       map.on('click', () => {
         if (suppressClick.current) { suppressClick.current = false; return }
         onMapClickRef.current?.()
@@ -234,26 +254,61 @@ export default function GlobalMapML({ onCampSelect, onMapClick, flyTarget, lang 
       map.addControl(new NavigationControl({ showCompass: false }), 'top-left')
       map.addControl(new ScaleControl({ unit: 'metric' }), 'bottom-left')
 
-      // ── VESSEL HQ star marker ─────────────────────────────────────────
+      // ── VESSEL HQ star ────────────────────────────────────────────────
       const hqWrapper = document.createElement('div')
-      hqWrapper.style.cssText = 'position:relative;width:36px;height:36px;'
-
-      // SVG star (with pulse animation via CSS class)
+      hqWrapper.style.cssText = 'position:relative;width:36px;height:36px;pointer-events:none;'
       hqWrapper.innerHTML = `
         <svg class="vessel-hq-star" width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
           <polygon points="18,2 22.8,13.2 35,13.2 25,21.4 28.5,33 18,26 7.5,33 11,21.4 1,13.2 13.2,13.2"
             fill="#E36F2C" stroke="#fff" stroke-width="1.5"/>
         </svg>
-        <div class="vessel-hq-label">${isZh ? HQ.labelZh : HQ.labelEn}</div>
+        <div class="vessel-hq-label">${isZhRef.current ? HQ.labelZh : HQ.labelEn}</div>
       `
       hqLabelRef.current = hqWrapper.querySelector<HTMLDivElement>('.vessel-hq-label')
 
       new Marker({ element: hqWrapper, anchor: 'center' })
         .setLngLat([HQ.lng, HQ.lat])
         .addTo(map)
+
+      // ── Showcase project markers (HTML, with pulse animation) ─────────
+      SHOWCASE_PROJECTS.forEach((project) => {
+        const el = document.createElement('div')
+        el.className = 'vessel-showcase-pin'
+        el.title = project.name.en
+
+        // Click → open detail panel (stops propagation so map click doesn't also fire)
+        el.addEventListener('click', (ev) => {
+          ev.stopPropagation()
+          onShowcaseSelectRef.current?.(project)
+        })
+
+        // Hover popup with project name
+        const showcasePopup = new Popup({
+          closeButton: false,
+          closeOnClick: false,
+          offset: 18,
+          className: 'vessel-camp-popup',
+        })
+
+        el.addEventListener('mouseenter', () => {
+          map.getCanvas().style.cursor = 'pointer'
+          showcasePopup
+            .setLngLat(project.coordinates)
+            .setText(project.name[isZhRef.current ? 'zh' : 'en'])
+            .addTo(map)
+        })
+        el.addEventListener('mouseleave', () => {
+          map.getCanvas().style.cursor = ''
+          showcasePopup.remove()
+        })
+
+        new Marker({ element: el, anchor: 'center' })
+          .setLngLat(project.coordinates)
+          .addTo(map)
+      })
     })
 
-    // Auto-resize when container width changes (panel slide-in/out)
+    // Auto-resize on container dimension change (panel open/close)
     const ro = new ResizeObserver(() => map.resize())
     ro.observe(containerRef.current)
 
@@ -267,6 +322,7 @@ export default function GlobalMapML({ onCampSelect, onMapClick, flyTarget, lang 
 
   // ── Language switching ────────────────────────────────────────────────
   useEffect(() => {
+    isZhRef.current = isZh
     const map = mapRef.current
     if (!map) return
     const apply = () => {
@@ -279,16 +335,31 @@ export default function GlobalMapML({ onCampSelect, onMapClick, flyTarget, lang 
     else map.once('load', apply)
   }, [isZh])
 
-  // ── FlyTo when a camp is selected ────────────────────────────────────
+  // ── FlyTo showcase project ────────────────────────────────────────────
   useEffect(() => {
     const map = mapRef.current
     if (!map || !flyTarget) return
     const key = `${flyTarget[0]},${flyTarget[1]}`
     if (key === prevFlyKey.current) return
     prevFlyKey.current = key
-    // flyTarget is [lat, lng] (Leaflet convention) — MapLibre wants [lng, lat]
-    map.flyTo({ center: [flyTarget[1], flyTarget[0]], zoom: 9, duration: 1500 })
+    // flyTarget is [lat, lng]; MapLibre wants [lng, lat]
+    map.flyTo({ center: [flyTarget[1], flyTarget[0]], zoom: 11, duration: 1600 })
   }, [flyTarget])
+
+  // ── Reset to global view when panel closes ────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    if (resetViewKey === undefined || resetViewKey === 0) return
+    if (resetViewKey === prevResetKey.current) return
+    prevResetKey.current = resetViewKey
+    prevFlyKey.current = ''  // allow re-selecting same project
+    map.flyTo({
+      center: isZhRef.current ? [105, 30] : [10, 20],
+      zoom: isZhRef.current ? 3 : 2,
+      duration: 1400,
+    })
+  }, [resetViewKey])
 
   return (
     <div
