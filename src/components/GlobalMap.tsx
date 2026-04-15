@@ -26,9 +26,13 @@ const MAP_CSS = `
   border: 2px dashed #A67C5B !important;
   background: rgba(227, 111, 44, 0.82) !important;
 }
-/* Dim the Voyager tile layer */
+/* Dim tile pane — applies to both CartoDB and TianDiTu */
 .vessel-map .leaflet-tile-pane {
   filter: brightness(0.72) saturate(0.8);
+}
+/* Slightly lighter dim for TianDiTu (white-base map) */
+.vessel-map.tile-zh .leaflet-tile-pane {
+  filter: brightness(0.78) saturate(0.75);
 }
 /* Hide default leaflet marker shadows */
 .vessel-map .leaflet-marker-shadow { display: none !important; }
@@ -84,6 +88,38 @@ const TILE_ZH_BASE = `https://t{s}.tianditu.gov.cn/vec_w/wmts?SERVICE=WMTS&REQUE
 const TILE_ZH_LABEL = `https://t{s}.tianditu.gov.cn/cva_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cva&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk=${TDT_TOKEN}`
 const TDT_SUBDOMAINS = ['0', '1', '2', '3', '4', '5', '6', '7']
 
+// Syncs tile-zh / tile-en class on the map container so CSS filter rules apply correctly.
+// MapContainer className prop is mount-only; this component updates it reactively.
+function TileClassUpdater({ isZh }: { isZh: boolean }) {
+  const map = useMap()
+  useEffect(() => {
+    const el = map.getContainer()
+    el.classList.toggle('tile-zh', isZh)
+    el.classList.toggle('tile-en', !isZh)
+  }, [isZh, map])
+  return null
+}
+
+// Named component avoids react-leaflet fragment reconciliation issues
+function TiandituTileLayers() {
+  return (
+    <>
+      <TileLayer
+        attribution='&copy; <a href="https://www.tianditu.gov.cn/">天地图</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        url={TILE_ZH_BASE}
+        subdomains={TDT_SUBDOMAINS}
+        noWrap={true}
+      />
+      <TileLayer
+        attribution=""
+        url={TILE_ZH_LABEL}
+        subdomains={TDT_SUBDOMAINS}
+        noWrap={true}
+      />
+    </>
+  )
+}
+
 interface Props {
   onCampSelect?: (camp: Camp) => void
   onMapClick?: () => void
@@ -137,6 +173,8 @@ export default function GlobalMap({ onCampSelect, onMapClick, flyTarget, lang }:
     })
   }
 
+  const isZh = lang === 'zh'
+
   return (
     <MapContainer
       center={[35, 105]}
@@ -146,23 +184,9 @@ export default function GlobalMap({ onCampSelect, onMapClick, flyTarget, lang }:
       className="vessel-map"
       style={{ height: '100%', width: '100%', background: '#b8c4be' }}
     >
-      {lang === 'zh' ? (
-        <>
-          <TileLayer
-            key="tile-zh-base"
-            attribution='&copy; <a href="https://www.tianditu.gov.cn/">天地图</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url={TILE_ZH_BASE}
-            subdomains={TDT_SUBDOMAINS}
-            noWrap={true}
-          />
-          <TileLayer
-            key="tile-zh-label"
-            attribution=""
-            url={TILE_ZH_LABEL}
-            subdomains={TDT_SUBDOMAINS}
-            noWrap={true}
-          />
-        </>
+      <TileClassUpdater isZh={isZh} />
+      {isZh ? (
+        <TiandituTileLayers key="tiles-zh" />
       ) : (
         <TileLayer
           key="tile-en"
