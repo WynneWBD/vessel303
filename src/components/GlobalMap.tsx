@@ -10,10 +10,15 @@ const DEALER_COUNTRIES = ['俄罗斯', '台湾', '沙特阿拉伯', '阿联酋',
 
 // Tile layers
 const TILE_EN = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-const TILE_ZH = 'https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key=7tbP0DIfmG9T8qWYxh5M&language=zh'
+const TILE_ZH = 'https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=7tbP0DIfmG9T8qWYxh5M&language=zh'
 
 // VESSEL HQ — Foshan Nanhai Shishan, Guangdong
-const HQ = { lat: 23.0833, lng: 113.0167 }
+const HQ = {
+  lat: 23.0833,
+  lng: 113.0167,
+  labelEn: 'VESSEL HQ & Smart Factory',
+  labelZh: 'VESSEL 微宿 · 超级工厂',
+}
 
 // CSS injected into <head> — scoped to .vessel-map
 const MAP_CSS = `
@@ -50,6 +55,19 @@ const MAP_CSS = `
 .vessel-map .leaflet-tile-pane.maptiler-dim {
   filter: brightness(0.6) contrast(1.15) saturate(0.8);
 }
+/* HQ permanent tooltip */
+.vessel-hq-tooltip {
+  background: rgba(26,26,26,0.85) !important;
+  color: #F0F0F0 !important;
+  border: 1px solid #E36F2C !important;
+  border-radius: 4px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  padding: 4px 10px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+  white-space: nowrap !important;
+}
+.vessel-hq-tooltip::before { border-right-color: rgba(26,26,26,0.85) !important; }
 /* Hide default marker shadows */
 .vessel-map .leaflet-marker-shadow { display: none !important; }
 `
@@ -170,7 +188,8 @@ export default function GlobalMap({ onCampSelect, onMapClick, flyTarget, lang }:
           key="tile-zh"
           attribution="&copy; <a href='https://www.maptiler.com/copyright/'>MapTiler</a> &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>"
           url={TILE_ZH}
-          tileSize={256}
+          tileSize={512}
+          zoomOffset={-1}
           noWrap={true}
           className="maptiler-dim"
         />
@@ -186,13 +205,22 @@ export default function GlobalMap({ onCampSelect, onMapClick, flyTarget, lang }:
       <FlyToController target={flyTarget ?? null} />
       <MapClickHandler onMapClick={onMapClick} suppress={suppressMapClick} />
 
-      {/* VESSEL HQ — orange star marker (no interaction) */}
+      {/* VESSEL HQ — orange star with permanent label */}
       <Marker
         position={[HQ.lat, HQ.lng]}
         icon={hqIcon}
         zIndexOffset={9999}
         interactive={false}
-      />
+      >
+        <Tooltip
+          permanent
+          direction="right"
+          offset={[20, 0]}
+          className="vessel-hq-tooltip"
+        >
+          {isZh ? HQ.labelZh : HQ.labelEn}
+        </Tooltip>
+      </Marker>
 
       {/* Camp markers */}
       {CAMPS.map((camp, i) => {
