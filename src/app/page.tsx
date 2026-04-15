@@ -399,8 +399,8 @@ function ScenariosSection() {
   const t = useT();
   const scenes = [
     { title: t(i18n.home.scen1Title), desc: t(i18n.home.scen1Desc), img: '/images/homepage/scene-tourism.jpg' },
-    { title: t(i18n.home.scen2Title), desc: t(i18n.home.scen2Desc), img: '/images/homepage/scene-commercial.jpg' },
-    { title: t(i18n.home.scen3Title), desc: t(i18n.home.scen3Desc), img: '/images/homepage/scene-public.jpg' },
+    { title: t(i18n.home.scen2Title), desc: t(i18n.home.scen2Desc), img: '/images/products/scenario-commercial.jpg' },
+    { title: t(i18n.home.scen3Title), desc: t(i18n.home.scen3Desc), img: '/images/products/scenario-public.jpg' },
   ];
   return (
     <section className="bg-[#F5F0EB] py-24 lg:py-32">
