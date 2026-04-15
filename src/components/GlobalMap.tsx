@@ -8,31 +8,33 @@ import type { Camp } from '@/data/camps'
 
 const DEALER_COUNTRIES = ['俄罗斯', '台湾', '沙特阿拉伯', '阿联酋', '韩国', '美国']
 
-// VESSEL HQ — Foshan, Guangdong
+const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+
+// VESSEL HQ — Foshan Nanhai Shishan, Guangdong
 const HQ = {
   lat: 23.0833,
   lng: 113.0167,
-  labelEn: 'VESSEL HQ & Smart Factory',
-  labelZh: 'VESSEL 微宿 · 超级工厂',
+  tooltipEn: 'VESSEL Smart Factory · Foshan, China',
+  tooltipZh: 'VESSEL 微宿智造总部 · 广东佛山',
   titleEn: 'VESSEL Smart Manufacturing HQ',
   titleZh: 'VESSEL 微宿智造总部',
-  addressEn: 'Xingye North Road 253, Shishan, Nanhai, Foshan, Guangdong',
+  addressEn: 'Xingye North Road 253, Shishan, Nanhai, Foshan',
   addressZh: '广东省佛山市南海区狮山镇兴业北路253号',
-  statsEn: '28,800㎡ Factory · 150 Units/Month · Shipping to 30+ Countries',
-  statsZh: '28,800㎡ 超级工厂 · 月产能 150台 · 远销 30+ 国家',
-  taglineEn: 'Every VESSEL unit starts here.',
-  taglineZh: '每一台微宿，从这里出发。',
+  statsEn: '28,800㎡ Factory · 150 Units/Month · 30+ Countries',
+  statsZh: '28,800㎡ 超级工厂 · 月产能150台 · 远销30+国家',
+  sloganEn: 'Every VESSEL unit starts here.',
+  sloganZh: '每一台微宿，从这里出发。',
 }
 
-// CSS injected into <head> — scoped to .vessel-map class
+// CSS injected into <head> — scoped to .vessel-map
 const MAP_CSS = `
 @keyframes vesselPulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(227, 111, 44, 0.55); }
   60%       { box-shadow: 0 0 0 10px rgba(227, 111, 44, 0); }
 }
-@keyframes hqPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(227, 111, 44, 0.75); }
-  60%       { box-shadow: 0 0 0 16px rgba(227, 111, 44, 0); }
+@keyframes hqRipple {
+  0%   { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(3); opacity: 0; }
 }
 .vessel-pin {
   border-radius: 50%;
@@ -46,51 +48,67 @@ const MAP_CSS = `
   border: 2px dashed #A67C5B !important;
   background: rgba(227, 111, 44, 0.82) !important;
 }
-.vessel-hq-pin {
-  width: 16px;
-  height: 16px;
+/* HQ radar-tower marker */
+.vessel-hq-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+}
+.vessel-hq-marker .hq-core {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
   background: #E36F2C;
-  border: 2.5px solid #fff;
-  transform: rotate(45deg);
-  animation: hqPulse 2s ease-out infinite;
-  cursor: pointer !important;
-  box-sizing: border-box;
+  border: 2px solid rgba(255,255,255,0.9);
+  z-index: 2;
+  cursor: pointer;
 }
-/* Leaflet tooltip for permanent HQ label */
-.vessel-hq-label {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
+.vessel-hq-marker .hq-ring {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(227, 111, 44, 0.55);
+  animation: hqRipple 2.5s ease-out infinite;
 }
-.vessel-hq-label::before { display: none !important; }
-/* Dark popup for HQ */
+.vessel-hq-marker .hq-ring-2 {
+  animation-delay: 0.8s;
+}
+/* HQ Popup dark override */
 .vessel-hq-popup .leaflet-popup-content-wrapper {
-  background: #1A1A1E;
+  background: #1A1A1A;
   color: #F0F0F0;
-  border: 1px solid #2A2A2E;
-  border-radius: 4px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.7);
+  border-radius: 8px;
+  border: 1px solid rgba(227,111,44,0.25);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
   padding: 0;
 }
-.vessel-hq-popup .leaflet-popup-tip-container { display: none; }
-.vessel-hq-popup .leaflet-popup-content { margin: 0; }
+.vessel-hq-popup .leaflet-popup-tip {
+  background: #1A1A1A;
+}
+.vessel-hq-popup .leaflet-popup-content {
+  margin: 0;
+  width: auto !important;
+}
 .vessel-hq-popup .leaflet-popup-close-button {
-  color: #8A8580 !important;
-  font-size: 18px !important;
-  top: 8px !important;
+  color: rgba(255,255,255,0.5) !important;
+  font-size: 20px !important;
+  top: 6px !important;
   right: 10px !important;
+}
+.vessel-hq-popup .leaflet-popup-close-button:hover {
+  color: #fff !important;
 }
 /* Dim tile pane */
 .vessel-map .leaflet-tile-pane {
   filter: brightness(0.72) saturate(0.8);
 }
-/* Hide default leaflet marker shadows */
 .vessel-map .leaflet-marker-shadow { display: none !important; }
 `
-
-// CartoDB Voyager — works for both EN and ZH (auto local language at higher zoom)
-const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
 
 function hashOffset(str: string, salt: number): number {
   let hash = salt
@@ -101,7 +119,6 @@ function hashOffset(str: string, salt: number): number {
   return (hash % 100) / 1000
 }
 
-// Fly to target when selectedCamp changes
 function FlyToController({ target }: { target: [number, number] | null }) {
   const map = useMap()
   const prevKey = useRef('')
@@ -115,7 +132,6 @@ function FlyToController({ target }: { target: [number, number] | null }) {
   return null
 }
 
-// Close panel on map background click
 function MapClickHandler({
   onMapClick,
   suppress,
@@ -188,14 +204,18 @@ export default function GlobalMap({ onCampSelect, onMapClick, flyTarget, lang }:
 
   const hqIcon = L.divIcon({
     className: '',
-    html: '<div class="vessel-hq-pin"></div>',
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
+    html: `<div class="vessel-hq-marker">
+      <div class="hq-ring"></div>
+      <div class="hq-ring hq-ring-2"></div>
+      <div class="hq-core"></div>
+    </div>`,
+    iconSize: [12, 12],
+    iconAnchor: [6, 6],
   })
 
   return (
     <MapContainer
-      center={[35, 105]}
+      center={isZh ? [30, 105] : [20, 10]}
       zoom={isZh ? 4 : 2}
       minZoom={2}
       maxZoom={16}
@@ -203,7 +223,6 @@ export default function GlobalMap({ onCampSelect, onMapClick, flyTarget, lang }:
       style={{ height: '100%', width: '100%', background: '#b8c4be' }}
     >
       <TileLayer
-        key={isZh ? 'tile-zh' : 'tile-en'}
         attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url={TILE_URL}
         noWrap={true}
@@ -212,55 +231,33 @@ export default function GlobalMap({ onCampSelect, onMapClick, flyTarget, lang }:
       <FlyToController target={flyTarget ?? null} />
       <MapClickHandler onMapClick={onMapClick} suppress={suppressMapClick} />
 
-      {/* VESSEL HQ marker */}
+      {/* VESSEL HQ — radar tower marker */}
       <Marker
         position={[HQ.lat, HQ.lng]}
         icon={hqIcon}
-        zIndexOffset={1000}
+        zIndexOffset={9999}
         eventHandlers={{
           click: () => { suppressMapClick.current = true },
         }}
       >
-        <Tooltip
-          permanent
-          direction="top"
-          offset={[0, -14]}
-          className="vessel-hq-label"
-        >
-          <span style={{
-            fontSize: 11, fontWeight: 700, color: '#E36F2C',
-            textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.8)',
-            whiteSpace: 'nowrap', letterSpacing: '0.04em',
-          }}>
-            {isZh ? HQ.labelZh : HQ.labelEn}
+        <Tooltip direction="top" offset={[0, -10]} opacity={0.97}>
+          <span style={{ fontSize: 12, color: '#1A1A1E', whiteSpace: 'nowrap', fontFamily: 'sans-serif' }}>
+            {isZh ? HQ.tooltipZh : HQ.tooltipEn}
           </span>
         </Tooltip>
-        <Popup className="vessel-hq-popup" minWidth={280} maxWidth={320}>
-          <div style={{ padding: '16px 20px 20px', fontFamily: 'sans-serif' }}>
-            {/* Header strip */}
-            <div style={{ borderBottom: '1px solid #2A2A2E', paddingBottom: 12, marginBottom: 12 }}>
-              <div style={{ fontSize: 10, color: '#E36F2C', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 4 }}>
-                {isZh ? '智造总部' : 'Smart Manufacturing HQ'}
-              </div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#F0F0F0', letterSpacing: '0.02em' }}>
-                {isZh ? HQ.titleZh : HQ.titleEn}
-              </div>
+        <Popup className="vessel-hq-popup" maxWidth={280} minWidth={240}>
+          <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#E36F2C', marginBottom: 6, letterSpacing: '0.02em' }}>
+              {isZh ? HQ.titleZh : HQ.titleEn}
             </div>
-            {/* Address */}
-            <div style={{ fontSize: 11, color: '#8A8580', lineHeight: 1.5, marginBottom: 10 }}>
+            <div style={{ fontSize: 11, color: '#8A8580', marginBottom: 12, lineHeight: 1.5 }}>
               {isZh ? HQ.addressZh : HQ.addressEn}
             </div>
-            {/* Stats */}
-            <div style={{
-              fontSize: 11, color: '#E36F2C', background: 'rgba(227,111,44,0.08)',
-              border: '1px solid rgba(227,111,44,0.2)',
-              padding: '6px 10px', marginBottom: 12, lineHeight: 1.6,
-            }}>
+            <div style={{ fontSize: 12, color: '#F0F0F0', marginBottom: 14, lineHeight: 1.6 }}>
               {isZh ? HQ.statsZh : HQ.statsEn}
             </div>
-            {/* Tagline */}
-            <div style={{ fontSize: 12, color: '#6A6560', fontStyle: 'italic', letterSpacing: '0.03em' }}>
-              "{isZh ? HQ.taglineZh : HQ.taglineEn}"
+            <div style={{ fontSize: 11, color: '#E36F2C', fontStyle: 'italic', borderTop: '1px solid #2A2A2E', paddingTop: 10 }}>
+              &ldquo;{isZh ? HQ.sloganZh : HQ.sloganEn}&rdquo;
             </div>
           </div>
         </Popup>
