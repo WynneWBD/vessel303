@@ -76,12 +76,12 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
       ],
     },
     images: [
-      '/images/projects/astrobase-mamison/exterior-01.jpg',
-      '/images/projects/astrobase-mamison/interior-01.jpg',
+      '/images/projects/astrobase-mamison/exterior-01.png',
+      '/images/projects/astrobase-mamison/interior-01.png',
       '/images/projects/astrobase-mamison/exterior-02.jpg',
-      '/images/projects/astrobase-mamison/interior-02.jpg',
+      '/images/projects/astrobase-mamison/interior-02.png',
       '/images/projects/astrobase-mamison/exterior-03.jpg',
-      '/images/projects/astrobase-mamison/interior-03.jpg',
+      '/images/projects/astrobase-mamison/interior-03.png',
     ],
   },
 ]
