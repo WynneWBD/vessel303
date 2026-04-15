@@ -1,10 +1,13 @@
 'use client'
 
-import { useEffect } from 'react'
-import { MapContainer, TileLayer, CircleMarker, Popup, ScaleControl } from 'react-leaflet'
+import { useEffect, useRef } from 'react'
+import { MapContainer, TileLayer, CircleMarker, ScaleControl, useMap, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { CAMPS } from '@/data/camps'
+import type { Camp } from '@/data/camps'
 import { useLanguage } from '@/contexts/LanguageContext'
+
+const DEALER_COUNTRIES = ['俄罗斯', '台湾', '沙特阿拉伯', '阿联酋', '韩国', '美国']
 
 function hashOffset(str: string, salt: number): number {
   let hash = salt
@@ -15,12 +18,36 @@ function hashOffset(str: string, salt: number): number {
   return (hash % 100) / 1000
 }
 
-export default function GlobalMap() {
+// Fly to a target when it changes
+function FlyToController({ target }: { target: [number, number] | null }) {
+  const map = useMap()
+  const prevKey = useRef<string>('')
+  useEffect(() => {
+    if (!target) return
+    const key = `${target[0]},${target[1]}`
+    if (key === prevKey.current) return
+    prevKey.current = key
+    map.flyTo(target, 9, { duration: 1.5 })
+  }, [target, map])
+  return null
+}
+
+// Close panel when map background is clicked
+function MapClickHandler({ onMapClick }: { onMapClick?: () => void }) {
+  useMapEvents({ click: () => onMapClick?.() })
+  return null
+}
+
+interface Props {
+  onCampSelect?: (camp: Camp) => void
+  onMapClick?: () => void
+  flyTarget?: [number, number] | null
+}
+
+export default function GlobalMap({ onCampSelect, onMapClick, flyTarget }: Props) {
   const { lang } = useLanguage()
-  const en = lang === 'en'
 
   useEffect(() => {
-    // Fix leaflet default icon path issue in Next.js
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const L = require('leaflet')
     delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl
@@ -31,13 +58,16 @@ export default function GlobalMap() {
     })
   }, [])
 
+  // suppress unused warning — lang is used indirectly via parent panel
+  void lang
+
   return (
     <MapContainer
       center={[35, 105]}
       zoom={4}
       minZoom={2}
       maxZoom={16}
-      style={{ height: 'calc(100vh - 56px)', width: '100%', background: '#111114' }}
+      style={{ height: '100%', width: '100%', background: '#111114' }}
     >
       <TileLayer
         attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -45,64 +75,72 @@ export default function GlobalMap() {
         noWrap={true}
       />
       <ScaleControl position="bottomleft" imperial={false} />
+      <FlyToController target={flyTarget ?? null} />
+      <MapClickHandler onMapClick={onMapClick} />
 
+      {/* Glow rings (decorative, behind main dots) */}
       {CAMPS.map((camp, i) => {
         const radius = Math.max(5, Math.sqrt(camp.total) * 1.2)
         const lat = camp.lat + hashOffset(camp.name, 1)
         const lng = camp.lng + hashOffset(camp.name, 2)
-
         return (
           <CircleMarker
-            key={i}
+            key={`glow-${i}`}
             center={[lat, lng]}
-            radius={radius + 5}
+            radius={radius + 6}
+            pathOptions={{ fillColor: '#2A5C5A', fillOpacity: 0.12, color: 'transparent', weight: 0 }}
+          />
+        )
+      })}
+
+      {/* Dealer copper rings */}
+      {CAMPS.filter(c => DEALER_COUNTRIES.includes(c.country)).map((camp, i) => {
+        const radius = Math.max(5, Math.sqrt(camp.total) * 1.2)
+        const lat = camp.lat + hashOffset(camp.name, 1)
+        const lng = camp.lng + hashOffset(camp.name, 2)
+        return (
+          <CircleMarker
+            key={`dealer-${i}`}
+            center={[lat, lng]}
+            radius={radius + 4}
             pathOptions={{
-              fillColor: '#2A5C5A',
-              fillOpacity: 0.15,
-              color: 'transparent',
-              weight: 0,
+              fillColor: 'transparent',
+              fillOpacity: 0,
+              color: '#A67C5B',
+              weight: 2,
+              opacity: 0.7,
+              dashArray: '4 3',
             }}
-          >
-            <CircleMarker
-              center={[lat, lng]}
-              radius={radius}
-              pathOptions={{
-                fillColor: '#2A5C5A',
-                fillOpacity: 0.7,
-                color: '#2A5C5A',
-                weight: 1.5,
-              }}
-              eventHandlers={{
-                mouseover: (e) => {
-                  e.target.setStyle({ fillOpacity: 1, radius: radius + 2 })
-                  e.target.getElement()!.style.cursor = 'pointer'
-                },
-                mouseout: (e) => {
-                  e.target.setStyle({ fillOpacity: 0.7, radius })
-                },
-              }}
-            >
-              <Popup>
-                <div style={{ fontFamily: 'sans-serif', minWidth: 160 }}>
-                  <div style={{ fontWeight: 700, color: '#1C1A18', marginBottom: 4, fontSize: 14 }}>
-                    {camp.name}
-                  </div>
-                  <div style={{ color: '#666', fontSize: 12, marginBottom: 2 }}>
-                    {camp.country}{camp.province && camp.province !== '—' ? ` · ${camp.province}` : ''}
-                  </div>
-                  <div style={{ color: '#444', fontSize: 12, marginBottom: 2 }}>
-                    {en ? 'Devices: ' : '设备总量：'}<strong>{camp.total}</strong>{en ? '' : ' 台'}
-                    {camp.online > 0 && <span style={{ color: '#2a9d2a' }}>{en ? ` · Online: ${camp.online}` : `（在线 ${camp.online}）`}</span>}
-                  </div>
-                  {camp.models && (
-                    <div style={{ color: '#888', fontSize: 11, marginTop: 4 }}>
-                      {en ? 'Models: ' : '型号：'}{camp.models}
-                    </div>
-                  )}
-                </div>
-              </Popup>
-            </CircleMarker>
-          </CircleMarker>
+          />
+        )
+      })}
+
+      {/* Main markers */}
+      {CAMPS.map((camp, i) => {
+        const radius = Math.max(5, Math.sqrt(camp.total) * 1.2)
+        const lat = camp.lat + hashOffset(camp.name, 1)
+        const lng = camp.lng + hashOffset(camp.name, 2)
+        return (
+          <CircleMarker
+            key={`marker-${i}`}
+            center={[lat, lng]}
+            radius={radius}
+            pathOptions={{ fillColor: '#2A5C5A', fillOpacity: 0.75, color: '#2A5C5A', weight: 1.5 }}
+            eventHandlers={{
+              click: (e) => {
+                e.originalEvent.stopPropagation()
+                onCampSelect?.(camp)
+              },
+              mouseover: (e) => {
+                e.target.setStyle({ fillOpacity: 1 })
+                const el = e.target.getElement()
+                if (el) el.style.cursor = 'pointer'
+              },
+              mouseout: (e) => {
+                e.target.setStyle({ fillOpacity: 0.75 })
+              },
+            }}
+          />
         )
       })}
     </MapContainer>
