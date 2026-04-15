@@ -148,11 +148,12 @@ export default function Navbar() {
             <Image
               src="/images/vessel-logo.png"
               alt="VESSEL 微宿"
-              height={36}
-              width={0}
-              style={{ width: 'auto' }}
-              className="h-7 lg:h-9"
+              height={40}
+              width={160}
+              style={{ height: '40px', width: 'auto', objectFit: 'contain' }}
+              className="h-7 lg:h-[40px]"
               priority
+              unoptimized
             />
           </Link>
 

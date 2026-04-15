@@ -37,9 +37,10 @@ export default function GlobalMapStats() {
           <Image
             src="/images/vessel-logo.png"
             alt="VESSEL 微宿"
-            height={28}
-            width={0}
-            style={{ width: 'auto', height: 28 }}
+            height={24}
+            width={96}
+            style={{ height: '24px', width: 'auto', objectFit: 'contain' }}
+            unoptimized
           />
         </span>
         <div style={{ width: 1, height: 20, background: 'rgba(138,133,128,0.4)' }} />

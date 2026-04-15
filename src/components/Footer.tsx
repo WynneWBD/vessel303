@@ -90,8 +90,9 @@ export default function Footer() {
                 src="/images/vessel-logo.png"
                 alt="VESSEL 微宿"
                 height={32}
-                width={0}
-                style={{ width: 'auto', height: 32, marginBottom: 4 }}
+                width={128}
+                style={{ height: '32px', width: 'auto', objectFit: 'contain', marginBottom: 4 }}
+                unoptimized
               />
               <div className="text-white/30 text-xs tracking-[0.3em]">{t(i18n.footer.brandTagline)}</div>
             </div>
