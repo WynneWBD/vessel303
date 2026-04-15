@@ -78,7 +78,11 @@ function MapClickHandler({
 }
 
 const TILE_EN = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-const TILE_ZH = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+
+const TDT_TOKEN = process.env.NEXT_PUBLIC_TIANDITU_TOKEN ?? ''
+const TILE_ZH_BASE = `https://t{s}.tianditu.gov.cn/vec_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk=${TDT_TOKEN}`
+const TILE_ZH_LABEL = `https://t{s}.tianditu.gov.cn/cva_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cva&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk=${TDT_TOKEN}`
+const TDT_SUBDOMAINS = ['0', '1', '2', '3', '4', '5', '6', '7']
 
 interface Props {
   onCampSelect?: (camp: Camp) => void
@@ -142,12 +146,31 @@ export default function GlobalMap({ onCampSelect, onMapClick, flyTarget, lang }:
       className="vessel-map"
       style={{ height: '100%', width: '100%', background: '#b8c4be' }}
     >
-      <TileLayer
-        key={lang === 'zh' ? 'tile-zh' : 'tile-en'}
-        attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url={lang === 'zh' ? TILE_ZH : TILE_EN}
-        noWrap={true}
-      />
+      {lang === 'zh' ? (
+        <>
+          <TileLayer
+            key="tile-zh-base"
+            attribution='&copy; <a href="https://www.tianditu.gov.cn/">天地图</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            url={TILE_ZH_BASE}
+            subdomains={TDT_SUBDOMAINS}
+            noWrap={true}
+          />
+          <TileLayer
+            key="tile-zh-label"
+            attribution=""
+            url={TILE_ZH_LABEL}
+            subdomains={TDT_SUBDOMAINS}
+            noWrap={true}
+          />
+        </>
+      ) : (
+        <TileLayer
+          key="tile-en"
+          attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url={TILE_EN}
+          noWrap={true}
+        />
+      )}
       <ScaleControl position="bottomleft" imperial={false} />
       <FlyToController target={flyTarget ?? null} />
       <MapClickHandler onMapClick={onMapClick} suppress={suppressMapClick} />
