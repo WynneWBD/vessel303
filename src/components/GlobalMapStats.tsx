@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 const countries = '30+'
@@ -31,15 +32,15 @@ export default function GlobalMapStats() {
         <span
           onClick={() => window.history.back()}
           role="button"
-          style={{
-            color: '#F0F0F0',
-            fontWeight: 700,
-            fontSize: 13,
-            letterSpacing: '3px',
-            cursor: 'pointer',
-          }}
+          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
         >
-          VESSEL
+          <Image
+            src="/images/vessel-logo.png"
+            alt="VESSEL 微宿"
+            height={28}
+            width={0}
+            style={{ width: 'auto', height: 28 }}
+          />
         </span>
         <div style={{ width: 1, height: 20, background: 'rgba(138,133,128,0.4)' }} />
         <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 13, letterSpacing: '0.1em' }}>

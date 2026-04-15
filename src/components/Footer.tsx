@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
 
@@ -85,7 +86,13 @@ export default function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <div className="mb-4">
-              <div className="text-[#F0F0F0] font-black text-2xl tracking-[0.25em] uppercase mb-1">VESSEL</div>
+              <Image
+                src="/images/vessel-logo.png"
+                alt="VESSEL 微宿"
+                height={32}
+                width={0}
+                style={{ width: 'auto', height: 32, marginBottom: 4 }}
+              />
               <div className="text-white/30 text-xs tracking-[0.3em]">{t(i18n.footer.brandTagline)}</div>
             </div>
             <p className="text-white/35 text-xs leading-relaxed mb-5 max-w-xs">

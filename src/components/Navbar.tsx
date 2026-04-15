@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import AuthButton from './AuthButton';
 import LanguageToggle from './LanguageToggle';
 import { useT } from '@/contexts/LanguageContext';
@@ -143,16 +144,16 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 lg:h-[72px]">
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 shrink-0">
-            <div className="relative flex flex-col">
-              <span className="text-[#F0F0F0] font-black text-xl tracking-[0.25em] uppercase leading-none">
-                VESSEL
-              </span>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <div className="h-px w-full bg-gradient-to-r from-[#2A5C5A]/60 to-transparent" />
-                <span className="text-white/40 text-[10px] tracking-[0.3em] whitespace-nowrap">微宿®</span>
-              </div>
-            </div>
+          <Link href="/" className="flex items-center shrink-0">
+            <Image
+              src="/images/vessel-logo.png"
+              alt="VESSEL 微宿"
+              height={36}
+              width={0}
+              style={{ width: 'auto' }}
+              className="h-7 lg:h-9"
+              priority
+            />
           </Link>
 
           {/* Desktop Nav */}
