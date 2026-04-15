@@ -301,7 +301,7 @@ function TechnologySection() {
 
 const REGIONS = [
   { label: 'Asia', desc: 'China · Taiwan · Japan · Korea · SE Asia', img: '/images/homepage/region-asia.jpg' },
-  { label: 'Europe', desc: 'Russia · Slovakia · Austria · Germany · Ireland', img: '/images/homepage/region-europe.jpg' },
+  { label: 'Europe', desc: 'Russia · Slovakia · Austria · Germany · Ireland', img: '/images/products/custom_V9-Gen6_Murmansk_01.jpg' },
   { label: 'Americas', desc: 'USA · Mexico · Brazil · Argentina', img: '/images/homepage/region-americas.jpg' },
   { label: 'Middle East', desc: 'UAE · Saudi Arabia · Libya · Cyprus', img: '/images/homepage/region-mideast.jpg' },
   { label: 'Oceania', desc: 'Australia · New Zealand', img: '/images/homepage/region-oceania.jpg' },
