@@ -99,7 +99,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
           </div>
           <div className="flex gap-3">
             <Link
-              href="/contact"
+              href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
               className="text-sm font-bold px-6 py-2.5 tracking-wider transition-colors"
               style={{ background: product.accentColor, color: '#1C1A18' }}
             >
@@ -300,7 +300,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
-              href="/contact"
+              href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
               className="text-sm font-bold px-8 py-3 tracking-wider transition-colors"
               style={{ background: product.accentColor, color: '#1C1A18' }}
             >

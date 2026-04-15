@@ -193,7 +193,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
 
             {/* CTA */}
             <Link
-              href="/contact"
+              href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
               className="block text-center py-4 font-bold tracking-[0.2em] uppercase text-sm bg-[#c9a84c] text-[#1C1A18] hover:bg-[#b8973d] transition-colors duration-200"
             >
               {t(i18n.productDetail.inquireBtn)}

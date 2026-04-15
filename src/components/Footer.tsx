@@ -71,7 +71,7 @@ export default function Footer() {
               {t(i18n.footer.phoneBtn)}
             </a>
             <Link
-              href="/contact"
+              href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
               className="border border-[#E36F2C]/40 text-[#E36F2C] text-sm px-6 py-3 hover:bg-[#E36F2C]/10 transition-colors tracking-wider"
             >
               {t(i18n.footer.messageBtn)}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHero from '@/components/PageHero';
@@ -9,6 +10,10 @@ import { i18n } from '@/lib/i18n';
 
 export default function ContactPage() {
   const t = useT();
+
+  useEffect(() => {
+    window.location.replace('https://en.303vessel.cn/contact.html');
+  }, []);
 
   const officeLocations = [
     { city: t(i18n.contact.city0), status: 'operating' as const },

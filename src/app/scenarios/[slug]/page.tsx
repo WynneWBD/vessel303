@@ -443,7 +443,7 @@ export default async function ScenarioPage({
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
-              href="/contact"
+              href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
               className="text-sm font-bold px-8 py-3 tracking-wider transition-colors"
               style={{ background: scenario.accentColor, color: '#1C1A18' }}
             >

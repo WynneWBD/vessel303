@@ -65,7 +65,7 @@ function HeroSection() {
           <Link href="/products" className="bg-[#E36F2C] text-white px-10 py-4 text-sm tracking-wider hover:bg-[#1E4543] transition-colors">
             {t(i18n.home.heroCta)}
           </Link>
-          <Link href="/contact" className="border border-white/30 text-white/80 px-10 py-4 text-sm tracking-wider hover:border-white/60 transition-colors">
+          <Link href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer" className="border border-white/30 text-white/80 px-10 py-4 text-sm tracking-wider hover:border-white/60 transition-colors">
             {t(i18n.home.heroCtaSecondary)}
           </Link>
         </div>
@@ -95,7 +95,7 @@ function CredentialsBar() {
           {stats.map((s) => (
             <div key={s.label} className="text-center py-6 px-4">
               <div
-                className="text-5xl lg:text-6xl font-light text-[#F0F0F0] tracking-tight mb-2"
+                className="text-5xl lg:text-6xl font-light text-[#E36F2C] tracking-tight mb-2"
                 style={{ fontFamily: 'var(--font-heading)', fontFeatureSettings: '"tnum"' }}
               >
                 {s.val}
@@ -244,7 +244,7 @@ function FlagshipSection() {
           {specs.map((s) => (
             <div key={s.label} className="pr-12 border-r border-[#333] last:border-0 last:pr-0">
               <div
-                className="text-3xl lg:text-4xl font-light text-[#F0F0F0] mb-1 whitespace-nowrap"
+                className="text-3xl lg:text-4xl font-light text-[#E36F2C] mb-1 whitespace-nowrap"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 {s.val}
@@ -472,7 +472,7 @@ function CtaSection() {
         </h2>
         <p className="text-base text-[#8A8580] mb-10 leading-relaxed">{t(i18n.home.ctaBody)}</p>
         <Link
-          href="/contact"
+          href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
           className="inline-block bg-[#E36F2C] text-white px-10 py-4 text-sm tracking-wider hover:bg-[#1E4543] transition-colors"
         >
           {t(i18n.home.ctaBtn)}

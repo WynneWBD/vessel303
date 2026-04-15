@@ -466,7 +466,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
             {/* 两个按钮 */}
             <div className="grid grid-cols-2 gap-3">
               <Link
-                href="/contact"
+                href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
                 className="py-3 text-center text-[11px] font-bold tracking-[0.2em] uppercase bg-[#c9a84c] text-[#1C1A18] hover:bg-[#b8973d] transition-colors"
               >
                 {lang === 'en' ? 'Inquire Now' : '立即咨询'}

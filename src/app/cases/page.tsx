@@ -236,7 +236,7 @@ export default function CasesPage() {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <a
-              href="/contact"
+              href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
               className="bg-[#c9a84c] text-[#1C1A18] font-bold text-sm px-8 py-3 hover:bg-[#b8973b] transition-colors tracking-wider"
             >
               {t(i18n.cases.ctaBtn1)}

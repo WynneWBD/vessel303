@@ -203,13 +203,13 @@ export default function Navbar() {
           {/* CTA + Toggle */}
           <div className="hidden lg:flex items-center gap-2 shrink-0">
             <Link
-              href="/contact"
+              href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
               className="text-white text-sm font-semibold px-3.5 py-2 border border-white/50 hover:bg-white hover:text-[#1A1A1A] transition-all duration-200 tracking-wider whitespace-nowrap"
             >
               {t(i18n.nav.purchaseBtn)}
             </Link>
             <Link
-              href="/contact#c-end"
+              href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
               className="text-white/75 text-sm font-medium px-3.5 py-2 border border-white/20 hover:border-[#E36F2C] hover:text-[#E36F2C] transition-all duration-200 tracking-wider whitespace-nowrap"
             >
               {t(i18n.nav.bookingBtn)}
@@ -289,14 +289,14 @@ export default function Navbar() {
 
             <div className="flex gap-3 pt-4">
               <Link
-                href="/contact"
+                href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
                 className="flex-1 text-center bg-[#1A1A1A] text-white text-sm font-semibold py-3 border border-white/60 tracking-wider"
                 onClick={() => setIsOpen(false)}
               >
                 {t(i18n.nav.purchaseBtn)}
               </Link>
               <Link
-                href="/contact#c-end"
+                href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
                 className="flex-1 text-center bg-transparent text-white/80 text-sm py-3 border border-white/25 tracking-wider"
                 onClick={() => setIsOpen(false)}
               >

@@ -164,7 +164,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
                     {en ? 'Local partner information coming soon' : '当地合作伙伴信息即将更新'}
                   </p>
                   <Link
-                    href="/contact"
+                    href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
                     style={{
                       display: 'inline-block', border: '1px solid #E36F2C',
                       color: '#E36F2C', fontSize: 12, padding: '6px 14px',
