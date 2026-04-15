@@ -1,7 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 const countries = '30+'
@@ -11,13 +9,6 @@ const totalDevices = '2000+'
 export default function GlobalMapStats() {
   const { lang, setLang } = useLanguage()
   const zh = lang === 'zh'
-  const [fromPartner, setFromPartner] = useState(false)
-
-  useEffect(() => {
-    if (document.referrer && document.referrer.includes('303vessel.cn')) {
-      setFromPartner(true)
-    }
-  }, [])
 
   return (
     <div
@@ -37,43 +28,19 @@ export default function GlobalMapStats() {
     >
       {/* Brand */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-        {fromPartner && (
-          <button
-            onClick={() => window.history.back()}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'rgba(255,255,255,0.35)',
-              fontSize: 13,
-              cursor: 'pointer',
-              padding: '0 8px 0 0',
-              letterSpacing: '0.05em',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-            }}
-          >
-            ←
-          </button>
-        )}
-        <Link
-          href="/"
-          onClick={(e) => {
-            if (fromPartner) {
-              e.preventDefault()
-              window.history.back()
-            }
-          }}
+        <span
+          onClick={() => window.history.back()}
+          role="button"
           style={{
             color: '#F0F0F0',
             fontWeight: 700,
             fontSize: 13,
             letterSpacing: '3px',
-            textDecoration: 'none',
+            cursor: 'pointer',
           }}
         >
           VESSEL
-        </Link>
+        </span>
         <div style={{ width: 1, height: 20, background: 'rgba(138,133,128,0.4)' }} />
         <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 13, letterSpacing: '0.1em' }}>
           {zh ? '全球营地部署' : 'Global Deployment'}
