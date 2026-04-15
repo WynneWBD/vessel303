@@ -37,55 +37,74 @@ export default function GlobalMap() {
       zoom={4}
       minZoom={2}
       maxZoom={16}
-      style={{ height: 'calc(100vh - 56px)', width: '100%', background: '#a8c8f0' }}
+      style={{ height: 'calc(100vh - 56px)', width: '100%', background: '#111114' }}
     >
       <TileLayer
-        attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         noWrap={true}
       />
       <ScaleControl position="bottomleft" imperial={false} />
-      {CAMPS.map((camp, i) => (
-        <CircleMarker
-          key={i}
-          center={[camp.lat + hashOffset(camp.name, 1), camp.lng + hashOffset(camp.name, 2)]}
-          radius={Math.max(5, Math.sqrt(camp.total) * 1.2)}
-          pathOptions={{
-            fillColor: '#C9A84C',
-            fillOpacity: 0.85,
-            color: '#8B6914',
-            weight: 1.5,
-          }}
-          eventHandlers={{
-            mouseover: (e) => {
-              e.target.setStyle({ fillOpacity: 1 })
-            },
-            mouseout: (e) => {
-              e.target.setStyle({ fillOpacity: 0.85 })
-            },
-          }}
-        >
-          <Popup>
-            <div style={{ fontFamily: 'sans-serif', minWidth: 160 }}>
-              <div style={{ fontWeight: 700, color: '#1C1A18', marginBottom: 4, fontSize: 14 }}>
-                {camp.name}
-              </div>
-              <div style={{ color: '#666', fontSize: 12, marginBottom: 2 }}>
-                {camp.country}{camp.province && camp.province !== '—' ? ` · ${camp.province}` : ''}
-              </div>
-              <div style={{ color: '#444', fontSize: 12, marginBottom: 2 }}>
-                {en ? 'Devices: ' : '设备总量：'}<strong>{camp.total}</strong>{en ? '' : ' 台'}
-                {camp.online > 0 && <span style={{ color: '#2a9d2a' }}>{en ? ` · Online: ${camp.online}` : `（在线 ${camp.online}）`}</span>}
-              </div>
-              {camp.models && (
-                <div style={{ color: '#888', fontSize: 11, marginTop: 4 }}>
-                  {en ? 'Models: ' : '型号：'}{camp.models}
+
+      {CAMPS.map((camp, i) => {
+        const radius = Math.max(5, Math.sqrt(camp.total) * 1.2)
+        const lat = camp.lat + hashOffset(camp.name, 1)
+        const lng = camp.lng + hashOffset(camp.name, 2)
+
+        return (
+          <CircleMarker
+            key={i}
+            center={[lat, lng]}
+            radius={radius + 5}
+            pathOptions={{
+              fillColor: '#2A5C5A',
+              fillOpacity: 0.15,
+              color: 'transparent',
+              weight: 0,
+            }}
+          >
+            <CircleMarker
+              center={[lat, lng]}
+              radius={radius}
+              pathOptions={{
+                fillColor: '#2A5C5A',
+                fillOpacity: 0.7,
+                color: '#2A5C5A',
+                weight: 1.5,
+              }}
+              eventHandlers={{
+                mouseover: (e) => {
+                  e.target.setStyle({ fillOpacity: 1, radius: radius + 2 })
+                  e.target.getElement()!.style.cursor = 'pointer'
+                },
+                mouseout: (e) => {
+                  e.target.setStyle({ fillOpacity: 0.7, radius })
+                },
+              }}
+            >
+              <Popup>
+                <div style={{ fontFamily: 'sans-serif', minWidth: 160 }}>
+                  <div style={{ fontWeight: 700, color: '#1C1A18', marginBottom: 4, fontSize: 14 }}>
+                    {camp.name}
+                  </div>
+                  <div style={{ color: '#666', fontSize: 12, marginBottom: 2 }}>
+                    {camp.country}{camp.province && camp.province !== '—' ? ` · ${camp.province}` : ''}
+                  </div>
+                  <div style={{ color: '#444', fontSize: 12, marginBottom: 2 }}>
+                    {en ? 'Devices: ' : '设备总量：'}<strong>{camp.total}</strong>{en ? '' : ' 台'}
+                    {camp.online > 0 && <span style={{ color: '#2a9d2a' }}>{en ? ` · Online: ${camp.online}` : `（在线 ${camp.online}）`}</span>}
+                  </div>
+                  {camp.models && (
+                    <div style={{ color: '#888', fontSize: 11, marginTop: 4 }}>
+                      {en ? 'Models: ' : '型号：'}{camp.models}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </Popup>
-        </CircleMarker>
-      ))}
+              </Popup>
+            </CircleMarker>
+          </CircleMarker>
+        )
+      })}
     </MapContainer>
   )
 }

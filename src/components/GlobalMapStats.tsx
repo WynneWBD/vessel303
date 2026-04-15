@@ -20,12 +20,12 @@ export default function GlobalMapStats() {
         left: 0,
         right: 0,
         height: 56,
-        background: '#1C1A18',
+        background: '#111114',
         zIndex: 1000,
         display: 'flex',
         alignItems: 'center',
         padding: '0 24px',
-        borderBottom: '1px solid rgba(201,168,76,0.2)',
+        borderBottom: '1px solid rgba(42,92,90,0.25)',
       }}
     >
       {/* Brand */}
@@ -33,7 +33,7 @@ export default function GlobalMapStats() {
         <Link
           href="/"
           style={{
-            color: '#C9A84C',
+            color: '#F0F0F0',
             fontWeight: 700,
             fontSize: 13,
             letterSpacing: '3px',
@@ -42,8 +42,8 @@ export default function GlobalMapStats() {
         >
           VESSEL
         </Link>
-        <div style={{ width: 1, height: 20, background: 'rgba(201,168,76,0.3)' }} />
-        <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, letterSpacing: '0.1em' }}>
+        <div style={{ width: 1, height: 20, background: 'rgba(138,133,128,0.4)' }} />
+        <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 13, letterSpacing: '0.1em' }}>
           {zh ? '全球营地部署' : 'Global Deployment'}
         </span>
       </div>
@@ -51,28 +51,28 @@ export default function GlobalMapStats() {
       {/* Stats */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 32, marginLeft: 'auto', marginRight: 24 }}>
         <div style={{ textAlign: 'center' }}>
-          <span style={{ color: '#C9A84C', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
+          <span style={{ color: '#2A5C5A', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
             {countries}
           </span>
-          <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, marginLeft: 4 }}>
+          <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 12, marginLeft: 4 }}>
             {zh ? '国家/地区' : 'Countries'}
           </span>
         </div>
-        <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.1)' }} />
+        <div style={{ width: 1, height: 16, background: 'rgba(138,133,128,0.3)' }} />
         <div style={{ textAlign: 'center' }}>
-          <span style={{ color: '#C9A84C', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
+          <span style={{ color: '#2A5C5A', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
             {campCount}
           </span>
-          <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, marginLeft: 4 }}>
+          <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 12, marginLeft: 4 }}>
             {zh ? '个营地' : 'Camps'}
           </span>
         </div>
-        <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.1)' }} />
+        <div style={{ width: 1, height: 16, background: 'rgba(138,133,128,0.3)' }} />
         <div style={{ textAlign: 'center' }}>
-          <span style={{ color: '#C9A84C', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
+          <span style={{ color: '#2A5C5A', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
             {totalDevices}
           </span>
-          <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, marginLeft: 4 }}>
+          <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 12, marginLeft: 4 }}>
             {zh ? '台设备' : 'Devices'}
           </span>
         </div>
@@ -88,8 +88,8 @@ export default function GlobalMapStats() {
             letterSpacing: '0.1em',
             cursor: 'pointer',
             border: 'none',
-            background: lang === 'en' ? '#C9A84C' : 'transparent',
-            color: lang === 'en' ? '#1C1A18' : 'rgba(255,255,255,0.4)',
+            background: lang === 'en' ? '#2A5C5A' : 'transparent',
+            color: lang === 'en' ? '#F0F0F0' : 'rgba(255,255,255,0.4)',
             fontWeight: lang === 'en' ? 700 : 400,
             transition: 'all 0.15s',
           }}
@@ -105,8 +105,8 @@ export default function GlobalMapStats() {
             letterSpacing: '0.1em',
             cursor: 'pointer',
             border: 'none',
-            background: lang === 'zh' ? '#C9A84C' : 'transparent',
-            color: lang === 'zh' ? '#1C1A18' : 'rgba(255,255,255,0.4)',
+            background: lang === 'zh' ? '#2A5C5A' : 'transparent',
+            color: lang === 'zh' ? '#F0F0F0' : 'rgba(255,255,255,0.4)',
             fontWeight: lang === 'zh' ? 700 : 400,
             transition: 'all 0.15s',
           }}
