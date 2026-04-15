@@ -2,11 +2,9 @@
 
 import Link from 'next/link'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { CAMPS } from '@/data/camps'
-
-const campCount = CAMPS.length
-const countries = new Set(CAMPS.filter(c => c.region !== '内部').map(c => c.country)).size
-const totalDevices = CAMPS.reduce((s, c) => s + c.total, 0).toLocaleString()
+const countries = '30+'
+const campCount = '300+'
+const totalDevices = '2000+'
 
 export default function GlobalMapStats() {
   const { lang, setLang } = useLanguage()

@@ -1,13 +1,38 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { MapContainer, TileLayer, CircleMarker, ScaleControl, useMap, useMapEvents } from 'react-leaflet'
+import { useEffect, useRef, useState } from 'react'
+import { MapContainer, TileLayer, Marker, Tooltip, ScaleControl, useMap, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { CAMPS } from '@/data/camps'
 import type { Camp } from '@/data/camps'
-import { useLanguage } from '@/contexts/LanguageContext'
 
 const DEALER_COUNTRIES = ['俄罗斯', '台湾', '沙特阿拉伯', '阿联酋', '韩国', '美国']
+
+// CSS injected into <head> — scoped to .vessel-map class
+const MAP_CSS = `
+@keyframes vesselPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(42, 92, 90, 0.55); }
+  60%       { box-shadow: 0 0 0 10px rgba(42, 92, 90, 0); }
+}
+.vessel-pin {
+  border-radius: 50%;
+  background: rgba(42, 92, 90, 0.88);
+  border: 1.5px solid #2A5C5A;
+  animation: vesselPulse 2.6s ease-out infinite;
+  cursor: pointer !important;
+  box-sizing: border-box;
+}
+.vessel-pin-dealer {
+  border: 2px dashed #A67C5B !important;
+  background: rgba(42, 92, 90, 0.82) !important;
+}
+/* Dim the Voyager tile layer */
+.vessel-map .leaflet-tile-pane {
+  filter: brightness(0.72) saturate(0.8);
+}
+/* Hide default leaflet marker shadows */
+.vessel-map .leaflet-marker-shadow { display: none !important; }
+`
 
 function hashOffset(str: string, salt: number): number {
   let hash = salt
@@ -18,10 +43,10 @@ function hashOffset(str: string, salt: number): number {
   return (hash % 100) / 1000
 }
 
-// Fly to a target when it changes
+// Fly to target when selectedCamp changes
 function FlyToController({ target }: { target: [number, number] | null }) {
   const map = useMap()
-  const prevKey = useRef<string>('')
+  const prevKey = useRef('')
   useEffect(() => {
     if (!target) return
     const key = `${target[0]},${target[1]}`
@@ -32,9 +57,23 @@ function FlyToController({ target }: { target: [number, number] | null }) {
   return null
 }
 
-// Close panel when map background is clicked
-function MapClickHandler({ onMapClick }: { onMapClick?: () => void }) {
-  useMapEvents({ click: () => onMapClick?.() })
+// Close panel on map background click — uses a suppress ref to avoid double-firing
+function MapClickHandler({
+  onMapClick,
+  suppress,
+}: {
+  onMapClick?: () => void
+  suppress: React.MutableRefObject<boolean>
+}) {
+  useMapEvents({
+    click: () => {
+      if (suppress.current) {
+        suppress.current = false
+        return
+      }
+      onMapClick?.()
+    },
+  })
   return null
 }
 
@@ -45,9 +84,20 @@ interface Props {
 }
 
 export default function GlobalMap({ onCampSelect, onMapClick, flyTarget }: Props) {
-  const { lang } = useLanguage()
+  const [mounted, setMounted] = useState(false)
+  const suppressMapClick = useRef(false)
 
   useEffect(() => {
+    // Inject scoped CSS once
+    const id = 'vessel-map-css'
+    if (!document.getElementById(id)) {
+      const style = document.createElement('style')
+      style.id = id
+      style.textContent = MAP_CSS
+      document.head.appendChild(style)
+    }
+
+    // Fix Leaflet default icon paths
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const L = require('leaflet')
     delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl
@@ -56,10 +106,28 @@ export default function GlobalMap({ onCampSelect, onMapClick, flyTarget }: Props
       iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
       shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
     })
+
+    setMounted(true)
   }, [])
 
-  // suppress unused warning — lang is used indirectly via parent panel
-  void lang
+  // Placeholder until Leaflet is ready
+  if (!mounted) {
+    return <div style={{ height: '100%', width: '100%', background: '#111114' }} />
+  }
+
+  // Safe to require after mount (ssr:false guaranteed)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const L = require('leaflet') as typeof import('leaflet')
+
+  function createIcon(size: number, isDealer: boolean) {
+    const s = Math.round(Math.max(8, size))
+    return L.divIcon({
+      className: '',
+      html: `<div class="vessel-pin${isDealer ? ' vessel-pin-dealer' : ''}" style="width:${s}px;height:${s}px"></div>`,
+      iconSize: [s, s],
+      iconAnchor: [s / 2, s / 2],
+    })
+  }
 
   return (
     <MapContainer
@@ -67,80 +135,48 @@ export default function GlobalMap({ onCampSelect, onMapClick, flyTarget }: Props
       zoom={4}
       minZoom={2}
       maxZoom={16}
-      style={{ height: '100%', width: '100%', background: '#111114' }}
+      className="vessel-map"
+      style={{ height: '100%', width: '100%', background: '#b8c4be' }}
     >
       <TileLayer
         attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         noWrap={true}
       />
       <ScaleControl position="bottomleft" imperial={false} />
       <FlyToController target={flyTarget ?? null} />
-      <MapClickHandler onMapClick={onMapClick} />
+      <MapClickHandler onMapClick={onMapClick} suppress={suppressMapClick} />
 
-      {/* Glow rings (decorative, behind main dots) */}
       {CAMPS.map((camp, i) => {
         const radius = Math.max(5, Math.sqrt(camp.total) * 1.2)
+        const size = radius * 2
+        const isDealer = DEALER_COUNTRIES.includes(camp.country)
         const lat = camp.lat + hashOffset(camp.name, 1)
         const lng = camp.lng + hashOffset(camp.name, 2)
-        return (
-          <CircleMarker
-            key={`glow-${i}`}
-            center={[lat, lng]}
-            radius={radius + 6}
-            pathOptions={{ fillColor: '#2A5C5A', fillOpacity: 0.12, color: 'transparent', weight: 0 }}
-          />
-        )
-      })}
 
-      {/* Dealer copper rings */}
-      {CAMPS.filter(c => DEALER_COUNTRIES.includes(c.country)).map((camp, i) => {
-        const radius = Math.max(5, Math.sqrt(camp.total) * 1.2)
-        const lat = camp.lat + hashOffset(camp.name, 1)
-        const lng = camp.lng + hashOffset(camp.name, 2)
         return (
-          <CircleMarker
-            key={`dealer-${i}`}
-            center={[lat, lng]}
-            radius={radius + 4}
-            pathOptions={{
-              fillColor: 'transparent',
-              fillOpacity: 0,
-              color: '#A67C5B',
-              weight: 2,
-              opacity: 0.7,
-              dashArray: '4 3',
-            }}
-          />
-        )
-      })}
-
-      {/* Main markers */}
-      {CAMPS.map((camp, i) => {
-        const radius = Math.max(5, Math.sqrt(camp.total) * 1.2)
-        const lat = camp.lat + hashOffset(camp.name, 1)
-        const lng = camp.lng + hashOffset(camp.name, 2)
-        return (
-          <CircleMarker
-            key={`marker-${i}`}
-            center={[lat, lng]}
-            radius={radius}
-            pathOptions={{ fillColor: '#2A5C5A', fillOpacity: 0.75, color: '#2A5C5A', weight: 1.5 }}
+          <Marker
+            key={i}
+            position={[lat, lng]}
+            icon={createIcon(size, isDealer)}
             eventHandlers={{
-              click: (e) => {
-                e.originalEvent.stopPropagation()
+              click: () => {
+                suppressMapClick.current = true
                 onCampSelect?.(camp)
               },
-              mouseover: (e) => {
-                e.target.setStyle({ fillOpacity: 1 })
-                const el = e.target.getElement()
-                if (el) el.style.cursor = 'pointer'
-              },
-              mouseout: (e) => {
-                e.target.setStyle({ fillOpacity: 0.75 })
-              },
             }}
-          />
+          >
+            <Tooltip
+              direction="top"
+              offset={[0, -Math.round(size / 2) - 2]}
+              opacity={0.95}
+              sticky={false}
+            >
+              <span style={{ fontSize: 12, color: '#1A1A1E', whiteSpace: 'nowrap', fontFamily: 'sans-serif' }}>
+                {camp.name}
+              </span>
+            </Tooltip>
+          </Marker>
         )
       })}
     </MapContainer>
