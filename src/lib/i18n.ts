@@ -136,6 +136,18 @@ export const i18n = {
     projLabel:        b('Global Presence', '全球实践'),
     projTitle:        b('Deployed Across 6 Continents', '部署覆盖六大洲'),
     projCta:          b('View All Projects', '查看全部项目'),
+    projReg1:         b('Asia', '亚洲'),
+    projReg1Desc:     b('China · Taiwan · Japan · Korea · SE Asia', '中国 · 台湾 · 日本 · 韩国 · 东南亚'),
+    projReg2:         b('Europe', '欧洲'),
+    projReg2Desc:     b('Russia · Slovakia · Austria · Germany · Ireland', '俄罗斯 · 斯洛伐克 · 奥地利 · 德国 · 爱尔兰'),
+    projReg3:         b('Americas', '美洲'),
+    projReg3Desc:     b('USA · Mexico · Brazil · Argentina', '美国 · 墨西哥 · 巴西 · 阿根廷'),
+    projReg4:         b('Middle East', '中东'),
+    projReg4Desc:     b('UAE · Saudi Arabia · Libya · Cyprus', '阿联酋 · 沙特阿拉伯 · 利比亚 · 塞浦路斯'),
+    projReg5:         b('Oceania', '大洋洲'),
+    projReg5Desc:     b('Australia · New Zealand', '澳大利亚 · 新西兰'),
+    projReg6:         b('Africa', '非洲'),
+    projReg6Desc:     b('Tanzania · Emerging markets', '坦桑尼亚 · 新兴市场'),
 
     // === MANUFACTURING ===
     mfgLabel:         b('Manufacturing', '智造实力'),

@@ -299,17 +299,16 @@ function TechnologySection() {
 
 // ─── Projects Grid ───────────────────────────────────────
 
-const REGIONS = [
-  { label: 'Asia', desc: 'China · Taiwan · Japan · Korea · SE Asia', img: '/images/products/region-asia-huawei.jpg' },
-  { label: 'Europe', desc: 'Russia · Slovakia · Austria · Germany · Ireland', img: '/images/products/region-europe-russia.jpg' },
-  { label: 'Americas', desc: 'USA · Mexico · Brazil · Argentina', img: '/images/products/region-americas.jpg' },
-  { label: 'Middle East', desc: 'UAE · Saudi Arabia · Libya · Cyprus', img: '/images/homepage/region-mideast.jpg' },
-  { label: 'Oceania', desc: 'Australia · New Zealand', img: '/images/homepage/region-oceania.jpg' },
-  { label: 'Africa', desc: 'Tanzania · Emerging markets', img: '/images/products/region-africa.jpg' },
-];
-
 function ProjectsSection() {
   const t = useT();
+  const REGIONS = [
+    { label: t(i18n.home.projReg1), desc: t(i18n.home.projReg1Desc), img: '/images/products/region-asia-huawei.jpg' },
+    { label: t(i18n.home.projReg2), desc: t(i18n.home.projReg2Desc), img: '/images/products/region-europe-russia.jpg' },
+    { label: t(i18n.home.projReg3), desc: t(i18n.home.projReg3Desc), img: '/images/products/region-americas.jpg' },
+    { label: t(i18n.home.projReg4), desc: t(i18n.home.projReg4Desc), img: '/images/homepage/region-mideast.jpg' },
+    { label: t(i18n.home.projReg5), desc: t(i18n.home.projReg5Desc), img: '/images/homepage/region-oceania.jpg' },
+    { label: t(i18n.home.projReg6), desc: t(i18n.home.projReg6Desc), img: '/images/products/region-africa.jpg' },
+  ];
   return (
     <section className="bg-[#F5F0EB] py-24 lg:py-32">
       <div className="max-w-6xl mx-auto px-6">
