@@ -200,8 +200,10 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
               >
                 {en ? 'Explore Products' : '查看产品系列'}
               </Link>
-              <Link
-                href="/contact"
+              <a
+                href="https://en.303vessel.cn/contact.html"
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{
                   display: 'block', textAlign: 'center',
                   border: '1px solid #2A2A2E', color: '#8A8580',
@@ -210,7 +212,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
                 }}
               >
                 {en ? 'Contact Us' : '联系我们'}
-              </Link>
+              </a>
             </div>
           </div>
         </>
