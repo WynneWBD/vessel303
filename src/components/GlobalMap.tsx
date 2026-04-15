@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { MapContainer, TileLayer, Marker, Tooltip, Popup, ScaleControl, useMap, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Tooltip, ScaleControl, useMap, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { CAMPS } from '@/data/camps'
 import type { Camp } from '@/data/camps'
@@ -10,27 +10,10 @@ const DEALER_COUNTRIES = ['俄罗斯', '台湾', '沙特阿拉伯', '阿联酋',
 
 // Tile layers
 const TILE_EN = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-const TILE_ZH = 'https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=7tbP0DIfmG9T8qWYxh5M&language=zh'
+const TILE_ZH = 'https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key=7tbP0DIfmG9T8qWYxh5M&language=zh'
 
 // VESSEL HQ — Foshan Nanhai Shishan, Guangdong
-const HQ = {
-  lat: 23.0833,
-  lng: 113.0167,
-  labelEn: 'VESSEL HQ & Smart Factory',
-  labelZh: 'VESSEL 微宿 · 超级工厂',
-  popupEn: `<div style="font-family:'DM Sans',sans-serif">
-    <div style="color:#E36F2C;font-size:16px;font-weight:700;margin-bottom:6px">VESSEL Smart Manufacturing HQ</div>
-    <div style="color:#8A8580;font-size:12px;margin-bottom:10px">Xingye North Road 253, Shishan, Nanhai, Foshan, China</div>
-    <div style="color:#F0F0F0;font-size:13px;margin-bottom:10px">28,800㎡ Factory · 150 Units/Month · 30+ Countries</div>
-    <div style="color:#E36F2C;font-size:12px;font-style:italic">"Every VESSEL unit starts here."</div>
-  </div>`,
-  popupZh: `<div style="font-family:'DM Sans',sans-serif">
-    <div style="color:#E36F2C;font-size:16px;font-weight:700;margin-bottom:6px">VESSEL 微宿智造总部</div>
-    <div style="color:#8A8580;font-size:12px;margin-bottom:10px">广东省佛山市南海区狮山镇兴业北路253号</div>
-    <div style="color:#F0F0F0;font-size:13px;margin-bottom:10px">28,800㎡ 超级工厂 · 月产能150台 · 远销30+国家</div>
-    <div style="color:#E36F2C;font-size:12px;font-style:italic">"每一台微宿，从这里出发。"</div>
-  </div>`,
-}
+const HQ = { lat: 23.0833, lng: 113.0167 }
 
 // CSS injected into <head> — scoped to .vessel-map
 const MAP_CSS = `
@@ -56,8 +39,8 @@ const MAP_CSS = `
 }
 .vessel-hq-star {
   animation: hq-pulse 2s ease-in-out infinite;
-  cursor: pointer;
   display: block;
+  pointer-events: none;
 }
 /* Dim CartoDB tile layer (EN mode) */
 .vessel-map .leaflet-tile-pane {
@@ -67,30 +50,6 @@ const MAP_CSS = `
 .vessel-map .leaflet-tile-pane.maptiler-dim {
   filter: brightness(0.6) contrast(1.15) saturate(0.8);
 }
-/* HQ Tooltip */
-.vessel-hq-tooltip {
-  background: rgba(26,26,26,0.85) !important;
-  color: #F0F0F0 !important;
-  border: 1px solid #E36F2C !important;
-  border-radius: 4px !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  padding: 4px 10px !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
-}
-.vessel-hq-tooltip::before { border-right-color: rgba(26,26,26,0.85) !important; }
-/* HQ Popup dark override */
-.vessel-hq-popup .leaflet-popup-content-wrapper {
-  background: #1A1A1A;
-  color: #F0F0F0;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-  padding: 0;
-}
-.vessel-hq-popup .leaflet-popup-tip { background: #1A1A1A; }
-.vessel-hq-popup .leaflet-popup-content { margin: 0; padding: 16px 20px; width: auto !important; }
-.vessel-hq-popup .leaflet-popup-close-button { color: #8A8580 !important; }
-.vessel-hq-popup .leaflet-popup-close-button:hover { color: #F0F0F0 !important; }
 /* Hide default marker shadows */
 .vessel-map .leaflet-marker-shadow { display: none !important; }
 `
@@ -211,8 +170,7 @@ export default function GlobalMap({ onCampSelect, onMapClick, flyTarget, lang }:
           key="tile-zh"
           attribution="&copy; <a href='https://www.maptiler.com/copyright/'>MapTiler</a> &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>"
           url={TILE_ZH}
-          tileSize={512}
-          zoomOffset={-1}
+          tileSize={256}
           noWrap={true}
           className="maptiler-dim"
         />
@@ -228,31 +186,13 @@ export default function GlobalMap({ onCampSelect, onMapClick, flyTarget, lang }:
       <FlyToController target={flyTarget ?? null} />
       <MapClickHandler onMapClick={onMapClick} suppress={suppressMapClick} />
 
-      {/* VESSEL HQ — orange star marker */}
+      {/* VESSEL HQ — orange star marker (no interaction) */}
       <Marker
         position={[HQ.lat, HQ.lng]}
         icon={hqIcon}
         zIndexOffset={9999}
-        eventHandlers={{
-          click: () => { suppressMapClick.current = true },
-        }}
-      >
-        <Tooltip
-          permanent
-          direction="right"
-          offset={[20, 0]}
-          className="vessel-hq-tooltip"
-        >
-          {isZh ? HQ.labelZh : HQ.labelEn}
-        </Tooltip>
-        <Popup
-          className="vessel-hq-popup"
-          maxWidth={280}
-          minWidth={240}
-        >
-          <div dangerouslySetInnerHTML={{ __html: isZh ? HQ.popupZh : HQ.popupEn }} />
-        </Popup>
-      </Marker>
+        interactive={false}
+      />
 
       {/* Camp markers */}
       {CAMPS.map((camp, i) => {
