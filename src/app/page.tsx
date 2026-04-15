@@ -50,7 +50,7 @@ function HeroSection() {
           <p className="text-base sm:text-lg tracking-[0.15em] text-white/70 font-light font-[family-name:var(--font-heading)]">
             {t(i18n.home.heroTagline)}
           </p>
-          <div className="w-12 h-px bg-[#2A5C5A] mx-auto mt-4" />
+          <div className="w-12 h-px bg-[#E36F2C] mx-auto mt-4" />
         </div>
 
         <h1 className="text-6xl sm:text-7xl lg:text-8xl font-normal text-white mb-10 leading-[1.08] tracking-[0.15em] font-[family-name:var(--font-heading)]">
@@ -62,7 +62,7 @@ function HeroSection() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link href="/products" className="bg-[#2A5C5A] text-white px-10 py-4 text-sm tracking-wider hover:bg-[#1E4543] transition-colors">
+          <Link href="/products" className="bg-[#E36F2C] text-white px-10 py-4 text-sm tracking-wider hover:bg-[#1E4543] transition-colors">
             {t(i18n.home.heroCta)}
           </Link>
           <Link href="/contact" className="border border-white/30 text-white/80 px-10 py-4 text-sm tracking-wider hover:border-white/60 transition-colors">
@@ -143,7 +143,7 @@ function CertificationsSection() {
       icon: (
         <svg viewBox="0 0 160 48" className="h-10 w-auto">
           <text x="80" y="34" textAnchor="middle" fill="#F0F0F0" fontSize="28" fontWeight="300" letterSpacing="0.05em" style={{fontFamily: 'var(--font-heading), sans-serif'}}>ISO</text>
-          <line x1="0" y1="44" x2="160" y2="44" stroke="#2A5C5A" strokeWidth="2"/>
+          <line x1="0" y1="44" x2="160" y2="44" stroke="#E36F2C" strokeWidth="2"/>
         </svg>
       ),
     },
@@ -163,7 +163,7 @@ function CertificationsSection() {
     <section className="bg-[#111114] py-24 lg:py-32">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-16">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#2A5C5A] mb-4 font-medium">{t(i18n.home.certLabel)}</p>
+          <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-4 font-medium">{t(i18n.home.certLabel)}</p>
           <h2 className="text-3xl lg:text-4xl font-light text-[#F0F0F0] mb-4 font-[family-name:var(--font-heading)]">
             {t(i18n.home.certTitle)}
           </h2>
@@ -194,7 +194,7 @@ function PhilosophySection() {
       <div className="max-w-6xl mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div>
-            <p className="text-xs tracking-[0.3em] uppercase text-[#2A5C5A] mb-6 font-medium">
+            <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-6 font-medium">
               {t(i18n.home.philoLabel)}
             </p>
             <h2
@@ -226,7 +226,7 @@ function FlagshipSection() {
   return (
     <section className="bg-[#111114] py-24 lg:py-32">
       <div className="max-w-6xl mx-auto px-6">
-        <p className="text-xs tracking-[0.3em] uppercase text-[#2A5C5A] mb-3 font-medium">
+        <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-3 font-medium">
           {t(i18n.home.flagshipLabel)}
         </p>
         <p className="text-sm text-[#8A8580] tracking-wider mb-4">{t(i18n.home.flagshipModel)}</p>
@@ -260,7 +260,7 @@ function FlagshipSection() {
 
         <Link
           href="/products/e7-gen6"
-          className="inline-flex items-center gap-2 text-[#2A5C5A] text-sm tracking-wider hover:text-[#3D7A77] transition-colors"
+          className="inline-flex items-center gap-2 text-[#E36F2C] text-sm tracking-wider hover:text-[#3D7A77] transition-colors"
         >
           {t(i18n.home.flagshipCta)}
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -285,7 +285,7 @@ function TechnologySection() {
     <section className="bg-[#111114] py-24 lg:py-32">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-16">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#2A5C5A] mb-4 font-medium">
+          <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-4 font-medium">
             {t(i18n.home.techLabel)}
           </p>
           <h2
@@ -309,7 +309,7 @@ function TechnologySection() {
                 />
               </div>
               <div className="p-8">
-                <p className="text-[#2A5C5A] text-xs tracking-[0.3em] font-medium mb-4 uppercase">{tech.tag}</p>
+                <p className="text-[#E36F2C] text-xs tracking-[0.3em] font-medium mb-4 uppercase">{tech.tag}</p>
                 <h3
                   className="text-xl font-medium text-[#F0F0F0] mb-4"
                   style={{ fontFamily: 'var(--font-heading)' }}
@@ -342,7 +342,7 @@ function ProjectsSection() {
     <section className="bg-[#F5F0EB] py-24 lg:py-32">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-16">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#2A5C5A] mb-4 font-medium">
+          <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-4 font-medium">
             {t(i18n.home.projLabel)}
           </p>
           <h2
@@ -380,7 +380,7 @@ function ProjectsSection() {
         <div className="text-center">
           <Link
             href="/global"
-            className="inline-flex items-center gap-2 text-[#2A5C5A] text-sm tracking-wider hover:text-[#3D7A77] transition-colors"
+            className="inline-flex items-center gap-2 text-[#E36F2C] text-sm tracking-wider hover:text-[#3D7A77] transition-colors"
           >
             {t(i18n.home.projCta)}
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -402,7 +402,7 @@ function ManufacturingSection() {
       <div className="max-w-6xl mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div>
-            <p className="text-xs tracking-[0.3em] uppercase text-[#2A5C5A] mb-6 font-medium">
+            <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-6 font-medium">
               {t(i18n.home.mfgLabel)}
             </p>
             <h2
@@ -435,17 +435,17 @@ function ScenariosSection() {
     <section className="bg-[#F5F0EB] py-24 lg:py-32">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-16">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#2A5C5A] mb-4 font-medium">{t(i18n.home.scenLabel)}</p>
+          <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-4 font-medium">{t(i18n.home.scenLabel)}</p>
           <h2 className="text-3xl lg:text-4xl font-light text-[#1A1A1E] font-[family-name:var(--font-heading)]">{t(i18n.home.scenTitle)}</h2>
         </div>
         <div className="grid lg:grid-cols-3 gap-5">
           {scenes.map((s) => (
-            <div key={s.title} className="group overflow-hidden border border-[#E5E0DA] hover:border-[#2A5C5A]/40 transition-colors">
+            <div key={s.title} className="group overflow-hidden border border-[#E5E0DA] hover:border-[#E36F2C]/40 transition-colors">
               <div className="relative aspect-[16/10] overflow-hidden">
                 <Image src={s.img} alt={s.title} fill sizes="(max-width: 1024px) 100vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
               </div>
               <div className="p-7">
-                <div className="h-0.5 bg-[#2A5C5A] w-8 mb-5" />
+                <div className="h-0.5 bg-[#E36F2C] w-8 mb-5" />
                 <h3 className="text-xl font-medium text-[#1A1A1E] mb-2 font-[family-name:var(--font-heading)]">{s.title}</h3>
                 <p className="text-sm text-[#8A8580] leading-relaxed">{s.desc}</p>
               </div>
@@ -473,7 +473,7 @@ function CtaSection() {
         <p className="text-base text-[#8A8580] mb-10 leading-relaxed">{t(i18n.home.ctaBody)}</p>
         <Link
           href="/contact"
-          className="inline-block bg-[#2A5C5A] text-white px-10 py-4 text-sm tracking-wider hover:bg-[#1E4543] transition-colors"
+          className="inline-block bg-[#E36F2C] text-white px-10 py-4 text-sm tracking-wider hover:bg-[#1E4543] transition-colors"
         >
           {t(i18n.home.ctaBtn)}
         </Link>

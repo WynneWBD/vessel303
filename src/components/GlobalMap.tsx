@@ -11,20 +11,20 @@ const DEALER_COUNTRIES = ['俄罗斯', '台湾', '沙特阿拉伯', '阿联酋',
 // CSS injected into <head> — scoped to .vessel-map class
 const MAP_CSS = `
 @keyframes vesselPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(42, 92, 90, 0.55); }
-  60%       { box-shadow: 0 0 0 10px rgba(42, 92, 90, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(227, 111, 44, 0.55); }
+  60%       { box-shadow: 0 0 0 10px rgba(227, 111, 44, 0); }
 }
 .vessel-pin {
   border-radius: 50%;
-  background: rgba(42, 92, 90, 0.88);
-  border: 1.5px solid #2A5C5A;
+  background: rgba(227, 111, 44, 0.88);
+  border: 1.5px solid #E36F2C;
   animation: vesselPulse 2.6s ease-out infinite;
   cursor: pointer !important;
   box-sizing: border-box;
 }
 .vessel-pin-dealer {
   border: 2px dashed #A67C5B !important;
-  background: rgba(42, 92, 90, 0.82) !important;
+  background: rgba(227, 111, 44, 0.82) !important;
 }
 /* Dim the Voyager tile layer */
 .vessel-map .leaflet-tile-pane {
@@ -112,7 +112,7 @@ export default function GlobalMap({ onCampSelect, onMapClick, flyTarget }: Props
 
   // Placeholder until Leaflet is ready
   if (!mounted) {
-    return <div style={{ height: '100%', width: '100%', background: '#111114' }} />
+    return <div style={{ height: '100%', width: '100%', background: '#1A1A1A' }} />
   }
 
   // Safe to require after mount (ssr:false guaranteed)

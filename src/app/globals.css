@@ -2,7 +2,7 @@
 
 :root {
   /* === 新配色系统：科技×自然材质 === */
-  --bg-dark: #111114;        /* 主画布-暗：Hero/技术展示区 */
+  --bg-dark: #1A1A1A;        /* 主画布-暗：Hero/技术展示区 */
   --bg-light: #F5F0EB;       /* 主画布-亮：内容区 */
   --bg-card: #FFFFFF;         /* 卡片背景 */
 
@@ -11,8 +11,10 @@
   --text-muted: #8A8580;      /* 次要文字 */
   --text-body: #4A4744;       /* 正文文字 */
 
-  --accent-teal: #2A5C5A;    /* 品牌主色：深青 */
-  --accent-copper: #A67C5B;  /* 暖色点缀：风化铜 */
+  --accent-teal: #E36F2C;    /* 品牌主色：品牌橙（兼容旧变量名） */
+  --accent-orange: #E36F2C;  /* 品牌主色：品牌橙 */
+  --accent-copper: #C4B9AB;  /* 暖色点缀：石灰中性 */
+  --accent-stone: #C4B9AB;   /* 同上，新变量名 */
 
   --border-light: #E5E0DA;   /* 亮底分隔线 */
   --border-dark: #2A2A2E;    /* 暗底分隔线 */
@@ -20,9 +22,9 @@
   /* 保留旧变量做兼容过渡（子页面暂不改） */
   --background: #F5F0EB;
   --foreground: #1A1A1E;
-  --gold: #2A5C5A;
-  --gold-dim: #1E4543;
-  --warm-dark: #111114;
+  --gold: #E36F2C;
+  --gold-dim: #C85A1F;
+  --warm-dark: #1A1A1A;
   --warm-white: #F5F0EB;
   --warm-text: #1A1A1E;
   --warm-muted: #8A8580;
@@ -64,16 +66,16 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--bg-light);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(42, 92, 90, 0.3);
+  background: rgba(227,111,44,0.3);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(42, 92, 90, 0.6);
+  background: rgba(227,111,44,0.6);
 }
 
 /* Teal gradient text - 替代原金色渐变 */
 .text-gold-gradient {
-  background: linear-gradient(135deg, #2A5C5A 0%, #3D7A77 50%, #2A5C5A 100%);
+  background: linear-gradient(135deg, #E36F2C 0%, #C85A1F 50%, #E36F2C 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

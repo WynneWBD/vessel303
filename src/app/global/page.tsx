@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function GlobalPage() {
   return (
-    <div style={{ overflow: 'hidden', height: '100vh', background: '#111114' }}>
+    <div style={{ overflow: 'hidden', height: '100vh', background: '#1A1A1A' }}>
       <GlobalMapStats />
       <div style={{ paddingTop: 56 }}>
         <GlobalMapView />

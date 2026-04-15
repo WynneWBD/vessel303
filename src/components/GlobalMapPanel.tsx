@@ -56,7 +56,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
       {camp && (
         <>
           {/* Photo */}
-          <div style={{ position: 'relative', height: 200, flexShrink: 0, background: '#111114' }}>
+          <div style={{ position: 'relative', height: 200, flexShrink: 0, background: '#1A1A1A' }}>
             <Image
               src={getPanelImage(camp.name, camp.models)}
               alt={camp.name}
@@ -110,7 +110,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
             <div style={{ marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 6 }}>
                 <span style={{
-                  color: '#2A5C5A', fontSize: 36, fontWeight: 700,
+                  color: '#E36F2C', fontSize: 36, fontWeight: 700,
                   fontFamily: 'var(--font-heading), sans-serif', letterSpacing: '-0.02em',
                 }}>
                   {camp.total}
@@ -132,7 +132,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
                     <span
                       key={model}
                       style={{
-                        border: '1px solid #2A5C5A', color: '#2A5C5A',
+                        border: '1px solid #E36F2C', color: '#E36F2C',
                         fontSize: 11, padding: '3px 8px', borderRadius: 4,
                         letterSpacing: '0.05em', fontFamily: 'var(--font-heading), sans-serif',
                       }}
@@ -151,7 +151,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
                 <div style={{ marginBottom: 20 }}>
                   <div style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6,
-                    background: '#2A5C5A', color: '#F0F0F0',
+                    background: '#E36F2C', color: '#F0F0F0',
                     fontSize: 11, padding: '4px 10px', borderRadius: 4,
                     fontWeight: 600, letterSpacing: '0.08em', marginBottom: 10,
                   }}>
@@ -166,8 +166,8 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
                   <Link
                     href="/contact"
                     style={{
-                      display: 'inline-block', border: '1px solid #2A5C5A',
-                      color: '#2A5C5A', fontSize: 12, padding: '6px 14px',
+                      display: 'inline-block', border: '1px solid #E36F2C',
+                      color: '#E36F2C', fontSize: 12, padding: '6px 14px',
                       borderRadius: 4, textDecoration: 'none', letterSpacing: '0.05em',
                     }}
                   >
@@ -187,7 +187,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
                 rel="noopener noreferrer"
                 style={{
                   display: 'block', textAlign: 'center',
-                  background: '#2A5C5A', color: '#F0F0F0',
+                  background: '#E36F2C', color: '#F0F0F0',
                   fontSize: 13, padding: '10px 16px',
                   textDecoration: 'none', letterSpacing: '0.08em', fontWeight: 500,
                 }}

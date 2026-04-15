@@ -19,12 +19,12 @@ export default function GlobalMapStats() {
         left: 0,
         right: 0,
         height: 56,
-        background: '#111114',
+        background: '#1A1A1A',
         zIndex: 1000,
         display: 'flex',
         alignItems: 'center',
         padding: '0 24px',
-        borderBottom: '1px solid rgba(42,92,90,0.25)',
+        borderBottom: '1px solid rgba(227,111,44,0.25)',
       }}
     >
       {/* Brand */}
@@ -52,7 +52,7 @@ export default function GlobalMapStats() {
       {/* Stats */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 32, marginLeft: 'auto', marginRight: 24 }}>
         <div style={{ textAlign: 'center' }}>
-          <span style={{ color: '#2A5C5A', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
+          <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
             {countries}
           </span>
           <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 12, marginLeft: 4 }}>
@@ -61,7 +61,7 @@ export default function GlobalMapStats() {
         </div>
         <div style={{ width: 1, height: 16, background: 'rgba(138,133,128,0.3)' }} />
         <div style={{ textAlign: 'center' }}>
-          <span style={{ color: '#2A5C5A', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
+          <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
             {campCount}
           </span>
           <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 12, marginLeft: 4 }}>
@@ -70,7 +70,7 @@ export default function GlobalMapStats() {
         </div>
         <div style={{ width: 1, height: 16, background: 'rgba(138,133,128,0.3)' }} />
         <div style={{ textAlign: 'center' }}>
-          <span style={{ color: '#2A5C5A', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
+          <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
             {totalDevices}
           </span>
           <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 12, marginLeft: 4 }}>
@@ -89,7 +89,7 @@ export default function GlobalMapStats() {
             letterSpacing: '0.1em',
             cursor: 'pointer',
             border: 'none',
-            background: lang === 'en' ? '#2A5C5A' : 'transparent',
+            background: lang === 'en' ? '#E36F2C' : 'transparent',
             color: lang === 'en' ? '#F0F0F0' : 'rgba(255,255,255,0.4)',
             fontWeight: lang === 'en' ? 700 : 400,
             transition: 'all 0.15s',
@@ -106,7 +106,7 @@ export default function GlobalMapStats() {
             letterSpacing: '0.1em',
             cursor: 'pointer',
             border: 'none',
-            background: lang === 'zh' ? '#2A5C5A' : 'transparent',
+            background: lang === 'zh' ? '#E36F2C' : 'transparent',
             color: lang === 'zh' ? '#F0F0F0' : 'rgba(255,255,255,0.4)',
             fontWeight: lang === 'zh' ? 700 : 400,
             transition: 'all 0.15s',
