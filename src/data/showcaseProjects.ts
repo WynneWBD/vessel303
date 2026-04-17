@@ -1337,6 +1337,76 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
     images: ['/images/projects/xinjiang-yili/image-01.jpg', '/images/projects/xinjiang-yili/image-02.jpg', '/images/projects/xinjiang-yili/image-03.jpg', '/images/projects/xinjiang-yili/image-04.jpg', '/images/projects/xinjiang-yili/image-05.jpg'],
   },
 
+  // ─── 云南 · 八珠在春天摩梭家园 ───
+  {
+    id: 'yunnan-mosuo',
+    name: { en: 'Bazhu Springtime Mosuo Home', zh: '云南八珠在春天摩梭家园' },
+    location: { en: 'Bazhu Village, Yongning Town, Ninglang County, Lijiang, Yunnan, China', zh: '中国云南·丽江市宁蒗县永宁镇泥鳅沟村委会八珠村·距泸沽湖10分钟' },
+    coordinates: [100.8353, 27.7183],
+    country: '🇨🇳',
+    openDate: '2024',
+    units: 51,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'Opened 2024 — 51-room immersive Mosuo cultural resort in Bazhu Village, Ninglang, 10 minutes from Lugu Lake. Mosuo log-house architecture fused with contemporary design: boutique rooms, space capsules and star-gazing tents, all with en-suite baths and smart controls. Nightly bonfire Jiaco dance with villagers, Mosuo culture museum, and springtime Gersa flower sea.',
+      zh: '2024年全新开业，坐落于云南宁蒗八珠村，距泸沽湖仅10分钟，51间客房融合摩梭木楞房元素与现代设计。特色客房、太空舱及星空帐篷均配独立卫浴与智能客控。每晚带餐篝火晚会，与村民共跳传统甲搓舞；设摩梭文化展示馆，春日可赏格桑花海，感受原生摩梭风情。',
+    },
+    amenities: [
+      { icon: '🏠', label: { en: 'Mosuo Log House Architecture', zh: '摩梭木楞房建筑' } },
+      { icon: '🔥', label: { en: 'Nightly Bonfire Dance', zh: '每晚篝火甲搓舞' } },
+      { icon: '🌸', label: { en: 'Springtime Gersa Flowers', zh: '格桑花海（春季）' } },
+      { icon: '🏛', label: { en: 'Mosuo Culture Museum', zh: '摩梭文化展示馆' } },
+      { icon: '🌌', label: { en: 'Stargazing Skylights', zh: '星空天窗' } },
+      { icon: '🍽', label: { en: 'Sour-Broth Hotpot', zh: '酸汤火锅与生态美食' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Lugu Lake scenic area — ~10 min drive' }, { mode: '🚗', text: 'From Lijiang via G245 — ~4h drive' }, { mode: '✈️', text: 'Lijiang Sanyi Airport — ~4h drive' }],
+      zh: [{ mode: '🚗', text: '泸沽湖景区 — 约10分钟' }, { mode: '🚗', text: '丽江沿G245 — 约4小时' }, { mode: '✈️', text: '丽江三义机场 — 约4小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Lugu Lake National Scenic Area', distance: '~10 min drive' }, { name: 'Lige Island', distance: '~20 min' }, { name: 'Mosuo Ancient Town', distance: '~15 min' }],
+      zh: [{ name: '泸沽湖国家级风景区', distance: '约10分钟' }, { name: '里格岛', distance: '约20分钟' }, { name: '摩梭小镇', distance: '约15分钟' }],
+    },
+    images: ['/images/projects/yunnan-mosuo/image-01.jpg', '/images/projects/yunnan-mosuo/image-02.jpg', '/images/projects/yunnan-mosuo/image-03.jpg', '/images/projects/yunnan-mosuo/image-04.jpg'],
+  },
+
+  // ─── 云南 · 玉溪映月潭圆梦营酒店 ───
+  {
+    id: 'yunnan-yuxi',
+    name: { en: 'Yingyue Tan Dream Camp Hotel', zh: '云南玉溪映月潭圆梦营酒店' },
+    location: { en: 'Yingyue Tan Leisure Culture Center (4A), Yuxi City, Yunnan, China', zh: '中国云南·玉溪市·映月潭修闲文化中心（国家4A级旅游景区）' },
+    coordinates: [102.5491, 24.3537],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: 26,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'A "hot spring + space capsule + glamping" resort within the 4A-rated Yingyue Tan Cultural Center, Yuxi — 26 futuristic capsule rooms with private hot-spring soaking pools in each courtyard. The 51°C natural geothermal spring from 2,000 m underground is rich in fluoride and silicic acid. Unlimited hot-spring access included with stay. BBQ kits and open-fire tea service in-courtyard.',
+      zh: '坐落于云南玉溪映月潭国家4A景区，是"温泉+太空舱+露营"沉浸式度假标杆。26间科技感太空舱，每间独立庭院标配私人泡池，源自地下2000米51°C天然矿泉富含氟与偏硅酸，住店即享无限次温泉权益。庭院内设烧烤台与围炉煮茶区，可步行至景区40+功能泡池。',
+    },
+    amenities: [
+      { icon: '♨️', label: { en: 'Private Hot-Spring Pool', zh: '独立庭院私人泡池' } },
+      { icon: '🌡', label: { en: '51°C Natural Geothermal Spring', zh: '51°C天然地热矿泉' } },
+      { icon: '🛸', label: { en: '26 Space Capsule Suites', zh: '26间科技感太空舱' } },
+      { icon: '🔥', label: { en: 'In-Courtyard BBQ & Fire Tea', zh: '庭院烧烤与围炉煮茶' } },
+      { icon: '🏊', label: { en: '40+ Pool Spa (Unlimited)', zh: '40+功能泡池（无限次）' } },
+      { icon: '⛪', label: { en: 'Yuquan Temple Nearby', zh: '玉泉寺1公里' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Yuxi city center — ~15 min drive' }, { mode: '🚗', text: 'From Kunming via G8511 — ~1.5h drive' }, { mode: '✈️', text: 'Kunming Changshui Airport — ~1.5h drive' }],
+      zh: [{ mode: '🚗', text: '玉溪市区 — 约15分钟' }, { mode: '🚗', text: '昆明沿G8511 — 约1.5小时' }, { mode: '✈️', text: '昆明长水机场 — 约1.5小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Yingyue Tan Hot Spring (40+ Pools)', distance: 'Walking' }, { name: 'Yuquan Temple', distance: '~1 km' }, { name: 'Dataying Commercial Street', distance: '~3 km' }],
+      zh: [{ name: '映月潭温泉（40+泡池）', distance: '步行可达' }, { name: '玉泉寺', distance: '约1公里' }, { name: '大营街商圈', distance: '约3公里' }],
+    },
+    images: ['/images/projects/yunnan-yuxi/image-01.jpg', '/images/projects/yunnan-yuxi/image-02.jpg', '/images/projects/yunnan-yuxi/image-03.jpg', '/images/projects/yunnan-yuxi/image-04.jpg'],
+  },
+
   // ─── 内蒙古 · 乌海漠海山境露营地 ───
   {
     id: 'wuhai-desert',
