@@ -76,7 +76,11 @@ const MARKER_CSS = `
   font-family: -apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
   pointer-events: none;
 }
-/* Showcase project pin — much larger, white border, strong pulse halo */
+/* Showcase project pin — much larger, white border, strong pulse halo.
+   NOTE: must not set position:relative — MapLibre adds .maplibregl-marker to
+   this same element and requires position:absolute for transform-based placement.
+   The ::after halo is still OK because .maplibregl-marker is position:absolute
+   (also a "positioned" ancestor), so absolute children resolve against it. */
 .vessel-showcase-pin {
   width: 40px;
   height: 40px;
@@ -87,7 +91,6 @@ const MARKER_CSS = `
   box-sizing: border-box;
   animation: showcase-ring 2.4s ease-out infinite;
   transition: transform 0.18s ease;
-  position: relative;
   z-index: 10;
   box-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
@@ -270,7 +273,10 @@ export default function GlobalMapML({
 
       // ── VESSEL HQ star ────────────────────────────────────────────────
       const hqWrapper = document.createElement('div')
-      hqWrapper.style.cssText = 'position:relative;width:36px;height:36px;pointer-events:none;'
+      // Leave position to .maplibregl-marker (absolute). Our inline "position:relative"
+      // was overriding it, which put the marker back in document flow and stacked all
+      // 40 showcase pins vertically below the map.
+      hqWrapper.style.cssText = 'width:36px;height:36px;pointer-events:none;'
       hqWrapper.innerHTML = `
         <svg class="vessel-hq-star" width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
           <polygon points="18,2 22.8,13.2 35,13.2 25,21.4 28.5,33 18,26 7.5,33 11,21.4 1,13.2 13.2,13.2"
