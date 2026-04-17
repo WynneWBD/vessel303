@@ -3,7 +3,6 @@
 import { useEffect, useRef } from 'react'
 import {
   Map as MaptilerMap,
-  MapStyle,
   Language,
   Marker,
   NavigationControl,
@@ -16,7 +15,13 @@ import { CAMPS } from '@/data/camps'
 import { SHOWCASE_PROJECTS } from '@/data/showcaseProjects'
 import type { ShowcaseProject } from '@/data/showcaseProjects'
 
-maptilerConfig.apiKey = '7tbP0DIfmG9T8qWYxh5M'
+const MAPTILER_KEY = '7tbP0DIfmG9T8qWYxh5M'
+maptilerConfig.apiKey = MAPTILER_KEY
+
+// Pin to streets-v2-dark: the SDK's MapStyle.STREETS.DARK resolves to
+// streets-v4-dark (paid tier), which returns 403 and silently falls back
+// to a light style.
+const STYLE_URL = `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${MAPTILER_KEY}`
 
 const DEALER_COUNTRIES = ['俄罗斯', '台湾', '沙特阿拉伯', '阿联酋', '韩国', '美国']
 
@@ -174,7 +179,7 @@ export default function GlobalMapML({
 
     const map = new MaptilerMap({
       container: containerRef.current,
-      style: MapStyle.STREETS.DARK,
+      style: STYLE_URL,
       center: isZhRef.current ? [105, 30] : [10, 20],
       zoom: isZhRef.current ? 3 : 2,
       minZoom: 1.5,
