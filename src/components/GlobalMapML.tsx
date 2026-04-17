@@ -283,7 +283,7 @@ export default function GlobalMapML({
       // Declared here, added to map AFTER showcase markers so it sits on top
       // in DOM order and is never covered by any showcase pin.
       const hqWrapper = document.createElement('div')
-      hqWrapper.style.cssText = 'width:36px;height:36px;pointer-events:none;'
+      hqWrapper.style.cssText = 'width:36px;height:36px;pointer-events:none;z-index:9999;'
       hqWrapper.innerHTML = `
         <svg class="vessel-hq-star" width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
           <polygon points="18,2 22.8,13.2 35,13.2 25,21.4 28.5,33 18,26 7.5,33 11,21.4 1,13.2 13.2,13.2"
