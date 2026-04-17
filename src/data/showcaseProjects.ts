@@ -812,6 +812,181 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
     images: ['/images/projects/guangxi-huangyao/image-01.jpg', '/images/projects/guangxi-huangyao/image-02.jpg', '/images/projects/guangxi-huangyao/image-03.jpg', '/images/projects/guangxi-huangyao/image-04.jpg'],
   },
 
+  // ─── 贵州 · 花溪晚霞星宿营地 ───
+  {
+    id: 'guizhou-huaxi',
+    name: { en: 'Wanxia Xingsu Star-Camp — Huaxi Gaopo', zh: '贵州花溪晚霞星宿营地' },
+    location: { en: 'Gaopo Town, Huaxi District, Guiyang, Guizhou, China', zh: '中国贵州·贵阳市花溪区高坡·海拔1400米喀斯特台地' },
+    coordinates: [106.6262, 26.2247],
+    country: '🇨🇳',
+    openDate: '2025.07',
+    units: 24,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'Guiyang\'s first space-capsule glamping camp, perched atop a 1,400 m karst plateau in Huaxi Gaopo — opened July 2025. 24 silver capsules and 10 glamping tents arranged across the clifftop, each with 270° unobstructed views of terraced fields, wind turbines, canyons and nightly 6.5-magnitude starfields. Acoustic smart control, private bath and cloud-edge viewing platform.',
+      zh: '贵阳首家太空舱野奢露营营地，2025年7月开业，坐落于花溪高坡海拔1400米喀斯特台地。24座银白色太空舱沿崖台错落，270°无界视野将梯田、风车与峡谷尽收眼底，实测星空能见度达6.5等星，是都市人逃离喧嚣的云端乌托邦。',
+    },
+    amenities: [
+      { icon: '🌌', label: { en: '6.5-Mag Dark Sky', zh: '6.5等星暗夜天空' } },
+      { icon: '🌅', label: { en: 'Sunset & Cloud Sea', zh: '晚霞云海观赏' } },
+      { icon: '🪟', label: { en: '270° Cliff Panorama', zh: '270° 悬崖全景' } },
+      { icon: '🎪', label: { en: 'Outdoor Lawn Concert', zh: '无界草坪音乐会' } },
+      { icon: '☕', label: { en: 'Cloud-Edge Café & BBQ', zh: '云崖餐吧与烧烤区' } },
+      { icon: '🔊', label: { en: 'Voice-Control Smart Room', zh: '声控智能系统' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Guiyang city center — ~1.5h drive' }, { mode: '✈️', text: 'Guiyang Longdongbao Airport — ~1.5h drive' }, { mode: '🚂', text: 'Guiyang North Station — ~1.5h drive to Gaopo' }],
+      zh: [{ mode: '🚗', text: '贵阳市区 — 约1.5小时车程' }, { mode: '✈️', text: '贵阳龙洞堡机场 — 约1.5小时' }, { mode: '🚂', text: '贵阳北站 — 约1.5小时到高坡' }],
+    },
+    nearby: {
+      en: [{ name: 'Gaopo Karst Plateau', distance: 'On-site' }, { name: 'Qingman Miao Village', distance: '~10 km' }, { name: 'Huaxi Park (4A)', distance: '~30 km' }],
+      zh: [{ name: '高坡喀斯特台地', distance: '营地内' }, { name: '青曼苗寨', distance: '约10公里' }, { name: '花溪公园（4A）', distance: '约30公里' }],
+    },
+    images: ['/images/projects/guizhou-huaxi/image-01.png', '/images/projects/guizhou-huaxi/image-02.png', '/images/projects/guizhou-huaxi/image-03.jpg', '/images/projects/guizhou-huaxi/image-04.jpg', '/images/projects/guizhou-huaxi/image-05.jpg'],
+  },
+
+  // ─── 海南 · 琼海无所归止汐语民宿 ───
+  {
+    id: 'hainan-qionghai',
+    name: { en: 'Wusuoguizhi Xiyu Coastal Inn', zh: '海南琼海无所归止汐语民宿' },
+    location: { en: 'Paigang Village, Tanmen Town, Qionghai, Hainan, China', zh: '中国海南·琼海市潭门镇排港村·潭门湾畔' },
+    coordinates: [110.5744, 19.2539],
+    country: '🇨🇳',
+    openDate: '2018',
+    units: null,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'National Grade-A B&B and Hainan Gold-Star designation — opened 2018 on Tanmen Bay, steps from a private beach. Panoramic ocean-view rooms with crashing-wave soundscapes, a fishermen-village boat-bar, and a tidal-flat foraging base. Nightly seafood feasts sourced straight from the South China Sea; bonfire evenings on the beach.',
+      zh: '全国甲级民宿、省级金宿，2018年开业，面朝潭门湾，步行即达专属沙滩。全景海景视野，设渔乡船屋音乐吧、潮捕赶海基地，晚餐直供南海海鲜。距潭门海鲜市场步行15分钟，距博鳌亚洲论坛会址20分钟，是琼海东线滨海度假标杆。',
+    },
+    amenities: [
+      { icon: '🌊', label: { en: 'Private Beach Access', zh: '专属沙滩步行可达' } },
+      { icon: '🦀', label: { en: 'Tidal Foraging Base', zh: '潮捕赶海基地' } },
+      { icon: '🎵', label: { en: 'Boat Music Bar', zh: '船屋音乐吧' } },
+      { icon: '🍲', label: { en: 'South China Sea Seafood', zh: '南海海鲜宴' } },
+      { icon: '🔥', label: { en: 'Beach Bonfire BBQ', zh: '篝火海鲜烧烤' } },
+      { icon: '📚', label: { en: 'Fishermen Library', zh: '渔家书屋' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Qionghai city — ~30 min drive' }, { mode: '🚗', text: 'From Sanya via G98 — ~2h drive' }, { mode: '🚂', text: 'Qionghai High-Speed Station — ~30 min taxi' }],
+      zh: [{ mode: '🚗', text: '琼海市区 — 约30分钟' }, { mode: '🚗', text: '三亚沿G98 — 约2小时' }, { mode: '🚂', text: '琼海高铁站 — 约30分钟出租' }],
+    },
+    nearby: {
+      en: [{ name: 'Tanmen Seafood Market', distance: '15 min walk' }, { name: 'Boao Asia Forum Site', distance: '~20 min drive' }, { name: 'Wanquan River Wetland', distance: '~10 km' }],
+      zh: [{ name: '潭门海鲜市场', distance: '步行15分钟' }, { name: '博鳌亚洲论坛永久会址', distance: '约20分钟' }, { name: '万泉河湿地', distance: '约10公里' }],
+    },
+    images: ['/images/projects/hainan-qionghai/image-01.jpg', '/images/projects/hainan-qionghai/image-02.jpg', '/images/projects/hainan-qionghai/image-03.jpg', '/images/projects/hainan-qionghai/image-04.jpg'],
+  },
+
+  // ─── 河北 · 张家口五色天路帐篷营地 ───
+  {
+    id: 'hebei-zhangbei',
+    name: { en: 'Wuse Tianlu Tent Camp — Zhangbei Grassland', zh: '河北张家口五色天路帐篷营地' },
+    location: { en: 'Abutigou Village, Zhanhai Township, Zhangbei County, Zhangjiakou, Hebei, China', zh: '中国河北·张家口市张北县战海乡阿不太沟村·奥伦达部落' },
+    coordinates: [115.06, 41.16],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: 57,
+    unitArea: 75,
+    guests: '2-9',
+    bookingUrl: '',
+    description: {
+      en: 'A luxury grassland tent camp 10 km from the Caoyuan Tianlu Scenic Road, Zhangbei — 57 premium tents (8 types including VESSEL capsules) at 1,600 m elevation on the Inner Mongolian border. Double-layer tents (90 m²) for 6–9 guests; star-gazing suites with full-panoramic skylights. UTV off-road, hang-gliding, archery, bonfires and Mongolian Andai dance on weekends.',
+      zh: '奥伦达部落五色天路运动休闲特色小镇，距草原天路10公里，海拔约1600米，57顶豪奢帐篷含8种房型（包含VESSEL微宿）。双层帐篷90㎡可住6-9人，星空房含全景天窗。周末提供UTV越野、三角翼飞行、射箭、篝火晚会与蒙古安代舞，是北京周边自驾2小时到达的草原营地。',
+    },
+    amenities: [
+      { icon: '🌌', label: { en: 'Panoramic Skylight', zh: '全景星空天窗' } },
+      { icon: '🏎', label: { en: 'UTV Off-Road', zh: 'UTV越野' } },
+      { icon: '🪂', label: { en: 'Hang-Gliding', zh: '三角翼飞行' } },
+      { icon: '🏹', label: { en: 'Archery', zh: '射箭' } },
+      { icon: '🔥', label: { en: 'Mongolian Bonfire Dance', zh: '蒙古篝火安代舞' } },
+      { icon: '📚', label: { en: 'Grassland Library Café', zh: '流浪书咖' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Beijing via G6 — ~2.5h drive' }, { mode: '🚂', text: 'Zhangjiakou South Station — ~1h drive' }, { mode: '✈️', text: 'Zhangjiakou Airport — ~1h drive' }],
+      zh: [{ mode: '🚗', text: '北京沿G6高速 — 约2.5小时' }, { mode: '🚂', text: '张家口南站 — 约1小时' }, { mode: '✈️', text: '张家口机场 — 约1小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Caoyuan Tianlu Scenic Road', distance: '~10 km' }, { name: 'Chongli Ski Resorts (Winter Olympics)', distance: '~50 km' }, { name: 'Flash Lake (Shandianhu)', distance: '~30 km' }],
+      zh: [{ name: '草原天路', distance: '约10公里' }, { name: '崇礼冬奥滑雪场', distance: '约50公里' }, { name: '闪电湖', distance: '约30公里' }],
+    },
+    images: ['/images/projects/hebei-zhangbei/image-01.jpg'],
+  },
+
+  // ─── 黑龙江 · 东极岛贝壳沙滩营地 ───
+  {
+    id: 'heilongjiang-fuyuan',
+    name: { en: 'Shell Beach Camp — China\'s Easternmost Point', zh: '黑龙江东极岛贝壳沙滩营地' },
+    location: { en: 'Near Dongji Square, Fuyuan City, Heilongjiang, China', zh: '中国黑龙江·抚远市·东极广场西侧·乌苏里江畔' },
+    coordinates: [134.3064, 48.3648],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: null,
+    unitArea: 23,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'VESSEL\'s easternmost China camp — on the banks of the Ussuri River in Fuyuan, just 800 m from China\'s Dongji (Eastern Extreme) Square. A 40,000 m² resort where you sleep in a capsule and receive the nation\'s first sunrise. 270° panoramic river-view capsules, tidal beach play zones, night-sky BBQ and fresh Heilongjiang river fish.',
+      zh: 'VESSEL 打造的华夏东极网红露营地，距祖国最东端地标东极广场仅800米，乌苏里江畔4万㎡。太空舱配270°全景江景，卧床即可迎接祖国第一缕阳光。设沙滩亲水区、天幕烧烤区与美食休闲区，提供江鲜宴与篝火晚会，是中国最东端科技度假目的地。',
+    },
+    amenities: [
+      { icon: '🌅', label: { en: 'First Sunrise in China', zh: '迎祖国第一缕阳光' } },
+      { icon: '🌊', label: { en: 'Ussuri River Views', zh: '乌苏里江畔' } },
+      { icon: '🪟', label: { en: '270° Panoramic Capsule', zh: '270° 全景落地窗太空舱' } },
+      { icon: '🐟', label: { en: 'Heilongjiang River Fish', zh: '抚远特色江鲜' } },
+      { icon: '🏖', label: { en: 'Shell Beach Waterplay', zh: '贝壳沙滩亲水区' } },
+      { icon: '🔥', label: { en: 'Bonfire & BBQ', zh: '篝火天幕烧烤' } },
+    ],
+    transport: {
+      en: [{ mode: '✈️', text: 'Fuyuan Dongji Airport — ~40 km / ~35 min drive' }, { mode: '🚗', text: 'From Jiamusi via G221 — ~3h drive' }, { mode: '🚗', text: 'From Harbin — ~600 km / ~6h drive' }],
+      zh: [{ mode: '✈️', text: '抚远东极机场 — 约40公里/35分钟' }, { mode: '🚗', text: '佳木斯沿G221 — 约3小时' }, { mode: '🚗', text: '哈尔滨出发 — 约600公里/6小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Dongji Square (Eastern Extreme)', distance: '~800 m' }, { name: 'Heixiazi Island', distance: '~10 km (boat)' }, { name: 'Fuyuan City Center', distance: '~25 min drive' }],
+      zh: [{ name: '东极广场（最东端地标）', distance: '约800米' }, { name: '黑瞎子岛', distance: '约10公里（船）' }, { name: '抚远市区', distance: '约25分钟' }],
+    },
+    images: ['/images/projects/heilongjiang-fuyuan/image-01.jpg', '/images/projects/heilongjiang-fuyuan/image-02.jpg', '/images/projects/heilongjiang-fuyuan/image-03.jpg', '/images/projects/heilongjiang-fuyuan/image-04.jpg', '/images/projects/heilongjiang-fuyuan/image-05.jpg', '/images/projects/heilongjiang-fuyuan/image-06.jpg'],
+  },
+
+  // ─── 湖北 · 武汉清凉寨树影行星太空舱民宿 ───
+  {
+    id: 'hubei-wuhan',
+    name: { en: 'Planet Capsule Inn — Mulan Qingliangzhai', zh: '武汉清凉寨树影行星太空舱民宿' },
+    location: { en: 'Mulan Qingliangzhai Scenic Area (4A), Huangpi District, Wuhan, Hubei, China', zh: '中国湖北·武汉市黄陂区·木兰清凉寨4A级景区·半山腰悬崖边' },
+    coordinates: [114.5108, 31.2186],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: 9,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: '9 standalone white capsules on a clifftop inside Mulan Qingliangzhai (4A), each named after one of the nine solar-system planets. 270° panoramic floor-to-ceiling windows and full-ceiling skylights frame forests, sea of flowers, lake views and starlit skies — delivered by smart voice controls, Dyson hairdryer and Marshall speakers. Drive to the summit for sunrise.',
+      zh: '位于武汉木兰清凉寨4A景区半山腰悬崖边，9间独立白色太空舱以太阳系九大行星命名，270°全景落地窗+全景天窗将青山花海湖景与星空纳入室内。配语音全屋智能控制、戴森吹风机、马歇尔音响，可开车直达山顶观日出，是武汉周边最具科幻感的网红住宿。',
+    },
+    amenities: [
+      { icon: '🌌', label: { en: 'Full Skylight Ceiling', zh: '全景天窗' } },
+      { icon: '🪟', label: { en: '270° Forest Panorama', zh: '270° 森林全景' } },
+      { icon: '🎙', label: { en: 'Voice Smart Control', zh: '语音全屋智能' } },
+      { icon: '🔊', label: { en: 'Marshall Speaker', zh: '马歇尔音响' } },
+      { icon: '🌸', label: { en: 'Sea of Flowers View', zh: '花海景观' } },
+      { icon: '🌅', label: { en: 'Drive-to Summit Sunrise', zh: '开车直达山顶观日出' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Wuhan city — ~1.5h drive' }, { mode: '✈️', text: 'Wuhan Tianhe Airport — ~1.5h drive' }, { mode: '🚂', text: 'Wuhan Station — then self-drive ~1.5h' }],
+      zh: [{ mode: '🚗', text: '武汉市区 — 约1.5小时' }, { mode: '✈️', text: '武汉天河机场 — 约1.5小时' }, { mode: '🚂', text: '武汉站 — 自驾约1.5小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Qingliangzhai Scenic Area (4A)', distance: 'On-site' }, { name: 'Mulan Mountain', distance: '~20 km' }, { name: 'Mulan Lake', distance: '~30 km' }],
+      zh: [{ name: '清凉寨景区（4A）', distance: '营地内' }, { name: '木兰山', distance: '约20公里' }, { name: '木兰湖', distance: '约30公里' }],
+    },
+    images: ['/images/projects/hubei-wuhan/image-01.jpg', '/images/projects/hubei-wuhan/image-02.jpg', '/images/projects/hubei-wuhan/image-03.jpg', '/images/projects/hubei-wuhan/image-04.jpg', '/images/projects/hubei-wuhan/image-05.jpg', '/images/projects/hubei-wuhan/image-06.jpg'],
+  },
+
   // ─── 内蒙古 · 乌海漠海山境露营地 ───
   {
     id: 'wuhai-desert',
