@@ -987,6 +987,181 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
     images: ['/images/projects/hubei-wuhan/image-01.jpg', '/images/projects/hubei-wuhan/image-02.jpg', '/images/projects/hubei-wuhan/image-03.jpg', '/images/projects/hubei-wuhan/image-04.jpg', '/images/projects/hubei-wuhan/image-05.jpg', '/images/projects/hubei-wuhan/image-06.jpg'],
   },
 
+  // ─── 青海 · 同宝山登山观湖特色野奢露营民宿 ───
+  {
+    id: 'qinghai-tongbao',
+    name: { en: 'Tongbao Mountain Lake-View Glamping', zh: '青海湖同宝山登山观湖特色野奢露营民宿' },
+    location: { en: 'Daying Wugu Village, Qinghai Lake Township, Haiyan County, Haibei, Qinghai, China', zh: '中国青海·海北州海晏县青海湖乡达玉五谷村·同宝山·海拔3200米' },
+    coordinates: [100.6167, 37.0219],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: 27,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'A high-altitude glamping base at 3,200 m on the north shore of Qinghai Lake — 27 sci-fi capsule rooms (space capsules, star capsules, couple suites, family suites) with titanium alloy shells and multi-angle panoramic windows. Lie in bed watching the blue expanse of Qinghai Lake. Drive 20 minutes to reach the 4,024 m Tongbao summit for a 360° panorama. Oxygen equipment provided.',
+      zh: '位于青海湖北岸海拔3200米，背靠同宝山，直面青海湖碧波。27间科幻感装配式住宿舱，钛合金铝板外壳，多角度超大景观窗，实现"躺在床上看青海湖"的极致体验。驾车20分钟可达海拔4024米山巅360°俯瞰全景，备有氧气瓶应对高反。',
+    },
+    amenities: [
+      { icon: '🏔', label: { en: '3200m Altitude Camp', zh: '海拔3200米营地' } },
+      { icon: '🌊', label: { en: 'Qinghai Lake Panorama', zh: '青海湖全景' } },
+      { icon: '🌌', label: { en: 'Zero-Pollution Night Sky', zh: '零光污染星空' } },
+      { icon: '🫧', label: { en: 'Oxygen Equipment Provided', zh: '备有氧气瓶' } },
+      { icon: '🥩', label: { en: 'Yak Hot Pot & Halal Food', zh: '牦牛火锅与清真餐饮' } },
+      { icon: '📷', label: { en: 'Sunrise Photography', zh: '日出摄影黄金地' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Xining via G6 — ~2.5h drive' }, { mode: '✈️', text: 'Xining Caojiapu Airport — ~2.5h drive' }, { mode: '🚗', text: 'From Qinghai Lake scenic area — ~30 min drive' }],
+      zh: [{ mode: '🚗', text: '西宁沿G6高速 — 约2.5小时' }, { mode: '✈️', text: '西宁曹家堡机场 — 约2.5小时' }, { mode: '🚗', text: '青海湖景区 — 约30分钟' }],
+    },
+    nearby: {
+      en: [{ name: 'Qinghai Lake National Scenic Area', distance: 'On shore' }, { name: 'Jinsha Bay Beach', distance: '~5 km' }, { name: 'Yuanzi Atomic City (Red Heritage)', distance: '~30 km' }],
+      zh: [{ name: '青海湖国家级风景区', distance: '湖畔' }, { name: '金沙湾', distance: '约5公里' }, { name: '原子城（爱国主义教育基地）', distance: '约30公里' }],
+    },
+    images: ['/images/projects/qinghai-tongbao/image-01.png', '/images/projects/qinghai-tongbao/image-02.jpg', '/images/projects/qinghai-tongbao/image-03.jpg', '/images/projects/qinghai-tongbao/image-04.jpg', '/images/projects/qinghai-tongbao/image-05.jpg'],
+  },
+
+  // ─── 青海 · 祁连托茂部落·生态营地 ───
+  {
+    id: 'qinghai-qilian',
+    name: { en: 'Tuomao Tribe Eco Camp — Qilian', zh: '青海祁连托茂部落·生态营地' },
+    location: { en: 'Zasha Village, Moule Town, Qilian County, Haibei, Qinghai, China', zh: '中国青海·海北州祁连县默勒镇扎沙村·天境圣湖景区·海拔3120米' },
+    coordinates: [100.2428, 38.1775],
+    country: '🇨🇳',
+    openDate: '2022',
+    units: 3,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'National 4C self-drive camping base at 3,120 m in Qilian County — VESSEL\'s benchmark alpine grassland glamping project. 3 VESSEL star-river capsules (270° lake panoramic windows, private terrace) plus 7 view rooms, 3 wooden cabins and 30+ RV spots. Watch Toumao Lake shimmer and Gangshika Snow Mountain silhouetted at dawn from your bed.',
+      zh: '国家4C级自驾车旅居车营地，VESSEL 微宿打造的祁连山草原野奢标杆营地，2022年投放运营，海拔3120米，占地1041亩，总投资4500万元。3间VESSEL星河揽月太空舱配270°环湖落地窗+全景天窗、专属湖景露台，卧床可观托茂湖与岗什卡雪山剪影。',
+    },
+    amenities: [
+      { icon: '🏔', label: { en: '3120m Altitude', zh: '海拔3120米' } },
+      { icon: '🌊', label: { en: 'Lake & Snow Mountain Views', zh: '托茂湖与雪山景观' } },
+      { icon: '🌌', label: { en: 'Star-River Skylight', zh: '星河揽月全景天窗' } },
+      { icon: '🐎', label: { en: 'Horse Riding on Grassland', zh: '草原骑行' } },
+      { icon: '🔥', label: { en: 'Bonfire & Tibetan BBQ', zh: '篝火与藏式烧烤' } },
+      { icon: '🎪', label: { en: 'Intangible Heritage Workshop', zh: '非遗手工坊体验' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Xining via G6 / G215 — ~2.5h drive' }, { mode: '🚗', text: 'From Qilian County town — ~30 min drive' }, { mode: '✈️', text: 'Xining Airport — ~2.5h drive' }],
+      zh: [{ mode: '🚗', text: '西宁沿G6/G215 — 约2.5小时' }, { mode: '🚗', text: '祁连县城 — 约30分钟' }, { mode: '✈️', text: '西宁机场 — 约2.5小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Toumao Lake (Tianjing Sacred Lake)', distance: 'On-site' }, { name: 'Gangshika Snow Mountain', distance: '~50 km' }, { name: 'Zhangye National Geopark (Rainbow Mountains)', distance: '~200 km' }],
+      zh: [{ name: '托茂湖（天境圣湖）', distance: '营地内' }, { name: '岗什卡雪山', distance: '约50公里' }, { name: '张掖丹霞国家地质公园', distance: '约200公里' }],
+    },
+    images: ['/images/projects/qinghai-qilian/image-01.jpg', '/images/projects/qinghai-qilian/image-02.jpg', '/images/projects/qinghai-qilian/image-03.jpg', '/images/projects/qinghai-qilian/image-04.jpg', '/images/projects/qinghai-qilian/image-05.jpg'],
+  },
+
+  // ─── 山西 · 西建大禹渡太空舱休闲度假湾 ───
+  {
+    id: 'shanxi-dayu',
+    name: { en: 'Dayu\'s Ford Space Capsule Bay — Yellow River', zh: '山西西建大禹渡太空舱休闲度假湾' },
+    location: { en: 'Dayu\'s Ford Scenic Area, Ruicheng County, Yuncheng, Shanxi, China', zh: '中国山西·运城市芮城县·大禹渡景区附近·黄河百米峭壁之上' },
+    coordinates: [110.6794, 34.7386],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: 7,
+    unitArea: null,
+    guests: '2',
+    bookingUrl: '',
+    description: {
+      en: '"The First Space Capsule on Ten Thousand Li of Yellow River" — 7 independent capsules arranged like the Big Dipper on a sheer 100 m cliff above the Yellow River. Paired with 7 themed tent suites. 270° unobstructed views of the river and Zhongtiaoshan range. Lie in bed watching Yellow River sunsets; star-gaze through the electric skylight at night.',
+      zh: '"万里黄河第一舱"，7座独立太空舱形似北斗七星，悬于黄河百米峭壁之上，搭配7顶主题帐篷酒店。270°全景落地窗无遮挡直面黄河与中条山，可"躺看长河落日、夜揽星河听涛"，毗邻大禹渡景区，感受黄河治水文化。',
+    },
+    amenities: [
+      { icon: '🌊', label: { en: 'Cliff-Top Yellow River View', zh: '黄河悬崖全景' } },
+      { icon: '⭐', label: { en: 'Big Dipper Layout', zh: '北斗七星布局' } },
+      { icon: '🌌', label: { en: 'Electric Skylight', zh: '电动星空天窗' } },
+      { icon: '🍽', label: { en: 'Yellow River Fish Feast', zh: '黄河鱼宴餐厅' } },
+      { icon: '🏺', label: { en: 'Dayu Culture Heritage', zh: '大禹治水文化' } },
+      { icon: '📷', label: { en: 'Sunset Photography', zh: '日落摄影圣地' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Yuncheng via G5 — ~1.5h drive' }, { mode: '🚗', text: 'From Xi\'an via G5 — ~2h drive' }, { mode: '✈️', text: 'Yuncheng Guanhan Airport — ~1.5h drive' }],
+      zh: [{ mode: '🚗', text: '运城沿G5 — 约1.5小时' }, { mode: '🚗', text: '西安沿G5 — 约2小时' }, { mode: '✈️', text: '运城关汉卿机场 — 约1.5小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Dayu\'s Ford Scenic Area', distance: '~2 km' }, { name: 'Yongle Palace Murals (National Treasure)', distance: '~30 km' }, { name: 'Pujin Ferry (Historic Yellow River Crossing)', distance: '~20 km' }],
+      zh: [{ name: '大禹渡景区', distance: '约2公里' }, { name: '永乐宫壁画（国宝）', distance: '约30公里' }, { name: '蒲津渡遗址', distance: '约20公里' }],
+    },
+    images: ['/images/projects/shanxi-dayu/image-01.jpg', '/images/projects/shanxi-dayu/image-02.jpg', '/images/projects/shanxi-dayu/image-03.jpg', '/images/projects/shanxi-dayu/image-04.jpg'],
+  },
+
+  // ─── 山西 · 云丘山轻野·HOME酒店 ───
+  {
+    id: 'shanxi-yunqiu',
+    name: { en: 'Qingye HOME Hotel — Yunqiu Mountain', zh: '山西云丘山轻野·HOME酒店' },
+    location: { en: 'Yunqiu Mountain 5A Scenic Area, Xiangning County, Linfen, Shanxi, China', zh: '中国山西·临汾市乡宁县·云丘山5A景区·海拔1330米悬崖边' },
+    coordinates: [110.8361, 36.0494],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: 10,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'Ten limited-edition space capsules perched on a 1,330 m clifftop within Yunqiu Mountain 5A Scenic Area — one of China\'s few smart capsule inns with card-swipe access and full voice-control. Three room types (Moonrise, Starhouse, Cloudlodge) all feature 270° panoramic windows and skylights for cloud-sea dawns, starlit nights and sunrises. Unlimited scenic area entry during stay.',
+      zh: '坐落于山西云丘山5A景区海拔1330米悬崖边，10间限量客房分轻野月栖、星舍、云居三种房型，智能门禁刷卡入舱，语音控制全屋设备，270°环绕落地窗与星空天窗可观云海、赏星河、迎日出。住宿期间可无限次进出景区。',
+    },
+    amenities: [
+      { icon: '⛰', label: { en: '1330m Clifftop Setting', zh: '海拔1330米悬崖' } },
+      { icon: '🌌', label: { en: 'Cloud-Sea & Starry Sky', zh: '云海与星河观赏' } },
+      { icon: '🗣', label: { en: 'Voice Smart Control', zh: '语音全屋控制' } },
+      { icon: '🎫', label: { en: 'Unlimited Park Access', zh: '无限次进出景区' } },
+      { icon: '🧖', label: { en: 'Herbal Health Soup', zh: '免费特色养生汤锅' } },
+      { icon: '📷', label: { en: 'Star Photography', zh: '星空摄影绝佳地' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Linfen via G5 — ~1.5h drive' }, { mode: '🚗', text: 'From Yuncheng via G5 — ~1.5h drive' }, { mode: '🚂', text: 'Linfen Station — ~1.5h drive to scenic area' }],
+      zh: [{ mode: '🚗', text: '临汾沿G5 — 约1.5小时' }, { mode: '🚗', text: '运城沿G5 — 约1.5小时' }, { mode: '🚂', text: '临汾站 — 约1.5小时到景区' }],
+    },
+    nearby: {
+      en: [{ name: 'Yunqiu Mountain Ice Caves (World Top 3)', distance: 'In park' }, { name: 'Kangjia Ancient Village', distance: '~10 km' }, { name: 'Tianzi Mountain Hope Farm', distance: '~15 km' }],
+      zh: [{ name: '云丘山冰洞群（世界三大冰洞之一）', distance: '景区内' }, { name: '康家坪古村', distance: '约10公里' }, { name: '天子山希望农场', distance: '约15公里' }],
+    },
+    images: ['/images/projects/shanxi-yunqiu/image-01.png', '/images/projects/shanxi-yunqiu/image-02.jpg', '/images/projects/shanxi-yunqiu/image-03.jpg', '/images/projects/shanxi-yunqiu/image-04.jpg'],
+  },
+
+  // ─── 四川 · 成都熊猫森林 ───
+  {
+    id: 'sichuan-chengdu',
+    name: { en: 'Panda Forest CAMP', zh: '四川成都熊猫森林' },
+    location: { en: 'Zhongba Village, Longmen Mountain Town, Pengzhou City, Chengdu, Sichuan, China', zh: '中国四川·成都彭州市龙门山镇中坝村·中坝森林秘境·海拔1200-1500米' },
+    coordinates: [103.9294, 31.1508],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: 10,
+    unitArea: 25,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'VESSEL\'s first domestic project — Panda Forest CAMP in the Longmen Mountain forest at 1,200–1,500 m, Pengzhou. 10 independent S5 capsules (24–25 m²) perched among the treetops with 270° panoramic windows and stargazing skylights. Average summer temperature 25°C with sky-high negative ions. Lakeside cascade, panda pool, sports courts and forest restaurant.',
+      zh: 'VESSEL 微宿国内首个落地项目，位于彭州市龙门山镇中坝森林秘境，占地约35亩，海拔1200-1500米。10栋独立S5太空舱（24-25㎡）悬于林梢，270°全景落地窗+星空天窗，夏季均温25°C，负氧离子爆表。配湖畔叠水、熊猫沙池、运动球场与森林餐厅。',
+    },
+    amenities: [
+      { icon: '🐼', label: { en: 'Panda Theme', zh: '熊猫主题' } },
+      { icon: '🌲', label: { en: 'Treetop Capsules', zh: '悬于林梢太空舱' } },
+      { icon: '🌌', label: { en: 'Stargazing Skylight', zh: '星空天窗' } },
+      { icon: '🍃', label: { en: 'High Negative Ions', zh: '负氧离子爆表' } },
+      { icon: '🍃', label: { en: 'Forest Restaurant & Café', zh: '森林餐厅与咖啡厅' } },
+      { icon: '💧', label: { en: 'Lakeside Cascade', zh: '湖畔叠水景观' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Chengdu via G5 — ~1.5h drive' }, { mode: '✈️', text: 'Chengdu Tianfu Airport — ~1.5h drive' }, { mode: '🚄', text: 'Pengzhou High-Speed Station — ~20 min taxi/ride' }],
+      zh: [{ mode: '🚗', text: '成都沿G5高速 — 约1.5小时' }, { mode: '✈️', text: '天府国际机场 — 约1.5小时' }, { mode: '🚄', text: '犀浦高铁30分钟至彭州再转车' }],
+    },
+    nearby: {
+      en: [{ name: 'Longmen Mountain National Forest Park', distance: '~10 km' }, { name: 'Baili Rhododendron Scenic Area', distance: '~20 km' }, { name: 'Pengzhou City Center', distance: '~30 km' }],
+      zh: [{ name: '龙门山国家森林公园', distance: '约10公里' }, { name: '白鹿百里杜鹃景区', distance: '约20公里' }, { name: '彭州市区', distance: '约30公里' }],
+    },
+    images: ['/images/projects/sichuan-chengdu/image-01.jpg', '/images/projects/sichuan-chengdu/image-02.jpg', '/images/projects/sichuan-chengdu/image-03.jpg', '/images/projects/sichuan-chengdu/image-04.jpg', '/images/projects/sichuan-chengdu/image-05.jpg'],
+  },
+
   // ─── 内蒙古 · 乌海漠海山境露营地 ───
   {
     id: 'wuhai-desert',
