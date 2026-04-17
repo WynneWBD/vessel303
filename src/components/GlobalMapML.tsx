@@ -46,8 +46,8 @@ const MARKER_CSS = `
   50%       { opacity: 0.65; }
 }
 @keyframes showcase-ring {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.5), 0 0 0 0 rgba(227,111,44,0.4); }
-  60%       { box-shadow: 0 0 0 10px rgba(255,255,255,0), 0 0 0 18px rgba(227,111,44,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.6), 0 0 0 0 rgba(227,111,44,0.55); }
+  60%       { box-shadow: 0 0 0 14px rgba(255,255,255,0), 0 0 0 26px rgba(227,111,44,0); }
 }
 .vessel-hq-star {
   animation: hq-pulse 2s ease-in-out infinite;
@@ -71,12 +71,12 @@ const MARKER_CSS = `
   font-family: -apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
   pointer-events: none;
 }
-/* Showcase project pin — larger, white border, pulsing */
+/* Showcase project pin — much larger, white border, strong pulse halo */
 .vessel-showcase-pin {
-  width: 26px;
-  height: 26px;
+  width: 40px;
+  height: 40px;
   background: #E36F2C;
-  border: 3px solid #FFFFFF;
+  border: 4px solid #FFFFFF;
   border-radius: 50%;
   cursor: pointer;
   box-sizing: border-box;
@@ -84,9 +84,18 @@ const MARKER_CSS = `
   transition: transform 0.18s ease;
   position: relative;
   z-index: 10;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 .vessel-showcase-pin:hover {
-  transform: scale(1.3);
+  transform: scale(1.25);
+}
+.vessel-showcase-pin::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.25);
+  pointer-events: none;
 }
 /* Camp name hover popup */
 .vessel-camp-popup .maplibregl-popup-content {

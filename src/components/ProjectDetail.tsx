@@ -234,10 +234,10 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
         borderBottom: '1px solid #262626',
       }}>
         {[
-          { value: String(project.units), label: en ? 'Units' : '舱数' },
-          { value: `${project.unitArea}㎡`, label: en ? 'Per Unit' : '每间面积' },
-          { value: project.guests, label: en ? 'Guests' : '入住人数' },
-          { value: project.openDate, label: en ? 'Opened' : '开业时间' },
+          { value: project.units !== null ? String(project.units) : '—', label: en ? 'Units' : '舱数' },
+          { value: project.unitArea !== null ? `${project.unitArea}㎡` : '—', label: en ? 'Per Unit' : '每间面积' },
+          { value: project.guests && project.guests !== 'TBD' ? project.guests : '—', label: en ? 'Guests' : '入住人数' },
+          { value: project.openDate && project.openDate !== 'TBD' ? project.openDate : '—', label: en ? 'Opened' : '开业时间' },
         ].map(({ value, label }, i) => (
           <div key={label} style={{
             padding: '14px 10px', textAlign: 'center',
@@ -351,20 +351,22 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
         {/* ── 7. CTAs ─────────────────────────────────────── */}
         <FadeSection style={{ paddingTop: 26 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <a
-              href={project.bookingUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'block', textAlign: 'center',
-                background: '#E36F2C', color: '#F0F0F0',
-                padding: '13px 24px', textDecoration: 'none',
-                fontSize: 13, fontWeight: 600, letterSpacing: '0.12em',
-                fontFamily: "var(--font-heading), 'DM Sans', sans-serif",
-              }}
-            >
-              {en ? '↗  BOOK NOW' : '↗  立即预订'}
-            </a>
+            {project.bookingUrl && (
+              <a
+                href={project.bookingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'block', textAlign: 'center',
+                  background: '#E36F2C', color: '#F0F0F0',
+                  padding: '13px 24px', textDecoration: 'none',
+                  fontSize: 13, fontWeight: 600, letterSpacing: '0.12em',
+                  fontFamily: "var(--font-heading), 'DM Sans', sans-serif",
+                }}
+              >
+                {en ? '↗  BOOK NOW' : '↗  立即预订'}
+              </a>
+            )}
             <a
               href="https://en.303vessel.cn/contact.html"
               target="_blank"
