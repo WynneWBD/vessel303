@@ -76,14 +76,22 @@ const MARKER_CSS = `
   font-family: -apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
   pointer-events: none;
 }
-/* Showcase project pin — much larger, white border, strong pulse halo.
-   NOTE: must not set position:relative — MapLibre adds .maplibregl-marker to
-   this same element and requires position:absolute for transform-based placement.
-   The ::after halo is still OK because .maplibregl-marker is position:absolute
-   (also a "positioned" ancestor), so absolute children resolve against it. */
-.vessel-showcase-pin {
+/* Showcase marker uses a two-layer structure to decouple map positioning
+   from visual effects:
+     .vessel-showcase-wrap  — outer element given to MapLibre; only used for
+                              its transform (translate) placement. Has no
+                              transitions so it tracks pan/zoom frame-by-frame.
+     .vessel-showcase-pin   — inner circle that owns visuals: pulse ring,
+                              hover scale, halo. Its transform:scale on hover
+                              is scoped to this inner element and never fights
+                              MapLibre's transform on the wrap. */
+.vessel-showcase-wrap {
   width: 40px;
   height: 40px;
+}
+.vessel-showcase-pin {
+  position: absolute;
+  inset: 0;
   background: #E36F2C;
   border: 4px solid #FFFFFF;
   border-radius: 50%;
@@ -292,17 +300,22 @@ export default function GlobalMapML({
 
       // ── Showcase project markers (HTML, with pulse animation) ─────────
       SHOWCASE_PROJECTS.forEach((project) => {
-        const el = document.createElement('div')
-        el.className = 'vessel-showcase-pin'
-        el.title = project.name.en
+        // Outer wrap = the element MapLibre controls via transform. No
+        // transitions on it, so it tracks pan/zoom in lockstep with the canvas.
+        const wrap = document.createElement('div')
+        wrap.className = 'vessel-showcase-wrap'
 
-        // Click → open detail panel (stops propagation so map click doesn't also fire)
-        el.addEventListener('click', (ev) => {
+        // Inner pin owns the visuals (pulse, hover scale, tooltip target).
+        const pin = document.createElement('div')
+        pin.className = 'vessel-showcase-pin'
+        pin.title = project.name.en
+        wrap.appendChild(pin)
+
+        pin.addEventListener('click', (ev) => {
           ev.stopPropagation()
           onShowcaseSelectRef.current?.(project)
         })
 
-        // Hover popup with project name
         const showcasePopup = new Popup({
           closeButton: false,
           closeOnClick: false,
@@ -310,20 +323,19 @@ export default function GlobalMapML({
           className: 'vessel-camp-popup',
         })
 
-        el.addEventListener('mouseenter', () => {
+        pin.addEventListener('mouseenter', () => {
           map.getCanvas().style.cursor = 'pointer'
           showcasePopup
             .setLngLat(project.coordinates)
             .setText(project.name[isZhRef.current ? 'zh' : 'en'])
             .addTo(map)
         })
-        el.addEventListener('mouseleave', () => {
+        pin.addEventListener('mouseleave', () => {
           map.getCanvas().style.cursor = ''
           showcasePopup.remove()
         })
 
-        console.log(`[VESSEL MAP] Showcase marker "${project.id}": setLngLat([${project.coordinates[0]}, ${project.coordinates[1]}]) — lng=${project.coordinates[0]}, lat=${project.coordinates[1]}`)
-        new Marker({ element: el, anchor: 'center' })
+        new Marker({ element: wrap, anchor: 'center' })
           .setLngLat(project.coordinates)
           .addTo(map)
       })
