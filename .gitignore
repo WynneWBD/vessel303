@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# large original project images — web 压缩版已提交
+/public/images/projects/wuhai-desert/image-01.jpg
+/public/images/projects/wuhai-desert/image-02.jpg
+/public/images/projects/wuhai-desert/image-03.jpg
+/public/images/projects/wuhai-desert/image-04.jpg
+/public/images/projects/wuhai-desert/image-05.jpg
+/public/images/projects/israel-dream-island/exterior-03.png

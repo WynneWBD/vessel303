@@ -114,7 +114,7 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
     images: [
       '/images/projects/israel-dream-island/exterior-01.jpg',
       '/images/projects/israel-dream-island/exterior-02.jpg',
-      '/images/projects/israel-dream-island/exterior-03.png',
+      '/images/projects/israel-dream-island/exterior-03-web.jpg',
       '/images/projects/israel-dream-island/exterior-04.jpg',
     ],
   },
@@ -172,11 +172,11 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
       ],
     },
     images: [
-      '/images/projects/wuhai-desert/image-01.jpg',
-      '/images/projects/wuhai-desert/image-02.jpg',
-      '/images/projects/wuhai-desert/image-03.jpg',
-      '/images/projects/wuhai-desert/image-04.jpg',
-      '/images/projects/wuhai-desert/image-05.jpg',
+      '/images/projects/wuhai-desert/image-01-web.jpg',
+      '/images/projects/wuhai-desert/image-02-web.jpg',
+      '/images/projects/wuhai-desert/image-03-web.jpg',
+      '/images/projects/wuhai-desert/image-04-web.jpg',
+      '/images/projects/wuhai-desert/image-05-web.jpg',
     ],
   },
 ]
