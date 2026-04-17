@@ -12,7 +12,7 @@ import {
 } from '@maptiler/sdk'
 import '@maptiler/sdk/dist/maptiler-sdk.css'
 import { CAMPS } from '@/data/camps'
-import { SHOWCASE_PROJECTS } from '@/data/showcaseProjects'
+import { SHOWCASE_PROJECTS, HQ_PROJECT } from '@/data/showcaseProjects'
 import type { ShowcaseProject } from '@/data/showcaseProjects'
 
 const MAPTILER_KEY = '7tbP0DIfmG9T8qWYxh5M'
@@ -26,10 +26,10 @@ const STYLE_URL = `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=
 const DEALER_COUNTRIES = ['俄罗斯', '台湾', '沙特阿拉伯', '阿联酋', '韩国', '美国']
 
 const HQ = {
-  lng: 113.0167,
-  lat: 23.0833,
-  labelEn: 'VESSEL HQ & Smart Factory',
-  labelZh: 'VESSEL 微宿 · 超级工厂',
+  lng: HQ_PROJECT.coordinates[0],   // 113.0021 — OSM-verified Shishan Town
+  lat: HQ_PROJECT.coordinates[1],   // 23.1247
+  labelEn: HQ_PROJECT.name.en,
+  labelZh: HQ_PROJECT.name.zh,
 }
 
 function hashOffset(str: string, salt: number): number {
@@ -74,7 +74,11 @@ const MARKER_CSS = `
   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
   white-space: nowrap;
   font-family: -apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
-  pointer-events: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+.vessel-hq-label:hover {
+  background: rgba(227,111,44,0.15);
+  border-color: #fff;
 }
 /* Showcase marker uses a two-layer structure to decouple map positioning
    from visual effects:
@@ -285,7 +289,7 @@ export default function GlobalMapML({
       // Declared here, added to map AFTER showcase markers so it sits on top
       // in DOM order and is never covered by any showcase pin.
       const hqWrapper = document.createElement('div')
-      hqWrapper.style.cssText = 'width:36px;height:36px;pointer-events:none;z-index:9999;'
+      hqWrapper.style.cssText = 'width:36px;height:36px;cursor:pointer;z-index:9999;'
       hqWrapper.innerHTML = `
         <svg class="vessel-hq-star" width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
           <polygon points="18,2 22.8,13.2 35,13.2 25,21.4 28.5,33 18,26 7.5,33 11,21.4 1,13.2 13.2,13.2"
@@ -294,6 +298,12 @@ export default function GlobalMapML({
         <div class="vessel-hq-label">${isZhRef.current ? HQ.labelZh : HQ.labelEn}</div>
       `
       hqLabelRef.current = hqWrapper.querySelector<HTMLDivElement>('.vessel-hq-label')
+
+      // Click star or label → open HQ detail panel
+      hqWrapper.addEventListener('click', (ev) => {
+        ev.stopPropagation()
+        onShowcaseSelectRef.current?.(HQ_PROJECT)
+      })
 
       // ── Zoom-responsive scale for showcase pins ───────────────────────
       // Maps zoom level → CSS scale factor for the inner pin element.

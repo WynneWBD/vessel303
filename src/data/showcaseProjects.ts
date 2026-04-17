@@ -1466,3 +1466,60 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
     ],
   },
 ]
+
+// ── VESSEL HQ — separate from showcase list, used by GlobalMapML ─────────────
+export const HQ_PROJECT: ShowcaseProject = {
+  id: 'vessel-hq',
+  name: { en: 'VESSEL HQ & Smart Factory', zh: 'VESSEL 微宿 · 超级工厂' },
+  location: {
+    en: '253 Xingye North Road, Shishan Town, Nanhai District, Foshan, Guangdong',
+    zh: '广东省佛山市南海区狮山镇兴业北路253号',
+  },
+  coordinates: [113.0021, 23.1247],
+  country: '🇨🇳',
+  openDate: '2018',
+  units: null,
+  unitArea: null,
+  guests: '—',
+  bookingUrl: '',   // no "Book Now"; only "Contact VESSEL" CTA will show
+  description: {
+    en: 'VESSEL\'s 28,800 ㎡ precision smart factory is the manufacturing heart of every micro-resort unit. Established in 2018 in Foshan\'s Nanhai Shishan industrial zone — China\'s most dynamic prefab manufacturing corridor — three dedicated production lines deliver up to 150 units per month. Every cabin is engineered, quality-tested, and internationally certified here before shipping to clients in 30+ countries.',
+    zh: 'VESSEL 28,800㎡ 超级工厂坐落于广东省佛山市南海区狮山镇，是每一套微宿产品的诞生地。工厂建于2018年，配备3条专属生产线，月产能达150台，累计服务全球30余个国家与地区。工厂持有150+项专利，全面通过 ISO、CE 等国际认证，是中国预制模块建筑行业的标杆制造基地。',
+  },
+  amenities: [
+    { icon: '🏭', label: { en: '28,800 ㎡ Smart Factory', zh: '28,800㎡ 精密智造基地' } },
+    { icon: '🏠', label: { en: '150 Units / Month Capacity', zh: '月产能 150 台' } },
+    { icon: '👥', label: { en: '75+ Skilled Staff', zh: '75+ 人专业团队' } },
+    { icon: '🏆', label: { en: '150+ Patents', zh: '150+ 项专利' } },
+    { icon: '🌍', label: { en: 'Shipped to 30+ Countries', zh: '产品出口 30+ 国家' } },
+    { icon: '✅', label: { en: 'ISO · CE · SGS Certified', zh: 'ISO · CE · SGS 国际认证' } },
+  ],
+  transport: {
+    en: [
+      { mode: '✈️', text: 'Guangzhou Baiyun Airport — 45 min drive' },
+      { mode: '✈️', text: 'Foshan Shunde Airport — 30 min drive' },
+      { mode: '🚇', text: 'Guangfo Metro Line 1 · Shishan Station — 10 min walk' },
+    ],
+    zh: [
+      { mode: '✈️', text: '广州白云国际机场 — 约45分钟车程' },
+      { mode: '✈️', text: '佛山顺德机场 — 约30分钟车程' },
+      { mode: '🚇', text: '广佛地铁1号线 · 狮山站 — 步行约10分钟' },
+    ],
+  },
+  nearby: {
+    en: [
+      { name: 'Guangfo Interchange (广佛互通)', distance: '5 min drive' },
+      { name: 'Foshan CBD (Chancheng District)', distance: '25 min drive' },
+      { name: 'Guangzhou city centre', distance: '45 min drive' },
+    ],
+    zh: [
+      { name: '广佛高速互通', distance: '5分钟车程' },
+      { name: '佛山禅城区CBD', distance: '25分钟车程' },
+      { name: '广州市区', distance: '45分钟车程' },
+    ],
+  },
+  images: [
+    '/images/homepage/factory-01.jpg',
+    '/images/homepage/factory-02.jpg',
+  ],
+}
