@@ -280,10 +280,9 @@ export default function GlobalMapML({
       map.addControl(new ScaleControl({ unit: 'metric' }), 'bottom-left')
 
       // ── VESSEL HQ star ────────────────────────────────────────────────
+      // Declared here, added to map AFTER showcase markers so it sits on top
+      // in DOM order and is never covered by any showcase pin.
       const hqWrapper = document.createElement('div')
-      // Leave position to .maplibregl-marker (absolute). Our inline "position:relative"
-      // was overriding it, which put the marker back in document flow and stacked all
-      // 40 showcase pins vertically below the map.
       hqWrapper.style.cssText = 'width:36px;height:36px;pointer-events:none;'
       hqWrapper.innerHTML = `
         <svg class="vessel-hq-star" width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
@@ -293,10 +292,6 @@ export default function GlobalMapML({
         <div class="vessel-hq-label">${isZhRef.current ? HQ.labelZh : HQ.labelEn}</div>
       `
       hqLabelRef.current = hqWrapper.querySelector<HTMLDivElement>('.vessel-hq-label')
-
-      new Marker({ element: hqWrapper, anchor: 'center' })
-        .setLngLat([HQ.lng, HQ.lat])
-        .addTo(map)
 
       // ── Showcase project markers (HTML, with pulse animation) ─────────
       SHOWCASE_PROJECTS.forEach((project) => {
@@ -339,6 +334,11 @@ export default function GlobalMapML({
           .setLngLat(project.coordinates)
           .addTo(map)
       })
+
+      // Add HQ last → highest DOM order → always renders above all showcase pins
+      new Marker({ element: hqWrapper, anchor: 'center' })
+        .setLngLat([HQ.lng, HQ.lat])
+        .addTo(map)
     })
 
     // Auto-resize on container dimension change (panel open/close)
