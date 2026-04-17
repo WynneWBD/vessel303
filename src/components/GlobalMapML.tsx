@@ -101,9 +101,11 @@ const MARKER_CSS = `
   transition: transform 0.18s ease;
   z-index: 10;
   box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  /* --vessel-zoom-scale is updated by JS on every zoom event */
+  transform: scale(var(--vessel-zoom-scale, 1));
 }
 .vessel-showcase-pin:hover {
-  transform: scale(1.25);
+  transform: scale(calc(var(--vessel-zoom-scale, 1) * 1.25));
 }
 .vessel-showcase-pin::after {
   content: '';
@@ -293,6 +295,25 @@ export default function GlobalMapML({
       `
       hqLabelRef.current = hqWrapper.querySelector<HTMLDivElement>('.vessel-hq-label')
 
+      // ── Zoom-responsive scale for showcase pins ───────────────────────
+      // Maps zoom level → CSS scale factor for the inner pin element.
+      // wrap stays 40px (MapLibre anchor math), only the visual pin scales.
+      const showcasePins: HTMLDivElement[] = []
+
+      function getPinScale(zoom: number): number {
+        if (zoom <= 2) return 0.35
+        if (zoom <= 6) return 0.35 + (zoom - 2) / 4 * 0.65   // 0.35 → 1.0
+        if (zoom <= 10) return 1.0 + (zoom - 6) / 4 * 0.5    // 1.0 → 1.5
+        return 1.5
+      }
+
+      function updatePinScales() {
+        const s = getPinScale(map.getZoom()).toFixed(3)
+        showcasePins.forEach(p => p.style.setProperty('--vessel-zoom-scale', s))
+      }
+
+      map.on('zoom', updatePinScales)
+
       // ── Showcase project markers (HTML, with pulse animation) ─────────
       SHOWCASE_PROJECTS.forEach((project) => {
         // Outer wrap = the element MapLibre controls via transform. No
@@ -305,6 +326,7 @@ export default function GlobalMapML({
         pin.className = 'vessel-showcase-pin'
         pin.title = project.name.en
         wrap.appendChild(pin)
+        showcasePins.push(pin)
 
         pin.addEventListener('click', (ev) => {
           ev.stopPropagation()
@@ -334,6 +356,9 @@ export default function GlobalMapML({
           .setLngLat(project.coordinates)
           .addTo(map)
       })
+
+      // Apply initial scale after all pins are created
+      updatePinScales()
 
       // Add HQ last → highest DOM order → always renders above all showcase pins
       new Marker({ element: hqWrapper, anchor: 'center' })
