@@ -288,7 +288,181 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
     images: ['/images/projects/usa-mount-pleasant/exterior-01.jpg', '/images/projects/usa-mount-pleasant/exterior-02.jpg', '/images/projects/usa-mount-pleasant/exterior-03.jpg'],
   },
 
+  // ─── Japan · SPACE-VESSEL Base — Vacation STAY 42244v ───
+  {
+    id: 'japan-space-vessel',
+    name: { en: 'SPACE-VESSEL Base — Vacation STAY', zh: 'SPACE-VESSEL Base 宇宙船主题住宿' },
+    location: { en: 'Tsukahara, Yufuin-cho, Yufu City, Oita Prefecture, Japan', zh: '日本大分县由布市湯布院町塚原' },
+    coordinates: [131.343, 33.284],
+    country: '🇯🇵',
+    openDate: 'TBD',
+    units: 1,
+    unitArea: 38,
+    guests: '2-5',
+    bookingUrl: 'https://www.booking.com/hotel/jp/yufu-city-camp-vacation-stay-42244v.zh-cn.html',
+    description: {
+      en: 'A futuristic spacecraft-themed vacation stay in the mountains of Yufuin-cho, Yufu City, Oita — just 7.4 km from the iconic Kinrin Lake. The 38 m² space-capsule unit sleeps up to 5 guests with a full kitchen, private terrace, free BBQ, and a "Salon Lunaire" lunar lounge area. Surrounded by forest streams with views of Mount Yufu.',
+      zh: '位于日本大分县由布市汤布院町塚原，距著名金鱗湖仅7.4公里的宇宙船主题住宿。38㎡太空舱，最多容纳5名客人，配全套厨房、私人露台、免费烧烤区及月球沙龙休闲空间，绿树环绕、溪流相伴，可眺望由布岳。',
+    },
+    amenities: [
+      { icon: '🛸', label: { en: 'Spacecraft Interior Design', zh: '宇宙船沉浸式内饰' } },
+      { icon: '🍳', label: { en: 'Full Kitchen', zh: '完整厨房设备' } },
+      { icon: '🔥', label: { en: 'Outdoor BBQ', zh: '户外无烟烧烤' } },
+      { icon: '🅿️', label: { en: 'Free Parking', zh: '免费专用停车场' } },
+      { icon: '📶', label: { en: 'High-Speed WiFi', zh: '全屋高速WiFi' } },
+      { icon: '🏔', label: { en: 'Mt. Yufu Views', zh: '由布岳山景' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'Yufuin Station — 18 min drive (6 km)' }, { mode: '🚗', text: 'Minami-Yufu Station — 25 min drive (9 km)' }, { mode: '✈️', text: 'Oita Airport — ~50 min drive' }],
+      zh: [{ mode: '🚗', text: '由布院駅 — 车程约18分钟（6公里）' }, { mode: '🚗', text: '南由布駅 — 车程约25分钟（9公里）' }, { mode: '✈️', text: '大分机场 — 车程约50分钟' }],
+    },
+    nearby: {
+      en: [{ name: 'Kinrin Lake (Yufuin)', distance: '7.4 km' }, { name: 'Yufuin Onsen Ryokan District', distance: '~10 km' }, { name: 'Mount Yufu (Hiking)', distance: '~8 km' }],
+      zh: [{ name: '金鱗湖', distance: '7.4公里' }, { name: '汤布院温泉旅馆区', distance: '约10公里' }, { name: '由布岳（徒步）', distance: '约8公里' }],
+    },
+    images: ['/images/projects/japan-space-vessel/exterior-01.jpg', '/images/projects/japan-space-vessel/exterior-02.jpg', '/images/projects/japan-space-vessel/exterior-03.jpg', '/images/projects/japan-space-vessel/exterior-04.png', '/images/projects/japan-space-vessel/interior-01.png', '/images/projects/japan-space-vessel/interior-02.png'],
+  },
+
+  // ─── Japan · 瀬戸の浜 Beach & Resort ───
+  {
+    id: 'japan-setonohama',
+    name: { en: 'Setonohama Beach & Resort', zh: '瀬戸の浜 Beach & Resort' },
+    location: { en: 'Sakate, Shodoshima-cho, Shodoshima Island, Kagawa Prefecture, Japan', zh: '日本香川县小豆郡小豆岛町坂手' },
+    coordinates: [134.5155, 34.4813],
+    country: '🇯🇵',
+    openDate: '2025.04',
+    units: 5,
+    unitArea: 28,
+    guests: '2-3',
+    bookingUrl: 'https://setonohama.com/#access',
+    description: {
+      en: 'Opened April 2025 on the shores of Shodoshima Island, Kagawa — 5 independent spacecraft-shaped VESSEL Bezel S5 units facing the Seto Inland Sea. Each private villa includes a King Size bed, smart home controls, projector, BBQ terrace, and complimentary SUP/kayak use. One pet-friendly unit available. Stunning sunrise, sunset and stargazing.',
+      zh: '2025年4月开业，位于濑户内海小豆岛坂手海岸，5栋独立宇宙船造型 VESSEL Bezel S5 太空舱，每栋面向濑户内海，配 King Size 大床、智能家居、投影仪与专属 BBQ 露台，免费提供 SUP 和皮划艇。含1栋宠物友好房型，可欣赏日出、日落与璀璨星空。',
+    },
+    amenities: [
+      { icon: '🌊', label: { en: 'Seto Inland Sea View', zh: '濑户内海景观' } },
+      { icon: '🛸', label: { en: 'Spacecraft Capsule Design', zh: '宇宙船造型设计' } },
+      { icon: '🏄', label: { en: 'Free SUP & Kayak', zh: '免费SUP与皮划艇' } },
+      { icon: '🔥', label: { en: 'Private BBQ Terrace', zh: '私人BBQ露台' } },
+      { icon: '🐕', label: { en: 'Pet-Friendly Unit', zh: '宠物友好房型' } },
+      { icon: '🎣', label: { en: 'Ocean Activities', zh: '海上活动体验' } },
+    ],
+    transport: {
+      en: [{ mode: '⛴', text: 'Sakate Port — 5 min drive / 20 min walk' }, { mode: '⛴', text: 'Ferry from Osaka/Kobe/Okayama to Sakate' }, { mode: '🚗', text: 'From Ikeda Port / Tonosho Port — ~30 min drive' }],
+      zh: [{ mode: '⛴', text: '坂手港 — 车程5分钟/步行20分钟' }, { mode: '⛴', text: '大阪/神户/冈山乘船至坂手港' }, { mode: '🚗', text: '池田港/土庄港出发 — 约30分钟' }],
+    },
+    nearby: {
+      en: [{ name: 'Setonohama Beach (Walk)', distance: 'Steps away' }, { name: '24 Pupils Film Village', distance: '~20 min drive' }, { name: 'Olive Park', distance: '~20 min drive' }, { name: 'Angel Road', distance: '~30 min drive' }],
+      zh: [{ name: '瀬戸の浜海滩', distance: '步行即达' }, { name: '二十四瞳映画村', distance: '车程约20分钟' }, { name: '橄榄公园', distance: '车程约20分钟' }, { name: '天使之路', distance: '车程约30分钟' }],
+    },
+    images: ['/images/projects/japan-setonohama/exterior-01.png', '/images/projects/japan-setonohama/exterior-02.webp', '/images/projects/japan-setonohama/interior-01.webp', '/images/projects/japan-setonohama/interior-02.jpg'],
+  },
+
+  // ─── Thailand · Nx Space Pool Villa ───
+  {
+    id: 'thailand-nx-space',
+    name: { en: 'Nx Space Pool Villa', zh: 'Nx Space 泳池别墅' },
+    location: { en: 'Pak Phli District, Nakhon Nayok Province, Thailand', zh: '泰国那空那育府·Pak Phli 区' },
+    coordinates: [101.2159, 14.3485],
+    country: '🇹🇭',
+    openDate: 'TBD',
+    units: null,
+    unitArea: null,
+    guests: '2-9',
+    bookingUrl: 'https://www.booking.com/hotel/th/nx-space-phluuwillaa.zh-cn.html',
+    description: {
+      en: 'A high-end private villa in Nakhon Nayok Province, ~80–90 km from Bangkok — modern minimalist design with an infinity pool at its center, open-plan living, lush garden and full privacy. 4 bedrooms, 3 bathrooms, for up to 9 guests. VESSEL modular space capsules integrated into the resort aesthetic. Ideal for families, friends and group retreats.',
+      zh: '位于泰国那空那育府 Pak Phli 区，距曼谷约80-90公里的高端私人别墅度假地，现代简约轻奢风格，无边际泳池为核心景观，4卧3卫最多入住9人。全屋通透采光、绿植环绕，VESSEL 模块化太空舱融入度假美学，私密性极强。',
+    },
+    amenities: [
+      { icon: '🏊', label: { en: 'Infinity Pool', zh: '无边际泳池' } },
+      { icon: '🌿', label: { en: 'Garden & Nature Views', zh: '花园绿植环绕' } },
+      { icon: '🍳', label: { en: 'Full Open Kitchen', zh: '全套开放厨房' } },
+      { icon: '📶', label: { en: 'High-Speed WiFi', zh: '高速WiFi' } },
+      { icon: '🅿️', label: { en: 'Free Parking (Multi-car)', zh: '免费多车位停车' } },
+      { icon: '🏡', label: { en: 'Entire Villa — Full Privacy', zh: '整栋独享·私密无扰' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Bangkok via Ratchadaphisek Rd / Route 305 — ~1.5–2h' }, { mode: '✈️', text: 'Suvarnabhumi Airport — ~1.5h drive' }, { mode: '🚌', text: 'Bus from Bangkok Northern Terminal to Nakhon Nayok — ~2h' }],
+      zh: [{ mode: '🚗', text: '曼谷沿拉差达披塞路/305号公路 — 约1.5-2小时' }, { mode: '✈️', text: '素万那普机场 — 车程约1.5小时' }, { mode: '🚌', text: '曼谷北部巴士站至那空那育府 — 约2小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Khao Yai National Park', distance: '~50 km' }, { name: 'Haew Suwat Waterfall', distance: '~60 km' }, { name: 'Nakhon Nayok City', distance: '~15 km' }],
+      zh: [{ name: '考艾国家公园', distance: '约50公里' }, { name: '豪苏瓦特瀑布', distance: '约60公里' }, { name: '那空那育府城区', distance: '约15公里' }],
+    },
+    images: ['/images/projects/thailand-nx-space/exterior-01.jpg', '/images/projects/thailand-nx-space/exterior-02.jpg', '/images/projects/thailand-nx-space/exterior-03.jpg', '/images/projects/thailand-nx-space/exterior-04.jpg', '/images/projects/thailand-nx-space/interior-01.jpg', '/images/projects/thailand-nx-space/interior-02.jpg'],
+  },
+
   // ═══ 国内项目 (30) ═══
+
+  // ─── 江苏 · 常州太湖湾露营谷 ───
+  {
+    id: 'changzhou-taihu',
+    name: { en: 'Taihu Bay Camping Valley', zh: '常州太湖湾露营谷' },
+    location: { en: 'Taihu Bay National Tourism Resort, Liyang, Changzhou, Jiangsu, China', zh: '中国江苏·常州·太湖湾国家旅游度假区' },
+    coordinates: [119.4814, 31.3655],
+    country: '🇨🇳',
+    openDate: '2019.03',
+    units: 127,
+    unitArea: null,
+    guests: '2-9',
+    bookingUrl: '',
+    description: {
+      en: 'One of China\'s first National 5C Self-Drive Camping Resorts — 700 acres on the shores of Taihu Bay, Changzhou, opened March 2019. 127 accommodation units including VESSEL space capsules, mushroom houses, star-gazing rooms, twin RV courtyards and lakeside tree-villa suites. Upgraded in Jan 2026 with new themed suites.',
+      zh: '首批国家5C自驾车旅居车营地，2019年3月开园，占地近700亩，位于常州太湖湾国家旅游度假区。127个宿营单元含VESSEL太空舱、蘑菇屋、星空房、双拼房车院落、湖畔树屋别墅等，2026年1月新增松果亲子套房与主题房。',
+    },
+    amenities: [
+      { icon: '🛸', label: { en: 'VESSEL Space Capsules', zh: 'VESSEL太空舱' } },
+      { icon: '🎢', label: { en: 'Forest Karting (800 m)', zh: '森林卡丁车赛道800m' } },
+      { icon: '🚂', label: { en: '1500 m Loop Train', zh: '1500米环线小火车' } },
+      { icon: '🐌', label: { en: 'Snail Farm & Pets', zh: '蜗牛农场萌宠' } },
+      { icon: '🎡', label: { en: 'Amusement Park Adjacent', zh: '正对环球动漫嬉戏谷' } },
+      { icon: '🐕', label: { en: 'Pet Friendly', zh: '宠物友好' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Changzhou city — ~1h drive' }, { mode: '🚗', text: 'From Shanghai / Nanjing — ~2.5h drive' }, { mode: '🚂', text: 'Changzhou North Station — then taxi ~40 min' }],
+      zh: [{ mode: '🚗', text: '常州市区 — 约1小时车程' }, { mode: '🚗', text: '上海/南京自驾 — 约2.5小时' }, { mode: '🚂', text: '常州北站 — 转出租车约40分钟' }],
+    },
+    nearby: {
+      en: [{ name: 'Huanqiu Anime Park', distance: 'Adjacent' }, { name: 'Xixihai Water Park', distance: 'Adjacent' }, { name: 'Taihu Bay Forest Trails (13 km)', distance: 'On-site' }],
+      zh: [{ name: '环球动漫嬉戏谷', distance: '正对面' }, { name: '嬉戏海上水乐园', distance: '紧邻' }, { name: '太湖湾13公里森林步道', distance: '园区内' }],
+    },
+    images: ['/images/projects/changzhou-taihu/image-01.png', '/images/projects/changzhou-taihu/image-02.png', '/images/projects/changzhou-taihu/image-03.jpg', '/images/projects/changzhou-taihu/image-04.jpg', '/images/projects/changzhou-taihu/image-05.jpg', '/images/projects/changzhou-taihu/image-06.jpg'],
+  },
+
+  // ─── 甘肃 · 敦煌雅丹国家地质公园星辰驿站 ───
+  {
+    id: 'dunhuang-yardang',
+    name: { en: 'Yardang Geopark Star Station', zh: '敦煌雅丹国家地质公园星辰驿站' },
+    location: { en: 'Yardang National Geological Park, Dunhuang, Gansu, China', zh: '中国甘肃·敦煌市·雅丹国家地质公园核心区' },
+    coordinates: [92.9166, 40.5097],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: null,
+    unitArea: null,
+    guests: 'TBD',
+    bookingUrl: '',
+    description: {
+      en: 'The only accommodation station inside Dunhuang Yardang National Geological Park — a stargazing-themed glamping outpost deep in the Gobi Desert. Panoramic skylight capsules and scenic rooms overlook the dramatic "Devil City" yardang landforms. Skip the daytime crowds and experience Gobi sunsets, silver Milky Way, and desert dawns from your bed.',
+      zh: '敦煌雅丹国家地质公园核心区内唯一住宿接待站，西北戈壁极具特色的星空主题野奢驿站。全景天窗太空舱与观景客房直面壮阔雅丹地貌，避开日间人流，独享戈壁日落、银河星空与沙漠日出的沉浸式体验。',
+    },
+    amenities: [
+      { icon: '🌌', label: { en: 'Dark Sky Stargazing', zh: '暗夜银河观星' } },
+      { icon: '🪟', label: { en: 'Panoramic Skylight', zh: '全景观景天窗' } },
+      { icon: '🏜', label: { en: 'Inside Yardang Geopark', zh: '公园核心区内' } },
+      { icon: '🍽', label: { en: 'Dining & Rest Area', zh: '餐饮休息大厅' } },
+      { icon: '📷', label: { en: 'Sunrise / Sunset Views', zh: '日出日落观赏' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Dunhuang city — ~80 km / 1h drive' }, { mode: '✈️', text: 'Dunhuang Airport — ~90 km / 1.5h drive' }, { mode: '🚌', text: 'Tour bus from Dunhuang — available at main scenic area' }],
+      zh: [{ mode: '🚗', text: '敦煌市区 — 约80公里/1小时' }, { mode: '✈️', text: '敦煌机场 — 约90公里/1.5小时' }, { mode: '🚌', text: '敦煌景区旅游大巴可达' }],
+    },
+    nearby: {
+      en: [{ name: 'Yardang "Devil City" Formations', distance: 'On-site' }, { name: 'Yumen Pass (Jade Gate)', distance: '~30 km' }, { name: 'Han Dynasty Great Wall', distance: '~40 km' }, { name: 'Mogao Caves', distance: '~110 km' }],
+      zh: [{ name: '雅丹"魔鬼城"地貌', distance: '园区内' }, { name: '玉门关', distance: '约30公里' }, { name: '汉长城遗址', distance: '约40公里' }, { name: '莫高窟', distance: '约110公里' }],
+    },
+    images: ['/images/projects/dunhuang-yardang/image-01.jpg', '/images/projects/dunhuang-yardang/image-02.jpg', '/images/projects/dunhuang-yardang/image-03.jpg'],
+  },
 
   // ─── 内蒙古 · 乌海漠海山境露营地 ───
   {
