@@ -119,6 +119,175 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
     ],
   },
 
+  // ─── Argentina · Holihaus Centro Comercial Nordelta ───
+  {
+    id: 'argentina-nordelta',
+    name: { en: 'Holihaus Argentina Showroom — Centro Comercial Nordelta', zh: 'Holihaus 阿根廷展厅 · Nordelta 购物中心' },
+    location: { en: 'Centro Comercial Nordelta, Tigre, Buenos Aires Province, Argentina', zh: '阿根廷布宜诺斯艾利斯省·蒂格雷市·诺德尔塔购物中心' },
+    coordinates: [-58.6066, -34.3855],
+    country: '🇦🇷',
+    openDate: 'TBD',
+    units: null,
+    unitArea: null,
+    guests: 'TBD',
+    bookingUrl: '',
+    description: {
+      en: 'VESSEL\'s Latin American showroom at Centro Comercial Nordelta, located in the upscale waterfront district of Nordelta, Tigre. A permanent exhibition space showcasing modular space-capsule architecture and smart living solutions to the South American market.',
+      zh: '位于阿根廷蒂格雷市高端滨水富人区诺德尔塔购物中心，是 VESSEL 微宿在拉丁美洲的首个展厅，面向南美市场展示模块化太空舱建筑与智能居住方案。',
+    },
+    amenities: [
+      { icon: '🏙', label: { en: 'Waterfront Location', zh: '滨水地段' } },
+      { icon: '🛸', label: { en: 'Space Capsule Display', zh: '太空舱实体展示' } },
+      { icon: '🔧', label: { en: 'Custom Design Consult', zh: '定制设计咨询' } },
+      { icon: '🅿️', label: { en: 'Shopping Center Parking', zh: '购物中心停车场' } },
+    ],
+    transport: {
+      en: [{ mode: '✈️', text: 'Buenos Aires Ezeiza Airport — ~55 km / 1h drive' }, { mode: '🚢', text: 'Tigre delta ferry connections nearby' }, { mode: '🚗', text: 'From Buenos Aires city via Panamericana — ~45 min' }],
+      zh: [{ mode: '✈️', text: '布宜诺斯艾利斯埃塞萨机场 — 约55公里/车程1小时' }, { mode: '🚢', text: '附近有蒂格雷三角洲轮渡' }, { mode: '🚗', text: '布宜诺斯艾利斯市区沿泛美高速 — 约45分钟' }],
+    },
+    nearby: {
+      en: [{ name: 'Nordelta Lakes District', distance: 'On-site' }, { name: 'Tigre Delta', distance: '~5 km' }, { name: 'Buenos Aires city center', distance: '~45 km' }],
+      zh: [{ name: '诺德尔塔湖区', distance: '园区内' }, { name: '蒂格雷三角洲', distance: '约5公里' }, { name: '布宜诺斯艾利斯市中心', distance: '约45公里' }],
+    },
+    images: ['/images/projects/argentina-nordelta/exterior-01.jpg', '/images/projects/argentina-nordelta/exterior-02.jpg', '/images/projects/argentina-nordelta/interior-01.jpg', '/images/projects/argentina-nordelta/interior-02.jpg'],
+  },
+
+  // ─── Russia · Калак Ski Station ───
+  {
+    id: 'russia-kalak',
+    name: { en: 'Kalak Ski Station — Mamison Resort', zh: 'Калак 滑雪站 · Mamison 度假区' },
+    location: { en: 'Mamison Valley, Alagir District, North Ossetia, Russia', zh: '俄罗斯北奥塞梯·阿拉吉尔区·Mamison峡谷' },
+    coordinates: [43.855, 42.668],
+    country: '🇷🇺',
+    openDate: '2025.03',
+    units: null,
+    unitArea: null,
+    guests: 'TBD',
+    bookingUrl: 'https://miragrp.ru/realizovannye-proekty/elbrus',
+    description: {
+      en: 'Калак (Kalak) is the main ski station of the Mamison all-season mountain resort in North Ossetia — the gateway hub at 2,025 m elevation, connecting to Zaramag-1 and Zaramag-2 via the longest gondola line in the North Caucasus. 19 km of ski runs from beginner green to expert black, with summer hiking, rafting and mountain biking.',
+      zh: 'Калак 是北奥塞梯 Mamison 全季度假区起点滑雪站，海拔 2025 米，连接 Zaramag-1/2 高海拔站，拥有北高加索最长的 gondola 缆车（约 3.3 公里）。19 公里滑雪道覆盖初-中-高-专业四级，夏季可徒步、漂流和山地骑行。',
+    },
+    amenities: [
+      { icon: '⛷', label: { en: '19 km Ski Runs', zh: '19公里滑雪道' } },
+      { icon: '🚡', label: { en: 'Gondola Cable Car', zh: 'gondola 缆车' } },
+      { icon: '🎿', label: { en: 'Ski Rental & School', zh: '装备租赁与滑雪学校' } },
+      { icon: '☕', label: { en: 'MoonBase Café', zh: 'MoonBase 咖啡馆' } },
+      { icon: '🚌', label: { en: 'Free Resort Shuttle', zh: '度假区免费接驳车' } },
+      { icon: '🏔', label: { en: '4-Season Activities', zh: '四季户外活动' } },
+    ],
+    transport: {
+      en: [{ mode: '✈️', text: 'Vladikavkaz Airport — 1.5h drive' }, { mode: '🚂', text: 'Alagir Station — 45 min drive' }, { mode: '🚌', text: 'Free shuttle from resort accommodation' }],
+      zh: [{ mode: '✈️', text: '弗拉季高加索机场 — 车程1.5小时' }, { mode: '🚂', text: '阿拉吉尔火车站 — 车程45分钟' }, { mode: '🚌', text: '度假区住宿免费接驳车' }],
+    },
+    nearby: {
+      en: [{ name: 'AstroBase Mamison Hotel', distance: '1 km' }, { name: 'Mamihdon River Gorge', distance: 'Walking' }, { name: 'Mount Elbrus', distance: '2h drive' }, { name: 'Tsey Gorge', distance: '1.5h drive' }],
+      zh: [{ name: 'AstroBase Mamison 酒店', distance: '1公里' }, { name: 'Mamihdon 河峡谷', distance: '步行可达' }, { name: '厄尔布鲁士山', distance: '车程2小时' }, { name: 'Tsey 峡谷', distance: '车程1.5小时' }],
+    },
+    images: ['/images/projects/russia-kalak/exterior-01.webp', '/images/projects/russia-kalak/exterior-02.webp', '/images/projects/russia-kalak/exterior-03.png'],
+  },
+
+  // ─── USA · Clewiston, Florida ───
+  {
+    id: 'usa-clewiston',
+    name: { en: 'V9 Eco Smart Community — Clewiston, Florida', zh: 'V9 智能生态社区 · 佛罗里达州克莱威斯顿' },
+    location: { en: 'Clewiston, Hendry County, Florida, USA', zh: '美国佛罗里达州·亨德里县·克莱威斯顿' },
+    coordinates: [-80.9329, 26.7535],
+    country: '🇺🇸',
+    openDate: 'TBD',
+    units: null,
+    unitArea: null,
+    guests: 'TBD',
+    bookingUrl: '',
+    description: {
+      en: 'A sustainable smart-living community in Clewiston, Florida — featuring VESSEL V9-series modular space-capsule homes with 270° panoramic glass walls overlooking lake and wetland scenery. Built with high-strength eco-friendly materials, each unit installs on-site in under 2 hours and integrates a full smart-home system with smart locks, climate control, lighting and motorized blinds.',
+      zh: '位于佛罗里达州亨德里县克莱威斯顿的可持续智能生态社区，采用 VESSEL V9 系列太空舱式模块化住宅，270° 全景落地窗俯瞰湖景与湿地。高强度环保结构，现场安装仅需 2 小时，内置完整智能家居系统，实现科技、环保与自然景观的融合。',
+    },
+    amenities: [
+      { icon: '🪟', label: { en: '270° Panoramic Windows', zh: '270° 全景落地窗' } },
+      { icon: '📱', label: { en: 'Full Smart Home', zh: '全套智能家居' } },
+      { icon: '🌿', label: { en: 'Eco-Friendly Build', zh: '环保建造' } },
+      { icon: '💧', label: { en: 'Lake & Wetland Views', zh: '湖景湿地景观' } },
+      { icon: '⚡', label: { en: '2-Hour Installation', zh: '2小时现场安装' } },
+    ],
+    transport: {
+      en: [{ mode: '✈️', text: 'Fort Lauderdale Airport — ~150 km / 1.5h drive' }, { mode: '🚗', text: 'From Miami via US-27 — ~2h drive' }, { mode: '🚗', text: 'From Fort Myers via US-27 — ~1h drive' }],
+      zh: [{ mode: '✈️', text: '劳德代尔堡机场 — 约150公里/车程1.5小时' }, { mode: '🚗', text: '迈阿密沿US-27公路 — 约2小时' }, { mode: '🚗', text: '迈尔斯堡沿US-27 — 约1小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Lake Okeechobee', distance: '~10 km' }, { name: 'Big Cypress National Preserve', distance: '~60 km' }, { name: 'Everglades National Park', distance: '~120 km' }],
+      zh: [{ name: '奥基乔比湖', distance: '约10公里' }, { name: '大柏树国家保护区', distance: '约60公里' }, { name: '大沼泽地国家公园', distance: '约120公里' }],
+    },
+    images: ['/images/projects/usa-clewiston/exterior-01.jpg', '/images/projects/usa-clewiston/exterior-02.jpg', '/images/projects/usa-clewiston/exterior-03.jpg'],
+  },
+
+  // ─── USA · Georgetown, Louisiana ───
+  {
+    id: 'usa-georgetown',
+    name: { en: 'E9 Eco Smart Cabin Community — Georgetown, Louisiana', zh: 'E9 智能生态小屋社区 · 路易斯安那州乔治城' },
+    location: { en: 'Georgetown, Grant Parish, Louisiana, USA', zh: '美国路易斯安那州·格兰特县·乔治城镇' },
+    coordinates: [-92.3988, 31.617],
+    country: '🇺🇸',
+    openDate: 'TBD',
+    units: null,
+    unitArea: null,
+    guests: 'TBD',
+    bookingUrl: '',
+    description: {
+      en: 'VESSEL E9-series smart eco-cabins in Georgetown, Louisiana — set against the rolling hills of the Kisatchie National Forest, the only national forest in Louisiana. Each streamlined space-capsule home features 270° panoramic windows framing pine-forest sunrises and star-filled night skies, merging sustainable living with deep nature immersion.',
+      zh: '位于路易斯安那州格兰特县乔治城镇，背靠路易斯安那州唯一的国家森林 Kisatchie，采用 VESSEL E9 系列流线型太空舱智能生态小屋，270° 全景落地窗将松林日出与满天星空纳入室内，是追求自然与现代生活平衡的理想居所。',
+    },
+    amenities: [
+      { icon: '🌲', label: { en: 'National Forest Setting', zh: '国家森林环境' } },
+      { icon: '🪟', label: { en: '270° Panoramic Windows', zh: '270° 全景落地窗' } },
+      { icon: '📱', label: { en: 'Smart Home System', zh: '智能家居系统' } },
+      { icon: '🎣', label: { en: 'Fishing & Hiking Nearby', zh: '附近钓鱼徒步' } },
+    ],
+    transport: {
+      en: [{ mode: '✈️', text: 'Alexandria Regional Airport — ~30 min drive' }, { mode: '🚗', text: 'From Alexandria via US-165 — ~30 min' }, { mode: '🚗', text: 'From Shreveport — ~2h drive' }],
+      zh: [{ mode: '✈️', text: '亚历山大地区机场 — 约30分钟车程' }, { mode: '🚗', text: '亚历山大沿US-165 — 约30分钟' }, { mode: '🚗', text: '什里夫波特出发 — 约2小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Kisatchie National Forest', distance: 'Adjacent (600k+ acres)' }, { name: 'Alexandria City Center', distance: '~30 min' }, { name: 'Colfax Historic Site', distance: '~20 km' }],
+      zh: [{ name: 'Kisatchie 国家森林（超60万英亩）', distance: '紧邻' }, { name: '亚历山大市中心', distance: '约30分钟' }, { name: 'Colfax 历史遗址', distance: '约20公里' }],
+    },
+    images: ['/images/projects/usa-georgetown/exterior-01.jpg', '/images/projects/usa-georgetown/exterior-02.jpg', '/images/projects/usa-georgetown/exterior-03.jpg', '/images/projects/usa-georgetown/exterior-04.jpg'],
+  },
+
+  // ─── USA · Mount Pleasant, Texas ───
+  {
+    id: 'usa-mount-pleasant',
+    name: { en: 'E9 Eco Smart Cabin Community — Mount Pleasant, Texas', zh: 'E9 智能生态小屋社区 · 德克萨斯州芒特普莱森特' },
+    location: { en: 'Twin Lakes Resort, Mount Pleasant, Titus County, Texas, USA', zh: '美国德克萨斯州·泰特斯县·芒特普莱森特·双湖度假村' },
+    coordinates: [-95.0025, 33.1562],
+    country: '🇺🇸',
+    openDate: 'TBD',
+    units: null,
+    unitArea: null,
+    guests: 'TBD',
+    bookingUrl: '',
+    description: {
+      en: 'VESSEL E9 space-capsule homes at Twin Lakes Resort in Mount Pleasant, Texas — set between Bob Sandlin Lake and Cypress Springs Lake. Futuristic streamlined design meets lakeside nature: fishing, boating, kayaking, and resort amenities (pool, gym, BBQ, mini-golf) steps away. A 1.5-hour drive from the Dallas–Fort Worth metroplex.',
+      zh: '位于德克萨斯州泰特斯县芒特普莱森特双湖度假村，E9 系列太空舱式智能生态小屋坐落于 Bob Sandlin 湖与 Cypress Springs 湖之间，融合未来感设计与湖畔自然美景，钓鱼、划船、皮划艇及度假村配套设施一应俱全，距达拉斯/沃斯堡都会区约1.5小时。',
+    },
+    amenities: [
+      { icon: '🏊', label: { en: 'Dual Lake Waterfront', zh: '双湖滨水' } },
+      { icon: '🎣', label: { en: 'Fishing & Boating', zh: '钓鱼划船' } },
+      { icon: '🏋', label: { en: 'Resort Gym & Pool', zh: '度假村健身房与泳池' } },
+      { icon: '🪟', label: { en: '270° Panoramic Windows', zh: '270° 全景落地窗' } },
+      { icon: '⛳', label: { en: 'Mini Golf On-site', zh: '园内迷你高尔夫' } },
+    ],
+    transport: {
+      en: [{ mode: '✈️', text: 'Dallas/Fort Worth Airport — ~1.5h drive' }, { mode: '🚗', text: 'From Dallas via I-30 East — ~1.5h' }, { mode: '🚗', text: 'From Texarkana — ~1h drive' }],
+      zh: [{ mode: '✈️', text: '达拉斯/沃斯堡机场 — 约1.5小时车程' }, { mode: '🚗', text: '达拉斯沿I-30东行 — 约1.5小时' }, { mode: '🚗', text: 'Texarkana 出发 — 约1小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Bob Sandlin State Park', distance: '~5 km' }, { name: 'Caddo National Grasslands', distance: '~40 min' }, { name: 'Mount Pleasant City Center', distance: '~10 km' }],
+      zh: [{ name: 'Bob Sandlin 州立公园', distance: '约5公里' }, { name: 'Caddo 国家草原', distance: '约40分钟' }, { name: '芒特普莱森特市中心', distance: '约10公里' }],
+    },
+    images: ['/images/projects/usa-mount-pleasant/exterior-01.jpg', '/images/projects/usa-mount-pleasant/exterior-02.jpg', '/images/projects/usa-mount-pleasant/exterior-03.jpg'],
+  },
+
   // ═══ 国内项目 (30) ═══
 
   // ─── 内蒙古 · 乌海漠海山境露营地 ───
