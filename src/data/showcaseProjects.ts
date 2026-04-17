@@ -638,6 +638,180 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
     images: ['/images/projects/guangdong-heyuan/image-01.jpg', '/images/projects/guangdong-heyuan/image-02.jpg', '/images/projects/guangdong-heyuan/image-03.jpg', '/images/projects/guangdong-heyuan/image-04.jpg', '/images/projects/guangdong-heyuan/image-05.jpg', '/images/projects/guangdong-heyuan/image-06.jpg', '/images/projects/guangdong-heyuan/image-07.jpg', '/images/projects/guangdong-heyuan/image-08.png'],
   },
 
+  // ─── 广东 · 惠州巽寮湾假日星球 ───
+  {
+    id: 'guangdong-huizhou',
+    name: { en: 'HelloSpace Holiday Planet — Xunliao Bay', zh: '惠州巽寮湾假日星球' },
+    location: { en: 'Qingxun Mountain, Huidong County, Huizhou, Guangdong, China', zh: '中国广东·惠州市惠东县·青巽山景区内·巽寮湾滨海旅游带' },
+    coordinates: [115.0264, 22.9006],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: null,
+    unitArea: 33,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'VESSEL HelloSpace Holiday Planet — a luxury glamping resort on Qingxun Mountain within the Xunliao Bay coastal tourism corridor, Huizhou. Independent S5/E7/O5/V7 capsule villas (27–38 m²) surround a private lake and hillside, some featuring stargazing skylights and private hot tubs. SUP, paddleboard and glass boat activities complement the pristine near-ocean setting.',
+      zh: '位于惠州惠东县青巽山景区，毗邻巽寮湾滨海旅游带，VESSEL 微宿打造的高端野奢太空舱度假营地。多栋独立S5/E7/O5/V7太空舱（27-38㎡），依山环湖而建，部分带星空天窗与私人泡池，可体验桨板、皮划艇和玻璃船等水上项目。',
+    },
+    amenities: [
+      { icon: '🏝', label: { en: 'Hill & Lake Setting', zh: '依山环湖' } },
+      { icon: '🛸', label: { en: 'VESSEL S5/E7/O5/V7', zh: 'VESSEL 多型号太空舱' } },
+      { icon: '♨️', label: { en: 'Private Hot Tub (Select)', zh: '私人泡池（部分房型）' } },
+      { icon: '🚣', label: { en: 'Glass Boat & Waterboard', zh: '玻璃船与桨板' } },
+      { icon: '🌌', label: { en: 'Star-Gazing Skylight', zh: '星空天窗' } },
+      { icon: '🏕', label: { en: 'Lawn & Observation Deck', zh: '大草坪与观景台' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Shenzhen / Guangzhou via G15 — ~2.5h drive' }, { mode: '✈️', text: 'Shenzhen Airport — ~2h drive' }, { mode: '🚂', text: 'Huizhou South Station — ~1h taxi/shuttle' }],
+      zh: [{ mode: '🚗', text: '深圳/广州沿G15高速 — 约2.5小时' }, { mode: '✈️', text: '深圳机场 — 约2小时' }, { mode: '🚂', text: '惠州南站 — 约1小时接送' }],
+    },
+    nearby: {
+      en: [{ name: 'Xunliao Bay Beach', distance: '~5 km' }, { name: 'Qingxun Mountain Forest Park', distance: 'On-site' }, { name: 'Shuangyuewan National Park', distance: '~30 km' }],
+      zh: [{ name: '巽寮湾海滩', distance: '约5公里' }, { name: '青巽山森林公园', distance: '园区内' }, { name: '双月湾国家公园', distance: '约30公里' }],
+    },
+    images: ['/images/projects/guangdong-huizhou/image-01.jpg', '/images/projects/guangdong-huizhou/image-02.jpg', '/images/projects/guangdong-huizhou/image-03.jpg', '/images/projects/guangdong-huizhou/image-04.jpg', '/images/projects/guangdong-huizhou/image-05.jpg', '/images/projects/guangdong-huizhou/image-06.jpg', '/images/projects/guangdong-huizhou/image-07.jpg', '/images/projects/guangdong-huizhou/image-08.jpg'],
+  },
+
+  // ─── 广东 · 肇庆六角泉森林康养基地 ───
+  {
+    id: 'guangdong-zhaoqing',
+    name: { en: 'Liujiaoquan Forest Health Resort', zh: '广东肇庆六角泉森林康养基地' },
+    location: { en: 'Fengkai County, Zhaoqing, Guangdong, China', zh: '中国广东·肇庆市封开县江口街道扶来村' },
+    coordinates: [111.4858, 23.4361],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: 4,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'Guangdong\'s first Forest Health Base pilot — 98 hectares of 90%+ forest cover in Fengkai County, Zhaoqing, transformed from a state forest farm. VESSEL O5 and E7 space capsules with panoramic skylights are nestled among the trees: mountain cloud-sea by day, Milky Way by night. Complemented by herbal-medicine valley trails, mountain spring pools and children\'s nature education.',
+      zh: '广东省首批森林康养基地试点，位于肇庆封开县，总面积98.08公顷，森林覆盖率超90%。VESSEL O5/E7 太空舱嵌入林间，配全景天窗，白天坐拥山林云海，夜晚卧赏银河。设南药溪谷、山泉泳池、五感步道、儿童欢乐谷等游玩业态。',
+    },
+    amenities: [
+      { icon: '🌲', label: { en: '90%+ Forest Cover', zh: '90%以上森林覆盖' } },
+      { icon: '🌌', label: { en: 'Panoramic Skylight', zh: '全景天窗' } },
+      { icon: '🏊', label: { en: 'Mountain Spring Pool', zh: '山泉泳池' } },
+      { icon: '🌿', label: { en: 'Herbal Medicine Valley', zh: '南药溪谷' } },
+      { icon: '🧒', label: { en: 'Nature Education Base', zh: '自然教育基地' } },
+      { icon: '🏍', label: { en: 'ATV Off-Road', zh: '四轮摩托越野' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Guangzhou via G321 — ~3h drive' }, { mode: '🚗', text: 'From Zhaoqing city — ~1.5h drive' }, { mode: '✈️', text: 'Guangzhou Baiyun Airport — ~3h drive' }],
+      zh: [{ mode: '🚗', text: '广州沿G321国道 — 约3小时' }, { mode: '🚗', text: '肇庆市区 — 约1.5小时' }, { mode: '✈️', text: '广州白云机场 — 约3小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Hejiang Blueway Scenic Corridor', distance: 'Adjacent' }, { name: 'Fengkai Water Sports Center', distance: '~15 km' }, { name: 'Liangguang Headwaters Museum', distance: '~20 km' }],
+      zh: [{ name: '贺江碧道画廊', distance: '紧邻' }, { name: '封开水上运动中心', distance: '约15公里' }, { name: '两广源流博物馆', distance: '约20公里' }],
+    },
+    images: ['/images/projects/guangdong-zhaoqing/image-01.jpg', '/images/projects/guangdong-zhaoqing/image-02.jpg', '/images/projects/guangdong-zhaoqing/image-03.jpg', '/images/projects/guangdong-zhaoqing/image-04.jpg'],
+  },
+
+  // ─── 广东 · 珠海临海·星空海景美宿（飞沙滩店）───
+  {
+    id: 'guangdong-zhuhai',
+    name: { en: 'Linhai Starry Sea-View Inn — Feisha Beach', zh: '珠海临海·星空海景美宿（飞沙滩店）' },
+    location: { en: 'Feisha Village, Nanshui Town, Jinwan District, Zhuhai, Guangdong, China', zh: '中国广东·珠海市金湾区南水镇飞沙村' },
+    coordinates: [113.3116, 21.8935],
+    country: '🇨🇳',
+    openDate: '2022',
+    units: null,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'A VESSEL-partnered immersive coastal resort at Feisha Beach, Zhuhai — stargazing sea-view space capsules steps from the sand. Panoramic floor-to-ceiling glass, private courtyards, and smart amenities let you fall asleep to ocean waves and wake to golden sunrises. Surfing lessons, tidal-flat foraging, and a sea-view restaurant serving fresh local seafood.',
+      zh: '与 VESSEL 微宿品牌合作，位于珠海金湾区飞沙滩，步行即达海滩，星空海景太空舱配全景落地窗、私家庭院与智能客控。枕着海浪声入眠，推窗见碧海，白天冲浪、赶海，夜晚繁星满天，是珠海滨海度假的沉浸式体验地。',
+    },
+    amenities: [
+      { icon: '🌊', label: { en: 'Steps to the Beach', zh: '步行即达沙滩' } },
+      { icon: '🌌', label: { en: 'Stargazing Sea View', zh: '星空海景观赏' } },
+      { icon: '🏄', label: { en: 'Surf Lessons', zh: '冲浪课程' } },
+      { icon: '🦀', label: { en: 'Tidal-Flat Foraging', zh: '赶海拾趣' } },
+      { icon: '🍽', label: { en: 'Seafood Restaurant', zh: '海景餐厅海鲜料理' } },
+      { icon: '🅿️', label: { en: 'Free Parking', zh: '免费停车' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Zhuhai city / Hong Kong-Zhuhai-Macao Bridge — ~40 min' }, { mode: '✈️', text: 'Zhuhai Airport — ~20 min drive' }, { mode: '🚗', text: 'From Guangzhou via G4W2 — ~2h' }],
+      zh: [{ mode: '🚗', text: '珠海市区/港珠澳大桥 — 约40分钟' }, { mode: '✈️', text: '珠海机场 — 约20分钟' }, { mode: '🚗', text: '广州沿G4W2 — 约2小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Feisha Beach Scenic Area', distance: 'Walking' }, { name: 'Shangchuan Island Wind Farm', distance: '~50 km' }, { name: 'Nagin Peninsula ("Little Santorini")', distance: '~40 km' }],
+      zh: [{ name: '飞沙滩景区', distance: '步行' }, { name: '上川岛风车山', distance: '约50公里' }, { name: '那琴半岛"小圣托里尼"', distance: '约40公里' }],
+    },
+    images: ['/images/projects/guangdong-zhuhai/image-01.jpg', '/images/projects/guangdong-zhuhai/image-02.jpg', '/images/projects/guangdong-zhuhai/image-03.jpg'],
+  },
+
+  // ─── 广西 · 贺州鹊鸣春太空舱民宿 ───
+  {
+    id: 'guangxi-hezhou',
+    name: { en: 'Quemingchun Tea Garden Capsule Inn', zh: '广西贺州鹊鸣春太空舱民宿' },
+    location: { en: 'Organic Tea Garden, Mashen Village, Zhaoping Town, Zhaoping County, Hezhou, Guangxi, China', zh: '中国广西·贺州市昭平县昭平镇马圣村有机茶园内' },
+    coordinates: [110.8127, 24.1749],
+    country: '🇨🇳',
+    openDate: '2024',
+    units: 6,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'Six VESSEL space capsules "floating" above Zhaoping\'s organic tea hills — a tea-culture glamping fusion resort opened late 2024. Fully transparent panoramic design lets you wake to rolling tea-garden waves and mountain mist. Tea-picking tours, artisanal tea-making workshops, oil-tea hotpot, and charcoal BBQ round out an immersive Guangxi tea-country experience.',
+      zh: '2024年底落成，6座 VESSEL 太空舱"悬浮"于昭平县有机茶园，全景透明设计，卧床即观茶海起伏与远山云雾。配套烧烤场、多功能会议厅，提供采茶研学、制茶工坊、油茶火锅与围炉煮茶等特色体验。',
+    },
+    amenities: [
+      { icon: '🍵', label: { en: 'Tea Garden Panorama', zh: '茶园全景景观' } },
+      { icon: '🌿', label: { en: 'Tea Picking & Making', zh: '采茶制茶体验' } },
+      { icon: '🔥', label: { en: 'BBQ & Charcoal Tea', zh: '烧烤与围炉煮茶' } },
+      { icon: '🏫', label: { en: 'Research & Education', zh: '研学教育活动' } },
+      { icon: '📶', label: { en: 'Smart Temperature Control', zh: '智能温控系统' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Hezhou city — ~30 min drive' }, { mode: '🚗', text: 'From Guilin via G72 — ~2h drive' }, { mode: '✈️', text: 'Guilin Liangjiang Airport — ~2h drive' }],
+      zh: [{ mode: '🚗', text: '贺州市区 — 约30分钟' }, { mode: '🚗', text: '桂林沿G72 — 约2小时' }, { mode: '✈️', text: '桂林两江机场 — 约2小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Huangyao Ancient Town', distance: '~40 min drive' }, { name: 'Nanshan Tea Sea', distance: '~20 km' }, { name: 'Zhaoping Guijiang River Cruise', distance: '~15 km' }],
+      zh: [{ name: '黄姚古镇', distance: '约40分钟' }, { name: '南山茶海（华南最大高山茶园）', distance: '约20公里' }, { name: '昭平桂江游船', distance: '约15公里' }],
+    },
+    images: ['/images/projects/guangxi-hezhou/image-01.png', '/images/projects/guangxi-hezhou/image-02.png', '/images/projects/guangxi-hezhou/image-03.jpg', '/images/projects/guangxi-hezhou/image-04.png', '/images/projects/guangxi-hezhou/image-05.png', '/images/projects/guangxi-hezhou/image-06.jpg'],
+  },
+
+  // ─── 广西 · 黄姚乐耘庄园 ───
+  {
+    id: 'guangxi-huangyao',
+    name: { en: 'Leyun Farmstead — Huangyao', zh: '广西黄姚乐耘庄园' },
+    location: { en: 'Beilai Village, Huangyao Town, Zhaoping County, Hezhou, Guangxi, China', zh: '中国广西·贺州市昭平县黄姚镇北莱村' },
+    coordinates: [110.9267, 24.1055],
+    country: '🇨🇳',
+    openDate: '2023',
+    units: null,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'A Guangdong–Guangxi rural-revitalization showcase 10 minutes from Huangyao Ancient Town (5A) — 100-acre farmstead combining organic agriculture, intangible cultural heritage, and eco-tourism. Space capsules, tatami suites and sunshine villas with smart controls and panoramic nature views. Includes a black sesame paste heritage hall, jungle mini-train, and kids\' farm.',
+      zh: '距国家5A景区黄姚古镇约10分钟，粤桂合作乡村振兴重点项目。100亩庄园融合有机农业、非遗文化（黄姚豆豉古法制作）与亲子度假。太空舱、榻榻米房、阳光房均配智能客控，设丛林穿越小火车、萌宠喂养、农家大灶台等，是广西中小学研学实践教育基地。',
+    },
+    amenities: [
+      { icon: '🏺', label: { en: 'Intangible Heritage Workshops', zh: '非遗工坊体验' } },
+      { icon: '🚂', label: { en: '2000 m Jungle Train', zh: '2000米丛林小火车' } },
+      { icon: '🐾', label: { en: 'Pet & Animal Farm', zh: '萌宠喂养' } },
+      { icon: '🛸', label: { en: 'Space Capsule Rooms', zh: '太空舱住宿' } },
+      { icon: '🍳', label: { en: 'Farm-style Restaurant', zh: '乐耘佳味馆农家菜' } },
+      { icon: '🐕', label: { en: 'Pet Friendly', zh: '宠物友好' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Hezhou city — ~1h drive' }, { mode: '🚗', text: 'From Guilin via G72 — ~2.5h drive' }, { mode: '✈️', text: 'Guilin Airport — ~2.5h drive' }],
+      zh: [{ mode: '🚗', text: '贺州市区 — 约1小时' }, { mode: '🚗', text: '桂林沿G72 — 约2.5小时' }, { mode: '✈️', text: '桂林机场 — 约2.5小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Huangyao Ancient Town (5A)', distance: '~10 min drive' }, { name: 'Gupo Mountain National Forest Park', distance: '~40 km' }, { name: 'Hezhou City Center', distance: '~80 km' }],
+      zh: [{ name: '黄姚古镇（5A景区）', distance: '约10分钟' }, { name: '姑婆山国家森林公园', distance: '约40公里' }, { name: '贺州市区', distance: '约80公里' }],
+    },
+    images: ['/images/projects/guangxi-huangyao/image-01.jpg', '/images/projects/guangxi-huangyao/image-02.jpg', '/images/projects/guangxi-huangyao/image-03.jpg', '/images/projects/guangxi-huangyao/image-04.jpg'],
+  },
+
   // ─── 内蒙古 · 乌海漠海山境露营地 ───
   {
     id: 'wuhai-desert',
