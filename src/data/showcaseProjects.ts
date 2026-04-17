@@ -464,6 +464,180 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
     images: ['/images/projects/dunhuang-yardang/image-01.jpg', '/images/projects/dunhuang-yardang/image-02.jpg', '/images/projects/dunhuang-yardang/image-03.jpg'],
   },
 
+  // ─── 福建 · 东山彩蝶湾景区特色民宿（环岛路分店）───
+  {
+    id: 'fujian-dongshan',
+    name: { en: 'Caidie Bay Seaside B&B — Huandao Road', zh: '东山彩蝶湾景区特色民宿（环岛路分店）' },
+    location: { en: 'Aojiao Village, Chengcheng Town, Dongshan County, Fujian, China', zh: '中国福建·东山县陈城镇澳角村·彩蝶湾景区环岛路' },
+    coordinates: [117.5075, 23.7062],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: null,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'A coastal boutique guesthouse on Dongshan Island\'s scenic ring road — steps from Caidie Bay\'s pristine beach. Space capsules, sea-view courtyards and loft suites all feature panoramic sea views, smart amenities and independent bathrooms. Sunrise over the reefs, tide-pool exploring, ring-island cycling and local seafood await.',
+      zh: '坐落于福建东山县环岛景观带，紧邻彩蝶湾景区，步行即达沙滩。太空舱、海景小院及Loft跃层等房型均配全景海景视野与智能配套，推窗见礁石碧海。可赶海、拾贝壳、环岛骑行，享受东山岛沉浸式滨海度假体验。',
+    },
+    amenities: [
+      { icon: '🌊', label: { en: 'Beachfront Location', zh: '步行达沙滩' } },
+      { icon: '🛸', label: { en: 'Space Capsule Rooms', zh: '太空舱房型' } },
+      { icon: '☀️', label: { en: 'Sea-View Terrace', zh: '海景观景露台' } },
+      { icon: '☕', label: { en: 'Seaside Coffee Bar', zh: '滨海咖啡吧' } },
+      { icon: '🅿️', label: { en: 'Free Parking', zh: '免费停车场' } },
+      { icon: '🦀', label: { en: 'Seafood Processing', zh: '海鲜加工服务' } },
+    ],
+    transport: {
+      en: [{ mode: '✈️', text: 'Yunxiao Zhangzhou Airport — ~60 km, then taxi' }, { mode: '🚗', text: 'From Zhangzhou via G15 — ~2h drive' }, { mode: '🚂', text: 'Yunxiao High-Speed Station — ~45 min drive, shuttle available' }],
+      zh: [{ mode: '✈️', text: '漳州云霄机场 — 约60公里转出租' }, { mode: '🚗', text: '漳州沿G15高速 — 约2小时' }, { mode: '🚂', text: '云霄高铁站 — 约45分钟，可预约接送' }],
+    },
+    nearby: {
+      en: [{ name: 'Caidie Bay Beach', distance: 'Steps away' }, { name: 'Jinluan Bay "Mirror Beach"', distance: '~15 min drive' }, { name: 'Wind Rock (Fengdong Shi)', distance: '~20 min drive' }],
+      zh: [{ name: '彩蝶湾沙滩', distance: '步行即达' }, { name: '金銮湾"镜面沙滩"', distance: '约15分钟' }, { name: '风动石景区', distance: '约20分钟' }],
+    },
+    images: ['/images/projects/fujian-dongshan/image-01.jpg', '/images/projects/fujian-dongshan/image-02.jpg', '/images/projects/fujian-dongshan/image-03.jpg', '/images/projects/fujian-dongshan/image-04.jpg'],
+  },
+
+  // ─── 甘肃 · 白银龙山民宿 ───
+  {
+    id: 'gansu-baiyin',
+    name: { en: 'Longshan Cliff Capsule Inn — Yellow River Cloud Town', zh: '甘肃白银龙山民宿·黄河云客小镇' },
+    location: { en: 'Shuichuan Town, Baiyin District, Baiyin City, Gansu, China', zh: '中国甘肃·白银市白银区水川镇蒋家湾五柳村' },
+    coordinates: [104.1369, 36.544],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: null,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'VESSEL E5 & E7 space capsules perched along a loess cliff above the Yellow River\'s Wujin Gorge — part of the "Yellow River · Baiyin Cloud Town" rural revitalization project. Push the window open to an unobstructed panorama of the Yellow River and ancient Great Wall ruins. Sunsets over the Huang He and Milky Way nights make this a photographer\'s paradise.',
+      zh: '依托黄河乌金峡北岸崖壁与古长城遗址打造，VESSEL E5/E7 太空舱沿黄土崖壁错落排布，是"黄河·白银云客小镇"乡村振兴文旅项目核心。推窗即可无遮挡俯瞰黄河壮阔河景，远眺古长城遗址，实现"卧看长河落日、夜揽星河入梦"的沉浸式体验。',
+    },
+    amenities: [
+      { icon: '🌊', label: { en: 'Yellow River Cliff View', zh: '黄河悬崖观景' } },
+      { icon: '🏯', label: { en: 'Great Wall Ruins Nearby', zh: '古长城遗址毗邻' } },
+      { icon: '🛸', label: { en: 'VESSEL E5/E7 Capsules', zh: 'VESSEL E5/E7 太空舱' } },
+      { icon: '🌌', label: { en: 'Milky Way Stargazing', zh: '银河观星' } },
+      { icon: '📷', label: { en: 'Sunset Photography', zh: '日落摄影打卡' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Baiyin city center — ~30 min drive' }, { mode: '✈️', text: 'Lanzhou Zhongchuan Airport — ~90 min drive' }, { mode: '🚗', text: 'From Lanzhou via G6 — ~1.5h drive' }],
+      zh: [{ mode: '🚗', text: '白银市区 — 约30分钟车程' }, { mode: '✈️', text: '兰州中川机场 — 约90分钟车程' }, { mode: '🚗', text: '兰州沿G6高速 — 约1.5小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Yellow River Wujin Gorge', distance: 'On cliff' }, { name: 'Han Dynasty Great Wall Ruins', distance: 'Adjacent' }, { name: 'Shuichuan Wetland Park', distance: '~5 km' }],
+      zh: [{ name: '黄河乌金峡', distance: '崖壁之上' }, { name: '汉长城遗址', distance: '紧邻' }, { name: '水川国家湿地公园', distance: '约5公里' }],
+    },
+    images: ['/images/projects/gansu-baiyin/image-01.jpg', '/images/projects/gansu-baiyin/image-02.jpg', '/images/projects/gansu-baiyin/image-03.jpg', '/images/projects/gansu-baiyin/image-04.jpg'],
+  },
+
+  // ─── 甘肃 · 和政星语云端 ───
+  {
+    id: 'gansu-hezheng',
+    name: { en: 'Xingyu Yunduan Alpine Eco Resort', zh: '甘肃和政星语云端' },
+    location: { en: 'Dahualiáng, Songling Town, Hezheng County, Linxia, Gansu, China', zh: '中国甘肃·临夏州和政县松鸣镇大桦梁·太子山脚下' },
+    coordinates: [103.3513, 35.439],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: 30,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'A high-altitude eco retreat at 2,400 m on the slopes of Taizishan, Hezheng County — 10 VESSEL smart space capsules, 10 forest wooden cabins and 10 sci-fi themed suites (ring panoramic windows). Zero light pollution for naked-eye Milky Way; cloud sea and mountain views at dawn. Activities include paragliding, hot-air ballooning and family farm picking.',
+      zh: '坐落于甘肃和政县太子山脚下松鸣镇大桦梁，海拔约2400米，占地200公顷。10间微宿太空舱、10间野奢木屋与10间星月居科幻主题民宿依山错落。零光污染环境下可裸眼观银河，清晨云海翻涌，配套动力伞、热气球与亲子农场体验。',
+    },
+    amenities: [
+      { icon: '🌌', label: { en: 'Zero-Pollution Dark Sky', zh: '零光污染暗夜星空' } },
+      { icon: '☁️', label: { en: 'Cloud Sea at Dawn', zh: '清晨云海观赏' } },
+      { icon: '🪟', label: { en: 'Ring Panoramic Windows', zh: '环绕式全景落地窗' } },
+      { icon: '🪂', label: { en: 'Paragliding & Hot Air Balloon', zh: '动力伞/热气球' } },
+      { icon: '🏊', label: { en: 'Infinity Pool', zh: '无边泳池' } },
+      { icon: '🍽', label: { en: 'Hezhou Cuisine Restaurant', zh: '地道河州风味餐厅' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Linxia city — ~40 min drive' }, { mode: '🚗', text: 'From Lanzhou via G75 — ~2.5h drive' }, { mode: '✈️', text: 'Lanzhou Zhongchuan Airport — ~3h drive' }],
+      zh: [{ mode: '🚗', text: '临夏市区 — 约40分钟车程' }, { mode: '🚗', text: '兰州沿G75高速 — 约2.5小时' }, { mode: '✈️', text: '兰州中川机场 — 约3小时车程' }],
+    },
+    nearby: {
+      en: [{ name: 'Songming Rock Scenic Area', distance: '~5 km' }, { name: 'Songming Rock Int\'l Ski Resort', distance: '~8 km' }, { name: 'Taizishan National Nature Reserve', distance: 'Adjacent' }],
+      zh: [{ name: '松鸣岩国家级风景区', distance: '约5公里' }, { name: '松鸣岩国际滑雪场', distance: '约8公里' }, { name: '太子山国家级自然保护区', distance: '紧邻' }],
+    },
+    images: ['/images/projects/gansu-hezheng/image-01.jpg', '/images/projects/gansu-hezheng/image-02.jpg', '/images/projects/gansu-hezheng/image-03.jpg', '/images/projects/gansu-hezheng/image-04.jpg', '/images/projects/gansu-hezheng/image-05.jpg'],
+  },
+
+  // ─── 广东 · 佛山云东海蒹葭苍苍露营地 ───
+  {
+    id: 'guangdong-foshan',
+    name: { en: 'Jianjiá Cangcang Wetland Glamping — Yundonghai', zh: '佛山云东海蒹葭苍苍露营地' },
+    location: { en: 'Moon Park North, Yundonghai Avenue, Sanshui District, Foshan, Guangdong, China', zh: '中国广东·佛山三水区·云东海大道月亮公园北侧' },
+    coordinates: [112.9345, 23.0996],
+    country: '🇨🇳',
+    openDate: '2023',
+    units: 12,
+    unitArea: 35,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'A VESSEL-built wetland glamping resort adjacent to Yundonghai National Wetland Park, Foshan — 12 independent space capsules (V5/V7/V9, 27–38 m²) each with a private courtyard, plus 6 glamping tents. Push the window open to reeds swaying in the lake breeze. Weekends feature molten iron flower shows and fireworks.',
+      zh: '佛山三水区云东海国家湿地公园旁，VESSEL 微宿打造的湿地湖景野奢太空舱露营地，2023年开业。12间独立太空舱（V5/V7/V9，27-38㎡）配专属小院，6顶帐篷，推窗见芦苇荡漾湖光，周末有打铁花表演与烟花秀。',
+    },
+    amenities: [
+      { icon: '🌾', label: { en: 'Wetland Reed Lake Views', zh: '芦苇湖景' } },
+      { icon: '🛶', label: { en: 'Kayak & Dock', zh: '皮划艇码头' } },
+      { icon: '🎣', label: { en: 'Free Fishing (Keep Your Catch)', zh: '免费钓鱼可带走' } },
+      { icon: '🎆', label: { en: 'Weekend Fireworks Show', zh: '周末打铁花/烟花' } },
+      { icon: '🎤', label: { en: 'KTV & Recreation', zh: 'KTV与棋牌' } },
+      { icon: '🌌', label: { en: 'Star-Gazing Skylight', zh: '星空天窗' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Guangzhou / Foshan via Guanghe Expressway — ~1h' }, { mode: '🚉', text: 'Yundonghai Station — ~12 min taxi' }, { mode: '🚇', text: 'Guangfo Metro to Sanshui — then taxi' }],
+      zh: [{ mode: '🚗', text: '广佛市区沿广贺高速 — 约1小时' }, { mode: '🚉', text: '云东海站 — 打车约12分钟' }, { mode: '🚇', text: '广佛地铁至三水 — 转出租车' }],
+    },
+    nearby: {
+      en: [{ name: 'Yundonghai National Wetland Park', distance: 'Adjacent' }, { name: 'Moon Park Sanshui', distance: 'On-site' }, { name: 'Sanshui City Center', distance: '~15 km' }],
+      zh: [{ name: '云东海国家湿地公园', distance: '紧邻' }, { name: '三水月亮公园', distance: '园区内' }, { name: '三水城区', distance: '约15公里' }],
+    },
+    images: ['/images/projects/guangdong-foshan/image-01.png', '/images/projects/guangdong-foshan/image-02.jpg', '/images/projects/guangdong-foshan/image-03.png', '/images/projects/guangdong-foshan/image-04.jpg'],
+  },
+
+  // ─── 广东 · 河源万绿湖心乐青谷 ───
+  {
+    id: 'guangdong-heyuan',
+    name: { en: 'Wanlv Lake Lèqīng Valley Glamping', zh: '广东河源万绿湖心乐青谷' },
+    location: { en: 'Wanlv Lake Scenic Area, Dongyuan County, Heyuan, Guangdong, China', zh: '中国广东·河源市东源县·万绿湖风景区·私密半岛' },
+    coordinates: [114.7443, 23.9875],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: 16,
+    unitArea: 31,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'VESSEL-built glamping resort on a private peninsula in Wanlv Lake scenic area, Heyuan — 16 independent V5/V7 capsules (27–35 m²), surrounded on three sides by China\'s largest reservoir-lake with Class I drinking-water quality. Panoramic lake views, SUP/kayak, fishing pier and lakeside lawns create the ultimate Pearl River Delta lakeside escape.',
+      zh: '位于广东河源万绿湖风景区私密半岛，三面环湖、一面靠山，坐拥国家I类直饮水质。VESSEL 微宿打造的16间独立V5/V7太空舱（27-35㎡），配独立庭院，全景湖景、桨板皮划艇、垂钓区与湖畔大草坪，是大湾区高品质湖景度假优选。',
+    },
+    amenities: [
+      { icon: '🏞', label: { en: 'Private Peninsula 3-Side Lake', zh: '三面环湖私密半岛' } },
+      { icon: '🏄', label: { en: 'SUP & Kayak', zh: '桨板与皮划艇' } },
+      { icon: '🎣', label: { en: 'Fishing Pier', zh: '湖畔垂钓区' } },
+      { icon: '🌌', label: { en: 'Star-Gazing Skylight', zh: '星空天窗' } },
+      { icon: '🎤', label: { en: 'KTV', zh: 'KTV包厢' } },
+      { icon: '🍽', label: { en: 'Farm-to-Table Dining', zh: '本地农家菜' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Guangzhou / Shenzhen via G25 — ~1.5–2h drive' }, { mode: '✈️', text: 'Shenzhen Airport — ~2h drive' }, { mode: '🚂', text: 'Heyuan Station — then taxi ~40 min' }],
+      zh: [{ mode: '🚗', text: '广深沿G25高速 — 约1.5-2小时' }, { mode: '✈️', text: '深圳机场 — 约2小时' }, { mode: '🚂', text: '河源站 — 转出租约40分钟' }],
+    },
+    nearby: {
+      en: [{ name: 'Wanlv Lake (National Scenic Area)', distance: 'On-site' }, { name: 'New Fengmen Island', distance: '~10 km (boat)' }, { name: 'Heyuan City Center', distance: '~40 km' }],
+      zh: [{ name: '万绿湖国家级风景区', distance: '园区内' }, { name: '新丰门岛', distance: '约10公里（船）' }, { name: '河源市区', distance: '约40公里' }],
+    },
+    images: ['/images/projects/guangdong-heyuan/image-01.jpg', '/images/projects/guangdong-heyuan/image-02.jpg', '/images/projects/guangdong-heyuan/image-03.jpg', '/images/projects/guangdong-heyuan/image-04.jpg', '/images/projects/guangdong-heyuan/image-05.jpg', '/images/projects/guangdong-heyuan/image-06.jpg', '/images/projects/guangdong-heyuan/image-07.jpg', '/images/projects/guangdong-heyuan/image-08.png'],
+  },
+
   // ─── 内蒙古 · 乌海漠海山境露营地 ───
   {
     id: 'wuhai-desert',
