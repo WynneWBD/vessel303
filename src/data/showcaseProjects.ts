@@ -1097,7 +1097,7 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
     id: 'shanxi-yunqiu',
     name: { en: 'Qingye HOME Hotel — Yunqiu Mountain', zh: '山西云丘山轻野·HOME酒店' },
     location: { en: 'Yunqiu Mountain 5A Scenic Area, Xiangning County, Linfen, Shanxi, China', zh: '中国山西·临汾市乡宁县·云丘山5A景区·海拔1330米悬崖边' },
-    coordinates: [110.8361, 36.0494],
+    coordinates: [111.02, 35.74],
     country: '🇨🇳',
     openDate: 'TBD',
     units: 10,
