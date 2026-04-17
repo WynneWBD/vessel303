@@ -25,6 +25,48 @@ const STYLE_URL = `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=
 
 const DEALER_COUNTRIES = ['俄罗斯', '台湾', '沙特阿拉伯', '阿联酋', '韩国', '美国']
 
+// ── EN label helpers for camp hover popup ─────────────────────────────────────
+const COUNTRY_EN: Record<string, string> = {
+  '中国': 'China', '俄罗斯': 'Russia', '利比亚': 'Libya', '印度': 'India',
+  '印度尼西亚': 'Indonesia', '吉尔吉斯坦': 'Kyrgyzstan', '坦桑尼亚': 'Tanzania',
+  '塞浦路斯': 'Cyprus', '墨西哥': 'Mexico', '奥地利': 'Austria',
+  '巴基斯坦': 'Pakistan', '巴西': 'Brazil', '德国': 'Germany',
+  '斯洛伐克': 'Slovakia', '新西兰': 'New Zealand', '日本': 'Japan',
+  '柬埔寨': 'Cambodia', '沙特阿拉伯': 'Saudi Arabia', '泰国': 'Thailand',
+  '澳大利亚': 'Australia', '爱尔兰': 'Ireland', '罗马尼亚': 'Romania',
+  '美国': 'USA', '荷兰': 'Netherlands', '蒙古国': 'Mongolia',
+  '西班牙': 'Spain', '越南': 'Vietnam', '迪拜(阿联酋)': 'Dubai, UAE',
+  '阿根廷': 'Argentina', '韩国': 'South Korea', '马来西亚': 'Malaysia',
+  '中东': 'Middle East',
+}
+const PROVINCE_EN: Record<string, string> = {
+  '上海': 'Shanghai', '云南': 'Yunnan', '内蒙古': 'Inner Mongolia',
+  '北京': 'Beijing', '台湾': 'Taiwan', '吉林': 'Jilin', '四川': 'Sichuan',
+  '天津': 'Tianjin', '安徽': 'Anhui', '安徽/江苏': 'Anhui / Jiangsu',
+  '山东': 'Shandong', '山西': 'Shanxi', '广东': 'Guangdong', '广西': 'Guangxi',
+  '新疆': 'Xinjiang', '江苏': 'Jiangsu', '江西': 'Jiangxi', '河北': 'Hebei',
+  '河南': 'Henan', '浙江': 'Zhejiang', '海南': 'Hainan', '湖北': 'Hubei',
+  '湖南': 'Hunan', '甘肃': 'Gansu', '福建': 'Fujian', '西藏': 'Tibet',
+  '贵州': 'Guizhou', '辽宁': 'Liaoning', '重庆': 'Chongqing',
+  '陕西': 'Shaanxi', '青海': 'Qinghai', '黑龙江': 'Heilongjiang',
+  // overseas sub-regions
+  '南卡罗来纳州': 'South Carolina', '密歇根州': 'Michigan', '德克萨斯州': 'Texas',
+  '富山县': 'Toyama', '茨城县': 'Ibaraki', '香川县': 'Kagawa',
+  '清迈府': 'Chiang Mai', '维多利亚州': 'Victoria',
+  '摩尔曼斯克州': 'Murmansk Oblast', '巴什科尔托斯坦共和国': 'Bashkortostan',
+  '迪拜': 'Dubai',
+}
+
+function campLabelEn(country: string, province: string): string {
+  const countryEn = COUNTRY_EN[country] || country
+  if (country === '中国' || country === '中国（内部）') {
+    const provEn = province !== '—' ? PROVINCE_EN[province] : null
+    return provEn ? `${provEn}, China` : 'China'
+  }
+  const provEn = province !== '—' ? PROVINCE_EN[province] : null
+  return provEn ? `${countryEn} · ${provEn}` : countryEn
+}
+
 const HQ = {
   lng: HQ_PROJECT.coordinates[0],   // 113.0021 — OSM-verified Shishan Town
   lat: HQ_PROJECT.coordinates[1],   // 23.1247
@@ -230,6 +272,7 @@ export default function GlobalMapML({
         properties: {
           index: i,
           name: camp.name,
+          nameEn: campLabelEn(camp.country, camp.province),
           isDealer: DEALER_COUNTRIES.includes(camp.country),
           radius: Math.max(5, Math.sqrt(camp.total) * 1.2),
         },
@@ -261,8 +304,11 @@ export default function GlobalMapML({
         const feats = (e as { features?: { geometry: unknown; properties: Record<string, unknown> }[] }).features
         if (feats?.length) {
           const coords = (feats[0].geometry as GeoJSON.Point).coordinates as [number, number]
-          const name = (feats[0].properties?.name ?? '') as string
-          hoverPopup.setLngLat(coords).setText(name).addTo(map)
+          const props = feats[0].properties ?? {}
+          const label = isZhRef.current
+            ? (props.name ?? '') as string
+            : (props.nameEn ?? props.name ?? '') as string
+          hoverPopup.setLngLat(coords).setText(label).addTo(map)
         }
       })
       map.on('mouseleave', 'camps-layer', () => {
