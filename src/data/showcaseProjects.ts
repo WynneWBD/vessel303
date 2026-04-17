@@ -1162,6 +1162,181 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
     images: ['/images/projects/sichuan-chengdu/image-01.jpg', '/images/projects/sichuan-chengdu/image-02.jpg', '/images/projects/sichuan-chengdu/image-03.jpg', '/images/projects/sichuan-chengdu/image-04.jpg', '/images/projects/sichuan-chengdu/image-05.jpg'],
   },
 
+  // ─── 四川 · 轿顶山麋鹿生活营 ───
+  {
+    id: 'sichuan-jiaoding',
+    name: { en: 'Elk Life Camp — Jiaoding Mountain', zh: '四川轿顶山麋鹿生活营' },
+    location: { en: 'Jiaoding Mountain Scenic Area, Hanyuan County, Ya\'an, Sichuan, China', zh: '中国四川·雅安市汉源县·轿顶山景区·海拔3500米高山观景带' },
+    coordinates: [102.5391, 29.3732],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: null,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'A luxury alpine glamping camp at 3,500 m on Jiaoding Mountain, Hanyuan — unobstructed face-on views of Gongga Snow Mountain (7,556 m). Space capsules with smart control, private bath and heating gear positioned on a panoramic ridge for sunrise, cloud-sea, sunset and Milky Way stargazing. Adjacent to Hanyuan Lake for lakeside strolling.',
+      zh: '位于四川雅安汉源县轿顶山景区海拔3500米高山观景带，视野开阔无遮挡，可直面贡嘎雪山（7556米）。太空舱配智能系统、独立卫浴与保暖设备，轻松观赏日出、云海、晚霞与银河星空，邻近汉源湖，可环湖漫步与休闲垂钓。',
+    },
+    amenities: [
+      { icon: '🏔', label: { en: '3500m Alpine Ridge', zh: '海拔3500米高山' } },
+      { icon: '🗻', label: { en: 'Gongga Snow Mountain View', zh: '直面贡嘎雪山' } },
+      { icon: '🌌', label: { en: 'Milky Way Stargazing', zh: '银河星空观赏' } },
+      { icon: '☁️', label: { en: 'Cloud Sea & Sunrise', zh: '云海与日出' } },
+      { icon: '🦌', label: { en: 'Elk & Wild Life', zh: '麋鹿等野生动物' } },
+      { icon: '🎣', label: { en: 'Hanyuan Lake Fishing', zh: '汉源湖垂钓' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Chengdu via G5 — ~4h drive' }, { mode: '🚗', text: 'From Ya\'an via G318 — ~2h drive' }, { mode: '✈️', text: 'Chengdu Tianfu Airport — ~4h drive' }],
+      zh: [{ mode: '🚗', text: '成都沿G5 — 约4小时' }, { mode: '🚗', text: '雅安沿G318 — 约2小时' }, { mode: '✈️', text: '天府国际机场 — 约4小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Jiaoding Mountain Summit Viewpoint', distance: 'On-site' }, { name: 'Hanyuan Lake', distance: '~30 km' }, { name: 'Luding Bridge (Historic)', distance: '~80 km' }],
+      zh: [{ name: '轿顶山全景观景台', distance: '营地内' }, { name: '汉源湖', distance: '约30公里' }, { name: '泸定桥（历史名胜）', distance: '约80公里' }],
+    },
+    images: ['/images/projects/sichuan-jiaoding/image-01.jpg', '/images/projects/sichuan-jiaoding/image-02.jpg', '/images/projects/sichuan-jiaoding/image-03.png', '/images/projects/sichuan-jiaoding/image-04.png', '/images/projects/sichuan-jiaoding/image-05.png'],
+  },
+
+  // ─── 四川 · 遂宁烟火里帐篷营地 ───
+  {
+    id: 'sichuan-suining',
+    name: { en: 'Yanhuoli Tent Camp — Suining', zh: '四川遂宁烟火里帐篷营地' },
+    location: { en: 'Yangsheng Valley, Hedong New District, Chuanshan District, Suining, Sichuan, China', zh: '中国四川·遂宁市船山区·河东新区灵泉大道养生谷·紧邻灵泉风景区' },
+    coordinates: [105.5926, 30.5332],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: null,
+    unitArea: null,
+    guests: '2-6',
+    bookingUrl: '',
+    description: {
+      en: 'A 70,000 m² urban-edge glamping complex adjacent to Lingquan Scenic Area (Guanyin culture), Suining — star rooms, tree houses, boat suites and luxury tents scattered through forest, open 24 hours with free park entry. Famous for colorful rapeseed flower fields in spring (Mar–Apr), weekend bonfire parties and whole-roasted lamb for groups of 8–10.',
+      zh: '坐落于四川遂宁灵泉大道养生谷，紧邻中国观音故里灵泉风景区，占地7万余㎡，24小时开放，免费入园。星空房、树屋、船屋与轻奢帐篷散落林间，春季3-4月彩色油菜花田是热门打卡地，周末有篝火晚会与烤全羊，配套田园餐厅和亲子拓展区。',
+    },
+    amenities: [
+      { icon: '🌸', label: { en: 'Spring Rapeseed Flower Fields', zh: '春季彩色油菜花田' } },
+      { icon: '🏕', label: { en: '24-Hour Open Camp', zh: '24小时开放免费入园' } },
+      { icon: '🐑', label: { en: 'Whole Roasted Lamb', zh: '烤全羊盛宴' } },
+      { icon: '🌲', label: { en: 'Tree Houses & Boat Suites', zh: '树屋与船屋' } },
+      { icon: '🎪', label: { en: 'Bonfire & Live Music', zh: '篝火晚会与演出' } },
+      { icon: '👨‍👩‍👧', label: { en: 'Kids Adventure Zone', zh: '亲子拓展区' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'Suining city center — ~10 min drive' }, { mode: '🚂', text: 'Suining High-Speed Station — ~20 min drive' }, { mode: '🚗', text: 'From Chengdu via G75 — ~2h drive' }],
+      zh: [{ mode: '🚗', text: '遂宁市区 — 约10分钟' }, { mode: '🚂', text: '遂宁高铁站 — 约20分钟' }, { mode: '🚗', text: '成都沿G75 — 约2小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Lingquan Scenic Area (Guanyin Culture)', distance: 'Walking' }, { name: 'Hedong New District Commercial Center', distance: '~10 min drive' }, { name: 'Suining Ancient City', distance: '~20 min drive' }],
+      zh: [{ name: '灵泉风景区（观音故里）', distance: '步行可达' }, { name: '河东新区核心商圈', distance: '约10分钟' }, { name: '遂宁古城', distance: '约20分钟' }],
+    },
+    images: ['/images/projects/sichuan-suining/image-01.jpg', '/images/projects/sichuan-suining/image-02.jpg', '/images/projects/sichuan-suining/image-03.jpg', '/images/projects/sichuan-suining/image-04.jpg', '/images/projects/sichuan-suining/image-05.jpg'],
+  },
+
+  // ─── 台湾 · 惠来大雪山营地 ───
+  {
+    id: 'taiwan-daxueshan',
+    name: { en: 'Daxueshan Mountain Camp', zh: '台湾惠来大雪山营地' },
+    location: { en: 'Daxueshan National Forest Recreation Area, Heping District, Taichung, Taiwan, China', zh: '中国台湾·台中市和平区·大雪山国家森林游乐区·海拔1800-2996米' },
+    coordinates: [121.0, 24.26],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: null,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'VESSEL V5 Gen5 capsules installed in Daxueshan National Forest Recreation Area, Taichung — altitude 1,800–2,996 m among ancient red cypress groves. Zero-pollution installation preserves the original mountain forest; capsules hide among pine and cypress with panoramic windows, full smart systems and private bath. Four-season scenery: spring flowers, summer cool, autumn maple, winter snow.',
+      zh: '台湾台中大雪山国家森林游乐区，海拔1800-2996米，VESSEL V5 Gen5太空舱零污染安装，不破坏原生山林，舱体隐于苍松翠柏间。配全景落地窗、全屋智能与独立卫浴，可卧赏云海星空。春赏花、夏避暑、秋观枫、冬览雪景，可邂逅山羌、帝雉等珍稀动植物。',
+    },
+    amenities: [
+      { icon: '🌲', label: { en: 'Ancient Red Cypress Forest', zh: '千年红桧神木群' } },
+      { icon: '🌌', label: { en: 'Cloud Sea & Stars', zh: '云海与星空观赏' } },
+      { icon: '🦌', label: { en: 'Mikado Pheasant & Wildlife', zh: '帝雉等珍稀野生动物' } },
+      { icon: '🍁', label: { en: '4-Season Mountain Views', zh: '四季山林风光' } },
+      { icon: '🥾', label: { en: 'Forest Bath Trails', zh: '森林浴步道' } },
+      { icon: '🔭', label: { en: 'Stargazing Activity', zh: '夜间观星活动' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Taichung city via Taiwan Route 8 — ~2.5h drive' }, { mode: '🚗', text: 'From Dongshi District, Taichung — ~1.5h drive' }, { mode: '✈️', text: 'Taichung Airport — ~2h drive' }],
+      zh: [{ mode: '🚗', text: '台中市区沿台8线 — 约2.5小时' }, { mode: '🚗', text: '台中东势区 — 约1.5小时' }, { mode: '✈️', text: '台中清泉岗机场 — 约2小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Daxueshan Summit (2996 m)', distance: 'In park' }, { name: 'Dongshi Forest Recreation Area', distance: '~1h drive' }, { name: 'Guguan Hot Springs', distance: '~1.5h drive' }],
+      zh: [{ name: '大雪山主峰（2996米）', distance: '景区内' }, { name: '东势林场', distance: '约1小时' }, { name: '谷关温泉', distance: '约1.5小时' }],
+    },
+    images: ['/images/projects/taiwan-daxueshan/image-01.jpg', '/images/projects/taiwan-daxueshan/image-02.jpg', '/images/projects/taiwan-daxueshan/image-03.jpg', '/images/projects/taiwan-daxueshan/image-04.jpg'],
+  },
+
+  // ─── 西藏 · 加拉桃源雪峰温泉民宿 ───
+  {
+    id: 'tibet-jiala',
+    name: { en: 'Jiala Peach Blossom Snow Peak Hot Spring Inn', zh: '西藏加拉桃源雪峰温泉民宿' },
+    location: { en: 'Yusong Village, Pai Town, Milin (Mainling) City, Nyingchi, Tibet, China', zh: '中国西藏·林芝市米林市派镇玉松村·雅鲁藏布大峡谷核心地带·海拔3100米' },
+    coordinates: [95.0, 29.6],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: null,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'A high-altitude secret retreat at 3,100 m in Pai Town, Nyingchi — facing Namcha Barwa (7,782 m) and beside 100+ acres of wild peach blossom. Three room series: panoramic 5 m floor-to-ceiling star rooms, 260° smart Tibetan suites, and traditional Tibetan rooms. Natural hot-spring pools open at night for snow-mountain soaking. Oxygen supply available for altitude comfort.',
+      zh: '藏于雅鲁藏布大峡谷核心地带，海拔3100米，直面"西藏众山之父"南迦巴瓦峰（7782米），毗邻百亩野生桃花园。三大系列住宿：5米全景落地窗星空观景房、260度全景智能藏式客房、传统藏式客房。20点开放温泉池边泡汤远眺雪山，备有夜间供氧系统。',
+    },
+    amenities: [
+      { icon: '🌸', label: { en: 'Wild Peach Blossom (Mar–Apr)', zh: '百亩野生桃花（3-4月）' } },
+      { icon: '🏔', label: { en: 'Namcha Barwa View', zh: '直面南迦巴瓦峰' } },
+      { icon: '♨️', label: { en: 'Natural Hot Spring (Night)', zh: '天然温泉（夜间开放）' } },
+      { icon: '🫧', label: { en: 'Night Oxygen System', zh: '夜间供氧系统' } },
+      { icon: '🍲', label: { en: 'Tibetan Cuisine & Butter Tea', zh: '藏香猪火锅与酥油茶' } },
+      { icon: '🙏', label: { en: 'Mani Pile Blessing Walk', zh: '玛尼堆祈福' } },
+    ],
+    transport: {
+      en: [{ mode: '🚗', text: 'From Lhasa via G318 — ~4h drive' }, { mode: '🚂', text: 'Lhasa Station — Nyingchi by train ~3.5h, then drive ~1.5h' }, { mode: '✈️', text: 'Nyingchi Mainling Airport — ~1h drive' }],
+      zh: [{ mode: '🚗', text: '拉萨沿G318国道 — 约4小时' }, { mode: '🚂', text: '拉萨站乘动车至林芝约3.5小时，再驾车约1.5小时' }, { mode: '✈️', text: '林芝米林机场 — 约1小时' }],
+    },
+    nearby: {
+      en: [{ name: 'Namcha Barwa Base Camp', distance: '~1.5 km' }, { name: 'Ancient Millennium Mulberry Tree', distance: '~5 km' }, { name: 'Yarlung Tsangpo Grand Canyon', distance: '~20 km' }],
+      zh: [{ name: '南迦巴瓦峰大本营', distance: '约1.5公里' }, { name: '千年古桑树', distance: '约5公里' }, { name: '雅鲁藏布大峡谷', distance: '约20公里' }],
+    },
+    images: ['/images/projects/tibet-jiala/image-01.webp', '/images/projects/tibet-jiala/image-02.webp', '/images/projects/tibet-jiala/image-03.webp', '/images/projects/tibet-jiala/image-04.webp', '/images/projects/tibet-jiala/image-05.webp', '/images/projects/tibet-jiala/image-06.webp', '/images/projects/tibet-jiala/image-07.webp'],
+  },
+
+  // ─── 新疆 · 伊犁黑蜂庄园生态酒店 ───
+  {
+    id: 'xinjiang-yili',
+    name: { en: 'Black Bee Manor Eco Hotel — Tangbula Grassland', zh: '新疆伊犁黑蜂庄园生态酒店' },
+    location: { en: 'Tangbula Grassland, Nilka County, Ili Kazakh Autonomous Prefecture, Xinjiang, China', zh: '中国新疆·伊犁哈萨克自治州尼勒克县·唐布拉草原·海拔1600米' },
+    coordinates: [82.8225, 43.7978],
+    country: '🇨🇳',
+    openDate: 'TBD',
+    units: null,
+    unitArea: null,
+    guests: '2-4',
+    bookingUrl: '',
+    description: {
+      en: 'Ili Valley\'s first bee-culture themed eco hotel at 1,600 m on Tangbula Grassland — VESSEL capsules, luxury log cabins, Kazakh yurts and star-gazing tents. VESSEL panoramic capsules with smart climate control and private bath overlook snow peaks and streams. Fresh honey pressing, horse riding, wildflower hiking and Kazakh nomadic cultural immersion.',
+      zh: '伊犁河谷首家蜂文化主题生态酒店，位于尼勒克县唐布拉草原海拔1600米，是唐布拉百里画廊起点地标。VESSEL 微宿太空舱全景通透，推窗即见草原雪山与溪流，配套割蜜工坊、高加索餐厅、草原骑马与千人露营地，可明火烧烤自助扎营。',
+    },
+    amenities: [
+      { icon: '🐝', label: { en: 'Black Bee Honey Experience', zh: '黑蜂割蜜工坊体验' } },
+      { icon: '🏔', label: { en: 'Tian Shan Snow Mountain Views', zh: '天山雪山全景' } },
+      { icon: '🐎', label: { en: 'Horse Riding & Grassland', zh: '草原骑马' } },
+      { icon: '🌸', label: { en: 'Wildflower Valley Hiking', zh: '花海徒步' } },
+      { icon: '🏕', label: { en: 'Thousand-Person Camp', zh: '千人露营地' } },
+      { icon: '🥘', label: { en: 'Caucasus Restaurant', zh: '高加索餐厅' } },
+    ],
+    transport: {
+      en: [{ mode: '✈️', text: 'Narat Airport (Xinyuan) — ~69 km / ~50 min drive' }, { mode: '🚗', text: 'From Yining city via S315 — ~2.5h drive' }, { mode: '🚗', text: 'Self-drive on Yili Scenic Ring Road (Golden Route)' }],
+      zh: [{ mode: '✈️', text: '那拉提机场（新源）— 约69公里/50分钟' }, { mode: '🚗', text: '伊宁市沿S315省道 — 约2.5小时' }, { mode: '🚗', text: '伊犁自驾黄金线路经过此地' }],
+    },
+    nearby: {
+      en: [{ name: 'Tangbula 100 km Scenic Corridor', distance: 'Starting point' }, { name: 'Narat National Scenic Area', distance: '~100 km' }, { name: 'Sailimu Lake', distance: '~150 km' }],
+      zh: [{ name: '唐布拉百里画廊', distance: '起点' }, { name: '那拉提国家级风景区', distance: '约100公里' }, { name: '赛里木湖', distance: '约150公里' }],
+    },
+    images: ['/images/projects/xinjiang-yili/image-01.jpg', '/images/projects/xinjiang-yili/image-02.jpg', '/images/projects/xinjiang-yili/image-03.jpg', '/images/projects/xinjiang-yili/image-04.jpg', '/images/projects/xinjiang-yili/image-05.jpg'],
+  },
+
   // ─── 内蒙古 · 乌海漠海山境露营地 ───
   {
     id: 'wuhai-desert',
