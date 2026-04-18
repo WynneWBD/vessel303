@@ -56,42 +56,42 @@ const STATS = [
 
 const TIMELINE = [
   {
-    year: '2018', img: '/images/about/about_milestone-01.jpg',
+    year: '2018',
     en: 'Studio 303 Design establishes VESSEL®. First steel-framed prototype completed. First production base set up in Sanshui, Foshan.',
     zh: 'Studio 303 设计创立 VESSEL 微宿®，完成首台钢结构原型，佛山三水首个生产基地建立。',
   },
   {
-    year: '2019', img: null,
+    year: '2019',
     en: 'E7 (originally C70) launches. Featured live on CCTV National News. Projects delivered to Hebei and Sichuan.',
     zh: 'E7（原 C70）发布，登上央视新闻直播间，河北、四川项目落地。',
   },
   {
-    year: '2020', img: null,
+    year: '2020',
     en: 'V Series and E5 launch. Joint R&D partnerships formed with China Aerospace and CRRC.',
     zh: 'V 系列与 E5 发布，与中国航天、中车集团开展联合研发。',
   },
   {
-    year: '2021', img: null,
+    year: '2021',
     en: 'Second production base established. Projects across Inner Mongolia, Yunnan, and Sichuan.',
     zh: '南沙第二生产基地建立，内蒙古、云南、四川等地项目落地。',
   },
   {
-    year: '2022', img: '/images/about/about_milestone-02.jpg',
+    year: '2022',
     en: 'S5 launched. R&D Center opens in Shishan, Foshan. Awarded High-Tech Enterprise status. Projects now cover all provinces.',
     zh: 'S5 发布，佛山狮山研发中心成立，获高新技术企业认定，落地项目覆盖全国全省份。',
   },
   {
-    year: '2023', img: null,
+    year: '2023',
     en: 'E7 certified for Japan (Kyushu). Delivered to Iran and Saudi Arabia (+55°C). Strategic partnership with Lotus Cars. North America expansion with Massimo Corp.',
     zh: 'E7 获日本（九州）认证，成功交付伊朗、沙特（+55°C）。与 Lotus Cars 太阳能建筑战略合作，与 Massimo Corp. 拓展北美市场。',
   },
   {
-    year: '2024', img: null,
+    year: '2024',
     en: 'E3 Gen6 and E6 Gen6 launch. Huawei Smart Home partnership. Projects at Qatar Lake. Qinghai Lake winter test completed (−32°C).',
     zh: 'E3 Gen6、E6 Gen6 发布，华为智能家居合作，青海湖极寒测试（−32°C）完成。',
   },
   {
-    year: '2025', img: '/images/about/about_milestone-03.jpg',
+    year: '2025',
     en: 'E7 Gen6 launches. Multiple international certifications passed. Debut at St. Petersburg International Economic Forum. Canton Fair participation.',
     zh: 'E7 Gen6 发布，通过多项国际权威认证，亮相圣彼得堡国际经济论坛，参展广交会。',
   },
@@ -101,21 +101,13 @@ const AWARDS = Array.from({ length: 13 }, (_, i) => `/images/about/about_award-$
 
 const PARTNERS = Array.from({ length: 33 }, (_, i) => `/images/about/about_partner-${String(i + 1).padStart(2, '0')}.png`);
 
-const FACTORY_IMGS = [
-  '/images/about/about_factory-01.jpg',
-  '/images/about/about_factory-02.jpg',
+// factory-02 used in brand story; remaining: 01(hero) + 03/04/05/06 (grid)
+const FACTORY_HERO = '/images/about/about_factory-01.jpg';
+const FACTORY_GRID = [
   '/images/about/about_factory-03.jpg',
   '/images/about/about_factory-04.jpg',
   '/images/about/about_factory-05.jpg',
   '/images/about/about_factory-06.png',
-];
-
-const TEAM_IMGS = [
-  '/images/about/about_team-01.jpg',
-  '/images/about/about_team-02.jpg',
-  '/images/about/about_team-03.jpg',
-  '/images/about/about_team-04.jpg',
-  '/images/about/about_team-05.jpg',
 ];
 
 const SERVICES = [
@@ -242,8 +234,8 @@ export default function AboutPage() {
           <Reveal delay={80} from="right" className="relative">
             <div className="relative aspect-[4/5] overflow-hidden">
               <Image
-                src="/images/about/about_scene-02.jpg"
-                alt="VESSEL project"
+                src="/images/about/about_factory-02.jpg"
+                alt="VESSEL factory aerial"
                 fill
                 className="object-cover"
                 unoptimized
@@ -280,15 +272,22 @@ export default function AboutPage() {
             </div>
           </Reveal>
 
-          {/* masonry-style grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-            {FACTORY_IMGS.map((src, i) => (
-              <Reveal key={src} delay={i * 60} className={i === 0 ? 'col-span-2 lg:col-span-1 row-span-2' : ''}>
-                <div className={`relative overflow-hidden ${i === 0 ? 'aspect-[3/4]' : 'aspect-[4/3]'}`}>
-                  <Image src={src} alt={`VESSEL factory ${i + 1}`} fill className="object-cover hover:scale-105 transition-transform duration-700" unoptimized />
-                </div>
-              </Reveal>
-            ))}
+          {/* factory grid B: full-width hero + 2-col small grid */}
+          <div className="flex flex-col gap-2">
+            <Reveal>
+              <div className="relative w-full rounded-sm overflow-hidden" style={{ aspectRatio: '16/9' }}>
+                <Image src={FACTORY_HERO} alt="VESSEL factory" fill className="object-cover hover:scale-105 transition-transform duration-700" unoptimized />
+              </div>
+            </Reveal>
+            <div className="grid grid-cols-2 gap-2">
+              {FACTORY_GRID.map((src, i) => (
+                <Reveal key={src} delay={i * 60}>
+                  <div className="relative rounded-sm overflow-hidden" style={{ aspectRatio: '4/3' }}>
+                    <Image src={src} alt={`VESSEL factory ${i + 2}`} fill className="object-cover hover:scale-105 transition-transform duration-700" unoptimized />
+                  </div>
+                </Reveal>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -311,7 +310,7 @@ export default function AboutPage() {
           <div className="space-y-0">
             {TIMELINE.map((item, i) => (
               <Reveal key={item.year} delay={i * 40}>
-                <div className={`grid sm:grid-cols-[120px_1fr] lg:grid-cols-[120px_1fr_280px] gap-0 border-t border-[#E5E0DA] py-7 group ${i === TIMELINE.length - 1 ? 'border-b' : ''}`}>
+                <div className={`grid sm:grid-cols-[120px_1fr] gap-0 border-t border-[#E5E0DA] py-7 group ${i === TIMELINE.length - 1 ? 'border-b' : ''}`}>
                   <div className="flex items-start pt-1">
                     <span
                       className="text-3xl font-bold text-[#E36F2C] group-hover:text-[#C85A1F] transition-colors"
@@ -321,18 +320,11 @@ export default function AboutPage() {
                     </span>
                   </div>
                   <p
-                    className="text-[#1A1A1A]/70 text-sm sm:text-base leading-relaxed pr-8"
+                    className="text-[#1A1A1A]/70 text-sm sm:text-base leading-relaxed"
                     style={{ fontFamily: 'Inter, sans-serif' }}
                   >
                     {zh ? item.zh : item.en}
                   </p>
-                  {item.img ? (
-                    <div className="hidden lg:block relative aspect-[16/9] overflow-hidden mt-1">
-                      <Image src={item.img} alt={item.year} fill className="object-cover" unoptimized />
-                    </div>
-                  ) : (
-                    <div className="hidden lg:block" />
-                  )}
                 </div>
               </Reveal>
             ))}
@@ -340,59 +332,48 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── S6 Team ──────────────────────────────────────────── */}
+      {/* ── S6 Founder ───────────────────────────────────────── */}
       <section className="bg-[#1A1A1A] py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-12">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
               {zh ? '团队' : 'Team'}
             </p>
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-              <h2
-                className="text-4xl sm:text-5xl font-bold text-[#F0F0F0]"
-                style={{ fontFamily: 'DM Sans, sans-serif' }}
-              >
-                {zh ? '75 人精英团队' : '75 People.\nOne Mission.'}
-              </h2>
-              <p className="text-[#8A8580] text-sm max-w-sm leading-relaxed">
-                {zh
-                  ? '设计师、工程师、销售与运营，共同打造全球领先的文旅装配建筑品牌。'
-                  : 'Designers, engineers, sales and operations — united around building the world\'s leading prefab camp resort brand.'}
-              </p>
-            </div>
+            <h2
+              className="text-4xl sm:text-5xl font-bold text-[#F0F0F0]"
+              style={{ fontFamily: 'DM Sans, sans-serif' }}
+            >
+              {zh ? '100+ 人精英团队' : '100+ Expert Team'}
+            </h2>
           </Reveal>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {TEAM_IMGS.map((src, i) => (
-              <Reveal key={src} delay={i * 60}>
-                <div className="relative aspect-[3/4] overflow-hidden">
-                  <Image src={src} alt={`VESSEL team ${i + 1}`} fill className="object-cover grayscale hover:grayscale-0 transition-all duration-500" unoptimized />
-                </div>
-              </Reveal>
-            ))}
-          </div>
-
-          {/* Founder note */}
-          <Reveal delay={200} className="mt-14 border-t border-[#2A2A2E] pt-10 grid lg:grid-cols-[auto_1fr] gap-8 items-start">
-            <div className="w-20 h-20 rounded-full bg-[#E36F2C] flex items-center justify-center shrink-0 mx-auto lg:mx-0">
-              <span className="text-white text-3xl font-bold" style={{ fontFamily: 'DM Sans, sans-serif' }}>W</span>
+          {/* Founder */}
+          <Reveal delay={100} className="grid lg:grid-cols-[256px_1fr] gap-10 items-start">
+            <div className="w-64 h-64 rounded-full overflow-hidden shrink-0 mx-auto lg:mx-0 relative">
+              <Image
+                src="/images/about/about_team-05.jpg"
+                alt="Wang Shuaibin"
+                fill
+                className="object-cover object-top"
+                unoptimized
+              />
             </div>
-            <div>
-              <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-2">
+            <div className="pt-2">
+              <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
                 {zh ? '创始人 & 首席设计师' : 'Founder & Chief Designer'}
               </p>
-              <p className="text-[#F0F0F0] text-xl font-bold mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              <p className="text-[#F0F0F0] text-3xl font-bold mb-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                 {zh ? '王帅斌' : 'Wang Shuaibin'}
               </p>
-              <p className="text-[#8A8580] text-xs tracking-wider mb-4">
+              <p className="text-[#8A8580] text-sm tracking-wider mb-6">
                 {zh ? '建筑师 · 企业家 · 先行者' : 'Architect · Entrepreneur · Visionary'}
               </p>
-              <p className="text-[#F0F0F0]/60 text-sm leading-relaxed max-w-2xl" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <p className="text-[#F0F0F0]/65 text-base leading-relaxed max-w-2xl mb-6" style={{ fontFamily: 'Inter, sans-serif' }}>
                 {zh
-                  ? '王帅斌于 2018 年创立 VESSEL 微宿，以国际建筑师视野重新定义中国文旅行业。他持有英国邓迪大学建筑学硕士（RIBA Part II 认证）及美国圣路易斯华盛顿大学建筑学硕士学位，曾任职于纽约华尔街 SOM 建筑设计事务所。'
-                  : 'Wang Shuaibin founded VESSEL in 2018, bringing an international architectural perspective to the cultural tourism industry. He holds Master of Architecture degrees from the University of Dundee (RIBA Part II) and Washington University in St. Louis, and previously worked at SOM Architects on Wall Street, New York City.'}
+                  ? '王帅斌于 2018 年创立 VESSEL 微宿，以国际建筑师视野重新定义中国文旅行业。他持有英国邓迪大学建筑学硕士（RIBA Part II 认证）及美国圣路易斯华盛顿大学建筑学硕士学位，曾任职于纽约华尔街 SOM 建筑设计事务所。在他的带领下，微宿开创了"太空主题高端度假营地"品类，成长为出口 30 余国的全球知名品牌。'
+                  : 'Wang Shuaibin founded VESSEL in 2018, bringing an international architectural perspective to the cultural tourism industry. He holds Master of Architecture degrees from the University of Dundee (RIBA Part II) and Washington University in St. Louis, and previously worked at SOM Architects on Wall Street, New York City. Under his leadership, VESSEL pioneered the space-themed luxury camp resort category and has grown into a globally recognised brand with exports across 30+ countries.'}
               </p>
-              <div className="flex flex-wrap gap-2 mt-4">
+              <div className="flex flex-wrap gap-2">
                 {['Univ. of Dundee — RIBA Part II', 'Washington Univ. in St. Louis — M.Arch', 'SOM Architects — NYC'].map(tag => (
                   <span key={tag} className="text-xs px-3 py-1.5 border border-[#2A2A2E] text-[#8A8580] tracking-wider">{tag}</span>
                 ))}
@@ -514,48 +495,39 @@ export default function AboutPage() {
       </section>
 
       {/* ── S10 Global reach ─────────────────────────────────── */}
-      <section className="bg-[#1A1A1A] py-24 px-6">
+      <section className="bg-[#1A1A1A] py-16 px-6">
         <div className="max-w-6xl mx-auto">
-          <Reveal className="mb-10">
+          <Reveal className="mb-8">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
-              {zh ? '全球版图' : 'Global Presence'}
+              {zh ? '全球版图' : 'Global Footprint'}
             </p>
             <h2
               className="text-4xl sm:text-5xl font-bold text-[#F0F0F0]"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
             >
-              {zh ? '六大洲，30+ 国家' : '30+ Countries\nAcross Six Continents'}
+              {zh ? '六大洲，30+ 国家' : 'Six Continents, 30+ Countries'}
             </h2>
           </Reveal>
 
           <Reveal delay={80}>
-            <div className="relative aspect-[16/7] overflow-hidden mb-8">
-              <Image
-                src="/images/about/about_globalmap-01.jpg"
-                alt="VESSEL global presence"
-                fill
-                className="object-cover object-center"
-                unoptimized
+            <div className="rounded-lg overflow-hidden border border-[#2A2A2E]" style={{ height: '520px' }}>
+              <iframe
+                src="/global"
+                width="100%"
+                height="520"
+                style={{ border: 'none', display: 'block' }}
+                title={zh ? '微宿全球版图' : 'VESSEL Global Map'}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A]/60 to-transparent" />
+            </div>
+            <div className="mt-4 text-right">
+              <Link
+                href="/global"
+                className="text-[#E36F2C] hover:text-[#C85A1F] text-sm font-medium tracking-wider transition-colors"
+              >
+                {zh ? '查看完整全球地图 →' : 'View Full Global Map →'}
+              </Link>
             </div>
           </Reveal>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              { value: '30+', en: 'Countries', zh: '出口国家' },
-              { value: '6',   en: 'Continents', zh: '覆盖大洲' },
-              { value: '300+',en: 'Projects',  zh: '落地项目' },
-              { value: '8M+', en: 'Followers', zh: '全网粉丝' },
-            ].map((s, i) => (
-              <Reveal key={s.value} delay={i * 60}>
-                <div className="bg-[#2A2A2E] p-6 text-center">
-                  <div className="text-3xl font-bold text-[#E36F2C] mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{s.value}</div>
-                  <div className="text-[#8A8580] text-xs tracking-wider">{zh ? s.zh : s.en}</div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
         </div>
       </section>
 
