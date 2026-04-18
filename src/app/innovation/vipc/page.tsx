@@ -1,0 +1,245 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { useLanguage } from '@/contexts/LanguageContext';
+
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return { ref, visible };
+}
+
+function Reveal({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const { ref, visible } = useReveal();
+  return (
+    <div ref={ref} className={className} style={{
+      opacity: visible ? 1 : 0,
+      transform: visible ? 'translateY(0)' : 'translateY(20px)',
+      transition: `opacity 0.55s ease ${delay}ms, transform 0.55s ease ${delay}ms`,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+const SHIPPING = [
+  { en: 'Container Standard', zh: '集装箱标准', value: '40ft Flat Rack Container' },
+  { en: 'Dimensions', zh: '运输尺寸', value: '11.762m × 2.240m × 2.034m' },
+  { en: 'Port Compliance', zh: '港口合规', value: 'International loading regulations' },
+  { en: 'Road Compliance', zh: '道路合规', value: 'Multi-country road transport regulations' },
+  { en: 'Logistics Optimization', zh: '物流优化', value: 'E3 & E6 — 2 units per truck' },
+];
+
+const STEPS = [
+  {
+    n: '01',
+    en: 'Factory Complete',
+    zh: '工厂完工',
+    desc_en: '100% finished unit leaves Foshan — furnishings, MEP and smart controls fully installed.',
+    desc_zh: '100%成品出厂，家具、机电、智控全部安装完毕。',
+  },
+  {
+    n: '02',
+    en: 'International Shipping',
+    zh: '国际海运',
+    desc_en: '40ft Flat Rack, compliant with port loading standards. Delivered to 30+ countries.',
+    desc_zh: '40英尺平架集装箱，符合港口装载标准，交付30余国。',
+  },
+  {
+    n: '03',
+    en: 'On-site Crane Lift',
+    zh: '现场吊装',
+    desc_en: 'No foundation, no excavation. Any terrain — mountain, forest, wetland or desert.',
+    desc_zh: '无需地基，无需开挖。适配山地、密林、湿地、沙漠一切地形。',
+  },
+  {
+    n: '04',
+    en: 'Connect & Operate',
+    zh: '接通即营业',
+    desc_en: 'Water and electricity hookup only. Ready for guests in as little as 2 hours.',
+    desc_zh: '仅需接通水电，最快2小时即可接待宾客。',
+  },
+];
+
+const PERF = [
+  { value: '8.0',      en: 'Seismic Rating',       zh: '抗震设防烈度' },
+  { value: 'Lv. 11',  en: 'Wind Resistance',       zh: '防风等级' },
+  { value: '50°C',    en: 'Thermal Differential',  zh: '室内外温差保温' },
+  { value: '15+ yrs', en: 'Design Lifespan',       zh: '设计使用寿命' },
+  { value: '45 days', en: 'Production Cycle',      zh: '标准生产周期' },
+  { value: '2 hrs',   en: 'On-site Installation',  zh: '现场安装时间' },
+];
+
+export default function VipcPage() {
+  const { lang } = useLanguage();
+  const zh = lang === 'zh';
+
+  return (
+    <div className="min-h-screen flex flex-col bg-[#F5F2ED]">
+      <Navbar />
+
+      {/* S1 Hero */}
+      <section className="bg-[#1A1A1A] pt-28 pb-20 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(circle at 60% 40%, #E36F2C 0%, transparent 55%)' }} />
+        <div className="max-w-5xl mx-auto relative">
+          <p className="text-[#E36F2C] text-xs tracking-[0.35em] uppercase font-medium mb-4">
+            {zh ? '微宿整装预制系统' : 'Vessel Integral Pre-fab Construction'}
+          </p>
+          <h1 className="text-7xl sm:text-8xl font-bold text-[#F0F0F0] leading-none tracking-tight mb-4" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+            VIPC
+          </h1>
+          <p className="text-[#C4B9AB] text-lg sm:text-xl">
+            {zh ? '出厂即成品 · 2小时安装 · 全球合规运输' : 'Factory-complete · 2-hour install · Global shipping compliant'}
+          </p>
+          <div className="flex gap-2 mt-8 flex-wrap">
+            {[
+              zh ? '100%成品出厂' : '100% Factory Complete',
+              zh ? '30+国交付记录' : '30+ Countries Delivered',
+              zh ? '2小时安装' : '2-Hour Installation',
+            ].map(tag => (
+              <span key={tag} className="text-xs px-3 py-1.5 border border-[#E36F2C]/30 text-[#E36F2C]/80 tracking-wider">{tag}</span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* S2 Core concept */}
+      <section className="bg-[#F5F2ED] py-20 px-4">
+        <div className="max-w-5xl mx-auto">
+          <Reveal>
+            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-2">Philosophy</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#1A1A1A] mb-6 leading-tight" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              {zh
+                ? '像造汽车一样造建筑\n像插插头一样完成安装'
+                : 'Built Like a Car,\nInstalled Like a Plug'}
+            </h2>
+          </Reveal>
+          <Reveal delay={100}>
+            <div className="max-w-3xl space-y-4 text-[#1A1A1A]/70 text-sm sm:text-base leading-relaxed" style={{ fontFamily: 'Inter, sans-serif' }}>
+              {zh ? (
+                <>
+                  <p>微宿整装预制（VIPC）系统是微宿交付模式的核心基础。每台舱体从佛山工厂出厂时均为100%成品——室内家具、机电系统、智能控制均已安装调试完毕，现场只需接通水电即可投入使用。</p>
+                  <p>VIPC通过100余次真实项目交付锤炼而成，覆盖高山、密林、滩涂、沙漠、极寒等多种地形。结构工程经过专项设计，确保舱体在多次长途运输和反复吊装过程中不变形，保持整体结构稳定安全。</p>
+                </>
+              ) : (
+                <>
+                  <p>The VESSEL Integral Pre-fab Construction (VIPC) system is the foundation of VESSEL's delivery model. Every unit exits the Foshan factory as a 100% finished product — furnishings, mechanical systems, and smart controls fully installed and tested. On-site work consists only of connecting water and electricity.</p>
+                  <p>VIPC was developed through 100+ real-world delivery projects across diverse terrain types including mountain peaks, dense forests, wetlands, deserts, and arctic environments. The structural engineering has been refined to withstand multiple long-distance transports and repeated crane lifts without deformation.</p>
+                </>
+              )}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* S3 Shipping specs */}
+      <section className="bg-[#1A1A1A] py-20 px-4">
+        <div className="max-w-5xl mx-auto">
+          <Reveal>
+            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-2">Logistics</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#F0F0F0] mb-10" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              {zh ? '国际运输合规标准' : 'Global Shipping Compliance'}
+            </h2>
+          </Reveal>
+          <Reveal delay={80}>
+            <div className="border border-[#2A2A2E] overflow-hidden">
+              {SHIPPING.map((s, i) => (
+                <div key={s.en} className={`grid grid-cols-2 items-center px-6 py-4 border-b border-[#2A2A2E] last:border-0 ${i % 2 === 0 ? 'bg-[#2A2A2E]' : 'bg-[#1F1F1F]'}`}>
+                  <span className="text-[#8A8580] text-sm">{zh ? s.zh : s.en}</span>
+                  <span className="text-[#F0F0F0] text-sm font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>{s.value}</span>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* S4 Installation steps */}
+      <section className="bg-[#F5F2ED] py-20 px-4">
+        <div className="max-w-5xl mx-auto">
+          <Reveal>
+            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-2">Process</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#1A1A1A] mb-10" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              {zh ? '从工厂到营业，仅需2小时' : 'From Factory to Operating in 2 Hours'}
+            </h2>
+          </Reveal>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 relative">
+            {/* connector line desktop */}
+            <div className="hidden lg:block absolute top-8 left-[12.5%] right-[12.5%] h-px bg-[#E5E0DA]" style={{ top: '2rem' }} />
+            {STEPS.map((s, i) => (
+              <Reveal key={s.n} delay={i * 80}>
+                <div className="relative bg-white border border-[#E5E0DA] p-6 flex flex-col gap-4">
+                  <div className="w-10 h-10 bg-[#E36F2C] flex items-center justify-center shrink-0">
+                    <span className="text-white text-xs font-bold tracking-wider">{s.n}</span>
+                  </div>
+                  <p className="text-[#1A1A1A] font-semibold text-sm" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                    {zh ? s.zh : s.en}
+                  </p>
+                  <p className="text-[#8A8580] text-xs leading-relaxed">{zh ? s.desc_zh : s.desc_en}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* S5 Performance */}
+      <section className="bg-[#1A1A1A] py-20 px-4">
+        <div className="max-w-5xl mx-auto">
+          <Reveal>
+            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-2">Performance</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#F0F0F0] mb-10" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              {zh ? '结构性能参数' : 'Structural Performance'}
+            </h2>
+          </Reveal>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {PERF.map((p, i) => (
+              <Reveal key={p.en} delay={i * 60}>
+                <div className="bg-[#2A2A2E] p-6 flex flex-col gap-2 border border-transparent hover:border-[#E36F2C]/20 transition-colors">
+                  <span className="text-3xl sm:text-4xl font-bold text-[#E36F2C]" style={{ fontFamily: 'DM Sans, sans-serif' }}>{p.value}</span>
+                  <span className="text-[#8A8580] text-xs tracking-wider leading-snug">{zh ? p.zh : p.en}</span>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-[#F5F2ED] border-t border-[#E5E0DA] py-14 px-4">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div>
+            <p className="text-[#1A1A1A] font-semibold text-lg mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              {zh ? '了解更多微宿技术体系' : 'Explore all VESSEL systems'}
+            </p>
+            <p className="text-[#8A8580] text-sm">{zh ? '返回技术创新主页' : 'Back to Innovation overview'}</p>
+          </div>
+          <div className="flex gap-3 flex-wrap justify-center sm:justify-end">
+            <Link href="/innovation" className="px-6 py-3 border border-[#C4B9AB] text-[#8A8580] text-sm tracking-wider hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-colors">
+              {zh ? '← 返回' : '← Back'}
+            </Link>
+            <a href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
+              className="px-6 py-3 bg-[#E36F2C] text-white text-sm font-semibold tracking-wider hover:bg-[#C85A1F] transition-colors">
+              {zh ? '联系我们' : 'Contact VESSEL'}
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
+}
