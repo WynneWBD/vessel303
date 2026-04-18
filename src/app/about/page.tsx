@@ -374,7 +374,10 @@ export default function AboutPage() {
                   : 'Wang Shuaibin founded VESSEL in 2018, bringing an international architectural perspective to the cultural tourism industry. He holds Master of Architecture degrees from the University of Dundee (RIBA Part II) and Washington University in St. Louis, and previously worked at SOM Architects on Wall Street, New York City. Under his leadership, VESSEL pioneered the space-themed luxury camp resort category and has grown into a globally recognised brand with exports across 30+ countries.'}
               </p>
               <div className="flex flex-wrap gap-2">
-                {['Univ. of Dundee — RIBA Part II', 'Washington Univ. in St. Louis — M.Arch', 'SOM Architects — NYC'].map(tag => (
+                {(zh
+                  ? ['邓迪大学 — RIBA Part II', '华盛顿大学圣路易斯 — 建筑学硕士', 'SOM建筑事务所 — 纽约']
+                  : ['Univ. of Dundee — RIBA Part II', 'Washington Univ. in St. Louis — M.Arch', 'SOM Architects — NYC']
+                ).map(tag => (
                   <span key={tag} className="text-xs px-3 py-1.5 border border-[#2A2A2E] text-[#8A8580] tracking-wider">{tag}</span>
                 ))}
               </div>
@@ -433,6 +436,57 @@ export default function AboutPage() {
                   ? '欧盟建筑安全许可 · 美国建筑准入认证 · 广东省高新技术企业'
                   : 'EU Building Safety · US Building Access · Guangdong High-Tech Enterprise'}
               </p>
+            </div>
+          </Reveal>
+
+          {/* International cert photos */}
+          <Reveal className="mb-10">
+            <p className="text-[#F0F0F0] text-sm font-semibold mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              {zh ? '国际认证证书' : 'International Certifications'}
+            </p>
+            <p className="text-[#8A8580] text-xs mb-6">
+              {zh ? '欧盟及国际权威机构颁发' : 'Issued by European and international accredited bodies'}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                {
+                  src: '/images/about/certs/cert-cpr.png',
+                  en: 'CE Factory Production Control · EN 1090-1 · Valid to 2028',
+                  zh: 'CE欧盟工厂生产合规认证 · EN 1090-1 · 有效至2028',
+                },
+                {
+                  src: '/images/about/certs/cert-ce-gpsd.png',
+                  en: 'CE General Product Safety · ECM Italy · Valid to 2028',
+                  zh: 'CE通用产品安全认证 · ECM意大利 · 有效至2028',
+                },
+                {
+                  src: '/images/about/certs/cert-iso9001.png',
+                  en: 'ISO 9001:2015 Quality Management System · Valid to 2027',
+                  zh: 'ISO 9001质量管理体系 · 有效至2027',
+                },
+                {
+                  src: '/images/about/certs/cert-voc.png',
+                  en: 'EU CPR Verification of Conformity · 40+ Models · Valid to 2030',
+                  zh: '欧盟CPR合规验证 · 覆盖40+型号 · 有效至2030',
+                },
+              ].map((cert, i) => (
+                <Reveal key={cert.src} delay={i * 60}>
+                  <div className="bg-white rounded-lg p-4 flex flex-col gap-3">
+                    <div className="relative w-full" style={{ maxHeight: '200px', height: '200px' }}>
+                      <Image
+                        src={cert.src}
+                        alt={cert.en}
+                        fill
+                        className="object-contain"
+                        unoptimized
+                      />
+                    </div>
+                    <p className="text-[#8A8580] text-xs leading-snug text-center">
+                      {zh ? cert.zh : cert.en}
+                    </p>
+                  </div>
+                </Reveal>
+              ))}
             </div>
           </Reveal>
 
