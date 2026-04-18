@@ -51,7 +51,7 @@ const STATS = [
   { value: '28,800㎡',en: 'Owned Factory',        zh: '自建工厂' },
   { value: '150+',    en: 'National Patents',      zh: '国家专利' },
   { value: '150 /mo', en: 'Monthly Capacity',      zh: '月产能' },
-  { value: '8M+',     en: 'Global Followers',      zh: '全网粉丝' },
+  { value: '10M+', valueZh: '1000万+', en: 'Social Followers', zh: '全网粉丝' },
 ];
 
 const TIMELINE = [
@@ -183,7 +183,7 @@ export default function AboutPage() {
                   className="text-2xl sm:text-3xl font-bold text-[#E36F2C] mb-1"
                   style={{ fontFamily: 'DM Sans, sans-serif' }}
                 >
-                  {s.value}
+                  {zh && s.valueZh ? s.valueZh : s.value}
                 </div>
                 <div className="text-[#8A8580] text-[11px] tracking-wider uppercase leading-tight">
                   {zh ? s.zh : s.en}
