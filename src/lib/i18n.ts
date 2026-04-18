@@ -76,7 +76,7 @@ export const i18n = {
 
     // === CERTIFICATIONS ===
     certLabel:        b('Global Compliance', '全球资质认证'),
-    certTitle:        b('Certified for the World\'s Most Demanding Markets', '通过全球最严苛市场的建筑认证'),
+    certTitle:        b('Certified for EU & International Building Standards', '通过欧美双重合规认证的建筑标准'),
     certEuName:       b('EU CE Mark', '欧盟 CE 认证'),
     certEuStd:        b('EN 1337 · CPR', 'EN 1337 · CPR'),
     certEuDesc:       b('Construction Products Regulation — direct market access to 27 EU member states', '建筑产品法规——直接进入27个欧盟成员国市场'),

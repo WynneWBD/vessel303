@@ -107,7 +107,7 @@ export const products: ProductData[] = [
       { title: '氟碳喷涂铝板', spec: '43μm 涂层，耐腐蚀、不褪色' },
       { title: '断桥隔热门窗', spec: '35mm+ 断桥宽度，隔热隔噪双效' },
       { title: 'LOW-E 三玻两腔', spec: '18mm 氩气腔，紫外线隔绝率42.39%' },
-      { title: '硬质聚氨酯喷涂', spec: '导热系数0.0294W/mK，极致隔热' },
+      { title: '硬质聚氨酯喷涂', spec: '导热系数0.0294W/mK，高效隔热' },
     ],
     image: '/images/e7-gen6.jpg',
     badge: '畅销 No.1',
@@ -130,7 +130,7 @@ export const products: ProductData[] = [
     tag: '明星款',
     size: '29.6㎡',
     tagline: '29.6㎡ 明星第六代旅居版',
-    tagline2: '最好的传承，是新生',
+    tagline2: '传承经典，焕新演绎',
     dimensions: { length: 8700, width: 3400, height: 3400 },
     floorArea: '29.6㎡',
     power: '13/20kW',
@@ -180,7 +180,7 @@ export const products: ProductData[] = [
       { title: '无甲醛板材', spec: 'E0 级甲醛标准，健康环保' },
     ],
     image: '/images/e6-gen6.jpg',
-    badge: '全球最畅销',
+    badge: '全球热销',
     accentColor: '#c9a84c',
     priceDisplay: '¥ 388,000 起',
     priceHidden: 'XX万起',
@@ -401,7 +401,7 @@ export const products: ProductData[] = [
     capacity: '2-4人',
     zones: ['卫生间', '淋浴间', '玄关', '起居空间', '卧室'],
     designPhilosophy:
-      '超越空间感，尽收天光云景。独特的天窗采光系统将自然光线垂直引入室内，随时间变化的光影成为空间最美的装饰。',
+      '超越空间感，尽收天光云景。独特的天窗采光系统将自然光线垂直引入室内，随时间变化的光影成为空间独特的装饰。',
     features: [
       {
         title: '天光采光系统',
@@ -461,7 +461,7 @@ export const products: ProductData[] = [
     weight: '约9吨',
     capacity: '2-4人',
     zones: ['入户玄关', '270°环幕客厅', '主卧室', '礼宾空间', '卫浴间'],
-    designPhilosophy: '以礼宾级行政空间为核心设计语言，270°环幕客厅提供全方位景观体验，全屋电动窗帘与智能系统实现极致旅居享受。',
+    designPhilosophy: '以礼宾级行政空间为核心设计语言，270°环幕客厅提供全方位景观体验，全屋电动窗帘与智能系统实现卓越旅居享受。',
     features: [
       { title: '270°环幕客厅', desc: '270°全景环绕设计，将户外风景最大限度引入室内。' },
       { title: '礼宾级空间', desc: '行政礼宾级内饰，匹配高端度假营地定位。' },

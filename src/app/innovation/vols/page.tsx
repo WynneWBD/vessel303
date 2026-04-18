@@ -87,7 +87,7 @@ const SCENARIOS = [
     en: 'Desert & Arid Regions',
     zh: '沙漠干旱地区',
     desc_en: 'High solar yield, no municipal infrastructure — ideal VOLS conditions.',
-    desc_zh: '光照充足，无市政配套——VOLS最佳应用环境。',
+    desc_zh: '光照充足，无市政配套——VOLS理想应用环境。',
     icon: '🏜️',
   },
   {

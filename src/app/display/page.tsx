@@ -23,7 +23,7 @@ const slides = [
     tag: '明星款',
     size: '29.6㎡',
     capacity: '2–4 人',
-    tagline: '最好的传承，是新生',
+    tagline: '传承经典，焕新演绎',
     features: ['180° 全景环绕窗', '第六代锁扣防水屋顶', '一车双运 · 降低物流成本'],
     price: '¥ 388,000 起',
     image: '/images/e6-gen6.jpg',

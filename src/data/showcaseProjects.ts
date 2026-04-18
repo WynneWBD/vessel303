@@ -966,7 +966,7 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
     bookingUrl: '',
     description: {
       en: '9 standalone white capsules on a clifftop inside Mulan Qingliangzhai (4A), each named after one of the nine solar-system planets. 270° panoramic floor-to-ceiling windows and full-ceiling skylights frame forests, sea of flowers, lake views and starlit skies — delivered by smart voice controls, Dyson hairdryer and Marshall speakers. Drive to the summit for sunrise.',
-      zh: '位于武汉木兰清凉寨4A景区半山腰悬崖边，9间独立白色太空舱以太阳系九大行星命名，270°全景落地窗+全景天窗将青山花海湖景与星空纳入室内。配语音全屋智能控制、戴森吹风机、马歇尔音响，可开车直达山顶观日出，是武汉周边最具科幻感的网红住宿。',
+      zh: '位于武汉木兰清凉寨4A景区半山腰悬崖边，9间独立白色太空舱以太阳系九大行星命名，270°全景落地窗+全景天窗将青山花海湖景与星空纳入室内。配语音全屋智能控制、戴森吹风机、马歇尔音响，可开车直达山顶观日出，是武汉周边独具科幻感的网红住宿。',
     },
     amenities: [
       { icon: '🌌', label: { en: 'Full Skylight Ceiling', zh: '全景天窗' } },
@@ -1001,7 +1001,7 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
     bookingUrl: '',
     description: {
       en: 'A high-altitude glamping base at 3,200 m on the north shore of Qinghai Lake — 27 sci-fi capsule rooms (space capsules, star capsules, couple suites, family suites) with titanium alloy shells and multi-angle panoramic windows. Lie in bed watching the blue expanse of Qinghai Lake. Drive 20 minutes to reach the 4,024 m Tongbao summit for a 360° panorama. Oxygen equipment provided.',
-      zh: '位于青海湖北岸海拔3200米，背靠同宝山，直面青海湖碧波。27间科幻感装配式住宿舱，钛合金铝板外壳，多角度超大景观窗，实现"躺在床上看青海湖"的极致体验。驾车20分钟可达海拔4024米山巅360°俯瞰全景，备有氧气瓶应对高反。',
+      zh: '位于青海湖北岸海拔3200米，背靠同宝山，直面青海湖碧波。27间科幻感装配式住宿舱，钛合金铝板外壳，多角度超大景观窗，实现"躺在床上看青海湖"的卓越体验。驾车20分钟可达海拔4024米山巅360°俯瞰全景，备有氧气瓶应对高反。',
     },
     amenities: [
       { icon: '🏔', label: { en: '3200m Altitude Camp', zh: '海拔3200米营地' } },
