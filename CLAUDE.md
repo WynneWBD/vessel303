@@ -1,6 +1,6 @@
 # vessel303.com — Agent 操作手册
 
-> 文档版本 V5.0 · 2026-04-15 · 只放当前事实与规则，历史/说明去查 `vessel303_handoff_V5_0.docx`
+> 文档版本 V5.1 · 2026-04-18 · 只放当前事实与规则，历史/说明去查 `vessel303_handoff_V5_0.docx`
 
 ## 角色与工作方式
 
@@ -37,6 +37,9 @@
 - **MapLibre 必须 dynamic import + `ssr: false`**
 - **Tailwind v4** 用 `@tailwindcss/postcss`，不用 `tailwind.config.ts`
 - **globals.css 保留旧变量映射**：`--gold → #E36F2C`、`--accent-teal → #E36F2C`、`--warm-dark → #1A1A1A`、`--warm-white → #F5F2ED`，子页面靠映射过渡，不要删
+- **MapLibre HTML Marker 不能加 `position: relative`**：MapLibre 会在 `.maplibregl-marker` 上设 `position: absolute`，若自定义 CSS 或 inline style 加了 `position: relative`，后者会覆盖，导致所有 marker 跑到错误坐标（印度洋/南极）。自定义样式只能加在 marker element 的子元素上
+- **`transition: transform` 不能加在 Marker element 本身**：MapLibre 靠 `transform: translate(x, y)` 定位 marker，若 element 有 `transition: transform`，每次地图平移/缩放都会触发动画延迟（lag）。必须用两层结构：outer wrap（MapLibre 控制，无 transition）+ inner pin（视觉层，transition 安全）
+- **HQ 五角星要最后 `addTo(map)`**：HTML marker 按 DOM 插入顺序堆叠，HQ 必须在所有展示项目 marker 之后 `addTo`，并加 `z-index:9999` inline，才能保证永远浮在最上层
 
 ## 3. 设计规范（V4.0 品牌橙，占比 ≤10%）
 
@@ -84,15 +87,18 @@ Logo：透明背景橙色 PNG（含中文"微宿"），`/images/vessel-logo.png`
 | `public/images/projects/<slug>/` | 展示项目图片，命名 `exterior-NN.*` / `interior-NN.*` / `image-NN.*` |
 | `vessel303-assets/新官网项目详情/` | 展示项目原始资料（docx + 图），40 个项目 |
 | `public/images/vessel-logo.png` | 品牌 Logo |
+| `src/data/showcaseProjects.ts` 末尾 `HQ_PROJECT` | 总部工厂作为特殊展示项目，`bookingUrl:''` 抑制预订按钮，点击弹详情面板 |
 
 ## 6. 已上线页面
 
-`/`（Hero 5 图轮播）· `/products`（39 SKU）· `/products/v9-gen6`（详情模板）· `/global`（MapLibre 暗色 + 工厂五角星 + 展示项目详情面板）· `/about` · `/news` · `/contact`（跳 303vessel.cn）· `/scenarios/*` · `/display` · `/auth/*` · 价格权限全站生效 · i18n EN/ZH（EN 默认）
+`/`（Hero 5 图轮播）· `/products`（39 SKU）· `/products/v9-gen6`（详情模板）· `/global`（MapLibre 暗色 + 工厂五角星可点击弹详情 + **40 个展示项目**全部上线 + 随缩放动态缩放红点 + 中英双语营地标签）· `/about` · `/news` · `/contact`（跳 303vessel.cn）· `/scenarios/*` · `/display` · `/auth/*` · 价格权限全站生效 · i18n EN/ZH（EN 默认）
 
 ## 7. 待办（优先级）
 
+### ✅ 已完成
+1. **展示项目扩容**：全部 40 个项目上线（10 海外 + 30 国内），含 HQ 工厂可点击详情面板、随缩放缩放红点、中英双语营地标签
+
 ### 🔴 进行中
-1. **展示项目扩容**：已 1（AstroBase Mamison），待上 39（10 海外 + 30 国内），资料在 `vessel303-assets/新官网项目详情/`
 2. `/global` 代理商联系方式填充
 3. 子页面配色细节清理（about / news / scenarios 残留旧色）
 
@@ -113,4 +119,4 @@ Logo：透明背景橙色 PNG（含中文"微宿"），`/images/vessel-logo.png`
 WhatsApp **+86 180-2417-6679** · 销售邮箱 **vessel.sale@303industries.cn** · 电话 **400-8090-303** · 项目邮箱（暂）**wynnewbd@gmail.com**（最终迁到 `wynne@303vessel.cn`）
 
 ---
-*VESSEL 微宿® · vessel303.com · CLAUDE.md V5.0 · 完整档案看 `vessel303_handoff_V5_0.docx`*
+*VESSEL 微宿® · vessel303.com · CLAUDE.md V5.1 · 完整档案看 `vessel303_handoff_V5_0.docx`*
