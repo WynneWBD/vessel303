@@ -26,7 +26,7 @@ export const FAQ_DATA: FaqItem[] = [
     question_en: 'What are the key upgrades of the sixth-generation (Gen6) products?',
     answer_en: 'Gen6 features six major upgrades: (1) Interlocked watertight roof — physical waterproofing that prevents leakage even as sealant ages; (2) Underfloor semi-open mechanical level — houses AC units, batteries and equipment below the floor without occupying interior space; (3) Glue-free joint finish — no gaps, no formaldehyde, easier to clean; (4) High-performance thermal break windows & doors — break width >35mm for superior insulation; (5) Integrated bedside system — ambient lighting and switches built into the headboard; (6) Iconic "Diamond-shaped Realm" exterior — eliminates the "square box" look of conventional prefab buildings.',
     question_zh: '第六代（Gen6）产品有哪些重要升级？',
-    answer_zh: 'Gen6 拥有六大核心升级：(1) 互扣式防水屋顶——物理防水，即使密封胶老化也不渗漏；(2) 地板下半开放式设备层——空调、电池等设备下置，不占用室内空间；(3) 无胶缝收口——无缝隙、无甲醛、易清洁；(4) 高性能断热桥门窗——断桥宽度 >35mm，保温性能卓越；(5) 床头集成系统——氛围灯与开关内嵌于床头板；(6) 标志性"钻石领域"外观——彻底告别传统装配式建筑的"方盒子"形象。',
+    answer_zh: 'Gen6 拥有六大核心升级：(1) 互扣式防水屋顶——物理防水，即使密封胶老化也不渗漏；(2) 地板下半开放式设备层——空调、电池等设备下置，不占用室内空间；(3) 无胶缝收口——无缝隙、无甲醛、易清洁；(4) 高性能断热桥门窗——断桥宽度 >35mm，保温性能出色；(5) 床头集成系统——氛围灯与开关内嵌于床头板；(6) 标志性"钻石领域"外观——彻底告别传统装配式建筑的"方盒子"形象。',
   },
   {
     id: 'pm-3',
@@ -46,7 +46,7 @@ export const FAQ_DATA: FaqItem[] = [
     question_en: 'Can VESSEL products perform in extreme climates?',
     answer_en: 'Yes. VESSEL has delivered projects across the world\'s most extreme environments. The highest recorded ambient temperature in our portfolio is +55°C in Riyadh, Saudi Arabia; the lowest is -32°C in Murmansk, Russia. For extreme cold or heat, units can be specified with an Enhanced Insulation Package. The structure is also rated for Seismic Intensity 8.0 and Wind Force Level 11.',
     question_zh: 'VESSEL 产品能在极端气候下使用吗？',
-    answer_zh: '能。VESSEL 已在全球最极端的环境中完成交付。我们项目记录的最高环境温度为沙特利雅得的 +55°C，最低为俄罗斯摩尔曼斯克的 -32°C。针对极寒或极热地区，可选配增强保温方案。结构同时通过抗震烈度 8.0 级和抗风 11 级认证。',
+    answer_zh: '能。VESSEL 已在全球各类严苛环境中完成交付。我们项目记录的最高环境温度为沙特利雅得的 +55°C，最低为俄罗斯摩尔曼斯克的 -32°C。针对极寒或极热地区，可选配增强保温方案。结构同时通过抗震烈度 8.0 级和抗风 11 级认证。',
   },
   {
     id: 'cp-2',

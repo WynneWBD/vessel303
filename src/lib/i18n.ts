@@ -197,8 +197,8 @@ export const i18n = {
       'VESSEL 微宿® 致力于成为高端度假营地一站式解决方案服务商，带领中国文旅创新品类走向全球。我们的产品专注于文旅智能装配建筑的本质价值：快速交付、经久耐用、高颜值、低运维成本。'
     ),
     missionSub:       b(
-      'Founded in 2018, we have served tourism developers in 30+ countries over 8 years, completing over 300 premium camp projects, establishing ourselves as the industry benchmark brand.',
-      '创立于 2018 年，8 年间我们服务了全球 30+ 国家的文旅开发者，打造了超过 300 个高端营地项目，成为行业标杆品牌。'
+      'Founded in 2018, we have served tourism developers in 30+ countries over 8 years, completing over 300 premium camp projects, earning industry-wide recognition.',
+      '创立于 2018 年，8 年间我们服务了全球 30+ 国家的文旅开发者，打造了超过 300 个高端营地项目，赢得行业广泛认可。'
     ),
     stat1Val:         b('300+', '300+'),
     stat1:            b('Projects Delivered', '全球交付项目'),
@@ -234,7 +234,7 @@ export const i18n = {
     timeline0:        b('303 Design Studio founded the VESSEL brand', '三零三设计工作室创立微宿品牌'),
     timeline1:        b('First prototype steel frame completed', '首台样板钢结构框架完成'),
     timeline2:        b('First production base established in Sanshui, Foshan', '佛山三水首家生产基地成立'),
-    timeline3:        b("World's first VESSEL prefab unit unveiled", '全球第一台微宿装配式建筑面世'),
+    timeline3:        b("World's first VESSEL prefab unit unveiled", '全球首台微宿装配式建筑面世'),
     timeline4:        b('Products exported to Southeast Asia, entering international market', '产品出口东南亚，开拓国际市场'),
     timeline5:        b('Obtained EU CE certification, entering European market', '获欧盟 CE 建筑认证，进入欧洲市场'),
     timeline6:        b('Obtained US IBC certification, entering North American market', '获美国 IBC 建筑认证，进入北美市场'),
@@ -242,7 +242,7 @@ export const i18n = {
     timeline8:        b('Strategic partnership signed with HUAWEI to advance smart integration', '与华为 HUAWEI 战略签约，推进智能化升级'),
     timeline9:        b('6th Generation Gen6 full lineup officially launched', '第六代 Gen6 全系列正式发布'),
     timeline10:       b('Global projects exceeded 300, covering 30+ countries', '全球项目突破 300 个，覆盖 30+ 国家'),
-    globalLabel:      b('China Leading, Global Presence', '中国领先，全球布局'),
+    globalLabel:      b('China-Based, Global Presence', '中国原创，全球布局'),
     globalTitle:      b('30+ Countries Across 6 Continents', '全球 6 大洲 30+ 国家'),
     globalSubtitle:   b(
       'As of 2025, VESSEL has delivered 300+ projects nationally and exported to 30+ countries across 100+ cities.',

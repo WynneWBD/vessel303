@@ -31,13 +31,13 @@ const scenarios: ScenarioData[] = [
     titleGold: '整体解决方案',
     subtitle: 'VESSEL 微宿度假营地解决方案',
     intro:
-      '以自然景观为依托，VESSEL 装配建筑快速建设高品质度假营地，实现土地价值最大化。建设周期比传统建筑缩短 80%，45 天即可完成交付，助力文旅投资者快速实现盈利。',
+      '以自然景观为依托，VESSEL 装配建筑快速建设高品质度假营地，充分实现土地价值。建设周期比传统建筑缩短 80%，45 天即可完成交付，助力文旅投资者快速实现盈利。',
     heroTagline: '45天交付 · 高ROI文旅度假营地解决方案',
     specs: [
       { label: '推荐产品', value: 'E7 Gen6 / V9 Gen6 / E6 Gen6' },
       { label: '适用面积', value: '5,000㎡ 以上' },
-      { label: '最快交付', value: '45天' },
-      { label: '最小起订量', value: '5台起' },
+      { label: '交付周期', value: '45天' },
+      { label: '起订量', value: '5台起' },
       { label: '自重', value: '7–9吨/台' },
       { label: '适用气候', value: '-32℃ 至 55℃' },
     ],
@@ -86,9 +86,9 @@ const scenarios: ScenarioData[] = [
     specs: [
       { label: '垂直叠拼面积', value: '74㎡' },
       { label: '平行叠拼面积', value: '76㎡' },
-      { label: '最大额定功率', value: '36/42kW' },
+      { label: '额定功率', value: '36/42kW' },
       { label: '叠拼净重', value: '18–20吨' },
-      { label: '最快交付', value: '45天' },
+      { label: '交付周期', value: '45天' },
       { label: '定制类型', value: '不限' },
     ],
     features: [
@@ -144,7 +144,7 @@ const scenarios: ScenarioData[] = [
     features: [
       {
         title: '应急快速响应',
-        desc: '工厂直发，到场 2 小时完成安装，可在最短时间内为灾区居民或边远地区提供临时居所与公共服务设施。',
+        desc: '工厂直发，到场 2 小时完成安装，可快速为灾区居民或边远地区提供临时居所与公共服务设施。',
       },
       {
         title: '可持续使用',

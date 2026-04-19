@@ -70,7 +70,7 @@ const STEPS = [
     en: 'Connect & Operate',
     zh: '接通即营业',
     desc_en: 'Water and electricity hookup only. Ready for guests in as little as 2 hours.',
-    desc_zh: '仅需接通水电，最快2小时即可接待宾客。',
+    desc_zh: '仅需接通水电，2小时内即可接待宾客。',
   },
 ];
 

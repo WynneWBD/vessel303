@@ -209,7 +209,7 @@ export const products: ProductData[] = [
     capacity: '1-2人',
     zones: ['卫生间', '淋浴间', '开角式衣柜', '一体式橱柜', '卧室'],
     designPhilosophy:
-      '以游艇立面美学为设计语言，无痕光域灯带环绕全身，半圆弧形玻璃窗以最小尺寸实现 180° 无遮挡景观视野。',
+      '以游艇立面美学为设计语言，无痕光域灯带环绕全身，半圆弧形玻璃窗以紧凑尺寸实现 180° 无遮挡景观视野。',
     features: [
       {
         title: '游艇式立面',
@@ -231,7 +231,7 @@ export const products: ProductData[] = [
     spaces: [
       { name: '卧室', desc: '2m 大床 + 内嵌式气候调节头枕系统。' },
       { name: '卫生间', desc: '集成式卫浴，紧凑不失功能。' },
-      { name: '开角式衣柜', desc: '转角空间最大化利用，收纳充足。' },
+      { name: '开角式衣柜', desc: '转角空间充分利用，收纳充足。' },
       { name: '一体式橱柜', desc: '迷你厨房功能，满足基础饮食需求。' },
     ],
     materials: [
@@ -241,7 +241,7 @@ export const products: ProductData[] = [
       { title: 'SPC 防水地板', spec: '防水防潮，耐磨易清洁' },
     ],
     image: '/images/e6-gen6.jpg',
-    badge: '入门首选',
+    badge: '入门推荐',
     accentColor: '#c9a84c',
     priceDisplay: '¥ 228,000 起',
     priceHidden: 'XX万起',
@@ -311,7 +311,7 @@ export const products: ProductData[] = [
       { title: '硬质聚氨酯喷涂', spec: '导热系数0.0294W/mK' },
     ],
     image: '/images/v9-gen6.jpg',
-    badge: '长居首选',
+    badge: '长居推荐',
     accentColor: '#c9a84c',
     priceDisplay: '¥ 458,000 起',
     priceHidden: 'XX万起',
@@ -340,7 +340,7 @@ export const products: ProductData[] = [
     capacity: '1-2人',
     zones: ['卧室', '吧台', '卫生间', '玄关', '双人床区'],
     designPhilosophy:
-      '以超广角全景玻璃为核心，将自然景色最大限度引入室内。轻量化 6 吨结构支持快速运输部署，是打造景观度假营地的理想单元。',
+      '以超广角全景玻璃为核心，将自然景色充分引入室内。轻量化 6 吨结构支持快速运输部署，是打造景观度假营地的理想单元。',
     features: [
       {
         title: '超广角全景',
@@ -409,7 +409,7 @@ export const products: ProductData[] = [
       },
       {
         title: '多面大窗视野',
-        desc: '多方向大面积玻璃设计，最大化全方位观景体验。',
+        desc: '多方向大面积玻璃设计，多方位全面观景体验。',
       },
       {
         title: '精品卫浴',
@@ -433,7 +433,7 @@ export const products: ProductData[] = [
       { title: 'LOW-E 玻璃', spec: '节能隔热' },
     ],
     image: '/images/e6-gen6.jpg',
-    badge: '景观首选',
+    badge: '景观推荐',
     accentColor: '#c9a84c',
     priceDisplay: '¥ 328,000 起',
     priceHidden: 'XX万起',
@@ -461,9 +461,9 @@ export const products: ProductData[] = [
     weight: '约9吨',
     capacity: '2-4人',
     zones: ['入户玄关', '270°环幕客厅', '主卧室', '礼宾空间', '卫浴间'],
-    designPhilosophy: '以礼宾级行政空间为核心设计语言，270°环幕客厅提供全方位景观体验，全屋电动窗帘与智能系统实现卓越旅居享受。',
+    designPhilosophy: '以礼宾级行政空间为核心设计语言，270°环幕客厅提供全方位景观体验，全屋电动窗帘与智能系统实现高品质旅居享受。',
     features: [
-      { title: '270°环幕客厅', desc: '270°全景环绕设计，将户外风景最大限度引入室内。' },
+      { title: '270°环幕客厅', desc: '270°全景环绕设计，将户外风景充分引入室内。' },
       { title: '礼宾级空间', desc: '行政礼宾级内饰，匹配高端度假营地定位。' },
       { title: '全屋电动窗帘', desc: '全屋电动遮帘，一键调节私密与观景模式。' },
       { title: '第五代经典设计', desc: '历经市场考验的成熟设计，广受全球采购商认可。' },
@@ -536,7 +536,7 @@ export interface CatalogProduct {
 
 export const catalogProducts: CatalogProduct[] = [
   // ── E3 ──────────────────────────────────────
-  { id: 'e3-gen6-standard', productSeries: 'E3', name_cn: 'E3 Gen6 · 国标版', name_en: 'E3 Gen6 · China Standard', gen: 'Gen6', size: '19㎡', area: 19, generation: 6, productType: 'compact', badge_cn: '入门首选', badge_en: 'Entry Choice', tags_cn: ['迷你', '经济', '双台运输'], tags_en: ['Mini', 'Economical', '2-per-truck'], features_cn: ['内嵌式入户门廊', '270°环幕视野', '一车可运两台'], features_en: ['Integrated entrance hallway', '270° panoramic view', '2 units per 40ft container'], image: '/images/products/E3-Gen6_render-01.jpg', isCustom: false, detailSlug: 'e3' },
+  { id: 'e3-gen6-standard', productSeries: 'E3', name_cn: 'E3 Gen6 · 国标版', name_en: 'E3 Gen6 · China Standard', gen: 'Gen6', size: '19㎡', area: 19, generation: 6, productType: 'compact', badge_cn: '入门推荐', badge_en: 'Entry Pick', tags_cn: ['迷你', '经济', '双台运输'], tags_en: ['Mini', 'Economical', '2-per-truck'], features_cn: ['内嵌式入户门廊', '270°环幕视野', '一车可运两台'], features_en: ['Integrated entrance hallway', '270° panoramic view', '2 units per 40ft container'], image: '/images/products/E3-Gen6_render-01.jpg', isCustom: false, detailSlug: 'e3' },
   { id: 'e3-custom-airport', productSeries: 'E3', name_cn: 'E3 Gen6 · 机场茶室版', name_en: 'E3 Gen6 · Airport Lounge', gen: 'Gen6', size: '19㎡', area: 19, generation: 6, productType: 'compact', badge_cn: '定制案例', badge_en: 'Custom Case', tags_cn: ['商业定制', '机场配套'], tags_en: ['Commercial Custom', 'Airport'], features_cn: ['商业场景定制内装', '快速模块化部署', '符合机场运营标准'], features_en: ['Commercial interior customization', 'Fast modular deployment', 'Airport operation compliant'], image: '/images/products/custom_E3-Gen6_airport-tearoom_01.jpg', isCustom: true },
   { id: 'e3-custom-germany', productSeries: 'E3', name_cn: 'E3 Gen6 · 德国版', name_en: 'E3 Gen6 · Germany Edition', gen: 'Gen6', size: '19㎡', area: 19, generation: 6, productType: 'compact', badge_cn: '海外定制', badge_en: 'Overseas Custom', tags_cn: ['欧盟认证', '海外定制'], tags_en: ['EU Certified', 'Overseas'], features_cn: ['符合欧盟建筑法规', '定制外观结构', '海运整体交付'], features_en: ['EU building code compliant', 'Custom exterior', 'Integral shipping'], image: '/images/products/custom_E3-Gen6_Germany_01.jpg', isCustom: true },
   // ── E5 ──────────────────────────────────────
@@ -568,7 +568,7 @@ export const catalogProducts: CatalogProduct[] = [
   { id: 'v7-custom-newzealand', productSeries: 'V7', name_cn: 'V7 Gen5 · 双拼–新西兰版', name_en: 'V7 Gen5 · Double Module New Zealand', gen: 'Gen5', size: '60㎡', area: 60, generation: 5, productType: 'standard', badge_cn: '双拼定制', badge_en: 'Double Module', tags_cn: ['新西兰', '双拼'], tags_en: ['New Zealand', 'Double Module'], features_cn: ['双舱拼接大空间', '新西兰建筑规范适配', '带厨房完整配置'], features_en: ['Double-module large space', 'NZ building code compliant', 'Full kitchen configuration'], image: '/images/products/custom_V7-Gen5_double-NewZealand_01.jpg', isCustom: true },
   { id: 'v7-custom-pakistan', productSeries: 'V7', name_cn: 'V7 Gen6 · 雾化玻璃–巴基斯坦版', name_en: 'V7 Gen6 · Smart Glass Pakistan', gen: 'Gen6', size: '35㎡', area: 35, generation: 6, productType: 'standard', badge_cn: '智能玻璃', badge_en: 'Smart Glass', tags_cn: ['巴基斯坦', '雾化玻璃'], tags_en: ['Pakistan', 'Smart Glass'], features_cn: ['电控雾化玻璃系统', '隐私与采光智能切换', '高温气候适配设计'], features_en: ['Electric smart glass system', 'Privacy/lighting smart switch', 'High-temp climate adapted'], image: '/images/products/custom_V7-Gen6_frosted-glass-Pakistan_01.jpg', isCustom: true },
   // ── V9 ──────────────────────────────────────
-  { id: 'v9-gen6-standard', productSeries: 'V9', name_cn: 'V9 Gen6 · 国标旗舰版', name_en: 'V9 Gen6 · China Flagship', gen: 'Gen6', size: '38.8㎡', area: 38.8, generation: 6, productType: 'luxury', badge_cn: '长居首选', badge_en: 'Long-stay Choice', tags_cn: ['家居版', '旗舰'], tags_en: ['Residential', 'Flagship'], features_cn: ['17㎡落地景观窗', '180°全景玻璃', 'VIIE智能系统'], features_en: ['17㎡ floor-to-ceiling windows', '180° panoramic glass', 'VIIE smart system'], image: '/images/products/V9-Gen6_render-01.jpg', isCustom: false, detailSlug: 'v9-gen6' },
+  { id: 'v9-gen6-standard', productSeries: 'V9', name_cn: 'V9 Gen6 · 国标旗舰版', name_en: 'V9 Gen6 · China Flagship', gen: 'Gen6', size: '38.8㎡', area: 38.8, generation: 6, productType: 'luxury', badge_cn: '长居推荐', badge_en: 'Long-stay Pick', tags_cn: ['家居版', '旗舰'], tags_en: ['Residential', 'Flagship'], features_cn: ['17㎡落地景观窗', '180°全景玻璃', 'VIIE智能系统'], features_en: ['17㎡ floor-to-ceiling windows', '180° panoramic glass', 'VIIE smart system'], image: '/images/products/V9-Gen6_render-01.jpg', isCustom: false, detailSlug: 'v9-gen6' },
   { id: 'v9-gen5-standard', productSeries: 'V9', name_cn: 'V9 Gen5 · 国标版', name_en: 'V9 Gen5 · China Standard', gen: 'Gen5', size: '37.6㎡', area: 37.6, generation: 5, productType: 'luxury', badge_cn: '经典旗舰', badge_en: 'Classic Flagship', tags_cn: ['家居版', '经典'], tags_en: ['Residential', 'Classic'], features_cn: ['超大落地景观窗', '完整家居功能配置', '高端精装交付'], features_en: ['Large floor-to-ceiling windows', 'Full residential features', 'Premium fully-fitted delivery'], image: '/images/products/V9-Gen5_render-01.jpg', isCustom: false },
   { id: 'v9-custom-saudi', productSeries: 'V9', name_cn: 'V9 Gen6 · 带厨房–沙特版', name_en: 'V9 Gen6 · With Kitchen Saudi Arabia', gen: 'Gen6', size: '38.8㎡', area: 38.8, generation: 6, productType: 'luxury', badge_cn: '高温定制', badge_en: 'High-Temp Custom', tags_cn: ['沙特', '带厨房', '极热'], tags_en: ['Saudi Arabia', 'With Kitchen', 'Extreme Heat'], features_cn: ['沙特利雅得落地（+55℃）', '集成厨房模块', '高温保温隔热升级'], features_en: ['Riyadh deployed (+55°C)', 'Integrated kitchen module', 'High-temp insulation upgrade'], image: '/images/products/custom_V9-Gen6_Saudi-kitchen_01.jpg', isCustom: true },
   { id: 'v9-custom-japan', productSeries: 'V9', name_cn: 'V9 Gen6 · 带底盘–日本版', name_en: 'V9 Gen6 · With Chassis Japan', gen: 'Gen6', size: '38.8㎡', area: 38.8, generation: 6, productType: 'luxury', badge_cn: '可移动', badge_en: 'Mobile', tags_cn: ['日本', '带底盘', '可移动'], tags_en: ['Japan', 'With Chassis', 'Mobile'], features_cn: ['集成底盘可移动部署', '日本建筑规范适配', '港口标准吊装规格'], features_en: ['Integrated mobile chassis', 'Japan building code compliant', 'Port standard lifting spec'], image: '/images/products/custom_V9-Gen6_chassis-Japan_01.jpg', isCustom: true },

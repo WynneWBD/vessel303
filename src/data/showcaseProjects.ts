@@ -772,7 +772,7 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
     },
     nearby: {
       en: [{ name: 'Huangyao Ancient Town', distance: '~40 min drive' }, { name: 'Nanshan Tea Sea', distance: '~20 km' }, { name: 'Zhaoping Guijiang River Cruise', distance: '~15 km' }],
-      zh: [{ name: '黄姚古镇', distance: '约40分钟' }, { name: '南山茶海（华南最大高山茶园）', distance: '约20公里' }, { name: '昭平桂江游船', distance: '约15公里' }],
+      zh: [{ name: '黄姚古镇', distance: '约40分钟' }, { name: '南山茶海（华南知名高山茶园）', distance: '约20公里' }, { name: '昭平桂江游船', distance: '约15公里' }],
     },
     images: ['/images/projects/guangxi-hezhou/image-01.png', '/images/projects/guangxi-hezhou/image-02.png', '/images/projects/guangxi-hezhou/image-03.jpg', '/images/projects/guangxi-hezhou/image-04.png', '/images/projects/guangxi-hezhou/image-05.png', '/images/projects/guangxi-hezhou/image-06.jpg'],
   },
@@ -861,7 +861,7 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
     bookingUrl: '',
     description: {
       en: 'National Grade-A B&B and Hainan Gold-Star designation — opened 2018 on Tanmen Bay, steps from a private beach. Panoramic ocean-view rooms with crashing-wave soundscapes, a fishermen-village boat-bar, and a tidal-flat foraging base. Nightly seafood feasts sourced straight from the South China Sea; bonfire evenings on the beach.',
-      zh: '全国甲级民宿、省级金宿，2018年开业，面朝潭门湾，步行即达专属沙滩。全景海景视野，设渔乡船屋音乐吧、潮捕赶海基地，晚餐直供南海海鲜。距潭门海鲜市场步行15分钟，距博鳌亚洲论坛会址20分钟，是琼海东线滨海度假标杆。',
+      zh: '全国甲级民宿、省级金宿，2018年开业，面朝潭门湾，步行即达专属沙滩。全景海景视野，设渔乡船屋音乐吧、潮捕赶海基地，晚餐直供南海海鲜。距潭门海鲜市场步行15分钟，距博鳌亚洲论坛会址20分钟，是琼海东线知名滨海度假地。',
     },
     amenities: [
       { icon: '🌊', label: { en: 'Private Beach Access', zh: '专属沙滩步行可达' } },
@@ -931,10 +931,10 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
     bookingUrl: '',
     description: {
       en: 'VESSEL\'s easternmost China camp — on the banks of the Ussuri River in Fuyuan, just 800 m from China\'s Dongji (Eastern Extreme) Square. A 40,000 m² resort where you sleep in a capsule and receive the nation\'s first sunrise. 270° panoramic river-view capsules, tidal beach play zones, night-sky BBQ and fresh Heilongjiang river fish.',
-      zh: 'VESSEL 打造的华夏东极网红露营地，距祖国最东端地标东极广场仅800米，乌苏里江畔4万㎡。太空舱配270°全景江景，卧床即可迎接祖国第一缕阳光。设沙滩亲水区、天幕烧烤区与美食休闲区，提供江鲜宴与篝火晚会，是中国最东端科技度假目的地。',
+      zh: 'VESSEL 打造的华夏东极网红露营地，距祖国最东端地标东极广场仅800米，乌苏里江畔4万㎡。太空舱配270°全景江景，卧床即可迎接东方晨曦。设沙滩亲水区、天幕烧烤区与美食休闲区，提供江鲜宴与篝火晚会，是中国东极科技度假目的地。',
     },
     amenities: [
-      { icon: '🌅', label: { en: 'First Sunrise in China', zh: '迎祖国第一缕阳光' } },
+      { icon: '🌅', label: { en: 'Easternmost Sunrise View', zh: '东极晨曦观赏地' } },
       { icon: '🌊', label: { en: 'Ussuri River Views', zh: '乌苏里江畔' } },
       { icon: '🪟', label: { en: '270° Panoramic Capsule', zh: '270° 全景落地窗太空舱' } },
       { icon: '🐟', label: { en: 'Heilongjiang River Fish', zh: '抚远特色江鲜' } },
@@ -1386,7 +1386,7 @@ export const SHOWCASE_PROJECTS: ShowcaseProject[] = [
     bookingUrl: '',
     description: {
       en: 'A "hot spring + space capsule + glamping" resort within the 4A-rated Yingyue Tan Cultural Center, Yuxi — 26 futuristic capsule rooms with private hot-spring soaking pools in each courtyard. The 51°C natural geothermal spring from 2,000 m underground is rich in fluoride and silicic acid. Unlimited hot-spring access included with stay. BBQ kits and open-fire tea service in-courtyard.',
-      zh: '坐落于云南玉溪映月潭国家4A景区，是"温泉+太空舱+露营"沉浸式度假标杆。26间科技感太空舱，每间独立庭院标配私人泡池，源自地下2000米51°C天然矿泉富含氟与偏硅酸，住店即享无限次温泉权益。庭院内设烧烤台与围炉煮茶区，可步行至景区40+功能泡池。',
+      zh: '坐落于云南玉溪映月潭国家4A景区，是"温泉+太空舱+露营"沉浸式度假代表。26间科技感太空舱，每间独立庭院标配私人泡池，源自地下2000米51°C天然矿泉富含氟与偏硅酸，住店即享无限次温泉权益。庭院内设烧烤台与围炉煮茶区，可步行至景区40+功能泡池。',
     },
     amenities: [
       { icon: '♨️', label: { en: 'Private Hot-Spring Pool', zh: '独立庭院私人泡池' } },
