@@ -56,6 +56,44 @@ export const i18n = {
     ),
     privacy:          b('Privacy Policy', '隐私政策'),
     terms:            b('Terms of Use', '使用条款'),
+    mediaKit:         b('Media Kit', '媒体资源'),
+  },
+  mediaKit: {
+    heroLabel:        b('PRESS & MEDIA', '媒体与版权'),
+    heroTitle:        b('High-Resolution Assets on Request', '高清素材下载申请'),
+    heroSubtitle:     b(
+      'We supply high-resolution photography, renderings and brand assets to qualified media, partners and institutional stakeholders. All VESSEL® imagery remains copyrighted and is provided for editorial or partnership use only.',
+      '我们面向合规媒体、合作方与机构客户提供高清摄影、渲染图与品牌素材。所有 VESSEL 微宿® 图片均受版权保护，仅限编辑或合作用途。'
+    ),
+    formHeading:      b('Request Access', '提交申请'),
+    formIntro:        b(
+      'Fill in the form below. Our press team will review and reply within 2 business days via email.',
+      '填写下方表单，媒体团队将在 2 个工作日内邮件回复您。'
+    ),
+    labelName:        b('Name', '姓名'),
+    labelEmail:       b('Email', '邮箱'),
+    labelPhone:       b('Phone', '电话'),
+    labelCompany:     b('Company / Outlet', '公司 / 机构'),
+    labelCountry:     b('Country', '所在国家'),
+    labelUseCase:     b('Intended Use', '使用目的'),
+    labelMessage:     b('Details (optional)', '具体需求（可选）'),
+    useCasePress:     b('Press / Editorial', '媒体采访报道'),
+    useCaseBrand:     b('Brand Partnership', '品牌合作'),
+    useCaseInvestor:  b('Investor Relations', '投资机构'),
+    useCaseArch:      b('Architecture Media', '建筑媒体'),
+    useCaseOther:     b('Other', '其他'),
+    submit:           b('Submit Request', '提交申请'),
+    submitting:       b('Submitting...', '提交中...'),
+    successTitle:     b('Request Received', '申请已收到'),
+    successBody:      b(
+      'Thank you. Our press team will review your request and email you within 2 business days.',
+      '感谢提交。我们的媒体团队将在 2 个工作日内邮件回复。'
+    ),
+    errorBody:        b('Something went wrong. Please try again or email vessel.sale@303industries.cn directly.', '提交出错，请稍后再试或直接发邮件至 vessel.sale@303industries.cn。'),
+    noteTitle:        b('Usage Notice', '使用须知'),
+    note1:            b('All images embed IPTC copyright metadata. Commercial use without authorisation is prohibited.', '所有图片已嵌入 IPTC 版权元数据，未经授权不得商用。'),
+    note2:            b('Please credit "Photo © VESSEL 微宿® / vessel303.com" when publishing.', '发布时请注明 "Photo © VESSEL 微宿® / vessel303.com"。'),
+    note3:            b('We monitor image usage globally via reverse image search services.', '我们通过反向图像搜索服务在全球范围内监控图片使用情况。'),
   },
   home: {
     // === HERO ===

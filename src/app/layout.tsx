@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import SessionProviderWrapper from "@/components/SessionProviderWrapper";
+import ImageProtection from "@/components/ImageProtection";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 
 const dmSans = DM_Sans({
@@ -42,6 +43,7 @@ export default function RootLayout({
         <LanguageProvider>
           <SessionProviderWrapper>{children}</SessionProviderWrapper>
         </LanguageProvider>
+        <ImageProtection />
       </body>
     </html>
   );

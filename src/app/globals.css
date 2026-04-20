@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+/* === Image protection: deter casual download === */
+img {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
 :root {
   /* === 新配色系统：科技×自然材质 === */
   --bg-dark: #1A1A1A;        /* 主画布-暗：Hero/技术展示区 */

@@ -45,6 +45,7 @@ export default function Footer() {
     { label: t(i18n.nav.cases), href: '/cases' },
     { label: t(i18n.nav.news), href: '/news' },
     { label: t(i18n.nav.contact), href: '/contact' },
+    { label: t(i18n.footer.mediaKit), href: '/media-kit' },
     { label: t(i18n.nav.scenarioTourism), href: '/scenarios/tourism' },
     { label: t(i18n.nav.scenarioCommercial), href: '/scenarios/commercial' },
     { label: t(i18n.nav.scenarioPublic), href: '/scenarios/public' },

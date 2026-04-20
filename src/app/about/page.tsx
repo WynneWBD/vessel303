@@ -509,23 +509,23 @@ export default function AboutPage() {
               {[
                 {
                   src: '/images/about/certs/cert-cpr.png',
-                  en: 'CE Factory Production Control · EN 1090-1 · Valid to 2028',
-                  zh: 'CE欧盟工厂生产合规认证 · EN 1090-1 · 有效至2028',
+                  en: 'CE Factory Production Control · EN 1090-1',
+                  zh: 'CE欧盟工厂生产合规认证 · EN 1090-1',
                 },
                 {
                   src: '/images/about/certs/cert-ce-gpsd.png',
-                  en: 'CE General Product Safety · ECM Italy · Valid to 2028',
-                  zh: 'CE通用产品安全认证 · ECM意大利 · 有效至2028',
+                  en: 'CE General Product Safety · ECM Italy',
+                  zh: 'CE通用产品安全认证 · ECM意大利',
                 },
                 {
                   src: '/images/about/certs/cert-iso9001.png',
-                  en: 'ISO 9001:2015 Quality Management System · Valid to 2027',
-                  zh: 'ISO 9001质量管理体系 · 有效至2027',
+                  en: 'ISO 9001:2015 Quality Management System',
+                  zh: 'ISO 9001质量管理体系',
                 },
                 {
                   src: '/images/about/certs/cert-voc.png',
-                  en: 'EU CPR Verification of Conformity · 40+ Models · Valid to 2030',
-                  zh: '欧盟CPR合规验证 · 覆盖40+型号 · 有效至2030',
+                  en: 'EU CPR Verification of Conformity · 40+ Models Covered',
+                  zh: '欧盟CPR合规验证 · 覆盖40+型号',
                 },
               ].map((cert, i) => (
                 <Reveal key={cert.src} delay={i * 60}>
