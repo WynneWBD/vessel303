@@ -5,8 +5,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useT } from '@/contexts/LanguageContext';
+import TechDrawer from '@/components/TechDrawer';
+import { useT, useLanguage } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
+
+type Tech = 'viie' | 'vols' | 'vipc';
 
 // ─── Hero ────────────────────────────────────────────────
 
@@ -111,75 +114,67 @@ function CredentialsBar() {
 
 // ─── Core Tech Systems ───────────────────────────────────
 
-function CoreTechSection() {
+function CoreTechSection({ onOpenTech }: { onOpenTech: (tech: Tech) => void }) {
   const t = useT();
 
-  const cards = [
+  const cards: { tech: Tech; title: string; sub: string; desc: string; icon: React.ReactNode }[] = [
     {
-      href: '/innovation/viie',
+      tech: 'viie',
       title: t(i18n.home.coreViieTitle),
       sub: t(i18n.home.coreViieSub),
       desc: t(i18n.home.coreViieDesc),
       icon: (
-        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="4" y="4" width="32" height="32" rx="4" />
-          <rect x="10" y="10" width="8" height="8" rx="1" />
-          <rect x="22" y="10" width="8" height="8" rx="1" />
-          <rect x="10" y="22" width="8" height="8" rx="1" />
-          <rect x="22" y="22" width="8" height="8" rx="1" />
-          <line x1="18" y1="14" x2="22" y2="14" />
-          <line x1="18" y1="26" x2="22" y2="26" />
-          <line x1="14" y1="18" x2="14" y2="22" />
-          <line x1="26" y1="18" x2="26" y2="22" />
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="#E36F2C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="6" width="28" height="20" rx="1.5" />
+          <path d="M12 30h12M18 26v4" />
+          <circle cx="10" cy="12" r="1.4" fill="#E36F2C" />
+          <path d="M14 12h14" strokeWidth="1.3" />
+          <path d="M14 16h10" strokeWidth="1.3" opacity="0.6" />
+          <path d="M14 20h12" strokeWidth="1.3" opacity="0.4" />
         </svg>
       ),
     },
     {
-      href: '/innovation/vols',
+      tech: 'vols',
       title: t(i18n.home.coreVolsTitle),
       sub: t(i18n.home.coreVolsSub),
       desc: t(i18n.home.coreVolsDesc),
       icon: (
-        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="20" cy="20" r="7" />
-          <line x1="20" y1="4" x2="20" y2="8" />
-          <line x1="20" y1="32" x2="20" y2="36" />
-          <line x1="4" y1="20" x2="8" y2="20" />
-          <line x1="32" y1="20" x2="36" y2="20" />
-          <line x1="8.3" y1="8.3" x2="11.2" y2="11.2" />
-          <line x1="28.8" y1="28.8" x2="31.7" y2="31.7" />
-          <line x1="31.7" y1="8.3" x2="28.8" y2="11.2" />
-          <line x1="11.2" y1="28.8" x2="8.3" y2="31.7" />
-          <path d="M14 28h12l2-8H12l2 8z" />
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="#E36F2C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="18" cy="12" r="4.5" />
+          <path d="M18 3v2.5M18 18v2.5M9 12h2.5M24.5 12H27M11.6 5.6l1.8 1.8M22.6 16.6l1.8 1.8M24.4 5.6l-1.8 1.8M13.4 16.6l-1.8 1.8" />
+          <rect x="10" y="24" width="16" height="8" rx="1" />
+          <path d="M14 24v-1.5h8V24" />
+          <path d="M13 28h2M17 28h2M21 28h2" strokeWidth="1.3" opacity="0.7" />
         </svg>
       ),
     },
     {
-      href: '/innovation/vipc',
+      tech: 'vipc',
       title: t(i18n.home.coreVipcTitle),
       sub: t(i18n.home.coreVipcSub),
       desc: t(i18n.home.coreVipcDesc),
       icon: (
-        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="4" y="16" width="32" height="20" rx="2" />
-          <path d="M4 22h32" />
-          <path d="M12 16V10l8-6 8 6v6" />
-          <line x1="16" y1="28" x2="24" y2="28" />
-          <line x1="20" y1="24" x2="20" y2="32" />
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="#E36F2C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="6" width="13" height="10" rx="0.5" />
+          <rect x="19" y="6" width="13" height="10" rx="0.5" />
+          <rect x="4" y="18" width="13" height="12" rx="0.5" />
+          <rect x="19" y="18" width="13" height="12" rx="0.5" />
+          <path d="M8 24h2M13 24h2M23 24h2M28 24h2" strokeWidth="1.3" opacity="0.5" />
         </svg>
       ),
     },
   ];
 
   return (
-    <section className="bg-[#F5F2ED] py-20">
+    <section className="bg-[#1A1A1A] py-20">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-14">
           <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-4 font-medium">
             {t(i18n.home.coreLabel)}
           </p>
           <h2
-            className="text-3xl lg:text-4xl font-light text-[#1A1A1A] mb-4"
+            className="text-3xl lg:text-4xl font-light text-[#F0F0F0] mb-4"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
             {t(i18n.home.coreTitle)}
@@ -191,10 +186,11 @@ function CoreTechSection() {
 
         <div className="grid lg:grid-cols-3 gap-6">
           {cards.map((card) => (
-            <Link
-              key={card.href}
-              href={card.href}
-              className="group bg-[#1A1A1A] border-t-2 border-[#E36F2C] hover:border-t-4 p-8 flex flex-col transition-all duration-200"
+            <button
+              key={card.tech}
+              type="button"
+              onClick={() => onOpenTech(card.tech)}
+              className="group bg-[#2A2A2E] rounded-lg border-t-2 border-[#E36F2C] hover:border-t-4 hover:bg-[#333333] p-8 flex flex-col text-left transition-all duration-200 cursor-pointer"
             >
               <div className="mb-6">{card.icon}</div>
               <h3
@@ -207,16 +203,8 @@ function CoreTechSection() {
               <p className="text-sm text-[#8A8580] leading-relaxed flex-1">{card.desc}</p>
               <div className="mt-6 flex items-center gap-1 text-[#E36F2C] text-sm tracking-wider">
                 <span>{t(i18n.home.coreLearnMore)}</span>
-                <svg
-                  className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 16 16"
-                >
-                  <path d="M3 8h10M9 4l4 4-4 4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
               </div>
-            </Link>
+            </button>
           ))}
         </div>
       </div>
@@ -600,12 +588,21 @@ function CtaSection() {
 // ─── Page ────────────────────────────────────────────────
 
 export default function HomePage() {
+  const { lang } = useLanguage();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activeTech, setActiveTech] = useState<Tech | null>(null);
+
+  const openTech = (tech: Tech) => {
+    setActiveTech(tech);
+    setDrawerOpen(true);
+  };
+
   return (
     <main>
       <Navbar />
       <HeroSection />
       <CredentialsBar />
-      <CoreTechSection />
+      <CoreTechSection onOpenTech={openTech} />
       <CertificationsSection />
       <PhilosophySection />
       <FlagshipSection />
@@ -615,6 +612,12 @@ export default function HomePage() {
       <ScenariosSection />
       <CtaSection />
       <Footer />
+      <TechDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        tech={activeTech}
+        lang={lang}
+      />
     </main>
   );
 }

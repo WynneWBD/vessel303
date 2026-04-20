@@ -5,7 +5,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import TechDrawer from '@/components/TechDrawer';
 import { useLanguage } from '@/contexts/LanguageContext';
+
+type Tech = 'viie' | 'vols' | 'vipc';
 
 // ─── scroll reveal ────────────────────────────────────────────────────────────
 
@@ -177,6 +180,13 @@ export default function AboutPage() {
   const { lang } = useLanguage();
   const zh = lang === 'zh';
   const [activeSection, setActiveSection] = useState('brand-story');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activeTech, setActiveTech] = useState<Tech | null>(null);
+
+  const openTech = (tech: Tech) => {
+    setActiveTech(tech);
+    setDrawerOpen(true);
+  };
 
   useEffect(() => {
     const ids = ['brand-story', 'technologies', 'certifications', 'founder'];
@@ -390,8 +400,8 @@ export default function AboutPage() {
 
       {/* ── Technologies ─────────────────────────────────────── */}
       <section id="technologies" className="bg-[#F5F2ED] py-20 px-6">
-        <div className="max-w-6xl mx-auto">
-          <Reveal className="mb-14 text-center">
+        <div className="max-w-4xl mx-auto">
+          <Reveal className="mb-12">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-4">
               {zh ? '核心技术体系' : 'CORE TECHNOLOGIES'}
             </p>
@@ -401,102 +411,64 @@ export default function AboutPage() {
             >
               {zh ? '三大自研技术体系' : 'Three Proprietary Systems'}
             </h2>
-            <p className="text-[#8A8580] text-sm max-w-2xl mx-auto leading-relaxed">
+            <p className="text-[#8A8580] text-sm max-w-2xl leading-relaxed">
               {zh
                 ? '每一台微宿背后的工程基础——面向全球部署而生。'
                 : 'The engineering foundation behind every VESSEL unit — built for global deployment.'}
             </p>
           </Reveal>
 
-          <div className="grid lg:grid-cols-3 gap-6">
+          <div className="border-t border-[#E5E0DA]">
             {[
               {
-                href: '/innovation/viie',
-                tag: 'VesselOS · VIIE',
-                titleEn: 'Vessel Intelligent Interactive Experience',
-                titleZh: '微宿智能交互',
-                descEn: 'Proprietary VesselOS platform connecting 1,400+ units worldwide. Voice + app dual control for lighting, climate, curtains, access and real-time monitoring. Huawei HarmonyOS integrated.',
-                descZh: 'VesselOS 全屋智能控制系统，全球1,400余台舱体联网。AI语音 + App双控灯光、空调、遮帘、门锁与实时监控，深度融合华为鸿蒙生态。',
-                icon: (
-                  <svg viewBox="0 0 48 48" fill="none" className="w-12 h-12" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="6" y="10" width="36" height="24" rx="2" stroke="#E36F2C" strokeWidth="2" />
-                    <path d="M16 38h16" stroke="#E36F2C" strokeWidth="2" strokeLinecap="round" />
-                    <path d="M24 34v4" stroke="#E36F2C" strokeWidth="2" strokeLinecap="round" />
-                    <circle cx="18" cy="18" r="2" fill="#E36F2C" />
-                    <circle cx="24" cy="18" r="2" fill="#E36F2C" opacity="0.5" />
-                    <circle cx="30" cy="18" r="2" fill="#E36F2C" opacity="0.3" />
-                    <path d="M14 26h20" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M14 22h12" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-                  </svg>
-                ),
+                tech: 'viie' as const,
+                nameEn: 'VesselOS · VIIE',
+                nameZh: 'VesselOS · 智能交互',
+                descEn: 'Proprietary platform. 1,400+ units globally connected. Full remote control of lighting, climate, access and monitoring.',
+                descZh: '完全自研平台，全球1,400余台舱体联网，远程掌控灯光、空调、门锁与实时监控。',
               },
               {
-                href: '/innovation/vols',
-                tag: 'VOLS',
-                titleEn: 'Vessel Off-grid Living System',
-                titleZh: '微宿离网系统',
-                descEn: 'Rooftop solar generation, 100kWh+ battery storage, integrated water purification and VSRB bio-wastewater treatment. Total independence from municipal utilities.',
-                descZh: '屋顶光伏发电 + 100kWh+储能电池，集成净水与VSRB生物污水零排放处理系统，完全脱离市政基础设施运行。',
-                icon: (
-                  <svg viewBox="0 0 48 48" fill="none" className="w-12 h-12" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="24" cy="20" r="7" stroke="#E36F2C" strokeWidth="2" />
-                    <path d="M24 6v3M24 31v3M10 20H7M37 20h3M14.1 10.1l2.1 2.1M31.8 27.8l2.1 2.1M14.1 29.9l2.1-2.1M31.8 12.2l2.1-2.1" stroke="#E36F2C" strokeWidth="2" strokeLinecap="round" />
-                    <rect x="12" y="36" width="24" height="6" rx="1" stroke="#E36F2C" strokeWidth="1.5" />
-                    <path d="M18 36v-2h12v2" stroke="#E36F2C" strokeWidth="1.5" />
-                    <path d="M15 39h4M21 39h4M27 39h4" stroke="#E36F2C" strokeWidth="1" strokeLinecap="round" opacity="0.6" />
-                  </svg>
-                ),
+                tech: 'vols' as const,
+                nameEn: 'VOLS · Off-grid System',
+                nameZh: 'VOLS · 离网系统',
+                descEn: 'Solar generation + 100kWh+ storage + VSRB zero-discharge treatment. No municipal infrastructure needed.',
+                descZh: '光伏发电 + 100kWh+储能 + VSRB生物污水零排放，完全脱离市政水电基础设施。',
               },
               {
-                href: '/innovation/vipc',
-                tag: 'VIPC',
-                titleEn: 'Vessel Integral Pre-fab Construction',
-                titleZh: '微宿整装预制系统',
-                descEn: 'Factory precision ±0.5mm. 100% completed in-plant. Shipped whole via 40ft Flat Rack. 2-hour on-site installation. Compliant delivery to 30+ countries.',
-                descZh: '工厂精度±0.5mm，出厂100%成品，40尺平架集装箱整体运输，现场2小时完成安装，合规交付30余国。',
-                icon: (
-                  <svg viewBox="0 0 48 48" fill="none" className="w-12 h-12" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="8" y="20" width="32" height="20" rx="1" stroke="#E36F2C" strokeWidth="2" />
-                    <path d="M8 24l16-14 16 14" stroke="#E36F2C" strokeWidth="2" strokeLinejoin="round" />
-                    <rect x="18" y="28" width="12" height="12" rx="0.5" stroke="#E36F2C" strokeWidth="1.5" />
-                    <path d="M18 34h12" stroke="#E36F2C" strokeWidth="1" opacity="0.5" />
-                    <path d="M24 28v12" stroke="#E36F2C" strokeWidth="1" opacity="0.5" />
-                    <circle cx="36" cy="12" r="5" fill="#E36F2C" opacity="0.15" stroke="#E36F2C" strokeWidth="1.5" />
-                    <path d="M33.5 12l2 2 3-3" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                ),
+                tech: 'vipc' as const,
+                nameEn: 'VIPC · Pre-fab System',
+                nameZh: 'VIPC · 整装预制',
+                descEn: '100% finished at factory. 2-hour site installation. 40ft Flat Rack compliant. 30+ countries delivered.',
+                descZh: '工厂100%成品出厂，现场2小时完成安装，符合40尺平架集装箱规格，已合规交付30余国。',
               },
-            ].map((card) => (
-              <Reveal key={card.href}>
-                <Link
-                  href={card.href}
-                  className="group bg-[#1A1A1A] border-t-2 border-[#E36F2C] hover:border-t-4 p-8 flex flex-col transition-all duration-200 h-full"
+            ].map((item) => (
+              <Reveal key={item.tech}>
+                <button
+                  type="button"
+                  onClick={() => openTech(item.tech)}
+                  className="group w-full flex items-start gap-5 py-8 border-b border-[#E5E0DA] text-left hover:bg-[#EDE8E0]/50 transition-colors duration-200 px-2"
                 >
-                  <div className="mb-6">{card.icon}</div>
-                  <p className="text-[#E36F2C] text-xs tracking-[0.25em] uppercase font-bold mb-2">
-                    {card.tag}
-                  </p>
-                  <h3
-                    className="text-xl font-bold text-[#F0F0F0] mb-4 leading-snug"
-                    style={{ fontFamily: 'DM Sans, sans-serif' }}
-                  >
-                    {zh ? card.titleZh : card.titleEn}
-                  </h3>
-                  <p className="text-sm text-[#8A8580] leading-relaxed flex-1">
-                    {zh ? card.descZh : card.descEn}
-                  </p>
-                  <div className="mt-6 flex items-center gap-1 text-[#E36F2C] text-sm tracking-wider">
-                    <span>{zh ? '了解详情' : 'Explore'}</span>
-                    <svg
-                      className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 16 16"
+                  <span className="shrink-0 w-2.5 h-2.5 rounded-full bg-[#E36F2C] mt-2.5" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 mb-2">
+                      <h3
+                        className="text-xl sm:text-2xl font-bold text-[#1A1A1A]"
+                        style={{ fontFamily: 'DM Sans, sans-serif' }}
+                      >
+                        {zh ? item.nameZh : item.nameEn}
+                      </h3>
+                      <span className="shrink-0 text-[#E36F2C] text-sm tracking-wider group-hover:translate-x-1 transition-transform duration-200">
+                        {zh ? '了解详情 →' : 'View Details →'}
+                      </span>
+                    </div>
+                    <p
+                      className="text-[#1A1A1A]/60 text-sm sm:text-base leading-relaxed"
+                      style={{ fontFamily: 'Inter, sans-serif' }}
                     >
-                      <path d="M3 8h10M9 4l4 4-4 4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                      {zh ? item.descZh : item.descEn}
+                    </p>
                   </div>
-                </Link>
+                </button>
               </Reveal>
             ))}
           </div>
@@ -792,6 +764,13 @@ export default function AboutPage() {
       </section>
 
       <Footer />
+
+      <TechDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        tech={activeTech}
+        lang={lang}
+      />
     </div>
   );
 }
