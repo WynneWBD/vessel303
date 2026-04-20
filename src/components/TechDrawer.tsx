@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import ViieContent from './tech/ViieContent';
 import VolsContent from './tech/VolsContent';
 import VipcContent from './tech/VipcContent';
@@ -21,6 +21,8 @@ const TECH_LABELS: Record<Exclude<Tech, null>, { en: string; zh: string }> = {
 };
 
 export default function TechDrawer({ isOpen, onClose, tech, lang }: Props) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
@@ -34,6 +36,12 @@ export default function TechDrawer({ isOpen, onClose, tech, lang }: Props) {
       document.body.style.overflow = prev;
     };
   }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (isOpen && scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [isOpen, tech]);
 
   const zh = lang === 'zh';
   const label = tech ? TECH_LABELS[tech] : null;
@@ -83,7 +91,7 @@ export default function TechDrawer({ isOpen, onClose, tech, lang }: Props) {
         </div>
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto">
           {tech === 'viie' && <ViieContent lang={lang} />}
           {tech === 'vols' && <VolsContent lang={lang} />}
           {tech === 'vipc' && <VipcContent lang={lang} />}
