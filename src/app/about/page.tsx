@@ -50,7 +50,7 @@ const STATS = [
   { value: '30+',     en: 'Countries',            zh: '出口国家' },
   { value: '28,800㎡',en: 'Owned Factory',        zh: '自建工厂' },
   { value: '150+',    en: 'National Patents',      zh: '国家专利' },
-  { value: '150 /mo', en: 'Monthly Capacity',      zh: '月产能' },
+  { value: '150 units', valueZh: '150 台', en: 'Monthly Capacity', zh: '月产能' },
   { value: '10M+', valueZh: '1000万+', en: 'Social Followers', zh: '全网粉丝' },
 ];
 
