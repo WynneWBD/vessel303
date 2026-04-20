@@ -84,13 +84,13 @@ function ProductsDropdown({ items }: { items: DropdownItem[] }) {
 
 function SimpleDropdown({ items }: { items: DropdownItem[] }) {
   return (
-    <div className="absolute top-full left-0 mt-1 min-w-[180px] bg-[#1A1A1A] border border-[#E36F2C]/20 shadow-2xl shadow-black/60 z-50">
+    <div className="absolute top-full left-0 mt-1 min-w-[200px] bg-[#1A1A1A] border border-[#2A2A2E] shadow-2xl shadow-black/60 z-50">
       <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-[#E36F2C]/60 to-transparent" />
       {items.map((item) => (
         <Link
           key={item.href}
           href={item.href}
-          className="flex items-center justify-between px-4 py-2.5 text-white/65 hover:text-[#E36F2C] hover:bg-[#E36F2C]/5 transition-colors text-sm border-b border-white/5 last:border-0 tracking-wider"
+          className="flex items-center gap-0 px-4 py-2.5 text-white/65 hover:text-[#E36F2C] hover:bg-[#E36F2C]/5 transition-all duration-150 text-sm border-b border-white/5 last:border-0 tracking-wider border-l-2 border-l-transparent hover:border-l-[#E36F2C] pl-3"
         >
           {item.label}
         </Link>
@@ -110,9 +110,17 @@ export default function Navbar() {
   const navLinks: NavLink[] = [
     { label: t(i18n.nav.products), href: '/products' },
     { label: t(i18n.nav.cases), href: '/global' },
-    { label: t(i18n.nav.about), href: '/about' },
+    {
+      label: t(i18n.nav.about),
+      href: '/about',
+      dropdown: [
+        { label: t(i18n.nav.aboutBrandStory), href: '/about' },
+        { label: t(i18n.nav.aboutCoreTech), href: '/innovation' },
+        { label: t(i18n.nav.aboutCerts), href: '/about#certifications' },
+        { label: t(i18n.nav.aboutFounder), href: '/about#founder' },
+      ],
+    },
     { label: t(i18n.nav.faq), href: '/faq' },
-    { label: t(i18n.nav.innovation), href: '/innovation' },
     { label: t(i18n.nav.news), href: '/news' },
     { label: t(i18n.nav.contact), href: '/contact' },
   ];
@@ -162,7 +170,12 @@ export default function Navbar() {
           {/* Desktop Nav */}
           <div className="hidden lg:flex items-center gap-0.5 mx-4">
             {navLinks.map((link) => (
-              <div key={link.label} className="relative">
+              <div
+                key={link.label}
+                className="relative"
+                onMouseEnter={() => link.dropdown && setOpenDropdown(link.label)}
+                onMouseLeave={() => setOpenDropdown(null)}
+              >
                 {link.dropdown ? (
                   <button
                     className="flex items-center gap-1 text-white/65 hover:text-[#E36F2C] text-sm font-medium tracking-wide px-2.5 py-2 transition-colors duration-200 whitespace-nowrap relative group"

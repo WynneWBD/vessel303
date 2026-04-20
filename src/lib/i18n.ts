@@ -26,6 +26,10 @@ export const i18n = {
     globalPresence:   b('Global Presence', '全球部署'),
     faq:              b('FAQ', '常见问题'),
     innovation:       b('Innovation', '技术创新'),
+    aboutBrandStory:  b('Brand Story', '品牌故事'),
+    aboutCoreTech:    b('Core Technologies', '三大技术'),
+    aboutCerts:       b('Certifications', '认证荣誉'),
+    aboutFounder:     b('Founder', '创始人'),
   },
   footer: {
     ctaTitle:         b('Ready to start your tourism architecture project?', '准备好开始您的文旅建筑项目了吗？'),
@@ -176,6 +180,21 @@ export const i18n = {
       '从选址咨询到全球交付——我们的团队已支持30+国家的300+个项目。'
     ),
     ctaBtn:           b('Contact Us', '联系我们'),
+
+    // === CORE TECH SECTION ===
+    coreLabel:        b('CORE TECHNOLOGIES', '核心技术体系'),
+    coreTitle:        b('Three Systems That Define VESSEL', '三大自研技术体系'),
+    coreSub:          b('Engineered for global deployment across any climate, terrain or regulatory environment.', '面向全球气候、地形与合规要求的工程化技术解决方案。'),
+    coreViieTitle:    b('VesselOS · VIIE', 'VesselOS · 智能交互'),
+    coreViieSub:      b('Intelligent Interactive Experience', '微宿智能控制系统'),
+    coreViieDesc:     b('Proprietary smart control platform. 1,400+ units connected globally. Full remote control of lighting, climate, access and monitoring.', '完全自研智能控制平台，全球1,400余台舱体联网，远程掌控灯光、空调、门锁与实时监控。'),
+    coreVolsTitle:    b('VOLS', 'VOLS · 离网系统'),
+    coreVolsSub:      b('Off-grid Living System', '太阳能 · 储能 · 零排放'),
+    coreVolsDesc:     b('Solar + 100kWh+ storage + VSRB zero-discharge wastewater. Full energy independence, no infrastructure required.', '光伏发电 + 100kWh+储能 + VSRB生物污水零排放，完全脱离市政水电基础设施。'),
+    coreVipcTitle:    b('VIPC', 'VIPC · 整装预制'),
+    coreVipcSub:      b('Integral Pre-fab Construction', '出厂即成品 · 2小时安装'),
+    coreVipcDesc:     b('Factory-complete units. 2-hour on-site installation. 40ft Flat Rack shipping. Compliant in 30+ countries.', '出厂100%成品，现场2小时完成安装，40尺平架集装箱运输，合规交付30余国。'),
+    coreLearnMore:    b('Learn More →', '了解详情 →'),
 
     // === SHARED ===
     learnMore:        b('Learn More', '了解更多'),

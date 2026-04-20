@@ -109,6 +109,121 @@ function CredentialsBar() {
   );
 }
 
+// ─── Core Tech Systems ───────────────────────────────────
+
+function CoreTechSection() {
+  const t = useT();
+
+  const cards = [
+    {
+      href: '/innovation/viie',
+      title: t(i18n.home.coreViieTitle),
+      sub: t(i18n.home.coreViieSub),
+      desc: t(i18n.home.coreViieDesc),
+      icon: (
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="4" width="32" height="32" rx="4" />
+          <rect x="10" y="10" width="8" height="8" rx="1" />
+          <rect x="22" y="10" width="8" height="8" rx="1" />
+          <rect x="10" y="22" width="8" height="8" rx="1" />
+          <rect x="22" y="22" width="8" height="8" rx="1" />
+          <line x1="18" y1="14" x2="22" y2="14" />
+          <line x1="18" y1="26" x2="22" y2="26" />
+          <line x1="14" y1="18" x2="14" y2="22" />
+          <line x1="26" y1="18" x2="26" y2="22" />
+        </svg>
+      ),
+    },
+    {
+      href: '/innovation/vols',
+      title: t(i18n.home.coreVolsTitle),
+      sub: t(i18n.home.coreVolsSub),
+      desc: t(i18n.home.coreVolsDesc),
+      icon: (
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="20" cy="20" r="7" />
+          <line x1="20" y1="4" x2="20" y2="8" />
+          <line x1="20" y1="32" x2="20" y2="36" />
+          <line x1="4" y1="20" x2="8" y2="20" />
+          <line x1="32" y1="20" x2="36" y2="20" />
+          <line x1="8.3" y1="8.3" x2="11.2" y2="11.2" />
+          <line x1="28.8" y1="28.8" x2="31.7" y2="31.7" />
+          <line x1="31.7" y1="8.3" x2="28.8" y2="11.2" />
+          <line x1="11.2" y1="28.8" x2="8.3" y2="31.7" />
+          <path d="M14 28h12l2-8H12l2 8z" />
+        </svg>
+      ),
+    },
+    {
+      href: '/innovation/vipc',
+      title: t(i18n.home.coreVipcTitle),
+      sub: t(i18n.home.coreVipcSub),
+      desc: t(i18n.home.coreVipcDesc),
+      icon: (
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="16" width="32" height="20" rx="2" />
+          <path d="M4 22h32" />
+          <path d="M12 16V10l8-6 8 6v6" />
+          <line x1="16" y1="28" x2="24" y2="28" />
+          <line x1="20" y1="24" x2="20" y2="32" />
+        </svg>
+      ),
+    },
+  ];
+
+  return (
+    <section className="bg-[#F5F2ED] py-20">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="text-center mb-14">
+          <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-4 font-medium">
+            {t(i18n.home.coreLabel)}
+          </p>
+          <h2
+            className="text-3xl lg:text-4xl font-light text-[#1A1A1A] mb-4"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
+            {t(i18n.home.coreTitle)}
+          </h2>
+          <p className="text-sm text-[#8A8580] max-w-2xl mx-auto leading-relaxed">
+            {t(i18n.home.coreSub)}
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-6">
+          {cards.map((card) => (
+            <Link
+              key={card.href}
+              href={card.href}
+              className="group bg-[#1A1A1A] border-t-2 border-[#E36F2C] hover:border-t-4 p-8 flex flex-col transition-all duration-200"
+            >
+              <div className="mb-6">{card.icon}</div>
+              <h3
+                className="text-lg font-medium text-[#F0F0F0] mb-1"
+                style={{ fontFamily: 'var(--font-heading)' }}
+              >
+                {card.title}
+              </h3>
+              <p className="text-xs text-[#E36F2C]/70 tracking-wider uppercase mb-4">{card.sub}</p>
+              <p className="text-sm text-[#8A8580] leading-relaxed flex-1">{card.desc}</p>
+              <div className="mt-6 flex items-center gap-1 text-[#E36F2C] text-sm tracking-wider">
+                <span>{t(i18n.home.coreLearnMore)}</span>
+                <svg
+                  className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 16 16"
+                >
+                  <path d="M3 8h10M9 4l4 4-4 4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Certifications ──────────────────────────────────────
 
 function CertificationsSection() {
@@ -490,6 +605,7 @@ export default function HomePage() {
       <Navbar />
       <HeroSection />
       <CredentialsBar />
+      <CoreTechSection />
       <CertificationsSection />
       <PhilosophySection />
       <FlagshipSection />
