@@ -110,17 +110,9 @@ export default function Navbar() {
   const navLinks: NavLink[] = [
     { label: t(i18n.nav.products), href: '/products' },
     { label: t(i18n.nav.cases), href: '/global' },
-    {
-      label: t(i18n.nav.about),
-      href: '/about',
-      dropdown: [
-        { label: t(i18n.nav.aboutBrandStory), href: '/about' },
-        { label: t(i18n.nav.aboutCoreTech), href: '/innovation' },
-        { label: t(i18n.nav.aboutCerts), href: '/about#certifications' },
-        { label: t(i18n.nav.aboutFounder), href: '/about#founder' },
-      ],
-    },
+    { label: t(i18n.nav.about), href: '/about' },
     { label: t(i18n.nav.faq), href: '/faq' },
+    { label: t(i18n.nav.innovation), href: '/innovation' },
     { label: t(i18n.nav.news), href: '/news' },
     { label: t(i18n.nav.contact), href: '/contact' },
   ];
@@ -170,12 +162,7 @@ export default function Navbar() {
           {/* Desktop Nav */}
           <div className="hidden lg:flex items-center gap-0.5 mx-4">
             {navLinks.map((link) => (
-              <div
-                key={link.label}
-                className="relative"
-                onMouseEnter={() => link.dropdown && setOpenDropdown(link.label)}
-                onMouseLeave={() => setOpenDropdown(null)}
-              >
+              <div key={link.label} className="relative">
                 {link.dropdown ? (
                   <button
                     className="flex items-center gap-1 text-white/65 hover:text-[#E36F2C] text-sm font-medium tracking-wide px-2.5 py-2 transition-colors duration-200 whitespace-nowrap relative group"

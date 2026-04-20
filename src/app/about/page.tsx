@@ -134,11 +134,64 @@ const SERVICES = [
   },
 ];
 
+// ─── anchor nav ──────────────────────────────────────────────────────────────
+
+const ANCHOR_LINKS = [
+  { id: 'brand-story', en: 'Brand Story',   zh: '品牌故事' },
+  { id: 'technologies', en: 'Technologies', zh: '三大技术' },
+  { id: 'certifications', en: 'Certifications', zh: '认证荣誉' },
+  { id: 'founder',     en: 'Founder',       zh: '创始人' },
+];
+
+function AnchorNav({ activeSection, zh }: { activeSection: string; zh: boolean }) {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  return (
+    <div className="sticky top-16 lg:top-[72px] z-40 bg-[#1A1A1A] border-b border-[#2A2A2E]">
+      <div className="max-w-6xl mx-auto px-6 flex items-center justify-center gap-8 py-3 overflow-x-auto">
+        {ANCHOR_LINKS.map((link) => (
+          <a
+            key={link.id}
+            href={`#${link.id}`}
+            onClick={(e) => handleClick(e, link.id)}
+            className={`text-sm tracking-wider whitespace-nowrap transition-colors duration-150 pb-0.5 ${
+              activeSection === link.id
+                ? 'text-[#E36F2C] border-b border-[#E36F2C]'
+                : 'text-[#8A8580] hover:text-[#E36F2C]'
+            }`}
+          >
+            {zh ? link.zh : link.en}
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function AboutPage() {
   const { lang } = useLanguage();
   const zh = lang === 'zh';
+  const [activeSection, setActiveSection] = useState('brand-story');
+
+  useEffect(() => {
+    const ids = ['brand-story', 'technologies', 'certifications', 'founder'];
+    const observers = ids.map((id) => {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveSection(id); },
+        { threshold: 0.25 }
+      );
+      obs.observe(el);
+      return obs;
+    });
+    return () => observers.forEach((obs) => obs?.disconnect());
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#1A1A1A]">
@@ -173,6 +226,9 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* ── Anchor Nav ───────────────────────────────────────── */}
+      <AnchorNav activeSection={activeSection} zh={zh} />
+
       {/* ── S2 Stats bar ─────────────────────────────────────── */}
       <section className="bg-[#F5F2ED] border-b border-[#E5E0DA]">
         <div className="max-w-6xl mx-auto px-6">
@@ -195,7 +251,7 @@ export default function AboutPage() {
       </section>
 
       {/* ── S3 Brand story ───────────────────────────────────── */}
-      <section className="bg-[#F5F2ED] py-24 px-6">
+      <section id="brand-story" className="bg-[#F5F2ED] py-24 px-6">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
           <div>
             <Reveal>
@@ -333,7 +389,7 @@ export default function AboutPage() {
       </section>
 
       {/* ── S6 Founder ───────────────────────────────────────── */}
-      <section className="bg-[#1A1A1A] py-24 px-6">
+      <section id="founder" className="bg-[#1A1A1A] py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-12">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
@@ -417,8 +473,124 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* ── Technologies ─────────────────────────────────────── */}
+      <section id="technologies" className="bg-[#F5F2ED] py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <Reveal className="mb-14 text-center">
+            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-4">
+              {zh ? '核心技术体系' : 'CORE TECHNOLOGIES'}
+            </p>
+            <h2
+              className="text-4xl sm:text-5xl font-bold text-[#1A1A1A] mb-4"
+              style={{ fontFamily: 'DM Sans, sans-serif' }}
+            >
+              {zh ? '三大自研技术体系' : 'Three Proprietary Systems'}
+            </h2>
+            <p className="text-[#8A8580] text-sm max-w-2xl mx-auto leading-relaxed">
+              {zh
+                ? '每一台微宿背后的工程基础——面向全球部署而生。'
+                : 'The engineering foundation behind every VESSEL unit — built for global deployment.'}
+            </p>
+          </Reveal>
+
+          <div className="grid lg:grid-cols-3 gap-6">
+            {[
+              {
+                href: '/innovation/viie',
+                titleEn: 'VesselOS · VIIE',
+                titleZh: 'VesselOS · 智能交互系统',
+                descEn: 'Proprietary smart control platform connecting 1,400+ units globally. Remote lighting, climate, access and real-time monitoring.',
+                descZh: '完全自研智能控制平台，全球1,400余台舱体联网，远程掌控灯光、空调、门锁与实时监控。',
+                icon: (
+                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="4" y="4" width="32" height="32" rx="4" />
+                    <rect x="10" y="10" width="8" height="8" rx="1" />
+                    <rect x="22" y="10" width="8" height="8" rx="1" />
+                    <rect x="10" y="22" width="8" height="8" rx="1" />
+                    <rect x="22" y="22" width="8" height="8" rx="1" />
+                    <line x1="18" y1="14" x2="22" y2="14" />
+                    <line x1="18" y1="26" x2="22" y2="26" />
+                    <line x1="14" y1="18" x2="14" y2="22" />
+                    <line x1="26" y1="18" x2="26" y2="22" />
+                  </svg>
+                ),
+              },
+              {
+                href: '/innovation/vols',
+                titleEn: 'VOLS · Off-grid System',
+                titleZh: 'VOLS · 离网生活系统',
+                descEn: 'Solar generation, 100kWh+ storage, VSRB zero-discharge wastewater. Complete independence from municipal infrastructure.',
+                descZh: '光伏发电、100kWh+储能、VSRB生物污水零排放，完全脱离市政水电基础设施运行。',
+                icon: (
+                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="20" cy="16" r="7" />
+                    <line x1="20" y1="2" x2="20" y2="6" />
+                    <line x1="20" y1="26" x2="20" y2="30" />
+                    <line x1="6" y1="16" x2="10" y2="16" />
+                    <line x1="30" y1="16" x2="34" y2="16" />
+                    <line x1="9.8" y1="5.8" x2="12.6" y2="8.6" />
+                    <line x1="27.4" y1="23.4" x2="30.2" y2="26.2" />
+                    <line x1="30.2" y1="5.8" x2="27.4" y2="8.6" />
+                    <line x1="12.6" y1="23.4" x2="9.8" y2="26.2" />
+                    <rect x="12" y="30" width="16" height="6" rx="1" />
+                    <line x1="16" y1="30" x2="16" y2="36" />
+                    <line x1="20" y1="30" x2="20" y2="36" />
+                    <line x1="24" y1="30" x2="24" y2="36" />
+                  </svg>
+                ),
+              },
+              {
+                href: '/innovation/vipc',
+                titleEn: 'VIPC · Pre-fab Construction',
+                titleZh: 'VIPC · 整装预制系统',
+                descEn: '100% factory-complete. 2-hour site installation. 40ft Flat Rack compliant. Delivered to 30+ countries.',
+                descZh: '出厂100%成品，现场2小时完成安装，符合40尺平架集装箱规格，已合规交付30余国。',
+                icon: (
+                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="4" y="18" width="32" height="18" rx="2" />
+                    <path d="M4 24h32" />
+                    <path d="M13 18V12l7-8 7 8v6" />
+                    <line x1="16" y1="30" x2="24" y2="30" />
+                    <line x1="20" y1="26" x2="20" y2="34" />
+                  </svg>
+                ),
+              },
+            ].map((card) => (
+              <Reveal key={card.href}>
+                <Link
+                  href={card.href}
+                  className="group bg-[#1A1A1A] border-t-2 border-[#E36F2C] hover:border-t-4 p-8 flex flex-col transition-all duration-200 h-full"
+                >
+                  <div className="mb-6">{card.icon}</div>
+                  <h3
+                    className="text-lg font-bold text-[#F0F0F0] mb-4"
+                    style={{ fontFamily: 'DM Sans, sans-serif' }}
+                  >
+                    {zh ? card.titleZh : card.titleEn}
+                  </h3>
+                  <p className="text-sm text-[#8A8580] leading-relaxed flex-1">
+                    {zh ? card.descZh : card.descEn}
+                  </p>
+                  <div className="mt-6 flex items-center gap-1 text-[#E36F2C] text-sm tracking-wider">
+                    <span>{zh ? '了解详情' : 'Explore'}</span>
+                    <svg
+                      className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 16 16"
+                    >
+                      <path d="M3 8h10M9 4l4 4-4 4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── S8 Certifications ────────────────────────────────── */}
-      <section className="bg-[#1A1A1A] py-24 px-6">
+      <section id="certifications" className="bg-[#1A1A1A] py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-12">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
