@@ -243,10 +243,10 @@ export default function VolsPage() {
             <p className="text-[#1A1A1A] font-semibold text-lg mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>
               {zh ? '了解更多微宿技术体系' : 'Explore all VESSEL systems'}
             </p>
-            <p className="text-[#8A8580] text-sm">{zh ? '返回技术创新主页' : 'Back to Innovation overview'}</p>
+            <p className="text-[#8A8580] text-sm">{zh ? '返回关于我们 · 三大技术' : 'Back to About · Technologies'}</p>
           </div>
           <div className="flex gap-3 flex-wrap justify-center sm:justify-end">
-            <Link href="/innovation" className="px-6 py-3 border border-[#C4B9AB] text-[#8A8580] text-sm tracking-wider hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-colors">
+            <Link href="/about#technologies" className="px-6 py-3 border border-[#C4B9AB] text-[#8A8580] text-sm tracking-wider hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-colors">
               {zh ? '← 返回' : '← Back'}
             </Link>
             <a href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"

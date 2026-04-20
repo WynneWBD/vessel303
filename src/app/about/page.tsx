@@ -388,91 +388,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── S6 Founder ───────────────────────────────────────── */}
-      <section id="founder" className="bg-[#1A1A1A] py-24 px-6">
-        <div className="max-w-6xl mx-auto">
-          <Reveal className="mb-12">
-            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
-              {zh ? '团队' : 'Team'}
-            </p>
-            <h2
-              className="text-4xl sm:text-5xl font-bold text-[#F0F0F0]"
-              style={{ fontFamily: 'DM Sans, sans-serif' }}
-            >
-              {zh ? '100+ 人精英团队' : '100+ Expert Team'}
-            </h2>
-          </Reveal>
-
-          {/* Founder */}
-          <Reveal delay={100} className="grid lg:grid-cols-[256px_1fr] gap-10 items-start">
-            <div className="w-64 h-64 rounded-full overflow-hidden shrink-0 mx-auto lg:mx-0 relative">
-              <Image
-                src="/images/about/about_team-05.jpg"
-                alt="Wang Shuaibin"
-                fill
-                className="object-cover object-top"
-                unoptimized
-              />
-            </div>
-            <div className="pt-2">
-              <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
-                {zh ? '创始人 & 首席设计师' : 'Founder & Chief Designer'}
-              </p>
-              <p className="text-[#F0F0F0] text-3xl font-bold mb-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                {zh ? '王帅斌' : 'Wang Shuaibin'}
-              </p>
-              <p className="text-[#8A8580] text-sm tracking-wider mb-6">
-                {zh ? '建筑师 · 企业家 · 先行者' : 'Architect · Entrepreneur · Visionary'}
-              </p>
-              <p className="text-[#F0F0F0]/65 text-base leading-relaxed max-w-2xl mb-6" style={{ fontFamily: 'Inter, sans-serif' }}>
-                {zh
-                  ? '王帅斌于 2018 年创立 VESSEL 微宿，以国际建筑师视野重新定义中国文旅行业。他持有英国邓迪大学建筑学硕士（RIBA Part II 认证）及美国圣路易斯华盛顿大学建筑学硕士学位，曾任职于纽约华尔街 SOM 建筑设计事务所。在他的带领下，微宿开创了"太空主题高端度假营地"品类，成长为出口 30 余国的全球知名品牌。'
-                  : 'Wang Shuaibin founded VESSEL in 2018, bringing an international architectural perspective to the cultural tourism industry. He holds Master of Architecture degrees from the University of Dundee (RIBA Part II) and Washington University in St. Louis, and previously worked at SOM Architects on Wall Street, New York City. Under his leadership, VESSEL pioneered the space-themed luxury camp resort category and has grown into a globally recognised brand with exports across 30+ countries.'}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {(zh
-                  ? ['邓迪大学 — RIBA Part II', '华盛顿大学圣路易斯 — 建筑学硕士', 'SOM建筑事务所 — 纽约']
-                  : ['Univ. of Dundee — RIBA Part II', 'Washington Univ. in St. Louis — M.Arch', 'SOM Architects — NYC']
-                ).map(tag => (
-                  <span key={tag} className="text-xs px-3 py-1.5 border border-[#2A2A2E] text-[#8A8580] tracking-wider">{tag}</span>
-                ))}
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── S7 Three Services ────────────────────────────────── */}
-      <section className="bg-[#F5F2ED] py-24 px-6">
-        <div className="max-w-6xl mx-auto">
-          <Reveal className="mb-12">
-            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
-              {zh ? '三大服务体系' : 'Three Service Systems'}
-            </p>
-            <h2
-              className="text-4xl sm:text-5xl font-bold text-[#1A1A1A]"
-              style={{ fontFamily: 'DM Sans, sans-serif' }}
-            >
-              {zh ? '从选址到运营\n全程陪跑' : 'From Site Selection\nto Full Operations'}
-            </h2>
-          </Reveal>
-
-          <div className="grid md:grid-cols-3 gap-5">
-            {SERVICES.map((s, i) => (
-              <Reveal key={s.n} delay={i * 80}>
-                <div className="border border-[#E5E0DA] bg-white p-8 flex flex-col gap-5 h-full hover:border-[#E36F2C]/40 hover:shadow-sm transition-all">
-                  <span className="text-4xl font-bold text-[#E36F2C]/20" style={{ fontFamily: 'DM Sans, sans-serif' }}>{s.n}</span>
-                  <h3 className="text-[#1A1A1A] font-bold text-lg leading-snug" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                    {zh ? s.zh : s.en}
-                  </h3>
-                  <p className="text-[#8A8580] text-sm leading-relaxed flex-1">{zh ? s.desc_zh : s.desc_en}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── Technologies ─────────────────────────────────────── */}
       <section id="technologies" className="bg-[#F5F2ED] py-20 px-6">
         <div className="max-w-6xl mx-auto">
@@ -497,61 +412,57 @@ export default function AboutPage() {
             {[
               {
                 href: '/innovation/viie',
-                titleEn: 'VesselOS · VIIE',
-                titleZh: 'VesselOS · 智能交互系统',
-                descEn: 'Proprietary smart control platform connecting 1,400+ units globally. Remote lighting, climate, access and real-time monitoring.',
-                descZh: '完全自研智能控制平台，全球1,400余台舱体联网，远程掌控灯光、空调、门锁与实时监控。',
+                tag: 'VesselOS · VIIE',
+                titleEn: 'Vessel Intelligent Interactive Experience',
+                titleZh: '微宿智能交互',
+                descEn: 'Proprietary VesselOS platform connecting 1,400+ units worldwide. Voice + app dual control for lighting, climate, curtains, access and real-time monitoring. Huawei HarmonyOS integrated.',
+                descZh: 'VesselOS 全屋智能控制系统，全球1,400余台舱体联网。AI语音 + App双控灯光、空调、遮帘、门锁与实时监控，深度融合华为鸿蒙生态。',
                 icon: (
-                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="4" y="4" width="32" height="32" rx="4" />
-                    <rect x="10" y="10" width="8" height="8" rx="1" />
-                    <rect x="22" y="10" width="8" height="8" rx="1" />
-                    <rect x="10" y="22" width="8" height="8" rx="1" />
-                    <rect x="22" y="22" width="8" height="8" rx="1" />
-                    <line x1="18" y1="14" x2="22" y2="14" />
-                    <line x1="18" y1="26" x2="22" y2="26" />
-                    <line x1="14" y1="18" x2="14" y2="22" />
-                    <line x1="26" y1="18" x2="26" y2="22" />
+                  <svg viewBox="0 0 48 48" fill="none" className="w-12 h-12" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="6" y="10" width="36" height="24" rx="2" stroke="#E36F2C" strokeWidth="2" />
+                    <path d="M16 38h16" stroke="#E36F2C" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M24 34v4" stroke="#E36F2C" strokeWidth="2" strokeLinecap="round" />
+                    <circle cx="18" cy="18" r="2" fill="#E36F2C" />
+                    <circle cx="24" cy="18" r="2" fill="#E36F2C" opacity="0.5" />
+                    <circle cx="30" cy="18" r="2" fill="#E36F2C" opacity="0.3" />
+                    <path d="M14 26h20" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M14 22h12" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
                   </svg>
                 ),
               },
               {
                 href: '/innovation/vols',
-                titleEn: 'VOLS · Off-grid System',
-                titleZh: 'VOLS · 离网生活系统',
-                descEn: 'Solar generation, 100kWh+ storage, VSRB zero-discharge wastewater. Complete independence from municipal infrastructure.',
-                descZh: '光伏发电、100kWh+储能、VSRB生物污水零排放，完全脱离市政水电基础设施运行。',
+                tag: 'VOLS',
+                titleEn: 'Vessel Off-grid Living System',
+                titleZh: '微宿离网系统',
+                descEn: 'Rooftop solar generation, 100kWh+ battery storage, integrated water purification and VSRB bio-wastewater treatment. Total independence from municipal utilities.',
+                descZh: '屋顶光伏发电 + 100kWh+储能电池，集成净水与VSRB生物污水零排放处理系统，完全脱离市政基础设施运行。',
                 icon: (
-                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="20" cy="16" r="7" />
-                    <line x1="20" y1="2" x2="20" y2="6" />
-                    <line x1="20" y1="26" x2="20" y2="30" />
-                    <line x1="6" y1="16" x2="10" y2="16" />
-                    <line x1="30" y1="16" x2="34" y2="16" />
-                    <line x1="9.8" y1="5.8" x2="12.6" y2="8.6" />
-                    <line x1="27.4" y1="23.4" x2="30.2" y2="26.2" />
-                    <line x1="30.2" y1="5.8" x2="27.4" y2="8.6" />
-                    <line x1="12.6" y1="23.4" x2="9.8" y2="26.2" />
-                    <rect x="12" y="30" width="16" height="6" rx="1" />
-                    <line x1="16" y1="30" x2="16" y2="36" />
-                    <line x1="20" y1="30" x2="20" y2="36" />
-                    <line x1="24" y1="30" x2="24" y2="36" />
+                  <svg viewBox="0 0 48 48" fill="none" className="w-12 h-12" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="24" cy="20" r="7" stroke="#E36F2C" strokeWidth="2" />
+                    <path d="M24 6v3M24 31v3M10 20H7M37 20h3M14.1 10.1l2.1 2.1M31.8 27.8l2.1 2.1M14.1 29.9l2.1-2.1M31.8 12.2l2.1-2.1" stroke="#E36F2C" strokeWidth="2" strokeLinecap="round" />
+                    <rect x="12" y="36" width="24" height="6" rx="1" stroke="#E36F2C" strokeWidth="1.5" />
+                    <path d="M18 36v-2h12v2" stroke="#E36F2C" strokeWidth="1.5" />
+                    <path d="M15 39h4M21 39h4M27 39h4" stroke="#E36F2C" strokeWidth="1" strokeLinecap="round" opacity="0.6" />
                   </svg>
                 ),
               },
               {
                 href: '/innovation/vipc',
-                titleEn: 'VIPC · Pre-fab Construction',
-                titleZh: 'VIPC · 整装预制系统',
-                descEn: '100% factory-complete. 2-hour site installation. 40ft Flat Rack compliant. Delivered to 30+ countries.',
-                descZh: '出厂100%成品，现场2小时完成安装，符合40尺平架集装箱规格，已合规交付30余国。',
+                tag: 'VIPC',
+                titleEn: 'Vessel Integral Pre-fab Construction',
+                titleZh: '微宿整装预制系统',
+                descEn: 'Factory precision ±0.5mm. 100% completed in-plant. Shipped whole via 40ft Flat Rack. 2-hour on-site installation. Compliant delivery to 30+ countries.',
+                descZh: '工厂精度±0.5mm，出厂100%成品，40尺平架集装箱整体运输，现场2小时完成安装，合规交付30余国。',
                 icon: (
-                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="4" y="18" width="32" height="18" rx="2" />
-                    <path d="M4 24h32" />
-                    <path d="M13 18V12l7-8 7 8v6" />
-                    <line x1="16" y1="30" x2="24" y2="30" />
-                    <line x1="20" y1="26" x2="20" y2="34" />
+                  <svg viewBox="0 0 48 48" fill="none" className="w-12 h-12" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="8" y="20" width="32" height="20" rx="1" stroke="#E36F2C" strokeWidth="2" />
+                    <path d="M8 24l16-14 16 14" stroke="#E36F2C" strokeWidth="2" strokeLinejoin="round" />
+                    <rect x="18" y="28" width="12" height="12" rx="0.5" stroke="#E36F2C" strokeWidth="1.5" />
+                    <path d="M18 34h12" stroke="#E36F2C" strokeWidth="1" opacity="0.5" />
+                    <path d="M24 28v12" stroke="#E36F2C" strokeWidth="1" opacity="0.5" />
+                    <circle cx="36" cy="12" r="5" fill="#E36F2C" opacity="0.15" stroke="#E36F2C" strokeWidth="1.5" />
+                    <path d="M33.5 12l2 2 3-3" stroke="#E36F2C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 ),
               },
@@ -562,8 +473,11 @@ export default function AboutPage() {
                   className="group bg-[#1A1A1A] border-t-2 border-[#E36F2C] hover:border-t-4 p-8 flex flex-col transition-all duration-200 h-full"
                 >
                   <div className="mb-6">{card.icon}</div>
+                  <p className="text-[#E36F2C] text-xs tracking-[0.25em] uppercase font-bold mb-2">
+                    {card.tag}
+                  </p>
                   <h3
-                    className="text-lg font-bold text-[#F0F0F0] mb-4"
+                    className="text-xl font-bold text-[#F0F0F0] mb-4 leading-snug"
                     style={{ fontFamily: 'DM Sans, sans-serif' }}
                   >
                     {zh ? card.titleZh : card.titleEn}
@@ -713,6 +627,91 @@ export default function AboutPage() {
                     className="object-contain p-2 grayscale hover:grayscale-0 transition-all duration-300"
                     unoptimized
                   />
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── S6 Founder ───────────────────────────────────────── */}
+      <section id="founder" className="bg-[#1A1A1A] py-24 px-6">
+        <div className="max-w-6xl mx-auto">
+          <Reveal className="mb-12">
+            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
+              {zh ? '团队' : 'Team'}
+            </p>
+            <h2
+              className="text-4xl sm:text-5xl font-bold text-[#F0F0F0]"
+              style={{ fontFamily: 'DM Sans, sans-serif' }}
+            >
+              {zh ? '100+ 人精英团队' : '100+ Expert Team'}
+            </h2>
+          </Reveal>
+
+          {/* Founder */}
+          <Reveal delay={100} className="grid lg:grid-cols-[256px_1fr] gap-10 items-start">
+            <div className="w-64 h-64 rounded-full overflow-hidden shrink-0 mx-auto lg:mx-0 relative">
+              <Image
+                src="/images/about/about_team-05.jpg"
+                alt="Wang Shuaibin"
+                fill
+                className="object-cover object-top"
+                unoptimized
+              />
+            </div>
+            <div className="pt-2">
+              <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
+                {zh ? '创始人 & 首席设计师' : 'Founder & Chief Designer'}
+              </p>
+              <p className="text-[#F0F0F0] text-3xl font-bold mb-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                {zh ? '王帅斌' : 'Wang Shuaibin'}
+              </p>
+              <p className="text-[#8A8580] text-sm tracking-wider mb-6">
+                {zh ? '建筑师 · 企业家 · 先行者' : 'Architect · Entrepreneur · Visionary'}
+              </p>
+              <p className="text-[#F0F0F0]/65 text-base leading-relaxed max-w-2xl mb-6" style={{ fontFamily: 'Inter, sans-serif' }}>
+                {zh
+                  ? '王帅斌于 2018 年创立 VESSEL 微宿，以国际建筑师视野重新定义中国文旅行业。他持有英国邓迪大学建筑学硕士（RIBA Part II 认证）及美国圣路易斯华盛顿大学建筑学硕士学位，曾任职于纽约华尔街 SOM 建筑设计事务所。在他的带领下，微宿开创了"太空主题高端度假营地"品类，成长为出口 30 余国的全球知名品牌。'
+                  : 'Wang Shuaibin founded VESSEL in 2018, bringing an international architectural perspective to the cultural tourism industry. He holds Master of Architecture degrees from the University of Dundee (RIBA Part II) and Washington University in St. Louis, and previously worked at SOM Architects on Wall Street, New York City. Under his leadership, VESSEL pioneered the space-themed luxury camp resort category and has grown into a globally recognised brand with exports across 30+ countries.'}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {(zh
+                  ? ['邓迪大学 — RIBA Part II', '华盛顿大学圣路易斯 — 建筑学硕士', 'SOM建筑事务所 — 纽约']
+                  : ['Univ. of Dundee — RIBA Part II', 'Washington Univ. in St. Louis — M.Arch', 'SOM Architects — NYC']
+                ).map(tag => (
+                  <span key={tag} className="text-xs px-3 py-1.5 border border-[#2A2A2E] text-[#8A8580] tracking-wider">{tag}</span>
+                ))}
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── S7 Three Services ────────────────────────────────── */}
+      <section className="bg-[#F5F2ED] py-24 px-6">
+        <div className="max-w-6xl mx-auto">
+          <Reveal className="mb-12">
+            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
+              {zh ? '三大服务体系' : 'Three Service Systems'}
+            </p>
+            <h2
+              className="text-4xl sm:text-5xl font-bold text-[#1A1A1A]"
+              style={{ fontFamily: 'DM Sans, sans-serif' }}
+            >
+              {zh ? '从选址到运营\n全程陪跑' : 'From Site Selection\nto Full Operations'}
+            </h2>
+          </Reveal>
+
+          <div className="grid md:grid-cols-3 gap-5">
+            {SERVICES.map((s, i) => (
+              <Reveal key={s.n} delay={i * 80}>
+                <div className="border border-[#E5E0DA] bg-white p-8 flex flex-col gap-5 h-full hover:border-[#E36F2C]/40 hover:shadow-sm transition-all">
+                  <span className="text-4xl font-bold text-[#E36F2C]/20" style={{ fontFamily: 'DM Sans, sans-serif' }}>{s.n}</span>
+                  <h3 className="text-[#1A1A1A] font-bold text-lg leading-snug" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                    {zh ? s.zh : s.en}
+                  </h3>
+                  <p className="text-[#8A8580] text-sm leading-relaxed flex-1">{zh ? s.desc_zh : s.desc_en}</p>
                 </div>
               </Reveal>
             ))}

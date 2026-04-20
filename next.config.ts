@@ -18,6 +18,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/innovation',
+        destination: '/about#technologies',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

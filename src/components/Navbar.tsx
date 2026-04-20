@@ -112,7 +112,6 @@ export default function Navbar() {
     { label: t(i18n.nav.cases), href: '/global' },
     { label: t(i18n.nav.about), href: '/about' },
     { label: t(i18n.nav.faq), href: '/faq' },
-    { label: t(i18n.nav.innovation), href: '/innovation' },
     { label: t(i18n.nav.news), href: '/news' },
     { label: t(i18n.nav.contact), href: '/contact' },
   ];
