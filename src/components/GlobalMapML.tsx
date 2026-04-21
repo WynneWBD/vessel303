@@ -176,6 +176,32 @@ const MARKER_CSS = `
 .vessel-camp-popup .maplibregl-popup-tip {
   border-top-color: rgba(240,240,240,0.96);
 }
+/* HQ factory tooltip popup */
+.vessel-hq-popup .maplibregl-popup-content {
+  background: rgba(26,26,26,0.94);
+  color: #F0F0F0;
+  border: 1px solid #E36F2C;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  white-space: nowrap;
+  font-family: -apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  min-width: 160px;
+}
+.vessel-hq-popup .maplibregl-popup-tip {
+  border-top-color: #E36F2C;
+}
+.vessel-hq-popup-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #F0F0F0;
+  margin-bottom: 3px;
+}
+.vessel-hq-popup-addr {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+}
 /* MapLibre control buttons — dark theme */
 .maplibregl-ctrl-group {
   background: rgba(26,26,26,0.85) !important;
@@ -212,6 +238,7 @@ export default function GlobalMapML({
   const mapRef = useRef<MaptilerMap | null>(null)
   const suppressClick = useRef(false)
   const hqLabelRef = useRef<HTMLDivElement | null>(null)
+  const hqPopupRef = useRef<InstanceType<typeof Popup> | null>(null)
   const prevFlyKey = useRef('')
   const prevResetKey = useRef(resetViewKey ?? 0)
   const isZhRef = useRef(lang === 'zh')
@@ -345,10 +372,37 @@ export default function GlobalMapML({
       `
       hqLabelRef.current = hqWrapper.querySelector<HTMLDivElement>('.vessel-hq-label')
 
-      // Click star or label → open HQ detail panel
+      // HQ popup helpers
+      const hqPopup = new Popup({
+        closeButton: false,
+        closeOnClick: true,
+        offset: 22,
+        className: 'vessel-hq-popup',
+      })
+      hqPopupRef.current = hqPopup
+
+      function getHqPopupHtml() {
+        const zh = isZhRef.current
+        const name = zh ? HQ_PROJECT.name.zh : HQ_PROJECT.name.en
+        const addr = zh ? HQ_PROJECT.location.zh : HQ_PROJECT.location.en
+        return `<div class="vessel-hq-popup-name">${name}</div><div class="vessel-hq-popup-addr">${addr}</div>`
+      }
+
+      hqWrapper.addEventListener('mouseenter', () => {
+        const map = mapRef.current
+        if (!map) return
+        hqPopup.setLngLat([HQ.lng, HQ.lat]).setHTML(getHqPopupHtml()).addTo(map)
+      })
+      hqWrapper.addEventListener('mouseleave', () => {
+        hqPopup.remove()
+      })
       hqWrapper.addEventListener('click', (ev) => {
         ev.stopPropagation()
-        onShowcaseSelectRef.current?.(HQ_PROJECT)
+        const map = mapRef.current
+        if (!map) return
+        if (!hqPopup.isOpen()) {
+          hqPopup.setLngLat([HQ.lng, HQ.lat]).setHTML(getHqPopupHtml()).addTo(map)
+        }
       })
 
       // ── Zoom-responsive scale for showcase pins ───────────────────────
@@ -443,6 +497,12 @@ export default function GlobalMapML({
       map.setLanguage(isZh ? Language.CHINESE : Language.ENGLISH)
       if (hqLabelRef.current) {
         hqLabelRef.current.textContent = isZh ? HQ.labelZh : HQ.labelEn
+      }
+      const hqPopup = hqPopupRef.current
+      if (hqPopup?.isOpen()) {
+        const name = isZh ? HQ_PROJECT.name.zh : HQ_PROJECT.name.en
+        const addr = isZh ? HQ_PROJECT.location.zh : HQ_PROJECT.location.en
+        hqPopup.setHTML(`<div class="vessel-hq-popup-name">${name}</div><div class="vessel-hq-popup-addr">${addr}</div>`)
       }
     }
     if (map.loaded()) apply()
