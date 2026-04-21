@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import Image from 'next/image'
+import ProtectedImage from '@/components/ProtectedImage'
 import type { ShowcaseProject } from '@/data/showcaseProjects'
 
 // ── Fade-in section wrapper ──────────────────────────────────────────────────
@@ -134,7 +134,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
               transition: 'opacity 0.9s ease',
             }}
           >
-            <Image
+            <ProtectedImage
               src={src}
               alt={`${name} ${i + 1}`}
               fill
@@ -409,7 +409,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
           }}
         >
           <div style={{ position: 'relative', width: '80vw', height: '80vh', maxWidth: 1400 }}>
-            <Image src={lightboxSrc} alt="" fill style={{ objectFit: 'contain' }} sizes="90vw" />
+            <ProtectedImage src={lightboxSrc} alt="" fill style={{ objectFit: 'contain' }} sizes="90vw" />
           </div>
           <button
             onClick={() => setLightboxSrc(null)}
@@ -451,7 +451,7 @@ function GalleryThumb({
         cursor: 'zoom-in',
       }}
     >
-      <Image
+      <ProtectedImage
         src={src}
         alt={alt}
         fill

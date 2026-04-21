@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import ProtectedImage from '@/components/ProtectedImage';
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import { useT } from '@/contexts/LanguageContext';
@@ -62,7 +62,7 @@ function GridCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
     <div className="group flex flex-col bg-white border border-[#E8E4DE] hover:border-[#c9a84c]/40 transition-all duration-300 overflow-hidden">
       {/* Image area */}
       <div className="relative aspect-video overflow-hidden bg-[#F0EDE8]">
-        <Image
+        <ProtectedImage
           src={product.image}
           alt={lang === 'en' ? product.name_en : product.name_cn}
           fill
@@ -165,7 +165,7 @@ function ListCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
     <div className="group flex bg-white border border-[#E8E4DE] hover:border-[#c9a84c]/30 transition-all duration-300 overflow-hidden">
       {/* Image */}
       <div className="relative w-[240px] shrink-0 overflow-hidden bg-[#F0EDE8]">
-        <Image
+        <ProtectedImage
           src={product.image}
           alt={lang === 'en' ? product.name_en : product.name_cn}
           fill

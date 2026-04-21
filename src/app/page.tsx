@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import ProtectedImage from '@/components/ProtectedImage';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -459,7 +460,7 @@ function ProjectsSection() {
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-12">
           {REGIONS.map((r) => (
             <div key={r.label} className="relative aspect-[4/3] overflow-hidden group">
-              <Image
+              <ProtectedImage
                 src={r.img}
                 alt={r.label}
                 fill

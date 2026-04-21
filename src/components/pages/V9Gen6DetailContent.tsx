@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import ProtectedImage from '@/components/ProtectedImage';
 import Link from 'next/link';
 import { useState, useCallback, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -174,7 +174,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                       : 'border-white/10 opacity-45 hover:opacity-75 hover:border-white/30'
                   }`}
                 >
-                  <Image src={img.src} alt={lang === 'en' ? img.en : img.cn} fill className="object-cover" sizes="96px" />
+                  <ProtectedImage src={img.src} alt={lang === 'en' ? img.en : img.cn} fill className="object-cover" sizes="96px" />
                 </button>
               ))}
             </div>
@@ -185,7 +185,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
 
             {/* 主图 */}
             <div className="relative aspect-[4/3] bg-[#0d0d0d] overflow-hidden group">
-              <Image
+              <ProtectedImage
                 key={active.src}
                 src={active.src}
                 alt={lang === 'en' ? active.en : active.cn}
@@ -225,7 +225,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                     idx === activeIdx ? 'border-[#c9a84c]' : 'border-white/10 opacity-50 hover:opacity-80'
                   }`}
                 >
-                  <Image src={img.src} alt={lang === 'en' ? img.en : img.cn} fill className="object-cover" sizes="64px" />
+                  <ProtectedImage src={img.src} alt={lang === 'en' ? img.en : img.cn} fill className="object-cover" sizes="64px" />
                 </button>
               ))}
             </div>
@@ -318,7 +318,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                       onClick={() => selectImage(8 + i)}
                       className="relative aspect-[4/3] overflow-hidden group bg-[#0d0d0d]"
                     >
-                      <Image
+                      <ProtectedImage
                         src={img.src}
                         alt={lang === 'en' ? img.en : img.cn}
                         fill
@@ -340,7 +340,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                 <Label cn="运输说明" en="Shipping & Transport" lang={lang} />
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
                   <div className="relative aspect-video bg-[#0d0d0d] border border-white/8">
-                    <Image
+                    <ProtectedImage
                       src="/images/products/v9-gen6/exploded-view.png"
                       alt="Exploded view"
                       fill
@@ -564,7 +564,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                   className="group block bg-[#221F1C] border border-white/8 hover:border-[#c9a84c]/40 overflow-hidden transition-all duration-300"
                 >
                   <div className="relative aspect-video overflow-hidden bg-[#0d0d0d]">
-                    <Image
+                    <ProtectedImage
                       src={p.image}
                       alt={lang === 'en' ? p.name_en : p.name_cn}
                       fill

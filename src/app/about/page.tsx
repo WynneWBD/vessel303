@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import ProtectedImage from '@/components/ProtectedImage';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -342,14 +343,14 @@ export default function AboutPage() {
           <div className="flex flex-col gap-2">
             <Reveal>
               <div className="relative w-full rounded-sm overflow-hidden" style={{ aspectRatio: '16/9' }}>
-                <Image src={FACTORY_HERO} alt="VESSEL factory" fill className="object-cover hover:scale-105 transition-transform duration-700" unoptimized />
+                <ProtectedImage src={FACTORY_HERO} alt="VESSEL factory" fill className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" unoptimized />
               </div>
             </Reveal>
             <div className="grid grid-cols-2 gap-2">
               {FACTORY_GRID.map((src, i) => (
                 <Reveal key={src} delay={i * 60}>
                   <div className="relative rounded-sm overflow-hidden" style={{ aspectRatio: '4/3' }}>
-                    <Image src={src} alt={`VESSEL factory ${i + 2}`} fill className="object-cover hover:scale-105 transition-transform duration-700" unoptimized />
+                    <ProtectedImage src={src} alt={`VESSEL factory ${i + 2}`} fill className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" unoptimized />
                   </div>
                 </Reveal>
               ))}
