@@ -47,7 +47,7 @@ export default function GlobalMapStats() {
           <span
             style={{ color: 'rgba(255,255,255,0.40)', fontSize: 13, letterSpacing: '0.1em' }}
           >
-            {zh ? '全球营地部署' : 'Global Deployment'}
+            {zh ? '全球营地部署' : 'Global Map'}
           </span>
         </div>
 
@@ -84,10 +84,10 @@ export default function GlobalMapStats() {
           </div>
         </div>
 
-        {/* Lang switcher: desktop only in Row 1 */}
+        {/* Lang switcher: always visible; ml-auto on mobile pushes it right */}
         <div
-          className="hidden md:flex ml-auto md:ml-0"
-          style={{ alignItems: 'center', border: '1px solid rgba(255,255,255,0.15)', overflow: 'hidden', flexShrink: 0 }}
+          className="ml-auto md:ml-0"
+          style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(255,255,255,0.15)', overflow: 'hidden', flexShrink: 0 }}
         >
           <button
             onClick={() => setLang('en')}
@@ -125,81 +125,36 @@ export default function GlobalMapStats() {
         </div>
       </div>
 
-      {/* ── Row 2: mobile-only stats + lang switcher ── */}
+      {/* ── Row 2: mobile-only stats ── */}
       <div
-        className="flex md:hidden items-center w-full h-9"
+        className="flex md:hidden items-center justify-center gap-4 w-full h-9"
         style={{ borderTop: '1px solid rgba(227,111,44,0.15)', padding: '0 24px' }}
       >
-        {/* Left spacer for true centering */}
-        <div style={{ flex: 1 }} />
-
-        {/* Stats centered */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div>
-            <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 14, letterSpacing: '0.05em' }}>
-              {countries}
-            </span>
-            <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 11, marginLeft: 3 }}>
-              {zh ? '国家/地区' : 'Countries'}
-            </span>
-          </div>
-          <span style={{ color: 'rgba(138,133,128,0.4)', fontSize: 12 }}>·</span>
-          <div>
-            <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 14, letterSpacing: '0.05em' }}>
-              {campCount}
-            </span>
-            <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 11, marginLeft: 3 }}>
-              {zh ? '个营地' : 'Camps'}
-            </span>
-          </div>
-          <span style={{ color: 'rgba(138,133,128,0.4)', fontSize: 12 }}>·</span>
-          <div>
-            <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 14, letterSpacing: '0.05em' }}>
-              {totalDevices}
-            </span>
-            <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 11, marginLeft: 3 }}>
-              {zh ? '台设备' : 'Devices'}
-            </span>
-          </div>
+        <div>
+          <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 14, letterSpacing: '0.05em' }}>
+            {countries}
+          </span>
+          <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 11, marginLeft: 3 }}>
+            {zh ? '国家/地区' : 'Countries'}
+          </span>
         </div>
-
-        {/* Lang switcher right-aligned */}
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-          <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(255,255,255,0.15)', overflow: 'hidden' }}>
-            <button
-              onClick={() => setLang('en')}
-              style={{
-                padding: '3px 8px',
-                fontSize: 11,
-                letterSpacing: '0.1em',
-                cursor: 'pointer',
-                border: 'none',
-                background: lang === 'en' ? '#E36F2C' : 'transparent',
-                color: lang === 'en' ? '#F0F0F0' : 'rgba(255,255,255,0.4)',
-                fontWeight: lang === 'en' ? 700 : 400,
-                transition: 'all 0.15s',
-              }}
-            >
-              EN
-            </button>
-            <div style={{ width: 1, height: 10, background: 'rgba(255,255,255,0.15)' }} />
-            <button
-              onClick={() => setLang('zh')}
-              style={{
-                padding: '3px 8px',
-                fontSize: 11,
-                letterSpacing: '0.1em',
-                cursor: 'pointer',
-                border: 'none',
-                background: lang === 'zh' ? '#E36F2C' : 'transparent',
-                color: lang === 'zh' ? '#F0F0F0' : 'rgba(255,255,255,0.4)',
-                fontWeight: lang === 'zh' ? 700 : 400,
-                transition: 'all 0.15s',
-              }}
-            >
-              中
-            </button>
-          </div>
+        <span style={{ color: 'rgba(138,133,128,0.4)', fontSize: 12 }}>·</span>
+        <div>
+          <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 14, letterSpacing: '0.05em' }}>
+            {campCount}
+          </span>
+          <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 11, marginLeft: 3 }}>
+            {zh ? '个营地' : 'Camps'}
+          </span>
+        </div>
+        <span style={{ color: 'rgba(138,133,128,0.4)', fontSize: 12 }}>·</span>
+        <div>
+          <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 14, letterSpacing: '0.05em' }}>
+            {totalDevices}
+          </span>
+          <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 11, marginLeft: 3 }}>
+            {zh ? '台设备' : 'Devices'}
+          </span>
         </div>
       </div>
     </div>
