@@ -10,7 +10,8 @@ export default function GlobalPage() {
   return (
     <div style={{ overflow: 'hidden', height: '100vh', background: '#1A1A1A' }}>
       <GlobalMapStats />
-      <div style={{ paddingTop: 56 }}>
+      {/* mobile navbar = row1(56px) + row2(36px) = 92px; desktop = 56px */}
+      <div className="pt-[92px] md:pt-14">
         <GlobalMapView />
       </div>
     </div>
