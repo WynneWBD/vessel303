@@ -591,12 +591,12 @@ export default function AboutPage() {
           <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3">
             {PARTNERS.map((src, i) => (
               <Reveal key={src} delay={Math.floor(i / 6) * 60}>
-                <div className="bg-white border border-[#E5E0DA] p-3 aspect-square relative overflow-hidden group hover:border-[#C4B9AB] transition-colors">
+                <div className="bg-white border border-[#E5E0DA] rounded-lg p-3 aspect-square relative overflow-hidden group hover:shadow-md hover:-translate-y-1 transition-all duration-200">
                   <Image
                     src={src}
                     alt={`Partner ${i + 1}`}
                     fill
-                    className="object-contain p-2 grayscale hover:grayscale-0 transition-all duration-300"
+                    className="object-contain p-3"
                     unoptimized
                   />
                 </div>
