@@ -1,6 +1,6 @@
 # vessel303.com — Agent 操作手册
 
-> V6.1 · 2026-04-20 · 只放当前事实与规则，历史/说明去查 `vessel303_handoff_V6_0.docx`
+> V7.0 · 2026-04-21 · 只放当前事实与规则，历史/说明去查 `vessel303_handoff_V7_0.docx`
 
 ## 角色与工作方式
 
@@ -16,6 +16,9 @@
 5. 产品查看跳 `https://en.303vessel.cn/products_list.html`（新窗口）
 6. 价格权限严格分级（见第 4 节），海外不显示具体价格
 7. **广告法合规**：禁用极限词（最严苛/最先进/最优质/顶级/极致/唯一/世界领先/独家），违规罚款 20 万起。替换原则：主观评价 → 客观事实
+8. **V7.0 永久铁律**：
+   - `/global` 超级工厂五角星（佛山南海狮山）：hover/click 只显示 Tooltip popup，**不弹详情面板，不跳转**
+   - `ProtectedImage` 组件只作用于 5 个固定区块：产品列表卡片 / V9Gen6 图集 / About 工厂图网格 / ProjectDetail / 首页项目网格，不扩大不缩减
 
 ## 1. 技术栈
 
@@ -42,6 +45,7 @@
 - **MapLibre HTML Marker 不能加 `position: relative`**：会覆盖 MapLibre 的 `position: absolute` 导致所有 marker 跑偏。自定义样式只加在 marker 子元素上
 - **`transition: transform` 不能加在 Marker element 本身**：MapLibre 靠 `transform: translate(x,y)` 定位，加 transition 会导致地图平移时 lag。用两层结构：outer wrap（无 transition）+ inner pin（有 transition）
 - **HQ 五角星要最后 `addTo(map)`**：加 `z-index:9999` inline，保证浮在所有 marker 最上层
+- **`src/app/favicon.ico` 会覆盖 `public/favicon.svg`**：如果存在须删除，确保新 favicon 生效
 
 ## 3. 设计规范（品牌橙体系，占比 ≤10%）
 
@@ -59,6 +63,8 @@
 | `--border-dark` | `#2A2A2E` | 暗底分隔线 |
 
 Logo：`/images/vessel-logo.png`（透明背景橙色 PNG，含中文"微宿"）。Navbar 40px · Footer 32px · GlobalMap 统计栏 24px。
+
+Favicon（V7.0）：橙底白字 VESSEL 方案。`public/favicon.svg`（主）/ `favicon.ico` / `apple-touch-icon.png`（180×180）/ `icon-192.png` / `icon-512.png`。在 `src/app/layout.tsx` metadata.icons 注册。
 
 ## 4. 业务规则
 
@@ -83,12 +89,15 @@ Logo：`/images/vessel-logo.png`（透明背景橙色 PNG，含中文"微宿"）
 |---|---|
 | `src/components/GlobalMapML.tsx` | MapLibre 地图主组件 |
 | `src/components/GlobalMapView.tsx` | /global 页面容器 |
+| `src/components/GlobalMapStats.tsx` | /global Navbar 统计栏（手机端双行响应式） |
 | `src/components/ProjectDetail.tsx` | 展示项目详情侧栏 |
 | `src/components/TechDrawer.tsx` | 三大技术右滑 Drawer（60vw 桌面 / 100vw 移动） |
 | `src/components/tech/ViieContent.tsx` | VIIE 技术内容组件（接收 lang prop） |
 | `src/components/tech/VolsContent.tsx` | VOLS 技术内容组件 |
 | `src/components/tech/VipcContent.tsx` | VIPC 技术内容组件 |
-| `src/components/ImageProtection.tsx` | 图片防盗（屏蔽右键/dragstart） |
+| `src/components/tech/Reveal.tsx` | IntersectionObserver 显现动画组件 |
+| `src/components/ImageProtection.tsx` | 图片防盗（屏蔽右键/dragstart，全局） |
+| `src/components/ProtectedImage.tsx` | 移动端长按防盗（V7.0，覆盖 5 个区块） |
 | `src/data/showcaseProjects.ts` | 展示项目数据（40 个，中英双语） |
 | `src/data/camps.ts` | 普通营地数据（~232 个点） |
 | `src/lib/i18n.ts` | 中英文文案 |
@@ -97,15 +106,15 @@ Logo：`/images/vessel-logo.png`（透明背景橙色 PNG，含中文"微宿"）
 | `public/images/projects/<slug>/` | 展示项目图片 |
 | `GlobalMap.backup.tsx` | 旧 Leaflet 版本备份，保留不删 |
 
-## 6. 已上线页面（V6.0）
+## 6. 已上线页面（V7.0）
 
 | 页面 | 状态 |
 |---|---|
-| `/` | Hero 5 图轮播 + 三大技术 TechDrawer + 认证区块 |
-| `/products` | 39 SKU，分类筛选 |
-| `/products/v9-gen6` | 详情模板 |
-| `/global` | MapLibre 暗色 + 40 个展示项目 + 工厂五角星可点击 + 中英双语 |
-| `/about` | 10 区块，64 张真实图片，锚点导航，国际认证，TechDrawer |
+| `/` | Hero 5 图轮播 + 三大技术 TechDrawer + 认证区块；项目网格接入 ProtectedImage |
+| `/products` | 39 SKU，分类筛选；卡片图接入 ProtectedImage |
+| `/products/v9-gen6` | 详情模板；图集接入 ProtectedImage |
+| `/global` | MapLibre 暗色 + 40 个展示项目 + 工厂五角星 Tooltip + 手机端双行 Navbar |
+| `/about` | 10 区块，64 张真实图片，锚点导航，国际认证，TechDrawer；工厂图接入 ProtectedImage |
 | `/faq` | 16 条双语 Q&A，accordion |
 | `/innovation/viie` `/vols` `/vipc` | Orphan page，不挂导航，内容复用组件 |
 | `/media-kit` | 双语留资表单 + 邮件通知 |
@@ -118,14 +127,14 @@ Logo：`/images/vessel-logo.png`（透明背景橙色 PNG，含中文"微宿"）
 
 ### 🔴 立即
 - `/global` 代理商联系方式填充（需提供代理商数据）
-- 子页面配色清理（about / news / scenarios 残留旧色）
 
 ### 🟡 近期
+- 管理员后台 CMS（V8.0 目标）
 - 其余产品详情页（E7 / E6 / E3 / S5 / V5 / V7，参考 V9 Gen6 模板）
-- 管理员 CMS 后台
 - Resend 验证 303vessel.cn 域名
 - Pixsy 注册 + 上传 20-30 张关键图监控盗图
 - 证书图片打码（签名 / 公章 / 统一社会信用代码）
+- 其他 39 个展示项目资料收集
 
 ### ⏳ 规划
 - AWS EC2 迁移 · 代理商后台 · HD 高清图锁定表单
@@ -139,4 +148,4 @@ Logo：`/images/vessel-logo.png`（透明背景橙色 PNG，含中文"微宿"）
 WhatsApp **+86 180-2417-6679** · 销售邮箱 **vessel.sale@303industries.cn** · 电话 **400-8090-303**
 
 ---
-*VESSEL 微宿® · vessel303.com · CLAUDE.md V6.1 · 2026-04-20 · 完整档案看 `vessel303_handoff_V6_0.docx`*
+*VESSEL 微宿® · vessel303.com · CLAUDE.md V7.0 · 2026-04-21 · 完整档案看 `vessel303_handoff_V7_0.docx`*
