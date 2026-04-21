@@ -44,9 +44,7 @@ export default function GlobalMapStats() {
             />
           </span>
           <div style={{ width: 1, height: 20, background: 'rgba(138,133,128,0.4)' }} />
-          {/* Subtitle: hidden on mobile to avoid crowding */}
           <span
-            className="hidden md:inline"
             style={{ color: 'rgba(255,255,255,0.40)', fontSize: 13, letterSpacing: '0.1em' }}
           >
             {zh ? '全球营地部署' : 'Global Deployment'}
