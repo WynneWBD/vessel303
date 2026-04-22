@@ -11,7 +11,7 @@ const schema = z.object({
     .min(8, '密码至少8位')
     .regex(/[a-zA-Z]/, '密码需包含字母')
     .regex(/[0-9]/, '密码需包含数字'),
-  role: z.enum(['buyer', 'agent', 'individual'], {
+  identity: z.enum(['buyer', 'agent', 'individual'], {
     message: '请选择有效身份',
   }),
 });
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: message }, { status: 400 });
   }
 
-  const { name, email, password, role } = parsed.data;
+  const { name, email, password, identity } = parsed.data;
 
   const existing = await pool.query(
     'SELECT id FROM users WHERE email = $1',
@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
 
   const hashed = await bcrypt.hash(password, 12);
   await pool.query(
-    'INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)',
-    [name, email, hashed, role],
+    'INSERT INTO users (name, email, password, role, identity) VALUES ($1, $2, $3, $4, $5)',
+    [name, email, hashed, 'user', identity],
   );
 
   return Response.json({ success: true }, { status: 201 });

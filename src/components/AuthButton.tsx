@@ -32,8 +32,8 @@ export default function AuthButton() {
     );
   }
 
-  const user = session.user as typeof session.user & { role?: string };
-  const rolePair = ROLE_LABELS[user.role ?? ''] ?? { en: 'User', zh: '用户' };
+  const user = session.user as typeof session.user & { identity?: string };
+  const rolePair = ROLE_LABELS[user.identity ?? ''] ?? { en: 'User', zh: '用户' };
   const roleLabel = t(rolePair);
   const initial = (user.name ?? user.email ?? '?')[0].toUpperCase();
 

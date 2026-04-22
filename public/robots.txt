@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /api/admin/
+
+Allow: /
+
+Sitemap: https://vessel303.com/sitemap.xml
