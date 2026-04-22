@@ -1,5 +1,5 @@
 export const ADMIN_EMAIL_WHITELIST: string[] = [
-  // Wynne 测试后再加邮箱，先留空
+  'wynnewbd@gmail.com',
 ];
 
 export function isAdminEmail(email: string | null | undefined): boolean {

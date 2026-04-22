@@ -1,15 +1,25 @@
 import { auth } from '@/auth'
 import { signOut } from '@/auth'
+import { redirect } from 'next/navigation'
 
 export const metadata = { title: 'Admin — VESSEL®' }
 
-export default async function AdminLayout({
+export default async function ProtectedAdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   const session = await auth()
-  const email = session?.user?.email ?? ''
+
+  if (!session?.user) {
+    redirect('/admin/login')
+  }
+
+  if (session.user.role !== 'admin') {
+    redirect('/admin/login?error=unauthorized')
+  }
+
+  const email = session.user.email ?? ''
 
   return (
     <div className="flex h-screen bg-[#1A1A1A] text-[#F0F0F0]" style={{ fontFamily: 'Inter, sans-serif' }}>
@@ -36,8 +46,6 @@ export default async function AdminLayout({
             href="/admin"
             className="flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors"
             style={{ color: 'rgba(255,255,255,0.7)' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#E36F2C')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <rect x="3" y="3" width="7" height="7" rx="1" />

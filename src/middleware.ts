@@ -1,30 +1,17 @@
-import { auth } from '@/auth'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import NextAuth from 'next-auth'
+import authConfig from '@/auth.config'
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+const { auth } = NextAuth(authConfig)
 
-  // Only guard /admin routes
-  if (!pathname.startsWith('/admin')) return NextResponse.next()
+export default auth((req) => {
+  const { nextUrl } = req
+  const isLoggedIn = !!req.auth
+  const isLoginPage = nextUrl.pathname === '/admin/login'
 
-  // Login page itself is always accessible
-  if (pathname === '/admin/login') return NextResponse.next()
-
-  const session = await auth()
-
-  if (!session?.user) {
-    return NextResponse.redirect(new URL('/admin/login', request.url))
+  if (!isLoginPage && !isLoggedIn) {
+    return Response.redirect(new URL('/admin/login', nextUrl))
   }
-
-  if (session.user.role !== 'admin') {
-    return NextResponse.redirect(
-      new URL('/admin/login?error=unauthorized', request.url),
-    )
-  }
-
-  return NextResponse.next()
-}
+})
 
 export const config = {
   matcher: ['/admin/:path*'],
