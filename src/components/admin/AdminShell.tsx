@@ -12,6 +12,7 @@ import {
   LogOut,
   type LucideIcon,
 } from 'lucide-react'
+import { Toaster } from 'sonner'
 import { logoutAction } from '@/app/admin/actions'
 
 type MenuItem = {
@@ -24,7 +25,7 @@ type MenuItem = {
 
 const menuItems: MenuItem[] = [
   { label: '概览', href: '/admin', Icon: LayoutDashboard, title: '概览 Dashboard' },
-  { label: '线索管理', href: '/admin/leads', Icon: Inbox, title: '线索管理 Leads', badge: '0' },
+  { label: '线索管理', href: '/admin/leads', Icon: Inbox, title: '线索管理 Leads' },
   { label: '用户管理', href: '/admin/users', Icon: Users, title: '用户管理 Users' },
   { label: '新闻管理', href: '/admin/news', Icon: Newspaper, title: '新闻管理 News' },
   { label: '图片库', href: '/admin/media', Icon: ImageIcon, title: '图片库 Media' },
@@ -38,14 +39,21 @@ function isActive(pathname: string, href: string) {
 
 export default function AdminShell({
   email,
+  leadBadge = 0,
   children,
 }: {
   email: string
+  leadBadge?: number
   children: React.ReactNode
 }) {
   const pathname = usePathname() ?? '/admin'
   const current = menuItems.find((m) => isActive(pathname, m.href))
   const headerTitle = current?.title ?? '概览 Dashboard'
+
+  const badgeFor = (href: string): string | undefined => {
+    if (href === '/admin/leads' && leadBadge > 0) return String(leadBadge)
+    return undefined
+  }
 
   return (
     <div
@@ -80,6 +88,7 @@ export default function AdminShell({
         <nav className="flex flex-col flex-1 py-3">
           {menuItems.map((item) => {
             const active = isActive(pathname, item.href)
+            const badge = badgeFor(item.href)
             return (
               <Link
                 key={item.href}
@@ -123,7 +132,7 @@ export default function AdminShell({
                 >
                   {item.label}
                 </span>
-                {item.badge && (
+                {badge && (
                   <span
                     className="flex items-center justify-center rounded-full"
                     style={{
@@ -136,7 +145,7 @@ export default function AdminShell({
                       padding: '0 6px',
                     }}
                   >
-                    {item.badge}
+                    {badge}
                   </span>
                 )}
               </Link>
@@ -198,6 +207,18 @@ export default function AdminShell({
         {/* Page content */}
         <main className="flex-1 overflow-auto p-8">{children}</main>
       </div>
+
+      <Toaster
+        theme="dark"
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: '#0F0F0F',
+            border: '1px solid #2A2A2E',
+            color: '#F0F0F0',
+          },
+        }}
+      />
     </div>
   )
 }

@@ -1,9 +1,39 @@
-export default function LeadsPage() {
+import { listLeads } from '@/lib/leads-db'
+import LeadsClient from '@/components/admin/LeadsClient'
+
+export const dynamic = 'force-dynamic'
+
+export default async function LeadsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const sp = await searchParams
+  const getStr = (k: string) => {
+    const v = sp[k]
+    if (Array.isArray(v)) return v[0]
+    return v
+  }
+
+  const filters = {
+    status: getStr('status') ?? 'all',
+    inquiry_type: getStr('inquiry_type') ?? 'all',
+    country: getStr('country') ?? '',
+    search: getStr('search') ?? '',
+  }
+
+  const { leads, total } = await listLeads({
+    status: filters.status,
+    inquiry_type: filters.inquiry_type,
+    country: filters.country || undefined,
+    search: filters.search || undefined,
+  })
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh]">
-      <div className="text-6xl mb-4">🚧</div>
-      <h2 className="text-2xl font-bold text-white mb-2">线索管理</h2>
-      <p className="text-[#8A8580]">Coming Soon · V8.0 后续步骤上线</p>
-    </div>
+    <LeadsClient
+      initialLeads={leads}
+      initialTotal={total}
+      initialFilters={filters}
+    />
   )
 }

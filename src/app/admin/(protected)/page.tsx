@@ -1,5 +1,8 @@
 import { auth } from '@/auth'
+import { pool } from '@/lib/db'
 import { Users, Inbox, Newspaper, Image as ImageIcon, type LucideIcon } from 'lucide-react'
+
+export const dynamic = 'force-dynamic'
 
 type StatCard = {
   Icon: LucideIcon
@@ -9,41 +12,59 @@ type StatCard = {
   footerColor: string
 }
 
-// TODO: 接真实数据
-const stats: StatCard[] = [
-  {
-    Icon: Users,
-    label: '总用户数',
-    value: '128',
-    footer: '+12 本月新增',
-    footerColor: '#E36F2C',
-  },
-  {
-    Icon: Inbox,
-    label: '新线索',
-    value: '24',
-    footer: '18 待跟进',
-    footerColor: '#E36F2C',
-  },
-  {
-    Icon: Newspaper,
-    label: '已发布新闻',
-    value: '7',
-    footer: '本月发布 2',
-    footerColor: '#8A8580',
-  },
-  {
-    Icon: ImageIcon,
-    label: '图片资源',
-    value: '1,484',
-    footer: '已用 2.3 GB',
-    footerColor: '#8A8580',
-  },
-]
+async function safeCount(sql: string, params: unknown[] = []): Promise<number> {
+  try {
+    const res = await pool.query<{ count: string }>(sql, params)
+    return parseInt(res.rows[0]?.count ?? '0', 10)
+  } catch (err) {
+    console.error('[dashboard] count query failed', err)
+    return 0
+  }
+}
 
 export default async function AdminDashboard() {
   const session = await auth()
   const email = session?.user?.email ?? ''
+
+  const [userCount, newLeadCount, publishedNewsCount] = await Promise.all([
+    safeCount(`SELECT COUNT(*)::text AS count FROM users`),
+    safeCount(
+      `SELECT COUNT(*)::text AS count FROM leads WHERE status = 'new' AND deleted_at IS NULL`,
+    ),
+    safeCount(`SELECT COUNT(*)::text AS count FROM news WHERE status = 'published'`),
+  ])
+
+  const stats: StatCard[] = [
+    {
+      Icon: Users,
+      label: '总用户数',
+      value: userCount.toLocaleString(),
+      footer: '全部注册用户',
+      footerColor: '#8A8580',
+    },
+    {
+      Icon: Inbox,
+      label: '新线索',
+      value: newLeadCount.toLocaleString(),
+      footer: `${newLeadCount} 待跟进`,
+      footerColor: '#E36F2C',
+    },
+    {
+      Icon: Newspaper,
+      label: '已发布新闻',
+      value: publishedNewsCount.toLocaleString(),
+      footer: publishedNewsCount === 0 ? '暂无已发布' : `${publishedNewsCount} 条在线`,
+      footerColor: '#8A8580',
+    },
+    {
+      // TODO: 接真实数据(V8.0 后续步骤)
+      Icon: ImageIcon,
+      label: '图片资源',
+      value: '1,484',
+      footer: '已用 2.3 GB',
+      footerColor: '#8A8580',
+    },
+  ]
 
   return (
     <div className="flex flex-col gap-8">
