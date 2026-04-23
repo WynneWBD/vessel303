@@ -37,15 +37,22 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + '/')
 }
 
+function clampBadge(n: number): string {
+  if (n > 99) return '99+'
+  return String(n)
+}
+
 export default function AdminShell({
   email,
   leadBadge = 0,
   userBadge = 0,
+  mediaBadge = 0,
   children,
 }: {
   email: string
   leadBadge?: number
   userBadge?: number
+  mediaBadge?: number
   children: React.ReactNode
 }) {
   const pathname = usePathname() ?? '/admin'
@@ -53,8 +60,9 @@ export default function AdminShell({
   const headerTitle = current?.title ?? '概览 Dashboard'
 
   const badgeFor = (href: string): string | undefined => {
-    if (href === '/admin/leads' && leadBadge > 0) return String(leadBadge)
-    if (href === '/admin/users' && userBadge > 0) return String(userBadge)
+    if (href === '/admin/leads' && leadBadge > 0) return clampBadge(leadBadge)
+    if (href === '/admin/users' && userBadge > 0) return clampBadge(userBadge)
+    if (href === '/admin/media' && mediaBadge > 0) return clampBadge(mediaBadge)
     return undefined
   }
 

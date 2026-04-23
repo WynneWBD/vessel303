@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import AdminShell from '@/components/admin/AdminShell'
 import { countLeadsByStatus } from '@/lib/leads-db'
 import { countUsers } from '@/lib/users-db'
+import { countUploads } from '@/lib/uploads-db'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,7 +25,7 @@ export default async function ProtectedAdminLayout({
   }
 
   const email = session.user.email ?? ''
-  const [leadBadge, userBadge] = await Promise.all([
+  const [leadBadge, userBadge, mediaBadge] = await Promise.all([
     countLeadsByStatus('new').catch((err) => {
       console.error('[layout] count new leads failed', err)
       return 0
@@ -33,10 +34,19 @@ export default async function ProtectedAdminLayout({
       console.error('[layout] count untagged users failed', err)
       return 0
     }),
+    countUploads().catch((err) => {
+      console.error('[layout] count uploads failed', err)
+      return 0
+    }),
   ])
 
   return (
-    <AdminShell email={email} leadBadge={leadBadge} userBadge={userBadge}>
+    <AdminShell
+      email={email}
+      leadBadge={leadBadge}
+      userBadge={userBadge}
+      mediaBadge={mediaBadge}
+    >
       {children}
     </AdminShell>
   )

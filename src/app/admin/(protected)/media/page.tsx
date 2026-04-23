@@ -1,9 +1,38 @@
-export default function MediaPage() {
+import { listUploads, sumStorageSize } from '@/lib/uploads-db'
+import MediaClient from '@/components/admin/MediaClient'
+
+export const dynamic = 'force-dynamic'
+
+export default async function MediaPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const sp = await searchParams
+  const getStr = (k: string) => {
+    const v = sp[k]
+    return Array.isArray(v) ? v[0] : v
+  }
+
+  const filters = {
+    mime: getStr('mime') ?? 'all',
+    search: getStr('search') ?? '',
+  }
+
+  const [{ uploads, total }, bytes] = await Promise.all([
+    listUploads({
+      mime: filters.mime,
+      search: filters.search || undefined,
+    }),
+    sumStorageSize(),
+  ])
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh]">
-      <div className="text-6xl mb-4">🚧</div>
-      <h2 className="text-2xl font-bold text-white mb-2">图片库</h2>
-      <p className="text-[#8A8580]">Coming Soon · V8.0 后续步骤上线</p>
-    </div>
+    <MediaClient
+      initialUploads={uploads}
+      initialTotal={total}
+      initialBytes={bytes}
+      initialFilters={filters}
+    />
   )
 }

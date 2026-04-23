@@ -1,6 +1,15 @@
 import { auth } from '@/auth'
 import { pool } from '@/lib/db'
+import { countUploads, sumStorageSize } from '@/lib/uploads-db'
 import { Users, Inbox, Newspaper, Image as ImageIcon, type LucideIcon } from 'lucide-react'
+
+function formatBytes(n: number): string {
+  if (!n) return '0 B'
+  if (n < 1024) return `${n} B`
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
+  if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} MB`
+  return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -26,16 +35,27 @@ export default async function AdminDashboard() {
   const session = await auth()
   const email = session?.user?.email ?? ''
 
-  const [activeUserCount, adminCount, disabledCount, newLeadCount, publishedNewsCount] =
-    await Promise.all([
-      safeCount(`SELECT COUNT(*)::text AS count FROM users WHERE disabled = false`),
-      safeCount(`SELECT COUNT(*)::text AS count FROM users WHERE role = 'admin'`),
-      safeCount(`SELECT COUNT(*)::text AS count FROM users WHERE disabled = true`),
-      safeCount(
-        `SELECT COUNT(*)::text AS count FROM leads WHERE status = 'new' AND deleted_at IS NULL`,
-      ),
-      safeCount(`SELECT COUNT(*)::text AS count FROM news WHERE status = 'published'`),
-    ])
+  const [
+    activeUserCount,
+    adminCount,
+    disabledCount,
+    newLeadCount,
+    publishedNewsCount,
+    uploadCount,
+    uploadBytes,
+  ] = await Promise.all([
+    safeCount(`SELECT COUNT(*)::text AS count FROM users WHERE disabled = false`),
+    safeCount(`SELECT COUNT(*)::text AS count FROM users WHERE role = 'admin'`),
+    safeCount(`SELECT COUNT(*)::text AS count FROM users WHERE disabled = true`),
+    safeCount(
+      `SELECT COUNT(*)::text AS count FROM leads WHERE status = 'new' AND deleted_at IS NULL`,
+    ),
+    safeCount(`SELECT COUNT(*)::text AS count FROM news WHERE status = 'published'`),
+    countUploads().catch(() => 0),
+    sumStorageSize().catch(() => 0),
+  ])
+
+  const storageWarning = uploadBytes > 800 * 1024 * 1024
 
   const stats: StatCard[] = [
     {
@@ -60,12 +80,11 @@ export default async function AdminDashboard() {
       footerColor: '#8A8580',
     },
     {
-      // TODO: 接真实数据(V8.0 后续步骤)
       Icon: ImageIcon,
       label: '图片资源',
-      value: '1,484',
-      footer: '已用 2.3 GB',
-      footerColor: '#8A8580',
+      value: uploadCount.toLocaleString(),
+      footer: `已用 ${formatBytes(uploadBytes)}`,
+      footerColor: storageWarning ? '#E36F2C' : '#8A8580',
     },
   ]
 
