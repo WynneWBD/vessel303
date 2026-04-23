@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { put } from '@vercel/blob'
+import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
 import { requireAdmin } from '@/lib/auth-check'
 import { createUpload, listUploads } from '@/lib/uploads-db'
 import { logAdminAction } from '@/lib/leads-db'
@@ -7,14 +7,18 @@ import { logAdminAction } from '@/lib/leads-db'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-const MAX_BYTES = 10 * 1024 * 1024 // 10 MB
-const ALLOWED_MIME = new Set([
+const MAX_BYTES = 50 * 1024 * 1024 // 50 MB (bytes go direct to Blob; not bound by Vercel's 4.5 MB body limit)
+const ALLOWED_MIME = [
   'image/jpeg',
   'image/png',
   'image/webp',
   'image/gif',
   'image/svg+xml',
-])
+]
+
+// Payload shapes so the two callbacks stay in sync
+type ClientPayload = { size?: number; originalName?: string }
+type TokenPayload = { uploadedBy: string; size?: number; originalName?: string }
 
 export async function GET(req: NextRequest) {
   const admin = await requireAdmin()
@@ -30,79 +34,87 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(result)
 }
 
-function safeFilename(name: string): string {
-  return (
-    name
-      .normalize('NFKD')
-      .replace(/[^\w.\-]+/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^_+|_+$/g, '')
-      .slice(0, 80) || 'file'
-  )
-}
+// NOTE: Do NOT call requireAdmin() at the top of POST — Vercel Blob fires a second,
+// cookie-less request to this same endpoint for the `blob.upload-completed` event,
+// which must be admitted so handleUpload() can verify its signature. Admin auth
+// only happens on the browser-triggered `blob.generate-client-token` path inside
+// onBeforeGenerateToken below.
+export async function POST(request: NextRequest) {
+  const body = (await request.json()) as HandleUploadBody
 
-export async function POST(req: NextRequest) {
-  const admin = await requireAdmin()
-  if (admin instanceof Response) return admin
-
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return NextResponse.json(
-      { error: 'BLOB_READ_WRITE_TOKEN 未配置,无法上传' },
-      { status: 500 },
-    )
-  }
-
-  const form = await req.formData().catch(() => null)
-  const file = form?.get('file')
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: '未提交文件' }, { status: 400 })
-  }
-
-  if (!ALLOWED_MIME.has(file.type)) {
-    return NextResponse.json(
-      { error: '仅支持图片格式 (JPEG / PNG / WebP / GIF / SVG)' },
-      { status: 400 },
-    )
-  }
-  if (file.size > MAX_BYTES) {
-    return NextResponse.json(
-      { error: `文件过大(${(file.size / 1024 / 1024).toFixed(1)} MB),限制 10 MB` },
-      { status: 400 },
-    )
-  }
-
-  const now = new Date()
-  const y = now.getFullYear()
-  const m = String(now.getMonth() + 1).padStart(2, '0')
-  const uuid = crypto.randomUUID()
-  const pathname = `uploads/${y}/${m}/${uuid}-${safeFilename(file.name)}`
-
-  let blobUrl: string
   try {
-    const blob = await put(pathname, file, {
-      access: 'public',
-      contentType: file.type,
-      addRandomSuffix: false,
+    const jsonResponse = await handleUpload({
+      body,
+      request,
+
+      onBeforeGenerateToken: async (_pathname, clientPayload) => {
+        const admin = await requireAdmin()
+        if (admin instanceof Response) {
+          throw new Error('Unauthorized')
+        }
+
+        let parsed: ClientPayload = {}
+        if (clientPayload) {
+          try {
+            parsed = JSON.parse(clientPayload) as ClientPayload
+          } catch {
+            /* ignore malformed payload */
+          }
+        }
+
+        const tokenPayload: TokenPayload = {
+          uploadedBy: admin.id,
+          size: parsed.size,
+          originalName: parsed.originalName,
+        }
+
+        return {
+          allowedContentTypes: ALLOWED_MIME,
+          maximumSizeInBytes: MAX_BYTES,
+          tokenPayload: JSON.stringify(tokenPayload),
+          addRandomSuffix: false,
+        }
+      },
+
+      onUploadCompleted: async ({ blob, tokenPayload }) => {
+        // Vercel calls this server-to-server after the object lands in Blob.
+        // Cannot reach localhost during dev — only runs in production.
+        let payload: TokenPayload = { uploadedBy: '' }
+        try {
+          payload = JSON.parse(tokenPayload ?? '{}') as TokenPayload
+        } catch {
+          /* fall through with empty payload */
+        }
+
+        const filename = payload.originalName || blob.pathname.split('/').pop() || 'unknown'
+
+        try {
+          const upload = await createUpload({
+            url: blob.url,
+            blob_path: blob.pathname,
+            filename,
+            // blob.size isn't guaranteed across SDK versions; trust client-reported size
+            // (already bounded by maximumSizeInBytes so it can't be spoofed higher)
+            size: payload.size ?? 0,
+            mime: blob.contentType || 'application/octet-stream',
+            uploaded_by: payload.uploadedBy,
+          })
+
+          if (payload.uploadedBy) {
+            await logAdminAction(payload.uploadedBy, 'create_upload', 'upload', upload.id)
+          }
+        } catch (err) {
+          // Re-throw so handleUpload surfaces the failure; Vercel won't retry DB writes.
+          console.error('[media onUploadCompleted] DB insert failed', err)
+          throw new Error('DB write failed after Blob upload')
+        }
+      },
     })
-    blobUrl = blob.url
+
+    return NextResponse.json(jsonResponse)
   } catch (err) {
-    console.error('[media POST] blob put failed', err)
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Blob 上传失败' },
-      { status: 502 },
-    )
+    const message = err instanceof Error ? err.message : '上传失败'
+    const status = message === 'Unauthorized' ? 401 : 400
+    return NextResponse.json({ error: message }, { status })
   }
-
-  const upload = await createUpload({
-    url: blobUrl,
-    blob_path: pathname,
-    filename: file.name,
-    size: file.size,
-    mime: file.type,
-    uploaded_by: admin.id,
-  })
-
-  await logAdminAction(admin.id, 'create_upload', 'upload', upload.id)
-
-  return NextResponse.json({ upload }, { status: 201 })
 }

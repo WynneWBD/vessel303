@@ -9,6 +9,7 @@ import {
 } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { upload as blobUpload } from '@vercel/blob/client'
 import {
   Copy,
   ImagePlus,
@@ -33,7 +34,7 @@ import type { Upload } from '@/lib/uploads-db'
 const FREE_QUOTA_BYTES = 1 * 1024 * 1024 * 1024 // 1 GB
 const WARNING_BYTES = 800 * 1024 * 1024
 const BATCH_LIMIT = 20
-const MAX_BYTES = 10 * 1024 * 1024
+const MAX_BYTES = 50 * 1024 * 1024 // matches API's maximumSizeInBytes
 const ACCEPT = 'image/jpeg,image/png,image/webp,image/gif,image/svg+xml'
 const ACCEPT_MIMES = new Set([
   'image/jpeg',
@@ -194,65 +195,53 @@ export default function MediaClient({
   }, [])
 
   // ─── upload pipeline ─────────────────────────────────────────────────────
+  // Client-side direct-to-Blob upload via @vercel/blob/client. The API route
+  // at /api/admin/media now only mints signed tokens and receives the
+  // server-to-server `blob.upload-completed` callback that writes the DB row.
 
-  const uploadOne = (task: UploadTask, file: File): Promise<Upload | null> => {
-    return new Promise((resolve) => {
-      const xhr = new XMLHttpRequest()
-      const fd = new FormData()
-      fd.append('file', file)
+  const buildBlobPath = (file: File) => {
+    const now = new Date()
+    const y = now.getFullYear()
+    const m = String(now.getMonth() + 1).padStart(2, '0')
+    const safe =
+      file.name.replace(/[^a-zA-Z0-9.\-]/g, '_').slice(0, 80) || 'file'
+    return `uploads/${y}/${m}/${crypto.randomUUID()}-${safe}`
+  }
 
-      xhr.open('POST', '/api/admin/media')
-      xhr.responseType = 'json'
-
-      xhr.upload.onprogress = (e) => {
-        if (!e.lengthComputable) return
-        const pct = Math.round((e.loaded / e.total) * 100)
-        setTasks((prev) =>
-          prev.map((t) =>
-            t.id === task.id ? { ...t, status: 'uploading', progress: pct } : t,
-          ),
-        )
-      }
-
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          const body = xhr.response as { upload?: Upload } | string
-          const upload =
-            typeof body === 'string'
-              ? (JSON.parse(body) as { upload: Upload }).upload
-              : body.upload
-          setTasks((prev) =>
-            prev.map((t) =>
-              t.id === task.id ? { ...t, status: 'done', progress: 100 } : t,
-            ),
-          )
-          resolve(upload ?? null)
-        } else {
-          const errMsg =
-            (xhr.response && typeof xhr.response === 'object' && xhr.response.error) ||
-            `上传失败 (${xhr.status})`
+  const uploadOne = async (task: UploadTask, file: File): Promise<boolean> => {
+    try {
+      await blobUpload(buildBlobPath(file), file, {
+        access: 'public',
+        handleUploadUrl: '/api/admin/media',
+        clientPayload: JSON.stringify({
+          size: file.size,
+          originalName: file.name,
+        }),
+        onUploadProgress: ({ percentage }) => {
           setTasks((prev) =>
             prev.map((t) =>
               t.id === task.id
-                ? { ...t, status: 'error', error: String(errMsg) }
+                ? { ...t, status: 'uploading', progress: Math.round(percentage) }
                 : t,
             ),
           )
-          resolve(null)
-        }
-      }
-
-      xhr.onerror = () => {
-        setTasks((prev) =>
-          prev.map((t) =>
-            t.id === task.id ? { ...t, status: 'error', error: '网络错误' } : t,
-          ),
-        )
-        resolve(null)
-      }
-
-      xhr.send(fd)
-    })
+        },
+      })
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === task.id ? { ...t, status: 'done', progress: 100 } : t,
+        ),
+      )
+      return true
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '上传失败'
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === task.id ? { ...t, status: 'error', error: message } : t,
+        ),
+      )
+      return false
+    }
   }
 
   const handleFiles = async (files: File[]) => {
@@ -266,7 +255,7 @@ export default function MediaClient({
         continue
       }
       if (f.size > MAX_BYTES) {
-        rejected.push({ name: f.name, reason: '超过 10 MB' })
+        rejected.push({ name: f.name, reason: '超过 50 MB' })
         continue
       }
       accepted.push(f)
@@ -289,21 +278,18 @@ export default function MediaClient({
     }))
     setTasks((prev) => [...prev, ...newTasks])
 
-    let addedBytes = 0
-    const newUploads: Upload[] = []
+    let successCount = 0
     for (let i = 0; i < accepted.length; i++) {
-      const result = await uploadOne(newTasks[i], accepted[i])
-      if (result) {
-        newUploads.push(result)
-        addedBytes += accepted[i].size
-      }
+      const ok = await uploadOne(newTasks[i], accepted[i])
+      if (ok) successCount++
     }
 
-    if (newUploads.length) {
-      setUploads((prev) => [...newUploads, ...prev])
-      setTotal((t) => t + newUploads.length)
-      setStorageBytes((b) => b + addedBytes)
-      toast.success(`已上传 ${newUploads.length} 张`)
+    if (successCount > 0) {
+      toast.success(`已上传 ${successCount} 张,正在同步…`)
+      // onUploadCompleted runs server-to-server after Blob stores the object —
+      // give the DB insert a beat to land before we reload the grid.
+      await new Promise((r) => setTimeout(r, 1500))
+      await reload(filters)
       router.refresh() // keep sidebar badge + dashboard in sync
     }
 
