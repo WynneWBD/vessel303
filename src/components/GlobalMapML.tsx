@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Map as MaptilerMap,
   Language,
@@ -219,6 +219,41 @@ const MARKER_CSS = `
 }
 `
 
+// Rewrite MapTiler's default Taiwan country label ("Taiwan" / "中華民國") to
+// "中国台湾" / "Taiwan, China". Walks symbol layers whose id looks like a
+// country label and wraps text-field in a case expression that matches TW
+// by ISO code or common name variants; other features fall through unchanged.
+// Must be re-applied after setLanguage, which rewrites text-field.
+function applyTaiwanLabelOverride(map: MaptilerMap, isZh: boolean) {
+  const label = isZh ? '中国台湾' : 'Taiwan, China'
+  const style = map.getStyle()
+  const layers = (style?.layers ?? []) as Array<{ id: string; type: string }>
+  layers.forEach((layer) => {
+    if (layer.type !== 'symbol') return
+    if (!String(layer.id).toLowerCase().includes('country')) return
+    const current = map.getLayoutProperty(layer.id, 'text-field')
+    if (current === undefined || current === null) return
+    try {
+      map.setLayoutProperty(layer.id, 'text-field', [
+        'case',
+        ['any',
+          ['==', ['get', 'iso_a2'], 'TW'],
+          ['==', ['get', 'iso_3166_1'], 'TW'],
+          ['==', ['get', 'name:en'], 'Taiwan'],
+          ['==', ['get', 'name'], 'Taiwan'],
+          ['==', ['get', 'name'], '中華民國'],
+          ['==', ['get', 'name'], '台灣'],
+          ['==', ['get', 'name'], '臺灣'],
+        ],
+        label,
+        current,
+      ])
+    } catch {
+      // Schema mismatch on this layer — leave it alone.
+    }
+  })
+}
+
 interface Props {
   onShowcaseSelect?: (project: ShowcaseProject) => void
   onMapClick?: () => void
@@ -242,6 +277,7 @@ export default function GlobalMapML({
   const prevFlyKey = useRef('')
   const prevResetKey = useRef(resetViewKey ?? 0)
   const isZhRef = useRef(lang === 'zh')
+  const [mapReady, setMapReady] = useState(false)
 
   // Keep callbacks current without re-initializing the map
   const onShowcaseSelectRef = useRef(onShowcaseSelect)
@@ -285,6 +321,8 @@ export default function GlobalMapML({
     map.on('load', () => {
       // ── Language ──────────────────────────────────────────────────────
       map.setLanguage(isZhRef.current ? Language.CHINESE : Language.ENGLISH)
+      applyTaiwanLabelOverride(map, isZhRef.current)
+      setMapReady(true)
 
       // ── Regular camp GeoJSON ──────────────────────────────────────────
       const campFeatures: GeoJSON.Feature<GeoJSON.Point>[] = CAMPS.map((camp, i) => ({
@@ -495,6 +533,7 @@ export default function GlobalMapML({
     if (!map) return
     const apply = () => {
       map.setLanguage(isZh ? Language.CHINESE : Language.ENGLISH)
+      applyTaiwanLabelOverride(map, isZh)
       if (hqLabelRef.current) {
         hqLabelRef.current.textContent = isZh ? HQ.labelZh : HQ.labelEn
       }
@@ -536,9 +575,50 @@ export default function GlobalMapML({
   }, [resetViewKey])
 
   return (
-    <div
-      ref={containerRef}
-      style={{ height: '100%', width: '100%', background: '#1A1A1A' }}
-    />
+    <div style={{ position: 'relative', height: '100%', width: '100%', background: '#1A1A1A' }}>
+      <div
+        ref={containerRef}
+        style={{ height: '100%', width: '100%', background: '#1A1A1A' }}
+      />
+      <div
+        aria-hidden={mapReady}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: '#1A1A1A',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          opacity: mapReady ? 0 : 1,
+          pointerEvents: mapReady ? 'none' : 'auto',
+          transition: 'opacity 400ms ease-out',
+          zIndex: 50,
+        }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              border: '2px solid rgba(227,111,44,0.25)',
+              borderTopColor: '#E36F2C',
+              borderRadius: '50%',
+              animation: 'vessel-map-spin 0.9s linear infinite',
+            }}
+          />
+          <div
+            style={{
+              color: 'rgba(240,240,240,0.55)',
+              fontSize: 12,
+              letterSpacing: '0.15em',
+              fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",
+            }}
+          >
+            {isZhRef.current ? '全球地图加载中' : 'LOADING GLOBAL MAP'}
+          </div>
+        </div>
+        <style>{`@keyframes vessel-map-spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    </div>
   )
 }
