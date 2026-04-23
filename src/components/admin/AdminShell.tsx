@@ -40,10 +40,12 @@ function isActive(pathname: string, href: string) {
 export default function AdminShell({
   email,
   leadBadge = 0,
+  userBadge = 0,
   children,
 }: {
   email: string
   leadBadge?: number
+  userBadge?: number
   children: React.ReactNode
 }) {
   const pathname = usePathname() ?? '/admin'
@@ -52,6 +54,7 @@ export default function AdminShell({
 
   const badgeFor = (href: string): string | undefined => {
     if (href === '/admin/leads' && leadBadge > 0) return String(leadBadge)
+    if (href === '/admin/users' && userBadge > 0) return String(userBadge)
     return undefined
   }
 

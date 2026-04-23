@@ -54,12 +54,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: string; email: string; name: string | null
           image: string | null; password: string | null
           role: UserRole; identity: UserIdentity | null
+          disabled: boolean
         }>(
-          'SELECT id, email, name, image, password, role, identity FROM users WHERE email = $1',
+          'SELECT id, email, name, image, password, role, identity, disabled FROM users WHERE email = $1',
           [email],
         )
         const user = rows[0]
         if (!user?.password) return null
+        if (user.disabled) return null
 
         const valid = await bcrypt.compare(password, user.password)
         if (!valid) return null
@@ -96,14 +98,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const { rows } = await pool.query<{
           id: string; role: UserRole; identity: UserIdentity | null
+          disabled: boolean
         }>(
-          'SELECT id, role, identity FROM users WHERE email = $1',
+          'SELECT id, role, identity, disabled FROM users WHERE email = $1',
           [user.email],
         )
         if (rows[0]) {
+          if (rows[0].disabled) return false
           user.id = rows[0].id
           user.role = rows[0].role
           user.identity = rows[0].identity
+        }
+      }
+
+      // Stamp last_login_at for both providers (best-effort; never block login).
+      if (user?.id) {
+        try {
+          await pool.query(`UPDATE users SET last_login_at = NOW() WHERE id = $1`, [user.id])
+        } catch (err) {
+          console.error('[auth] last_login_at update failed', err)
         }
       }
       return true

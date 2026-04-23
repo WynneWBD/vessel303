@@ -26,20 +26,23 @@ export default async function AdminDashboard() {
   const session = await auth()
   const email = session?.user?.email ?? ''
 
-  const [userCount, newLeadCount, publishedNewsCount] = await Promise.all([
-    safeCount(`SELECT COUNT(*)::text AS count FROM users`),
-    safeCount(
-      `SELECT COUNT(*)::text AS count FROM leads WHERE status = 'new' AND deleted_at IS NULL`,
-    ),
-    safeCount(`SELECT COUNT(*)::text AS count FROM news WHERE status = 'published'`),
-  ])
+  const [activeUserCount, adminCount, disabledCount, newLeadCount, publishedNewsCount] =
+    await Promise.all([
+      safeCount(`SELECT COUNT(*)::text AS count FROM users WHERE disabled = false`),
+      safeCount(`SELECT COUNT(*)::text AS count FROM users WHERE role = 'admin'`),
+      safeCount(`SELECT COUNT(*)::text AS count FROM users WHERE disabled = true`),
+      safeCount(
+        `SELECT COUNT(*)::text AS count FROM leads WHERE status = 'new' AND deleted_at IS NULL`,
+      ),
+      safeCount(`SELECT COUNT(*)::text AS count FROM news WHERE status = 'published'`),
+    ])
 
   const stats: StatCard[] = [
     {
       Icon: Users,
       label: '总用户数',
-      value: userCount.toLocaleString(),
-      footer: '全部注册用户',
+      value: activeUserCount.toLocaleString(),
+      footer: `管理员 ${adminCount} · 已禁用 ${disabledCount}`,
       footerColor: '#8A8580',
     },
     {
