@@ -8,12 +8,10 @@
 // this proxy path so nested asset requests also stay on the cached route).
 
 export const runtime = 'edge'
-// Pin the proxy to Hong Kong. Mainland-China users almost always route to
-// hkg1 anyway, but pinning consolidates the edge cache to a single PoP so
-// we don't pay a fresh upstream MapTiler round-trip per region cold-miss.
-// Tile responses are still served from every Vercel PoP via CDN, so users
-// elsewhere only pay this on the very first cache miss.
-export const preferredRegion = 'hkg1'
+// Earlier attempt pinned preferredRegion = 'hkg1', but Vercel's plan/region
+// gate returned 403 before our function ran, killing /global. Leave region
+// auto-selected; the immutable cache header on tile responses already keeps
+// repeat visits cheap.
 
 // Hardcoded default matches the legacy GlobalMapML key. Override via Vercel
 // env `MAPTILER_KEY` when you want to rotate without redeploying code.
