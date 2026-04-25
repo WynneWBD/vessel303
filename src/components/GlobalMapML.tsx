@@ -15,13 +15,25 @@ import { CAMPS } from '@/data/camps'
 import { SHOWCASE_PROJECTS, HQ_PROJECT } from '@/data/showcaseProjects'
 import type { ShowcaseProject } from '@/data/showcaseProjects'
 
-const MAPTILER_KEY = '7tbP0DIfmG9T8qWYxh5M'
-maptilerConfig.apiKey = MAPTILER_KEY
+// The real MapTiler API key now lives on the edge proxy (see src/app/api/map/
+// [...path]/route.ts). Setting the SDK's apiKey to a placeholder stops it from
+// rejecting calls before our transformRequest rewrites them.
+maptilerConfig.apiKey = 'proxied'
 
-// Pin to streets-v2-dark: the SDK's MapStyle.STREETS.DARK resolves to
-// streets-v4-dark (paid tier), which returns 403 and silently falls back
-// to a light style.
-const STYLE_URL = `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${MAPTILER_KEY}`
+// Pin to streets-v2-dark via our edge proxy. The first mainland-China visitor
+// pays the cold-miss penalty (one edge round-trip); everyone after that hits
+// the cached tile within ~30–80 ms from HK/Tokyo/Singapore.
+const STYLE_URL = '/api/map/maps/streets-v2-dark/style.json'
+
+// Any MapTiler URL the SDK computes internally still needs to be redirected
+// through the proxy — this handler rewrites https://api.maptiler.com/* at
+// request time, stripping the (now unnecessary) key query param.
+const PROXY_TRANSFORM = (url: string) => {
+  if (!url || !url.startsWith('https://api.maptiler.com/')) return { url }
+  const u = new URL(url)
+  u.searchParams.delete('key')
+  return { url: `/api/map${u.pathname}${u.search}` }
+}
 
 const DEALER_COUNTRIES = ['俄罗斯', '台湾', '沙特阿拉伯', '阿联酋', '韩国', '美国']
 
@@ -307,6 +319,7 @@ export default function GlobalMapML({
       minZoom: 1.5,
       maxZoom: 16,
       renderWorldCopies: false,
+      transformRequest: PROXY_TRANSFORM,
     })
     mapRef.current = map
 
