@@ -12,8 +12,7 @@ import {
 } from '@maptiler/sdk'
 import '@maptiler/sdk/dist/maptiler-sdk.css'
 import { CAMPS } from '@/data/camps'
-import { SHOWCASE_PROJECTS, HQ_PROJECT } from '@/data/showcaseProjects'
-import type { ShowcaseProject } from '@/data/showcaseProjects'
+import { SHOWCASE_MARKERS, HQ_MARKER, type ShowcaseMarker } from '@/data/showcaseMarkers'
 
 // The real MapTiler API key now lives on the edge proxy (see src/app/api/map/
 // [...path]/route.ts). Setting the SDK's apiKey to a placeholder stops it from
@@ -80,10 +79,10 @@ function campLabelEn(country: string, province: string): string {
 }
 
 const HQ = {
-  lng: HQ_PROJECT.coordinates[0],   // 113.0021 — OSM-verified Shishan Town
-  lat: HQ_PROJECT.coordinates[1],   // 23.1247
-  labelEn: HQ_PROJECT.name.en,
-  labelZh: HQ_PROJECT.name.zh,
+  lng: HQ_MARKER.coordinates[0],   // 113.0021 — OSM-verified Shishan Town
+  lat: HQ_MARKER.coordinates[1],   // 23.1247
+  labelEn: HQ_MARKER.name.en,
+  labelZh: HQ_MARKER.name.zh,
 }
 
 function hashOffset(str: string, salt: number): number {
@@ -267,7 +266,7 @@ function applyTaiwanLabelOverride(map: MaptilerMap, isZh: boolean) {
 }
 
 interface Props {
-  onShowcaseSelect?: (project: ShowcaseProject) => void
+  onShowcaseSelect?: (marker: ShowcaseMarker) => void
   onMapClick?: () => void
   flyTarget?: [number, number] | null  // [lat, lng] — Leaflet convention from parent
   resetViewKey?: number  // increment to fly back to global default view
@@ -434,8 +433,8 @@ export default function GlobalMapML({
 
       function getHqPopupHtml() {
         const zh = isZhRef.current
-        const name = zh ? HQ_PROJECT.name.zh : HQ_PROJECT.name.en
-        const addr = zh ? HQ_PROJECT.location.zh : HQ_PROJECT.location.en
+        const name = zh ? HQ_MARKER.name.zh : HQ_MARKER.name.en
+        const addr = zh ? HQ_MARKER.location.zh : HQ_MARKER.location.en
         return `<div class="vessel-hq-popup-name">${name}</div><div class="vessel-hq-popup-addr">${addr}</div>`
       }
 
@@ -476,7 +475,7 @@ export default function GlobalMapML({
       map.on('zoom', updatePinScales)
 
       // ── Showcase project markers (HTML, with pulse animation) ─────────
-      SHOWCASE_PROJECTS.forEach((project) => {
+      SHOWCASE_MARKERS.forEach((marker) => {
         // Outer wrap = the element MapLibre controls via transform. No
         // transitions on it, so it tracks pan/zoom in lockstep with the canvas.
         const wrap = document.createElement('div')
@@ -485,13 +484,13 @@ export default function GlobalMapML({
         // Inner pin owns the visuals (pulse, hover scale, tooltip target).
         const pin = document.createElement('div')
         pin.className = 'vessel-showcase-pin'
-        pin.title = project.name.en
+        pin.title = marker.name.en
         wrap.appendChild(pin)
         showcasePins.push(pin)
 
         pin.addEventListener('click', (ev) => {
           ev.stopPropagation()
-          onShowcaseSelectRef.current?.(project)
+          onShowcaseSelectRef.current?.(marker)
         })
 
         const showcasePopup = new Popup({
@@ -504,8 +503,8 @@ export default function GlobalMapML({
         pin.addEventListener('mouseenter', () => {
           map.getCanvas().style.cursor = 'pointer'
           showcasePopup
-            .setLngLat(project.coordinates)
-            .setText(project.name[isZhRef.current ? 'zh' : 'en'])
+            .setLngLat(marker.coordinates)
+            .setText(marker.name[isZhRef.current ? 'zh' : 'en'])
             .addTo(map)
         })
         pin.addEventListener('mouseleave', () => {
@@ -514,7 +513,7 @@ export default function GlobalMapML({
         })
 
         new Marker({ element: wrap, anchor: 'center' })
-          .setLngLat(project.coordinates)
+          .setLngLat(marker.coordinates)
           .addTo(map)
       })
 
@@ -552,8 +551,8 @@ export default function GlobalMapML({
       }
       const hqPopup = hqPopupRef.current
       if (hqPopup?.isOpen()) {
-        const name = isZh ? HQ_PROJECT.name.zh : HQ_PROJECT.name.en
-        const addr = isZh ? HQ_PROJECT.location.zh : HQ_PROJECT.location.en
+        const name = isZh ? HQ_MARKER.name.zh : HQ_MARKER.name.en
+        const addr = isZh ? HQ_MARKER.location.zh : HQ_MARKER.location.en
         hqPopup.setHTML(`<div class="vessel-hq-popup-name">${name}</div><div class="vessel-hq-popup-addr">${addr}</div>`)
       }
     }
