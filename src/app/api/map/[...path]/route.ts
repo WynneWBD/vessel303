@@ -70,14 +70,18 @@ export async function GET(
   const isJson = contentType.includes('json')
 
   // style.json / tile-json responses carry absolute MapTiler URLs inside the
-  // body. Rewrite those so the map SDK keeps hitting our proxy for every
-  // downstream asset (tiles, glyphs, sprite).
+  // body. We must NOT rewrite the host: MapTiler SDK v4's setLanguage()
+  // skips any layer whose source URL host isn't `api.maptiler.com`, which
+  // would leave country/place labels stuck on the raw `{name:en}` token
+  // (broken in maplibre-gl v5) and disable the EN/ZH switcher entirely.
+  // Instead, just strip the API key from the body (so it doesn't leak to
+  // the browser) and let the client-side transformRequest redirect every
+  // outgoing api.maptiler.com fetch back through this proxy.
   let body: BodyInit
   if (isJson) {
     const text = await upstreamRes.text()
     body = text
-      .replace(/https:\/\/api\.maptiler\.com\//g, `${reqUrl.origin}/api/map/`)
-      // strip leaked ?key= / &key= now that the proxy injects its own
+      // strip leaked ?key= / &key= so the API key never reaches the browser
       .replace(/([?&])key=[^&"\\]+/g, (m) => (m.startsWith('?') ? '?' : ''))
       // collapse resulting "?&" or trailing "?" artifacts
       .replace(/\?&/g, '?')
