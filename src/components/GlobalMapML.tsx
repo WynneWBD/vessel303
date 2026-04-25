@@ -289,6 +289,10 @@ export default function GlobalMapML({
   const prevResetKey = useRef(resetViewKey ?? 0)
   const isZhRef = useRef(lang === 'zh')
   const [mapReady, setMapReady] = useState(false)
+  // 'init-failed' = constructor threw (e.g. WebGL2 unsupported);
+  // 'timeout'     = map.on('load') never fired within the budget;
+  // 'fatal'       = maplibre fired an 'error' event we couldn't recover from.
+  const [loadError, setLoadError] = useState<null | 'init-failed' | 'timeout' | 'fatal'>(null)
 
   // Keep callbacks current without re-initializing the map
   const onShowcaseSelectRef = useRef(onShowcaseSelect)
@@ -310,16 +314,27 @@ export default function GlobalMapML({
       document.head.appendChild(style)
     }
 
-    const map = new MaptilerMap({
-      container: containerRef.current,
-      style: STYLE_URL,
-      center: isZhRef.current ? [105, 30] : [10, 20],
-      zoom: isZhRef.current ? 3 : 2,
-      minZoom: 1.5,
-      maxZoom: 16,
-      renderWorldCopies: false,
-      transformRequest: PROXY_TRANSFORM,
-    })
+    // MapTiler SDK v4 throws synchronously when WebGL2 is unavailable
+    // (older Android WeChat browser, hardware-accelerated mode disabled,
+    // some restricted WebViews). Catch so we can show a fallback instead
+    // of leaving the user staring at a forever spinner.
+    let map: MaptilerMap
+    try {
+      map = new MaptilerMap({
+        container: containerRef.current,
+        style: STYLE_URL,
+        center: isZhRef.current ? [105, 30] : [10, 20],
+        zoom: isZhRef.current ? 3 : 2,
+        minZoom: 1.5,
+        maxZoom: 16,
+        renderWorldCopies: false,
+        transformRequest: PROXY_TRANSFORM,
+      })
+    } catch (err) {
+      console.error('[VESSEL] MapTiler init failed', err)
+      setLoadError('init-failed')
+      return
+    }
     mapRef.current = map
 
     // Hover popup for regular camp name
@@ -330,7 +345,32 @@ export default function GlobalMapML({
       className: 'vessel-camp-popup',
     })
 
+    // If the map hasn't fired 'load' within 25 s, something upstream is
+    // stalling (network blocked, tile fetch hung). Show a retry surface
+    // instead of an indefinite spinner.
+    const loadTimeout = window.setTimeout(() => {
+      if (!mapRef.current) return
+      if (!map.loaded()) {
+        console.warn('[VESSEL] map load timeout (25s)')
+        setLoadError('timeout')
+      }
+    }, 25000)
+
+    map.on('error', (ev) => {
+      const e = ev as { error?: { message?: string; status?: number } }
+      const msg = e.error?.message ?? ''
+      const status = e.error?.status
+      console.warn('[VESSEL] map error', status, msg)
+      // Style.json or critical asset failure → escalate. Tile-level errors
+      // (status >= 400 on individual tiles) are common on slow networks
+      // and the SDK retries them, so don't kill the map for those.
+      if (!map.loaded() && (msg.includes('style') || status === 0 || status === undefined)) {
+        setLoadError('fatal')
+      }
+    })
+
     map.on('load', () => {
+      window.clearTimeout(loadTimeout)
       // ── Language ──────────────────────────────────────────────────────
       map.setLanguage(isZhRef.current ? Language.CHINESE : Language.ENGLISH)
       applyTaiwanLabelOverride(map, isZhRef.current)
@@ -531,6 +571,7 @@ export default function GlobalMapML({
     ro.observe(containerRef.current)
 
     return () => {
+      window.clearTimeout(loadTimeout)
       ro.disconnect()
       map.remove()
       mapRef.current = null
@@ -591,6 +632,21 @@ export default function GlobalMapML({
     })
   }, [resetViewKey])
 
+  const zh = isZhRef.current
+  const errorTitle = zh ? '地图加载失败' : 'MAP LOAD FAILED'
+  const errorBody =
+    loadError === 'init-failed'
+      ? zh
+        ? '当前浏览器或显卡不支持 WebGL 加速渲染，地图无法显示。请尝试在系统浏览器（Chrome / Safari）中打开本页面。'
+        : 'Your browser or GPU does not support WebGL2. Please open this page in Chrome or Safari instead.'
+      : loadError === 'timeout'
+      ? zh
+        ? '网络较慢，地图样式或瓦片下载超时。请检查网络后点击下方按钮重试。'
+        : 'Style or tiles took too long to load. Please check your connection and retry.'
+      : zh
+      ? '地图样式加载出错。请稍后重试。'
+      : 'Map style failed to load. Please retry shortly.'
+
   return (
     <div style={{ position: 'relative', height: '100%', width: '100%', background: '#1A1A1A' }}>
       <div
@@ -598,7 +654,7 @@ export default function GlobalMapML({
         style={{ height: '100%', width: '100%', background: '#1A1A1A' }}
       />
       <div
-        aria-hidden={mapReady}
+        aria-hidden={mapReady && !loadError}
         style={{
           position: 'absolute',
           inset: 0,
@@ -606,34 +662,69 @@ export default function GlobalMapML({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          opacity: mapReady ? 0 : 1,
-          pointerEvents: mapReady ? 'none' : 'auto',
+          opacity: mapReady && !loadError ? 0 : 1,
+          pointerEvents: mapReady && !loadError ? 'none' : 'auto',
           transition: 'opacity 400ms ease-out',
           zIndex: 50,
+          padding: '0 24px',
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          <div
-            style={{
-              width: 28,
-              height: 28,
-              border: '2px solid rgba(227,111,44,0.25)',
-              borderTopColor: '#E36F2C',
-              borderRadius: '50%',
-              animation: 'vessel-map-spin 0.9s linear infinite',
-            }}
-          />
-          <div
-            style={{
-              color: 'rgba(240,240,240,0.55)',
-              fontSize: 12,
-              letterSpacing: '0.15em',
+        {loadError ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, maxWidth: 360, textAlign: 'center' }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: '50%',
+              border: '1.5px solid rgba(227,111,44,0.6)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#E36F2C', fontSize: 22, fontWeight: 600,
+            }}>!</div>
+            <div style={{
+              color: '#F0F0F0', fontSize: 14, fontWeight: 600, letterSpacing: '0.08em',
               fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",
-            }}
-          >
-            {isZhRef.current ? '全球地图加载中' : 'LOADING GLOBAL MAP'}
+            }}>{errorTitle}</div>
+            <div style={{
+              color: 'rgba(240,240,240,0.55)', fontSize: 12, lineHeight: 1.6,
+              fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",
+            }}>{errorBody}</div>
+            {loadError !== 'init-failed' && (
+              <button
+                onClick={() => { if (typeof window !== 'undefined') window.location.reload() }}
+                style={{
+                  marginTop: 4,
+                  padding: '8px 22px',
+                  background: '#E36F2C', color: '#F0F0F0',
+                  border: 'none', cursor: 'pointer',
+                  fontSize: 12, letterSpacing: '0.12em', fontWeight: 600,
+                  fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",
+                }}
+              >
+                {zh ? '重新加载' : 'RETRY'}
+              </button>
+            )}
           </div>
-        </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+            <div
+              style={{
+                width: 28,
+                height: 28,
+                border: '2px solid rgba(227,111,44,0.25)',
+                borderTopColor: '#E36F2C',
+                borderRadius: '50%',
+                animation: 'vessel-map-spin 0.9s linear infinite',
+              }}
+            />
+            <div
+              style={{
+                color: 'rgba(240,240,240,0.55)',
+                fontSize: 12,
+                letterSpacing: '0.15em',
+                fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",
+              }}
+            >
+              {zh ? '全球地图加载中' : 'LOADING GLOBAL MAP'}
+            </div>
+          </div>
+        )}
         <style>{`@keyframes vessel-map-spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     </div>
