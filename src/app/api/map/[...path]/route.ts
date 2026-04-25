@@ -35,11 +35,25 @@ export async function GET(
   })
   upstream.searchParams.set('key', MAPTILER_KEY)
 
+  // The MapTiler API key is Referrer-locked to vessel303.com. Browsers send
+  // the Referer automatically, but `fetch` from this edge function does NOT
+  // unless we set it explicitly — without this header, upstream returns 403
+  // "Key usage restricted" and the whole map breaks. Forward the caller's
+  // Referer when present; otherwise fall back to the canonical site URL.
+  const callerReferer = req.headers.get('referer')
+  const forwardedReferer =
+    callerReferer && /vessel303\.com/i.test(callerReferer)
+      ? callerReferer
+      : 'https://www.vessel303.com/'
+
   let upstreamRes: Response
   try {
     upstreamRes = await fetch(upstream.toString(), {
       // Accept encoded bodies transparently; fetch on edge handles decoding.
-      headers: { accept: req.headers.get('accept') ?? '*/*' },
+      headers: {
+        accept: req.headers.get('accept') ?? '*/*',
+        referer: forwardedReferer,
+      },
     })
   } catch (err) {
     return new Response(
