@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import GlobalMapStats from '@/components/GlobalMapStats'
 import GlobalMapView from '@/components/GlobalMapView'
 
@@ -12,7 +13,11 @@ export default function GlobalPage() {
       <GlobalMapStats />
       {/* mobile navbar = row1(56px) + row2(36px) = 92px; desktop = 56px */}
       <div className="pt-[92px] md:pt-14">
-        <GlobalMapView />
+        {/* GlobalMapView uses useSearchParams (for ?camp=… deep link),
+            which requires a Suspense boundary for static prerender. */}
+        <Suspense fallback={null}>
+          <GlobalMapView />
+        </Suspense>
       </div>
     </div>
   )

@@ -1,18 +1,46 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useState, useCallback } from 'react'
-import type { ShowcaseProject } from '@/data/showcaseProjects'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { SHOWCASE_PROJECTS, type ShowcaseProject } from '@/data/showcaseProjects'
 import ProjectDetail from './ProjectDetail'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 const GlobalMapDynamic = dynamic(() => import('./GlobalMapML'), { ssr: false })
+
+// Sync URL without triggering a Next router re-render — the map state owns
+// what's visible, the URL is just a shareable mirror.
+function setCampParam(id: string | null) {
+  if (typeof window === 'undefined') return
+  const url = new URL(window.location.href)
+  if (id) url.searchParams.set('camp', id)
+  else url.searchParams.delete('camp')
+  window.history.replaceState({}, '', url)
+}
 
 export default function GlobalMapView() {
   const [selectedProject, setSelectedProject] = useState<ShowcaseProject | null>(null)
   const [resetViewKey, setResetViewKey] = useState(0)
   const { lang } = useLanguage()
   const panelOpen = selectedProject !== null
+
+  // ── Deep link: open ?camp=<id> on mount ────────────────────────────────
+  const searchParams = useSearchParams()
+  const hydratedOnce = useRef(false)
+  useEffect(() => {
+    if (hydratedOnce.current) return
+    hydratedOnce.current = true
+    const campId = searchParams?.get('camp')
+    if (!campId) return
+    const project = SHOWCASE_PROJECTS.find((p) => p.id === campId)
+    if (project) setSelectedProject(project)
+  }, [searchParams])
+
+  // Mirror state → URL
+  useEffect(() => {
+    setCampParam(selectedProject?.id ?? null)
+  }, [selectedProject])
 
   const handleShowcaseSelect = useCallback((project: ShowcaseProject) => {
     setSelectedProject(project)

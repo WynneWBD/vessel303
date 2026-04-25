@@ -83,8 +83,41 @@ interface Props {
 export default function ProjectDetail({ project, lang, onClose }: Props) {
   const [currentImg, setCurrentImg] = useState(0)
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
+  const [shareCopied, setShareCopied] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const en = lang !== 'zh'
+
+  const handleShare = async () => {
+    if (!project) return
+    const origin =
+      typeof window !== 'undefined' ? window.location.origin : 'https://vessel303.com'
+    const shareUrl = `${origin}/global?camp=${project.id}`
+    const projectName = project.name[en ? 'en' : 'zh']
+    const projectLocation = project.location[en ? 'en' : 'zh']
+    const shareTitle = en
+      ? `VESSEL · ${projectName}, ${projectLocation}`
+      : `VESSEL 微宿 · ${projectName}(${projectLocation})`
+    const shareText = en
+      ? 'Explore this VESSEL prefab camp project.'
+      : 'VESSEL 微宿全球营地项目'
+
+    const nav = typeof navigator !== 'undefined' ? navigator : undefined
+    if (nav && typeof nav.share === 'function') {
+      try {
+        await nav.share({ title: shareTitle, text: shareText, url: shareUrl })
+        return
+      } catch {
+        // user dismissed the sheet, or share denied — fall through to clipboard
+      }
+    }
+    try {
+      await nav?.clipboard?.writeText(shareUrl)
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 1800)
+    } catch {
+      window.prompt(en ? 'Copy the link:' : '复制链接:', shareUrl)
+    }
+  }
 
   // Carousel auto-advance
   useEffect(() => {
@@ -147,6 +180,47 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
 
         {/* Gradient overlays */}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 30%, transparent 50%, rgba(0,0,0,0.8) 100%)', pointerEvents: 'none' }} />
+
+        {/* Share button (left of close) */}
+        <button
+          onClick={handleShare}
+          aria-label={en ? 'Share' : '分享'}
+          title={en ? 'Share this project' : '分享此项目'}
+          style={{
+            position: 'absolute', top: 16, right: 60, zIndex: 10,
+            height: 36, padding: '0 12px',
+            background: 'rgba(14,14,14,0.88)',
+            border: '1px solid rgba(255,255,255,0.18)',
+            borderRadius: 4, color: '#F0F0F0',
+            cursor: 'pointer', fontSize: 13, lineHeight: 1,
+            display: 'flex', alignItems: 'center', gap: 6,
+            fontFamily: "var(--font-body), 'Inter', sans-serif",
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+          </svg>
+          {en ? 'Share' : '分享'}
+        </button>
+        {shareCopied && (
+          <div
+            style={{
+              position: 'absolute', top: 58, right: 60, zIndex: 11,
+              background: 'rgba(14,14,14,0.95)',
+              border: '1px solid rgba(227,111,44,0.4)',
+              borderRadius: 4, color: '#E36F2C',
+              fontSize: 12, padding: '6px 10px',
+              fontFamily: "var(--font-body), 'Inter', sans-serif",
+              animation: 'vessel-fade-in 0.18s ease-out',
+            }}
+          >
+            {en ? '✓ Link copied' : '✓ 链接已复制'}
+          </div>
+        )}
 
         {/* Close button */}
         <button

@@ -554,9 +554,14 @@ export default function GlobalMapML({
     if (!map || !flyTarget) return
     const key = `${flyTarget[0]},${flyTarget[1]}`
     if (key === prevFlyKey.current) return
-    prevFlyKey.current = key
     // flyTarget is [lat, lng]; MapLibre wants [lng, lat]
-    map.flyTo({ center: [flyTarget[1], flyTarget[0]], zoom: 11, duration: 1600 })
+    const fly = () => {
+      prevFlyKey.current = key
+      map.flyTo({ center: [flyTarget[1], flyTarget[0]], zoom: 11, duration: 1600 })
+    }
+    // Deep-link case (URL carries ?camp=…): flyTarget is set before map finishes loading.
+    if (map.loaded()) fly()
+    else map.once('load', fly)
   }, [flyTarget])
 
   // ── Reset to global view when panel closes ────────────────────────────
