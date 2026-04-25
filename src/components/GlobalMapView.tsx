@@ -5,9 +5,13 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SHOWCASE_PROJECTS, type ShowcaseProject } from '@/data/showcaseProjects'
 import ProjectDetail from './ProjectDetail'
+import MapSkeleton from './MapSkeleton'
 import { useLanguage } from '@/contexts/LanguageContext'
 
-const GlobalMapDynamic = dynamic(() => import('./GlobalMapML'), { ssr: false })
+const GlobalMapDynamic = dynamic(() => import('./GlobalMapML'), {
+  ssr: false,
+  loading: () => <MapSkeleton />,
+})
 
 // Sync URL without triggering a Next router re-render — the map state owns
 // what's visible, the URL is just a shareable mirror.

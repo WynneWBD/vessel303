@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import GlobalMapStats from '@/components/GlobalMapStats'
 import GlobalMapView from '@/components/GlobalMapView'
+import MapSkeleton from '@/components/MapSkeleton'
 
 export const metadata: Metadata = {
   title: '全球营地部署 | VESSEL®',
@@ -22,10 +23,13 @@ export default function GlobalPage() {
       />
       <GlobalMapStats />
       {/* mobile navbar = row1(56px) + row2(36px) = 92px; desktop = 56px */}
-      <div className="pt-[92px] md:pt-14">
+      <div className="pt-[92px] md:pt-14" style={{ position: 'relative', height: '100vh' }}>
         {/* GlobalMapView uses useSearchParams (for ?camp=… deep link),
-            which requires a Suspense boundary for static prerender. */}
-        <Suspense fallback={null}>
+            which requires a Suspense boundary for static prerender. The
+            fallback is rendered into the SSR HTML, so users see the orange
+            spinner the moment the document arrives — no black flash while
+            the map JS chunk is downloading. */}
+        <Suspense fallback={<MapSkeleton />}>
           <GlobalMapView />
         </Suspense>
       </div>
