@@ -46,12 +46,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`h-full antialiased ${dmSans.variable} ${inter.variable}`}>
-      <head>
-        {/* MapTiler is the bottleneck on /global in mainland China — preheat
-            DNS + TLS so first tile is already on a warm connection. */}
-        <link rel="preconnect" href="https://api.maptiler.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://api.maptiler.com" />
-      </head>
       <body className="min-h-full flex flex-col bg-[#F5F0EB]">
         <LanguageProvider>
           <SessionProviderWrapper>{children}</SessionProviderWrapper>
