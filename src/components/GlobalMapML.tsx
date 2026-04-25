@@ -329,6 +329,13 @@ export default function GlobalMapML({
         maxZoom: 16,
         renderWorldCopies: false,
         transformRequest: PROXY_TRANSFORM,
+        // Render CJK characters using the device's system font instead of
+        // fetching MapTiler's glyph PBFs for those Unicode ranges. Saves
+        // ~10 separate font requests (≈ 800 KB total) on the first render
+        // for any Chinese-language view — the single biggest win for slow
+        // mainland-China mobile connections.
+        localIdeographFontFamily:
+          "'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif",
       })
     } catch (err) {
       console.error('[VESSEL] MapTiler init failed', err)
