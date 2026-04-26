@@ -289,10 +289,12 @@ export default function GlobalMapML({
   const prevResetKey = useRef(resetViewKey ?? 0)
   const isZhRef = useRef(lang === 'zh')
   const [mapReady, setMapReady] = useState(false)
-  // 'init-failed' = constructor threw (e.g. WebGL2 unsupported);
-  // 'timeout'     = map.on('load') never fired within the budget;
+  // 'init-failed' = MaptilerMap constructor threw (e.g. WebGL2 unsupported);
   // 'fatal'       = maplibre fired an 'error' event we couldn't recover from.
-  const [loadError, setLoadError] = useState<null | 'init-failed' | 'timeout' | 'fatal'>(null)
+  // No "timeout" state: a slow load is not a failure — better to keep the
+  // spinner than tell a patient mainland-China user the map is broken when
+  // it is in fact still streaming tiles in over a 200 ms-RTT link.
+  const [loadError, setLoadError] = useState<null | 'init-failed' | 'fatal'>(null)
 
   // Keep callbacks current without re-initializing the map
   const onShowcaseSelectRef = useRef(onShowcaseSelect)
@@ -352,32 +354,16 @@ export default function GlobalMapML({
       className: 'vessel-camp-popup',
     })
 
-    // If the map hasn't fired 'load' within 25 s, something upstream is
-    // stalling (network blocked, tile fetch hung). Show a retry surface
-    // instead of an indefinite spinner.
-    const loadTimeout = window.setTimeout(() => {
-      if (!mapRef.current) return
-      if (!map.loaded()) {
-        console.warn('[VESSEL] map load timeout (25s)')
-        setLoadError('timeout')
-      }
-    }, 25000)
-
+    // Surface maplibre's own error events to the console for debugging,
+    // but never automatically promote them to a "失败" UI — individual
+    // tile / glyph errors over a flaky mainland-China link are routine
+    // and the SDK retries them. Forcing a fatal banner on transient
+    // errors yesterday was the regression that prompted this rollback.
     map.on('error', (ev) => {
-      const e = ev as { error?: { message?: string; status?: number } }
-      const msg = e.error?.message ?? ''
-      const status = e.error?.status
-      console.warn('[VESSEL] map error', status, msg)
-      // Style.json or critical asset failure → escalate. Tile-level errors
-      // (status >= 400 on individual tiles) are common on slow networks
-      // and the SDK retries them, so don't kill the map for those.
-      if (!map.loaded() && (msg.includes('style') || status === 0 || status === undefined)) {
-        setLoadError('fatal')
-      }
+      console.warn('[VESSEL] map error', ev)
     })
 
     map.on('load', () => {
-      window.clearTimeout(loadTimeout)
       // ── Language ──────────────────────────────────────────────────────
       map.setLanguage(isZhRef.current ? Language.CHINESE : Language.ENGLISH)
       applyTaiwanLabelOverride(map, isZhRef.current)
@@ -578,7 +564,6 @@ export default function GlobalMapML({
     ro.observe(containerRef.current)
 
     return () => {
-      window.clearTimeout(loadTimeout)
       ro.disconnect()
       map.remove()
       mapRef.current = null
@@ -646,10 +631,6 @@ export default function GlobalMapML({
       ? zh
         ? '当前浏览器或显卡不支持 WebGL 加速渲染，地图无法显示。请尝试在系统浏览器（Chrome / Safari）中打开本页面。'
         : 'Your browser or GPU does not support WebGL2. Please open this page in Chrome or Safari instead.'
-      : loadError === 'timeout'
-      ? zh
-        ? '网络较慢，地图样式或瓦片下载超时。请检查网络后点击下方按钮重试。'
-        : 'Style or tiles took too long to load. Please check your connection and retry.'
       : zh
       ? '地图样式加载出错。请稍后重试。'
       : 'Map style failed to load. Please retry shortly.'
