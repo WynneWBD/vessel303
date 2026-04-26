@@ -1,0 +1,1735 @@
+{
+  "generatedFrom": "vessel303_handoff_V7_0.docx",
+  "blocks": [
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "VESSEL 微宿®"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "vessel303.com 项目全量文档"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "含版本历史 · 环境配置 · 业务逻辑 · 当前状态 · 待办事项"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "⚠️ 此文档为全量文档,每次更新只增不删,新版本完整替代旧版本。更新时请保留所有历史版本信息,仅在版本历史、当前状态、待办事项三个部分做覆盖更新。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": ""
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "项目",
+          "内容"
+        ],
+        [
+          "文档版本",
+          "V7.0"
+        ],
+        [
+          "更新日期",
+          "2026-04-21"
+        ],
+        [
+          "整理人",
+          "Wynne(何总)"
+        ],
+        [
+          "适用项目",
+          "Vessel_Ops / vessel303.com"
+        ],
+        [
+          "GitHub",
+          "https://github.com/WynneWBD/vessel303"
+        ],
+        [
+          "线上地址",
+          "https://vessel303.com"
+        ],
+        [
+          "本地路径",
+          "~/Desktop/vessel303"
+        ]
+      ]
+    },
+    {
+      "kind": "p",
+      "style": "Heading1",
+      "text": "文档维护说明(重要)"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "此文档为项目唯一全量上下文文档,每次生成新版本时必须遵守以下规则:"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "只增不删:所有历史版本内容必须完整保留,不得删除或压缩"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "版本历史:每个版本的详细变更记录必须完整保留"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "当前状态(第四部分):用最新状态覆盖,但关键文件路径只增不删"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "新对话启动模板:每次更新后必须同步更新,确保包含最新技术栈和功能"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "生成工具:使用 docx-js 在 Claude Web 对话中生成,参考本文档对应的 generate_v7.js 脚本"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "存储位置:只保留最新一个版本文件,文件名格式:vessel303_handoff_V{N}_{0}.docx"
+    },
+    {
+      "kind": "p",
+      "style": "Heading1",
+      "text": "第一部分:项目固定信息"
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "1.1 公司与品牌基本信息"
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "字段",
+          "内容"
+        ],
+        [
+          "公司全称",
+          "广东微宿文旅发展有限公司"
+        ],
+        [
+          "品牌",
+          "VESSEL 微宿®"
+        ],
+        [
+          "国际站域名",
+          "vessel303.com(主域名)"
+        ],
+        [
+          "备用域名",
+          "vessel303.cn / vessel303.com.cn"
+        ],
+        [
+          "旧有站点",
+          "303vessel.cn(300.cn 模板站,仍在运营)"
+        ],
+        [
+          "GitHub",
+          "https://github.com/WynneWBD/vessel303"
+        ],
+        [
+          "部署平台",
+          "Vercel Pro(自动连接 GitHub,push main 即触发部署)"
+        ],
+        [
+          "数据库",
+          "Neon Postgres(新加坡)"
+        ],
+        [
+          "邮件服务",
+          "Resend,wynnewbd@gmail.com"
+        ],
+        [
+          "项目负责人",
+          "Wynne(何总),数字运营子公司"
+        ],
+        [
+          "创始人/决策人",
+          "王帅斌(Wang),绝对控制人"
+        ],
+        [
+          "品牌企业色",
+          "PANTONE 4012 C / #E36F2C(橙色)"
+        ]
+      ]
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "1.2 开发环境与工具链"
+    },
+    {
+      "kind": "p",
+      "style": "Heading3",
+      "text": "硬件与系统"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "设备:MacBook Pro,用户名 wynnewbd,macOS,终端 zsh"
+    },
+    {
+      "kind": "p",
+      "style": "Heading3",
+      "text": "工作流程(V7.0 更新)"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "Wynne 在 Claude Web 描述需求 → Claude 生成带上下文的 Claude Code 指令 → Wynne 粘贴进终端执行 → Claude Code 自动 git push origin main → Vercel 自动部署 → Wynne 截图验收"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "✅ V7.0 起,Wynne 已授权 Claude Code 自动 push。如遇 5GB+ 大改动超时,fallback 给 Wynne 在普通终端执行:cd ~/Desktop/vessel303 && git push origin main。此规则已同步到 CLAUDE.md。"
+    },
+    {
+      "kind": "p",
+      "style": "Heading3",
+      "text": "已安装的 npm 依赖(主要)"
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "依赖包",
+          "用途"
+        ],
+        [
+          "next 14.x",
+          "前端框架"
+        ],
+        [
+          "typescript 5.x",
+          "类型系统"
+        ],
+        [
+          "tailwindcss v4",
+          "样式(注意:已升级到 v4,配置方式与 v3 不同)"
+        ],
+        [
+          "next-auth v5 (Auth.js)",
+          "用户认证"
+        ],
+        [
+          "maplibre-gl",
+          "地图渲染(V5.0 从 Leaflet 迁移)"
+        ],
+        [
+          "@maptiler/sdk",
+          "MapTiler vector tiles + 多语言标注"
+        ],
+        [
+          "resend",
+          "邮件发送"
+        ],
+        [
+          "@neondatabase/serverless",
+          "Neon Postgres 驱动"
+        ],
+        [
+          "@fontsource/dm-sans",
+          "标题字体"
+        ],
+        [
+          "@fontsource/inter",
+          "正文字体"
+        ]
+      ]
+    },
+    {
+      "kind": "p",
+      "style": "Heading3",
+      "text": "已废弃的依赖(V5.0 移除)"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "leaflet + react-leaflet —— 已被 maplibre-gl + @maptiler/sdk 替代。旧代码备份为 GlobalMap.backup.tsx"
+    },
+    {
+      "kind": "p",
+      "style": "Heading3",
+      "text": "已知的坑(持续更新)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "Auth.js v5 必须用 AUTH_GOOGLE_ID / AUTH_GOOGLE_SECRET,不是 GOOGLE_CLIENT_ID"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "MapLibre GL 必须 dynamic import + ssr:false(和 Leaflet 相同限制)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "MapTiler API Key: 7tbP0DIfmG9T8qWYxh5M(origin 白名单:vessel303.com, www.vessel303.com, localhost:3000)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "MapLibre 坐标顺序是 [lng, lat],和 Leaflet 的 [lat, lng] 相反"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "Tailwind v4 配置用 @tailwindcss/postcss 插件,不用 tailwind.config.ts"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "Neon Postgres 在 Vercel 构建时连不上(ETIMEDOUT,port 5432):/products/[slug]/page.tsx 必须加 export const dynamic = 'force-dynamic'"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "大文件 push(5GB+)在 Claude Code 里可能超时(RPC failed/broken pipe),V7.0 已授权自动 push,失败时 fallback 给 Wynne 手动 push"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "V7.0 新增:响应式副标题控制使用 \"hidden md:inline\",禁止只加不看整体上下文,否则会导致桌面端也看不到"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "V7.0 新增:/global 超级工厂五角星不触发详情面板,仅显示 Tooltip popup。改动时不要复用普通项目的 click handler"
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "1.3 色彩规范(V4.0 品牌橙体系)"
+    },
+    {
+      "kind": "p",
+      "style": "Heading3",
+      "text": "设计风格定义"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "基于企业色 PANTONE 4012 C (#E36F2C),结合暖炭暗色背景,橙色严格控制在全站 10% 以内。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "参考对标:McLaren 橙色克制 × Hermès 品牌橙 × KOTO Design 暖色建筑 × Four Seasons 温暖感"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "一句话总结:用建筑大师的克制,讲科技产品的故事。橙色像画廊里的一幅画——稀少、克制、磁性。"
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "CSS 变量",
+          "色值与用途"
+        ],
+        [
+          "--accent-orange: #E36F2C",
+          "品牌主色:CTA 按钮、Logo、hover 态、关键数字——全站占比 ≤ 10%"
+        ],
+        [
+          "--hover-orange: #C85A1F",
+          "橙色 hover 加深态"
+        ],
+        [
+          "--accent-stone: #C4B9AB",
+          "次要中性色:分隔线、次要文字"
+        ],
+        [
+          "--bg-dark: #1A1A1A",
+          "暗画布(Hero、导航、Footer、暗色 Section)"
+        ],
+        [
+          "--bg-light: #F5F2ED",
+          "亮画布(内容区、亮色 Section)"
+        ],
+        [
+          "--text-on-dark: #F0F0F0",
+          "暗底文字"
+        ],
+        [
+          "--text-on-light: #1A1A1A",
+          "亮底文字"
+        ],
+        [
+          "--text-muted: #8A8580",
+          "次要文字"
+        ],
+        [
+          "--border-light: #E5E0DA",
+          "亮底分隔线"
+        ],
+        [
+          "--border-dark: #2A2A2E",
+          "暗底分隔线"
+        ]
+      ]
+    },
+    {
+      "kind": "p",
+      "style": "Heading3",
+      "text": "字体系统"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "标题:DM Sans(weights 300/400/500/700) → CSS 变量 --font-heading,作用于 h1-h6"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "正文:Inter(weights 400/500) → CSS 变量 --font-body,作用于 body"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "通过 next/font/google 自托管,无外部请求。"
+    },
+    {
+      "kind": "p",
+      "style": "Heading3",
+      "text": "Logo 规范"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "全站使用透明背景+橙色品牌 Logo 图片(含中文\"微宿\"),文件路径 /images/vessel-logo.png"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "Navbar: height 40px / Footer: height 32px / GlobalMap 统计栏: height 24px"
+    },
+    {
+      "kind": "p",
+      "style": "Heading3",
+      "text": "Favicon 规范(V7.0 新增)"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "浏览器 Tab 小标采用橙底白字 VESSEL 极简方案。SVG 为主,PNG/ICO 兼容。"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "public/favicon.svg — 主资源,矢量无损"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "public/favicon.ico — Windows/旧浏览器兼容"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "public/apple-touch-icon.png — iOS 主屏幕图标(180×180)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "public/icon-192.png / icon-512.png — PWA 图标"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "在 src/app/layout.tsx 的 metadata.icons 中注册"
+    },
+    {
+      "kind": "p",
+      "style": "Heading3",
+      "text": "兼容过渡(V4.0 历史兼容)"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "globals.css 中保留旧版 CSS 变量映射:--gold → #E36F2C,--accent-teal → #E36F2C,--warm-dark → #1A1A1A,--warm-white → #F5F2ED。子页面通过映射自动过渡。"
+    },
+    {
+      "kind": "p",
+      "style": "Heading1",
+      "text": "第二部分:产品定位与业务逻辑"
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "2.1 项目定位"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "vessel303.com 是 VESSEL 微宿的国际 B2B 官网,面向海外度假村开发商、酒店集团、地产开发商、政府采购。不是国内 C 端营地预订站。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "核心价值:展示产品力 + 建立信任(认证、案例、工厂)+ 捕获采购线索"
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "2.2 四类用户权限"
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "用户类型",
+          "看什么",
+          "不看什么"
+        ],
+        [
+          "游客(未登录)",
+          "产品列表、案例、认证、公司介绍",
+          "价格、配置单下载"
+        ],
+        [
+          "注册用户",
+          "以上 + 价格区间 + 配置单下载",
+          "底价、批量折扣"
+        ],
+        [
+          "代理商",
+          "以上 + 底价 + 批量折扣 + 代理后台",
+          "/"
+        ],
+        [
+          "管理员",
+          "全部 + CMS 后台 + 数据管理",
+          "/"
+        ]
+      ]
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "2.3 SKU 与产品线"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "当前 39 个 SKU,覆盖系列:E3/E5/E6/E7/V3/V5/V7/V9/S5,每个系列有 Gen5 和 Gen6 两个代别。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "定制款:俄罗斯版、沙特版、台湾版、美国版等,按「型号-代别_国家」命名。"
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "2.4 定价逻辑"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "国内价格区间:7–37 万元 RMB/台(根据型号和配置)"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "海外定价:FOB 佛山 + 运费、关税、安装另计。网站不显示海外具体价格,引导留资后报价。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "定金锁价机制:30% 定金锁定当前报价,有效期 90 天。"
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "2.5 联系链接统一跳转"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "全站所有「联系我们」「在线留言」「采购咨询」等留资入口,均跳转到 https://en.303vessel.cn/contact.html(新窗口)。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "产品查看链接跳转到 https://en.303vessel.cn/products_list.html(新窗口)。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "/contact 页面本身保留,设置自动跳转到 303vessel.cn。"
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "2.6 广告法合规要求(V6.0 新增)"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "《中华人民共和国广告法》第九条第三项:禁止使用绝对化极限词。违规处罚 20 万元起,上限 100 万元。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "V6.0 已完成全站扫描并修复 14 处违规(2026-04-20 执行)。"
+    },
+    {
+      "kind": "p",
+      "style": "Heading3",
+      "text": "禁用词规则"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "禁用主观评价性极限词:最严苛、最先进、最优质、最专业、最高级、最佳、最好、最大、最强、最新(无代际限定词时)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "禁用绝对化表述:第一、唯一、顶级、极致、世界领先、独家、史上、空前"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "替换原则:主观评价 → 客观事实(如「欧美双重合规认证」替代「全球最严苛认证」)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "可保留:技术参数中有数据支撑的「最大承重」「最高温度记录 50°C」等客观描述"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "可保留:「高端度假营地开创者」——有 CCTV 2019 年报道背书,需在附近有事实佐证(如「2019 年登上央视新闻直播间」)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "所有新文案写作必须遵守,Claude Code 生成文案时也必须遵守"
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "2.7 图片安全策略(V6.0 新增 / V7.0 强化)"
+    },
+    {
+      "kind": "p",
+      "style": "Heading3",
+      "text": "IPTC 版权元数据"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "已完成:1431/1484 张图片批量写入版权信息(96% 成功率)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "版权内容:Copyright © 2025 VESSEL 微宿® / Guangdong Vessel Cultural Tourism Development Co., Ltd. / 未经授权禁止使用"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "批处理脚本:scripts/embed-copyright.sh"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "新增图片处理:本地运行 bash scripts/embed-copyright.sh public 即可"
+    },
+    {
+      "kind": "p",
+      "style": "Heading3",
+      "text": "前端防盗(V6.0 基础层)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "globals.css:全局禁止图片拖拽(-webkit-user-drag: none)、选中(user-select: none)、长按保存"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "ImageProtection 组件(src/components/ImageProtection.tsx):客户端屏蔽右键菜单+dragstart 事件"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "不做的事:不禁 F12/DevTools(破坏可访问性,违反用户权利),不禁截图(无法阻止)"
+    },
+    {
+      "kind": "p",
+      "style": "Heading3",
+      "text": "V7.0 新增:ProtectedImage 移动端长按防盗"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "针对移动端微信/Safari 长按\"保存图片\"菜单,V6.0 的 CSS 方案无法拦截(系统级行为)。V7.0 用透明层覆盖法解决。"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "新建 src/components/ProtectedImage.tsx,包装 next/image,覆盖透明 div 吃掉 touchstart 和 contextmenu 事件"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "iOS/Android 长按时系统识别到的是 div 不是 img,不会弹\"保存图片\"菜单"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "click 事件正常冒泡,不影响 lightbox、卡片跳转等交互"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "作用于 5 个区块:产品列表卡片 / V9Gen6 详情页图集 / About 工厂图网格 / ProjectDetail 项目详情 / 首页项目网格"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "与 ImageProtection 共存:ImageProtection 管全局右键+拖拽,ProtectedImage 管特定图片的长按保护"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "物理天花板:截屏无法阻止,这是所有 Web 方案的共同边界"
+    },
+    {
+      "kind": "p",
+      "style": "Heading3",
+      "text": "反盗图监控"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "建议:注册 pixsy.com 免费账号,上传 20-30 张关键图(产品主图/工厂航拍/Hero 图)开始监控"
+    },
+    {
+      "kind": "p",
+      "style": "Heading3",
+      "text": "证书图片处理建议"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "需要打码保护:签名/手写笔迹、公章/印章、统一社会信用代码"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "无需打码(展示有益):证书编号、有效期、颁发机构名称、产品型号"
+    },
+    {
+      "kind": "p",
+      "style": "Heading1",
+      "text": "第三部分:版本历史(完整记录)"
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "V1.0 · 2026-03-26 · 初始上线"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "黑金风格(#0A0A0A + #C9A84C),18 页面基础版,含首页/产品/案例/关于/新闻/联系/场景/展会屏。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "技术栈:Next.js 14 + TypeScript + Tailwind CSS,部署于 Vercel,源码在 GitHub。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "域名 vessel303.com 已在阿里云完成 DNS 解析(A 记录 + CNAME),指向 Vercel。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "已知问题:V9/E6 颜色不统一,按钮跳转错误,关于页数据错误(年份/人数),新闻日期不合逻辑,页脚备案号占位符,Resend 未配置。"
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "V2.0 · 2026-04-14 · 暖奢色系 + 用户系统 + 全球地图"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "全站色系从黑金改为暖奢(#1C1A18 + #FAF7F2 + #C9A84C)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "产品目录扩展到 39 SKU"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "NextAuth.js v5 用户系统上线(邮箱+Google OAuth)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "价格权限隔离(游客看区间价,登录用户看完整价)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "Resend 邮件服务接入"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "/display 展会大屏模式"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "/global 全球营地地图(232 个营地,Leaflet + CartoDB raster tiles)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "导航重构去掉下拉菜单"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "V9 Gen6 详情页三栏布局"
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "V3.0 · 2026-04-15 · 首页全面重构 + 科技建筑极简主义"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "配色从暖奢金色(#C9A84C)切换为深青(#2A5C5A)+风化铜(#A67C5B)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "字体升级为 DM Sans(标题)+ Inter(正文)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "首页从零重写,结构改为一屏一概念叙事"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "新增认证 Section、旗舰产品展示、项目网格升级、i18n 文案重写"
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "V4.0 · 2026-04-15 · 品牌色系回归 + Logo 替换 + 全球地图升级"
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "功能/变更",
+          "详细说明"
+        ],
+        [
+          "配色系统全面替换",
+          "从 V3.0 深青(#2A5C5A)切换为品牌橙(#E36F2C),暗画布从 #111114 改为 #1A1A1A"
+        ],
+        [
+          "Logo 替换",
+          "全站 Navbar/Footer/GlobalMap 从纯文字替换为透明背景橙色品牌 Logo PNG(含中文「微宿」)"
+        ],
+        [
+          "水印决策",
+          "不加可见水印,改用 IPTC 元数据+中等分辨率+高清图锁表单的隐形保护方案"
+        ],
+        [
+          "Hero 轮播",
+          "首页 Hero 区从单张静态图改为 5 张 banner 图自动轮播(5 秒间隔,淡入淡出)"
+        ],
+        [
+          "首页图片替换",
+          "项目网格 6 大洲图片替换为真实项目照片;应用场景图片替换"
+        ],
+        [
+          "全球地图暗色主题",
+          "底图从 CartoDB Voyager 白底改为暗色,标记点改为品牌橙"
+        ],
+        [
+          "全球地图详情面板",
+          "点击标记点右侧滑出面板,显示项目名/位置/设备数/型号"
+        ],
+        [
+          "代理商标识",
+          "俄罗斯/台湾/沙特等项目加铜色虚线外环+「VESSEL Authorized Partner」徽章"
+        ],
+        [
+          "品牌数字",
+          "从精确数字改为品牌数字(30+/300+/2000+)"
+        ],
+        [
+          "303vessel.cn 联动",
+          "旧站导航新增「全球营地」跳转;CSP frame-ancestors 配置;Logo 点击改为 history.back()"
+        ],
+        [
+          "联系链接统一",
+          "全站 /contact 链接改为跳转 https://en.303vessel.cn/contact.html(新窗口)"
+        ]
+      ]
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "V5.0 · 2026-04-15 · 地图引擎迁移 + 项目详情展示系统"
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "功能/变更",
+          "详细说明"
+        ],
+        [
+          "地图引擎迁移",
+          "从 Leaflet + CartoDB raster tiles 迁移到 MapLibre GL + MapTiler vector tiles。旧代码备份为 GlobalMap.backup.tsx"
+        ],
+        [
+          "多语言底图",
+          "中文模式全中文标注,英文模式全英文标注。通过 MapTiler SDK setLanguage() 实时切换,无需刷新"
+        ],
+        [
+          "暗色主题",
+          "使用 MapTiler streets-v2-dark 原生暗色主题,不再需要 CSS filter 暗化"
+        ],
+        [
+          "MapTiler 配置",
+          "API Key: 7tbP0DIfmG9T8qWYxh5M · Origin 白名单: vessel303.com, www.vessel303.com, localhost:3000"
+        ],
+        [
+          "工厂总部标记",
+          "佛山南海狮山 [lng:113.0167, lat:23.0833] 橙色 SVG 五角星 + CSS 闪动动画 + Tooltip(中英文切换)"
+        ],
+        [
+          "项目详情展示系统",
+          "展示项目点击→地图缩左 30%+ 右侧 70% 详情页滑入。普通营地点击→只显示名称 tooltip"
+        ],
+        [
+          "第一个展示项目",
+          "AstroBase Mamison Hotel · 俄罗斯北奥塞梯 · [lng:43.839825, lat:42.662101] · 20 台设备 · 含 6 张真实照片"
+        ],
+        [
+          "项目详情页组件",
+          "ProjectDetail.tsx · 图片轮播+核心数据条+简介+设施亮点+交通位置+订房按钮 · 暗色主题 #141414"
+        ],
+        [
+          "展示项目数据",
+          "src/data/showcaseProjects.ts · 独立于普通营地数据 · 支持中英双语"
+        ],
+        [
+          "地图交互改造",
+          "展示项目标记更大(radius 10-12)+白色粗描边 · 中文模式初始视角聚焦中国 [30,105] zoom4"
+        ]
+      ]
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "V6.0 · 2026-04-20 · 全站内容补全 + 合规 + 安全 + 交互升级"
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "功能/变更",
+          "详细说明"
+        ],
+        [
+          "FAQ 页面 /faq",
+          "16 条双语 Q&A,6 个分类(产品材料/气候性能/运输物流/安装场地/认证合规/定价商务),accordion 展开,sticky 分类筛选栏,中英文切换"
+        ],
+        [
+          "About 页全面重建",
+          "10 个区块:Hero/6 数字/品牌故事/工厂图网格(B 方案 1 大+4 小)/时间线(纯文字无配图)/三大技术/团队(100+人,仅创始人)/荣誉认证(13 张奖杯+4 张国际证书)/合作伙伴(33 个 Logo)/全球地图 iframe+CTA。64 张真实图片,全部来自 vessel303-assets 素材库"
+        ],
+        [
+          "About 页锚点导航",
+          "页面顶部 sticky 锚点导航:品牌故事/三大技术/认证荣誉/创始人,平滑滚动"
+        ],
+        [
+          "国际认证展示",
+          "About 页荣誉区块新增 4 张真实证书图:CE CPR(EN1090-1,OTC Bulgaria,有效至 2028)/ CE-GPSD(ECM 意大利,有效至 2028)/ ISO 9001:2015(中澜认证,有效至 2027)/ ICR VoC(覆盖 40+型号,有效至 2030)"
+        ],
+        [
+          "TechDrawer 交互",
+          "首页+About 页三大技术卡片,点击触发右侧 Drawer 滑入(桌面 60vw/移动 100vw),ESC 或点击遮罩关闭,零页面跳转,body 滚动锁定"
+        ],
+        [
+          "技术内容组件化",
+          "src/components/tech/ViieContent.tsx / VolsContent.tsx / VipcContent.tsx,Drawer 和子页面共用,接收 lang prop"
+        ],
+        [
+          "导航精简",
+          "顶级导航 6 项:产品系列/项目案例/关于我们/常见问题/新闻活动/联系我们。Innovation 独立入口移除,/innovation 301 重定向到 /about#technologies"
+        ],
+        [
+          "技术子页面",
+          "/innovation/viie、/innovation/vols、/innovation/vipc 保留为 orphan page(有 URL 可访问,不挂任何导航入口),内容复用 Content 组件"
+        ],
+        [
+          "广告法合规扫描",
+          "全站扫描修复 14 处极限词违规,涉及文件:src/lib/i18n.ts / src/data/products.ts / src/app/about/page.tsx / src/app/cases/page.tsx / src/app/display/page.tsx / src/data/showcaseProjects.ts / src/app/innovation/vols/page.tsx"
+        ],
+        [
+          "粉丝数更新",
+          "全网粉丝 8M+ → 中文「1000 万+」/ 英文「10M+」,同步更新 i18n.ts 和 about/page.tsx"
+        ],
+        [
+          "Vercel 构建修复",
+          "/products/[slug]/page.tsx 加 export const dynamic = 'force-dynamic',修复 Neon DB 构建超时(ETIMEDOUT port 5432)"
+        ],
+        [
+          "IPTC 版权元数据",
+          "批量写入 1431/1484 张图片(public/images 397 张 + vessel303-assets 1034 张),脚本 scripts/embed-copyright.sh 入库"
+        ],
+        [
+          "图片前端防盗",
+          "globals.css 全局禁止拖拽/选中/长按,ImageProtection 组件屏蔽右键菜单"
+        ],
+        [
+          "Media Kit 页面 /media-kit",
+          "双语留资表单(姓名/邮箱/电话/公司/国家/用途/需求),提交后发送邮件至 vessel.sale@303industries.cn,Footer 新增「媒体资源/Media Kit」入口"
+        ],
+        [
+          "创始人区块 i18n 修复",
+          "三个资历标签(邓迪大学/华盛顿大学/SOM)中英文正确切换"
+        ]
+      ]
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "V7.0 · 2026-04-21 · 移动端适配 + 图片防盗强化 + 超级工厂交互纠正 + favicon 升级 + push 规则授权"
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "功能/变更",
+          "详细说明"
+        ],
+        [
+          "Navbar 手机端双行响应式",
+          "/global 页面 <768px 双行布局:Row 1 显示 Logo+语言切换,Row 2 显示三组核心数据(30+国家/300+营地/2000+设备),带橙色细线分隔。桌面端(≥768px)保持单行不变。改动文件:src/components/GlobalMapStats.tsx / src/app/global/page.tsx"
+        ],
+        [
+          "副标题响应式控制",
+          "副标\"全球营地部署 / Global Deployment\"明确使用 className=\"hidden md:inline\":手机端隐藏避免第一行挤,桌面端 inline 显示。禁止两端都显示(手机会挤),禁止两端都隐藏(桌面会空缺)。改动文件:src/components/GlobalMapStats.tsx"
+        ],
+        [
+          "ProtectedImage 图片防盗组件【V7.0 核心】",
+          "新建 src/components/ProtectedImage.tsx。透明层覆盖法:在 next/image 上盖 absolute div 吃掉 touchstart + contextmenu + dragstart,iOS/Android 长按不弹「保存图片」菜单。click 事件正常冒泡,保留 lightbox、卡片跳转、缩略图切换等所有现有交互。作用于 5 个区块:产品列表卡片 / V9Gen6 详情页图集 / About 工厂图网格(1 大 4 小) / ProjectDetail 项目详情(AstroBase 6 张 + 未来 39 个) / 首页项目网格。与 ImageProtection 共存(全局右键+拖拽 vs 特定图片长按)。物理天花板:截屏无法阻止,所有 Web 方案共同边界"
+        ],
+        [
+          "超级工厂五角星交互纠正【V7.0 核心,不可改回】",
+          "点击佛山南海狮山超级工厂五角星不再弹出右侧详情面板,改为纯 Tooltip popup:暗底橙边气泡,显示工厂名(VESSEL 微宿·超级工厂 / VESSEL® Super Factory)+ 地址(广东省佛山市南海区狮山镇兴业北路 253 号)。hover 和 click 行为一致,支持中英文实时切换(lang state 改变时 popup 内容实时更新)。改动文件:src/components/GlobalMapML.tsx。背景原因:原详情面板霸占右 70% 屏幕遮挡其他项目标记,违背地图以项目宣传为主的产品定位"
+        ],
+        [
+          "favicon 升级",
+          "浏览器 Tab 小标从 Next.js 默认改为橙底白字 VESSEL(DM Sans 800 weight)。新增资源:public/favicon.svg(512×512,矢量主资源) / favicon.ico(32×32 兼容) / apple-touch-icon.png(180×180,iOS 主屏) / icon-192.png / icon-512.png(PWA)。修改 src/app/layout.tsx 的 metadata.icons 配置。注意:如果 src/app/favicon.ico 存在会优先于 public/favicon.svg,须删除确保新 favicon 生效"
+        ],
+        [
+          "Push 规则授权【V7.0 变更】",
+          "Wynne 已授权 Claude Code 自动 git add/commit/push。工作流简化为:Wynne 描述需求 → Claude 生成指令 → Claude Code 粘贴执行 + 自动 push → Vercel 自动部署。如遇 5GB+ 大改动 push 超时,fallback 给 Wynne 在普通终端执行。同步更新:CLAUDE.md 铁律、handoff 第一部分\"工作流程\"段落、第六部分\"新对话启动模板\"三处"
+        ],
+        [
+          "V6.0 待办清理",
+          "\"子页面配色细节清理(about/news/scenarios 残留旧色)\"原为 V6.0 立即待办。经 V7.0 review 确认:globals.css 兼容映射已覆盖所有旧色值(--gold → #E36F2C 等),无视觉残留,无需清理。此条从\"待办\"移至\"已废弃待办\",节省后续返工成本"
+        ],
+        [
+          "CLAUDE.md 铁律补充",
+          "新增 3 条永久约束:1) 超级工厂五角星只显示 Tooltip 不弹详情面板 2) 副标题响应式方案禁止改动(hidden md:inline) 3) ProtectedImage 作用于 5 个固定区块,不扩大不缩减"
+        ]
+      ]
+    },
+    {
+      "kind": "p",
+      "style": "Heading1",
+      "text": "第四部分:当前状态(截至 2026-04-21)"
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "4.1 已上线功能清单"
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "页面/功能",
+          "状态"
+        ],
+        [
+          "首页 /",
+          "✅ V4.0 品牌橙,Hero 轮播 5 张,三大技术 Section(TechDrawer),认证区块 4 个认证,数据统计(1000 万+粉丝)。V7.0 首页项目网格接入 ProtectedImage 防盗"
+        ],
+        [
+          "产品列表 /products (39 SKU)",
+          "✅ 上线,含分类筛选。V7.0 产品卡片图接入 ProtectedImage"
+        ],
+        [
+          "V9 Gen6 详情页 /products/v9-gen6",
+          "✅ 上线。V7.0 图集(主图+缩略图+瀑布流)接入 ProtectedImage"
+        ],
+        [
+          "全球营地地图 /global",
+          "✅ V5.0 MapLibre GL + MapTiler 暗色主题 + 中英文标注切换 + 40 个展示项目。V7.0 Navbar 手机端双行响应式,副标题响应式显示"
+        ],
+        [
+          "项目详情展示 /global",
+          "✅ 展示项目点击→详情页滑入,AstroBase Mamison 已跑通。V7.0 详情页图集接入 ProtectedImage"
+        ],
+        [
+          "工厂总部标记 /global",
+          "✅ V7.0 更新:佛山南海狮山五角星+闪动动画+Tooltip popup(纯标识,hover/click 均显示工厂名+地址,不弹详情面板,不跳转)"
+        ],
+        [
+          "关于我们 /about",
+          "✅ V6.0 全面重建,10 区块,64 张真实图片,锚点导航,国际认证,TechDrawer。V7.0 工厂图网格(1 大 4 小)接入 ProtectedImage"
+        ],
+        [
+          "FAQ /faq",
+          "✅ V6.0 新建,16 条双语 Q&A,accordion,分类筛选"
+        ],
+        [
+          "技术创新入口",
+          "✅ /about#technologies(Drawer 交互),导航无独立入口"
+        ],
+        [
+          "VIIE 详情 /innovation/viie",
+          "✅ Orphan page,内容复用 ViieContent 组件,顶部「← 返回首页」"
+        ],
+        [
+          "VOLS 详情 /innovation/vols",
+          "✅ Orphan page,内容复用 VolsContent 组件"
+        ],
+        [
+          "VIPC 详情 /innovation/vipc",
+          "✅ Orphan page,内容复用 VipcContent 组件"
+        ],
+        [
+          "新闻活动 /news",
+          "✅ 上线"
+        ],
+        [
+          "联系我们 /contact",
+          "✅ 自动跳转 303vessel.cn"
+        ],
+        [
+          "应用场景 /scenarios/*",
+          "✅ 上线"
+        ],
+        [
+          "展会大屏 /display",
+          "✅ 上线"
+        ],
+        [
+          "用户注册/登录 /auth/*",
+          "✅ 上线(邮箱+Google OAuth)"
+        ],
+        [
+          "价格权限隔离",
+          "✅ 全站生效"
+        ],
+        [
+          "Media Kit /media-kit",
+          "✅ V6.0 新建,双语留资表单+邮件通知"
+        ],
+        [
+          "图片防盗+IPTC 版权",
+          "✅ V6.0 基础层(桌面右键+拖拽)+ V7.0 移动端长按防盗(5 个区块),1431 张图片 IPTC"
+        ],
+        [
+          "广告法合规",
+          "✅ V6.0 全站扫描修复 14 处"
+        ],
+        [
+          "Favicon 橙底白字 VESSEL",
+          "✅ V7.0 新增,浏览器 Tab 小标"
+        ],
+        [
+          "Push 规则已授权自动",
+          "✅ V7.0 变更,Claude Code 自动 push,超时 fallback"
+        ]
+      ]
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "4.2 关键文件路径(持续积累)"
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "文件",
+          "用途"
+        ],
+        [
+          "src/components/GlobalMapML.tsx",
+          "MapLibre 地图主组件(V5.0 新建,V7.0 超级工厂 Tooltip 改造)"
+        ],
+        [
+          "src/components/GlobalMapView.tsx",
+          "地图页面容器(管理状态+详情面板)"
+        ],
+        [
+          "src/components/GlobalMapStats.tsx",
+          "/global Navbar 统计组件(V7.0 手机端双行响应式改造)"
+        ],
+        [
+          "src/components/ProjectDetail.tsx",
+          "项目详情展示组件(V5.0 新建,V7.0 图集接入 ProtectedImage)"
+        ],
+        [
+          "src/data/showcaseProjects.ts",
+          "展示项目数据(40 个,支持中英双语)"
+        ],
+        [
+          "src/components/GlobalMap.backup.tsx",
+          "旧 Leaflet 地图备份(V5.0 废弃但保留)"
+        ],
+        [
+          "src/components/TechDrawer.tsx",
+          "右侧滑入技术详情 Drawer(V6.0 新建)"
+        ],
+        [
+          "src/components/tech/ViieContent.tsx",
+          "VIIE 技术内容组件(V6.0 新建)"
+        ],
+        [
+          "src/components/tech/VolsContent.tsx",
+          "VOLS 技术内容组件(V6.0 新建)"
+        ],
+        [
+          "src/components/tech/VipcContent.tsx",
+          "VIPC 技术内容组件(V6.0 新建)"
+        ],
+        [
+          "src/components/tech/Reveal.tsx",
+          "IntersectionObserver 显现动画组件(V6.0 新建)"
+        ],
+        [
+          "src/components/ImageProtection.tsx",
+          "图片防盗组件(屏蔽右键/dragstart,V6.0 新建)"
+        ],
+        [
+          "src/components/ProtectedImage.tsx",
+          "图片移动端长按防盗组件(V7.0 新建,5 个区块使用)"
+        ],
+        [
+          "src/app/global/page.tsx",
+          "/global 页面容器(V7.0 paddingTop 响应式调整适配双行 Navbar)"
+        ],
+        [
+          "src/app/layout.tsx",
+          "全局 layout(V7.0 metadata.icons 注册新 favicon)"
+        ],
+        [
+          "scripts/embed-copyright.sh",
+          "批量写入 IPTC 版权元数据脚本(V6.0 新建)"
+        ],
+        [
+          "public/images/about/",
+          "About 页图片(工厂 7 张/团队 5 张/认证 13 张/合作伙伴 33 个 Logo 等 64 张)"
+        ],
+        [
+          "public/images/about/certs/",
+          "4 张国际认证证书图片(CE CPR/CE-GPSD/ISO9001/ICR VoC)"
+        ],
+        [
+          "public/images/projects/astrobase-mamison/",
+          "AstroBase Mamison 项目照片(6 张)"
+        ],
+        [
+          "public/favicon.svg",
+          "主 favicon(V7.0 新建,512×512 矢量)"
+        ],
+        [
+          "public/favicon.ico",
+          "Windows/旧浏览器兼容 favicon(V7.0 新建)"
+        ],
+        [
+          "public/apple-touch-icon.png",
+          "iOS 主屏幕图标(V7.0 新建,180×180)"
+        ],
+        [
+          "public/icon-192.png / icon-512.png",
+          "PWA 图标(V7.0 新建)"
+        ],
+        [
+          "CLAUDE.md",
+          "Claude Code 行为约束文件(V7.0 同步 push 规则+3 条新铁律)"
+        ]
+      ]
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "4.3 待办事项(优先级排序,截至 2026-04-21)"
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "优先级",
+          "任务"
+        ],
+        [
+          "🔴 立即",
+          "/global 代理商联系方式填充(需提供代理商数据)"
+        ],
+        [
+          "🟡 近期",
+          "管理员后台 CMS(V8.0 本次开发目标) —— 详见第七部分"
+        ],
+        [
+          "🟡 近期",
+          "其余产品详情页(参考 V9 Gen6 模板,按系列分批:E7/E6/E3/S5/V5/V7)"
+        ],
+        [
+          "🟡 近期",
+          "Resend 303vessel.cn 域名验证"
+        ],
+        [
+          "🟡 近期",
+          "Pixsy 注册+上传 20-30 张关键图开始盗图监控"
+        ],
+        [
+          "🟡 近期",
+          "证书图片打码(签名/公章/统一社会信用代码,PS 处理或 sharp 脚本)"
+        ],
+        [
+          "🟡 近期",
+          "ProjectDetail 其他 39 个展示项目资料收集(参考 4.4 模板)"
+        ],
+        [
+          "⏳ 规划中",
+          "AWS EC2 迁移"
+        ],
+        [
+          "⏳ 规划中",
+          "代理商后台"
+        ],
+        [
+          "⏳ 规划中",
+          "HD 高清资料锁定表单(Media Kit 付费版,留资换高清)"
+        ],
+        [
+          "⏳ 规划中",
+          "内容管理 CMS(新闻/案例编辑,V9.0)"
+        ],
+        [
+          "⏳ 规划中",
+          "数据看板(访问量/转化率,V10.0)"
+        ],
+        [
+          "🗑 已废弃",
+          "子页面配色细节清理(V7.0 review 确认 globals.css 兼容映射已覆盖,无需清理)"
+        ]
+      ]
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "4.4 展示项目资料模板(团队收集用)"
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "字段",
+          "说明",
+          "示例"
+        ],
+        [
+          "项目名",
+          "中英文",
+          "AstroBase Mamison Hotel / AstroBase 太空基地酒店"
+        ],
+        [
+          "国家+地区",
+          "精确到区县",
+          "俄罗斯北奥塞梯·阿拉吉尔区"
+        ],
+        [
+          "地址",
+          "详细地址(用于查坐标)",
+          "Kamskho 村,Mamison 滑雪度假区"
+        ],
+        [
+          "设备数量",
+          "台数",
+          "20"
+        ],
+        [
+          "单台面积",
+          "㎡",
+          "35"
+        ],
+        [
+          "容纳人数",
+          "人/台",
+          "2-4"
+        ],
+        [
+          "开业时间",
+          "年.月",
+          "2025.03"
+        ],
+        [
+          "简介",
+          "2-3 句,中英文各一份",
+          "见 AstroBase 示例"
+        ],
+        [
+          "设施亮点",
+          "6 个关键词",
+          "滑雪场 1km / 全景落地窗 / 智能控制..."
+        ],
+        [
+          "交通方式",
+          "机场/车站/自驾距离",
+          "弗拉季高加索机场 1.5h 车程"
+        ],
+        [
+          "周边景点",
+          "3-4 个+距离",
+          "Калак 滑雪站 1km / 厄尔布鲁士山 2h"
+        ],
+        [
+          "订房网址",
+          "URL",
+          "https://astrobasehotel.ru/"
+        ],
+        [
+          "照片",
+          "3-6 张(外观+室内各至少 1 张)",
+          "exterior-01.jpg, interior-01.jpg"
+        ]
+      ]
+    },
+    {
+      "kind": "p",
+      "style": "Heading1",
+      "text": "第五部分:三期开发规划摘要(V1.0 制定,持续有效)"
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "期次",
+          "时间",
+          "核心功能",
+          "关键依赖"
+        ],
+        [
+          "第一期",
+          "广交会前 ~4 月 15 日(已完成)",
+          "① 用户注册/登录 ② B/C 端分类注册 ③ 价格权限隔离 ④ 产品数据库化 39 SKU ⑤ 展会大屏模式 ⑥ 邮件通知",
+          "Google OAuth 注册 / SKU 数据整理 / Resend 配置"
+        ],
+        [
+          "第二期",
+          "5 月 → 8 月",
+          "① 四级权限完整版 ② 线索自动分流 ③ 代理商基础后台 ④ 管理员后台 ⑤ 国内中文站 vessel303.cn",
+          "代理合作架构确认 / 微信支付资质"
+        ],
+        [
+          "第三期",
+          "9 月 → 2027Q1",
+          "① 定金支付(Stripe+微信/支付宝) ② 代理完整后台 ③ 全球 IP 自动分流 ④ 多货币定价 ⑤ 数据报表看板",
+          "支付资质审核 / 代理商体系成熟"
+        ]
+      ]
+    },
+    {
+      "kind": "p",
+      "style": "Heading1",
+      "text": "第六部分:新对话启动模板(直接复制使用)"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "⚠️ 每次更新文档后必须同步更新此模板!将以下内容完整复制粘贴到新对话的第一条消息:"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": ""
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "━━━━━━━━━━ 复制以下内容(含所有【】标签)━━━━━━━━━━"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "我是 Wynne(何总),负责 VESSEL 微宿(广东微宿文旅发展有限公司)的数字运营子公司搭建。正在开发国际官网 vessel303.com。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": ""
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "【工作方式】我在这里说需求 → Claude 生成带上下文的指令 → 我粘贴进终端的 Claude Code 执行 → Claude Code 自动 git push origin main → Vercel 自动部署 → 我截图给你验收。V7.0 起 Claude Code 已获授权自动 push,如遇 5GB+ 大改动超时 fallback 给我在普通终端执行(cd ~/Desktop/vessel303 && git push origin main)。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": ""
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "【技术环境】MacBook Pro,用户名 wynnewbd,终端 zsh。本地路径:~/Desktop/vessel303。技术栈:Next.js 14 + TypeScript + Tailwind CSS v4(用 @tailwindcss/postcss,不用 tailwind.config.ts)。部署:Vercel Pro。数据库:Neon Postgres(新加坡,/products/[slug]/page.tsx 需要 export const dynamic = 'force-dynamic')。邮件:Resend。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": ""
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "【地图技术栈(V5.0)】MapLibre GL + @maptiler/sdk。MapTiler API Key: 7tbP0DIfmG9T8qWYxh5M。暗色主题:streets-v2-dark。中英文标注通过 setLanguage() 切换。坐标顺序 [lng, lat]。地图组件:src/components/GlobalMapML.tsx(dynamic import + ssr:false)。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": ""
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "【色彩规范】品牌橙体系:#1A1A1A(暗画布) + #F5F2ED(亮画布) + #E36F2C(品牌橙,占比≤10%) + #C4B9AB(石灰) + #8A8580(辅助灰)。字体:DM Sans(标题) + Inter(正文)。Logo 为透明背景橙色 PNG,路径 /images/vessel-logo.png。Favicon 为橙底白字 VESSEL(V7.0 新增)。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": ""
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "【广告法合规】《广告法》第九条禁止极限词,违规 20 万起。已完成全站扫描(V6.0)。禁用:最严苛/最先进/最优质/顶级/极致/唯一/世界领先/独家等主观绝对化表述。替换:主观评价→客观事实。所有新文案必须遵守。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": ""
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "【已上线功能(V7.0)】首页(品牌橙+Hero 轮播+三大技术 TechDrawer+认证区块) / products(39 SKU) / products/v9-gen6 / global(V5.0 MapLibre+40 个展示项目+工厂五角星 Tooltip+Navbar 手机端双行) / about(V6.0 十区块+锚点导航+国际认证+TechDrawer) / faq(16 条双语 accordion) / innovation/viie、vols、vipc(orphan pages) / media-kit(留资表单+邮件) / news / contact(跳转 303vessel.cn) / scenarios / display / auth / 价格权限隔离 / 图片防盗(桌面 ImageProtection + 移动端 ProtectedImage 5 区块) / favicon 橙底白字 VESSEL"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": ""
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "【关键组件】TechDrawer: src/components/TechDrawer.tsx(右滑 Drawer,60vw 桌面/100vw 移动,ESC+遮罩关闭)。技术内容:src/components/tech/Viie|Vols|VipcContent.tsx(接收 lang prop)。项目详情:src/components/ProjectDetail.tsx。展示数据:src/data/showcaseProjects.ts(40 个项目)。图片防盗:src/components/ImageProtection.tsx(全局) + src/components/ProtectedImage.tsx(5 区块,V7.0 新建)。Navbar 响应式:src/components/GlobalMapStats.tsx(V7.0 手机端双行)。版权脚本:scripts/embed-copyright.sh。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": ""
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "【导航结构(V6.0)】产品系列→/products · 项目案例→/global · 关于我们→/about(含 #technologies 锚点) · 常见问题→/faq · 新闻活动→/news · 联系我们→303vessel.cn。技术创新无独立导航入口(orphan pages)。/innovation 301 重定向到 /about#technologies。"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": ""
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "【V7.0 永久铁律,不要改回】"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "1. /global 超级工厂五角星(佛山南海狮山):hover/click 都只显示 Tooltip popup(工厂名+地址),不弹详情面板,不跳转"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "2. 副标\"全球营地部署 / Global Deployment\"响应式:className=\"hidden md:inline\"(手机隐藏,桌面显示 inline),禁止两端都显示也禁止两端都隐藏"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "3. ProtectedImage 组件作用于 5 个固定区块:产品列表卡片 / V9Gen6 详情页图集 / About 工厂图网格 / ProjectDetail 项目详情 / 首页项目网格。不扩大不缩减"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": ""
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "【当前待办】1./global 代理商信息填充 2.管理员后台 CMS(V8.0 进行中) 3.其余产品详情页(E7/E6/E3/S5/V5/V7) 4.Resend 域名验证 5.证书图片打码 6.Pixsy 盗图监控注册 7.其他 39 个展示项目资料收集"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": ""
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "【已知坑】Auth.js v5 用 AUTH_GOOGLE_ID · MapLibre 必须 dynamic import+ssr:false · MapLibre 坐标 [lng,lat] 和 Leaflet 相反 · Tailwind v4 用 @tailwindcss/postcss · Neon DB 构建超时需 force-dynamic · 大文件 push 在普通终端执行 · 副标响应式必须完整 hidden md:inline 不能只写 hidden"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": ""
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "━━━━━━━━━━ 复制结束 ━━━━━━━━━━"
+    },
+    {
+      "kind": "p",
+      "style": "Heading1",
+      "text": "第七部分:V8.0 开发预告 —— 管理员后台"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "⚠️ 此部分为 V7.0 文档末尾预留,V8.0 开发完成后会在下一版 handoff 中详细记录。本部分仅记录 V8.0 开发起点和约束。"
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "7.1 V8.0 目标"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "开发 vessel303.com 管理员后台(/admin),MVP 版本聚焦于留资线索管理。"
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "7.2 V8.0 待确定需求"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "以下需求点将在新对话框中与 Wynne 确认后确定:"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "MVP 功能范围:线索管理 vs 产品管理 vs 内容管理 vs 数据看板,优先级"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "登录方式:复用 Auth.js + DB role 字段 vs 硬编码邮箱白名单"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "UI 风格:暗画布+品牌橙(视觉统一)vs 白底数据密集(效率优先)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "是否需要图片上传功能(Vercel Blob / Cloudflare R2)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "是否需要 CSV 导出功能"
+    },
+    {
+      "kind": "p",
+      "style": "Heading2",
+      "text": "7.3 V8.0 技术约束(预设)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "路由:/admin/*,加 middleware 鉴权,非 admin 跳登录或 403"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "复用现有 Auth.js v5 用户系统(邮箱+Google OAuth)"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "复用 Neon Postgres 数据库"
+    },
+    {
+      "kind": "p",
+      "style": "ListParagraph",
+      "text": "不做:用户封禁、代理商后台(留 V10.0+)"
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": ""
+    },
+    {
+      "kind": "p",
+      "style": "Normal",
+      "text": "VESSEL 微宿® · vessel303.com · 文档版本 V7.0 · 2026-04-21 · 整理人 Wynne"
+    }
+  ]
+}
