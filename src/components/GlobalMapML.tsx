@@ -27,11 +27,18 @@ const STYLE_URL = '/api/map/maps/streets-v2-dark/style.json'
 // Any MapTiler URL the SDK computes internally still needs to be redirected
 // through the proxy — this handler rewrites https://api.maptiler.com/* at
 // request time, stripping the (now unnecessary) key query param.
+//
+// IMPORTANT: must return an absolute URL. maplibre v5 fetches vector tiles
+// from a Web Worker that has no document.baseURI, so a relative `/api/map/…`
+// path fails to resolve in the worker and every tile request silently dies
+// — symptom is a working spinner-clear but a blank base map underneath the
+// HTML markers (which are rendered on the main thread, not the worker).
 const PROXY_TRANSFORM = (url: string) => {
   if (!url || !url.startsWith('https://api.maptiler.com/')) return { url }
   const u = new URL(url)
   u.searchParams.delete('key')
-  return { url: `/api/map${u.pathname}${u.search}` }
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  return { url: `${origin}/api/map${u.pathname}${u.search}` }
 }
 
 const DEALER_COUNTRIES = ['俄罗斯', '台湾', '沙特阿拉伯', '阿联酋', '韩国', '美国']
