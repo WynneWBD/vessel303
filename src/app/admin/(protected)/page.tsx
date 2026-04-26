@@ -1,6 +1,7 @@
 import { auth } from '@/auth'
 import { pool } from '@/lib/db'
 import { countUploads, sumStorageSize } from '@/lib/uploads-db'
+import { countNewsByStatus } from '@/lib/news-db'
 import { Users, Inbox, Newspaper, Image as ImageIcon, type LucideIcon } from 'lucide-react'
 
 function formatBytes(n: number): string {
@@ -40,7 +41,7 @@ export default async function AdminDashboard() {
     adminCount,
     disabledCount,
     newLeadCount,
-    publishedNewsCount,
+    newsSummary,
     uploadCount,
     uploadBytes,
   ] = await Promise.all([
@@ -50,7 +51,10 @@ export default async function AdminDashboard() {
     safeCount(
       `SELECT COUNT(*)::text AS count FROM leads WHERE status = 'new' AND deleted_at IS NULL`,
     ),
-    safeCount(`SELECT COUNT(*)::text AS count FROM news WHERE status = 'published'`),
+    countNewsByStatus().catch((err) => {
+      console.error('[dashboard] countNewsByStatus failed', err)
+      return null
+    }),
     countUploads().catch(() => 0),
     sumStorageSize().catch(() => 0),
   ])
@@ -75,9 +79,13 @@ export default async function AdminDashboard() {
     {
       Icon: Newspaper,
       label: '已发布新闻',
-      value: publishedNewsCount.toLocaleString(),
-      footer: publishedNewsCount === 0 ? '暂无已发布' : `${publishedNewsCount} 条在线`,
-      footerColor: '#8A8580',
+      value: newsSummary ? newsSummary.published.toLocaleString() : '—',
+      footer: newsSummary
+        ? newsSummary.draft > 0
+          ? `草稿 ${newsSummary.draft} 篇`
+          : '暂无草稿'
+        : '数据获取失败',
+      footerColor: newsSummary && newsSummary.draft > 0 ? '#E36F2C' : '#8A8580',
     },
     {
       Icon: ImageIcon,

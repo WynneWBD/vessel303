@@ -1,9 +1,13 @@
-export default function NewsPage() {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh]">
-      <div className="text-6xl mb-4">🚧</div>
-      <h2 className="text-2xl font-bold text-white mb-2">新闻管理</h2>
-      <p className="text-[#8A8580]">Coming Soon · V8.0 后续步骤上线</p>
-    </div>
-  )
+import { listNews } from '@/lib/news-db'
+import NewsListClient from '@/components/admin/NewsListClient'
+
+export const dynamic = 'force-dynamic'
+
+export default async function NewsPage() {
+  const { rows, total } = await listNews({ limit: 20, offset: 0 }).catch(() => ({
+    rows: [],
+    total: 0,
+  }))
+
+  return <NewsListClient initialRows={rows} initialTotal={total} />
 }

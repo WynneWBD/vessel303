@@ -47,12 +47,14 @@ export default function AdminShell({
   leadBadge = 0,
   userBadge = 0,
   mediaBadge = 0,
+  newsBadge = 0,
   children,
 }: {
   email: string
   leadBadge?: number
   userBadge?: number
   mediaBadge?: number
+  newsBadge?: number
   children: React.ReactNode
 }) {
   const pathname = usePathname() ?? '/admin'
@@ -63,6 +65,7 @@ export default function AdminShell({
     if (href === '/admin/leads' && leadBadge > 0) return clampBadge(leadBadge)
     if (href === '/admin/users' && userBadge > 0) return clampBadge(userBadge)
     if (href === '/admin/media' && mediaBadge > 0) return clampBadge(mediaBadge)
+    if (href === '/admin/news' && newsBadge > 0) return clampBadge(newsBadge)
     return undefined
   }
 
