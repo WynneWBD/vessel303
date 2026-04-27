@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ExternalLink, Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,6 +20,10 @@ function formatDate(ts: string) {
   const d = new Date(ts)
   if (isNaN(d.getTime())) return ts
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function productHref(item: CatalogProductRow) {
+  return `/products/${item.detailSlug || item.id}`
 }
 
 export default function ProductListClient({
@@ -166,7 +170,7 @@ export default function ProductListClient({
         <div className="rounded-lg border border-[#E5DED4] overflow-hidden">
           <div
             className="grid gap-3 px-4 py-3 text-xs text-[#8A8580] bg-[#FAF7F2] border-b border-[#E5DED4]"
-            style={{ gridTemplateColumns: '72px 1fr 90px 90px 90px 110px 128px' }}
+            style={{ gridTemplateColumns: '72px 1fr 90px 90px 90px 110px 164px' }}
           >
             <span>封面</span>
             <span>产品</span>
@@ -181,7 +185,7 @@ export default function ProductListClient({
             <div
               key={item.id}
               className="grid gap-3 items-center px-4 py-3 border-b border-[#E5DED4] last:border-b-0 hover:bg-[#FAF7F2] transition-colors"
-              style={{ gridTemplateColumns: '72px 1fr 90px 90px 90px 110px 128px' }}
+              style={{ gridTemplateColumns: '72px 1fr 90px 90px 90px 110px 164px' }}
             >
               <div className="w-[72px] h-[44px] rounded overflow-hidden bg-[#E5DED4]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -211,6 +215,15 @@ export default function ProductListClient({
               <p className="text-xs text-[#8A8580]">{formatDate(item.updated_at)}</p>
 
               <div className="flex items-center gap-1">
+                <Link
+                  href={productHref(item)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="预览前台"
+                  className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-[#E36F2C] hover:bg-[#E36F2C]/10 transition-colors"
+                >
+                  <ExternalLink size={14} />
+                </Link>
                 <Link
                   href={`/admin/products/${item.id}/edit`}
                   title="编辑"

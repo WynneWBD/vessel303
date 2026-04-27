@@ -5,6 +5,7 @@ import { logAdminAction } from '@/lib/leads-db'
 import {
   createCatalogProduct,
   isCatalogProductIdTaken,
+  isCatalogProductUrlSlugTaken,
   isReservedProductId,
   listCatalogProducts,
   type CatalogProductStatus,
@@ -26,6 +27,14 @@ function normalizeId(value: string) {
     .replace(/^-|-$/g, '')
 }
 
+const detailSlugSchema = z.union([z.string().max(160), z.null()])
+  .optional()
+  .transform((value) => {
+    if (value == null) return value
+    const normalized = normalizeId(value)
+    return normalized || null
+  })
+
 const productSchema = z.object({
   id: z.string().max(160).transform(normalizeId).pipe(z.string().min(1).max(160)),
   productSeries: z.enum(seriesValues),
@@ -44,7 +53,7 @@ const productSchema = z.object({
   features_en: z.array(z.string().min(1).max(120)).max(12),
   image: z.string().min(1).max(500),
   isCustom: z.boolean(),
-  detailSlug: z.string().max(160).nullable().optional(),
+  detailSlug: detailSlugSchema,
   status: z.enum(statusValues).optional(),
   sort_order: z.coerce.number().int().min(0).max(9999).optional(),
 })
@@ -105,6 +114,17 @@ export async function POST(req: NextRequest) {
   const taken = await isCatalogProductIdTaken(parsed.data.id)
   if (taken) {
     return NextResponse.json({ error: 'Product id already in use' }, { status: 409 })
+  }
+
+  if (
+    parsed.data.detailSlug
+    && parsed.data.detailSlug !== parsed.data.id
+    && !isReservedProductId(parsed.data.detailSlug)
+  ) {
+    const slugTaken = await isCatalogProductUrlSlugTaken(parsed.data.detailSlug)
+    if (slugTaken) {
+      return NextResponse.json({ error: 'Detail page slug already in use' }, { status: 409 })
+    }
   }
 
   const product = await createCatalogProduct(parsed.data)

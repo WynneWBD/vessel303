@@ -214,6 +214,7 @@ export default function ProductForm({
             <Link
               href={previewHref}
               target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex h-9 items-center justify-center rounded-md border border-[#E5DED4] px-3 text-sm font-medium text-[#2C2A28] hover:bg-[#FFFFFF]"
             >
               预览
@@ -341,7 +342,7 @@ export default function ProductForm({
             <Input value={form.image} onChange={(e) => patch('image', e.target.value)} placeholder="/images/products/..." />
           </Field>
 
-          <Field label="详情页 Slug" hint="留空时使用本产品 ID 生成通用详情页；填 e7/v9-gen6 等会跳到已有精细详情页。">
+          <Field label="详情页 Slug" hint="普通新产品建议留空，系统会用产品 ID 生成通用详情页；只有要复用已有精细页时才填 e7、v9-gen6 等固定 slug。">
             <Input value={form.detailSlug} onChange={(e) => patch('detailSlug', normalizeId(e.target.value))} />
           </Field>
 

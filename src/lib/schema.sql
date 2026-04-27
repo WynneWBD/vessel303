@@ -64,6 +64,10 @@ CREATE INDEX IF NOT EXISTS idx_product_catalog_public
   ON product_catalog (status, sort_order)
   WHERE deleted_at IS NULL;
 
+CREATE INDEX IF NOT EXISTS idx_product_catalog_detail_slug
+  ON product_catalog (detail_slug)
+  WHERE deleted_at IS NULL AND detail_slug IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS users (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   name        TEXT,

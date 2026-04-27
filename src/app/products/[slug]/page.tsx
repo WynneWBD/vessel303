@@ -6,10 +6,16 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { getProductBySlug } from '@/lib/db-products';
 import { catalogProducts } from '@/lib/products';
-import { getPublicCatalogProductById } from '@/lib/product-catalog-db';
+import { getPublicCatalogProductBySlug, isReservedProductId } from '@/lib/product-catalog-db';
 import { auth } from '@/auth';
 import ProductDetailContent from '@/components/pages/ProductDetailContent';
 import CatalogProductDetailContent from '@/components/pages/CatalogProductDetailContent';
+
+function findStaticCatalogProduct(slug: string) {
+  return catalogProducts.find((p) => (
+    p.id === slug || (!isReservedProductId(slug) && p.detailSlug === slug)
+  )) ?? null;
+}
 
 // All catalog product ids + legacy DB slugs
 export function generateStaticParams() {
@@ -26,9 +32,9 @@ export async function generateMetadata({
   const { slug } = await params;
 
   // Catalog product (CMS first, static fallback for build/dev resilience)
-  let catalogProduct = await getPublicCatalogProductById(slug).catch(() => undefined);
+  let catalogProduct = await getPublicCatalogProductBySlug(slug).catch(() => undefined);
   if (catalogProduct === undefined) {
-    catalogProduct = catalogProducts.find((p) => p.id === slug) ?? null;
+    catalogProduct = findStaticCatalogProduct(slug);
   }
   if (catalogProduct) {
     return {
@@ -54,12 +60,12 @@ export default async function ProductDetailPage({
   const { slug } = await params;
 
   // ── 1. Catalog product (CMS first, static fallback) ─────
-  let catalogProduct = await getPublicCatalogProductById(slug).catch((err) => {
+  let catalogProduct = await getPublicCatalogProductBySlug(slug).catch((err) => {
       console.error('[products/detail] catalog db unavailable', err);
       return undefined;
     });
   if (catalogProduct === undefined) {
-    catalogProduct = catalogProducts.find((p) => p.id === slug) ?? null;
+    catalogProduct = findStaticCatalogProduct(slug);
   }
   if (catalogProduct) {
     const session = await auth();

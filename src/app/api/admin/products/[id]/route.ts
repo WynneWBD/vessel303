@@ -4,6 +4,8 @@ import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
 import {
   getCatalogProductById,
+  isCatalogProductUrlSlugTaken,
+  isReservedProductId,
   softDeleteCatalogProduct,
   updateCatalogProduct,
 } from '@/lib/product-catalog-db'
@@ -15,6 +17,23 @@ type Ctx = { params: Promise<{ id: string }> }
 const statusValues = ['draft', 'published'] as const
 const seriesValues = ['E3', 'E5', 'E6', 'E7', 'V3', 'V5', 'V7', 'V9', 'S5'] as const
 const productTypeValues = ['compact', 'standard', 'luxury'] as const
+
+function normalizeSlug(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+const detailSlugSchema = z.union([z.string().max(160), z.null()])
+  .optional()
+  .transform((value) => {
+    if (value == null) return value
+    const normalized = normalizeSlug(value)
+    return normalized || null
+  })
 
 const patchSchema = z.object({
   productSeries: z.enum(seriesValues).optional(),
@@ -33,7 +52,7 @@ const patchSchema = z.object({
   features_en: z.array(z.string().min(1).max(120)).max(12).optional(),
   image: z.string().min(1).max(500).optional(),
   isCustom: z.boolean().optional(),
-  detailSlug: z.string().max(160).nullable().optional(),
+  detailSlug: detailSlugSchema,
   status: z.enum(statusValues).optional(),
   sort_order: z.coerce.number().int().min(0).max(9999).optional(),
 })
@@ -68,6 +87,17 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       { error: 'Validation failed', issues: parsed.error.issues },
       { status: 400 },
     )
+  }
+
+  if (
+    parsed.data.detailSlug
+    && parsed.data.detailSlug !== id
+    && !isReservedProductId(parsed.data.detailSlug)
+  ) {
+    const slugTaken = await isCatalogProductUrlSlugTaken(parsed.data.detailSlug, id)
+    if (slugTaken) {
+      return NextResponse.json({ error: 'Detail page slug already in use' }, { status: 409 })
+    }
   }
 
   const updated = await updateCatalogProduct(id, parsed.data)

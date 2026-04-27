@@ -185,6 +185,11 @@ export async function ensureProductCatalogSchema() {
        ON product_catalog (status, sort_order)
        WHERE deleted_at IS NULL`,
     )
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_product_catalog_detail_slug
+       ON product_catalog (detail_slug)
+       WHERE deleted_at IS NULL AND detail_slug IS NOT NULL`,
+    )
     await seedCatalogProductsIfEmpty()
   })()
 
@@ -236,6 +241,21 @@ export async function getPublicCatalogProductById(id: string): Promise<CatalogPr
   return rows[0] ? rowToCatalogProduct(rows[0]) : null
 }
 
+export async function getPublicCatalogProductBySlug(slug: string): Promise<CatalogProduct | null> {
+  await ensureProductCatalogSchema()
+  const allowDetailSlug = !isReservedProductId(slug)
+  const { rows } = await pool.query(
+    `SELECT ${COLUMNS} FROM product_catalog
+     WHERE status = 'published'
+       AND deleted_at IS NULL
+       AND (id = $1 OR ($2::boolean AND detail_slug = $1))
+     ORDER BY CASE WHEN id = $1 THEN 0 ELSE 1 END, sort_order ASC, updated_at DESC
+     LIMIT 1`,
+    [slug, allowDetailSlug],
+  )
+  return rows[0] ? rowToCatalogProduct(rows[0]) : null
+}
+
 export async function listCatalogProducts(filter: ListCatalogProductsFilter) {
   await ensureProductCatalogSchema()
   const { where, params } = buildWhere(filter)
@@ -275,6 +295,27 @@ export async function isCatalogProductIdTaken(id: string, exceptId?: string) {
   const res = await pool.query<{ exists: boolean }>(
     `SELECT EXISTS(
        SELECT 1 FROM product_catalog WHERE id = $1 AND deleted_at IS NULL${extra}
+     ) AS exists`,
+    params,
+  )
+  return !!res.rows[0]?.exists
+}
+
+export async function isCatalogProductUrlSlugTaken(slug: string, exceptId?: string) {
+  await ensureProductCatalogSchema()
+  const params: unknown[] = [slug]
+  let extra = ''
+  if (exceptId) {
+    params.push(exceptId)
+    extra = ` AND id <> $${params.length}`
+  }
+  const res = await pool.query<{ exists: boolean }>(
+    `SELECT EXISTS(
+       SELECT 1
+       FROM product_catalog
+       WHERE deleted_at IS NULL
+         AND (id = $1 OR detail_slug = $1)
+         ${extra}
      ) AS exists`,
     params,
   )
