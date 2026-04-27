@@ -8,6 +8,15 @@ export const dynamic = 'force-dynamic'
 
 type Ctx = { params: Promise<{ id: string }> }
 
+function normalizeSlug(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
 function parseId(raw: string) {
   const n = parseInt(raw, 10)
   return Number.isFinite(n) && n > 0 ? n : null
@@ -28,14 +37,14 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
 }
 
 const patchSchema = z.object({
-  slug: z.string().min(1).max(200).optional(),
+  slug: z.string().max(200).transform(normalizeSlug).pipe(z.string().min(1).max(200)).optional(),
   title_zh: z.string().min(1).max(300).optional(),
   title_en: z.string().min(1).max(300).optional(),
   content_zh: z.unknown().optional(),
   content_en: z.unknown().optional(),
   excerpt_zh: z.string().max(500).nullable().optional(),
   excerpt_en: z.string().max(500).nullable().optional(),
-  cover_image_url: z.string().nullable().optional(),
+  cover_image_url: z.string().url().nullable().optional(),
 })
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {

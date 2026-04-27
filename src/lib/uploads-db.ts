@@ -141,7 +141,9 @@ export async function sumStorageSize(): Promise<number> {
 export async function countNewsReferencingImage(url: string): Promise<number> {
   try {
     const res = await pool.query<{ count: string }>(
-      `SELECT COUNT(*)::text AS count FROM news WHERE cover_image = $1`,
+      `SELECT COUNT(*)::text AS count
+       FROM news
+       WHERE cover_image_url = $1 AND deleted_at IS NULL`,
       [url],
     )
     return parseInt(res.rows[0]?.count ?? '0', 10)

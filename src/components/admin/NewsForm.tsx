@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import type { JSONContent } from '@tiptap/core'
-import type { NewsRow } from '@/lib/news-db'
+import type { NewsRow, NewsStatus } from '@/lib/news-db'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -23,9 +24,28 @@ function coerceJSON(v: unknown): JSONContent {
   return EMPTY_DOC
 }
 
+function normalizeSlug(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+type SavedNews = {
+  id: number
+  slug: string
+  status: NewsStatus
+}
+
 export default function NewsForm({ initialData, mode }: Props) {
   const router = useRouter()
 
+  const [currentId, setCurrentId] = useState(initialData?.id ?? null)
+  const [currentStatus, setCurrentStatus] = useState<NewsStatus>(
+    initialData?.status ?? 'draft',
+  )
   const [slug, setSlug] = useState(initialData?.slug ?? '')
   const [titleZh, setTitleZh] = useState(initialData?.title_zh ?? '')
   const [titleEn, setTitleEn] = useState(initialData?.title_en ?? '')
@@ -40,7 +60,7 @@ export default function NewsForm({ initialData, mode }: Props) {
   const [submitting, setSubmitting] = useState(false)
 
   const buildBody = () => ({
-    slug: slug.trim(),
+    slug: normalizeSlug(slug),
     title_zh: titleZh.trim(),
     title_en: titleEn.trim(),
     content_zh: contentZh,
@@ -51,79 +71,127 @@ export default function NewsForm({ initialData, mode }: Props) {
   })
 
   const validate = () => {
-    if (!slug.trim()) { alert('Slug 不能为空'); return false }
-    if (!titleZh.trim()) { alert('中文标题不能为空'); return false }
-    if (!titleEn.trim()) { alert('英文标题不能为空'); return false }
-    return true
+    const cleanSlug = normalizeSlug(slug)
+    if (!cleanSlug) return 'Slug 不能为空'
+    if (!titleZh.trim()) return '中文标题不能为空'
+    if (!titleEn.trim()) return '英文标题不能为空'
+    return null
   }
 
   // Returns the news id after save (create or patch)
-  const saveContent = async (): Promise<number | null> => {
-    if (mode === 'create') {
+  const saveContent = async (): Promise<SavedNews | null> => {
+    const body = buildBody()
+    setSlug(body.slug)
+
+    if (!currentId) {
       const res = await fetch('/api/admin/news', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildBody()),
+        body: JSON.stringify(body),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? '创建失败')
-      return (data.data as { id: number }).id
+      const saved = data.data as SavedNews
+      setCurrentId(saved.id)
+      setCurrentStatus(saved.status)
+      return saved
     } else {
-      const res = await fetch(`/api/admin/news/${initialData!.id}`, {
+      const res = await fetch(`/api/admin/news/${currentId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildBody()),
+        body: JSON.stringify(body),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? '保存失败')
-      return initialData!.id
+      const saved = data.data as SavedNews
+      setCurrentStatus(saved.status)
+      return saved
     }
   }
 
-  const handleSaveDraft = async () => {
-    if (!validate()) return
+  const handleSave = async () => {
+    const validationError = validate()
+    if (validationError) {
+      toast.error(validationError)
+      return
+    }
+
     setSubmitting(true)
     try {
-      const id = await saveContent()
-      if (mode === 'create' && id) {
-        router.push(`/admin/news/${id}/edit`)
+      const saved = await saveContent()
+      if (mode === 'create' && saved) {
+        toast.success('已保存草稿')
+        router.push(`/admin/news/${saved.id}/edit`)
       } else {
-        alert('已保存草稿')
+        toast.success(currentStatus === 'published' ? '已保存更新' : '已保存草稿')
+        router.refresh()
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : '操作失败')
+      toast.error(err instanceof Error ? err.message : '操作失败')
     } finally {
       setSubmitting(false)
     }
   }
 
   const handlePublishToggle = async () => {
-    if (!validate()) return
+    const validationError = validate()
+    if (validationError) {
+      toast.error(validationError)
+      return
+    }
+
     setSubmitting(true)
     try {
-      const id = await saveContent()
-      if (!id) return
+      const saved = await saveContent()
+      if (!saved) return
 
-      const isPublished = initialData?.status === 'published'
+      const isPublished = currentStatus === 'published'
       const action = isPublished ? 'unpublish' : 'publish'
-      const res = await fetch(`/api/admin/news/${id}/${action}`, { method: 'POST' })
+      const res = await fetch(`/api/admin/news/${saved.id}/${action}`, { method: 'POST' })
       if (!res.ok) {
         const d = await res.json()
         throw new Error(d.error ?? `${action} 失败`)
       }
-      router.push('/admin/news')
+      const data = await res.json() as { data: SavedNews }
+      setCurrentStatus(data.data.status)
+      toast.success(isPublished ? '已取消发布' : '已发布')
+      router.push(`/admin/news/${saved.id}/edit`)
+      router.refresh()
     } catch (err) {
-      alert(err instanceof Error ? err.message : '操作失败')
+      toast.error(err instanceof Error ? err.message : '操作失败')
     } finally {
       setSubmitting(false)
     }
   }
 
-  const isPublished = initialData?.status === 'published'
+  const isPublished = currentStatus === 'published'
 
   return (
     <div className="mx-auto max-w-4xl pb-28">
       <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1
+              className="text-white"
+              style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 24, fontWeight: 700 }}
+            >
+              {mode === 'create' ? '新建新闻' : '编辑新闻'}
+            </h1>
+            <p className="mt-1 text-sm text-[#8A8580]">
+              {isPublished ? '当前状态: 已发布' : '当前状态: 草稿'}
+            </p>
+          </div>
+          {isPublished && slug && (
+            <a
+              href={`/news/${normalizeSlug(slug)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-[#E36F2C] hover:text-[#F08A50] transition-colors"
+            >
+              查看前台页面
+            </a>
+          )}
+        </div>
 
         {/* Slug */}
         <div className="flex flex-col gap-1.5">
@@ -133,9 +201,8 @@ export default function NewsForm({ initialData, mode }: Props) {
           </label>
           <Input
             value={slug}
-            onChange={(e) =>
-              setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-'))
-            }
+            onBlur={(e) => setSlug(normalizeSlug(e.target.value))}
+            onChange={(e) => setSlug(e.target.value)}
             placeholder="vessel-2026-launch"
           />
         </div>
@@ -197,7 +264,10 @@ export default function NewsForm({ initialData, mode }: Props) {
               <label className="text-sm text-[#8A8580]">English Title</label>
               <Input
                 value={titleEn}
-                onChange={(e) => setTitleEn(e.target.value)}
+                onChange={(e) => {
+                  setTitleEn(e.target.value)
+                  if (!slug.trim()) setSlug(normalizeSlug(e.target.value))
+                }}
                 placeholder="News Title"
               />
             </div>
@@ -225,10 +295,10 @@ export default function NewsForm({ initialData, mode }: Props) {
             <Button
               type="button"
               variant="outline"
-              onClick={handleSaveDraft}
+              onClick={handleSave}
               disabled={submitting}
             >
-              保存草稿
+              {isPublished ? '保存更新' : '保存草稿'}
             </Button>
             <Button
               type="button"

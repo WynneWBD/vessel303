@@ -142,7 +142,8 @@ export async function getUserStats(user: AdminUserRow): Promise<UserStats> {
       .catch(() => ({ rows: [{ count: '0' }] })),
     pool
       .query<{ count: string }>(
-        `SELECT COUNT(*)::text AS count FROM news WHERE author_id = $1`,
+        `SELECT COUNT(*)::text AS count FROM news
+         WHERE author_id = $1 AND deleted_at IS NULL`,
         [user.id],
       )
       .catch(() => ({ rows: [{ count: '0' }] })),
