@@ -154,7 +154,7 @@ function AnchorNav({ activeSection, zh }: { activeSection: string; zh: boolean }
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
   return (
-    <div className="sticky top-16 lg:top-[72px] z-40 bg-[#1A1A1A] border-b border-[#2A2A2E]">
+    <div className="sticky top-16 lg:top-[72px] z-40 bg-[#241F1B] border-b border-[#3A302A]">
       <div className="max-w-6xl mx-auto px-6 flex items-center justify-center gap-8 py-3 overflow-x-auto">
         {ANCHOR_LINKS.map((link) => (
           <a
@@ -205,7 +205,7 @@ export default function AboutPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#1A1A1A]">
+    <div className="min-h-screen flex flex-col bg-[#241F1B]">
       <Navbar />
 
       {/* ── S1 Hero ───────────────────────────────────────────── */}
@@ -218,13 +218,13 @@ export default function AboutPage() {
           className="object-cover"
           unoptimized
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A] via-[#1A1A1A]/50 to-[#1A1A1A]/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#241F1B] via-[#241F1B]/50 to-[#241F1B]/10" />
         <div className="relative z-10 max-w-6xl mx-auto px-6 pb-16 w-full">
           <p className="text-[#E36F2C] text-xs tracking-[0.4em] uppercase font-medium mb-5">
             VESSEL® · {zh ? '关于微宿' : 'About'}
           </p>
           <h1
-            className="text-6xl sm:text-7xl lg:text-8xl font-bold text-white leading-none tracking-tight mb-5"
+            className="text-4xl sm:text-7xl lg:text-8xl font-bold text-white leading-[1.05] tracking-tight mb-5 break-words"
             style={{ fontFamily: 'DM Sans, sans-serif' }}
           >
             {zh ? '重构\n自然的栖居' : 'Reimagining\nNatural Dwelling'}
@@ -270,7 +270,7 @@ export default function AboutPage() {
                 {zh ? '品牌介绍' : 'About VESSEL®'}
               </p>
               <h2
-                className="text-4xl sm:text-5xl font-bold text-[#1A1A1A] mb-8 leading-tight"
+                className="text-4xl sm:text-5xl font-bold text-[#241F1B] mb-8 leading-tight"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
               >
                 {zh ? '高端度假营地\n开创者' : 'Pioneer of the\nSpace-Themed\nLuxury Camp Resort'}
@@ -278,12 +278,12 @@ export default function AboutPage() {
             </Reveal>
             <Reveal delay={100}>
               <div
-                className="space-y-5 text-[#1A1A1A]/70 text-base leading-relaxed"
+                className="space-y-5 text-[#241F1B]/70 text-base leading-relaxed"
                 style={{ fontFamily: 'Inter, sans-serif' }}
               >
                 {zh ? (
                   <>
-                    <p>VESSEL 微宿® 是高端度假营地开创者。我们以科幻感强烈的装配式舱体产品为特色，为全球文旅运营方提供一站式营地解决方案。自 2018 年创立，已在全国落地 300+ 项目，出口远销 30+ 国家，带领中国文旅创新品类"太空主题营地"走向全球。</p>
+                    <p>VESSEL 微宿® 是高端度假营地开创者。我们以科幻感强烈的装配式舱体产品为特色，为全球文旅运营方提供一站式营地解决方案。自 2018 年创立，已在全国落地 300+ 项目，出口远销 30+ 国家，带领中国文旅创新品类&quot;太空主题营地&quot;走向全球。</p>
                     <p>VESSEL 品牌由广东微宿文旅发展有限公司运营，总部位于广东佛山。我们坚持原创研发与自建工厂双核心：研发团队累计获得国家专利 150+ 件，自有生产线占地 28,800 ㎡，月产能 150 台。</p>
                     <p>VESSEL 在文旅场景之外，也与头部企业共创，产品广泛应用于养老度假地产、城市移动商业、便民服务设施等多元场景。我们构建了 VIPC 整装预制、VIIE 智能交互、VOLS 离网系统三大核心技术体系，让每一台微宿都能独立面对全球的气候、运输、运营挑战。</p>
                   </>
@@ -318,7 +318,7 @@ export default function AboutPage() {
       </section>
 
       {/* ── S4 Factory ───────────────────────────────────────── */}
-      <section className="bg-[#1A1A1A] py-24 px-6">
+      <section className="bg-[#241F1B] py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-12">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
@@ -326,7 +326,7 @@ export default function AboutPage() {
             </p>
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <h2
-                className="text-4xl sm:text-5xl font-bold text-[#F0F0F0] leading-tight"
+                className="text-4xl sm:text-5xl font-bold text-[#F5F2ED] leading-tight"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
               >
                 {zh ? '28,800㎡\n精密智造基地' : '28,800 m²\nPrecision Factory'}
@@ -367,7 +367,7 @@ export default function AboutPage() {
               {zh ? '品牌历程' : 'Timeline'}
             </p>
             <h2
-              className="text-4xl sm:text-5xl font-bold text-[#1A1A1A]"
+              className="text-4xl sm:text-5xl font-bold text-[#241F1B]"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
             >
               {zh ? '每一步，皆有印记' : 'Every milestone,\na mark made'}
@@ -387,7 +387,7 @@ export default function AboutPage() {
                     </span>
                   </div>
                   <p
-                    className="text-[#1A1A1A]/70 text-sm sm:text-base leading-relaxed"
+                    className="text-[#241F1B]/70 text-sm sm:text-base leading-relaxed"
                     style={{ fontFamily: 'Inter, sans-serif' }}
                   >
                     {zh ? item.zh : item.en}
@@ -407,7 +407,7 @@ export default function AboutPage() {
               {zh ? '核心技术体系' : 'CORE TECHNOLOGIES'}
             </p>
             <h2
-              className="text-4xl sm:text-5xl font-bold text-[#1A1A1A] mb-4"
+              className="text-4xl sm:text-5xl font-bold text-[#241F1B] mb-4"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
             >
               {zh ? '三大自研技术体系' : 'Three Proprietary Systems'}
@@ -453,7 +453,7 @@ export default function AboutPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 mb-2">
                       <h3
-                        className="text-xl sm:text-2xl font-bold text-[#1A1A1A]"
+                        className="text-xl sm:text-2xl font-bold text-[#241F1B]"
                         style={{ fontFamily: 'DM Sans, sans-serif' }}
                       >
                         {zh ? item.nameZh : item.nameEn}
@@ -463,7 +463,7 @@ export default function AboutPage() {
                       </span>
                     </div>
                     <p
-                      className="text-[#1A1A1A]/60 text-sm sm:text-base leading-relaxed"
+                      className="text-[#241F1B]/60 text-sm sm:text-base leading-relaxed"
                       style={{ fontFamily: 'Inter, sans-serif' }}
                     >
                       {zh ? item.descZh : item.descEn}
@@ -477,7 +477,7 @@ export default function AboutPage() {
       </section>
 
       {/* ── S8 Certifications ────────────────────────────────── */}
-      <section id="certifications" className="bg-[#1A1A1A] py-24 px-6">
+      <section id="certifications" className="bg-[#241F1B] py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-12">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
@@ -485,7 +485,7 @@ export default function AboutPage() {
             </p>
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <h2
-                className="text-4xl sm:text-5xl font-bold text-[#F0F0F0]"
+                className="text-4xl sm:text-5xl font-bold text-[#F5F2ED]"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
               >
                 {zh ? '国际认可\n品质背书' : 'Globally Recognised,\nQuality Assured'}
@@ -500,7 +500,7 @@ export default function AboutPage() {
 
           {/* International cert photos */}
           <Reveal className="mb-10">
-            <p className="text-[#F0F0F0] text-sm font-semibold mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+            <p className="text-[#F5F2ED] text-sm font-semibold mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>
               {zh ? '国际认证证书' : 'International Certifications'}
             </p>
             <p className="text-[#8A8580] text-xs mb-6">
@@ -576,7 +576,7 @@ export default function AboutPage() {
             </p>
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <h2
-                className="text-4xl sm:text-5xl font-bold text-[#1A1A1A]"
+                className="text-4xl sm:text-5xl font-bold text-[#241F1B]"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
               >
                 {zh ? '与世界同行' : 'Building with\nthe Best'}
@@ -608,14 +608,14 @@ export default function AboutPage() {
       </section>
 
       {/* ── S6 Founder ───────────────────────────────────────── */}
-      <section id="founder" className="bg-[#1A1A1A] py-24 px-6">
+      <section id="founder" className="bg-[#241F1B] py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-12">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
               {zh ? '团队' : 'Team'}
             </p>
             <h2
-              className="text-4xl sm:text-5xl font-bold text-[#F0F0F0]"
+              className="text-4xl sm:text-5xl font-bold text-[#F5F2ED]"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
             >
               {zh ? '100+ 人精英团队' : '100+ Expert Team'}
@@ -637,13 +637,13 @@ export default function AboutPage() {
               <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
                 {zh ? '创始人 & 首席设计师' : 'Founder & Chief Designer'}
               </p>
-              <p className="text-[#F0F0F0] text-3xl font-bold mb-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              <p className="text-[#F5F2ED] text-3xl font-bold mb-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                 {zh ? '王帅斌' : 'Wang Shuaibin'}
               </p>
               <p className="text-[#8A8580] text-sm tracking-wider mb-6">
                 {zh ? '建筑师 · 企业家 · 先行者' : 'Architect · Entrepreneur · Visionary'}
               </p>
-              <p className="text-[#F0F0F0]/65 text-base leading-relaxed max-w-2xl mb-6" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <p className="text-[#F5F2ED]/65 text-base leading-relaxed max-w-2xl mb-6" style={{ fontFamily: 'Inter, sans-serif' }}>
                 {zh
                   ? '王帅斌于 2018 年创立 VESSEL 微宿，以国际建筑师视野重新定义中国文旅行业。他持有英国邓迪大学建筑学硕士（RIBA Part II 认证）及美国圣路易斯华盛顿大学建筑学硕士学位，曾任职于纽约华尔街 SOM 建筑设计事务所。在他的带领下，微宿开创了"太空主题高端度假营地"品类，成长为出口 30 余国的全球知名品牌。'
                   : 'Wang Shuaibin founded VESSEL in 2018, bringing an international architectural perspective to the cultural tourism industry. He holds Master of Architecture degrees from the University of Dundee (RIBA Part II) and Washington University in St. Louis, and previously worked at SOM Architects on Wall Street, New York City. Under his leadership, VESSEL pioneered the space-themed luxury camp resort category and has grown into a globally recognised brand with exports across 30+ countries.'}
@@ -653,7 +653,7 @@ export default function AboutPage() {
                   ? ['邓迪大学 — RIBA Part II', '华盛顿大学圣路易斯 — 建筑学硕士', 'SOM建筑事务所 — 纽约']
                   : ['Univ. of Dundee — RIBA Part II', 'Washington Univ. in St. Louis — M.Arch', 'SOM Architects — NYC']
                 ).map(tag => (
-                  <span key={tag} className="text-xs px-3 py-1.5 border border-[#2A2A2E] text-[#8A8580] tracking-wider">{tag}</span>
+                  <span key={tag} className="text-xs px-3 py-1.5 border border-[#3A302A] text-[#8A8580] tracking-wider">{tag}</span>
                 ))}
               </div>
             </div>
@@ -669,7 +669,7 @@ export default function AboutPage() {
               {zh ? '三大服务体系' : 'Three Service Systems'}
             </p>
             <h2
-              className="text-4xl sm:text-5xl font-bold text-[#1A1A1A]"
+              className="text-4xl sm:text-5xl font-bold text-[#241F1B]"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
             >
               {zh ? '从选址到运营\n全程陪跑' : 'From Site Selection\nto Full Operations'}
@@ -681,7 +681,7 @@ export default function AboutPage() {
               <Reveal key={s.n} delay={i * 80}>
                 <div className="border border-[#E5E0DA] bg-white p-8 flex flex-col gap-5 h-full hover:border-[#E36F2C]/40 hover:shadow-sm transition-all">
                   <span className="text-4xl font-bold text-[#E36F2C]/20" style={{ fontFamily: 'DM Sans, sans-serif' }}>{s.n}</span>
-                  <h3 className="text-[#1A1A1A] font-bold text-lg leading-snug" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                  <h3 className="text-[#241F1B] font-bold text-lg leading-snug" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                     {zh ? s.zh : s.en}
                   </h3>
                   <p className="text-[#8A8580] text-sm leading-relaxed flex-1">{zh ? s.desc_zh : s.desc_en}</p>
@@ -693,14 +693,14 @@ export default function AboutPage() {
       </section>
 
       {/* ── S10 Global reach ─────────────────────────────────── */}
-      <section className="bg-[#1A1A1A] py-16 px-6">
+      <section className="bg-[#241F1B] py-16 px-6">
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-8">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
               {zh ? '全球版图' : 'Global Footprint'}
             </p>
             <h2
-              className="text-4xl sm:text-5xl font-bold text-[#F0F0F0]"
+              className="text-4xl sm:text-5xl font-bold text-[#F5F2ED]"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
             >
               {zh ? '六大洲，30+ 国家' : 'Six Continents, 30+ Countries'}
@@ -708,7 +708,7 @@ export default function AboutPage() {
           </Reveal>
 
           <Reveal delay={80}>
-            <div className="rounded-lg overflow-hidden border border-[#2A2A2E]" style={{ height: '520px' }}>
+            <div className="rounded-lg overflow-hidden border border-[#3A302A]" style={{ height: '520px' }}>
               <iframe
                 src="/global"
                 width="100%"

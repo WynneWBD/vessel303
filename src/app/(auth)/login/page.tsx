@@ -49,16 +49,16 @@ function LoginForm() {
         <Link href="/" className="inline-block">
           <span className="text-[#E36F2C] text-xs tracking-[0.4em] uppercase font-bold">VESSEL 微宿®</span>
         </Link>
-        <h1 className="text-white text-2xl font-black mt-3 tracking-wider">{t(i18n.auth.loginTitle)}</h1>
-        <p className="text-white/35 text-sm mt-1 tracking-wider">{t(i18n.auth.loginSubtitle)}</p>
+        <h1 className="text-[#2C2A28] text-2xl font-black mt-3 tracking-wider">{t(i18n.auth.loginTitle)}</h1>
+        <p className="text-[#8A7D74] text-sm mt-1 tracking-wider">{t(i18n.auth.loginSubtitle)}</p>
       </div>
 
       {/* Card */}
-      <div className="bg-[#0f0f0f] border border-white/8 p-8">
+      <div className="bg-white border border-[#E5DED4] p-8">
         {/* Google */}
         <button
           onClick={handleGoogle}
-          className="w-full flex items-center justify-center gap-3 border border-white/15 text-white/70 hover:border-[#E36F2C]/50 hover:text-white py-3 text-sm tracking-wider transition-all duration-200 mb-6"
+          className="w-full flex items-center justify-center gap-3 border border-[#E5DED4] text-[#6B625B] hover:border-[#E36F2C]/50 hover:text-[#E36F2C] py-3 text-sm tracking-wider transition-all duration-200 mb-6"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -70,14 +70,14 @@ function LoginForm() {
         </button>
 
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex-1 h-px bg-white/8" />
-          <span className="text-white/20 text-xs tracking-wider">{t(i18n.auth.orEmail)}</span>
-          <div className="flex-1 h-px bg-white/8" />
+          <div className="flex-1 h-px bg-[#E5DED4]" />
+          <span className="text-[#C4B9AB] text-xs tracking-wider">{t(i18n.auth.orEmail)}</span>
+          <div className="flex-1 h-px bg-[#E5DED4]" />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-white/40 text-xs tracking-wider mb-1.5">{t(i18n.auth.emailLabel)}</label>
+            <label className="block text-[#8A7D74] text-xs tracking-wider mb-1.5">{t(i18n.auth.emailLabel)}</label>
             <input
               type="email"
               value={email}
@@ -85,12 +85,12 @@ function LoginForm() {
               required
               autoComplete="email"
               placeholder="your@email.com"
-              className="w-full bg-[#1a1a1a] border border-white/10 focus:border-[#E36F2C]/60 outline-none text-white text-sm px-4 py-3 tracking-wider placeholder:text-white/20 transition-colors"
+              className="w-full bg-[#FAF7F2] border border-[#E5DED4] focus:border-[#E36F2C]/60 outline-none text-[#2C2A28] text-sm px-4 py-3 tracking-wider placeholder:text-[#C4B9AB] transition-colors"
             />
           </div>
 
           <div>
-            <label className="block text-white/40 text-xs tracking-wider mb-1.5">{t(i18n.auth.passwordLabel)}</label>
+            <label className="block text-[#8A7D74] text-xs tracking-wider mb-1.5">{t(i18n.auth.passwordLabel)}</label>
             <input
               type="password"
               value={password}
@@ -98,7 +98,7 @@ function LoginForm() {
               required
               autoComplete="current-password"
               placeholder="••••••••"
-              className="w-full bg-[#1a1a1a] border border-white/10 focus:border-[#E36F2C]/60 outline-none text-white text-sm px-4 py-3 tracking-wider placeholder:text-white/20 transition-colors"
+              className="w-full bg-[#FAF7F2] border border-[#E5DED4] focus:border-[#E36F2C]/60 outline-none text-[#2C2A28] text-sm px-4 py-3 tracking-wider placeholder:text-[#C4B9AB] transition-colors"
             />
           </div>
 
@@ -118,7 +118,7 @@ function LoginForm() {
         </form>
       </div>
 
-      <p className="text-center text-white/30 text-sm mt-6 tracking-wider">
+      <p className="text-center text-[#8A7D74] text-sm mt-6 tracking-wider">
         {t(i18n.auth.noAccount)}{' '}
         <Link href="/register" className="text-[#E36F2C] hover:text-[#C85A1F] transition-colors">
           {t(i18n.auth.registerLink)}

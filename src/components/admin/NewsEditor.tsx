@@ -49,7 +49,7 @@ function ToolbarButton({
         'p-1.5 rounded text-sm transition-colors',
         active
           ? 'bg-[#E36F2C]/10 text-[#E36F2C]'
-          : 'text-[#C4B9AB] hover:text-white hover:bg-[#2A2A2E]',
+          : 'text-[#C4B9AB] hover:text-[#2C2A28] hover:bg-[#E5DED4]',
       )}
     >
       {children}
@@ -68,7 +68,7 @@ export default function NewsEditor({ value, onChange, placeholder }: Props) {
     content: value,
     editorProps: {
       attributes: {
-        class: 'prose prose-invert max-w-none min-h-[400px] p-4 focus:outline-none text-[#F0F0F0]',
+        class: 'prose prose-invert max-w-none min-h-[400px] p-4 focus:outline-none text-[#2C2A28]',
       },
     },
     onUpdate({ editor }) {
@@ -103,13 +103,13 @@ export default function NewsEditor({ value, onChange, placeholder }: Props) {
     }
   }
 
-  const sep = <div className="w-px h-5 bg-[#2A2A2E] mx-1 self-center" />
+  const sep = <div className="w-px h-5 bg-[#E5DED4] mx-1 self-center" />
   const showPlaceholder = placeholder && editor.isEmpty && revision >= 0
 
   return (
-    <div className="border border-[#2A2A2E] rounded-lg focus-within:border-[#E36F2C] overflow-hidden transition-colors">
+    <div className="border border-[#E5DED4] rounded-lg focus-within:border-[#E36F2C] overflow-hidden transition-colors">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 border-b border-[#2A2A2E] px-2 py-1.5 bg-[#141414]">
+      <div className="flex flex-wrap items-center gap-0.5 border-b border-[#E5DED4] px-2 py-1.5 bg-[#FAF7F2]">
         <ToolbarButton
           title="Bold"
           active={editor.isActive('bold')}
@@ -190,7 +190,7 @@ export default function NewsEditor({ value, onChange, placeholder }: Props) {
       </div>
 
       {/* Editor content */}
-      <div className="relative bg-[#0F0F0F]">
+      <div className="relative bg-[#FFFFFF]">
         {showPlaceholder && (
           <div className="pointer-events-none absolute left-4 top-4 text-sm text-[#6B6560]">
             {placeholder}

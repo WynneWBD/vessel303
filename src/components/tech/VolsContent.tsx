@@ -76,12 +76,12 @@ export default function VolsContent({ lang }: { lang: 'en' | 'zh' }) {
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-2">Overview</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#1A1A1A] mb-6" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#2C2A28] mb-6" style={{ fontFamily: 'DM Sans, sans-serif' }}>
               {zh ? '真正的能源自由' : 'True Energy Independence'}
             </h2>
           </Reveal>
           <Reveal delay={100}>
-            <div className="max-w-3xl space-y-4 text-[#1A1A1A]/70 text-sm sm:text-base leading-relaxed" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <div className="max-w-3xl space-y-4 text-[#2C2A28]/70 text-sm sm:text-base leading-relaxed" style={{ fontFamily: 'Inter, sans-serif' }}>
               {zh ? (
                 <>
                   <p>微宿离网系统（VOLS）使第六代微宿产品完全脱离市政水电基础设施独立运行，无需现场配套水电管线工程。</p>
@@ -99,20 +99,20 @@ export default function VolsContent({ lang }: { lang: 'en' | 'zh' }) {
       </section>
 
       {/* Four Subsystems */}
-      <section className="bg-[#1A1A1A] py-16 px-6 lg:px-10">
+      <section className="bg-[#FAF7F2] py-16 px-6 lg:px-10">
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-2">Systems</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#F0F0F0] mb-10" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#2C2A28] mb-10" style={{ fontFamily: 'DM Sans, sans-serif' }}>
               {zh ? '四大一体化子系统' : 'Four Integrated Systems'}
             </h2>
           </Reveal>
           <div className="grid sm:grid-cols-2 gap-4">
             {SUBSYSTEMS.map((s, i) => (
               <Reveal key={s.en} delay={i * 70}>
-                <div className="bg-[#2A2A2E] p-7 flex flex-col gap-4 border border-transparent hover:border-[#E36F2C]/20 transition-colors h-full">
+                <div className="bg-white p-7 flex flex-col gap-4 border border-transparent hover:border-[#E36F2C]/20 transition-colors h-full">
                   <span className="text-3xl">{s.icon}</span>
-                  <p className="text-[#F0F0F0] font-semibold text-base" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                  <p className="text-[#2C2A28] font-semibold text-base" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                     {zh ? s.zh : s.en}
                   </p>
                   <p className="text-[#8A8580] text-sm leading-relaxed" style={{ fontFamily: 'Inter, sans-serif' }}>
@@ -130,7 +130,7 @@ export default function VolsContent({ lang }: { lang: 'en' | 'zh' }) {
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-2">Specifications</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#1A1A1A] mb-10" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#2C2A28] mb-10" style={{ fontFamily: 'DM Sans, sans-serif' }}>
               {zh ? '技术规格' : 'Technical Specifications'}
             </h2>
           </Reveal>
@@ -138,10 +138,10 @@ export default function VolsContent({ lang }: { lang: 'en' | 'zh' }) {
             <div className="border border-[#E5E0DA] overflow-hidden">
               {SPECS.map((s, i) => (
                 <div key={s.en} className={`grid grid-cols-2 items-center px-6 py-4 ${i % 2 === 0 ? 'bg-white' : 'bg-[#F5F2ED]'} border-b border-[#E5E0DA] last:border-0`}>
-                  <span className="text-[#1A1A1A]/60 text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  <span className="text-[#2C2A28]/60 text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
                     {zh ? s.zh : s.en}
                   </span>
-                  <span className="text-[#1A1A1A] text-sm font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>{s.value}</span>
+                  <span className="text-[#2C2A28] text-sm font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>{s.value}</span>
                 </div>
               ))}
             </div>
@@ -150,20 +150,20 @@ export default function VolsContent({ lang }: { lang: 'en' | 'zh' }) {
       </section>
 
       {/* Scenarios */}
-      <section className="bg-[#1A1A1A] py-16 px-6 lg:px-10">
+      <section className="bg-[#FAF7F2] py-16 px-6 lg:px-10">
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-2">Applications</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#F0F0F0] mb-10" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#2C2A28] mb-10" style={{ fontFamily: 'DM Sans, sans-serif' }}>
               {zh ? '离网部署的理想解决方案' : 'Ideal For Off-grid Deployment'}
             </h2>
           </Reveal>
           <div className="grid md:grid-cols-3 gap-4">
             {SCENARIOS.map((s, i) => (
               <Reveal key={s.en} delay={i * 70}>
-                <div className="bg-[#2A2A2E] p-7 flex flex-col gap-4 border border-transparent hover:border-[#E36F2C]/30 transition-colors">
+                <div className="bg-white p-7 flex flex-col gap-4 border border-transparent hover:border-[#E36F2C]/30 transition-colors">
                   <span className="text-4xl">{s.icon}</span>
-                  <p className="text-[#F0F0F0] font-semibold" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                  <p className="text-[#2C2A28] font-semibold" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                     {zh ? s.zh : s.en}
                   </p>
                   <p className="text-[#8A8580] text-sm leading-relaxed">{zh ? s.desc_zh : s.desc_en}</p>

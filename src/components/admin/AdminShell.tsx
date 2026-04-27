@@ -76,18 +76,18 @@ export default function AdminShell({
 
   return (
     <div
-      className="flex h-screen bg-[#1A1A1A] text-[#F0F0F0]"
+      className="flex h-screen bg-[#F5F2ED] text-[#2C2A28]"
       style={{ fontFamily: 'Inter, sans-serif' }}
     >
       {/* ── Sidebar ── */}
       <aside
         className="flex flex-col shrink-0"
-        style={{ width: 240, background: '#0F0F0F', borderRight: '1px solid #2A2A2E' }}
+        style={{ width: 240, background: '#FFFFFF', borderRight: '1px solid #E5DED4' }}
       >
         {/* Logo */}
         <div
           className="flex items-center gap-2 px-6"
-          style={{ height: 56, borderBottom: '1px solid #2A2A2E' }}
+          style={{ height: 56, borderBottom: '1px solid #E5DED4' }}
         >
           <span
             style={{
@@ -100,7 +100,7 @@ export default function AdminShell({
           >
             VESSEL
           </span>
-          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>Admin</span>
+          <span style={{ color: 'rgba(44,42,40,0.35)', fontSize: 12 }}>Admin</span>
         </div>
 
         {/* Nav */}
@@ -117,11 +117,11 @@ export default function AdminShell({
                   height: 44,
                   paddingLeft: 16,
                   paddingRight: 16,
-                  color: active ? '#FFFFFF' : '#C4B9AB',
-                  background: active ? '#0F0F0F' : 'transparent',
+                  color: active ? '#2C2A28' : '#6B625B',
+                  background: active ? '#F5F2ED' : 'transparent',
                 }}
                 onMouseEnter={(e) => {
-                  if (!active) e.currentTarget.style.background = 'rgba(15,15,15,0.5)'
+                  if (!active) e.currentTarget.style.background = 'rgba(227,111,44,0.08)'
                 }}
                 onMouseLeave={(e) => {
                   if (!active) e.currentTarget.style.background = 'transparent'
@@ -173,13 +173,13 @@ export default function AdminShell({
         </nav>
 
         {/* Logout */}
-        <div className="p-3" style={{ borderTop: '1px solid #2A2A2E' }}>
+        <div className="p-3" style={{ borderTop: '1px solid #E5DED4' }}>
           <form action={logoutAction}>
             <button
               type="submit"
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors"
               style={{
-                color: 'rgba(255,255,255,0.4)',
+                color: 'rgba(44,42,40,0.55)',
                 background: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
@@ -200,8 +200,8 @@ export default function AdminShell({
           className="flex items-center justify-between px-8 shrink-0"
           style={{
             height: 56,
-            borderBottom: '1px solid #2A2A2E',
-            background: '#141414',
+            borderBottom: '1px solid #E5DED4',
+            background: '#FAF7F2',
           }}
         >
           <span
@@ -209,7 +209,7 @@ export default function AdminShell({
               fontFamily: 'DM Sans, sans-serif',
               fontWeight: 500,
               fontSize: 15,
-              color: '#F0F0F0',
+              color: '#2C2A28',
             }}
           >
             {headerTitle}
@@ -219,7 +219,7 @@ export default function AdminShell({
               className="inline-block rounded-full"
               style={{ width: 8, height: 8, background: '#E36F2C' }}
             />
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>{email}</span>
+            <span style={{ fontSize: 13, color: 'rgba(44,42,40,0.60)' }}>{email}</span>
           </div>
         </header>
 
@@ -228,13 +228,13 @@ export default function AdminShell({
       </div>
 
       <Toaster
-        theme="dark"
+        theme="light"
         position="top-right"
         toastOptions={{
           style: {
-            background: '#0F0F0F',
-            border: '1px solid #2A2A2E',
-            color: '#F0F0F0',
+            background: '#FFFFFF',
+            border: '1px solid #E5DED4',
+            color: '#2C2A28',
           },
         }}
       />

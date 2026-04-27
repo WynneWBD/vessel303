@@ -23,14 +23,14 @@ function LoginForm() {
   return (
     <div
       className="min-h-screen flex items-center justify-center"
-      style={{ background: '#1A1A1A' }}
+      style={{ background: '#F5F2ED' }}
     >
       <div
         style={{
           width: 360,
           padding: '40px 36px',
-          background: '#0F0F0F',
-          border: '1px solid #2A2A2E',
+          background: '#FFFFFF',
+          border: '1px solid #E5DED4',
           borderRadius: 8,
         }}
       >
@@ -48,7 +48,7 @@ function LoginForm() {
             VESSEL
           </span>
           <span
-            style={{ display: 'block', fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 4, letterSpacing: '0.1em' }}
+            style={{ display: 'block', fontSize: 12, color: 'rgba(44,42,40,0.35)', marginTop: 4, letterSpacing: '0.1em' }}
           >
             Admin Portal
           </span>
@@ -69,10 +69,10 @@ function LoginForm() {
         )}
 
         {sent ? (
-          <div className="text-center" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, lineHeight: 1.7 }}>
+          <div className="text-center" style={{ color: 'rgba(44,42,40,0.70)', fontSize: 14, lineHeight: 1.7 }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>📬</div>
             魔法链接已发送至<br />
-            <strong style={{ color: '#F0F0F0' }}>{email}</strong><br />
+            <strong style={{ color: '#2C2A28' }}>{email}</strong><br />
             请检查邮箱并点击链接登录
           </div>
         ) : (
@@ -81,7 +81,7 @@ function LoginForm() {
               <div>
                 <label
                   htmlFor="email"
-                  style={{ display: 'block', fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 8, letterSpacing: '0.08em' }}
+                  style={{ display: 'block', fontSize: 12, color: 'rgba(44,42,40,0.55)', marginBottom: 8, letterSpacing: '0.08em' }}
                 >
                   EMAIL
                 </label>
@@ -95,16 +95,16 @@ function LoginForm() {
                   style={{
                     width: '100%',
                     padding: '10px 14px',
-                    background: '#1A1A1A',
-                    border: '1px solid #2A2A2E',
+                    background: '#F5F2ED',
+                    border: '1px solid #E5DED4',
                     borderRadius: 4,
-                    color: '#F0F0F0',
+                    color: '#2C2A28',
                     fontSize: 14,
                     outline: 'none',
                     boxSizing: 'border-box',
                   }}
                   onFocus={e => (e.target.style.borderColor = '#E36F2C')}
-                  onBlur={e => (e.target.style.borderColor = '#2A2A2E')}
+                  onBlur={e => (e.target.style.borderColor = '#E5DED4')}
                 />
               </div>
 
@@ -131,9 +131,9 @@ function LoginForm() {
 
             {/* OR divider */}
             <div className="flex items-center gap-3 my-5">
-              <div style={{ flex: 1, height: 1, background: '#2A2A2E' }} />
+              <div style={{ flex: 1, height: 1, background: '#E5DED4' }} />
               <span style={{ fontSize: 11, color: '#8A8580', letterSpacing: '0.1em' }}>OR</span>
-              <div style={{ flex: 1, height: 1, background: '#2A2A2E' }} />
+              <div style={{ flex: 1, height: 1, background: '#E5DED4' }} />
             </div>
 
             {/* Google OAuth */}
@@ -147,17 +147,17 @@ function LoginForm() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 10,
-                background: '#0F0F0F',
-                border: '1px solid #2A2A2E',
+                background: '#FFFFFF',
+                border: '1px solid #E5DED4',
                 borderRadius: 4,
-                color: '#F0F0F0',
+                color: '#2C2A28',
                 fontSize: 13,
                 fontWeight: 500,
                 cursor: 'pointer',
                 transition: 'border-color 0.15s',
               }}
               onMouseEnter={e => (e.currentTarget.style.borderColor = '#E36F2C')}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = '#2A2A2E')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = '#E5DED4')}
             >
               <svg width="18" height="18" viewBox="0 0 48 48" fill="none">
                 <path d="M43.611 20.083H42V20H24v8h11.303C33.977 32.244 29.383 35 24 35c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" fill="#FFC107"/>

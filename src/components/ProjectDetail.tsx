@@ -57,7 +57,7 @@ const S = {
     fontFamily: "var(--font-heading), 'DM Sans', sans-serif",
   },
   title: {
-    color: '#F0F0F0',
+    color: '#F5F2ED',
     fontSize: 20,
     fontWeight: 700,
     marginBottom: 20,
@@ -191,7 +191,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
             height: 36, padding: '0 12px',
             background: 'rgba(14,14,14,0.88)',
             border: '1px solid rgba(255,255,255,0.18)',
-            borderRadius: 4, color: '#F0F0F0',
+            borderRadius: 4, color: '#F5F2ED',
             cursor: 'pointer', fontSize: 13, lineHeight: 1,
             display: 'flex', alignItems: 'center', gap: 6,
             fontFamily: "var(--font-body), 'Inter', sans-serif",
@@ -230,7 +230,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
             width: 36, height: 36,
             background: 'rgba(14,14,14,0.88)',
             border: '1px solid rgba(255,255,255,0.18)',
-            borderRadius: 4, color: '#F0F0F0',
+            borderRadius: 4, color: '#F5F2ED',
             cursor: 'pointer', fontSize: 20, lineHeight: 1,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
@@ -253,7 +253,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
               width: 34, height: 34, zIndex: 10,
               background: 'rgba(14,14,14,0.72)',
               border: '1px solid rgba(255,255,255,0.14)',
-              borderRadius: 4, color: '#F0F0F0',
+              borderRadius: 4, color: '#F5F2ED',
               cursor: 'pointer', fontSize: 22, lineHeight: 1,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
@@ -285,7 +285,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
         <div style={{ position: 'absolute', bottom: 22, left: 22, right: 60, zIndex: 5 }}>
           <div style={{ fontSize: 22, marginBottom: 5, lineHeight: 1 }}>{project.country}</div>
           <h1 style={{
-            color: '#F0F0F0', fontSize: 21, fontWeight: 700,
+            color: '#F5F2ED', fontSize: 21, fontWeight: 700,
             fontFamily: "var(--font-heading), 'DM Sans', sans-serif",
             margin: '0 0 6px', lineHeight: 1.2,
             textShadow: '0 1px 8px rgba(0,0,0,0.6)',
@@ -304,7 +304,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
       {/* ── 2. Stats Bar ─────────────────────────────────────────────────── */}
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
-        background: '#1A1A1A',
+        background: '#241F1B',
         borderBottom: '1px solid #262626',
       }}>
         {[
@@ -432,7 +432,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
                 rel="noopener noreferrer"
                 style={{
                   display: 'block', textAlign: 'center',
-                  background: '#E36F2C', color: '#F0F0F0',
+                  background: '#E36F2C', color: '#F5F2ED',
                   padding: '13px 24px', textDecoration: 'none',
                   fontSize: 13, fontWeight: 600, letterSpacing: '0.12em',
                   fontFamily: "var(--font-heading), 'DM Sans', sans-serif",
@@ -492,7 +492,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
               width: 40, height: 40,
               background: 'rgba(14,14,14,0.9)',
               border: '1px solid rgba(255,255,255,0.18)',
-              borderRadius: 4, color: '#F0F0F0',
+              borderRadius: 4, color: '#F5F2ED',
               cursor: 'pointer', fontSize: 22,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}

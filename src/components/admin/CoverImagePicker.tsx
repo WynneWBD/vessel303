@@ -49,7 +49,7 @@ export default function CoverImagePicker({ value, onChange }: Props) {
     <>
       {value ? (
         <div className="flex items-start gap-3">
-          <div className="w-40 h-[100px] rounded-md overflow-hidden border border-[#2A2A2E] bg-[#141414] shrink-0">
+          <div className="w-40 h-[100px] rounded-md overflow-hidden border border-[#E5DED4] bg-[#FAF7F2] shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={value} alt="封面图" className="w-full h-full object-cover" />
           </div>
@@ -74,7 +74,7 @@ export default function CoverImagePicker({ value, onChange }: Props) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex flex-col items-center justify-center gap-2 w-full h-32 rounded-lg border border-dashed border-[#2A2A2E] hover:border-[#E36F2C] text-[#8A8580] hover:text-[#E36F2C] transition-colors bg-[#0F0F0F]"
+          className="flex flex-col items-center justify-center gap-2 w-full h-32 rounded-lg border border-dashed border-[#E5DED4] hover:border-[#E36F2C] text-[#8A8580] hover:text-[#E36F2C] transition-colors bg-[#FFFFFF]"
         >
           <ImagePlus size={24} />
           <span className="text-sm">选择封面图</span>
@@ -106,7 +106,7 @@ export default function CoverImagePicker({ value, onChange }: Props) {
                     type="button"
                     onClick={() => handlePick(img.url)}
                     title={img.filename ?? ''}
-                    className="group relative aspect-square rounded-md overflow-hidden border-2 border-transparent hover:border-[#E36F2C] focus:outline-none focus:border-[#E36F2C] transition-colors bg-[#141414]"
+                    className="group relative aspect-square rounded-md overflow-hidden border-2 border-transparent hover:border-[#E36F2C] focus:outline-none focus:border-[#E36F2C] transition-colors bg-[#FAF7F2]"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img

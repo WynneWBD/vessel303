@@ -106,7 +106,7 @@ export default function ProductListClient({
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1
-            className="text-white"
+            className="text-[#2C2A28]"
             style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 24, fontWeight: 700 }}
           >
             产品管理 Products
@@ -153,7 +153,7 @@ export default function ProductListClient({
       </div>
 
       {rows.length === 0 && !loading ? (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#2A2A2E] bg-[#0F0F0F] py-20">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#E5DED4] bg-[#FFFFFF] py-20">
           <p className="text-[#C4B9AB]">暂无产品</p>
           <Link
             href="/admin/products/new"
@@ -163,9 +163,9 @@ export default function ProductListClient({
           </Link>
         </div>
       ) : (
-        <div className="rounded-lg border border-[#2A2A2E] overflow-hidden">
+        <div className="rounded-lg border border-[#E5DED4] overflow-hidden">
           <div
-            className="grid gap-3 px-4 py-3 text-xs text-[#8A8580] bg-[#141414] border-b border-[#2A2A2E]"
+            className="grid gap-3 px-4 py-3 text-xs text-[#8A8580] bg-[#FAF7F2] border-b border-[#E5DED4]"
             style={{ gridTemplateColumns: '72px 1fr 90px 90px 90px 110px 128px' }}
           >
             <span>封面</span>
@@ -180,16 +180,16 @@ export default function ProductListClient({
           {rows.map((item) => (
             <div
               key={item.id}
-              className="grid gap-3 items-center px-4 py-3 border-b border-[#2A2A2E] last:border-b-0 hover:bg-[#141414] transition-colors"
+              className="grid gap-3 items-center px-4 py-3 border-b border-[#E5DED4] last:border-b-0 hover:bg-[#FAF7F2] transition-colors"
               style={{ gridTemplateColumns: '72px 1fr 90px 90px 90px 110px 128px' }}
             >
-              <div className="w-[72px] h-[44px] rounded overflow-hidden bg-[#2A2A2E]">
+              <div className="w-[72px] h-[44px] rounded overflow-hidden bg-[#E5DED4]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={item.image} alt="" className="w-full h-full object-cover" />
               </div>
 
               <div className="min-w-0">
-                <p className="text-sm text-[#F0F0F0] truncate font-medium">{item.name_cn}</p>
+                <p className="text-sm text-[#2C2A28] truncate font-medium">{item.name_cn}</p>
                 <p className="text-xs text-[#6B6560] truncate mt-0.5">{item.id} · {item.name_en}</p>
               </div>
 
@@ -202,7 +202,7 @@ export default function ProductListClient({
                     已发布
                   </Badge>
                 ) : (
-                  <Badge className="bg-[#2A2A2E] text-[#8A8580] border-[#3A3A3E] text-xs">
+                  <Badge className="bg-[#E5DED4] text-[#8A8580] border-[#C4B9AB] text-xs">
                     草稿
                   </Badge>
                 )}
@@ -214,7 +214,7 @@ export default function ProductListClient({
                 <Link
                   href={`/admin/products/${item.id}/edit`}
                   title="编辑"
-                  className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-white hover:bg-[rgba(15,15,15,0.5)] transition-colors"
+                  className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-[#2C2A28] hover:bg-[#F5F2ED] transition-colors"
                 >
                   <Pencil size={14} />
                 </Link>

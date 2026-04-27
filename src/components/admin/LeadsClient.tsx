@@ -235,7 +235,7 @@ export default function LeadsClient({
       {/* Title + actions */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1
-          className="text-white"
+          className="text-[#2C2A28]"
           style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em' }}
         >
           线索管理
@@ -289,11 +289,11 @@ export default function LeadsClient({
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border border-[#2A2A2E] bg-[#0F0F0F] overflow-hidden">
+      <div className="rounded-lg border border-[#E5DED4] bg-[#FFFFFF] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#2A2A2E] text-[#8A8580]">
+              <tr className="border-b border-[#E5DED4] text-[#8A8580]">
                 <th className="text-left font-medium px-4 py-3">状态</th>
                 <th className="text-left font-medium px-4 py-3">邮箱</th>
                 <th className="text-left font-medium px-4 py-3">姓名</th>
@@ -322,7 +322,7 @@ export default function LeadsClient({
               {leads.map((lead) => (
                 <tr
                   key={lead.id}
-                  className="border-b border-[#2A2A2E] hover:bg-[#141414] cursor-pointer transition-colors"
+                  className="border-b border-[#E5DED4] hover:bg-[#FAF7F2] cursor-pointer transition-colors"
                   onClick={() => handleSelect(lead)}
                 >
                   <td className="px-4 py-3">
@@ -330,7 +330,7 @@ export default function LeadsClient({
                       {STATUS_LABEL[lead.status] ?? lead.status}
                     </Badge>
                   </td>
-                  <td className="px-4 py-3 text-[#F0F0F0]">{lead.email}</td>
+                  <td className="px-4 py-3 text-[#2C2A28]">{lead.email}</td>
                   <td className="px-4 py-3 text-[#C4B9AB]">{lead.name ?? '—'}</td>
                   <td className="px-4 py-3 text-[#C4B9AB]">{lead.company ?? '—'}</td>
                   <td className="px-4 py-3 text-[#C4B9AB]">{lead.country ?? '—'}</td>
@@ -441,7 +441,7 @@ function LeadDetailSheet({
               {/* Message */}
               <div>
                 <div className="text-xs text-[#8A8580] mb-2">留言内容</div>
-                <div className="rounded-md bg-[#141414] border border-[#2A2A2E] p-3 text-sm text-[#F0F0F0] whitespace-pre-wrap min-h-[80px]">
+                <div className="rounded-md bg-[#FAF7F2] border border-[#E5DED4] p-3 text-sm text-[#2C2A28] whitespace-pre-wrap min-h-[80px]">
                   {lead.message || <span className="text-[#6B6560]">(无留言)</span>}
                 </div>
               </div>
@@ -484,7 +484,7 @@ function LeadDetailSheet({
                 {lead.notes && (
                   <div className="mt-3">
                     <div className="text-xs text-[#8A8580] mb-2">历史备注</div>
-                    <div className="rounded-md bg-[#141414] border border-[#2A2A2E] p-3 text-xs text-[#C4B9AB] whitespace-pre-wrap max-h-40 overflow-auto">
+                    <div className="rounded-md bg-[#FAF7F2] border border-[#E5DED4] p-3 text-xs text-[#C4B9AB] whitespace-pre-wrap max-h-40 overflow-auto">
                       {lead.notes}
                     </div>
                   </div>
@@ -517,7 +517,7 @@ function Field({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
       <div className="text-xs text-[#8A8580]">{label}</div>
-      <div className="text-sm text-[#F0F0F0] break-all">{value || '—'}</div>
+      <div className="text-sm text-[#2C2A28] break-all">{value || '—'}</div>
     </div>
   )
 }

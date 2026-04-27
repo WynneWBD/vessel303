@@ -22,7 +22,7 @@ img {
   --warm-paper: #F5F2ED;
   --warm-paper-soft: #FAF7F2;
   --warm-card: #FFFFFF;
-  --warm-charcoal: #1A1A1A;
+  --warm-charcoal: #241F1B;
   --warm-espresso: #241F1B;
   --warm-ink: #2C2A28;
   --warm-body: #5F5750;
@@ -35,7 +35,7 @@ img {
   --bg-light: var(--warm-paper);
   --bg-card: var(--warm-card);
 
-  --text-on-dark: #F0F0F0;
+  --text-on-dark: #F5F2ED;
   --text-on-light: var(--warm-ink);
   --text-muted: var(--warm-muted);
   --text-body: var(--warm-body);
@@ -46,7 +46,7 @@ img {
   --accent-stone: var(--warm-stone);
 
   --border-light: var(--warm-border);
-  --border-dark: #2A2A2E;
+  --border-dark: #3A302A;
 
   /* 保留旧变量做兼容过渡（子页面暂不改） */
   --background: var(--warm-paper);

@@ -29,7 +29,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
   const typeLabel = TYPE_LABEL[product.productType] ?? TYPE_LABEL.standard;
 
   return (
-    <main className="bg-white text-[#1A1A1A]">
+    <main className="bg-white text-[#2C2A28]">
       {/* ── Hero image ── */}
       <section className="relative h-[400px] sm:h-[500px] overflow-hidden bg-white">
         <Image
@@ -126,7 +126,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
                   : ['度假营地客房', '远程营地扩容', '商业展示空间']
                 ).map((item) => (
                   <div key={item} className="border border-[#E5DED4] bg-[#FAF9F6] p-4">
-                    <div className="text-sm font-semibold text-[#1A1A1A] tracking-wide">{item}</div>
+                    <div className="text-sm font-semibold text-[#2C2A28] tracking-wide">{item}</div>
                   </div>
                 ))}
               </div>
@@ -168,7 +168,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
               ].map(({ label, value }) => (
                 <div key={label} className="bg-white p-5">
                   <div className="text-[#888888] text-[10px] tracking-[0.2em] uppercase mb-2">{label}</div>
-                  <div className="text-[#1A1A1A] font-bold text-lg tracking-wider">{value}</div>
+                  <div className="text-[#2C2A28] font-bold text-lg tracking-wider">{value}</div>
                 </div>
               ))}
             </div>

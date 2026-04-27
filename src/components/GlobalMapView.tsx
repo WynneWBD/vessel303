@@ -52,7 +52,7 @@ function PanelLoadingSpinner({ lang, onClose }: { lang: string; onClose: () => v
           width: 36, height: 36,
           background: 'rgba(14,14,14,0.88)',
           border: '1px solid rgba(255,255,255,0.18)',
-          borderRadius: 4, color: '#F0F0F0',
+          borderRadius: 4, color: '#F5F2ED',
           cursor: 'pointer', fontSize: 20, lineHeight: 1,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}
@@ -147,7 +147,7 @@ export default function GlobalMapView() {
       height: 'calc(100vh - 56px)',
       overflow: 'hidden',
       display: 'flex',
-      background: '#1A1A1A',
+      background: '#241F1B',
     }}>
 
       {/* ── Map — shrinks to 30% when detail panel is open ── */}
@@ -174,7 +174,7 @@ export default function GlobalMapView() {
         transform: panelOpen ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform 300ms ease-out',
         zIndex: 100,
-        borderLeft: '1px solid #2A2A2E',
+        borderLeft: '1px solid #3A302A',
       }}>
         {selectedProject ? (
           <ProjectDetailDynamic

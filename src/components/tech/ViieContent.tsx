@@ -119,12 +119,12 @@ export default function ViieContent({ lang }: { lang: 'en' | 'zh' }) {
           <div>
             <Reveal>
               <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-2">Overview</p>
-              <h2 className="text-3xl sm:text-4xl font-bold text-[#1A1A1A] mb-6" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              <h2 className="text-3xl sm:text-4xl font-bold text-[#2C2A28] mb-6" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                 {zh ? '完全自研智能控制平台' : 'Fully Proprietary Smart Control Platform'}
               </h2>
             </Reveal>
             <Reveal delay={100}>
-              <div className="space-y-4 text-[#1A1A1A]/70 text-sm sm:text-base leading-relaxed" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <div className="space-y-4 text-[#2C2A28]/70 text-sm sm:text-base leading-relaxed" style={{ fontFamily: 'Inter, sans-serif' }}>
                 {zh ? (
                   <>
                     <p>VesselOS是微宿完全自主研发的智能空间运营系统，不依赖涂鸦、BroadLink等任何第三方平台。系统已连接全球1,400余台微宿舱体，让营地运营方和设备业主能够实时查看并远程控制每台舱体。</p>
@@ -143,7 +143,7 @@ export default function ViieContent({ lang }: { lang: 'en' | 'zh' }) {
           <Reveal delay={120}>
             <div className="grid grid-cols-2 gap-3">
               {STATS.map((s) => (
-                <div key={s.value} className="bg-[#1A1A1A] p-5 flex flex-col gap-2">
+                <div key={s.value} className="bg-[#FAF7F2] p-5 flex flex-col gap-2">
                   <span className="text-3xl font-bold text-[#E36F2C]" style={{ fontFamily: 'DM Sans, sans-serif' }}>{s.value}</span>
                   <span className="text-[#8A8580] text-xs tracking-wider leading-snug">{zh ? s.zh : s.en}</span>
                 </div>
@@ -154,20 +154,20 @@ export default function ViieContent({ lang }: { lang: 'en' | 'zh' }) {
       </section>
 
       {/* Capabilities */}
-      <section className="bg-[#1A1A1A] py-16 px-6 lg:px-10">
+      <section className="bg-[#FAF7F2] py-16 px-6 lg:px-10">
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-2">Capabilities</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#F0F0F0] mb-10" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#2C2A28] mb-10" style={{ fontFamily: 'DM Sans, sans-serif' }}>
               {zh ? '全设备控制能力' : 'Full Device Control Capability'}
             </h2>
           </Reveal>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {CAPABILITIES.map((c, i) => (
               <Reveal key={c.en} delay={i * 50}>
-                <div className="bg-[#2A2A2E] p-5 flex flex-col gap-3 border border-transparent hover:border-[#E36F2C]/20 transition-colors">
+                <div className="bg-white p-5 flex flex-col gap-3 border border-transparent hover:border-[#E36F2C]/20 transition-colors">
                   {c.icon}
-                  <p className="text-[#F0F0F0] text-sm font-semibold" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                  <p className="text-[#2C2A28] text-sm font-semibold" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                     {zh ? c.zh : c.en}
                   </p>
                   <p className="text-[#8A8580] text-xs leading-relaxed">{zh ? c.desc_zh : c.desc_en}</p>
@@ -183,7 +183,7 @@ export default function ViieContent({ lang }: { lang: 'en' | 'zh' }) {
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-2">Framework</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#1A1A1A] mb-10" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#2C2A28] mb-10" style={{ fontFamily: 'DM Sans, sans-serif' }}>
               {zh ? '1+2+N 全屋智能方案' : 'The 1+2+N Smart Home Framework'}
             </h2>
           </Reveal>
@@ -214,7 +214,7 @@ export default function ViieContent({ lang }: { lang: 'en' | 'zh' }) {
               <Reveal key={item.num} delay={i * 80}>
                 <div className="border border-[#E5E0DA] bg-white p-7 flex flex-col gap-4">
                   <span className="text-5xl font-bold text-[#E36F2C]" style={{ fontFamily: 'DM Sans, sans-serif' }}>{item.num}</span>
-                  <p className="text-[#1A1A1A] font-semibold text-base" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                  <p className="text-[#2C2A28] font-semibold text-base" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                     {zh ? item.zh : item.en}
                   </p>
                   <p className="text-[#8A8580] text-sm leading-relaxed">{zh ? item.desc_zh : item.desc_en}</p>
@@ -226,28 +226,28 @@ export default function ViieContent({ lang }: { lang: 'en' | 'zh' }) {
       </section>
 
       {/* Roadmap */}
-      <section className="bg-[#1A1A1A] py-16 px-6 lg:px-10">
+      <section className="bg-[#FAF7F2] py-16 px-6 lg:px-10">
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-2">Roadmap</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#F0F0F0] mb-12" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#2C2A28] mb-12" style={{ fontFamily: 'DM Sans, sans-serif' }}>
               {zh ? 'VesselOS 产品路线图' : 'VesselOS Roadmap'}
             </h2>
           </Reveal>
 
           <div className="hidden md:grid grid-cols-4 gap-0 relative">
-            <div className="absolute top-[28px] left-[12.5%] right-[12.5%] h-px bg-[#2A2A2E]" />
+            <div className="absolute top-[28px] left-[12.5%] right-[12.5%] h-px bg-white" />
             {ROADMAP.map((r, i) => (
               <Reveal key={r.phase} delay={i * 80}>
                 <div className="flex flex-col items-center text-center px-3">
-                  <div className={`w-5 h-5 rounded-full border-2 mb-4 z-10 relative ${r.active ? 'bg-[#E36F2C] border-[#E36F2C]' : 'bg-[#1A1A1A] border-[#2A2A2E]'}`} />
+                  <div className={`w-5 h-5 rounded-full border-2 mb-4 z-10 relative ${r.active ? 'bg-[#E36F2C] border-[#E36F2C]' : 'bg-[#FAF7F2] border-[#E5DED4]'}`} />
                   <p className={`text-xs font-bold tracking-[0.2em] uppercase mb-1 ${r.active ? 'text-[#E36F2C]' : 'text-[#8A8580]'}`}>
                     {r.phase}
                   </p>
                   <p className={`text-xs mb-3 ${r.active ? 'text-[#E36F2C]/70' : 'text-[#8A8580]/60'}`}>
                     {zh ? r.label_zh : r.label_en}
                   </p>
-                  <p className={`text-xs leading-relaxed ${r.active ? 'text-[#F0F0F0]/80' : 'text-[#8A8580]/60'}`} style={{ fontFamily: 'Inter, sans-serif' }}>
+                  <p className={`text-xs leading-relaxed ${r.active ? 'text-[#2C2A28]/80' : 'text-[#8A8580]/60'}`} style={{ fontFamily: 'Inter, sans-serif' }}>
                     {zh ? r.zh : r.en}
                   </p>
                 </div>
@@ -256,13 +256,13 @@ export default function ViieContent({ lang }: { lang: 'en' | 'zh' }) {
           </div>
 
           <div className="md:hidden space-y-6 relative pl-6">
-            <div className="absolute left-[9px] top-2 bottom-2 w-px bg-[#2A2A2E]" />
+            <div className="absolute left-[9px] top-2 bottom-2 w-px bg-white" />
             {ROADMAP.map((r, i) => (
               <Reveal key={r.phase} delay={i * 60}>
                 <div className="relative">
-                  <div className={`absolute -left-6 top-1 w-4 h-4 rounded-full border-2 ${r.active ? 'bg-[#E36F2C] border-[#E36F2C]' : 'bg-[#1A1A1A] border-[#2A2A2E]'}`} />
+                  <div className={`absolute -left-6 top-1 w-4 h-4 rounded-full border-2 ${r.active ? 'bg-[#E36F2C] border-[#E36F2C]' : 'bg-[#FAF7F2] border-[#E5DED4]'}`} />
                   <p className={`text-xs font-bold tracking-widest uppercase mb-0.5 ${r.active ? 'text-[#E36F2C]' : 'text-[#8A8580]'}`}>{r.phase} · {zh ? r.label_zh : r.label_en}</p>
-                  <p className={`text-sm leading-relaxed ${r.active ? 'text-[#F0F0F0]/80' : 'text-[#8A8580]/60'}`} style={{ fontFamily: 'Inter, sans-serif' }}>
+                  <p className={`text-sm leading-relaxed ${r.active ? 'text-[#2C2A28]/80' : 'text-[#8A8580]/60'}`} style={{ fontFamily: 'Inter, sans-serif' }}>
                     {zh ? r.zh : r.en}
                   </p>
                 </div>

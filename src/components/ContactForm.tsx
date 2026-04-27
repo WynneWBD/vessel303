@@ -96,7 +96,7 @@ export default function ContactForm() {
           </svg>
         </div>
         <div className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.form.successBadge)}</div>
-        <h3 className="text-[#1A1A1A] text-xl font-black mb-3 tracking-wider">{t(i18n.form.successTitle)}</h3>
+        <h3 className="text-[#2C2A28] text-xl font-black mb-3 tracking-wider">{t(i18n.form.successTitle)}</h3>
         <p className="text-[#666666] text-sm leading-relaxed max-w-sm tracking-wider">
           {t(i18n.form.successMsg)}
           {form.email && ' ' + t(i18n.form.successEmail)}
@@ -133,7 +133,7 @@ export default function ContactForm() {
                 onChange={() => set('inquiryType', type.value)}
                 className="accent-[#E36F2C]"
               />
-              <span className="text-sm text-[#555555] group-hover:text-[#333333] transition-colors tracking-wider">
+              <span className="text-sm text-[#555555] group-hover:text-[#2C2A28] transition-colors tracking-wider">
                 {t(type.key)}
               </span>
             </label>
@@ -151,7 +151,7 @@ export default function ContactForm() {
             value={form.name}
             onChange={(e) => set('name', e.target.value)}
             placeholder={t(i18n.form.namePlaceholder)}
-            className="w-full bg-white border border-[#E5DED4] text-[#1A1A1A] text-sm px-4 py-3 focus:outline-none focus:border-[#E36F2C]/60 placeholder-[#8A7D74] tracking-wider"
+            className="w-full bg-white border border-[#E5DED4] text-[#2C2A28] text-sm px-4 py-3 focus:outline-none focus:border-[#E36F2C]/60 placeholder-[#8A7D74] tracking-wider"
           />
         </div>
         <div>
@@ -162,7 +162,7 @@ export default function ContactForm() {
             value={form.phone}
             onChange={(e) => set('phone', e.target.value)}
             placeholder={t(i18n.form.phonePlaceholder)}
-            className="w-full bg-white border border-[#E5DED4] text-[#1A1A1A] text-sm px-4 py-3 focus:outline-none focus:border-[#E36F2C]/60 placeholder-[#8A7D74] tracking-wider"
+            className="w-full bg-white border border-[#E5DED4] text-[#2C2A28] text-sm px-4 py-3 focus:outline-none focus:border-[#E36F2C]/60 placeholder-[#8A7D74] tracking-wider"
           />
         </div>
       </div>
@@ -178,7 +178,7 @@ export default function ContactForm() {
             value={form.email}
             onChange={(e) => set('email', e.target.value)}
             placeholder={t(i18n.form.emailPlaceholder)}
-            className={`w-full bg-white border text-[#1A1A1A] text-sm px-4 py-3 focus:outline-none placeholder-[#8A7D74] tracking-wider ${emailError ? 'border-red-500/60 focus:border-red-500/80' : 'border-[#E5DED4] focus:border-[#E36F2C]/60'}`}
+            className={`w-full bg-white border text-[#2C2A28] text-sm px-4 py-3 focus:outline-none placeholder-[#8A7D74] tracking-wider ${emailError ? 'border-red-500/60 focus:border-red-500/80' : 'border-[#E5DED4] focus:border-[#E36F2C]/60'}`}
           />
           {emailError && (
             <p className="text-red-400/80 text-xs tracking-wider mt-1">{emailError}</p>
@@ -191,7 +191,7 @@ export default function ContactForm() {
             value={form.company}
             onChange={(e) => set('company', e.target.value)}
             placeholder={t(i18n.form.companyPlaceholder)}
-            className="w-full bg-white border border-[#E5DED4] text-[#1A1A1A] text-sm px-4 py-3 focus:outline-none focus:border-[#E36F2C]/60 placeholder-[#8A7D74] tracking-wider"
+            className="w-full bg-white border border-[#E5DED4] text-[#2C2A28] text-sm px-4 py-3 focus:outline-none focus:border-[#E36F2C]/60 placeholder-[#8A7D74] tracking-wider"
           />
         </div>
       </div>
@@ -205,7 +205,7 @@ export default function ContactForm() {
             value={form.location}
             onChange={(e) => set('location', e.target.value)}
             placeholder={t(i18n.form.locationPlaceholder)}
-            className="w-full bg-white border border-[#E5DED4] text-[#1A1A1A] text-sm px-4 py-3 focus:outline-none focus:border-[#E36F2C]/60 placeholder-[#8A7D74] tracking-wider"
+            className="w-full bg-white border border-[#E5DED4] text-[#2C2A28] text-sm px-4 py-3 focus:outline-none focus:border-[#E36F2C]/60 placeholder-[#8A7D74] tracking-wider"
           />
         </div>
         <div>
@@ -231,7 +231,7 @@ export default function ContactForm() {
             value={form.quantity}
             onChange={(e) => set('quantity', e.target.value)}
             placeholder={t(i18n.form.quantityPlaceholder)}
-            className="w-full bg-white border border-[#E5DED4] text-[#1A1A1A] text-sm px-4 py-3 focus:outline-none focus:border-[#E36F2C]/60 placeholder-[#8A7D74] tracking-wider"
+            className="w-full bg-white border border-[#E5DED4] text-[#2C2A28] text-sm px-4 py-3 focus:outline-none focus:border-[#E36F2C]/60 placeholder-[#8A7D74] tracking-wider"
           />
         </div>
         <div>
@@ -256,7 +256,7 @@ export default function ContactForm() {
           value={form.remarks}
           onChange={(e) => set('remarks', e.target.value)}
           placeholder={t(i18n.form.remarksPlaceholder)}
-          className="w-full bg-white border border-[#E5DED4] text-[#1A1A1A] text-sm px-4 py-3 focus:outline-none focus:border-[#E36F2C]/60 placeholder-[#8A7D74] resize-none tracking-wider"
+          className="w-full bg-white border border-[#E5DED4] text-[#2C2A28] text-sm px-4 py-3 focus:outline-none focus:border-[#E36F2C]/60 placeholder-[#8A7D74] resize-none tracking-wider"
         />
       </div>
 

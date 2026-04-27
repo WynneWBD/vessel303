@@ -99,7 +99,7 @@ export default function NewsListClient({
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1
-          className="text-white"
+          className="text-[#2C2A28]"
           style={{
             fontFamily: 'DM Sans, sans-serif',
             fontSize: 24,
@@ -138,17 +138,17 @@ export default function NewsListClient({
 
       {/* Table */}
       {rows.length === 0 && !loading ? (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#2A2A2E] bg-[#0F0F0F] py-20">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#E5DED4] bg-[#FFFFFF] py-20">
           <p className="text-[#C4B9AB]">暂无新闻</p>
           <Button asChild size="sm" variant="outline">
             <Link href="/admin/news/new">+ 新建第一条新闻</Link>
           </Button>
         </div>
       ) : (
-        <div className="rounded-lg border border-[#2A2A2E] overflow-hidden">
+        <div className="rounded-lg border border-[#E5DED4] overflow-hidden">
           {/* Table head */}
           <div
-            className="grid gap-3 px-4 py-3 text-xs text-[#8A8580] bg-[#141414] border-b border-[#2A2A2E]"
+            className="grid gap-3 px-4 py-3 text-xs text-[#8A8580] bg-[#FAF7F2] border-b border-[#E5DED4]"
             style={{ gridTemplateColumns: '60px 1fr 90px 140px 80px' }}
           >
             <span>封面</span>
@@ -162,11 +162,11 @@ export default function NewsListClient({
           {rows.map((item) => (
             <div
               key={item.id}
-              className="grid gap-3 items-center px-4 py-3 border-b border-[#2A2A2E] last:border-b-0 hover:bg-[#141414] transition-colors"
+              className="grid gap-3 items-center px-4 py-3 border-b border-[#E5DED4] last:border-b-0 hover:bg-[#FAF7F2] transition-colors"
               style={{ gridTemplateColumns: '60px 1fr 90px 140px 80px' }}
             >
               {/* Cover */}
-              <div className="w-[60px] h-[38px] rounded overflow-hidden bg-[#2A2A2E] shrink-0">
+              <div className="w-[60px] h-[38px] rounded overflow-hidden bg-[#E5DED4] shrink-0">
                 {item.cover_image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -175,13 +175,13 @@ export default function NewsListClient({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-[#2A2A2E]" />
+                  <div className="w-full h-full bg-[#E5DED4]" />
                 )}
               </div>
 
               {/* Title */}
               <div className="min-w-0">
-                <p className="text-sm text-[#F0F0F0] truncate font-medium">
+                <p className="text-sm text-[#2C2A28] truncate font-medium">
                   {item.title_zh || '(无中文标题)'}
                 </p>
                 <p className="text-xs text-[#6B6560] truncate mt-0.5">
@@ -196,7 +196,7 @@ export default function NewsListClient({
                     已发布
                   </Badge>
                 ) : (
-                  <Badge className="bg-[#2A2A2E] text-[#8A8580] border-[#3A3A3E] text-xs">
+                  <Badge className="bg-[#E5DED4] text-[#8A8580] border-[#C4B9AB] text-xs">
                     草稿
                   </Badge>
                 )}

@@ -42,11 +42,11 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
   const dateStr = formatNewsDate(news.published_at, lang)
 
   return (
-    <main className="min-h-screen bg-[#1A1A1A] text-[#F0F0F0]">
+    <main className="min-h-screen bg-[#FAF7F2] text-[#2C2A28]">
       <Navbar />
 
       {/* Hero */}
-      <section className="relative pt-28 bg-[#0F0F0F]">
+      <section className="relative pt-28 bg-[#241F1B]">
         {news.cover_image_url ? (
           <div className="relative h-[420px] overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -55,7 +55,7 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
               alt={title}
               className="h-full w-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0F0F0F] via-[#0F0F0F]/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#241F1B] via-[#241F1B]/45 to-transparent" />
             {/* Title overlay */}
             <div className="absolute bottom-0 left-0 right-0 px-6 pb-10 max-w-3xl mx-auto">
               <HeroMeta dateStr={dateStr} />
@@ -72,7 +72,7 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
                 {title}
               </h1>
               {excerpt && (
-                <p className="mt-3 text-[#C4B9AB] text-sm leading-relaxed max-w-2xl">
+              <p className="mt-3 text-[#C9BEB4] text-sm leading-relaxed max-w-2xl">
                   {excerpt}
                 </p>
               )}
@@ -82,7 +82,7 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 pb-10">
             <HeroMeta dateStr={dateStr} />
             <h1
-              className="text-white mt-3"
+              className="text-[#F5F2ED] mt-3"
               style={{
                 fontFamily: 'DM Sans, sans-serif',
                 fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
@@ -94,7 +94,7 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
               {title}
             </h1>
             {excerpt && (
-              <p className="mt-4 text-[#8A8580] text-base leading-relaxed">{excerpt}</p>
+              <p className="mt-4 text-[#C9BEB4] text-base leading-relaxed">{excerpt}</p>
             )}
           </div>
         )}
@@ -105,7 +105,7 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           {html ? (
             <div
-              className="prose prose-invert prose-orange max-w-none"
+              className="prose prose-stone prose-orange max-w-none"
               dangerouslySetInnerHTML={{ __html: html }}
             />
           ) : (

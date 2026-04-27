@@ -29,7 +29,7 @@ function AccordionItem({
       >
         <span
           className={`text-base font-medium leading-snug transition-colors ${
-            isOpen ? 'text-[#1A1A1A]' : 'text-[#1A1A1A]/80 group-hover:text-[#E36F2C]'
+            isOpen ? 'text-[#2C2A28]' : 'text-[#2C2A28]/80 group-hover:text-[#E36F2C]'
           }`}
           style={{ fontFamily: 'var(--font-dm-sans, DM Sans, sans-serif)' }}
         >
@@ -60,7 +60,7 @@ function AccordionItem({
       >
         <div className="px-6 pb-6 border-l-2 border-[#E36F2C] ml-6">
           <p
-            className="text-[#1A1A1A]/70 text-sm leading-relaxed"
+            className="text-[#2C2A28]/70 text-sm leading-relaxed"
             style={{ fontFamily: 'var(--font-inter, Inter, sans-serif)' }}
           >
             {answer}
@@ -89,19 +89,19 @@ export default function FaqPage() {
       {/* Hero */}
       <section
         className="pt-28 pb-16 px-4"
-        style={{ backgroundColor: '#1A1A1A' }}
+        style={{ backgroundColor: '#241F1B' }}
       >
         <div className="max-w-4xl mx-auto">
           <p className="text-[#E36F2C] text-xs tracking-[0.35em] uppercase font-medium mb-4">
             {lang === 'zh' ? '常见问题' : 'Frequently Asked Questions'}
           </p>
           <h1
-            className="text-5xl sm:text-6xl font-bold text-[#F0F0F0] mb-5 leading-none tracking-tight"
+            className="text-5xl sm:text-6xl font-bold text-[#F5F2ED] mb-5 leading-none tracking-tight"
             style={{ fontFamily: 'var(--font-dm-sans, DM Sans, sans-serif)' }}
           >
             FAQ
           </h1>
-          <p className="text-[#8A8580] text-base sm:text-lg max-w-xl leading-relaxed">
+          <p className="text-[#C9BEB4] text-base sm:text-lg max-w-xl leading-relaxed">
             {lang === 'zh'
               ? '关于 VESSEL 产品、运输、安装、认证及商务条款的专业解答。'
               : 'Expert answers on VESSEL products, transport, installation, certifications, and commercial terms.'}
@@ -120,8 +120,8 @@ export default function FaqPage() {
               onClick={() => setActiveCategory(null)}
               className={`px-3.5 py-1.5 text-xs tracking-wider font-medium transition-all whitespace-nowrap rounded-sm ${
                 activeCategory === null
-                  ? 'bg-[#1A1A1A] text-white'
-                  : 'text-[#8A8580] hover:text-[#1A1A1A] hover:bg-[#E5E0DA]'
+                  ? 'bg-[#241F1B] text-[#F5F2ED]'
+                  : 'text-[#8A8580] hover:text-[#2C2A28] hover:bg-[#E5E0DA]'
               }`}
             >
               {lang === 'zh' ? '全部' : 'All'}
@@ -133,7 +133,7 @@ export default function FaqPage() {
                 className={`px-3.5 py-1.5 text-xs tracking-wider font-medium transition-all whitespace-nowrap rounded-sm ${
                   activeCategory === cat.key
                     ? 'bg-[#E36F2C] text-white'
-                    : 'text-[#8A8580] hover:text-[#1A1A1A] hover:bg-[#E5E0DA]'
+                    : 'text-[#8A8580] hover:text-[#2C2A28] hover:bg-[#E5E0DA]'
                 }`}
               >
                 {lang === 'zh' ? cat.zh : cat.en}
@@ -154,7 +154,7 @@ export default function FaqPage() {
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-1 h-5 bg-[#E36F2C] rounded-full shrink-0" />
                   <h2
-                    className="text-sm font-semibold tracking-[0.2em] uppercase text-[#1A1A1A]/50"
+                    className="text-sm font-semibold tracking-[0.2em] uppercase text-[#2C2A28]/50"
                     style={{ fontFamily: 'var(--font-dm-sans, DM Sans, sans-serif)' }}
                   >
                     {lang === 'zh' ? cat.zh : cat.en}
@@ -180,18 +180,18 @@ export default function FaqPage() {
       </main>
 
       {/* CTA */}
-      <section style={{ backgroundColor: '#1A1A1A' }} className="py-16 px-4">
+      <section style={{ backgroundColor: '#241F1B' }} className="py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
             {lang === 'zh' ? '还有问题？' : 'Still have questions?'}
           </p>
           <h2
-            className="text-3xl sm:text-4xl font-bold text-[#F0F0F0] mb-4"
+            className="text-3xl sm:text-4xl font-bold text-[#F5F2ED] mb-4"
             style={{ fontFamily: 'var(--font-dm-sans, DM Sans, sans-serif)' }}
           >
             {lang === 'zh' ? '我们的团队随时为您解答' : 'Our team is ready to help'}
           </h2>
-          <p className="text-[#8A8580] text-sm mb-8 max-w-md mx-auto leading-relaxed">
+          <p className="text-[#C9BEB4] text-sm mb-8 max-w-md mx-auto leading-relaxed">
             {lang === 'zh'
               ? '提交您的项目需求，专业顾问将在 24 小时内与您联系。'
               : 'Submit your project requirements and a specialist will contact you within 24 hours.'}

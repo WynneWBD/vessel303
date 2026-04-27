@@ -94,7 +94,7 @@ function MetricCard({
           <Icon size={16} />
           <span className="text-sm">{label}</span>
         </div>
-        <div className="mt-3 text-2xl font-bold text-white" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+        <div className="mt-3 text-2xl font-bold text-[#2C2A28]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
           {value}
         </div>
         <div className="mt-2 text-xs text-[#8A8580]">{detail}</div>
@@ -198,7 +198,7 @@ export default async function SettingsPage() {
       <div className="flex flex-col gap-2">
         <p className="text-xs tracking-[0.18em] uppercase text-[#E36F2C]">System Control</p>
         <h1
-          className="text-white"
+          className="text-[#2C2A28]"
           style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 28, fontWeight: 700 }}
         >
           设置
@@ -245,10 +245,10 @@ export default async function SettingsPage() {
             <CardDescription>只显示是否配置，不展示任何密钥内容。</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="divide-y divide-[#2A2A2E]">
+            <div className="divide-y divide-[#E5DED4]">
               {configItems.map((item) => (
                 <div key={item.label} className="grid grid-cols-1 gap-3 py-4 md:grid-cols-[180px_120px_1fr] md:items-center">
-                  <div className="text-sm font-medium text-[#F0F0F0]">{item.label}</div>
+                  <div className="text-sm font-medium text-[#2C2A28]">{item.label}</div>
                   <div className="flex items-center gap-2">
                     <StatusBadge state={item.state} />
                     <span className="text-xs text-[#8A8580]">{item.value}</span>
@@ -272,13 +272,13 @@ export default async function SettingsPage() {
             {ADMIN_EMAIL_WHITELIST.map((email) => (
               <div
                 key={email}
-                className="flex items-center justify-between rounded-md border border-[#2A2A2E] bg-[#141414] px-3 py-2"
+                className="flex items-center justify-between rounded-md border border-[#E5DED4] bg-[#FAF7F2] px-3 py-2"
               >
-                <span className="text-sm text-[#F0F0F0]">{email}</span>
+                <span className="text-sm text-[#2C2A28]">{email}</span>
                 <Badge className="border-[#E36F2C]/30 bg-[#E36F2C]/10 text-[#E36F2C]">白名单</Badge>
               </div>
             ))}
-            <div className="rounded-md border border-[#2A2A2E] bg-[#0B0B0B] p-3 text-xs leading-5 text-[#8A8580]">
+            <div className="rounded-md border border-[#E5DED4] bg-[#F5F2ED] p-3 text-xs leading-5 text-[#8A8580]">
               白名单用户登录时会被强制保护为管理员。下一版如果要做可编辑白名单，应先把 Auth.js 登录回调、用户 PATCH 保护和审计日志一起迁移到 DB 配置。
             </div>
           </CardContent>
@@ -312,7 +312,7 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {roadmap.map((item) => (
-              <div key={item.name} className="flex gap-3 rounded-md border border-[#2A2A2E] bg-[#141414] p-3">
+              <div key={item.name} className="flex gap-3 rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
                 <div className="pt-0.5">
                   {item.state === '进行中' ? (
                     <CircleAlert size={16} className="text-[#E36F2C]" />
@@ -322,8 +322,8 @@ export default async function SettingsPage() {
                 </div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-medium text-[#F0F0F0]">{item.name}</p>
-                    <Badge className="border-[#3A3A3E] bg-[#0F0F0F] text-[#8A8580]">{item.state}</Badge>
+                    <p className="text-sm font-medium text-[#2C2A28]">{item.name}</p>
+                    <Badge className="border-[#C4B9AB] bg-[#FFFFFF] text-[#8A8580]">{item.state}</Badge>
                   </div>
                   <p className="mt-1 text-sm leading-5 text-[#8A8580]">{item.detail}</p>
                 </div>
@@ -343,12 +343,12 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           {logs.length === 0 ? (
-            <div className="rounded-md border border-dashed border-[#2A2A2E] py-10 text-center text-sm text-[#8A8580]">
+            <div className="rounded-md border border-dashed border-[#E5DED4] py-10 text-center text-sm text-[#8A8580]">
               暂无操作日志
             </div>
           ) : (
-            <div className="overflow-hidden rounded-md border border-[#2A2A2E]">
-              <div className="grid grid-cols-[150px_1fr_120px_160px] gap-3 border-b border-[#2A2A2E] bg-[#141414] px-4 py-3 text-xs text-[#8A8580]">
+            <div className="overflow-hidden rounded-md border border-[#E5DED4]">
+              <div className="grid grid-cols-[150px_1fr_120px_160px] gap-3 border-b border-[#E5DED4] bg-[#FAF7F2] px-4 py-3 text-xs text-[#8A8580]">
                 <span>时间</span>
                 <span>操作</span>
                 <span>对象</span>
@@ -357,10 +357,10 @@ export default async function SettingsPage() {
               {logs.map((log) => (
                 <div
                   key={log.id}
-                  className="grid grid-cols-[150px_1fr_120px_160px] gap-3 border-b border-[#2A2A2E] px-4 py-3 text-sm last:border-b-0"
+                  className="grid grid-cols-[150px_1fr_120px_160px] gap-3 border-b border-[#E5DED4] px-4 py-3 text-sm last:border-b-0"
                 >
                   <span className="text-[#8A8580]">{formatDateTime(log.created_at)}</span>
-                  <span className="truncate text-[#F0F0F0]">{log.action ?? '—'}</span>
+                  <span className="truncate text-[#2C2A28]">{log.action ?? '—'}</span>
                   <span className="truncate text-[#8A8580]">
                     {log.target_type ?? '—'} {log.target_id ? `#${log.target_id}` : ''}
                   </span>
@@ -385,10 +385,10 @@ function LinkRow({
   text: string
 }) {
   return (
-    <div className="flex gap-3 rounded-md border border-[#2A2A2E] bg-[#141414] p-3">
+    <div className="flex gap-3 rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
       <Icon size={16} className="mt-0.5 shrink-0 text-[#E36F2C]" />
       <div>
-        <p className="text-sm font-medium text-[#F0F0F0]">{title}</p>
+        <p className="text-sm font-medium text-[#2C2A28]">{title}</p>
         <p className="mt-1 text-sm leading-5 text-[#8A8580]">{text}</p>
       </div>
     </div>

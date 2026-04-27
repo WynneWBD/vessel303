@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function GlobalPage() {
   return (
-    <div style={{ overflow: 'hidden', height: '100vh', background: '#1A1A1A' }}>
+    <div style={{ overflow: 'hidden', height: '100vh', background: '#241F1B' }}>
       {/* Preload the style.json through our edge proxy so the browser starts
           fetching it in parallel with the map JS chunk, instead of waiting
           for maplibre-gl to finish parsing before requesting it. Saves one

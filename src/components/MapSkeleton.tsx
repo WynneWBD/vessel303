@@ -15,7 +15,7 @@ export default function MapSkeleton() {
       style={{
         position: 'absolute',
         inset: 0,
-        background: '#1A1A1A',
+        background: '#241F1B',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

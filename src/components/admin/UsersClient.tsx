@@ -201,7 +201,7 @@ export default function UsersClient({
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex flex-col gap-1">
           <h1
-            className="text-white"
+            className="text-[#2C2A28]"
             style={{
               fontFamily: 'DM Sans, sans-serif',
               fontSize: 24,
@@ -259,11 +259,11 @@ export default function UsersClient({
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border border-[#2A2A2E] bg-[#0F0F0F] overflow-hidden">
+      <div className="rounded-lg border border-[#E5DED4] bg-[#FFFFFF] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#2A2A2E] text-[#8A8580]">
+              <tr className="border-b border-[#E5DED4] text-[#8A8580]">
                 <th className="text-left font-medium px-4 py-3">邮箱</th>
                 <th className="text-left font-medium px-4 py-3">姓名</th>
                 <th className="text-left font-medium px-4 py-3">角色</th>
@@ -287,12 +287,12 @@ export default function UsersClient({
                 return (
                   <tr
                     key={u.id}
-                    className={`border-b border-[#2A2A2E] hover:bg-[#141414] cursor-pointer transition-colors ${
+                    className={`border-b border-[#E5DED4] hover:bg-[#FAF7F2] cursor-pointer transition-colors ${
                       wl ? 'bg-[#E36F2C]/5' : ''
                     }`}
                     onClick={() => handleSelect(u)}
                   >
-                    <td className="px-4 py-3 text-[#F0F0F0]">
+                    <td className="px-4 py-3 text-[#2C2A28]">
                       <div className="flex items-center gap-2">
                         <span>{u.email}</span>
                         {wl && (
@@ -425,7 +425,7 @@ function UserDetailSheet({
                     className="h-10 w-10 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="h-10 w-10 rounded-full bg-[#2A2A2E] flex items-center justify-center text-sm text-[#C4B9AB]">
+                  <div className="h-10 w-10 rounded-full bg-[#E5DED4] flex items-center justify-center text-sm text-[#C4B9AB]">
                     {(user.name ?? user.email).slice(0, 1).toUpperCase()}
                   </div>
                 )}
@@ -490,18 +490,18 @@ function UserDetailSheet({
               </div>
 
               {/* Related */}
-              <div className="rounded-md border border-[#2A2A2E] bg-[#141414] p-4 flex flex-col gap-2 text-sm">
+              <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-4 flex flex-col gap-2 text-sm">
                 <div className="text-xs text-[#8A8580] mb-1">关联数据</div>
                 <Link
                   href={`/admin/leads?search=${encodeURIComponent(user.email)}`}
-                  className="flex items-center justify-between text-[#F0F0F0] hover:text-[#E36F2C]"
+                  className="flex items-center justify-between text-[#2C2A28] hover:text-[#E36F2C]"
                 >
                   <span>提交线索</span>
                   <span className="text-[#E36F2C]">{stats.leads_count} 条 ›</span>
                 </Link>
                 <Link
                   href={`/admin/news?author=${user.id}`}
-                  className="flex items-center justify-between text-[#F0F0F0] hover:text-[#E36F2C]"
+                  className="flex items-center justify-between text-[#2C2A28] hover:text-[#E36F2C]"
                 >
                   <span>创作新闻</span>
                   <span className="text-[#E36F2C]">{stats.news_count} 篇 ›</span>
@@ -511,9 +511,9 @@ function UserDetailSheet({
               {/* Disable switch */}
               <div>
                 <div className="text-xs text-[#8A8580] mb-2">账户状态</div>
-                <div className="flex items-center justify-between rounded-md border border-[#2A2A2E] bg-[#141414] p-3">
+                <div className="flex items-center justify-between rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
                   <div>
-                    <div className="text-sm text-[#F0F0F0]">
+                    <div className="text-sm text-[#2C2A28]">
                       {disabled ? '已禁用' : '已激活'}
                     </div>
                     <div className="text-xs text-[#8A8580] mt-0.5">
@@ -562,7 +562,7 @@ function Field({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
       <div className="text-xs text-[#8A8580]">{label}</div>
-      <div className="text-sm text-[#F0F0F0] break-all">{value || '—'}</div>
+      <div className="text-sm text-[#2C2A28] break-all">{value || '—'}</div>
     </div>
   )
 }

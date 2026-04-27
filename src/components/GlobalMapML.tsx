@@ -125,7 +125,7 @@ const MARKER_CSS = `
   top: 50%;
   transform: translateY(-50%);
   background: rgba(26,26,26,0.88);
-  color: #F0F0F0;
+  color: #F5F2ED;
   border: 1px solid #E36F2C;
   border-radius: 4px;
   font-size: 13px;
@@ -197,7 +197,7 @@ const MARKER_CSS = `
 /* HQ factory tooltip popup */
 .vessel-hq-popup .maplibregl-popup-content {
   background: rgba(26,26,26,0.94);
-  color: #F0F0F0;
+  color: #F5F2ED;
   border: 1px solid #E36F2C;
   border-radius: 6px;
   padding: 8px 14px;
@@ -213,7 +213,7 @@ const MARKER_CSS = `
 .vessel-hq-popup-name {
   font-weight: 600;
   font-size: 13px;
-  color: #F0F0F0;
+  color: #F5F2ED;
   margin-bottom: 3px;
 }
 .vessel-hq-popup-addr {
@@ -227,7 +227,7 @@ const MARKER_CSS = `
 }
 .maplibregl-ctrl-group button {
   background-color: transparent !important;
-  color: #F0F0F0 !important;
+  color: #F5F2ED !important;
 }
 .maplibregl-ctrl-group button:hover {
   background-color: rgba(227,111,44,0.2) !important;
@@ -643,17 +643,17 @@ export default function GlobalMapML({
       : 'Map style failed to load. Please retry shortly.'
 
   return (
-    <div style={{ position: 'relative', height: '100%', width: '100%', background: '#1A1A1A' }}>
+    <div style={{ position: 'relative', height: '100%', width: '100%', background: '#241F1B' }}>
       <div
         ref={containerRef}
-        style={{ height: '100%', width: '100%', background: '#1A1A1A' }}
+        style={{ height: '100%', width: '100%', background: '#241F1B' }}
       />
       <div
         aria-hidden={mapReady && !loadError}
         style={{
           position: 'absolute',
           inset: 0,
-          background: '#1A1A1A',
+          background: '#241F1B',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -673,7 +673,7 @@ export default function GlobalMapML({
               color: '#E36F2C', fontSize: 22, fontWeight: 600,
             }}>!</div>
             <div style={{
-              color: '#F0F0F0', fontSize: 14, fontWeight: 600, letterSpacing: '0.08em',
+              color: '#F5F2ED', fontSize: 14, fontWeight: 600, letterSpacing: '0.08em',
               fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",
             }}>{errorTitle}</div>
             <div style={{
@@ -686,7 +686,7 @@ export default function GlobalMapML({
                 style={{
                   marginTop: 4,
                   padding: '8px 22px',
-                  background: '#E36F2C', color: '#F0F0F0',
+                  background: '#E36F2C', color: '#F5F2ED',
                   border: 'none', cursor: 'pointer',
                   fontSize: 12, letterSpacing: '0.12em', fontWeight: 600,
                   fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",

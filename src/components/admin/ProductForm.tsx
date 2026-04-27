@@ -202,7 +202,7 @@ export default function ProductForm({
             返回产品列表
           </Link>
           <h1
-            className="text-white"
+            className="text-[#2C2A28]"
             style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 24, fontWeight: 700 }}
           >
             {mode === 'create' ? '新建产品' : '编辑产品'}
@@ -214,7 +214,7 @@ export default function ProductForm({
             <Link
               href={previewHref}
               target="_blank"
-              className="inline-flex h-9 items-center justify-center rounded-md border border-[#2A2A2E] px-3 text-sm font-medium text-[#F0F0F0] hover:bg-[#0F0F0F]"
+              className="inline-flex h-9 items-center justify-center rounded-md border border-[#E5DED4] px-3 text-sm font-medium text-[#2C2A28] hover:bg-[#FFFFFF]"
             >
               预览
             </Link>
@@ -231,7 +231,7 @@ export default function ProductForm({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-        <div className="rounded-lg border border-[#2A2A2E] bg-[#0F0F0F] p-5 space-y-5">
+        <div className="rounded-lg border border-[#E5DED4] bg-[#FFFFFF] p-5 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="产品 ID / URL Slug" hint="新建后不可修改。示例: e7-custom-france">
               <Input
@@ -319,7 +319,7 @@ export default function ProductForm({
           </div>
         </div>
 
-        <aside className="rounded-lg border border-[#2A2A2E] bg-[#0F0F0F] p-5 space-y-5 h-fit">
+        <aside className="rounded-lg border border-[#E5DED4] bg-[#FFFFFF] p-5 space-y-5 h-fit">
           <Field label="状态">
             <Select
               value={form.status}
@@ -345,7 +345,7 @@ export default function ProductForm({
             <Input value={form.detailSlug} onChange={(e) => patch('detailSlug', normalizeId(e.target.value))} />
           </Field>
 
-          <label className="flex items-center gap-3 rounded-md border border-[#2A2A2E] bg-[#141414] px-3 py-3">
+          <label className="flex items-center gap-3 rounded-md border border-[#E5DED4] bg-[#FAF7F2] px-3 py-3">
             <input
               type="checkbox"
               checked={form.isCustom}

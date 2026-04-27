@@ -18,7 +18,7 @@ const cases = [
     products: 'S5 Gen5 · O5 · E7 Gen5 · V7 Gen5',
     desc: '依托惠州巽寮湾天然海岸线，打造集滨海野奢住宿、亲水体验、休闲餐饮于一体的高端度假营地，多种产品型号组合构建丰富的空间层次。',
     tags: ['滨海', '野奢', '亲子'],
-    accentColor: '#4a8fc9',
+    accentColor: '#E36F2C',
   },
   {
     id: 2,
@@ -31,7 +31,7 @@ const cases = [
     products: 'E7 Gen6 · V9 Gen6 · E6 Gen6',
     desc: '海拔3000米以上的轿顶山高原营地，利用VESSEL产品极端气候适应性（-32℃至55℃），实现高原四季全天候运营。云海与星空成为壮丽的天然背景。',
     tags: ['高原', '星空', '云海'],
-    accentColor: '#4ac97a',
+    accentColor: '#E36F2C',
   },
   {
     id: 3,
@@ -57,7 +57,7 @@ const cases = [
     products: 'V5 Gen5 · V7 Gen5',
     desc: '国家级自然保护区内，以轻量化装配建筑减少对生态的干扰。万绿湖碧水倒映下，15台产品点缀湖岸，构建"在自然中住宿"的卓越体验。',
     tags: ['生态保护', '湖景', '轻奢'],
-    accentColor: '#7a9ec9',
+    accentColor: '#E36F2C',
   },
   {
     id: 5,
@@ -83,7 +83,7 @@ const cases = [
     products: 'E7 Gen6 · V9 Gen6',
     desc: '微宿VESSEL与华为HUAWEI战略合作，装配式预制建筑与华为全屋智能系统完美融合，共同打造未来生活方式体验展馆。',
     tags: ['科技', '智能家居', '品牌合作'],
-    accentColor: '#c97a9e',
+    accentColor: '#E36F2C',
   },
 ];
 

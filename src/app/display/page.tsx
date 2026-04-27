@@ -148,7 +148,7 @@ export default function DisplayPage() {
 
   return (
     <div
-      className="relative overflow-hidden bg-black select-none"
+      className="relative overflow-hidden bg-[#241F1B] select-none"
       style={{ width: '100vw', height: '100vh' }}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
@@ -168,8 +168,8 @@ export default function DisplayPage() {
           sizes="100vw"
         />
         {/* Overlay gradients */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/88 via-black/55 to-black/20" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/35" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#241F1B]/88 via-[#241F1B]/55 to-[#241F1B]/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#241F1B]/75 via-transparent to-[#241F1B]/35" />
       </div>
 
       {/* Top gold line */}

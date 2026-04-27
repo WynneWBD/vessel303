@@ -33,17 +33,17 @@ export default function NewsListView({ rows }: { rows: NewsItem[] }) {
   const isEmpty = rows.length === 0
 
   return (
-    <main className="min-h-screen bg-[#1A1A1A] text-[#F0F0F0]">
+    <main className="min-h-screen bg-[#FAF7F2] text-[#2C2A28]">
       <Navbar />
 
       {/* Hero */}
-      <section className="relative pt-32 pb-16 bg-[#0F0F0F] border-b border-[#2A2A2E]">
+      <section className="relative pt-32 pb-16 bg-[#241F1B] border-b border-[#E36F2C]/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-xs tracking-[0.2em] text-[#E36F2C] uppercase mb-3">
             {lang === 'zh' ? '新闻动态' : 'News & Events'}
           </p>
           <h1
-            className="text-white"
+            className="text-[#F5F2ED]"
             style={{
               fontFamily: 'DM Sans, sans-serif',
               fontSize: 'clamp(2rem, 5vw, 3.5rem)',
@@ -54,7 +54,7 @@ export default function NewsListView({ rows }: { rows: NewsItem[] }) {
           >
             {lang === 'zh' ? '最新动态' : 'Latest Updates'}
           </h1>
-          <p className="mt-4 text-[#8A8580] text-sm max-w-xl">
+          <p className="mt-4 text-[#C9BEB4] text-sm max-w-xl">
             {lang === 'zh'
               ? 'VESSEL 微宿®品牌动态、行业资讯与项目合作'
               : 'Brand news, industry insights and project highlights from VESSEL®'}
@@ -82,10 +82,10 @@ export default function NewsListView({ rows }: { rows: NewsItem[] }) {
                 <Link
                   key={item.id}
                   href={`/news/${item.slug}`}
-                  className="group flex flex-col overflow-hidden rounded-lg border border-[#2A2A2E] bg-[#141414] hover:border-[#E36F2C]/40 transition-all duration-300"
+                  className="group flex flex-col overflow-hidden rounded-lg border border-[#E5DED4] bg-white hover:border-[#E36F2C]/40 hover:shadow-[0_18px_50px_rgba(44,42,40,0.10)] transition-all duration-300"
                 >
                   {/* Cover */}
-                  <div className="relative h-48 overflow-hidden bg-[#0F0F0F] shrink-0">
+                  <div className="relative h-48 overflow-hidden bg-[#FAF7F2] shrink-0">
                     {item.cover_image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -98,7 +98,7 @@ export default function NewsListView({ rows }: { rows: NewsItem[] }) {
                         className="h-full w-full"
                         style={{
                           background:
-                            'linear-gradient(135deg, #1A1A1A 0%, #E36F2C22 50%, #1A1A1A 100%)',
+                            'linear-gradient(135deg, #F5F2ED 0%, #E36F2C22 50%, #FAF7F2 100%)',
                         }}
                       >
                         <div className="flex h-full items-center justify-center">
@@ -127,7 +127,7 @@ export default function NewsListView({ rows }: { rows: NewsItem[] }) {
                       <p className="text-xs text-[#6B6560] tracking-wider">{dateStr}</p>
                     )}
                     <h2
-                      className="text-[#F0F0F0] font-semibold leading-snug line-clamp-2 group-hover:text-[#E36F2C] transition-colors"
+                      className="text-[#2C2A28] font-semibold leading-snug line-clamp-2 group-hover:text-[#E36F2C] transition-colors"
                       style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 16 }}
                     >
                       {title}

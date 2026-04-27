@@ -17,7 +17,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
   const t = useT();
 
   return (
-    <main className="bg-white text-[#1A1A1A]">
+    <main className="bg-white text-[#2C2A28]">
       {/* ── Hero ── */}
       <section className="relative min-h-[70vh] flex items-end pb-16 overflow-hidden bg-white">
         <Image
@@ -57,7 +57,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black leading-none mb-4">
             <span style={{ color: product.accentColor }}>{product.model}</span>
-            <span className="text-[#1A1A1A] ml-4">{product.gen}</span>
+            <span className="text-[#2C2A28] ml-4">{product.gen}</span>
           </h1>
           <p className="text-[#444444] text-lg sm:text-xl font-light mb-2 tracking-wider">{product.tagline}</p>
           <p className="text-[#888888] text-sm tracking-wider italic">{product.tagline2}</p>
@@ -71,9 +71,9 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
               { label: t(i18n.productDetail.specCapacity), value: product.capacity },
               { label: t(i18n.productDetail.specWeight), value: product.weight },
             ].map((spec) => (
-              <div key={spec.label} className="bg-black/50 backdrop-blur-sm border border-[#E0DCD6] px-4 py-2">
+              <div key={spec.label} className="bg-[#241F1B]/50 backdrop-blur-sm border border-[#E0DCD6] px-4 py-2">
                 <div className="text-[#888888] text-[10px] tracking-wider">{spec.label}</div>
-                <div className="text-[#1A1A1A] font-bold text-sm tracking-wider">{spec.value}</div>
+                <div className="text-[#2C2A28] font-bold text-sm tracking-wider">{spec.value}</div>
               </div>
             ))}
           </div>
@@ -153,7 +153,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <div className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase mb-4 font-medium">{t(i18n.productDetail.designLabel)}</div>
-              <h2 className="text-3xl font-black text-[#1A1A1A] mb-6 leading-tight">
+              <h2 className="text-3xl font-black text-[#2C2A28] mb-6 leading-tight">
                 {product.tagline2}
               </h2>
               <p className="text-[#666666] text-sm leading-loose">{product.designPhilosophy}</p>
@@ -191,7 +191,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
         <section className="py-20 border-b border-[#F0EDE8]">
           <div className="text-center mb-12">
             <div className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.productDetail.featuresLabel)}</div>
-            <h2 className="text-3xl font-black text-[#1A1A1A]">{t(i18n.productDetail.featuresTitle)}</h2>
+            <h2 className="text-3xl font-black text-[#2C2A28]">{t(i18n.productDetail.featuresTitle)}</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {product.features.map((feature, i) => (
@@ -205,7 +205,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
                 >
                   {String(i + 1).padStart(2, '0')}
                 </div>
-                <h3 className="text-[#1A1A1A] font-bold mb-2 tracking-wider">{feature.title}</h3>
+                <h3 className="text-[#2C2A28] font-bold mb-2 tracking-wider">{feature.title}</h3>
                 <p className="text-[#666666] text-sm leading-relaxed">{feature.desc}</p>
               </div>
             ))}
@@ -216,7 +216,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
         <section className="py-20 border-b border-[#F0EDE8]">
           <div className="text-center mb-12">
             <div className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.productDetail.spacesLabel)}</div>
-            <h2 className="text-3xl font-black text-[#1A1A1A]">{t(i18n.productDetail.spacesTitle)}</h2>
+            <h2 className="text-3xl font-black text-[#2C2A28]">{t(i18n.productDetail.spacesTitle)}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {product.spaces.map((space, i) => (
@@ -231,7 +231,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
                   {String(i + 1).padStart(2, '0')}
                 </div>
                 <div>
-                  <div className="text-[#1A1A1A] font-bold text-sm mb-1 tracking-wider">{space.name}</div>
+                  <div className="text-[#2C2A28] font-bold text-sm mb-1 tracking-wider">{space.name}</div>
                   <div className="text-[#666666] text-sm leading-relaxed">{space.desc}</div>
                 </div>
               </div>
@@ -243,7 +243,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
         <section className="py-20 border-b border-[#F0EDE8]">
           <div className="text-center mb-12">
             <div className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.productDetail.materialsLabel)}</div>
-            <h2 className="text-3xl font-black text-[#1A1A1A]">{t(i18n.productDetail.materialsTitle)}</h2>
+            <h2 className="text-3xl font-black text-[#2C2A28]">{t(i18n.productDetail.materialsTitle)}</h2>
             <p className="text-[#888888] text-sm mt-3 max-w-xl mx-auto tracking-wider">
               {t(i18n.productDetail.materialsNote)}
             </p>
@@ -256,7 +256,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
               >
                 <div className="absolute top-0 left-0 w-0.5 h-full" style={{ background: product.accentColor }} />
                 <div className="pl-3">
-                  <div className="text-[#1A1A1A] font-bold text-sm mb-1 tracking-wider">{mat.title}</div>
+                  <div className="text-[#2C2A28] font-bold text-sm mb-1 tracking-wider">{mat.title}</div>
                   <div className="text-[#888888] text-xs tracking-wider">{mat.spec}</div>
                 </div>
               </div>
@@ -282,7 +282,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
               ].map(([k, v]) => (
                 <div key={k} className="p-4">
                   <div className="text-[#999999] text-[10px] tracking-wider mb-1">{k}</div>
-                  <div className="text-[#1A1A1A] text-sm font-semibold tracking-wider">{v}</div>
+                  <div className="text-[#2C2A28] text-sm font-semibold tracking-wider">{v}</div>
                 </div>
               ))}
             </div>
@@ -292,7 +292,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
         {/* ── CTA ── */}
         <section className="py-20 text-center">
           <div className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase mb-4 font-medium">{t(i18n.productDetail.startCoop)}</div>
-          <h2 className="text-3xl sm:text-4xl font-black text-[#1A1A1A] mb-4">
+          <h2 className="text-3xl sm:text-4xl font-black text-[#2C2A28] mb-4">
             {t(i18n.productDetail.interested).replace('{model}', product.model).replace('{gen}', product.gen)}
           </h2>
           <p className="text-[#888888] text-sm mb-10 max-w-lg mx-auto tracking-wider">
@@ -308,7 +308,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
             </Link>
             <a
               href="tel:4008090303"
-              className="text-sm px-8 py-3 border border-[#BBBBBB] text-[#1A1A1A] hover:border-[#E36F2C] hover:text-[#E36F2C] transition-colors tracking-wider"
+              className="text-sm px-8 py-3 border border-[#BBBBBB] text-[#2C2A28] hover:border-[#E36F2C] hover:text-[#E36F2C] transition-colors tracking-wider"
             >
               400-8090-303
             </a>
@@ -329,7 +329,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
                     </svg>
                     <div>
                       <div className="text-[#AAAAAA] text-xs mb-0.5">{t(i18n.productDetail.prevProductLabel)}</div>
-                      <div className="text-[#1A1A1A] group-hover:text-[#E36F2C] transition-colors font-bold tracking-wider">
+                      <div className="text-[#2C2A28] group-hover:text-[#E36F2C] transition-colors font-bold tracking-wider">
                         {prevProduct.model} {prevProduct.gen}
                       </div>
                     </div>
@@ -341,7 +341,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
                   <Link href={`/products/${nextProduct.slug}`} className="group inline-flex items-center gap-3">
                     <div>
                       <div className="text-[#AAAAAA] text-xs mb-0.5">{t(i18n.productDetail.nextProductLabel)}</div>
-                      <div className="text-[#1A1A1A] group-hover:text-[#E36F2C] transition-colors font-bold tracking-wider">
+                      <div className="text-[#2C2A28] group-hover:text-[#E36F2C] transition-colors font-bold tracking-wider">
                         {nextProduct.model} {nextProduct.gen}
                       </div>
                     </div>

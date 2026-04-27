@@ -19,7 +19,7 @@ export default function GlobalMapStats() {
         top: 0,
         left: 0,
         right: 0,
-        background: '#1A1A1A',
+        background: '#241F1B',
         zIndex: 1000,
         borderBottom: '1px solid rgba(227,111,44,0.25)',
       }}
@@ -98,7 +98,7 @@ export default function GlobalMapStats() {
               cursor: 'pointer',
               border: 'none',
               background: lang === 'en' ? '#E36F2C' : 'transparent',
-              color: lang === 'en' ? '#F0F0F0' : 'rgba(255,255,255,0.4)',
+              color: lang === 'en' ? '#F5F2ED' : 'rgba(255,255,255,0.4)',
               fontWeight: lang === 'en' ? 700 : 400,
               transition: 'all 0.15s',
             }}
@@ -115,7 +115,7 @@ export default function GlobalMapStats() {
               cursor: 'pointer',
               border: 'none',
               background: lang === 'zh' ? '#E36F2C' : 'transparent',
-              color: lang === 'zh' ? '#F0F0F0' : 'rgba(255,255,255,0.4)',
+              color: lang === 'zh' ? '#F5F2ED' : 'rgba(255,255,255,0.4)',
               fontWeight: lang === 'zh' ? 700 : 400,
               transition: 'all 0.15s',
             }}

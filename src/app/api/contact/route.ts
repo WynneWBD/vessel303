@@ -34,7 +34,7 @@ function row(label: string, value: string) {
 
 function notificationHtml(d: z.infer<typeof schema>, isBEnd: boolean) {
   const tag = isBEnd ? 'B端线索' : 'C端线索';
-  const tagColor = isBEnd ? '#E36F2C' : '#7a9ec9';
+  const tagColor = isBEnd ? '#E36F2C' : '#E36F2C';
   return `<!DOCTYPE html>
 <html lang="zh">
 <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>

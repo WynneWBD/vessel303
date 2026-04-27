@@ -104,27 +104,27 @@ export default async function AdminDashboard() {
             fontFamily: 'DM Sans, sans-serif',
             fontWeight: 700,
             fontSize: 28,
-            color: '#F0F0F0',
+            color: '#2C2A28',
             letterSpacing: '-0.02em',
           }}
         >
           Welcome Admin
         </h1>
-        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>{email}</p>
+        <p style={{ fontSize: 14, color: 'rgba(44,42,40,0.55)' }}>{email}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
           <div
             key={s.label}
-            className="bg-[#0F0F0F] border border-[#2A2A2E] rounded-lg p-6"
+            className="bg-[#FFFFFF] border border-[#E5DED4] rounded-lg p-6"
           >
             <div className="flex items-center gap-2">
               <s.Icon size={16} style={{ color: '#8A8580' }} />
               <span style={{ color: '#8A8580', fontSize: 14 }}>{s.label}</span>
             </div>
             <div
-              className="text-3xl font-bold text-white mt-3"
+              className="text-3xl font-bold text-[#2C2A28] mt-3"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
             >
               {s.value}
@@ -137,7 +137,7 @@ export default async function AdminDashboard() {
       </div>
 
       <p className="mt-8 text-sm text-[#8A8580] italic">
-        // 后续这里加最近线索列表 / 注册趋势图 / 待办事项
+        后续这里加最近线索列表 / 注册趋势图 / 待办事项
       </p>
     </div>
   )

@@ -296,20 +296,20 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
               {/* Arrows */}
               <button
                 onClick={prev}
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 border border-white/15 flex items-center justify-center text-xl text-white/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#E36F2C] hover:text-white hover:border-[#E36F2C]"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#241F1B]/65 border border-white/15 flex items-center justify-center text-xl text-white/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#E36F2C] hover:text-white hover:border-[#E36F2C]"
                 aria-label="Previous image"
               >‹</button>
               <button
                 onClick={next}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 border border-white/15 flex items-center justify-center text-xl text-white/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#E36F2C] hover:text-white hover:border-[#E36F2C]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#241F1B]/65 border border-white/15 flex items-center justify-center text-xl text-white/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#E36F2C] hover:text-white hover:border-[#E36F2C]"
                 aria-label="Next image"
               >›</button>
               {/* Counter */}
-              <div className="absolute bottom-3 right-3 bg-black/70 px-2.5 py-1 text-[10px] text-white/55 tracking-widest">
+              <div className="absolute bottom-3 right-3 bg-[#241F1B]/75 px-2.5 py-1 text-[10px] text-white/55 tracking-widest">
                 {activeIdx + 1} / {GALLERY.length}
               </div>
               {/* Label */}
-              <div className="absolute bottom-3 left-3 bg-black/70 px-2.5 py-1 text-[10px] text-white/50 tracking-wider">
+              <div className="absolute bottom-3 left-3 bg-[#241F1B]/75 px-2.5 py-1 text-[10px] text-white/50 tracking-wider">
                 {lang === 'en' ? active.en : active.cn}
               </div>
             </div>
@@ -558,7 +558,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 18vw"
                       />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                      <div className="absolute inset-0 bg-[#241F1B]/0 group-hover:bg-[#241F1B]/20 transition-colors" />
                     </button>
                   ))}
                 </div>

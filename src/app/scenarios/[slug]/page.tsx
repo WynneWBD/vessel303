@@ -122,7 +122,7 @@ const scenarios: ScenarioData[] = [
       { name: '南海狮山文旅商业街', location: '广东·佛山', desc: '城郊商业文旅综合体' },
       { name: '广交会品牌展示', location: '广东·广州', desc: '137届广交会展位部署' },
     ],
-    accentColor: '#4a8fc9',
+    accentColor: '#E36F2C',
   },
   {
     slug: 'public',
@@ -172,7 +172,7 @@ const scenarios: ScenarioData[] = [
       { name: '边境服务设施', location: '多地', desc: '多地边境及偏远地区公共服务配套' },
       { name: '展会临时场馆', location: '全国', desc: '广交会等大型展会临时展览空间' },
     ],
-    accentColor: '#4ac97a',
+    accentColor: '#E36F2C',
   },
 ];
 
@@ -196,8 +196,8 @@ export async function generateMetadata({
 
 function Placeholder({ label, className }: { label: string; className?: string }) {
   return (
-    <div className={`bg-[#1a1a1a] flex items-center justify-center ${className}`}>
-      <span className="text-white/15 text-xs tracking-wider">{label}</span>
+    <div className={`bg-[#E5DED4] flex items-center justify-center ${className}`}>
+      <span className="text-[#C4B9AB] text-xs tracking-wider">{label}</span>
     </div>
   );
 }
@@ -214,7 +214,7 @@ export default async function ScenarioPage({
   const otherScenarios = scenarios.filter((s) => s.slug !== scenario.slug);
 
   return (
-    <main className="bg-[#1C1A18] text-white">
+    <main className="bg-[#FAF7F2] text-[#2C2A28]">
       <Navbar />
 
       <PageHero
@@ -230,15 +230,15 @@ export default async function ScenarioPage({
       />
 
       {/* ── Intro ── */}
-      <section className="py-16 border-b border-white/5">
+      <section className="py-16 border-b border-[#E5DED4]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <p className="text-white/55 text-base leading-loose mb-8">{scenario.intro}</p>
+              <p className="text-[#6B625B] text-base leading-loose mb-8">{scenario.intro}</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {scenario.specs.map((spec) => (
-                  <div key={spec.label} className="bg-[#111] border border-white/8 p-3">
-                    <div className="text-white/30 text-[10px] tracking-wider mb-0.5">{spec.label}</div>
+                  <div key={spec.label} className="bg-white border border-[#E5DED4] p-3">
+                    <div className="text-[#8A7D74] text-[10px] tracking-wider mb-0.5">{spec.label}</div>
                     <div
                       className="text-sm font-bold tracking-wider"
                       style={{ color: scenario.accentColor }}
@@ -255,7 +255,7 @@ export default async function ScenarioPage({
       </section>
 
       {/* ── Features ── */}
-      <section className="py-20 bg-[#151310] border-b border-white/5">
+      <section className="py-20 bg-[#F5F2ED] border-b border-[#E5DED4]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div
@@ -264,13 +264,13 @@ export default async function ScenarioPage({
             >
               方案优势
             </div>
-            <h2 className="text-3xl font-black text-white">为什么选择 VESSEL？</h2>
+            <h2 className="text-3xl font-black text-[#2C2A28]">为什么选择 VESSEL？</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {scenario.features.map((f, i) => (
               <div
                 key={i}
-                className="bg-[#111] border border-white/8 hover:border-[#E36F2C]/20 transition-all p-7 group"
+                className="bg-white border border-[#E5DED4] hover:border-[#E36F2C]/20 transition-all p-7 group"
               >
                 <div
                   className="w-10 h-10 flex items-center justify-center font-black text-sm mb-4"
@@ -278,8 +278,8 @@ export default async function ScenarioPage({
                 >
                   {String(i + 1).padStart(2, '0')}
                 </div>
-                <h3 className="text-white font-bold mb-2 tracking-wider">{f.title}</h3>
-                <p className="text-white/45 text-sm leading-relaxed">{f.desc}</p>
+                <h3 className="text-[#2C2A28] font-bold mb-2 tracking-wider">{f.title}</h3>
+                <p className="text-[#6B625B] text-sm leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -287,7 +287,7 @@ export default async function ScenarioPage({
       </section>
 
       {/* ── 5-Step Process ── */}
-      <section className="py-20 border-b border-white/5">
+      <section className="py-20 border-b border-[#E5DED4]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div
@@ -296,7 +296,7 @@ export default async function ScenarioPage({
             >
               合作流程
             </div>
-            <h2 className="text-3xl font-black text-white">五步实现您的项目</h2>
+            <h2 className="text-3xl font-black text-[#2C2A28]">五步实现您的项目</h2>
           </div>
           <div className="relative">
             {/* Connecting line */}
@@ -306,15 +306,15 @@ export default async function ScenarioPage({
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               {scenario.process.map((step) => (
-                <div key={step.step} className="relative bg-[#221F1C] border border-white/8 p-5 text-center group">
+                <div key={step.step} className="relative bg-white border border-[#E5DED4] p-5 text-center group">
                   <div
-                    className="w-14 h-14 rounded-full flex items-center justify-center font-black text-lg mx-auto mb-4 border-2 bg-[#1C1A18]"
+                    className="w-14 h-14 rounded-full flex items-center justify-center font-black text-lg mx-auto mb-4 border-2 bg-[#FAF7F2]"
                     style={{ borderColor: scenario.accentColor, color: scenario.accentColor }}
                   >
                     {step.step}
                   </div>
-                  <h3 className="text-white font-bold text-sm mb-2 tracking-wider">{step.title}</h3>
-                  <p className="text-white/40 text-xs leading-relaxed">{step.desc}</p>
+                  <h3 className="text-[#2C2A28] font-bold text-sm mb-2 tracking-wider">{step.title}</h3>
+                  <p className="text-[#6B625B] text-xs leading-relaxed">{step.desc}</p>
                 </div>
               ))}
             </div>
@@ -323,7 +323,7 @@ export default async function ScenarioPage({
       </section>
 
       {/* ── Recommended Products ── */}
-      <section className="py-16 bg-[#151310] border-b border-white/5">
+      <section className="py-16 bg-[#F5F2ED] border-b border-[#E5DED4]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
             <div
@@ -332,14 +332,14 @@ export default async function ScenarioPage({
             >
               推荐产品
             </div>
-            <h2 className="text-2xl font-black text-white">适合{scenario.label}的产品</h2>
+            <h2 className="text-2xl font-black text-[#2C2A28]">适合{scenario.label}的产品</h2>
           </div>
           <div className="flex flex-wrap justify-center gap-4">
             {scenario.recommendedProducts.map((p) => (
               <Link
                 key={p}
                 href={`/products/${p.split(' ')[0].toLowerCase()}`}
-                className="flex items-center gap-3 px-6 py-3 border border-white/15 hover:border-[#E36F2C]/50 hover:text-[#E36F2C] text-white/70 text-sm transition-all tracking-wider group"
+                className="flex items-center gap-3 px-6 py-3 border border-[#E5DED4] hover:border-[#E36F2C]/50 hover:text-[#E36F2C] text-[#6B625B] text-sm transition-all tracking-wider group"
               >
                 <span>{p}</span>
                 <svg className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -358,7 +358,7 @@ export default async function ScenarioPage({
       </section>
 
       {/* ── Related Cases ── */}
-      <section className="py-20 border-b border-white/5">
+      <section className="py-20 border-b border-[#E5DED4]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
             <div
@@ -367,16 +367,16 @@ export default async function ScenarioPage({
             >
               典型案例
             </div>
-            <h2 className="text-2xl font-black text-white">相关项目案例</h2>
+            <h2 className="text-2xl font-black text-[#2C2A28]">相关项目案例</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {scenario.cases.map((c) => (
-              <div key={c.name} className="bg-[#111] border border-white/8 hover:border-[#E36F2C]/25 transition-all overflow-hidden group">
+              <div key={c.name} className="bg-white border border-[#E5DED4] hover:border-[#E36F2C]/25 transition-all overflow-hidden group">
                 <Placeholder label={c.name} className="h-44" />
                 <div className="p-5">
-                  <div className="text-white/30 text-xs mb-1 tracking-wider">📍 {c.location}</div>
-                  <div className="text-white font-bold text-sm mb-2 tracking-wider">{c.name}</div>
-                  <div className="text-white/45 text-xs leading-relaxed">{c.desc}</div>
+                  <div className="text-[#8A7D74] text-xs mb-1 tracking-wider">📍 {c.location}</div>
+                  <div className="text-[#2C2A28] font-bold text-sm mb-2 tracking-wider">{c.name}</div>
+                  <div className="text-[#6B625B] text-xs leading-relaxed">{c.desc}</div>
                 </div>
               </div>
             ))}
@@ -384,7 +384,7 @@ export default async function ScenarioPage({
           <div className="mt-8 text-center">
             <Link
               href="/cases"
-              className="inline-flex items-center gap-2 border border-white/20 text-white/60 text-sm px-6 py-3 hover:border-[#E36F2C]/40 hover:text-[#E36F2C] transition-colors tracking-wider"
+              className="inline-flex items-center gap-2 border border-[#E5DED4] text-[#6B625B] text-sm px-6 py-3 hover:border-[#E36F2C]/40 hover:text-[#E36F2C] transition-colors tracking-wider"
             >
               查看全部案例 →
             </Link>
@@ -396,14 +396,14 @@ export default async function ScenarioPage({
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
-            <h2 className="text-xl font-black text-white/60">更多应用场景</h2>
+            <h2 className="text-xl font-black text-[#6B625B]">更多应用场景</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {otherScenarios.map((s) => (
               <Link
                 key={s.slug}
                 href={`/scenarios/${s.slug}`}
-                className="group flex items-center gap-4 p-6 bg-[#221F1C] border border-white/8 hover:border-[#E36F2C]/30 transition-all"
+                className="group flex items-center gap-4 p-6 bg-white border border-[#E5DED4] hover:border-[#E36F2C]/30 transition-all"
               >
                 <div
                   className="w-12 h-12 flex items-center justify-center shrink-0 text-lg font-black"
@@ -412,12 +412,12 @@ export default async function ScenarioPage({
                   {s.label[0]}
                 </div>
                 <div>
-                  <div className="text-white font-bold tracking-wider group-hover:text-[#E36F2C] transition-colors">
+                  <div className="text-[#2C2A28] font-bold tracking-wider group-hover:text-[#E36F2C] transition-colors">
                     {s.title} {s.titleGold}
                   </div>
-                  <div className="text-white/35 text-xs mt-0.5 tracking-wider">{s.heroTagline}</div>
+                  <div className="text-[#8A7D74] text-xs mt-0.5 tracking-wider">{s.heroTagline}</div>
                 </div>
-                <svg className="w-5 h-5 text-white/20 group-hover:text-[#E36F2C] transition-colors ml-auto shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-[#C4B9AB] group-hover:text-[#E36F2C] transition-colors ml-auto shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
                 </svg>
               </Link>
@@ -427,7 +427,7 @@ export default async function ScenarioPage({
       </section>
 
       {/* ── CTA ── */}
-      <div className="border-t border-white/5 bg-[#151310] py-16">
+      <div className="border-t border-[#E5DED4] bg-[#F5F2ED] py-16">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <div
             className="text-xs tracking-[0.3em] uppercase mb-4 font-medium"
@@ -435,10 +435,10 @@ export default async function ScenarioPage({
           >
             开始合作
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-white mb-4">
+          <h2 className="text-2xl sm:text-3xl font-black text-[#2C2A28] mb-4">
             有{scenario.label}项目需求？
           </h2>
-          <p className="text-white/40 text-sm mb-8 tracking-wider">
+          <p className="text-[#6B625B] text-sm mb-8 tracking-wider">
             专业顾问团队提供从选址规划到交付运营的全程服务，45天即可实现项目落地
           </p>
           <div className="flex flex-wrap justify-center gap-4">
@@ -451,7 +451,7 @@ export default async function ScenarioPage({
             </Link>
             <a
               href="tel:4008090303"
-              className="text-sm px-8 py-3 border border-white/30 text-white hover:border-[#E36F2C] hover:text-[#E36F2C] transition-colors tracking-wider"
+              className="text-sm px-8 py-3 border border-[#C4B9AB] text-[#2C2A28] hover:border-[#E36F2C] hover:text-[#E36F2C] transition-colors tracking-wider"
             >
               400-8090-303
             </a>

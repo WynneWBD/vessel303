@@ -349,7 +349,7 @@ export default function MediaClient({
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div className="flex flex-col gap-2">
           <h1
-            className="text-white"
+            className="text-[#2C2A28]"
             style={{
               fontFamily: 'DM Sans, sans-serif',
               fontSize: 24,
@@ -366,7 +366,7 @@ export default function MediaClient({
             </span>{' '}
             / 1 GB 免费额度
           </div>
-          <div className="h-1 w-64 rounded-full bg-[#2A2A2E] overflow-hidden">
+          <div className="h-1 w-64 rounded-full bg-[#E5DED4] overflow-hidden">
             <div
               className="h-full rounded-full transition-all"
               style={{
@@ -426,7 +426,7 @@ export default function MediaClient({
 
       {/* Grid */}
       {uploads.length === 0 && !loading ? (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#2A2A2E] bg-[#0F0F0F] py-20 text-center">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#E5DED4] bg-[#FFFFFF] py-20 text-center">
           <ImageOff size={48} className="text-[#4A4744]" />
           <p className="text-[#C4B9AB]">还没有图片</p>
           <p className="text-xs text-[#6B6560]">点击右上角上传,或直接拖拽图片到此页面</p>
@@ -443,14 +443,14 @@ export default function MediaClient({
 
       {/* Upload progress panel */}
       {tasks.length > 0 && (
-        <div className="fixed bottom-6 right-6 z-40 w-80 rounded-lg border border-[#2A2A2E] bg-[#0F0F0F] shadow-xl">
-          <div className="flex items-center justify-between border-b border-[#2A2A2E] px-4 py-2.5">
+        <div className="fixed bottom-6 right-6 z-40 w-80 rounded-lg border border-[#E5DED4] bg-[#FFFFFF] shadow-xl">
+          <div className="flex items-center justify-between border-b border-[#E5DED4] px-4 py-2.5">
             <span className="text-xs text-[#C4B9AB]">
               上传进度 ({tasks.filter((t) => t.status === 'done').length}/{tasks.length})
             </span>
             <button
               onClick={() => setTasks([])}
-              className="text-[#8A8580] hover:text-white"
+              className="text-[#8A8580] hover:text-[#2C2A28]"
             >
               <X size={14} />
             </button>
@@ -459,10 +459,10 @@ export default function MediaClient({
             {tasks.map((t) => (
               <div
                 key={t.id}
-                className="rounded-md bg-[#141414] border border-[#2A2A2E] p-2"
+                className="rounded-md bg-[#FAF7F2] border border-[#E5DED4] p-2"
               >
                 <div className="flex items-center justify-between text-xs gap-2">
-                  <span className="truncate text-[#F0F0F0]" title={t.name}>
+                  <span className="truncate text-[#2C2A28]" title={t.name}>
                     {t.name}
                   </span>
                   <span
@@ -477,7 +477,7 @@ export default function MediaClient({
                     {t.status === 'error' ? '失败' : `${t.progress}%`}
                   </span>
                 </div>
-                <div className="mt-1.5 h-1 w-full rounded-full bg-[#2A2A2E] overflow-hidden">
+                <div className="mt-1.5 h-1 w-full rounded-full bg-[#E5DED4] overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all"
                     style={{
@@ -541,10 +541,10 @@ function MediaCard({ upload, onClick }: { upload: Upload; onClick: () => void })
     <button
       type="button"
       onClick={onClick}
-      className="group relative aspect-square overflow-hidden rounded-md border border-[#2A2A2E] bg-[#141414] text-left focus:outline-none focus:ring-2 focus:ring-[#E36F2C]"
+      className="group relative aspect-square overflow-hidden rounded-md border border-[#E5DED4] bg-[#FAF7F2] text-left focus:outline-none focus:ring-2 focus:ring-[#E36F2C]"
     >
       {!loaded && (
-        <div className="absolute inset-0 bg-[#2A2A2E] animate-pulse" aria-hidden />
+        <div className="absolute inset-0 bg-[#E5DED4] animate-pulse" aria-hidden />
       )}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -634,7 +634,7 @@ function MediaDetailSheet({
 
             <div className="flex-1 overflow-auto p-6 flex flex-col gap-6">
               {/* Preview */}
-              <div className="rounded-md border border-[#2A2A2E] bg-[#141414] overflow-hidden flex items-center justify-center max-h-[400px]">
+              <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] overflow-hidden flex items-center justify-center max-h-[400px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={upload.url}
@@ -668,15 +668,15 @@ function MediaDetailSheet({
                     复制
                   </button>
                 </div>
-                <div className="rounded-md bg-[#141414] border border-[#2A2A2E] p-3 text-xs font-mono text-[#C4B9AB] break-all">
+                <div className="rounded-md bg-[#FAF7F2] border border-[#E5DED4] p-3 text-xs font-mono text-[#C4B9AB] break-all">
                   {upload.url}
                 </div>
               </div>
 
               {/* References */}
-              <div className="rounded-md border border-[#2A2A2E] bg-[#141414] p-3 text-sm">
+              <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3 text-sm">
                 <div className="text-xs text-[#8A8580] mb-1.5">引用统计</div>
-                <div className="text-[#F0F0F0]">
+                <div className="text-[#2C2A28]">
                   被引用 <span className="text-[#E36F2C]">{refs.total}</span> 次
                   {refs.news > 0 && (
                     <span className="text-[#8A8580]">
@@ -726,7 +726,7 @@ function Field({
   return (
     <div className={fullWidth ? 'col-span-2' : ''}>
       <div className="text-xs text-[#8A8580]">{label}</div>
-      <div className="text-sm text-[#F0F0F0] break-all">{value || '—'}</div>
+      <div className="text-sm text-[#2C2A28] break-all">{value || '—'}</div>
     </div>
   )
 }

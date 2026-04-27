@@ -74,13 +74,13 @@ function GridCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
 
         {/* Top-left: Gen tag */}
         <div className="absolute top-3 left-3">
-          <span className="text-[10px] font-bold px-2 py-1 bg-black/80 text-white tracking-wider">
+          <span className="text-[10px] font-bold px-2 py-1 bg-[#241F1B]/80 text-white tracking-wider">
             {product.gen}
           </span>
         </div>
         {/* Top-right: Area */}
         <div className="absolute top-3 right-3">
-          <span className="text-[10px] font-bold px-2 py-1 bg-white text-black tracking-wider">
+          <span className="text-[10px] font-bold px-2 py-1 bg-white text-[#241F1B] tracking-wider">
             {product.size}
           </span>
         </div>
@@ -93,7 +93,7 @@ function GridCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
         {/* Bottom-right: Custom indicator */}
         {product.isCustom && (
           <div className="absolute bottom-3 right-3">
-            <span className="text-[10px] px-2 py-1 bg-black/70 text-white tracking-wider border border-white/30">
+            <span className="text-[10px] px-2 py-1 bg-[#241F1B]/70 text-white tracking-wider border border-white/30">
               {lang === 'en' ? 'Custom' : '定制'}
             </span>
           </div>
@@ -193,7 +193,7 @@ function ListCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
               </h3>
             </div>
             <div className="flex flex-col items-end gap-1 shrink-0">
-              <span className="text-[10px] font-bold px-2 py-1 bg-black/70 text-white tracking-wider">
+              <span className="text-[10px] font-bold px-2 py-1 bg-[#241F1B]/70 text-white tracking-wider">
                 {product.gen}
               </span>
               {product.isCustom && (

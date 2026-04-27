@@ -172,7 +172,7 @@ export default function NewsForm({ initialData, mode }: Props) {
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1
-              className="text-white"
+              className="text-[#2C2A28]"
               style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 24, fontWeight: 700 }}
             >
               {mode === 'create' ? '新建新闻' : '编辑新闻'}
@@ -215,7 +215,7 @@ export default function NewsForm({ initialData, mode }: Props) {
 
         {/* Language tabs */}
         <div>
-          <div className="flex border-b border-[#2A2A2E] mb-5">
+          <div className="flex border-b border-[#E5DED4] mb-5">
             {(['zh', 'en'] as const).map((lang) => (
               <button
                 key={lang}
@@ -225,7 +225,7 @@ export default function NewsForm({ initialData, mode }: Props) {
                   'px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px',
                   activeTab === lang
                     ? 'border-[#E36F2C] text-[#E36F2C]'
-                    : 'border-transparent text-[#8A8580] hover:text-white',
+                    : 'border-transparent text-[#8A8580] hover:text-[#2C2A28]',
                 )}
               >
                 {lang === 'zh' ? '中文' : 'English'}
@@ -289,7 +289,7 @@ export default function NewsForm({ initialData, mode }: Props) {
       </div>
 
       {/* Sticky bottom bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-[#2A2A2E] bg-[#1A1A1A] px-6 py-4">
+      <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-[#E5DED4] bg-[#F5F2ED] px-6 py-4">
         <div className="mx-auto max-w-4xl flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Button

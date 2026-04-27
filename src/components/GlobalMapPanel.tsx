@@ -50,13 +50,13 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
         display: 'flex',
         flexDirection: 'column',
         overflowY: 'auto',
-        borderLeft: '1px solid #2A2A2E',
+        borderLeft: '1px solid #3A302A',
       }}
     >
       {camp && (
         <>
           {/* Photo */}
-          <div style={{ position: 'relative', height: 200, flexShrink: 0, background: '#1A1A1A' }}>
+          <div style={{ position: 'relative', height: 200, flexShrink: 0, background: '#241F1B' }}>
             <Image
               src={getPanelImage(camp.name, camp.models)}
               alt={camp.name}
@@ -77,7 +77,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
                 background: 'rgba(17,17,20,0.85)',
                 border: '1px solid rgba(255,255,255,0.15)',
                 borderRadius: 4,
-                color: '#F0F0F0',
+                color: '#F5F2ED',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -95,7 +95,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
           <div style={{ padding: '20px 24px', flex: 1 }}>
             {/* Name + location */}
             <h2 style={{
-              color: '#F0F0F0', fontSize: 18, fontWeight: 600, marginBottom: 6,
+              color: '#F5F2ED', fontSize: 18, fontWeight: 600, marginBottom: 6,
               lineHeight: 1.3, fontFamily: 'var(--font-heading), sans-serif',
             }}>
               {camp.name}
@@ -104,7 +104,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
               {camp.country}{camp.province && camp.province !== '—' ? ` · ${camp.province}` : ''}
             </p>
 
-            <div style={{ height: 1, background: '#2A2A2E', marginBottom: 20 }} />
+            <div style={{ height: 1, background: '#3A302A', marginBottom: 20 }} />
 
             {/* Device stats */}
             <div style={{ marginBottom: 20 }}>
@@ -147,11 +147,11 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
             {/* Dealer badge */}
             {isDealer && (
               <>
-                <div style={{ height: 1, background: '#2A2A2E', marginBottom: 20 }} />
+                <div style={{ height: 1, background: '#3A302A', marginBottom: 20 }} />
                 <div style={{ marginBottom: 20 }}>
                   <div style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6,
-                    background: '#E36F2C', color: '#F0F0F0',
+                    background: '#E36F2C', color: '#F5F2ED',
                     fontSize: 11, padding: '4px 10px', borderRadius: 4,
                     fontWeight: 600, letterSpacing: '0.08em', marginBottom: 10,
                   }}>
@@ -177,7 +177,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
               </>
             )}
 
-            <div style={{ height: 1, background: '#2A2A2E', marginBottom: 20 }} />
+            <div style={{ height: 1, background: '#3A302A', marginBottom: 20 }} />
 
             {/* Bottom actions */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -187,7 +187,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
                 rel="noopener noreferrer"
                 style={{
                   display: 'block', textAlign: 'center',
-                  background: '#E36F2C', color: '#F0F0F0',
+                  background: '#E36F2C', color: '#F5F2ED',
                   fontSize: 13, padding: '10px 16px',
                   textDecoration: 'none', letterSpacing: '0.08em', fontWeight: 500,
                 }}
@@ -200,7 +200,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
                 rel="noopener noreferrer"
                 style={{
                   display: 'block', textAlign: 'center',
-                  border: '1px solid #2A2A2E', color: '#8A8580',
+                  border: '1px solid #3A302A', color: '#8A8580',
                   fontSize: 13, padding: '10px 16px',
                   textDecoration: 'none', letterSpacing: '0.08em',
                 }}

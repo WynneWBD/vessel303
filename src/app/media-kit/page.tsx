@@ -56,13 +56,13 @@ export default function MediaKitPage() {
       <Navbar />
 
       {/* Hero */}
-      <section className="bg-[#1A1A1A] pt-28 pb-16 px-6">
+      <section className="bg-[#241F1B] pt-28 pb-16 px-6">
         <div className="max-w-5xl mx-auto">
           <p className="text-[#E36F2C] text-xs tracking-[0.35em] uppercase font-medium mb-4">
             {t(i18n.mediaKit.heroLabel)}
           </p>
           <h1
-            className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#F0F0F0] leading-tight mb-6"
+            className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#F5F2ED] leading-tight mb-6"
             style={{ fontFamily: 'DM Sans, sans-serif' }}
           >
             {t(i18n.mediaKit.heroTitle)}
@@ -79,7 +79,7 @@ export default function MediaKitPage() {
           {/* Form */}
           <div>
             <h2
-              className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] mb-3"
+              className="text-2xl sm:text-3xl font-bold text-[#2C2A28] mb-3"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
             >
               {t(i18n.mediaKit.formHeading)}
@@ -93,7 +93,7 @@ export default function MediaKitPage() {
                 <p className="text-[#E36F2C] text-lg font-bold mb-3" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                   {t(i18n.mediaKit.successTitle)}
                 </p>
-                <p className="text-[#1A1A1A]/70 text-sm leading-relaxed">
+                <p className="text-[#2C2A28]/70 text-sm leading-relaxed">
                   {t(i18n.mediaKit.successBody)}
                 </p>
               </div>
@@ -110,14 +110,14 @@ export default function MediaKitPage() {
                 <Field label={t(i18n.mediaKit.labelCountry)} name="country" required />
 
                 <div>
-                  <label className="block text-[#1A1A1A]/70 text-xs tracking-wider uppercase mb-2 font-medium">
+                  <label className="block text-[#2C2A28]/70 text-xs tracking-wider uppercase mb-2 font-medium">
                     {t(i18n.mediaKit.labelUseCase)} <span className="text-[#E36F2C]">*</span>
                   </label>
                   <select
                     name="useCase"
                     required
                     defaultValue=""
-                    className="w-full border border-[#E5E0DA] bg-white px-4 py-3 text-sm text-[#1A1A1A] focus:outline-none focus:border-[#E36F2C]"
+                    className="w-full border border-[#E5E0DA] bg-white px-4 py-3 text-sm text-[#2C2A28] focus:outline-none focus:border-[#E36F2C]"
                   >
                     <option value="" disabled>—</option>
                     {useCaseOptions.map((opt) => (
@@ -127,13 +127,13 @@ export default function MediaKitPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#1A1A1A]/70 text-xs tracking-wider uppercase mb-2 font-medium">
+                  <label className="block text-[#2C2A28]/70 text-xs tracking-wider uppercase mb-2 font-medium">
                     {t(i18n.mediaKit.labelMessage)}
                   </label>
                   <textarea
                     name="message"
                     rows={4}
-                    className="w-full border border-[#E5E0DA] bg-white px-4 py-3 text-sm text-[#1A1A1A] focus:outline-none focus:border-[#E36F2C] resize-y"
+                    className="w-full border border-[#E5E0DA] bg-white px-4 py-3 text-sm text-[#2C2A28] focus:outline-none focus:border-[#E36F2C] resize-y"
                   />
                 </div>
 
@@ -153,11 +153,11 @@ export default function MediaKitPage() {
           </div>
 
           {/* Usage notes */}
-          <aside className="bg-[#1A1A1A] p-8 h-fit">
+          <aside className="bg-white border border-[#E5DED4] p-8 h-fit shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-4">
               {t(i18n.mediaKit.noteTitle)}
             </p>
-            <ul className="space-y-4 text-[#C4B9AB] text-sm leading-relaxed">
+            <ul className="space-y-4 text-[#6B625B] text-sm leading-relaxed">
               {[i18n.mediaKit.note1, i18n.mediaKit.note2, i18n.mediaKit.note3].map((k, i) => (
                 <li key={i} className="flex gap-3">
                   <span className="text-[#E36F2C] shrink-0">·</span>
@@ -187,14 +187,14 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-[#1A1A1A]/70 text-xs tracking-wider uppercase mb-2 font-medium">
+      <label className="block text-[#2C2A28]/70 text-xs tracking-wider uppercase mb-2 font-medium">
         {label} {required && <span className="text-[#E36F2C]">*</span>}
       </label>
       <input
         type={type}
         name={name}
         required={required}
-        className="w-full border border-[#E5E0DA] bg-white px-4 py-3 text-sm text-[#1A1A1A] focus:outline-none focus:border-[#E36F2C]"
+        className="w-full border border-[#E5E0DA] bg-white px-4 py-3 text-sm text-[#2C2A28] focus:outline-none focus:border-[#E36F2C]"
       />
     </div>
   );

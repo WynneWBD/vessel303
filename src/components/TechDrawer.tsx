@@ -52,7 +52,7 @@ export default function TechDrawer({ isOpen, onClose, tech, lang }: Props) {
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 bg-black/60 z-50 transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-[#241F1B]/65 z-50 transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       />
@@ -67,13 +67,13 @@ export default function TechDrawer({ isOpen, onClose, tech, lang }: Props) {
         aria-hidden={!isOpen}
       >
         {/* Top bar */}
-        <div className="shrink-0 bg-[#1A1A1A] border-b border-[#2A2A2E] px-6 lg:px-10 py-5 flex items-center justify-between gap-4">
+        <div className="shrink-0 bg-[#241F1B] border-b border-[#3A302A] px-6 lg:px-10 py-5 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-[#E36F2C] text-[10px] tracking-[0.35em] uppercase font-medium mb-1">
               {zh ? '核心技术' : 'Core Technology'}
             </p>
             <h2
-              className="text-[#F0F0F0] text-lg lg:text-xl font-bold truncate"
+              className="text-[#F5F2ED] text-lg lg:text-xl font-bold truncate"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
             >
               {title}

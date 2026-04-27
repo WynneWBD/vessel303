@@ -52,7 +52,7 @@ export default function Footer() {
   ];
 
   return (
-    <footer id="contact" className="bg-[#1A1A1A] border-t border-[#E36F2C]/15">
+    <footer id="contact" className="bg-[#241F1B] border-t border-[#E36F2C]/15">
       {/* CTA bar */}
       <div className="bg-[#E36F2C]/5 border-b border-[#E36F2C]/15 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
