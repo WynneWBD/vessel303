@@ -6,7 +6,6 @@ import { useState, useCallback, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
-import { catalogProducts } from '@/lib/products';
 
 // ─── Gallery images (按指定顺序) ─────────────────────────────────────────────
 const GALLERY = [
@@ -19,6 +18,9 @@ const GALLERY = [
   { src: '/images/products/v9-gen6/render-09.jpg',   cn: '渲染角度 09', en: 'View 09' },
   { src: '/images/products/v9-gen6/render-10.jpg',   cn: '超流体立面',  en: 'Fluid Facade' },
   { src: '/images/products/v9-gen6/angle.jpg',       cn: '大斜角',      en: 'Side Angle' },
+  { src: '/images/products/v9-gen6/render-full.png', cn: '完整外观',    en: 'Full Exterior' },
+  { src: '/images/products/v9-gen6/bedroom.jpg',     cn: '卧室空间',    en: 'Bedroom' },
+  { src: '/images/products/v9-gen6/lights.jpg',      cn: '夜间灯光',    en: 'Night Lighting' },
   // 实拍图 photo-00 ~ photo-20
   ...Array.from({ length: 21 }, (_, i) => ({
     src: `/images/products/v9-gen6/photo-${String(i).padStart(2, '0')}.jpg`,
@@ -30,8 +32,11 @@ const GALLERY = [
   { src: '/images/products/v9-gen6/exploded-view.png', cn: '结构爆炸图', en: 'Exploded View' },
 ];
 
-// Default to photo-00 (index 8)
-const DEFAULT_IDX = 8;
+const PHOTO_START_IDX = 11;
+const PHOTO_GRID = GALLERY.slice(PHOTO_START_IDX, PHOTO_START_IDX + 22);
+
+// Default to the rendered hero view.
+const DEFAULT_IDX = 0;
 
 // ─── Spec grid ────────────────────────────────────────────────────────────────
 const SPECS = [
@@ -41,6 +46,97 @@ const SPECS = [
   { cn: '容纳人数', en: 'Capacity',    val: '2 – 4 人' },
   { cn: '自重',     en: 'Weight',      val: '约 9 吨' },
   { cn: '代别',     en: 'Generation',  val: 'Gen6 第六代' },
+];
+
+const QUICK_STATS = [
+  { cn: '17㎡ 落地景观窗', en: '17㎡ Panoramic Glazing' },
+  { cn: '四大完整生活分区', en: '4 Complete Living Zones' },
+  { cn: 'VIIE Gen6 智能系统', en: 'VIIE Gen6 Smart System' },
+  { cn: '约 2 小时现场吊装', en: '~2h On-site Lifting' },
+];
+
+const VISUAL_STORIES = [
+  {
+    cn: '钻石切割外观',
+    en: 'Diamond-cut Exterior',
+    desc_cn: '弧线与折线交织，形成更具辨识度的旗舰外观，适合高端营地、展示空间与景观度假项目。',
+    desc_en: 'Curves and facets interweave into a distinctive flagship silhouette for premium resorts, showrooms, and scenic hospitality projects.',
+    image: '/images/products/v9-gen6/render-full.png',
+  },
+  {
+    cn: '完整家居化卧室',
+    en: 'Residential Bedroom',
+    desc_cn: '1.8m 大床、集成衣柜、梳妆台与床头控制系统，让旅居单元接近真实酒店套房体验。',
+    desc_en: 'A 1.8m bed, built-in wardrobe, vanity, and bedside controls bring the unit closer to a real hotel-suite experience.',
+    image: '/images/products/v9-gen6/bedroom.jpg',
+  },
+  {
+    cn: '夜间氛围灯光',
+    en: 'Night Ambience',
+    desc_cn: '轮廓灯带、室内氛围照明与可调色温主灯，让单体在夜间也成为营地视觉焦点。',
+    desc_en: 'Outline lights, ambient interior lighting, and tunable main lights turn the unit into a nighttime focal point.',
+    image: '/images/products/v9-gen6/lights.jpg',
+  },
+];
+
+const SPACE_ZONES = [
+  {
+    cn: '起居会客',
+    en: 'Living Lounge',
+    desc_cn: '2.4m 宽躺沙发与 180° 景观面，适合会客、观景、办公与短时餐饮。',
+    desc_en: 'A 2.4m lounge sofa and 180° glazing support hosting, viewing, working, and light dining.',
+  },
+  {
+    cn: '岛台餐厨',
+    en: 'Kitchen & Island',
+    desc_cn: '2.3m 延伸厨柜与四座岛台，预留冰箱、洗碗机、烟机等高端家电接口。',
+    desc_en: 'A 2.3m extended cabinet and four-seat island reserve space for premium appliances.',
+  },
+  {
+    cn: '主卧系统',
+    en: 'Primary Bedroom',
+    desc_cn: '独立休息空间、全包覆衣柜、集成梳妆台与电动遮阳，兼顾私密与景观。',
+    desc_en: 'Independent sleeping space with wardrobe, vanity, and blackout curtains balances privacy and scenery.',
+  },
+  {
+    cn: '卫浴模块',
+    en: 'Bathroom Module',
+    desc_cn: '独立卫浴、干湿分离、智能镜柜和热水系统，满足长期运营的客房标准。',
+    desc_en: 'Private bathroom, wet-dry separation, smart mirror, and water heating for long-stay operation.',
+  },
+];
+
+const ENGINEERING_DETAILS = [
+  {
+    cn: '热镀锌钢骨架',
+    en: 'Galvanized Steel Frame',
+    desc_cn: '主结构采用热镀锌钢骨架，兼顾运输吊装强度与长期耐候表现。',
+    desc_en: 'A hot-dip galvanized steel frame supports transport, lifting, and long-term weather resistance.',
+  },
+  {
+    cn: '铝板外维护系统',
+    en: 'Aluminum Envelope',
+    desc_cn: '氟碳喷涂铝板外饰面，提升耐腐蚀、耐候与后期维护效率。',
+    desc_en: 'Fluorocarbon aluminum cladding improves corrosion resistance, durability, and maintenance efficiency.',
+  },
+  {
+    cn: '高性能玻璃系统',
+    en: 'High-performance Glazing',
+    desc_cn: 'LOW-E 中空玻璃结合断桥铝门窗，兼顾视野、隔热与隔噪。',
+    desc_en: 'LOW-E insulating glass with thermal-break frames balances view, insulation, and acoustic comfort.',
+  },
+  {
+    cn: '保温与防水层',
+    en: 'Insulation & Waterproofing',
+    desc_cn: '硬质聚氨酯喷涂保温与结构防水设计，适配多气候项目交付。',
+    desc_en: 'Rigid PU insulation and structural waterproofing prepare the unit for multi-climate delivery.',
+  },
+];
+
+const APPLICATIONS = [
+  { cn: '高端度假营地', en: 'Luxury Resort Camps', image: '/images/products/v9-gen6/photo-04.jpg' },
+  { cn: '海滨 / 山地酒店', en: 'Coastal & Mountain Hotels', image: '/images/products/v9-gen6/photo-12.jpg' },
+  { cn: '商业接待与样板间', en: 'Commercial Reception & Showrooms', image: '/images/products/v9-gen6/photo-18.jpg' },
 ];
 
 // ─── Config groups ────────────────────────────────────────────────────────────
@@ -82,11 +178,6 @@ const TERMS = [
   { cn: '起订量',   en: 'Min. Order',  vcn: '1 台起订',                  ven: '1 unit minimum' },
 ];
 
-// ─── Related products ─────────────────────────────────────────────────────────
-const RELATED = catalogProducts.filter(
-  (p) => p.productSeries === 'V9' && p.id !== 'v9-gen6-standard'
-).slice(0, 4);
-
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface Props { isLoggedIn: boolean }
@@ -114,7 +205,15 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
   // Config collapse
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const toggle = useCallback((id: string) => {
-    setCollapsed((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    setCollapsed((s) => {
+      const nextSet = new Set(s);
+      if (nextSet.has(id)) {
+        nextSet.delete(id);
+      } else {
+        nextSet.add(id);
+      }
+      return nextSet;
+    });
   }, []);
 
   // Inquiry form
@@ -215,6 +314,16 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/8 border-x border-b border-white/8">
+              {QUICK_STATS.map((item) => (
+                <div key={item.cn} className="bg-[#111] px-4 py-3">
+                  <div className="text-[10px] text-[#c9a84c] tracking-[0.18em] uppercase leading-relaxed">
+                    {lang === 'en' ? item.en : item.cn}
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {/* 平板/手机：缩略图横排，置于主图下方 */}
             <div className="lg:hidden flex gap-1.5 overflow-x-auto py-2 scrollbar-none">
               {GALLERY.map((img, idx) => (
@@ -248,7 +357,70 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                 </div>
               </section>
 
-              {/* ② 完整配置清单 */}
+              {/* ② 大图细节叙事 */}
+              <section>
+                <Label cn="产品细节展示" en="Product Detail Showcase" lang={lang} />
+                <div className="mt-4 space-y-6">
+                  {VISUAL_STORIES.map((story, index) => (
+                    <div
+                      key={story.cn}
+                      className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-white/8 bg-[#0f0f0f] overflow-hidden"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const idx = GALLERY.findIndex((img) => img.src === story.image);
+                          if (idx >= 0) selectImage(idx);
+                        }}
+                        className={`relative aspect-[16/10] md:aspect-auto min-h-[260px] bg-[#0d0d0d] overflow-hidden group ${
+                          index % 2 === 1 ? 'md:order-2' : ''
+                        }`}
+                      >
+                        <ProtectedImage
+                          src={story.image}
+                          alt={lang === 'en' ? story.en : story.cn}
+                          fill
+                          loading="lazy"
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                          sizes="(max-width: 768px) 100vw, 34vw"
+                        />
+                      </button>
+                      <div className={`p-6 md:p-8 flex flex-col justify-center ${
+                        index % 2 === 1 ? 'md:order-1' : ''
+                      }`}>
+                        <div className="text-[10px] text-[#c9a84c] tracking-[0.28em] uppercase mb-3">
+                          {String(index + 1).padStart(2, '0')}
+                        </div>
+                        <h2 className="text-xl md:text-2xl font-black tracking-wide text-white">
+                          {lang === 'en' ? story.en : story.cn}
+                        </h2>
+                        <p className="mt-4 text-sm text-white/50 leading-[1.9] tracking-wide">
+                          {lang === 'en' ? story.desc_en : story.desc_cn}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* ③ 空间分区 */}
+              <section>
+                <Label cn="空间分区" en="Spatial Layout" lang={lang} />
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {SPACE_ZONES.map((zone) => (
+                    <div key={zone.cn} className="border border-white/8 bg-[#0f0f0f] p-5">
+                      <div className="text-sm font-semibold text-white tracking-wider">
+                        {lang === 'en' ? zone.en : zone.cn}
+                      </div>
+                      <p className="mt-3 text-xs text-white/45 leading-relaxed tracking-wide">
+                        {lang === 'en' ? zone.desc_en : zone.desc_cn}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* ④ 完整配置清单 */}
               <section>
                 <Label cn="完整配置清单" en="Full Configuration" lang={lang} />
                 <div className="mt-4 space-y-1">
@@ -282,7 +454,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                 </div>
               </section>
 
-              {/* ③ 设计理念 */}
+              {/* ⑤ 设计理念 */}
               <section>
                 <Label cn="设计理念" en="Design Philosophy" lang={lang} />
                 <div className="mt-4 border-l-2 border-[#c9a84c]/40 pl-5 space-y-4">
@@ -301,21 +473,81 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                         VESSEL V9 is our first long-stay model purpose-built for the global market. 38.8㎡ includes four fully functional zones: bedroom, bathroom, living room, and kitchen-dining. Focused on comfort and practicality, compatible with premium appliances worldwide — redefining luxury prefab living with industrial precision.
                       </p>
                       <p className="text-white/40 text-sm leading-[1.9] tracking-wide">
-                        Inspired by the "diamond cut" design language, curves and facets interweave to deliver an architecture of strength and elegance. The 17.0㎡ panoramic glazing with 42.39% UV rejection lets natural light tell a different story every hour of the day.
+                        Inspired by the diamond-cut design language, curves and facets interweave to deliver an architecture of strength and elegance. The 17.0㎡ panoramic glazing with 42.39% UV rejection lets natural light tell a different story every hour of the day.
                       </p>
                     </>
                   )}
                 </div>
               </section>
 
-              {/* ④ 实拍图瀑布流 */}
+              {/* ⑥ 工程结构 */}
+              <section>
+                <Label cn="工程结构细节" en="Engineering Details" lang={lang} />
+                <div className="mt-4 grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const idx = GALLERY.findIndex((img) => img.src.includes('exploded-view'));
+                      if (idx >= 0) selectImage(idx);
+                    }}
+                    className="relative aspect-video bg-[#0d0d0d] border border-white/8 overflow-hidden"
+                  >
+                    <ProtectedImage
+                      src="/images/products/v9-gen6/exploded-view.png"
+                      alt="Exploded structural view"
+                      fill
+                      loading="lazy"
+                      className="object-contain p-4"
+                      sizes="(max-width: 1024px) 100vw, 40vw"
+                    />
+                  </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
+                    {ENGINEERING_DETAILS.map((detail) => (
+                      <div key={detail.cn} className="border border-white/8 bg-[#0f0f0f] p-4">
+                        <div className="text-xs font-semibold text-white/80 tracking-wider">
+                          {lang === 'en' ? detail.en : detail.cn}
+                        </div>
+                        <p className="mt-2 text-[11px] text-white/40 leading-relaxed">
+                          {lang === 'en' ? detail.desc_en : detail.desc_cn}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+
+              {/* ⑦ 应用场景 */}
+              <section>
+                <Label cn="应用场景" en="Application Scenarios" lang={lang} />
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {APPLICATIONS.map((app) => (
+                    <div key={app.cn} className="group border border-white/8 bg-[#0f0f0f] overflow-hidden">
+                      <div className="relative aspect-[4/3] overflow-hidden bg-[#0d0d0d]">
+                        <ProtectedImage
+                          src={app.image}
+                          alt={lang === 'en' ? app.en : app.cn}
+                          fill
+                          loading="lazy"
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                          sizes="(max-width: 640px) 100vw, 20vw"
+                        />
+                      </div>
+                      <div className="p-4 text-xs font-semibold tracking-wider text-white/75">
+                        {lang === 'en' ? app.en : app.cn}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* ⑧ 实拍图瀑布流 */}
               <section>
                 <Label cn="真实落地实拍" en="Real Project Photos" lang={lang} />
                 <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {GALLERY.slice(8, 30).map((img, i) => (
+                  {PHOTO_GRID.map((img, i) => (
                     <button
                       key={img.src}
-                      onClick={() => selectImage(8 + i)}
+                      onClick={() => selectImage(PHOTO_START_IDX + i)}
                       className="relative aspect-[4/3] overflow-hidden group bg-[#0d0d0d]"
                     >
                       <ProtectedImage
@@ -335,7 +567,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                 </p>
               </section>
 
-              {/* ⑤ 运输说明 */}
+              {/* ⑨ 运输说明 */}
               <section>
                 <Label cn="运输说明" en="Shipping & Transport" lang={lang} />
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
@@ -548,48 +780,6 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
           </div>{/* end 右栏 */}
         </div>
       </div>
-
-      {/* ── Related Products ─────────────────────────────────────────────── */}
-      {RELATED.length > 0 && (
-        <section className="border-t border-white/8 bg-[#0d0d0d]">
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="text-[10px] tracking-[0.3em] text-[#c9a84c] uppercase mb-6">
-              {lang === 'en' ? 'Other V9 Series Variants' : 'V9 系列其他版本'}
-            </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {RELATED.map(p => (
-                <Link
-                  key={p.id}
-                  href={p.detailSlug ? `/products/${p.detailSlug}` : `/products/${p.id}`}
-                  className="group block bg-[#221F1C] border border-white/8 hover:border-[#c9a84c]/40 overflow-hidden transition-all duration-300"
-                >
-                  <div className="relative aspect-video overflow-hidden bg-[#0d0d0d]">
-                    <ProtectedImage
-                      src={p.image}
-                      alt={lang === 'en' ? p.name_en : p.name_cn}
-                      fill
-                      loading="lazy"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="(max-width: 640px) 50vw, 25vw"
-                    />
-                    <div className="absolute bottom-2 left-2">
-                      <span className="text-[10px] font-bold px-2 py-0.5 bg-[#c9a84c] text-[#1C1A18]">
-                        {lang === 'en' ? p.badge_en : p.badge_cn}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-3">
-                    <div className="text-white/65 text-[11px] font-semibold tracking-wider leading-snug">
-                      {lang === 'en' ? p.name_en : p.name_cn}
-                    </div>
-                    <div className="mt-1 text-white/25 text-[10px] tracking-wider">{p.size}</div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
     </div>
   );
