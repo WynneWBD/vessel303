@@ -278,6 +278,7 @@ interface Props {
   flyTarget?: [number, number] | null  // [lat, lng] — Leaflet convention from parent
   resetViewKey?: number  // increment to fly back to global default view
   lang?: string
+  showcaseMarkers?: ShowcaseMarker[]
 }
 
 export default function GlobalMapML({
@@ -286,6 +287,7 @@ export default function GlobalMapML({
   flyTarget,
   resetViewKey,
   lang,
+  showcaseMarkers = SHOWCASE_MARKERS,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MaptilerMap | null>(null)
@@ -348,7 +350,7 @@ export default function GlobalMapML({
       })
     } catch (err) {
       console.error('[VESSEL] MapTiler init failed', err)
-      setLoadError('init-failed')
+      window.setTimeout(() => setLoadError('init-failed'), 0)
       return
     }
     mapRef.current = map
@@ -515,7 +517,7 @@ export default function GlobalMapML({
       map.on('zoom', updatePinScales)
 
       // ── Showcase project markers (HTML, with pulse animation) ─────────
-      SHOWCASE_MARKERS.forEach((marker) => {
+      showcaseMarkers.forEach((marker) => {
         // Outer wrap = the element MapLibre controls via transform. No
         // transitions on it, so it tracks pan/zoom in lockstep with the canvas.
         const wrap = document.createElement('div')
@@ -575,8 +577,7 @@ export default function GlobalMapML({
       map.remove()
       mapRef.current = null
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [showcaseMarkers])
 
   // ── Language switching ────────────────────────────────────────────────
   useEffect(() => {
@@ -631,7 +632,7 @@ export default function GlobalMapML({
     })
   }, [resetViewKey])
 
-  const zh = isZhRef.current
+  const zh = isZh
   const errorTitle = zh ? '地图加载失败' : 'MAP LOAD FAILED'
   const errorBody =
     loadError === 'init-failed'

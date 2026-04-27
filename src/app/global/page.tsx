@@ -3,12 +3,26 @@ import { Suspense } from 'react'
 import GlobalMapStats from '@/components/GlobalMapStats'
 import GlobalMapView from '@/components/GlobalMapView'
 import MapSkeleton from '@/components/MapSkeleton'
+import { listPublishedProjectCases } from '@/lib/project-cases-db'
+import { projectCaseToShowcaseProject } from '@/lib/project-cases-global'
+import type { ShowcaseProject } from '@/data/showcaseProjects'
 
 export const metadata: Metadata = {
   title: '全球营地部署 | VESSEL®',
 }
 
-export default function GlobalPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function GlobalPage() {
+  const cmsProjects: ShowcaseProject[] = await listPublishedProjectCases()
+    .then((projects) => projects
+      .map(projectCaseToShowcaseProject)
+      .filter((project): project is ShowcaseProject => Boolean(project)))
+    .catch((err) => {
+      console.error('[global] project cases db unavailable', err)
+      return []
+    })
+
   return (
     <div style={{ overflow: 'hidden', height: '100vh', background: '#241F1B' }}>
       {/* Preload the style.json through our edge proxy so the browser starts
@@ -33,7 +47,7 @@ export default function GlobalPage() {
             spinner the moment the document arrives — no black flash while
             the map JS chunk is downloading. */}
         <Suspense fallback={<MapSkeleton />}>
-          <GlobalMapView />
+          <GlobalMapView cmsProjects={cmsProjects} />
         </Suspense>
       </div>
     </div>

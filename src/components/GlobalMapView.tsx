@@ -1,7 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SHOWCASE_MARKERS, type ShowcaseMarker } from '@/data/showcaseMarkers'
 import type { ShowcaseProject } from '@/data/showcaseProjects'
@@ -81,7 +81,7 @@ function PanelLoadingSpinner({ lang, onClose }: { lang: string; onClose: () => v
   )
 }
 
-export default function GlobalMapView() {
+export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: ShowcaseProject[] }) {
   // selectedMarker drives panel-open + flyTo (slim, always-loaded);
   // selectedProject drives ProjectDetail content (lazy-loaded on first click).
   const [selectedMarker, setSelectedMarker] = useState<ShowcaseMarker | null>(null)
@@ -89,10 +89,28 @@ export default function GlobalMapView() {
   const [resetViewKey, setResetViewKey] = useState(0)
   const { lang } = useLanguage()
   const panelOpen = selectedMarker !== null
+  const cmsProjectById = useMemo(() => new Map(cmsProjects.map((p) => [p.id, p])), [cmsProjects])
+  const showcaseMarkers = useMemo<ShowcaseMarker[]>(() => {
+    const cmsMarkers = cmsProjects.map((project) => ({
+      id: project.id,
+      name: project.name,
+      coordinates: project.coordinates,
+    }))
+    const cmsIds = new Set(cmsMarkers.map((m) => m.id))
+    return [
+      ...SHOWCASE_MARKERS.filter((marker) => !cmsIds.has(marker.id)),
+      ...cmsMarkers,
+    ]
+  }, [cmsProjects])
 
   // Async-load the full ShowcaseProject for a given marker id. First call
   // pays a chunk download; subsequent calls reuse the cached module.
   const loadProjectDetails = useCallback(async (markerId: string) => {
+    const cmsProject = cmsProjectById.get(markerId)
+    if (cmsProject) {
+      setSelectedProject(cmsProject)
+      return
+    }
     const { SHOWCASE_PROJECTS } = await import('@/data/showcaseProjects')
     const project = SHOWCASE_PROJECTS.find((p) => p.id === markerId) ?? null
     setSelectedProject((prev) => {
@@ -101,7 +119,7 @@ export default function GlobalMapView() {
       if (prev && prev.id !== markerId) return prev
       return project
     })
-  }, [])
+  }, [cmsProjectById])
 
   // ── Deep link: open ?camp=<id> on mount ────────────────────────────────
   const searchParams = useSearchParams()
@@ -111,11 +129,11 @@ export default function GlobalMapView() {
     hydratedOnce.current = true
     const campId = searchParams?.get('camp')
     if (!campId) return
-    const marker = SHOWCASE_MARKERS.find((m) => m.id === campId)
+    const marker = showcaseMarkers.find((m) => m.id === campId)
     if (!marker) return
     setSelectedMarker(marker)
     loadProjectDetails(marker.id)
-  }, [searchParams, loadProjectDetails])
+  }, [searchParams, loadProjectDetails, showcaseMarkers])
 
   // Mirror state → URL
   useEffect(() => {
@@ -163,6 +181,7 @@ export default function GlobalMapView() {
           flyTarget={flyTarget}
           resetViewKey={resetViewKey}
           lang={lang}
+          showcaseMarkers={showcaseMarkers}
         />
       </div>
 
