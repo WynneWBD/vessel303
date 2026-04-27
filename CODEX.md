@@ -150,7 +150,7 @@ Codex 默认工作方式：
 - `/admin/users`：用户列表、角色/身份/禁用管理、CSV 导出、服务端自我保护。
 - `/admin/media`：基于 Vercel Blob 的图片库，使用 client upload。
 - `/admin/news`：新闻管理，已能新建、编辑、发布、取消发布，并在前台展示。
-- `/admin/settings`：仍是占位页，属于 Step 7。
+- `/admin/settings`：设置页已上线，包含站点运营配置表单、系统健康检查、白名单展示和最近操作日志。
 
 ## V8 后台进度
 
@@ -162,10 +162,10 @@ Codex 默认工作方式：
 - Step 4：用户管理。
 - Step 5：图片库和 Vercel Blob client upload。
 - Step 6：新闻管理和前台新闻展示。
+- Step 7：设置页、站点运营配置、系统配置检查。
 
 下一步：
 
-- Step 7：设置页、白名单管理、系统配置。
 - Step 8：Resend 域名验证、Vercel warning 清理。
 - V8.1：项目 CMS / 案例 CMS。
 - V8.2：39 个 SKU 产品 CMS 与多语言内容管理。
@@ -399,7 +399,7 @@ curl -I https://www.vessel303.com/news/<slug>
 
 ## 当前已知后续事项
 
-- 做 `/admin/settings`。
+- 将前台联系方式、SEO 默认值、外部跳转逐步接入 `/admin/settings` 的 `site_settings` 数据源。
 - 评估是否把 `src/middleware.ts` 迁移到 Next 16 推荐的 `src/proxy.ts`。
 - 历史 lint 问题单独开任务清理，不要混在功能开发里。
 - 如果 Wynne 需要，再生成新的 V9 全量 handoff 文档。

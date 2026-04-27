@@ -19,8 +19,10 @@ import { countLeadsByStatus } from '@/lib/leads-db'
 import { countNewsByStatus } from '@/lib/news-db'
 import { countUploads, sumStorageSize } from '@/lib/uploads-db'
 import { getUserSummary } from '@/lib/users-db'
+import { defaultSiteSettings, getSettingsUpdatedMeta, getSiteSettings } from '@/lib/admin-settings-db'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import SiteSettingsForm from '@/components/admin/SiteSettingsForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -137,7 +139,7 @@ async function getRecentLogs(): Promise<AdminLogRow[]> {
 }
 
 export default async function SettingsPage() {
-  const [dbHealth, userSummary, newLeads, newsSummary, uploadCount, uploadBytes, logs] =
+  const [dbHealth, userSummary, newLeads, newsSummary, uploadCount, uploadBytes, logs, siteSettings, settingsMeta] =
     await Promise.all([
       checkDb(),
       getUserSummary().catch(() => null),
@@ -146,6 +148,8 @@ export default async function SettingsPage() {
       countUploads().catch(() => 0),
       sumStorageSize().catch(() => 0),
       getRecentLogs(),
+      getSiteSettings().catch(() => defaultSiteSettings),
+      getSettingsUpdatedMeta().catch(() => null),
     ])
 
   const configItems: ConfigItem[] = [
@@ -197,16 +201,28 @@ export default async function SettingsPage() {
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-2">
         <p className="text-xs tracking-[0.18em] uppercase text-[#E36F2C]">System Control</p>
-        <h1
-          className="text-[#2C2A28]"
-          style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 28, fontWeight: 700 }}
-        >
-          设置
-        </h1>
-        <p className="max-w-3xl text-sm leading-6 text-[#8A8580]">
-          当前版本先做只读系统控制台：展示后台运行状态、关键环境配置是否存在、管理员白名单和最近操作日志。白名单仍由代码常量管理，避免在没有完整审计前影响登录链路。
-        </p>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1
+              className="text-[#2C2A28]"
+              style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 28, fontWeight: 700 }}
+            >
+              设置
+            </h1>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#8A8580]">
+              运营配置、系统健康检查、管理员白名单和最近操作日志。当前配置会保存到数据库并写入审计日志，前台模块后续逐步接入这些统一配置。
+            </p>
+          </div>
+          <div className="rounded-md border border-[#E5DED4] bg-[#FFFFFF] px-4 py-3 text-xs text-[#8A8580]">
+            <span className="text-[#2C2A28]">最近保存：</span>
+            {settingsMeta
+              ? `${formatDateTime(settingsMeta.updated_at)} · ${settingsMeta.updated_by_email ?? 'unknown'}`
+              : '尚未保存过'}
+          </div>
+        </div>
       </div>
+
+      <SiteSettingsForm settings={siteSettings} />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard

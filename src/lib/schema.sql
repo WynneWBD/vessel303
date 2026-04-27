@@ -73,3 +73,12 @@ CREATE TABLE IF NOT EXISTS users (
   role        TEXT        NOT NULL DEFAULT 'individual',  -- 'buyer' | 'agent' | 'individual'
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Admin-editable operational settings. Values are JSONB so each key can store
+-- strings, booleans, or numbers while keeping a small, audited key/value model.
+CREATE TABLE IF NOT EXISTS site_settings (
+  key        TEXT        PRIMARY KEY,
+  value      JSONB       NOT NULL,
+  updated_by UUID        REFERENCES users(id) ON DELETE SET NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
