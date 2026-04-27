@@ -34,7 +34,7 @@ function row(label: string, value: string) {
 
 function notificationHtml(d: z.infer<typeof schema>, isBEnd: boolean) {
   const tag = isBEnd ? 'B端线索' : 'C端线索';
-  const tagColor = isBEnd ? '#c9a84c' : '#7a9ec9';
+  const tagColor = isBEnd ? '#E36F2C' : '#7a9ec9';
   return `<!DOCTYPE html>
 <html lang="zh">
 <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
@@ -43,7 +43,7 @@ function notificationHtml(d: z.infer<typeof schema>, isBEnd: boolean) {
 
     <!-- Header -->
     <div style="padding:24px 28px;border-bottom:1px solid #222;display:flex;align-items:center;gap:12px;">
-      <span style="color:#c9a84c;font-weight:900;font-size:18px;letter-spacing:0.2em;">VESSEL 微宿®</span>
+      <span style="color:#E36F2C;font-weight:900;font-size:18px;letter-spacing:0.2em;">VESSEL 微宿®</span>
       <span style="background:${tagColor};color:#0a0a0a;font-size:11px;font-weight:700;padding:3px 10px;letter-spacing:0.1em;">${tag}</span>
     </div>
 
@@ -84,20 +84,20 @@ function confirmationHtml(d: z.infer<typeof schema>) {
   <div style="max-width:560px;margin:40px auto;background:#111;border:1px solid #222;">
 
     <!-- Header -->
-    <div style="padding:28px;background:linear-gradient(135deg,#1a1a1a,#111);border-bottom:1px solid #c9a84c22;text-align:center;">
-      <div style="color:#c9a84c;font-weight:900;font-size:20px;letter-spacing:0.3em;margin-bottom:4px;">VESSEL 微宿®</div>
+    <div style="padding:28px;background:linear-gradient(135deg,#1a1a1a,#111);border-bottom:1px solid #E36F2C22;text-align:center;">
+      <div style="color:#E36F2C;font-weight:900;font-size:20px;letter-spacing:0.3em;margin-bottom:4px;">VESSEL 微宿®</div>
       <div style="color:#555;font-size:11px;letter-spacing:0.2em;">高端度假营地一站式解决方案</div>
     </div>
 
     <!-- Body -->
     <div style="padding:32px 28px;">
-      <p style="color:#ddd;font-size:15px;margin:0 0 8px;">尊敬的 <strong style="color:#c9a84c;">${d.name}</strong> 您好，</p>
+      <p style="color:#ddd;font-size:15px;margin:0 0 8px;">尊敬的 <strong style="color:#E36F2C;">${d.name}</strong> 您好，</p>
       <p style="color:#888;font-size:14px;line-height:1.7;margin:0 0 24px;">
         感谢您的咨询！我们已收到您的「${d.inquiryType}」留言，专业顾问将在 <strong style="color:#fff;">24小时内</strong>与您取得联系。
       </p>
 
       <div style="background:#0f0f0f;border:1px solid #222;padding:16px 20px;margin-bottom:24px;">
-        <div style="color:#c9a84c;font-size:11px;letter-spacing:0.2em;margin-bottom:12px;">您的咨询摘要</div>
+        <div style="color:#E36F2C;font-size:11px;letter-spacing:0.2em;margin-bottom:12px;">您的咨询摘要</div>
         <table style="width:100%;border-collapse:collapse;">
           ${row('咨询类型', d.inquiryType)}
           ${d.projectType ? row('项目类型', d.projectType) : ''}
@@ -107,7 +107,7 @@ function confirmationHtml(d: z.infer<typeof schema>) {
 
       <p style="color:#666;font-size:13px;line-height:1.7;margin:0 0 8px;">如需紧急咨询，欢迎直接联系：</p>
       <p style="margin:0;">
-        <a href="tel:4008090303" style="color:#c9a84c;font-weight:700;text-decoration:none;font-size:16px;">400-8090-303</a>
+        <a href="tel:4008090303" style="color:#E36F2C;font-weight:700;text-decoration:none;font-size:16px;">400-8090-303</a>
         <span style="color:#444;font-size:13px;margin-left:12px;">工作日 9:00–18:00</span>
       </p>
     </div>

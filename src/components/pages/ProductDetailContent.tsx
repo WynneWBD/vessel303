@@ -42,9 +42,9 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
         <div className="absolute top-24 left-0 right-0">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-2 text-xs text-[#999999] tracking-wider">
-              <Link href="/" className="hover:text-[#c9a84c] transition-colors">{t(i18n.productDetail.home)}</Link>
+              <Link href="/" className="hover:text-[#E36F2C] transition-colors">{t(i18n.productDetail.home)}</Link>
               <span>/</span>
-              <Link href="/products" className="hover:text-[#c9a84c] transition-colors">{t(i18n.productDetail.breadcrumbProducts)}</Link>
+              <Link href="/products" className="hover:text-[#E36F2C] transition-colors">{t(i18n.productDetail.breadcrumbProducts)}</Link>
               <span>/</span>
               <span className="text-[#666666]">{product.model} {product.gen}</span>
             </div>
@@ -52,7 +52,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">
+          <div className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase mb-3 font-medium">
             VESSEL 微宿® · {product.series} · {product.tag}
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black leading-none mb-4">
@@ -89,7 +89,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
           <div className="flex items-center gap-3">
             <span
               className="text-xs px-3 py-1 font-bold tracking-wider"
-              style={{ background: `${product.accentColor}`, color: '#1C1A18' }}
+              style={{ background: `${product.accentColor}`, color: '#FFFFFF' }}
             >
               {product.badge}
             </span>
@@ -101,7 +101,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
             <Link
               href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
               className="text-sm font-bold px-6 py-2.5 tracking-wider transition-colors"
-              style={{ background: product.accentColor, color: '#1C1A18' }}
+              style={{ background: product.accentColor, color: '#FFFFFF' }}
             >
               {t(i18n.productDetail.inquireBtn)}
             </Link>
@@ -121,9 +121,9 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
         <section className="py-10 border-b border-[#F0EDE8]">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-2 font-medium">{t(i18n.productDetail.priceLabel)}</div>
+              <div className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase mb-2 font-medium">{t(i18n.productDetail.priceLabel)}</div>
               {isLoggedIn ? (
-                <div className="text-3xl font-black text-[#c9a84c] tracking-wider">
+                <div className="text-3xl font-black text-[#E36F2C] tracking-wider">
                   {product.priceDisplay}
                 </div>
               ) : (
@@ -133,7 +133,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
                   </div>
                   <Link
                     href="/login"
-                    className="text-xs px-4 py-2 border border-[#c9a84c]/40 text-[#c9a84c] hover:bg-[#c9a84c] hover:text-[#1C1A18] transition-all tracking-wider"
+                    className="text-xs px-4 py-2 border border-[#E36F2C]/40 text-[#E36F2C] hover:bg-[#E36F2C] hover:text-white transition-all tracking-wider"
                   >
                     {t(i18n.productDetail.loginToView)}
                   </Link>
@@ -152,7 +152,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
         <section className="py-20 border-b border-[#F0EDE8]">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-4 font-medium">{t(i18n.productDetail.designLabel)}</div>
+              <div className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase mb-4 font-medium">{t(i18n.productDetail.designLabel)}</div>
               <h2 className="text-3xl font-black text-[#1A1A1A] mb-6 leading-tight">
                 {product.tagline2}
               </h2>
@@ -190,14 +190,14 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
         {/* ── Features Grid ── */}
         <section className="py-20 border-b border-[#F0EDE8]">
           <div className="text-center mb-12">
-            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.productDetail.featuresLabel)}</div>
+            <div className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.productDetail.featuresLabel)}</div>
             <h2 className="text-3xl font-black text-[#1A1A1A]">{t(i18n.productDetail.featuresTitle)}</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {product.features.map((feature, i) => (
               <div
                 key={i}
-                className="bg-white border border-[#E8E4DE] hover:border-[#c9a84c]/30 transition-all duration-300 p-6 group"
+                className="bg-white border border-[#E5DED4] hover:border-[#E36F2C]/30 transition-all duration-300 p-6 group"
               >
                 <div
                   className="w-8 h-8 flex items-center justify-center text-sm font-black mb-4"
@@ -215,14 +215,14 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
         {/* ── Space Configuration ── */}
         <section className="py-20 border-b border-[#F0EDE8]">
           <div className="text-center mb-12">
-            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.productDetail.spacesLabel)}</div>
+            <div className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.productDetail.spacesLabel)}</div>
             <h2 className="text-3xl font-black text-[#1A1A1A]">{t(i18n.productDetail.spacesTitle)}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {product.spaces.map((space, i) => (
               <div
                 key={i}
-                className="flex gap-4 p-5 bg-white border border-[#E8E4DE] hover:border-[#c9a84c]/20 transition-all"
+                className="flex gap-4 p-5 bg-white border border-[#E5DED4] hover:border-[#E36F2C]/20 transition-all"
               >
                 <div
                   className="shrink-0 w-10 h-10 flex items-center justify-center font-black text-sm"
@@ -242,7 +242,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
         {/* ── Materials ── */}
         <section className="py-20 border-b border-[#F0EDE8]">
           <div className="text-center mb-12">
-            <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.productDetail.materialsLabel)}</div>
+            <div className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase mb-3 font-medium">{t(i18n.productDetail.materialsLabel)}</div>
             <h2 className="text-3xl font-black text-[#1A1A1A]">{t(i18n.productDetail.materialsTitle)}</h2>
             <p className="text-[#888888] text-sm mt-3 max-w-xl mx-auto tracking-wider">
               {t(i18n.productDetail.materialsNote)}
@@ -252,7 +252,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
             {product.materials.map((mat, i) => (
               <div
                 key={i}
-                className="p-5 bg-white border border-[#E8E4DE] relative overflow-hidden"
+                className="p-5 bg-white border border-[#E5DED4] relative overflow-hidden"
               >
                 <div className="absolute top-0 left-0 w-0.5 h-full" style={{ background: product.accentColor }} />
                 <div className="pl-3">
@@ -264,8 +264,8 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
           </div>
 
           {/* Full specs table */}
-          <div className="mt-10 border border-[#E8E4DE] overflow-hidden">
-            <div className="bg-white px-6 py-3 border-b border-[#E8E4DE]">
+          <div className="mt-10 border border-[#E5DED4] overflow-hidden">
+            <div className="bg-white px-6 py-3 border-b border-[#E5DED4]">
               <span className="text-[#888888] text-xs tracking-wider uppercase">{t(i18n.productDetail.specsLabel)}</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 divide-x divide-y divide-white/5">
@@ -291,7 +291,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
 
         {/* ── CTA ── */}
         <section className="py-20 text-center">
-          <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-4 font-medium">{t(i18n.productDetail.startCoop)}</div>
+          <div className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase mb-4 font-medium">{t(i18n.productDetail.startCoop)}</div>
           <h2 className="text-3xl sm:text-4xl font-black text-[#1A1A1A] mb-4">
             {t(i18n.productDetail.interested).replace('{model}', product.model).replace('{gen}', product.gen)}
           </h2>
@@ -302,13 +302,13 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
             <Link
               href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
               className="text-sm font-bold px-8 py-3 tracking-wider transition-colors"
-              style={{ background: product.accentColor, color: '#1C1A18' }}
+              style={{ background: product.accentColor, color: '#FFFFFF' }}
             >
               {t(i18n.productDetail.inquireBtn)}
             </Link>
             <a
               href="tel:4008090303"
-              className="text-sm px-8 py-3 border border-[#BBBBBB] text-[#1A1A1A] hover:border-[#c9a84c] hover:text-[#c9a84c] transition-colors tracking-wider"
+              className="text-sm px-8 py-3 border border-[#BBBBBB] text-[#1A1A1A] hover:border-[#E36F2C] hover:text-[#E36F2C] transition-colors tracking-wider"
             >
               400-8090-303
             </a>
@@ -318,18 +318,18 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
 
       {/* ── Product Navigation ── */}
       {(prevProduct || nextProduct) && (
-        <div className="border-t border-[#E8E4DE] bg-[#F0EDE8]">
+        <div className="border-t border-[#E5DED4] bg-[#F0EDE8]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 divide-x divide-white/8">
               <div className="py-6 pr-8">
                 {prevProduct && (
                   <Link href={`/products/${prevProduct.slug}`} className="group flex items-center gap-3">
-                    <svg className="w-5 h-5 text-[#999999] group-hover:text-[#c9a84c] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-[#999999] group-hover:text-[#E36F2C] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
                     </svg>
                     <div>
                       <div className="text-[#AAAAAA] text-xs mb-0.5">{t(i18n.productDetail.prevProductLabel)}</div>
-                      <div className="text-[#1A1A1A] group-hover:text-[#c9a84c] transition-colors font-bold tracking-wider">
+                      <div className="text-[#1A1A1A] group-hover:text-[#E36F2C] transition-colors font-bold tracking-wider">
                         {prevProduct.model} {prevProduct.gen}
                       </div>
                     </div>
@@ -341,11 +341,11 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
                   <Link href={`/products/${nextProduct.slug}`} className="group inline-flex items-center gap-3">
                     <div>
                       <div className="text-[#AAAAAA] text-xs mb-0.5">{t(i18n.productDetail.nextProductLabel)}</div>
-                      <div className="text-[#1A1A1A] group-hover:text-[#c9a84c] transition-colors font-bold tracking-wider">
+                      <div className="text-[#1A1A1A] group-hover:text-[#E36F2C] transition-colors font-bold tracking-wider">
                         {nextProduct.model} {nextProduct.gen}
                       </div>
                     </div>
-                    <svg className="w-5 h-5 text-[#999999] group-hover:text-[#c9a84c] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-[#999999] group-hover:text-[#E36F2C] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
                     </svg>
                   </Link>

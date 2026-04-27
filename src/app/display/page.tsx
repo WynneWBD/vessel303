@@ -173,7 +173,7 @@ export default function DisplayPage() {
       </div>
 
       {/* Top gold line */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-[#c9a84c] via-[#c9a84c]/40 to-transparent z-10" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-[#E36F2C] via-[#E36F2C]/40 to-transparent z-10" />
 
       {/* ── Main content ── */}
       <div
@@ -187,7 +187,7 @@ export default function DisplayPage() {
         {/* Series badge */}
         <div className="flex items-center gap-3 mb-[clamp(0.5rem,1.5vh,1.5rem)]">
           <span
-            className="text-[#c9a84c] font-bold uppercase border border-[#c9a84c]/50 tracking-[0.4em]"
+            className="text-[#E36F2C] font-bold uppercase border border-[#E36F2C]/50 tracking-[0.4em]"
             style={{ fontSize: 'clamp(0.55rem, 1vw, 0.8rem)', padding: 'clamp(2px,0.4vh,5px) clamp(6px,0.8vw,12px)' }}
           >
             {slide.gen}
@@ -213,7 +213,7 @@ export default function DisplayPage() {
           </h1>
           <div style={{ marginBottom: 'clamp(0.5rem, 1.5vw, 1.5rem)' }}>
             <div
-              className="text-[#c9a84c] font-black tracking-wider"
+              className="text-[#E36F2C] font-black tracking-wider"
               style={{ fontSize: 'clamp(1.2rem, 3.5vw, 3rem)' }}
             >
               {slide.size}
@@ -244,7 +244,7 @@ export default function DisplayPage() {
             <div key={i} className="flex items-center">
               <div className="flex items-center" style={{ gap: 'clamp(0.4rem, 0.8vw, 0.75rem)', paddingRight: 'clamp(0.75rem, 2vw, 2rem)' }}>
                 <div
-                  className="bg-[#c9a84c] shrink-0"
+                  className="bg-[#E36F2C] shrink-0"
                   style={{ width: 'clamp(2px, 0.25vw, 4px)', height: 'clamp(1.2rem, 2.5vh, 2rem)' }}
                 />
                 <span
@@ -281,7 +281,7 @@ export default function DisplayPage() {
                 onClick={() => { setPaused(true); goTo(i); }}
                 className={`transition-all duration-300 ${
                   i === current
-                    ? 'bg-[#c9a84c]'
+                    ? 'bg-[#E36F2C]'
                     : 'bg-white/30 hover:bg-white/50'
                 }`}
                 style={{
@@ -293,7 +293,7 @@ export default function DisplayPage() {
           </div>
           <div className="flex items-baseline" style={{ gap: 'clamp(0.25rem, 0.5vw, 0.5rem)' }}>
             <span
-              className="text-[#c9a84c] font-black tracking-wider tabular-nums"
+              className="text-[#E36F2C] font-black tracking-wider tabular-nums"
               style={{ fontSize: 'clamp(1.4rem, 4vw, 3rem)' }}
             >
               {idx}
@@ -337,7 +337,7 @@ export default function DisplayPage() {
               {t(i18n.display.refPrice)}
             </div>
             <div
-              className="text-[#c9a84c] font-black tracking-wider"
+              className="text-[#E36F2C] font-black tracking-wider"
               style={{ fontSize: 'clamp(1rem, 2.8vw, 2rem)' }}
             >
               {slide.price}
@@ -367,7 +367,7 @@ export default function DisplayPage() {
       {/* Side nav arrows */}
       <button
         onClick={() => { setPaused(true); prev(); }}
-        className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center text-white/20 hover:text-[#c9a84c] hover:bg-white/5 transition-all duration-200"
+        className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center text-white/20 hover:text-[#E36F2C] hover:bg-white/5 transition-all duration-200"
         style={{ width: 'clamp(2.5rem, 5vw, 4rem)', height: 'clamp(2.5rem, 5vw, 4rem)' }}
         aria-label="prev"
       >
@@ -377,7 +377,7 @@ export default function DisplayPage() {
       </button>
       <button
         onClick={() => { setPaused(true); next(); }}
-        className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center text-white/20 hover:text-[#c9a84c] hover:bg-white/5 transition-all duration-200"
+        className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center text-white/20 hover:text-[#E36F2C] hover:bg-white/5 transition-all duration-200"
         style={{ width: 'clamp(2.5rem, 5vw, 4rem)', height: 'clamp(2.5rem, 5vw, 4rem)' }}
         aria-label="next"
       >

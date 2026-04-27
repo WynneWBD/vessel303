@@ -46,11 +46,11 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
         <div className="absolute top-6 left-0 right-0">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-2 text-xs text-[#888888] tracking-wider">
-              <Link href="/" className="hover:text-[#c9a84c] transition-colors">
+              <Link href="/" className="hover:text-[#E36F2C] transition-colors">
                 {t(i18n.productDetail.home)}
               </Link>
               <span>/</span>
-              <Link href="/products" className="hover:text-[#c9a84c] transition-colors">
+              <Link href="/products" className="hover:text-[#E36F2C] transition-colors">
                 {t(i18n.productDetail.breadcrumbProducts)}
               </Link>
               <span>/</span>
@@ -63,7 +63,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
         <div className="absolute bottom-8 left-0 right-0">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-[10px] font-bold px-2.5 py-1 bg-[#c9a84c] text-[#1C1A18] tracking-wider">
+              <span className="text-[10px] font-bold px-2.5 py-1 bg-[#E36F2C] text-white tracking-wider">
                 {badge}
               </span>
               {product.isCustom && (
@@ -73,7 +73,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
               )}
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-wide leading-tight">
-              <span className="text-[#c9a84c]">VESSEL</span>
+              <span className="text-[#E36F2C]">VESSEL</span>
               <span className="text-white ml-3 drop-shadow-sm">{name}</span>
             </h1>
           </div>
@@ -103,13 +103,13 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
 
             {/* Features */}
             <div>
-              <div className="text-[#c9a84c] text-[10px] tracking-[0.25em] uppercase mb-4">
+              <div className="text-[#E36F2C] text-[10px] tracking-[0.25em] uppercase mb-4">
                 {t(i18n.productDetail.featuresLabel)}
               </div>
               <ul className="space-y-4">
                 {features.map((f, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <span className="text-[#c9a84c] text-sm mt-0.5 shrink-0">▸</span>
+                    <span className="text-[#E36F2C] text-sm mt-0.5 shrink-0">▸</span>
                     <span className="text-[#5A5A5A] text-sm leading-relaxed tracking-wide">{f}</span>
                   </li>
                 ))}
@@ -117,7 +117,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
             </div>
 
             <div>
-              <div className="text-[#c9a84c] text-[10px] tracking-[0.25em] uppercase mb-4">
+              <div className="text-[#E36F2C] text-[10px] tracking-[0.25em] uppercase mb-4">
                 {lang === 'en' ? 'Best-fit scenarios' : '适用场景'}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -125,7 +125,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
                   ? ['Resort guest rooms', 'Remote camp expansion', 'Commercial showcase']
                   : ['度假营地客房', '远程营地扩容', '商业展示空间']
                 ).map((item) => (
-                  <div key={item} className="border border-[#E8E4DE] bg-[#FAF9F6] p-4">
+                  <div key={item} className="border border-[#E5DED4] bg-[#FAF9F6] p-4">
                     <div className="text-sm font-semibold text-[#1A1A1A] tracking-wide">{item}</div>
                   </div>
                 ))}
@@ -134,8 +134,8 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
 
             {/* isCustom notice */}
             {product.isCustom && (
-              <div className="border border-[#c9a84c]/20 bg-[#c9a84c]/5 p-5">
-                <div className="text-[#c9a84c] text-xs tracking-[0.2em] uppercase mb-2">
+              <div className="border border-[#E36F2C]/20 bg-[#E36F2C]/5 p-5">
+                <div className="text-[#E36F2C] text-xs tracking-[0.2em] uppercase mb-2">
                   {lang === 'en' ? 'Custom Case · Real Project' : '定制案例 · 真实落地项目'}
                 </div>
                 <p className="text-[#5A5A5A] text-sm leading-relaxed">
@@ -147,7 +147,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
             )}
 
             {/* 4 param grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/8 border border-[#E8E4DE]">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/8 border border-[#E5DED4]">
               {[
                 {
                   label: t(i18n.productDetail.specArea),
@@ -173,8 +173,8 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
               ))}
             </div>
 
-            <div className="border border-[#E8E4DE] p-5">
-              <div className="text-[#c9a84c] text-[10px] tracking-[0.25em] uppercase mb-3">
+            <div className="border border-[#E5DED4] p-5">
+              <div className="text-[#E36F2C] text-[10px] tracking-[0.25em] uppercase mb-3">
                 {lang === 'en' ? 'Customization scope' : '可定制范围'}
               </div>
               <p className="text-[#5A5A5A] text-sm leading-relaxed">
@@ -188,8 +188,8 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
           {/* Right: price + CTA */}
           <div className="space-y-5">
             {/* Price card */}
-            <div className="bg-white border border-[#E8E4DE] p-6">
-              <div className="text-[#c9a84c] text-[10px] tracking-[0.25em] uppercase mb-4">
+            <div className="bg-white border border-[#E5DED4] p-6">
+              <div className="text-[#E36F2C] text-[10px] tracking-[0.25em] uppercase mb-4">
                 {t(i18n.productDetail.priceLabel)}
               </div>
               {isLoggedIn ? (
@@ -212,8 +212,8 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
             </div>
 
             {/* Delivery strip */}
-            <div className="bg-[#c9a84c]/8 border border-[#c9a84c]/20 p-4">
-              <div className="text-[#c9a84c] text-xs tracking-wider leading-relaxed">
+            <div className="bg-[#E36F2C]/8 border border-[#E36F2C]/20 p-4">
+              <div className="text-[#E36F2C] text-xs tracking-wider leading-relaxed">
                 {t(i18n.productDetail.deliveryStrip)}
               </div>
             </div>
@@ -221,14 +221,14 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
             {/* CTA */}
             <Link
               href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
-              className="block text-center py-4 font-bold tracking-[0.2em] uppercase text-sm bg-[#c9a84c] text-[#1C1A18] hover:bg-[#b8973d] transition-colors duration-200"
+              className="block text-center py-4 font-bold tracking-[0.2em] uppercase text-sm bg-[#E36F2C] text-white hover:bg-[#C85A1F] transition-colors duration-200"
             >
               {t(i18n.productDetail.inquireBtn)}
             </Link>
 
             <Link
               href="/products"
-              className="block text-center py-3 text-xs font-semibold tracking-[0.2em] uppercase text-[#c9a84c]/70 border border-[#c9a84c]/20 hover:border-[#c9a84c]/50 hover:text-[#c9a84c] transition-colors duration-200"
+              className="block text-center py-3 text-xs font-semibold tracking-[0.2em] uppercase text-[#E36F2C]/70 border border-[#E36F2C]/20 hover:border-[#E36F2C]/50 hover:text-[#E36F2C] transition-colors duration-200"
             >
               {t(i18n.productDetail.otherProducts)}
             </Link>

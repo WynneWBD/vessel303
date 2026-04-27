@@ -19,12 +19,12 @@ export default function AuthButtonClient({ name, roleLabel, initial }: Props) {
         className="flex items-center gap-2 group"
       >
         {/* Avatar */}
-        <div className="w-7 h-7 bg-[#c9a84c] text-[#1C1A18] flex items-center justify-center text-xs font-black">
+        <div className="w-7 h-7 bg-[#E36F2C] text-white flex items-center justify-center text-xs font-black">
           {initial}
         </div>
         <div className="hidden sm:block text-left">
           <div className="text-white/80 text-xs tracking-wider leading-none">{name}</div>
-          <div className="text-[#c9a84c] text-[10px] tracking-wider mt-0.5">{roleLabel}</div>
+          <div className="text-[#E36F2C] text-[10px] tracking-wider mt-0.5">{roleLabel}</div>
         </div>
         <svg className="w-3 h-3 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

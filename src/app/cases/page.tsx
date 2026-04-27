@@ -44,7 +44,7 @@ const cases = [
     products: 'V9 Gen6 · E6 Gen6',
     desc: '祁连山下托茂部落，以蒙古族文化为主题，VESSEL装配建筑与蒙古包景观相互辉映，实现现代舒适与民族特色的融合。',
     tags: ['草原', '民族风情', '文化体验'],
-    accentColor: '#c9a84c',
+    accentColor: '#E36F2C',
   },
   {
     id: 4,
@@ -89,7 +89,7 @@ const cases = [
 
 function Placeholder({ label, className }: { label: string; className?: string }) {
   return (
-    <div className={`bg-[#E8E4DE] flex items-center justify-center ${className}`}>
+    <div className={`bg-[#E5DED4] flex items-center justify-center ${className}`}>
       <span className="text-[#CCCCCC] text-xs tracking-wider">{label}</span>
     </div>
   );
@@ -111,7 +111,7 @@ export default function CasesPage() {
       />
 
       {/* Stats bar */}
-      <div className="bg-[#FAF7F2] border-b border-[#c9a84c]/10">
+      <div className="bg-[#FAF7F2] border-b border-[#E36F2C]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex flex-wrap gap-8 justify-center">
             {[
@@ -121,7 +121,7 @@ export default function CasesPage() {
               [t(i18n.cases.stat4Val), t(i18n.cases.stat4)],
             ].map(([num, label]) => (
               <div key={label} className="text-center">
-                <div className="text-[#c9a84c] text-2xl font-black">{num}</div>
+                <div className="text-[#E36F2C] text-2xl font-black">{num}</div>
                 <div className="text-[#6B6560] text-xs tracking-wider">{label}</div>
               </div>
             ))}
@@ -145,8 +145,8 @@ export default function CasesPage() {
               key={tab}
               className={`text-sm px-4 py-1.5 border tracking-wider transition-colors ${
                 i === 0
-                  ? 'border-[#c9a84c] text-[#c9a84c] bg-[#c9a84c]/5'
-                  : 'border-[#D8D4CE] text-[#6B6560] hover:border-[#BBBBBB] hover:text-[#555555]'
+                  ? 'border-[#E36F2C] text-[#E36F2C] bg-[#E36F2C]/5'
+                  : 'border-[#E5DED4] text-[#6B6560] hover:border-[#BBBBBB] hover:text-[#555555]'
               }`}
             >
               {tab}
@@ -159,7 +159,7 @@ export default function CasesPage() {
           {cases.map((c, i) => (
             <div
               key={c.id}
-              className="group bg-white border border-[#E8E4DE] hover:border-[#c9a84c]/25 transition-all duration-300 overflow-hidden"
+              className="group bg-white border border-[#E5DED4] hover:border-[#E36F2C]/25 transition-all duration-300 overflow-hidden"
             >
               <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
                 {/* Image placeholder */}
@@ -205,7 +205,7 @@ export default function CasesPage() {
                       { label: t(i18n.cases.specUnits), value: c.units },
                       { label: t(i18n.cases.specProducts), value: c.products },
                     ].map((spec) => (
-                      <div key={spec.label} className="bg-[#F8F6F2] px-3 py-2 border border-[#E8E4DE]">
+                      <div key={spec.label} className="bg-[#F8F6F2] px-3 py-2 border border-[#E5DED4]">
                         <div className="text-[#AAAAAA] text-[10px] tracking-wider mb-0.5">{spec.label}</div>
                         <div className="text-[#444444] text-xs font-semibold tracking-wider">{spec.value}</div>
                       </div>
@@ -214,7 +214,7 @@ export default function CasesPage() {
 
                   <a
                     href="#"
-                    className="inline-flex items-center gap-2 text-[#c9a84c] text-xs hover:underline tracking-wider"
+                    className="inline-flex items-center gap-2 text-[#E36F2C] text-xs hover:underline tracking-wider"
                   >
                     {t(i18n.cases.viewDetail)}
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -228,8 +228,8 @@ export default function CasesPage() {
         </div>
 
         {/* CTA */}
-        <div className="mt-16 text-center p-12 border border-[#c9a84c]/15 bg-[#c9a84c]/3">
-          <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-3">{t(i18n.cases.ctaBadge)}</div>
+        <div className="mt-16 text-center p-12 border border-[#E36F2C]/15 bg-[#E36F2C]/3">
+          <div className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase mb-3">{t(i18n.cases.ctaBadge)}</div>
           <h2 className="text-2xl font-black text-[#2C2A28] mb-3">{t(i18n.cases.ctaTitle)}</h2>
           <p className="text-[#6B6560] text-sm mb-8 tracking-wider">
             {t(i18n.cases.ctaSubtitle)}
@@ -237,13 +237,13 @@ export default function CasesPage() {
           <div className="flex flex-wrap justify-center gap-4">
             <a
               href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
-              className="bg-[#c9a84c] text-[#1C1A18] font-bold text-sm px-8 py-3 hover:bg-[#b8973b] transition-colors tracking-wider"
+              className="bg-[#E36F2C] text-white font-bold text-sm px-8 py-3 hover:bg-[#C85A1F] transition-colors tracking-wider"
             >
               {t(i18n.cases.ctaBtn1)}
             </a>
             <a
               href="tel:4008090303"
-              className="border border-[#999999] text-[#2C2A28] text-sm px-8 py-3 hover:border-[#c9a84c] hover:text-[#c9a84c] transition-colors tracking-wider"
+              className="border border-[#999999] text-[#2C2A28] text-sm px-8 py-3 hover:border-[#E36F2C] hover:text-[#E36F2C] transition-colors tracking-wider"
             >
               400-8090-303
             </a>

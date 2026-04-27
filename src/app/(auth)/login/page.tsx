@@ -47,7 +47,7 @@ function LoginForm() {
       {/* Logo */}
       <div className="text-center mb-10">
         <Link href="/" className="inline-block">
-          <span className="text-[#c9a84c] text-xs tracking-[0.4em] uppercase font-bold">VESSEL 微宿®</span>
+          <span className="text-[#E36F2C] text-xs tracking-[0.4em] uppercase font-bold">VESSEL 微宿®</span>
         </Link>
         <h1 className="text-white text-2xl font-black mt-3 tracking-wider">{t(i18n.auth.loginTitle)}</h1>
         <p className="text-white/35 text-sm mt-1 tracking-wider">{t(i18n.auth.loginSubtitle)}</p>
@@ -58,7 +58,7 @@ function LoginForm() {
         {/* Google */}
         <button
           onClick={handleGoogle}
-          className="w-full flex items-center justify-center gap-3 border border-white/15 text-white/70 hover:border-[#c9a84c]/50 hover:text-white py-3 text-sm tracking-wider transition-all duration-200 mb-6"
+          className="w-full flex items-center justify-center gap-3 border border-white/15 text-white/70 hover:border-[#E36F2C]/50 hover:text-white py-3 text-sm tracking-wider transition-all duration-200 mb-6"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -85,7 +85,7 @@ function LoginForm() {
               required
               autoComplete="email"
               placeholder="your@email.com"
-              className="w-full bg-[#1a1a1a] border border-white/10 focus:border-[#c9a84c]/60 outline-none text-white text-sm px-4 py-3 tracking-wider placeholder:text-white/20 transition-colors"
+              className="w-full bg-[#1a1a1a] border border-white/10 focus:border-[#E36F2C]/60 outline-none text-white text-sm px-4 py-3 tracking-wider placeholder:text-white/20 transition-colors"
             />
           </div>
 
@@ -98,7 +98,7 @@ function LoginForm() {
               required
               autoComplete="current-password"
               placeholder="••••••••"
-              className="w-full bg-[#1a1a1a] border border-white/10 focus:border-[#c9a84c]/60 outline-none text-white text-sm px-4 py-3 tracking-wider placeholder:text-white/20 transition-colors"
+              className="w-full bg-[#1a1a1a] border border-white/10 focus:border-[#E36F2C]/60 outline-none text-white text-sm px-4 py-3 tracking-wider placeholder:text-white/20 transition-colors"
             />
           </div>
 
@@ -111,7 +111,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#c9a84c] text-[#1C1A18] font-bold text-sm py-3 tracking-wider hover:bg-[#d4b55a] disabled:opacity-50 transition-colors mt-2"
+            className="w-full bg-[#E36F2C] text-white font-bold text-sm py-3 tracking-wider hover:bg-[#C85A1F] disabled:opacity-50 transition-colors mt-2"
           >
             {loading ? t(i18n.auth.signingIn) : t(i18n.auth.loginBtn)}
           </button>
@@ -120,7 +120,7 @@ function LoginForm() {
 
       <p className="text-center text-white/30 text-sm mt-6 tracking-wider">
         {t(i18n.auth.noAccount)}{' '}
-        <Link href="/register" className="text-[#c9a84c] hover:text-[#d4b55a] transition-colors">
+        <Link href="/register" className="text-[#E36F2C] hover:text-[#C85A1F] transition-colors">
           {t(i18n.auth.registerLink)}
         </Link>
       </p>

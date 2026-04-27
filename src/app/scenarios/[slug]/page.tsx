@@ -72,7 +72,7 @@ const scenarios: ScenarioData[] = [
       { name: '麋鹿高山生活营地', location: '四川·轿顶山', desc: '15,000㎡ 高原营地，26台产品' },
       { name: '托茂部落生态营地', location: '青海·祁连', desc: '草原民族文化主题营地' },
     ],
-    accentColor: '#c9a84c',
+    accentColor: '#E36F2C',
   },
   {
     slug: 'commercial',
@@ -270,7 +270,7 @@ export default async function ScenarioPage({
             {scenario.features.map((f, i) => (
               <div
                 key={i}
-                className="bg-[#111] border border-white/8 hover:border-[#c9a84c]/20 transition-all p-7 group"
+                className="bg-[#111] border border-white/8 hover:border-[#E36F2C]/20 transition-all p-7 group"
               >
                 <div
                   className="w-10 h-10 flex items-center justify-center font-black text-sm mb-4"
@@ -339,7 +339,7 @@ export default async function ScenarioPage({
               <Link
                 key={p}
                 href={`/products/${p.split(' ')[0].toLowerCase()}`}
-                className="flex items-center gap-3 px-6 py-3 border border-white/15 hover:border-[#c9a84c]/50 hover:text-[#c9a84c] text-white/70 text-sm transition-all tracking-wider group"
+                className="flex items-center gap-3 px-6 py-3 border border-white/15 hover:border-[#E36F2C]/50 hover:text-[#E36F2C] text-white/70 text-sm transition-all tracking-wider group"
               >
                 <span>{p}</span>
                 <svg className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -349,7 +349,7 @@ export default async function ScenarioPage({
             ))}
             <Link
               href="/products"
-              className="flex items-center gap-2 px-6 py-3 border border-[#c9a84c]/30 text-[#c9a84c] text-sm hover:bg-[#c9a84c]/5 transition-all tracking-wider"
+              className="flex items-center gap-2 px-6 py-3 border border-[#E36F2C]/30 text-[#E36F2C] text-sm hover:bg-[#E36F2C]/5 transition-all tracking-wider"
             >
               查看全部产品 →
             </Link>
@@ -371,7 +371,7 @@ export default async function ScenarioPage({
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {scenario.cases.map((c) => (
-              <div key={c.name} className="bg-[#111] border border-white/8 hover:border-[#c9a84c]/25 transition-all overflow-hidden group">
+              <div key={c.name} className="bg-[#111] border border-white/8 hover:border-[#E36F2C]/25 transition-all overflow-hidden group">
                 <Placeholder label={c.name} className="h-44" />
                 <div className="p-5">
                   <div className="text-white/30 text-xs mb-1 tracking-wider">📍 {c.location}</div>
@@ -384,7 +384,7 @@ export default async function ScenarioPage({
           <div className="mt-8 text-center">
             <Link
               href="/cases"
-              className="inline-flex items-center gap-2 border border-white/20 text-white/60 text-sm px-6 py-3 hover:border-[#c9a84c]/40 hover:text-[#c9a84c] transition-colors tracking-wider"
+              className="inline-flex items-center gap-2 border border-white/20 text-white/60 text-sm px-6 py-3 hover:border-[#E36F2C]/40 hover:text-[#E36F2C] transition-colors tracking-wider"
             >
               查看全部案例 →
             </Link>
@@ -403,7 +403,7 @@ export default async function ScenarioPage({
               <Link
                 key={s.slug}
                 href={`/scenarios/${s.slug}`}
-                className="group flex items-center gap-4 p-6 bg-[#221F1C] border border-white/8 hover:border-[#c9a84c]/30 transition-all"
+                className="group flex items-center gap-4 p-6 bg-[#221F1C] border border-white/8 hover:border-[#E36F2C]/30 transition-all"
               >
                 <div
                   className="w-12 h-12 flex items-center justify-center shrink-0 text-lg font-black"
@@ -412,12 +412,12 @@ export default async function ScenarioPage({
                   {s.label[0]}
                 </div>
                 <div>
-                  <div className="text-white font-bold tracking-wider group-hover:text-[#c9a84c] transition-colors">
+                  <div className="text-white font-bold tracking-wider group-hover:text-[#E36F2C] transition-colors">
                     {s.title} {s.titleGold}
                   </div>
                   <div className="text-white/35 text-xs mt-0.5 tracking-wider">{s.heroTagline}</div>
                 </div>
-                <svg className="w-5 h-5 text-white/20 group-hover:text-[#c9a84c] transition-colors ml-auto shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-white/20 group-hover:text-[#E36F2C] transition-colors ml-auto shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
                 </svg>
               </Link>
@@ -445,13 +445,13 @@ export default async function ScenarioPage({
             <Link
               href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
               className="text-sm font-bold px-8 py-3 tracking-wider transition-colors"
-              style={{ background: scenario.accentColor, color: '#1C1A18' }}
+              style={{ background: scenario.accentColor, color: '#FFFFFF' }}
             >
               立即咨询方案
             </Link>
             <a
               href="tel:4008090303"
-              className="text-sm px-8 py-3 border border-white/30 text-white hover:border-[#c9a84c] hover:text-[#c9a84c] transition-colors tracking-wider"
+              className="text-sm px-8 py-3 border border-white/30 text-white hover:border-[#E36F2C] hover:text-[#E36F2C] transition-colors tracking-wider"
             >
               400-8090-303
             </a>

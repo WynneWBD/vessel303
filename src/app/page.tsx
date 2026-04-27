@@ -294,7 +294,7 @@ function CertificationsSection() {
 function PhilosophySection() {
   const t = useT();
   return (
-    <section className="bg-[#F5F0EB] py-24 lg:py-32">
+    <section className="bg-[#F5F2ED] py-24 lg:py-32">
       <div className="max-w-6xl mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div>
@@ -443,7 +443,7 @@ function ProjectsSection() {
     { label: t(i18n.home.projReg6), desc: t(i18n.home.projReg6Desc), img: '/images/products/region-africa.jpg' },
   ];
   return (
-    <section className="bg-[#F5F0EB] py-24 lg:py-32">
+    <section className="bg-[#F5F2ED] py-24 lg:py-32">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-16">
           <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-4 font-medium">
@@ -536,7 +536,7 @@ function ScenariosSection() {
     { title: t(i18n.home.scen3Title), desc: t(i18n.home.scen3Desc), img: '/images/products/scenario-public.jpg' },
   ];
   return (
-    <section className="bg-[#F5F0EB] py-24 lg:py-32">
+    <section className="bg-[#F5F2ED] py-24 lg:py-32">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-16">
           <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-4 font-medium">{t(i18n.home.scenLabel)}</p>

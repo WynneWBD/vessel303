@@ -25,7 +25,7 @@ export default function AuthButton() {
     return (
       <Link
         href="/login"
-        className="text-sm px-4 py-2 border border-[#c9a84c]/50 text-[#c9a84c] hover:bg-[#c9a84c] hover:text-[#1C1A18] transition-all duration-200 tracking-wider font-medium"
+        className="text-sm px-4 py-2 border border-[#E36F2C]/50 text-[#E36F2C] hover:bg-[#E36F2C] hover:text-white transition-all duration-200 tracking-wider font-medium"
       >
         {t(i18n.nav.signIn)}
       </Link>
@@ -40,14 +40,14 @@ export default function AuthButton() {
   return (
     <div className="relative">
       <button onClick={() => setOpen(v => !v)} className="flex items-center gap-2">
-        <div className="w-7 h-7 bg-[#c9a84c] text-[#1C1A18] flex items-center justify-center text-xs font-black shrink-0">
+        <div className="w-7 h-7 bg-[#E36F2C] text-white flex items-center justify-center text-xs font-black shrink-0">
           {initial}
         </div>
         <div className="hidden sm:block text-left">
           <div className="text-white/80 text-xs tracking-wider leading-none max-w-[80px] truncate">
             {user.name ?? user.email}
           </div>
-          <div className="text-[#c9a84c] text-[10px] tracking-wider mt-0.5">{roleLabel}</div>
+          <div className="text-[#E36F2C] text-[10px] tracking-wider mt-0.5">{roleLabel}</div>
         </div>
         <svg className="w-3 h-3 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -61,7 +61,7 @@ export default function AuthButton() {
             <Link
               href="/display"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-4 py-2.5 text-white/50 hover:text-[#c9a84c] hover:bg-white/5 text-xs tracking-wider transition-colors border-b border-white/5"
+              className="flex items-center gap-2.5 px-4 py-2.5 text-white/50 hover:text-[#E36F2C] hover:bg-white/5 text-xs tracking-wider transition-colors border-b border-white/5"
             >
               <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
