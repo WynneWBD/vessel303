@@ -38,7 +38,7 @@ function PanelLoadingSpinner({ lang, onClose }: { lang: string; onClose: () => v
   return (
     <div style={{
       height: '100%',
-      background: '#141414',
+      background: '#F5F2ED',
       position: 'relative',
       display: 'flex',
       alignItems: 'center',
@@ -50,8 +50,8 @@ function PanelLoadingSpinner({ lang, onClose }: { lang: string; onClose: () => v
         style={{
           position: 'absolute', top: 16, right: 16,
           width: 36, height: 36,
-          background: 'rgba(14,14,14,0.88)',
-          border: '1px solid rgba(255,255,255,0.18)',
+          background: '#241F1B',
+          border: '1px solid rgba(227,111,44,0.25)',
           borderRadius: 4, color: '#F5F2ED',
           cursor: 'pointer', fontSize: 20, lineHeight: 1,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -68,7 +68,7 @@ function PanelLoadingSpinner({ lang, onClose }: { lang: string; onClose: () => v
           animation: 'vessel-panel-spin 0.9s linear infinite',
         }} />
         <div style={{
-          color: 'rgba(240,240,240,0.55)',
+          color: '#8A7D74',
           fontSize: 12,
           letterSpacing: '0.15em',
           fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",
@@ -175,6 +175,7 @@ export default function GlobalMapView() {
         transition: 'transform 300ms ease-out',
         zIndex: 100,
         borderLeft: '1px solid #3A302A',
+        background: '#F5F2ED',
       }}>
         {selectedProject ? (
           <ProjectDetailDynamic

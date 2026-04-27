@@ -57,7 +57,7 @@ const S = {
     fontFamily: "var(--font-heading), 'DM Sans', sans-serif",
   },
   title: {
-    color: '#F5F2ED',
+    color: '#241F1B',
     fontSize: 20,
     fontWeight: 700,
     marginBottom: 20,
@@ -66,12 +66,12 @@ const S = {
     margin: '0 0 20px',
   },
   body: {
-    color: '#B0ACA8',
+    color: '#5F5750',
     fontSize: 15,
     lineHeight: 1.78,
     fontFamily: "var(--font-body), 'Inter', sans-serif",
   },
-  divider: { height: 1, background: '#242424', margin: '0 0 0' },
+  divider: { height: 1, background: '#E5DED4', margin: '0 0 0' },
 }
 
 interface Props {
@@ -130,8 +130,11 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
 
   // Reset carousel + scroll when project changes
   useEffect(() => {
-    setCurrentImg(0)
-    if (scrollRef.current) scrollRef.current.scrollTop = 0
+    const frame = requestAnimationFrame(() => {
+      setCurrentImg(0)
+      if (scrollRef.current) scrollRef.current.scrollTop = 0
+    })
+    return () => cancelAnimationFrame(frame)
   }, [project?.id])
 
   if (!project) return null
@@ -147,7 +150,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
       style={{
         height: '100%',
         overflowY: 'auto',
-        background: '#141414',
+        background: '#F5F2ED',
         position: 'relative',
         scrollbarWidth: 'thin',
         scrollbarColor: 'rgba(227,111,44,0.3) transparent',
@@ -304,8 +307,8 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
       {/* ── 2. Stats Bar ─────────────────────────────────────────────────── */}
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
-        background: '#241F1B',
-        borderBottom: '1px solid #262626',
+        background: '#FAF7F2',
+        borderBottom: '1px solid #E5DED4',
       }}>
         {[
           { value: project.units !== null ? String(project.units) : '—', label: en ? 'Units' : '舱数' },
@@ -315,7 +318,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
         ].map(({ value, label }, i) => (
           <div key={label} style={{
             padding: '14px 10px', textAlign: 'center',
-            borderRight: i < 3 ? '1px solid #262626' : 'none',
+            borderRight: i < 3 ? '1px solid #E5DED4' : 'none',
           }}>
             <div style={{
               color: '#E36F2C', fontSize: 20, fontWeight: 700,
@@ -324,7 +327,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
             }}>
               {value}
             </div>
-            <div style={{ color: '#5A5654', fontSize: 10, marginTop: 3, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            <div style={{ color: '#8A7D74', fontSize: 10, marginTop: 3, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
               {label}
             </div>
           </div>
@@ -337,7 +340,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
         {/* ── 3. Overview ─────────────────────────────────── */}
         <FadeSection style={{
           paddingTop: 28, paddingBottom: 26,
-          borderBottom: '1px solid #242424',
+          borderBottom: '1px solid #E5DED4',
         }}>
           <div style={S.label}>{en ? 'Overview' : '项目概览'}</div>
           <h2 style={S.title}>{en ? 'About This Project' : '关于本项目'}</h2>
@@ -347,19 +350,21 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
         {/* ── 4. Amenities ────────────────────────────────── */}
         <FadeSection style={{
           paddingTop: 26, paddingBottom: 26,
-          borderBottom: '1px solid #242424',
+          borderBottom: '1px solid #E5DED4',
         }}>
           <div style={S.label}>{en ? 'Amenities' : '配套设施'}</div>
           <h2 style={S.title}>{en ? "What's Included" : '设施亮点'}</h2>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {project.amenities.map((a, i) => (
               <div key={i} style={{
-                background: '#1E1E1E', borderRadius: 8,
+                background: '#FFFFFF',
+                border: '1px solid #E5DED4',
+                borderRadius: 8,
                 padding: '11px 14px',
                 display: 'flex', alignItems: 'center', gap: 10,
               }}>
                 <span style={{ fontSize: 18, flexShrink: 0 }}>{a.icon}</span>
-                <span style={{ color: '#C0BCB8', fontSize: 13, lineHeight: 1.3 }}>{a.label[t]}</span>
+                <span style={{ color: '#5F5750', fontSize: 13, lineHeight: 1.3 }}>{a.label[t]}</span>
               </div>
             ))}
           </div>
@@ -368,7 +373,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
         {/* ── 5. Gallery ──────────────────────────────────── */}
         <FadeSection style={{
           paddingTop: 26, paddingBottom: 26,
-          borderBottom: '1px solid #242424',
+          borderBottom: '1px solid #E5DED4',
         }}>
           <div style={S.label}>{en ? 'Gallery' : '项目图集'}</div>
           <h2 style={S.title}>{en ? 'Interior & Exterior' : '实景照片'}</h2>
@@ -387,7 +392,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
         {/* ── 6. Transport & Location ─────────────────────── */}
         <FadeSection style={{
           paddingTop: 26, paddingBottom: 26,
-          borderBottom: '1px solid #242424',
+          borderBottom: '1px solid #E5DED4',
         }}>
           <div style={S.label}>{en ? 'Getting There' : '交通指引'}</div>
           <h2 style={S.title}>{en ? 'Location & Transport' : '位置与交通'}</h2>
@@ -397,7 +402,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
               <div key={i} style={{
                 display: 'flex', alignItems: 'flex-start', gap: 12,
                 padding: '10px 0',
-                borderBottom: i < arr.length - 1 ? '1px solid #1E1E1E' : 'none',
+                borderBottom: i < arr.length - 1 ? '1px solid #E5DED4' : 'none',
               }}>
                 <span style={{ fontSize: 17, flexShrink: 0, width: 22, textAlign: 'center', marginTop: 1 }}>{item.mode}</span>
                 <span style={{ ...S.body, fontSize: 13, lineHeight: 1.6 }}>{item.text}</span>
@@ -405,17 +410,19 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
             ))}
           </div>
 
-          <div style={{ color: '#5A5654', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>
+          <div style={{ color: '#8A7D74', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>
             {en ? 'Nearby Attractions' : '周边景点'}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
             {project.nearby[t].map((n, i) => (
               <div key={i} style={{
-                background: '#1E1E1E', borderRadius: 6,
+                background: '#FFFFFF',
+                border: '1px solid #E5DED4',
+                borderRadius: 6,
                 padding: '9px 12px',
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
               }}>
-                <span style={{ color: '#C0BCB8', fontSize: 12, lineHeight: 1.3 }}>{n.name}</span>
+                <span style={{ color: '#5F5750', fontSize: 12, lineHeight: 1.3 }}>{n.name}</span>
                 <span style={{ color: '#E36F2C', fontSize: 11, flexShrink: 0 }}>{n.distance}</span>
               </div>
             ))}
@@ -432,7 +439,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
                 rel="noopener noreferrer"
                 style={{
                   display: 'block', textAlign: 'center',
-                  background: '#E36F2C', color: '#F5F2ED',
+                  background: '#E36F2C', color: '#FFFFFF',
                   padding: '13px 24px', textDecoration: 'none',
                   fontSize: 13, fontWeight: 600, letterSpacing: '0.12em',
                   fontFamily: "var(--font-heading), 'DM Sans', sans-serif",
@@ -459,7 +466,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
               onClick={onClose}
               style={{
                 background: 'transparent', border: 'none',
-                color: '#5A5654', cursor: 'pointer',
+                color: '#8A7D74', cursor: 'pointer',
                 fontSize: 13, padding: '6px 0',
                 letterSpacing: '0.04em',
                 fontFamily: "var(--font-body), 'Inter', sans-serif",
