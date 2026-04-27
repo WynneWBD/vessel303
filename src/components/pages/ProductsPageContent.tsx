@@ -56,7 +56,7 @@ function GridCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
   const tags = lang === 'en' ? product.tags_en : product.tags_cn;
   const features = lang === 'en' ? product.features_en : product.features_cn;
   const badge = lang === 'en' ? product.badge_en : product.badge_cn;
-  const href = product.detailSlug ? `/products/${product.detailSlug}` : '/contact';
+  const href = product.detailSlug ? `/products/${product.detailSlug}` : `/products/${product.id}`;
 
   return (
     <div className="group flex flex-col bg-white border border-[#E8E4DE] hover:border-[#c9a84c]/40 transition-all duration-300 overflow-hidden">
@@ -74,7 +74,7 @@ function GridCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
 
         {/* Top-left: Gen tag */}
         <div className="absolute top-3 left-3">
-          <span className="text-[10px] font-bold px-2 py-1 bg-black/80 text-[#1A1A1A] tracking-wider">
+          <span className="text-[10px] font-bold px-2 py-1 bg-black/80 text-white tracking-wider">
             {product.gen}
           </span>
         </div>
@@ -93,7 +93,7 @@ function GridCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
         {/* Bottom-right: Custom indicator */}
         {product.isCustom && (
           <div className="absolute bottom-3 right-3">
-            <span className="text-[10px] px-2 py-1 bg-white/10 text-[#555555] tracking-wider border border-[#D0CCC6]">
+            <span className="text-[10px] px-2 py-1 bg-black/70 text-white tracking-wider border border-white/30">
               {lang === 'en' ? 'Custom' : '定制'}
             </span>
           </div>
@@ -159,7 +159,7 @@ function ListCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
   const tags = lang === 'en' ? product.tags_en : product.tags_cn;
   const features = lang === 'en' ? product.features_en : product.features_cn;
   const badge = lang === 'en' ? product.badge_en : product.badge_cn;
-  const href = product.detailSlug ? `/products/${product.detailSlug}` : '/contact';
+  const href = product.detailSlug ? `/products/${product.detailSlug}` : `/products/${product.id}`;
 
   return (
     <div className="group flex bg-white border border-[#E8E4DE] hover:border-[#c9a84c]/30 transition-all duration-300 overflow-hidden">
@@ -193,7 +193,7 @@ function ListCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
               </h3>
             </div>
             <div className="flex flex-col items-end gap-1 shrink-0">
-              <span className="text-[10px] font-bold px-2 py-1 bg-black/60 text-[#1A1A1A] tracking-wider">
+              <span className="text-[10px] font-bold px-2 py-1 bg-black/70 text-white tracking-wider">
                 {product.gen}
               </span>
               {product.isCustom && (

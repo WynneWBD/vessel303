@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { getProductBySlug } from '@/lib/db-products';
 import { catalogProducts } from '@/lib/products';
+import { getPublicCatalogProductById } from '@/lib/product-catalog-db';
 import { auth } from '@/auth';
 import ProductDetailContent from '@/components/pages/ProductDetailContent';
 import CatalogProductDetailContent from '@/components/pages/CatalogProductDetailContent';
@@ -24,8 +25,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
 
-  // Catalog product (static data — no DB needed)
-  const catalogProduct = catalogProducts.find((p) => p.id === slug);
+  // Catalog product (CMS first, static fallback for build/dev resilience)
+  let catalogProduct = await getPublicCatalogProductById(slug).catch(() => undefined);
+  if (catalogProduct === undefined) {
+    catalogProduct = catalogProducts.find((p) => p.id === slug) ?? null;
+  }
   if (catalogProduct) {
     return {
       title: `${catalogProduct.name_en} | VESSEL 微宿®`,
@@ -49,8 +53,14 @@ export default async function ProductDetailPage({
 }) {
   const { slug } = await params;
 
-  // ── 1. Catalog product (static, no DB) ──────────────────
-  const catalogProduct = catalogProducts.find((p) => p.id === slug);
+  // ── 1. Catalog product (CMS first, static fallback) ─────
+  let catalogProduct = await getPublicCatalogProductById(slug).catch((err) => {
+      console.error('[products/detail] catalog db unavailable', err);
+      return undefined;
+    });
+  if (catalogProduct === undefined) {
+    catalogProduct = catalogProducts.find((p) => p.id === slug) ?? null;
+  }
   if (catalogProduct) {
     const session = await auth();
     return (

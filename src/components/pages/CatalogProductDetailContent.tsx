@@ -74,7 +74,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-wide leading-tight">
               <span className="text-[#c9a84c]">VESSEL</span>
-              <span className="text-[#1A1A1A] ml-3">{name}</span>
+              <span className="text-white ml-3 drop-shadow-sm">{name}</span>
             </h1>
           </div>
         </div>
@@ -110,10 +110,26 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
                 {features.map((f, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <span className="text-[#c9a84c] text-sm mt-0.5 shrink-0">▸</span>
-                    <span className="text-white/75 text-sm leading-relaxed tracking-wide">{f}</span>
+                    <span className="text-[#5A5A5A] text-sm leading-relaxed tracking-wide">{f}</span>
                   </li>
                 ))}
               </ul>
+            </div>
+
+            <div>
+              <div className="text-[#c9a84c] text-[10px] tracking-[0.25em] uppercase mb-4">
+                {lang === 'en' ? 'Best-fit scenarios' : '适用场景'}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {(lang === 'en'
+                  ? ['Resort guest rooms', 'Remote camp expansion', 'Commercial showcase']
+                  : ['度假营地客房', '远程营地扩容', '商业展示空间']
+                ).map((item) => (
+                  <div key={item} className="border border-[#E8E4DE] bg-[#FAF9F6] p-4">
+                    <div className="text-sm font-semibold text-[#1A1A1A] tracking-wide">{item}</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* isCustom notice */}
@@ -155,6 +171,17 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
                   <div className="text-[#1A1A1A] font-bold text-lg tracking-wider">{value}</div>
                 </div>
               ))}
+            </div>
+
+            <div className="border border-[#E8E4DE] p-5">
+              <div className="text-[#c9a84c] text-[10px] tracking-[0.25em] uppercase mb-3">
+                {lang === 'en' ? 'Customization scope' : '可定制范围'}
+              </div>
+              <p className="text-[#5A5A5A] text-sm leading-relaxed">
+                {lang === 'en'
+                  ? 'Exterior finish, interior layout, furniture package, climate systems, off-grid energy, bathroom/kitchen modules, and local compliance details can be configured by project.'
+                  : '可按项目配置外观饰面、内部布局、家具包、暖通系统、离网能源、卫浴/厨房模块，以及当地规范适配细节。'}
+              </p>
             </div>
           </div>
 

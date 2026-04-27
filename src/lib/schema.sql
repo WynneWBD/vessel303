@@ -32,6 +32,38 @@ CREATE TABLE IF NOT EXISTS products (
   materials        JSONB        NOT NULL DEFAULT '[]'    -- {title, spec}[]
 );
 
+-- Product CMS for /products listing and generic product detail pages.
+-- Existing static catalog entries are copied into this table on first runtime use.
+CREATE TABLE IF NOT EXISTS product_catalog (
+  id             TEXT        PRIMARY KEY,
+  product_series TEXT        NOT NULL,
+  name_cn        TEXT        NOT NULL,
+  name_en        TEXT        NOT NULL,
+  gen            TEXT        NOT NULL,
+  size           TEXT        NOT NULL,
+  area           NUMERIC     NOT NULL DEFAULT 0,
+  generation     INTEGER     NOT NULL DEFAULT 6,
+  product_type   TEXT        NOT NULL DEFAULT 'standard',
+  badge_cn       TEXT        NOT NULL DEFAULT '',
+  badge_en       TEXT        NOT NULL DEFAULT '',
+  tags_cn        JSONB       NOT NULL DEFAULT '[]',
+  tags_en        JSONB       NOT NULL DEFAULT '[]',
+  features_cn    JSONB       NOT NULL DEFAULT '[]',
+  features_en    JSONB       NOT NULL DEFAULT '[]',
+  image          TEXT        NOT NULL,
+  is_custom      BOOLEAN     NOT NULL DEFAULT FALSE,
+  detail_slug    TEXT,
+  status         TEXT        NOT NULL DEFAULT 'draft',
+  sort_order     INTEGER     NOT NULL DEFAULT 0,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at     TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_catalog_public
+  ON product_catalog (status, sort_order)
+  WHERE deleted_at IS NULL;
+
 CREATE TABLE IF NOT EXISTS users (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   name        TEXT,
