@@ -192,9 +192,10 @@ export default async function SettingsPage() {
   ]
 
   const roadmap = [
-    { name: 'Step 7 设置页', state: '进行中', detail: '系统状态、白名单、日志、配置检查' },
-    { name: 'Step 8 收尾', state: '待做', detail: 'Resend 域名验证、Vercel warning 清理' },
-    { name: 'V8.2 产品 CMS', state: '下一阶段', detail: '后台新增/下架/编辑产品，前台产品页改为 CMS 数据源' },
+    { name: 'Step 7 设置页', state: '已上线', detail: '系统状态、白名单、日志、配置检查' },
+    { name: 'Step 8 产品 CMS', state: '已上线', detail: '产品列表、通用详情、详情图库和规格参数已接入' },
+    { name: 'V8.1 项目 CMS', state: '进行中', detail: '案例列表、/global 地图点位和地图发布校验已接入' },
+    { name: 'Step 10 收尾', state: '待做', detail: 'Resend 域名验证、Vercel warning 清理' },
   ]
 
   return (

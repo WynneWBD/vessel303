@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ExternalLink, Eye, EyeOff, MapPinned, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,6 +19,10 @@ function formatDate(ts: string) {
   const d = new Date(ts)
   if (isNaN(d.getTime())) return ts
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function hasMapCoordinates(item: ProjectCaseRow) {
+  return item.latitude != null && item.longitude != null
 }
 
 export default function ProjectListClient({
@@ -98,6 +102,8 @@ export default function ProjectListClient({
   }
 
   const totalPages = Math.max(1, Math.ceil(total / LIMIT))
+  const publishedCount = rows.filter((item) => item.status === 'published').length
+  const mapReadyCount = rows.filter((item) => item.status === 'published' && hasMapCoordinates(item)).length
 
   return (
     <div className="flex flex-col gap-6">
@@ -107,7 +113,7 @@ export default function ProjectListClient({
             项目案例 Projects
           </h1>
           <p className="mt-1 text-xs text-[#8A8580]">
-            管理官网 /cases 案例列表；地图 /global 接入会在下一步继续。
+            管理官网 /cases 案例列表；已发布且经纬度完整的案例会同步进入 /global 地图。
           </p>
         </div>
         <Link
@@ -133,6 +139,21 @@ export default function ProjectListClient({
         />
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="rounded-lg border border-[#E5DED4] bg-[#FFFFFF] p-4">
+          <p className="text-xs text-[#8A8580]">当前页案例</p>
+          <p className="mt-1 text-2xl font-semibold text-[#2C2A28]">{rows.length}</p>
+        </div>
+        <div className="rounded-lg border border-[#E5DED4] bg-[#FFFFFF] p-4">
+          <p className="text-xs text-[#8A8580]">当前页已发布</p>
+          <p className="mt-1 text-2xl font-semibold text-[#2C2A28]">{publishedCount}</p>
+        </div>
+        <div className="rounded-lg border border-[#E5DED4] bg-[#FFFFFF] p-4">
+          <p className="text-xs text-[#8A8580]">当前页进入地图</p>
+          <p className="mt-1 text-2xl font-semibold text-[#E36F2C]">{mapReadyCount}</p>
+        </div>
+      </div>
+
       {rows.length === 0 && !loading ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#E5DED4] bg-[#FFFFFF] py-20">
           <p className="text-[#C4B9AB]">暂无案例</p>
@@ -144,68 +165,96 @@ export default function ProjectListClient({
         <div className="rounded-lg border border-[#E5DED4] overflow-hidden">
           <div
             className="grid gap-3 px-4 py-3 text-xs text-[#8A8580] bg-[#FAF7F2] border-b border-[#E5DED4]"
-            style={{ gridTemplateColumns: '72px 1fr 140px 90px 110px 128px' }}
+            style={{ gridTemplateColumns: '72px minmax(0,1fr) 140px 90px 118px 110px 128px' }}
           >
             <span>封面</span>
             <span>案例</span>
             <span>位置</span>
             <span>状态</span>
+            <span>地图</span>
             <span>更新</span>
             <span>操作</span>
           </div>
 
-          {rows.map((item) => (
-            <div
-              key={item.id}
-              className="grid gap-3 items-center px-4 py-3 border-b border-[#E5DED4] last:border-b-0 hover:bg-[#FAF7F2] transition-colors"
-              style={{ gridTemplateColumns: '72px 1fr 140px 90px 110px 128px' }}
-            >
-              <div className="w-[72px] h-[44px] rounded overflow-hidden bg-[#E5DED4]">
-                {item.cover_image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.cover_image_url} alt="" className="w-full h-full object-cover" />
-                ) : null}
+          {rows.map((item) => {
+            const mapReady = item.status === 'published' && hasMapCoordinates(item)
+            const hasCoords = hasMapCoordinates(item)
+            return (
+              <div
+                key={item.id}
+                className="grid gap-3 items-center px-4 py-3 border-b border-[#E5DED4] last:border-b-0 hover:bg-[#FAF7F2] transition-colors"
+                style={{ gridTemplateColumns: '72px minmax(0,1fr) 140px 90px 118px 110px 128px' }}
+              >
+                <div className="w-[72px] h-[44px] rounded overflow-hidden bg-[#E5DED4]">
+                  {item.cover_image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.cover_image_url} alt="" className="w-full h-full object-cover" />
+                  ) : null}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm text-[#2C2A28] truncate font-medium">{item.name_zh}</p>
+                  <p className="text-xs text-[#6B6560] truncate mt-0.5">{item.id} · {item.name_en}</p>
+                </div>
+                <p className="text-xs text-[#8A8580] truncate">{item.location_zh}</p>
+                <div>
+                  {item.status === 'published' ? (
+                    <Badge className="bg-green-600/20 text-green-400 border-green-600/30 text-xs">已发布</Badge>
+                  ) : (
+                    <Badge className="bg-[#E5DED4] text-[#8A8580] border-[#C4B9AB] text-xs">草稿</Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {mapReady ? (
+                    <>
+                      <Badge className="bg-[#E36F2C]/15 text-[#E36F2C] border-[#E36F2C]/30 text-xs">
+                        <MapPinned size={12} />
+                        已入图
+                      </Badge>
+                      <Link
+                        href={`/global?camp=${item.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="查看地图点位"
+                        className="text-[#8A8580] hover:text-[#E36F2C]"
+                      >
+                        <ExternalLink size={13} />
+                      </Link>
+                    </>
+                  ) : (
+                    <Badge className="bg-[#E5DED4] text-[#8A8580] border-[#C4B9AB] text-xs">
+                      {hasCoords ? '待发布' : '缺坐标'}
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-[#8A8580]">{formatDate(item.updated_at)}</p>
+                <div className="flex items-center gap-1">
+                  <Link
+                    href={`/admin/projects/${item.id}/edit`}
+                    title="编辑"
+                    className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-[#2C2A28] hover:bg-[#F5F2ED] transition-colors"
+                  >
+                    <Pencil size={14} />
+                  </Link>
+                  <button
+                    type="button"
+                    title={item.status === 'published' ? '下架' : '发布'}
+                    onClick={() => updateStatus(item, item.status === 'published' ? 'draft' : 'published')}
+                    className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-[#E36F2C] hover:bg-[#E36F2C]/10 transition-colors"
+                  >
+                    {item.status === 'published' ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                  <button
+                    type="button"
+                    title="删除"
+                    onClick={() => handleDelete(item)}
+                    className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-sm text-[#2C2A28] truncate font-medium">{item.name_zh}</p>
-                <p className="text-xs text-[#6B6560] truncate mt-0.5">{item.id} · {item.name_en}</p>
-              </div>
-              <p className="text-xs text-[#8A8580] truncate">{item.location_zh}</p>
-              <div>
-                {item.status === 'published' ? (
-                  <Badge className="bg-green-600/20 text-green-400 border-green-600/30 text-xs">已发布</Badge>
-                ) : (
-                  <Badge className="bg-[#E5DED4] text-[#8A8580] border-[#C4B9AB] text-xs">草稿</Badge>
-                )}
-              </div>
-              <p className="text-xs text-[#8A8580]">{formatDate(item.updated_at)}</p>
-              <div className="flex items-center gap-1">
-                <Link
-                  href={`/admin/projects/${item.id}/edit`}
-                  title="编辑"
-                  className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-[#2C2A28] hover:bg-[#F5F2ED] transition-colors"
-                >
-                  <Pencil size={14} />
-                </Link>
-                <button
-                  type="button"
-                  title={item.status === 'published' ? '下架' : '发布'}
-                  onClick={() => updateStatus(item, item.status === 'published' ? 'draft' : 'published')}
-                  className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-[#E36F2C] hover:bg-[#E36F2C]/10 transition-colors"
-                >
-                  {item.status === 'published' ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-                <button
-                  type="button"
-                  title="删除"
-                  onClick={() => handleDelete(item)}
-                  className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

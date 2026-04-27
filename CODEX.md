@@ -414,10 +414,10 @@ curl -I https://www.vessel303.com/news/<slug>
 ## 当前已知后续事项
 
 - 将前台联系方式、SEO 默认值、外部跳转逐步接入 `/admin/settings` 的 `site_settings` 数据源。
-- 项目 / 案例 CMS 下一阶段：将 `/global` 地图点位、深链和右侧详情面板接入 `project_cases` 数据源，并保留现有静态地图兜底。
+- 项目 / 案例 CMS 下一阶段：继续精细化设施、交通、周边字段，并完善项目图库排序能力。
 - 产品 CMS 下一阶段：增加高级详情模块、规格模板和批量图片排序能力，减少对固定精细页的依赖。
 - 评估是否把 `src/middleware.ts` 迁移到 Next 16 推荐的 `src/proxy.ts`。
 - 历史 lint 问题单独开任务清理，不要混在功能开发里。
 - 如果 Wynne 需要，再生成新的 V9 全量 handoff 文档。
-- V8.1：项目 / 案例 CMS 的 `/global` 接库。
+- V8.1：项目 / 案例 CMS 的地图发布校验、设施/交通/周边字段和图库排序。
 - V8.2：产品 CMS 详情内容、产品图片和规格管理。

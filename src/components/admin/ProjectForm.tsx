@@ -4,10 +4,11 @@ import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Save, Send } from 'lucide-react'
+import { ArrowLeft, ExternalLink, MapPinned, Save, Send } from 'lucide-react'
 import { toast } from 'sonner'
 import CoverImagePicker from '@/components/admin/CoverImagePicker'
 import ProductGalleryPicker from '@/components/admin/ProductGalleryPicker'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
@@ -80,6 +81,13 @@ function splitLines(value: string) {
     .filter(Boolean)
 }
 
+function parseOptionalNumber(value: string) {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  const parsed = Number(trimmed)
+  return Number.isFinite(parsed) ? parsed : NaN
+}
+
 function fromProject(project?: ProjectCaseRow | null): FormState {
   if (!project) return emptyState
   return {
@@ -129,6 +137,22 @@ export default function ProjectForm({
   const [form, setForm] = useState<FormState>(() => fromProject(project))
   const [saving, setSaving] = useState(false)
   const imageUrls = useMemo(() => splitLines(form.images), [form.images])
+  const latitude = useMemo(() => parseOptionalNumber(form.latitude), [form.latitude])
+  const longitude = useMemo(() => parseOptionalNumber(form.longitude), [form.longitude])
+  const hasLatitude = form.latitude.trim().length > 0
+  const hasLongitude = form.longitude.trim().length > 0
+  const hasCompleteCoordinates = hasLatitude && hasLongitude
+  const coordinatesValid =
+    hasCompleteCoordinates &&
+    latitude !== null &&
+    longitude !== null &&
+    !Number.isNaN(latitude) &&
+    !Number.isNaN(longitude) &&
+    latitude >= -90 &&
+    latitude <= 90 &&
+    longitude >= -180 &&
+    longitude <= 180
+  const mapReady = form.status === 'published' && coordinatesValid
 
   const patch = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -153,8 +177,8 @@ export default function ProjectForm({
     cover_image_url: form.cover_image_url.trim() || null,
     images: imageUrls,
     country: form.country.trim(),
-    latitude: form.latitude.trim() ? Number(form.latitude) : null,
-    longitude: form.longitude.trim() ? Number(form.longitude) : null,
+    latitude,
+    longitude,
     status: nextStatus ?? form.status,
     sort_order: Number(form.sort_order || 999),
   })
@@ -162,6 +186,14 @@ export default function ProjectForm({
   const handleSave = async (nextStatus?: ProjectCaseStatus) => {
     setSaving(true)
     try {
+      if (hasLatitude !== hasLongitude) {
+        toast.error('经纬度需要同时填写，或者同时留空')
+        return
+      }
+      if (hasCompleteCoordinates && !coordinatesValid) {
+        toast.error('坐标格式不正确：纬度需在 -90 到 90，经度需在 -180 到 180')
+        return
+      }
       const payload = buildPayload(nextStatus)
       const url = mode === 'create' ? '/api/admin/projects' : `/api/admin/projects/${project?.id}`
       const res = await fetch(url, {
@@ -305,12 +337,42 @@ export default function ProjectForm({
             <Input value={form.country} onChange={(e) => patch('country', e.target.value)} />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="纬度">
+            <Field label="纬度" hint="-90 到 90">
               <Input type="number" step="0.000001" value={form.latitude} onChange={(e) => patch('latitude', e.target.value)} />
             </Field>
-            <Field label="经度">
+            <Field label="经度" hint="-180 到 180">
               <Input type="number" step="0.000001" value={form.longitude} onChange={(e) => patch('longitude', e.target.value)} />
             </Field>
+          </div>
+
+          <div className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-[#2C2A28]">
+                <MapPinned size={16} className="text-[#E36F2C]" />
+                /global 地图状态
+              </div>
+              {mapReady ? (
+                <Badge className="bg-[#E36F2C]/15 text-[#E36F2C] border-[#E36F2C]/30">已入图</Badge>
+              ) : (
+                <Badge className="bg-[#E5DED4] text-[#8A8580] border-[#C4B9AB]">
+                  {coordinatesValid ? '待发布' : hasCompleteCoordinates ? '坐标需检查' : '未入图'}
+                </Badge>
+              )}
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-[#6B6560]">
+              案例发布后，同时填写有效经纬度，才会进入 /global 地图点位和右侧详情；不填坐标时仍可正常展示在 /cases。
+            </p>
+            {mode === 'edit' && coordinatesValid ? (
+              <Link
+                href={`/global?camp=${project?.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-[#E36F2C] hover:text-[#C85A1F]"
+              >
+                查看地图深链
+                <ExternalLink size={13} />
+              </Link>
+            ) : null}
           </div>
         </aside>
       </div>
