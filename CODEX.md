@@ -152,6 +152,7 @@ Codex 默认工作方式：
 - `/admin/news`：新闻管理，已能新建、编辑、发布、取消发布，并在前台展示。
 - `/admin/settings`：设置页已上线，包含站点运营配置表单、系统健康检查、白名单展示和最近操作日志。
 - `/admin/products`：产品 CMS 已接入产品列表和通用详情页，支持新建、编辑、复制为草稿、发布/下架、删除、筛选、图片选择、前台预览、详情介绍、详情图库选择器和规格参数；固定精细详情页如 `e7`、`v9-gen6` 仍保留原页面。
+- `/admin/projects`：项目 / 案例 CMS 基础版已接入，支持新建、编辑、发布/下架、删除、筛选、封面图、图库和中英文案例内容；前台 `/cases` 已优先读取数据库并保留静态兜底。
 
 ## V8 后台进度
 
@@ -165,11 +166,12 @@ Codex 默认工作方式：
 - Step 6：新闻管理和前台新闻展示。
 - Step 7：设置页、站点运营配置、系统配置检查。
 - Step 8：产品 CMS 基础发布链路，含公开详情 slug 校验、后台预览、产品复制、通用详情介绍、图库选择器和规格参数。
+- Step 9：项目 / 案例 CMS 基础发布链路，含后台 CRUD 和 `/cases` 数据库接入。
 
 下一步：
 
-- Step 9：Resend 域名验证、Vercel warning 清理。
-- V8.1：项目 CMS / 案例 CMS。
+- Step 10：Resend 域名验证、Vercel warning 清理。
+- V8.1：项目 CMS / 案例 CMS 的 `/global` 地图点位和详情面板接库。
 - V8.2：产品 CMS 高级详情模块、产品图片批量管理和规格模板。
 
 ## 新闻模块当前状态
@@ -356,6 +358,9 @@ Vercel Serverless 有 4.5MB request body 限制。大文件不能直接通过普
 - `/admin/products`
 - `/admin/products/new`
 - `/admin/products/[id]/edit`
+- `/admin/projects`
+- `/admin/projects/new`
+- `/admin/projects/[id]/edit`
 - `/admin/settings`
 
 后台 API：
@@ -368,6 +373,8 @@ Vercel Serverless 有 4.5MB request body 限制。大文件不能直接通过普
 - `/api/admin/users/export`
 - `/api/admin/media`
 - `/api/admin/media/[id]`
+- `/api/admin/projects`
+- `/api/admin/projects/[id]`
 - `/api/admin/products`
 - `/api/admin/products/[id]`
 - `/api/admin/news`
@@ -407,9 +414,10 @@ curl -I https://www.vessel303.com/news/<slug>
 ## 当前已知后续事项
 
 - 将前台联系方式、SEO 默认值、外部跳转逐步接入 `/admin/settings` 的 `site_settings` 数据源。
+- 项目 / 案例 CMS 下一阶段：将 `/global` 地图点位、深链和右侧详情面板接入 `project_cases` 数据源，并保留现有静态地图兜底。
 - 产品 CMS 下一阶段：增加高级详情模块、规格模板和批量图片排序能力，减少对固定精细页的依赖。
 - 评估是否把 `src/middleware.ts` 迁移到 Next 16 推荐的 `src/proxy.ts`。
 - 历史 lint 问题单独开任务清理，不要混在功能开发里。
 - 如果 Wynne 需要，再生成新的 V9 全量 handoff 文档。
-- V8.1：项目 / 案例 CMS。
+- V8.1：项目 / 案例 CMS 的 `/global` 接库。
 - V8.2：产品 CMS 详情内容、产品图片和规格管理。

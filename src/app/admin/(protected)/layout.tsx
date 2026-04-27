@@ -6,6 +6,7 @@ import { countUsers } from '@/lib/users-db'
 import { countUploads } from '@/lib/uploads-db'
 import { countNewsByStatus } from '@/lib/news-db'
 import { countCatalogProductsByStatus } from '@/lib/product-catalog-db'
+import { countProjectCasesByStatus } from '@/lib/project-cases-db'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,7 +28,7 @@ export default async function ProtectedAdminLayout({
   }
 
   const email = session.user.email ?? ''
-  const [leadBadge, userBadge, mediaBadge, newsSummary, productSummary] = await Promise.all([
+  const [leadBadge, userBadge, mediaBadge, newsSummary, productSummary, projectSummary] = await Promise.all([
     countLeadsByStatus('new').catch((err) => {
       console.error('[layout] count new leads failed', err)
       return 0
@@ -48,6 +49,10 @@ export default async function ProtectedAdminLayout({
       console.error('[layout] count products failed', err)
       return { draft: 0, published: 0, total: 0 }
     }),
+    countProjectCasesByStatus().catch((err) => {
+      console.error('[layout] count project cases failed', err)
+      return { draft: 0, published: 0, total: 0 }
+    }),
   ])
 
   return (
@@ -58,6 +63,7 @@ export default async function ProtectedAdminLayout({
       mediaBadge={mediaBadge}
       newsBadge={newsSummary.draft}
       productBadge={productSummary.draft}
+      projectBadge={projectSummary.draft}
     >
       {children}
     </AdminShell>

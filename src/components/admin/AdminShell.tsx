@@ -8,6 +8,7 @@ import {
   Users,
   Newspaper,
   Package,
+  MapPinned,
   Image as ImageIcon,
   Settings,
   LogOut,
@@ -30,6 +31,7 @@ const menuItems: MenuItem[] = [
   { label: '用户管理', href: '/admin/users', Icon: Users, title: '用户管理 Users' },
   { label: '新闻管理', href: '/admin/news', Icon: Newspaper, title: '新闻管理 News' },
   { label: '产品管理', href: '/admin/products', Icon: Package, title: '产品管理 Products' },
+  { label: '项目案例', href: '/admin/projects', Icon: MapPinned, title: '项目案例 Projects' },
   { label: '图片库', href: '/admin/media', Icon: ImageIcon, title: '图片库 Media' },
   { label: '设置', href: '/admin/settings', Icon: Settings, title: '设置 Settings' },
 ]
@@ -51,6 +53,7 @@ export default function AdminShell({
   mediaBadge = 0,
   newsBadge = 0,
   productBadge = 0,
+  projectBadge = 0,
   children,
 }: {
   email: string
@@ -59,6 +62,7 @@ export default function AdminShell({
   mediaBadge?: number
   newsBadge?: number
   productBadge?: number
+  projectBadge?: number
   children: React.ReactNode
 }) {
   const pathname = usePathname() ?? '/admin'
@@ -71,6 +75,7 @@ export default function AdminShell({
     if (href === '/admin/media' && mediaBadge > 0) return clampBadge(mediaBadge)
     if (href === '/admin/news' && newsBadge > 0) return clampBadge(newsBadge)
     if (href === '/admin/products' && productBadge > 0) return clampBadge(productBadge)
+    if (href === '/admin/projects' && projectBadge > 0) return clampBadge(projectBadge)
     return undefined
   }
 

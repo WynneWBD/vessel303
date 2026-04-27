@@ -73,6 +73,38 @@ CREATE INDEX IF NOT EXISTS idx_product_catalog_detail_slug
   ON product_catalog (detail_slug)
   WHERE deleted_at IS NULL AND detail_slug IS NOT NULL;
 
+CREATE TABLE IF NOT EXISTS project_cases (
+  id                 TEXT        PRIMARY KEY,
+  name_zh            TEXT        NOT NULL,
+  name_en            TEXT        NOT NULL,
+  location_zh        TEXT        NOT NULL,
+  location_en        TEXT        NOT NULL,
+  project_type_zh    TEXT        NOT NULL DEFAULT '',
+  project_type_en    TEXT        NOT NULL DEFAULT '',
+  area_display       TEXT        NOT NULL DEFAULT '',
+  investment_display TEXT        NOT NULL DEFAULT '',
+  units_display      TEXT        NOT NULL DEFAULT '',
+  products           TEXT        NOT NULL DEFAULT '',
+  description_zh     TEXT        NOT NULL DEFAULT '',
+  description_en     TEXT        NOT NULL DEFAULT '',
+  tags_zh            JSONB       NOT NULL DEFAULT '[]',
+  tags_en            JSONB       NOT NULL DEFAULT '[]',
+  cover_image_url    TEXT,
+  images             JSONB       NOT NULL DEFAULT '[]',
+  country            TEXT        NOT NULL DEFAULT '',
+  latitude           NUMERIC,
+  longitude          NUMERIC,
+  status             TEXT        NOT NULL DEFAULT 'draft',
+  sort_order         INTEGER     NOT NULL DEFAULT 999,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at         TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_project_cases_public
+  ON project_cases (status, sort_order)
+  WHERE deleted_at IS NULL;
+
 CREATE TABLE IF NOT EXISTS users (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   name        TEXT,
