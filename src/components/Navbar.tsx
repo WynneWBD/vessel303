@@ -28,7 +28,7 @@ function ProductsDropdown({ items }: { items: DropdownItem[] }) {
   const t = useT();
 
   return (
-    <div className="absolute top-full left-0 mt-1 w-[440px] bg-[#1A1A1A] border border-[#E36F2C]/20 shadow-2xl shadow-black/60 z-50">
+    <div className="absolute top-full left-0 mt-1 w-[440px] bg-[#241F1B] border border-[#E36F2C]/25 shadow-2xl shadow-black/50 z-50">
       <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-[#E36F2C]/60 to-transparent" />
       <div className="grid grid-cols-2 divide-x divide-white/5">
         {/* Gen6 */}
@@ -84,7 +84,7 @@ function ProductsDropdown({ items }: { items: DropdownItem[] }) {
 
 function SimpleDropdown({ items }: { items: DropdownItem[] }) {
   return (
-    <div className="absolute top-full left-0 mt-1 min-w-[200px] bg-[#1A1A1A] border border-[#2A2A2E] shadow-2xl shadow-black/60 z-50">
+    <div className="absolute top-full left-0 mt-1 min-w-[200px] bg-[#241F1B] border border-[#3A302A] shadow-2xl shadow-black/50 z-50">
       <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-[#E36F2C]/60 to-transparent" />
       {items.map((item) => (
         <Link
@@ -137,8 +137,8 @@ export default function Navbar() {
       ref={navRef}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-[#1A1A1A]/98 backdrop-blur-md border-b border-[#E36F2C]/20 shadow-lg shadow-black/50'
-          : 'bg-[#1A1A1A]/80 backdrop-blur-sm'
+          ? 'bg-[#241F1B]/98 backdrop-blur-md border-b border-[#E36F2C]/20 shadow-lg shadow-black/40'
+          : 'bg-[#241F1B]/88 backdrop-blur-sm'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -205,7 +205,7 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center gap-2 shrink-0">
             <Link
               href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
-              className="text-white text-sm font-semibold px-3.5 py-2 border border-white/50 hover:bg-white hover:text-[#1A1A1A] transition-all duration-200 tracking-wider whitespace-nowrap"
+              className="text-white text-sm font-semibold px-3.5 py-2 border border-white/50 hover:bg-[#F5F2ED] hover:text-[#241F1B] transition-all duration-200 tracking-wider whitespace-nowrap"
             >
               {t(i18n.nav.purchaseBtn)}
             </Link>
@@ -291,7 +291,7 @@ export default function Navbar() {
             <div className="flex gap-3 pt-4">
               <Link
                 href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
-                className="flex-1 text-center bg-[#1A1A1A] text-white text-sm font-semibold py-3 border border-white/60 tracking-wider"
+                className="flex-1 text-center bg-[#241F1B] text-white text-sm font-semibold py-3 border border-white/60 tracking-wider"
                 onClick={() => setIsOpen(false)}
               >
                 {t(i18n.nav.purchaseBtn)}
