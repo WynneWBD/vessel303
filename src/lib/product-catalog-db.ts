@@ -1,5 +1,10 @@
 import { pool } from '@/lib/db'
-import { catalogProducts, type CatalogProduct, type ProductSeriesCode } from '@/lib/products'
+import {
+  catalogProducts,
+  type CatalogProduct,
+  type CatalogSpecItem,
+  type ProductSeriesCode,
+} from '@/lib/products'
 
 export type CatalogProductStatus = 'draft' | 'published'
 export type CatalogProductType = CatalogProduct['productType']
@@ -37,6 +42,11 @@ export type CatalogProductInput = {
   features_cn: string[]
   features_en: string[]
   image: string
+  description_cn?: string
+  description_en?: string
+  gallery?: string[]
+  specs_cn?: CatalogSpecItem[]
+  specs_en?: CatalogSpecItem[]
   isCustom: boolean
   detailSlug?: string | null
   status?: CatalogProductStatus
@@ -64,6 +74,11 @@ function rowToCatalogProduct(row: {
   features_cn: string[]
   features_en: string[]
   image: string
+  description_cn: string | null
+  description_en: string | null
+  gallery: string[]
+  specs_cn: CatalogSpecItem[]
+  specs_en: CatalogSpecItem[]
   is_custom: boolean
   detail_slug: string | null
   status: CatalogProductStatus
@@ -89,6 +104,11 @@ function rowToCatalogProduct(row: {
     features_cn: row.features_cn ?? [],
     features_en: row.features_en ?? [],
     image: row.image,
+    description_cn: row.description_cn ?? '',
+    description_en: row.description_en ?? '',
+    gallery: row.gallery ?? [],
+    specs_cn: row.specs_cn ?? [],
+    specs_en: row.specs_en ?? [],
     isCustom: row.is_custom,
     detailSlug: row.detail_slug ?? undefined,
     status: row.status,
@@ -102,7 +122,8 @@ function rowToCatalogProduct(row: {
 const COLUMNS = `
   id, product_series, name_cn, name_en, gen, size, area, generation,
   product_type, badge_cn, badge_en, tags_cn, tags_en, features_cn, features_en,
-  image, is_custom, detail_slug, status, sort_order,
+  image, description_cn, description_en, gallery, specs_cn, specs_en,
+  is_custom, detail_slug, status, sort_order,
   created_at::text AS created_at,
   updated_at::text AS updated_at,
   deleted_at::text AS deleted_at
@@ -119,11 +140,13 @@ async function seedCatalogProductsIfEmpty() {
       `INSERT INTO product_catalog (
          id, product_series, name_cn, name_en, gen, size, area, generation,
          product_type, badge_cn, badge_en, tags_cn, tags_en, features_cn, features_en,
-         image, is_custom, detail_slug, status, sort_order
+         image, description_cn, description_en, gallery, specs_cn, specs_en,
+         is_custom, detail_slug, status, sort_order
        ) VALUES (
          $1, $2, $3, $4, $5, $6, $7, $8,
          $9, $10, $11, $12, $13, $14, $15,
-         $16, $17, $18, 'published', $19
+         $16, $17, $18, $19, $20, $21,
+         $22, $23, 'published', $24
        )
        ON CONFLICT (id) DO NOTHING`,
       [
@@ -143,6 +166,11 @@ async function seedCatalogProductsIfEmpty() {
         JSON.stringify(product.features_cn),
         JSON.stringify(product.features_en),
         product.image,
+        product.description_cn ?? '',
+        product.description_en ?? '',
+        JSON.stringify(product.gallery ?? []),
+        JSON.stringify(product.specs_cn ?? []),
+        JSON.stringify(product.specs_en ?? []),
         product.isCustom,
         product.detailSlug ?? null,
         index + 1,
@@ -171,6 +199,11 @@ export async function ensureProductCatalogSchema() {
         features_cn    JSONB       NOT NULL DEFAULT '[]',
         features_en    JSONB       NOT NULL DEFAULT '[]',
         image          TEXT        NOT NULL,
+        description_cn TEXT        NOT NULL DEFAULT '',
+        description_en TEXT        NOT NULL DEFAULT '',
+        gallery        JSONB       NOT NULL DEFAULT '[]',
+        specs_cn       JSONB       NOT NULL DEFAULT '[]',
+        specs_en       JSONB       NOT NULL DEFAULT '[]',
         is_custom      BOOLEAN     NOT NULL DEFAULT FALSE,
         detail_slug    TEXT,
         status         TEXT        NOT NULL DEFAULT 'draft',
@@ -179,6 +212,14 @@ export async function ensureProductCatalogSchema() {
         updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         deleted_at     TIMESTAMPTZ
       )
+    `)
+    await pool.query(`
+      ALTER TABLE product_catalog
+        ADD COLUMN IF NOT EXISTS description_cn TEXT NOT NULL DEFAULT '',
+        ADD COLUMN IF NOT EXISTS description_en TEXT NOT NULL DEFAULT '',
+        ADD COLUMN IF NOT EXISTS gallery JSONB NOT NULL DEFAULT '[]',
+        ADD COLUMN IF NOT EXISTS specs_cn JSONB NOT NULL DEFAULT '[]',
+        ADD COLUMN IF NOT EXISTS specs_en JSONB NOT NULL DEFAULT '[]'
     `)
     await pool.query(
       `CREATE INDEX IF NOT EXISTS idx_product_catalog_public
@@ -332,11 +373,13 @@ export async function createCatalogProduct(input: CatalogProductInput) {
     `INSERT INTO product_catalog (
        id, product_series, name_cn, name_en, gen, size, area, generation,
        product_type, badge_cn, badge_en, tags_cn, tags_en, features_cn, features_en,
-       image, is_custom, detail_slug, status, sort_order
+       image, description_cn, description_en, gallery, specs_cn, specs_en,
+       is_custom, detail_slug, status, sort_order
      ) VALUES (
        $1, $2, $3, $4, $5, $6, $7, $8,
        $9, $10, $11, $12, $13, $14, $15,
-       $16, $17, $18, $19, $20
+       $16, $17, $18, $19, $20, $21,
+       $22, $23, $24, $25
      )
      RETURNING ${COLUMNS}`,
     [
@@ -356,6 +399,11 @@ export async function createCatalogProduct(input: CatalogProductInput) {
       JSON.stringify(input.features_cn),
       JSON.stringify(input.features_en),
       input.image,
+      input.description_cn ?? '',
+      input.description_en ?? '',
+      JSON.stringify(input.gallery ?? []),
+      JSON.stringify(input.specs_cn ?? []),
+      JSON.stringify(input.specs_en ?? []),
       input.isCustom,
       input.detailSlug || null,
       input.status ?? 'draft',
@@ -385,6 +433,11 @@ export async function updateCatalogProduct(id: string, input: UpdateCatalogProdu
     ['features_cn', 'features_cn', (v) => JSON.stringify(v)],
     ['features_en', 'features_en', (v) => JSON.stringify(v)],
     ['image', 'image', (v) => v],
+    ['description_cn', 'description_cn', (v) => v ?? ''],
+    ['description_en', 'description_en', (v) => v ?? ''],
+    ['gallery', 'gallery', (v) => JSON.stringify(v ?? [])],
+    ['specs_cn', 'specs_cn', (v) => JSON.stringify(v ?? [])],
+    ['specs_en', 'specs_en', (v) => JSON.stringify(v ?? [])],
     ['isCustom', 'is_custom', (v) => v],
     ['detailSlug', 'detail_slug', (v) => v || null],
     ['status', 'status', (v) => v],

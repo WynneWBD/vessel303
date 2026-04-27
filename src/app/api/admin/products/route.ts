@@ -17,6 +17,10 @@ export const dynamic = 'force-dynamic'
 const statusValues = ['draft', 'published'] as const
 const seriesValues = ['E3', 'E5', 'E6', 'E7', 'V3', 'V5', 'V7', 'V9', 'S5'] as const
 const productTypeValues = ['compact', 'standard', 'luxury'] as const
+const specItemSchema = z.object({
+  label: z.string().min(1).max(80),
+  value: z.string().min(1).max(160),
+})
 
 function normalizeId(value: string) {
   return value
@@ -52,6 +56,11 @@ const productSchema = z.object({
   features_cn: z.array(z.string().min(1).max(120)).max(12),
   features_en: z.array(z.string().min(1).max(120)).max(12),
   image: z.string().min(1).max(500),
+  description_cn: z.string().max(1800).optional().default(''),
+  description_en: z.string().max(1800).optional().default(''),
+  gallery: z.array(z.string().min(1).max(500)).max(24).optional().default([]),
+  specs_cn: z.array(specItemSchema).max(24).optional().default([]),
+  specs_en: z.array(specItemSchema).max(24).optional().default([]),
   isCustom: z.boolean(),
   detailSlug: detailSlugSchema,
   status: z.enum(statusValues).optional(),

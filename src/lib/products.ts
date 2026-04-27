@@ -512,6 +512,11 @@ export const gen5Products = products.filter((p) => p.series === 'Gen5');
 
 export type ProductSeriesCode = 'E3' | 'E5' | 'E6' | 'E7' | 'V3' | 'V5' | 'V7' | 'V9' | 'S5';
 
+export interface CatalogSpecItem {
+  label: string;
+  value: string;
+}
+
 export interface CatalogProduct {
   id: string;
   productSeries: ProductSeriesCode;
@@ -529,6 +534,11 @@ export interface CatalogProduct {
   features_cn: string[];
   features_en: string[];
   image: string;
+  description_cn?: string;
+  description_en?: string;
+  gallery?: string[];
+  specs_cn?: CatalogSpecItem[];
+  specs_en?: CatalogSpecItem[];
   isCustom: boolean;
   /** If set, "查看详情" links to /products/{detailSlug}; otherwise links to /contact */
   detailSlug?: string;

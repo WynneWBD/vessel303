@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useT } from '@/contexts/LanguageContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -26,19 +25,39 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
   const badge   = lang === 'en' ? product.badge_en : product.badge_cn;
   const tags    = lang === 'en' ? product.tags_en  : product.tags_cn;
   const features = lang === 'en' ? product.features_en : product.features_cn;
+  const description = lang === 'en' ? product.description_en : product.description_cn;
+  const gallery = product.gallery ?? [];
+  const customSpecs = lang === 'en' ? product.specs_en ?? [] : product.specs_cn ?? [];
   const typeLabel = TYPE_LABEL[product.productType] ?? TYPE_LABEL.standard;
+  const specRows = [
+    {
+      label: t(i18n.productDetail.specArea),
+      value: product.size,
+    },
+    {
+      label: lang === 'en' ? 'Generation' : '代别',
+      value: product.gen,
+    },
+    {
+      label: t(i18n.productDetail.specSeries),
+      value: `VESSEL ${product.productSeries}`,
+    },
+    {
+      label: lang === 'en' ? 'Type' : '产品类型',
+      value: lang === 'en' ? typeLabel.en : typeLabel.cn,
+    },
+    ...customSpecs,
+  ];
 
   return (
     <main className="bg-white text-[#2C2A28]">
       {/* ── Hero image ── */}
       <section className="relative h-[400px] sm:h-[500px] overflow-hidden bg-white">
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src={product.image}
           alt={name}
-          fill
-          priority
-          className="object-cover object-center"
-          sizes="100vw"
+          className="absolute inset-0 h-full w-full object-cover object-center"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#1C1A18] via-[#1C1A18]/50 to-transparent" />
 
@@ -101,6 +120,17 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
               </div>
             )}
 
+            {description && (
+              <div className="border-l-2 border-[#E36F2C] pl-5">
+                <div className="text-[#E36F2C] text-[10px] tracking-[0.25em] uppercase mb-4">
+                  {lang === 'en' ? 'Overview' : '产品概览'}
+                </div>
+                <p className="text-[#5A5A5A] text-base leading-8 tracking-wide whitespace-pre-line">
+                  {description}
+                </p>
+              </div>
+            )}
+
             {/* Features */}
             <div>
               <div className="text-[#E36F2C] text-[10px] tracking-[0.25em] uppercase mb-4">
@@ -148,30 +178,37 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
 
             {/* 4 param grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/8 border border-[#E5DED4]">
-              {[
-                {
-                  label: t(i18n.productDetail.specArea),
-                  value: product.size,
-                },
-                {
-                  label: lang === 'en' ? 'Generation' : '代别',
-                  value: product.gen,
-                },
-                {
-                  label: t(i18n.productDetail.specSeries),
-                  value: `VESSEL ${product.productSeries}`,
-                },
-                {
-                  label: lang === 'en' ? 'Type' : '产品类型',
-                  value: lang === 'en' ? typeLabel.en : typeLabel.cn,
-                },
-              ].map(({ label, value }) => (
+              {specRows.map(({ label, value }) => (
                 <div key={label} className="bg-white p-5">
                   <div className="text-[#888888] text-[10px] tracking-[0.2em] uppercase mb-2">{label}</div>
                   <div className="text-[#2C2A28] font-bold text-lg tracking-wider">{value}</div>
                 </div>
               ))}
             </div>
+
+            {gallery.length > 0 && (
+              <div>
+                <div className="text-[#E36F2C] text-[10px] tracking-[0.25em] uppercase mb-4">
+                  {lang === 'en' ? 'Gallery' : '产品图集'}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {gallery.map((src, index) => (
+                    <div
+                      key={`${src}-${index}`}
+                      className="relative aspect-[4/3] overflow-hidden border border-[#E5DED4] bg-[#FAF9F6]"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={src}
+                        alt={`${name} ${index + 1}`}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="border border-[#E5DED4] p-5">
               <div className="text-[#E36F2C] text-[10px] tracking-[0.25em] uppercase mb-3">

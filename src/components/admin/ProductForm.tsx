@@ -31,6 +31,11 @@ type FormState = {
   features_cn: string
   features_en: string
   image: string
+  description_cn: string
+  description_en: string
+  gallery: string
+  specs_cn: string
+  specs_en: string
   isCustom: boolean
   detailSlug: string
   status: CatalogProductStatus
@@ -54,6 +59,11 @@ const emptyState: FormState = {
   features_cn: '',
   features_en: '',
   image: '',
+  description_cn: '',
+  description_en: '',
+  gallery: '',
+  specs_cn: '',
+  specs_en: '',
   isCustom: false,
   detailSlug: '',
   status: 'draft',
@@ -79,6 +89,11 @@ function fromProduct(product?: CatalogProductRow | null): FormState {
     features_cn: product.features_cn.join('\n'),
     features_en: product.features_en.join('\n'),
     image: product.image,
+    description_cn: product.description_cn ?? '',
+    description_en: product.description_en ?? '',
+    gallery: (product.gallery ?? []).join('\n'),
+    specs_cn: formatSpecItems(product.specs_cn ?? []),
+    specs_en: formatSpecItems(product.specs_en ?? []),
     isCustom: product.isCustom,
     detailSlug: product.detailSlug ?? '',
     status: product.status,
@@ -91,6 +106,31 @@ function splitLines(value: string) {
     .split(/\r?\n|,/)
     .map((v) => v.trim())
     .filter(Boolean)
+}
+
+function formatSpecItems(items: { label: string; value: string }[]) {
+  return items.map((item) => `${item.label}: ${item.value}`).join('\n')
+}
+
+function parseSpecItems(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((line) => {
+      const trimmed = line.trim()
+      if (!trimmed) return null
+      const separator = trimmed.includes('|')
+        ? '|'
+        : trimmed.includes('：')
+          ? '：'
+          : ':'
+      const index = trimmed.indexOf(separator)
+      if (index <= 0) return null
+      const label = trimmed.slice(0, index).trim()
+      const specValue = trimmed.slice(index + 1).trim()
+      if (!label || !specValue) return null
+      return { label, value: specValue }
+    })
+    .filter((item): item is { label: string; value: string } => Boolean(item))
 }
 
 function normalizeId(value: string) {
@@ -157,6 +197,11 @@ export default function ProductForm({
     features_cn: splitLines(form.features_cn),
     features_en: splitLines(form.features_en),
     image: form.image.trim(),
+    description_cn: form.description_cn.trim(),
+    description_en: form.description_en.trim(),
+    gallery: splitLines(form.gallery),
+    specs_cn: parseSpecItems(form.specs_cn),
+    specs_en: parseSpecItems(form.specs_en),
     isCustom: form.isCustom,
     detailSlug: form.detailSlug.trim() || null,
     status: nextStatus ?? form.status,
@@ -317,6 +362,62 @@ export default function ProductForm({
             <Field label="英文卖点">
               <Textarea className="min-h-32" value={form.features_en} onChange={(e) => patch('features_en', e.target.value)} />
             </Field>
+          </div>
+
+          <div className="border-t border-[#E5DED4] pt-5 space-y-4">
+            <div>
+              <h2 className="text-sm font-semibold text-[#2C2A28]">详情页内容</h2>
+              <p className="mt-1 text-xs text-[#8A8580]">
+                用于通用产品详情页；固定精细详情页仍按原页面展示。
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="中文详情介绍">
+                <Textarea
+                  className="min-h-32"
+                  value={form.description_cn}
+                  onChange={(e) => patch('description_cn', e.target.value)}
+                  placeholder="介绍产品定位、空间体验、适用项目和关键系统..."
+                />
+              </Field>
+              <Field label="英文详情介绍">
+                <Textarea
+                  className="min-h-32"
+                  value={form.description_en}
+                  onChange={(e) => patch('description_en', e.target.value)}
+                  placeholder="Describe positioning, guest experience, project fit and key systems..."
+                />
+              </Field>
+            </div>
+
+            <Field label="详情图库 URL" hint="一行一张图。可使用图片库里的 URL，也可填 /images/products/...">
+              <Textarea
+                className="min-h-28"
+                value={form.gallery}
+                onChange={(e) => patch('gallery', e.target.value)}
+                placeholder="/images/products/example-01.jpg"
+              />
+            </Field>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="中文规格参数" hint="一行一个，格式：参数名: 参数值。">
+                <Textarea
+                  className="min-h-32"
+                  value={form.specs_cn}
+                  onChange={(e) => patch('specs_cn', e.target.value)}
+                  placeholder={'尺寸范围: 19m2 - 38.8m2\n生产周期: 45天'}
+                />
+              </Field>
+              <Field label="英文规格参数" hint="一行一个，格式：Label: Value。">
+                <Textarea
+                  className="min-h-32"
+                  value={form.specs_en}
+                  onChange={(e) => patch('specs_en', e.target.value)}
+                  placeholder={'Size range: 19m2 - 38.8m2\nProduction lead time: 45 days'}
+                />
+              </Field>
+            </div>
           </div>
         </div>
 
