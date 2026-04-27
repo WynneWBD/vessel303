@@ -1,5 +1,23 @@
 export type ProjectCaseStatus = 'draft' | 'published'
 
+export type ProjectGlobalAmenity = {
+  icon: string
+  label: {
+    zh: string
+    en: string
+  }
+}
+
+export type ProjectGlobalTransport = {
+  mode: string
+  text: string
+}
+
+export type ProjectGlobalNearby = {
+  name: string
+  distance: string
+}
+
 export interface ProjectCaseInput {
   id: string
   name_zh: string
@@ -21,11 +39,21 @@ export interface ProjectCaseInput {
   country: string
   latitude: number | null
   longitude: number | null
+  global_amenities?: ProjectGlobalAmenity[]
+  global_transport_zh?: ProjectGlobalTransport[]
+  global_transport_en?: ProjectGlobalTransport[]
+  global_nearby_zh?: ProjectGlobalNearby[]
+  global_nearby_en?: ProjectGlobalNearby[]
   status?: ProjectCaseStatus
   sort_order?: number
 }
 
 export type ProjectCaseRow = ProjectCaseInput & {
+  global_amenities: ProjectGlobalAmenity[]
+  global_transport_zh: ProjectGlobalTransport[]
+  global_transport_en: ProjectGlobalTransport[]
+  global_nearby_zh: ProjectGlobalNearby[]
+  global_nearby_en: ProjectGlobalNearby[]
   status: ProjectCaseStatus
   sort_order: number
   created_at: string
@@ -33,7 +61,15 @@ export type ProjectCaseRow = ProjectCaseInput & {
   deleted_at: string | null
 }
 
-export const staticProjectCases: ProjectCaseRow[] = [
+type StaticProjectCaseSeed = Omit<
+  ProjectCaseRow,
+  'global_amenities' | 'global_transport_zh' | 'global_transport_en' | 'global_nearby_zh' | 'global_nearby_en'
+> & Partial<Pick<
+  ProjectCaseRow,
+  'global_amenities' | 'global_transport_zh' | 'global_transport_en' | 'global_nearby_zh' | 'global_nearby_en'
+>>
+
+const staticProjectCaseSeeds: StaticProjectCaseSeed[] = [
   {
     id: 'xunliao-bay-holiday-planet',
     name_zh: '巽寮湾·假日星球滨海野奢营地',
@@ -197,3 +233,12 @@ export const staticProjectCases: ProjectCaseRow[] = [
     deleted_at: null,
   },
 ]
+
+export const staticProjectCases: ProjectCaseRow[] = staticProjectCaseSeeds.map((item) => ({
+  global_amenities: [],
+  global_transport_zh: [],
+  global_transport_en: [],
+  global_nearby_zh: [],
+  global_nearby_en: [],
+  ...item,
+}))

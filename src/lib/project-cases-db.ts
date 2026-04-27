@@ -22,7 +22,10 @@ const COLUMNS = `
   project_type_zh, project_type_en, area_display, investment_display,
   units_display, products, description_zh, description_en,
   tags_zh, tags_en, cover_image_url, images, country,
-  latitude, longitude, status, sort_order,
+  latitude, longitude,
+  global_amenities, global_transport_zh, global_transport_en,
+  global_nearby_zh, global_nearby_en,
+  status, sort_order,
   created_at::text AS created_at,
   updated_at::text AS updated_at,
   deleted_at::text AS deleted_at
@@ -49,6 +52,11 @@ function rowToProjectCase(row: {
   country: string
   latitude: string | number | null
   longitude: string | number | null
+  global_amenities: ProjectCaseRow['global_amenities']
+  global_transport_zh: ProjectCaseRow['global_transport_zh']
+  global_transport_en: ProjectCaseRow['global_transport_en']
+  global_nearby_zh: ProjectCaseRow['global_nearby_zh']
+  global_nearby_en: ProjectCaseRow['global_nearby_en']
   status: ProjectCaseStatus
   sort_order: number
   created_at: string
@@ -76,6 +84,11 @@ function rowToProjectCase(row: {
     country: row.country,
     latitude: row.latitude == null ? null : Number(row.latitude),
     longitude: row.longitude == null ? null : Number(row.longitude),
+    global_amenities: row.global_amenities ?? [],
+    global_transport_zh: row.global_transport_zh ?? [],
+    global_transport_en: row.global_transport_en ?? [],
+    global_nearby_zh: row.global_nearby_zh ?? [],
+    global_nearby_en: row.global_nearby_en ?? [],
     status: row.status,
     sort_order: row.sort_order,
     created_at: row.created_at,
@@ -157,12 +170,25 @@ export async function ensureProjectCasesSchema() {
         country            TEXT        NOT NULL DEFAULT '',
         latitude           NUMERIC,
         longitude          NUMERIC,
+        global_amenities   JSONB       NOT NULL DEFAULT '[]',
+        global_transport_zh JSONB      NOT NULL DEFAULT '[]',
+        global_transport_en JSONB      NOT NULL DEFAULT '[]',
+        global_nearby_zh   JSONB       NOT NULL DEFAULT '[]',
+        global_nearby_en   JSONB       NOT NULL DEFAULT '[]',
         status             TEXT        NOT NULL DEFAULT 'draft',
         sort_order         INTEGER     NOT NULL DEFAULT 999,
         created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         deleted_at         TIMESTAMPTZ
       )
+    `)
+    await pool.query(`
+      ALTER TABLE project_cases
+        ADD COLUMN IF NOT EXISTS global_amenities JSONB NOT NULL DEFAULT '[]',
+        ADD COLUMN IF NOT EXISTS global_transport_zh JSONB NOT NULL DEFAULT '[]',
+        ADD COLUMN IF NOT EXISTS global_transport_en JSONB NOT NULL DEFAULT '[]',
+        ADD COLUMN IF NOT EXISTS global_nearby_zh JSONB NOT NULL DEFAULT '[]',
+        ADD COLUMN IF NOT EXISTS global_nearby_en JSONB NOT NULL DEFAULT '[]'
     `)
     await pool.query(
       `CREATE INDEX IF NOT EXISTS idx_project_cases_public
@@ -257,13 +283,16 @@ export async function createProjectCase(input: ProjectCaseInput) {
        project_type_zh, project_type_en, area_display, investment_display,
        units_display, products, description_zh, description_en,
        tags_zh, tags_en, cover_image_url, images, country,
-       latitude, longitude, status, sort_order
+       latitude, longitude,
+       global_amenities, global_transport_zh, global_transport_en,
+       global_nearby_zh, global_nearby_en,
+       status, sort_order
      ) VALUES (
        $1, $2, $3, $4, $5,
        $6, $7, $8, $9,
        $10, $11, $12, $13,
        $14, $15, $16, $17, $18,
-       $19, $20, $21, $22
+       $19, $20, $21, $22, $23, $24, $25, $26, $27
      )
      RETURNING ${COLUMNS}`,
     [
@@ -287,6 +316,11 @@ export async function createProjectCase(input: ProjectCaseInput) {
       input.country,
       input.latitude,
       input.longitude,
+      JSON.stringify(input.global_amenities ?? []),
+      JSON.stringify(input.global_transport_zh ?? []),
+      JSON.stringify(input.global_transport_en ?? []),
+      JSON.stringify(input.global_nearby_zh ?? []),
+      JSON.stringify(input.global_nearby_en ?? []),
       input.status ?? 'draft',
       input.sort_order ?? 999,
     ],
@@ -318,6 +352,11 @@ export async function updateProjectCase(id: string, input: UpdateProjectCaseInpu
     ['country', 'country', (v) => v],
     ['latitude', 'latitude', (v) => v ?? null],
     ['longitude', 'longitude', (v) => v ?? null],
+    ['global_amenities', 'global_amenities', (v) => JSON.stringify(v ?? [])],
+    ['global_transport_zh', 'global_transport_zh', (v) => JSON.stringify(v ?? [])],
+    ['global_transport_en', 'global_transport_en', (v) => JSON.stringify(v ?? [])],
+    ['global_nearby_zh', 'global_nearby_zh', (v) => JSON.stringify(v ?? [])],
+    ['global_nearby_en', 'global_nearby_en', (v) => JSON.stringify(v ?? [])],
     ['status', 'status', (v) => v],
     ['sort_order', 'sort_order', (v) => v],
   ]

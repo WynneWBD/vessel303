@@ -14,6 +14,24 @@ type Ctx = { params: Promise<{ id: string }> }
 
 const statusValues = ['draft', 'published'] as const
 
+const globalAmenitySchema = z.object({
+  icon: z.string().min(1).max(12),
+  label: z.object({
+    zh: z.string().min(1).max(120),
+    en: z.string().min(1).max(160),
+  }),
+})
+
+const globalTransportSchema = z.object({
+  mode: z.string().min(1).max(12),
+  text: z.string().min(1).max(220),
+})
+
+const globalNearbySchema = z.object({
+  name: z.string().min(1).max(120),
+  distance: z.string().min(1).max(120),
+})
+
 const patchSchema = z.object({
   name_zh: z.string().min(1).max(220).optional(),
   name_en: z.string().min(1).max(220).optional(),
@@ -34,6 +52,11 @@ const patchSchema = z.object({
   country: z.string().max(80).optional(),
   latitude: z.coerce.number().min(-90).max(90).nullable().optional(),
   longitude: z.coerce.number().min(-180).max(180).nullable().optional(),
+  global_amenities: z.array(globalAmenitySchema).max(12).optional(),
+  global_transport_zh: z.array(globalTransportSchema).max(12).optional(),
+  global_transport_en: z.array(globalTransportSchema).max(12).optional(),
+  global_nearby_zh: z.array(globalNearbySchema).max(12).optional(),
+  global_nearby_en: z.array(globalNearbySchema).max(12).optional(),
   status: z.enum(statusValues).optional(),
   sort_order: z.coerce.number().int().min(0).max(9999).optional(),
 })

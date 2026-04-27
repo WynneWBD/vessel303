@@ -36,6 +36,11 @@ type FormState = {
   country: string
   latitude: string
   longitude: string
+  global_amenities: string
+  global_transport_zh: string
+  global_transport_en: string
+  global_nearby_zh: string
+  global_nearby_en: string
   status: ProjectCaseStatus
   sort_order: string
 }
@@ -61,6 +66,11 @@ const emptyState: FormState = {
   country: '中国',
   latitude: '',
   longitude: '',
+  global_amenities: '',
+  global_transport_zh: '',
+  global_transport_en: '',
+  global_nearby_zh: '',
+  global_nearby_en: '',
   status: 'draft',
   sort_order: '999',
 }
@@ -81,11 +91,74 @@ function splitLines(value: string) {
     .filter(Boolean)
 }
 
+function splitRows(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((v) => v.trim())
+    .filter(Boolean)
+}
+
 function parseOptionalNumber(value: string) {
   const trimmed = value.trim()
   if (!trimmed) return null
   const parsed = Number(trimmed)
   return Number.isFinite(parsed) ? parsed : NaN
+}
+
+function parseAmenityRows(value: string) {
+  return splitRows(value).map((line) => {
+    const parts = line.split('|').map((part) => part.trim()).filter(Boolean)
+    if (parts.length >= 3) {
+      return {
+        icon: parts[0],
+        label: { zh: parts[1], en: parts.slice(2).join(' | ') },
+      }
+    }
+    if (parts.length === 2) {
+      return {
+        icon: '•',
+        label: { zh: parts[0], en: parts[1] },
+      }
+    }
+    return {
+      icon: '•',
+      label: { zh: line, en: line },
+    }
+  })
+}
+
+function parseTransportRows(value: string) {
+  return splitRows(value).map((line) => {
+    const parts = line.split('|').map((part) => part.trim()).filter(Boolean)
+    if (parts.length >= 2) {
+      return { mode: parts[0], text: parts.slice(1).join(' | ') }
+    }
+    return { mode: '📍', text: line }
+  })
+}
+
+function parseNearbyRows(value: string) {
+  return splitRows(value).map((line) => {
+    const parts = line.split('|').map((part) => part.trim()).filter(Boolean)
+    if (parts.length >= 2) {
+      return { name: parts[0], distance: parts.slice(1).join(' | ') }
+    }
+    return { name: line, distance: '—' }
+  })
+}
+
+function formatAmenities(project?: ProjectCaseRow | null) {
+  return (project?.global_amenities ?? [])
+    .map((item) => `${item.icon} | ${item.label.zh} | ${item.label.en}`)
+    .join('\n')
+}
+
+function formatTransport(items: ProjectCaseRow['global_transport_zh']) {
+  return items.map((item) => `${item.mode} | ${item.text}`).join('\n')
+}
+
+function formatNearby(items: ProjectCaseRow['global_nearby_zh']) {
+  return items.map((item) => `${item.name} | ${item.distance}`).join('\n')
 }
 
 function fromProject(project?: ProjectCaseRow | null): FormState {
@@ -111,6 +184,11 @@ function fromProject(project?: ProjectCaseRow | null): FormState {
     country: project.country,
     latitude: project.latitude == null ? '' : String(project.latitude),
     longitude: project.longitude == null ? '' : String(project.longitude),
+    global_amenities: formatAmenities(project),
+    global_transport_zh: formatTransport(project.global_transport_zh),
+    global_transport_en: formatTransport(project.global_transport_en),
+    global_nearby_zh: formatNearby(project.global_nearby_zh),
+    global_nearby_en: formatNearby(project.global_nearby_en),
     status: project.status,
     sort_order: String(project.sort_order),
   }
@@ -137,6 +215,11 @@ export default function ProjectForm({
   const [form, setForm] = useState<FormState>(() => fromProject(project))
   const [saving, setSaving] = useState(false)
   const imageUrls = useMemo(() => splitLines(form.images), [form.images])
+  const globalAmenities = useMemo(() => parseAmenityRows(form.global_amenities), [form.global_amenities])
+  const globalTransportZh = useMemo(() => parseTransportRows(form.global_transport_zh), [form.global_transport_zh])
+  const globalTransportEn = useMemo(() => parseTransportRows(form.global_transport_en), [form.global_transport_en])
+  const globalNearbyZh = useMemo(() => parseNearbyRows(form.global_nearby_zh), [form.global_nearby_zh])
+  const globalNearbyEn = useMemo(() => parseNearbyRows(form.global_nearby_en), [form.global_nearby_en])
   const latitude = useMemo(() => parseOptionalNumber(form.latitude), [form.latitude])
   const longitude = useMemo(() => parseOptionalNumber(form.longitude), [form.longitude])
   const hasLatitude = form.latitude.trim().length > 0
@@ -179,6 +262,11 @@ export default function ProjectForm({
     country: form.country.trim(),
     latitude,
     longitude,
+    global_amenities: globalAmenities,
+    global_transport_zh: globalTransportZh,
+    global_transport_en: globalTransportEn,
+    global_nearby_zh: globalNearbyZh,
+    global_nearby_en: globalNearbyEn,
     status: nextStatus ?? form.status,
     sort_order: Number(form.sort_order || 999),
   })
@@ -306,6 +394,52 @@ export default function ProjectForm({
             <Field label="英文标签">
               <Textarea value={form.tags_en} onChange={(e) => patch('tags_en', e.target.value)} />
             </Field>
+          </div>
+
+          <div className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4 space-y-4">
+            <div>
+              <h2 className="text-sm font-semibold text-[#2C2A28]">/global 详情内容</h2>
+              <p className="mt-1 text-xs leading-relaxed text-[#8A8580]">
+                用于地图右侧详情面板。留空时会继续使用项目类型、产品型号、标签和位置自动生成兜底内容。
+              </p>
+            </div>
+            <Field label="设施亮点" hint="每行一条，格式：图标 | 中文 | English。示例：🏔 | 海拔1330米悬崖 | Cliff at 1,330m">
+              <Textarea
+                className="min-h-28 bg-white"
+                value={form.global_amenities}
+                onChange={(e) => patch('global_amenities', e.target.value)}
+              />
+            </Field>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="交通指引中文" hint="每行一条，格式：图标 | 文案。">
+                <Textarea
+                  className="min-h-24 bg-white"
+                  value={form.global_transport_zh}
+                  onChange={(e) => patch('global_transport_zh', e.target.value)}
+                />
+              </Field>
+              <Field label="交通指引英文">
+                <Textarea
+                  className="min-h-24 bg-white"
+                  value={form.global_transport_en}
+                  onChange={(e) => patch('global_transport_en', e.target.value)}
+                />
+              </Field>
+              <Field label="周边景点中文" hint="每行一条，格式：名称 | 距离。">
+                <Textarea
+                  className="min-h-24 bg-white"
+                  value={form.global_nearby_zh}
+                  onChange={(e) => patch('global_nearby_zh', e.target.value)}
+                />
+              </Field>
+              <Field label="周边景点英文">
+                <Textarea
+                  className="min-h-24 bg-white"
+                  value={form.global_nearby_en}
+                  onChange={(e) => patch('global_nearby_en', e.target.value)}
+                />
+              </Field>
+            </div>
           </div>
 
           <Field label="案例图库">
