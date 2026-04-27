@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ExternalLink, Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Copy, ExternalLink, Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,6 +26,10 @@ function productHref(item: CatalogProductRow) {
   return `/products/${item.detailSlug || item.id}`
 }
 
+function cloneId(id: string) {
+  return `${id}-copy-${Date.now().toString(36).slice(-5)}`
+}
+
 export default function ProductListClient({
   initialRows,
   initialTotal,
@@ -39,6 +43,7 @@ export default function ProductListClient({
   const [page, setPage] = useState(1)
   const [filters, setFilters] = useState<Filters>({ status: '', series: '', search: '' })
   const [loading, setLoading] = useState(false)
+  const [copyingId, setCopyingId] = useState<string | null>(null)
 
   const reload = useCallback(async (f: Filters, p: number) => {
     setLoading(true)
@@ -100,6 +105,53 @@ export default function ProductListClient({
       router.refresh()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '删除失败')
+    }
+  }
+
+  const handleCopy = async (item: CatalogProductRow) => {
+    setCopyingId(item.id)
+    try {
+      const nextId = cloneId(item.id)
+      const res = await fetch('/api/admin/products', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          id: nextId,
+          productSeries: item.productSeries,
+          name_cn: `${item.name_cn} 副本`,
+          name_en: `${item.name_en} Copy`,
+          gen: item.gen,
+          size: item.size,
+          area: item.area,
+          generation: item.generation,
+          productType: item.productType,
+          badge_cn: item.badge_cn,
+          badge_en: item.badge_en,
+          tags_cn: item.tags_cn,
+          tags_en: item.tags_en,
+          features_cn: item.features_cn,
+          features_en: item.features_en,
+          image: item.image,
+          description_cn: item.description_cn ?? '',
+          description_en: item.description_en ?? '',
+          gallery: item.gallery ?? [],
+          specs_cn: item.specs_cn ?? [],
+          specs_en: item.specs_en ?? [],
+          isCustom: item.isCustom,
+          detailSlug: null,
+          status: 'draft',
+          sort_order: item.sort_order + 1,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? '复制失败')
+      toast.success('已复制为草稿')
+      await reload(filters, page)
+      router.refresh()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '复制失败')
+    } finally {
+      setCopyingId(null)
     }
   }
 
@@ -170,7 +222,7 @@ export default function ProductListClient({
         <div className="rounded-lg border border-[#E5DED4] overflow-hidden">
           <div
             className="grid gap-3 px-4 py-3 text-xs text-[#8A8580] bg-[#FAF7F2] border-b border-[#E5DED4]"
-            style={{ gridTemplateColumns: '72px 1fr 90px 90px 90px 110px 164px' }}
+            style={{ gridTemplateColumns: '72px 1fr 90px 90px 90px 110px 200px' }}
           >
             <span>封面</span>
             <span>产品</span>
@@ -185,7 +237,7 @@ export default function ProductListClient({
             <div
               key={item.id}
               className="grid gap-3 items-center px-4 py-3 border-b border-[#E5DED4] last:border-b-0 hover:bg-[#FAF7F2] transition-colors"
-              style={{ gridTemplateColumns: '72px 1fr 90px 90px 90px 110px 164px' }}
+              style={{ gridTemplateColumns: '72px 1fr 90px 90px 90px 110px 200px' }}
             >
               <div className="w-[72px] h-[44px] rounded overflow-hidden bg-[#E5DED4]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -238,6 +290,15 @@ export default function ProductListClient({
                   className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-[#E36F2C] hover:bg-[#E36F2C]/10 transition-colors"
                 >
                   {item.status === 'published' ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+                <button
+                  type="button"
+                  title="复制为草稿"
+                  disabled={copyingId === item.id}
+                  onClick={() => handleCopy(item)}
+                  className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-[#E36F2C] hover:bg-[#E36F2C]/10 transition-colors disabled:opacity-50"
+                >
+                  <Copy size={14} />
                 </button>
                 <button
                   type="button"

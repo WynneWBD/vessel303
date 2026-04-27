@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { Save, Send, ArrowLeft } from 'lucide-react'
 import CoverImagePicker from '@/components/admin/CoverImagePicker'
+import ProductGalleryPicker from '@/components/admin/ProductGalleryPicker'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
@@ -175,6 +176,7 @@ export default function ProductForm({
     if (!form.id) return '/products'
     return form.detailSlug ? `/products/${form.detailSlug}` : `/products/${form.id}`
   }, [form.detailSlug, form.id])
+  const galleryUrls = useMemo(() => splitLines(form.gallery), [form.gallery])
 
   const patch = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -392,6 +394,10 @@ export default function ProductForm({
             </div>
 
             <Field label="详情图库 URL" hint="一行一张图。可使用图片库里的 URL，也可填 /images/products/...">
+              <ProductGalleryPicker
+                value={galleryUrls}
+                onChange={(urls) => patch('gallery', urls.join('\n'))}
+              />
               <Textarea
                 className="min-h-28"
                 value={form.gallery}
