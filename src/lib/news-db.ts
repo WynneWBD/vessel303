@@ -40,11 +40,16 @@ export type NewsStatusSummary = {
 const NEWS_COLUMNS = `
   id, slug, title_zh, title_en, content_zh, content_en,
   excerpt_zh, excerpt_en, cover_image_url, status,
-  published_at, author_id, created_at, updated_at, deleted_at
+  published_at::text AS published_at,
+  author_id,
+  created_at::text AS created_at,
+  updated_at::text AS updated_at,
+  deleted_at::text AS deleted_at
 `
 
 const NEWS_LIST_COLUMNS = `
-  id, slug, title_zh, title_en, excerpt_zh, excerpt_en, cover_image_url, published_at
+  id, slug, title_zh, title_en, excerpt_zh, excerpt_en, cover_image_url,
+  published_at::text AS published_at
 `
 
 export async function listNews({

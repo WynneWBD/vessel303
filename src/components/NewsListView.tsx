@@ -14,16 +14,16 @@ type NewsItem = {
   excerpt_zh: string | null
   excerpt_en: string | null
   cover_image_url: string | null
-  published_at: string | null
+  published_at: string | Date | null
 }
 
-function formatNewsDate(dateStr: string | null, lang: 'zh' | 'en'): string {
-  if (!dateStr) return ''
+function formatNewsDate(value: string | Date | null, lang: 'zh' | 'en'): string {
+  if (!value) return ''
   try {
-    const d = parseISO(dateStr)
+    const d = value instanceof Date ? value : parseISO(value)
     return lang === 'zh' ? format(d, 'yyyy-MM-dd') : format(d, 'MMM d, yyyy')
   } catch {
-    return dateStr
+    return String(value)
   }
 }
 

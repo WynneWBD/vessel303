@@ -14,7 +14,7 @@ type NewsData = {
   excerpt_zh: string | null
   excerpt_en: string | null
   cover_image_url: string | null
-  published_at: string | null
+  published_at: string | Date | null
 }
 
 interface Props {
@@ -23,13 +23,13 @@ interface Props {
   htmlEn: string
 }
 
-function formatNewsDate(dateStr: string | null, lang: 'zh' | 'en'): string {
-  if (!dateStr) return ''
+function formatNewsDate(value: string | Date | null, lang: 'zh' | 'en'): string {
+  if (!value) return ''
   try {
-    const d = parseISO(dateStr)
+    const d = value instanceof Date ? value : parseISO(value)
     return lang === 'zh' ? format(d, 'yyyy-MM-dd') : format(d, 'MMM d, yyyy')
   } catch {
-    return dateStr
+    return String(value)
   }
 }
 
@@ -58,7 +58,7 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
             <div className="absolute inset-0 bg-gradient-to-t from-[#0F0F0F] via-[#0F0F0F]/40 to-transparent" />
             {/* Title overlay */}
             <div className="absolute bottom-0 left-0 right-0 px-6 pb-10 max-w-3xl mx-auto">
-              <HeroMeta dateStr={dateStr} lang={lang} />
+              <HeroMeta dateStr={dateStr} />
               <h1
                 className="text-white mt-3"
                 style={{
@@ -80,7 +80,7 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
           </div>
         ) : (
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 pb-10">
-            <HeroMeta dateStr={dateStr} lang={lang} />
+            <HeroMeta dateStr={dateStr} />
             <h1
               className="text-white mt-3"
               style={{
@@ -132,7 +132,7 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
   )
 }
 
-function HeroMeta({ dateStr, lang }: { dateStr: string; lang: 'zh' | 'en' }) {
+function HeroMeta({ dateStr }: { dateStr: string }) {
   return (
     <div className="flex items-center gap-3">
       <span
