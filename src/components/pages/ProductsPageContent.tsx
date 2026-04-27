@@ -299,14 +299,18 @@ export default function ProductsPageContent({ products }: Props) {
     { value: 'area_asc', label: t(i18n.products.sortAreaAsc) },
     { value: 'area_desc', label: t(i18n.products.sortAreaDesc) },
   ];
+  const heroSubtitle =
+    lang === 'zh'
+      ? '45天预制 · 2小时安装 · 欧盟/美国认证 · 全球交付'
+      : '45-day production · 2-hour install · EU+US certified · global delivery';
 
   return (
     <>
-      <section className="relative overflow-hidden bg-[#F5F2ED] border-b border-[#E5DED4] pt-28 sm:pt-32 pb-10">
+      <section className="relative overflow-hidden bg-[#F5F2ED] border-b border-[#E5DED4] pt-28 sm:pt-32 pb-8 lg:pb-10">
         <div className="absolute inset-x-0 top-0 h-1 bg-[#E36F2C]" />
-        <div className="absolute right-0 top-0 h-full w-1/2 bg-[radial-gradient(circle_at_80%_20%,rgba(227,111,44,0.14),transparent_38%)] pointer-events-none" />
+        <div className="absolute right-0 top-0 h-full w-2/3 bg-[radial-gradient(circle_at_80%_35%,rgba(227,111,44,0.16),transparent_42%)] pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <nav className="flex items-center gap-2 text-xs text-[#8A7D74] mb-10 tracking-wider">
+          <nav className="flex items-center gap-2 text-xs text-[#8A7D74] mb-8 tracking-wider">
             <Link href="/" className="hover:text-[#E36F2C] transition-colors">
               {t(i18n.productDetail.home)}
             </Link>
@@ -314,31 +318,35 @@ export default function ProductsPageContent({ products }: Props) {
             <span>{t(i18n.nav.products)}</span>
           </nav>
 
-          <div className="grid lg:grid-cols-[minmax(0,0.95fr)_minmax(360px,0.55fr)] gap-8 lg:gap-12 items-end">
-            <div>
-              <div className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase mb-4 font-semibold">
-                {t(i18n.products.heroLabel)}
+          <div className="grid lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.48fr)] gap-8 lg:gap-12 items-center min-h-[260px]">
+            <div className="max-w-3xl">
+              <div className="flex flex-wrap items-center gap-3 mb-5">
+                <span className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-semibold">
+                  VESSEL®
+                </span>
+                <span className="h-px w-10 bg-[#E36F2C]/35" />
+                <span className="text-[#8A7D74] text-xs tracking-[0.22em] uppercase">
+                  {t(i18n.products.heroLabel)}
+                </span>
               </div>
-              <h1 className="text-[#241F1B] text-4xl sm:text-5xl lg:text-6xl font-black leading-tight tracking-normal mb-5">
-                VESSEL® <span className="text-[#E36F2C] block sm:inline">{t(i18n.products.heroTitleGold)}</span>
+              <h1 className="text-[#241F1B] text-4xl sm:text-5xl lg:text-[56px] font-black leading-tight tracking-normal mb-5 max-w-4xl">
+                {t(i18n.products.heroTitleGold)}
               </h1>
-              <p className="text-[#6B625B] text-base sm:text-lg leading-relaxed max-w-3xl">
-                {t(i18n.products.heroSubtitle)}
+              <p className="text-[#6B625B] text-base sm:text-lg leading-relaxed max-w-2xl">
+                {heroSubtitle}
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                [t(i18n.products.specProd), t(i18n.products.specProdVal)],
-                [t(i18n.products.specInstall), t(i18n.products.specInstallVal)],
-                [t(i18n.products.specTransport), t(i18n.products.specTransportVal)],
-                [t(i18n.products.specHS), t(i18n.products.specHSVal)],
-              ].map(([k, v]) => (
-                <div key={k} className="bg-white border border-[#E5DED4] p-4 shadow-[0_14px_40px_rgba(44,42,40,0.06)]">
-                  <div className="text-[#E36F2C] text-base sm:text-lg font-black tracking-wider">{v}</div>
-                  <div className="text-[#8A7D74] text-xs tracking-wider mt-1">{k}</div>
-                </div>
-              ))}
+            <div className="hidden md:block relative h-52 lg:h-60">
+              <div className="absolute inset-0 bg-[linear-gradient(110deg,rgba(255,255,255,0),rgba(255,255,255,0.58)_42%,rgba(227,111,44,0.10))]" />
+              <ProtectedImage
+                src="/images/products/V9-Gen6_render-01.jpg"
+                alt={lang === 'en' ? 'VESSEL V9 Gen6 smart prefab architecture' : 'VESSEL V9 Gen6 文旅智能装配建筑'}
+                fill
+                priority
+                sizes="(max-width: 1024px) 40vw, 420px"
+                className="object-contain object-center drop-shadow-[0_30px_60px_rgba(44,42,40,0.18)]"
+              />
             </div>
           </div>
         </div>
