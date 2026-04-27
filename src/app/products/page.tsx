@@ -19,7 +19,7 @@ export default async function ProductsPage() {
   });
 
   return (
-    <main className="bg-[#1C1A18] text-white">
+    <main className="bg-[#F5F2ED] text-[#2C2A28]">
       <Navbar />
       <ProductsPageContent products={products} />
       <Footer />

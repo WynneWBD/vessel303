@@ -16,33 +16,46 @@ img {
 }
 
 :root {
-  /* === 新配色系统：科技×自然材质 === */
-  --bg-dark: #1A1A1A;        /* 主画布-暗：Hero/技术展示区 */
-  --bg-light: #F5F0EB;       /* 主画布-亮：内容区 */
-  --bg-card: #FFFFFF;         /* 卡片背景 */
+  /* === VESSEL warm architecture-tech palette === */
+  --brand-orange: #E36F2C;      /* 8-10% visual weight: CTA, logo, active states */
+  --brand-orange-hover: #C85A1F;
+  --warm-paper: #F5F2ED;
+  --warm-paper-soft: #FAF7F2;
+  --warm-card: #FFFFFF;
+  --warm-charcoal: #1A1A1A;
+  --warm-espresso: #241F1B;
+  --warm-ink: #2C2A28;
+  --warm-body: #5F5750;
+  --warm-muted: #8A7D74;
+  --warm-stone: #C4B9AB;
+  --warm-border: #E5DED4;
+  --warm-border-dark: #3A302A;
 
-  --text-on-dark: #F0F0F0;   /* 暗底文字 */
-  --text-on-light: #1A1A1E;  /* 亮底文字 */
-  --text-muted: #8A8580;      /* 次要文字 */
-  --text-body: #4A4744;       /* 正文文字 */
+  --bg-dark: var(--warm-charcoal);
+  --bg-light: var(--warm-paper);
+  --bg-card: var(--warm-card);
 
-  --accent-teal: #E36F2C;    /* 品牌主色：品牌橙（兼容旧变量名） */
-  --accent-orange: #E36F2C;  /* 品牌主色：品牌橙 */
-  --accent-copper: #C4B9AB;  /* 暖色点缀：石灰中性 */
-  --accent-stone: #C4B9AB;   /* 同上，新变量名 */
+  --text-on-dark: #F0F0F0;
+  --text-on-light: var(--warm-ink);
+  --text-muted: var(--warm-muted);
+  --text-body: var(--warm-body);
 
-  --border-light: #E5E0DA;   /* 亮底分隔线 */
-  --border-dark: #2A2A2E;    /* 暗底分隔线 */
+  --accent-teal: var(--brand-orange);    /* 兼容旧变量名 */
+  --accent-orange: var(--brand-orange);
+  --accent-copper: var(--warm-stone);
+  --accent-stone: var(--warm-stone);
+
+  --border-light: var(--warm-border);
+  --border-dark: #2A2A2E;
 
   /* 保留旧变量做兼容过渡（子页面暂不改） */
-  --background: #F5F0EB;
-  --foreground: #1A1A1E;
-  --gold: #E36F2C;
-  --gold-dim: #C85A1F;
-  --warm-dark: #1A1A1A;
-  --warm-white: #F5F0EB;
-  --warm-text: #1A1A1E;
-  --warm-muted: #8A8580;
+  --background: var(--warm-paper);
+  --foreground: var(--warm-ink);
+  --gold: var(--brand-orange);
+  --gold-dim: var(--brand-orange-hover);
+  --warm-dark: var(--warm-charcoal);
+  --warm-white: var(--warm-paper);
+  --warm-text: var(--warm-ink);
 }
 
 @theme inline {
@@ -73,7 +86,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading), -apple-system, 'PingFang SC', sans-serif;
 }
 
-/* Custom scrollbar - 更新为青色系 */
+/* Custom scrollbar - warm brand accent */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -88,7 +101,7 @@ h1, h2, h3, h4, h5, h6 {
   background: rgba(227,111,44,0.6);
 }
 
-/* Teal gradient text - 替代原金色渐变 */
+/* Orange gradient text - legacy class name kept for compatibility */
 .text-gold-gradient {
   background: linear-gradient(135deg, #E36F2C 0%, #C85A1F 50%, #E36F2C 100%);
   -webkit-background-clip: text;
@@ -104,7 +117,7 @@ h1, h2, h3, h4, h5, h6 {
   background-clip: text;
 }
 
-/* Section divider - 更新为青色 */
+/* Section divider - warm brand accent */
 .gold-divider {
   background: linear-gradient(90deg, transparent, var(--accent-teal), transparent);
   height: 1px;

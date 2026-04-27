@@ -39,12 +39,12 @@ function Select({
       onChange={(e) => onChange(e.target.value)}
       className={`text-xs px-3 py-2 border tracking-wider bg-white outline-none cursor-pointer transition-colors ${
         active
-          ? 'border-[#c9a84c]/60 text-[#c9a84c]'
-          : 'border-[#D8D4CE] text-[#5A5A5A] hover:border-[#BBBBBB]'
+          ? 'border-[#E36F2C]/60 text-[#E36F2C]'
+          : 'border-[#E5DED4] text-[#5F5750] hover:border-[#C4B9AB]'
       }`}
     >
       {options.map((o) => (
-        <option key={o.value} value={o.value} className="bg-white text-[#1A1A1A]">
+        <option key={o.value} value={o.value} className="bg-white text-[#2C2A28]">
           {o.label}
         </option>
       ))}
@@ -59,9 +59,9 @@ function GridCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
   const href = product.detailSlug ? `/products/${product.detailSlug}` : `/products/${product.id}`;
 
   return (
-    <div className="group flex flex-col bg-white border border-[#E8E4DE] hover:border-[#c9a84c]/40 transition-all duration-300 overflow-hidden">
+    <div className="group flex flex-col bg-white border border-[#E5DED4] hover:border-[#E36F2C]/45 transition-all duration-300 overflow-hidden shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
       {/* Image area */}
-      <div className="relative aspect-video overflow-hidden bg-[#F0EDE8]">
+      <div className="relative aspect-video overflow-hidden bg-[#E5DED4]">
         <ProtectedImage
           src={product.image}
           alt={lang === 'en' ? product.name_en : product.name_cn}
@@ -86,7 +86,7 @@ function GridCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
         </div>
         {/* Bottom-left: Badge */}
         <div className="absolute bottom-3 left-3">
-          <span className="text-[10px] font-bold px-2.5 py-1 bg-[#c9a84c] text-[#1C1A18] tracking-wider">
+          <span className="text-[10px] font-bold px-2.5 py-1 bg-[#E36F2C] text-white tracking-wider">
             {badge}
           </span>
         </div>
@@ -103,7 +103,7 @@ function GridCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
       {/* Content */}
       <div className="p-5 flex flex-col flex-1">
         {/* Model name */}
-        <h3 className="text-[#1A1A1A] text-base font-black tracking-wider mb-1 leading-snug">
+        <h3 className="text-[#2C2A28] text-base font-black tracking-wider mb-1 leading-snug">
           {lang === 'en' ? product.name_en : product.name_cn}
         </h3>
 
@@ -113,7 +113,7 @@ function GridCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="text-[10px] px-2 py-0.5 bg-white/5 text-[#666666] border border-[#E0DCD6] tracking-wider"
+                className="text-[10px] px-2 py-0.5 bg-[#FAF7F2] text-[#5F5750] border border-[#E5DED4] tracking-wider"
               >
                 {tag}
               </span>
@@ -125,27 +125,27 @@ function GridCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
         {features && features.length > 0 && (
           <ul className="space-y-1 mb-4 flex-1">
             {features.map((f) => (
-              <li key={f} className="flex items-start gap-1.5 text-xs text-[#666666]">
-                <span className="text-[#c9a84c] mt-0.5 text-[10px] shrink-0">▸</span>
+              <li key={f} className="flex items-start gap-1.5 text-xs text-[#5F5750]">
+                <span className="text-[#E36F2C] mt-0.5 text-[10px] shrink-0">▸</span>
                 <span className="tracking-wide leading-relaxed">{f}</span>
               </li>
             ))}
           </ul>
         )}
 
-        <div className="border-t border-[#E8E4DE] pt-4 mt-auto">
+        <div className="border-t border-[#E5DED4] pt-4 mt-auto">
           {/* Price row */}
           <div className="flex items-center gap-2 mb-3">
             <svg className="w-3 h-3 text-[#999999] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            <span className="text-[#888888] text-xs tracking-wider">{t(i18n.products.loginToView)}</span>
+            <span className="text-[#8A7D74] text-xs tracking-wider">{t(i18n.products.loginToView)}</span>
           </div>
 
           {/* CTA */}
           <Link
             href={href}
-            className="block text-center text-xs py-2.5 font-semibold tracking-wider bg-white text-[#c9a84c] border border-[#c9a84c]/30 hover:bg-[#c9a84c] hover:text-[#1C1A18] transition-all duration-200"
+            className="block text-center text-xs py-2.5 font-semibold tracking-wider bg-[#E36F2C] text-white border border-[#E36F2C] hover:bg-[#C85A1F] hover:border-[#C85A1F] transition-all duration-200"
           >
             {t(i18n.products.viewDetails)}
           </Link>
@@ -162,9 +162,9 @@ function ListCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
   const href = product.detailSlug ? `/products/${product.detailSlug}` : `/products/${product.id}`;
 
   return (
-    <div className="group flex bg-white border border-[#E8E4DE] hover:border-[#c9a84c]/30 transition-all duration-300 overflow-hidden">
+    <div className="group flex bg-white border border-[#E5DED4] hover:border-[#E36F2C]/45 transition-all duration-300 overflow-hidden shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
       {/* Image */}
-      <div className="relative w-[240px] shrink-0 overflow-hidden bg-[#F0EDE8]">
+      <div className="relative w-[240px] shrink-0 overflow-hidden bg-[#E5DED4]">
         <ProtectedImage
           src={product.image}
           alt={lang === 'en' ? product.name_en : product.name_cn}
@@ -174,7 +174,7 @@ function ListCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
           sizes="240px"
         />
         <div className="absolute bottom-2 left-2">
-          <span className="text-[10px] font-bold px-2 py-1 bg-[#c9a84c] text-[#1C1A18] tracking-wider">
+          <span className="text-[10px] font-bold px-2 py-1 bg-[#E36F2C] text-white tracking-wider">
             {badge}
           </span>
         </div>
@@ -185,10 +185,10 @@ function ListCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
         <div>
           <div className="flex items-start justify-between gap-4 mb-3">
             <div>
-              <div className="text-[#c9a84c] text-[10px] tracking-[0.25em] uppercase mb-1">
+              <div className="text-[#E36F2C] text-[10px] tracking-[0.25em] uppercase mb-1">
                 {product.gen} · {product.size}
               </div>
-              <h3 className="text-[#1A1A1A] text-lg font-black tracking-wider leading-snug">
+              <h3 className="text-[#2C2A28] text-lg font-black tracking-wider leading-snug">
                 {lang === 'en' ? product.name_en : product.name_cn}
               </h3>
             </div>
@@ -197,7 +197,7 @@ function ListCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
                 {product.gen}
               </span>
               {product.isCustom && (
-                <span className="text-[10px] px-2 py-0.5 border border-[#D0CCC6] text-[#666666] tracking-wider">
+                <span className="text-[10px] px-2 py-0.5 border border-[#E5DED4] text-[#5F5750] tracking-wider">
                   {lang === 'en' ? 'Custom' : '定制'}
                 </span>
               )}
@@ -207,7 +207,7 @@ function ListCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
           {tags && tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-3">
               {tags.map((tag) => (
-                <span key={tag} className="text-[10px] px-2 py-0.5 bg-white/5 text-[#666666] border border-[#E0DCD6] tracking-wider">
+                <span key={tag} className="text-[10px] px-2 py-0.5 bg-[#FAF7F2] text-[#5F5750] border border-[#E5DED4] tracking-wider">
                   {tag}
                 </span>
               ))}
@@ -217,8 +217,8 @@ function ListCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
           {features && features.length > 0 && (
             <div className="flex flex-wrap gap-x-6 gap-y-1">
               {features.map((f) => (
-                <span key={f} className="flex items-center gap-1.5 text-xs text-[#666666]">
-                  <span className="text-[#c9a84c] text-[10px]">▸</span>
+                <span key={f} className="flex items-center gap-1.5 text-xs text-[#5F5750]">
+                  <span className="text-[#E36F2C] text-[10px]">▸</span>
                   {f}
                 </span>
               ))}
@@ -226,7 +226,7 @@ function ListCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
           )}
         </div>
 
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#E8E4DE]">
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#E5DED4]">
           <div className="flex items-center gap-2 text-[#999999] text-xs">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -235,7 +235,7 @@ function ListCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType
           </div>
           <Link
             href={href}
-            className="text-xs px-5 py-2 font-semibold tracking-wider bg-white text-[#c9a84c] border border-[#c9a84c]/30 hover:bg-[#c9a84c] hover:text-[#1C1A18] transition-all duration-200"
+            className="text-xs px-5 py-2 font-semibold tracking-wider bg-[#E36F2C] text-white border border-[#E36F2C] hover:bg-[#C85A1F] hover:border-[#C85A1F] transition-all duration-200"
           >
             {t(i18n.products.viewDetails)}
           </Link>
@@ -315,7 +315,7 @@ export default function ProductsPageContent({ products }: Props) {
       />
 
       {/* Key specs bar */}
-      <div className="bg-white border-b border-[#c9a84c]/10">
+      <div className="bg-[#FAF7F2] border-b border-[#E5DED4]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-wrap gap-6 justify-center">
             {[
@@ -327,8 +327,8 @@ export default function ProductsPageContent({ products }: Props) {
               [t(i18n.products.specHS), t(i18n.products.specHSVal)],
             ].map(([k, v]) => (
               <div key={k} className="flex items-center gap-2 text-sm">
-                <span className="text-[#999999] tracking-wider">{k}</span>
-                <span className="text-[#c9a84c] font-semibold tracking-wider">{v}</span>
+                <span className="text-[#8A7D74] tracking-wider">{k}</span>
+                <span className="text-[#E36F2C] font-semibold tracking-wider">{v}</span>
               </div>
             ))}
           </div>
@@ -336,7 +336,7 @@ export default function ProductsPageContent({ products }: Props) {
       </div>
 
       {/* Sticky filter bar */}
-      <div className="sticky top-[72px] z-30 bg-white/95 backdrop-blur-sm border-b border-[#E8E4DE]">
+      <div className="sticky top-[72px] z-30 bg-[#F5F2ED]/95 backdrop-blur-sm border-b border-[#E5DED4]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-2">
 
           {/* Row 1: Series quick filter */}
@@ -347,8 +347,8 @@ export default function ProductsPageContent({ products }: Props) {
                 onClick={() => setSeriesFilter(s)}
                 className={`shrink-0 text-xs font-bold px-3 py-1.5 tracking-widest border transition-all duration-150 ${
                   seriesFilter === s
-                    ? 'bg-[#c9a84c] text-[#1C1A18] border-[#c9a84c]'
-                    : 'bg-transparent text-[#c9a84c]/80 border-[#c9a84c]/40 hover:border-[#c9a84c] hover:text-[#c9a84c]'
+                    ? 'bg-[#E36F2C] text-white border-[#E36F2C]'
+                    : 'bg-transparent text-[#E36F2C]/80 border-[#E36F2C]/40 hover:border-[#E36F2C] hover:text-[#E36F2C]'
                 }`}
               >
                 {s === 'all' ? (lang === 'en' ? 'ALL' : '全部') : s}
@@ -387,11 +387,11 @@ export default function ProductsPageContent({ products }: Props) {
             />
 
             {/* View toggle */}
-            <div className="flex border border-[#D8D4CE] overflow-hidden">
+            <div className="flex border border-[#E5DED4] overflow-hidden bg-white">
               <button
                 onClick={() => setViewMode('grid')}
                 title={t(i18n.products.gridView)}
-                className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-[#c9a84c] text-[#1C1A18]' : 'text-[#888888] hover:text-[#444444]'}`}
+                className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-[#E36F2C] text-white' : 'text-[#8A7D74] hover:text-[#2C2A28]'}`}
               >
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16">
                   <rect x="0" y="0" width="6" height="6" /><rect x="10" y="0" width="6" height="6" />
@@ -401,7 +401,7 @@ export default function ProductsPageContent({ products }: Props) {
               <button
                 onClick={() => setViewMode('list')}
                 title={t(i18n.products.listView)}
-                className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-[#c9a84c] text-[#1C1A18]' : 'text-[#888888] hover:text-[#444444]'}`}
+                className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-[#E36F2C] text-white' : 'text-[#8A7D74] hover:text-[#2C2A28]'}`}
               >
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16">
                   <rect x="0" y="0" width="16" height="3" /><rect x="0" y="6" width="16" height="3" />
@@ -412,7 +412,7 @@ export default function ProductsPageContent({ products }: Props) {
           </div>
 
           {/* Count */}
-          <div className="mt-1.5 text-[#888888] text-xs tracking-wider">
+          <div className="mt-1.5 text-[#8A7D74] text-xs tracking-wider">
             {t(i18n.products.foundCount).replace('{n}', String(filtered.length))}
           </div>
         </div>
@@ -425,7 +425,9 @@ export default function ProductsPageContent({ products }: Props) {
             {t(i18n.products.noResults)}
           </div>
         ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 transition-opacity duration-150">
+          <div className={`grid grid-cols-1 sm:grid-cols-2 gap-5 transition-opacity duration-150 ${
+            filtered.length === 1 ? 'lg:grid-cols-[minmax(0,520px)] justify-center' : 'lg:grid-cols-4'
+          }`}>
             {filtered.map((p) => (
               <GridCard key={p.id} product={p} t={t} lang={lang} />
             ))}

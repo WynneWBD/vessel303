@@ -238,16 +238,16 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
   const active = GALLERY[activeIdx]!;
 
   return (
-    <div className="bg-[#1C1A18] text-white min-h-screen">
+    <div className="bg-[#F5F2ED] text-[#2C2A28] min-h-screen">
 
       {/* ── Breadcrumb ──────────────────────────────────────────────────── */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-3">
-        <nav className="flex items-center gap-2 text-[11px] text-white/30 tracking-wider">
-          <Link href="/" className="hover:text-[#c9a84c] transition-colors">{t(i18n.productDetail.home)}</Link>
+        <nav className="flex items-center gap-2 text-[11px] text-[#8A7D74] tracking-wider">
+          <Link href="/" className="hover:text-[#E36F2C] transition-colors">{t(i18n.productDetail.home)}</Link>
           <span>/</span>
-          <Link href="/products" className="hover:text-[#c9a84c] transition-colors">{t(i18n.productDetail.breadcrumbProducts)}</Link>
+          <Link href="/products" className="hover:text-[#E36F2C] transition-colors">{t(i18n.productDetail.breadcrumbProducts)}</Link>
           <span>/</span>
-          <span className="text-white/50">V9 Gen6</span>
+          <span className="text-[#2C2A28]/70">V9 Gen6</span>
         </nav>
       </div>
 
@@ -269,8 +269,8 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                   onClick={() => selectImage(idx)}
                   className={`relative w-full aspect-square shrink-0 overflow-hidden border-2 transition-all duration-150 ${
                     idx === activeIdx
-                      ? 'border-[#c9a84c] opacity-100'
-                      : 'border-white/10 opacity-45 hover:opacity-75 hover:border-white/30'
+                      ? 'border-[#E36F2C] opacity-100'
+                      : 'border-[#E5DED4] opacity-55 hover:opacity-85 hover:border-[#C4B9AB]'
                   }`}
                 >
                   <ProtectedImage src={img.src} alt={lang === 'en' ? img.en : img.cn} fill className="object-cover" sizes="96px" />
@@ -296,12 +296,12 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
               {/* Arrows */}
               <button
                 onClick={prev}
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 border border-white/15 flex items-center justify-center text-xl opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#c9a84c] hover:text-black hover:border-[#c9a84c]"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 border border-white/15 flex items-center justify-center text-xl text-white/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#E36F2C] hover:text-white hover:border-[#E36F2C]"
                 aria-label="Previous image"
               >‹</button>
               <button
                 onClick={next}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 border border-white/15 flex items-center justify-center text-xl opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#c9a84c] hover:text-black hover:border-[#c9a84c]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 border border-white/15 flex items-center justify-center text-xl text-white/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#E36F2C] hover:text-white hover:border-[#E36F2C]"
                 aria-label="Next image"
               >›</button>
               {/* Counter */}
@@ -314,10 +314,10 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/8 border-x border-b border-white/8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[#3A302A] border-x border-b border-[#3A302A]">
               {QUICK_STATS.map((item) => (
-                <div key={item.cn} className="bg-[#111] px-4 py-3">
-                  <div className="text-[10px] text-[#c9a84c] tracking-[0.18em] uppercase leading-relaxed">
+                <div key={item.cn} className="bg-[#241F1B] px-4 py-3">
+                  <div className="text-[10px] text-[#E36F2C] tracking-[0.18em] uppercase leading-relaxed">
                     {lang === 'en' ? item.en : item.cn}
                   </div>
                 </div>
@@ -331,7 +331,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                   key={img.src}
                   onClick={() => selectImage(idx)}
                   className={`relative shrink-0 w-16 h-12 overflow-hidden border-2 transition-all ${
-                    idx === activeIdx ? 'border-[#c9a84c]' : 'border-white/10 opacity-50 hover:opacity-80'
+                    idx === activeIdx ? 'border-[#E36F2C]' : 'border-[#E5DED4] opacity-60 hover:opacity-90'
                   }`}
                 >
                   <ProtectedImage src={img.src} alt={lang === 'en' ? img.en : img.cn} fill className="object-cover" sizes="64px" />
@@ -345,13 +345,13 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
               {/* ① 核心参数格 */}
               <section>
                 <Label cn="核心规格参数" en="Core Specifications" lang={lang} />
-                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-px bg-white/8 border border-white/8">
+                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-px bg-[#E5DED4] border border-[#E5DED4]">
                   {SPECS.map(s => (
-                    <div key={s.cn} className="bg-[#0f0f0f] p-4">
-                      <div className="text-white/30 text-[10px] tracking-[0.2em] uppercase mb-1.5">
+                    <div key={s.cn} className="bg-white p-4">
+                      <div className="text-[#8A7D74] text-[10px] tracking-[0.2em] uppercase mb-1.5">
                         {lang === 'en' ? s.en : s.cn}
                       </div>
-                      <div className="text-white font-bold text-sm tracking-wide">{s.val}</div>
+                      <div className="text-[#2C2A28] font-bold text-sm tracking-wide">{s.val}</div>
                     </div>
                   ))}
                 </div>
@@ -364,7 +364,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                   {VISUAL_STORIES.map((story, index) => (
                     <div
                       key={story.cn}
-                      className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-white/8 bg-[#0f0f0f] overflow-hidden"
+                      className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-[#E5DED4] bg-white overflow-hidden shadow-[0_18px_60px_rgba(44,42,40,0.08)]"
                     >
                       <button
                         type="button"
@@ -388,13 +388,13 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                       <div className={`p-6 md:p-8 flex flex-col justify-center ${
                         index % 2 === 1 ? 'md:order-1' : ''
                       }`}>
-                        <div className="text-[10px] text-[#c9a84c] tracking-[0.28em] uppercase mb-3">
+                        <div className="text-[10px] text-[#E36F2C] tracking-[0.28em] uppercase mb-3">
                           {String(index + 1).padStart(2, '0')}
                         </div>
-                        <h2 className="text-xl md:text-2xl font-black tracking-wide text-white">
+                        <h2 className="text-xl md:text-2xl font-black tracking-wide text-[#2C2A28]">
                           {lang === 'en' ? story.en : story.cn}
                         </h2>
-                        <p className="mt-4 text-sm text-white/50 leading-[1.9] tracking-wide">
+                        <p className="mt-4 text-sm text-[#5F5750] leading-[1.9] tracking-wide">
                           {lang === 'en' ? story.desc_en : story.desc_cn}
                         </p>
                       </div>
@@ -408,11 +408,11 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                 <Label cn="空间分区" en="Spatial Layout" lang={lang} />
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {SPACE_ZONES.map((zone) => (
-                    <div key={zone.cn} className="border border-white/8 bg-[#0f0f0f] p-5">
-                      <div className="text-sm font-semibold text-white tracking-wider">
+                    <div key={zone.cn} className="border border-[#E5DED4] bg-white p-5">
+                      <div className="text-sm font-semibold text-[#2C2A28] tracking-wider">
                         {lang === 'en' ? zone.en : zone.cn}
                       </div>
-                      <p className="mt-3 text-xs text-white/45 leading-relaxed tracking-wide">
+                      <p className="mt-3 text-xs text-[#5F5750] leading-relaxed tracking-wide">
                         {lang === 'en' ? zone.desc_en : zone.desc_cn}
                       </p>
                     </div>
@@ -428,21 +428,21 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                     const open = !collapsed.has(g.id);
                     const items = lang === 'en' ? g.items_en : g.items_cn;
                     return (
-                      <div key={g.id} className="border border-white/8">
+                      <div key={g.id} className="border border-[#E5DED4]">
                         <button
                           onClick={() => toggle(g.id)}
-                          className="w-full flex items-center justify-between px-4 py-3 bg-[#221F1C] hover:bg-[#141414] transition-colors text-left"
+                          className="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-[#FAF7F2] transition-colors text-left"
                         >
-                          <span className="text-sm font-semibold tracking-wider text-white/80">
+                          <span className="text-sm font-semibold tracking-wider text-[#2C2A28]">
                             {lang === 'en' ? g.en : g.cn}
                           </span>
-                          <span className={`text-[#c9a84c] text-base transition-transform duration-200 ${open ? 'rotate-90' : 'rotate-0'}`}>›</span>
+                          <span className={`text-[#E36F2C] text-base transition-transform duration-200 ${open ? 'rotate-90' : 'rotate-0'}`}>›</span>
                         </button>
                         {open && (
-                          <ul className="px-4 py-3 bg-[#0d0d0d] space-y-2">
+                          <ul className="px-4 py-3 bg-[#FAF7F2] space-y-2">
                             {items.map(item => (
-                              <li key={item} className="flex items-start gap-2 text-xs text-white/50 leading-relaxed">
-                                <span className="text-[#c9a84c] text-[10px] mt-0.5 shrink-0">▸</span>
+                              <li key={item} className="flex items-start gap-2 text-xs text-[#5F5750] leading-relaxed">
+                                <span className="text-[#E36F2C] text-[10px] mt-0.5 shrink-0">▸</span>
                                 {item}
                               </li>
                             ))}
@@ -457,22 +457,22 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
               {/* ⑤ 设计理念 */}
               <section>
                 <Label cn="设计理念" en="Design Philosophy" lang={lang} />
-                <div className="mt-4 border-l-2 border-[#c9a84c]/40 pl-5 space-y-4">
+                <div className="mt-4 border-l-2 border-[#E36F2C]/40 pl-5 space-y-4">
                   {lang === 'zh' ? (
                     <>
-                      <p className="text-white/60 text-sm leading-[1.9] tracking-wide">
+                      <p className="text-[#5F5750] text-sm leading-[1.9] tracking-wide">
                         VESSEL V9 作为首款定位全球市场的长居度假型产品，38.8㎡ 内囊括主卧、卫浴、起居与餐厨四大完整功能区。聚焦舒适性与实用性，完美兼容海内外各类高端家电的集成需求，以工业级精度重新定义高品质移动生活方式。
                       </p>
-                      <p className="text-white/40 text-sm leading-[1.9] tracking-wide">
+                      <p className="text-[#8A7D74] text-sm leading-[1.9] tracking-wide">
                         遵循「钻石切割」设计理念，弧线与折线交织，刚柔并济的建筑美学。17.0㎡ 超大采光面，42.39% 紫外线隔绝率，让自然光线在每一天的不同时刻演绎专属的光影故事。
                       </p>
                     </>
                   ) : (
                     <>
-                      <p className="text-white/60 text-sm leading-[1.9] tracking-wide">
+                      <p className="text-[#5F5750] text-sm leading-[1.9] tracking-wide">
                         VESSEL V9 is our first long-stay model purpose-built for the global market. 38.8㎡ includes four fully functional zones: bedroom, bathroom, living room, and kitchen-dining. Focused on comfort and practicality, compatible with premium appliances worldwide — redefining luxury prefab living with industrial precision.
                       </p>
-                      <p className="text-white/40 text-sm leading-[1.9] tracking-wide">
+                      <p className="text-[#8A7D74] text-sm leading-[1.9] tracking-wide">
                         Inspired by the diamond-cut design language, curves and facets interweave to deliver an architecture of strength and elegance. The 17.0㎡ panoramic glazing with 42.39% UV rejection lets natural light tell a different story every hour of the day.
                       </p>
                     </>
@@ -490,7 +490,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                       const idx = GALLERY.findIndex((img) => img.src.includes('exploded-view'));
                       if (idx >= 0) selectImage(idx);
                     }}
-                    className="relative aspect-video bg-[#0d0d0d] border border-white/8 overflow-hidden"
+                    className="relative aspect-video bg-white border border-[#E5DED4] overflow-hidden"
                   >
                     <ProtectedImage
                       src="/images/products/v9-gen6/exploded-view.png"
@@ -503,11 +503,11 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                   </button>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
                     {ENGINEERING_DETAILS.map((detail) => (
-                      <div key={detail.cn} className="border border-white/8 bg-[#0f0f0f] p-4">
-                        <div className="text-xs font-semibold text-white/80 tracking-wider">
+                      <div key={detail.cn} className="border border-[#E5DED4] bg-white p-4">
+                        <div className="text-xs font-semibold text-[#2C2A28] tracking-wider">
                           {lang === 'en' ? detail.en : detail.cn}
                         </div>
-                        <p className="mt-2 text-[11px] text-white/40 leading-relaxed">
+                        <p className="mt-2 text-[11px] text-[#5F5750] leading-relaxed">
                           {lang === 'en' ? detail.desc_en : detail.desc_cn}
                         </p>
                       </div>
@@ -521,7 +521,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                 <Label cn="应用场景" en="Application Scenarios" lang={lang} />
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {APPLICATIONS.map((app) => (
-                    <div key={app.cn} className="group border border-white/8 bg-[#0f0f0f] overflow-hidden">
+                    <div key={app.cn} className="group border border-[#E5DED4] bg-white overflow-hidden">
                       <div className="relative aspect-[4/3] overflow-hidden bg-[#0d0d0d]">
                         <ProtectedImage
                           src={app.image}
@@ -532,7 +532,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                           sizes="(max-width: 640px) 100vw, 20vw"
                         />
                       </div>
-                      <div className="p-4 text-xs font-semibold tracking-wider text-white/75">
+                      <div className="p-4 text-xs font-semibold tracking-wider text-[#2C2A28]">
                         {lang === 'en' ? app.en : app.cn}
                       </div>
                     </div>
@@ -562,7 +562,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                     </button>
                   ))}
                 </div>
-                <p className="mt-2 text-white/25 text-[11px] tracking-wider">
+                <p className="mt-2 text-[#8A7D74] text-[11px] tracking-wider">
                   {lang === 'en' ? 'Click any photo to view in gallery' : '点击图片可在上方主图中查看大图'}
                 </p>
               </section>
@@ -571,7 +571,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
               <section>
                 <Label cn="运输说明" en="Shipping & Transport" lang={lang} />
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
-                  <div className="relative aspect-video bg-[#0d0d0d] border border-white/8">
+                  <div className="relative aspect-video bg-white border border-[#E5DED4]">
                     <ProtectedImage
                       src="/images/products/v9-gen6/exploded-view.png"
                       alt="Exploded view"
@@ -580,7 +580,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                       sizes="(max-width: 640px) 100vw, 28vw"
                     />
                   </div>
-                  <ul className="space-y-3 text-sm text-white/50">
+                  <ul className="space-y-3 text-sm text-[#5F5750]">
                     {[
                       lang === 'en' ? '40ft Flat Rack Container: 11.762 × 2.240 × 2.034 m' : '集装箱规格：40ft Flat Rack（11.762 × 2.240 × 2.034 m）',
                       lang === 'en' ? 'Complies with international sea freight & port lifting standards' : '符合国际海运及各国港口标准吊装规格',
@@ -588,7 +588,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                       lang === 'en' ? 'On-site install: ~2 hours with standard crane' : '现场安装：约 2 小时，标准吊装设备即可',
                     ].map(s => (
                       <li key={s} className="flex gap-2">
-                        <span className="text-[#c9a84c] text-[10px] mt-1 shrink-0">▸</span>
+                        <span className="text-[#E36F2C] text-[10px] mt-1 shrink-0">▸</span>
                         {s}
                       </li>
                     ))}
@@ -603,43 +603,43 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
           <div className="w-full lg:w-[340px] xl:w-[380px] shrink-0 lg:sticky lg:top-24 lg:self-start mt-8 lg:mt-0 space-y-4">
 
             {/* 产品名称 */}
-            <div className="bg-[#111] border border-white/8 px-5 pt-5 pb-4">
-              <div className="text-[10px] tracking-[0.3em] text-[#c9a84c] uppercase mb-2">
+            <div className="bg-white border border-[#E5DED4] px-5 pt-5 pb-4 shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
+              <div className="text-[10px] tracking-[0.3em] text-[#E36F2C] uppercase mb-2">
                 VESSEL 微宿® · Gen6 · {lang === 'en' ? 'Flagship Long-Stay' : '旗舰家居版'}
               </div>
               <h1 className="text-3xl font-black tracking-wide leading-none">
-                <span className="text-[#c9a84c]">V9</span>
-                <span className="text-white ml-3">Gen6</span>
+                <span className="text-[#E36F2C]">V9</span>
+                <span className="text-[#2C2A28] ml-3">Gen6</span>
               </h1>
-              <p className="mt-2 text-white/35 text-xs tracking-wider">
+              <p className="mt-2 text-[#5F5750] text-xs tracking-wider">
                 {lang === 'en' ? '38.8㎡ · 180° Panoramic · VIIE Smart System' : '38.8㎡ · 180° 全景玻璃 · VIIE 智能系统'}
               </p>
             </div>
 
             {/* 价格 */}
-            <div className="bg-[#111] border border-white/8 px-5 py-4">
-              <div className="text-[10px] tracking-[0.25em] text-[#c9a84c] uppercase mb-3">
+            <div className="bg-white border border-[#E5DED4] px-5 py-4 shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
+              <div className="text-[10px] tracking-[0.25em] text-[#E36F2C] uppercase mb-3">
                 {t(i18n.productDetail.priceLabel)}
               </div>
               {isLoggedIn ? (
                 <div>
-                  <div className="text-[11px] text-white/35 tracking-widest mb-1">EXW / CNY</div>
-                  <div className="text-3xl font-black text-white tracking-wide">
+                  <div className="text-[11px] text-[#8A7D74] tracking-widest mb-1">EXW / CNY</div>
+                  <div className="text-3xl font-black text-[#2C2A28] tracking-wide">
                     ¥ 296,000
-                    <span className="text-sm font-normal text-white/35 ml-2">{lang === 'en' ? 'from' : '起'}</span>
+                    <span className="text-sm font-normal text-[#8A7D74] ml-2">{lang === 'en' ? 'from' : '起'}</span>
                   </div>
-                  <p className="mt-2 text-white/30 text-[11px] leading-relaxed">
+                  <p className="mt-2 text-[#8A7D74] text-[11px] leading-relaxed">
                     {lang === 'en' ? 'Base config, VAT incl., ex-works. Shipping & install extra.' : '基础配置含税出厂价，不含运输及现场安装费用。'}
                   </p>
                 </div>
               ) : (
                 <div>
-                  <div className="text-2xl font-black text-white/15 tracking-widest select-none mb-2">
+                  <div className="text-2xl font-black text-[#C4B9AB] tracking-widest select-none mb-2">
                     ¥ *** , ***
                   </div>
                   <Link
                     href="/login"
-                    className="inline-flex items-center gap-1.5 text-xs text-[#c9a84c] hover:text-[#dbb85e] transition-colors"
+                    className="inline-flex items-center gap-1.5 text-xs text-[#E36F2C] hover:text-[#C85A1F] transition-colors"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -651,44 +651,44 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
             </div>
 
             {/* 商务条款 */}
-            <div className="bg-[#111] border border-white/8 px-5 py-4">
-              <div className="text-[10px] tracking-[0.25em] text-[#c9a84c] uppercase mb-3">
+            <div className="bg-white border border-[#E5DED4] px-5 py-4 shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
+              <div className="text-[10px] tracking-[0.25em] text-[#E36F2C] uppercase mb-3">
                 {lang === 'en' ? 'Trade Terms' : '商务条款'}
               </div>
               <dl className="space-y-2">
                 {TERMS.map(t2 => (
-                  <div key={t2.cn} className="flex justify-between gap-3 pb-2 border-b border-white/5 text-[11px]">
-                    <dt className="text-white/30 shrink-0 tracking-wider">{lang === 'en' ? t2.en : t2.cn}</dt>
-                    <dd className="text-white/65 text-right tracking-wide">{lang === 'en' ? t2.ven : t2.vcn}</dd>
+                  <div key={t2.cn} className="flex justify-between gap-3 pb-2 border-b border-[#E5DED4] text-[11px]">
+                    <dt className="text-[#8A7D74] shrink-0 tracking-wider">{lang === 'en' ? t2.en : t2.cn}</dt>
+                    <dd className="text-[#2C2A28] text-right tracking-wide">{lang === 'en' ? t2.ven : t2.vcn}</dd>
                   </div>
                 ))}
               </dl>
             </div>
 
             {/* 联系方式 */}
-            <div className="bg-[#111] border border-white/8 px-5 py-4 space-y-3">
-              <div className="text-[10px] tracking-[0.25em] text-[#c9a84c] uppercase mb-1">
+            <div className="bg-white border border-[#E5DED4] px-5 py-4 space-y-3 shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
+              <div className="text-[10px] tracking-[0.25em] text-[#E36F2C] uppercase mb-1">
                 {lang === 'en' ? 'Contact Us' : '联系方式'}
               </div>
               <a
                 href="https://api.whatsapp.com/send?phone=8618024176679"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2.5 text-[11px] text-white/55 hover:text-[#c9a84c] transition-colors"
+                className="flex items-center gap-2.5 text-[11px] text-[#5F5750] hover:text-[#E36F2C] transition-colors"
               >
                 <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 fill-current"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                 <span>+86 180-2417-6679</span>
               </a>
               <a
                 href="tel:4008090303"
-                className="flex items-center gap-2.5 text-[11px] text-white/55 hover:text-[#c9a84c] transition-colors"
+                className="flex items-center gap-2.5 text-[11px] text-[#5F5750] hover:text-[#E36F2C] transition-colors"
               >
                 <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 fill-none stroke-current" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
                 <span>400-8090-303</span>
               </a>
               <a
                 href="mailto:vessel.sale@303industries.cn"
-                className="flex items-center gap-2.5 text-[11px] text-white/55 hover:text-[#c9a84c] transition-colors"
+                className="flex items-center gap-2.5 text-[11px] text-[#5F5750] hover:text-[#E36F2C] transition-colors"
               >
                 <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 fill-none stroke-current" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 <span className="break-all">vessel.sale@303industries.cn</span>
@@ -699,27 +699,27 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
             <div className="grid grid-cols-2 gap-3">
               <Link
                 href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
-                className="py-3 text-center text-[11px] font-bold tracking-[0.2em] uppercase bg-[#c9a84c] text-[#1C1A18] hover:bg-[#b8973d] transition-colors"
+                className="py-3 text-center text-[11px] font-bold tracking-[0.2em] uppercase bg-[#E36F2C] text-white hover:bg-[#C85A1F] transition-colors"
               >
                 {lang === 'en' ? 'Inquire Now' : '立即咨询'}
               </Link>
               <Link
                 href="/products"
-                className="py-3 text-center text-[11px] font-bold tracking-[0.2em] uppercase border border-[#c9a84c]/50 text-[#c9a84c] hover:border-[#c9a84c] hover:bg-[#c9a84c]/8 transition-colors"
+                className="py-3 text-center text-[11px] font-bold tracking-[0.2em] uppercase border border-[#E36F2C]/50 text-[#E36F2C] hover:border-[#E36F2C] hover:bg-[#E36F2C]/10 transition-colors"
               >
                 {lang === 'en' ? 'All Products' : '查看全系列'}
               </Link>
             </div>
 
             {/* 询价表单 */}
-            <div className="bg-[#111] border border-white/8 px-5 py-4">
-              <div className="text-[10px] tracking-[0.25em] text-[#c9a84c] uppercase mb-4">
+            <div className="bg-white border border-[#E5DED4] px-5 py-4 shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
+              <div className="text-[10px] tracking-[0.25em] text-[#E36F2C] uppercase mb-4">
                 {lang === 'en' ? 'Quick Inquiry' : '快速询价'}
               </div>
               {status === 'sent' ? (
                 <div className="py-5 text-center">
-                  <div className="text-[#c9a84c] text-2xl mb-2">✓</div>
-                  <p className="text-white/50 text-xs tracking-wider">
+                  <div className="text-[#E36F2C] text-2xl mb-2">✓</div>
+                  <p className="text-[#5F5750] text-xs tracking-wider">
                     {lang === 'en' ? "Sent! We'll reply within 24h." : '已提交！顾问将在 24 小时内联系您。'}
                   </p>
                 </div>
@@ -738,16 +738,16 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                       placeholder={lang === 'en' ? ph_en : ph_cn}
                       value={form[k]}
                       onChange={set(k)}
-                      className="w-full bg-[#1C1A18] border border-white/10 px-3 py-2.5 text-[11px] text-white placeholder-white/20 outline-none focus:border-[#c9a84c]/40 tracking-wider"
+                      className="w-full bg-[#FAF7F2] border border-[#E5DED4] px-3 py-2.5 text-[11px] text-[#2C2A28] placeholder-[#8A7D74] outline-none focus:border-[#E36F2C] tracking-wider"
                     />
                   ))}
                   <select
                     value={form.quantity}
                     onChange={set('quantity')}
-                    className="w-full bg-[#1C1A18] border border-white/10 px-3 py-2.5 text-[11px] text-white/60 outline-none focus:border-[#c9a84c]/40 tracking-wider cursor-pointer"
+                    className="w-full bg-[#FAF7F2] border border-[#E5DED4] px-3 py-2.5 text-[11px] text-[#5F5750] outline-none focus:border-[#E36F2C] tracking-wider cursor-pointer"
                   >
                     {['1', '2–5', '6–10', '11–20', '20+'].map(q => (
-                      <option key={q} value={q} className="bg-[#111]">
+                      <option key={q} value={q} className="bg-white">
                         {lang === 'en' ? `Qty: ${q}` : `采购数量：${q} 台`}
                       </option>
                     ))}
@@ -757,7 +757,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                     placeholder={lang === 'en' ? 'Project description / requirements' : '项目描述 / 需求说明'}
                     value={form.remarks}
                     onChange={set('remarks')}
-                    className="w-full bg-[#1C1A18] border border-white/10 px-3 py-2.5 text-[11px] text-white placeholder-white/20 outline-none focus:border-[#c9a84c]/40 tracking-wider resize-none"
+                    className="w-full bg-[#FAF7F2] border border-[#E5DED4] px-3 py-2.5 text-[11px] text-[#2C2A28] placeholder-[#8A7D74] outline-none focus:border-[#E36F2C] tracking-wider resize-none"
                   />
                   {status === 'error' && (
                     <p className="text-red-400 text-[11px] tracking-wider">
@@ -767,7 +767,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                   <button
                     type="submit"
                     disabled={status === 'sending'}
-                    className="w-full py-3 bg-[#c9a84c] text-[#1C1A18] text-[11px] font-bold tracking-[0.2em] uppercase hover:bg-[#b8973d] transition-colors disabled:opacity-50"
+                    className="w-full py-3 bg-[#E36F2C] text-white text-[11px] font-bold tracking-[0.2em] uppercase hover:bg-[#C85A1F] transition-colors disabled:opacity-50"
                   >
                     {status === 'sending'
                       ? (lang === 'en' ? 'Sending...' : '提交中...')
@@ -789,8 +789,8 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
 function Label({ cn, en, lang }: { cn: string; en: string; lang: 'en' | 'zh' }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="w-0.5 h-4 bg-[#c9a84c] shrink-0" />
-      <span className="text-[10px] tracking-[0.3em] text-[#c9a84c] uppercase font-medium">
+      <span className="w-0.5 h-4 bg-[#E36F2C] shrink-0" />
+      <span className="text-[10px] tracking-[0.3em] text-[#E36F2C] uppercase font-medium">
         {lang === 'en' ? en : cn}
       </span>
     </div>

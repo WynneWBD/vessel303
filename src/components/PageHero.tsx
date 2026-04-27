@@ -9,24 +9,24 @@ interface PageHeroProps {
 export default function PageHero({ label, title, titleGold, subtitle, breadcrumb }: PageHeroProps) {
   return (
     <>
-    <section className="relative pt-32 pb-20 bg-[#1C1A18] overflow-hidden">
+    <section className="relative pt-32 pb-20 bg-[#241F1B] overflow-hidden">
       {/* Grid */}
       <div
         className="absolute inset-0 pointer-events-none hero-grid opacity-60"
       />
-      {/* Gold glow */}
+      {/* Brand glow */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse 70% 50% at 50% 0%, rgba(201,168,76,0.06) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse 70% 50% at 50% 0%, rgba(227,111,44,0.08) 0%, transparent 70%)',
         }}
       />
       {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#1C1A18] to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#241F1B] to-transparent pointer-events-none" />
 
       {/* Corner accents */}
-      <div className="absolute top-24 left-6 w-10 h-10 border-t border-l border-[#c9a84c]/25" />
-      <div className="absolute top-24 right-6 w-10 h-10 border-t border-r border-[#c9a84c]/25" />
+      <div className="absolute top-24 left-6 w-10 h-10 border-t border-l border-[#E36F2C]/25" />
+      <div className="absolute top-24 right-6 w-10 h-10 border-t border-r border-[#E36F2C]/25" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
@@ -36,7 +36,7 @@ export default function PageHero({ label, title, titleGold, subtitle, breadcrumb
               <span key={i} className="flex items-center gap-2">
                 {i > 0 && <span>/</span>}
                 {crumb.href ? (
-                  <a href={crumb.href} className="hover:text-[#c9a84c] transition-colors">
+                  <a href={crumb.href} className="hover:text-[#E36F2C] transition-colors">
                     {crumb.label}
                   </a>
                 ) : (
@@ -48,7 +48,7 @@ export default function PageHero({ label, title, titleGold, subtitle, breadcrumb
         )}
 
         {label && (
-          <div className="text-[#c9a84c] text-xs tracking-[0.3em] uppercase mb-4 font-medium">
+          <div className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase mb-4 font-medium">
             {label}
           </div>
         )}
@@ -69,12 +69,12 @@ export default function PageHero({ label, title, titleGold, subtitle, breadcrumb
           </p>
         )}
 
-        {/* Gold line */}
-        <div className="mt-8 w-16 h-0.5 bg-gradient-to-r from-[#c9a84c] to-transparent" />
+        {/* Brand line */}
+        <div className="mt-8 w-16 h-0.5 bg-gradient-to-r from-[#E36F2C] to-transparent" />
       </div>
     </section>
     {/* Hero → content gradient transition */}
-    <div className="h-20 bg-gradient-to-b from-[#1C1A18] to-[#FAF7F2]" />
+    <div className="h-20 bg-gradient-to-b from-[#241F1B] to-[#FAF7F2]" />
     </>
   );
 }
