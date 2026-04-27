@@ -274,6 +274,10 @@ export default function ProductsPageContent({ products }: Props) {
 
     return list;
   }, [products, seriesFilter, sizeFilter, typeFilter, genFilter, sortKey]);
+  const availableSeries = useMemo(() => {
+    const series = Array.from(new Set(products.map((p) => p.productSeries)));
+    return series.length > 0 ? series.join(' / ') : '—';
+  }, [products]);
 
   const sizeOptions = [
     { value: 'all', label: t(i18n.products.filterSizeAll) },
@@ -303,14 +307,19 @@ export default function ProductsPageContent({ products }: Props) {
     lang === 'zh'
       ? '45天预制 · 2小时安装 · 欧盟/美国认证 · 全球交付'
       : '45-day production · 2-hour install · EU+US certified · global delivery';
+  const heroSummary = [
+    [lang === 'zh' ? '在售产品' : 'Live products', String(products.length)],
+    [lang === 'zh' ? '当前系列' : 'Series', availableSeries],
+    [lang === 'zh' ? '筛选维度' : 'Filters', lang === 'zh' ? '型号 / 面积 / 类型 / 代际' : 'Series / Size / Type / Gen'],
+  ];
 
   return (
     <>
-      <section className="relative overflow-hidden bg-[#F5F2ED] border-b border-[#E5DED4] pt-28 sm:pt-32 pb-8 lg:pb-10">
+      <section className="relative overflow-hidden bg-[#F5F2ED] border-b border-[#E5DED4] pt-28 sm:pt-32 pb-8">
         <div className="absolute inset-x-0 top-0 h-1 bg-[#E36F2C]" />
-        <div className="absolute right-0 top-0 h-full w-2/3 bg-[radial-gradient(circle_at_80%_35%,rgba(227,111,44,0.16),transparent_42%)] pointer-events-none" />
+        <div className="absolute right-0 top-0 h-full w-2/3 bg-[radial-gradient(circle_at_82%_28%,rgba(227,111,44,0.10),transparent_38%)] pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <nav className="flex items-center gap-2 text-xs text-[#8A7D74] mb-8 tracking-wider">
+          <nav className="flex items-center gap-2 text-xs text-[#8A7D74] mb-7 tracking-wider">
             <Link href="/" className="hover:text-[#E36F2C] transition-colors">
               {t(i18n.productDetail.home)}
             </Link>
@@ -318,9 +327,9 @@ export default function ProductsPageContent({ products }: Props) {
             <span>{t(i18n.nav.products)}</span>
           </nav>
 
-          <div className="grid lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.48fr)] gap-8 lg:gap-12 items-center min-h-[260px]">
-            <div className="max-w-3xl">
-              <div className="flex flex-wrap items-center gap-3 mb-5">
+          <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] gap-8 lg:gap-12 items-end">
+            <div className="max-w-4xl">
+              <div className="flex flex-wrap items-center gap-3 mb-4">
                 <span className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-semibold">
                   VESSEL®
                 </span>
@@ -329,7 +338,7 @@ export default function ProductsPageContent({ products }: Props) {
                   {t(i18n.products.heroLabel)}
                 </span>
               </div>
-              <h1 className="text-[#241F1B] text-4xl sm:text-5xl lg:text-[56px] font-black leading-tight tracking-normal mb-5 max-w-4xl">
+              <h1 className="text-[#241F1B] text-4xl sm:text-5xl lg:text-[54px] font-black leading-tight tracking-normal mb-4 max-w-4xl">
                 {t(i18n.products.heroTitleGold)}
               </h1>
               <p className="text-[#6B625B] text-base sm:text-lg leading-relaxed max-w-2xl">
@@ -337,16 +346,18 @@ export default function ProductsPageContent({ products }: Props) {
               </p>
             </div>
 
-            <div className="hidden md:block relative h-52 lg:h-60">
-              <div className="absolute inset-0 bg-[linear-gradient(110deg,rgba(255,255,255,0),rgba(255,255,255,0.58)_42%,rgba(227,111,44,0.10))]" />
-              <ProtectedImage
-                src="/images/products/V9-Gen6_render-01.jpg"
-                alt={lang === 'en' ? 'VESSEL V9 Gen6 smart prefab architecture' : 'VESSEL V9 Gen6 文旅智能装配建筑'}
-                fill
-                priority
-                sizes="(max-width: 1024px) 40vw, 420px"
-                className="object-contain object-center drop-shadow-[0_30px_60px_rgba(44,42,40,0.18)]"
-              />
+            <div className="hidden lg:block border-l border-[#E5DED4] pl-8 py-1">
+              <div className="text-[#E36F2C] text-[11px] tracking-[0.28em] uppercase font-semibold mb-4">
+                {lang === 'zh' ? '目录摘要' : 'Catalog Summary'}
+              </div>
+              <div className="space-y-3">
+                {heroSummary.map(([label, value]) => (
+                  <div key={label} className="flex items-baseline justify-between gap-5 border-b border-[#E5DED4]/70 pb-3 last:border-b-0 last:pb-0">
+                    <span className="text-[#8A7D74] text-xs tracking-wider">{label}</span>
+                    <span className="text-[#2C2A28] text-sm font-semibold tracking-wider text-right">{value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
