@@ -36,6 +36,11 @@ type FormState = {
   country: string
   latitude: string
   longitude: string
+  global_open_date: string
+  global_units: string
+  global_unit_area: string
+  global_guests: string
+  global_booking_url: string
   global_amenities: string
   global_transport_zh: string
   global_transport_en: string
@@ -66,6 +71,11 @@ const emptyState: FormState = {
   country: '中国',
   latitude: '',
   longitude: '',
+  global_open_date: '',
+  global_units: '',
+  global_unit_area: '',
+  global_guests: '',
+  global_booking_url: '',
   global_amenities: '',
   global_transport_zh: '',
   global_transport_en: '',
@@ -184,6 +194,11 @@ function fromProject(project?: ProjectCaseRow | null): FormState {
     country: project.country,
     latitude: project.latitude == null ? '' : String(project.latitude),
     longitude: project.longitude == null ? '' : String(project.longitude),
+    global_open_date: project.global_open_date,
+    global_units: project.global_units == null ? '' : String(project.global_units),
+    global_unit_area: project.global_unit_area == null ? '' : String(project.global_unit_area),
+    global_guests: project.global_guests,
+    global_booking_url: project.global_booking_url,
     global_amenities: formatAmenities(project),
     global_transport_zh: formatTransport(project.global_transport_zh),
     global_transport_en: formatTransport(project.global_transport_en),
@@ -222,8 +237,12 @@ export default function ProjectForm({
   const globalNearbyEn = useMemo(() => parseNearbyRows(form.global_nearby_en), [form.global_nearby_en])
   const latitude = useMemo(() => parseOptionalNumber(form.latitude), [form.latitude])
   const longitude = useMemo(() => parseOptionalNumber(form.longitude), [form.longitude])
+  const globalUnits = useMemo(() => parseOptionalNumber(form.global_units), [form.global_units])
+  const globalUnitArea = useMemo(() => parseOptionalNumber(form.global_unit_area), [form.global_unit_area])
   const hasLatitude = form.latitude.trim().length > 0
   const hasLongitude = form.longitude.trim().length > 0
+  const hasGlobalUnits = form.global_units.trim().length > 0
+  const hasGlobalUnitArea = form.global_unit_area.trim().length > 0
   const hasCompleteCoordinates = hasLatitude && hasLongitude
   const coordinatesValid =
     hasCompleteCoordinates &&
@@ -262,6 +281,11 @@ export default function ProjectForm({
     country: form.country.trim(),
     latitude,
     longitude,
+    global_open_date: form.global_open_date.trim(),
+    global_units: globalUnits,
+    global_unit_area: globalUnitArea,
+    global_guests: form.global_guests.trim(),
+    global_booking_url: form.global_booking_url.trim(),
     global_amenities: globalAmenities,
     global_transport_zh: globalTransportZh,
     global_transport_en: globalTransportEn,
@@ -280,6 +304,14 @@ export default function ProjectForm({
       }
       if (hasCompleteCoordinates && !coordinatesValid) {
         toast.error('坐标格式不正确：纬度需在 -90 到 90，经度需在 -180 到 180')
+        return
+      }
+      if (hasGlobalUnits && (globalUnits === null || Number.isNaN(globalUnits) || !Number.isInteger(globalUnits) || globalUnits < 0)) {
+        toast.error('地图详情舱数需填写 0 或正整数')
+        return
+      }
+      if (hasGlobalUnitArea && (globalUnitArea === null || Number.isNaN(globalUnitArea) || globalUnitArea < 0)) {
+        toast.error('地图详情每间面积需填写 0 或正数')
         return
       }
       const payload = buildPayload(nextStatus)
@@ -400,8 +432,54 @@ export default function ProjectForm({
             <div>
               <h2 className="text-sm font-semibold text-[#2C2A28]">/global 详情内容</h2>
               <p className="mt-1 text-xs leading-relaxed text-[#8A8580]">
-                用于地图右侧详情面板。留空时会继续使用项目类型、产品型号、标签和位置自动生成兜底内容。
+                用于地图右侧详情面板。留空时会继续使用项目基础信息自动生成兜底内容。
               </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <Field label="开业时间">
+                <Input
+                  className="bg-white"
+                  value={form.global_open_date}
+                  onChange={(e) => patch('global_open_date', e.target.value)}
+                  placeholder="2025.03"
+                />
+              </Field>
+              <Field label="舱数">
+                <Input
+                  type="number"
+                  min="0"
+                  step="1"
+                  className="bg-white"
+                  value={form.global_units}
+                  onChange={(e) => patch('global_units', e.target.value)}
+                />
+              </Field>
+              <Field label="每间面积㎡">
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  className="bg-white"
+                  value={form.global_unit_area}
+                  onChange={(e) => patch('global_unit_area', e.target.value)}
+                />
+              </Field>
+              <Field label="入住人数">
+                <Input
+                  className="bg-white"
+                  value={form.global_guests}
+                  onChange={(e) => patch('global_guests', e.target.value)}
+                  placeholder="2-4"
+                />
+              </Field>
+              <Field label="预订/官网链接">
+                <Input
+                  className="bg-white"
+                  value={form.global_booking_url}
+                  onChange={(e) => patch('global_booking_url', e.target.value)}
+                  placeholder="https://..."
+                />
+              </Field>
             </div>
             <Field label="设施亮点" hint="每行一条，格式：图标 | 中文 | English。示例：🏔 | 海拔1330米悬崖 | Cliff at 1,330m">
               <Textarea

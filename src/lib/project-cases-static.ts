@@ -39,6 +39,11 @@ export interface ProjectCaseInput {
   country: string
   latitude: number | null
   longitude: number | null
+  global_open_date?: string
+  global_units?: number | null
+  global_unit_area?: number | null
+  global_guests?: string
+  global_booking_url?: string
   global_amenities?: ProjectGlobalAmenity[]
   global_transport_zh?: ProjectGlobalTransport[]
   global_transport_en?: ProjectGlobalTransport[]
@@ -49,6 +54,11 @@ export interface ProjectCaseInput {
 }
 
 export type ProjectCaseRow = ProjectCaseInput & {
+  global_open_date: string
+  global_units: number | null
+  global_unit_area: number | null
+  global_guests: string
+  global_booking_url: string
   global_amenities: ProjectGlobalAmenity[]
   global_transport_zh: ProjectGlobalTransport[]
   global_transport_en: ProjectGlobalTransport[]
@@ -63,10 +73,28 @@ export type ProjectCaseRow = ProjectCaseInput & {
 
 type StaticProjectCaseSeed = Omit<
   ProjectCaseRow,
-  'global_amenities' | 'global_transport_zh' | 'global_transport_en' | 'global_nearby_zh' | 'global_nearby_en'
+  | 'global_open_date'
+  | 'global_units'
+  | 'global_unit_area'
+  | 'global_guests'
+  | 'global_booking_url'
+  | 'global_amenities'
+  | 'global_transport_zh'
+  | 'global_transport_en'
+  | 'global_nearby_zh'
+  | 'global_nearby_en'
 > & Partial<Pick<
   ProjectCaseRow,
-  'global_amenities' | 'global_transport_zh' | 'global_transport_en' | 'global_nearby_zh' | 'global_nearby_en'
+  | 'global_open_date'
+  | 'global_units'
+  | 'global_unit_area'
+  | 'global_guests'
+  | 'global_booking_url'
+  | 'global_amenities'
+  | 'global_transport_zh'
+  | 'global_transport_en'
+  | 'global_nearby_zh'
+  | 'global_nearby_en'
 >>
 
 const staticProjectCaseSeeds: StaticProjectCaseSeed[] = [
@@ -235,6 +263,11 @@ const staticProjectCaseSeeds: StaticProjectCaseSeed[] = [
 ]
 
 export const staticProjectCases: ProjectCaseRow[] = staticProjectCaseSeeds.map((item) => ({
+  global_open_date: '',
+  global_units: null,
+  global_unit_area: null,
+  global_guests: '',
+  global_booking_url: '',
   global_amenities: [],
   global_transport_zh: [],
   global_transport_en: [],

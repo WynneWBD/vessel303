@@ -26,6 +26,7 @@ const COLUMNS = `
   units_display, products, description_zh, description_en,
   tags_zh, tags_en, cover_image_url, images, country,
   latitude, longitude,
+  global_open_date, global_units, global_unit_area, global_guests, global_booking_url,
   global_amenities, global_transport_zh, global_transport_en,
   global_nearby_zh, global_nearby_en,
   status, sort_order,
@@ -55,6 +56,11 @@ function rowToProjectCase(row: {
   country: string
   latitude: string | number | null
   longitude: string | number | null
+  global_open_date: string
+  global_units: string | number | null
+  global_unit_area: string | number | null
+  global_guests: string
+  global_booking_url: string
   global_amenities: ProjectCaseRow['global_amenities']
   global_transport_zh: ProjectCaseRow['global_transport_zh']
   global_transport_en: ProjectCaseRow['global_transport_en']
@@ -87,6 +93,11 @@ function rowToProjectCase(row: {
     country: row.country,
     latitude: row.latitude == null ? null : Number(row.latitude),
     longitude: row.longitude == null ? null : Number(row.longitude),
+    global_open_date: row.global_open_date ?? '',
+    global_units: row.global_units == null ? null : Number(row.global_units),
+    global_unit_area: row.global_unit_area == null ? null : Number(row.global_unit_area),
+    global_guests: row.global_guests ?? '',
+    global_booking_url: row.global_booking_url ?? '',
     global_amenities: row.global_amenities ?? [],
     global_transport_zh: row.global_transport_zh ?? [],
     global_transport_en: row.global_transport_en ?? [],
@@ -173,6 +184,11 @@ export async function ensureProjectCasesSchema() {
         country            TEXT        NOT NULL DEFAULT '',
         latitude           NUMERIC,
         longitude          NUMERIC,
+        global_open_date   TEXT        NOT NULL DEFAULT '',
+        global_units       INTEGER,
+        global_unit_area   NUMERIC,
+        global_guests      TEXT        NOT NULL DEFAULT '',
+        global_booking_url TEXT        NOT NULL DEFAULT '',
         global_amenities   JSONB       NOT NULL DEFAULT '[]',
         global_transport_zh JSONB      NOT NULL DEFAULT '[]',
         global_transport_en JSONB      NOT NULL DEFAULT '[]',
@@ -187,6 +203,11 @@ export async function ensureProjectCasesSchema() {
     `)
     await pool.query(`
       ALTER TABLE project_cases
+        ADD COLUMN IF NOT EXISTS global_open_date TEXT NOT NULL DEFAULT '',
+        ADD COLUMN IF NOT EXISTS global_units INTEGER,
+        ADD COLUMN IF NOT EXISTS global_unit_area NUMERIC,
+        ADD COLUMN IF NOT EXISTS global_guests TEXT NOT NULL DEFAULT '',
+        ADD COLUMN IF NOT EXISTS global_booking_url TEXT NOT NULL DEFAULT '',
         ADD COLUMN IF NOT EXISTS global_amenities JSONB NOT NULL DEFAULT '[]',
         ADD COLUMN IF NOT EXISTS global_transport_zh JSONB NOT NULL DEFAULT '[]',
         ADD COLUMN IF NOT EXISTS global_transport_en JSONB NOT NULL DEFAULT '[]',
@@ -295,6 +316,7 @@ export async function createProjectCase(input: ProjectCaseInput) {
        units_display, products, description_zh, description_en,
        tags_zh, tags_en, cover_image_url, images, country,
        latitude, longitude,
+       global_open_date, global_units, global_unit_area, global_guests, global_booking_url,
        global_amenities, global_transport_zh, global_transport_en,
        global_nearby_zh, global_nearby_en,
        status, sort_order
@@ -303,7 +325,8 @@ export async function createProjectCase(input: ProjectCaseInput) {
        $6, $7, $8, $9,
        $10, $11, $12, $13,
        $14, $15, $16, $17, $18,
-       $19, $20, $21, $22, $23, $24, $25, $26, $27
+       $19, $20, $21, $22, $23, $24, $25,
+       $26, $27, $28, $29, $30, $31, $32
      )
      RETURNING ${COLUMNS}`,
     [
@@ -327,6 +350,11 @@ export async function createProjectCase(input: ProjectCaseInput) {
       input.country,
       input.latitude,
       input.longitude,
+      input.global_open_date ?? '',
+      input.global_units ?? null,
+      input.global_unit_area ?? null,
+      input.global_guests ?? '',
+      input.global_booking_url ?? '',
       JSON.stringify(input.global_amenities ?? []),
       JSON.stringify(input.global_transport_zh ?? []),
       JSON.stringify(input.global_transport_en ?? []),
@@ -363,6 +391,11 @@ export async function updateProjectCase(id: string, input: UpdateProjectCaseInpu
     ['country', 'country', (v) => v],
     ['latitude', 'latitude', (v) => v ?? null],
     ['longitude', 'longitude', (v) => v ?? null],
+    ['global_open_date', 'global_open_date', (v) => v ?? ''],
+    ['global_units', 'global_units', (v) => v ?? null],
+    ['global_unit_area', 'global_unit_area', (v) => v ?? null],
+    ['global_guests', 'global_guests', (v) => v ?? ''],
+    ['global_booking_url', 'global_booking_url', (v) => v ?? ''],
     ['global_amenities', 'global_amenities', (v) => JSON.stringify(v ?? [])],
     ['global_transport_zh', 'global_transport_zh', (v) => JSON.stringify(v ?? [])],
     ['global_transport_en', 'global_transport_en', (v) => JSON.stringify(v ?? [])],
