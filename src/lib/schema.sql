@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS product_catalog (
   gallery        JSONB       NOT NULL DEFAULT '[]',
   specs_cn       JSONB       NOT NULL DEFAULT '[]',
   specs_en       JSONB       NOT NULL DEFAULT '[]',
+  detail_modules JSONB       NOT NULL DEFAULT '[]',
   is_custom      BOOLEAN     NOT NULL DEFAULT FALSE,
   detail_slug    TEXT,
   status         TEXT        NOT NULL DEFAULT 'draft',

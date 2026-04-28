@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { Save, Send, ArrowLeft } from 'lucide-react'
+import { Save, Send, ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import CoverImagePicker from '@/components/admin/CoverImagePicker'
 import ProductGalleryPicker from '@/components/admin/ProductGalleryPicker'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,12 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import type { CatalogProductRow, CatalogProductStatus } from '@/lib/product-catalog-db'
-import type { ProductSeriesCode } from '@/lib/products'
+import type {
+  CatalogDetailModule,
+  CatalogDetailModuleItem,
+  CatalogDetailModuleType,
+  ProductSeriesCode,
+} from '@/lib/products'
 
 type FormState = {
   id: string
@@ -37,6 +42,7 @@ type FormState = {
   gallery: string
   specs_cn: string
   specs_en: string
+  detail_modules: CatalogDetailModule[]
   isCustom: boolean
   detailSlug: string
   status: CatalogProductStatus
@@ -65,6 +71,7 @@ const emptyState: FormState = {
   gallery: '',
   specs_cn: '',
   specs_en: '',
+  detail_modules: [],
   isCustom: false,
   detailSlug: '',
   status: 'draft',
@@ -95,6 +102,7 @@ function fromProduct(product?: CatalogProductRow | null): FormState {
     gallery: (product.gallery ?? []).join('\n'),
     specs_cn: formatSpecItems(product.specs_cn ?? []),
     specs_en: formatSpecItems(product.specs_en ?? []),
+    detail_modules: normalizeDetailModules(product.detail_modules ?? []),
     isCustom: product.isCustom,
     detailSlug: product.detailSlug ?? '',
     status: product.status,
@@ -134,6 +142,33 @@ function parseSpecItems(value: string) {
     .filter((item): item is { label: string; value: string } => Boolean(item))
 }
 
+function formatModuleItems(items: CatalogDetailModuleItem[] = []) {
+  return items
+    .map((item) => item.body ? `${item.title}: ${item.body}` : item.title)
+    .join('\n')
+}
+
+function parseModuleItems(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((line) => {
+      const trimmed = line.trim()
+      if (!trimmed) return null
+      const separator = trimmed.includes('：')
+        ? '：'
+        : trimmed.includes('|')
+          ? '|'
+          : ':'
+      const index = trimmed.indexOf(separator)
+      if (index <= 0) return { title: trimmed }
+      return {
+        title: trimmed.slice(0, index).trim(),
+        body: trimmed.slice(index + 1).trim() || undefined,
+      }
+    })
+    .filter((item): item is CatalogDetailModuleItem => Boolean(item?.title))
+}
+
 function normalizeId(value: string) {
   return value
     .toLowerCase()
@@ -141,6 +176,26 @@ function normalizeId(value: string) {
     .replace(/[^a-z0-9-]/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
+}
+
+function normalizeDetailModules(modules: CatalogDetailModule[]) {
+  return [...modules]
+    .map((module, index) => ({
+      ...module,
+      id: module.id || `detail-module-${index + 1}`,
+      type: module.type || 'content',
+      title_cn: module.title_cn ?? '',
+      title_en: module.title_en ?? '',
+      body_cn: module.body_cn ?? '',
+      body_en: module.body_en ?? '',
+      items_cn: module.items_cn ?? [],
+      items_en: module.items_en ?? [],
+      image_url: module.image_url ?? '',
+      images: module.images ?? [],
+      is_visible: module.is_visible !== false,
+      sort_order: Number.isFinite(Number(module.sort_order)) ? Number(module.sort_order) : (index + 1) * 10,
+    }))
+    .sort((a, b) => a.sort_order - b.sort_order)
 }
 
 function Field({
@@ -182,6 +237,43 @@ export default function ProductForm({
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
+  const patchDetailModule = (id: string, patch: Partial<CatalogDetailModule>) => {
+    setForm((prev) => ({
+      ...prev,
+      detail_modules: prev.detail_modules.map((module) => (
+        module.id === id ? { ...module, ...patch } : module
+      )),
+    }))
+  }
+
+  const addDetailModule = () => {
+    setForm((prev) => {
+      const maxSort = prev.detail_modules.reduce((max, module) => Math.max(max, Number(module.sort_order) || 0), 0)
+      const next: CatalogDetailModule = {
+        id: `detail-module-${Date.now()}`,
+        type: 'highlights',
+        title_cn: '产品亮点',
+        title_en: 'Product Highlights',
+        body_cn: '',
+        body_en: '',
+        items_cn: [],
+        items_en: [],
+        image_url: '',
+        images: [],
+        is_visible: true,
+        sort_order: maxSort + 10,
+      }
+      return { ...prev, detail_modules: [...prev.detail_modules, next] }
+    })
+  }
+
+  const removeDetailModule = (id: string) => {
+    setForm((prev) => ({
+      ...prev,
+      detail_modules: prev.detail_modules.filter((module) => module.id !== id),
+    }))
+  }
+
   const buildPayload = (nextStatus?: CatalogProductStatus) => ({
     id: normalizeId(form.id),
     productSeries: form.productSeries,
@@ -204,6 +296,18 @@ export default function ProductForm({
     gallery: splitLines(form.gallery),
     specs_cn: parseSpecItems(form.specs_cn),
     specs_en: parseSpecItems(form.specs_en),
+    detail_modules: normalizeDetailModules(form.detail_modules).map((module) => ({
+      ...module,
+      id: normalizeId(module.id) || `detail-module-${Date.now()}`,
+      title_cn: module.title_cn.trim(),
+      title_en: module.title_en.trim(),
+      body_cn: module.body_cn?.trim() || '',
+      body_en: module.body_en?.trim() || '',
+      items_cn: module.items_cn ?? [],
+      items_en: module.items_en ?? [],
+      image_url: module.image_url?.trim() || '',
+      images: module.images ?? [],
+    })),
     isCustom: form.isCustom,
     detailSlug: form.detailSlug.trim() || null,
     status: nextStatus ?? form.status,
@@ -423,6 +527,142 @@ export default function ProductForm({
                   placeholder={'Size range: 19m2 - 38.8m2\nProduction lead time: 45 days'}
                 />
               </Field>
+            </div>
+
+            <div className="border-t border-[#E5DED4] pt-5 space-y-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <h2 className="text-sm font-semibold text-[#2C2A28]">详情页模块</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-[#8A8580]">
+                    用于通用产品详情页，可维护亮点、适用场景、FAQ、定制范围和图文内容。没有模块时前台继续使用默认展示。
+                  </p>
+                </div>
+                <Button type="button" size="sm" variant="outline" onClick={addDetailModule}>
+                  <Plus size={14} />
+                  新增模块
+                </Button>
+              </div>
+
+              {form.detail_modules.length > 0 ? (
+                <div className="space-y-4">
+                  {normalizeDetailModules(form.detail_modules).map((module) => (
+                    <div key={module.id} className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4 space-y-4">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div className="min-w-0">
+                          <p className="truncate text-xs text-[#8A8580]">{module.id}</p>
+                          <p className="mt-1 text-sm font-semibold text-[#2C2A28]">{module.title_cn || '未命名模块'}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <label className="flex items-center gap-2 text-xs text-[#8A8580]">
+                            <input
+                              type="checkbox"
+                              checked={module.is_visible}
+                              onChange={(e) => patchDetailModule(module.id, { is_visible: e.target.checked })}
+                              className="h-4 w-4 accent-[#E36F2C]"
+                            />
+                            显示
+                          </label>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-[#8A8580] hover:text-red-600"
+                            aria-label="删除详情模块"
+                            onClick={() => removeDetailModule(module.id)}
+                          >
+                            <Trash2 size={15} />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <Field label="模块 ID">
+                          <Input
+                            value={module.id}
+                            onChange={(e) => patchDetailModule(module.id, { id: normalizeId(e.target.value) })}
+                          />
+                        </Field>
+                        <Field label="模块类型">
+                          <Select
+                            value={module.type}
+                            onChange={(e) => patchDetailModule(module.id, { type: e.target.value as CatalogDetailModuleType })}
+                          >
+                            <option value="highlights">亮点 Highlights</option>
+                            <option value="scenarios">场景 Scenarios</option>
+                            <option value="faq">FAQ</option>
+                            <option value="content">图文内容 Content</option>
+                            <option value="customization">定制范围 Customization</option>
+                          </Select>
+                        </Field>
+                        <Field label="排序">
+                          <Input
+                            type="number"
+                            value={module.sort_order}
+                            onChange={(e) => patchDetailModule(module.id, { sort_order: Number(e.target.value) || 0 })}
+                          />
+                        </Field>
+                        <Field label="模块主图 URL">
+                          <Input
+                            value={module.image_url ?? ''}
+                            onChange={(e) => patchDetailModule(module.id, { image_url: e.target.value })}
+                            placeholder="/images/products/..."
+                          />
+                        </Field>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Field label="中文标题">
+                          <Input value={module.title_cn} onChange={(e) => patchDetailModule(module.id, { title_cn: e.target.value })} />
+                        </Field>
+                        <Field label="英文标题">
+                          <Input value={module.title_en} onChange={(e) => patchDetailModule(module.id, { title_en: e.target.value })} />
+                        </Field>
+                        <Field label="中文正文">
+                          <Textarea
+                            className="min-h-24"
+                            value={module.body_cn ?? ''}
+                            onChange={(e) => patchDetailModule(module.id, { body_cn: e.target.value })}
+                          />
+                        </Field>
+                        <Field label="英文正文">
+                          <Textarea
+                            className="min-h-24"
+                            value={module.body_en ?? ''}
+                            onChange={(e) => patchDetailModule(module.id, { body_en: e.target.value })}
+                          />
+                        </Field>
+                        <Field label="中文列表项" hint="一行一个，格式：标题: 说明。FAQ 可写 问题: 答案。">
+                          <Textarea
+                            className="min-h-28"
+                            value={formatModuleItems(module.items_cn)}
+                            onChange={(e) => patchDetailModule(module.id, { items_cn: parseModuleItems(e.target.value) })}
+                          />
+                        </Field>
+                        <Field label="英文列表项" hint="One per line: Title: Description.">
+                          <Textarea
+                            className="min-h-28"
+                            value={formatModuleItems(module.items_en)}
+                            onChange={(e) => patchDetailModule(module.id, { items_en: parseModuleItems(e.target.value) })}
+                          />
+                        </Field>
+                      </div>
+
+                      <Field label="模块图片组 URL" hint="一行一张图，用于图文模块或 FAQ/场景补充图片。">
+                        <Textarea
+                          className="min-h-24"
+                          value={(module.images ?? []).join('\n')}
+                          onChange={(e) => patchDetailModule(module.id, { images: splitLines(e.target.value) })}
+                          placeholder="/images/products/detail-01.jpg"
+                        />
+                      </Field>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-[#E5DED4] bg-[#FAF7F2] p-6 text-sm text-[#8A8580]">
+                  暂无详情模块。可以先新增一个亮点模块，前台会显示在产品卖点之后。
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -137,6 +137,7 @@ export default function ProductListClient({
           gallery: item.gallery ?? [],
           specs_cn: item.specs_cn ?? [],
           specs_en: item.specs_en ?? [],
+          detail_modules: item.detail_modules ?? [],
           isCustom: item.isCustom,
           detailSlug: null,
           status: 'draft',

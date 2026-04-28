@@ -517,6 +517,28 @@ export interface CatalogSpecItem {
   value: string;
 }
 
+export type CatalogDetailModuleType = 'highlights' | 'scenarios' | 'faq' | 'content' | 'customization';
+
+export interface CatalogDetailModuleItem {
+  title: string;
+  body?: string;
+}
+
+export interface CatalogDetailModule {
+  id: string;
+  type: CatalogDetailModuleType;
+  title_cn: string;
+  title_en: string;
+  body_cn?: string;
+  body_en?: string;
+  items_cn?: CatalogDetailModuleItem[];
+  items_en?: CatalogDetailModuleItem[];
+  image_url?: string;
+  images?: string[];
+  is_visible: boolean;
+  sort_order: number;
+}
+
 export interface CatalogProduct {
   id: string;
   productSeries: ProductSeriesCode;
@@ -539,6 +561,7 @@ export interface CatalogProduct {
   gallery?: string[];
   specs_cn?: CatalogSpecItem[];
   specs_en?: CatalogSpecItem[];
+  detail_modules?: CatalogDetailModule[];
   isCustom: boolean;
   /** If set, "查看详情" links to /products/{detailSlug}; otherwise links to /contact */
   detailSlug?: string;

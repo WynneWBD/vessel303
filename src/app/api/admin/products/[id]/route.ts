@@ -17,9 +17,28 @@ type Ctx = { params: Promise<{ id: string }> }
 const statusValues = ['draft', 'published'] as const
 const seriesValues = ['E3', 'E5', 'E6', 'E7', 'V3', 'V5', 'V7', 'V9', 'S5'] as const
 const productTypeValues = ['compact', 'standard', 'luxury'] as const
+const detailModuleTypeValues = ['highlights', 'scenarios', 'faq', 'content', 'customization'] as const
 const specItemSchema = z.object({
   label: z.string().min(1).max(80),
   value: z.string().min(1).max(160),
+})
+const detailModuleItemSchema = z.object({
+  title: z.string().min(1).max(160),
+  body: z.string().max(800).optional(),
+})
+const detailModuleSchema = z.object({
+  id: z.string().min(1).max(120),
+  type: z.enum(detailModuleTypeValues),
+  title_cn: z.string().max(180),
+  title_en: z.string().max(220),
+  body_cn: z.string().max(1800).optional(),
+  body_en: z.string().max(2200).optional(),
+  items_cn: z.array(detailModuleItemSchema).max(12).optional().default([]),
+  items_en: z.array(detailModuleItemSchema).max(12).optional().default([]),
+  image_url: z.string().max(500).optional(),
+  images: z.array(z.string().min(1).max(500)).max(12).optional().default([]),
+  is_visible: z.boolean(),
+  sort_order: z.coerce.number().int().min(0).max(9999),
 })
 
 function normalizeSlug(value: string) {
@@ -60,6 +79,7 @@ const patchSchema = z.object({
   gallery: z.array(z.string().min(1).max(500)).max(24).optional(),
   specs_cn: z.array(specItemSchema).max(24).optional(),
   specs_en: z.array(specItemSchema).max(24).optional(),
+  detail_modules: z.array(detailModuleSchema).max(16).optional(),
   isCustom: z.boolean().optional(),
   detailSlug: detailSlugSchema,
   status: z.enum(statusValues).optional(),

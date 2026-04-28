@@ -2,6 +2,7 @@ import { pool } from '@/lib/db'
 import {
   catalogProducts,
   type CatalogProduct,
+  type CatalogDetailModule,
   type CatalogSpecItem,
   type ProductSeriesCode,
 } from '@/lib/products'
@@ -47,6 +48,7 @@ export type CatalogProductInput = {
   gallery?: string[]
   specs_cn?: CatalogSpecItem[]
   specs_en?: CatalogSpecItem[]
+  detail_modules?: CatalogDetailModule[]
   isCustom: boolean
   detailSlug?: string | null
   status?: CatalogProductStatus
@@ -79,6 +81,7 @@ function rowToCatalogProduct(row: {
   gallery: string[]
   specs_cn: CatalogSpecItem[]
   specs_en: CatalogSpecItem[]
+  detail_modules: CatalogDetailModule[]
   is_custom: boolean
   detail_slug: string | null
   status: CatalogProductStatus
@@ -109,6 +112,7 @@ function rowToCatalogProduct(row: {
     gallery: row.gallery ?? [],
     specs_cn: row.specs_cn ?? [],
     specs_en: row.specs_en ?? [],
+    detail_modules: row.detail_modules ?? [],
     isCustom: row.is_custom,
     detailSlug: row.detail_slug ?? undefined,
     status: row.status,
@@ -123,7 +127,7 @@ const COLUMNS = `
   id, product_series, name_cn, name_en, gen, size, area, generation,
   product_type, badge_cn, badge_en, tags_cn, tags_en, features_cn, features_en,
   image, description_cn, description_en, gallery, specs_cn, specs_en,
-  is_custom, detail_slug, status, sort_order,
+  detail_modules, is_custom, detail_slug, status, sort_order,
   created_at::text AS created_at,
   updated_at::text AS updated_at,
   deleted_at::text AS deleted_at
@@ -141,12 +145,12 @@ async function seedCatalogProductsIfEmpty() {
          id, product_series, name_cn, name_en, gen, size, area, generation,
          product_type, badge_cn, badge_en, tags_cn, tags_en, features_cn, features_en,
          image, description_cn, description_en, gallery, specs_cn, specs_en,
-         is_custom, detail_slug, status, sort_order
+         detail_modules, is_custom, detail_slug, status, sort_order
        ) VALUES (
          $1, $2, $3, $4, $5, $6, $7, $8,
          $9, $10, $11, $12, $13, $14, $15,
          $16, $17, $18, $19, $20, $21,
-         $22, $23, 'published', $24
+         $22, $23, $24, 'published', $25
        )
        ON CONFLICT (id) DO NOTHING`,
       [
@@ -171,6 +175,7 @@ async function seedCatalogProductsIfEmpty() {
         JSON.stringify(product.gallery ?? []),
         JSON.stringify(product.specs_cn ?? []),
         JSON.stringify(product.specs_en ?? []),
+        JSON.stringify(product.detail_modules ?? []),
         product.isCustom,
         product.detailSlug ?? null,
         index + 1,
@@ -204,6 +209,7 @@ export async function ensureProductCatalogSchema() {
         gallery        JSONB       NOT NULL DEFAULT '[]',
         specs_cn       JSONB       NOT NULL DEFAULT '[]',
         specs_en       JSONB       NOT NULL DEFAULT '[]',
+        detail_modules JSONB       NOT NULL DEFAULT '[]',
         is_custom      BOOLEAN     NOT NULL DEFAULT FALSE,
         detail_slug    TEXT,
         status         TEXT        NOT NULL DEFAULT 'draft',
@@ -219,7 +225,8 @@ export async function ensureProductCatalogSchema() {
         ADD COLUMN IF NOT EXISTS description_en TEXT NOT NULL DEFAULT '',
         ADD COLUMN IF NOT EXISTS gallery JSONB NOT NULL DEFAULT '[]',
         ADD COLUMN IF NOT EXISTS specs_cn JSONB NOT NULL DEFAULT '[]',
-        ADD COLUMN IF NOT EXISTS specs_en JSONB NOT NULL DEFAULT '[]'
+        ADD COLUMN IF NOT EXISTS specs_en JSONB NOT NULL DEFAULT '[]',
+        ADD COLUMN IF NOT EXISTS detail_modules JSONB NOT NULL DEFAULT '[]'
     `)
     await pool.query(
       `CREATE INDEX IF NOT EXISTS idx_product_catalog_public
@@ -374,12 +381,12 @@ export async function createCatalogProduct(input: CatalogProductInput) {
        id, product_series, name_cn, name_en, gen, size, area, generation,
        product_type, badge_cn, badge_en, tags_cn, tags_en, features_cn, features_en,
        image, description_cn, description_en, gallery, specs_cn, specs_en,
-       is_custom, detail_slug, status, sort_order
+       detail_modules, is_custom, detail_slug, status, sort_order
      ) VALUES (
        $1, $2, $3, $4, $5, $6, $7, $8,
        $9, $10, $11, $12, $13, $14, $15,
        $16, $17, $18, $19, $20, $21,
-       $22, $23, $24, $25
+       $22, $23, $24, $25, $26
      )
      RETURNING ${COLUMNS}`,
     [
@@ -404,6 +411,7 @@ export async function createCatalogProduct(input: CatalogProductInput) {
       JSON.stringify(input.gallery ?? []),
       JSON.stringify(input.specs_cn ?? []),
       JSON.stringify(input.specs_en ?? []),
+      JSON.stringify(input.detail_modules ?? []),
       input.isCustom,
       input.detailSlug || null,
       input.status ?? 'draft',
@@ -438,6 +446,7 @@ export async function updateCatalogProduct(id: string, input: UpdateCatalogProdu
     ['gallery', 'gallery', (v) => JSON.stringify(v ?? [])],
     ['specs_cn', 'specs_cn', (v) => JSON.stringify(v ?? [])],
     ['specs_en', 'specs_en', (v) => JSON.stringify(v ?? [])],
+    ['detail_modules', 'detail_modules', (v) => JSON.stringify(v ?? [])],
     ['isCustom', 'is_custom', (v) => v],
     ['detailSlug', 'detail_slug', (v) => v || null],
     ['status', 'status', (v) => v],

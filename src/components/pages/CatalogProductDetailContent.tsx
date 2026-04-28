@@ -29,6 +29,11 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
   const gallery = product.gallery ?? [];
   const customSpecs = lang === 'en' ? product.specs_en ?? [] : product.specs_cn ?? [];
   const typeLabel = TYPE_LABEL[product.productType] ?? TYPE_LABEL.standard;
+  const detailModules = (product.detail_modules ?? [])
+    .filter((module) => module.is_visible !== false)
+    .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0));
+  const hasScenarioModule = detailModules.some((module) => module.type === 'scenarios');
+  const hasCustomizationModule = detailModules.some((module) => module.type === 'customization');
   const specRows = [
     {
       label: t(i18n.productDetail.specArea),
@@ -48,6 +53,66 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
     },
     ...customSpecs,
   ];
+  const renderDetailModule = (module: NonNullable<typeof product.detail_modules>[number]) => {
+    const title = lang === 'en' ? module.title_en : module.title_cn;
+    const body = lang === 'en' ? module.body_en : module.body_cn;
+    const items = lang === 'en' ? module.items_en ?? [] : module.items_cn ?? [];
+    const images = [module.image_url, ...(module.images ?? [])].filter((src): src is string => Boolean(src));
+    const isFaq = module.type === 'faq';
+
+    return (
+      <div key={module.id} className="border border-[#E5DED4] bg-[#FAF9F6] p-5 sm:p-6">
+        <div className="text-[#E36F2C] text-[10px] tracking-[0.25em] uppercase mb-3">
+          {module.type === 'faq'
+            ? 'FAQ'
+            : module.type === 'scenarios'
+              ? (lang === 'en' ? 'Best-fit scenarios' : '适用场景')
+              : module.type === 'customization'
+                ? (lang === 'en' ? 'Customization scope' : '可定制范围')
+                : (lang === 'en' ? 'Detail Module' : '详情模块')}
+        </div>
+        {title ? (
+          <h2 className="text-[#2C2A28] text-xl sm:text-2xl font-bold tracking-wide mb-3">
+            {title}
+          </h2>
+        ) : null}
+        {body ? (
+          <p className="text-[#5A5A5A] text-sm sm:text-base leading-8 whitespace-pre-line mb-5">
+            {body}
+          </p>
+        ) : null}
+
+        {items.length > 0 ? (
+          <div className={isFaq ? 'space-y-3' : 'grid grid-cols-1 sm:grid-cols-2 gap-3'}>
+            {items.map((item, index) => (
+              <div key={`${item.title}-${index}`} className="border border-[#E5DED4] bg-white p-4">
+                <div className="text-sm font-semibold text-[#2C2A28] leading-snug">{item.title}</div>
+                {item.body ? (
+                  <p className="mt-2 text-xs sm:text-sm leading-relaxed text-[#6B625B]">{item.body}</p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {images.length > 0 ? (
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {images.map((src, index) => (
+              <div key={`${src}-${index}`} className="relative aspect-[4/3] overflow-hidden border border-[#E5DED4] bg-white">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={src}
+                  alt={`${title || name} ${index + 1}`}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
 
   return (
     <main className="bg-white text-[#2C2A28]">
@@ -146,6 +211,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
               </ul>
             </div>
 
+            {!hasScenarioModule ? (
             <div>
               <div className="text-[#E36F2C] text-[10px] tracking-[0.25em] uppercase mb-4">
                 {lang === 'en' ? 'Best-fit scenarios' : '适用场景'}
@@ -161,6 +227,13 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
                 ))}
               </div>
             </div>
+            ) : null}
+
+            {detailModules.length > 0 ? (
+              <div className="space-y-4">
+                {detailModules.map(renderDetailModule)}
+              </div>
+            ) : null}
 
             {/* isCustom notice */}
             {product.isCustom && (
@@ -210,6 +283,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
               </div>
             )}
 
+            {!hasCustomizationModule ? (
             <div className="border border-[#E5DED4] p-5">
               <div className="text-[#E36F2C] text-[10px] tracking-[0.25em] uppercase mb-3">
                 {lang === 'en' ? 'Customization scope' : '可定制范围'}
@@ -220,6 +294,7 @@ export default function CatalogProductDetailContent({ product, isLoggedIn }: Pro
                   : '可按项目配置外观饰面、内部布局、家具包、暖通系统、离网能源、卫浴/厨房模块，以及当地规范适配细节。'}
               </p>
             </div>
+            ) : null}
           </div>
 
           {/* Right: price + CTA */}
