@@ -357,16 +357,20 @@ export default function AboutPage() {
   const statsModule = useAboutModule('stats');
   const brandStoryModule = useAboutModule('brand-story');
   const factoryModule = useAboutModule('factory');
+  const timelineModule = useAboutModule('timeline');
   const technologiesModule = useAboutModule('technologies');
   const founderModule = useAboutModule('founder');
   const servicesModule = useAboutModule('services');
+  const partnersModule = useAboutModule('partners');
   const heroItems = moduleItems(heroModule);
   const statsItems = moduleItems(statsModule);
   const storyItems = moduleItems(brandStoryModule);
   const factoryItems = moduleItems(factoryModule);
+  const timelineItems = moduleItems(timelineModule);
   const techModuleItems = moduleItems(technologiesModule);
   const founderItems = moduleItems(founderModule);
   const serviceModuleItems = moduleItems(servicesModule);
+  const partnerItems = moduleItems(partnersModule);
   const heroImage = itemById(heroItems, 'about-hero-image')?.image_url || '/images/about/about_scene-01.jpg';
   const storyImage = itemById(storyItems, 'story-image')?.image_url || '/images/about/about_factory-02.jpg';
   const storyBadge = itemById(storyItems, 'story-badge');
@@ -409,6 +413,19 @@ export default function AboutPage() {
   const factoryGridImages = ['factory-image-01', 'factory-image-02', 'factory-image-03', 'factory-image-04']
     .map((id, index) => itemById(factoryItems, id)?.image_url || FACTORY_GRID[index])
     .filter((src): src is string => Boolean(src));
+  const showTimeline = timelineModule?.is_visible !== false;
+  const timelineEntries = timelineModule
+    ? timelineItems
+        .filter((item) => typeof item.id === 'string' && item.id.startsWith('timeline-') && item.id !== 'timeline-kicker' && item.id !== 'timeline-heading')
+        .map((item, index) => ({
+          year: localValue(item, zh, TIMELINE[index]?.year ?? item.label_zh ?? ''),
+          text: localContent(item, zh, zh ? TIMELINE[index]?.zh ?? '' : TIMELINE[index]?.en ?? ''),
+        }))
+        .filter((item) => item.year || item.text)
+    : TIMELINE.map((item) => ({
+        year: item.year,
+        text: zh ? item.zh : item.en,
+      }));
   const showTechnologies = technologiesModule?.is_visible !== false;
   const technologyFallbacks = [
     {
@@ -476,6 +493,18 @@ export default function AboutPage() {
         };
       }).filter((item): item is (typeof SERVICES)[number] => Boolean(item))
     : SERVICES;
+  const showPartners = partnersModule?.is_visible !== false;
+  const partnerImages = partnersModule
+    ? partnerItems
+        .filter((item) => Boolean(item.image_url))
+        .map((item, index) => ({
+          src: item.image_url as string,
+          alt: localText(item, zh, `Partner ${index + 1}`),
+        }))
+    : PARTNERS.map((src, index) => ({
+        src,
+        alt: `Partner ${index + 1}`,
+      }));
 
   const openTech = (tech: Tech) => {
     setActiveTech(tech);
@@ -710,24 +739,25 @@ export default function AboutPage() {
       ) : null}
 
       {/* ── S5 Timeline ──────────────────────────────────────── */}
+      {showTimeline && timelineEntries.length > 0 ? (
       <section className="bg-[#F5F2ED] py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-14">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
-              {zh ? '品牌历程' : 'Timeline'}
+              {localText(itemById(timelineItems, 'timeline-kicker'), zh, zh ? '品牌历程' : 'Timeline')}
             </p>
             <h2
               className="text-4xl sm:text-5xl font-bold text-[#241F1B]"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
             >
-              {zh ? '每一步，皆有印记' : 'Every milestone,\na mark made'}
+              {localText(itemById(timelineItems, 'timeline-heading'), zh, zh ? '每一步，皆有印记' : 'Every milestone,\na mark made')}
             </h2>
           </Reveal>
 
           <div className="space-y-0">
-            {TIMELINE.map((item, i) => (
-              <Reveal key={item.year} delay={i * 40}>
-                <div className={`grid sm:grid-cols-[120px_1fr] gap-0 border-t border-[#E5E0DA] py-7 group ${i === TIMELINE.length - 1 ? 'border-b' : ''}`}>
+            {timelineEntries.map((item, i) => (
+              <Reveal key={`${item.year}-${i}`} delay={i * 40}>
+                <div className={`grid sm:grid-cols-[120px_1fr] gap-0 border-t border-[#E5E0DA] py-7 group ${i === timelineEntries.length - 1 ? 'border-b' : ''}`}>
                   <div className="flex items-start pt-1">
                     <span
                       className="text-3xl font-bold text-[#E36F2C] group-hover:text-[#C85A1F] transition-colors"
@@ -740,7 +770,7 @@ export default function AboutPage() {
                     className="text-[#241F1B]/70 text-sm sm:text-base leading-relaxed"
                     style={{ fontFamily: 'Inter, sans-serif' }}
                   >
-                    {zh ? item.zh : item.en}
+                    {item.text}
                   </p>
                 </div>
               </Reveal>
@@ -748,6 +778,7 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* ── Technologies ─────────────────────────────────────── */}
       {showTechnologies ? (
@@ -907,34 +938,39 @@ export default function AboutPage() {
       </section>
 
       {/* ── S9 Partners ──────────────────────────────────────── */}
+      {showPartners && partnerImages.length > 0 ? (
       <section className="bg-[#F5F2ED] py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-12">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
-              {zh ? '战略合作伙伴' : 'Strategic Partners'}
+              {localText(itemById(partnerItems, 'partners-kicker'), zh, zh ? '战略合作伙伴' : 'Strategic Partners')}
             </p>
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <h2
                 className="text-4xl sm:text-5xl font-bold text-[#241F1B]"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
               >
-                {zh ? '与世界同行' : 'Building with\nthe Best'}
+                {localText(itemById(partnerItems, 'partners-heading'), zh, zh ? '与世界同行' : 'Building with\nthe Best')}
               </h2>
               <p className="text-[#8A8580] text-sm max-w-xs leading-relaxed">
-                {zh
-                  ? '与全球知名品牌联合开发，共同引领智能居住前沿。'
-                  : 'Collaborating with world-leading brands to innovate at the frontier of smart living.'}
+                {localText(
+                  itemById(partnerItems, 'partners-summary'),
+                  zh,
+                  zh
+                    ? '与全球知名品牌联合开发，共同引领智能居住前沿。'
+                    : 'Collaborating with world-leading brands to innovate at the frontier of smart living.',
+                )}
               </p>
             </div>
           </Reveal>
 
           <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3">
-            {PARTNERS.map((src, i) => (
-              <Reveal key={src} delay={Math.floor(i / 6) * 60}>
+            {partnerImages.map((partner, i) => (
+              <Reveal key={`${partner.src}-${i}`} delay={Math.floor(i / 6) * 60}>
                 <div className="bg-white border border-[#E5E0DA] rounded-lg p-3 aspect-square relative overflow-hidden group hover:shadow-md hover:-translate-y-1 transition-all duration-200">
                   <Image
-                    src={src}
-                    alt={`Partner ${i + 1}`}
+                    src={partner.src}
+                    alt={partner.alt}
                     fill
                     className="object-contain p-3"
                     unoptimized
@@ -945,6 +981,7 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* ── S6 Founder ───────────────────────────────────────── */}
       {showFounder ? (

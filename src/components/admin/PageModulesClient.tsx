@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { Eye, EyeOff, Save } from 'lucide-react'
+import { Eye, EyeOff, Plus, Save, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
@@ -24,10 +24,12 @@ function moduleStatus(pageModule: PageModuleRow) {
   if (pageModule.module_key === 'stats') return '已接入前台'
   if (pageModule.module_key === 'brand-story') return '已接入前台'
   if (pageModule.module_key === 'factory') return '已接入前台'
+  if (pageModule.module_key === 'timeline') return '已接入前台'
   if (pageModule.module_key === 'technologies') return '已接入前台'
   if (pageModule.module_key === 'founder') return '已接入前台'
   if (pageModule.module_key === 'services') return '已接入前台'
   if (pageModule.module_key === 'recognition-awards') return '已接入前台'
+  if (pageModule.module_key === 'partners') return '已接入前台'
   return '规划中'
 }
 
@@ -66,12 +68,50 @@ export default function PageModulesClient({
     })
   }
 
+  const addItem = () => {
+    if (!active) return
+    const maxSort = active.items.reduce((max, item) => Math.max(max, Number(item.sort_order) || 0), 0)
+    const item: PageModuleItem = {
+      id: `${active.module_key}-item-${Date.now()}`,
+      label_zh: '新项目',
+      label_en: 'New item',
+      is_visible: true,
+      sort_order: maxSort + 10,
+    }
+
+    if (active.module_type.includes('gallery')) {
+      item.image_url = ''
+    }
+
+    if (active.module_type === 'list') {
+      item.value_zh = ''
+      item.value_en = ''
+      item.content_zh = ''
+      item.content_en = ''
+    }
+
+    patchActive({ items: [...active.items, item] })
+  }
+
+  const removeItem = (id: string) => {
+    if (!active) return
+    patchActive({ items: active.items.filter((item) => item.id !== id) })
+  }
+
   const isStatsModule = active?.module_type === 'stats'
+  const isListModule = active?.module_type === 'list'
 
   const isImageItem = (item: PageModuleItem) => (
     Boolean(item.image_url) ||
     item.id.includes('image') ||
-    active?.module_type === 'gallery-with-captions'
+    Boolean(active?.module_type.includes('gallery'))
+  )
+
+  const showValueFields = (item: PageModuleItem) => (
+    isStatsModule ||
+    isListModule ||
+    Boolean(item.value_zh) ||
+    Boolean(item.value_en)
   )
 
   const isLinkItem = (item: PageModuleItem) => item.id.includes('cta') || Boolean(item.href)
@@ -80,7 +120,10 @@ export default function PageModulesClient({
     Boolean(item.content_zh) ||
     Boolean(item.content_en) ||
     item.id.includes('paragraph') ||
-    item.id.includes('body')
+    item.id.includes('body') ||
+    (item.id.startsWith('timeline-') && item.id !== 'timeline-kicker' && item.id !== 'timeline-heading') ||
+    /^service-\d/.test(item.id) ||
+    item.id.startsWith('tech-')
   )
 
   const save = async () => {
@@ -129,7 +172,7 @@ export default function PageModulesClient({
             页面模块
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#8A8580]">
-            用受控模块管理首页、关于我们等页面的文字和图片。当前首页首屏、首页数据区、关于我们首屏、数据条、品牌故事、智造实力、三大技术、创始人、服务体系、奖项荣誉已经接入前台，其他模块先作为后续接入的结构地基。
+            用受控模块管理首页、关于我们等页面的文字和图片。当前首页首屏、首页数据区、关于我们首屏、数据条、品牌故事、智造实力、品牌历程、三大技术、创始人、服务体系、奖项荣誉、合作伙伴已经接入前台，其他模块先作为后续接入的结构地基。
           </p>
         </div>
         <Button type="button" size="sm" disabled={saving} onClick={save}>
@@ -221,11 +264,17 @@ export default function PageModulesClient({
 
           {active.items.length > 0 ? (
             <div className="border-t border-[#E5DED4] p-5">
-              <div className="mb-4">
-                <p className="text-sm font-semibold text-[#2C2A28]">图片与文字项</p>
-                <p className="mt-1 text-xs text-[#8A8580]">
-                  已接入前台的模块会立即影响网站展示。图片字段先支持 URL 修改，后续再接入统一图片库选择器。
-                </p>
+              <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-[#2C2A28]">图片与文字项</p>
+                  <p className="mt-1 text-xs text-[#8A8580]">
+                    已接入前台的模块会立即影响网站展示。可以新增、删除、调整排序；图片字段先支持 URL 修改，后续再接入统一图片库选择器。
+                  </p>
+                </div>
+                <Button type="button" size="sm" variant="outline" onClick={addItem}>
+                  <Plus size={14} />
+                  新增项目
+                </Button>
               </div>
               <div className="grid grid-cols-1 gap-4 2xl:grid-cols-2">
                 {active.items.map((item) => {
@@ -248,11 +297,32 @@ export default function PageModulesClient({
                     <div className="flex min-w-0 flex-col gap-3">
                       <div className="flex items-center justify-between gap-3">
                         <span className="truncate text-xs text-[#8A8580]">{item.id}</span>
-                        <Switch
-                          checked={item.is_visible}
-                          onCheckedChange={(checked) => patchItem(item.id, { is_visible: checked })}
-                        />
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={item.is_visible}
+                            onCheckedChange={(checked) => patchItem(item.id, { is_visible: checked })}
+                          />
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-[#8A8580] hover:text-red-600"
+                            aria-label="删除项目"
+                            onClick={() => removeItem(item.id)}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
                       </div>
+                      <label className="grid grid-cols-[56px_minmax(0,1fr)] items-center gap-2 text-xs text-[#8A8580]">
+                        <span>排序</span>
+                        <Input
+                          type="number"
+                          value={item.sort_order}
+                          onChange={(e) => patchItem(item.id, { sort_order: Number(e.target.value) || 0 })}
+                          className="h-8 bg-white"
+                        />
+                      </label>
                       {showImage ? (
                         <Input
                           value={item.image_url ?? ''}
@@ -260,17 +330,17 @@ export default function PageModulesClient({
                           placeholder="图片 URL"
                         />
                       ) : null}
-                      {isStatsModule ? (
+                      {showValueFields(item) ? (
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                           <Input
                             value={item.value_zh ?? ''}
                             onChange={(e) => patchItem(item.id, { value_zh: e.target.value })}
-                            placeholder="中文数值"
+                            placeholder="中文数值/编号"
                           />
                           <Input
                             value={item.value_en ?? ''}
                             onChange={(e) => patchItem(item.id, { value_en: e.target.value })}
-                            placeholder="英文数值"
+                            placeholder="英文数值/编号"
                           />
                         </div>
                       ) : null}
@@ -315,7 +385,13 @@ export default function PageModulesClient({
             </div>
           ) : (
             <div className="border-t border-[#E5DED4] px-5 py-10 text-sm text-[#8A8580]">
-              这个模块暂未接入具体字段。后续会按页面结构逐个增加标题、图片、列表项等可编辑字段。
+              这个模块暂未接入具体字段。你可以先新增项目作为内容结构，后续会按页面结构逐个增加标题、图片、列表项等可编辑字段。
+              <div className="mt-4">
+                <Button type="button" size="sm" variant="outline" onClick={addItem}>
+                  <Plus size={14} />
+                  新增项目
+                </Button>
+              </div>
             </div>
           )}
         </main>
