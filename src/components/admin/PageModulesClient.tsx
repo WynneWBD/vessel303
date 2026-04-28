@@ -19,6 +19,8 @@ function pageLabel(pageKey: string) {
 }
 
 function moduleStatus(pageModule: PageModuleRow) {
+  if (pageModule.module_key === 'hero') return '已接入前台'
+  if (pageModule.module_key === 'credentials') return '已接入前台'
   if (pageModule.module_key === 'recognition-awards') return '已接入前台'
   return '规划中'
 }
@@ -57,6 +59,16 @@ export default function PageModulesClient({
       items: active.items.map((item) => (item.id === id ? { ...item, ...patch } : item)),
     })
   }
+
+  const isStatsModule = active?.module_type === 'stats'
+
+  const isImageItem = (item: PageModuleItem) => (
+    Boolean(item.image_url) ||
+    item.id.includes('image') ||
+    active?.module_type === 'gallery-with-captions'
+  )
+
+  const isLinkItem = (item: PageModuleItem) => item.id.includes('cta') || Boolean(item.href)
 
   const save = async () => {
     if (!active) return
@@ -104,7 +116,7 @@ export default function PageModulesClient({
             页面模块
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#8A8580]">
-            用受控模块管理首页、关于我们等页面的文字和图片。当前“关于我们 · 奖项荣誉”已经接入前台，其他模块先作为后续接入的结构地基。
+            用受控模块管理首页、关于我们等页面的文字和图片。当前首页首屏、首页数据区、关于我们奖项荣誉已经接入前台，其他模块先作为后续接入的结构地基。
           </p>
         </div>
         <Button type="button" size="sm" disabled={saving} onClick={save}>
@@ -199,18 +211,26 @@ export default function PageModulesClient({
               <div className="mb-4">
                 <p className="text-sm font-semibold text-[#2C2A28]">图片与文字项</p>
                 <p className="mt-1 text-xs text-[#8A8580]">
-                  这里先支持修改现有奖杯/证书的中英文说明和显示状态；新增图片后续接入图片库选择器。
+                  已接入前台的模块会立即影响网站展示。图片字段先支持 URL 修改，后续再接入统一图片库选择器。
                 </p>
               </div>
               <div className="grid grid-cols-1 gap-4 2xl:grid-cols-2">
-                {active.items.map((item) => (
-                  <div key={item.id} className="grid grid-cols-[92px_minmax(0,1fr)] gap-4 rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-3">
-                    <div className="overflow-hidden rounded-md bg-white">
-                      {item.image_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.image_url} alt="" className="h-28 w-full object-contain p-2" />
-                      ) : null}
-                    </div>
+                {active.items.map((item) => {
+                  const showImage = isImageItem(item)
+                  const showLink = isLinkItem(item)
+                  return (
+                  <div
+                    key={item.id}
+                    className={`grid gap-4 rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-3 ${showImage ? 'grid-cols-[92px_minmax(0,1fr)]' : 'grid-cols-1'}`}
+                  >
+                    {showImage ? (
+                      <div className="overflow-hidden rounded-md bg-white">
+                        {item.image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={item.image_url} alt="" className="h-28 w-full object-contain p-2" />
+                        ) : null}
+                      </div>
+                    ) : null}
                     <div className="flex min-w-0 flex-col gap-3">
                       <div className="flex items-center justify-between gap-3">
                         <span className="truncate text-xs text-[#8A8580]">{item.id}</span>
@@ -219,19 +239,48 @@ export default function PageModulesClient({
                           onCheckedChange={(checked) => patchItem(item.id, { is_visible: checked })}
                         />
                       </div>
+                      {showImage ? (
+                        <Input
+                          value={item.image_url ?? ''}
+                          onChange={(e) => patchItem(item.id, { image_url: e.target.value })}
+                          placeholder="图片 URL"
+                        />
+                      ) : null}
+                      {isStatsModule ? (
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <Input
+                            value={item.value_zh ?? ''}
+                            onChange={(e) => patchItem(item.id, { value_zh: e.target.value })}
+                            placeholder="中文数值"
+                          />
+                          <Input
+                            value={item.value_en ?? ''}
+                            onChange={(e) => patchItem(item.id, { value_en: e.target.value })}
+                            placeholder="英文数值"
+                          />
+                        </div>
+                      ) : null}
                       <Input
                         value={item.label_zh}
                         onChange={(e) => patchItem(item.id, { label_zh: e.target.value })}
-                        placeholder="中文说明"
+                        placeholder={isStatsModule ? '中文名称' : '中文文字'}
                       />
                       <Input
                         value={item.label_en}
                         onChange={(e) => patchItem(item.id, { label_en: e.target.value })}
-                        placeholder="英文说明"
+                        placeholder={isStatsModule ? '英文名称' : '英文文字'}
                       />
+                      {showLink ? (
+                        <Input
+                          value={item.href ?? ''}
+                          onChange={(e) => patchItem(item.id, { href: e.target.value })}
+                          placeholder="跳转链接"
+                        />
+                      ) : null}
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           ) : (

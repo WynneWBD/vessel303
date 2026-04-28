@@ -13,6 +13,9 @@ const pageKeys = ['home', 'about'] as const
 const itemSchema = z.object({
   id: z.string().min(1).max(120),
   image_url: z.string().max(500).optional(),
+  href: z.string().max(500).optional(),
+  value_zh: z.string().max(80).optional(),
+  value_en: z.string().max(80).optional(),
   label_zh: z.string().max(160),
   label_en: z.string().max(220),
   is_visible: z.boolean(),

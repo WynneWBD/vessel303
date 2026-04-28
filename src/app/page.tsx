@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import ProtectedImage from '@/components/ProtectedImage';
 import Link from 'next/link';
@@ -11,6 +11,77 @@ import { useT, useLanguage } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
 
 type Tech = 'viie' | 'vols' | 'vipc';
+type Lang = 'zh' | 'en';
+
+type HomeModuleItem = {
+  id: string;
+  image_url?: string;
+  href?: string;
+  value_zh?: string;
+  value_en?: string;
+  label_zh: string;
+  label_en: string;
+  is_visible: boolean;
+  sort_order: number;
+};
+
+type HomePageModule = {
+  module_key: string;
+  is_visible: boolean;
+  items: HomeModuleItem[];
+};
+
+type HomePageModuleResponse = {
+  data: HomePageModule | null;
+};
+
+function useHomePageModule(moduleKey: string) {
+  const [pageModule, setPageModule] = useState<HomePageModule | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetch(`/api/page-modules/home?module=${moduleKey}`, { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((payload: HomePageModuleResponse | null) => {
+        if (payload?.data) setPageModule(payload.data);
+      })
+      .catch((err) => {
+        if ((err as Error).name !== 'AbortError') {
+          console.warn(`[home] page module fallback: ${moduleKey}`, err);
+        }
+      });
+
+    return () => controller.abort();
+  }, [moduleKey]);
+
+  return pageModule;
+}
+
+function sortModuleItems(pageModule: HomePageModule | null) {
+  if (!pageModule?.is_visible) return [];
+  return [...pageModule.items].sort((a, b) => a.sort_order - b.sort_order);
+}
+
+function localizedLabel(item: HomeModuleItem | undefined, lang: Lang, fallback: string) {
+  if (!item) return fallback;
+  if (!item.is_visible) return '';
+  return (lang === 'zh' ? item.label_zh : item.label_en) || fallback;
+}
+
+function localizedValue(item: HomeModuleItem | undefined, lang: Lang, fallback: string) {
+  if (!item) return fallback;
+  if (!item.is_visible) return '';
+  return (lang === 'zh' ? item.value_zh : item.value_en) || fallback;
+}
+
+function externalLinkProps(href: string) {
+  if (/^https?:\/\//i.test(href)) {
+    return { target: '_blank', rel: 'noopener noreferrer' };
+  }
+
+  return {};
+}
 
 // ─── Hero ────────────────────────────────────────────────
 
@@ -24,19 +95,40 @@ const HERO_IMAGES = [
 
 function HeroSection() {
   const t = useT();
+  const { lang } = useLanguage();
+  const pageModule = useHomePageModule('hero');
   const [current, setCurrent] = useState(0);
+  const items = useMemo(() => sortModuleItems(pageModule), [pageModule]);
+  const heroImages = useMemo(() => {
+    const editableImages = items
+      .filter((item) => item.id.startsWith('hero-image') && item.is_visible && item.image_url)
+      .map((item) => item.image_url as string);
+
+    return editableImages.length > 0 ? editableImages : HERO_IMAGES;
+  }, [items]);
+  const findItem = (id: string) => items.find((item) => item.id === id);
+  const tagline = localizedLabel(findItem('hero-tagline'), lang, t(i18n.home.heroTagline));
+  const headline = localizedLabel(findItem('hero-headline'), lang, t(i18n.home.heroHeadline));
+  const subtitle = localizedLabel(findItem('hero-subtitle'), lang, t(i18n.home.heroSubtitle));
+  const primaryCta = findItem('hero-primary-cta');
+  const secondaryCta = findItem('hero-secondary-cta');
+  const primaryLabel = localizedLabel(primaryCta, lang, t(i18n.home.heroCta));
+  const secondaryLabel = localizedLabel(secondaryCta, lang, t(i18n.home.heroCtaSecondary));
+  const primaryHref = primaryCta?.href || 'https://en.303vessel.cn/products_list.html';
+  const secondaryHref = secondaryCta?.href || 'https://en.303vessel.cn/contact.html';
+  const activeImage = current % heroImages.length;
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % HERO_IMAGES.length);
+      setCurrent((prev) => (prev + 1) % heroImages.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [heroImages.length]);
 
   return (
     <section className="relative h-screen min-h-[700px] flex items-center justify-center overflow-hidden bg-[#241F1B]">
       {/* Carousel images */}
-      {HERO_IMAGES.map((src, i) => (
+      {heroImages.map((src, i) => (
         <Image
           key={src}
           src={src}
@@ -44,34 +136,50 @@ function HeroSection() {
           fill
           priority={i === 0}
           sizes="100vw"
-          className={`object-cover transition-opacity duration-1000 ${i === current ? 'opacity-100' : 'opacity-0'}`}
+          className={`object-cover transition-opacity duration-1000 ${i === activeImage ? 'opacity-100' : 'opacity-0'}`}
         />
       ))}
       <div className="absolute inset-0 bg-[#241F1B]/48" />
 
       <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
-        <div className="mb-10">
-          <p className="text-base sm:text-lg tracking-[0.15em] text-white/70 font-light font-[family-name:var(--font-heading)]">
-            {t(i18n.home.heroTagline)}
-          </p>
-          <div className="w-12 h-px bg-[#E36F2C] mx-auto mt-4" />
-        </div>
+        {tagline ? (
+          <div className="mb-10">
+            <p className="text-base sm:text-lg tracking-[0.15em] text-white/70 font-light font-[family-name:var(--font-heading)]">
+              {tagline}
+            </p>
+            <div className="w-12 h-px bg-[#E36F2C] mx-auto mt-4" />
+          </div>
+        ) : null}
 
         <h1 className="text-4xl sm:text-6xl lg:text-8xl font-normal text-white mb-10 leading-[1.12] tracking-[0.08em] sm:tracking-[0.15em] break-words font-[family-name:var(--font-heading)]">
-          {t(i18n.home.heroHeadline)}
+          {headline}
         </h1>
 
-        <p className="text-white/55 text-base sm:text-lg leading-relaxed mb-12 max-w-2xl mx-auto">
-          {t(i18n.home.heroSubtitle)}
-        </p>
+        {subtitle ? (
+          <p className="text-white/55 text-base sm:text-lg leading-relaxed mb-12 max-w-2xl mx-auto">
+            {subtitle}
+          </p>
+        ) : null}
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link href="/products" className="bg-[#E36F2C] text-white px-10 py-4 text-sm tracking-wider hover:bg-[#C85A1F] transition-colors">
-            {t(i18n.home.heroCta)}
-          </Link>
-          <Link href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer" className="border border-white/30 text-white/80 px-10 py-4 text-sm tracking-wider hover:border-white/60 transition-colors">
-            {t(i18n.home.heroCtaSecondary)}
-          </Link>
+          {primaryLabel ? (
+            <Link
+              href={primaryHref}
+              {...externalLinkProps(primaryHref)}
+              className="bg-[#E36F2C] text-white px-10 py-4 text-sm tracking-wider hover:bg-[#C85A1F] transition-colors"
+            >
+              {primaryLabel}
+            </Link>
+          ) : null}
+          {secondaryLabel ? (
+            <Link
+              href={secondaryHref}
+              {...externalLinkProps(secondaryHref)}
+              className="border border-white/30 text-white/80 px-10 py-4 text-sm tracking-wider hover:border-white/60 transition-colors"
+            >
+              {secondaryLabel}
+            </Link>
+          ) : null}
         </div>
       </div>
 
@@ -86,12 +194,28 @@ function HeroSection() {
 
 function CredentialsBar() {
   const t = useT();
-  const stats = [
+  const { lang } = useLanguage();
+  const pageModule = useHomePageModule('credentials');
+  const items = useMemo(() => sortModuleItems(pageModule), [pageModule]);
+  const defaultStats = [
     { val: t(i18n.home.credStat1), label: t(i18n.home.credLabel1) },
     { val: t(i18n.home.credStat2), label: t(i18n.home.credLabel2) },
     { val: t(i18n.home.credStat3), label: t(i18n.home.credLabel3) },
     { val: t(i18n.home.credStat4), label: t(i18n.home.credLabel4) },
   ];
+  const stats = pageModule
+    ? items
+        .filter((item) => item.is_visible)
+        .map((item, index) => ({
+          val: localizedValue(item, lang, defaultStats[index]?.val ?? ''),
+          label: localizedLabel(item, lang, defaultStats[index]?.label ?? ''),
+        }))
+        .filter((stat) => stat.val || stat.label)
+    : defaultStats;
+
+  if (pageModule && !pageModule.is_visible) return null;
+  if (stats.length === 0) return null;
+
   return (
     <section className="bg-[#F5F2ED] py-14 border-y border-[#E5DED4]">
       <div className="max-w-5xl mx-auto px-6">

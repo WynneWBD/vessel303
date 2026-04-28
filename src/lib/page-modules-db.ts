@@ -3,6 +3,9 @@ import { pool } from '@/lib/db'
 export type PageModuleItem = {
   id: string
   image_url?: string
+  href?: string
+  value_zh?: string
+  value_en?: string
   label_zh: string
   label_en: string
   is_visible: boolean
@@ -47,11 +50,141 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     module_type: 'fixed-content',
     title_zh: '首页首屏',
     title_en: 'Homepage Hero',
-    description_zh: '首页首屏标题、说明、背景图和按钮。当前先作为模块化 CMS 规划项，后续逐步接入前台。',
+    description_zh: '首页首屏标题、说明、轮播图和按钮。这个模块已接入前台，可以直接影响首页首屏展示。',
     description_en: 'Hero title, intro, background image, and calls to action.',
-    items: [],
+    items: [
+      {
+        id: 'hero-tagline',
+        label_zh: '重构自然的栖居',
+        label_en: 'Redefine Natural Dwelling',
+        is_visible: true,
+        sort_order: 10,
+      },
+      {
+        id: 'hero-headline',
+        label_zh: '建 筑 无 界',
+        label_en: 'Architecture Without\nBoundaries',
+        is_visible: true,
+        sort_order: 20,
+      },
+      {
+        id: 'hero-subtitle',
+        label_zh: '45天工厂预制，2小时现场安装，欧盟+美国双认证，为全球文旅项目提供可复制、可运营、可持续的智能装配建筑系统。',
+        label_en: '45-day factory production, 2-hour on-site installation, EU+US certified smart prefab architecture for resort, hospitality and public-sector projects worldwide.',
+        is_visible: true,
+        sort_order: 30,
+      },
+      {
+        id: 'hero-primary-cta',
+        href: 'https://en.303vessel.cn/products_list.html',
+        label_zh: '探索产品',
+        label_en: 'Explore Products',
+        is_visible: true,
+        sort_order: 40,
+      },
+      {
+        id: 'hero-secondary-cta',
+        href: 'https://en.303vessel.cn/contact.html',
+        label_zh: '联系我们',
+        label_en: 'Get in Touch',
+        is_visible: true,
+        sort_order: 50,
+      },
+      {
+        id: 'hero-image-01',
+        image_url: '/images/hero/homepage_banner-01.jpg',
+        label_zh: '首页轮播图 01',
+        label_en: 'Homepage hero image 01',
+        is_visible: true,
+        sort_order: 60,
+      },
+      {
+        id: 'hero-image-02',
+        image_url: '/images/hero/homepage_banner-02.png',
+        label_zh: '首页轮播图 02',
+        label_en: 'Homepage hero image 02',
+        is_visible: true,
+        sort_order: 70,
+      },
+      {
+        id: 'hero-image-03',
+        image_url: '/images/hero/homepage_banner-03.jpg',
+        label_zh: '首页轮播图 03',
+        label_en: 'Homepage hero image 03',
+        is_visible: true,
+        sort_order: 80,
+      },
+      {
+        id: 'hero-image-04',
+        image_url: '/images/hero/homepage_banner-04.jpg',
+        label_zh: '首页轮播图 04',
+        label_en: 'Homepage hero image 04',
+        is_visible: true,
+        sort_order: 90,
+      },
+      {
+        id: 'hero-image-05',
+        image_url: '/images/hero/homepage_banner-05.jpg',
+        label_zh: '首页轮播图 05',
+        label_en: 'Homepage hero image 05',
+        is_visible: true,
+        sort_order: 100,
+      },
+    ],
     is_visible: true,
     sort_order: 10,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'home:credentials',
+    page_key: 'home',
+    module_key: 'credentials',
+    module_type: 'stats',
+    title_zh: '首页数据区',
+    title_en: 'Homepage Stats',
+    description_zh: '首页首屏下方核心数据。这个模块已接入前台，可以直接影响首页数据条展示。',
+    description_en: 'Key statistics shown below the homepage hero.',
+    items: [
+      {
+        id: 'cred-stat-01',
+        value_zh: '300+',
+        value_en: '300+',
+        label_zh: '落地项目',
+        label_en: 'Projects Delivered',
+        is_visible: true,
+        sort_order: 10,
+      },
+      {
+        id: 'cred-stat-02',
+        value_zh: '30+',
+        value_en: '30+',
+        label_zh: '覆盖国家',
+        label_en: 'Countries',
+        is_visible: true,
+        sort_order: 20,
+      },
+      {
+        id: 'cred-stat-03',
+        value_zh: '150+',
+        value_en: '150+',
+        label_zh: '自主专利',
+        label_en: 'Patents',
+        is_visible: true,
+        sort_order: 30,
+      },
+      {
+        id: 'cred-stat-04',
+        value_zh: '28,800',
+        value_en: '28,800',
+        label_zh: '平方米工厂',
+        label_en: 'Sqm Factory',
+        is_visible: true,
+        sort_order: 40,
+      },
+    ],
+    is_visible: true,
+    sort_order: 20,
     updated_at: '',
     updated_by_email: null,
   },
@@ -66,7 +199,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     description_en: 'Technology cards and supporting copy on the homepage.',
     items: [],
     is_visible: true,
-    sort_order: 20,
+    sort_order: 30,
     updated_at: '',
     updated_by_email: null,
   },
@@ -234,6 +367,9 @@ function normalizeItems(value: unknown): PageModuleItem[] {
     items.push({
       id: typeof raw.id === 'string' && raw.id ? raw.id : `item-${index + 1}`,
       image_url: typeof raw.image_url === 'string' ? raw.image_url : undefined,
+      href: typeof raw.href === 'string' ? raw.href : undefined,
+      value_zh: typeof raw.value_zh === 'string' ? raw.value_zh : undefined,
+      value_en: typeof raw.value_en === 'string' ? raw.value_en : undefined,
       label_zh: typeof raw.label_zh === 'string' ? raw.label_zh : '',
       label_en: typeof raw.label_en === 'string' ? raw.label_en : '',
       is_visible: raw.is_visible !== false,
@@ -302,7 +438,17 @@ async function seedDefaultPageModules() {
            description_zh, description_en, items, is_visible, sort_order
          )
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11)
-         ON CONFLICT (page_key, module_key) DO NOTHING`,
+         ON CONFLICT (page_key, module_key)
+         DO UPDATE SET
+           module_type = EXCLUDED.module_type,
+           title_zh = EXCLUDED.title_zh,
+           title_en = EXCLUDED.title_en,
+           description_zh = EXCLUDED.description_zh,
+           description_en = EXCLUDED.description_en,
+           items = EXCLUDED.items,
+           is_visible = EXCLUDED.is_visible,
+           sort_order = EXCLUDED.sort_order
+         WHERE page_modules.updated_by IS NULL AND page_modules.items = '[]'::jsonb`,
         [
           pageModule.id,
           pageModule.page_key,
