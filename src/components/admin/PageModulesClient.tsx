@@ -21,6 +21,8 @@ function pageLabel(pageKey: string) {
 function moduleStatus(pageModule: PageModuleRow) {
   if (pageModule.module_key === 'hero') return '已接入前台'
   if (pageModule.module_key === 'credentials') return '已接入前台'
+  if (pageModule.module_key === 'stats') return '已接入前台'
+  if (pageModule.module_key === 'brand-story') return '已接入前台'
   if (pageModule.module_key === 'recognition-awards') return '已接入前台'
   return '规划中'
 }
@@ -70,6 +72,13 @@ export default function PageModulesClient({
 
   const isLinkItem = (item: PageModuleItem) => item.id.includes('cta') || Boolean(item.href)
 
+  const isContentItem = (item: PageModuleItem) => (
+    Boolean(item.content_zh) ||
+    Boolean(item.content_en) ||
+    item.id.includes('paragraph') ||
+    item.id.includes('body')
+  )
+
   const save = async () => {
     if (!active) return
     setSaving(true)
@@ -116,7 +125,7 @@ export default function PageModulesClient({
             页面模块
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#8A8580]">
-            用受控模块管理首页、关于我们等页面的文字和图片。当前首页首屏、首页数据区、关于我们奖项荣誉已经接入前台，其他模块先作为后续接入的结构地基。
+            用受控模块管理首页、关于我们等页面的文字和图片。当前首页首屏、首页数据区、关于我们首屏、关于我们数据条、品牌故事、奖项荣誉已经接入前台，其他模块先作为后续接入的结构地基。
           </p>
         </div>
         <Button type="button" size="sm" disabled={saving} onClick={save}>
@@ -218,6 +227,7 @@ export default function PageModulesClient({
                 {active.items.map((item) => {
                   const showImage = isImageItem(item)
                   const showLink = isLinkItem(item)
+                  const showContent = isContentItem(item)
                   return (
                   <div
                     key={item.id}
@@ -270,6 +280,22 @@ export default function PageModulesClient({
                         onChange={(e) => patchItem(item.id, { label_en: e.target.value })}
                         placeholder={isStatsModule ? '英文名称' : '英文文字'}
                       />
+                      {showContent ? (
+                        <div className="grid grid-cols-1 gap-3">
+                          <Textarea
+                            className="min-h-[116px] bg-white"
+                            value={item.content_zh ?? ''}
+                            onChange={(e) => patchItem(item.id, { content_zh: e.target.value })}
+                            placeholder="中文正文"
+                          />
+                          <Textarea
+                            className="min-h-[132px] bg-white"
+                            value={item.content_en ?? ''}
+                            onChange={(e) => patchItem(item.id, { content_en: e.target.value })}
+                            placeholder="英文正文"
+                          />
+                        </div>
+                      ) : null}
                       {showLink ? (
                         <Input
                           value={item.href ?? ''}

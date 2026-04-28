@@ -20,12 +20,22 @@ type AwardItem = {
   isVisible: boolean;
 };
 
-type RemoteAwardItem = {
+type RemotePageModuleItem = {
   id?: string;
   image_url?: string;
+  value_zh?: string;
+  value_en?: string;
   label_zh?: string;
   label_en?: string;
+  content_zh?: string;
+  content_en?: string;
   is_visible?: boolean;
+  sort_order?: number;
+};
+
+type RemotePageModule = {
+  is_visible?: boolean;
+  items?: RemotePageModuleItem[];
 };
 
 // ─── scroll reveal ────────────────────────────────────────────────────────────
@@ -62,6 +72,56 @@ function Reveal({
       {children}
     </div>
   );
+}
+
+function useAboutModule(moduleKey: string) {
+  const [pageModule, setPageModule] = useState<RemotePageModule | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadModule() {
+      try {
+        const res = await fetch(`/api/page-modules/about?module=${moduleKey}`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) setPageModule(data?.data ?? null);
+      } catch {
+        // Keep static fallback content if the CMS endpoint is unavailable.
+      }
+    }
+
+    loadModule();
+    return () => { cancelled = true; };
+  }, [moduleKey]);
+
+  return pageModule;
+}
+
+function moduleItems(pageModule: RemotePageModule | null) {
+  if (!pageModule || pageModule.is_visible === false || !Array.isArray(pageModule.items)) return [];
+  return [...pageModule.items]
+    .filter((item) => item.is_visible !== false)
+    .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0));
+}
+
+function itemById(items: RemotePageModuleItem[], id: string) {
+  return items.find((item) => item.id === id);
+}
+
+function localText(item: RemotePageModuleItem | undefined, zh: boolean, fallback: string) {
+  if (!item) return fallback;
+  return (zh ? item.label_zh : item.label_en) || fallback;
+}
+
+function localContent(item: RemotePageModuleItem | undefined, zh: boolean, fallback: string) {
+  if (!item) return fallback;
+  return (zh ? item.content_zh : item.content_en) || fallback;
+}
+
+function localValue(item: RemotePageModuleItem | undefined, zh: boolean, fallback: string) {
+  if (!item) return fallback;
+  return (zh ? item.value_zh : item.value_en) || fallback;
 }
 
 // ─── data ────────────────────────────────────────────────────────────────────
@@ -293,6 +353,49 @@ export default function AboutPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeTech, setActiveTech] = useState<Tech | null>(null);
   const [awards, setAwards] = useState(AWARDS);
+  const heroModule = useAboutModule('hero');
+  const statsModule = useAboutModule('stats');
+  const brandStoryModule = useAboutModule('brand-story');
+  const heroItems = moduleItems(heroModule);
+  const statsItems = moduleItems(statsModule);
+  const storyItems = moduleItems(brandStoryModule);
+  const heroImage = itemById(heroItems, 'about-hero-image')?.image_url || '/images/about/about_scene-01.jpg';
+  const storyImage = itemById(storyItems, 'story-image')?.image_url || '/images/about/about_factory-02.jpg';
+  const storyBadge = itemById(storyItems, 'story-badge');
+  const aboutStats = statsModule?.is_visible === false
+    ? []
+    : statsModule
+    ? statsItems.map((item, index) => ({
+        value: localValue(item, zh, STATS[index]?.value ?? ''),
+        en: item.label_en || STATS[index]?.en || '',
+        zh: item.label_zh || STATS[index]?.zh || '',
+      })).filter((item) => item.value || item.en || item.zh)
+    : STATS.map((item) => ({
+        value: zh && item.valueZh ? item.valueZh : item.value,
+        en: item.en,
+        zh: item.zh,
+      }));
+  const showBrandStory = brandStoryModule?.is_visible !== false;
+  const storyParagraphFallbacks = [
+    {
+      id: 'story-paragraph-01',
+      zh: 'VESSEL 微宿® 是高端度假营地开创者。我们以科幻感强烈的装配式舱体产品为特色，为全球文旅运营方提供一站式营地解决方案。自 2018 年创立，已在全国落地 300+ 项目，出口远销 30+ 国家，带领中国文旅创新品类"太空主题营地"走向全球。',
+      en: 'VESSEL® pioneered the space-themed luxury camp resort category. We design, manufacture and deliver sci-fi-inspired prefabricated cabins, offering a turnkey solution for resort operators worldwide. Since 2018 we have delivered 300+ projects across China and exported to 30+ countries, taking the space-themed resort — a new Chinese category of experiential tourism — to the global market.',
+    },
+    {
+      id: 'story-paragraph-02',
+      zh: 'VESSEL 品牌由广东微宿文旅发展有限公司运营，总部位于广东佛山。我们坚持原创研发与自建工厂双核心：研发团队累计获得国家专利 150+ 件，自有生产线占地 28,800 ㎡，月产能 150 台。',
+      en: 'The VESSEL® brand is operated by Guangdong Vessel Cultural Tourism Development Co., Ltd., headquartered in Foshan, China. In-house R&D and owned manufacturing are our two strategic pillars: our design team holds 150+ national patents, and our 28,800 m² production line delivers a monthly capacity of 150 units.',
+    },
+    {
+      id: 'story-paragraph-03',
+      zh: 'VESSEL 在文旅场景之外，也与头部企业共创，产品广泛应用于养老度假地产、城市移动商业、便民服务设施等多元场景。我们构建了 VIPC 整装预制、VIIE 智能交互、VOLS 离网系统三大核心技术体系，让每一台微宿都能独立面对全球的气候、运输、运营挑战。',
+      en: 'Beyond tourism, VESSEL® partners with leading enterprises on mixed-use deployments — senior resort real estate, urban mobile retail, and public amenity installations. Our three proprietary technology systems — VIPC, VIIE and VOLS — allow every unit to operate autonomously under diverse climates, logistics routes and operating models worldwide.',
+    },
+  ];
+  const storyParagraphs = storyParagraphFallbacks
+    .map((item) => localContent(itemById(storyItems, item.id), zh, zh ? item.zh : item.en))
+    .filter(Boolean);
 
   const openTech = (tech: Tech) => {
     setActiveTech(tech);
@@ -328,10 +431,10 @@ export default function AboutPage() {
           return;
         }
 
-        const remote = new Map<string, RemoteAwardItem>();
+        const remote = new Map<string, RemotePageModuleItem>();
         for (const item of pageModule.items as unknown[]) {
           if (!item || typeof item !== 'object') continue;
-          const value = item as RemoteAwardItem;
+          const value = item as RemotePageModuleItem;
           const key = value.image_url || value.id || '';
           if (key) remote.set(key, value);
         }
@@ -366,7 +469,7 @@ export default function AboutPage() {
       {/* ── S1 Hero ───────────────────────────────────────────── */}
       <section className="relative h-[90vh] min-h-[600px] flex items-end">
         <Image
-          src="/images/about/about_scene-01.jpg"
+          src={heroImage}
           alt="VESSEL® brand"
           fill
           priority
@@ -376,18 +479,22 @@ export default function AboutPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#241F1B] via-[#241F1B]/50 to-[#241F1B]/10" />
         <div className="relative z-10 max-w-6xl mx-auto px-6 pb-16 w-full">
           <p className="text-[#E36F2C] text-xs tracking-[0.4em] uppercase font-medium mb-5">
-            VESSEL® · {zh ? '关于微宿' : 'About'}
+            {localText(itemById(heroItems, 'about-hero-eyebrow'), zh, `VESSEL® · ${zh ? '关于微宿' : 'About'}`)}
           </p>
           <h1
             className="text-4xl sm:text-7xl lg:text-8xl font-bold text-white leading-[1.05] tracking-tight mb-5 break-words"
             style={{ fontFamily: 'DM Sans, sans-serif' }}
           >
-            {zh ? '重构\n自然的栖居' : 'Reimagining\nNatural Dwelling'}
+            {localText(itemById(heroItems, 'about-hero-headline'), zh, zh ? '重构\n自然的栖居' : 'Reimagining\nNatural Dwelling')}
           </h1>
           <p className="text-white/60 text-lg sm:text-xl max-w-xl leading-relaxed">
-            {zh
-              ? '自 2018 年创立，已在全国落地 300+ 项目，出口远销 30+ 国家，带领中国文旅创新品类走向全球。'
-              : 'Since 2018 we have delivered 300+ projects across China and exported to 30+ countries, taking a new Chinese category of experiential tourism to the global market.'}
+            {localText(
+              itemById(heroItems, 'about-hero-subtitle'),
+              zh,
+              zh
+                ? '自 2018 年创立，已在全国落地 300+ 项目，出口远销 30+ 国家，带领中国文旅创新品类走向全球。'
+                : 'Since 2018 we have delivered 300+ projects across China and exported to 30+ countries, taking a new Chinese category of experiential tourism to the global market.',
+            )}
           </p>
         </div>
       </section>
@@ -396,39 +503,46 @@ export default function AboutPage() {
       <AnchorNav activeSection={activeSection} zh={zh} />
 
       {/* ── S2 Stats bar ─────────────────────────────────────── */}
-      <section className="bg-[#F5F2ED] border-b border-[#E5E0DA]">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid grid-cols-3 lg:grid-cols-6 divide-x divide-[#E5E0DA]">
-            {STATS.map((s, i) => (
-              <Reveal key={s.value} delay={i * 50} className="py-8 px-4 text-center">
-                <div
-                  className="text-2xl sm:text-3xl font-bold text-[#E36F2C] mb-1"
-                  style={{ fontFamily: 'DM Sans, sans-serif' }}
-                >
-                  {zh && s.valueZh ? s.valueZh : s.value}
-                </div>
-                <div className="text-[#8A8580] text-[11px] tracking-wider uppercase leading-tight">
-                  {zh ? s.zh : s.en}
-                </div>
-              </Reveal>
-            ))}
+      {aboutStats.length > 0 ? (
+        <section className="bg-[#F5F2ED] border-b border-[#E5E0DA]">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="grid grid-cols-3 lg:grid-cols-6 divide-x divide-[#E5E0DA]">
+              {aboutStats.map((s, i) => (
+                <Reveal key={`${s.value}-${i}`} delay={i * 50} className="py-8 px-4 text-center">
+                  <div
+                    className="text-2xl sm:text-3xl font-bold text-[#E36F2C] mb-1"
+                    style={{ fontFamily: 'DM Sans, sans-serif' }}
+                  >
+                    {s.value}
+                  </div>
+                  <div className="text-[#8A8580] text-[11px] tracking-wider uppercase leading-tight">
+                    {zh ? s.zh : s.en}
+                  </div>
+                </Reveal>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       {/* ── S3 Brand story ───────────────────────────────────── */}
+      {showBrandStory ? (
       <section id="brand-story" className="bg-[#F5F2ED] py-24 px-6">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
           <div>
             <Reveal>
               <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
-                {zh ? '品牌介绍' : 'About VESSEL®'}
+                {localText(itemById(storyItems, 'story-kicker'), zh, zh ? '品牌介绍' : 'About VESSEL®')}
               </p>
               <h2
                 className="text-4xl sm:text-5xl font-bold text-[#241F1B] mb-8 leading-tight"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
               >
-                {zh ? '高端度假营地\n开创者' : 'Pioneer of the\nSpace-Themed\nLuxury Camp Resort'}
+                {localText(
+                  itemById(storyItems, 'story-heading'),
+                  zh,
+                  zh ? '高端度假营地\n开创者' : 'Pioneer of the\nSpace-Themed\nLuxury Camp Resort',
+                )}
               </h2>
             </Reveal>
             <Reveal delay={100}>
@@ -436,19 +550,9 @@ export default function AboutPage() {
                 className="space-y-5 text-[#241F1B]/70 text-base leading-relaxed"
                 style={{ fontFamily: 'Inter, sans-serif' }}
               >
-                {zh ? (
-                  <>
-                    <p>VESSEL 微宿® 是高端度假营地开创者。我们以科幻感强烈的装配式舱体产品为特色，为全球文旅运营方提供一站式营地解决方案。自 2018 年创立，已在全国落地 300+ 项目，出口远销 30+ 国家，带领中国文旅创新品类&quot;太空主题营地&quot;走向全球。</p>
-                    <p>VESSEL 品牌由广东微宿文旅发展有限公司运营，总部位于广东佛山。我们坚持原创研发与自建工厂双核心：研发团队累计获得国家专利 150+ 件，自有生产线占地 28,800 ㎡，月产能 150 台。</p>
-                    <p>VESSEL 在文旅场景之外，也与头部企业共创，产品广泛应用于养老度假地产、城市移动商业、便民服务设施等多元场景。我们构建了 VIPC 整装预制、VIIE 智能交互、VOLS 离网系统三大核心技术体系，让每一台微宿都能独立面对全球的气候、运输、运营挑战。</p>
-                  </>
-                ) : (
-                  <>
-                    <p>VESSEL® pioneered the space-themed luxury camp resort category. We design, manufacture and deliver sci-fi-inspired prefabricated cabins, offering a turnkey solution for resort operators worldwide. Since 2018 we have delivered 300+ projects across China and exported to 30+ countries, taking the space-themed resort — a new Chinese category of experiential tourism — to the global market.</p>
-                    <p>The VESSEL® brand is operated by Guangdong Vessel Cultural Tourism Development Co., Ltd., headquartered in Foshan, China. In-house R&D and owned manufacturing are our two strategic pillars: our design team holds 150+ national patents, and our 28,800 m² production line delivers a monthly capacity of 150 units.</p>
-                    <p>Beyond tourism, VESSEL® partners with leading enterprises on mixed-use deployments — senior resort real estate, urban mobile retail, and public amenity installations. Our three proprietary technology systems — VIPC, VIIE and VOLS — allow every unit to operate autonomously under diverse climates, logistics routes and operating models worldwide.</p>
-                  </>
-                )}
+                {storyParagraphs.map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
               </div>
             </Reveal>
           </div>
@@ -456,7 +560,7 @@ export default function AboutPage() {
           <Reveal delay={80} from="right" className="relative">
             <div className="relative aspect-[4/5] overflow-hidden">
               <Image
-                src="/images/about/about_factory-02.jpg"
+                src={storyImage}
                 alt="VESSEL factory aerial"
                 fill
                 className="object-cover"
@@ -465,12 +569,17 @@ export default function AboutPage() {
             </div>
             {/* stat badge */}
             <div className="absolute -bottom-5 -left-5 bg-[#E36F2C] text-white px-6 py-4 shadow-xl">
-              <div className="text-3xl font-bold leading-none" style={{ fontFamily: 'DM Sans, sans-serif' }}>2018</div>
-              <div className="text-xs tracking-widest opacity-80 mt-1">{zh ? '品牌创立' : 'FOUNDED'}</div>
+              <div className="text-3xl font-bold leading-none" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                {localValue(storyBadge, zh, '2018')}
+              </div>
+              <div className="text-xs tracking-widest opacity-80 mt-1">
+                {localText(storyBadge, zh, zh ? '品牌创立' : 'FOUNDED')}
+              </div>
             </div>
           </Reveal>
         </div>
       </section>
+      ) : null}
 
       {/* ── S4 Factory ───────────────────────────────────────── */}
       <section className="bg-[#241F1B] py-24 px-6">

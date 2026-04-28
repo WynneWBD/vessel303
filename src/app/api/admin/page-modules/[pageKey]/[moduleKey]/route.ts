@@ -16,8 +16,10 @@ const itemSchema = z.object({
   href: z.string().max(500).optional(),
   value_zh: z.string().max(80).optional(),
   value_en: z.string().max(80).optional(),
-  label_zh: z.string().max(160),
-  label_en: z.string().max(220),
+  content_zh: z.string().max(1600).optional(),
+  content_en: z.string().max(2200).optional(),
+  label_zh: z.string().max(500),
+  label_en: z.string().max(700),
   is_visible: z.boolean(),
   sort_order: z.coerce.number().int().min(0).max(9999),
 })
