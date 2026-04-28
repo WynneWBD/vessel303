@@ -8,8 +8,11 @@ import {
 
 export type { ProjectCaseInput, ProjectCaseRow, ProjectCaseStatus }
 
+export type ProjectCaseMapStatus = 'map-ready' | 'missing-coordinates' | 'unpublished-with-coordinates'
+
 export type ListProjectCasesFilter = {
   status?: ProjectCaseStatus
+  mapStatus?: ProjectCaseMapStatus
   search?: string
   limit: number
   offset: number
@@ -210,6 +213,14 @@ function buildWhere(filter: Partial<ListProjectCasesFilter>, publicOnly = false)
   } else if (filter.status) {
     params.push(filter.status)
     conds.push(`status = $${params.length}`)
+  }
+
+  if (filter.mapStatus === 'map-ready') {
+    conds.push(`status = 'published' AND latitude IS NOT NULL AND longitude IS NOT NULL`)
+  } else if (filter.mapStatus === 'missing-coordinates') {
+    conds.push(`(latitude IS NULL OR longitude IS NULL)`)
+  } else if (filter.mapStatus === 'unpublished-with-coordinates') {
+    conds.push(`status <> 'published' AND latitude IS NOT NULL AND longitude IS NOT NULL`)
   }
 
   if (filter.search) {

@@ -6,12 +6,14 @@ import {
   createProjectCase,
   isProjectCaseIdTaken,
   listProjectCases,
+  type ProjectCaseMapStatus,
   type ProjectCaseStatus,
 } from '@/lib/project-cases-db'
 
 export const dynamic = 'force-dynamic'
 
 const statusValues = ['draft', 'published'] as const
+const mapStatusValues = ['map-ready', 'missing-coordinates', 'unpublished-with-coordinates'] as const
 
 const globalAmenitySchema = z.object({
   icon: z.string().min(1).max(12),
@@ -82,9 +84,14 @@ export async function GET(req: NextRequest) {
   const status = statusValues.includes(rawStatus as ProjectCaseStatus)
     ? (rawStatus as ProjectCaseStatus)
     : undefined
+  const rawMapStatus = sp.get('mapStatus')
+  const mapStatus = mapStatusValues.includes(rawMapStatus as ProjectCaseMapStatus)
+    ? (rawMapStatus as ProjectCaseMapStatus)
+    : undefined
 
   const result = await listProjectCases({
     status,
+    mapStatus,
     search: sp.get('search') ?? undefined,
     limit,
     offset,

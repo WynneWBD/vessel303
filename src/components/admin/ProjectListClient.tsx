@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import type { ProjectCaseRow, ProjectCaseStatus } from '@/lib/project-cases-db'
 
-type Filters = { status: string; search: string }
+type Filters = { status: string; mapStatus: string; search: string }
 
 const LIMIT = 20
 
@@ -36,7 +36,7 @@ export default function ProjectListClient({
   const [rows, setRows] = useState(initialRows)
   const [total, setTotal] = useState(initialTotal)
   const [page, setPage] = useState(1)
-  const [filters, setFilters] = useState<Filters>({ status: '', search: '' })
+  const [filters, setFilters] = useState<Filters>({ status: '', mapStatus: '', search: '' })
   const [loading, setLoading] = useState(false)
 
   const reload = useCallback(async (f: Filters, p: number) => {
@@ -44,6 +44,7 @@ export default function ProjectListClient({
     try {
       const sp = new URLSearchParams()
       if (f.status) sp.set('status', f.status)
+      if (f.mapStatus) sp.set('mapStatus', f.mapStatus)
       if (f.search) sp.set('search', f.search)
       sp.set('page', String(p))
       sp.set('limit', String(LIMIT))
@@ -125,11 +126,17 @@ export default function ProjectListClient({
         </Link>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 max-w-3xl">
+      <div className="flex flex-wrap items-center gap-3 max-w-4xl">
         <Select value={filters.status} onChange={(e) => handleFilterChange({ status: e.target.value })} className="w-36">
           <option value="">全部状态</option>
           <option value="draft">草稿</option>
           <option value="published">已发布</option>
+        </Select>
+        <Select value={filters.mapStatus} onChange={(e) => handleFilterChange({ mapStatus: e.target.value })} className="w-44">
+          <option value="">全部地图状态</option>
+          <option value="map-ready">已进入地图</option>
+          <option value="missing-coordinates">缺少坐标</option>
+          <option value="unpublished-with-coordinates">有坐标待发布</option>
         </Select>
         <Input
           placeholder="搜索名称、位置或 ID..."
