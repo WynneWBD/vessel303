@@ -23,6 +23,10 @@ function moduleStatus(pageModule: PageModuleRow) {
   if (pageModule.module_key === 'credentials') return '已接入前台'
   if (pageModule.module_key === 'stats') return '已接入前台'
   if (pageModule.module_key === 'brand-story') return '已接入前台'
+  if (pageModule.module_key === 'factory') return '已接入前台'
+  if (pageModule.module_key === 'technologies') return '已接入前台'
+  if (pageModule.module_key === 'founder') return '已接入前台'
+  if (pageModule.module_key === 'services') return '已接入前台'
   if (pageModule.module_key === 'recognition-awards') return '已接入前台'
   return '规划中'
 }
@@ -125,7 +129,7 @@ export default function PageModulesClient({
             页面模块
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#8A8580]">
-            用受控模块管理首页、关于我们等页面的文字和图片。当前首页首屏、首页数据区、关于我们首屏、关于我们数据条、品牌故事、奖项荣誉已经接入前台，其他模块先作为后续接入的结构地基。
+            用受控模块管理首页、关于我们等页面的文字和图片。当前首页首屏、首页数据区、关于我们首屏、数据条、品牌故事、智造实力、三大技术、创始人、服务体系、奖项荣誉已经接入前台，其他模块先作为后续接入的结构地基。
           </p>
         </div>
         <Button type="button" size="sm" disabled={saving} onClick={save}>

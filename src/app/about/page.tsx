@@ -356,9 +356,17 @@ export default function AboutPage() {
   const heroModule = useAboutModule('hero');
   const statsModule = useAboutModule('stats');
   const brandStoryModule = useAboutModule('brand-story');
+  const factoryModule = useAboutModule('factory');
+  const technologiesModule = useAboutModule('technologies');
+  const founderModule = useAboutModule('founder');
+  const servicesModule = useAboutModule('services');
   const heroItems = moduleItems(heroModule);
   const statsItems = moduleItems(statsModule);
   const storyItems = moduleItems(brandStoryModule);
+  const factoryItems = moduleItems(factoryModule);
+  const techModuleItems = moduleItems(technologiesModule);
+  const founderItems = moduleItems(founderModule);
+  const serviceModuleItems = moduleItems(servicesModule);
   const heroImage = itemById(heroItems, 'about-hero-image')?.image_url || '/images/about/about_scene-01.jpg';
   const storyImage = itemById(storyItems, 'story-image')?.image_url || '/images/about/about_factory-02.jpg';
   const storyBadge = itemById(storyItems, 'story-badge');
@@ -396,6 +404,78 @@ export default function AboutPage() {
   const storyParagraphs = storyParagraphFallbacks
     .map((item) => localContent(itemById(storyItems, item.id), zh, zh ? item.zh : item.en))
     .filter(Boolean);
+  const showFactory = factoryModule?.is_visible !== false;
+  const factoryHeroImage = itemById(factoryItems, 'factory-image-hero')?.image_url || FACTORY_HERO;
+  const factoryGridImages = ['factory-image-01', 'factory-image-02', 'factory-image-03', 'factory-image-04']
+    .map((id, index) => itemById(factoryItems, id)?.image_url || FACTORY_GRID[index])
+    .filter((src): src is string => Boolean(src));
+  const showTechnologies = technologiesModule?.is_visible !== false;
+  const technologyFallbacks = [
+    {
+      id: 'tech-viie',
+      tech: 'viie' as const,
+      nameEn: 'VesselOS · VIIE',
+      nameZh: 'VesselOS · 智能交互',
+      descEn: 'Proprietary platform. 1,400+ units globally connected. Full remote control of lighting, climate, access and monitoring.',
+      descZh: '完全自研平台，全球1,400余台舱体联网，远程掌控灯光、空调、门锁与实时监控。',
+    },
+    {
+      id: 'tech-vols',
+      tech: 'vols' as const,
+      nameEn: 'VOLS · Off-grid System',
+      nameZh: 'VOLS · 离网系统',
+      descEn: 'Solar generation + 100kWh+ storage + VSRB zero-discharge treatment. No municipal infrastructure needed.',
+      descZh: '光伏发电 + 100kWh+储能 + VSRB生物污水零排放，完全脱离市政水电基础设施。',
+    },
+    {
+      id: 'tech-vipc',
+      tech: 'vipc' as const,
+      nameEn: 'VIPC · Pre-fab System',
+      nameZh: 'VIPC · 整装预制',
+      descEn: '100% finished at factory. 2-hour site installation. 40ft Flat Rack compliant. 30+ countries delivered.',
+      descZh: '工厂100%成品出厂，现场2小时完成安装，符合40尺平架集装箱规格，已合规交付30余国。',
+    },
+  ];
+  const technologyCards = technologiesModule
+    ? technologyFallbacks
+        .map((fallback) => {
+          const item = itemById(techModuleItems, fallback.id);
+          if (!item) return null;
+          return {
+            ...fallback,
+            nameEn: item.label_en || fallback.nameEn,
+            nameZh: item.label_zh || fallback.nameZh,
+            descEn: item.content_en || fallback.descEn,
+            descZh: item.content_zh || fallback.descZh,
+          };
+        })
+        .filter((item): item is (typeof technologyFallbacks)[number] => Boolean(item))
+    : technologyFallbacks;
+  const showFounder = founderModule?.is_visible !== false;
+  const founderPhoto = itemById(founderItems, 'founder-photo')?.image_url || '/images/about/about_team-05.jpg';
+  const founderTags = ['founder-tag-01', 'founder-tag-02', 'founder-tag-03']
+    .map((id) => {
+      const fallback = zh
+        ? ['邓迪大学 — RIBA Part II', '华盛顿大学圣路易斯 — 建筑学硕士', 'SOM建筑事务所 — 纽约']
+        : ['Univ. of Dundee — RIBA Part II', 'Washington Univ. in St. Louis — M.Arch', 'SOM Architects — NYC'];
+      const index = Number(id.slice(-2)) - 1;
+      return localText(itemById(founderItems, id), zh, fallback[index] ?? '');
+    })
+    .filter(Boolean);
+  const showServices = servicesModule?.is_visible !== false;
+  const serviceCards = servicesModule
+    ? SERVICES.map((fallback, index) => {
+        const item = itemById(serviceModuleItems, `service-${String(index + 1).padStart(2, '0')}`);
+        if (!item) return null;
+        return {
+          n: localValue(item, zh, fallback.n),
+          en: item.label_en || fallback.en,
+          zh: item.label_zh || fallback.zh,
+          desc_en: item.content_en || fallback.desc_en,
+          desc_zh: item.content_zh || fallback.desc_zh,
+        };
+      }).filter((item): item is (typeof SERVICES)[number] => Boolean(item))
+    : SERVICES;
 
   const openTech = (tech: Tech) => {
     setActiveTech(tech);
@@ -582,23 +662,28 @@ export default function AboutPage() {
       ) : null}
 
       {/* ── S4 Factory ───────────────────────────────────────── */}
+      {showFactory ? (
       <section className="bg-[#241F1B] py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-12">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
-              {zh ? '智造实力' : 'Manufacturing'}
+              {localText(itemById(factoryItems, 'factory-kicker'), zh, zh ? '智造实力' : 'Manufacturing')}
             </p>
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <h2
                 className="text-4xl sm:text-5xl font-bold text-[#F5F2ED] leading-tight"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
               >
-                {zh ? '28,800㎡\n精密智造基地' : '28,800 m²\nPrecision Factory'}
+                {localText(itemById(factoryItems, 'factory-heading'), zh, zh ? '28,800㎡\n精密智造基地' : '28,800 m²\nPrecision Factory')}
               </h2>
               <p className="text-[#8A8580] text-sm max-w-xs leading-relaxed">
-                {zh
-                  ? '佛山狮山自有工厂，月产能 150 台，出厂即成品。'
-                  : 'Self-owned facility in Shishan, Foshan. 150 units monthly. Every unit leaves as a finished product.'}
+                {localText(
+                  itemById(factoryItems, 'factory-summary'),
+                  zh,
+                  zh
+                    ? '佛山狮山自有工厂，月产能 150 台，出厂即成品。'
+                    : 'Self-owned facility in Shishan, Foshan. 150 units monthly. Every unit leaves as a finished product.',
+                )}
               </p>
             </div>
           </Reveal>
@@ -607,11 +692,11 @@ export default function AboutPage() {
           <div className="flex flex-col gap-2">
             <Reveal>
               <div className="relative w-full rounded-sm overflow-hidden" style={{ aspectRatio: '16/9' }}>
-                <ProtectedImage src={FACTORY_HERO} alt="VESSEL factory" fill className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" unoptimized />
+                <ProtectedImage src={factoryHeroImage} alt="VESSEL factory" fill className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" unoptimized />
               </div>
             </Reveal>
             <div className="grid grid-cols-2 gap-2">
-              {FACTORY_GRID.map((src, i) => (
+              {factoryGridImages.map((src, i) => (
                 <Reveal key={src} delay={i * 60}>
                   <div className="relative rounded-sm overflow-hidden" style={{ aspectRatio: '4/3' }}>
                     <ProtectedImage src={src} alt={`VESSEL factory ${i + 2}`} fill className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" unoptimized />
@@ -622,6 +707,7 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* ── S5 Timeline ──────────────────────────────────────── */}
       <section className="bg-[#F5F2ED] py-24 px-6">
@@ -664,49 +750,32 @@ export default function AboutPage() {
       </section>
 
       {/* ── Technologies ─────────────────────────────────────── */}
+      {showTechnologies ? (
       <section id="technologies" className="bg-[#F5F2ED] py-20 px-6">
         <div className="max-w-4xl mx-auto">
           <Reveal className="mb-12">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-4">
-              {zh ? '核心技术体系' : 'CORE TECHNOLOGIES'}
+              {localText(itemById(techModuleItems, 'tech-kicker'), zh, zh ? '核心技术体系' : 'CORE TECHNOLOGIES')}
             </p>
             <h2
               className="text-4xl sm:text-5xl font-bold text-[#241F1B] mb-4"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
             >
-              {zh ? '三大自研技术体系' : 'Three Proprietary Systems'}
+              {localText(itemById(techModuleItems, 'tech-heading'), zh, zh ? '三大自研技术体系' : 'Three Proprietary Systems')}
             </h2>
             <p className="text-[#8A8580] text-sm max-w-2xl leading-relaxed">
-              {zh
-                ? '每一台微宿背后的工程基础——面向全球部署而生。'
-                : 'The engineering foundation behind every VESSEL unit — built for global deployment.'}
+              {localText(
+                itemById(techModuleItems, 'tech-summary'),
+                zh,
+                zh
+                  ? '每一台微宿背后的工程基础——面向全球部署而生。'
+                  : 'The engineering foundation behind every VESSEL unit — built for global deployment.',
+              )}
             </p>
           </Reveal>
 
           <div className="border-t border-[#E5E0DA]">
-            {[
-              {
-                tech: 'viie' as const,
-                nameEn: 'VesselOS · VIIE',
-                nameZh: 'VesselOS · 智能交互',
-                descEn: 'Proprietary platform. 1,400+ units globally connected. Full remote control of lighting, climate, access and monitoring.',
-                descZh: '完全自研平台，全球1,400余台舱体联网，远程掌控灯光、空调、门锁与实时监控。',
-              },
-              {
-                tech: 'vols' as const,
-                nameEn: 'VOLS · Off-grid System',
-                nameZh: 'VOLS · 离网系统',
-                descEn: 'Solar generation + 100kWh+ storage + VSRB zero-discharge treatment. No municipal infrastructure needed.',
-                descZh: '光伏发电 + 100kWh+储能 + VSRB生物污水零排放，完全脱离市政水电基础设施。',
-              },
-              {
-                tech: 'vipc' as const,
-                nameEn: 'VIPC · Pre-fab System',
-                nameZh: 'VIPC · 整装预制',
-                descEn: '100% finished at factory. 2-hour site installation. 40ft Flat Rack compliant. 30+ countries delivered.',
-                descZh: '工厂100%成品出厂，现场2小时完成安装，符合40尺平架集装箱规格，已合规交付30余国。',
-              },
-            ].map((item) => (
+            {technologyCards.map((item) => (
               <Reveal key={item.tech}>
                 <button
                   type="button"
@@ -739,6 +808,7 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* ── S8 Certifications ────────────────────────────────── */}
       <section id="certifications" className="bg-[#241F1B] py-24 px-6">
@@ -877,17 +947,18 @@ export default function AboutPage() {
       </section>
 
       {/* ── S6 Founder ───────────────────────────────────────── */}
+      {showFounder ? (
       <section id="founder" className="bg-[#241F1B] py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-12">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
-              {zh ? '团队' : 'Team'}
+              {localText(itemById(founderItems, 'founder-section-kicker'), zh, zh ? '团队' : 'Team')}
             </p>
             <h2
               className="text-4xl sm:text-5xl font-bold text-[#F5F2ED]"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
             >
-              {zh ? '100+ 人精英团队' : '100+ Expert Team'}
+              {localText(itemById(founderItems, 'founder-section-heading'), zh, zh ? '100+ 人精英团队' : '100+ Expert Team')}
             </h2>
           </Reveal>
 
@@ -895,8 +966,8 @@ export default function AboutPage() {
           <Reveal delay={100} className="grid lg:grid-cols-[256px_1fr] gap-10 items-start">
             <div className="w-64 h-64 rounded-full overflow-hidden shrink-0 mx-auto lg:mx-0 relative">
               <Image
-                src="/images/about/about_team-05.jpg"
-                alt="Wang Shuaibin"
+                src={founderPhoto}
+                alt={localText(itemById(founderItems, 'founder-name'), zh, zh ? '王帅斌' : 'Wang Shuaibin')}
                 fill
                 className="object-cover object-top"
                 unoptimized
@@ -904,24 +975,25 @@ export default function AboutPage() {
             </div>
             <div className="pt-2">
               <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
-                {zh ? '创始人 & 首席设计师' : 'Founder & Chief Designer'}
+                {localText(itemById(founderItems, 'founder-role'), zh, zh ? '创始人 & 首席设计师' : 'Founder & Chief Designer')}
               </p>
               <p className="text-[#F5F2ED] text-3xl font-bold mb-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                {zh ? '王帅斌' : 'Wang Shuaibin'}
+                {localText(itemById(founderItems, 'founder-name'), zh, zh ? '王帅斌' : 'Wang Shuaibin')}
               </p>
               <p className="text-[#8A8580] text-sm tracking-wider mb-6">
-                {zh ? '建筑师 · 企业家 · 先行者' : 'Architect · Entrepreneur · Visionary'}
+                {localText(itemById(founderItems, 'founder-subtitle'), zh, zh ? '建筑师 · 企业家 · 先行者' : 'Architect · Entrepreneur · Visionary')}
               </p>
               <p className="text-[#F5F2ED]/65 text-base leading-relaxed max-w-2xl mb-6" style={{ fontFamily: 'Inter, sans-serif' }}>
-                {zh
-                  ? '王帅斌于 2018 年创立 VESSEL 微宿，以国际建筑师视野重新定义中国文旅行业。他持有英国邓迪大学建筑学硕士（RIBA Part II 认证）及美国圣路易斯华盛顿大学建筑学硕士学位，曾任职于纽约华尔街 SOM 建筑设计事务所。在他的带领下，微宿开创了"太空主题高端度假营地"品类，成长为出口 30 余国的全球知名品牌。'
-                  : 'Wang Shuaibin founded VESSEL in 2018, bringing an international architectural perspective to the cultural tourism industry. He holds Master of Architecture degrees from the University of Dundee (RIBA Part II) and Washington University in St. Louis, and previously worked at SOM Architects on Wall Street, New York City. Under his leadership, VESSEL pioneered the space-themed luxury camp resort category and has grown into a globally recognised brand with exports across 30+ countries.'}
+                {localContent(
+                  itemById(founderItems, 'founder-bio'),
+                  zh,
+                  zh
+                    ? '王帅斌于 2018 年创立 VESSEL 微宿，以国际建筑师视野重新定义中国文旅行业。他持有英国邓迪大学建筑学硕士（RIBA Part II 认证）及美国圣路易斯华盛顿大学建筑学硕士学位，曾任职于纽约华尔街 SOM 建筑设计事务所。在他的带领下，微宿开创了"太空主题高端度假营地"品类，成长为出口 30 余国的全球知名品牌。'
+                    : 'Wang Shuaibin founded VESSEL in 2018, bringing an international architectural perspective to the cultural tourism industry. He holds Master of Architecture degrees from the University of Dundee (RIBA Part II) and Washington University in St. Louis, and previously worked at SOM Architects on Wall Street, New York City. Under his leadership, VESSEL pioneered the space-themed luxury camp resort category and has grown into a globally recognised brand with exports across 30+ countries.',
+                )}
               </p>
               <div className="flex flex-wrap gap-2">
-                {(zh
-                  ? ['邓迪大学 — RIBA Part II', '华盛顿大学圣路易斯 — 建筑学硕士', 'SOM建筑事务所 — 纽约']
-                  : ['Univ. of Dundee — RIBA Part II', 'Washington Univ. in St. Louis — M.Arch', 'SOM Architects — NYC']
-                ).map(tag => (
+                {founderTags.map(tag => (
                   <span key={tag} className="text-xs px-3 py-1.5 border border-[#3A302A] text-[#8A8580] tracking-wider">{tag}</span>
                 ))}
               </div>
@@ -929,24 +1001,26 @@ export default function AboutPage() {
           </Reveal>
         </div>
       </section>
+      ) : null}
 
       {/* ── S7 Three Services ────────────────────────────────── */}
+      {showServices ? (
       <section className="bg-[#F5F2ED] py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-12">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
-              {zh ? '三大服务体系' : 'Three Service Systems'}
+              {localText(itemById(serviceModuleItems, 'services-kicker'), zh, zh ? '三大服务体系' : 'Three Service Systems')}
             </p>
             <h2
               className="text-4xl sm:text-5xl font-bold text-[#241F1B]"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
             >
-              {zh ? '从选址到运营\n全程陪跑' : 'From Site Selection\nto Full Operations'}
+              {localText(itemById(serviceModuleItems, 'services-heading'), zh, zh ? '从选址到运营\n全程陪跑' : 'From Site Selection\nto Full Operations')}
             </h2>
           </Reveal>
 
           <div className="grid md:grid-cols-3 gap-5">
-            {SERVICES.map((s, i) => (
+            {serviceCards.map((s, i) => (
               <Reveal key={s.n} delay={i * 80}>
                 <div className="border border-[#E5E0DA] bg-white p-8 flex flex-col gap-5 h-full hover:border-[#E36F2C]/40 hover:shadow-sm transition-all">
                   <span className="text-4xl font-bold text-[#E36F2C]/20" style={{ fontFamily: 'DM Sans, sans-serif' }}>{s.n}</span>
@@ -960,6 +1034,7 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* ── S10 Global reach ─────────────────────────────────── */}
       <section className="bg-[#241F1B] py-16 px-6">
