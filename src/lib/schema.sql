@@ -123,3 +123,26 @@ CREATE TABLE IF NOT EXISTS site_settings (
   updated_by UUID        REFERENCES users(id) ON DELETE SET NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Controlled page-builder modules for homepage/about and future static pages.
+-- Frontend components keep the layout fixed, while operations can edit text,
+-- captions, visibility, and repeatable JSON items through the admin panel.
+CREATE TABLE IF NOT EXISTS page_modules (
+  id             TEXT        PRIMARY KEY,
+  page_key       TEXT        NOT NULL,
+  module_key     TEXT        NOT NULL,
+  module_type    TEXT        NOT NULL DEFAULT 'fixed-content',
+  title_zh       TEXT        NOT NULL DEFAULT '',
+  title_en       TEXT        NOT NULL DEFAULT '',
+  description_zh TEXT        NOT NULL DEFAULT '',
+  description_en TEXT        NOT NULL DEFAULT '',
+  items          JSONB       NOT NULL DEFAULT '[]',
+  is_visible     BOOLEAN     NOT NULL DEFAULT TRUE,
+  sort_order     INTEGER     NOT NULL DEFAULT 0,
+  updated_by     UUID        REFERENCES users(id) ON DELETE SET NULL,
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (page_key, module_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_page_modules_page
+  ON page_modules (page_key, sort_order);

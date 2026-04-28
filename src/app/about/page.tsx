@@ -11,6 +11,22 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 type Tech = 'viie' | 'vols' | 'vipc';
 
+type AwardItem = {
+  id: string;
+  src: string;
+  en: string;
+  zh: string;
+  isVisible: boolean;
+};
+
+type RemoteAwardItem = {
+  id?: string;
+  image_url?: string;
+  label_zh?: string;
+  label_en?: string;
+  is_visible?: boolean;
+};
+
 // ─── scroll reveal ────────────────────────────────────────────────────────────
 
 function useReveal(threshold = 0.1) {
@@ -101,7 +117,99 @@ const TIMELINE = [
   },
 ];
 
-const AWARDS = Array.from({ length: 13 }, (_, i) => `/images/about/about_award-${String(i + 1).padStart(2, '0')}.jpg`);
+const AWARDS: AwardItem[] = [
+  {
+    id: 'about-award-01',
+    src: '/images/about/about_award-01.jpg',
+    en: '2020 Jingzhu Award · Homestay Hotel Application Demonstration Project',
+    zh: '2020景筑奖 · 民宿酒店应用示范项目',
+    isVisible: true,
+  },
+  {
+    id: 'about-award-02',
+    src: '/images/about/about_award-02.jpg',
+    en: '2021 Greater Bay Area Digital Fashion Award',
+    zh: '2021粤港澳大湾区数字时尚大奖',
+    isVisible: true,
+  },
+  {
+    id: 'about-award-03',
+    src: '/images/about/about_award-03.jpg',
+    en: '2019 China Innovation & Entrepreneurship Fair · Technology Innovation Growth Enterprise',
+    zh: '2019中国创新创业成果交易会 · 技术创新成长企业',
+    isVisible: true,
+  },
+  {
+    id: 'about-award-04',
+    src: '/images/about/about_award-04.jpg',
+    en: '2023 Haibei Eco Camping Season · Silver Award',
+    zh: '2023海北州生态露营季 · 银奖',
+    isVisible: true,
+  },
+  {
+    id: 'about-award-05',
+    src: '/images/about/about_award-05.jpg',
+    en: 'China Tourism Vehicle & Cruise Association · Innovative Travel Service Recognition',
+    zh: '中国旅游车船协会 · 旅游出行行业创新发展服务',
+    isVisible: true,
+  },
+  {
+    id: 'about-award-06',
+    src: '/images/about/about_award-06.jpg',
+    en: '2018 Global Mobile Internet Creative Development Competition · First Place',
+    zh: '2018全球移动互联网开发创意大赛 · 体育文旅创新创业赛第一名',
+    isVisible: true,
+  },
+  {
+    id: 'about-award-07',
+    src: '/images/about/about_award-07.jpg',
+    en: '2023 Haibei Eco Camping Season · Silver Award',
+    zh: '2023海北州生态露营季 · 银奖',
+    isVisible: true,
+  },
+  {
+    id: 'about-award-08',
+    src: '/images/about/about_award-08.jpg',
+    en: 'Partner Creative Group Cultural & Tourism Equipment Production and Research Base',
+    zh: '同路创意集团文旅装备产研基地',
+    isVisible: true,
+  },
+  {
+    id: 'about-award-09',
+    src: '/images/about/about_award-09.jpg',
+    en: '2023 Haibei Eco Camping Season · Silver Award Certificate',
+    zh: '2023海北州生态露营季 · 银奖证书',
+    isVisible: true,
+  },
+  {
+    id: 'about-award-10',
+    src: '/images/about/about_award-10.jpg',
+    en: 'Member of the Enterprise Credit Construction Committee',
+    zh: '中企信办信用建设工作委员会会员单位',
+    isVisible: true,
+  },
+  {
+    id: 'about-award-11',
+    src: '/images/about/about_award-11.jpg',
+    en: '2023 Beijing International Cultural Tourism Consumption Expo · Product Sales Award',
+    zh: '2023北京国际文旅消费博览会 · 文旅消费产品销售奖',
+    isVisible: true,
+  },
+  {
+    id: 'about-award-12',
+    src: '/images/about/about_award-12.jpg',
+    en: 'International Mountain Tourism Alliance Membership Certificate',
+    zh: '国际山地旅游联盟会员证',
+    isVisible: true,
+  },
+  {
+    id: 'about-award-13',
+    src: '/images/about/about_award-13.jpg',
+    en: '2025 High-Tech Enterprise Certificate',
+    zh: '2025高新技术企业证书',
+    isVisible: true,
+  },
+];
 
 const PARTNERS = Array.from({ length: 33 }, (_, i) => `/images/about/about_partner-${String(i + 1).padStart(2, '0')}.png`);
 
@@ -183,6 +291,7 @@ export default function AboutPage() {
   const [activeSection, setActiveSection] = useState('brand-story');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeTech, setActiveTech] = useState<Tech | null>(null);
+  const [awards, setAwards] = useState(AWARDS);
 
   const openTech = (tech: Tech) => {
     setActiveTech(tech);
@@ -202,6 +311,51 @@ export default function AboutPage() {
       return obs;
     });
     return () => observers.forEach((obs) => obs?.disconnect());
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAwards() {
+      try {
+        const res = await fetch('/api/page-modules/about?module=recognition-awards', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const pageModule = data?.data;
+        if (!pageModule || pageModule.is_visible === false || !Array.isArray(pageModule.items)) {
+          if (!cancelled && pageModule?.is_visible === false) setAwards([]);
+          return;
+        }
+
+        const remote = new Map<string, RemoteAwardItem>();
+        for (const item of pageModule.items as unknown[]) {
+          if (!item || typeof item !== 'object') continue;
+          const value = item as RemoteAwardItem;
+          const key = value.image_url || value.id || '';
+          if (key) remote.set(key, value);
+        }
+
+        const merged = AWARDS
+          .map((award) => {
+            const value = remote.get(award.src) ?? remote.get(award.id);
+            if (!value) return award;
+            return {
+              ...award,
+              zh: value.label_zh || award.zh,
+              en: value.label_en || award.en,
+              isVisible: value.is_visible !== false,
+            };
+          })
+          .filter((award) => award.isVisible);
+
+        if (!cancelled) setAwards(merged);
+      } catch {
+        // Keep the static fallback content if the CMS endpoint is unavailable.
+      }
+    }
+
+    loadAwards();
+    return () => { cancelled = true; };
   }, []);
 
   return (
@@ -549,17 +703,22 @@ export default function AboutPage() {
             </div>
           </Reveal>
 
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
-            {AWARDS.map((src, i) => (
-              <Reveal key={src} delay={i * 30}>
-                <div className="bg-white p-3 aspect-[3/4] relative overflow-hidden group">
-                  <Image
-                    src={src}
-                    alt={`Award ${i + 1}`}
-                    fill
-                    className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
-                    unoptimized
-                  />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {awards.map((award, i) => (
+              <Reveal key={award.id} delay={i * 30}>
+                <div className="bg-white p-3 min-h-full overflow-hidden group flex flex-col gap-3">
+                  <div className="relative aspect-[3/4]">
+                    <Image
+                      src={award.src}
+                      alt={zh ? award.zh : award.en}
+                      fill
+                      className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
+                      unoptimized
+                    />
+                  </div>
+                  <p className="text-[#8A8580] text-xs leading-snug text-center min-h-[2.5rem] flex items-center justify-center">
+                    {zh ? award.zh : award.en}
+                  </p>
                 </div>
               </Reveal>
             ))}
