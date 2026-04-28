@@ -21,9 +21,20 @@ interface MediaItem {
 interface Props {
   value: string[]
   onChange: (urls: string[]) => void
+  title?: string
+  description?: string
+  emptyLabel?: string
+  actionLabel?: string
 }
 
-export default function ProductGalleryPicker({ value, onChange }: Props) {
+export default function ProductGalleryPicker({
+  value,
+  onChange,
+  title = '选择详情图库',
+  description = '可多选，已选顺序就是前台图库顺序，可用箭头调整。',
+  emptyLabel = '选择详情图库',
+  actionLabel,
+}: Props) {
   const [open, setOpen] = useState(false)
   const [images, setImages] = useState<MediaItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -51,6 +62,19 @@ export default function ProductGalleryPicker({ value, onChange }: Props) {
       return
     }
     onChange([...value, url])
+  }
+
+  const addVisible = () => {
+    const next = [...value]
+    for (const img of images) {
+      if (!selected.has(img.url)) next.push(img.url)
+    }
+    onChange(next)
+  }
+
+  const removeVisible = () => {
+    const visible = new Set(images.map((img) => img.url))
+    onChange(value.filter((url) => !visible.has(url)))
   }
 
   const remove = (url: string) => {
@@ -119,14 +143,14 @@ export default function ProductGalleryPicker({ value, onChange }: Props) {
           className="flex h-28 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-[#E5DED4] bg-[#FFFFFF] text-[#8A8580] transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
         >
           <ImagePlus size={22} />
-          <span className="text-sm">选择详情图库</span>
+          <span className="text-sm">{emptyLabel}</span>
         </button>
       )}
 
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" size="sm" onClick={openPicker}>
           <RefreshCw size={14} />
-          {value.length > 0 ? '添加/更换图库' : '从图片库选择'}
+          {actionLabel ?? (value.length > 0 ? '添加/更换图库' : '从图片库选择')}
         </Button>
         {value.length > 0 && (
           <Button
@@ -151,9 +175,20 @@ export default function ProductGalleryPicker({ value, onChange }: Props) {
       >
         <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>选择详情图库</DialogTitle>
-            <DialogDescription>可多选，已选顺序就是前台图库顺序，可用箭头调整。</DialogDescription>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
           </DialogHeader>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-y border-[#E5DED4] py-2">
+            <span className="text-xs text-[#8A8580]">已选 {value.length} 张</span>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" variant="outline" disabled={loading || images.length === 0} onClick={addVisible}>
+                批量加入当前页
+              </Button>
+              <Button type="button" size="sm" variant="ghost" disabled={loading || images.length === 0} onClick={removeVisible}>
+                移除当前页
+              </Button>
+            </div>
+          </div>
 
           {loading ? (
             <div className="flex-1 flex items-center justify-center py-12 text-[#8A8580] text-sm">

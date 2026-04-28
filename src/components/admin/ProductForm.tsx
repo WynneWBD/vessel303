@@ -198,6 +198,147 @@ function normalizeDetailModules(modules: CatalogDetailModule[]) {
     .sort((a, b) => a.sort_order - b.sort_order)
 }
 
+function defaultScenarioItems(lang: 'cn' | 'en'): CatalogDetailModuleItem[] {
+  if (lang === 'en') {
+    return [
+      { title: 'Resort guest rooms', body: 'Standardized cabin rooms for resort expansion and new destination camps.' },
+      { title: 'Remote camp deployment', body: 'Factory-finished units for sites where local construction is slow or constrained.' },
+      { title: 'Commercial showcase', body: 'Brand pop-ups, reception suites and experience spaces with fast installation.' },
+    ]
+  }
+
+  return [
+    { title: '度假营地客房', body: '适合度假村扩容、新营地样板间和标准化客房部署。' },
+    { title: '远程营地部署', body: '适合施工条件受限、需要快速落地的山地、海岛、荒漠等项目。' },
+    { title: '商业展示空间', body: '可用于品牌展厅、接待室、快闪空间和体验式商业场景。' },
+  ]
+}
+
+function defaultFaqItems(lang: 'cn' | 'en'): CatalogDetailModuleItem[] {
+  if (lang === 'en') {
+    return [
+      { title: 'Can the layout be customized?', body: 'Yes. Interior layout, furniture package, MEP systems and exterior finish can be configured by project.' },
+      { title: 'How is it delivered overseas?', body: 'Units are designed for containerized or flat-rack logistics depending on size and destination requirements.' },
+      { title: 'Can it adapt to local codes?', body: 'VESSEL can coordinate structure, insulation, electrical and fire-safety details around local compliance needs.' },
+    ]
+  }
+
+  return [
+    { title: '户型可以定制吗？', body: '可以。室内布局、家具包、水电系统、外立面材料都可以按项目配置。' },
+    { title: '海外如何运输？', body: '根据尺寸和目的地要求，支持集装箱或平板架等方式进行整体运输。' },
+    { title: '能适配当地规范吗？', body: '可围绕当地建筑、电气、保温、防火等要求进行方案配合。' },
+  ]
+}
+
+function buildDetailModuleTemplate(
+  type: CatalogDetailModuleType,
+  product: FormState,
+  sortOrder: number,
+): CatalogDetailModule {
+  const id = `${type}-${Date.now()}-${sortOrder}`
+  const featuresCn = splitLines(product.features_cn).map((title) => ({ title }))
+  const featuresEn = splitLines(product.features_en).map((title) => ({ title }))
+
+  if (type === 'highlights') {
+    return {
+      id,
+      type,
+      title_cn: '产品亮点',
+      title_en: 'Product Highlights',
+      body_cn: `${product.name_cn || '该产品'}围绕空间效率、快速交付和项目运营稳定性设计。`,
+      body_en: `${product.name_en || 'This product'} is designed around spatial efficiency, fast delivery and reliable project operations.`,
+      items_cn: featuresCn.length > 0 ? featuresCn : [
+        { title: '快速部署', body: '工厂预制，现场安装周期短。' },
+        { title: '智能系统', body: '支持照明、空调、门锁等设备集中控制。' },
+        { title: '项目适配', body: '可根据不同气候、场地和运营模式配置。' },
+      ],
+      items_en: featuresEn.length > 0 ? featuresEn : [
+        { title: 'Fast deployment', body: 'Factory-finished units reduce on-site installation time.' },
+        { title: 'Smart systems', body: 'Lighting, HVAC and access control can be integrated.' },
+        { title: 'Project-fit configuration', body: 'Adaptable to different climates, sites and operating models.' },
+      ],
+      image_url: '',
+      images: [],
+      is_visible: true,
+      sort_order: sortOrder,
+    }
+  }
+
+  if (type === 'scenarios') {
+    return {
+      id,
+      type,
+      title_cn: '适用场景',
+      title_en: 'Best-fit Scenarios',
+      body_cn: '适合需要稳定品质、快速交付和持续运营能力的文旅与商业项目。',
+      body_en: 'Suitable for hospitality and commercial projects that need consistent quality, fast delivery and long-term operation.',
+      items_cn: defaultScenarioItems('cn'),
+      items_en: defaultScenarioItems('en'),
+      image_url: '',
+      images: [],
+      is_visible: true,
+      sort_order: sortOrder,
+    }
+  }
+
+  if (type === 'faq') {
+    return {
+      id,
+      type,
+      title_cn: '常见问题',
+      title_en: 'FAQ',
+      body_cn: '',
+      body_en: '',
+      items_cn: defaultFaqItems('cn'),
+      items_en: defaultFaqItems('en'),
+      image_url: '',
+      images: [],
+      is_visible: true,
+      sort_order: sortOrder,
+    }
+  }
+
+  if (type === 'customization') {
+    return {
+      id,
+      type,
+      title_cn: '可定制范围',
+      title_en: 'Customization Scope',
+      body_cn: '可按项目配置外观饰面、内部布局、家具包、暖通系统、离网能源、卫浴/厨房模块，以及当地规范适配细节。',
+      body_en: 'Exterior finish, interior layout, furniture package, climate systems, off-grid energy, bathroom/kitchen modules, and local compliance details can be configured by project.',
+      items_cn: [
+        { title: '外观与结构', body: '颜色、饰面、门窗、遮阳和组合形式。' },
+        { title: '室内与家具', body: '床型、收纳、卫浴、厨房、办公和亲子布局。' },
+        { title: '能源与机电', body: '空调、地暖、光伏、储能、给排水和智能控制。' },
+      ],
+      items_en: [
+        { title: 'Exterior and structure', body: 'Color, finish, openings, shading and multi-module configuration.' },
+        { title: 'Interior and furniture', body: 'Bed type, storage, bathroom, kitchen, office and family layouts.' },
+        { title: 'Energy and MEP', body: 'HVAC, heating, solar, storage, plumbing and smart control systems.' },
+      ],
+      image_url: '',
+      images: [],
+      is_visible: true,
+      sort_order: sortOrder,
+    }
+  }
+
+  return {
+    id,
+    type: 'content',
+    title_cn: '交付与配置',
+    title_en: 'Delivery and Configuration',
+    body_cn: '从产品选型、项目适配到运输安装，可按项目条件进行配置与交付规划。',
+    body_en: 'From product selection and project adaptation to logistics and installation, delivery can be planned around project conditions.',
+    items_cn: [],
+    items_en: [],
+    image_url: '',
+    images: [],
+    is_visible: true,
+    sort_order: sortOrder,
+  }
+}
+
 function Field({
   label,
   children,
@@ -249,22 +390,63 @@ export default function ProductForm({
   const addDetailModule = () => {
     setForm((prev) => {
       const maxSort = prev.detail_modules.reduce((max, module) => Math.max(max, Number(module.sort_order) || 0), 0)
-      const next: CatalogDetailModule = {
-        id: `detail-module-${Date.now()}`,
-        type: 'highlights',
-        title_cn: '产品亮点',
-        title_en: 'Product Highlights',
-        body_cn: '',
-        body_en: '',
-        items_cn: [],
-        items_en: [],
-        image_url: '',
-        images: [],
-        is_visible: true,
-        sort_order: maxSort + 10,
-      }
+      const next = buildDetailModuleTemplate('highlights', prev, maxSort + 10)
       return { ...prev, detail_modules: [...prev.detail_modules, next] }
     })
+  }
+
+  const addDetailModuleTemplate = (type: CatalogDetailModuleType) => {
+    setForm((prev) => {
+      const maxSort = prev.detail_modules.reduce((max, module) => Math.max(max, Number(module.sort_order) || 0), 0)
+      return {
+        ...prev,
+        detail_modules: [...prev.detail_modules, buildDetailModuleTemplate(type, prev, maxSort + 10)],
+      }
+    })
+  }
+
+  const applyStandardDetailTemplates = () => {
+    const existing = new Set(form.detail_modules.map((module) => module.type))
+    const types: CatalogDetailModuleType[] = ['highlights', 'scenarios', 'customization', 'faq']
+    let nextSort = form.detail_modules.reduce((max, module) => Math.max(max, Number(module.sort_order) || 0), 0)
+    const additions = types
+      .filter((type) => !existing.has(type))
+      .map((type) => {
+        nextSort += 10
+        return buildDetailModuleTemplate(type, form, nextSort)
+      })
+
+    if (additions.length === 0) {
+      toast.info('标准模块已经存在')
+      return
+    }
+
+    setForm((prev) => ({ ...prev, detail_modules: [...prev.detail_modules, ...additions] }))
+    toast.success(`已生成 ${additions.length} 个标准模块`)
+  }
+
+  const applySpecTemplate = () => {
+    const cn = [
+      `尺寸范围: ${form.size || '请填写'}`,
+      '标准生产周期: 45天',
+      '安装时间: 2小时',
+      '运输方式: 40尺平架集装箱',
+      '适用温度: -32°C 至 55°C',
+    ].join('\n')
+    const en = [
+      `Size range: ${form.size || 'TBD'}`,
+      'Standard production lead time: 45 days',
+      'Installation time: 2 hours',
+      'Transport method: 40ft flat-rack container',
+      'Operating temperature: -32°C to 55°C',
+    ].join('\n')
+
+    setForm((prev) => ({
+      ...prev,
+      specs_cn: prev.specs_cn.trim() ? prev.specs_cn : cn,
+      specs_en: prev.specs_en.trim() ? prev.specs_en : en,
+    }))
+    toast.success('已填入空白规格模板')
   }
 
   const removeDetailModule = (id: string) => {
@@ -471,11 +653,22 @@ export default function ProductForm({
           </div>
 
           <div className="border-t border-[#E5DED4] pt-5 space-y-4">
-            <div>
-              <h2 className="text-sm font-semibold text-[#2C2A28]">详情页内容</h2>
-              <p className="mt-1 text-xs text-[#8A8580]">
-                用于通用产品详情页；固定精细详情页仍按原页面展示。
-              </p>
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-[#2C2A28]">详情页内容</h2>
+                <p className="mt-1 text-xs text-[#8A8580]">
+                  用于通用产品详情页；固定精细详情页仍按原页面展示。
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" size="sm" variant="outline" onClick={applyStandardDetailTemplates}>
+                  <Plus size={14} />
+                  生成标准详情模块
+                </Button>
+                <Button type="button" size="sm" variant="outline" onClick={applySpecTemplate}>
+                  填入规格模板
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -502,6 +695,26 @@ export default function ProductForm({
                 value={galleryUrls}
                 onChange={(urls) => patch('gallery', urls.join('\n'))}
               />
+              <div className="flex flex-wrap gap-2">
+                {form.image ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const next = Array.from(new Set([form.image, ...galleryUrls].filter(Boolean)))
+                      patch('gallery', next.join('\n'))
+                    }}
+                  >
+                    将封面加入图库
+                  </Button>
+                ) : null}
+                {galleryUrls.length > 0 ? (
+                  <Button type="button" size="sm" variant="ghost" onClick={() => patch('gallery', '')}>
+                    清空图库
+                  </Button>
+                ) : null}
+              </div>
               <Textarea
                 className="min-h-28"
                 value={form.gallery}
@@ -541,6 +754,25 @@ export default function ProductForm({
                   <Plus size={14} />
                   新增模块
                 </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  ['highlights', '亮点'],
+                  ['scenarios', '场景'],
+                  ['customization', '定制范围'],
+                  ['faq', 'FAQ'],
+                  ['content', '图文内容'],
+                ].map(([type, label]) => (
+                  <Button
+                    key={type}
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => addDetailModuleTemplate(type as CatalogDetailModuleType)}
+                  >
+                    + {label}
+                  </Button>
+                ))}
               </div>
 
               {form.detail_modules.length > 0 ? (
@@ -648,6 +880,39 @@ export default function ProductForm({
                       </div>
 
                       <Field label="模块图片组 URL" hint="一行一张图，用于图文模块或 FAQ/场景补充图片。">
+                        <ProductGalleryPicker
+                          value={module.images ?? []}
+                          title="选择模块图片"
+                          description="可多选，已选顺序就是该模块图片组顺序。"
+                          emptyLabel="选择模块图片"
+                          actionLabel="添加/更换模块图片"
+                          onChange={(urls) => patchDetailModule(module.id, { images: urls })}
+                        />
+                        <div className="flex flex-wrap gap-2">
+                          {module.image_url ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const next = Array.from(new Set([module.image_url, ...(module.images ?? [])].filter(Boolean))) as string[]
+                                patchDetailModule(module.id, { images: next })
+                              }}
+                            >
+                              将主图加入图片组
+                            </Button>
+                          ) : null}
+                          {galleryUrls.length > 0 ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => patchDetailModule(module.id, { images: galleryUrls })}
+                            >
+                              使用详情图库
+                            </Button>
+                          ) : null}
+                        </div>
                         <Textarea
                           className="min-h-24"
                           value={(module.images ?? []).join('\n')}
