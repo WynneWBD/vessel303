@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ImagePlus, RefreshCw, Trash2, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ImagePlus, RefreshCw, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -57,25 +57,58 @@ export default function ProductGalleryPicker({ value, onChange }: Props) {
     onChange(value.filter((item) => item !== url))
   }
 
+  const move = (index: number, direction: -1 | 1) => {
+    const nextIndex = index + direction
+    if (nextIndex < 0 || nextIndex >= value.length) return
+    const next = [...value]
+    const current = next[index]
+    next[index] = next[nextIndex]
+    next[nextIndex] = current
+    onChange(next)
+  }
+
   return (
     <div className="space-y-3">
       {value.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {value.map((url) => (
+          {value.map((url, index) => (
             <div
               key={url}
               className="group relative aspect-[4/3] overflow-hidden rounded-md border border-[#E5DED4] bg-[#FAF7F2]"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={url} alt="" className="h-full w-full object-cover" />
-              <button
-                type="button"
-                onClick={() => remove(url)}
-                title="移除"
-                className="absolute right-1.5 top-1.5 hidden h-7 w-7 items-center justify-center rounded bg-black/60 text-white transition-colors hover:bg-red-500 group-hover:flex"
-              >
-                <X size={14} />
-              </button>
+              <span className="absolute left-1.5 top-1.5 rounded bg-[#241F1B]/75 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                {index + 1}
+              </span>
+              <div className="absolute inset-x-1.5 bottom-1.5 flex items-center justify-end gap-1">
+                <button
+                  type="button"
+                  onClick={() => move(index, -1)}
+                  disabled={index === 0}
+                  title="前移"
+                  className="flex h-7 w-7 items-center justify-center rounded bg-black/60 text-white transition-colors hover:bg-[#E36F2C] disabled:cursor-not-allowed disabled:opacity-35"
+                >
+                  <ArrowLeft size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => move(index, 1)}
+                  disabled={index === value.length - 1}
+                  title="后移"
+                  className="flex h-7 w-7 items-center justify-center rounded bg-black/60 text-white transition-colors hover:bg-[#E36F2C] disabled:cursor-not-allowed disabled:opacity-35"
+                >
+                  <ArrowRight size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => remove(url)}
+                  title="移除"
+                  className="flex h-7 w-7 items-center justify-center rounded bg-black/60 text-white transition-colors hover:bg-red-500"
+                >
+                  <X size={14} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -119,7 +152,7 @@ export default function ProductGalleryPicker({ value, onChange }: Props) {
         <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>选择详情图库</DialogTitle>
-            <DialogDescription>可多选，已选图片会进入产品详情页图库。</DialogDescription>
+            <DialogDescription>可多选，已选顺序就是前台图库顺序，可用箭头调整。</DialogDescription>
           </DialogHeader>
 
           {loading ? (
