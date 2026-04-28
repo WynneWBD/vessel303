@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import TechDrawer from '@/components/TechDrawer';
+import GlobalMapPreview from '@/components/GlobalMapPreview';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 type Tech = 'viie' | 'vols' | 'vipc';
@@ -862,21 +863,24 @@ export default function AboutPage() {
               className="text-4xl sm:text-5xl font-bold text-[#F5F2ED]"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
             >
-              {zh ? '六大洲，30+ 国家' : 'Six Continents, 30+ Countries'}
+              {zh ? '微宿全球营地部署' : 'VESSEL Global Camp Deployment'}
             </h2>
           </Reveal>
 
           <Reveal delay={80}>
-            <div className="rounded-lg overflow-hidden border border-[#3A302A]" style={{ height: '520px' }}>
-              <iframe
-                src="/global"
-                width="100%"
-                height="520"
-                style={{ border: 'none', display: 'block' }}
-                title={zh ? '微宿全球版图' : 'VESSEL Global Map'}
-              />
+            <div
+              className="rounded-lg overflow-hidden border border-[#3A302A] shadow-[0_24px_80px_rgba(0,0,0,0.22)]"
+              style={{ height: '520px' }}
+              aria-label={zh ? '微宿全球营地部署预览地图' : 'VESSEL global camp deployment preview map'}
+            >
+              <GlobalMapPreview />
             </div>
-            <div className="mt-4 text-right">
+            <div className="mt-4 flex flex-col gap-2 text-right sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs leading-relaxed text-[#8A8580]">
+                {zh
+                  ? '预览地图仅展示全球点位，不支持缩放和拖拽。'
+                  : 'Preview only. Zoom, drag and project details are available on the full map.'}
+              </p>
               <Link
                 href="/global"
                 className="text-[#E36F2C] hover:text-[#C85A1F] text-sm font-medium tracking-wider transition-colors"

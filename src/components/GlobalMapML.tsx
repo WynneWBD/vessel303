@@ -279,6 +279,7 @@ interface Props {
   resetViewKey?: number  // increment to fly back to global default view
   lang?: string
   showcaseMarkers?: ShowcaseMarker[]
+  previewMode?: boolean
 }
 
 export default function GlobalMapML({
@@ -288,6 +289,7 @@ export default function GlobalMapML({
   resetViewKey,
   lang,
   showcaseMarkers = SHOWCASE_MARKERS,
+  previewMode = false,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MaptilerMap | null>(null)
@@ -334,10 +336,11 @@ export default function GlobalMapML({
       map = new MaptilerMap({
         container: containerRef.current,
         style: STYLE_URL,
-        center: isZhRef.current ? [105, 30] : [10, 20],
-        zoom: isZhRef.current ? 3 : 2,
-        minZoom: 1.5,
+        center: previewMode ? [35, 18] : isZhRef.current ? [105, 30] : [10, 20],
+        zoom: previewMode ? 1.55 : isZhRef.current ? 3 : 2,
+        minZoom: previewMode ? 1.2 : 1.5,
         maxZoom: 16,
+        interactive: !previewMode,
         renderWorldCopies: false,
         transformRequest: PROXY_TRANSFORM,
         // Render CJK characters using the device's system font instead of
@@ -417,44 +420,46 @@ export default function GlobalMapML({
         },
       })
 
-      // Hover: cursor + name popup
-      map.on('mouseenter', 'camps-layer', (e) => {
-        map.getCanvas().style.cursor = 'pointer'
-        const feats = (e as { features?: { geometry: unknown; properties: Record<string, unknown> }[] }).features
-        if (feats?.length) {
-          const coords = (feats[0].geometry as GeoJSON.Point).coordinates as [number, number]
-          const props = feats[0].properties ?? {}
-          const label = isZhRef.current
-            ? (props.name ?? '') as string
-            : (props.nameEn ?? props.name ?? '') as string
-          hoverPopup.setLngLat(coords).setText(label).addTo(map)
-        }
-      })
-      map.on('mouseleave', 'camps-layer', () => {
-        map.getCanvas().style.cursor = ''
-        hoverPopup.remove()
-      })
+      if (!previewMode) {
+        // Hover: cursor + name popup
+        map.on('mouseenter', 'camps-layer', (e) => {
+          map.getCanvas().style.cursor = 'pointer'
+          const feats = (e as { features?: { geometry: unknown; properties: Record<string, unknown> }[] }).features
+          if (feats?.length) {
+            const coords = (feats[0].geometry as GeoJSON.Point).coordinates as [number, number]
+            const props = feats[0].properties ?? {}
+            const label = isZhRef.current
+              ? (props.name ?? '') as string
+              : (props.nameEn ?? props.name ?? '') as string
+            hoverPopup.setLngLat(coords).setText(label).addTo(map)
+          }
+        })
+        map.on('mouseleave', 'camps-layer', () => {
+          map.getCanvas().style.cursor = ''
+          hoverPopup.remove()
+        })
 
-      // Click regular camp — suppress background dismiss, show tooltip only
-      map.on('click', 'camps-layer', () => {
-        suppressClick.current = true
-      })
+        // Click regular camp — suppress background dismiss, show tooltip only
+        map.on('click', 'camps-layer', () => {
+          suppressClick.current = true
+        })
 
-      // Background click — close detail panel
-      map.on('click', () => {
-        if (suppressClick.current) { suppressClick.current = false; return }
-        onMapClickRef.current?.()
-      })
+        // Background click — close detail panel
+        map.on('click', () => {
+          if (suppressClick.current) { suppressClick.current = false; return }
+          onMapClickRef.current?.()
+        })
 
-      // ── Map controls ──────────────────────────────────────────────────
-      map.addControl(new NavigationControl({ showCompass: false }), 'top-left')
-      map.addControl(new ScaleControl({ unit: 'metric' }), 'bottom-left')
+        // ── Map controls ──────────────────────────────────────────────────
+        map.addControl(new NavigationControl({ showCompass: false }), 'top-left')
+        map.addControl(new ScaleControl({ unit: 'metric' }), 'bottom-left')
+      }
 
       // ── VESSEL HQ star ────────────────────────────────────────────────
       // Declared here, added to map AFTER showcase markers so it sits on top
       // in DOM order and is never covered by any showcase pin.
       const hqWrapper = document.createElement('div')
-      hqWrapper.style.cssText = 'width:36px;height:36px;cursor:pointer;z-index:9999;'
+      hqWrapper.style.cssText = `width:36px;height:36px;cursor:${previewMode ? 'default' : 'pointer'};z-index:9999;`
       hqWrapper.innerHTML = `
         <svg class="vessel-hq-star" width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
           <polygon points="18,2 22.8,13.2 35,13.2 25,21.4 28.5,33 18,26 7.5,33 11,21.4 1,13.2 13.2,13.2"
@@ -480,22 +485,24 @@ export default function GlobalMapML({
         return `<div class="vessel-hq-popup-name">${name}</div><div class="vessel-hq-popup-addr">${addr}</div>`
       }
 
-      hqWrapper.addEventListener('mouseenter', () => {
-        const map = mapRef.current
-        if (!map) return
-        hqPopup.setLngLat([HQ.lng, HQ.lat]).setHTML(getHqPopupHtml()).addTo(map)
-      })
-      hqWrapper.addEventListener('mouseleave', () => {
-        hqPopup.remove()
-      })
-      hqWrapper.addEventListener('click', (ev) => {
-        ev.stopPropagation()
-        const map = mapRef.current
-        if (!map) return
-        if (!hqPopup.isOpen()) {
+      if (!previewMode) {
+        hqWrapper.addEventListener('mouseenter', () => {
+          const map = mapRef.current
+          if (!map) return
           hqPopup.setLngLat([HQ.lng, HQ.lat]).setHTML(getHqPopupHtml()).addTo(map)
-        }
-      })
+        })
+        hqWrapper.addEventListener('mouseleave', () => {
+          hqPopup.remove()
+        })
+        hqWrapper.addEventListener('click', (ev) => {
+          ev.stopPropagation()
+          const map = mapRef.current
+          if (!map) return
+          if (!hqPopup.isOpen()) {
+            hqPopup.setLngLat([HQ.lng, HQ.lat]).setHTML(getHqPopupHtml()).addTo(map)
+          }
+        })
+      }
 
       // ── Zoom-responsive scale for showcase pins ───────────────────────
       // Maps zoom level → CSS scale factor for the inner pin element.
@@ -530,10 +537,14 @@ export default function GlobalMapML({
         wrap.appendChild(pin)
         showcasePins.push(pin)
 
-        pin.addEventListener('click', (ev) => {
-          ev.stopPropagation()
-          onShowcaseSelectRef.current?.(marker)
-        })
+        if (previewMode) {
+          pin.style.cursor = 'default'
+        } else {
+          pin.addEventListener('click', (ev) => {
+            ev.stopPropagation()
+            onShowcaseSelectRef.current?.(marker)
+          })
+        }
 
         const showcasePopup = new Popup({
           closeButton: false,
@@ -542,17 +553,19 @@ export default function GlobalMapML({
           className: 'vessel-camp-popup',
         })
 
-        pin.addEventListener('mouseenter', () => {
-          map.getCanvas().style.cursor = 'pointer'
-          showcasePopup
-            .setLngLat(marker.coordinates)
-            .setText(marker.name[isZhRef.current ? 'zh' : 'en'])
-            .addTo(map)
-        })
-        pin.addEventListener('mouseleave', () => {
-          map.getCanvas().style.cursor = ''
-          showcasePopup.remove()
-        })
+        if (!previewMode) {
+          pin.addEventListener('mouseenter', () => {
+            map.getCanvas().style.cursor = 'pointer'
+            showcasePopup
+              .setLngLat(marker.coordinates)
+              .setText(marker.name[isZhRef.current ? 'zh' : 'en'])
+              .addTo(map)
+          })
+          pin.addEventListener('mouseleave', () => {
+            map.getCanvas().style.cursor = ''
+            showcasePopup.remove()
+          })
+        }
 
         new Marker({ element: wrap, anchor: 'center' })
           .setLngLat(marker.coordinates)
@@ -577,7 +590,7 @@ export default function GlobalMapML({
       map.remove()
       mapRef.current = null
     }
-  }, [showcaseMarkers])
+  }, [previewMode, showcaseMarkers])
 
   // ── Language switching ────────────────────────────────────────────────
   useEffect(() => {
@@ -644,7 +657,7 @@ export default function GlobalMapML({
       : 'Map style failed to load. Please retry shortly.'
 
   return (
-    <div style={{ position: 'relative', height: '100%', width: '100%', background: '#241F1B' }}>
+    <div style={{ position: 'relative', height: '100%', width: '100%', background: '#241F1B', pointerEvents: previewMode ? 'none' : 'auto' }}>
       <div
         ref={containerRef}
         style={{ height: '100%', width: '100%', background: '#241F1B' }}
@@ -659,7 +672,7 @@ export default function GlobalMapML({
           alignItems: 'center',
           justifyContent: 'center',
           opacity: mapReady && !loadError ? 0 : 1,
-          pointerEvents: mapReady && !loadError ? 'none' : 'auto',
+          pointerEvents: previewMode || (mapReady && !loadError) ? 'none' : 'auto',
           transition: 'opacity 400ms ease-out',
           zIndex: 50,
           padding: '0 24px',
