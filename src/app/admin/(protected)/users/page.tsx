@@ -1,4 +1,5 @@
 import { auth } from '@/auth'
+import { redirect } from 'next/navigation'
 import { listUsers, getUserSummary } from '@/lib/users-db'
 import { ADMIN_EMAIL_WHITELIST } from '@/lib/admin-whitelist'
 import UsersClient from '@/components/admin/UsersClient'
@@ -11,6 +12,9 @@ export default async function UsersPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const [sp, session] = await Promise.all([searchParams, auth()])
+  if (session?.user?.role !== 'admin') {
+    redirect('/admin?error=forbidden')
+  }
   const getStr = (k: string) => {
     const v = sp[k]
     return Array.isArray(v) ? v[0] : v

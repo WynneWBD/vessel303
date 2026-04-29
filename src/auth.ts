@@ -7,7 +7,7 @@ import { pool } from '@/lib/db'
 import { isAdminEmail } from '@/lib/admin-whitelist'
 import authConfig from './auth.config'
 
-export type UserRole = 'user' | 'admin'
+export type UserRole = 'user' | 'operator' | 'admin'
 export type UserIdentity = 'buyer' | 'investor' | 'agent' | 'individual'
 
 declare module 'next-auth' {
@@ -122,11 +122,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return true
     },
 
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id
         token.role = user.role
         token.identity = user.identity
+        return token
+      }
+
+      if (token.id) {
+        try {
+          const { rows } = await pool.query<{
+            role: UserRole
+            identity: UserIdentity | null
+            disabled: boolean
+          }>(
+            'SELECT role, identity, disabled FROM users WHERE id = $1',
+            [token.id],
+          )
+          if (rows[0]) {
+            token.role = rows[0].disabled ? 'user' : rows[0].role
+            token.identity = rows[0].identity
+          }
+        } catch (err) {
+          console.error('[auth] jwt role refresh failed', err)
+        }
       }
       return token
     },

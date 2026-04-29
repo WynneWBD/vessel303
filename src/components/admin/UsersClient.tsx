@@ -66,9 +66,9 @@ function formatDate(ts: string | null) {
 }
 
 function roleBadgeClass(role: UserRole) {
-  return role === 'admin'
-    ? 'bg-[#E36F2C]/20 text-[#E36F2C] border-[#E36F2C]/30'
-    : 'bg-gray-600/20 text-gray-400 border-gray-600/30'
+  if (role === 'admin') return 'bg-[#E36F2C]/20 text-[#E36F2C] border-[#E36F2C]/30'
+  if (role === 'operator') return 'bg-blue-600/20 text-blue-500 border-blue-600/30'
+  return 'bg-gray-600/20 text-gray-400 border-gray-600/30'
 }
 
 function identityBadgeClass(identity: UserIdentity | null) {
@@ -212,7 +212,7 @@ export default function UsersClient({
             用户管理
           </h1>
           <div className="text-xs text-[#8A8580]">
-            共 {summary.total} 个用户 · 管理员 {summary.admins} 个 · 已禁用{' '}
+            共 {summary.total} 个用户 · 管理员 {summary.admins} 个 · 运营 {summary.operators} 个 · 已禁用{' '}
             {summary.disabled} 个
           </div>
         </div>
@@ -230,6 +230,7 @@ export default function UsersClient({
         >
           <option value="all">角色:全部</option>
           <option value="admin">admin</option>
+          <option value="operator">operator</option>
           <option value="user">user</option>
         </Select>
         <Select
@@ -348,12 +349,15 @@ export default function UsersClient({
         {loading && <span>加载中…</span>}
       </div>
 
-      <UserDetailSheet
-        user={selected}
-        currentUserId={currentUserId}
-        onClose={() => setSelected(null)}
-        onSave={handleSave}
-      />
+      {selected ? (
+        <UserDetailSheet
+          key={selected.id}
+          user={selected}
+          currentUserId={currentUserId}
+          onClose={() => setSelected(null)}
+          onSave={handleSave}
+        />
+      ) : null}
     </div>
   )
 }
@@ -364,7 +368,7 @@ function UserDetailSheet({
   onClose,
   onSave,
 }: {
-  user: UserWithFlag | null
+  user: UserWithFlag
   currentUserId: string
   onClose: () => void
   onSave: (
@@ -372,9 +376,9 @@ function UserDetailSheet({
     patch: { role: UserRole; identity: string; disabled: boolean },
   ) => Promise<void>
 }) {
-  const [role, setRole] = useState<UserRole>('user')
-  const [identity, setIdentity] = useState<string>('null')
-  const [disabled, setDisabled] = useState(false)
+  const [role, setRole] = useState<UserRole>(user.role)
+  const [identity, setIdentity] = useState<string>(user.identity ?? 'null')
+  const [disabled, setDisabled] = useState(user.disabled)
   const [saving, setSaving] = useState(false)
   const [stats, setStats] = useState<{ leads_count: number; news_count: number }>({
     leads_count: 0,
@@ -382,11 +386,6 @@ function UserDetailSheet({
   })
 
   useEffect(() => {
-    if (!user) return
-    setRole(user.role)
-    setIdentity(user.identity ?? 'null')
-    setDisabled(user.disabled)
-    // Fetch stats alongside
     fetch(`/api/admin/users/${user.id}`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -399,7 +398,6 @@ function UserDetailSheet({
   const isWhitelisted = !!user?.is_whitelisted
 
   const handleSave = async () => {
-    if (!user) return
     setSaving(true)
     await onSave(user, { role, identity, disabled })
     setSaving(false)
@@ -462,6 +460,7 @@ function UserDetailSheet({
                   disabled={isWhitelisted || isSelf}
                 >
                   <option value="user">user</option>
+                  <option value="operator">operator / 运营</option>
                   <option value="admin">admin</option>
                 </Select>
                 {isWhitelisted && (
@@ -566,4 +565,3 @@ function Field({ label, value }: { label: string; value: string | null }) {
     </div>
   )
 }
-

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAdmin } from '@/lib/auth-check'
+import { requireSuperAdmin } from '@/lib/auth-check'
 import { isAdminEmail } from '@/lib/admin-whitelist'
 import { logAdminAction } from '@/lib/leads-db'
 import {
@@ -20,7 +20,7 @@ export async function GET(
   _req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
 ) {
-  const admin = await requireAdmin()
+  const admin = await requireSuperAdmin()
   if (admin instanceof Response) return admin
 
   const { id } = await ctx.params
@@ -35,7 +35,7 @@ export async function GET(
 }
 
 const patchSchema = z.object({
-  role: z.enum(['user', 'admin']).optional(),
+  role: z.enum(['user', 'operator', 'admin']).optional(),
   identity: z.enum(IDENTITY_OR_NULL).nullable().optional(),
   disabled: z.boolean().optional(),
 })
@@ -44,7 +44,7 @@ export async function PATCH(
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
 ) {
-  const admin = await requireAdmin()
+  const admin = await requireSuperAdmin()
   if (admin instanceof Response) return admin
 
   const { id } = await ctx.params

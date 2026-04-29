@@ -13,6 +13,8 @@ import {
   Shield,
   Users,
 } from 'lucide-react'
+import { redirect } from 'next/navigation'
+import { auth } from '@/auth'
 import { ADMIN_EMAIL_WHITELIST } from '@/lib/admin-whitelist'
 import { pool } from '@/lib/db'
 import { countLeadsByStatus } from '@/lib/leads-db'
@@ -139,6 +141,11 @@ async function getRecentLogs(): Promise<AdminLogRow[]> {
 }
 
 export default async function SettingsPage() {
+  const session = await auth()
+  if (session?.user?.role !== 'admin') {
+    redirect('/admin?error=forbidden')
+  }
+
   const [dbHealth, userSummary, newLeads, newsSummary, uploadCount, uploadBytes, logs, siteSettings, settingsMeta] =
     await Promise.all([
       checkDb(),

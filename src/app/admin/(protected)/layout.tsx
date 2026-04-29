@@ -23,20 +23,23 @@ export default async function ProtectedAdminLayout({
     redirect('/admin/login')
   }
 
-  if (session.user.role !== 'admin') {
+  const role = session.user.role
+  if (role !== 'admin' && role !== 'operator') {
     redirect('/admin/login?error=unauthorized')
   }
 
   const email = session.user.email ?? ''
+  const adminRole: 'admin' | 'operator' = role
+  const isSuperAdmin = adminRole === 'admin'
   const [leadBadge, userBadge, mediaBadge, newsSummary, productSummary, projectSummary] = await Promise.all([
     countLeadsByStatus('new').catch((err) => {
       console.error('[layout] count new leads failed', err)
       return 0
     }),
-    countUsers({ identity: 'null' }).catch((err) => {
+    isSuperAdmin ? countUsers({ identity: 'null' }).catch((err) => {
       console.error('[layout] count untagged users failed', err)
       return 0
-    }),
+    }) : Promise.resolve(0),
     countUploads().catch((err) => {
       console.error('[layout] count uploads failed', err)
       return 0
@@ -58,6 +61,7 @@ export default async function ProtectedAdminLayout({
   return (
     <AdminShell
       email={email}
+      role={adminRole}
       leadBadge={leadBadge}
       userBadge={userBadge}
       mediaBadge={mediaBadge}

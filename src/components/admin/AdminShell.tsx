@@ -24,18 +24,19 @@ type MenuItem = {
   Icon: LucideIcon
   title: string
   badge?: string
+  superAdminOnly?: boolean
 }
 
 const menuItems: MenuItem[] = [
   { label: '概览', href: '/admin', Icon: LayoutDashboard, title: '概览 Dashboard' },
   { label: '线索管理', href: '/admin/leads', Icon: Inbox, title: '线索管理 Leads' },
-  { label: '用户管理', href: '/admin/users', Icon: Users, title: '用户管理 Users' },
+  { label: '用户管理', href: '/admin/users', Icon: Users, title: '用户管理 Users', superAdminOnly: true },
   { label: '页面模块', href: '/admin/pages', Icon: LayoutTemplate, title: '页面模块 Pages' },
   { label: '新闻管理', href: '/admin/news', Icon: Newspaper, title: '新闻管理 News' },
   { label: '产品管理', href: '/admin/products', Icon: Package, title: '产品管理 Products' },
   { label: '项目案例', href: '/admin/projects', Icon: MapPinned, title: '项目案例 Projects' },
   { label: '图片库', href: '/admin/media', Icon: ImageIcon, title: '图片库 Media' },
-  { label: '设置', href: '/admin/settings', Icon: Settings, title: '设置 Settings' },
+  { label: '设置', href: '/admin/settings', Icon: Settings, title: '设置 Settings', superAdminOnly: true },
 ]
 
 function isActive(pathname: string, href: string) {
@@ -50,6 +51,7 @@ function clampBadge(n: number): string {
 
 export default function AdminShell({
   email,
+  role,
   leadBadge = 0,
   userBadge = 0,
   mediaBadge = 0,
@@ -59,6 +61,7 @@ export default function AdminShell({
   children,
 }: {
   email: string
+  role: 'admin' | 'operator'
   leadBadge?: number
   userBadge?: number
   mediaBadge?: number
@@ -68,7 +71,8 @@ export default function AdminShell({
   children: React.ReactNode
 }) {
   const pathname = usePathname() ?? '/admin'
-  const current = menuItems.find((m) => isActive(pathname, m.href))
+  const visibleMenuItems = menuItems.filter((item) => role === 'admin' || !item.superAdminOnly)
+  const current = visibleMenuItems.find((m) => isActive(pathname, m.href))
   const headerTitle = current?.title ?? '概览 Dashboard'
 
   const badgeFor = (href: string): string | undefined => {
@@ -112,7 +116,7 @@ export default function AdminShell({
 
         {/* Nav */}
         <nav className="flex flex-col flex-1 py-3">
-          {menuItems.map((item) => {
+          {visibleMenuItems.map((item) => {
             const active = isActive(pathname, item.href)
             const badge = badgeFor(item.href)
             return (
@@ -181,6 +185,12 @@ export default function AdminShell({
 
         {/* Logout */}
         <div className="p-3" style={{ borderTop: '1px solid #E5DED4' }}>
+          <div className="mb-3 rounded-md border border-[#E5DED4] bg-[#F5F2ED] px-3 py-2">
+            <div className="text-xs font-semibold text-[#2C2A28]">
+              {role === 'admin' ? '总管理' : '运营'}
+            </div>
+            <div className="mt-1 truncate text-xs text-[#8A8580]">{email}</div>
+          </div>
           <form action={logoutAction}>
             <button
               type="submit"

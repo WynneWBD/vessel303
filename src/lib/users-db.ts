@@ -1,6 +1,6 @@
 import { pool } from '@/lib/db'
 
-export type UserRole = 'user' | 'admin'
+export type UserRole = 'user' | 'operator' | 'admin'
 export type UserIdentity = 'buyer' | 'investor' | 'agent' | 'individual'
 
 export type AdminUserRow = {
@@ -166,6 +166,7 @@ export async function countUsers(filter: UserFilter) {
 export type UserSummary = {
   total: number
   admins: number
+  operators: number
   disabled: number
   untagged: number
 }
@@ -174,12 +175,14 @@ export async function getUserSummary(): Promise<UserSummary> {
   const res = await pool.query<{
     total: string
     admins: string
+    operators: string
     disabled: string
     untagged: string
   }>(
     `SELECT
        COUNT(*)::text                                         AS total,
        COUNT(*) FILTER (WHERE role = 'admin')::text           AS admins,
+       COUNT(*) FILTER (WHERE role = 'operator')::text        AS operators,
        COUNT(*) FILTER (WHERE disabled = true)::text          AS disabled,
        COUNT(*) FILTER (WHERE identity IS NULL)::text         AS untagged
      FROM users`,
@@ -188,6 +191,7 @@ export async function getUserSummary(): Promise<UserSummary> {
   return {
     total: parseInt(r?.total ?? '0', 10),
     admins: parseInt(r?.admins ?? '0', 10),
+    operators: parseInt(r?.operators ?? '0', 10),
     disabled: parseInt(r?.disabled ?? '0', 10),
     untagged: parseInt(r?.untagged ?? '0', 10),
   }

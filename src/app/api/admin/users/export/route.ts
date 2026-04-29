@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { requireAdmin } from '@/lib/auth-check'
+import { requireSuperAdmin } from '@/lib/auth-check'
 import { exportUsers } from '@/lib/users-db'
 
 export const dynamic = 'force-dynamic'
@@ -12,7 +12,7 @@ function csvEscape(val: unknown): string {
 }
 
 export async function GET(req: NextRequest) {
-  const admin = await requireAdmin()
+  const admin = await requireSuperAdmin()
   if (admin instanceof Response) return admin
 
   const sp = req.nextUrl.searchParams

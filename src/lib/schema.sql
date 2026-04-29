@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS users (
   email       TEXT        UNIQUE NOT NULL,
   image       TEXT,
   password    TEXT,                          -- NULL for OAuth-only users
-  role        TEXT        NOT NULL DEFAULT 'individual',  -- 'buyer' | 'agent' | 'individual'
+  role        TEXT        NOT NULL DEFAULT 'user',        -- 'user' | 'operator' | 'admin'
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

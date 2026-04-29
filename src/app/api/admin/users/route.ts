@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth-check'
+import { requireSuperAdmin } from '@/lib/auth-check'
 import { listUsers } from '@/lib/users-db'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const admin = await requireAdmin()
+  const admin = await requireSuperAdmin()
   if (admin instanceof Response) return admin
 
   const sp = req.nextUrl.searchParams

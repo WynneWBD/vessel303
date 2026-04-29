@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAdmin } from '@/lib/auth-check'
+import { requireSuperAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
 import { getSiteSettings, updateSiteSettings } from '@/lib/admin-settings-db'
 
@@ -25,7 +25,7 @@ const settingsSchema = z.object({
 })
 
 export async function GET() {
-  const admin = await requireAdmin()
+  const admin = await requireSuperAdmin()
   if (admin instanceof Response) return admin
 
   const settings = await getSiteSettings()
@@ -33,7 +33,7 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
-  const admin = await requireAdmin()
+  const admin = await requireSuperAdmin()
   if (admin instanceof Response) return admin
 
   let body: unknown
