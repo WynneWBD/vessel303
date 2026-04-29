@@ -264,6 +264,14 @@ Auth.js v5 使用 split config：
 - 白名单管理员不能被误降级。
 - Auth JWT callback 会从数据库刷新用户 `role` / `identity` / `disabled`，确保角色调整或禁用后不会长期依赖旧 token。
 
+后台登录规则：
+
+- `/admin/login` 使用邮箱 + 密码作为主登录方式，Google 登录作为备用。
+- 不再使用邮箱魔法链接作为后台主入口；邮件送达不稳定时会锁住后台。
+- 邮箱密码登录走 Auth.js `credentials` provider，密码存储在 `users.password`，必须是 bcrypt hash。
+- 后台访问权限仍由服务端 `role` 判断，普通 `user` 即使能登录前台也不能进入后台。
+- 给现有管理员设置或重置密码时，用 `scripts/set-admin-password.js`，不要手写明文 SQL 更新密码。
+
 前台注册与身份规则：
 
 - `users.role` 是后台权限角色，只能表示 `user` / `operator` / `admin`。
