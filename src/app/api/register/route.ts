@@ -11,7 +11,7 @@ const schema = z.object({
     .min(8, '密码至少8位')
     .regex(/[a-zA-Z]/, '密码需包含字母')
     .regex(/[0-9]/, '密码需包含数字'),
-  identity: z.enum(['buyer', 'agent', 'individual'], {
+  identity: z.enum(['buyer', 'investor', 'agent', 'individual'], {
     message: '请选择有效身份',
   }),
 });

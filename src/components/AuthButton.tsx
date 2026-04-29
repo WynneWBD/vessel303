@@ -8,6 +8,7 @@ import { i18n } from '@/lib/i18n';
 
 const ROLE_LABELS: Record<string, { en: string; zh: string }> = {
   buyer:      { en: 'Buyer',      zh: '采购商' },
+  investor:   { en: 'Investor',   zh: '投资方' },
   agent:      { en: 'Agent',      zh: '代理商' },
   individual: { en: 'Individual', zh: '个人' },
 };

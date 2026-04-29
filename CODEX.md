@@ -264,6 +264,14 @@ Auth.js v5 使用 split config：
 - 白名单管理员不能被误降级。
 - Auth JWT callback 会从数据库刷新用户 `role` / `identity` / `disabled`，确保角色调整或禁用后不会长期依赖旧 token。
 
+前台注册与身份规则：
+
+- `users.role` 是后台权限角色，只能表示 `user` / `operator` / `admin`。
+- `users.identity` 是前台客户身份，表示 `buyer` / `investor` / `agent` / `individual`。
+- 注册页和注册 API 必须提交/校验 `identity`，不要再把前台客户身份命名为 `role`。
+- Google 新用户不要默认写成 `individual`；首次 Google 注册后进入 `/register/complete` 补全 `identity`。
+- `/api/register/profile` 只允许当前登录用户补全自己的 `identity`。
+
 ## Vercel Blob 上传规则
 
 Vercel Serverless 有 4.5MB request body 限制。大文件不能直接通过普通 API route body 上传。

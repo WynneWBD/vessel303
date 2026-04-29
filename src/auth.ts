@@ -87,7 +87,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         await pool.query(
           `INSERT INTO users (email, name, image, role, identity)
-           VALUES ($1, $2, $3, $4, 'individual')
+           VALUES ($1, $2, $3, $4, NULL)
            ON CONFLICT (email) DO UPDATE
              SET name     = COALESCE(EXCLUDED.name,  users.name),
                  image    = COALESCE(EXCLUDED.image, users.image),

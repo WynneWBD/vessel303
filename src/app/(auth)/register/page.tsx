@@ -7,19 +7,20 @@ import { signIn } from 'next-auth/react';
 import { useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
 
-type Role = 'buyer' | 'agent' | 'individual';
+type Identity = 'buyer' | 'investor' | 'agent' | 'individual';
 
 export default function RegisterPage() {
   const t = useT();
   const router = useRouter();
 
-  const ROLES: { value: Role; label: string; desc: string }[] = [
-    { value: 'buyer' as Role, label: t(i18n.auth.roleBuyer), desc: t(i18n.auth.roleBuyerDesc) },
-    { value: 'agent' as Role, label: t(i18n.auth.roleAgent), desc: t(i18n.auth.roleAgentDesc) },
-    { value: 'individual' as Role, label: t(i18n.auth.roleIndividual), desc: t(i18n.auth.roleIndividualDesc) },
+  const IDENTITIES: { value: Identity; label: string; desc: string }[] = [
+    { value: 'buyer', label: t(i18n.auth.roleBuyer), desc: t(i18n.auth.roleBuyerDesc) },
+    { value: 'investor', label: t(i18n.auth.roleInvestor), desc: t(i18n.auth.roleInvestorDesc) },
+    { value: 'agent', label: t(i18n.auth.roleAgent), desc: t(i18n.auth.roleAgentDesc) },
+    { value: 'individual', label: t(i18n.auth.roleIndividual), desc: t(i18n.auth.roleIndividualDesc) },
   ];
 
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: '' as Role | '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', identity: '' as Identity | '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -31,7 +32,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
 
-    if (!form.role) {
+    if (!form.identity) {
       setError(t(i18n.auth.roleError));
       return;
     }
@@ -70,7 +71,7 @@ export default function RegisterPage() {
   }
 
   async function handleGoogle() {
-    await signIn('google', { callbackUrl: '/' });
+    await signIn('google', { callbackUrl: '/register/complete' });
   }
 
   return (
@@ -109,19 +110,19 @@ export default function RegisterPage() {
           {/* Role selection */}
           <div>
             <label className="block text-[#8A7D74] text-xs tracking-wider mb-2">{t(i18n.auth.roleLabel)}</label>
-            <div className="grid grid-cols-3 gap-2">
-              {ROLES.map(r => (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {IDENTITIES.map(r => (
                 <button
                   key={r.value}
                   type="button"
-                  onClick={() => set('role', r.value)}
+                  onClick={() => set('identity', r.value)}
                   className={`border p-3 text-left transition-all duration-150 ${
-                    form.role === r.value
+                    form.identity === r.value
                       ? 'border-[#E36F2C] bg-[#E36F2C]/8'
                       : 'border-[#E5DED4] hover:border-[#C4B9AB]'
                   }`}
                 >
-                  <div className={`text-xs font-bold tracking-wider mb-0.5 ${form.role === r.value ? 'text-[#E36F2C]' : 'text-[#6B625B]'}`}>
+                  <div className={`text-xs font-bold tracking-wider mb-0.5 ${form.identity === r.value ? 'text-[#E36F2C]' : 'text-[#6B625B]'}`}>
                     {r.label}
                   </div>
                   <div className="text-[#8A7D74] text-[10px] leading-tight">{r.desc}</div>
