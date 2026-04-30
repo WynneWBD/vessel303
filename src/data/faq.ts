@@ -33,7 +33,7 @@ export const FAQ_DATA: FaqItem[] = [
     category: 'Product & Materials',
     category_zh: '产品与材料',
     question_en: 'How many product models does VESSEL offer?',
-    answer_en: 'VESSEL currently offers five flagship models: V9 Gen6 (38.8㎡, full kitchen + living + bedroom); E7 Gen6 (38.8㎡, industry-pioneering one-bedroom-one-living layout); E6 Gen6 (29.6㎡, 4-zone star model); E3 Gen6 (19㎡, ultra-compact, two units per truck); and S5 Gen5 (28㎡, the original space-themed icon with 3.3m panoramic balcony and starlight skylight). Each model is available in base and Pro configurations, with custom variants for specific regional standards.',
+    answer_en: 'VESSEL currently offers five flagship models: V9 Gen6 (38.8㎡, full kitchen + living + bedroom); E7 Gen6 (38.8㎡, one-bedroom-one-living layout); E6 Gen6 (29.6㎡, 4-zone star model); E3 Gen6 (19㎡, ultra-compact, two units per truck); and S5 Gen5 (28㎡, the original space-themed icon with 3.3m panoramic balcony and starlight skylight). Each model is available in base and Pro configurations, with custom variants for specific regional standards.',
     question_zh: 'VESSEL 提供多少款产品型号？',
     answer_zh: 'VESSEL 目前提供五款旗舰型号：V9 Gen6（38.8㎡，全厨房+客厅+卧室）；E7 Gen6（38.8㎡，行业首创一室一厅格局）；E6 Gen6（29.6㎡，四分区明星款）；E3 Gen6（19㎡，超紧凑型，两台一车）；S5 Gen5（28㎡，太空主题经典款，3.3m 全景阳台+星光天窗）。每款均提供标准版和 Pro 版配置，并有针对特定地区标准的定制版本。',
   },

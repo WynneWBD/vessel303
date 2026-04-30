@@ -4,6 +4,7 @@ import "./globals.css";
 import SessionProviderWrapper from "@/components/SessionProviderWrapper";
 import ImageProtection from "@/components/ImageProtection";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { DEFAULT_OG_IMAGE, DEFAULT_SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -20,15 +21,23 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "VESSEL® | Smart Prefab Architecture for Tourism Resorts",
-  description: "VESSEL® — EU+US certified smart prefab architecture. 300+ projects, 30+ countries. E7/E6/V9 Gen6 luxury camp resort solutions.",
+  description: DEFAULT_SITE_DESCRIPTION,
   keywords: "prefab architecture,modular building,tourism resort,VESSEL,camp resort,smart building",
   openGraph: {
     title: "VESSEL® | Smart Prefab Architecture",
-    description: "EU+US Certified | 30+ Countries | 300+ Projects Delivered",
-    url: "https://vessel303.com",
-    siteName: "VESSEL®",
+    description: DEFAULT_SITE_DESCRIPTION,
+    url: '/',
+    siteName: SITE_NAME,
+    images: [{ url: DEFAULT_OG_IMAGE }],
     type: "website",
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'VESSEL® | Smart Prefab Architecture',
+    description: DEFAULT_SITE_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
   },
   icons: {
     icon: [

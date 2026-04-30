@@ -137,8 +137,8 @@ export const i18n = {
     philoLabel:       b('Our Philosophy', '品牌理念'),
     philoTitle:       b('Where Technology Disappears Into Landscape', '当科技消融于风景'),
     philoBody:        b(
-      'Since 2018, VESSEL has pioneered space-themed prefab architecture — merging futuristic design with the warmth of natural dwelling. Every unit ships complete from our factory, ready to inhabit the moment it touches ground.',
-      '自2018年创立以来，VESSEL 以科幻美学与自然栖居的融合开创了太空主题装配建筑品类。每一台产品从工厂出发时已是成品，落地即可入住。'
+      'Since 2018, VESSEL has focused on space-themed prefab architecture — merging futuristic design with the warmth of natural dwelling. Every unit ships complete from our factory, ready to inhabit the moment it touches ground.',
+      '自2018年创立以来，VESSEL 专注于科幻美学与自然栖居融合的太空主题装配建筑。每一台产品从工厂出发时已是成品，落地即可入住。'
     ),
 
     // === FLAGSHIP ===
@@ -241,17 +241,17 @@ export const i18n = {
   },
   about: {
     heroLabel:        b('About Us', '关于我们'),
-    heroTitleGold:    b('Founder of Luxury Camp Resorts', '高端度假营地开创者'),
+    heroTitleGold:    b('Luxury Camp Resort Solutions', '高端度假营地解决方案'),
     heroSubtitle:     b(
-      'Prefab technology leading the future of tourism dwelling, reshaping the boundaries of travel experience through architecture.',
-      '装配式科技领跑未来旅居，用建筑重塑文旅体验边界'
+      'Prefab technology for tourism dwelling, reshaping travel experiences through architecture.',
+      '以装配式科技服务未来旅居，用建筑重塑文旅体验边界'
     ),
     missionLabel:     b('Brand Mission', '品牌使命'),
     missionTitle1:    b('Luxury Camp Resort', '高端度假营地'),
     missionTitle2:    b('One-Stop Solution Provider', '一站式解决方案服务商'),
     missionMain:      b(
-      "VESSEL® is dedicated to becoming the one-stop solution provider for luxury camp resorts, leading China's innovative tourism category onto the global stage. Our products focus on the core values of smart prefab tourism architecture: rapid delivery, long-lasting durability, high aesthetics, and low maintenance cost.",
-      'VESSEL 微宿® 致力于成为高端度假营地一站式解决方案服务商，带领中国文旅创新品类走向全球。我们的产品专注于文旅智能装配建筑的本质价值：快速交付、经久耐用、高颜值、低运维成本。'
+      "VESSEL® is dedicated to becoming a one-stop solution provider for luxury camp resorts, supporting China's innovative tourism category in global markets. Our products focus on the core values of smart prefab tourism architecture: rapid delivery, long-lasting durability, high aesthetics, and low maintenance cost.",
+      'VESSEL 微宿® 致力于成为高端度假营地一站式解决方案服务商，推动中国文旅创新品类进入国际市场。我们的产品专注于文旅智能装配建筑的本质价值：快速交付、经久耐用、高颜值、低运维成本。'
     ),
     missionSub:       b(
       'Founded in 2018, we have served tourism developers in 30+ countries over 8 years, completing over 300 premium camp projects, earning industry-wide recognition.',
@@ -291,7 +291,7 @@ export const i18n = {
     timeline0:        b('303 Design Studio founded the VESSEL brand', '三零三设计工作室创立微宿品牌'),
     timeline1:        b('First prototype steel frame completed', '首台样板钢结构框架完成'),
     timeline2:        b('First production base established in Sanshui, Foshan', '佛山三水首家生产基地成立'),
-    timeline3:        b("World's first VESSEL prefab unit unveiled", '全球首台微宿装配式建筑面世'),
+    timeline3:        b('VESSEL prefab unit unveiled for commercial deployment', '微宿装配式建筑产品面向商业部署发布'),
     timeline4:        b('Products exported to Southeast Asia, entering international market', '产品出口东南亚，开拓国际市场'),
     timeline5:        b('Obtained EU CE certification, entering European market', '获欧盟 CE 建筑认证，进入欧洲市场'),
     timeline6:        b('Obtained US IBC certification, entering North American market', '获美国 IBC 建筑认证，进入北美市场'),
@@ -343,8 +343,8 @@ export const i18n = {
     founderCred3:     b('Former Architect at SOM, New York', '曾任职纽约 SOM 建筑师事务所'),
     founderCred4:     b('Founder & Chief Designer of VESSEL 微宿®', 'VESSEL 微宿® 品牌创始人兼总设计师'),
     founderBio:       b(
-      "With a solid international architecture background and deep understanding of China's tourism market, Wang Shuaibin founded VESSEL® in 2018, integrating industrial precision manufacturing with architectural aesthetics, pioneering a new category of premium prefab tourism architecture in China.",
-      '王帅斌以扎实的国际建筑学背景和对中国文旅市场的深刻理解，于 2018 年创立 VESSEL 微宿®，将工业化精密制造与建筑美学融为一体，开创了中国高端装配式文旅建筑的全新品类。'
+      "With a solid international architecture background and deep understanding of China's tourism market, Wang Shuaibin founded VESSEL® in 2018, integrating industrial precision manufacturing with architectural aesthetics for premium prefab tourism architecture in China.",
+      '王帅斌以扎实的国际建筑学背景和对中国文旅市场的深刻理解，于 2018 年创立 VESSEL 微宿®，将工业化精密制造与建筑美学融为一体，服务中国高端装配式文旅建筑。'
     ),
   },
   contact: {

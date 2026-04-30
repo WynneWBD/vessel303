@@ -29,7 +29,7 @@ const products = [
     weight: '约9吨',
     capacity: '2-4人',
     design_philosophy: '以飞船轮廓为灵感，流线外观传递速度与未来感。飞翼式门檐在入口处形成独特的遮阳廊道，红色轮廓灯与霓虹侧灯在夜间构筑科技感光影场景。',
-    badge: '畅销 No.1',
+    badge: '项目优选',
     image: '/images/e7-gen6.jpg',
     accent_color: '#E36F2C',
     price_display: '¥ 488,000 起',

@@ -391,8 +391,8 @@ export default function AboutPage() {
   const storyParagraphFallbacks = [
     {
       id: 'story-paragraph-01',
-      zh: 'VESSEL 微宿® 是高端度假营地开创者。我们以科幻感强烈的装配式舱体产品为特色，为全球文旅运营方提供一站式营地解决方案。自 2018 年创立，已在全国落地 300+ 项目，出口远销 30+ 国家，带领中国文旅创新品类"太空主题营地"走向全球。',
-      en: 'VESSEL® pioneered the space-themed luxury camp resort category. We design, manufacture and deliver sci-fi-inspired prefabricated cabins, offering a turnkey solution for resort operators worldwide. Since 2018 we have delivered 300+ projects across China and exported to 30+ countries, taking the space-themed resort — a new Chinese category of experiential tourism — to the global market.',
+      zh: 'VESSEL 微宿® 专注于高端度假营地解决方案。我们以科幻感强烈的装配式舱体产品为特色，为全球文旅运营方提供一站式营地解决方案。自 2018 年创立，已在全国落地 300+ 项目，出口远销 30+ 国家，推动中国文旅创新品类"太空主题营地"进入国际市场。',
+      en: 'VESSEL® focuses on space-themed luxury camp resort solutions. We design, manufacture and deliver sci-fi-inspired prefabricated cabins, offering a turnkey solution for resort operators worldwide. Since 2018 we have delivered 300+ projects across China and exported to 30+ countries, supporting the space-themed resort category in international markets.',
     },
     {
       id: 'story-paragraph-02',
@@ -401,8 +401,8 @@ export default function AboutPage() {
     },
     {
       id: 'story-paragraph-03',
-      zh: 'VESSEL 在文旅场景之外，也与头部企业共创，产品广泛应用于养老度假地产、城市移动商业、便民服务设施等多元场景。我们构建了 VIPC 整装预制、VIIE 智能交互、VOLS 离网系统三大核心技术体系，让每一台微宿都能独立面对全球的气候、运输、运营挑战。',
-      en: 'Beyond tourism, VESSEL® partners with leading enterprises on mixed-use deployments — senior resort real estate, urban mobile retail, and public amenity installations. Our three proprietary technology systems — VIPC, VIIE and VOLS — allow every unit to operate autonomously under diverse climates, logistics routes and operating models worldwide.',
+      zh: 'VESSEL 在文旅场景之外，也与知名企业共创，产品广泛应用于养老度假地产、城市移动商业、便民服务设施等多元场景。我们构建了 VIPC 整装预制、VIIE 智能交互、VOLS 离网系统三大核心技术体系，让每一台微宿都能独立面对全球的气候、运输、运营挑战。',
+      en: 'Beyond tourism, VESSEL® partners with established enterprises on mixed-use deployments — senior resort real estate, urban mobile retail, and public amenity installations. Our three proprietary technology systems — VIPC, VIIE and VOLS — allow every unit to operate autonomously under diverse climates, logistics routes and operating models worldwide.',
     },
   ];
   const storyParagraphs = storyParagraphFallbacks
@@ -601,7 +601,7 @@ export default function AboutPage() {
               itemById(heroItems, 'about-hero-subtitle'),
               zh,
               zh
-                ? '自 2018 年创立，已在全国落地 300+ 项目，出口远销 30+ 国家，带领中国文旅创新品类走向全球。'
+                ? '自 2018 年创立，已在全国落地 300+ 项目，出口远销 30+ 国家，推动中国文旅创新品类进入国际市场。'
                 : 'Since 2018 we have delivered 300+ projects across China and exported to 30+ countries, taking a new Chinese category of experiential tourism to the global market.',
             )}
           </p>
@@ -650,7 +650,7 @@ export default function AboutPage() {
                 {localText(
                   itemById(storyItems, 'story-heading'),
                   zh,
-                  zh ? '高端度假营地\n开创者' : 'Pioneer of the\nSpace-Themed\nLuxury Camp Resort',
+                  zh ? '高端度假营地\n解决方案' : 'Space-Themed\nLuxury Camp\nResort Solutions',
                 )}
               </h2>
             </Reveal>
@@ -950,15 +950,15 @@ export default function AboutPage() {
                 className="text-4xl sm:text-5xl font-bold text-[#241F1B]"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
               >
-                {localText(itemById(partnerItems, 'partners-heading'), zh, zh ? '与世界同行' : 'Building with\nthe Best')}
+                {localText(itemById(partnerItems, 'partners-heading'), zh, zh ? '与世界同行' : 'Building with\nPartners')}
               </h2>
               <p className="text-[#8A8580] text-sm max-w-xs leading-relaxed">
                 {localText(
                   itemById(partnerItems, 'partners-summary'),
                   zh,
                   zh
-                    ? '与全球知名品牌联合开发，共同引领智能居住前沿。'
-                    : 'Collaborating with world-leading brands to innovate at the frontier of smart living.',
+                    ? '与全球知名品牌联合开发，共同参与智能居住实践。'
+                    : 'Collaborating with established global brands on smart living solutions.',
                 )}
               </p>
             </div>
@@ -1025,8 +1025,8 @@ export default function AboutPage() {
                   itemById(founderItems, 'founder-bio'),
                   zh,
                   zh
-                    ? '王帅斌于 2018 年创立 VESSEL 微宿，以国际建筑师视野重新定义中国文旅行业。他持有英国邓迪大学建筑学硕士（RIBA Part II 认证）及美国圣路易斯华盛顿大学建筑学硕士学位，曾任职于纽约华尔街 SOM 建筑设计事务所。在他的带领下，微宿开创了"太空主题高端度假营地"品类，成长为出口 30 余国的全球知名品牌。'
-                    : 'Wang Shuaibin founded VESSEL in 2018, bringing an international architectural perspective to the cultural tourism industry. He holds Master of Architecture degrees from the University of Dundee (RIBA Part II) and Washington University in St. Louis, and previously worked at SOM Architects on Wall Street, New York City. Under his leadership, VESSEL pioneered the space-themed luxury camp resort category and has grown into a globally recognised brand with exports across 30+ countries.',
+                    ? '王帅斌于 2018 年创立 VESSEL 微宿，以国际建筑师视野参与中国文旅行业创新。他持有英国邓迪大学建筑学硕士（RIBA Part II 认证）及美国圣路易斯华盛顿大学建筑学硕士学位，曾任职于纽约华尔街 SOM 建筑设计事务所。在团队持续研发与全球项目交付中，微宿形成了"太空主题高端度假营地"解决方案，产品出口 30 余国。'
+                    : 'Wang Shuaibin founded VESSEL in 2018, bringing an international architectural perspective to the cultural tourism industry. He holds Master of Architecture degrees from the University of Dundee (RIBA Part II) and Washington University in St. Louis, and previously worked at SOM Architects on Wall Street, New York City. Through ongoing team R&D and global project delivery, VESSEL has developed space-themed luxury camp resort solutions with exports across 30+ countries.',
                 )}
               </p>
               <div className="flex flex-wrap gap-2">

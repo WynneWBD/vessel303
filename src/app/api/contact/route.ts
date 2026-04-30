@@ -115,7 +115,7 @@ function confirmationHtml(d: z.infer<typeof schema>) {
     <!-- Footer -->
     <div style="padding:16px 28px;border-top:1px solid #1a1a1a;text-align:center;">
       <p style="color:#444;font-size:11px;margin:0;line-height:1.6;">
-        VESSEL 微宿® · 高端度假营地开创者<br/>
+        VESSEL 微宿® · 高端度假营地解决方案<br/>
         广东省佛山市南海区狮山镇兴业北路253号 · vessel303.com
       </p>
     </div>
