@@ -7,20 +7,11 @@ import { signIn } from 'next-auth/react';
 import { useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
 
-type Identity = 'buyer' | 'investor' | 'agent' | 'individual';
-
 export default function RegisterPage() {
   const t = useT();
   const router = useRouter();
 
-  const IDENTITIES: { value: Identity; label: string; desc: string }[] = [
-    { value: 'buyer', label: t(i18n.auth.roleBuyer), desc: t(i18n.auth.roleBuyerDesc) },
-    { value: 'investor', label: t(i18n.auth.roleInvestor), desc: t(i18n.auth.roleInvestorDesc) },
-    { value: 'agent', label: t(i18n.auth.roleAgent), desc: t(i18n.auth.roleAgentDesc) },
-    { value: 'individual', label: t(i18n.auth.roleIndividual), desc: t(i18n.auth.roleIndividualDesc) },
-  ];
-
-  const [form, setForm] = useState({ name: '', email: '', password: '', identity: '' as Identity | '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -31,11 +22,6 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-
-    if (!form.identity) {
-      setError(t(i18n.auth.roleError));
-      return;
-    }
 
     setLoading(true);
 
@@ -71,7 +57,7 @@ export default function RegisterPage() {
   }
 
   async function handleGoogle() {
-    await signIn('google', { callbackUrl: '/register/complete' });
+    await signIn('google', { callbackUrl: '/' });
   }
 
   return (
@@ -107,30 +93,6 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Role selection */}
-          <div>
-            <label className="block text-[#8A7D74] text-xs tracking-wider mb-2">{t(i18n.auth.roleLabel)}</label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {IDENTITIES.map(r => (
-                <button
-                  key={r.value}
-                  type="button"
-                  onClick={() => set('identity', r.value)}
-                  className={`border p-3 text-left transition-all duration-150 ${
-                    form.identity === r.value
-                      ? 'border-[#E36F2C] bg-[#E36F2C]/8'
-                      : 'border-[#E5DED4] hover:border-[#C4B9AB]'
-                  }`}
-                >
-                  <div className={`text-xs font-bold tracking-wider mb-0.5 ${form.identity === r.value ? 'text-[#E36F2C]' : 'text-[#6B625B]'}`}>
-                    {r.label}
-                  </div>
-                  <div className="text-[#8A7D74] text-[10px] leading-tight">{r.desc}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div>
             <label className="block text-[#8A7D74] text-xs tracking-wider mb-1.5">{t(i18n.auth.nameLabel)}</label>
             <input

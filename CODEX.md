@@ -275,10 +275,11 @@ Auth.js v5 使用 split config：
 前台注册与身份规则：
 
 - `users.role` 是后台权限角色，只能表示 `user` / `operator` / `admin`。
-- `users.identity` 是前台客户身份，表示 `buyer` / `investor` / `agent` / `individual`。
-- 注册页和注册 API 必须提交/校验 `identity`，不要再把前台客户身份命名为 `role`。
-- Google 新用户不要默认写成 `individual`；首次 Google 注册后进入 `/register/complete` 补全 `identity`。
-- `/api/register/profile` 只允许当前登录用户补全自己的 `identity`。
+- 前台新注册用户默认都是普通会员：`role = 'user'`。
+- 注册页和 `/api/register` 不再让用户选择或提交 `identity`，也不要把 `agent` / `investor` 当成用户自选身份。
+- 为兼容当前数据库字段，注册 API 服务端仍显式写入 `identity = NULL`；以后价格权限或会员分层不要复用旧 `identity` 自选逻辑。
+- Google 新用户不再进入 `/register/complete` 补全身份；Auth callback 创建/更新用户后直接按普通会员返回首页，白名单管理员逻辑保持独立。
+- `/register/complete` 和 `/api/register/profile` 只是旧路径兼容，不应再承载前台身份选择。
 
 ## Vercel Blob 上传规则
 
