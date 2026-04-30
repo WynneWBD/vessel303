@@ -51,7 +51,7 @@ Wynne 已经把旧参考资料整理到 `参考文档/` 目录。它们是背景
 
 重要：这是 Next.js 16，不是旧版 Next.js。写框架相关代码前，必须读本地文档 `node_modules/next/dist/docs/` 中对应章节。
 
-Next 16 特别提醒：`middleware` 文件约定已经被标记为 deprecated，官方建议改为 `proxy`。本项目目前仍有 `src/middleware.ts`，不要在无关任务里顺手迁移。
+Next 16 特别提醒：`middleware` 文件约定已经被标记为 deprecated，官方建议使用 `proxy`。本项目已迁移到 `src/proxy.ts`，不要再新增或恢复 `src/middleware.ts`。
 
 ## 常用命令
 
@@ -396,9 +396,9 @@ Codex 默认工作方式：
 
 Auth.js v5 使用 split config：
 
-- `src/auth.config.ts`：给 middleware/proxy 用的极简配置，不做 DB 调用。
+- `src/auth.config.ts`：给 proxy 用的极简配置，不做 DB 调用。
 - `src/auth.ts`：服务端完整 auth，包含 DB callbacks。
-- `src/middleware.ts`：当前保护 `/admin/*` 登录状态。
+- `src/proxy.ts`：当前保护 `/admin/*` 登录状态。
 
 不要在 middleware/proxy 中 import `src/auth.ts`，会引发运行时兼容问题。
 
@@ -593,7 +593,6 @@ curl -I https://www.vessel303.com/news/<slug>
 
 - 将前台联系方式、SEO 默认值、外部跳转逐步接入 `/admin/settings` 的 `site_settings` 数据源。
 - 产品 CMS 下一阶段：增加高级详情模块、规格模板和批量图片排序能力，减少对固定精细页的依赖。
-- 评估是否把 `src/middleware.ts` 迁移到 Next 16 推荐的 `src/proxy.ts`。
 - 历史 lint 问题单独开任务清理，不要混在功能开发里。
 - 多对话并行完成后，由 06 文档对话统一整理阶段总结和 handoff，确认是否更新 `CODEX.md`；不要由功能开发对话顺手改接手文档。
 - 如果 Wynne 需要，再生成新的 V9 全量 handoff 文档。
