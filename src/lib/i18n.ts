@@ -20,6 +20,8 @@ export const i18n = {
     allCases:         b('All Cases →', '全部案例 →'),
     purchaseBtn:      b('Purchase Inquiry', '采购咨询'),
     bookingBtn:       b('Book a Camp', '预订营地'),
+    accountCenter:    b('Account Center', '个人中心'),
+    adminDashboard:   b('Admin Dashboard', '管理后台'),
     displayMode:      b('Showroom Mode', '展厅展示模式'),
     signOut:          b('Sign Out', '退出登录'),
     signIn:           b('Sign In', '登录'),
