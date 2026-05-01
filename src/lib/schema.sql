@@ -113,6 +113,11 @@ CREATE TABLE IF NOT EXISTS users (
   image       TEXT,
   password    TEXT,                          -- NULL for OAuth-only users
   role        TEXT        NOT NULL DEFAULT 'user',        -- 'user' | 'operator' | 'admin'
+  company     TEXT,
+  country     TEXT,
+  phone       TEXT,
+  whatsapp    TEXT,
+  preferred_language TEXT,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
