@@ -1,10 +1,16 @@
 # CODEX.md - vessel303.com Codex 接手文档
 
-最后更新：2026-04-30
+最后更新：2026-05-07
 
 这是 `vessel303.com` 给 Codex 使用的接手文档和操作指南。每次新对话或开始大改动时，先读 `AGENTS.md`，再读本文件。
 
 `CLAUDE.md` 是另一个模型留下的历史文档，里面仍然有有用的业务规则和事故记录，但当前 Codex 的工作入口以本文件为准。除非 Wynne 明确要求，不要主动修改 `CLAUDE.md`。
+
+当前开发指导以 Wynne 本机文档库中的 V9 handoff 为准：
+
+`C:\Users\Wynne\Desktop\vessel303\vessel303文档\vessel303_handoff_V9.md`
+
+旧 handoff 已归档，仅作为历史背景，不再作为当前开发依据。
 
 ## 项目概况
 
@@ -12,7 +18,7 @@
 - 品牌：VESSEL 微宿
 - 官网：`https://www.vessel303.com`
 - GitHub：`https://github.com/WynneWBD/vessel303`
-- 本地路径：`/Users/wynnewbd/Desktop/vessel303`
+- 本地真实代码路径：`C:\Users\Wynne\Desktop\vessel303\repo-git`
 - 部署：Vercel Pro，push 到 `main` 会自动触发生产部署
 - 数据库：Neon Postgres
 - 图片存储：Vercel Blob，store 为 `vessel303-media`，public，区域 `sin1`
@@ -22,16 +28,17 @@
 
 核心目标：展示产品力，通过认证、案例、工厂内容建立信任，并捕获采购线索。
 
-## 参考文档
+## 当前 Handoff
 
-Wynne 已经把旧参考资料整理到 `参考文档/` 目录。它们是背景资料：
+当前开发指导以 Wynne 本机文档库中的 V9 handoff 为准：
 
-- `参考文档/vessel303_handoff_V8_0.docx`
-- `参考文档/vessel303_handoff_V7_0.docx`
-- `参考文档/vessel303-项目清单-40个.xlsx`
-- `参考文档/vessel303官网开发（ai辅助版）.docx`
+- `C:\Users\Wynne\Desktop\vessel303\vessel303文档\vessel303_handoff_V9.md`
 
-注意：当前代码状态已经比 V8.0 handoff 更新。最重要的变化是：V8.0 Step 6 新闻管理已经做到可发布、可前台展示。
+V9 handoff 位于 `repo-git` 外层文档库，不随本仓库 Git 提交；它是 Wynne 本机 Codex 接手时使用的当前指导文件。
+
+旧 handoff 已归档，仅作为历史背景，不再作为当前开发依据。
+
+进入开发前，必须对照 V9、当前代码和必要的数据库只读核对结果。业务需求资料不能直接当作当前代码事实。
 
 ## 技术栈
 
@@ -80,157 +87,34 @@ Codex 默认工作方式：
 
 当前本地常见情况：Wynne 可能会移动或整理参考文档，导致 `参考文档/`、旧 handoff、xlsx 等文件出现在 git status 中。除非 Wynne 明确要求，不要清理这些状态。
 
+## 当前业务边界
+
+当前阶段不要把中长期目标误判为废弃需求，也不要把未确认需求写死到代码里。
+
+产品中心：先做 1 个标准产品详情页模型，不急着恢复或导入全部 39 SKU。字段和详情页结构确认后，再批量导入后台 CMS。缺失字段不显示，不用 TBD 硬填。
+
+项目案例：先确定详情页模型和字段，40 个项目不急着一次性全部后台导入。缺失字段不显示。
+
+Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳定性优先于功能扩展。
+
+价格与会员：价格体系、会员体系、代理后台、中文站、支付系统是中长期专项。价格规则未确认前，不把游客价、注册会员价、代理价、国家价写死。
+
+`site_settings`：后续可接管联系链接、产品外链、SEO 默认值，但必须单独任务、单独验收。
+
 ## 多对话分工与协作边界
 
 当前 vessel303 采用多对话分工推进。每个对话只处理自己的责任范围，避免并行改动互相覆盖。开始任何任务前，先确认自己属于哪条线，并查看 `git status`，不要触碰其他线未提交的改动。
 
-### 00 | 项目总控与盘点
+当前分工：
 
-职责：
+- 00 项目总控与需求确认：盘点、拆任务、确认风险、协调各线，不改文件。
+- 01 产品中心 / 产品 CMS：产品列表、产品数据、产品详情页模型、价格显示策略配合研究。
+- 02 项目案例 / Global 地图 CMS：40 个项目、项目详情页模型、经纬度、`/cases`、`/global` 数据接入。
+- 03 后台运营 / 设置 / 媒体库 / 邮件：后台菜单、`site_settings`、Resend、Vercel warning、媒体库验证。
+- 05 测试验收 / 提交 / 推送 / 上线：统一验收、检查、提交、推送、上线控制。
+- 06 文档整理 / Handoff 重写：文档库整理、handoff 重写、`CODEX.md` 草稿。
 
-- 总控、状态检查、任务拆分。
-- `git diff` 审查、风险判断。
-- 汇总各线 handoff 和阶段状态。
-- 不写功能代码，不直接改文档，不提交，不推送。
-
-适合任务：
-
-- 判断当前工作区是否干净。
-- 检查不同对话的改动是否冲突。
-- 给 Wynne 输出下一步执行顺序和风险提示。
-
-### 01 | 会员体系开发
-
-职责：
-
-- 注册、登录、会员中心、用户菜单。
-- `role` / `identity` / `price_tier` 相关逻辑。
-- 前台会员权限、价格层级、登录态体验。
-
-边界：
-
-- 不做 SEO / CMS / `/global` / 部署。
-- 不改后台 CMS 内容管理能力，除非与会员权限直接相关。
-- 涉及 Auth.js v5 时必须遵守 split config：middleware/proxy 不能 import `src/auth.ts`。
-
-当前重要规则：
-
-- `users.role` 只表示后台权限：`user` / `operator` / `admin`。
-- 前台新注册用户默认是普通会员：`role = 'user'`。
-- `identity` 不再作为注册页自选身份使用；兼容数据库时可写入 `NULL`。
-- 会员分层或价格权限不要复用旧 `identity` 自选逻辑，应该使用明确的会员/价格字段。
-
-### 02 | 后台 CMS 开发
-
-职责：
-
-- 产品、项目、新闻、页面模块、媒体库。
-- 后台页面和后台 API。
-- CMS 发布链路、草稿/发布状态、图片选择和排序。
-
-边界：
-
-- 不做会员体系。
-- 不做 SEO 专项，除非 CMS 字段本身需要提供 SEO 数据。
-- 不改 `/global` 地图链路，除非任务明确是项目点位入库并已和 04 对齐。
-- 不做部署。
-
-重要规则：
-
-- 内容运营类 API 用 `requireAdmin()`，允许 `admin` 和 `operator`。
-- 用户管理、设置、白名单、系统配置等敏感 API 用 `requireSuperAdmin()`。
-- 大文件上传必须走 Vercel Blob client upload，不要把文件 body 直接打到 API route。
-
-### 03 | 官网前端页面 / 品牌文案 / SEO
-
-职责：
-
-- 前台页面、布局、品牌文案。
-- `metadata`、canonical、Open Graph、SEO 默认值。
-- contact redirect 和外部跳转一致性。
-
-边界：
-
-- 不做会员体系。
-- 不做后台 CMS。
-- 不做 `/global` 地图链路。
-- 不做部署。
-
-重要规则：
-
-- 联系、留资、采购咨询入口统一跳 `https://en.303vessel.cn/contact.html`。
-- 查看产品入口统一跳 `https://en.303vessel.cn/products_list.html`。
-- 文案避免广告法高风险绝对化表达。
-- SEO 或 metadata 改动后，至少验证页面构建和关键页面 HTML 输出。
-
-### 04 | Global 地图 / 项目案例地图
-
-职责：
-
-- `/global`。
-- MapLibre、MapTiler、地图 API。
-- 项目点位、地图详情面板、地图资源加载。
-
-边界：
-
-- 不做会员体系。
-- 不做普通 CMS 管理页，除非任务明确是地图字段与项目 CMS 对接。
-- 不做 SEO 和部署。
-
-必须遵守：
-
-- 改 `/global` 前先读 `CODEX.md` 的地图规则和相关代码。
-- Edge proxy 必须保留正确 `Referer`。
-- 不要 rewrite MapTiler JSON 里的 `api.maptiler.com` host，只能剥掉 `key`。
-- `transformRequest` 必须返回绝对 URL。
-- 不要给地图慢加载加超时式失败 UI。
-- MapLibre 坐标顺序是 `[lng, lat]`。
-- MapLibre 组件必须 dynamic import，`ssr: false`。
-
-### 05 | 构建部署 / Vercel / 数据库 / 线上运维
-
-职责：
-
-- `npm run build`、TypeScript、lint、线上验证。
-- Vercel、Neon、Resend、Blob。
-- 线上事故排查和修复验证。
-- 部署后页面/API 验证。
-
-边界：
-
-- 没有 Wynne 当前任务明确授权，不能 push `main`。
-- 不顺手做功能代码，除非事故修复必须并得到授权。
-- 不清理其他线未提交改动。
-
-重要规则：
-
-- push `main` 会触发 Vercel 生产部署。
-- build 可能需要联网，因为 `next/font` 会拉取 Google Fonts。
-- DB schema 不要只看 `src/lib/schema.sql`，要查迁移脚本或实际数据库。
-- 涉及生产数据、环境变量、外部服务配置时，先说明风险再执行。
-
-### 06 | CODEX 文档
-
-职责：
-
-- `CODEX.md` / `AGENTS.md` 更新建议。
-- 阶段总结。
-- handoff 草稿。
-- 整理各线最终状态和风险。
-
-边界：
-
-- 不写业务代码。
-- 不改功能实现。
-- 实际修改 `AGENTS.md` 或 `CODEX.md` 前，必须先给 Wynne 看草稿并获得授权。
-- 文档提交/推送也需要 Wynne 明确授权。
-
-维护原则：
-
-- `AGENTS.md` 只保留入口硬规则和跨对话硬边界，少改。
-- `CODEX.md` 记录较完整的阶段状态、模块边界、事故规则、后续路线。
-- 并行任务未稳定前，不把临时中间状态写成长期事实。
-- 大模块完成、数据库关键 schema 改变、线上事故修复、协作规则改变后，再同步更新文档。
+实际修改 `AGENTS.md` 或 `CODEX.md` 前，必须先给 Wynne 看草稿并获得授权。文档提交、推送、上线也需要 Wynne 明确授权。
 
 ## Codex 文档维护规则
 
@@ -291,8 +175,15 @@ Codex 默认工作方式：
 官网前台：
 
 - 首页、产品列表、V9 Gen6 详情、About、FAQ、Cases、News、Contact、`/global`、Display 等页面已存在。
-- `/contact` 保留为跳转/承接页，最终导向旧 300.cn 站点联系页。
-- `/global` 使用 MapLibre/MapTiler，已经经过 V8 大修。
+- `/contact` 保留为跳转/承接页，最终导向统一外部联系页。
+- `/global` 使用 MapLibre/MapTiler，是高风险稳定模块。
+
+账号中心：
+
+- `/account` 页面已接入。
+- 已有账号资料表单、密码设置/修改、资料 API、密码 API。
+- `users` 表已有 company、country、phone、whatsapp、preferred_language 等资料字段。
+- 临时 operator 账号先保留；后续如不再使用，优先禁用，不建议直接删除。
 
 管理后台：
 
@@ -307,27 +198,14 @@ Codex 默认工作方式：
 - `/admin/projects`：项目 / 案例 CMS 已接入，支持新建、编辑、发布/下架、删除、筛选、封面图、图库排序、中英文案例内容、地图发布校验、地图状态筛选，以及 `/global` 详情里的统计数据、预订链接、设施亮点、交通指引和周边景点；前台 `/cases` 已优先读取数据库并保留静态兜底；带经纬度的已发布项目会进入 `/global` 地图点位和详情面板。
 - `/admin/pages`：页面模块 CMS 已上线，首页首屏/数据区、关于我们首屏、数据条、品牌故事、智造实力、品牌历程、三大技术、认证荣誉、合作伙伴、创始人、服务体系已接入前台；后台支持模块显示/隐藏、文字图片编辑、列表项新增/删除/排序。
 
-## V8 后台进度
+## 当前阶段工作重点
 
-已完成：
-
-- Step 1：后台地基、Auth split config、数据库基础表。
-- Step 2：后台 UI shell 和手写 UI 组件。
-- Step 3：线索管理。
-- Step 4：用户管理。
-- Step 5：图片库和 Vercel Blob client upload。
-- Step 6：新闻管理和前台新闻展示。
-- Step 7：设置页、站点运营配置、系统配置检查。
-- Step 8：产品 CMS 基础发布链路，含公开详情 slug 校验、后台预览、产品复制、通用详情介绍、图库选择器和规格参数。
-- Step 9：项目 / 案例 CMS 基础发布链路，含后台 CRUD、`/cases` 数据库接入、`/global` 地图点位和详情面板接库。
-- V8.1：项目 / 案例 CMS 增强，含地图状态筛选、图库排序、`/global` 详情统计、预订链接、设施、交通和周边字段。
-- V8.2：页面模块 CMS 与产品详情模块增强，含 `/about` 静态地图预览、关于我们主要区块接后台模块、通用产品详情页 `detail_modules`。
-- V8.3：后台角色权限升级，新增 `operator` 运营角色；总管理保留全部权限，运营可管理内容但不能进入或调用用户管理、系统设置、白名单等敏感后台能力。
-
-下一步：
-
-- Step 10：Resend 域名验证、Vercel warning 清理。
-- V8.4：产品图片批量管理、规格模板、固定精细详情页逐步迁移到产品 CMS。
+- 产品中心：确定 1 个标准产品详情页样板和字段模型，再决定后台 CMS 批量导入方案。
+- 项目案例：确定案例详情页字段模型，再处理 40 个项目导入和 `/cases` 展示完善。
+- `/global`：先保持地图链路稳定，再规划 CMS 化最小步骤。
+- `site_settings`：单独确认第一批接管范围，不在普通任务中顺手改。
+- 价格、会员、代理、支付：单独专项，不在普通 CMS 任务中写死规则。
+- Resend、Vercel warning、媒体库验证：由后台运营 / 测试验收线处理。
 
 ## 新闻模块当前状态
 
@@ -591,9 +469,10 @@ curl -I https://www.vessel303.com/news/<slug>
 
 ## 当前已知后续事项
 
-- 将前台联系方式、SEO 默认值、外部跳转逐步接入 `/admin/settings` 的 `site_settings` 数据源。
-- 产品 CMS 下一阶段：增加高级详情模块、规格模板和批量图片排序能力，减少对固定精细页的依赖。
-- 历史 lint 问题单独开任务清理，不要混在功能开发里。
-- 多对话并行完成后，由 06 文档对话统一整理阶段总结和 handoff，确认是否更新 `CODEX.md`；不要由功能开发对话顺手改接手文档。
-- 如果 Wynne 需要，再生成新的 V9 全量 handoff 文档。
-- V8.2：产品 CMS 详情内容、产品图片和规格管理。
+- 产品中心：确定 1 个标准详情页样板和字段模型。
+- 项目案例：确定案例详情页字段模型，再处理 40 个项目导入。
+- `/global`：先保持地图链路稳定，再规划 CMS 化最小步骤。
+- `site_settings`：单独确认第一批接管范围。
+- 价格、会员、代理、支付：单独专项，不在普通 CMS 任务中顺手实现。
+- Resend、Vercel warning、媒体库验证：由后台运营 / 测试验收线处理。
+- 文档：业务结论变化先更新 V9，再判断是否同步 `CODEX.md`。
