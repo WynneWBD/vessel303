@@ -38,6 +38,12 @@ const IDENTITY_LABEL: Record<string, string> = {
   individual: 'C-个人',
 }
 
+const ROLE_LABEL: Record<UserRole, string> = {
+  user: '用户',
+  operator: '运营人员',
+  admin: '管理员',
+}
+
 function relativeTime(ts: string | null): string {
   if (!ts) return '从未登录'
   const d = new Date(ts)
@@ -228,10 +234,10 @@ export default function UsersClient({
           value={filters.role}
           onChange={(e) => setFilters((f) => ({ ...f, role: e.target.value }))}
         >
-          <option value="all">角色:全部</option>
-          <option value="admin">admin</option>
-          <option value="operator">operator</option>
-          <option value="user">user</option>
+          <option value="all">后台权限:全部</option>
+          <option value="user">用户</option>
+          <option value="operator">运营人员</option>
+          <option value="admin">管理员</option>
         </Select>
         <Select
           value={filters.identity}
@@ -267,7 +273,7 @@ export default function UsersClient({
               <tr className="border-b border-[#E5DED4] text-[#8A8580]">
                 <th className="text-left font-medium px-4 py-3">邮箱</th>
                 <th className="text-left font-medium px-4 py-3">姓名</th>
-                <th className="text-left font-medium px-4 py-3">角色</th>
+                <th className="text-left font-medium px-4 py-3">后台权限</th>
                 <th className="text-left font-medium px-4 py-3">身份</th>
                 <th className="text-left font-medium px-4 py-3">注册时间</th>
                 <th className="text-left font-medium px-4 py-3">最近登录</th>
@@ -309,7 +315,7 @@ export default function UsersClient({
                     </td>
                     <td className="px-4 py-3 text-[#C4B9AB]">{u.name ?? '—'}</td>
                     <td className="px-4 py-3">
-                      <Badge className={roleBadgeClass(u.role)}>{u.role}</Badge>
+                      <Badge className={roleBadgeClass(u.role)}>{ROLE_LABEL[u.role]}</Badge>
                     </td>
                     <td className="px-4 py-3">
                       <Badge className={identityBadgeClass(u.identity)}>
@@ -451,25 +457,25 @@ function UserDetailSheet({
               {/* Role */}
               <div>
                 <div className="text-xs text-[#8A8580] mb-2 flex items-center gap-2">
-                  <span>角色管理</span>
-                  <Badge className={roleBadgeClass(user.role)}>{user.role}</Badge>
+                  <span>后台权限</span>
+                  <Badge className={roleBadgeClass(user.role)}>{ROLE_LABEL[user.role]}</Badge>
                 </div>
                 <Select
                   value={role}
                   onChange={(e) => setRole(e.target.value as UserRole)}
                   disabled={isWhitelisted || isSelf}
                 >
-                  <option value="user">user</option>
-                  <option value="operator">operator / 运营</option>
-                  <option value="admin">admin</option>
+                  <option value="user">用户</option>
+                  <option value="operator">运营人员</option>
+                  <option value="admin">管理员</option>
                 </Select>
                 {isWhitelisted && (
                   <p className="mt-1.5 text-xs text-[#8A8580]">
-                    此用户在硬编码白名单中,无法修改角色
+                    此用户在硬编码白名单中,无法修改后台权限
                   </p>
                 )}
                 {isSelf && !isWhitelisted && (
-                  <p className="mt-1.5 text-xs text-[#8A8580]">无法修改自己的角色</p>
+                  <p className="mt-1.5 text-xs text-[#8A8580]">无法修改自己的后台权限</p>
                 )}
               </div>
 
