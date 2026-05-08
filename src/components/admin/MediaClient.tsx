@@ -35,6 +35,7 @@ const FREE_QUOTA_BYTES = 1 * 1024 * 1024 * 1024 // 1 GB
 const WARNING_BYTES = 800 * 1024 * 1024
 const BATCH_LIMIT = 20
 const BYTES_PER_MB = 1024 * 1024
+const ADMIN_TIMEZONE_OFFSET_MINUTES = 8 * 60
 const ACCEPT = 'image/jpeg,image/png,image/webp,image/gif,image/svg+xml'
 const ACCEPT_MIMES = new Set([
   'image/jpeg',
@@ -83,15 +84,16 @@ function formatBytes(n: number): string {
   return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`
 }
 
-function formatDate(ts: string) {
-  const d = new Date(ts)
-  if (isNaN(d.getTime())) return ts
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const hh = String(d.getHours()).padStart(2, '0')
-  const mm = String(d.getMinutes()).padStart(2, '0')
-  return `${y}-${m}-${day} ${hh}:${mm}`
+function formatDate(ts: string | Date) {
+  const d = ts instanceof Date ? ts : new Date(ts)
+  if (isNaN(d.getTime())) return String(ts)
+  const adminTime = new Date(d.getTime() + ADMIN_TIMEZONE_OFFSET_MINUTES * 60 * 1000)
+  const y = adminTime.getUTCFullYear()
+  const m = String(adminTime.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(adminTime.getUTCDate()).padStart(2, '0')
+  const hh = String(adminTime.getUTCHours()).padStart(2, '0')
+  const mm = String(adminTime.getUTCMinutes()).padStart(2, '0')
+  return `${y}-${m}-${day} ${hh}:${mm} UTC+8`
 }
 
 function mimeLabel(mime: string | null): string {
