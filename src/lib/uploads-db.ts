@@ -19,6 +19,14 @@ export type UploadFilter = {
   limit?: number
 }
 
+export type MediaReferenceCounts = {
+  news: number
+  products: number
+  projects: number
+  pages: number
+  total: number
+}
+
 const UPLOAD_COLUMNS = `
   u.id, u.url, u.blob_path, u.filename, u.size, u.mime,
   u.uploaded_by, usr.email AS uploaded_by_email, u.created_at
@@ -138,16 +146,58 @@ export async function sumStorageSize(): Promise<number> {
   return parseInt(res.rows[0]?.total ?? '0', 10)
 }
 
+async function countRows(sql: string, params: unknown[]): Promise<number> {
+  const res = await pool.query<{ count: string }>(sql, params)
+  return parseInt(res.rows[0]?.count ?? '0', 10)
+}
+
 export async function countNewsReferencingImage(url: string): Promise<number> {
-  try {
-    const res = await pool.query<{ count: string }>(
+  return countRows(
+    `SELECT COUNT(*)::text AS count
+     FROM news
+     WHERE cover_image_url = $1 AND deleted_at IS NULL`,
+    [url],
+  )
+}
+
+export async function countMediaReferences(url: string): Promise<MediaReferenceCounts> {
+  const jsonArray = JSON.stringify([url])
+  const [news, products, projects, pages] = await Promise.all([
+    countNewsReferencingImage(url),
+    countRows(
       `SELECT COUNT(*)::text AS count
-       FROM news
-       WHERE cover_image_url = $1 AND deleted_at IS NULL`,
+       FROM product_catalog
+       WHERE deleted_at IS NULL
+         AND (
+           image = $1
+           OR gallery @> $2::jsonb
+           OR strpos(COALESCE(detail_modules::text, ''), $1) > 0
+         )`,
+      [url, jsonArray],
+    ),
+    countRows(
+      `SELECT COUNT(*)::text AS count
+       FROM project_cases
+       WHERE deleted_at IS NULL
+         AND (
+           cover_image_url = $1
+           OR images @> $2::jsonb
+         )`,
+      [url, jsonArray],
+    ),
+    countRows(
+      `SELECT COUNT(*)::text AS count
+       FROM page_modules
+       WHERE strpos(COALESCE(items::text, ''), $1) > 0`,
       [url],
-    )
-    return parseInt(res.rows[0]?.count ?? '0', 10)
-  } catch {
-    return 0
+    ),
+  ])
+
+  return {
+    news,
+    products,
+    projects,
+    pages,
+    total: news + products + projects + pages,
   }
 }

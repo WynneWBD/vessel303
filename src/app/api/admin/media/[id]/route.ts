@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { del } from '@vercel/blob'
 import { requireAdmin } from '@/lib/auth-check'
 import {
+  type MediaReferenceCounts,
   getUpload,
   deleteUploadRow,
-  countNewsReferencingImage,
+  countMediaReferences,
 } from '@/lib/uploads-db'
 import { logAdminAction } from '@/lib/leads-db'
 
@@ -22,13 +23,16 @@ export async function GET(
   const upload = await getUpload(id)
   if (!upload) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const newsRefs = await countNewsReferencingImage(upload.url)
+  let refs: MediaReferenceCounts
+  try {
+    refs = await countMediaReferences(upload.url)
+  } catch (err) {
+    console.error('[media GET] reference check failed', err)
+    return NextResponse.json({ error: '引用检查失败' }, { status: 502 })
+  }
   return NextResponse.json({
     upload,
-    refs: {
-      news: newsRefs,
-      total: newsRefs,
-    },
+    refs,
   })
 }
 
@@ -44,10 +48,19 @@ export async function DELETE(
   if (!upload) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   // Refuse deletion if referenced elsewhere (keep DB+Blob consistent)
-  const newsRefs = await countNewsReferencingImage(upload.url)
-  if (newsRefs > 0) {
+  let refs: MediaReferenceCounts
+  try {
+    refs = await countMediaReferences(upload.url)
+  } catch (err) {
+    console.error('[media DELETE] reference check failed', err)
     return NextResponse.json(
-      { error: `该图片正在被 ${newsRefs} 处引用,先移除引用再删除` },
+      { error: '引用检查失败,请稍后再试' },
+      { status: 502 },
+    )
+  }
+  if (refs.total > 0) {
+    return NextResponse.json(
+      { error: `该图片正在被 ${refs.total} 处引用,先移除引用再删除` },
       { status: 409 },
     )
   }

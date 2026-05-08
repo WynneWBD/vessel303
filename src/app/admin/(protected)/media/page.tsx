@@ -1,5 +1,10 @@
 import { listUploads, sumStorageSize } from '@/lib/uploads-db'
 import MediaClient from '@/components/admin/MediaClient'
+import {
+  defaultSiteSettings,
+  getSiteSettings,
+  normalizeMediaMaxUploadMb,
+} from '@/lib/admin-settings-db'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,12 +24,13 @@ export default async function MediaPage({
     search: getStr('search') ?? '',
   }
 
-  const [{ uploads, total }, bytes] = await Promise.all([
+  const [{ uploads, total }, bytes, settings] = await Promise.all([
     listUploads({
       mime: filters.mime,
       search: filters.search || undefined,
     }),
     sumStorageSize(),
+    getSiteSettings().catch(() => defaultSiteSettings),
   ])
 
   return (
@@ -33,6 +39,7 @@ export default async function MediaPage({
       initialTotal={total}
       initialBytes={bytes}
       initialFilters={filters}
+      maxUploadMb={normalizeMediaMaxUploadMb(settings.mediaMaxUploadMb)}
     />
   )
 }

@@ -29,12 +29,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import type { Upload } from '@/lib/uploads-db'
+import type { MediaReferenceCounts, Upload } from '@/lib/uploads-db'
 
 const FREE_QUOTA_BYTES = 1 * 1024 * 1024 * 1024 // 1 GB
 const WARNING_BYTES = 800 * 1024 * 1024
 const BATCH_LIMIT = 20
-const MAX_BYTES = 50 * 1024 * 1024 // matches API's maximumSizeInBytes
+const BYTES_PER_MB = 1024 * 1024
 const ACCEPT = 'image/jpeg,image/png,image/webp,image/gif,image/svg+xml'
 const ACCEPT_MIMES = new Set([
   'image/jpeg',
@@ -56,6 +56,23 @@ type UploadTask = {
   progress: number // 0..100
   status: 'pending' | 'uploading' | 'done' | 'error'
   error?: string
+}
+
+const EMPTY_MEDIA_REFERENCES: MediaReferenceCounts = {
+  news: 0,
+  products: 0,
+  projects: 0,
+  pages: 0,
+  total: 0,
+}
+
+function emptyMediaReferences(): MediaReferenceCounts {
+  return { ...EMPTY_MEDIA_REFERENCES }
+}
+
+function normalizeMaxUploadMb(value: number): number {
+  if (!Number.isFinite(value)) return 20
+  return Math.min(100, Math.max(1, Math.round(value)))
 }
 
 function formatBytes(n: number): string {
@@ -92,11 +109,13 @@ export default function MediaClient({
   initialTotal,
   initialBytes,
   initialFilters,
+  maxUploadMb,
 }: {
   initialUploads: Upload[]
   initialTotal: number
   initialBytes: number
   initialFilters: Filters
+  maxUploadMb: number
 }) {
   const router = useRouter()
   const [uploads, setUploads] = useState<Upload[]>(initialUploads)
@@ -116,6 +135,8 @@ export default function MediaClient({
     [storageBytes],
   )
   const usageWarning = storageBytes > WARNING_BYTES
+  const uploadLimitMb = useMemo(() => normalizeMaxUploadMb(maxUploadMb), [maxUploadMb])
+  const uploadLimitBytes = uploadLimitMb * BYTES_PER_MB
 
   const buildQuery = useCallback((f: Filters) => {
     const sp = new URLSearchParams()
@@ -254,8 +275,8 @@ export default function MediaClient({
         rejected.push({ name: f.name, reason: '非图片格式' })
         continue
       }
-      if (f.size > MAX_BYTES) {
-        rejected.push({ name: f.name, reason: '超过 50 MB' })
+      if (f.size > uploadLimitBytes) {
+        rejected.push({ name: f.name, reason: `超过 ${uploadLimitMb} MB` })
         continue
       }
       accepted.push(f)
@@ -312,7 +333,7 @@ export default function MediaClient({
       if (res.ok) {
         const data = (await res.json()) as {
           upload: Upload
-          refs: { news: number; total: number }
+          refs: MediaReferenceCounts
         }
         setSelected(data.upload)
         return { refs: data.refs }
@@ -321,7 +342,7 @@ export default function MediaClient({
       /* ignore */
     }
     setSelected(u)
-    return { refs: { news: 0, total: 0 } }
+    return { refs: emptyMediaReferences() }
   }
 
   const handleDelete = async (u: Upload) => {
@@ -506,7 +527,7 @@ export default function MediaClient({
           <UploadIcon size={64} className="text-[#E36F2C]" />
           <p className="text-xl font-semibold text-white">松开鼠标上传图片</p>
           <p className="text-sm text-white/80">
-            支持 JPEG / PNG / WebP / GIF / SVG · 最大 10 MB · 一次最多 {BATCH_LIMIT} 张
+            支持 JPEG / PNG / WebP / GIF / SVG · 最大 {uploadLimitMb} MB · 一次最多 {BATCH_LIMIT} 张
           </p>
         </div>
       )}
@@ -593,18 +614,26 @@ function MediaDetailSheet({
   onClose: () => void
   onDelete: (u: Upload) => Promise<void>
 }) {
-  const [refs, setRefs] = useState<{ news: number; total: number }>({ news: 0, total: 0 })
+  const uploadId = upload?.id ?? null
+  const [refsState, setRefsState] = useState<{
+    uploadId: string | null
+    refs: MediaReferenceCounts
+  }>(() => ({ uploadId: null, refs: emptyMediaReferences() }))
+  const refs = refsState.uploadId === uploadId ? refsState.refs : EMPTY_MEDIA_REFERENCES
 
   useEffect(() => {
-    if (!upload) return
-    setRefs({ news: 0, total: 0 })
-    fetch(`/api/admin/media/${upload.id}`, { cache: 'no-store' })
+    if (!uploadId) return
+    let ignore = false
+    fetch(`/api/admin/media/${uploadId}`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data?.refs) setRefs(data.refs)
+        if (!ignore && data?.refs) setRefsState({ uploadId, refs: data.refs })
       })
       .catch(() => void 0)
-  }, [upload])
+    return () => {
+      ignore = true
+    }
+  }, [uploadId])
 
   const copyUrl = async () => {
     if (!upload) return
@@ -682,6 +711,24 @@ function MediaDetailSheet({
                     <span className="text-[#8A8580]">
                       {' '}
                       · news 封面图 {refs.news} 次
+                    </span>
+                  )}
+                  {refs.products > 0 && (
+                    <span className="text-[#8A8580]">
+                      {' '}
+                      · 产品 {refs.products} 次
+                    </span>
+                  )}
+                  {refs.projects > 0 && (
+                    <span className="text-[#8A8580]">
+                      {' '}
+                      · 项目案例 {refs.projects} 次
+                    </span>
+                  )}
+                  {refs.pages > 0 && (
+                    <span className="text-[#8A8580]">
+                      {' '}
+                      · 页面模块 {refs.pages} 次
                     </span>
                   )}
                 </div>

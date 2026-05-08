@@ -46,12 +46,26 @@ export const defaultSiteSettings: SiteSettings = {
 }
 
 const SETTING_KEYS = Object.keys(defaultSiteSettings) as SiteSettingKey[]
+const BYTES_PER_MB = 1024 * 1024
+
+export function normalizeMediaMaxUploadMb(value: unknown): number {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return defaultSiteSettings.mediaMaxUploadMb
+  return Math.min(100, Math.max(1, Math.round(n)))
+}
+
+export function getMediaUploadLimitBytes(value: unknown): number {
+  return normalizeMediaMaxUploadMb(value) * BYTES_PER_MB
+}
 
 let schemaReady: Promise<void> | null = null
 
 function coerceSettingValue(key: SiteSettingKey, value: unknown): SiteSettings[SiteSettingKey] {
   const fallback = defaultSiteSettings[key]
   if (typeof fallback === 'boolean') return Boolean(value)
+  if (key === 'mediaMaxUploadMb') {
+    return normalizeMediaMaxUploadMb(value) as SiteSettings[SiteSettingKey]
+  }
   if (typeof fallback === 'number') {
     const n = Number(value)
     return (Number.isFinite(n) ? n : fallback) as SiteSettings[SiteSettingKey]

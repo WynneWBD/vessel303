@@ -3,11 +3,15 @@ import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
 import { requireAdmin } from '@/lib/auth-check'
 import { createUpload, listUploads } from '@/lib/uploads-db'
 import { logAdminAction } from '@/lib/leads-db'
+import {
+  defaultSiteSettings,
+  getMediaUploadLimitBytes,
+  getSiteSettings,
+} from '@/lib/admin-settings-db'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-const MAX_BYTES = 50 * 1024 * 1024 // 50 MB (bytes go direct to Blob; not bound by Vercel's 4.5 MB body limit)
 const ALLOWED_MIME = [
   'image/jpeg',
   'image/png',
@@ -67,10 +71,11 @@ export async function POST(request: NextRequest) {
           size: parsed.size,
           originalName: parsed.originalName,
         }
+        const settings = await getSiteSettings().catch(() => defaultSiteSettings)
 
         return {
           allowedContentTypes: ALLOWED_MIME,
-          maximumSizeInBytes: MAX_BYTES,
+          maximumSizeInBytes: getMediaUploadLimitBytes(settings.mediaMaxUploadMb),
           tokenPayload: JSON.stringify(tokenPayload),
           addRandomSuffix: false,
         }
