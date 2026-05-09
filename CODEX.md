@@ -1,6 +1,6 @@
 # CODEX.md - vessel303.com Codex 接手文档
 
-最后更新：2026-05-08
+最后更新：2026-05-09
 
 这是 `vessel303.com` 给 Codex 使用的接手文档和操作指南。每次新对话或开始大改动时，先读 `AGENTS.md`，再读本文件。
 
@@ -316,6 +316,13 @@ Auth.js v5 使用 split config：
 - 为兼容当前数据库字段，注册 API 服务端仍显式写入 `identity = NULL`；以后价格权限或会员分层不要复用旧 `identity` 自选逻辑。
 - Google 新用户不再进入 `/register/complete` 补全身份；Auth callback 创建/更新用户后直接按普通会员返回首页，白名单管理员逻辑保持独立。
 - `/register/complete` 和 `/api/register/profile` 只是旧路径兼容，不应再承载前台身份选择。
+
+测试账号与本机运维脚本：
+
+- 当前存在 `user` / `operator` / `admin` 三类测试账号，用于前台账号、运营后台、总管理权限验证。
+- 测试账号密码保存在 `repo-git\.env.local`，不进入 Git，不在文档或对话中输出。
+- 创建/修复测试账号的脚本位于外层 `C:\Users\Wynne\Desktop\vessel303\local-ops\`，不属于 `repo-git` 项目代码，不随线上部署。
+- 该脚本会写数据库；运行前必须获得 Wynne 明确授权。
 
 ## Vercel Blob 上传规则
 
