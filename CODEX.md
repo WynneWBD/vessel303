@@ -105,7 +105,7 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 
 价格与会员：价格体系、会员体系、代理后台、中文站、支付系统是中长期专项。价格规则未确认前，不把游客价、注册会员价、代理价、国家价写死。
 
-`site_settings`：后续可接管联系链接、产品外链、SEO 默认值，但必须单独任务、单独验收。
+`site_settings`：已初始化；`/contact` 已由后台设置 `contactUrl` 接管，异常时回退默认联系链接。后续扩展产品外链、SEO 默认值等必须单独任务、单独验收。
 
 ## 多对话分工与协作边界
 
@@ -172,7 +172,7 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 
 外部跳转规则：
 
-- 联系、留资、采购咨询入口：`https://en.303vessel.cn/contact.html`
+- 联系、留资、采购咨询入口：默认链接为 `https://en.303vessel.cn/contact.html`；当前 `/contact` 由后台 `site_settings.contactUrl` 接管，异常时回退该默认链接。
 - 查看产品入口：`https://en.303vessel.cn/products_list.html`
 - 这些外链默认新窗口打开。
 
@@ -181,7 +181,7 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 官网前台：
 
 - 首页、产品列表、V9 Gen6 详情、About、FAQ、Cases、News、Contact、`/global`、Display 等页面已存在。
-- `/contact` 保留为跳转/承接页，最终导向统一外部联系页。
+- `/contact` 保留为跳转/承接页，已读取后台设置 `contactUrl`，异常时回退统一外部联系页。
 - `/global` 使用 MapLibre/MapTiler，是高风险稳定模块。
 
 账号中心：
@@ -199,7 +199,7 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 - `/admin/users`：总管理专用。用户列表、角色/身份/禁用管理、CSV 导出、服务端自我保护。
 - `/admin/media`：基于 Vercel Blob 的图片库，使用 client upload。
 - `/admin/news`：新闻管理，已能新建、编辑、发布、取消发布，并在前台展示。
-- `/admin/settings`：总管理专用。设置页已上线，包含站点运营配置表单、系统健康检查、白名单展示和最近操作日志。
+- `/admin/settings`：总管理专用。设置页已上线，`site_settings` 已初始化；保存设置会写数据库并产生后台审计日志。
 - `/admin/products`：产品 CMS 已接入产品列表和通用详情页，支持新建、编辑、复制为草稿、发布/下架、删除、筛选、图片选择、前台预览、详情介绍、详情图库选择器、图库排序、规格参数，以及通用详情页模块（亮点、场景、FAQ、图文内容、定制范围）；固定精细详情页如 `e7`、`v9-gen6` 仍保留原页面。
 - `/admin/projects`：项目 / 案例 CMS 已接入，支持新建、编辑、发布/下架、删除、筛选、封面图、图库排序、中英文案例内容、地图发布校验、地图状态筛选，以及 `/global` 详情里的统计数据、预订链接、设施亮点、交通指引和周边景点；前台 `/cases` 已优先读取数据库并保留静态兜底；带经纬度的已发布项目会进入 `/global` 地图点位和详情面板。
 - `/admin/pages`：页面模块 CMS 已上线，首页首屏/数据区、关于我们首屏、数据条、品牌故事、智造实力、品牌历程、三大技术、认证荣誉、合作伙伴、创始人、服务体系已接入前台；后台支持模块显示/隐藏、文字图片编辑、列表项新增/删除/排序。
@@ -209,9 +209,10 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 - 产品中心：确定 1 个标准产品详情页样板和字段模型，再决定后台 CMS 批量导入方案。
 - 项目案例：确定案例详情页字段模型，再处理 40 个项目导入和 `/cases` 展示完善。
 - `/global`：先保持地图链路稳定，再规划 CMS 化最小步骤。
-- `site_settings`：单独确认第一批接管范围，不在普通任务中顺手改。
+- `site_settings`：已接管 `/contact` 的 `contactUrl`；后续扩展范围需单独任务，不在普通任务中顺手改。
 - 价格、会员、代理、支付：单独专项，不在普通 CMS 任务中写死规则。
-- Resend、Vercel warning、媒体库验证：由后台运营 / 测试验收线处理。
+- Resend：正式发件身份仍未配置，缺少 `RESEND_FROM` / `CONTACT_NOTIFY_TO` / `MEDIA_KIT_NOTIFY_TO` 和域名验证信息。
+- Vercel edge runtime warning：仍来自 `/api/map/[...path]`，归入 `/global` 地图专项，暂不处理。
 
 ## 新闻模块当前状态
 
@@ -485,7 +486,8 @@ curl -I https://www.vessel303.com/news/<slug>
 - 产品中心：确定 1 个标准详情页样板和字段模型。
 - 项目案例：确定案例详情页字段模型，再处理 40 个项目导入。
 - `/global`：先保持地图链路稳定，再规划 CMS 化最小步骤。
-- `site_settings`：单独确认第一批接管范围。
+- `site_settings`：已初始化并接管 `/contact` 的 `contactUrl`；后续扩展范围单独确认。
 - 价格、会员、代理、支付：单独专项，不在普通 CMS 任务中顺手实现。
-- Resend、Vercel warning、媒体库验证：由后台运营 / 测试验收线处理。
+- Resend：正式发件身份仍未配置。
+- Vercel edge runtime warning：归入 `/global` 地图专项，暂不处理。
 - 文档：业务结论变化先更新 V9，再判断是否同步 `CODEX.md`。
