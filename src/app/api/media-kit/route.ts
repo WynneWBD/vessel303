@@ -4,8 +4,15 @@ import { z } from 'zod';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM = 'onboarding@resend.dev';
-const NOTIFY_TO = 'vessel.sale@303industries.cn';
+const DEFAULT_FROM = 'onboarding@resend.dev';
+const DEFAULT_NOTIFY_TO = 'vessel.sale@303industries.cn';
+
+function getMailConfig() {
+  return {
+    from: process.env.RESEND_FROM || DEFAULT_FROM,
+    notifyTo: process.env.MEDIA_KIT_NOTIFY_TO || DEFAULT_NOTIFY_TO,
+  };
+}
 
 const schema = z.object({
   name:    z.string().min(1, 'Name required').max(100),
@@ -152,10 +159,11 @@ export async function POST(req: NextRequest) {
   }
 
   const data = parsed.data;
+  const { from, notifyTo } = getMailConfig();
 
   const { error: notifyError } = await resend.emails.send({
-    from: FROM,
-    to: NOTIFY_TO,
+    from,
+    to: notifyTo,
     replyTo: data.email,
     subject: `【Media Kit】${data.company} · ${USE_CASE_LABELS[data.useCase]}`,
     html: notificationHtml(data),
@@ -167,7 +175,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { error: confirmError } = await resend.emails.send({
-    from: FROM,
+    from,
     to: data.email,
     subject: 'Request Received — VESSEL® Media Kit',
     html: confirmationHtml(data),

@@ -185,6 +185,12 @@ export default async function SettingsPage() {
       detail: '联系表单与资料下载邮件通知',
     },
     {
+      label: 'Resend From',
+      value: process.env.RESEND_FROM ? '已配置' : 'onboarding fallback',
+      state: process.env.RESEND_FROM ? 'ok' : 'warning',
+      detail: '正式域名发信需要 RESEND_FROM 绑定已验证域名；未配置时继续使用 Resend 测试发件人',
+    },
+    {
       label: 'Vercel Blob',
       value: maskConfigured(process.env.BLOB_READ_WRITE_TOKEN),
       state: process.env.BLOB_READ_WRITE_TOKEN ? 'ok' : 'warning',

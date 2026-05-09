@@ -4,8 +4,15 @@ import { z } from 'zod';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM = 'onboarding@resend.dev';
-const NOTIFY_TO = 'wynnewbd@gmail.com';
+const DEFAULT_FROM = 'onboarding@resend.dev';
+const DEFAULT_NOTIFY_TO = 'wynnewbd@gmail.com';
+
+function getMailConfig() {
+  return {
+    from: process.env.RESEND_FROM || DEFAULT_FROM,
+    notifyTo: process.env.CONTACT_NOTIFY_TO || DEFAULT_NOTIFY_TO,
+  };
+}
 
 // B端咨询类型
 const B_END_TYPES = new Set(['咨询报价', '合作代理', '定制服务']);
@@ -144,10 +151,12 @@ export async function POST(req: NextRequest) {
     ? '【B端线索】新采购咨询 - VESSEL 微宿'
     : '【C端线索】新营地咨询 - VESSEL 微宿';
 
+  const { from, notifyTo } = getMailConfig();
+
   // Send notification to team (must succeed)
   const { error: notifyError } = await resend.emails.send({
-    from: FROM,
-    to: NOTIFY_TO,
+    from,
+    to: notifyTo,
     subject,
     html: notificationHtml(data, isBEnd),
   });
@@ -160,7 +169,7 @@ export async function POST(req: NextRequest) {
   // Send confirmation to user (best-effort — don't fail the request if this fails)
   if (data.email) {
     const { error: confirmError } = await resend.emails.send({
-      from: FROM,
+      from,
       to: data.email,
       subject: '感谢您的咨询 — VESSEL 微宿® 已收到您的留言',
       html: confirmationHtml(data),
