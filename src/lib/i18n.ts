@@ -478,7 +478,7 @@ export const i18n = {
     sortAreaDesc:      b('Size: Large to Small', '面积从大到小'),
     foundCount:        b('{n} models found', '共找到 {n} 款产品'),
     noResults:         b('No products found', '暂无符合条件的产品'),
-    loginToView:       b('Login to view price', '登录查看价格'),
+    loginToView:       b('Inquire for project quote', '获取项目报价'),
     viewDetails:       b('View Details →', '查看详情 →'),
     gridView:          b('Grid view', '网格视图'),
     listView:          b('List view', '列表视图'),

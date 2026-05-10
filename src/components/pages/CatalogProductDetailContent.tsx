@@ -209,7 +209,7 @@ export default function CatalogProductDetailContent({ product }: Props) {
       {items.length > 0 ? (
         <div className="space-y-3">
           {items.map((item, index) => (
-            <details key={`${item.title}-${index}`} className="group border border-[#E5DED4] bg-white">
+            <details key={`${item.title}-${index}`} open={index === 0} className="group border border-[#E5DED4] bg-white">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 text-left">
                 <span className="text-sm font-semibold leading-snug text-[#2C2A28]">{item.title}</span>
                 <span className="text-lg leading-none text-[#E36F2C] transition-transform group-open:rotate-90">›</span>

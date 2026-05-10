@@ -308,10 +308,14 @@ export default function ProductsPageContent({ products }: Props) {
       ? '45天预制 · 2小时安装 · 欧盟/美国认证 · 全球交付'
       : '45-day production · 2-hour install · EU+US certified · global delivery';
   const heroSummary = [
-    [lang === 'zh' ? '在售产品' : 'Live products', String(products.length)],
+    [lang === 'zh' ? '可选型号' : 'Available models', String(products.length)],
     [lang === 'zh' ? '当前系列' : 'Series', availableSeries],
     [lang === 'zh' ? '筛选维度' : 'Filters', lang === 'zh' ? '型号 / 面积 / 类型 / 代际' : 'Series / Size / Type / Gen'],
   ];
+  const resultCountText =
+    lang === 'zh'
+      ? `当前 ${filtered.length} 款可选型号`
+      : `${filtered.length} ${filtered.length === 1 ? 'model' : 'models'} available`;
 
   return (
     <>
@@ -462,7 +466,7 @@ export default function ProductsPageContent({ products }: Props) {
 
           {/* Count */}
           <div className="mt-1.5 text-[#8A7D74] text-xs tracking-wider">
-            {t(i18n.products.foundCount).replace('{n}', String(filtered.length))}
+            {resultCountText}
           </div>
         </div>
       </div>
