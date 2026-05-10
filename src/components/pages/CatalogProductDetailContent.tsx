@@ -15,6 +15,7 @@ interface Props {
 
 type DetailModule = NonNullable<CatalogProduct['detail_modules']>[number];
 type DetailModuleItem = NonNullable<DetailModule['items_cn']>[number];
+type SpecRow = { label: string; value: string };
 
 const TYPE_LABEL: Record<string, { cn: string; en: string }> = {
   compact: { cn: '紧凑型', en: 'Compact' },
@@ -41,6 +42,21 @@ function hasModuleContent(module: DetailModule, lang: 'en' | 'zh') {
   const images = uniqueImageList([module.image_url, ...(module.images ?? [])]);
 
   return Boolean(title || body || items.length > 0 || images.length > 0);
+}
+
+function normalizeSpecLabel(label: string) {
+  return label.trim().toLowerCase().replace(/\s+/g, '');
+}
+
+function uniqueSpecRows(rows: SpecRow[]) {
+  const seen = new Set<string>();
+
+  return rows.filter((row) => {
+    const key = normalizeSpecLabel(row.label);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function SectionLabel({
@@ -135,7 +151,7 @@ export default function CatalogProductDetailContent({ product }: Props) {
     .filter((module) => hasModuleContent(module, lang))
     .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0));
 
-  const specRows = [
+  const specRows = uniqueSpecRows([
     {
       label: t(i18n.productDetail.specArea),
       value: product.size,
@@ -153,7 +169,7 @@ export default function CatalogProductDetailContent({ product }: Props) {
       value: lang === 'en' ? typeLabel.en : typeLabel.cn,
     },
     ...customSpecs,
-  ].filter((row) => row.label && row.value);
+  ].filter((row): row is SpecRow => Boolean(row.label && row.value)));
 
   const media = useMemo(
     () => uniqueImageList([product.image, ...(product.gallery ?? [])]),
@@ -219,7 +235,7 @@ export default function CatalogProductDetailContent({ product }: Props) {
   ) => (
     <section key={module.id}>
       <SectionLabel
-        label={lang === 'en' ? 'Best-fit scenarios' : '适用场景'}
+        label={lang === 'en' ? 'Use cases' : '应用场景'}
         title={title}
         body={body}
       />
@@ -252,7 +268,7 @@ export default function CatalogProductDetailContent({ product }: Props) {
   ) => (
     <section key={module.id} className="border border-[#E36F2C]/25 bg-[#E36F2C]/5 p-5 sm:p-7">
       <SectionLabel
-        label={lang === 'en' ? 'Customization scope' : '可定制范围'}
+        label={lang === 'en' ? 'Available options' : '可选配置'}
         title={title}
         body={body}
       />
@@ -276,7 +292,7 @@ export default function CatalogProductDetailContent({ product }: Props) {
   ) => (
     <section key={module.id}>
       <SectionLabel
-        label={lang === 'en' ? 'Product highlights' : '产品亮点'}
+        label={lang === 'en' ? 'Design highlights' : '设计亮点'}
         title={title}
         body={body}
       />
@@ -302,7 +318,7 @@ export default function CatalogProductDetailContent({ product }: Props) {
 
     return (
       <section key={module.id} className="border-t border-[#E5DED4] pt-9">
-        <SectionLabel label={lang === 'en' ? 'Product section' : '产品章节'} title={title} body={body} />
+        <SectionLabel label={lang === 'en' ? 'Details' : '详情内容'} title={title} body={body} />
         {images.length > 0 ? (
           <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {images.slice(0, 4).map((src, index) => (
@@ -494,7 +510,7 @@ export default function CatalogProductDetailContent({ product }: Props) {
 
             {features.length > 0 ? (
               <section>
-                <SectionLabel label={t(i18n.productDetail.featuresLabel)} />
+                <SectionLabel label={lang === 'en' ? 'Key features' : '核心亮点'} />
                 <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {features.map((feature, index) => (
                     <li key={`${feature}-${index}`} className="flex gap-3 border border-[#E5DED4] bg-[#FAF7F2] p-4">
@@ -512,7 +528,7 @@ export default function CatalogProductDetailContent({ product }: Props) {
 
             {specRows.length > 0 ? (
               <section>
-                <SectionLabel label={lang === 'en' ? 'Specifications' : '规格参数'} />
+                <SectionLabel label={lang === 'en' ? 'Technical specs' : '规格参数'} />
                 <div className="grid grid-cols-1 border border-[#E5DED4] sm:grid-cols-2">
                   {specRows.map(({ label, value }) => (
                     <div key={`${label}-${value}`} className="border-b border-[#E5DED4] bg-white p-5 sm:border-r">
@@ -542,7 +558,7 @@ export default function CatalogProductDetailContent({ product }: Props) {
 
             <div className="border border-[#E5DED4] bg-[#FAF7F2] p-5">
               <div className="mb-4 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#E36F2C]">
-                {lang === 'en' ? 'Product summary' : '产品摘要'}
+                {lang === 'en' ? 'Quick summary' : '产品概览'}
               </div>
               <dl className="space-y-3">
                 {specRows.slice(0, 5).map(({ label, value }) => (
