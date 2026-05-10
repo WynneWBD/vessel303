@@ -4,6 +4,15 @@ import type { ProjectCaseRow } from '@/lib/project-cases-static'
 
 const FALLBACK_IMAGE = '/images/projects/guangdong-huizhou/image-01.jpg'
 
+function uniqueImageUrls(urls: Array<string | null | undefined>) {
+  const seen = new Set<string>()
+  return urls.filter((url): url is string => {
+    if (!url || seen.has(url)) return false
+    seen.add(url)
+    return true
+  })
+}
+
 function fallbackAmenities(project: ProjectCaseRow): ShowcaseProject['amenities'] {
   return [
     {
@@ -74,10 +83,10 @@ export function projectCaseToMarker(project: ProjectCaseRow): ShowcaseMarker | n
 
 export function projectCaseToShowcaseProject(project: ProjectCaseRow): ShowcaseProject | null {
   if (project.longitude == null || project.latitude == null) return null
-  const images = [
+  const images = uniqueImageUrls([
     project.cover_image_url,
     ...project.images,
-  ].filter((src): src is string => Boolean(src))
+  ])
 
   return {
     id: project.id,
