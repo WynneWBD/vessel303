@@ -79,6 +79,12 @@ export default function CasesPageContent({ cases }: { cases: ProjectCaseRow[] })
             const type = zh ? item.project_type_zh : item.project_type_en
             const desc = zh ? item.description_zh : item.description_en
             const tags = zh ? item.tags_zh : item.tags_en
+            const specs = [
+              { label: t(i18n.cases.specArea), value: item.area_display?.trim() ?? '' },
+              { label: t(i18n.cases.specInvestment), value: item.investment_display?.trim() ?? '' },
+              { label: t(i18n.cases.specUnits), value: item.units_display?.trim() ?? '' },
+              { label: t(i18n.cases.specProducts), value: item.products?.trim() ?? '' },
+            ].filter((spec) => spec.value.length > 0)
             return (
               <div
                 key={item.id}
@@ -125,19 +131,16 @@ export default function CasesPageContent({ cases }: { cases: ProjectCaseRow[] })
 
                     <p className="text-[#6B6560] text-sm leading-relaxed mb-5">{desc}</p>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                      {[
-                        { label: t(i18n.cases.specArea), value: item.area_display },
-                        { label: t(i18n.cases.specInvestment), value: item.investment_display },
-                        { label: t(i18n.cases.specUnits), value: item.units_display },
-                        { label: t(i18n.cases.specProducts), value: item.products },
-                      ].map((spec) => (
-                        <div key={spec.label} className="bg-[#F8F6F2] px-3 py-2 border border-[#E5DED4]">
-                          <div className="text-[#AAAAAA] text-[10px] tracking-wider mb-0.5">{spec.label}</div>
-                          <div className="text-[#444444] text-xs font-semibold tracking-wider">{spec.value || '-'}</div>
-                        </div>
-                      ))}
-                    </div>
+                    {specs.length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                        {specs.map((spec) => (
+                          <div key={spec.label} className="bg-[#F8F6F2] px-3 py-2 border border-[#E5DED4]">
+                            <div className="text-[#AAAAAA] text-[10px] tracking-wider mb-0.5">{spec.label}</div>
+                            <div className="text-[#444444] text-xs font-semibold tracking-wider">{spec.value}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     <a
                       href={`/global?camp=${item.id}`}
