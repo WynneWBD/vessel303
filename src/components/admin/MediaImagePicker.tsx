@@ -195,12 +195,12 @@ export default function MediaImagePicker({
       />
 
       {value ? (
-        <div className="flex items-start gap-3">
-          <div className="h-[100px] w-40 shrink-0 overflow-hidden rounded-md border border-[#E5DED4] bg-[#FAF7F2]">
+        <div className="space-y-3">
+          <div className="aspect-[4/3] w-full overflow-hidden rounded-md border border-[#E5DED4] bg-[#FAF7F2]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={value} alt="" className="h-full w-full object-cover" />
           </div>
-          <div className="flex flex-col gap-2 pt-1">
+          <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" size="sm" onClick={openPicker}>
               <RefreshCw size={14} />
               {actionLabel ?? '更换'}
@@ -245,9 +245,9 @@ export default function MediaImagePicker({
             {uploading ? '上传中' : '直接上传新图'}
           </Button>
         ) : null}
-        <p className="flex items-center gap-1 text-[11px] leading-5 text-[#8A8580]">
-          <ImageIcon size={13} />
-          最大 {uploadLimitMb} MB。这里只回填 URL，保存产品后才会更新前台。
+        <p className="flex min-w-0 items-start gap-1 text-[11px] leading-relaxed text-[#8A8580]">
+          <ImageIcon size={13} className="mt-0.5 shrink-0" />
+          <span>最大 {uploadLimitMb} MB。这里只回填 URL，保存产品后才会更新前台。</span>
         </p>
       </div>
 

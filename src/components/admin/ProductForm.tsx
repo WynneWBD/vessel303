@@ -348,11 +348,11 @@ function Field({
   hint?: string
 }) {
   return (
-    <label className="flex flex-col gap-2">
-      <span className="text-xs text-[#C4B9AB] font-medium">{label}</span>
+    <div className="flex flex-col gap-2">
+      <div className="text-xs text-[#C4B9AB] font-medium">{label}</div>
       {children}
-      {hint && <span className="text-[11px] leading-relaxed text-[#6B6560]">{hint}</span>}
-    </label>
+      {hint && <div className="text-[11px] leading-relaxed text-[#6B6560]">{hint}</div>}
+    </div>
   )
 }
 
