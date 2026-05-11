@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Eye, EyeOff, Plus, Save, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -41,6 +41,35 @@ function cloneModule(pageModule: PageModuleRow): PageModuleRow {
   }
 }
 
+function comparableModule(pageModule: PageModuleRow) {
+  return {
+    title_zh: pageModule.title_zh,
+    title_en: pageModule.title_en,
+    description_zh: pageModule.description_zh,
+    description_en: pageModule.description_en,
+    is_visible: pageModule.is_visible,
+    sort_order: Number(pageModule.sort_order) || 0,
+    items: pageModule.items.map((item) => ({
+      id: item.id,
+      image_url: item.image_url ?? '',
+      href: item.href ?? '',
+      value_zh: item.value_zh ?? '',
+      value_en: item.value_en ?? '',
+      content_zh: item.content_zh ?? '',
+      content_en: item.content_en ?? '',
+      label_zh: item.label_zh,
+      label_en: item.label_en,
+      is_visible: item.is_visible,
+      sort_order: Number(item.sort_order) || 0,
+    })),
+  }
+}
+
+function modulesEqual(a: PageModuleRow | undefined, b: PageModuleRow | undefined) {
+  if (!a || !b) return true
+  return JSON.stringify(comparableModule(a)) === JSON.stringify(comparableModule(b))
+}
+
 export default function PageModulesClient({
   initialModules,
   maxUploadMb = 20,
@@ -49,6 +78,7 @@ export default function PageModulesClient({
   maxUploadMb?: number
 }) {
   const [modules, setModules] = useState(() => initialModules.map(cloneModule))
+  const [savedModules, setSavedModules] = useState(() => initialModules.map(cloneModule))
   const [activeId, setActiveId] = useState(initialModules[0]?.id ?? '')
   const [saving, setSaving] = useState(false)
 
@@ -58,6 +88,53 @@ export default function PageModulesClient({
   )
 
   const pageKeys = useMemo(() => Array.from(new Set(modules.map((pageModule) => pageModule.page_key))), [modules])
+
+  const dirtyIds = useMemo(() => {
+    const savedById = new Map(savedModules.map((pageModule) => [pageModule.id, pageModule]))
+    return new Set(
+      modules
+        .filter((pageModule) => !modulesEqual(pageModule, savedById.get(pageModule.id)))
+        .map((pageModule) => pageModule.id),
+    )
+  }, [modules, savedModules])
+
+  const activeHasUnsavedChanges = active ? dirtyIds.has(active.id) : false
+  const hasAnyUnsavedChanges = dirtyIds.size > 0
+
+  useEffect(() => {
+    if (!hasAnyUnsavedChanges) return
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    const handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target
+      if (!(target instanceof Element)) return
+      const anchor = target.closest('a[href]')
+      if (!(anchor instanceof HTMLAnchorElement)) return
+      if (anchor.target || anchor.download) return
+
+      const nextUrl = new URL(anchor.href)
+      const currentUrl = new URL(window.location.href)
+      if (nextUrl.origin !== currentUrl.origin) return
+      if (nextUrl.pathname === currentUrl.pathname && nextUrl.search === currentUrl.search) return
+
+      const ok = window.confirm('页面模块有未保存修改。离开此页会丢失这些修改，确定离开吗？')
+      if (!ok) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    document.addEventListener('click', handleDocumentClick, true)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      document.removeEventListener('click', handleDocumentClick, true)
+    }
+  }, [hasAnyUnsavedChanges])
 
   const patchActive = (patch: Partial<PageModuleRow>) => {
     if (!active) return
@@ -150,6 +227,7 @@ export default function PageModulesClient({
       if (!res.ok) throw new Error(data.error ?? '保存失败')
       const saved = data.data as PageModuleRow
       setModules((prev) => prev.map((pageModule) => (pageModule.id === saved.id ? cloneModule(saved) : pageModule)))
+      setSavedModules((prev) => prev.map((pageModule) => (pageModule.id === saved.id ? cloneModule(saved) : pageModule)))
       toast.success('页面模块已保存')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '保存失败')
@@ -167,7 +245,7 @@ export default function PageModulesClient({
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={`flex flex-col gap-6 ${activeHasUnsavedChanges ? 'pb-24' : ''}`}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-xs tracking-[0.18em] uppercase text-[#E36F2C]">Page Builder</p>
@@ -178,10 +256,19 @@ export default function PageModulesClient({
             用受控模块管理首页、关于我们等页面的文字和图片。当前首页首屏、首页数据区、关于我们首屏、数据条、品牌故事、智造实力、品牌历程、三大技术、创始人、服务体系、奖项荣誉、合作伙伴已经接入前台，其他模块先作为后续接入的结构地基。
           </p>
         </div>
-        <Button type="button" size="sm" disabled={saving} onClick={save}>
-          <Save size={15} />
-          {saving ? '保存中' : '保存当前模块'}
-        </Button>
+        <div className="flex flex-col items-start gap-2 lg:items-end">
+          {hasAnyUnsavedChanges ? (
+            <p className="text-xs text-[#E36F2C]">
+              {dirtyIds.size} 个模块有未保存修改，当前按钮只保存正在编辑的模块。
+            </p>
+          ) : (
+            <p className="text-xs text-[#8A8580]">当前没有未保存修改</p>
+          )}
+          <Button type="button" size="sm" disabled={saving} onClick={save}>
+            <Save size={15} />
+            {saving ? '保存中' : activeHasUnsavedChanges ? '保存当前模块' : '已保存'}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
@@ -196,6 +283,7 @@ export default function PageModulesClient({
                   .filter((pageModule) => pageModule.page_key === pageKey)
                   .map((pageModule) => {
                     const selected = pageModule.id === active.id
+                    const dirty = dirtyIds.has(pageModule.id)
                     return (
                       <button
                         key={pageModule.id}
@@ -210,6 +298,11 @@ export default function PageModulesClient({
                         <span className="min-w-0">
                           <span className="block truncate text-sm font-medium">{pageModule.title_zh}</span>
                           <span className="mt-1 block text-xs text-[#8A8580]">{moduleStatus(pageModule)}</span>
+                          {dirty ? (
+                            <span className="mt-1 inline-flex rounded-full bg-[#E36F2C]/10 px-2 py-0.5 text-[11px] font-medium text-[#E36F2C]">
+                              未保存
+                            </span>
+                          ) : null}
                         </span>
                         {pageModule.is_visible ? (
                           <Eye size={15} className="mt-0.5 shrink-0 text-[#E36F2C]" />
@@ -406,6 +499,22 @@ export default function PageModulesClient({
           )}
         </main>
       </div>
+      {activeHasUnsavedChanges ? (
+        <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-[#E5DED4] bg-[#FFFFFF]/95 px-6 py-4 shadow-[0_-8px_24px_rgba(44,42,40,0.08)] backdrop-blur">
+          <div className="mx-auto flex max-w-7xl flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-[#2C2A28]">当前页面模块有未保存修改</p>
+              <p className="mt-1 text-xs text-[#8A8580]">
+                选择图片或修改文字后，需要点击保存当前模块才会更新前台。
+              </p>
+            </div>
+            <Button type="button" disabled={saving} onClick={save}>
+              <Save size={15} />
+              {saving ? '保存中' : '保存当前模块'}
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
