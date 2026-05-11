@@ -6,8 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { Save, Send, ArrowLeft, Plus, Trash2 } from 'lucide-react'
-import CoverImagePicker from '@/components/admin/CoverImagePicker'
-import ProductGalleryPicker from '@/components/admin/ProductGalleryPicker'
+import MediaImagePicker, { MediaGalleryPicker } from '@/components/admin/MediaImagePicker'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
@@ -360,9 +359,11 @@ function Field({
 export default function ProductForm({
   mode,
   product,
+  maxUploadMb = 20,
 }: {
   mode: 'create' | 'edit'
   product?: CatalogProductRow | null
+  maxUploadMb?: number
 }) {
   const router = useRouter()
   const [form, setForm] = useState<FormState>(() => fromProduct(product))
@@ -691,8 +692,9 @@ export default function ProductForm({
             </div>
 
             <Field label="详情图库 URL" hint="一行一张图。可使用图片库里的 URL，也可填 /images/products/...">
-              <ProductGalleryPicker
+              <MediaGalleryPicker
                 value={galleryUrls}
+                maxUploadMb={maxUploadMb}
                 onChange={(urls) => patch('gallery', urls.join('\n'))}
               />
               <div className="flex flex-wrap gap-2">
@@ -834,6 +836,14 @@ export default function ProductForm({
                           />
                         </Field>
                         <Field label="模块主图 URL">
+                          <MediaImagePicker
+                            value={module.image_url || null}
+                            maxUploadMb={maxUploadMb}
+                            title="选择模块主图"
+                            description="从图片库选择一张模块主图，或直接上传新图。"
+                            emptyLabel="选择/上传模块主图"
+                            onChange={(url) => patchDetailModule(module.id, { image_url: url ?? '' })}
+                          />
                           <Input
                             value={module.image_url ?? ''}
                             onChange={(e) => patchDetailModule(module.id, { image_url: e.target.value })}
@@ -880,8 +890,9 @@ export default function ProductForm({
                       </div>
 
                       <Field label="模块图片组 URL" hint="一行一张图，用于图文模块或 FAQ/场景补充图片。">
-                        <ProductGalleryPicker
+                        <MediaGalleryPicker
                           value={module.images ?? []}
+                          maxUploadMb={maxUploadMb}
                           title="选择模块图片"
                           description="可多选，已选顺序就是该模块图片组顺序。"
                           emptyLabel="选择模块图片"
@@ -944,8 +955,12 @@ export default function ProductForm({
           </Field>
 
           <Field label="封面图">
-            <CoverImagePicker
+            <MediaImagePicker
               value={form.image || null}
+              maxUploadMb={maxUploadMb}
+              title="选择产品封面图"
+              description="从图片库选择产品封面，或直接上传新图。"
+              emptyLabel="选择/上传封面图"
               onChange={(url) => patch('image', url ?? '')}
             />
           </Field>

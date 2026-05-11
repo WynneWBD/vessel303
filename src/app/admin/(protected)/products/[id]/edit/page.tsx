@@ -1,5 +1,10 @@
 import { notFound } from 'next/navigation'
 import ProductForm from '@/components/admin/ProductForm'
+import {
+  defaultSiteSettings,
+  getSiteSettings,
+  normalizeMediaMaxUploadMb,
+} from '@/lib/admin-settings-db'
 import { getCatalogProductById } from '@/lib/product-catalog-db'
 
 export const dynamic = 'force-dynamic'
@@ -10,11 +15,20 @@ export default async function EditProductPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const product = await getCatalogProductById(id).catch((err) => {
-    console.error('[admin/products/edit] load failed', err)
-    return null
-  })
+  const [product, settings] = await Promise.all([
+    getCatalogProductById(id).catch((err) => {
+      console.error('[admin/products/edit] load failed', err)
+      return null
+    }),
+    getSiteSettings().catch(() => defaultSiteSettings),
+  ])
 
   if (!product) notFound()
-  return <ProductForm mode="edit" product={product} />
+  return (
+    <ProductForm
+      mode="edit"
+      product={product}
+      maxUploadMb={normalizeMediaMaxUploadMb(settings.mediaMaxUploadMb)}
+    />
+  )
 }
