@@ -400,30 +400,35 @@ export default function MediaClient({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <input
-            ref={batchInputRef}
-            type="file"
-            accept={ACCEPT}
-            multiple
-            className="hidden"
-            onChange={handleSelectFile}
-          />
-          <input
-            ref={singleInputRef}
-            type="file"
-            accept={ACCEPT}
-            className="hidden"
-            onChange={handleSelectFile}
-          />
-          <Button variant="outline" size="sm" onClick={() => batchInputRef.current?.click()}>
-            <ImagePlus size={16} />
-            批量上传
-          </Button>
-          <Button size="sm" onClick={() => singleInputRef.current?.click()}>
-            <ImageUp size={16} />
-            上传
-          </Button>
+        <div className="flex flex-col items-start gap-1 sm:items-end">
+          <div className="flex items-center gap-2">
+            <input
+              ref={batchInputRef}
+              type="file"
+              accept={ACCEPT}
+              multiple
+              className="hidden"
+              onChange={handleSelectFile}
+            />
+            <input
+              ref={singleInputRef}
+              type="file"
+              accept={ACCEPT}
+              className="hidden"
+              onChange={handleSelectFile}
+            />
+            <Button variant="outline" size="sm" onClick={() => batchInputRef.current?.click()}>
+              <ImagePlus size={16} />
+              批量上传
+            </Button>
+            <Button size="sm" onClick={() => singleInputRef.current?.click()}>
+              <ImageUp size={16} />
+              上传
+            </Button>
+          </div>
+          <p className="text-[11px] text-[#8A8580]">
+            支持 JPEG / PNG / WebP / GIF / SVG · 最大 {uploadLimitMb} MB · 一次最多 {BATCH_LIMIT} 张
+          </p>
         </div>
       </div>
 
@@ -708,35 +713,35 @@ function MediaDetailSheet({
               <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3 text-sm">
                 <div className="text-xs text-[#8A8580] mb-1.5">引用统计</div>
                 <div className="text-[#2C2A28]">
-                  被引用 <span className="text-[#E36F2C]">{refs.total}</span> 次
+                  涉及 <span className="text-[#E36F2C]">{refs.total}</span> 条内容
                   {refs.news > 0 && (
                     <span className="text-[#8A8580]">
                       {' '}
-                      · news 封面图 {refs.news} 次
+                      · 新闻 {refs.news} 条
                     </span>
                   )}
                   {refs.products > 0 && (
                     <span className="text-[#8A8580]">
                       {' '}
-                      · 产品 {refs.products} 次
+                      · 产品 {refs.products} 条
                     </span>
                   )}
                   {refs.projects > 0 && (
                     <span className="text-[#8A8580]">
                       {' '}
-                      · 项目案例 {refs.projects} 次
+                      · 项目案例 {refs.projects} 条
                     </span>
                   )}
                   {refs.pages > 0 && (
                     <span className="text-[#8A8580]">
                       {' '}
-                      · 页面模块 {refs.pages} 次
+                      · 页面模块 {refs.pages} 条
                     </span>
                   )}
                 </div>
                 {refs.total > 0 && (
                   <div className="mt-1.5 text-xs text-[#E36F2C]">
-                    该图片正在使用,先移除引用才能删除
+                    该图片正在使用,先移除相关内容里的引用才能删除
                   </div>
                 )}
               </div>

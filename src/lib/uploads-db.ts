@@ -155,7 +155,12 @@ export async function countNewsReferencingImage(url: string): Promise<number> {
   return countRows(
     `SELECT COUNT(*)::text AS count
      FROM news
-     WHERE cover_image_url = $1 AND deleted_at IS NULL`,
+     WHERE deleted_at IS NULL
+       AND (
+         cover_image_url = $1
+         OR strpos(COALESCE(content_zh::text, ''), $1) > 0
+         OR strpos(COALESCE(content_en::text, ''), $1) > 0
+       )`,
     [url],
   )
 }
