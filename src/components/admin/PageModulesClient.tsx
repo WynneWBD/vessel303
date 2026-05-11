@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import PageModuleImagePicker from '@/components/admin/PageModuleImagePicker'
 import type { PageModuleItem, PageModuleRow } from '@/lib/page-modules-db'
 
 const PAGE_LABELS = {
@@ -42,8 +43,10 @@ function cloneModule(pageModule: PageModuleRow): PageModuleRow {
 
 export default function PageModulesClient({
   initialModules,
+  maxUploadMb = 20,
 }: {
   initialModules: PageModuleRow[]
+  maxUploadMb?: number
 }) {
   const [modules, setModules] = useState(() => initialModules.map(cloneModule))
   const [activeId, setActiveId] = useState(initialModules[0]?.id ?? '')
@@ -268,7 +271,7 @@ export default function PageModulesClient({
                 <div>
                   <p className="text-sm font-semibold text-[#2C2A28]">图片与文字项</p>
                   <p className="mt-1 text-xs text-[#8A8580]">
-                    已接入前台的模块会立即影响网站展示。可以新增、删除、调整排序；图片字段先支持 URL 修改，后续再接入统一图片库选择器。
+                    已接入前台的模块保存后会影响网站展示。图片可以从图片库选择、直接上传，或继续手动填写 URL。
                   </p>
                 </div>
                 <Button type="button" size="sm" variant="outline" onClick={addItem}>
@@ -324,11 +327,18 @@ export default function PageModulesClient({
                         />
                       </label>
                       {showImage ? (
-                        <Input
-                          value={item.image_url ?? ''}
-                          onChange={(e) => patchItem(item.id, { image_url: e.target.value })}
-                          placeholder="图片 URL"
-                        />
+                        <div className="space-y-2">
+                          <PageModuleImagePicker
+                            value={item.image_url ?? ''}
+                            maxUploadMb={maxUploadMb}
+                            onChange={(url) => patchItem(item.id, { image_url: url })}
+                          />
+                          <Input
+                            value={item.image_url ?? ''}
+                            onChange={(e) => patchItem(item.id, { image_url: e.target.value })}
+                            placeholder="图片 URL（可手动粘贴）"
+                          />
+                        </div>
                       ) : null}
                       {showValueFields(item) ? (
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
