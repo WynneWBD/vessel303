@@ -26,6 +26,8 @@ export default async function UsersPage({
     disabled: getStr('disabled') ?? 'all',
     search: getStr('search') ?? '',
   }
+  const page = Math.max(1, Number(getStr('page') ?? 1) || 1)
+  const limit = Math.min(100, Math.max(20, Number(getStr('limit') ?? 50) || 50))
 
   const [{ users, total }, summary] = await Promise.all([
     listUsers({
@@ -33,6 +35,8 @@ export default async function UsersPage({
       identity: filters.identity,
       disabled: filters.disabled,
       search: filters.search || undefined,
+      page,
+      limit,
     }),
     getUserSummary(),
   ])
@@ -42,6 +46,8 @@ export default async function UsersPage({
       initialUsers={users}
       initialTotal={total}
       initialFilters={filters}
+      initialPage={page}
+      initialLimit={limit}
       initialSummary={summary}
       whitelist={ADMIN_EMAIL_WHITELIST.map((e) => e.toLowerCase())}
       currentUserId={session?.user?.id ?? ''}

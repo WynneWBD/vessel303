@@ -23,11 +23,15 @@ export default async function MediaPage({
     mime: getStr('mime') ?? 'all',
     search: getStr('search') ?? '',
   }
+  const page = Math.max(1, Number(getStr('page') ?? 1) || 1)
+  const limit = Math.min(100, Math.max(20, Number(getStr('limit') ?? 50) || 50))
 
   const [{ uploads, total }, bytes, settings] = await Promise.all([
     listUploads({
       mime: filters.mime,
       search: filters.search || undefined,
+      page,
+      limit,
     }),
     sumStorageSize(),
     getSiteSettings().catch(() => defaultSiteSettings),
@@ -39,6 +43,8 @@ export default async function MediaPage({
       initialTotal={total}
       initialBytes={bytes}
       initialFilters={filters}
+      initialPage={page}
+      initialLimit={limit}
       maxUploadMb={normalizeMediaMaxUploadMb(settings.mediaMaxUploadMb)}
     />
   )

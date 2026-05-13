@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Download, Plus, Trash2, Mail } from 'lucide-react'
+import { Download, Plus, Trash2, Mail, SearchX } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,6 +25,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
+import AdminPagination from '@/components/admin/AdminPagination'
 import type { Lead, LeadStatus } from '@/lib/leads-db'
 
 type Filters = {
@@ -85,42 +86,70 @@ export default function LeadsClient({
   initialLeads,
   initialTotal,
   initialFilters,
+  initialPage,
+  initialLimit,
 }: {
   initialLeads: Lead[]
   initialTotal: number
   initialFilters: Filters
+  initialPage: number
+  initialLimit: number
 }) {
   const router = useRouter()
   const [filters, setFilters] = useState<Filters>(initialFilters)
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
   const [total, setTotal] = useState(initialTotal)
+  const [page, setPage] = useState(initialPage)
+  const [limit, setLimit] = useState(initialLimit)
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState<Lead | null>(null)
   const [newOpen, setNewOpen] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<Lead | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
-  const buildQuery = useCallback((f: Filters) => {
+  const hasActiveFilters =
+    filters.status !== 'all' ||
+    filters.inquiry_type !== 'all' ||
+    filters.country.trim().length > 0 ||
+    filters.search.trim().length > 0
+
+  const resetFilters = () => {
+    setFilters({ status: 'all', inquiry_type: 'all', country: '', search: '' })
+    setPage(1)
+  }
+
+  const updateFilters = (patch: Partial<Filters>) => {
+    setFilters((f) => ({ ...f, ...patch }))
+    setPage(1)
+  }
+
+  const buildQuery = useCallback((f: Filters, paging?: { page: number; limit: number }) => {
     const sp = new URLSearchParams()
     if (f.status && f.status !== 'all') sp.set('status', f.status)
     if (f.inquiry_type && f.inquiry_type !== 'all') sp.set('inquiry_type', f.inquiry_type)
     if (f.country) sp.set('country', f.country)
     if (f.search) sp.set('search', f.search)
+    if (paging) {
+      sp.set('page', String(paging.page))
+      sp.set('limit', String(paging.limit))
+    }
     return sp.toString()
   }, [])
 
   const reload = useCallback(
-    async (f: Filters) => {
+    async (f: Filters, nextPage: number, nextLimit: number) => {
       setLoading(true)
       try {
-        const qs = buildQuery(f)
+        const qs = buildQuery(f, { page: nextPage, limit: nextLimit })
         const res = await fetch(`/api/admin/leads${qs ? `?${qs}` : ''}`, {
           cache: 'no-store',
         })
         if (!res.ok) throw new Error('Failed to load')
-        const data = (await res.json()) as { leads: Lead[]; total: number }
+        const data = (await res.json()) as { leads: Lead[]; total: number; page: number; limit: number }
         setLeads(data.leads)
         setTotal(data.total)
+        setPage(data.page)
+        setLimit(data.limit)
       } catch (err) {
         toast.error('加载失败')
         console.error(err)
@@ -134,10 +163,10 @@ export default function LeadsClient({
   // Debounce search/country text inputs; selects fire immediately.
   useEffect(() => {
     const t = setTimeout(() => {
-      reload(filters)
+      reload(filters, page, limit)
     }, 300)
     return () => clearTimeout(t)
-  }, [filters, reload])
+  }, [filters, page, limit, reload])
 
   const handleExport = () => {
     const qs = buildQuery(filters)
@@ -165,7 +194,7 @@ export default function LeadsClient({
       if (!res.ok) throw new Error('Delete failed')
       toast.success('已删除')
       setSelected(null)
-      await reload(filters)
+      await reload(filters, page, limit)
       router.refresh()
     } catch (err) {
       toast.error('删除失败')
@@ -203,7 +232,7 @@ export default function LeadsClient({
       const data = (await res.json()) as { lead: Lead }
       toast.success('已保存')
       setSelected(data.lead)
-      await reload(filters)
+      await reload(filters, page, limit)
       router.refresh()
     } catch (err) {
       toast.error('保存失败')
@@ -235,7 +264,8 @@ export default function LeadsClient({
       }
       toast.success('测试线索已新建')
       setNewOpen(false)
-      await reload(filters)
+      setPage(1)
+      await reload(filters, 1, limit)
       router.refresh()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '新建失败')
@@ -269,7 +299,7 @@ export default function LeadsClient({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         <Select
           value={filters.status}
-          onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}
+          onChange={(e) => updateFilters({ status: e.target.value })}
         >
           <option value="all">状态:全部</option>
           {STATUS_OPTIONS.map((o) => (
@@ -280,7 +310,7 @@ export default function LeadsClient({
         </Select>
         <Select
           value={filters.inquiry_type}
-          onChange={(e) => setFilters((f) => ({ ...f, inquiry_type: e.target.value }))}
+          onChange={(e) => updateFilters({ inquiry_type: e.target.value })}
         >
           <option value="all">身份:全部</option>
           {INQUIRY_OPTIONS.map((o) => (
@@ -292,12 +322,12 @@ export default function LeadsClient({
         <Input
           placeholder="国家"
           value={filters.country}
-          onChange={(e) => setFilters((f) => ({ ...f, country: e.target.value }))}
+          onChange={(e) => updateFilters({ country: e.target.value })}
         />
         <Input
           placeholder="关键词(邮箱/姓名/公司/留言)"
           value={filters.search}
-          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+          onChange={(e) => updateFilters({ search: e.target.value })}
         />
       </div>
 
@@ -323,11 +353,22 @@ export default function LeadsClient({
                 <tr>
                   <td colSpan={9} className="px-4 py-16">
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
-                      <Mail size={32} className="text-[#4A4744]" />
-                      <p className="text-[#C4B9AB]">暂无线索</p>
+                      {hasActiveFilters ? (
+                        <SearchX size={32} className="text-[#4A4744]" />
+                      ) : (
+                        <Mail size={32} className="text-[#4A4744]" />
+                      )}
+                      <p className="text-[#C4B9AB]">
+                        {hasActiveFilters ? '没有找到符合条件的线索' : '暂无线索'}
+                      </p>
                       <p className="text-xs text-[#6B6560]">
                         公开询价表单接入后,线索会自动显示在这里
                       </p>
+                      {hasActiveFilters ? (
+                        <Button type="button" variant="outline" size="sm" onClick={resetFilters}>
+                          清空筛选
+                        </Button>
+                      ) : null}
                     </div>
                   </td>
                 </tr>
@@ -362,10 +403,20 @@ export default function LeadsClient({
         </div>
       </div>
 
-      <div className="text-xs text-[#8A8580] flex items-center gap-3">
-        <span>共 {total} 条</span>
-        {loading && <span>加载中…</span>}
-      </div>
+      {total > 0 ? (
+        <AdminPagination
+          total={total}
+          page={page}
+          limit={limit}
+          loading={loading}
+          itemLabel="条线索"
+          onPageChange={setPage}
+          onLimitChange={(nextLimit) => {
+            setLimit(nextLimit)
+            setPage(1)
+          }}
+        />
+      ) : null}
 
       {/* Detail sheet */}
       <LeadDetailSheet

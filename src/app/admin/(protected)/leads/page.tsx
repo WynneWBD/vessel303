@@ -21,12 +21,16 @@ export default async function LeadsPage({
     country: getStr('country') ?? '',
     search: getStr('search') ?? '',
   }
+  const page = Math.max(1, Number(getStr('page') ?? 1) || 1)
+  const limit = Math.min(100, Math.max(20, Number(getStr('limit') ?? 50) || 50))
 
   const { leads, total } = await listLeads({
     status: filters.status,
     inquiry_type: filters.inquiry_type,
     country: filters.country || undefined,
     search: filters.search || undefined,
+    page,
+    limit,
   })
 
   return (
@@ -34,6 +38,8 @@ export default async function LeadsPage({
       initialLeads={leads}
       initialTotal={total}
       initialFilters={filters}
+      initialPage={page}
+      initialLimit={limit}
     />
   )
 }

@@ -15,6 +15,7 @@ import {
   ImagePlus,
   ImageUp,
   ImageOff,
+  SearchX,
   Trash2,
   Upload as UploadIcon,
   X,
@@ -30,6 +31,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
+import AdminPagination from '@/components/admin/AdminPagination'
 import type { MediaReferenceCounts, Upload } from '@/lib/uploads-db'
 
 const FREE_QUOTA_BYTES = 1 * 1024 * 1024 * 1024 // 1 GB
@@ -112,12 +114,16 @@ export default function MediaClient({
   initialTotal,
   initialBytes,
   initialFilters,
+  initialPage,
+  initialLimit,
   maxUploadMb,
 }: {
   initialUploads: Upload[]
   initialTotal: number
   initialBytes: number
   initialFilters: Filters
+  initialPage: number
+  initialLimit: number
   maxUploadMb: number
 }) {
   const router = useRouter()
@@ -125,6 +131,8 @@ export default function MediaClient({
   const [total, setTotal] = useState(initialTotal)
   const [storageBytes, setStorageBytes] = useState(initialBytes)
   const [filters, setFilters] = useState<Filters>(initialFilters)
+  const [page, setPage] = useState(initialPage)
+  const [limit, setLimit] = useState(initialLimit)
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState<Upload | null>(null)
   const [tasks, setTasks] = useState<UploadTask[]>([])
@@ -143,25 +151,43 @@ export default function MediaClient({
   const uploadLimitMb = useMemo(() => normalizeMaxUploadMb(maxUploadMb), [maxUploadMb])
   const uploadLimitBytes = uploadLimitMb * BYTES_PER_MB
 
-  const buildQuery = useCallback((f: Filters) => {
+  const hasActiveFilters = filters.mime !== 'all' || filters.search.trim().length > 0
+
+  const resetFilters = () => {
+    setFilters({ mime: 'all', search: '' })
+    setPage(1)
+  }
+
+  const updateFilters = (patch: Partial<Filters>) => {
+    setFilters((f) => ({ ...f, ...patch }))
+    setPage(1)
+  }
+
+  const buildQuery = useCallback((f: Filters, paging?: { page: number; limit: number }) => {
     const sp = new URLSearchParams()
     if (f.mime && f.mime !== 'all') sp.set('mime', f.mime)
     if (f.search) sp.set('search', f.search)
+    if (paging) {
+      sp.set('page', String(paging.page))
+      sp.set('limit', String(paging.limit))
+    }
     return sp.toString()
   }, [])
 
   const reload = useCallback(
-    async (f: Filters) => {
+    async (f: Filters, nextPage: number, nextLimit: number) => {
       setLoading(true)
       try {
-        const qs = buildQuery(f)
+        const qs = buildQuery(f, { page: nextPage, limit: nextLimit })
         const res = await fetch(`/api/admin/media${qs ? `?${qs}` : ''}`, {
           cache: 'no-store',
         })
         if (!res.ok) throw new Error('load failed')
-        const data = (await res.json()) as { uploads: Upload[]; total: number }
+        const data = (await res.json()) as { uploads: Upload[]; total: number; page: number; limit: number }
         setUploads(data.uploads)
         setTotal(data.total)
+        setPage(data.page)
+        setLimit(data.limit)
       } catch (err) {
         toast.error('加载失败')
         console.error(err)
@@ -173,9 +199,9 @@ export default function MediaClient({
   )
 
   useEffect(() => {
-    const t = setTimeout(() => reload(filters), 300)
+    const t = setTimeout(() => reload(filters, page, limit), 300)
     return () => clearTimeout(t)
-  }, [filters, reload])
+  }, [filters, page, limit, reload])
 
   // ─── drag & drop wiring on the whole page ────────────────────────────────
   useEffect(() => {
@@ -315,7 +341,8 @@ export default function MediaClient({
       // onUploadCompleted runs server-to-server after Blob stores the object —
       // give the DB insert a beat to land before we reload the grid.
       await new Promise((r) => setTimeout(r, 1500))
-      await reload(filters)
+      setPage(1)
+      await reload(filters, 1, limit)
       router.refresh() // keep sidebar badge + dashboard in sync
     }
 
@@ -449,7 +476,7 @@ export default function MediaClient({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-xl">
         <Select
           value={filters.mime}
-          onChange={(e) => setFilters((f) => ({ ...f, mime: e.target.value }))}
+          onChange={(e) => updateFilters({ mime: e.target.value })}
         >
           <option value="all">类型:全部</option>
           <option value="jpeg">JPEG</option>
@@ -461,16 +488,27 @@ export default function MediaClient({
         <Input
           placeholder="搜索文件名"
           value={filters.search}
-          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+          onChange={(e) => updateFilters({ search: e.target.value })}
         />
       </div>
 
       {/* Grid */}
       {uploads.length === 0 && !loading ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#E5DED4] bg-[#FFFFFF] py-20 text-center">
-          <ImageOff size={48} className="text-[#4A4744]" />
-          <p className="text-[#C4B9AB]">还没有图片</p>
+          {hasActiveFilters ? (
+            <SearchX size={48} className="text-[#4A4744]" />
+          ) : (
+            <ImageOff size={48} className="text-[#4A4744]" />
+          )}
+          <p className="text-[#C4B9AB]">
+            {hasActiveFilters ? '没有找到符合条件的图片' : '还没有图片'}
+          </p>
           <p className="text-xs text-[#6B6560]">点击右上角上传,或直接拖拽图片到此页面</p>
+          {hasActiveFilters ? (
+            <Button type="button" variant="outline" size="sm" onClick={resetFilters}>
+              清空筛选
+            </Button>
+          ) : null}
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -479,6 +517,21 @@ export default function MediaClient({
           ))}
         </div>
       )}
+
+      {total > 0 ? (
+        <AdminPagination
+          total={total}
+          page={page}
+          limit={limit}
+          loading={loading}
+          itemLabel="张图片"
+          onPageChange={setPage}
+          onLimitChange={(nextLimit) => {
+            setLimit(nextLimit)
+            setPage(1)
+          }}
+        />
+      ) : null}
 
       {loading && <div className="text-xs text-[#8A8580]">加载中…</div>}
 

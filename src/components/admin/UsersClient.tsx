@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { Download, Shield, AlertTriangle } from 'lucide-react'
+import { Download, Shield, AlertTriangle, SearchX } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +17,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import AdminPagination from '@/components/admin/AdminPagination'
 import type {
   AdminUserRow,
   UserIdentity,
@@ -91,6 +92,8 @@ export default function UsersClient({
   initialUsers,
   initialTotal,
   initialFilters,
+  initialPage,
+  initialLimit,
   initialSummary,
   whitelist,
   currentUserId,
@@ -98,6 +101,8 @@ export default function UsersClient({
   initialUsers: AdminUserRow[]
   initialTotal: number
   initialFilters: Filters
+  initialPage: number
+  initialLimit: number
   initialSummary: UserSummary
   whitelist: string[]
   currentUserId: string
@@ -106,6 +111,8 @@ export default function UsersClient({
   const [filters, setFilters] = useState<Filters>(initialFilters)
   const [users, setUsers] = useState<AdminUserRow[]>(initialUsers)
   const [total, setTotal] = useState(initialTotal)
+  const [page, setPage] = useState(initialPage)
+  const [limit, setLimit] = useState(initialLimit)
   const [summary] = useState(initialSummary)
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState<UserWithFlag | null>(null)
@@ -118,27 +125,49 @@ export default function UsersClient({
     [whitelist],
   )
 
-  const buildQuery = useCallback((f: Filters) => {
+  const hasActiveFilters =
+    filters.role !== 'all' ||
+    filters.identity !== 'all' ||
+    filters.disabled !== 'all' ||
+    filters.search.trim().length > 0
+
+  const resetFilters = () => {
+    setFilters({ role: 'all', identity: 'all', disabled: 'all', search: '' })
+    setPage(1)
+  }
+
+  const updateFilters = (patch: Partial<Filters>) => {
+    setFilters((f) => ({ ...f, ...patch }))
+    setPage(1)
+  }
+
+  const buildQuery = useCallback((f: Filters, paging?: { page: number; limit: number }) => {
     const sp = new URLSearchParams()
     if (f.role && f.role !== 'all') sp.set('role', f.role)
     if (f.identity && f.identity !== 'all') sp.set('identity', f.identity)
     if (f.disabled && f.disabled !== 'all') sp.set('disabled', f.disabled)
     if (f.search) sp.set('search', f.search)
+    if (paging) {
+      sp.set('page', String(paging.page))
+      sp.set('limit', String(paging.limit))
+    }
     return sp.toString()
   }, [])
 
   const reload = useCallback(
-    async (f: Filters) => {
+    async (f: Filters, nextPage: number, nextLimit: number) => {
       setLoading(true)
       try {
-        const qs = buildQuery(f)
+        const qs = buildQuery(f, { page: nextPage, limit: nextLimit })
         const res = await fetch(`/api/admin/users${qs ? `?${qs}` : ''}`, {
           cache: 'no-store',
         })
         if (!res.ok) throw new Error('load failed')
-        const data = (await res.json()) as { users: AdminUserRow[]; total: number }
+        const data = (await res.json()) as { users: AdminUserRow[]; total: number; page: number; limit: number }
         setUsers(data.users)
         setTotal(data.total)
+        setPage(data.page)
+        setLimit(data.limit)
       } catch (err) {
         toast.error('加载失败')
         console.error(err)
@@ -150,9 +179,9 @@ export default function UsersClient({
   )
 
   useEffect(() => {
-    const t = setTimeout(() => reload(filters), 300)
+    const t = setTimeout(() => reload(filters, page, limit), 300)
     return () => clearTimeout(t)
-  }, [filters, reload])
+  }, [filters, page, limit, reload])
 
   const handleExport = () => {
     const qs = buildQuery(filters)
@@ -194,7 +223,7 @@ export default function UsersClient({
       const data = (await res.json()) as { user: UserWithFlag }
       toast.success('已保存')
       setSelected(data.user)
-      await reload(filters)
+      await reload(filters, page, limit)
       router.refresh()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '保存失败')
@@ -232,7 +261,7 @@ export default function UsersClient({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         <Select
           value={filters.role}
-          onChange={(e) => setFilters((f) => ({ ...f, role: e.target.value }))}
+          onChange={(e) => updateFilters({ role: e.target.value })}
         >
           <option value="all">后台权限:全部</option>
           <option value="user">用户</option>
@@ -241,7 +270,7 @@ export default function UsersClient({
         </Select>
         <Select
           value={filters.identity}
-          onChange={(e) => setFilters((f) => ({ ...f, identity: e.target.value }))}
+          onChange={(e) => updateFilters({ identity: e.target.value })}
         >
           <option value="all">身份:全部</option>
           <option value="buyer">B-采购商</option>
@@ -252,7 +281,7 @@ export default function UsersClient({
         </Select>
         <Select
           value={filters.disabled}
-          onChange={(e) => setFilters((f) => ({ ...f, disabled: e.target.value }))}
+          onChange={(e) => updateFilters({ disabled: e.target.value })}
         >
           <option value="all">状态:全部</option>
           <option value="false">已激活</option>
@@ -261,7 +290,7 @@ export default function UsersClient({
         <Input
           placeholder="搜索邮箱或姓名"
           value={filters.search}
-          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+          onChange={(e) => updateFilters({ search: e.target.value })}
         />
       </div>
 
@@ -284,8 +313,23 @@ export default function UsersClient({
             <tbody>
               {users.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-16 text-center text-[#C4B9AB]">
-                    暂无用户
+                  <td colSpan={8} className="px-4 py-16">
+                    <div className="flex flex-col items-center justify-center gap-2 text-center">
+                      <SearchX size={32} className="text-[#4A4744]" />
+                      <p className="text-[#C4B9AB]">
+                        {hasActiveFilters ? '没有找到符合条件的用户' : '暂无用户'}
+                      </p>
+                      <p className="text-xs text-[#6B6560]">
+                        {hasActiveFilters
+                          ? '可以放宽筛选条件，或清空筛选后再查看。'
+                          : '新注册用户会显示在这里。'}
+                      </p>
+                      {hasActiveFilters ? (
+                        <Button type="button" variant="outline" size="sm" onClick={resetFilters}>
+                          清空筛选
+                        </Button>
+                      ) : null}
+                    </div>
                   </td>
                 </tr>
               )}
@@ -350,10 +394,20 @@ export default function UsersClient({
         </div>
       </div>
 
-      <div className="text-xs text-[#8A8580] flex items-center gap-3">
-        <span>共 {total} 条</span>
-        {loading && <span>加载中…</span>}
-      </div>
+      {total > 0 ? (
+        <AdminPagination
+          total={total}
+          page={page}
+          limit={limit}
+          loading={loading}
+          itemLabel="个用户"
+          onPageChange={setPage}
+          onLimitChange={(nextLimit) => {
+            setLimit(nextLimit)
+            setPage(1)
+          }}
+        />
+      ) : null}
 
       {selected ? (
         <UserDetailSheet
