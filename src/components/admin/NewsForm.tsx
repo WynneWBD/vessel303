@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import type { JSONContent } from '@tiptap/core'
@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 import NewsEditor from './NewsEditor'
 import CoverImagePicker from './CoverImagePicker'
 import AdminConfirmDialog from './AdminConfirmDialog'
+import { UNSAVED_CHANGES_MESSAGE, useUnsavedChangesWarning } from './useUnsavedChangesWarning'
 
 interface Props {
   initialData?: NewsRow
@@ -61,7 +62,7 @@ export default function NewsForm({ initialData, mode }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false)
 
-  const buildBody = () => ({
+  const formBody = useMemo(() => ({
     slug: normalizeSlug(slug),
     title_zh: titleZh.trim(),
     title_en: titleEn.trim(),
@@ -70,7 +71,17 @@ export default function NewsForm({ initialData, mode }: Props) {
     excerpt_zh: excerptZh.trim() || null,
     excerpt_en: excerptEn.trim() || null,
     cover_image_url: coverImageUrl,
-  })
+  }), [contentEn, contentZh, coverImageUrl, excerptEn, excerptZh, slug, titleEn, titleZh])
+  const currentSnapshot = useMemo(
+    () => JSON.stringify({ ...formBody, status: currentStatus }),
+    [currentStatus, formBody],
+  )
+  const [savedSnapshot, setSavedSnapshot] = useState(currentSnapshot)
+  const hasUnsavedChanges = currentSnapshot !== savedSnapshot
+
+  useUnsavedChangesWarning(hasUnsavedChanges)
+
+  const buildBody = () => formBody
 
   const validate = () => {
     const cleanSlug = normalizeSlug(slug)
@@ -121,6 +132,7 @@ export default function NewsForm({ initialData, mode }: Props) {
     setSubmitting(true)
     try {
       const saved = await saveContent()
+      if (saved) setSavedSnapshot(JSON.stringify({ ...formBody, status: saved.status }))
       if (mode === 'create' && saved) {
         toast.success('已保存草稿')
         router.push(`/admin/news/${saved.id}/edit`)
@@ -156,6 +168,7 @@ export default function NewsForm({ initialData, mode }: Props) {
       }
       const data = await res.json() as { data: SavedNews }
       setCurrentStatus(data.data.status)
+      setSavedSnapshot(JSON.stringify({ ...formBody, status: data.data.status }))
       toast.success(isPublished ? '已取消发布' : '已发布')
       router.push(`/admin/news/${saved.id}/edit`)
       router.refresh()
@@ -167,6 +180,11 @@ export default function NewsForm({ initialData, mode }: Props) {
   }
 
   const isPublished = currentStatus === 'published'
+  const handleBackToList = () => {
+    if (!hasUnsavedChanges || window.confirm(UNSAVED_CHANGES_MESSAGE)) {
+      router.push('/admin/news')
+    }
+  }
   const requestPublishToggle = () => {
     const validationError = validate()
     if (validationError) {
@@ -300,8 +318,8 @@ export default function NewsForm({ initialData, mode }: Props) {
 
       {/* Sticky bottom bar */}
       <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-[#E5DED4] bg-[#F5F2ED] px-6 py-4">
-        <div className="mx-auto max-w-4xl flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
               variant="outline"
@@ -318,10 +336,15 @@ export default function NewsForm({ initialData, mode }: Props) {
               {isPublished ? '保存并取消发布' : '保存并发布'}
             </Button>
           </div>
+          {hasUnsavedChanges ? (
+            <span className="rounded-full border border-[#F2C6A7] bg-[#FFF7F0] px-2.5 py-1 text-xs font-medium text-[#B85D21]">
+              有未保存修改
+            </span>
+          ) : null}
           <Button
             type="button"
             variant="ghost"
-            onClick={() => router.push('/admin/news')}
+            onClick={handleBackToList}
             disabled={submitting}
           >
             返回列表

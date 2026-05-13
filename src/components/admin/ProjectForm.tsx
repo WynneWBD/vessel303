@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import type { ProjectCaseRow, ProjectCaseStatus } from '@/lib/project-cases-db'
+import { useUnsavedChangesWarning } from './useUnsavedChangesWarning'
 
 type FormState = {
   id: string
@@ -228,6 +229,7 @@ export default function ProjectForm({
 }) {
   const router = useRouter()
   const [form, setForm] = useState<FormState>(() => fromProject(project))
+  const [savedForm, setSavedForm] = useState<FormState>(() => fromProject(project))
   const [saving, setSaving] = useState(false)
   const imageUrls = useMemo(() => splitLines(form.images), [form.images])
   const globalAmenities = useMemo(() => parseAmenityRows(form.global_amenities), [form.global_amenities])
@@ -255,6 +257,9 @@ export default function ProjectForm({
     longitude >= -180 &&
     longitude <= 180
   const mapReady = form.status === 'published' && coordinatesValid
+  const hasUnsavedChanges = useMemo(() => JSON.stringify(form) !== JSON.stringify(savedForm), [form, savedForm])
+
+  useUnsavedChangesWarning(hasUnsavedChanges)
 
   const patch = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -324,10 +329,12 @@ export default function ProjectForm({
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? '保存失败')
       toast.success(nextStatus === 'published' ? '已保存并发布' : '已保存')
+      const nextForm = fromProject(data.data)
+      setForm(nextForm)
+      setSavedForm(nextForm)
       if (mode === 'create') {
         router.push(`/admin/projects/${data.data.id}/edit`)
       } else {
-        setForm(fromProject(data.data))
         router.refresh()
       }
     } catch (err) {
@@ -349,7 +356,12 @@ export default function ProjectForm({
             {mode === 'create' ? '新建项目案例' : '编辑项目案例'}
           </h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {hasUnsavedChanges ? (
+            <span className="rounded-full border border-[#F2C6A7] bg-[#FFF7F0] px-2.5 py-1 text-xs font-medium text-[#B85D21]">
+              有未保存修改
+            </span>
+          ) : null}
           <Link
             href="/cases"
             target="_blank"

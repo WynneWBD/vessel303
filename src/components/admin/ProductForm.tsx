@@ -18,6 +18,7 @@ import type {
   CatalogDetailModuleType,
   ProductSeriesCode,
 } from '@/lib/products'
+import { useUnsavedChangesWarning } from './useUnsavedChangesWarning'
 
 type FormState = {
   id: string
@@ -367,6 +368,7 @@ export default function ProductForm({
 }) {
   const router = useRouter()
   const [form, setForm] = useState<FormState>(() => fromProduct(product))
+  const [savedForm, setSavedForm] = useState<FormState>(() => fromProduct(product))
   const [saving, setSaving] = useState(false)
 
   const previewHref = useMemo(() => {
@@ -374,6 +376,9 @@ export default function ProductForm({
     return form.detailSlug ? `/products/${form.detailSlug}` : `/products/${form.id}`
   }, [form.detailSlug, form.id])
   const galleryUrls = useMemo(() => splitLines(form.gallery), [form.gallery])
+  const hasUnsavedChanges = useMemo(() => JSON.stringify(form) !== JSON.stringify(savedForm), [form, savedForm])
+
+  useUnsavedChangesWarning(hasUnsavedChanges)
 
   const patch = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -511,10 +516,12 @@ export default function ProductForm({
       if (!res.ok) throw new Error(data.error ?? '保存失败')
 
       toast.success(nextStatus === 'published' ? '已保存并发布' : '已保存')
+      const nextForm = fromProduct(data.data)
+      setForm(nextForm)
+      setSavedForm(nextForm)
       if (mode === 'create') {
         router.push(`/admin/products/${data.data.id}/edit`)
       } else {
-        setForm(fromProduct(data.data))
         router.refresh()
       }
     } catch (err) {
@@ -543,7 +550,12 @@ export default function ProductForm({
           </h1>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {hasUnsavedChanges ? (
+            <span className="rounded-full border border-[#F2C6A7] bg-[#FFF7F0] px-2.5 py-1 text-xs font-medium text-[#B85D21]">
+              有未保存修改
+            </span>
+          ) : null}
           {mode === 'edit' && (
             <Link
               href={previewHref}

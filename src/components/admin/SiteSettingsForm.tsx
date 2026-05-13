@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { toast } from 'sonner'
 import { RotateCcw, Save } from 'lucide-react'
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import type { SiteSettings } from '@/lib/admin-settings-db'
+import { useUnsavedChangesWarning } from './useUnsavedChangesWarning'
 
 type FieldProps = {
   label: string
@@ -34,6 +35,9 @@ export default function SiteSettingsForm({
   const [saved, setSaved] = useState<SiteSettings>(settings)
   const [form, setForm] = useState<SiteSettings>(settings)
   const [saving, setSaving] = useState(false)
+  const hasUnsavedChanges = useMemo(() => JSON.stringify(form) !== JSON.stringify(saved), [form, saved])
+
+  useUnsavedChangesWarning(hasUnsavedChanges)
 
   const patch = <K extends keyof SiteSettings>(key: K, value: SiteSettings[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -75,7 +79,12 @@ export default function SiteSettingsForm({
             先用于后台统一维护，后续模块会逐步读取这些配置，避免联系方式和外链散落在代码里。
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {hasUnsavedChanges ? (
+            <span className="rounded-full border border-[#F2C6A7] bg-[#FFF7F0] px-2.5 py-1 text-xs font-medium text-[#B85D21]">
+              有未保存修改
+            </span>
+          ) : null}
           <Button type="button" variant="outline" size="sm" disabled={saving} onClick={reset}>
             <RotateCcw size={15} />
             恢复
