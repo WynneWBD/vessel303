@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import NewsEditor from './NewsEditor'
 import CoverImagePicker from './CoverImagePicker'
+import AdminConfirmDialog from './AdminConfirmDialog'
 
 interface Props {
   initialData?: NewsRow
@@ -58,6 +59,7 @@ export default function NewsForm({ initialData, mode }: Props) {
   )
   const [activeTab, setActiveTab] = useState<'zh' | 'en'>('zh')
   const [submitting, setSubmitting] = useState(false)
+  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false)
 
   const buildBody = () => ({
     slug: normalizeSlug(slug),
@@ -165,6 +167,14 @@ export default function NewsForm({ initialData, mode }: Props) {
   }
 
   const isPublished = currentStatus === 'published'
+  const requestPublishToggle = () => {
+    const validationError = validate()
+    if (validationError) {
+      toast.error(validationError)
+      return
+    }
+    setPublishConfirmOpen(true)
+  }
 
   return (
     <div className="mx-auto max-w-4xl pb-28">
@@ -302,7 +312,7 @@ export default function NewsForm({ initialData, mode }: Props) {
             </Button>
             <Button
               type="button"
-              onClick={handlePublishToggle}
+              onClick={requestPublishToggle}
               disabled={submitting}
             >
               {isPublished ? '保存并取消发布' : '保存并发布'}
@@ -318,6 +328,24 @@ export default function NewsForm({ initialData, mode }: Props) {
           </Button>
         </div>
       </div>
+
+      <AdminConfirmDialog
+        open={publishConfirmOpen}
+        onOpenChange={setPublishConfirmOpen}
+        title={isPublished ? '确认取消发布这条新闻？' : '确认发布这条新闻？'}
+        description={
+          isPublished
+            ? '确认后会先保存当前表单内容，再取消发布。前台新闻页将不再展示这条新闻。'
+            : '确认后会先保存当前表单内容，再发布到前台新闻页。'
+        }
+        confirmLabel={isPublished ? '保存并取消发布' : '保存并发布'}
+        tone="warning"
+        loading={submitting}
+        onConfirm={async () => {
+          await handlePublishToggle()
+          setPublishConfirmOpen(false)
+        }}
+      />
     </div>
   )
 }

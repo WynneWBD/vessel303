@@ -24,6 +24,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import type { Lead, LeadStatus } from '@/lib/leads-db'
 
 type Filters = {
@@ -96,6 +97,8 @@ export default function LeadsClient({
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState<Lead | null>(null)
   const [newOpen, setNewOpen] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<Lead | null>(null)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   const buildQuery = useCallback((f: Filters) => {
     const sp = new URLSearchParams()
@@ -157,7 +160,6 @@ export default function LeadsClient({
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('确定删除这条线索?此操作可在数据库恢复。')) return
     try {
       const res = await fetch(`/api/admin/leads/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Delete failed')
@@ -168,6 +170,17 @@ export default function LeadsClient({
     } catch (err) {
       toast.error('删除失败')
       console.error(err)
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete) return
+    setConfirmingDelete(true)
+    try {
+      await handleDelete(pendingDelete.id)
+      setPendingDelete(null)
+    } finally {
+      setConfirmingDelete(false)
     }
   }
 
@@ -356,14 +369,33 @@ export default function LeadsClient({
 
       {/* Detail sheet */}
       <LeadDetailSheet
+        key={selected?.id ?? 'no-lead'}
         lead={selected}
         onClose={() => setSelected(null)}
         onSave={handleSave}
-        onDelete={handleDelete}
+        onDelete={setPendingDelete}
       />
 
       {/* New test lead dialog */}
-      <NewLeadDialog open={newOpen} onOpenChange={setNewOpen} onSubmit={handleCreate} />
+      <NewLeadDialog
+        key={newOpen ? 'new-lead-open' : 'new-lead-closed'}
+        open={newOpen}
+        onOpenChange={setNewOpen}
+        onSubmit={handleCreate}
+      />
+
+      <AdminConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null)
+        }}
+        title="确认删除这条线索？"
+        description={`将删除「${pendingDelete?.email ?? ''}」。此操作会把线索标记为删除，必要时可从数据库恢复。`}
+        confirmLabel="确认删除"
+        tone="danger"
+        loading={confirmingDelete}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   )
 }
@@ -380,20 +412,12 @@ function LeadDetailSheet({
     lead: Lead,
     patch: { status: LeadStatus; assigned_to: string; note_append: string },
   ) => Promise<void>
-  onDelete: (id: string) => Promise<void>
+  onDelete: (lead: Lead) => void
 }) {
-  const [status, setStatus] = useState<LeadStatus>('new')
-  const [assignedTo, setAssignedTo] = useState('')
+  const [status, setStatus] = useState<LeadStatus>(lead?.status ?? 'new')
+  const [assignedTo, setAssignedTo] = useState(lead?.assigned_to ?? '')
   const [noteAppend, setNoteAppend] = useState('')
   const [saving, setSaving] = useState(false)
-
-  useEffect(() => {
-    if (lead) {
-      setStatus(lead.status)
-      setAssignedTo(lead.assigned_to ?? '')
-      setNoteAppend('')
-    }
-  }, [lead])
 
   const handleSave = async () => {
     if (!lead) return
@@ -496,7 +520,7 @@ function LeadDetailSheet({
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={() => onDelete(lead.id)}
+                onClick={() => onDelete(lead)}
                 disabled={saving}
               >
                 <Trash2 size={16} />
@@ -541,15 +565,6 @@ function NewLeadDialog({
   const [inquiryType, setInquiryType] = useState('B-buyer')
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
-
-  useEffect(() => {
-    if (!open) {
-      setEmail('')
-      setName('')
-      setInquiryType('B-buyer')
-      setMessage('')
-    }
-  }, [open])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

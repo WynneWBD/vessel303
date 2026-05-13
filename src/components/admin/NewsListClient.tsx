@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 
 type NewsItem = {
   id: number
@@ -43,6 +44,8 @@ export default function NewsListClient({
   const [page, setPage] = useState(1)
   const [filters, setFilters] = useState<Filters>({ status: '', search: '' })
   const [loading, setLoading] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<NewsItem | null>(null)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   const reload = useCallback(async (f: Filters, p: number) => {
     setLoading(true)
@@ -76,7 +79,6 @@ export default function NewsListClient({
   }
 
   const handleDelete = async (item: NewsItem) => {
-    if (!window.confirm(`确定删除这条新闻?\n「${item.title_zh}」`)) return
     try {
       const res = await fetch(`/api/admin/news/${item.id}`, { method: 'DELETE' })
       if (!res.ok) {
@@ -89,6 +91,17 @@ export default function NewsListClient({
       router.refresh()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '删除失败')
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete) return
+    setConfirmingDelete(true)
+    try {
+      await handleDelete(pendingDelete)
+      setPendingDelete(null)
+    } finally {
+      setConfirmingDelete(false)
     }
   }
 
@@ -215,7 +228,7 @@ export default function NewsListClient({
                 <button
                   type="button"
                   title="删除"
-                  onClick={() => handleDelete(item)}
+                  onClick={() => setPendingDelete(item)}
                   className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-red-400 hover:bg-red-400/10 transition-colors"
                 >
                   <Trash2 size={14} />
@@ -252,6 +265,19 @@ export default function NewsListClient({
           </Button>
         </div>
       )}
+
+      <AdminConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null)
+        }}
+        title="确认删除这条新闻？"
+        description={`将删除「${pendingDelete?.title_zh ?? ''}」。删除后前台新闻页不再展示，操作会写入后台日志。`}
+        confirmLabel="确认删除"
+        tone="danger"
+        loading={confirmingDelete}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   )
 }

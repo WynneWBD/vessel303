@@ -29,6 +29,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import type { MediaReferenceCounts, Upload } from '@/lib/uploads-db'
 
 const FREE_QUOTA_BYTES = 1 * 1024 * 1024 * 1024 // 1 GB
@@ -128,6 +129,8 @@ export default function MediaClient({
   const [selected, setSelected] = useState<Upload | null>(null)
   const [tasks, setTasks] = useState<UploadTask[]>([])
   const [dragActive, setDragActive] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<Upload | null>(null)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   const singleInputRef = useRef<HTMLInputElement>(null)
   const batchInputRef = useRef<HTMLInputElement>(null)
@@ -348,7 +351,6 @@ export default function MediaClient({
   }
 
   const handleDelete = async (u: Upload) => {
-    if (!window.confirm('确定删除此图片?此操作不可恢复。')) return
     try {
       const res = await fetch(`/api/admin/media/${u.id}`, { method: 'DELETE' })
       if (!res.ok) {
@@ -363,6 +365,17 @@ export default function MediaClient({
       router.refresh()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '删除失败')
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete) return
+    setConfirmingDelete(true)
+    try {
+      await handleDelete(pendingDelete)
+      setPendingDelete(null)
+    } finally {
+      setConfirmingDelete(false)
     }
   }
 
@@ -543,7 +556,20 @@ export default function MediaClient({
       <MediaDetailSheet
         upload={selected}
         onClose={() => setSelected(null)}
-        onDelete={handleDelete}
+        onDelete={setPendingDelete}
+      />
+
+      <AdminConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null)
+        }}
+        title="确认删除这张图片？"
+        description={`将删除「${pendingDelete?.filename ?? ''}」。此操作会删除 Blob 文件和媒体库记录，不可恢复。`}
+        confirmLabel="确认删除"
+        tone="danger"
+        loading={confirmingDelete}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   )
@@ -619,7 +645,7 @@ function MediaDetailSheet({
 }: {
   upload: Upload | null
   onClose: () => void
-  onDelete: (u: Upload) => Promise<void>
+  onDelete: (u: Upload) => void
 }) {
   const uploadId = upload?.id ?? null
   const [refsState, setRefsState] = useState<{

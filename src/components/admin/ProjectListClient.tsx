@@ -9,9 +9,13 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
+import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import type { ProjectCaseRow, ProjectCaseStatus } from '@/lib/project-cases-db'
 
 type Filters = { status: string; mapStatus: string; search: string }
+type PendingAction =
+  | { type: 'status'; item: ProjectCaseRow; status: ProjectCaseStatus }
+  | { type: 'delete'; item: ProjectCaseRow }
 
 const LIMIT = 20
 
@@ -38,6 +42,8 @@ export default function ProjectListClient({
   const [page, setPage] = useState(1)
   const [filters, setFilters] = useState<Filters>({ status: '', mapStatus: '', search: '' })
   const [loading, setLoading] = useState(false)
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
+  const [confirming, setConfirming] = useState(false)
 
   const reload = useCallback(async (f: Filters, p: number) => {
     setLoading(true)
@@ -88,7 +94,6 @@ export default function ProjectListClient({
   }
 
   const handleDelete = async (item: ProjectCaseRow) => {
-    if (!window.confirm(`确定删除这个案例?\n「${item.name_zh}」`)) return
     try {
       const res = await fetch(`/api/admin/projects/${item.id}`, { method: 'DELETE' })
       const data = await res.json()
@@ -102,9 +107,46 @@ export default function ProjectListClient({
     }
   }
 
+  const handleConfirmAction = async () => {
+    if (!pendingAction) return
+    setConfirming(true)
+    try {
+      if (pendingAction.type === 'delete') {
+        await handleDelete(pendingAction.item)
+      } else {
+        await updateStatus(pendingAction.item, pendingAction.status)
+      }
+      setPendingAction(null)
+    } finally {
+      setConfirming(false)
+    }
+  }
+
   const totalPages = Math.max(1, Math.ceil(total / LIMIT))
   const publishedCount = rows.filter((item) => item.status === 'published').length
   const mapReadyCount = rows.filter((item) => item.status === 'published' && hasMapCoordinates(item)).length
+  const pendingIsDelete = pendingAction?.type === 'delete'
+  const pendingIsPublish =
+    pendingAction?.type === 'status' && pendingAction.status === 'published'
+  const pendingName = pendingAction?.item.name_zh ?? ''
+  const pendingTitle =
+    pendingIsDelete
+      ? '确认删除这个案例？'
+      : pendingIsPublish
+        ? '确认发布这个案例？'
+        : '确认下架这个案例？'
+  const pendingDescription =
+    pendingIsDelete
+      ? `将删除「${pendingName}」。删除后前台案例页不再展示，操作会写入后台日志。`
+      : pendingIsPublish
+        ? `将发布「${pendingName}」。如果经纬度完整，它也会进入 /global 地图。`
+        : `将下架「${pendingName}」。前台案例页和 /global 地图将不再展示该案例。`
+  const pendingConfirmLabel =
+    pendingIsDelete
+      ? '确认删除'
+      : pendingIsPublish
+        ? '确认发布'
+        : '确认下架'
 
   return (
     <div className="flex flex-col gap-6">
@@ -245,7 +287,13 @@ export default function ProjectListClient({
                   <button
                     type="button"
                     title={item.status === 'published' ? '下架' : '发布'}
-                    onClick={() => updateStatus(item, item.status === 'published' ? 'draft' : 'published')}
+                    onClick={() =>
+                      setPendingAction({
+                        type: 'status',
+                        item,
+                        status: item.status === 'published' ? 'draft' : 'published',
+                      })
+                    }
                     className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-[#E36F2C] hover:bg-[#E36F2C]/10 transition-colors"
                   >
                     {item.status === 'published' ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -253,7 +301,7 @@ export default function ProjectListClient({
                   <button
                     type="button"
                     title="删除"
-                    onClick={() => handleDelete(item)}
+                    onClick={() => setPendingAction({ type: 'delete', item })}
                     className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-red-400 hover:bg-red-400/10 transition-colors"
                   >
                     <Trash2 size={14} />
@@ -278,6 +326,19 @@ export default function ProjectListClient({
           </Button>
         </div>
       )}
+
+      <AdminConfirmDialog
+        open={!!pendingAction}
+        onOpenChange={(open) => {
+          if (!open) setPendingAction(null)
+        }}
+        title={pendingTitle}
+        description={pendingDescription}
+        confirmLabel={pendingConfirmLabel}
+        tone={pendingAction?.type === 'delete' ? 'danger' : 'warning'}
+        loading={confirming}
+        onConfirm={handleConfirmAction}
+      />
     </div>
   )
 }

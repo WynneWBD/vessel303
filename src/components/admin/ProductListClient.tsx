@@ -9,10 +9,14 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
+import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import type { CatalogProductRow, CatalogProductStatus } from '@/lib/product-catalog-db'
 import type { ProductSeriesCode } from '@/lib/products'
 
 type Filters = { status: string; series: string; search: string }
+type PendingAction =
+  | { type: 'status'; item: CatalogProductRow; status: CatalogProductStatus }
+  | { type: 'delete'; item: CatalogProductRow }
 
 const LIMIT = 20
 
@@ -44,6 +48,8 @@ export default function ProductListClient({
   const [filters, setFilters] = useState<Filters>({ status: '', series: '', search: '' })
   const [loading, setLoading] = useState(false)
   const [copyingId, setCopyingId] = useState<string | null>(null)
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
+  const [confirming, setConfirming] = useState(false)
 
   const reload = useCallback(async (f: Filters, p: number) => {
     setLoading(true)
@@ -94,7 +100,6 @@ export default function ProductListClient({
   }
 
   const handleDelete = async (item: CatalogProductRow) => {
-    if (!window.confirm(`确定删除这个产品?\n「${item.name_cn}」`)) return
     try {
       const res = await fetch(`/api/admin/products/${item.id}`, { method: 'DELETE' })
       const data = await res.json()
@@ -156,7 +161,44 @@ export default function ProductListClient({
     }
   }
 
+  const handleConfirmAction = async () => {
+    if (!pendingAction) return
+    setConfirming(true)
+    try {
+      if (pendingAction.type === 'delete') {
+        await handleDelete(pendingAction.item)
+      } else {
+        await updateStatus(pendingAction.item, pendingAction.status)
+      }
+      setPendingAction(null)
+    } finally {
+      setConfirming(false)
+    }
+  }
+
   const totalPages = Math.max(1, Math.ceil(total / LIMIT))
+  const pendingIsDelete = pendingAction?.type === 'delete'
+  const pendingIsPublish =
+    pendingAction?.type === 'status' && pendingAction.status === 'published'
+  const pendingName = pendingAction?.item.name_cn ?? ''
+  const pendingTitle =
+    pendingIsDelete
+      ? '确认删除这个产品？'
+      : pendingIsPublish
+        ? '确认发布这个产品？'
+        : '确认下架这个产品？'
+  const pendingDescription =
+    pendingIsDelete
+      ? `将删除「${pendingName}」。删除后前台不再展示，操作会写入后台日志。`
+      : pendingIsPublish
+        ? `将发布「${pendingName}」，前台产品页会对外展示。`
+        : `将下架「${pendingName}」，前台产品页不再展示该产品。`
+  const pendingConfirmLabel =
+    pendingIsDelete
+      ? '确认删除'
+      : pendingIsPublish
+        ? '确认发布'
+        : '确认下架'
 
   return (
     <div className="flex flex-col gap-6">
@@ -287,7 +329,13 @@ export default function ProductListClient({
                 <button
                   type="button"
                   title={item.status === 'published' ? '下架' : '发布'}
-                  onClick={() => updateStatus(item, item.status === 'published' ? 'draft' : 'published')}
+                  onClick={() =>
+                    setPendingAction({
+                      type: 'status',
+                      item,
+                      status: item.status === 'published' ? 'draft' : 'published',
+                    })
+                  }
                   className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-[#E36F2C] hover:bg-[#E36F2C]/10 transition-colors"
                 >
                   {item.status === 'published' ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -304,7 +352,7 @@ export default function ProductListClient({
                 <button
                   type="button"
                   title="删除"
-                  onClick={() => handleDelete(item)}
+                  onClick={() => setPendingAction({ type: 'delete', item })}
                   className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-red-400 hover:bg-red-400/10 transition-colors"
                 >
                   <Trash2 size={14} />
@@ -340,6 +388,19 @@ export default function ProductListClient({
           </Button>
         </div>
       )}
+
+      <AdminConfirmDialog
+        open={!!pendingAction}
+        onOpenChange={(open) => {
+          if (!open) setPendingAction(null)
+        }}
+        title={pendingTitle}
+        description={pendingDescription}
+        confirmLabel={pendingConfirmLabel}
+        tone={pendingAction?.type === 'delete' ? 'danger' : 'warning'}
+        loading={confirming}
+        onConfirm={handleConfirmAction}
+      />
     </div>
   )
 }
