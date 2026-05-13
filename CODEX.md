@@ -1,6 +1,6 @@
 # CODEX.md - vessel303.com Codex 接手文档
 
-最后更新：2026-05-11
+最后更新：2026-05-13
 
 这是 `vessel303.com` 给 Codex 使用的接手文档和操作指南。每次新对话或开始大改动时，先读 `AGENTS.md`，再读本文件。
 
@@ -99,7 +99,7 @@ Codex 默认工作方式：
 
 产品中心：先做 1 个标准产品详情页模型，不急着恢复或导入全部 39 SKU。字段和详情页结构确认后，再批量导入后台 CMS。缺失字段不显示，不用 TBD 硬填。
 
-项目案例：先确定详情页模型和字段，40 个项目不急着一次性全部后台导入。缺失字段不显示。
+项目案例：`project_cases` 当前非删除 9 条、published 8 条、draft 1 条、map-ready CMS 项目 3 条；不建议一次性导入 40 项，继续小批量样板策略。缺失字段不显示。`/cases` 空规格字段已隐藏，不显示 `-`，不用 TBD 硬填。
 
 Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳定性优先于功能扩展。
 
@@ -184,7 +184,7 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 
 - 首页、产品列表、V9 Gen6 详情、About、FAQ、Cases、News、Contact、`/global`、Display 等页面已存在。
 - `/contact` 保留为跳转/承接页，已读取后台设置 `contactUrl`，异常时回退统一外部联系页。
-- `/global` 使用 MapLibre/MapTiler，是高风险稳定模块。
+- `/global` 使用 MapLibre/MapTiler，是高风险稳定模块；当前 CMS 接管同 ID static 点位的样板项目为 `astrobase-mamison`、`japan-space-vessel`、`guangdong-foshan`。
 
 账号中心：
 
@@ -210,8 +210,8 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 
 - 01 产品中心：V9 CMS 详情页第一版模板优化已完成并上线；后续再扩展字段、内容和批量数据。
 - 02 后台运营 / 设置：`site_settings` 初始化、测试账号体系、联系页设置接管、后台图片管理基线已完成并上线；真实上传/删除端到端测试仍需单独授权。
-- 03 项目案例 / 项目 CMS：已启动；`project_cases` 与 Excel/static 40 项 ID 体系不一致，下一步是项目数据基线确认表。
-- 04 Global 地图专项：已完成只读盘点；当前暂不改地图底层，等 03 数据基线清楚后再决定是否介入。
+- 03 项目案例 / 项目 CMS：当前 3 个 Excel/static 样板项目已进入 CMS 发布链路；旧 `foshan-shishan-cultural-camp` 保持 draft，不显示在 `/cases`，不进入 `/global`。
+- 04 Global 地图专项：`/global` 地图底层仍归 04；03 不直接修改地图底层。
 - 05 测试 / 提交 / 推送 / 上线：继续统一验收、提交、push `main` 和 Vercel 上线控制。
 - 06 文档整理：继续维护 V9、`CODEX.md` 和文档库。
 - 07 使用规范与故障排查：沉淀 Codex 使用规范、Browser Use / 工具故障和流程问题。
@@ -488,8 +488,8 @@ curl -I https://www.vessel303.com/news/<slug>
 
 ## 当前已知后续事项
 
-- 03 项目案例 / 项目 CMS：先完成项目数据基线确认表。
-- 04 Global 地图专项：等待 03 数据基线清楚后，再决定是否介入地图点位接入。
+- 03 项目案例 / 项目 CMS：继续小批量样板策略；发布更多项目前先补齐封面图、图库、经纬度、简介、舱数/规模、设施、交通、周边。
+- 04 Global 地图专项：地图底层仍归 04；更多 `/global` 点位接入前先等 03 数据基线稳定。
 - 02 后台运营 / 设置：`site_settings` 已初始化并接管 `/contact` 的 `contactUrl`；后续扩展范围单独确认。
 - 后台图片管理：页面模块、产品图片、表单图片控件、媒体库提示/引用保护已补齐；真实上传/删除端到端测试需单独授权。
 - 价格、会员、代理、支付：单独专项，不在普通 CMS 任务中顺手实现。
