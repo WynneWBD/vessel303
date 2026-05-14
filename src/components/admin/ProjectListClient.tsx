@@ -16,6 +16,7 @@ type Filters = { status: string; mapStatus: string; search: string }
 type PendingAction =
   | { type: 'status'; item: ProjectCaseRow; status: ProjectCaseStatus }
   | { type: 'delete'; item: ProjectCaseRow }
+type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
 
 const LIMIT = 20
 
@@ -27,6 +28,39 @@ function formatDate(ts: string) {
 
 function hasMapCoordinates(item: ProjectCaseRow) {
   return item.latitude != null && item.longitude != null
+}
+
+function hasText(value: string | null | undefined) {
+  return Boolean(value?.trim())
+}
+
+function getProjectCompleteness(item: ProjectCaseRow): {
+  level: CompletenessLevel
+  issues: string[]
+} {
+  const issues: string[] = []
+  const hasCoords = hasMapCoordinates(item)
+
+  if (!hasText(item.cover_image_url)) issues.push('缺封面')
+  if (item.images.length === 0) issues.push('缺图库')
+  if (!hasText(item.description_zh)) issues.push('缺中文简介')
+  if (!hasText(item.description_en)) issues.push('缺英文简介')
+  if (!hasText(item.products)) issues.push('缺产品型号')
+  if (item.tags_zh.length === 0 || item.tags_en.length === 0) issues.push('缺标签')
+  if (!hasCoords) issues.push('缺坐标')
+  if (hasCoords && item.status !== 'published') issues.push('有坐标待发布')
+
+  if (issues.length === 0) return { level: '完整', issues }
+  if (issues.includes('缺封面') || issues.includes('缺图库')) {
+    return { level: '待补素材', issues }
+  }
+  return { level: '可展示但待补充', issues }
+}
+
+function completenessBadgeClass(level: CompletenessLevel) {
+  if (level === '完整') return 'bg-green-600/15 text-green-700 border-green-600/25'
+  if (level === '待补素材') return 'bg-[#E36F2C]/15 text-[#C85A1F] border-[#E36F2C]/30'
+  return 'bg-[#F5F2ED] text-[#6B625B] border-[#C4B9AB]'
 }
 
 export default function ProjectListClient({
@@ -228,6 +262,9 @@ export default function ProjectListClient({
           {rows.map((item) => {
             const mapReady = item.status === 'published' && hasMapCoordinates(item)
             const hasCoords = hasMapCoordinates(item)
+            const completeness = getProjectCompleteness(item)
+            const visibleIssues = completeness.issues.slice(0, 3)
+            const hiddenIssueCount = Math.max(0, completeness.issues.length - visibleIssues.length)
             return (
               <div
                 key={item.id}
@@ -243,6 +280,22 @@ export default function ProjectListClient({
                 <div className="min-w-0">
                   <p className="text-sm text-[#2C2A28] truncate font-medium">{item.name_zh}</p>
                   <p className="text-xs text-[#6B6560] truncate mt-0.5">{item.id} · {item.name_en}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <Badge className={`${completenessBadgeClass(completeness.level)} text-[11px]`}>
+                      {completeness.level}
+                    </Badge>
+                    {visibleIssues.map((issue) => (
+                      <span
+                        key={issue}
+                        className="rounded-full border border-[#E5DED4] bg-[#FAF7F2] px-2 py-0.5 text-[11px] text-[#8A8580]"
+                      >
+                        {issue}
+                      </span>
+                    ))}
+                    {hiddenIssueCount > 0 ? (
+                      <span className="text-[11px] text-[#8A8580]">还有 {hiddenIssueCount} 项</span>
+                    ) : null}
+                  </div>
                 </div>
                 <p className="text-xs text-[#8A8580] truncate">{item.location_zh}</p>
                 <div>

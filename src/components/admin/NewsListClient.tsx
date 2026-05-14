@@ -22,6 +22,7 @@ type NewsItem = {
 }
 
 type Filters = { status: string; search: string }
+type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
 
 const LIMIT = 20
 
@@ -29,6 +30,37 @@ function formatDate(ts: string) {
   const d = new Date(ts)
   if (isNaN(d.getTime())) return ts
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+function hasText(value: string | null | undefined) {
+  return Boolean(value?.trim())
+}
+
+function getNewsCompleteness(item: NewsItem): {
+  level: CompletenessLevel
+  issues: string[]
+} {
+  const issues: string[] = []
+
+  if (!hasText(item.cover_image_url)) issues.push('缺封面')
+  if (!hasText(item.title_zh)) issues.push('缺中文标题')
+  if (!hasText(item.title_en)) issues.push('缺英文标题')
+
+  if (issues.length === 0) {
+    return { level: '完整', issues }
+  }
+
+  if (issues.includes('缺封面')) {
+    return { level: '待补素材', issues }
+  }
+
+  return { level: '可展示但待补充', issues }
+}
+
+function completenessBadgeClass(level: CompletenessLevel) {
+  if (level === '完整') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  if (level === '待补素材') return 'border-orange-200 bg-orange-50 text-orange-700'
+  return 'border-zinc-200 bg-zinc-50 text-zinc-600'
 }
 
 export default function NewsListClient({
@@ -172,7 +204,12 @@ export default function NewsListClient({
           </div>
 
           {/* Rows */}
-          {rows.map((item) => (
+          {rows.map((item) => {
+            const completeness = getNewsCompleteness(item)
+            const visibleIssues = completeness.issues.slice(0, 3)
+            const hiddenIssueCount = Math.max(0, completeness.issues.length - visibleIssues.length)
+
+            return (
             <div
               key={item.id}
               className="grid gap-3 items-center px-4 py-3 border-b border-[#E5DED4] last:border-b-0 hover:bg-[#FAF7F2] transition-colors"
@@ -200,6 +237,24 @@ export default function NewsListClient({
                 <p className="text-xs text-[#6B6560] truncate mt-0.5">
                   {item.title_en || '(no English title)'}
                 </p>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <Badge className={`${completenessBadgeClass(completeness.level)} text-[11px]`}>
+                    {completeness.level}
+                  </Badge>
+                  {visibleIssues.map((issue) => (
+                    <span
+                      key={issue}
+                      className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] text-zinc-600"
+                    >
+                      {issue}
+                    </span>
+                  ))}
+                  {hiddenIssueCount > 0 ? (
+                    <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] text-zinc-500">
+                      还有 {hiddenIssueCount} 项
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
               {/* Status badge */}
@@ -235,7 +290,8 @@ export default function NewsListClient({
                 </button>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

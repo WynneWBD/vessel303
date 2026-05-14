@@ -51,6 +51,8 @@ type FormState = {
   sort_order: string
 }
 
+type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
+
 const emptyState: FormState = {
   id: '',
   name_zh: '',
@@ -107,6 +109,66 @@ function splitRows(value: string) {
     .split(/\r?\n/)
     .map((v) => v.trim())
     .filter(Boolean)
+}
+
+function hasText(value: string | null | undefined) {
+  return Boolean(value?.trim())
+}
+
+function getProjectCompleteness({
+  form,
+  imageUrls,
+  hasLatitude,
+  hasLongitude,
+  hasCompleteCoordinates,
+  coordinatesValid,
+}: {
+  form: FormState
+  imageUrls: string[]
+  hasLatitude: boolean
+  hasLongitude: boolean
+  hasCompleteCoordinates: boolean
+  coordinatesValid: boolean
+}): {
+  level: CompletenessLevel
+  issues: string[]
+} {
+  const issues: string[] = []
+
+  if (!hasText(form.cover_image_url)) issues.push('缺封面')
+  if (imageUrls.length === 0) issues.push('缺图库')
+  if (!hasText(form.description_zh)) issues.push('缺中文简介')
+  if (!hasText(form.description_en)) issues.push('缺英文简介')
+  if (!hasText(form.products)) issues.push('缺产品型号')
+  if (splitLines(form.tags_zh).length === 0 || splitLines(form.tags_en).length === 0) {
+    issues.push('缺标签')
+  }
+
+  if (hasLatitude !== hasLongitude) {
+    issues.push('坐标需成对')
+  } else if (!hasCompleteCoordinates) {
+    issues.push('缺坐标')
+  } else if (!coordinatesValid) {
+    issues.push('坐标需检查')
+  } else if (form.status !== 'published') {
+    issues.push('有坐标待发布')
+  }
+
+  if (issues.length === 0) {
+    return { level: '完整', issues }
+  }
+
+  if (issues.includes('缺封面') || issues.includes('缺图库')) {
+    return { level: '待补素材', issues }
+  }
+
+  return { level: '可展示但待补充', issues }
+}
+
+function completenessBadgeClass(level: CompletenessLevel) {
+  if (level === '完整') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  if (level === '待补素材') return 'border-orange-200 bg-orange-50 text-orange-700'
+  return 'border-zinc-200 bg-zinc-50 text-zinc-600'
 }
 
 function parseOptionalNumber(value: string) {
@@ -257,6 +319,19 @@ export default function ProjectForm({
     longitude >= -180 &&
     longitude <= 180
   const mapReady = form.status === 'published' && coordinatesValid
+  const completeness = getProjectCompleteness({
+    form,
+    imageUrls,
+    hasLatitude,
+    hasLongitude,
+    hasCompleteCoordinates,
+    coordinatesValid,
+  })
+  const visibleCompletenessIssues = completeness.issues.slice(0, 3)
+  const hiddenCompletenessIssueCount = Math.max(
+    0,
+    completeness.issues.length - visibleCompletenessIssues.length,
+  )
   const hasUnsavedChanges = useMemo(() => JSON.stringify(form) !== JSON.stringify(savedForm), [form, savedForm])
 
   useUnsavedChangesWarning(hasUnsavedChanges)
@@ -567,6 +642,37 @@ export default function ProjectForm({
             <Field label="经度" hint="-180 到 180">
               <Input type="number" step="0.000001" value={form.longitude} onChange={(e) => patch('longitude', e.target.value)} />
             </Field>
+          </div>
+
+          <div className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-medium text-[#2C2A28]">发布前检查</div>
+              <Badge className={`${completenessBadgeClass(completeness.level)} text-xs`}>
+                {completeness.level}
+              </Badge>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-[#6B6560]">
+              仅做运营提示，不会阻止保存或发布。
+            </p>
+            {visibleCompletenessIssues.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {visibleCompletenessIssues.map((issue) => (
+                  <span
+                    key={issue}
+                    className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-600"
+                  >
+                    {issue}
+                  </span>
+                ))}
+                {hiddenCompletenessIssueCount > 0 ? (
+                  <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-500">
+                    还有 {hiddenCompletenessIssueCount} 项
+                  </span>
+                ) : null}
+              </div>
+            ) : (
+              <p className="mt-3 text-xs text-emerald-700">当前基础内容完整。</p>
+            )}
           </div>
 
           <div className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4">

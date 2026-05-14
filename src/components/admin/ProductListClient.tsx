@@ -17,6 +17,7 @@ type Filters = { status: string; series: string; search: string }
 type PendingAction =
   | { type: 'status'; item: CatalogProductRow; status: CatalogProductStatus }
   | { type: 'delete'; item: CatalogProductRow }
+type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
 
 const LIMIT = 20
 
@@ -32,6 +33,41 @@ function productHref(item: CatalogProductRow) {
 
 function cloneId(id: string) {
   return `${id}-copy-${Date.now().toString(36).slice(-5)}`
+}
+
+function hasText(value: string | null | undefined) {
+  return Boolean(value?.trim())
+}
+
+function getProductCompleteness(item: CatalogProductRow): {
+  level: CompletenessLevel
+  issues: string[]
+} {
+  const issues: string[] = []
+
+  if (!hasText(item.image)) issues.push('缺封面')
+  if ((item.gallery ?? []).length === 0) issues.push('缺详情图库')
+  if (!hasText(item.description_cn)) issues.push('缺中文简介')
+  if (!hasText(item.description_en)) issues.push('缺英文简介')
+  if (item.tags_cn.length === 0 || item.tags_en.length === 0) issues.push('缺标签')
+  if (item.features_cn.length === 0 || item.features_en.length === 0) issues.push('缺亮点')
+  if ((item.detail_modules ?? []).length === 0) issues.push('缺详情模块')
+
+  if (issues.length === 0) {
+    return { level: '完整', issues }
+  }
+
+  if (issues.includes('缺封面') || issues.includes('缺详情图库')) {
+    return { level: '待补素材', issues }
+  }
+
+  return { level: '可展示但待补充', issues }
+}
+
+function completenessBadgeClass(level: CompletenessLevel) {
+  if (level === '完整') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  if (level === '待补素材') return 'border-orange-200 bg-orange-50 text-orange-700'
+  return 'border-zinc-200 bg-zinc-50 text-zinc-600'
 }
 
 export default function ProductListClient({
@@ -276,20 +312,47 @@ export default function ProductListClient({
             <span>操作</span>
           </div>
 
-          {rows.map((item) => (
+          {rows.map((item) => {
+            const completeness = getProductCompleteness(item)
+            const visibleIssues = completeness.issues.slice(0, 3)
+            const hiddenIssueCount = Math.max(0, completeness.issues.length - visibleIssues.length)
+
+            return (
             <div
               key={item.id}
               className="grid gap-3 items-center px-4 py-3 border-b border-[#E5DED4] last:border-b-0 hover:bg-[#FAF7F2] transition-colors"
               style={{ gridTemplateColumns: '72px 1fr 90px 90px 90px 110px 200px' }}
             >
               <div className="w-[72px] h-[44px] rounded overflow-hidden bg-[#E5DED4]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.image} alt="" className="w-full h-full object-cover" />
+                {hasText(item.image) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.image} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="h-full w-full bg-[#E5DED4]" />
+                )}
               </div>
 
               <div className="min-w-0">
                 <p className="text-sm text-[#2C2A28] truncate font-medium">{item.name_cn}</p>
                 <p className="text-xs text-[#6B6560] truncate mt-0.5">{item.id} · {item.name_en}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <Badge className={`${completenessBadgeClass(completeness.level)} text-[11px]`}>
+                    {completeness.level}
+                  </Badge>
+                  {visibleIssues.map((issue) => (
+                    <span
+                      key={issue}
+                      className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] text-zinc-600"
+                    >
+                      {issue}
+                    </span>
+                  ))}
+                  {hiddenIssueCount > 0 ? (
+                    <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] text-zinc-500">
+                      还有 {hiddenIssueCount} 项
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
               <p className="text-xs text-[#C4B9AB]">{item.productSeries} {item.gen}</p>
@@ -359,7 +422,8 @@ export default function ProductListClient({
                 </button>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
