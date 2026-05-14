@@ -88,12 +88,14 @@ export default function LeadsClient({
   initialFilters,
   initialPage,
   initialLimit,
+  allowTestLeadCreation,
 }: {
   initialLeads: Lead[]
   initialTotal: number
   initialFilters: Filters
   initialPage: number
   initialLimit: number
+  allowTestLeadCreation: boolean
 }) {
   const router = useRouter()
   const [filters, setFilters] = useState<Filters>(initialFilters)
@@ -246,6 +248,11 @@ export default function LeadsClient({
     inquiry_type: string
     message: string
   }) => {
+    if (!allowTestLeadCreation) {
+      toast.error('当前环境不允许新建测试线索')
+      return
+    }
+
     try {
       const res = await fetch('/api/admin/leads', {
         method: 'POST',
@@ -284,10 +291,12 @@ export default function LeadsClient({
           线索管理
         </h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setNewOpen(true)}>
-            <Plus size={16} />
-            新建测试线索
-          </Button>
+          {allowTestLeadCreation ? (
+            <Button variant="outline" size="sm" onClick={() => setNewOpen(true)}>
+              <Plus size={16} />
+              新建测试线索
+            </Button>
+          ) : null}
           <Button variant="outline" size="sm" onClick={handleExport}>
             <Download size={16} />
             导出 CSV
@@ -427,13 +436,14 @@ export default function LeadsClient({
         onDelete={setPendingDelete}
       />
 
-      {/* New test lead dialog */}
-      <NewLeadDialog
-        key={newOpen ? 'new-lead-open' : 'new-lead-closed'}
-        open={newOpen}
-        onOpenChange={setNewOpen}
-        onSubmit={handleCreate}
-      />
+      {allowTestLeadCreation ? (
+        <NewLeadDialog
+          key={newOpen ? 'new-lead-open' : 'new-lead-closed'}
+          open={newOpen}
+          onOpenChange={setNewOpen}
+          onSubmit={handleCreate}
+        />
+      ) : null}
 
       <AdminConfirmDialog
         open={!!pendingDelete}

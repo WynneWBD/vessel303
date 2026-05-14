@@ -51,8 +51,13 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     )
   }
+  const source = parsed.data.source?.trim()
+  const effectiveSource = source || 'admin_test'
+  if (process.env.NODE_ENV === 'production' && effectiveSource === 'admin_test') {
+    return NextResponse.json({ error: 'Test lead creation is disabled' }, { status: 403 })
+  }
 
-  const lead = await createLead(parsed.data)
+  const lead = await createLead({ ...parsed.data, source: effectiveSource })
   await logAdminAction(admin.id, 'create', 'lead', lead.id)
 
   return NextResponse.json({ lead }, { status: 201 })

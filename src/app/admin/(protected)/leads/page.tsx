@@ -40,6 +40,7 @@ export default async function LeadsPage({
       initialFilters={filters}
       initialPage={page}
       initialLimit={limit}
+      allowTestLeadCreation={process.env.NODE_ENV !== 'production'}
     />
   )
 }
