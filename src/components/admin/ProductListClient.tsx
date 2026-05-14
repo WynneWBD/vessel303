@@ -1,8 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Copy, ExternalLink, Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -20,6 +20,11 @@ type PendingAction =
 type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
 
 const LIMIT = 20
+const STATUS_QUICK_FILTERS: Array<{ label: string; value: Filters['status'] }> = [
+  { label: '全部', value: '' },
+  { label: '草稿', value: 'draft' },
+  { label: '已发布', value: 'published' },
+]
 
 function formatDate(ts: string) {
   const d = new Date(ts)
@@ -73,19 +78,25 @@ function completenessBadgeClass(level: CompletenessLevel) {
 export default function ProductListClient({
   initialRows,
   initialTotal,
+  initialFilters = { status: '', series: '', search: '' },
+  initialPage = 1,
 }: {
   initialRows: CatalogProductRow[]
   initialTotal: number
+  initialFilters?: Filters
+  initialPage?: number
 }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [rows, setRows] = useState(initialRows)
   const [total, setTotal] = useState(initialTotal)
-  const [page, setPage] = useState(1)
-  const [filters, setFilters] = useState<Filters>({ status: '', series: '', search: '' })
+  const [page, setPage] = useState(initialPage)
+  const [filters, setFilters] = useState<Filters>(initialFilters)
   const [loading, setLoading] = useState(false)
   const [copyingId, setCopyingId] = useState<string | null>(null)
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
   const [confirming, setConfirming] = useState(false)
+  const didSkipInitialLoad = useRef(false)
 
   const reload = useCallback(async (f: Filters, p: number) => {
     setLoading(true)
@@ -109,6 +120,20 @@ export default function ProductListClient({
   }, [])
 
   useEffect(() => {
+    const sp = new URLSearchParams()
+    if (filters.status) sp.set('status', filters.status)
+    if (filters.series) sp.set('series', filters.series)
+    if (filters.search.trim()) sp.set('search', filters.search.trim())
+    if (page > 1) sp.set('page', String(page))
+    const query = sp.toString()
+    window.history.replaceState(null, '', query ? `${pathname}?${query}` : pathname)
+  }, [filters, page, pathname])
+
+  useEffect(() => {
+    if (!didSkipInitialLoad.current) {
+      didSkipInitialLoad.current = true
+      return
+    }
     const t = setTimeout(() => reload(filters, page), filters.search ? 300 : 0)
     return () => clearTimeout(t)
   }, [filters, page, reload])
@@ -259,7 +284,24 @@ export default function ProductListClient({
         </Link>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 max-w-3xl">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {STATUS_QUICK_FILTERS.map((option) => (
+            <button
+              key={option.label}
+              type="button"
+              onClick={() => handleFilterChange({ status: option.value })}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                filters.status === option.value
+                  ? 'border-[#E36F2C] bg-[#E36F2C]/10 text-[#E36F2C]'
+                  : 'border-[#E5DED4] bg-white text-[#8A8580] hover:text-[#2C2A28]'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-3 max-w-3xl">
         <Select
           value={filters.status}
           onChange={(e) => handleFilterChange({ status: e.target.value })}
@@ -285,6 +327,7 @@ export default function ProductListClient({
           onChange={(e) => handleFilterChange({ search: e.target.value })}
           className="flex-1 min-w-[220px]"
         />
+        </div>
       </div>
 
       {rows.length === 0 && !loading ? (
@@ -373,15 +416,24 @@ export default function ProductListClient({
               <p className="text-xs text-[#8A8580]">{formatDate(item.updated_at)}</p>
 
               <div className="flex items-center gap-1">
-                <Link
-                  href={productHref(item)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="预览前台"
-                  className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-[#E36F2C] hover:bg-[#E36F2C]/10 transition-colors"
-                >
-                  <ExternalLink size={14} />
-                </Link>
+                {item.status === 'published' ? (
+                  <Link
+                    href={productHref(item)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="查看前台产品"
+                    className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-[#E36F2C] hover:bg-[#E36F2C]/10 transition-colors"
+                  >
+                    <ExternalLink size={14} />
+                  </Link>
+                ) : (
+                  <span
+                    title="草稿未发布，暂无前台入口"
+                    className="h-8 w-8 flex items-center justify-center rounded text-[#C4B9AB]"
+                  >
+                    <ExternalLink size={14} />
+                  </span>
+                )}
                 <Link
                   href={`/admin/products/${item.id}/edit`}
                   title="编辑"

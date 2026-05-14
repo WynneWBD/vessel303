@@ -4,6 +4,7 @@ import {
   CircleAlert,
   CircleDashed,
   Database,
+  ExternalLink,
   FileText,
   Globe2,
   Image as ImageIcon,
@@ -13,6 +14,7 @@ import {
   Shield,
   Users,
 } from 'lucide-react'
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { ADMIN_EMAIL_WHITELIST } from '@/lib/admin-whitelist'
@@ -46,6 +48,92 @@ type AdminLogRow = {
   created_at: string
 }
 
+type SettingsTakeoverState = 'active' | 'planned' | 'hold'
+
+type SettingsTakeoverItem = {
+  title: string
+  fields: string
+  state: SettingsTakeoverState
+  detail: string
+}
+
+const ACTION_LABELS: Record<string, string> = {
+  create: '新建线索',
+  update: '更新线索',
+  delete: '删除线索',
+  'news.create': '新建新闻',
+  'news.update': '更新新闻',
+  'news.delete': '删除新闻',
+  'news.publish': '发布新闻',
+  'news.unpublish': '取消发布新闻',
+  'product.create': '新建产品',
+  'product.update': '更新产品',
+  'product.delete': '删除产品',
+  'project.create': '新建项目案例',
+  'project.update': '更新项目案例',
+  'project.delete': '删除项目案例',
+  'page_module.update': '更新页面模块',
+  'settings.update': '保存后台设置',
+  create_upload: '上传媒体',
+  delete_upload: '删除媒体',
+  update_user_role: '调整用户后台权限',
+  update_user_identity: '调整用户身份标记',
+  toggle_user_disabled: '调整用户账号状态',
+  'user.role.update': '调整用户后台权限',
+  'user.identity.update': '调整用户身份标记',
+  'user.disabled.update': '调整用户账号状态',
+}
+
+const TARGET_LABELS: Record<string, string> = {
+  lead: '线索',
+  news: '新闻',
+  product: '产品',
+  project: '项目',
+  page_module: '页面模块',
+  site_settings: '站点设置',
+  upload: '媒体',
+  user: '用户',
+}
+
+const SETTINGS_TAKEOVER_ITEMS: SettingsTakeoverItem[] = [
+  {
+    title: '联系入口',
+    fields: 'contactUrl',
+    state: 'active',
+    detail: '/contact 已读取后台 contactUrl；保存设置会写入 site_settings 并记录日志。',
+  },
+  {
+    title: '媒体上传限制',
+    fields: 'mediaMaxUploadMb',
+    state: 'active',
+    detail: '媒体库、页面模块、产品图片上传限制已按后台设置读取；真实上传仍需单独授权验收。',
+  },
+  {
+    title: '品牌与 SEO 默认值',
+    fields: 'siteNameZh/siteNameEn, seoTitle*, seoDescription*',
+    state: 'planned',
+    detail: '建议先确认前台哪些页面需要统一默认值，再逐页接入，避免覆盖已有页面文案。',
+  },
+  {
+    title: '销售联系方式',
+    fields: 'salesEmail, salesPhone, whatsapp',
+    state: 'planned',
+    detail: '建议先确认展示位置、邮件收件逻辑和隐私边界，再接入前台。',
+  },
+  {
+    title: '产品旧站入口',
+    fields: 'productsLegacyUrl',
+    state: 'planned',
+    detail: '适合接管“查看产品”外链，但需要先确认是否继续跳 303vessel.cn。',
+  },
+  {
+    title: '地图与维护模式',
+    fields: 'mapProvider, maintenanceMode, maintenanceNotice',
+    state: 'hold',
+    detail: '/global 地图底层归 04 专项；维护模式会影响前台访问，需单独方案和授权。',
+  },
+]
+
 function maskConfigured(value: string | undefined) {
   return value ? '已配置' : '未配置'
 }
@@ -62,6 +150,45 @@ function formatDateTime(value: string) {
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return value
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+function formatAction(action: string | null) {
+  if (!action) return '未知操作'
+  return ACTION_LABELS[action] ?? action
+}
+
+function formatTarget(targetType: string | null, targetId: string | null) {
+  const label = targetType ? TARGET_LABELS[targetType] ?? targetType : '对象'
+  return targetId ? `${label} #${targetId}` : label
+}
+
+function getTargetHref(targetType: string | null, targetId: string | null) {
+  if (!targetType) return null
+  if (targetType === 'news' && targetId) return `/admin/news/${targetId}/edit`
+  if (targetType === 'product' && targetId) return `/admin/products/${targetId}/edit`
+  if (targetType === 'project' && targetId) return `/admin/projects/${targetId}/edit`
+  if (targetType === 'page_module' && targetId) return `/admin/pages?module=${encodeURIComponent(targetId)}`
+  if (targetType === 'lead') return '/admin/leads'
+  if (targetType === 'upload') return '/admin/media'
+  if (targetType === 'user') return '/admin/users'
+  if (targetType === 'site_settings') return '/admin/settings'
+  return null
+}
+
+function TakeoverBadge({ state }: { state: SettingsTakeoverState }) {
+  const map = {
+    active: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    planned: 'border-[#E36F2C]/30 bg-[#E36F2C]/10 text-[#E36F2C]',
+    hold: 'border-[#C4B9AB] bg-[#F5F2ED] text-[#8A8580]',
+  } satisfies Record<SettingsTakeoverState, string>
+
+  const label = {
+    active: '已接管',
+    planned: '待确认',
+    hold: '暂不接管',
+  } satisfies Record<SettingsTakeoverState, string>
+
+  return <Badge className={map[state]}>{label[state]}</Badge>
 }
 
 function StatusBadge({ state }: { state: HealthState }) {
@@ -238,6 +365,32 @@ export default async function SettingsPage() {
 
       <SiteSettingsForm settings={siteSettings} />
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CircleDashed size={18} className="text-[#E36F2C]" />
+            设置项接管计划
+          </CardTitle>
+          <CardDescription>
+            只读说明当前哪些 site_settings 已被前台或后台读取，哪些需要确认后再接入。这里不写数据库。
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 lg:grid-cols-2">
+          {SETTINGS_TAKEOVER_ITEMS.map((item) => (
+            <div key={item.title} className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-[#2C2A28]">{item.title}</p>
+                  <p className="mt-1 text-xs text-[#8A8580]">{item.fields}</p>
+                </div>
+                <TakeoverBadge state={item.state} />
+              </div>
+              <p className="mt-3 text-sm leading-6 text-[#8A8580]">{item.detail}</p>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           icon={Users}
@@ -378,25 +531,43 @@ export default async function SettingsPage() {
             </div>
           ) : (
             <div className="overflow-hidden rounded-md border border-[#E5DED4]">
-              <div className="grid grid-cols-[150px_1fr_120px_160px] gap-3 border-b border-[#E5DED4] bg-[#FAF7F2] px-4 py-3 text-xs text-[#8A8580]">
+              <div className="grid grid-cols-[150px_minmax(0,1fr)_180px_160px] gap-3 border-b border-[#E5DED4] bg-[#FAF7F2] px-4 py-3 text-xs text-[#8A8580]">
                 <span>时间</span>
                 <span>操作</span>
                 <span>对象</span>
                 <span>管理员</span>
               </div>
-              {logs.map((log) => (
-                <div
-                  key={log.id}
-                  className="grid grid-cols-[150px_1fr_120px_160px] gap-3 border-b border-[#E5DED4] px-4 py-3 text-sm last:border-b-0"
-                >
-                  <span className="text-[#8A8580]">{formatDateTime(log.created_at)}</span>
-                  <span className="truncate text-[#2C2A28]">{log.action ?? '—'}</span>
-                  <span className="truncate text-[#8A8580]">
-                    {log.target_type ?? '—'} {log.target_id ? `#${log.target_id}` : ''}
-                  </span>
-                  <span className="truncate text-[#8A8580]">{log.admin_email ?? 'unknown'}</span>
-                </div>
-              ))}
+              {logs.map((log) => {
+                const targetHref = getTargetHref(log.target_type, log.target_id)
+                const targetText = formatTarget(log.target_type, log.target_id)
+
+                return (
+                  <div
+                    key={log.id}
+                    className="grid grid-cols-[150px_minmax(0,1fr)_180px_160px] gap-3 border-b border-[#E5DED4] px-4 py-3 text-sm last:border-b-0"
+                  >
+                    <span className="text-[#8A8580]">{formatDateTime(log.created_at)}</span>
+                    <div className="min-w-0">
+                      <p className="truncate text-[#2C2A28]">{formatAction(log.action)}</p>
+                      {log.action ? (
+                        <p className="mt-0.5 truncate text-[11px] text-[#8A8580]">{log.action}</p>
+                      ) : null}
+                    </div>
+                    {targetHref ? (
+                      <Link
+                        href={targetHref}
+                        className="inline-flex min-w-0 items-center gap-1 text-[#E36F2C] hover:text-[#C85A1F]"
+                      >
+                        <span className="truncate">{targetText}</span>
+                        <ExternalLink size={12} className="shrink-0" />
+                      </Link>
+                    ) : (
+                      <span className="truncate text-[#8A8580]">{targetText}</span>
+                    )}
+                    <span className="truncate text-[#8A8580]">{log.admin_email ?? 'unknown'}</span>
+                  </div>
+                )
+              })}
             </div>
           )}
         </CardContent>

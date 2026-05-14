@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { Save, Send, ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import MediaImagePicker, { MediaGalleryPicker } from '@/components/admin/MediaImagePicker'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
@@ -48,6 +49,8 @@ type FormState = {
   status: CatalogProductStatus
   sort_order: string
 }
+
+type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
 
 const emptyState: FormState = {
   id: '',
@@ -115,6 +118,46 @@ function splitLines(value: string) {
     .split(/\r?\n|,/)
     .map((v) => v.trim())
     .filter(Boolean)
+}
+
+function hasText(value: string | null | undefined) {
+  return Boolean(value?.trim())
+}
+
+function getProductCompleteness(form: FormState, galleryUrls: string[]): {
+  level: CompletenessLevel
+  issues: string[]
+} {
+  const issues: string[] = []
+  const visibleDetailModules = form.detail_modules.filter((module) => module.is_visible !== false)
+
+  if (!hasText(form.image)) issues.push('缺封面')
+  if (galleryUrls.length === 0) issues.push('缺详情图库')
+  if (!hasText(form.description_cn)) issues.push('缺中文简介')
+  if (!hasText(form.description_en)) issues.push('缺英文简介')
+  if (splitLines(form.tags_cn).length === 0 || splitLines(form.tags_en).length === 0) {
+    issues.push('缺标签')
+  }
+  if (splitLines(form.features_cn).length === 0 || splitLines(form.features_en).length === 0) {
+    issues.push('缺亮点')
+  }
+  if (visibleDetailModules.length === 0) issues.push('缺详情模块')
+
+  if (issues.length === 0) {
+    return { level: '完整', issues }
+  }
+
+  if (issues.includes('缺封面') || issues.includes('缺详情图库')) {
+    return { level: '待补素材', issues }
+  }
+
+  return { level: '可展示但待补充', issues }
+}
+
+function completenessBadgeClass(level: CompletenessLevel) {
+  if (level === '完整') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  if (level === '待补素材') return 'border-orange-200 bg-orange-50 text-orange-700'
+  return 'border-zinc-200 bg-zinc-50 text-zinc-600'
 }
 
 function formatSpecItems(items: { label: string; value: string }[]) {
@@ -376,6 +419,12 @@ export default function ProductForm({
     return form.detailSlug ? `/products/${form.detailSlug}` : `/products/${form.id}`
   }, [form.detailSlug, form.id])
   const galleryUrls = useMemo(() => splitLines(form.gallery), [form.gallery])
+  const completeness = getProductCompleteness(form, galleryUrls)
+  const visibleCompletenessIssues = completeness.issues.slice(0, 3)
+  const hiddenCompletenessIssueCount = Math.max(
+    0,
+    completeness.issues.length - visibleCompletenessIssues.length,
+  )
   const hasUnsavedChanges = useMemo(() => JSON.stringify(form) !== JSON.stringify(savedForm), [form, savedForm])
 
   useUnsavedChangesWarning(hasUnsavedChanges)
@@ -980,6 +1029,37 @@ export default function ProductForm({
           <Field label="图片 URL">
             <Input value={form.image} onChange={(e) => patch('image', e.target.value)} placeholder="/images/products/..." />
           </Field>
+
+          <div className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-medium text-[#2C2A28]">发布前检查</div>
+              <Badge className={`${completenessBadgeClass(completeness.level)} text-xs`}>
+                {completeness.level}
+              </Badge>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-[#6B6560]">
+              只做运营提示，不新增保存或发布限制。
+            </p>
+            {visibleCompletenessIssues.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {visibleCompletenessIssues.map((issue) => (
+                  <span
+                    key={issue}
+                    className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-600"
+                  >
+                    {issue}
+                  </span>
+                ))}
+                {hiddenCompletenessIssueCount > 0 ? (
+                  <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-500">
+                    还有 {hiddenCompletenessIssueCount} 项
+                  </span>
+                ) : null}
+              </div>
+            ) : (
+              <p className="mt-3 text-xs text-emerald-700">当前基础内容完整。</p>
+            )}
+          </div>
 
           <Field label="详情页 Slug" hint="普通新产品建议留空，系统会用产品 ID 生成通用详情页；只有要复用已有精细页时才填 e7、v9-gen6 等固定 slug。">
             <Input value={form.detailSlug} onChange={(e) => patch('detailSlug', normalizeId(e.target.value))} />

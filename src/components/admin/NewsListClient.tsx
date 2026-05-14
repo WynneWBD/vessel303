@@ -1,10 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { ExternalLink, Plus, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
@@ -25,6 +25,11 @@ type Filters = { status: string; search: string }
 type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
 
 const LIMIT = 20
+const STATUS_QUICK_FILTERS: Array<{ label: string; value: Filters['status'] }> = [
+  { label: '全部', value: '' },
+  { label: '草稿', value: 'draft' },
+  { label: '已发布', value: 'published' },
+]
 
 function formatDate(ts: string) {
   const d = new Date(ts)
@@ -66,18 +71,24 @@ function completenessBadgeClass(level: CompletenessLevel) {
 export default function NewsListClient({
   initialRows,
   initialTotal,
+  initialFilters = { status: '', search: '' },
+  initialPage = 1,
 }: {
   initialRows: NewsItem[]
   initialTotal: number
+  initialFilters?: Filters
+  initialPage?: number
 }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [rows, setRows] = useState<NewsItem[]>(initialRows)
   const [total, setTotal] = useState(initialTotal)
-  const [page, setPage] = useState(1)
-  const [filters, setFilters] = useState<Filters>({ status: '', search: '' })
+  const [page, setPage] = useState(initialPage)
+  const [filters, setFilters] = useState<Filters>(initialFilters)
   const [loading, setLoading] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<NewsItem | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const didSkipInitialLoad = useRef(false)
 
   const reload = useCallback(async (f: Filters, p: number) => {
     setLoading(true)
@@ -99,8 +110,21 @@ export default function NewsListClient({
     }
   }, [])
 
+  useEffect(() => {
+    const sp = new URLSearchParams()
+    if (filters.status) sp.set('status', filters.status)
+    if (filters.search.trim()) sp.set('search', filters.search.trim())
+    if (page > 1) sp.set('page', String(page))
+    const query = sp.toString()
+    window.history.replaceState(null, '', query ? `${pathname}?${query}` : pathname)
+  }, [filters, page, pathname])
+
   // Debounce search; immediate on status change
   useEffect(() => {
+    if (!didSkipInitialLoad.current) {
+      didSkipInitialLoad.current = true
+      return
+    }
     const t = setTimeout(() => reload(filters, page), filters.search ? 300 : 0)
     return () => clearTimeout(t)
   }, [filters, page, reload])
@@ -163,7 +187,24 @@ export default function NewsListClient({
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 max-w-xl">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {STATUS_QUICK_FILTERS.map((option) => (
+            <button
+              key={option.label}
+              type="button"
+              onClick={() => handleFilterChange({ status: option.value })}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                filters.status === option.value
+                  ? 'border-[#E36F2C] bg-[#E36F2C]/10 text-[#E36F2C]'
+                  : 'border-[#E5DED4] bg-white text-[#8A8580] hover:text-[#2C2A28]'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-3 max-w-xl">
         <Select
           value={filters.status}
           onChange={(e) => handleFilterChange({ status: e.target.value })}
@@ -179,6 +220,7 @@ export default function NewsListClient({
           onChange={(e) => handleFilterChange({ search: e.target.value })}
           className="flex-1 min-w-[180px]"
         />
+        </div>
       </div>
 
       {/* Table */}
@@ -194,7 +236,7 @@ export default function NewsListClient({
           {/* Table head */}
           <div
             className="grid gap-3 px-4 py-3 text-xs text-[#8A8580] bg-[#FAF7F2] border-b border-[#E5DED4]"
-            style={{ gridTemplateColumns: '60px 1fr 90px 140px 80px' }}
+            style={{ gridTemplateColumns: '60px 1fr 90px 140px 120px' }}
           >
             <span>封面</span>
             <span>标题</span>
@@ -213,7 +255,7 @@ export default function NewsListClient({
             <div
               key={item.id}
               className="grid gap-3 items-center px-4 py-3 border-b border-[#E5DED4] last:border-b-0 hover:bg-[#FAF7F2] transition-colors"
-              style={{ gridTemplateColumns: '60px 1fr 90px 140px 80px' }}
+              style={{ gridTemplateColumns: '60px 1fr 90px 140px 120px' }}
             >
               {/* Cover */}
               <div className="w-[60px] h-[38px] rounded overflow-hidden bg-[#E5DED4] shrink-0">
@@ -275,6 +317,24 @@ export default function NewsListClient({
 
               {/* Actions */}
               <div className="flex items-center gap-1">
+                {item.status === 'published' ? (
+                  <Link
+                    href={`/news/${item.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="查看前台新闻"
+                    className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-[#E36F2C] hover:bg-[#E36F2C]/10 transition-colors"
+                  >
+                    <ExternalLink size={14} />
+                  </Link>
+                ) : (
+                  <span
+                    title="草稿未发布，暂无前台入口"
+                    className="h-8 w-8 flex items-center justify-center rounded text-[#C4B9AB]"
+                  >
+                    <ExternalLink size={14} />
+                  </span>
+                )}
                 <Button asChild variant="ghost" size="icon" className="h-8 w-8">
                   <Link href={`/admin/news/${item.id}/edit`} title="编辑">
                     <Pencil size={14} />

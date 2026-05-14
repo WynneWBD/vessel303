@@ -1,8 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { ExternalLink, Eye, EyeOff, MapPinned, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -19,6 +19,17 @@ type PendingAction =
 type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
 
 const LIMIT = 20
+const STATUS_QUICK_FILTERS: Array<{ label: string; value: Filters['status'] }> = [
+  { label: '全部', value: '' },
+  { label: '草稿', value: 'draft' },
+  { label: '已发布', value: 'published' },
+]
+const MAP_QUICK_FILTERS: Array<{ label: string; value: Filters['mapStatus'] }> = [
+  { label: '全部地图状态', value: '' },
+  { label: '已入图', value: 'map-ready' },
+  { label: '缺坐标', value: 'missing-coordinates' },
+  { label: '有坐标待发布', value: 'unpublished-with-coordinates' },
+]
 
 function formatDate(ts: string) {
   const d = new Date(ts)
@@ -66,18 +77,24 @@ function completenessBadgeClass(level: CompletenessLevel) {
 export default function ProjectListClient({
   initialRows,
   initialTotal,
+  initialFilters = { status: '', mapStatus: '', search: '' },
+  initialPage = 1,
 }: {
   initialRows: ProjectCaseRow[]
   initialTotal: number
+  initialFilters?: Filters
+  initialPage?: number
 }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [rows, setRows] = useState(initialRows)
   const [total, setTotal] = useState(initialTotal)
-  const [page, setPage] = useState(1)
-  const [filters, setFilters] = useState<Filters>({ status: '', mapStatus: '', search: '' })
+  const [page, setPage] = useState(initialPage)
+  const [filters, setFilters] = useState<Filters>(initialFilters)
   const [loading, setLoading] = useState(false)
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
   const [confirming, setConfirming] = useState(false)
+  const didSkipInitialLoad = useRef(false)
 
   const reload = useCallback(async (f: Filters, p: number) => {
     setLoading(true)
@@ -101,6 +118,20 @@ export default function ProjectListClient({
   }, [])
 
   useEffect(() => {
+    const sp = new URLSearchParams()
+    if (filters.status) sp.set('status', filters.status)
+    if (filters.mapStatus) sp.set('mapStatus', filters.mapStatus)
+    if (filters.search.trim()) sp.set('search', filters.search.trim())
+    if (page > 1) sp.set('page', String(page))
+    const query = sp.toString()
+    window.history.replaceState(null, '', query ? `${pathname}?${query}` : pathname)
+  }, [filters, page, pathname])
+
+  useEffect(() => {
+    if (!didSkipInitialLoad.current) {
+      didSkipInitialLoad.current = true
+      return
+    }
     const t = setTimeout(() => reload(filters, page), filters.search ? 300 : 0)
     return () => clearTimeout(t)
   }, [filters, page, reload])
@@ -202,7 +233,38 @@ export default function ProjectListClient({
         </Link>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 max-w-4xl">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {STATUS_QUICK_FILTERS.map((option) => (
+            <button
+              key={option.label}
+              type="button"
+              onClick={() => handleFilterChange({ status: option.value })}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                filters.status === option.value
+                  ? 'border-[#E36F2C] bg-[#E36F2C]/10 text-[#E36F2C]'
+                  : 'border-[#E5DED4] bg-white text-[#8A8580] hover:text-[#2C2A28]'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+          {MAP_QUICK_FILTERS.map((option) => (
+            <button
+              key={option.label}
+              type="button"
+              onClick={() => handleFilterChange({ mapStatus: option.value })}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                filters.mapStatus === option.value
+                  ? 'border-[#E36F2C] bg-[#E36F2C]/10 text-[#E36F2C]'
+                  : 'border-[#E5DED4] bg-white text-[#8A8580] hover:text-[#2C2A28]'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-3 max-w-4xl">
         <Select value={filters.status} onChange={(e) => handleFilterChange({ status: e.target.value })} className="w-36">
           <option value="">全部状态</option>
           <option value="draft">草稿</option>
@@ -220,6 +282,7 @@ export default function ProjectListClient({
           onChange={(e) => handleFilterChange({ search: e.target.value })}
           className="flex-1 min-w-[220px]"
         />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -248,7 +311,7 @@ export default function ProjectListClient({
         <div className="rounded-lg border border-[#E5DED4] overflow-hidden">
           <div
             className="grid gap-3 px-4 py-3 text-xs text-[#8A8580] bg-[#FAF7F2] border-b border-[#E5DED4]"
-            style={{ gridTemplateColumns: '72px minmax(0,1fr) 140px 90px 118px 110px 128px' }}
+            style={{ gridTemplateColumns: '72px minmax(0,1fr) 140px 90px 118px 110px 156px' }}
           >
             <span>封面</span>
             <span>案例</span>
@@ -269,7 +332,7 @@ export default function ProjectListClient({
               <div
                 key={item.id}
                 className="grid gap-3 items-center px-4 py-3 border-b border-[#E5DED4] last:border-b-0 hover:bg-[#FAF7F2] transition-colors"
-                style={{ gridTemplateColumns: '72px minmax(0,1fr) 140px 90px 118px 110px 128px' }}
+                style={{ gridTemplateColumns: '72px minmax(0,1fr) 140px 90px 118px 110px 156px' }}
               >
                 <div className="w-[72px] h-[44px] rounded overflow-hidden bg-[#E5DED4]">
                   {item.cover_image_url ? (
@@ -330,6 +393,24 @@ export default function ProjectListClient({
                 </div>
                 <p className="text-xs text-[#8A8580]">{formatDate(item.updated_at)}</p>
                 <div className="flex items-center gap-1">
+                  {item.status === 'published' ? (
+                    <Link
+                      href="/cases"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="查看前台案例列表"
+                      className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-[#E36F2C] hover:bg-[#E36F2C]/10 transition-colors"
+                    >
+                      <ExternalLink size={14} />
+                    </Link>
+                  ) : (
+                    <span
+                      title="草稿未发布，暂无前台入口"
+                      className="h-8 w-8 flex items-center justify-center rounded text-[#C4B9AB]"
+                    >
+                      <ExternalLink size={14} />
+                    </span>
+                  )}
                   <Link
                     href={`/admin/projects/${item.id}/edit`}
                     title="编辑"

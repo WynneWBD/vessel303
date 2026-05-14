@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import type { JSONContent } from '@tiptap/core'
 import type { NewsRow, NewsStatus } from '@/lib/news-db'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -21,6 +22,8 @@ interface Props {
 
 const EMPTY_DOC: JSONContent = { type: 'doc', content: [] }
 
+type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
+
 function coerceJSON(v: unknown): JSONContent {
   if (v && typeof v === 'object' && !Array.isArray(v)) return v as JSONContent
   return EMPTY_DOC
@@ -33,6 +36,76 @@ function normalizeSlug(value: string) {
     .replace(/[^a-z0-9-]/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
+}
+
+function hasText(value: string | null | undefined) {
+  return Boolean(value?.trim())
+}
+
+function hasRichTextContent(value: JSONContent) {
+  let found = false
+
+  const visit = (node: JSONContent) => {
+    if (found) return
+    if (typeof node.text === 'string' && node.text.trim()) {
+      found = true
+      return
+    }
+    node.content?.forEach(visit)
+  }
+
+  visit(value)
+  return found
+}
+
+function getNewsCompleteness({
+  slug,
+  titleZh,
+  titleEn,
+  excerptZh,
+  excerptEn,
+  contentZh,
+  contentEn,
+  coverImageUrl,
+}: {
+  slug: string
+  titleZh: string
+  titleEn: string
+  excerptZh: string
+  excerptEn: string
+  contentZh: JSONContent
+  contentEn: JSONContent
+  coverImageUrl: string | null
+}): {
+  level: CompletenessLevel
+  issues: string[]
+} {
+  const issues: string[] = []
+
+  if (!normalizeSlug(slug)) issues.push('缺 Slug')
+  if (!hasText(coverImageUrl)) issues.push('缺封面')
+  if (!hasText(titleZh)) issues.push('缺中文标题')
+  if (!hasText(titleEn)) issues.push('缺英文标题')
+  if (!hasText(excerptZh)) issues.push('缺中文摘要')
+  if (!hasText(excerptEn)) issues.push('缺英文摘要')
+  if (!hasRichTextContent(contentZh)) issues.push('缺中文正文')
+  if (!hasRichTextContent(contentEn)) issues.push('缺英文正文')
+
+  if (issues.length === 0) {
+    return { level: '完整', issues }
+  }
+
+  if (issues.includes('缺封面')) {
+    return { level: '待补素材', issues }
+  }
+
+  return { level: '可展示但待补充', issues }
+}
+
+function completenessBadgeClass(level: CompletenessLevel) {
+  if (level === '完整') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  if (level === '待补素材') return 'border-orange-200 bg-orange-50 text-orange-700'
+  return 'border-zinc-200 bg-zinc-50 text-zinc-600'
 }
 
 type SavedNews = {
@@ -72,6 +145,21 @@ export default function NewsForm({ initialData, mode }: Props) {
     excerpt_en: excerptEn.trim() || null,
     cover_image_url: coverImageUrl,
   }), [contentEn, contentZh, coverImageUrl, excerptEn, excerptZh, slug, titleEn, titleZh])
+  const completeness = getNewsCompleteness({
+    slug,
+    titleZh,
+    titleEn,
+    excerptZh,
+    excerptEn,
+    contentZh,
+    contentEn,
+    coverImageUrl,
+  })
+  const visibleCompletenessIssues = completeness.issues.slice(0, 3)
+  const hiddenCompletenessIssueCount = Math.max(
+    0,
+    completeness.issues.length - visibleCompletenessIssues.length,
+  )
   const currentSnapshot = useMemo(
     () => JSON.stringify({ ...formBody, status: currentStatus }),
     [currentStatus, formBody],
@@ -218,6 +306,37 @@ export default function NewsForm({ initialData, mode }: Props) {
             >
               查看前台页面
             </a>
+          )}
+        </div>
+
+        <div className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="text-sm font-medium text-[#2C2A28]">发布前检查</div>
+            <Badge className={`${completenessBadgeClass(completeness.level)} text-xs`}>
+              {completeness.level}
+            </Badge>
+          </div>
+          <p className="mt-2 text-xs leading-relaxed text-[#6B6560]">
+            只做运营提示，不新增保存或发布限制。
+          </p>
+          {visibleCompletenessIssues.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {visibleCompletenessIssues.map((issue) => (
+                <span
+                  key={issue}
+                  className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-600"
+                >
+                  {issue}
+                </span>
+              ))}
+              {hiddenCompletenessIssueCount > 0 ? (
+                <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-500">
+                  还有 {hiddenCompletenessIssueCount} 项
+                </span>
+              ) : null}
+            </div>
+          ) : (
+            <p className="mt-3 text-xs text-emerald-700">当前基础内容完整。</p>
           )}
         </div>
 
