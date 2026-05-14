@@ -3,9 +3,11 @@ import { del } from '@vercel/blob'
 import { requireAdmin } from '@/lib/auth-check'
 import {
   type MediaReferenceCounts,
+  type MediaReferenceDetails,
   getUpload,
   deleteUploadRow,
   countMediaReferences,
+  getMediaReferenceDetails,
 } from '@/lib/uploads-db'
 import { logAdminAction } from '@/lib/leads-db'
 
@@ -23,9 +25,9 @@ export async function GET(
   const upload = await getUpload(id)
   if (!upload) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  let refs: MediaReferenceCounts
+  let refs: MediaReferenceDetails
   try {
-    refs = await countMediaReferences(upload.url)
+    refs = await getMediaReferenceDetails(upload.url)
   } catch (err) {
     console.error('[media GET] reference check failed', err)
     return NextResponse.json({ error: '引用检查失败' }, { status: 502 })

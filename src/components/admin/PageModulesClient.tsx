@@ -70,16 +70,33 @@ function modulesEqual(a: PageModuleRow | undefined, b: PageModuleRow | undefined
   return JSON.stringify(comparableModule(a)) === JSON.stringify(comparableModule(b))
 }
 
+function resolveInitialModuleId(modules: PageModuleRow[], requestedId?: string) {
+  if (requestedId) {
+    const exact = modules.find((pageModule) => pageModule.id === requestedId)
+    if (exact) return exact.id
+
+    const [pageKey, moduleKey] = requestedId.split(':')
+    const byPageAndModule = modules.find(
+      (pageModule) => pageModule.page_key === pageKey && pageModule.module_key === moduleKey,
+    )
+    if (byPageAndModule) return byPageAndModule.id
+  }
+
+  return modules[0]?.id ?? ''
+}
+
 export default function PageModulesClient({
   initialModules,
+  initialModuleId,
   maxUploadMb = 20,
 }: {
   initialModules: PageModuleRow[]
+  initialModuleId?: string
   maxUploadMb?: number
 }) {
   const [modules, setModules] = useState(() => initialModules.map(cloneModule))
   const [savedModules, setSavedModules] = useState(() => initialModules.map(cloneModule))
-  const [activeId, setActiveId] = useState(initialModules[0]?.id ?? '')
+  const [activeId, setActiveId] = useState(() => resolveInitialModuleId(initialModules, initialModuleId))
   const [saving, setSaving] = useState(false)
 
   const active = useMemo(

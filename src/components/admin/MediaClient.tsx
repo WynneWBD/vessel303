@@ -12,6 +12,7 @@ import { toast } from 'sonner'
 import { upload as blobUpload } from '@vercel/blob/client'
 import {
   Copy,
+  ExternalLink,
   ImagePlus,
   ImageUp,
   ImageOff,
@@ -32,7 +33,12 @@ import {
 } from '@/components/ui/sheet'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import AdminPagination from '@/components/admin/AdminPagination'
-import type { MediaReferenceCounts, Upload } from '@/lib/uploads-db'
+import type {
+  MediaReferenceDetails,
+  MediaReferenceItems,
+  MediaReferenceItem,
+  Upload,
+} from '@/lib/uploads-db'
 
 const FREE_QUOTA_BYTES = 1 * 1024 * 1024 * 1024 // 1 GB
 const WARNING_BYTES = 800 * 1024 * 1024
@@ -62,16 +68,37 @@ type UploadTask = {
   error?: string
 }
 
-const EMPTY_MEDIA_REFERENCES: MediaReferenceCounts = {
+const emptyMediaReferenceItems = (): MediaReferenceItems => ({
+  news: [],
+  products: [],
+  projects: [],
+  pages: [],
+})
+
+const EMPTY_MEDIA_REFERENCES: MediaReferenceDetails = {
   news: 0,
   products: 0,
   projects: 0,
   pages: 0,
   total: 0,
+  items: emptyMediaReferenceItems(),
 }
 
-function emptyMediaReferences(): MediaReferenceCounts {
-  return { ...EMPTY_MEDIA_REFERENCES }
+function emptyMediaReferences(): MediaReferenceDetails {
+  return {
+    ...EMPTY_MEDIA_REFERENCES,
+    items: emptyMediaReferenceItems(),
+  }
+}
+
+function normalizeMediaReferences(refs: MediaReferenceDetails): MediaReferenceDetails {
+  return {
+    ...refs,
+    items: {
+      ...emptyMediaReferenceItems(),
+      ...(refs.items ?? {}),
+    },
+  }
 }
 
 function normalizeMaxUploadMb(value: number): number {
@@ -365,7 +392,7 @@ export default function MediaClient({
       if (res.ok) {
         const data = (await res.json()) as {
           upload: Upload
-          refs: MediaReferenceCounts
+          refs: MediaReferenceDetails
         }
         setSelected(data.upload)
         return { refs: data.refs }
@@ -691,6 +718,64 @@ function MediaCard({ upload, onClick }: { upload: Upload; onClick: () => void })
   )
 }
 
+function ReferenceSourceList({
+  label,
+  count,
+  items,
+}: {
+  label: string
+  count: number
+  items: MediaReferenceItem[]
+}) {
+  if (count <= 0) return null
+
+  const hiddenCount = Math.max(0, count - items.length)
+
+  return (
+    <div className="rounded-md border border-[#E5DED4] bg-white/70 p-2.5">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <span className="text-xs font-medium text-[#2C2A28]">{label}</span>
+        <span className="text-xs text-[#8A8580]">{count} 条</span>
+      </div>
+      {items.length > 0 ? (
+        <div className="space-y-2">
+          {items.map((item) => (
+            <a
+              key={`${label}-${item.id}`}
+              href={item.href}
+              className="flex items-start justify-between gap-3 rounded-md border border-[#E5DED4] bg-white px-2.5 py-2 text-left transition-colors hover:border-[#E36F2C]/50 hover:bg-[#FFF8F2]"
+            >
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-medium text-[#2C2A28]">
+                  {item.title}
+                </span>
+                {item.fields.length > 0 && (
+                  <span className="mt-1 block truncate text-xs text-[#8A8580]">
+                    {item.fields.join(' / ')}
+                  </span>
+                )}
+              </span>
+              <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#E36F2C]">
+                去编辑
+                <ExternalLink size={13} />
+              </span>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-md border border-dashed border-[#E5DED4] bg-white px-2.5 py-2 text-xs text-[#8A8580]">
+          已检测到引用，但来源明细暂不可显示
+        </div>
+      )}
+      {hiddenCount > 0 && (
+        <div className="mt-2 text-xs text-[#8A8580]">
+          还有 {hiddenCount} 条未显示，请进入对应列表继续检查。
+        </div>
+      )}
+    </div>
+  )
+}
+
 function MediaDetailSheet({
   upload,
   onClose,
@@ -703,7 +788,7 @@ function MediaDetailSheet({
   const uploadId = upload?.id ?? null
   const [refsState, setRefsState] = useState<{
     uploadId: string | null
-    refs: MediaReferenceCounts
+    refs: MediaReferenceDetails
   }>(() => ({ uploadId: null, refs: emptyMediaReferences() }))
   const refs = refsState.uploadId === uploadId ? refsState.refs : EMPTY_MEDIA_REFERENCES
 
@@ -713,7 +798,9 @@ function MediaDetailSheet({
     fetch(`/api/admin/media/${uploadId}`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (!ignore && data?.refs) setRefsState({ uploadId, refs: data.refs })
+        if (!ignore && data?.refs) {
+          setRefsState({ uploadId, refs: normalizeMediaReferences(data.refs) })
+        }
       })
       .catch(() => void 0)
     return () => {
@@ -821,6 +908,27 @@ function MediaDetailSheet({
                 {refs.total > 0 && (
                   <div className="mt-1.5 text-xs text-[#E36F2C]">
                     该图片正在使用,先移除相关内容里的引用才能删除
+                  </div>
+                )}
+                {refs.total > 0 && (
+                  <div className="mt-3 space-y-2 border-t border-[#E5DED4] pt-3">
+                    <div className="text-xs font-medium text-[#2C2A28]">引用来源</div>
+                    <ReferenceSourceList label="新闻" count={refs.news} items={refs.items.news} />
+                    <ReferenceSourceList
+                      label="产品"
+                      count={refs.products}
+                      items={refs.items.products}
+                    />
+                    <ReferenceSourceList
+                      label="项目案例"
+                      count={refs.projects}
+                      items={refs.items.projects}
+                    />
+                    <ReferenceSourceList
+                      label="页面模块"
+                      count={refs.pages}
+                      items={refs.items.pages}
+                    />
                   </div>
                 )}
               </div>

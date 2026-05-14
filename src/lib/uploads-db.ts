@@ -27,6 +27,26 @@ export type MediaReferenceCounts = {
   total: number
 }
 
+export type MediaReferenceItem = {
+  id: string
+  title: string
+  href: string
+  fields: string[]
+}
+
+export type MediaReferenceItems = {
+  news: MediaReferenceItem[]
+  products: MediaReferenceItem[]
+  projects: MediaReferenceItem[]
+  pages: MediaReferenceItem[]
+}
+
+export type MediaReferenceDetails = MediaReferenceCounts & {
+  items: MediaReferenceItems
+}
+
+const MEDIA_REFERENCE_DETAIL_LIMIT = 10
+
 const UPLOAD_COLUMNS = `
   u.id, u.url, u.blob_path, u.filename, u.size, u.mime,
   u.uploaded_by, usr.email AS uploaded_by_email, u.created_at
@@ -151,6 +171,18 @@ async function countRows(sql: string, params: unknown[]): Promise<number> {
   return parseInt(res.rows[0]?.count ?? '0', 10)
 }
 
+function firstText(...values: Array<string | null | undefined>): string {
+  for (const value of values) {
+    const trimmed = value?.trim()
+    if (trimmed) return trimmed
+  }
+  return '未命名内容'
+}
+
+function collectFields(fields: Array<[boolean | null | undefined, string]>): string[] {
+  return fields.filter(([matched]) => Boolean(matched)).map(([, label]) => label)
+}
+
 export async function countNewsReferencingImage(url: string): Promise<number> {
   return countRows(
     `SELECT COUNT(*)::text AS count
@@ -204,5 +236,143 @@ export async function countMediaReferences(url: string): Promise<MediaReferenceC
     projects,
     pages,
     total: news + products + projects + pages,
+  }
+}
+
+export async function getMediaReferenceDetails(url: string): Promise<MediaReferenceDetails> {
+  const jsonArray = JSON.stringify([url])
+
+  type NewsRefRow = {
+    id: string
+    slug: string
+    title_zh: string | null
+    title_en: string | null
+    in_cover: boolean | null
+    in_content_zh: boolean | null
+    in_content_en: boolean | null
+  }
+
+  type ProductRefRow = {
+    id: string
+    name_cn: string | null
+    name_en: string | null
+    in_cover: boolean | null
+    in_gallery: boolean | null
+    in_detail_modules: boolean | null
+  }
+
+  type ProjectRefRow = {
+    id: string
+    name_zh: string | null
+    name_en: string | null
+    in_cover: boolean | null
+    in_images: boolean | null
+  }
+
+  type PageRefRow = {
+    id: string
+    page_key: string
+    module_key: string
+    title_zh: string | null
+    title_en: string | null
+  }
+
+  const [counts, newsRes, productsRes, projectsRes, pagesRes] = await Promise.all([
+    countMediaReferences(url),
+    pool.query<NewsRefRow>(
+      `SELECT id::text AS id, slug, title_zh, title_en,
+              (cover_image_url = $1) AS in_cover,
+              (strpos(COALESCE(content_zh::text, ''), $1) > 0) AS in_content_zh,
+              (strpos(COALESCE(content_en::text, ''), $1) > 0) AS in_content_en
+         FROM news
+        WHERE deleted_at IS NULL
+          AND (
+            cover_image_url = $1
+            OR strpos(COALESCE(content_zh::text, ''), $1) > 0
+            OR strpos(COALESCE(content_en::text, ''), $1) > 0
+          )
+        ORDER BY updated_at DESC NULLS LAST, id DESC
+        LIMIT $2`,
+      [url, MEDIA_REFERENCE_DETAIL_LIMIT],
+    ),
+    pool.query<ProductRefRow>(
+      `SELECT id, name_cn, name_en,
+              (image = $1) AS in_cover,
+              (gallery @> $2::jsonb) AS in_gallery,
+              (strpos(COALESCE(detail_modules::text, ''), $1) > 0) AS in_detail_modules
+         FROM product_catalog
+        WHERE deleted_at IS NULL
+          AND (
+            image = $1
+            OR gallery @> $2::jsonb
+            OR strpos(COALESCE(detail_modules::text, ''), $1) > 0
+          )
+        ORDER BY updated_at DESC NULLS LAST, id ASC
+        LIMIT $3`,
+      [url, jsonArray, MEDIA_REFERENCE_DETAIL_LIMIT],
+    ),
+    pool.query<ProjectRefRow>(
+      `SELECT id, name_zh, name_en,
+              (cover_image_url = $1) AS in_cover,
+              (images @> $2::jsonb) AS in_images
+         FROM project_cases
+        WHERE deleted_at IS NULL
+          AND (
+            cover_image_url = $1
+            OR images @> $2::jsonb
+          )
+        ORDER BY updated_at DESC NULLS LAST, id ASC
+        LIMIT $3`,
+      [url, jsonArray, MEDIA_REFERENCE_DETAIL_LIMIT],
+    ),
+    pool.query<PageRefRow>(
+      `SELECT id, page_key, module_key, title_zh, title_en
+         FROM page_modules
+        WHERE strpos(COALESCE(items::text, ''), $1) > 0
+        ORDER BY page_key ASC, sort_order ASC, module_key ASC
+        LIMIT $2`,
+      [url, MEDIA_REFERENCE_DETAIL_LIMIT],
+    ),
+  ])
+
+  return {
+    ...counts,
+    items: {
+      news: newsRes.rows.map((row) => ({
+        id: row.id,
+        title: firstText(row.title_zh, row.title_en, row.slug),
+        href: `/admin/news/${row.id}/edit`,
+        fields: collectFields([
+          [row.in_cover, '封面图'],
+          [row.in_content_zh, '中文正文'],
+          [row.in_content_en, '英文正文'],
+        ]),
+      })),
+      products: productsRes.rows.map((row) => ({
+        id: row.id,
+        title: firstText(row.name_cn, row.name_en, row.id),
+        href: `/admin/products/${row.id}/edit`,
+        fields: collectFields([
+          [row.in_cover, '封面图'],
+          [row.in_gallery, '详情图库'],
+          [row.in_detail_modules, '详情模块'],
+        ]),
+      })),
+      projects: projectsRes.rows.map((row) => ({
+        id: row.id,
+        title: firstText(row.name_zh, row.name_en, row.id),
+        href: `/admin/projects/${row.id}/edit`,
+        fields: collectFields([
+          [row.in_cover, '封面图'],
+          [row.in_images, '图库'],
+        ]),
+      })),
+      pages: pagesRes.rows.map((row) => ({
+        id: row.id,
+        title: firstText(row.title_zh, row.title_en, `${row.page_key}:${row.module_key}`),
+        href: `/admin/pages?module=${encodeURIComponent(`${row.page_key}:${row.module_key}`)}`,
+        fields: ['页面模块图片'],
+      })),
+    },
   }
 }

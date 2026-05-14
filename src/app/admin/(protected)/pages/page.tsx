@@ -8,7 +8,21 @@ import { listDefaultPageModules, listPageModules } from '@/lib/page-modules-db'
 
 export const dynamic = 'force-dynamic'
 
-export default async function PagesAdminPage() {
+type PagesAdminPageProps = {
+  searchParams?: Promise<{
+    module?: string | string[]
+  }>
+}
+
+function firstSearchParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0]
+  return value
+}
+
+export default async function PagesAdminPage({ searchParams }: PagesAdminPageProps) {
+  const sp = searchParams ? await searchParams : {}
+  const initialModuleId = firstSearchParam(sp.module)
+
   const [modules, settings] = await Promise.all([
     listPageModules().catch((err) => {
       console.error('[admin/pages] list failed', err)
@@ -20,6 +34,7 @@ export default async function PagesAdminPage() {
   return (
     <PageModulesClient
       initialModules={modules}
+      initialModuleId={initialModuleId}
       maxUploadMb={normalizeMediaMaxUploadMb(settings.mediaMaxUploadMb)}
     />
   )
