@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto'
 import { pool } from '@/lib/db'
 
 export type PageModuleItem = {
@@ -30,6 +31,23 @@ export type PageModuleRow = {
   updated_by_email: string | null
 }
 
+export type PageModuleSnapshotRow = {
+  id: string
+  page_key: string
+  module_key: string
+  module_id: string
+  module_type: string
+  title_zh: string
+  title_en: string
+  description_zh: string
+  description_en: string
+  items: PageModuleItem[]
+  is_visible: boolean
+  sort_order: number
+  created_at: string
+  created_by_email: string | null
+}
+
 export type PageModuleInput = {
   title_zh: string
   title_en: string
@@ -41,6 +59,10 @@ export type PageModuleInput = {
 }
 
 type DbPageModuleRow = Omit<PageModuleRow, 'items'> & {
+  items: unknown
+}
+
+type DbPageModuleSnapshotRow = Omit<PageModuleSnapshotRow, 'items'> & {
   items: unknown
 }
 
@@ -983,6 +1005,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
 
 let schemaReady: Promise<void> | null = null
 let seededReady: Promise<void> | null = null
+let snapshotSchemaReady: Promise<void> | null = null
 
 function normalizeItems(value: unknown): PageModuleItem[] {
   if (!Array.isArray(value)) return []
@@ -1009,6 +1032,13 @@ function normalizeItems(value: unknown): PageModuleItem[] {
 }
 
 function normalizeRow(row: DbPageModuleRow): PageModuleRow {
+  return {
+    ...row,
+    items: normalizeItems(row.items),
+  }
+}
+
+function normalizeSnapshotRow(row: DbPageModuleSnapshotRow): PageModuleSnapshotRow {
   return {
     ...row,
     items: normalizeItems(row.items),
@@ -1054,6 +1084,37 @@ export async function ensurePageModulesSchema() {
   })()
 
   return schemaReady
+}
+
+export async function ensurePageModuleSnapshotsSchema() {
+  snapshotSchemaReady ??= (async () => {
+    await ensurePageModulesSchema()
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS page_module_snapshots (
+        id             TEXT        PRIMARY KEY,
+        page_key       TEXT        NOT NULL,
+        module_key     TEXT        NOT NULL,
+        module_id      TEXT        NOT NULL,
+        module_type    TEXT        NOT NULL DEFAULT 'fixed-content',
+        title_zh       TEXT        NOT NULL DEFAULT '',
+        title_en       TEXT        NOT NULL DEFAULT '',
+        description_zh TEXT        NOT NULL DEFAULT '',
+        description_en TEXT        NOT NULL DEFAULT '',
+        items          JSONB       NOT NULL DEFAULT '[]',
+        is_visible     BOOLEAN     NOT NULL DEFAULT TRUE,
+        sort_order     INTEGER     NOT NULL DEFAULT 0,
+        created_by     UUID        REFERENCES users(id) ON DELETE SET NULL,
+        created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `)
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_page_module_snapshots_module
+        ON page_module_snapshots (page_key, module_key, created_at DESC)
+    `)
+  })()
+
+  return snapshotSchemaReady
 }
 
 async function seedDefaultPageModules() {
@@ -1200,4 +1261,170 @@ export async function updatePageModule(
   )
 
   return getPageModule(pageKey, moduleKey)
+}
+
+export function pageModuleInputChanged(pageModule: PageModuleRow, input: PageModuleInput) {
+  return JSON.stringify({
+    title_zh: pageModule.title_zh,
+    title_en: pageModule.title_en,
+    description_zh: pageModule.description_zh,
+    description_en: pageModule.description_en,
+    items: pageModule.items,
+    is_visible: pageModule.is_visible,
+    sort_order: Number(pageModule.sort_order) || 0,
+  }) !== JSON.stringify({
+    title_zh: input.title_zh,
+    title_en: input.title_en,
+    description_zh: input.description_zh,
+    description_en: input.description_en,
+    items: input.items,
+    is_visible: input.is_visible,
+    sort_order: Number(input.sort_order) || 0,
+  })
+}
+
+export async function createPageModuleSnapshot(pageModule: PageModuleRow, adminId: string) {
+  await ensurePageModuleSnapshotsSchema()
+  const id = randomUUID()
+
+  await pool.query(
+    `INSERT INTO page_module_snapshots (
+       id, page_key, module_key, module_id, module_type, title_zh, title_en,
+       description_zh, description_en, items, is_visible, sort_order, created_by, created_at
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11, $12, $13, NOW())`,
+    [
+      id,
+      pageModule.page_key,
+      pageModule.module_key,
+      pageModule.id,
+      pageModule.module_type,
+      pageModule.title_zh,
+      pageModule.title_en,
+      pageModule.description_zh,
+      pageModule.description_en,
+      JSON.stringify(pageModule.items),
+      pageModule.is_visible,
+      pageModule.sort_order,
+      adminId,
+    ],
+  )
+
+  return id
+}
+
+export async function prunePageModuleSnapshots(pageKey: string, moduleKey: string, keep = 30) {
+  await ensurePageModuleSnapshotsSchema()
+  const safeKeep = Math.min(100, Math.max(1, keep))
+
+  await pool.query(
+    `DELETE FROM page_module_snapshots
+     WHERE page_key = $1
+       AND module_key = $2
+       AND id NOT IN (
+         SELECT id
+         FROM page_module_snapshots
+         WHERE page_key = $1 AND module_key = $2
+         ORDER BY created_at DESC
+         LIMIT $3
+       )`,
+    [pageKey, moduleKey, safeKeep],
+  )
+}
+
+export async function listPageModuleSnapshots(
+  pageKey: string,
+  moduleKey: string,
+  limit = 20,
+): Promise<PageModuleSnapshotRow[]> {
+  await ensurePageModuleSnapshotsSchema()
+  const safeLimit = Math.min(50, Math.max(1, limit))
+
+  const res = await pool.query<DbPageModuleSnapshotRow>(
+    `SELECT
+       s.id,
+       s.page_key,
+       s.module_key,
+       s.module_id,
+       s.module_type,
+       s.title_zh,
+       s.title_en,
+       s.description_zh,
+       s.description_en,
+       s.items,
+       s.is_visible,
+       s.sort_order,
+       s.created_at::text AS created_at,
+       u.email AS created_by_email
+     FROM page_module_snapshots s
+     LEFT JOIN users u ON u.id = s.created_by
+     WHERE s.page_key = $1 AND s.module_key = $2
+     ORDER BY s.created_at DESC
+     LIMIT $3`,
+    [pageKey, moduleKey, safeLimit],
+  )
+
+  return res.rows.map(normalizeSnapshotRow)
+}
+
+export async function getPageModuleSnapshot(snapshotId: string): Promise<PageModuleSnapshotRow | null> {
+  await ensurePageModuleSnapshotsSchema()
+
+  const res = await pool.query<DbPageModuleSnapshotRow>(
+    `SELECT
+       s.id,
+       s.page_key,
+       s.module_key,
+       s.module_id,
+       s.module_type,
+       s.title_zh,
+       s.title_en,
+       s.description_zh,
+       s.description_en,
+       s.items,
+       s.is_visible,
+       s.sort_order,
+       s.created_at::text AS created_at,
+       u.email AS created_by_email
+     FROM page_module_snapshots s
+     LEFT JOIN users u ON u.id = s.created_by
+     WHERE s.id = $1
+     LIMIT 1`,
+    [snapshotId],
+  )
+
+  return res.rows[0] ? normalizeSnapshotRow(res.rows[0]) : null
+}
+
+export async function restorePageModuleSnapshot(
+  pageKey: string,
+  moduleKey: string,
+  snapshotId: string,
+  adminId: string,
+): Promise<PageModuleRow | null> {
+  const snapshot = await getPageModuleSnapshot(snapshotId)
+  if (!snapshot || snapshot.page_key !== pageKey || snapshot.module_key !== moduleKey) return null
+
+  const current = await getPageModule(pageKey, moduleKey)
+  if (current) {
+    await createPageModuleSnapshot(current, adminId)
+  }
+
+  const restored = await updatePageModule(
+    pageKey,
+    moduleKey,
+    {
+      title_zh: snapshot.title_zh,
+      title_en: snapshot.title_en,
+      description_zh: snapshot.description_zh,
+      description_en: snapshot.description_en,
+      items: snapshot.items,
+      is_visible: snapshot.is_visible,
+      sort_order: snapshot.sort_order,
+    },
+    adminId,
+  )
+
+  await prunePageModuleSnapshots(pageKey, moduleKey)
+  return restored
 }

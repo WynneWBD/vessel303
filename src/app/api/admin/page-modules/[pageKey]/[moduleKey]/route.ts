@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
-import { getPageModule, updatePageModule } from '@/lib/page-modules-db'
+import {
+  createPageModuleSnapshot,
+  getPageModule,
+  pageModuleInputChanged,
+  prunePageModuleSnapshots,
+  updatePageModule,
+} from '@/lib/page-modules-db'
 
 export const dynamic = 'force-dynamic'
 
@@ -75,6 +81,12 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       { error: 'Validation failed', issues: parsed.error.issues },
       { status: 400 },
     )
+  }
+
+  const before = await getPageModule(pageKey, moduleKey)
+  if (before && pageModuleInputChanged(before, parsed.data)) {
+    await createPageModuleSnapshot(before, admin.id)
+    await prunePageModuleSnapshots(pageKey, moduleKey)
   }
 
   const pageModule = await updatePageModule(pageKey, moduleKey, parsed.data, admin.id)

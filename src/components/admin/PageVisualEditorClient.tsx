@@ -4,16 +4,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import {
+  ArrowDown,
+  ArrowUp,
   ArrowUpRight,
+  Clock3,
   Eye,
-  EyeOff,
   ImageIcon,
   Link2,
   LocateFixed,
   MousePointer2,
+  Plus,
   RefreshCcw,
   RotateCcw,
   Save,
+  Trash2,
   Type,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -23,7 +27,7 @@ import { Textarea } from '@/components/ui/textarea'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import PageModuleImagePicker from '@/components/admin/PageModuleImagePicker'
 import { useUnsavedChangesWarning } from '@/components/admin/useUnsavedChangesWarning'
-import type { PageModuleItem, PageModuleRow } from '@/lib/page-modules-db'
+import type { PageModuleItem, PageModuleRow, PageModuleSnapshotRow } from '@/lib/page-modules-db'
 
 type PageKey = 'home' | 'about'
 
@@ -150,6 +154,18 @@ function filterEditableModules(modules: PageModuleRow[]) {
     .sort((a, b) => EDITABLE_MODULE_IDS.indexOf(moduleId(a)) - EDITABLE_MODULE_IDS.indexOf(moduleId(b)))
 }
 
+function sortedItems(items: PageModuleItem[]) {
+  return [...items].sort((a, b) => Number(a.sort_order) - Number(b.sort_order) || a.id.localeCompare(b.id))
+}
+
+function supportsRepeatedItems(pageModule: PageModuleRow) {
+  return (
+    pageModule.module_type === 'stats' ||
+    pageModule.module_type === 'list' ||
+    pageModule.module_type.includes('gallery')
+  )
+}
+
 function isImageItem(pageModule: PageModuleRow, item: PageModuleItem) {
   return (
     Boolean(item.image_url) ||
@@ -205,6 +221,17 @@ function buildPreviewSrc(path: string, version: number) {
   return `${path}${joiner}visualPreview=${version}`
 }
 
+function formatSnapshotTime(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return new Intl.DateTimeFormat('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
+}
+
 export default function PageVisualEditorClient({
   initialModules,
   maxUploadMb = 20,
@@ -226,6 +253,11 @@ export default function PageVisualEditorClient({
   const [previewVersion, setPreviewVersion] = useState(0)
   const [saving, setSaving] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [deleteItemId, setDeleteItemId] = useState<string | null>(null)
+  const [snapshots, setSnapshots] = useState<PageModuleSnapshotRow[]>([])
+  const [snapshotsLoading, setSnapshotsLoading] = useState(false)
+  const [restoreSnapshot, setRestoreSnapshot] = useState<PageModuleSnapshotRow | null>(null)
+  const [restoringSnapshotId, setRestoringSnapshotId] = useState<string | null>(null)
 
   const currentPage = PAGES.find((page) => page.key === selectedPage) ?? PAGES[0]
   const currentModules = useMemo(
@@ -234,6 +266,11 @@ export default function PageVisualEditorClient({
   )
   const active = currentModules.find((pageModule) => moduleId(pageModule) === selectedModuleId) ?? currentModules[0]
   const activeModuleId = active ? moduleId(active) : ''
+  const activePageKey = active?.page_key ?? ''
+  const activeModuleKey = active?.module_key ?? ''
+  const activeItems = useMemo(() => (active ? sortedItems(active.items) : []), [active])
+  const canManageRepeatedItems = active ? supportsRepeatedItems(active) : false
+  const activeItemToDelete = active && deleteItemId ? active.items.find((item) => item.id === deleteItemId) : null
   const selectedLocated = active ? locatedModules[activeModuleId] === true : false
   const formEditorHref = active ? `/admin/pages?module=${activeModuleId}` : '/admin/pages'
   const previewSrc = useMemo(() => buildPreviewSrc(currentPage.path, previewVersion), [currentPage.path, previewVersion])
@@ -308,6 +345,96 @@ export default function PageVisualEditorClient({
       items: active.items.map((item) => (item.id === id ? { ...item, ...patch } : item)),
     })
   }, [active, patchActive])
+
+  const loadSnapshots = useCallback(async () => {
+    if (!activePageKey || !activeModuleKey) {
+      setSnapshots([])
+      return
+    }
+
+    setSnapshotsLoading(true)
+    try {
+      const res = await fetch(`/api/admin/page-modules/${activePageKey}/${activeModuleKey}/snapshots?limit=12`)
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : '读取版本快照失败')
+      setSnapshots(Array.isArray(data.data) ? data.data : [])
+    } catch (err) {
+      setSnapshots([])
+      toast.error(err instanceof Error ? err.message : '读取版本快照失败')
+    } finally {
+      setSnapshotsLoading(false)
+    }
+  }, [activeModuleKey, activePageKey])
+
+  useEffect(() => {
+    void loadSnapshots()
+  }, [loadSnapshots])
+
+  const addItem = useCallback(() => {
+    if (!active || !canManageRepeatedItems) return
+    if (active.items.length >= 80) {
+      toast.error('当前模块项目数量已达到上限')
+      return
+    }
+
+    const maxSort = active.items.reduce((max, item) => Math.max(max, Number(item.sort_order) || 0), 0)
+    const item: PageModuleItem = {
+      id: `${active.module_key}-item-${Date.now()}`,
+      label_zh: '新项目',
+      label_en: 'New item',
+      is_visible: true,
+      sort_order: maxSort + 10,
+    }
+
+    if (active.module_type.includes('gallery')) {
+      item.image_url = ''
+    }
+    if (active.module_type === 'stats') {
+      item.value_zh = ''
+      item.value_en = ''
+    }
+    if (active.module_type === 'list') {
+      item.value_zh = ''
+      item.value_en = ''
+      item.content_zh = ''
+      item.content_en = ''
+    }
+
+    patchActive({ items: [...active.items, item] })
+    setSelectedField({ itemId: item.id, field: 'label_zh' })
+    toast.message('已新增项目，保存当前模块前不会影响前台')
+  }, [active, canManageRepeatedItems, patchActive])
+
+  const moveItem = useCallback((id: string, direction: -1 | 1) => {
+    if (!active) return
+    const items = sortedItems(active.items)
+    const index = items.findIndex((item) => item.id === id)
+    const nextIndex = index + direction
+    if (index < 0 || nextIndex < 0 || nextIndex >= items.length) return
+
+    const next = [...items]
+    const currentItem = next[index]
+    const targetItem = next[nextIndex]
+    if (!currentItem || !targetItem) return
+    next[index] = targetItem
+    next[nextIndex] = currentItem
+
+    patchActive({
+      items: next.map((item, itemIndex) => ({
+        ...item,
+        sort_order: (itemIndex + 1) * 10,
+      })),
+    })
+    setSelectedField({ itemId: id, field: null })
+  }, [active, patchActive])
+
+  const confirmDeleteItem = useCallback(() => {
+    if (!active || !deleteItemId || !canManageRepeatedItems) return
+    patchActive({ items: active.items.filter((item) => item.id !== deleteItemId) })
+    setSelectedField({ itemId: null, field: null })
+    setDeleteItemId(null)
+    toast.message('已删除项目，保存当前模块后才会影响前台')
+  }, [active, canManageRepeatedItems, deleteItemId, patchActive])
 
   const scrollModuleIntoView = useCallback((id: string) => {
     const doc = getIframeDocument(iframeRef.current)
@@ -387,11 +514,46 @@ export default function PageVisualEditorClient({
       setConfirmOpen(false)
       setPreviewVersion(Date.now())
       setFrameLoaded(false)
+      void loadSnapshots()
       toast.success('当前模块已保存，前台会立即使用最新内容')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '保存失败')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const restoreSelectedSnapshot = async () => {
+    if (!active || !restoreSnapshot) return
+
+    setRestoringSnapshotId(restoreSnapshot.id)
+    try {
+      const res = await fetch(
+        `/api/admin/page-modules/${active.page_key}/${active.module_key}/snapshots/${restoreSnapshot.id}/restore`,
+        { method: 'POST' },
+      )
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : '恢复快照失败')
+
+      const restored = data.data as PageModuleRow
+      const restoredId = moduleId(restored)
+      setModules((prev) => prev.map((pageModule) => (
+        moduleId(pageModule) === restoredId ? cloneModule(restored) : pageModule
+      )))
+      setSavedModules((prev) => prev.map((pageModule) => (
+        moduleId(pageModule) === restoredId ? cloneModule(restored) : pageModule
+      )))
+      setSelectedModuleId(restoredId)
+      setSelectedField({ itemId: null, field: null })
+      setRestoreSnapshot(null)
+      setPreviewVersion(Date.now())
+      setFrameLoaded(false)
+      void loadSnapshots()
+      toast.success('已恢复版本快照，前台会立即使用恢复后的内容')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '恢复快照失败')
+    } finally {
+      setRestoringSnapshotId(null)
     }
   }
 
@@ -504,7 +666,8 @@ export default function PageVisualEditorClient({
           </h1>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-[#8A8580]">
             受控可视化编辑，只能修改已接入 page_modules 的文字、链接、图片和模块显示状态。
-            不支持新增、删除、排序模块，也不能自由修改样式或布局。保存后会立即影响前台页面。
+            支持重复型模块内的项目新增、删除、排序；不支持新增、删除、排序页面模块，也不能自由修改样式或布局。
+            保存前会自动保留上一版快照，保存或恢复后会立即影响前台页面。
           </p>
         </div>
 
@@ -670,6 +833,57 @@ export default function PageVisualEditorClient({
                 </div>
               </div>
 
+              <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-[#2C2A28]">
+                      <Clock3 size={15} className="text-[#E36F2C]" />
+                      <span>版本快照</span>
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-[#8A8580]">
+                      每次保存前会自动保留上一版，最多保留最近 30 版。
+                    </p>
+                  </div>
+                  <Button type="button" size="sm" variant="outline" onClick={loadSnapshots} disabled={snapshotsLoading}>
+                    <RefreshCcw size={14} />
+                    刷新
+                  </Button>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {snapshotsLoading ? (
+                    <p className="text-xs text-[#8A8580]">正在读取快照...</p>
+                  ) : snapshots.length > 0 ? (
+                    snapshots.map((snapshot) => (
+                      <div key={snapshot.id} className="rounded-md border border-[#E5DED4] bg-white p-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-[#2C2A28]">
+                              {formatSnapshotTime(snapshot.created_at)}
+                            </p>
+                            <p className="mt-1 truncate text-[11px] text-[#8A8580]">
+                              {snapshot.created_by_email ?? '未知操作人'} · {snapshot.items.length} 个项目
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={Boolean(restoringSnapshotId)}
+                            onClick={() => setRestoreSnapshot(snapshot)}
+                          >
+                            恢复
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs leading-5 text-[#8A8580]">
+                      暂无快照。第一次保存当前模块后，这里会出现保存前的上一版。
+                    </p>
+                  )}
+                </div>
+              </div>
+
               {selectedField.itemId || selectedField.field ? (
                 <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
                   <div className="flex items-center gap-2 text-xs font-semibold text-[#2C2A28]">
@@ -691,25 +905,91 @@ export default function PageVisualEditorClient({
               </div>
 
               <div className="space-y-3">
-                {active.items.map((item) => {
+                <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-[#2C2A28]">模块内项目</p>
+                      <p className="mt-1 text-xs leading-5 text-[#8A8580]">
+                        可显示/隐藏项目并调整排序。只有数据条、列表、图片墙这类重复型模块支持新增和删除项目。
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={!canManageRepeatedItems || active.items.length >= 80}
+                      onClick={addItem}
+                      title={canManageRepeatedItems ? '新增项目' : '固定内容模块不支持新增项目'}
+                    >
+                      <Plus size={14} />
+                      新增项目
+                    </Button>
+                  </div>
+                  {!canManageRepeatedItems ? (
+                    <p className="mt-2 text-xs text-[#8A8580]">
+                      当前是固定内容模块，只开放已有字段编辑和显示/隐藏，避免破坏前台固定结构。
+                    </p>
+                  ) : null}
+                </div>
+
+                {activeItems.map((item, itemIndex) => {
                   const showImage = isImageItem(active, item)
                   const showLink = isLinkItem(item)
                   const showValue = showValueFields(active, item)
                   const showContent = showContentFields(item)
+                  const firstItem = itemIndex === 0
+                  const lastItem = itemIndex === activeItems.length - 1
                   return (
                     <div key={item.id} className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-3">
                       <div className="mb-3 flex items-center justify-between gap-3">
                         <div className="min-w-0">
                           <p className="truncate font-mono text-xs text-[#6B625B]">{item.id}</p>
                           <p className="mt-1 truncate text-xs text-[#8A8580]">
-                            {item.is_visible ? '字段当前参与前台渲染' : '字段当前隐藏，visual 暂不开放单项显示开关'}
+                            {item.is_visible ? '项目当前参与前台渲染' : '项目当前隐藏'}
                           </p>
                         </div>
-                        {item.is_visible ? (
-                          <Eye size={15} className="shrink-0 text-[#E36F2C]" />
-                        ) : (
-                          <EyeOff size={15} className="shrink-0 text-[#8A8580]" />
-                        )}
+                        <div className="flex shrink-0 items-center gap-1">
+                          <Switch
+                            checked={item.is_visible}
+                            onCheckedChange={(checked) => patchItem(item.id, { is_visible: checked })}
+                          />
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-[#8A8580] hover:text-[#E36F2C]"
+                            aria-label="上移项目"
+                            title="上移项目"
+                            disabled={firstItem}
+                            onClick={() => moveItem(item.id, -1)}
+                          >
+                            <ArrowUp size={14} />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-[#8A8580] hover:text-[#E36F2C]"
+                            aria-label="下移项目"
+                            title="下移项目"
+                            disabled={lastItem}
+                            onClick={() => moveItem(item.id, 1)}
+                          >
+                            <ArrowDown size={14} />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-[#8A8580] hover:text-red-600"
+                            aria-label="删除项目"
+                            title={canManageRepeatedItems ? '删除项目' : '固定内容模块不支持删除项目'}
+                            disabled={!canManageRepeatedItems}
+                            onClick={() => setDeleteItemId(item.id)}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
                       </div>
 
                       <div className="space-y-3">
@@ -851,7 +1131,7 @@ export default function PageVisualEditorClient({
             <div>
               <p className="text-sm font-semibold text-[#2C2A28]">当前模块有未保存修改</p>
               <p className="mt-1 text-xs text-[#8A8580]">
-                保存前会再次确认。确认保存后，当前模块内容会立即影响前台页面。
+                保存前会再次确认并自动保留上一版快照。确认保存后，当前模块内容会立即影响前台页面。
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -874,14 +1154,48 @@ export default function PageVisualEditorClient({
         title="确认保存当前模块？"
         description={
           <span>
-            保存后会立即影响前台页面。当前只会保存 <strong>{active.title_zh}</strong> 这个模块，
-            不会新增、删除或排序模块。
+            保存前会自动保留上一版快照。保存后会立即影响前台页面。当前只会保存 <strong>{active.title_zh}</strong> 这个模块，
+            不会新增、删除或排序页面模块。
           </span>
         }
         confirmLabel="确认保存"
         tone="warning"
         loading={saving}
         onConfirm={saveActiveModule}
+      />
+
+      <AdminConfirmDialog
+        open={Boolean(deleteItemId)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteItemId(null)
+        }}
+        title="确认删除这个项目？"
+        description={
+          <span>
+            这只会先成为当前模块的未保存修改。点击保存当前模块后，<strong>{activeItemToDelete?.label_zh ?? deleteItemId}</strong>{' '}
+            才会从前台对应模块中移除。
+          </span>
+        }
+        confirmLabel="确认删除"
+        tone="danger"
+        onConfirm={confirmDeleteItem}
+      />
+
+      <AdminConfirmDialog
+        open={Boolean(restoreSnapshot)}
+        onOpenChange={(open) => {
+          if (!open && !restoringSnapshotId) setRestoreSnapshot(null)
+        }}
+        title="确认恢复这个版本？"
+        description={
+          <span>
+            恢复后会立即影响前台页面。系统会在恢复前自动保存当前版本快照，方便再次回退。
+          </span>
+        }
+        confirmLabel="确认恢复"
+        tone="danger"
+        loading={Boolean(restoringSnapshotId)}
+        onConfirm={restoreSelectedSnapshot}
       />
     </div>
   )
