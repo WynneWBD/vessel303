@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
@@ -42,6 +43,11 @@ const patchSchema = z.object({
 
 function isPageKey(value: string): value is (typeof pageKeys)[number] {
   return pageKeys.includes(value as (typeof pageKeys)[number])
+}
+
+function revalidatePageModulePath(pageKey: string) {
+  if (pageKey === 'home') revalidatePath('/')
+  if (pageKey === 'about') revalidatePath('/about')
 }
 
 export async function GET(_req: NextRequest, ctx: Ctx) {
@@ -92,6 +98,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   const pageModule = await updatePageModule(pageKey, moduleKey, parsed.data, admin.id)
   if (!pageModule) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  revalidatePageModulePath(pageKey)
   await logAdminAction(admin.id, 'page_module.update', 'page_module', `${pageKey}:${moduleKey}`)
   return NextResponse.json({ data: pageModule })
 }

@@ -24,6 +24,7 @@ export type MediaReferenceCounts = {
   products: number
   projects: number
   pages: number
+  pageSnapshots: number
   total: number
 }
 
@@ -39,10 +40,21 @@ export type MediaReferenceItems = {
   products: MediaReferenceItem[]
   projects: MediaReferenceItem[]
   pages: MediaReferenceItem[]
+  pageSnapshots: MediaReferenceItem[]
 }
 
 export type MediaReferenceDetails = MediaReferenceCounts & {
   items: MediaReferenceItems
+}
+
+type PageSnapshotRefRow = {
+  id: string
+  page_key: string
+  module_key: string
+  title_zh: string | null
+  title_en: string | null
+  created_at: string
+  created_by_email: string | null
 }
 
 const MEDIA_REFERENCE_DETAIL_LIMIT = 10
@@ -171,6 +183,14 @@ async function countRows(sql: string, params: unknown[]): Promise<number> {
   return parseInt(res.rows[0]?.count ?? '0', 10)
 }
 
+async function tableExists(tableName: string): Promise<boolean> {
+  const res = await pool.query<{ table_name: string | null }>(
+    'SELECT to_regclass($1) AS table_name',
+    [tableName],
+  )
+  return Boolean(res.rows[0]?.table_name)
+}
+
 function firstText(...values: Array<string | null | undefined>): string {
   for (const value of values) {
     const trimmed = value?.trim()
@@ -197,9 +217,43 @@ export async function countNewsReferencingImage(url: string): Promise<number> {
   )
 }
 
+async function countPageModuleSnapshotReferences(url: string): Promise<number> {
+  if (!(await tableExists('public.page_module_snapshots'))) return 0
+
+  return countRows(
+    `SELECT COUNT(*)::text AS count
+     FROM page_module_snapshots
+     WHERE strpos(COALESCE(items::text, ''), $1) > 0`,
+    [url],
+  )
+}
+
+async function listPageModuleSnapshotReferences(url: string): Promise<PageSnapshotRefRow[]> {
+  if (!(await tableExists('public.page_module_snapshots'))) return []
+
+  const res = await pool.query<PageSnapshotRefRow>(
+    `SELECT
+       s.id,
+       s.page_key,
+       s.module_key,
+       s.title_zh,
+       s.title_en,
+       s.created_at::text AS created_at,
+       u.email AS created_by_email
+     FROM page_module_snapshots s
+     LEFT JOIN users u ON u.id = s.created_by
+     WHERE strpos(COALESCE(s.items::text, ''), $1) > 0
+     ORDER BY s.created_at DESC
+     LIMIT $2`,
+    [url, MEDIA_REFERENCE_DETAIL_LIMIT],
+  )
+
+  return res.rows
+}
+
 export async function countMediaReferences(url: string): Promise<MediaReferenceCounts> {
   const jsonArray = JSON.stringify([url])
-  const [news, products, projects, pages] = await Promise.all([
+  const [news, products, projects, pages, pageSnapshots] = await Promise.all([
     countNewsReferencingImage(url),
     countRows(
       `SELECT COUNT(*)::text AS count
@@ -228,6 +282,7 @@ export async function countMediaReferences(url: string): Promise<MediaReferenceC
        WHERE strpos(COALESCE(items::text, ''), $1) > 0`,
       [url],
     ),
+    countPageModuleSnapshotReferences(url),
   ])
 
   return {
@@ -235,7 +290,8 @@ export async function countMediaReferences(url: string): Promise<MediaReferenceC
     products,
     projects,
     pages,
-    total: news + products + projects + pages,
+    pageSnapshots,
+    total: news + products + projects + pages + pageSnapshots,
   }
 }
 
@@ -277,7 +333,7 @@ export async function getMediaReferenceDetails(url: string): Promise<MediaRefere
     title_en: string | null
   }
 
-  const [counts, newsRes, productsRes, projectsRes, pagesRes] = await Promise.all([
+  const [counts, newsRes, productsRes, projectsRes, pagesRes, pageSnapshotsRes] = await Promise.all([
     countMediaReferences(url),
     pool.query<NewsRefRow>(
       `SELECT id::text AS id, slug, title_zh, title_en,
@@ -333,6 +389,7 @@ export async function getMediaReferenceDetails(url: string): Promise<MediaRefere
         LIMIT $2`,
       [url, MEDIA_REFERENCE_DETAIL_LIMIT],
     ),
+    listPageModuleSnapshotReferences(url),
   ])
 
   return {
@@ -372,6 +429,16 @@ export async function getMediaReferenceDetails(url: string): Promise<MediaRefere
         title: firstText(row.title_zh, row.title_en, `${row.page_key}:${row.module_key}`),
         href: `/admin/pages?module=${encodeURIComponent(`${row.page_key}:${row.module_key}`)}`,
         fields: ['页面模块图片'],
+      })),
+      pageSnapshots: pageSnapshotsRes.map((row) => ({
+        id: row.id,
+        title: firstText(row.title_zh, row.title_en, `${row.page_key}:${row.module_key}`),
+        href: '/admin/pages/visual',
+        fields: [
+          '历史快照引用',
+          `${row.page_key}:${row.module_key}`,
+          row.created_by_email ? `操作人: ${row.created_by_email}` : '操作人: 未知',
+        ],
       })),
     },
   }

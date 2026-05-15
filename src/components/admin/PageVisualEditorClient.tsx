@@ -232,6 +232,55 @@ function formatSnapshotTime(value: string) {
   }).format(date)
 }
 
+function firstReadableItemText(items: PageModuleItem[]) {
+  for (const item of sortedItems(items)) {
+    const candidates = [
+      item.label_zh,
+      item.label_en,
+      item.value_zh,
+      item.value_en,
+      item.content_zh,
+      item.content_en,
+    ]
+    const value = candidates.find((text) => text?.trim())
+    if (value) return value.trim()
+  }
+  return ''
+}
+
+function truncateText(value: string, maxLength = 64) {
+  const normalized = value.replace(/\s+/g, ' ').trim()
+  if (normalized.length <= maxLength) return normalized
+  return `${normalized.slice(0, maxLength)}...`
+}
+
+function snapshotSummary(snapshot: PageModuleSnapshotRow) {
+  const title = truncateText(
+    snapshot.title_zh.trim() ||
+      snapshot.title_en.trim() ||
+      firstReadableItemText(snapshot.items) ||
+      `${snapshot.page_key}:${snapshot.module_key}`,
+  )
+  const hasImages = snapshot.items.some((item) => Boolean(item.image_url?.trim()))
+
+  return {
+    title,
+    hasImages,
+    itemCount: snapshot.items.length,
+    savedAt: formatSnapshotTime(snapshot.created_at),
+    operator: snapshot.created_by_email ?? '未知操作人',
+  }
+}
+
+function itemSummary(item: PageModuleItem) {
+  const label = truncateText(item.label_zh || item.label_en || '无标题项目', 48)
+  const value = truncateText(item.value_zh || item.value_en || item.content_zh || item.content_en || '', 72)
+  return {
+    label,
+    value,
+  }
+}
+
 export default function PageVisualEditorClient({
   initialModules,
   maxUploadMb = 20,
@@ -271,6 +320,11 @@ export default function PageVisualEditorClient({
   const activeItems = useMemo(() => (active ? sortedItems(active.items) : []), [active])
   const canManageRepeatedItems = active ? supportsRepeatedItems(active) : false
   const activeItemToDelete = active && deleteItemId ? active.items.find((item) => item.id === deleteItemId) : null
+  const activeItemToDeleteIndex = activeItemToDelete
+    ? activeItems.findIndex((item) => item.id === activeItemToDelete.id)
+    : -1
+  const activeItemToDeleteSummary = activeItemToDelete ? itemSummary(activeItemToDelete) : null
+  const restoreSnapshotSummary = restoreSnapshot ? snapshotSummary(restoreSnapshot) : null
   const selectedLocated = active ? locatedModules[activeModuleId] === true : false
   const formEditorHref = active ? `/admin/pages?module=${activeModuleId}` : '/admin/pages'
   const previewSrc = useMemo(() => buildPreviewSrc(currentPage.path, previewVersion), [currentPage.path, previewVersion])
@@ -853,15 +907,20 @@ export default function PageVisualEditorClient({
                   {snapshotsLoading ? (
                     <p className="text-xs text-[#8A8580]">正在读取快照...</p>
                   ) : snapshots.length > 0 ? (
-                    snapshots.map((snapshot) => (
+                    snapshots.map((snapshot) => {
+                      const summary = snapshotSummary(snapshot)
+                      return (
                       <div key={snapshot.id} className="rounded-md border border-[#E5DED4] bg-white p-2">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <p className="text-xs font-medium text-[#2C2A28]">
-                              {formatSnapshotTime(snapshot.created_at)}
+                            <p className="truncate text-xs font-medium text-[#2C2A28]">
+                              {summary.title}
+                            </p>
+                            <p className="mt-1 text-[11px] text-[#8A8580]">
+                              {summary.itemCount} 个项目 · {summary.hasImages ? '包含图片' : '无图片'}
                             </p>
                             <p className="mt-1 truncate text-[11px] text-[#8A8580]">
-                              {snapshot.created_by_email ?? '未知操作人'} · {snapshot.items.length} 个项目
+                              {summary.savedAt} · {summary.operator}
                             </p>
                           </div>
                           <Button
@@ -875,7 +934,8 @@ export default function PageVisualEditorClient({
                           </Button>
                         </div>
                       </div>
-                    ))
+                    )
+                    })
                   ) : (
                     <p className="text-xs leading-5 text-[#8A8580]">
                       暂无快照。第一次保存当前模块后，这里会出现保存前的上一版。
@@ -1172,8 +1232,12 @@ export default function PageVisualEditorClient({
         title="确认删除这个项目？"
         description={
           <span>
-            这只会先成为当前模块的未保存修改。点击保存当前模块后，<strong>{activeItemToDelete?.label_zh ?? deleteItemId}</strong>{' '}
-            才会从前台对应模块中移除。
+            这只会先成为当前模块的未保存修改。将删除第{' '}
+            <strong>{activeItemToDeleteIndex >= 0 ? activeItemToDeleteIndex + 1 : '-'}</strong> 个项目，
+            ID 为 <strong>{activeItemToDelete?.id ?? deleteItemId}</strong>，
+            当前文字为 <strong>{activeItemToDeleteSummary?.label ?? '-'}</strong>
+            {activeItemToDeleteSummary?.value ? <>，值/正文为 <strong>{activeItemToDeleteSummary.value}</strong></> : null}。
+            点击保存当前模块后才会从前台对应模块中移除。
           </span>
         }
         confirmLabel="确认删除"
@@ -1189,6 +1253,11 @@ export default function PageVisualEditorClient({
         title="确认恢复这个版本？"
         description={
           <span>
+            将恢复 <strong>{restoreSnapshotSummary?.title ?? '这个快照'}</strong>，
+            共 <strong>{restoreSnapshotSummary?.itemCount ?? '-'}</strong> 个项目，
+            {restoreSnapshotSummary?.hasImages ? '包含图片，' : '不包含图片，'}
+            保存时间 <strong>{restoreSnapshotSummary?.savedAt ?? '-'}</strong>，
+            操作人 <strong>{restoreSnapshotSummary?.operator ?? '-'}</strong>。
             恢复后会立即影响前台页面。系统会在恢复前自动保存当前版本快照，方便再次回退。
           </span>
         }
