@@ -29,6 +29,11 @@ export type PageModuleRow = {
   sort_order: number
   updated_at: string
   updated_by_email: string | null
+  has_draft?: boolean
+  draft_updated_at?: string | null
+  draft_updated_by_email?: string | null
+  live_updated_at?: string | null
+  live_updated_by_email?: string | null
 }
 
 export type PageModuleSnapshotRow = {
@@ -63,6 +68,10 @@ type DbPageModuleRow = Omit<PageModuleRow, 'items'> & {
 }
 
 type DbPageModuleSnapshotRow = Omit<PageModuleSnapshotRow, 'items'> & {
+  items: unknown
+}
+
+type DbPageModuleDraftRow = Omit<PageModuleRow, 'items'> & {
   items: unknown
 }
 
@@ -1006,6 +1015,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
 let schemaReady: Promise<void> | null = null
 let seededReady: Promise<void> | null = null
 let snapshotSchemaReady: Promise<void> | null = null
+let draftSchemaReady: Promise<void> | null = null
 
 function normalizeItems(value: unknown): PageModuleItem[] {
   if (!Array.isArray(value)) return []
@@ -1038,10 +1048,32 @@ function normalizeRow(row: DbPageModuleRow): PageModuleRow {
   }
 }
 
+function normalizeDraftRow(row: DbPageModuleDraftRow): PageModuleRow {
+  return {
+    ...row,
+    items: normalizeItems(row.items),
+    has_draft: true,
+    draft_updated_at: row.updated_at,
+    draft_updated_by_email: row.updated_by_email,
+  }
+}
+
 function normalizeSnapshotRow(row: DbPageModuleSnapshotRow): PageModuleSnapshotRow {
   return {
     ...row,
     items: normalizeItems(row.items),
+  }
+}
+
+function pageModuleToInput(pageModule: PageModuleRow): PageModuleInput {
+  return {
+    title_zh: pageModule.title_zh,
+    title_en: pageModule.title_en,
+    description_zh: pageModule.description_zh,
+    description_en: pageModule.description_en,
+    items: pageModule.items,
+    is_visible: pageModule.is_visible,
+    sort_order: pageModule.sort_order,
   }
 }
 
@@ -1115,6 +1147,38 @@ export async function ensurePageModuleSnapshotsSchema() {
   })()
 
   return snapshotSchemaReady
+}
+
+export async function ensurePageModuleDraftsSchema() {
+  draftSchemaReady ??= (async () => {
+    await ensurePageModulesSchema()
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS page_module_drafts (
+        id              TEXT        PRIMARY KEY,
+        page_key        TEXT        NOT NULL,
+        module_key      TEXT        NOT NULL,
+        module_type     TEXT        NOT NULL DEFAULT 'fixed-content',
+        title_zh        TEXT        NOT NULL DEFAULT '',
+        title_en        TEXT        NOT NULL DEFAULT '',
+        description_zh  TEXT        NOT NULL DEFAULT '',
+        description_en  TEXT        NOT NULL DEFAULT '',
+        items           JSONB       NOT NULL DEFAULT '[]',
+        is_visible      BOOLEAN     NOT NULL DEFAULT TRUE,
+        sort_order      INTEGER     NOT NULL DEFAULT 0,
+        base_updated_at TIMESTAMPTZ,
+        updated_by      UUID        REFERENCES users(id) ON DELETE SET NULL,
+        updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (page_key, module_key)
+      )
+    `)
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_page_module_drafts_page
+        ON page_module_drafts (page_key, sort_order)
+    `)
+  })()
+
+  return draftSchemaReady
 }
 
 async function seedDefaultPageModules() {
@@ -1214,6 +1278,183 @@ export async function getPageModule(pageKey: string, moduleKey: string): Promise
   )
 
   return res.rows[0] ? normalizeRow(res.rows[0]) : null
+}
+
+export async function getPageModuleDraft(pageKey: string, moduleKey: string): Promise<PageModuleRow | null> {
+  await ensurePageModuleDraftsSchema()
+  const res = await pool.query<DbPageModuleDraftRow>(
+    `SELECT
+       d.id,
+       d.page_key,
+       d.module_key,
+       d.module_type,
+       d.title_zh,
+       d.title_en,
+       d.description_zh,
+       d.description_en,
+       d.items,
+       d.is_visible,
+       d.sort_order,
+       d.updated_at::text AS updated_at,
+       u.email AS updated_by_email
+     FROM page_module_drafts d
+     LEFT JOIN users u ON u.id = d.updated_by
+     WHERE d.page_key = $1 AND d.module_key = $2
+     LIMIT 1`,
+    [pageKey, moduleKey],
+  )
+
+  return res.rows[0] ? normalizeDraftRow(res.rows[0]) : null
+}
+
+export async function listPageModulesForVisualEditor(pageKey?: string): Promise<PageModuleRow[]> {
+  const liveModules = await listPageModules(pageKey)
+  await ensurePageModuleDraftsSchema()
+
+  const params: string[] = []
+  const where = pageKey ? 'WHERE d.page_key = $1' : ''
+  if (pageKey) params.push(pageKey)
+
+  const draftsRes = await pool.query<DbPageModuleDraftRow>(
+    `SELECT
+       d.id,
+       d.page_key,
+       d.module_key,
+       d.module_type,
+       d.title_zh,
+       d.title_en,
+       d.description_zh,
+       d.description_en,
+       d.items,
+       d.is_visible,
+       d.sort_order,
+       d.updated_at::text AS updated_at,
+       u.email AS updated_by_email
+     FROM page_module_drafts d
+     LEFT JOIN users u ON u.id = d.updated_by
+     ${where}
+     ORDER BY d.page_key ASC, d.sort_order ASC`,
+    params,
+  )
+
+  const draftsByModule = new Map(
+    draftsRes.rows.map((row) => [`${row.page_key}:${row.module_key}`, normalizeDraftRow(row)]),
+  )
+
+  return liveModules
+    .map((live) => {
+      const draft = draftsByModule.get(`${live.page_key}:${live.module_key}`)
+      if (!draft) {
+        return {
+          ...live,
+          has_draft: false,
+          draft_updated_at: null,
+          draft_updated_by_email: null,
+          live_updated_at: live.updated_at,
+          live_updated_by_email: live.updated_by_email,
+        }
+      }
+
+      return {
+        ...draft,
+        has_draft: true,
+        live_updated_at: live.updated_at,
+        live_updated_by_email: live.updated_by_email,
+      }
+    })
+    .sort((a, b) => a.page_key.localeCompare(b.page_key) || a.sort_order - b.sort_order)
+}
+
+export async function getPageModuleForPreview(
+  pageKey: string,
+  moduleKey: string,
+  includeDraft: boolean,
+): Promise<PageModuleRow | null> {
+  if (includeDraft) {
+    const draft = await getPageModuleDraft(pageKey, moduleKey)
+    if (draft) return draft
+  }
+
+  return getPageModule(pageKey, moduleKey)
+}
+
+export async function listPageModulesForPreview(
+  pageKey: string,
+  includeDraft: boolean,
+): Promise<PageModuleRow[]> {
+  if (includeDraft) return listPageModulesForVisualEditor(pageKey)
+  return listPageModules(pageKey)
+}
+
+export async function savePageModuleDraft(
+  pageKey: string,
+  moduleKey: string,
+  input: PageModuleInput,
+  adminId: string,
+): Promise<PageModuleRow | null> {
+  await ensurePageModuleDraftsSchema()
+  const live = await getPageModule(pageKey, moduleKey)
+  const fallback = getDefaultPageModule(pageKey, moduleKey)
+  const moduleType = live?.module_type ?? fallback?.module_type ?? 'fixed-content'
+  const id = live?.id ?? fallback?.id ?? `${pageKey}:${moduleKey}`
+  const baseUpdatedAt = live?.updated_at || null
+
+  await pool.query(
+    `INSERT INTO page_module_drafts (
+       id, page_key, module_key, module_type, title_zh, title_en,
+       description_zh, description_en, items, is_visible, sort_order,
+       base_updated_at, updated_by, updated_at
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12, $13, NOW())
+     ON CONFLICT (page_key, module_key)
+     DO UPDATE SET
+       title_zh = EXCLUDED.title_zh,
+       title_en = EXCLUDED.title_en,
+       description_zh = EXCLUDED.description_zh,
+       description_en = EXCLUDED.description_en,
+       items = EXCLUDED.items,
+       is_visible = EXCLUDED.is_visible,
+       sort_order = EXCLUDED.sort_order,
+       base_updated_at = EXCLUDED.base_updated_at,
+       updated_by = EXCLUDED.updated_by,
+       updated_at = NOW()`,
+    [
+      id,
+      pageKey,
+      moduleKey,
+      moduleType,
+      input.title_zh,
+      input.title_en,
+      input.description_zh,
+      input.description_en,
+      JSON.stringify(input.items),
+      input.is_visible,
+      input.sort_order,
+      baseUpdatedAt,
+      adminId,
+    ],
+  )
+
+  const draft = await getPageModuleDraft(pageKey, moduleKey)
+  if (!draft) return null
+
+  return {
+    ...draft,
+    live_updated_at: live?.updated_at ?? null,
+    live_updated_by_email: live?.updated_by_email ?? null,
+  }
+}
+
+export async function deletePageModuleDraft(pageKey: string, moduleKey: string): Promise<boolean> {
+  await ensurePageModuleDraftsSchema()
+  const res = await pool.query<{ id: string }>(
+    `DELETE FROM page_module_drafts
+     WHERE page_key = $1 AND module_key = $2
+     RETURNING id`,
+    [pageKey, moduleKey],
+  )
+
+  return Boolean(res.rows[0]?.id)
 }
 
 export async function updatePageModule(
@@ -1427,4 +1668,60 @@ export async function restorePageModuleSnapshot(
 
   await prunePageModuleSnapshots(pageKey, moduleKey)
   return restored
+}
+
+export async function publishPageModuleDraft(
+  pageKey: string,
+  moduleKey: string,
+  adminId: string,
+): Promise<PageModuleRow | null> {
+  const draft = await getPageModuleDraft(pageKey, moduleKey)
+  if (!draft) return null
+
+  const live = await getPageModule(pageKey, moduleKey)
+  const input = pageModuleToInput(draft)
+
+  if (live && pageModuleInputChanged(live, input)) {
+    await createPageModuleSnapshot(live, adminId)
+  }
+
+  const published = await updatePageModule(pageKey, moduleKey, input, adminId)
+  if (!published) return null
+
+  await deletePageModuleDraft(pageKey, moduleKey)
+  await prunePageModuleSnapshots(pageKey, moduleKey)
+
+  return {
+    ...published,
+    has_draft: false,
+    draft_updated_at: null,
+    draft_updated_by_email: null,
+    live_updated_at: published.updated_at,
+    live_updated_by_email: published.updated_by_email,
+  }
+}
+
+export async function restorePageModuleSnapshotToDraft(
+  pageKey: string,
+  moduleKey: string,
+  snapshotId: string,
+  adminId: string,
+): Promise<PageModuleRow | null> {
+  const snapshot = await getPageModuleSnapshot(snapshotId)
+  if (!snapshot || snapshot.page_key !== pageKey || snapshot.module_key !== moduleKey) return null
+
+  return savePageModuleDraft(
+    pageKey,
+    moduleKey,
+    {
+      title_zh: snapshot.title_zh,
+      title_en: snapshot.title_en,
+      description_zh: snapshot.description_zh,
+      description_en: snapshot.description_en,
+      items: snapshot.items,
+      is_visible: snapshot.is_visible,
+      sort_order: snapshot.sort_order,
+    },
+    adminId,
+  )
 }

@@ -4,13 +4,13 @@ import {
   getSiteSettings,
   normalizeMediaMaxUploadMb,
 } from '@/lib/admin-settings-db'
-import { listDefaultPageModules, listPageModules } from '@/lib/page-modules-db'
+import { listDefaultPageModules, listPageModulesForVisualEditor } from '@/lib/page-modules-db'
 
 export const dynamic = 'force-dynamic'
 
 export default async function PageVisualEditorPage() {
   const [modules, settings] = await Promise.all([
-    listPageModules().catch((err) => {
+    listPageModulesForVisualEditor().catch((err) => {
       console.error('[admin/pages/visual] list failed', err)
       return listDefaultPageModules()
     }),

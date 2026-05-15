@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getOptionalAdmin } from '@/lib/auth-check'
 import {
   getDefaultPageModule,
-  getPageModule,
   listDefaultPageModules,
-  listPageModules,
+  getPageModuleForPreview,
+  listPageModulesForPreview,
 } from '@/lib/page-modules-db'
 
 export const dynamic = 'force-dynamic'
@@ -23,14 +24,24 @@ export async function GET(req: NextRequest, ctx: Ctx) {
   }
 
   const moduleKey = req.nextUrl.searchParams.get('module')
+  const wantsDraft = req.nextUrl.searchParams.get('draft') === '1'
 
   try {
+    const admin = wantsDraft ? await getOptionalAdmin() : null
+    const includeDraft = Boolean(admin)
+
     if (moduleKey) {
-      const pageModule = await getPageModule(pageKey, moduleKey)
-      return NextResponse.json({ data: pageModule ?? getDefaultPageModule(pageKey, moduleKey) })
+      const pageModule = await getPageModuleForPreview(pageKey, moduleKey, includeDraft)
+      return NextResponse.json({
+        data: pageModule ?? getDefaultPageModule(pageKey, moduleKey),
+        previewDraft: includeDraft,
+      })
     }
 
-    return NextResponse.json({ data: await listPageModules(pageKey) })
+    return NextResponse.json({
+      data: await listPageModulesForPreview(pageKey, includeDraft),
+      previewDraft: includeDraft,
+    })
   } catch (err) {
     console.error('[page-modules] fallback to defaults', err)
 

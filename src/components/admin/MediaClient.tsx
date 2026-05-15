@@ -73,6 +73,7 @@ const emptyMediaReferenceItems = (): MediaReferenceItems => ({
   products: [],
   projects: [],
   pages: [],
+  pageDrafts: [],
   pageSnapshots: [],
 })
 
@@ -81,6 +82,7 @@ const EMPTY_MEDIA_REFERENCES: MediaReferenceDetails = {
   products: 0,
   projects: 0,
   pages: 0,
+  pageDrafts: 0,
   pageSnapshots: 0,
   total: 0,
   items: emptyMediaReferenceItems(),
@@ -906,6 +908,12 @@ function MediaDetailSheet({
                       · 页面模块 {refs.pages} 条
                     </span>
                   )}
+                  {refs.pageDrafts > 0 && (
+                    <span className="text-[#8A8580]">
+                      {' '}
+                      · 页面草稿 {refs.pageDrafts} 条
+                    </span>
+                  )}
                   {refs.pageSnapshots > 0 && (
                     <span className="text-[#8A8580]">
                       {' '}
@@ -936,6 +944,11 @@ function MediaDetailSheet({
                       label="页面模块"
                       count={refs.pages}
                       items={refs.items.pages}
+                    />
+                    <ReferenceSourceList
+                      label="页面草稿引用"
+                      count={refs.pageDrafts}
+                      items={refs.items.pageDrafts}
                     />
                     <ReferenceSourceList
                       label="历史快照引用"

@@ -40,8 +40,13 @@ function useHomePageModule(moduleKey: string) {
 
   useEffect(() => {
     const controller = new AbortController();
+    const sp = new URLSearchParams({ module: moduleKey });
+    const currentParams = new URLSearchParams(window.location.search);
+    const previewVersion = currentParams.get('visualPreview');
+    if (currentParams.get('visualDraft') === '1') sp.set('draft', '1');
+    if (previewVersion) sp.set('visualPreview', previewVersion);
 
-    fetch(`/api/page-modules/home?module=${moduleKey}`, { signal: controller.signal })
+    fetch(`/api/page-modules/home?${sp.toString()}`, { signal: controller.signal })
       .then((res) => (res.ok ? res.json() : null))
       .then((payload: HomePageModuleResponse | null) => {
         if (payload?.data) setPageModule(payload.data);

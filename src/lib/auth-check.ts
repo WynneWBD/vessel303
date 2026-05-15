@@ -26,6 +26,20 @@ export async function requireAdmin(): Promise<AdminUser | Response> {
   }
 }
 
+export async function getOptionalAdmin(): Promise<AdminUser | null> {
+  const session = await auth()
+  if (!session?.user) return null
+
+  const role = session.user.role
+  if (role !== 'admin' && role !== 'operator') return null
+
+  return {
+    id: session.user.id,
+    email: session.user.email ?? '',
+    role,
+  }
+}
+
 export async function requireSuperAdmin(): Promise<AdminUser | Response> {
   const session = await auth()
   if (!session?.user || session.user.role !== 'admin') {

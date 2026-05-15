@@ -216,9 +216,10 @@ function fieldLabel(field: string) {
 }
 
 function buildPreviewSrc(path: string, version: number) {
-  if (!version) return path
+  const params = new URLSearchParams({ visualDraft: '1' })
+  if (version) params.set('visualPreview', String(version))
   const joiner = path.includes('?') ? '&' : '?'
-  return `${path}${joiner}visualPreview=${version}`
+  return `${path}${joiner}${params.toString()}`
 }
 
 function formatSnapshotTime(value: string) {
@@ -302,6 +303,10 @@ export default function PageVisualEditorClient({
   const [previewVersion, setPreviewVersion] = useState(0)
   const [saving, setSaving] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false)
+  const [publishing, setPublishing] = useState(false)
+  const [discardDraftConfirmOpen, setDiscardDraftConfirmOpen] = useState(false)
+  const [discardingDraft, setDiscardingDraft] = useState(false)
   const [deleteItemId, setDeleteItemId] = useState<string | null>(null)
   const [snapshots, setSnapshots] = useState<PageModuleSnapshotRow[]>([])
   const [snapshotsLoading, setSnapshotsLoading] = useState(false)
@@ -318,6 +323,9 @@ export default function PageVisualEditorClient({
   const activePageKey = active?.page_key ?? ''
   const activeModuleKey = active?.module_key ?? ''
   const activeItems = useMemo(() => (active ? sortedItems(active.items) : []), [active])
+  const activeHasSavedDraft = active?.has_draft === true
+  const activeDraftUpdatedAt = active?.draft_updated_at ? formatSnapshotTime(active.draft_updated_at) : null
+  const activeLiveUpdatedAt = active?.live_updated_at ? formatSnapshotTime(active.live_updated_at) : null
   const canManageRepeatedItems = active ? supportsRepeatedItems(active) : false
   const activeItemToDelete = active && deleteItemId ? active.items.find((item) => item.id === deleteItemId) : null
   const activeItemToDeleteIndex = activeItemToDelete
@@ -343,7 +351,7 @@ export default function PageVisualEditorClient({
 
   useUnsavedChangesWarning(
     hasAnyUnsavedChanges,
-    '可视化编辑器有未保存修改。离开此页会丢失这些修改，确定离开吗？',
+    '可视化编辑器有未保存的草稿修改。离开此页会丢失这些修改，确定离开吗？',
   )
 
   const updateLocatedModules = useCallback(() => {
@@ -456,7 +464,7 @@ export default function PageVisualEditorClient({
 
     patchActive({ items: [...active.items, item] })
     setSelectedField({ itemId: item.id, field: 'label_zh' })
-    toast.message('已新增项目，保存当前模块前不会影响前台')
+    toast.message('已新增项目，保存草稿和发布前不会影响前台')
   }, [active, canManageRepeatedItems, patchActive])
 
   const moveItem = useCallback((id: string, direction: -1 | 1) => {
@@ -487,7 +495,7 @@ export default function PageVisualEditorClient({
     patchActive({ items: active.items.filter((item) => item.id !== deleteItemId) })
     setSelectedField({ itemId: null, field: null })
     setDeleteItemId(null)
-    toast.message('已删除项目，保存当前模块后才会影响前台')
+    toast.message('已删除项目，保存草稿和发布后才会影响前台')
   }, [active, canManageRepeatedItems, deleteItemId, patchActive])
 
   const scrollModuleIntoView = useCallback((id: string) => {
@@ -522,7 +530,7 @@ export default function PageVisualEditorClient({
   const requestSave = () => {
     if (!active) return
     if (!activeHasUnsavedChanges) {
-      toast.message('当前模块没有未保存修改')
+      toast.message('当前模块没有未保存的草稿修改')
       return
     }
     setConfirmOpen(true)
@@ -537,14 +545,14 @@ export default function PageVisualEditorClient({
       moduleId(pageModule) === activeModuleId ? cloneModule(saved) : pageModule
     )))
     setSelectedField({ itemId: null, field: null })
-    toast.message('已撤销当前模块的未保存修改')
+    toast.message('已撤销当前模块的未保存草稿修改')
   }
 
   const saveActiveModule = async () => {
     if (!active) return
     setSaving(true)
     try {
-      const res = await fetch(`/api/admin/page-modules/${active.page_key}/${active.module_key}`, {
+      const res = await fetch(`/api/admin/page-modules/${active.page_key}/${active.module_key}/draft`, {
         method: 'PATCH',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -568,12 +576,86 @@ export default function PageVisualEditorClient({
       setConfirmOpen(false)
       setPreviewVersion(Date.now())
       setFrameLoaded(false)
-      void loadSnapshots()
-      toast.success('当前模块已保存，前台会立即使用最新内容')
+      toast.success('草稿已保存，前台不会变化。确认无误后再发布。')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '保存失败')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const requestPublish = () => {
+    if (!active) return
+    if (activeHasUnsavedChanges) {
+      toast.error('请先保存草稿，再发布到前台')
+      return
+    }
+    if (!activeHasSavedDraft) {
+      toast.message('当前模块没有已保存草稿')
+      return
+    }
+    setPublishConfirmOpen(true)
+  }
+
+  const publishActiveDraft = async () => {
+    if (!active) return
+    setPublishing(true)
+    try {
+      const res = await fetch(`/api/admin/page-modules/${active.page_key}/${active.module_key}/draft/publish`, {
+        method: 'POST',
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : '发布失败')
+
+      const published = data.data as PageModuleRow
+      const publishedId = moduleId(published)
+      setModules((prev) => prev.map((pageModule) => (
+        moduleId(pageModule) === publishedId ? cloneModule(published) : pageModule
+      )))
+      setSavedModules((prev) => prev.map((pageModule) => (
+        moduleId(pageModule) === publishedId ? cloneModule(published) : pageModule
+      )))
+      setSelectedModuleId(publishedId)
+      setPublishConfirmOpen(false)
+      setPreviewVersion(Date.now())
+      setFrameLoaded(false)
+      void loadSnapshots()
+      toast.success('草稿已发布，前台页面已更新')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '发布失败')
+    } finally {
+      setPublishing(false)
+    }
+  }
+
+  const discardSavedDraft = async () => {
+    if (!active) return
+    setDiscardingDraft(true)
+    try {
+      const res = await fetch(`/api/admin/page-modules/${active.page_key}/${active.module_key}/draft`, {
+        method: 'DELETE',
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : '丢弃草稿失败')
+
+      const live = data.data as PageModuleRow
+      const liveId = moduleId(live)
+      setModules((prev) => prev.map((pageModule) => (
+        moduleId(pageModule) === liveId ? cloneModule(live) : pageModule
+      )))
+      setSavedModules((prev) => prev.map((pageModule) => (
+        moduleId(pageModule) === liveId ? cloneModule(live) : pageModule
+      )))
+      setSelectedModuleId(liveId)
+      setSelectedField({ itemId: null, field: null })
+      setDiscardDraftConfirmOpen(false)
+      setPreviewVersion(Date.now())
+      setFrameLoaded(false)
+      toast.success('已丢弃草稿，当前模块回到线上版本')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '丢弃草稿失败')
+    } finally {
+      setDiscardingDraft(false)
     }
   }
 
@@ -583,7 +665,7 @@ export default function PageVisualEditorClient({
     setRestoringSnapshotId(restoreSnapshot.id)
     try {
       const res = await fetch(
-        `/api/admin/page-modules/${active.page_key}/${active.module_key}/snapshots/${restoreSnapshot.id}/restore`,
+        `/api/admin/page-modules/${active.page_key}/${active.module_key}/snapshots/${restoreSnapshot.id}/draft`,
         { method: 'POST' },
       )
       const data = await res.json().catch(() => ({}))
@@ -602,8 +684,7 @@ export default function PageVisualEditorClient({
       setRestoreSnapshot(null)
       setPreviewVersion(Date.now())
       setFrameLoaded(false)
-      void loadSnapshots()
-      toast.success('已恢复版本快照，前台会立即使用恢复后的内容')
+      toast.success('已恢复到草稿，前台不会变化。确认无误后再发布。')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '恢复快照失败')
     } finally {
@@ -721,7 +802,7 @@ export default function PageVisualEditorClient({
           <p className="mt-2 max-w-4xl text-sm leading-6 text-[#8A8580]">
             受控可视化编辑，只能修改已接入 page_modules 的文字、链接、图片和模块显示状态。
             支持重复型模块内的项目新增、删除、排序；不支持新增、删除、排序页面模块，也不能自由修改样式或布局。
-            保存前会自动保留上一版快照，保存或恢复后会立即影响前台页面。
+            当前编辑的是草稿预览：保存草稿不会影响前台，点击发布后才会上线；发布前会自动保留当前线上版本快照。
           </p>
         </div>
 
@@ -746,7 +827,7 @@ export default function PageVisualEditorClient({
             })}
           </div>
           <p className="text-xs text-[#8A8580]">
-            {hasAnyUnsavedChanges ? `${dirtyIds.size} 个模块有未保存修改` : '当前没有未保存修改'}
+            {hasAnyUnsavedChanges ? `${dirtyIds.size} 个模块有未保存草稿修改` : '当前没有未保存草稿修改'}
           </p>
         </div>
       </div>
@@ -801,6 +882,11 @@ export default function PageVisualEditorClient({
                           隐藏
                         </span>
                       )}
+                      {pageModule.has_draft ? (
+                        <span className="inline-flex rounded-full bg-[#E36F2C]/10 px-2 py-0.5 text-[11px] text-[#E36F2C]">
+                          有草稿
+                        </span>
+                      ) : null}
                       {dirty ? (
                         <span className="inline-flex rounded-full bg-[#E36F2C]/10 px-2 py-0.5 text-[11px] text-[#E36F2C]">
                           未保存
@@ -818,10 +904,10 @@ export default function PageVisualEditorClient({
           <div className="flex flex-col gap-2 border-b border-[#E5DED4] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-2 text-sm font-medium text-[#2C2A28]">
               <Eye size={16} className="text-[#E36F2C]" />
-              <span>{currentPage.label} 真实前台预览</span>
+              <span>{currentPage.label} 草稿预览</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-xs text-[#8A8580]">{currentPage.path}</span>
+              <span className="text-xs text-[#8A8580]">{currentPage.path} · 仅后台可见</span>
               <Button
                 type="button"
                 size="sm"
@@ -890,12 +976,53 @@ export default function PageVisualEditorClient({
               <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
+                    <p className="text-sm font-semibold text-[#2C2A28]">
+                      {activeHasSavedDraft ? '当前有已保存草稿' : '当前使用线上版本'}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-[#8A8580]">
+                      {activeHasSavedDraft
+                        ? `草稿保存时间：${activeDraftUpdatedAt ?? '未知'}。发布前不会影响前台。`
+                        : `线上版本时间：${activeLiveUpdatedAt ?? '未知'}。修改后请先保存草稿。`}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!activeHasSavedDraft || activeHasUnsavedChanges || publishing}
+                    onClick={requestPublish}
+                    title={activeHasUnsavedChanges ? '请先保存草稿' : '发布草稿到前台'}
+                  >
+                    <ArrowUpRight size={14} />
+                    {publishing ? '发布中...' : '发布草稿'}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={!activeHasSavedDraft || activeHasUnsavedChanges || discardingDraft}
+                    onClick={() => setDiscardDraftConfirmOpen(true)}
+                    title={activeHasUnsavedChanges ? '请先撤销或保存当前未保存草稿修改' : '丢弃已保存草稿'}
+                  >
+                    <RotateCcw size={14} />
+                    丢弃草稿
+                  </Button>
+                </div>
+                {activeHasUnsavedChanges ? (
+                  <p className="mt-2 text-xs text-[#E36F2C]">当前还有未保存草稿修改，先保存草稿后才能发布。</p>
+                ) : null}
+              </div>
+
+              <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
                     <div className="flex items-center gap-2 text-sm font-semibold text-[#2C2A28]">
                       <Clock3 size={15} className="text-[#E36F2C]" />
                       <span>版本快照</span>
                     </div>
                     <p className="mt-1 text-xs leading-5 text-[#8A8580]">
-                      每次保存前会自动保留上一版，最多保留最近 30 版。
+                      每次发布前会自动保留当前线上版本，最多保留最近 30 版。恢复快照会先进入草稿。
                     </p>
                   </div>
                   <Button type="button" size="sm" variant="outline" onClick={loadSnapshots} disabled={snapshotsLoading}>
@@ -930,7 +1057,7 @@ export default function PageVisualEditorClient({
                             disabled={Boolean(restoringSnapshotId)}
                             onClick={() => setRestoreSnapshot(snapshot)}
                           >
-                            恢复
+                            恢复到草稿
                           </Button>
                         </div>
                       </div>
@@ -938,7 +1065,7 @@ export default function PageVisualEditorClient({
                     })
                   ) : (
                     <p className="text-xs leading-5 text-[#8A8580]">
-                      暂无快照。第一次保存当前模块后，这里会出现保存前的上一版。
+                      暂无快照。第一次发布草稿后，这里会出现发布前的线上版本。
                     </p>
                   )}
                 </div>
@@ -959,7 +1086,7 @@ export default function PageVisualEditorClient({
               <div className="flex items-center justify-between gap-3 rounded-md border border-[#E5DED4] bg-[#FAF7F2] px-3 py-2">
                 <div>
                   <p className="text-sm font-medium text-[#2C2A28]">前台显示</p>
-                  <p className="mt-1 text-xs text-[#8A8580]">关闭后保存，前台会隐藏整个模块。</p>
+                  <p className="mt-1 text-xs text-[#8A8580]">关闭后先保存草稿，发布后前台才会隐藏整个模块。</p>
                 </div>
                 <Switch checked={active.is_visible} onCheckedChange={(checked) => patchActive({ is_visible: checked })} />
               </div>
@@ -970,7 +1097,7 @@ export default function PageVisualEditorClient({
                     <div>
                       <p className="text-sm font-semibold text-[#2C2A28]">模块内项目</p>
                       <p className="mt-1 text-xs leading-5 text-[#8A8580]">
-                        可显示/隐藏项目并调整排序。只有数据条、列表、图片墙这类重复型模块支持新增和删除项目。
+                        可显示/隐藏项目并调整排序。只有数据条、列表、图片墙这类重复型模块支持新增和删除项目；所有变化都会先保存为草稿。
                       </p>
                     </div>
                     <Button
@@ -1177,9 +1304,12 @@ export default function PageVisualEditorClient({
                 prefetch={false}
                 className="inline-flex items-center justify-center gap-2 rounded-md border border-[#E5DED4] bg-white px-4 py-2.5 text-sm font-medium text-[#2C2A28] transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
               >
-                去表单编辑器打开
+                去备用表单编辑器打开
                 <ArrowUpRight size={15} />
               </Link>
+              <p className="text-xs leading-5 text-[#8A8580]">
+                备用表单编辑器仍是直接保存线上版本，运营测试建议优先使用本页草稿发布流程。
+              </p>
             </div>
           </div>
         </aside>
@@ -1189,9 +1319,9 @@ export default function PageVisualEditorClient({
         <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-[#E5DED4] bg-[#FFFFFF]/95 px-6 py-4 shadow-[0_-8px_24px_rgba(44,42,40,0.08)] backdrop-blur">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-sm font-semibold text-[#2C2A28]">当前模块有未保存修改</p>
+              <p className="text-sm font-semibold text-[#2C2A28]">当前模块有未保存草稿修改</p>
               <p className="mt-1 text-xs text-[#8A8580]">
-                保存前会再次确认并自动保留上一版快照。确认保存后，当前模块内容会立即影响前台页面。
+                保存草稿不会影响前台页面。保存后可在右侧确认并发布，发布前会自动保留当前线上版本快照。
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -1201,7 +1331,7 @@ export default function PageVisualEditorClient({
               </Button>
               <Button type="button" disabled={saving} onClick={requestSave}>
                 <Save size={15} />
-                {saving ? '保存中...' : '保存当前模块'}
+                {saving ? '保存中...' : '保存草稿'}
               </Button>
             </div>
           </div>
@@ -1211,17 +1341,46 @@ export default function PageVisualEditorClient({
       <AdminConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title="确认保存当前模块？"
+        title="确认保存当前模块草稿？"
         description={
           <span>
-            保存前会自动保留上一版快照。保存后会立即影响前台页面。当前只会保存 <strong>{active.title_zh}</strong> 这个模块，
-            不会新增、删除或排序页面模块。
+            这次只会把 <strong>{active.title_zh}</strong> 保存为草稿，不会影响前台页面。确认无误后，还需要点击“发布草稿”才会上线。
           </span>
         }
-        confirmLabel="确认保存"
+        confirmLabel="保存草稿"
         tone="warning"
         loading={saving}
         onConfirm={saveActiveModule}
+      />
+
+      <AdminConfirmDialog
+        open={publishConfirmOpen}
+        onOpenChange={setPublishConfirmOpen}
+        title="确认发布当前模块草稿？"
+        description={
+          <span>
+            发布后 <strong>{active.title_zh}</strong> 会立即影响前台页面。系统会在发布前自动保留当前线上版本快照，方便后续恢复。
+          </span>
+        }
+        confirmLabel="确认发布"
+        tone="warning"
+        loading={publishing}
+        onConfirm={publishActiveDraft}
+      />
+
+      <AdminConfirmDialog
+        open={discardDraftConfirmOpen}
+        onOpenChange={setDiscardDraftConfirmOpen}
+        title="确认丢弃当前模块草稿？"
+        description={
+          <span>
+            将丢弃 <strong>{active.title_zh}</strong> 当前已保存草稿，并回到线上版本。这个操作不会影响前台页面。
+          </span>
+        }
+        confirmLabel="确认丢弃"
+        tone="danger"
+        loading={discardingDraft}
+        onConfirm={discardSavedDraft}
       />
 
       <AdminConfirmDialog
@@ -1232,12 +1391,12 @@ export default function PageVisualEditorClient({
         title="确认删除这个项目？"
         description={
           <span>
-            这只会先成为当前模块的未保存修改。将删除第{' '}
+            这只会先成为当前模块的未保存草稿修改。将删除第{' '}
             <strong>{activeItemToDeleteIndex >= 0 ? activeItemToDeleteIndex + 1 : '-'}</strong> 个项目，
             ID 为 <strong>{activeItemToDelete?.id ?? deleteItemId}</strong>，
             当前文字为 <strong>{activeItemToDeleteSummary?.label ?? '-'}</strong>
             {activeItemToDeleteSummary?.value ? <>，值/正文为 <strong>{activeItemToDeleteSummary.value}</strong></> : null}。
-            点击保存当前模块后才会从前台对应模块中移除。
+            保存草稿后只会进入草稿预览，发布草稿后才会从前台对应模块中移除。
           </span>
         }
         confirmLabel="确认删除"
@@ -1250,7 +1409,7 @@ export default function PageVisualEditorClient({
         onOpenChange={(open) => {
           if (!open && !restoringSnapshotId) setRestoreSnapshot(null)
         }}
-        title="确认恢复这个版本？"
+        title="确认恢复这个版本到草稿？"
         description={
           <span>
             将恢复 <strong>{restoreSnapshotSummary?.title ?? '这个快照'}</strong>，
@@ -1258,10 +1417,10 @@ export default function PageVisualEditorClient({
             {restoreSnapshotSummary?.hasImages ? '包含图片，' : '不包含图片，'}
             保存时间 <strong>{restoreSnapshotSummary?.savedAt ?? '-'}</strong>，
             操作人 <strong>{restoreSnapshotSummary?.operator ?? '-'}</strong>。
-            恢复后会立即影响前台页面。系统会在恢复前自动保存当前版本快照，方便再次回退。
+            恢复后只会覆盖当前草稿，不会立即影响前台页面。确认无误后需要再发布草稿。
           </span>
         }
-        confirmLabel="确认恢复"
+        confirmLabel="恢复到草稿"
         tone="danger"
         loading={Boolean(restoringSnapshotId)}
         onConfirm={restoreSelectedSnapshot}

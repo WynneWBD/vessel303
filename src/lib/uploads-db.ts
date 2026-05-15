@@ -24,6 +24,7 @@ export type MediaReferenceCounts = {
   products: number
   projects: number
   pages: number
+  pageDrafts: number
   pageSnapshots: number
   total: number
 }
@@ -40,6 +41,7 @@ export type MediaReferenceItems = {
   products: MediaReferenceItem[]
   projects: MediaReferenceItem[]
   pages: MediaReferenceItem[]
+  pageDrafts: MediaReferenceItem[]
   pageSnapshots: MediaReferenceItem[]
 }
 
@@ -55,6 +57,16 @@ type PageSnapshotRefRow = {
   title_en: string | null
   created_at: string
   created_by_email: string | null
+}
+
+type PageDraftRefRow = {
+  id: string
+  page_key: string
+  module_key: string
+  title_zh: string | null
+  title_en: string | null
+  updated_at: string
+  updated_by_email: string | null
 }
 
 const MEDIA_REFERENCE_DETAIL_LIMIT = 10
@@ -251,9 +263,43 @@ async function listPageModuleSnapshotReferences(url: string): Promise<PageSnapsh
   return res.rows
 }
 
+async function countPageModuleDraftReferences(url: string): Promise<number> {
+  if (!(await tableExists('public.page_module_drafts'))) return 0
+
+  return countRows(
+    `SELECT COUNT(*)::text AS count
+     FROM page_module_drafts
+     WHERE strpos(COALESCE(items::text, ''), $1) > 0`,
+    [url],
+  )
+}
+
+async function listPageModuleDraftReferences(url: string): Promise<PageDraftRefRow[]> {
+  if (!(await tableExists('public.page_module_drafts'))) return []
+
+  const res = await pool.query<PageDraftRefRow>(
+    `SELECT
+       d.id,
+       d.page_key,
+       d.module_key,
+       d.title_zh,
+       d.title_en,
+       d.updated_at::text AS updated_at,
+       u.email AS updated_by_email
+     FROM page_module_drafts d
+     LEFT JOIN users u ON u.id = d.updated_by
+     WHERE strpos(COALESCE(d.items::text, ''), $1) > 0
+     ORDER BY d.updated_at DESC
+     LIMIT $2`,
+    [url, MEDIA_REFERENCE_DETAIL_LIMIT],
+  )
+
+  return res.rows
+}
+
 export async function countMediaReferences(url: string): Promise<MediaReferenceCounts> {
   const jsonArray = JSON.stringify([url])
-  const [news, products, projects, pages, pageSnapshots] = await Promise.all([
+  const [news, products, projects, pages, pageDrafts, pageSnapshots] = await Promise.all([
     countNewsReferencingImage(url),
     countRows(
       `SELECT COUNT(*)::text AS count
@@ -282,6 +328,7 @@ export async function countMediaReferences(url: string): Promise<MediaReferenceC
        WHERE strpos(COALESCE(items::text, ''), $1) > 0`,
       [url],
     ),
+    countPageModuleDraftReferences(url),
     countPageModuleSnapshotReferences(url),
   ])
 
@@ -290,8 +337,9 @@ export async function countMediaReferences(url: string): Promise<MediaReferenceC
     products,
     projects,
     pages,
+    pageDrafts,
     pageSnapshots,
-    total: news + products + projects + pages + pageSnapshots,
+    total: news + products + projects + pages + pageDrafts + pageSnapshots,
   }
 }
 
@@ -333,7 +381,7 @@ export async function getMediaReferenceDetails(url: string): Promise<MediaRefere
     title_en: string | null
   }
 
-  const [counts, newsRes, productsRes, projectsRes, pagesRes, pageSnapshotsRes] = await Promise.all([
+  const [counts, newsRes, productsRes, projectsRes, pagesRes, pageDraftsRes, pageSnapshotsRes] = await Promise.all([
     countMediaReferences(url),
     pool.query<NewsRefRow>(
       `SELECT id::text AS id, slug, title_zh, title_en,
@@ -389,6 +437,7 @@ export async function getMediaReferenceDetails(url: string): Promise<MediaRefere
         LIMIT $2`,
       [url, MEDIA_REFERENCE_DETAIL_LIMIT],
     ),
+    listPageModuleDraftReferences(url),
     listPageModuleSnapshotReferences(url),
   ])
 
@@ -429,6 +478,16 @@ export async function getMediaReferenceDetails(url: string): Promise<MediaRefere
         title: firstText(row.title_zh, row.title_en, `${row.page_key}:${row.module_key}`),
         href: `/admin/pages?module=${encodeURIComponent(`${row.page_key}:${row.module_key}`)}`,
         fields: ['页面模块图片'],
+      })),
+      pageDrafts: pageDraftsRes.map((row) => ({
+        id: row.id,
+        title: firstText(row.title_zh, row.title_en, `${row.page_key}:${row.module_key}`),
+        href: '/admin/pages/visual',
+        fields: [
+          '页面草稿引用',
+          `${row.page_key}:${row.module_key}`,
+          row.updated_by_email ? `操作人 ${row.updated_by_email}` : '操作人 未知',
+        ],
       })),
       pageSnapshots: pageSnapshotsRes.map((row) => ({
         id: row.id,

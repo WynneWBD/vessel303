@@ -79,10 +79,15 @@ function useAboutModule(moduleKey: string) {
 
   useEffect(() => {
     let cancelled = false;
+    const sp = new URLSearchParams({ module: moduleKey });
+    const currentParams = new URLSearchParams(window.location.search);
+    const previewVersion = currentParams.get('visualPreview');
+    if (currentParams.get('visualDraft') === '1') sp.set('draft', '1');
+    if (previewVersion) sp.set('visualPreview', previewVersion);
 
     async function loadModule() {
       try {
-        const res = await fetch(`/api/page-modules/about?module=${moduleKey}`, { cache: 'no-store' });
+        const res = await fetch(`/api/page-modules/about?${sp.toString()}`, { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
         if (!cancelled) setPageModule(data?.data ?? null);
