@@ -378,11 +378,13 @@ export default function AboutPage() {
     ? []
     : statsModule
     ? statsItems.map((item, index) => ({
+        id: item.id ?? `about-stat-${String(index + 1).padStart(2, '0')}`,
         value: localValue(item, zh, STATS[index]?.value ?? ''),
         en: item.label_en || STATS[index]?.en || '',
         zh: item.label_zh || STATS[index]?.zh || '',
       })).filter((item) => item.value || item.en || item.zh)
-    : STATS.map((item) => ({
+    : STATS.map((item, index) => ({
+        id: `about-stat-${String(index + 1).padStart(2, '0')}`,
         value: zh && item.valueZh ? item.valueZh : item.value,
         en: item.en,
         zh: item.zh,
@@ -406,23 +408,31 @@ export default function AboutPage() {
     },
   ];
   const storyParagraphs = storyParagraphFallbacks
-    .map((item) => localContent(itemById(storyItems, item.id), zh, zh ? item.zh : item.en))
-    .filter(Boolean);
+    .map((item) => ({
+      id: item.id,
+      text: localContent(itemById(storyItems, item.id), zh, zh ? item.zh : item.en),
+    }))
+    .filter((item) => Boolean(item.text));
   const showFactory = factoryModule?.is_visible !== false;
   const factoryHeroImage = itemById(factoryItems, 'factory-image-hero')?.image_url || FACTORY_HERO;
   const factoryGridImages = ['factory-image-01', 'factory-image-02', 'factory-image-03', 'factory-image-04']
-    .map((id, index) => itemById(factoryItems, id)?.image_url || FACTORY_GRID[index])
-    .filter((src): src is string => Boolean(src));
+    .map((id, index) => ({
+      id,
+      src: itemById(factoryItems, id)?.image_url || FACTORY_GRID[index],
+    }))
+    .filter((item): item is { id: string; src: string } => Boolean(item.src));
   const showTimeline = timelineModule?.is_visible !== false;
   const timelineEntries = timelineModule
     ? timelineItems
         .filter((item) => typeof item.id === 'string' && item.id.startsWith('timeline-') && item.id !== 'timeline-kicker' && item.id !== 'timeline-heading')
         .map((item, index) => ({
+          id: item.id ?? `timeline-${TIMELINE[index]?.year ?? index + 1}`,
           year: localValue(item, zh, TIMELINE[index]?.year ?? item.label_zh ?? ''),
           text: localContent(item, zh, zh ? TIMELINE[index]?.zh ?? '' : TIMELINE[index]?.en ?? ''),
         }))
         .filter((item) => item.year || item.text)
     : TIMELINE.map((item) => ({
+        id: `timeline-${item.year}`,
         year: item.year,
         text: zh ? item.zh : item.en,
       }));
@@ -498,10 +508,12 @@ export default function AboutPage() {
     ? partnerItems
         .filter((item) => Boolean(item.image_url))
         .map((item, index) => ({
+          id: item.id ?? `partner-${String(index + 1).padStart(2, '0')}`,
           src: item.image_url as string,
           alt: localText(item, zh, `Partner ${index + 1}`),
         }))
     : PARTNERS.map((src, index) => ({
+        id: `partner-${String(index + 1).padStart(2, '0')}`,
         src,
         alt: `Partner ${index + 1}`,
       }));
@@ -576,7 +588,12 @@ export default function AboutPage() {
       <Navbar />
 
       {/* ── S1 Hero ───────────────────────────────────────────── */}
-      <section className="relative h-[90vh] min-h-[600px] flex items-end">
+      <section
+        className="relative h-[90vh] min-h-[600px] flex items-end"
+        data-page-module="about:hero"
+        data-page-key="about"
+        data-module-key="hero"
+      >
         <Image
           src={heroImage}
           alt="VESSEL® brand"
@@ -584,19 +601,31 @@ export default function AboutPage() {
           priority
           className="object-cover"
           unoptimized
+          data-page-module-item="about-hero-image"
+          data-page-module-field="image_url"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#241F1B] via-[#241F1B]/50 to-[#241F1B]/10" />
         <div className="relative z-10 max-w-6xl mx-auto px-6 pb-16 w-full">
-          <p className="text-[#E36F2C] text-xs tracking-[0.4em] uppercase font-medium mb-5">
+          <p
+            className="text-[#E36F2C] text-xs tracking-[0.4em] uppercase font-medium mb-5"
+            data-page-module-item="about-hero-eyebrow"
+            data-page-module-field={zh ? 'label_zh' : 'label_en'}
+          >
             {localText(itemById(heroItems, 'about-hero-eyebrow'), zh, `VESSEL® · ${zh ? '关于微宿' : 'About'}`)}
           </p>
           <h1
             className="text-4xl sm:text-7xl lg:text-8xl font-bold text-white leading-[1.05] tracking-tight mb-5 break-words"
             style={{ fontFamily: 'DM Sans, sans-serif' }}
+            data-page-module-item="about-hero-headline"
+            data-page-module-field={zh ? 'label_zh' : 'label_en'}
           >
             {localText(itemById(heroItems, 'about-hero-headline'), zh, zh ? '重构\n自然的栖居' : 'Reimagining\nNatural Dwelling')}
           </h1>
-          <p className="text-white/60 text-lg sm:text-xl max-w-xl leading-relaxed">
+          <p
+            className="text-white/60 text-lg sm:text-xl max-w-xl leading-relaxed"
+            data-page-module-item="about-hero-subtitle"
+            data-page-module-field={zh ? 'label_zh' : 'label_en'}
+          >
             {localText(
               itemById(heroItems, 'about-hero-subtitle'),
               zh,
@@ -613,7 +642,12 @@ export default function AboutPage() {
 
       {/* ── S2 Stats bar ─────────────────────────────────────── */}
       {aboutStats.length > 0 ? (
-        <section className="bg-[#F5F2ED] border-b border-[#E5E0DA]">
+        <section
+          className="bg-[#F5F2ED] border-b border-[#E5E0DA]"
+          data-page-module="about:stats"
+          data-page-key="about"
+          data-module-key="stats"
+        >
           <div className="max-w-6xl mx-auto px-6">
             <div className="grid grid-cols-3 lg:grid-cols-6 divide-x divide-[#E5E0DA]">
               {aboutStats.map((s, i) => (
@@ -621,10 +655,16 @@ export default function AboutPage() {
                   <div
                     className="text-2xl sm:text-3xl font-bold text-[#E36F2C] mb-1"
                     style={{ fontFamily: 'DM Sans, sans-serif' }}
+                    data-page-module-item={s.id}
+                    data-page-module-field={zh ? 'value_zh' : 'value_en'}
                   >
                     {s.value}
                   </div>
-                  <div className="text-[#8A8580] text-[11px] tracking-wider uppercase leading-tight">
+                  <div
+                    className="text-[#8A8580] text-[11px] tracking-wider uppercase leading-tight"
+                    data-page-module-item={s.id}
+                    data-page-module-field={zh ? 'label_zh' : 'label_en'}
+                  >
                     {zh ? s.zh : s.en}
                   </div>
                 </Reveal>
@@ -636,16 +676,28 @@ export default function AboutPage() {
 
       {/* ── S3 Brand story ───────────────────────────────────── */}
       {showBrandStory ? (
-      <section id="brand-story" className="bg-[#F5F2ED] py-24 px-6">
+      <section
+        id="brand-story"
+        className="bg-[#F5F2ED] py-24 px-6"
+        data-page-module="about:brand-story"
+        data-page-key="about"
+        data-module-key="brand-story"
+      >
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
           <div>
             <Reveal>
-              <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
+              <p
+                className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3"
+                data-page-module-item="story-kicker"
+                data-page-module-field={zh ? 'label_zh' : 'label_en'}
+              >
                 {localText(itemById(storyItems, 'story-kicker'), zh, zh ? '品牌介绍' : 'About VESSEL®')}
               </p>
               <h2
                 className="text-4xl sm:text-5xl font-bold text-[#241F1B] mb-8 leading-tight"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
+                data-page-module-item="story-heading"
+                data-page-module-field={zh ? 'label_zh' : 'label_en'}
               >
                 {localText(
                   itemById(storyItems, 'story-heading'),
@@ -659,15 +711,25 @@ export default function AboutPage() {
                 className="space-y-5 text-[#241F1B]/70 text-base leading-relaxed"
                 style={{ fontFamily: 'Inter, sans-serif' }}
               >
-                {storyParagraphs.map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
+                {storyParagraphs.map((paragraph) => (
+                  <p
+                    key={paragraph.id}
+                    data-page-module-item={paragraph.id}
+                    data-page-module-field={zh ? 'content_zh' : 'content_en'}
+                  >
+                    {paragraph.text}
+                  </p>
                 ))}
               </div>
             </Reveal>
           </div>
 
           <Reveal delay={80} from="right" className="relative">
-            <div className="relative aspect-[4/5] overflow-hidden">
+            <div
+              className="relative aspect-[4/5] overflow-hidden"
+              data-page-module-item="story-image"
+              data-page-module-field="image_url"
+            >
               <Image
                 src={storyImage}
                 alt="VESSEL factory aerial"
@@ -678,10 +740,19 @@ export default function AboutPage() {
             </div>
             {/* stat badge */}
             <div className="absolute -bottom-5 -left-5 bg-[#E36F2C] text-white px-6 py-4 shadow-xl">
-              <div className="text-3xl font-bold leading-none" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              <div
+                className="text-3xl font-bold leading-none"
+                style={{ fontFamily: 'DM Sans, sans-serif' }}
+                data-page-module-item="story-badge"
+                data-page-module-field={zh ? 'value_zh' : 'value_en'}
+              >
                 {localValue(storyBadge, zh, '2018')}
               </div>
-              <div className="text-xs tracking-widest opacity-80 mt-1">
+              <div
+                className="text-xs tracking-widest opacity-80 mt-1"
+                data-page-module-item="story-badge"
+                data-page-module-field={zh ? 'label_zh' : 'label_en'}
+              >
                 {localText(storyBadge, zh, zh ? '品牌创立' : 'FOUNDED')}
               </div>
             </div>
@@ -692,20 +763,35 @@ export default function AboutPage() {
 
       {/* ── S4 Factory ───────────────────────────────────────── */}
       {showFactory ? (
-      <section className="bg-[#241F1B] py-24 px-6">
+      <section
+        className="bg-[#241F1B] py-24 px-6"
+        data-page-module="about:factory"
+        data-page-key="about"
+        data-module-key="factory"
+      >
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-12">
-            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
+            <p
+              className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3"
+              data-page-module-item="factory-kicker"
+              data-page-module-field={zh ? 'label_zh' : 'label_en'}
+            >
               {localText(itemById(factoryItems, 'factory-kicker'), zh, zh ? '智造实力' : 'Manufacturing')}
             </p>
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <h2
                 className="text-4xl sm:text-5xl font-bold text-[#F5F2ED] leading-tight"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
+                data-page-module-item="factory-heading"
+                data-page-module-field={zh ? 'label_zh' : 'label_en'}
               >
                 {localText(itemById(factoryItems, 'factory-heading'), zh, zh ? '28,800㎡\n精密智造基地' : '28,800 m²\nPrecision Factory')}
               </h2>
-              <p className="text-[#8A8580] text-sm max-w-xs leading-relaxed">
+              <p
+                className="text-[#8A8580] text-sm max-w-xs leading-relaxed"
+                data-page-module-item="factory-summary"
+                data-page-module-field={zh ? 'label_zh' : 'label_en'}
+              >
                 {localText(
                   itemById(factoryItems, 'factory-summary'),
                   zh,
@@ -720,15 +806,25 @@ export default function AboutPage() {
           {/* factory grid B: full-width hero + 2-col small grid */}
           <div className="flex flex-col gap-2">
             <Reveal>
-              <div className="relative w-full rounded-sm overflow-hidden" style={{ aspectRatio: '16/9' }}>
+              <div
+                className="relative w-full rounded-sm overflow-hidden"
+                style={{ aspectRatio: '16/9' }}
+                data-page-module-item="factory-image-hero"
+                data-page-module-field="image_url"
+              >
                 <ProtectedImage src={factoryHeroImage} alt="VESSEL factory" fill className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" unoptimized />
               </div>
             </Reveal>
             <div className="grid grid-cols-2 gap-2">
-              {factoryGridImages.map((src, i) => (
-                <Reveal key={src} delay={i * 60}>
-                  <div className="relative rounded-sm overflow-hidden" style={{ aspectRatio: '4/3' }}>
-                    <ProtectedImage src={src} alt={`VESSEL factory ${i + 2}`} fill className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" unoptimized />
+              {factoryGridImages.map((item, i) => (
+                <Reveal key={item.src} delay={i * 60}>
+                  <div
+                    className="relative rounded-sm overflow-hidden"
+                    style={{ aspectRatio: '4/3' }}
+                    data-page-module-item={item.id}
+                    data-page-module-field="image_url"
+                  >
+                    <ProtectedImage src={item.src} alt={`VESSEL factory ${i + 2}`} fill className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" unoptimized />
                   </div>
                 </Reveal>
               ))}
@@ -740,15 +836,26 @@ export default function AboutPage() {
 
       {/* ── S5 Timeline ──────────────────────────────────────── */}
       {showTimeline && timelineEntries.length > 0 ? (
-      <section className="bg-[#F5F2ED] py-24 px-6">
+      <section
+        className="bg-[#F5F2ED] py-24 px-6"
+        data-page-module="about:timeline"
+        data-page-key="about"
+        data-module-key="timeline"
+      >
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-14">
-            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
+            <p
+              className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3"
+              data-page-module-item="timeline-kicker"
+              data-page-module-field={zh ? 'label_zh' : 'label_en'}
+            >
               {localText(itemById(timelineItems, 'timeline-kicker'), zh, zh ? '品牌历程' : 'Timeline')}
             </p>
             <h2
               className="text-4xl sm:text-5xl font-bold text-[#241F1B]"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
+              data-page-module-item="timeline-heading"
+              data-page-module-field={zh ? 'label_zh' : 'label_en'}
             >
               {localText(itemById(timelineItems, 'timeline-heading'), zh, zh ? '每一步，皆有印记' : 'Every milestone,\na mark made')}
             </h2>
@@ -757,11 +864,15 @@ export default function AboutPage() {
           <div className="space-y-0">
             {timelineEntries.map((item, i) => (
               <Reveal key={`${item.year}-${i}`} delay={i * 40}>
-                <div className={`grid sm:grid-cols-[120px_1fr] gap-0 border-t border-[#E5E0DA] py-7 group ${i === timelineEntries.length - 1 ? 'border-b' : ''}`}>
+                <div
+                  className={`grid sm:grid-cols-[120px_1fr] gap-0 border-t border-[#E5E0DA] py-7 group ${i === timelineEntries.length - 1 ? 'border-b' : ''}`}
+                  data-page-module-item={item.id}
+                >
                   <div className="flex items-start pt-1">
                     <span
                       className="text-3xl font-bold text-[#E36F2C] group-hover:text-[#C85A1F] transition-colors"
                       style={{ fontFamily: 'DM Sans, sans-serif' }}
+                      data-page-module-field={zh ? 'value_zh' : 'value_en'}
                     >
                       {item.year}
                     </span>
@@ -769,6 +880,7 @@ export default function AboutPage() {
                   <p
                     className="text-[#241F1B]/70 text-sm sm:text-base leading-relaxed"
                     style={{ fontFamily: 'Inter, sans-serif' }}
+                    data-page-module-field={zh ? 'content_zh' : 'content_en'}
                   >
                     {item.text}
                   </p>
@@ -782,19 +894,35 @@ export default function AboutPage() {
 
       {/* ── Technologies ─────────────────────────────────────── */}
       {showTechnologies ? (
-      <section id="technologies" className="bg-[#F5F2ED] py-20 px-6">
+      <section
+        id="technologies"
+        className="bg-[#F5F2ED] py-20 px-6"
+        data-page-module="about:technologies"
+        data-page-key="about"
+        data-module-key="technologies"
+      >
         <div className="max-w-4xl mx-auto">
           <Reveal className="mb-12">
-            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-4">
+            <p
+              className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-4"
+              data-page-module-item="tech-kicker"
+              data-page-module-field={zh ? 'label_zh' : 'label_en'}
+            >
               {localText(itemById(techModuleItems, 'tech-kicker'), zh, zh ? '核心技术体系' : 'CORE TECHNOLOGIES')}
             </p>
             <h2
               className="text-4xl sm:text-5xl font-bold text-[#241F1B] mb-4"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
+              data-page-module-item="tech-heading"
+              data-page-module-field={zh ? 'label_zh' : 'label_en'}
             >
               {localText(itemById(techModuleItems, 'tech-heading'), zh, zh ? '三大自研技术体系' : 'Three Proprietary Systems')}
             </h2>
-            <p className="text-[#8A8580] text-sm max-w-2xl leading-relaxed">
+            <p
+              className="text-[#8A8580] text-sm max-w-2xl leading-relaxed"
+              data-page-module-item="tech-summary"
+              data-page-module-field={zh ? 'label_zh' : 'label_en'}
+            >
               {localText(
                 itemById(techModuleItems, 'tech-summary'),
                 zh,
@@ -812,6 +940,7 @@ export default function AboutPage() {
                   type="button"
                   onClick={() => openTech(item.tech)}
                   className="group w-full flex items-start gap-5 py-8 border-b border-[#E5E0DA] text-left hover:bg-[#EDE8E0]/50 transition-colors duration-200 px-2"
+                  data-page-module-item={item.id}
                 >
                   <span className="shrink-0 w-2.5 h-2.5 rounded-full bg-[#E36F2C] mt-2.5" />
                   <div className="flex-1 min-w-0">
@@ -819,6 +948,7 @@ export default function AboutPage() {
                       <h3
                         className="text-xl sm:text-2xl font-bold text-[#241F1B]"
                         style={{ fontFamily: 'DM Sans, sans-serif' }}
+                        data-page-module-field={zh ? 'label_zh' : 'label_en'}
                       >
                         {zh ? item.nameZh : item.nameEn}
                       </h3>
@@ -829,6 +959,7 @@ export default function AboutPage() {
                     <p
                       className="text-[#241F1B]/60 text-sm sm:text-base leading-relaxed"
                       style={{ fontFamily: 'Inter, sans-serif' }}
+                      data-page-module-field={zh ? 'content_zh' : 'content_en'}
                     >
                       {zh ? item.descZh : item.descEn}
                     </p>
@@ -914,10 +1045,18 @@ export default function AboutPage() {
             </div>
           </Reveal>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
+            data-page-module="about:recognition-awards"
+            data-page-key="about"
+            data-module-key="recognition-awards"
+          >
             {awards.map((award, i) => (
               <Reveal key={award.id} delay={i * 30}>
-                <div className="bg-white p-3 min-h-full overflow-hidden group flex flex-col gap-3">
+                <div
+                  className="bg-white p-3 min-h-full overflow-hidden group flex flex-col gap-3"
+                  data-page-module-item={award.id}
+                >
                   <div className="relative aspect-[3/4]">
                     <Image
                       src={award.src}
@@ -925,9 +1064,13 @@ export default function AboutPage() {
                       fill
                       className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
                       unoptimized
+                      data-page-module-field="image_url"
                     />
                   </div>
-                  <p className="text-[#8A8580] text-xs leading-snug text-center min-h-[2.5rem] flex items-center justify-center">
+                  <p
+                    className="text-[#8A8580] text-xs leading-snug text-center min-h-[2.5rem] flex items-center justify-center"
+                    data-page-module-field={zh ? 'label_zh' : 'label_en'}
+                  >
                     {zh ? award.zh : award.en}
                   </p>
                 </div>
@@ -939,20 +1082,35 @@ export default function AboutPage() {
 
       {/* ── S9 Partners ──────────────────────────────────────── */}
       {showPartners && partnerImages.length > 0 ? (
-      <section className="bg-[#F5F2ED] py-24 px-6">
+      <section
+        className="bg-[#F5F2ED] py-24 px-6"
+        data-page-module="about:partners"
+        data-page-key="about"
+        data-module-key="partners"
+      >
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-12">
-            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
+            <p
+              className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3"
+              data-page-module-item="partners-kicker"
+              data-page-module-field={zh ? 'label_zh' : 'label_en'}
+            >
               {localText(itemById(partnerItems, 'partners-kicker'), zh, zh ? '战略合作伙伴' : 'Strategic Partners')}
             </p>
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <h2
                 className="text-4xl sm:text-5xl font-bold text-[#241F1B]"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
+                data-page-module-item="partners-heading"
+                data-page-module-field={zh ? 'label_zh' : 'label_en'}
               >
                 {localText(itemById(partnerItems, 'partners-heading'), zh, zh ? '与世界同行' : 'Building with\nPartners')}
               </h2>
-              <p className="text-[#8A8580] text-sm max-w-xs leading-relaxed">
+              <p
+                className="text-[#8A8580] text-sm max-w-xs leading-relaxed"
+                data-page-module-item="partners-summary"
+                data-page-module-field={zh ? 'label_zh' : 'label_en'}
+              >
                 {localText(
                   itemById(partnerItems, 'partners-summary'),
                   zh,
@@ -967,7 +1125,11 @@ export default function AboutPage() {
           <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3">
             {partnerImages.map((partner, i) => (
               <Reveal key={`${partner.src}-${i}`} delay={Math.floor(i / 6) * 60}>
-                <div className="bg-white border border-[#E5E0DA] rounded-lg p-3 aspect-square relative overflow-hidden group hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                <div
+                  className="bg-white border border-[#E5E0DA] rounded-lg p-3 aspect-square relative overflow-hidden group hover:shadow-md hover:-translate-y-1 transition-all duration-200"
+                  data-page-module-item={partner.id}
+                  data-page-module-field="image_url"
+                >
                   <Image
                     src={partner.src}
                     alt={partner.alt}
@@ -985,15 +1147,27 @@ export default function AboutPage() {
 
       {/* ── S6 Founder ───────────────────────────────────────── */}
       {showFounder ? (
-      <section id="founder" className="bg-[#241F1B] py-24 px-6">
+      <section
+        id="founder"
+        className="bg-[#241F1B] py-24 px-6"
+        data-page-module="about:founder"
+        data-page-key="about"
+        data-module-key="founder"
+      >
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-12">
-            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
+            <p
+              className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3"
+              data-page-module-item="founder-section-kicker"
+              data-page-module-field={zh ? 'label_zh' : 'label_en'}
+            >
               {localText(itemById(founderItems, 'founder-section-kicker'), zh, zh ? '团队' : 'Team')}
             </p>
             <h2
               className="text-4xl sm:text-5xl font-bold text-[#F5F2ED]"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
+              data-page-module-item="founder-section-heading"
+              data-page-module-field={zh ? 'label_zh' : 'label_en'}
             >
               {localText(itemById(founderItems, 'founder-section-heading'), zh, zh ? '100+ 人精英团队' : '100+ Expert Team')}
             </h2>
@@ -1001,7 +1175,11 @@ export default function AboutPage() {
 
           {/* Founder */}
           <Reveal delay={100} className="grid lg:grid-cols-[256px_1fr] gap-10 items-start">
-            <div className="w-64 h-64 rounded-full overflow-hidden shrink-0 mx-auto lg:mx-0 relative">
+            <div
+              className="w-64 h-64 rounded-full overflow-hidden shrink-0 mx-auto lg:mx-0 relative"
+              data-page-module-item="founder-photo"
+              data-page-module-field="image_url"
+            >
               <Image
                 src={founderPhoto}
                 alt={localText(itemById(founderItems, 'founder-name'), zh, zh ? '王帅斌' : 'Wang Shuaibin')}
@@ -1011,16 +1189,34 @@ export default function AboutPage() {
               />
             </div>
             <div className="pt-2">
-              <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
+              <p
+                className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3"
+                data-page-module-item="founder-role"
+                data-page-module-field={zh ? 'label_zh' : 'label_en'}
+              >
                 {localText(itemById(founderItems, 'founder-role'), zh, zh ? '创始人 & 首席设计师' : 'Founder & Chief Designer')}
               </p>
-              <p className="text-[#F5F2ED] text-3xl font-bold mb-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              <p
+                className="text-[#F5F2ED] text-3xl font-bold mb-2"
+                style={{ fontFamily: 'DM Sans, sans-serif' }}
+                data-page-module-item="founder-name"
+                data-page-module-field={zh ? 'label_zh' : 'label_en'}
+              >
                 {localText(itemById(founderItems, 'founder-name'), zh, zh ? '王帅斌' : 'Wang Shuaibin')}
               </p>
-              <p className="text-[#8A8580] text-sm tracking-wider mb-6">
+              <p
+                className="text-[#8A8580] text-sm tracking-wider mb-6"
+                data-page-module-item="founder-subtitle"
+                data-page-module-field={zh ? 'label_zh' : 'label_en'}
+              >
                 {localText(itemById(founderItems, 'founder-subtitle'), zh, zh ? '建筑师 · 企业家 · 先行者' : 'Architect · Entrepreneur · Visionary')}
               </p>
-              <p className="text-[#F5F2ED]/65 text-base leading-relaxed max-w-2xl mb-6" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <p
+                className="text-[#F5F2ED]/65 text-base leading-relaxed max-w-2xl mb-6"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+                data-page-module-item="founder-bio"
+                data-page-module-field={zh ? 'content_zh' : 'content_en'}
+              >
                 {localContent(
                   itemById(founderItems, 'founder-bio'),
                   zh,
@@ -1030,8 +1226,15 @@ export default function AboutPage() {
                 )}
               </p>
               <div className="flex flex-wrap gap-2">
-                {founderTags.map(tag => (
-                  <span key={tag} className="text-xs px-3 py-1.5 border border-[#3A302A] text-[#8A8580] tracking-wider">{tag}</span>
+                {founderTags.map((tag, index) => (
+                  <span
+                    key={tag}
+                    className="text-xs px-3 py-1.5 border border-[#3A302A] text-[#8A8580] tracking-wider"
+                    data-page-module-item={`founder-tag-${String(index + 1).padStart(2, '0')}`}
+                    data-page-module-field={zh ? 'label_zh' : 'label_en'}
+                  >
+                    {tag}
+                  </span>
                 ))}
               </div>
             </div>
@@ -1042,15 +1245,26 @@ export default function AboutPage() {
 
       {/* ── S7 Three Services ────────────────────────────────── */}
       {showServices ? (
-      <section className="bg-[#F5F2ED] py-24 px-6">
+      <section
+        className="bg-[#F5F2ED] py-24 px-6"
+        data-page-module="about:services"
+        data-page-key="about"
+        data-module-key="services"
+      >
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-12">
-            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
+            <p
+              className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3"
+              data-page-module-item="services-kicker"
+              data-page-module-field={zh ? 'label_zh' : 'label_en'}
+            >
               {localText(itemById(serviceModuleItems, 'services-kicker'), zh, zh ? '三大服务体系' : 'Three Service Systems')}
             </p>
             <h2
               className="text-4xl sm:text-5xl font-bold text-[#241F1B]"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
+              data-page-module-item="services-heading"
+              data-page-module-field={zh ? 'label_zh' : 'label_en'}
             >
               {localText(itemById(serviceModuleItems, 'services-heading'), zh, zh ? '从选址到运营\n全程陪跑' : 'From Site Selection\nto Full Operations')}
             </h2>
@@ -1059,12 +1273,30 @@ export default function AboutPage() {
           <div className="grid md:grid-cols-3 gap-5">
             {serviceCards.map((s, i) => (
               <Reveal key={s.n} delay={i * 80}>
-                <div className="border border-[#E5E0DA] bg-white p-8 flex flex-col gap-5 h-full hover:border-[#E36F2C]/40 hover:shadow-sm transition-all">
-                  <span className="text-4xl font-bold text-[#E36F2C]/20" style={{ fontFamily: 'DM Sans, sans-serif' }}>{s.n}</span>
-                  <h3 className="text-[#241F1B] font-bold text-lg leading-snug" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                <div
+                  className="border border-[#E5E0DA] bg-white p-8 flex flex-col gap-5 h-full hover:border-[#E36F2C]/40 hover:shadow-sm transition-all"
+                  data-page-module-item={`service-${String(i + 1).padStart(2, '0')}`}
+                >
+                  <span
+                    className="text-4xl font-bold text-[#E36F2C]/20"
+                    style={{ fontFamily: 'DM Sans, sans-serif' }}
+                    data-page-module-field={zh ? 'value_zh' : 'value_en'}
+                  >
+                    {s.n}
+                  </span>
+                  <h3
+                    className="text-[#241F1B] font-bold text-lg leading-snug"
+                    style={{ fontFamily: 'DM Sans, sans-serif' }}
+                    data-page-module-field={zh ? 'label_zh' : 'label_en'}
+                  >
                     {zh ? s.zh : s.en}
                   </h3>
-                  <p className="text-[#8A8580] text-sm leading-relaxed flex-1">{zh ? s.desc_zh : s.desc_en}</p>
+                  <p
+                    className="text-[#8A8580] text-sm leading-relaxed flex-1"
+                    data-page-module-field={zh ? 'content_zh' : 'content_en'}
+                  >
+                    {zh ? s.desc_zh : s.desc_en}
+                  </p>
                 </div>
               </Reveal>
             ))}

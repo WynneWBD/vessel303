@@ -126,7 +126,12 @@ function HeroSection() {
   }, [heroImages.length]);
 
   return (
-    <section className="relative h-screen min-h-[700px] flex items-center justify-center overflow-hidden bg-[#241F1B]">
+    <section
+      className="relative h-screen min-h-[700px] flex items-center justify-center overflow-hidden bg-[#241F1B]"
+      data-page-module="home:hero"
+      data-page-key="home"
+      data-module-key="hero"
+    >
       {/* Carousel images */}
       {heroImages.map((src, i) => (
         <Image
@@ -137,6 +142,8 @@ function HeroSection() {
           priority={i === 0}
           sizes="100vw"
           className={`object-cover transition-opacity duration-1000 ${i === activeImage ? 'opacity-100' : 'opacity-0'}`}
+          data-page-module-item={`hero-image-${String(i + 1).padStart(2, '0')}`}
+          data-page-module-field="image_url"
         />
       ))}
       <div className="absolute inset-0 bg-[#241F1B]/48" />
@@ -144,19 +151,31 @@ function HeroSection() {
       <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
         {tagline ? (
           <div className="mb-10">
-            <p className="text-base sm:text-lg tracking-[0.15em] text-white/70 font-light font-[family-name:var(--font-heading)]">
+            <p
+              className="text-base sm:text-lg tracking-[0.15em] text-white/70 font-light font-[family-name:var(--font-heading)]"
+              data-page-module-item="hero-tagline"
+              data-page-module-field={`label_${lang}`}
+            >
               {tagline}
             </p>
             <div className="w-12 h-px bg-[#E36F2C] mx-auto mt-4" />
           </div>
         ) : null}
 
-        <h1 className="text-4xl sm:text-6xl lg:text-8xl font-normal text-white mb-10 leading-[1.12] tracking-[0.08em] sm:tracking-[0.15em] break-words font-[family-name:var(--font-heading)]">
+        <h1
+          className="text-4xl sm:text-6xl lg:text-8xl font-normal text-white mb-10 leading-[1.12] tracking-[0.08em] sm:tracking-[0.15em] break-words font-[family-name:var(--font-heading)]"
+          data-page-module-item="hero-headline"
+          data-page-module-field={`label_${lang}`}
+        >
           {headline}
         </h1>
 
         {subtitle ? (
-          <p className="text-white/55 text-base sm:text-lg leading-relaxed mb-12 max-w-2xl mx-auto">
+          <p
+            className="text-white/55 text-base sm:text-lg leading-relaxed mb-12 max-w-2xl mx-auto"
+            data-page-module-item="hero-subtitle"
+            data-page-module-field={`label_${lang}`}
+          >
             {subtitle}
           </p>
         ) : null}
@@ -167,6 +186,8 @@ function HeroSection() {
               href={primaryHref}
               {...externalLinkProps(primaryHref)}
               className="bg-[#E36F2C] text-white px-10 py-4 text-sm tracking-wider hover:bg-[#C85A1F] transition-colors"
+              data-page-module-item="hero-primary-cta"
+              data-page-module-field={`label_${lang}`}
             >
               {primaryLabel}
             </Link>
@@ -176,6 +197,8 @@ function HeroSection() {
               href={secondaryHref}
               {...externalLinkProps(secondaryHref)}
               className="border border-white/30 text-white/80 px-10 py-4 text-sm tracking-wider hover:border-white/60 transition-colors"
+              data-page-module-item="hero-secondary-cta"
+              data-page-module-field={`label_${lang}`}
             >
               {secondaryLabel}
             </Link>
@@ -207,28 +230,43 @@ function CredentialsBar() {
     ? items
         .filter((item) => item.is_visible)
         .map((item, index) => ({
+          id: item.id,
           val: localizedValue(item, lang, defaultStats[index]?.val ?? ''),
           label: localizedLabel(item, lang, defaultStats[index]?.label ?? ''),
         }))
         .filter((stat) => stat.val || stat.label)
-    : defaultStats;
+    : defaultStats.map((item, index) => ({
+        id: `cred-stat-${String(index + 1).padStart(2, '0')}`,
+        ...item,
+      }));
 
   if (pageModule && !pageModule.is_visible) return null;
   if (stats.length === 0) return null;
 
   return (
-    <section className="bg-[#F5F2ED] py-14 border-y border-[#E5DED4]">
+    <section
+      className="bg-[#F5F2ED] py-14 border-y border-[#E5DED4]"
+      data-page-module="home:credentials"
+      data-page-key="home"
+      data-module-key="credentials"
+    >
       <div className="max-w-5xl mx-auto px-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-[#E5DED4] bg-white border border-[#E5DED4] shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
           {stats.map((s) => (
-            <div key={s.label} className="text-center py-6 px-4">
+            <div key={s.id} className="text-center py-6 px-4" data-page-module-item={s.id}>
               <div
                 className="text-4xl sm:text-5xl lg:text-6xl font-light text-[#E36F2C] tracking-tight mb-2"
                 style={{ fontFamily: 'var(--font-heading)', fontFeatureSettings: '"tnum"' }}
+                data-page-module-field={`value_${lang}`}
               >
                 {s.val}
               </div>
-              <div className="text-xs tracking-wider text-[#8A7D74] uppercase">{s.label}</div>
+              <div
+                className="text-xs tracking-wider text-[#8A7D74] uppercase"
+                data-page-module-field={`label_${lang}`}
+              >
+                {s.label}
+              </div>
             </div>
           ))}
         </div>
