@@ -94,6 +94,26 @@ const EDITABLE_MODULE_IDS = [
 
 const EDITABLE_MODULE_ID_SET = new Set(EDITABLE_MODULE_IDS)
 
+const OPERATING_WORKFLOW = [
+  '先选 Home 或 About，再选左侧模块；也可以直接点击预览里的高亮模块定位。',
+  '文字、链接、图片和显示状态只会先改到当前草稿，保存草稿不会影响前台。',
+  '发布前先看 Desktop / Tablet / Mobile 三种预览，再核对右侧变更摘要和发布前检查。',
+  '确认无误后再发布草稿；发布会立即影响前台，并在发布前自动保留线上版本快照。',
+]
+
+const OPERATING_GUARDRAILS = [
+  '当前只编辑已有页面模块和模块内受控字段，不支持整页模块级新增、删除、拖拽排序。',
+  '不能自由改字体、颜色、间距、布局、SEO、导航和页脚；这些仍由代码和品牌规则控制。',
+  '恢复快照只会恢复到草稿，不会直接影响前台；恢复后仍需要预览、检查并手动发布。',
+  '发现图片、链接、空内容、隐藏模块等检查提醒时，先确认业务意图，再保存或发布。',
+]
+
+const OPERATOR_CHECKLIST = [
+  '保存草稿后刷新预览，确认预览内容和右侧字段一致。',
+  '发布前确认变更摘要没有异常，尤其是图片、链接、显示/隐藏变化。',
+  '发布后回到真实前台 Home / About 核对一次。',
+]
+
 function moduleId(pageModule: Pick<PageModuleRow, 'page_key' | 'module_key'>) {
   return `${pageModule.page_key}:${pageModule.module_key}`
 }
@@ -1188,6 +1208,62 @@ export default function PageVisualEditorClient({
           )
         })}
       </div>
+
+      <section className="rounded-lg border border-[#E5DED4] bg-white p-4">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-[#2C2A28]">运营使用规范</p>
+            <p className="mt-1 text-xs leading-5 text-[#8A8580]">
+              这里是运营编辑 Home / About 的主入口。当前编辑器只做受控内容编辑和草稿发布，不做自由建站。
+            </p>
+          </div>
+          <span className="inline-flex w-fit rounded-full bg-[#E36F2C]/10 px-3 py-1 text-xs font-medium text-[#E36F2C]">
+            保存草稿不影响前台，发布后立即上线
+          </span>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-3">
+          <div className="rounded-md bg-[#FAF7F2] p-3">
+            <p className="text-xs font-semibold text-[#2C2A28]">推荐流程</p>
+            <ol className="mt-3 space-y-2 text-xs leading-5 text-[#6B625B]">
+              {OPERATING_WORKFLOW.map((item, index) => (
+                <li key={item} className="flex gap-2">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-[#E36F2C]">
+                    {index + 1}
+                  </span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <div className="rounded-md bg-[#FAF7F2] p-3">
+            <p className="text-xs font-semibold text-[#2C2A28]">安全边界</p>
+            <ul className="mt-3 space-y-2 text-xs leading-5 text-[#6B625B]">
+              {OPERATING_GUARDRAILS.map((item) => (
+                <li key={item} className="flex gap-2">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E36F2C]" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="rounded-md bg-[#FAF7F2] p-3">
+            <p className="text-xs font-semibold text-[#2C2A28]">发布前确认</p>
+            <ul className="mt-3 space-y-2 text-xs leading-5 text-[#6B625B]">
+              {OPERATOR_CHECKLIST.map((item) => (
+                <li key={item} className="flex gap-2">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-[#E36F2C]">
+                    ✓
+                  </span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
 
       <div className="grid flex-1 grid-cols-1 gap-5 xl:grid-cols-[270px_minmax(0,1fr)_420px]">
         <aside className="rounded-lg border border-[#E5DED4] bg-white">
