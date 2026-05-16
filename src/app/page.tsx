@@ -9,6 +9,12 @@ import Footer from '@/components/Footer';
 import TechDrawer from '@/components/TechDrawer';
 import { useT, useLanguage } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
+import {
+  isResolvedPageModuleVisible,
+  resolveDynamicPageModules,
+  type PageModuleRegistryEntry,
+  type ResolvedPageModule,
+} from '@/lib/page-module-rendering';
 
 type Tech = 'viie' | 'vols' | 'vipc';
 type Lang = 'zh' | 'en';
@@ -26,46 +32,77 @@ type HomeModuleItem = {
 };
 
 type HomePageModule = {
+  id?: string;
+  page_key?: string;
   module_key: string;
+  module_type?: string;
   is_visible: boolean;
-  items: HomeModuleItem[];
+  sort_order: number;
+  items?: HomeModuleItem[];
 };
 
-type HomePageModuleResponse = {
-  data: HomePageModule | null;
+type HomePageModulesResponse = {
+  data: HomePageModule[] | null;
 };
 
-function useHomePageModule(moduleKey: string) {
-  const [pageModule, setPageModule] = useState<HomePageModule | null>(null);
+const HOME_MODULE_REGISTRY = [
+  {
+    rendererKey: 'home.hero',
+    pageKey: 'home',
+    moduleKey: 'hero',
+    moduleType: 'fixed-content',
+    defaultSortOrder: 10,
+    dynamicEnabled: true,
+  },
+  {
+    rendererKey: 'home.credentials',
+    pageKey: 'home',
+    moduleKey: 'credentials',
+    moduleType: 'stats',
+    defaultSortOrder: 20,
+    dynamicEnabled: true,
+  },
+] satisfies PageModuleRegistryEntry[];
+
+function useHomePageModules() {
+  const [pageModules, setPageModules] = useState<HomePageModule[] | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    const sp = new URLSearchParams({ module: moduleKey });
+    const sp = new URLSearchParams();
     const currentParams = new URLSearchParams(window.location.search);
     const previewVersion = currentParams.get('visualPreview');
     if (currentParams.get('visualDraft') === '1') sp.set('draft', '1');
     if (previewVersion) sp.set('visualPreview', previewVersion);
+    const queryString = sp.toString();
+    const url = queryString ? `/api/page-modules/home?${queryString}` : '/api/page-modules/home';
 
-    fetch(`/api/page-modules/home?${sp.toString()}`, { signal: controller.signal })
+    fetch(url, { signal: controller.signal })
       .then((res) => (res.ok ? res.json() : null))
-      .then((payload: HomePageModuleResponse | null) => {
-        if (payload?.data) setPageModule(payload.data);
+      .then((payload: HomePageModulesResponse | null) => {
+        if (Array.isArray(payload?.data)) setPageModules(payload.data);
       })
       .catch((err) => {
         if ((err as Error).name !== 'AbortError') {
-          console.warn(`[home] page module fallback: ${moduleKey}`, err);
+          console.warn('[home] page modules fallback', err);
         }
       });
 
     return () => controller.abort();
-  }, [moduleKey]);
+  }, []);
 
-  return pageModule;
+  return pageModules;
+}
+
+function moduleItemSortOrder(item: HomeModuleItem) {
+  const sortOrder = Number(item.sort_order);
+  return Number.isFinite(sortOrder) ? sortOrder : 0;
 }
 
 function sortModuleItems(pageModule: HomePageModule | null) {
   if (!pageModule?.is_visible) return [];
-  return [...pageModule.items].sort((a, b) => a.sort_order - b.sort_order);
+  if (!Array.isArray(pageModule.items)) return [];
+  return [...pageModule.items].sort((a, b) => moduleItemSortOrder(a) - moduleItemSortOrder(b));
 }
 
 function localizedLabel(item: HomeModuleItem | undefined, lang: Lang, fallback: string) {
@@ -98,20 +135,19 @@ const HERO_IMAGES = [
   '/images/hero/homepage_banner-05.jpg',
 ];
 
-function HeroSection() {
+function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const t = useT();
   const { lang } = useLanguage();
-  const pageModule = useHomePageModule('hero');
   const [current, setCurrent] = useState(0);
   const items = useMemo(() => sortModuleItems(pageModule), [pageModule]);
   const heroImages = useMemo(() => {
     const editableImages = items
-      .filter((item) => item.id.startsWith('hero-image') && item.is_visible && item.image_url)
+      .filter((item) => typeof item.id === 'string' && item.id.startsWith('hero-image') && item.is_visible && item.image_url)
       .map((item) => item.image_url as string);
 
     return editableImages.length > 0 ? editableImages : HERO_IMAGES;
   }, [items]);
-  const findItem = (id: string) => items.find((item) => item.id === id);
+  const findItem = (id: string) => items.find((item) => typeof item.id === 'string' && item.id === id);
   const tagline = localizedLabel(findItem('hero-tagline'), lang, t(i18n.home.heroTagline));
   const headline = localizedLabel(findItem('hero-headline'), lang, t(i18n.home.heroHeadline));
   const subtitle = localizedLabel(findItem('hero-subtitle'), lang, t(i18n.home.heroSubtitle));
@@ -220,18 +256,18 @@ function HeroSection() {
 
 // ─── Credentials Bar ─────────────────────────────────────
 
-function CredentialsBar() {
+function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
   const t = useT();
   const { lang } = useLanguage();
-  const pageModule = useHomePageModule('credentials');
   const items = useMemo(() => sortModuleItems(pageModule), [pageModule]);
+  const hasEditableStats = Boolean(pageModule && Array.isArray(pageModule.items) && pageModule.items.length > 0);
   const defaultStats = [
     { val: t(i18n.home.credStat1), label: t(i18n.home.credLabel1) },
     { val: t(i18n.home.credStat2), label: t(i18n.home.credLabel2) },
     { val: t(i18n.home.credStat3), label: t(i18n.home.credLabel3) },
     { val: t(i18n.home.credStat4), label: t(i18n.home.credLabel4) },
   ];
-  const stats = pageModule
+  const stats = hasEditableStats
     ? items
         .filter((item) => item.is_visible)
         .map((item, index) => ({
@@ -278,6 +314,19 @@ function CredentialsBar() {
       </div>
     </section>
   );
+}
+
+function renderHomeDynamicModule(resolved: ResolvedPageModule<HomePageModule>) {
+  if (!isResolvedPageModuleVisible(resolved)) return null;
+
+  switch (resolved.registry.rendererKey) {
+    case 'home.hero':
+      return <HeroSection key={resolved.registry.rendererKey} pageModule={resolved.pageModule} />;
+    case 'home.credentials':
+      return <CredentialsBar key={resolved.registry.rendererKey} pageModule={resolved.pageModule} />;
+    default:
+      return null;
+  }
 }
 
 // ─── Core Tech Systems ───────────────────────────────────
@@ -759,6 +808,11 @@ export default function HomePage() {
   const { lang } = useLanguage();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeTech, setActiveTech] = useState<Tech | null>(null);
+  const pageModules = useHomePageModules();
+  const dynamicModules = useMemo(
+    () => resolveDynamicPageModules(pageModules, HOME_MODULE_REGISTRY),
+    [pageModules],
+  );
 
   const openTech = (tech: Tech) => {
     setActiveTech(tech);
@@ -768,8 +822,7 @@ export default function HomePage() {
   return (
     <main>
       <Navbar />
-      <HeroSection />
-      <CredentialsBar />
+      {dynamicModules.map(renderHomeDynamicModule)}
       <CoreTechSection onOpenTech={openTech} />
       <CertificationsSection />
       <PhilosophySection />
