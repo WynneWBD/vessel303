@@ -15,6 +15,18 @@ export type PageModuleItem = {
   sort_order: number
 }
 
+export type PageModuleLiveState = {
+  title_zh: string
+  title_en: string
+  description_zh: string
+  description_en: string
+  items: PageModuleItem[]
+  is_visible: boolean
+  sort_order: number
+  updated_at: string
+  updated_by_email: string | null
+}
+
 export type PageModuleRow = {
   id: string
   page_key: string
@@ -34,6 +46,7 @@ export type PageModuleRow = {
   draft_updated_by_email?: string | null
   live_updated_at?: string | null
   live_updated_by_email?: string | null
+  live_state?: PageModuleLiveState | null
 }
 
 export type PageModuleSnapshotRow = {
@@ -1077,6 +1090,15 @@ function pageModuleToInput(pageModule: PageModuleRow): PageModuleInput {
   }
 }
 
+function pageModuleToLiveState(pageModule: PageModuleRow): PageModuleLiveState {
+  return {
+    ...pageModuleToInput(pageModule),
+    items: pageModule.items.map((item) => ({ ...item })),
+    updated_at: pageModule.updated_at,
+    updated_by_email: pageModule.updated_by_email,
+  }
+}
+
 export function getDefaultPageModule(pageKey: string, moduleKey: string): PageModuleRow | null {
   return DEFAULT_PAGE_MODULES.find((pageModule) => pageModule.page_key === pageKey && pageModule.module_key === moduleKey) ?? null
 }
@@ -1352,6 +1374,7 @@ export async function listPageModulesForVisualEditor(pageKey?: string): Promise<
           draft_updated_by_email: null,
           live_updated_at: live.updated_at,
           live_updated_by_email: live.updated_by_email,
+          live_state: pageModuleToLiveState(live),
         }
       }
 
@@ -1360,6 +1383,7 @@ export async function listPageModulesForVisualEditor(pageKey?: string): Promise<
         has_draft: true,
         live_updated_at: live.updated_at,
         live_updated_by_email: live.updated_by_email,
+        live_state: pageModuleToLiveState(live),
       }
     })
     .sort((a, b) => a.page_key.localeCompare(b.page_key) || a.sort_order - b.sort_order)
@@ -1442,6 +1466,7 @@ export async function savePageModuleDraft(
     ...draft,
     live_updated_at: live?.updated_at ?? null,
     live_updated_by_email: live?.updated_by_email ?? null,
+    live_state: live ? pageModuleToLiveState(live) : null,
   }
 }
 
@@ -1698,6 +1723,7 @@ export async function publishPageModuleDraft(
     draft_updated_by_email: null,
     live_updated_at: published.updated_at,
     live_updated_by_email: published.updated_by_email,
+    live_state: pageModuleToLiveState(published),
   }
 }
 

@@ -12,11 +12,14 @@ import {
   ImageIcon,
   Link2,
   LocateFixed,
+  Monitor,
   MousePointer2,
   Plus,
   RefreshCcw,
   RotateCcw,
   Save,
+  Smartphone,
+  Tablet,
   Trash2,
   Type,
 } from 'lucide-react'
@@ -27,7 +30,7 @@ import { Textarea } from '@/components/ui/textarea'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import PageModuleImagePicker from '@/components/admin/PageModuleImagePicker'
 import { useUnsavedChangesWarning } from '@/components/admin/useUnsavedChangesWarning'
-import type { PageModuleItem, PageModuleRow, PageModuleSnapshotRow } from '@/lib/page-modules-db'
+import type { PageModuleItem, PageModuleLiveState, PageModuleRow, PageModuleSnapshotRow } from '@/lib/page-modules-db'
 
 type PageKey = 'home' | 'about'
 
@@ -49,9 +52,24 @@ type FieldSelection = {
   field: string | null
 }
 
+type PreviewDeviceKey = 'desktop' | 'tablet' | 'mobile'
+
+type PreviewDevice = {
+  key: PreviewDeviceKey
+  label: string
+  width: number | null
+  icon: typeof Monitor
+}
+
 const PAGES: PageMeta[] = [
   { key: 'home', label: 'Home', path: '/' },
   { key: 'about', label: 'About', path: '/about' },
+]
+
+const PREVIEW_DEVICES: PreviewDevice[] = [
+  { key: 'desktop', label: 'Desktop', width: null, icon: Monitor },
+  { key: 'tablet', label: 'Tablet', width: 768, icon: Tablet },
+  { key: 'mobile', label: 'Mobile', width: 390, icon: Smartphone },
 ]
 
 const PAGE_LABELS = {
@@ -116,10 +134,38 @@ function cloneModule(pageModule: PageModuleRow): PageModuleRow {
   return {
     ...pageModule,
     items: pageModule.items.map((item) => ({ ...item })),
+    live_state: pageModule.live_state
+      ? {
+          ...pageModule.live_state,
+          items: pageModule.live_state.items.map((item) => ({ ...item })),
+        }
+      : pageModule.live_state,
   }
 }
 
-function comparableModule(pageModule: PageModuleRow) {
+function pageModuleAsLiveState(pageModule: PageModuleRow): PageModuleLiveState {
+  return {
+    title_zh: pageModule.title_zh,
+    title_en: pageModule.title_en,
+    description_zh: pageModule.description_zh,
+    description_en: pageModule.description_en,
+    items: pageModule.items.map((item) => ({ ...item })),
+    is_visible: pageModule.is_visible,
+    sort_order: pageModule.sort_order,
+    updated_at: pageModule.updated_at,
+    updated_by_email: pageModule.updated_by_email,
+  }
+}
+
+function withLiveState(pageModule: PageModuleRow): PageModuleRow {
+  if (pageModule.live_state) return pageModule
+  return {
+    ...pageModule,
+    live_state: pageModuleAsLiveState(pageModule),
+  }
+}
+
+function comparableModule(pageModule: PageModuleRow | PageModuleLiveState) {
   return {
     title_zh: pageModule.title_zh,
     title_en: pageModule.title_en,
@@ -282,6 +328,225 @@ function itemSummary(item: PageModuleItem) {
   }
 }
 
+type ModuleChange = {
+  label: string
+  detail: string
+  severity: 'high' | 'medium' | 'low'
+}
+
+type PreflightIssue = {
+  label: string
+  detail: string
+  severity: 'warning' | 'danger'
+}
+
+function readableModuleTitle(pageModule: PageModuleRow | PageModuleLiveState | PageModuleSnapshotRow) {
+  return truncateText(
+    pageModule.title_zh.trim() ||
+      pageModule.title_en.trim() ||
+      firstReadableItemText(pageModule.items) ||
+      '未命名模块',
+    72,
+  )
+}
+
+function readableItemTitle(item: PageModuleItem) {
+  return truncateText(item.label_zh || item.label_en || item.value_zh || item.value_en || item.id, 48)
+}
+
+function readableValue(value: string | undefined) {
+  const normalized = value?.replace(/\s+/g, ' ').trim()
+  return normalized ? truncateText(normalized, 48) : '空'
+}
+
+function buildModuleChanges(current: PageModuleRow, baseline?: PageModuleLiveState | PageModuleRow | null): ModuleChange[] {
+  if (!baseline) return []
+
+  const changes: ModuleChange[] = []
+  const currentComparable = comparableModule(current)
+  const baselineComparable = comparableModule(baseline)
+
+  if (currentComparable.is_visible !== baselineComparable.is_visible) {
+    changes.push({
+      label: '模块显示状态',
+      detail: currentComparable.is_visible ? '从隐藏改为显示' : '从显示改为隐藏',
+      severity: 'high',
+    })
+  }
+
+  const moduleFields: Array<keyof Pick<PageModuleLiveState, 'title_zh' | 'title_en' | 'description_zh' | 'description_en'>> = [
+    'title_zh',
+    'title_en',
+    'description_zh',
+    'description_en',
+  ]
+  for (const field of moduleFields) {
+    if (currentComparable[field] !== baselineComparable[field]) {
+      changes.push({
+        label: fieldLabel(field),
+        detail: `${readableValue(baselineComparable[field])} -> ${readableValue(currentComparable[field])}`,
+        severity: 'medium',
+      })
+    }
+  }
+
+  const currentItems = new Map(currentComparable.items.map((item) => [item.id, item]))
+  const baselineItems = new Map(baselineComparable.items.map((item) => [item.id, item]))
+  for (const item of currentComparable.items) {
+    const before = baselineItems.get(item.id)
+    if (!before) {
+      changes.push({
+        label: `新增条目：${readableItemTitle(item)}`,
+        detail: `item ID：${item.id}`,
+        severity: 'high',
+      })
+      continue
+    }
+
+    if (item.is_visible !== before.is_visible) {
+      changes.push({
+        label: `条目显示状态：${readableItemTitle(item)}`,
+        detail: item.is_visible ? '从隐藏改为显示' : '从显示改为隐藏',
+        severity: 'medium',
+      })
+    }
+
+    if (item.sort_order !== before.sort_order) {
+      changes.push({
+        label: `条目位置：${readableItemTitle(item)}`,
+        detail: `从 ${before.sort_order} 调整到 ${item.sort_order}`,
+        severity: 'medium',
+      })
+    }
+
+    const itemFields = [
+      'label_zh',
+      'label_en',
+      'value_zh',
+      'value_en',
+      'content_zh',
+      'content_en',
+      'image_url',
+      'href',
+    ] as const
+    for (const field of itemFields) {
+      if ((item[field] ?? '') !== (before[field] ?? '')) {
+        changes.push({
+          label: `${readableItemTitle(item)} / ${fieldLabel(field)}`,
+          detail: `${readableValue(before[field])} -> ${readableValue(item[field])}`,
+          severity: field === 'image_url' || field === 'href' ? 'high' : 'low',
+        })
+      }
+    }
+  }
+
+  for (const item of baselineComparable.items) {
+    if (!currentItems.has(item.id)) {
+      changes.push({
+        label: `删除条目：${readableItemTitle(item)}`,
+        detail: `item ID：${item.id}`,
+        severity: 'high',
+      })
+    }
+  }
+
+  return changes
+}
+
+function isAllowedHref(value: string) {
+  const href = value.trim()
+  return (
+    href.startsWith('/') ||
+    href.startsWith('#') ||
+    href.startsWith('http://') ||
+    href.startsWith('https://') ||
+    href.startsWith('mailto:') ||
+    href.startsWith('tel:')
+  )
+}
+
+function buildPreflightIssues(pageModule: PageModuleRow | undefined): PreflightIssue[] {
+  if (!pageModule) return []
+
+  const issues: PreflightIssue[] = []
+  const visibleItems = sortedItems(pageModule.items).filter((item) => item.is_visible)
+
+  if (!pageModule.is_visible) {
+    issues.push({
+      label: '模块已隐藏',
+      detail: '发布后前台不会显示这个模块。',
+      severity: 'warning',
+    })
+  }
+
+  if (!pageModule.title_zh.trim() && !pageModule.title_en.trim()) {
+    issues.push({
+      label: '模块标题为空',
+      detail: '运营后续识别版本和恢复快照会更困难。',
+      severity: 'warning',
+    })
+  }
+
+  if (pageModule.items.length === 0) {
+    issues.push({
+      label: '模块没有内容条目',
+      detail: '发布后该模块可能为空。',
+      severity: 'danger',
+    })
+  } else if (visibleItems.length === 0) {
+    issues.push({
+      label: '所有条目都已隐藏',
+      detail: '发布后该模块可能没有可见内容。',
+      severity: 'danger',
+    })
+  }
+
+  for (const item of visibleItems) {
+    const hasReadableText = Boolean(
+      item.label_zh?.trim() ||
+        item.label_en?.trim() ||
+        item.value_zh?.trim() ||
+        item.value_en?.trim() ||
+        item.content_zh?.trim() ||
+        item.content_en?.trim(),
+    )
+
+    if (!hasReadableText && !item.image_url?.trim()) {
+      issues.push({
+        label: `空条目：${item.id}`,
+        detail: '这个条目没有文字，也没有图片。',
+        severity: 'warning',
+      })
+    }
+
+    if (isImageItem(pageModule, item) && !item.image_url?.trim()) {
+      issues.push({
+        label: `图片为空：${readableItemTitle(item)}`,
+        detail: `item ID：${item.id}`,
+        severity: 'danger',
+      })
+    }
+
+    if (isLinkItem(item)) {
+      if (!item.href?.trim()) {
+        issues.push({
+          label: `链接为空：${readableItemTitle(item)}`,
+          detail: `item ID：${item.id}`,
+          severity: 'danger',
+        })
+      } else if (!isAllowedHref(item.href)) {
+        issues.push({
+          label: `链接格式异常：${readableItemTitle(item)}`,
+          detail: item.href,
+          severity: 'warning',
+        })
+      }
+    }
+  }
+
+  return issues
+}
+
 export default function PageVisualEditorClient({
   initialModules,
   maxUploadMb = 20,
@@ -301,6 +566,7 @@ export default function PageVisualEditorClient({
   const [frameLoaded, setFrameLoaded] = useState(false)
   const [frameVersion, setFrameVersion] = useState(0)
   const [previewVersion, setPreviewVersion] = useState(0)
+  const [previewDevice, setPreviewDevice] = useState<PreviewDeviceKey>('desktop')
   const [saving, setSaving] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false)
@@ -336,6 +602,7 @@ export default function PageVisualEditorClient({
   const selectedLocated = active ? locatedModules[activeModuleId] === true : false
   const formEditorHref = active ? `/admin/pages?module=${activeModuleId}` : '/admin/pages'
   const previewSrc = useMemo(() => buildPreviewSrc(currentPage.path, previewVersion), [currentPage.path, previewVersion])
+  const currentPreviewDevice = PREVIEW_DEVICES.find((device) => device.key === previewDevice) ?? PREVIEW_DEVICES[0]
 
   const dirtyIds = useMemo(() => {
     const savedById = new Map(savedModules.map((pageModule) => [moduleId(pageModule), pageModule]))
@@ -348,6 +615,40 @@ export default function PageVisualEditorClient({
 
   const activeHasUnsavedChanges = active ? dirtyIds.has(activeModuleId) : false
   const hasAnyUnsavedChanges = dirtyIds.size > 0
+  const pageStats = useMemo(
+    () =>
+      PAGES.map((page) => {
+        const pageModules = modules.filter((pageModule) => pageModule.page_key === page.key)
+        const draftCount = pageModules.filter((pageModule) => pageModule.has_draft).length
+        const hiddenCount = pageModules.filter((pageModule) => !pageModule.is_visible).length
+        const unsavedCount = pageModules.filter((pageModule) => dirtyIds.has(moduleId(pageModule))).length
+        const issueCount = pageModules.reduce((total, pageModule) => total + buildPreflightIssues(pageModule).length, 0)
+
+        return {
+          ...page,
+          moduleCount: pageModules.length,
+          draftCount,
+          hiddenCount,
+          unsavedCount,
+          issueCount,
+        }
+      }),
+    [dirtyIds, modules],
+  )
+  const activeLiveState = active?.live_state ?? null
+  const activeDraftChanges = useMemo(
+    () => (active ? buildModuleChanges(active, activeLiveState) : []),
+    [active, activeLiveState],
+  )
+  const activeSavedModule = useMemo(
+    () => savedModules.find((pageModule) => moduleId(pageModule) === activeModuleId),
+    [activeModuleId, savedModules],
+  )
+  const activeUnsavedChanges = useMemo(
+    () => (active && activeSavedModule ? buildModuleChanges(active, activeSavedModule) : []),
+    [active, activeSavedModule],
+  )
+  const activePreflightIssues = useMemo(() => buildPreflightIssues(active), [active])
 
   useUnsavedChangesWarning(
     hasAnyUnsavedChanges,
@@ -594,6 +895,9 @@ export default function PageVisualEditorClient({
       toast.message('当前模块没有已保存草稿')
       return
     }
+    if (activePreflightIssues.length > 0) {
+      toast.warning(`发布前检查发现 ${activePreflightIssues.length} 项提醒，请在确认弹窗中复核`)
+    }
     setPublishConfirmOpen(true)
   }
 
@@ -638,7 +942,7 @@ export default function PageVisualEditorClient({
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : '丢弃草稿失败')
 
-      const live = data.data as PageModuleRow
+      const live = withLiveState(data.data as PageModuleRow)
       const liveId = moduleId(live)
       setModules((prev) => prev.map((pageModule) => (
         moduleId(pageModule) === liveId ? cloneModule(live) : pageModule
@@ -764,6 +1068,13 @@ export default function PageVisualEditorClient({
   }, [frameLoaded, refreshFrameState, selectedModuleId])
 
   useEffect(() => {
+    if (!frameLoaded) return
+
+    const timer = window.setTimeout(refreshFrameState, 120)
+    return () => window.clearTimeout(timer)
+  }, [frameLoaded, previewDevice, refreshFrameState])
+
+  useEffect(() => {
     if (!activeModuleId || !selectedField.itemId || !selectedField.field) return
 
     const node = fieldRefs.current[editorFieldKey(activeModuleId, selectedField.itemId, selectedField.field)]
@@ -830,6 +1141,52 @@ export default function PageVisualEditorClient({
             {hasAnyUnsavedChanges ? `${dirtyIds.size} 个模块有未保存草稿修改` : '当前没有未保存草稿修改'}
           </p>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        {pageStats.map((page) => {
+          const isActive = page.key === selectedPage
+          return (
+            <button
+              key={page.key}
+              type="button"
+              onClick={() => handleSelectPage(page.key)}
+              className="rounded-lg border bg-white p-4 text-left transition-colors"
+              style={{
+                borderColor: isActive ? '#E36F2C' : '#E5DED4',
+                boxShadow: isActive ? '0 0 0 3px rgba(227,111,44,0.10)' : 'none',
+              }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-[#2C2A28]">{page.label} 页面总览</p>
+                  <p className="mt-1 text-xs text-[#8A8580]">{page.path}</p>
+                </div>
+                <span className="rounded-full bg-[#F5F2ED] px-2 py-1 text-xs text-[#6B625B]">
+                  {page.moduleCount} 个模块
+                </span>
+              </div>
+              <div className="mt-4 grid grid-cols-4 gap-2 text-center">
+                <div className="rounded-md bg-[#F8F6F2] px-2 py-2">
+                  <p className="text-base font-semibold text-[#2C2A28]">{page.draftCount}</p>
+                  <p className="mt-1 text-[11px] text-[#8A8580]">草稿</p>
+                </div>
+                <div className="rounded-md bg-[#F8F6F2] px-2 py-2">
+                  <p className="text-base font-semibold text-[#2C2A28]">{page.unsavedCount}</p>
+                  <p className="mt-1 text-[11px] text-[#8A8580]">未保存</p>
+                </div>
+                <div className="rounded-md bg-[#F8F6F2] px-2 py-2">
+                  <p className="text-base font-semibold text-[#2C2A28]">{page.issueCount}</p>
+                  <p className="mt-1 text-[11px] text-[#8A8580]">检查项</p>
+                </div>
+                <div className="rounded-md bg-[#F8F6F2] px-2 py-2">
+                  <p className="text-base font-semibold text-[#2C2A28]">{page.hiddenCount}</p>
+                  <p className="mt-1 text-[11px] text-[#8A8580]">隐藏</p>
+                </div>
+              </div>
+            </button>
+          )
+        })}
       </div>
 
       <div className="grid flex-1 grid-cols-1 gap-5 xl:grid-cols-[270px_minmax(0,1fr)_420px]">
@@ -906,8 +1263,34 @@ export default function PageVisualEditorClient({
               <Eye size={16} className="text-[#E36F2C]" />
               <span>{currentPage.label} 草稿预览</span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center justify-end gap-3">
               <span className="text-xs text-[#8A8580]">{currentPage.path} · 仅后台可见</span>
+              <div className="flex rounded-md border border-[#E5DED4] bg-[#F8F6F2] p-1">
+                {PREVIEW_DEVICES.map((device) => {
+                  const Icon = device.icon
+                  const selected = device.key === previewDevice
+                  return (
+                    <button
+                      key={device.key}
+                      type="button"
+                      onClick={() => {
+                        setPreviewDevice(device.key)
+                        window.setTimeout(refreshFrameState, 120)
+                      }}
+                      className="inline-flex h-8 items-center gap-1 rounded px-2 text-xs font-medium transition-colors"
+                      style={{
+                        background: selected ? '#FFFFFF' : 'transparent',
+                        color: selected ? '#2C2A28' : '#8A8580',
+                        boxShadow: selected ? '0 1px 2px rgba(36,31,27,0.10)' : 'none',
+                      }}
+                      aria-pressed={selected}
+                    >
+                      <Icon size={14} />
+                      {device.label}
+                    </button>
+                  )
+                })}
+              </div>
               <Button
                 type="button"
                 size="sm"
@@ -923,27 +1306,35 @@ export default function PageVisualEditorClient({
             </div>
           </div>
 
-          <div className="relative h-[720px] overflow-hidden bg-[#241F1B]">
-            <iframe
-              key={`${selectedPage}-${previewVersion}`}
-              ref={iframeRef}
-              src={previewSrc}
-              title={`${currentPage.label} page visual editor preview`}
-              className="h-full w-full border-0 bg-white"
-              onLoad={handleFrameLoad}
-            />
-            <div className="pointer-events-none absolute inset-0">
-              {highlightRect ? (
-                <div
-                  className="absolute rounded-sm border-2 border-[#E36F2C] bg-[#E36F2C]/10 shadow-[0_0_0_9999px_rgba(36,31,27,0.08)] transition-all duration-150"
-                  style={{
-                    top: highlightRect.top,
-                    left: highlightRect.left,
-                    width: highlightRect.width,
-                    height: highlightRect.height,
-                  }}
-                />
-              ) : null}
+          <div className="h-[720px] overflow-auto bg-[#241F1B] p-4">
+            <div
+              className="relative mx-auto h-full min-w-0 overflow-hidden bg-white"
+              style={{
+                width: currentPreviewDevice.width ? `${currentPreviewDevice.width}px` : '100%',
+                maxWidth: '100%',
+              }}
+            >
+              <iframe
+                key={`${selectedPage}-${previewVersion}-${previewDevice}`}
+                ref={iframeRef}
+                src={previewSrc}
+                title={`${currentPage.label} page visual editor preview`}
+                className="h-full w-full border-0 bg-white"
+                onLoad={handleFrameLoad}
+              />
+              <div className="pointer-events-none absolute inset-0">
+                {highlightRect ? (
+                  <div
+                    className="absolute rounded-sm border-2 border-[#E36F2C] bg-[#E36F2C]/10 shadow-[0_0_0_9999px_rgba(36,31,27,0.08)] transition-all duration-150"
+                    style={{
+                      top: highlightRect.top,
+                      left: highlightRect.left,
+                      width: highlightRect.width,
+                      height: highlightRect.height,
+                    }}
+                  />
+                ) : null}
+              </div>
             </div>
           </div>
         </main>
@@ -958,7 +1349,7 @@ export default function PageVisualEditorClient({
             <div className="flex flex-col gap-4">
               <div>
                 <p className="text-xs text-[#8A8580]">{pageLabel(active.page_key)} / {active.module_key}</p>
-                <h2 className="mt-1 text-lg font-semibold text-[#2C2A28]">{active.title_zh}</h2>
+                <h2 className="mt-1 text-lg font-semibold text-[#2C2A28]">{readableModuleTitle(active)}</h2>
                 <p className="mt-2 text-sm leading-6 text-[#8A8580]">{active.description_zh}</p>
               </div>
 
@@ -1013,6 +1404,96 @@ export default function PageVisualEditorClient({
                   <p className="mt-2 text-xs text-[#E36F2C]">当前还有未保存草稿修改，先保存草稿后才能发布。</p>
                 ) : null}
               </div>
+
+              <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-[#2C2A28]">发布前检查</p>
+                    <p className="mt-1 text-xs leading-5 text-[#8A8580]">
+                      发布前用于提醒隐藏、空内容、缺图片、缺链接等明显风险，不会自动修改内容。
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-white px-2 py-1 text-xs text-[#6B625B]">
+                    {activePreflightIssues.length} 项
+                  </span>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {activePreflightIssues.length > 0 ? (
+                    activePreflightIssues.slice(0, 6).map((issue, index) => (
+                      <div
+                        key={`${issue.label}-${index}`}
+                        className="rounded-md border border-[#E5DED4] bg-white px-2 py-2 text-xs"
+                      >
+                        <p className={issue.severity === 'danger' ? 'font-medium text-[#B54318]' : 'font-medium text-[#2C2A28]'}>
+                          {issue.label}
+                        </p>
+                        <p className="mt-1 text-[#8A8580]">{issue.detail}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-[#6B625B]">未发现明显发布风险。</p>
+                  )}
+                  {activePreflightIssues.length > 6 ? (
+                    <p className="text-xs text-[#8A8580]">还有 {activePreflightIssues.length - 6} 项未展示。</p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-[#2C2A28]">草稿相对线上变更</p>
+                    <p className="mt-1 text-xs leading-5 text-[#8A8580]">
+                      帮运营确认当前草稿会把线上版本改成什么。未保存修改会单独提示。
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-white px-2 py-1 text-xs text-[#6B625B]">
+                    {activeDraftChanges.length} 项
+                  </span>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {activeDraftChanges.length > 0 ? (
+                    activeDraftChanges.slice(0, 8).map((change, index) => (
+                      <div
+                        key={`${change.label}-${index}`}
+                        className="rounded-md border border-[#E5DED4] bg-white px-2 py-2 text-xs"
+                      >
+                        <p className={change.severity === 'high' ? 'font-medium text-[#B54318]' : 'font-medium text-[#2C2A28]'}>
+                          {change.label}
+                        </p>
+                        <p className="mt-1 break-words text-[#8A8580]">{change.detail}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-[#6B625B]">
+                      当前模块和线上版本没有可识别差异。
+                    </p>
+                  )}
+                  {activeDraftChanges.length > 8 ? (
+                    <p className="text-xs text-[#8A8580]">还有 {activeDraftChanges.length - 8} 项未展示。</p>
+                  ) : null}
+                </div>
+              </div>
+
+              {activeHasUnsavedChanges ? (
+                <div className="rounded-md border border-[#E36F2C]/40 bg-[#FFF8F3] p-3">
+                  <p className="text-sm font-semibold text-[#B54318]">还有未保存修改</p>
+                  <div className="mt-3 space-y-2">
+                    {activeUnsavedChanges.slice(0, 6).map((change, index) => (
+                      <div
+                        key={`${change.label}-${index}`}
+                        className="rounded-md border border-[#F1D0BD] bg-white px-2 py-2 text-xs"
+                      >
+                        <p className="font-medium text-[#2C2A28]">{change.label}</p>
+                        <p className="mt-1 break-words text-[#8A8580]">{change.detail}</p>
+                      </div>
+                    ))}
+                    {activeUnsavedChanges.length > 6 ? (
+                      <p className="text-xs text-[#8A8580]">还有 {activeUnsavedChanges.length - 6} 项未展示。</p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
 
               <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
                 <div className="flex items-start justify-between gap-3">
@@ -1358,9 +1839,41 @@ export default function PageVisualEditorClient({
         onOpenChange={setPublishConfirmOpen}
         title="确认发布当前模块草稿？"
         description={
-          <span>
-            发布后 <strong>{active.title_zh}</strong> 会立即影响前台页面。系统会在发布前自动保留当前线上版本快照，方便后续恢复。
-          </span>
+          <div className="space-y-3 text-left">
+            <p>
+              发布后 <strong>{active.title_zh}</strong> 会立即影响前台页面。系统会在发布前自动保留当前线上版本快照，方便后续恢复。
+            </p>
+            {activeDraftChanges.length > 0 ? (
+              <div>
+                <p className="font-medium text-[#2C2A28]">本次发布变更摘要：</p>
+                <ul className="mt-2 space-y-1">
+                  {activeDraftChanges.slice(0, 6).map((change, index) => (
+                    <li key={`${change.label}-${index}`}>
+                      {change.label}：{change.detail}
+                    </li>
+                  ))}
+                </ul>
+                {activeDraftChanges.length > 6 ? (
+                  <p className="mt-1">还有 {activeDraftChanges.length - 6} 项未展示。</p>
+                ) : null}
+              </div>
+            ) : null}
+            {activePreflightIssues.length > 0 ? (
+              <div>
+                <p className="font-medium text-[#B54318]">发布前检查提醒：</p>
+                <ul className="mt-2 space-y-1">
+                  {activePreflightIssues.slice(0, 5).map((issue, index) => (
+                    <li key={`${issue.label}-${index}`}>
+                      {issue.label}：{issue.detail}
+                    </li>
+                  ))}
+                </ul>
+                {activePreflightIssues.length > 5 ? (
+                  <p className="mt-1">还有 {activePreflightIssues.length - 5} 项未展示。</p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         }
         confirmLabel="确认发布"
         tone="warning"
