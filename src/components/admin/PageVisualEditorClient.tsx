@@ -42,7 +42,14 @@ import {
   type PageModuleCatalogPage,
   type PageModuleCatalogStatus,
 } from '@/lib/page-module-catalog'
-import type { PageModuleItem, PageModuleLiveState, PageModuleRow, PageModuleSnapshotRow } from '@/lib/page-modules-db'
+import type {
+  PageModuleItem,
+  PageModuleLiveState,
+  PageModuleRow,
+  PageModuleSnapshotRow,
+  PageStructureDraftRow,
+  PageStructureSnapshotRow,
+} from '@/lib/page-modules-db'
 
 type PageKey = 'home' | 'about'
 
@@ -474,6 +481,29 @@ function snapshotSummary(snapshot: PageModuleSnapshotRow) {
   }
 }
 
+function structureDraftStatusLabel(status: PageStructureDraftRow['draft_status']) {
+  if (status === 'stale') return '已过期'
+  if (status === 'review') return '待复核'
+  if (status === 'discarded') return '已丢弃'
+  return '草稿中'
+}
+
+function structureDraftStatusClassName(status: PageStructureDraftRow['draft_status']) {
+  if (status === 'stale') return 'bg-[#B54318]/10 text-[#B54318]'
+  if (status === 'review') return 'bg-[#E36F2C]/10 text-[#E36F2C]'
+  if (status === 'discarded') return 'bg-[#F5F2ED] text-[#8A8580]'
+  return 'bg-[#E36F2C]/10 text-[#E36F2C]'
+}
+
+function structureSnapshotSummary(snapshot: PageStructureSnapshotRow) {
+  return {
+    moduleCount: snapshot.summary.moduleCount,
+    imageCount: snapshot.image_refs.length || snapshot.summary.imageCount,
+    savedAt: formatSnapshotTime(snapshot.created_at),
+    operator: snapshot.created_by_email ?? '未知操作人',
+  }
+}
+
 function itemSummary(item: PageModuleItem) {
   const label = truncateText(item.label_zh || item.label_en || '无标题项目', 48)
   const value = truncateText(item.value_zh || item.value_en || item.content_zh || item.content_en || '', 72)
@@ -704,9 +734,15 @@ function buildPreflightIssues(pageModule: PageModuleRow | undefined): PreflightI
 
 export default function PageVisualEditorClient({
   initialModules,
+  initialStructureDrafts = [],
+  initialStructureSnapshots,
+  currentAdminRole = 'operator',
   maxUploadMb = 20,
 }: {
   initialModules: PageModuleRow[]
+  initialStructureDrafts?: PageStructureDraftRow[]
+  initialStructureSnapshots?: Record<PageKey, PageStructureSnapshotRow[]>
+  currentAdminRole?: 'admin' | 'operator'
   maxUploadMb?: number
 }) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -733,8 +769,22 @@ export default function PageVisualEditorClient({
   const [snapshotsLoading, setSnapshotsLoading] = useState(false)
   const [restoreSnapshot, setRestoreSnapshot] = useState<PageModuleSnapshotRow | null>(null)
   const [restoringSnapshotId, setRestoringSnapshotId] = useState<string | null>(null)
+  const [structureDrafts, setStructureDrafts] = useState<PageStructureDraftRow[]>(initialStructureDrafts)
+  const [structureSnapshots, setStructureSnapshots] = useState<Record<PageKey, PageStructureSnapshotRow[]>>(
+    initialStructureSnapshots ?? { home: [], about: [] },
+  )
+  const [structureBusy, setStructureBusy] = useState<string | null>(null)
+  const [structurePublishConfirmOpen, setStructurePublishConfirmOpen] = useState(false)
+  const [structureDiscardConfirmOpen, setStructureDiscardConfirmOpen] = useState(false)
+  const [structureRestoreSnapshot, setStructureRestoreSnapshot] = useState<PageStructureSnapshotRow | null>(null)
 
   const currentPage = PAGES.find((page) => page.key === selectedPage) ?? PAGES[0]
+  const currentStructureDraft = structureDrafts.find((draft) => draft.page_key === selectedPage) ?? null
+  const currentStructureSnapshots = structureSnapshots[selectedPage] ?? []
+  const currentStructureRestoreSummary = structureRestoreSnapshot
+    ? structureSnapshotSummary(structureRestoreSnapshot)
+    : null
+  const canPublishStructureDraft = currentAdminRole === 'admin'
   const currentModules = useMemo(
     () => modules.filter((pageModule) => pageModule.page_key === selectedPage),
     [modules, selectedPage],
@@ -1151,6 +1201,145 @@ export default function PageVisualEditorClient({
     }
   }
 
+  const upsertStructureDraft = (draft: PageStructureDraftRow) => {
+    setStructureDrafts((prev) => {
+      const rest = prev.filter((item) => item.page_key !== draft.page_key)
+      return [...rest, draft]
+    })
+  }
+
+  const removeStructureDraft = (pageKey: PageKey) => {
+    setStructureDrafts((prev) => prev.filter((draft) => draft.page_key !== pageKey))
+  }
+
+  const loadStructureSnapshots = async (pageKey: PageKey = selectedPage) => {
+    setStructureBusy(`snapshots:${pageKey}`)
+    try {
+      const res = await fetch(`/api/admin/page-structures/${pageKey}/snapshots?limit=8`, { cache: 'no-store' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : '读取页面级快照失败')
+      setStructureSnapshots((prev) => ({
+        ...prev,
+        [pageKey]: (data.data ?? []) as PageStructureSnapshotRow[],
+      }))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '读取页面级快照失败')
+    } finally {
+      setStructureBusy(null)
+    }
+  }
+
+  const createStructureDraft = async () => {
+    const pageKey = selectedPage
+    setStructureBusy(`create:${pageKey}`)
+    try {
+      const res = await fetch(`/api/admin/page-structures/${pageKey}/draft`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : '创建结构草稿失败')
+
+      upsertStructureDraft(data.data as PageStructureDraftRow)
+      setPreviewVersion(Date.now())
+      setFrameLoaded(false)
+      toast.success('页面级结构草稿已创建。当前不会影响前台。')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '创建结构草稿失败')
+    } finally {
+      setStructureBusy(null)
+    }
+  }
+
+  const discardStructureDraft = async () => {
+    const pageKey = selectedPage
+    setStructureBusy(`discard:${pageKey}`)
+    try {
+      const res = await fetch(`/api/admin/page-structures/${pageKey}/draft`, { method: 'DELETE' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : '丢弃结构草稿失败')
+
+      removeStructureDraft(pageKey)
+      setStructureDiscardConfirmOpen(false)
+      setPreviewVersion(Date.now())
+      setFrameLoaded(false)
+      toast.success('页面级结构草稿已丢弃，预览回到线上结构。')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '丢弃结构草稿失败')
+    } finally {
+      setStructureBusy(null)
+    }
+  }
+
+  const publishStructureDraft = async () => {
+    if (!currentStructureDraft) return
+    if (!canPublishStructureDraft) {
+      toast.error('仅 admin 可发布结构草稿')
+      return
+    }
+
+    const pageKey = selectedPage
+    setStructureBusy(`publish:${pageKey}`)
+    try {
+      const res = await fetch(`/api/admin/page-structures/${pageKey}/draft/publish`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        if (res.status === 409 && data.data) upsertStructureDraft(data.data as PageStructureDraftRow)
+        throw new Error(
+          typeof data.error === 'string'
+            ? data.error
+            : res.status === 403
+              ? '只有 admin 可以发布页面结构草稿'
+              : '发布结构草稿失败',
+        )
+      }
+
+      const publishedModules = Array.isArray(data.modules) ? data.modules as PageModuleRow[] : []
+      if (publishedModules.length > 0) {
+        const nextModules = filterEditableModules(publishedModules).map(cloneModule)
+        setModules((prev) => [
+          ...prev.filter((pageModule) => pageModule.page_key !== pageKey),
+          ...nextModules,
+        ])
+        setSavedModules((prev) => [
+          ...prev.filter((pageModule) => pageModule.page_key !== pageKey),
+          ...nextModules.map(cloneModule),
+        ])
+      }
+
+      removeStructureDraft(pageKey)
+      setStructurePublishConfirmOpen(false)
+      setPreviewVersion(Date.now())
+      setFrameLoaded(false)
+      void loadStructureSnapshots(pageKey)
+      toast.success('页面结构草稿已发布，前台结构已更新。')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '发布结构草稿失败')
+    } finally {
+      setStructureBusy(null)
+    }
+  }
+
+  const restoreStructureSnapshotToDraft = async () => {
+    if (!structureRestoreSnapshot) return
+    setStructureBusy(`restore:${selectedPage}`)
+    try {
+      const res = await fetch(
+        `/api/admin/page-structures/${selectedPage}/snapshots/${structureRestoreSnapshot.id}/draft`,
+        { method: 'POST' },
+      )
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : '恢复页面级快照失败')
+
+      upsertStructureDraft(data.data as PageStructureDraftRow)
+      setStructureRestoreSnapshot(null)
+      setPreviewVersion(Date.now())
+      setFrameLoaded(false)
+      toast.success('页面级快照已恢复到结构草稿，前台不会立即变化。')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '恢复页面级快照失败')
+    } finally {
+      setStructureBusy(null)
+    }
+  }
+
   const bindFieldRef = (itemId: string, field: string) => (node: HTMLElement | null) => {
     if (!activeModuleId) return
     fieldRefs.current[editorFieldKey(activeModuleId, itemId, field)] = node
@@ -1401,6 +1590,157 @@ export default function PageVisualEditorClient({
       </section>
 
       <ModuleCatalogPanel />
+
+      <section className="rounded-lg border border-[#E5DED4] bg-white p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#2C2A28]">
+              <Layers3 size={16} className="text-[#E36F2C]" />
+              <span>页面级结构草稿</span>
+            </div>
+            <p className="mt-1 max-w-4xl text-xs leading-5 text-[#8A8580]">
+              C4-2b 只建立整页结构草稿底座。当前仍不开放整页模块新增、删除或拖拽排序；结构草稿用于后续安全预览和一次性发布。
+            </p>
+          </div>
+          <span
+            className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium ${
+              currentStructureDraft
+                ? structureDraftStatusClassName(currentStructureDraft.draft_status)
+                : 'bg-[#F5F2ED] text-[#6B625B]'
+            }`}
+          >
+            {currentPage.label}：{currentStructureDraft ? structureDraftStatusLabel(currentStructureDraft.draft_status) : '暂无结构草稿'}
+          </span>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
+            {currentStructureDraft ? (
+              <div>
+                <div className="grid grid-cols-2 gap-2 text-center md:grid-cols-4">
+                  <div className="rounded-md bg-white px-2 py-2">
+                    <p className="text-base font-semibold text-[#2C2A28]">{currentStructureDraft.summary.moduleCount}</p>
+                    <p className="mt-1 text-[11px] text-[#8A8580]">模块</p>
+                  </div>
+                  <div className="rounded-md bg-white px-2 py-2">
+                    <p className="text-base font-semibold text-[#2C2A28]">{currentStructureDraft.summary.hiddenCount}</p>
+                    <p className="mt-1 text-[11px] text-[#8A8580]">隐藏</p>
+                  </div>
+                  <div className="rounded-md bg-white px-2 py-2">
+                    <p className="text-base font-semibold text-[#2C2A28]">{currentStructureDraft.summary.addedCount}</p>
+                    <p className="mt-1 text-[11px] text-[#8A8580]">新增</p>
+                  </div>
+                  <div className="rounded-md bg-white px-2 py-2">
+                    <p className="text-base font-semibold text-[#2C2A28]">{currentStructureDraft.image_refs.length}</p>
+                    <p className="mt-1 text-[11px] text-[#8A8580]">图片引用</p>
+                  </div>
+                </div>
+                <p className="mt-3 text-xs leading-5 text-[#8A8580]">
+                  更新时间：{formatSnapshotTime(currentStructureDraft.updated_at)}；操作人：{currentStructureDraft.updated_by_email ?? '未知'}。
+                  预览 iframe 会读取结构草稿，普通访客仍只看线上结构。
+                </p>
+                {currentStructureDraft.draft_status === 'stale' ? (
+                  <p className="mt-2 rounded-md border border-[#F1D0BD] bg-white px-2 py-2 text-xs leading-5 text-[#B54318]">
+                    结构草稿已过期：线上结构在草稿创建后发生过变化。请先丢弃并重新创建结构草稿，或由 admin 复核后处理。
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-xs leading-5 text-[#8A8580]">
+                当前页面还没有结构草稿。创建后只会复制当前线上结构和已保存的模块草稿用于预览，不会新增模块，也不会影响前台。
+              </p>
+            )}
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={Boolean(currentStructureDraft) || Boolean(structureBusy)}
+                onClick={createStructureDraft}
+              >
+                <Layers3 size={14} />
+                创建结构草稿
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={
+                  !canPublishStructureDraft ||
+                  !currentStructureDraft ||
+                  currentStructureDraft.draft_status === 'stale' ||
+                  Boolean(structureBusy)
+                }
+                onClick={() => {
+                  if (canPublishStructureDraft) setStructurePublishConfirmOpen(true)
+                }}
+                title={canPublishStructureDraft ? '发布结构草稿' : '仅 admin 可发布结构草稿'}
+              >
+                <ArrowUpRight size={14} />
+                发布结构草稿
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={!currentStructureDraft || Boolean(structureBusy)}
+                onClick={() => setStructureDiscardConfirmOpen(true)}
+              >
+                <RotateCcw size={14} />
+                丢弃结构草稿
+              </Button>
+            </div>
+          </div>
+
+          <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold text-[#2C2A28]">页面级快照</p>
+                <p className="mt-1 text-xs leading-5 text-[#8A8580]">结构发布前会保留整页结构快照，恢复时只恢复到结构草稿。</p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={structureBusy === `snapshots:${selectedPage}`}
+                onClick={() => loadStructureSnapshots(selectedPage)}
+              >
+                <RefreshCcw size={14} />
+                刷新
+              </Button>
+            </div>
+            <div className="mt-3 space-y-2">
+              {currentStructureSnapshots.length > 0 ? (
+                currentStructureSnapshots.map((snapshot) => {
+                  const summary = structureSnapshotSummary(snapshot)
+                  return (
+                    <div key={snapshot.id} className="rounded-md border border-[#E5DED4] bg-white p-2">
+                      <p className="text-xs font-medium text-[#2C2A28]">
+                        {summary.moduleCount} 个模块 · {summary.imageCount} 张图片
+                      </p>
+                      <p className="mt-1 text-[11px] text-[#8A8580]">
+                        {summary.savedAt} · {summary.operator}
+                      </p>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="mt-2"
+                        disabled={Boolean(structureBusy)}
+                        onClick={() => setStructureRestoreSnapshot(snapshot)}
+                      >
+                        恢复到结构草稿
+                      </Button>
+                    </div>
+                  )
+                })
+              ) : (
+                <p className="text-xs leading-5 text-[#8A8580]">暂无页面级结构快照。发布第一版结构草稿后会自动生成。</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div className="grid flex-1 grid-cols-1 gap-5 xl:grid-cols-[270px_minmax(0,1fr)_420px]">
         <aside className="rounded-lg border border-[#E5DED4] bg-white">
@@ -2150,6 +2490,65 @@ export default function PageVisualEditorClient({
         tone="danger"
         loading={Boolean(restoringSnapshotId)}
         onConfirm={restoreSelectedSnapshot}
+      />
+
+      <AdminConfirmDialog
+        open={structurePublishConfirmOpen}
+        onOpenChange={setStructurePublishConfirmOpen}
+        title="确认发布页面级结构草稿？"
+        description={
+          <div className="space-y-2 text-left">
+            <p>
+              发布后 <strong>{currentPage.label}</strong> 的页面结构会立即影响前台。系统会先保存页面级结构快照，再一次性写入线上结构。
+            </p>
+            <p>
+              当前草稿包含 <strong>{currentStructureDraft?.summary.moduleCount ?? 0}</strong> 个模块，
+              <strong>{currentStructureDraft?.image_refs.length ?? 0}</strong> 个图片引用。
+            </p>
+            <p className="text-[#B54318]">只有 admin 可以发布结构草稿；operator 可以创建和预览，但不建议直接发布结构变更。</p>
+          </div>
+        }
+        confirmLabel="确认发布结构草稿"
+        tone="warning"
+        loading={structureBusy === `publish:${selectedPage}`}
+        onConfirm={publishStructureDraft}
+      />
+
+      <AdminConfirmDialog
+        open={structureDiscardConfirmOpen}
+        onOpenChange={setStructureDiscardConfirmOpen}
+        title="确认丢弃页面级结构草稿？"
+        description={
+          <span>
+            将丢弃 <strong>{currentPage.label}</strong> 的页面级结构草稿，并让预览回到线上结构。这个操作不会影响前台页面。
+          </span>
+        }
+        confirmLabel="确认丢弃"
+        tone="danger"
+        loading={structureBusy === `discard:${selectedPage}`}
+        onConfirm={discardStructureDraft}
+      />
+
+      <AdminConfirmDialog
+        open={Boolean(structureRestoreSnapshot)}
+        onOpenChange={(open) => {
+          if (!open && !structureBusy?.startsWith('restore:')) setStructureRestoreSnapshot(null)
+        }}
+        title="确认恢复页面级快照到结构草稿？"
+        description={
+          <span>
+            将恢复 <strong>{currentPage.label}</strong> 的页面级结构快照，
+            共 <strong>{currentStructureRestoreSummary?.moduleCount ?? '-'}</strong> 个模块，
+            <strong>{currentStructureRestoreSummary?.imageCount ?? '-'}</strong> 个图片引用；
+            保存时间 <strong>{currentStructureRestoreSummary?.savedAt ?? '-'}</strong>，
+            操作人 <strong>{currentStructureRestoreSummary?.operator ?? '-'}</strong>。
+            恢复后只会成为结构草稿，不会立即影响前台。
+          </span>
+        }
+        confirmLabel="恢复到结构草稿"
+        tone="danger"
+        loading={structureBusy === `restore:${selectedPage}`}
+        onConfirm={restoreStructureSnapshotToDraft}
       />
     </div>
   )

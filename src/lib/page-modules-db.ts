@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { createHash, randomUUID } from 'crypto'
 import { pool } from '@/lib/db'
 
 export type PageModuleItem = {
@@ -76,6 +76,66 @@ export type PageModuleInput = {
   sort_order: number
 }
 
+export type PageStructureDraftStatus = 'active' | 'stale' | 'review' | 'discarded'
+
+export type PageStructureModuleStatus = 'existing' | 'added' | 'removed' | 'hidden'
+
+export type PageStructureModule = {
+  moduleKey: string
+  rendererKey: string
+  moduleType: string
+  sortOrder: number
+  isVisible: boolean
+  status: PageStructureModuleStatus
+  locked: boolean
+  required: boolean
+  sourceModuleKey: string | null
+  createdFromTemplate: string | null
+}
+
+export type PageStructureSummary = {
+  moduleCount: number
+  visibleCount: number
+  addedCount: number
+  removedCount: number
+  hiddenCount: number
+  imageCount: number
+}
+
+export type PageStructureDraftRow = {
+  id: string
+  page_key: string
+  base_hash: string
+  base_updated_at: string | null
+  modules: PageStructureModule[]
+  updated_at: string
+  updated_by_email: string | null
+  draft_status: PageStructureDraftStatus
+  schema_version: number
+  summary: PageStructureSummary
+  image_refs: string[]
+}
+
+export type PageStructureSnapshotRow = {
+  id: string
+  page_key: string
+  base_hash: string
+  modules: PageStructureModule[]
+  created_at: string
+  created_by_email: string | null
+  schema_version: number
+  summary: PageStructureSummary
+  image_refs: string[]
+}
+
+export type PageStructurePublishResult = {
+  conflict: boolean
+  noChanges?: boolean
+  draft: PageStructureDraftRow
+  publishedModules: PageModuleRow[]
+  currentHash?: string
+}
+
 type DbPageModuleRow = Omit<PageModuleRow, 'items'> & {
   items: unknown
 }
@@ -86,6 +146,18 @@ type DbPageModuleSnapshotRow = Omit<PageModuleSnapshotRow, 'items'> & {
 
 type DbPageModuleDraftRow = Omit<PageModuleRow, 'items'> & {
   items: unknown
+}
+
+type DbPageStructureDraftRow = Omit<PageStructureDraftRow, 'modules' | 'summary' | 'image_refs'> & {
+  modules: unknown
+  summary: unknown
+  image_refs: unknown
+}
+
+type DbPageStructureSnapshotRow = Omit<PageStructureSnapshotRow, 'modules' | 'summary' | 'image_refs'> & {
+  modules: unknown
+  summary: unknown
+  image_refs: unknown
 }
 
 export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
@@ -1029,6 +1101,29 @@ let schemaReady: Promise<void> | null = null
 let seededReady: Promise<void> | null = null
 let snapshotSchemaReady: Promise<void> | null = null
 let draftSchemaReady: Promise<void> | null = null
+let structureDraftSchemaReady: Promise<void> | null = null
+let structureSnapshotSchemaReady: Promise<void> | null = null
+
+const PAGE_STRUCTURE_SCHEMA_VERSION = 1
+
+const PAGE_MODULE_RENDERER_KEYS: Record<string, string> = {
+  'home:hero': 'home.hero',
+  'home:credentials': 'home.credentials',
+  'about:hero': 'about.hero',
+  'about:stats': 'about.stats',
+  'about:brand-story': 'about.brandStory',
+  'about:factory': 'about.factory',
+  'about:timeline': 'about.timeline',
+  'about:technologies': 'about.technologies',
+  'about:recognition-awards': 'about.recognitionAwards',
+  'about:partners': 'about.partners',
+  'about:founder': 'about.founder',
+  'about:services': 'about.services',
+}
+
+function pageStructureRendererKey(pageKey: string, moduleKey: string) {
+  return PAGE_MODULE_RENDERER_KEYS[`${pageKey}:${moduleKey}`] ?? `${pageKey}.${moduleKey}`
+}
 
 function normalizeItems(value: unknown): PageModuleItem[] {
   if (!Array.isArray(value)) return []
@@ -1078,6 +1173,81 @@ function normalizeSnapshotRow(row: DbPageModuleSnapshotRow): PageModuleSnapshotR
   }
 }
 
+function normalizeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return [...new Set(value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0))]
+}
+
+function normalizeStructureStatus(value: unknown): PageStructureModuleStatus {
+  if (value === 'added' || value === 'removed' || value === 'hidden') return value
+  return 'existing'
+}
+
+function normalizeDraftStatus(value: unknown): PageStructureDraftStatus {
+  if (value === 'stale' || value === 'review' || value === 'discarded') return value
+  return 'active'
+}
+
+function normalizeStructureSummary(value: unknown): PageStructureSummary {
+  const raw = value && typeof value === 'object' ? value as Partial<PageStructureSummary> : {}
+  return {
+    moduleCount: Number(raw.moduleCount) || 0,
+    visibleCount: Number(raw.visibleCount) || 0,
+    addedCount: Number(raw.addedCount) || 0,
+    removedCount: Number(raw.removedCount) || 0,
+    hiddenCount: Number(raw.hiddenCount) || 0,
+    imageCount: Number(raw.imageCount) || 0,
+  }
+}
+
+function normalizeStructureModules(value: unknown): PageStructureModule[] {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .map((item, index) => {
+      if (!item || typeof item !== 'object') return null
+      const raw = item as Partial<PageStructureModule>
+      const moduleKey = typeof raw.moduleKey === 'string' && raw.moduleKey ? raw.moduleKey : `module-${index + 1}`
+      const status = normalizeStructureStatus(raw.status)
+
+      return {
+        moduleKey,
+        rendererKey: typeof raw.rendererKey === 'string' && raw.rendererKey ? raw.rendererKey : pageStructureRendererKey('', moduleKey),
+        moduleType: typeof raw.moduleType === 'string' && raw.moduleType ? raw.moduleType : 'fixed-content',
+        sortOrder: Number.isFinite(Number(raw.sortOrder)) ? Number(raw.sortOrder) : (index + 1) * 10,
+        isVisible: status === 'hidden' ? false : raw.isVisible !== false,
+        status,
+        locked: raw.locked === true,
+        required: raw.required === true,
+        sourceModuleKey: typeof raw.sourceModuleKey === 'string' ? raw.sourceModuleKey : null,
+        createdFromTemplate: typeof raw.createdFromTemplate === 'string' ? raw.createdFromTemplate : null,
+      }
+    })
+    .filter((item): item is PageStructureModule => Boolean(item))
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.moduleKey.localeCompare(b.moduleKey))
+}
+
+function normalizeStructureDraftRow(row: DbPageStructureDraftRow): PageStructureDraftRow {
+  return {
+    ...row,
+    draft_status: normalizeDraftStatus(row.draft_status),
+    schema_version: Number(row.schema_version) || PAGE_STRUCTURE_SCHEMA_VERSION,
+    modules: normalizeStructureModules(row.modules),
+    summary: normalizeStructureSummary(row.summary),
+    image_refs: normalizeStringArray(row.image_refs),
+  }
+}
+
+function normalizeStructureSnapshotRow(row: DbPageStructureSnapshotRow): PageStructureSnapshotRow {
+  return {
+    ...row,
+    schema_version: Number(row.schema_version) || PAGE_STRUCTURE_SCHEMA_VERSION,
+    modules: normalizeStructureModules(row.modules),
+    summary: normalizeStructureSummary(row.summary),
+    image_refs: normalizeStringArray(row.image_refs),
+  }
+}
+
 function pageModuleToInput(pageModule: PageModuleRow): PageModuleInput {
   return {
     title_zh: pageModule.title_zh,
@@ -1097,6 +1267,94 @@ function pageModuleToLiveState(pageModule: PageModuleRow): PageModuleLiveState {
     updated_at: pageModule.updated_at,
     updated_by_email: pageModule.updated_by_email,
   }
+}
+
+function pageModuleToStructureModule(pageModule: PageModuleRow): PageStructureModule {
+  return {
+    moduleKey: pageModule.module_key,
+    rendererKey: pageStructureRendererKey(pageModule.page_key, pageModule.module_key),
+    moduleType: pageModule.module_type,
+    sortOrder: Number(pageModule.sort_order) || 0,
+    isVisible: pageModule.is_visible,
+    status: pageModule.is_visible ? 'existing' : 'hidden',
+    locked: pageModule.module_key === 'hero',
+    required: pageModule.module_key === 'hero',
+    sourceModuleKey: null,
+    createdFromTemplate: null,
+  }
+}
+
+function structureModuleToPageModule(
+  pageKey: string,
+  module: PageStructureModule,
+  contentSource?: PageModuleRow | null,
+): PageModuleRow {
+  const fallback = contentSource ?? getDefaultPageModule(pageKey, module.moduleKey)
+  return {
+    id: fallback?.id ?? `${pageKey}:${module.moduleKey}`,
+    page_key: pageKey,
+    module_key: module.moduleKey,
+    module_type: module.moduleType || fallback?.module_type || 'fixed-content',
+    title_zh: fallback?.title_zh ?? '',
+    title_en: fallback?.title_en ?? '',
+    description_zh: fallback?.description_zh ?? '',
+    description_en: fallback?.description_en ?? '',
+    items: fallback?.items.map((item) => ({ ...item })) ?? [],
+    is_visible: module.status === 'hidden' ? false : module.isVisible,
+    sort_order: module.sortOrder,
+    updated_at: fallback?.updated_at ?? '',
+    updated_by_email: fallback?.updated_by_email ?? null,
+    has_draft: fallback?.has_draft,
+    draft_updated_at: fallback?.draft_updated_at,
+    draft_updated_by_email: fallback?.draft_updated_by_email,
+    live_updated_at: fallback?.live_updated_at,
+    live_updated_by_email: fallback?.live_updated_by_email,
+    live_state: fallback?.live_state,
+  }
+}
+
+function extractPageStructureImageRefs(modules: PageStructureModule[]): string[] {
+  void modules
+  return []
+}
+
+function buildPageStructureSummary(modules: PageStructureModule[]): PageStructureSummary {
+  const imageRefs = extractPageStructureImageRefs(modules)
+  return {
+    moduleCount: modules.length,
+    visibleCount: modules.filter((module) => module.status !== 'removed' && module.isVisible).length,
+    addedCount: modules.filter((module) => module.status === 'added').length,
+    removedCount: modules.filter((module) => module.status === 'removed').length,
+    hiddenCount: modules.filter((module) => module.status === 'hidden' || !module.isVisible).length,
+    imageCount: imageRefs.length,
+  }
+}
+
+function pageStructureHashFromModules(modules: PageStructureModule[]) {
+  const comparable = modules
+    .map((module) => ({
+      moduleKey: module.moduleKey,
+      rendererKey: module.rendererKey,
+      moduleType: module.moduleType,
+      sortOrder: Number(module.sortOrder) || 0,
+      isVisible: module.isVisible,
+      status: module.status,
+      locked: module.locked,
+      required: module.required,
+      sourceModuleKey: module.sourceModuleKey,
+      createdFromTemplate: module.createdFromTemplate,
+    }))
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.moduleKey.localeCompare(b.moduleKey))
+
+  return createHash('sha256').update(JSON.stringify(comparable)).digest('hex')
+}
+
+function latestModuleUpdatedAt(modules: PageModuleRow[]) {
+  return modules
+    .map((module) => module.updated_at)
+    .filter(Boolean)
+    .sort()
+    .at(-1) ?? null
 }
 
 export function getDefaultPageModule(pageKey: string, moduleKey: string): PageModuleRow | null {
@@ -1201,6 +1459,60 @@ export async function ensurePageModuleDraftsSchema() {
   })()
 
   return draftSchemaReady
+}
+
+export async function ensurePageStructureDraftsSchema() {
+  structureDraftSchemaReady ??= (async () => {
+    await ensurePageModulesSchema()
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS page_structure_drafts (
+        id              TEXT        PRIMARY KEY,
+        page_key        TEXT        NOT NULL UNIQUE,
+        base_hash       TEXT        NOT NULL DEFAULT '',
+        base_updated_at TIMESTAMPTZ,
+        modules         JSONB       NOT NULL DEFAULT '[]',
+        updated_by      UUID        REFERENCES users(id) ON DELETE SET NULL,
+        updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        draft_status    TEXT        NOT NULL DEFAULT 'active',
+        schema_version  INTEGER     NOT NULL DEFAULT 1,
+        summary         JSONB       NOT NULL DEFAULT '{}',
+        image_refs      JSONB       NOT NULL DEFAULT '[]'
+      )
+    `)
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_page_structure_drafts_page
+        ON page_structure_drafts (page_key, updated_at DESC)
+    `)
+  })()
+
+  return structureDraftSchemaReady
+}
+
+export async function ensurePageStructureSnapshotsSchema() {
+  structureSnapshotSchemaReady ??= (async () => {
+    await ensurePageStructureDraftsSchema()
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS page_structure_snapshots (
+        id             TEXT        PRIMARY KEY,
+        page_key       TEXT        NOT NULL,
+        base_hash      TEXT        NOT NULL DEFAULT '',
+        modules        JSONB       NOT NULL DEFAULT '[]',
+        created_by     UUID        REFERENCES users(id) ON DELETE SET NULL,
+        created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        schema_version INTEGER     NOT NULL DEFAULT 1,
+        summary        JSONB       NOT NULL DEFAULT '{}',
+        image_refs     JSONB       NOT NULL DEFAULT '[]'
+      )
+    `)
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_page_structure_snapshots_page
+        ON page_structure_snapshots (page_key, created_at DESC)
+    `)
+  })()
+
+  return structureSnapshotSchemaReady
 }
 
 async function seedDefaultPageModules() {
@@ -1329,6 +1641,33 @@ export async function getPageModuleDraft(pageKey: string, moduleKey: string): Pr
   return res.rows[0] ? normalizeDraftRow(res.rows[0]) : null
 }
 
+async function listPageModuleDrafts(pageKey: string): Promise<PageModuleRow[]> {
+  await ensurePageModuleDraftsSchema()
+  const res = await pool.query<DbPageModuleDraftRow>(
+    `SELECT
+       d.id,
+       d.page_key,
+       d.module_key,
+       d.module_type,
+       d.title_zh,
+       d.title_en,
+       d.description_zh,
+       d.description_en,
+       d.items,
+       d.is_visible,
+       d.sort_order,
+       d.updated_at::text AS updated_at,
+       u.email AS updated_by_email
+     FROM page_module_drafts d
+     LEFT JOIN users u ON u.id = d.updated_by
+     WHERE d.page_key = $1
+     ORDER BY d.sort_order ASC, d.module_key ASC`,
+    [pageKey],
+  )
+
+  return res.rows.map(normalizeDraftRow)
+}
+
 export async function listPageModulesForVisualEditor(pageKey?: string): Promise<PageModuleRow[]> {
   const liveModules = await listPageModules(pageKey)
   await ensurePageModuleDraftsSchema()
@@ -1406,8 +1745,379 @@ export async function listPageModulesForPreview(
   pageKey: string,
   includeDraft: boolean,
 ): Promise<PageModuleRow[]> {
-  if (includeDraft) return listPageModulesForVisualEditor(pageKey)
+  if (includeDraft) {
+    const structureDraft = await getPageStructureDraft(pageKey)
+    if (structureDraft && structureDraft.draft_status !== 'discarded') {
+      const liveModules = await listPageModules(pageKey)
+      const liveByKey = new Map(liveModules.map((pageModule) => [pageModule.module_key, pageModule]))
+      const moduleDrafts = await listPageModuleDrafts(pageKey)
+      const draftsByKey = new Map(moduleDrafts.map((draft) => [draft.module_key, draft]))
+
+      const modules = structureDraft.modules
+        .filter((module) => module.status !== 'removed')
+        .map((module) => {
+          const contentSource = draftsByKey.get(module.moduleKey) ?? liveByKey.get(module.moduleKey)
+          return structureModuleToPageModule(pageKey, module, contentSource)
+        })
+
+      return modules
+        .sort((a, b) => a.sort_order - b.sort_order || a.module_key.localeCompare(b.module_key))
+    }
+
+    return listPageModulesForVisualEditor(pageKey)
+  }
   return listPageModules(pageKey)
+}
+
+export async function getPageStructureDraft(pageKey: string): Promise<PageStructureDraftRow | null> {
+  await ensurePageStructureDraftsSchema()
+  const res = await pool.query<DbPageStructureDraftRow>(
+    `SELECT
+       d.id,
+       d.page_key,
+       d.base_hash,
+       d.base_updated_at::text AS base_updated_at,
+       d.modules,
+       d.updated_at::text AS updated_at,
+       u.email AS updated_by_email,
+       d.draft_status,
+       d.schema_version,
+       d.summary,
+       d.image_refs
+     FROM page_structure_drafts d
+     LEFT JOIN users u ON u.id = d.updated_by
+     WHERE d.page_key = $1
+     LIMIT 1`,
+    [pageKey],
+  )
+
+  return res.rows[0] ? normalizeStructureDraftRow(res.rows[0]) : null
+}
+
+export async function listPageStructureDrafts(): Promise<PageStructureDraftRow[]> {
+  await ensurePageStructureDraftsSchema()
+  const res = await pool.query<DbPageStructureDraftRow>(
+    `SELECT
+       d.id,
+       d.page_key,
+       d.base_hash,
+       d.base_updated_at::text AS base_updated_at,
+       d.modules,
+       d.updated_at::text AS updated_at,
+       u.email AS updated_by_email,
+       d.draft_status,
+       d.schema_version,
+       d.summary,
+       d.image_refs
+     FROM page_structure_drafts d
+     LEFT JOIN users u ON u.id = d.updated_by
+     ORDER BY d.page_key ASC`,
+  )
+
+  return res.rows.map(normalizeStructureDraftRow)
+}
+
+export async function createPageStructureDraft(pageKey: string, adminId: string): Promise<PageStructureDraftRow> {
+  const existing = await getPageStructureDraft(pageKey)
+  if (existing && existing.draft_status !== 'discarded') return existing
+
+  const liveModules = await listPageModules(pageKey)
+  const modules = liveModules.map(pageModuleToStructureModule)
+  const baseModules = modules
+  const baseHash = pageStructureHashFromModules(baseModules)
+  const baseUpdatedAt = latestModuleUpdatedAt(liveModules)
+  const summary = buildPageStructureSummary(modules)
+  const imageRefs = extractPageStructureImageRefs(modules)
+  const id = existing?.id ?? randomUUID()
+
+  await ensurePageStructureDraftsSchema()
+  await pool.query(
+    `INSERT INTO page_structure_drafts (
+       id, page_key, base_hash, base_updated_at, modules, updated_by,
+       updated_at, draft_status, schema_version, summary, image_refs
+     )
+     VALUES ($1, $2, $3, $4, $5::jsonb, $6, NOW(), 'active', $7, $8::jsonb, $9::jsonb)
+     ON CONFLICT (page_key)
+     DO UPDATE SET
+       base_hash = EXCLUDED.base_hash,
+       base_updated_at = EXCLUDED.base_updated_at,
+       modules = EXCLUDED.modules,
+       updated_by = EXCLUDED.updated_by,
+       updated_at = NOW(),
+       draft_status = 'active',
+       schema_version = EXCLUDED.schema_version,
+       summary = EXCLUDED.summary,
+       image_refs = EXCLUDED.image_refs`,
+    [
+      id,
+      pageKey,
+      baseHash,
+      baseUpdatedAt,
+      JSON.stringify(modules),
+      adminId,
+      PAGE_STRUCTURE_SCHEMA_VERSION,
+      JSON.stringify(summary),
+      JSON.stringify(imageRefs),
+    ],
+  )
+
+  const draft = await getPageStructureDraft(pageKey)
+  if (!draft) throw new Error('Failed to create page structure draft')
+  return draft
+}
+
+export async function deletePageStructureDraft(pageKey: string): Promise<boolean> {
+  await ensurePageStructureDraftsSchema()
+  const res = await pool.query<{ id: string }>(
+    `DELETE FROM page_structure_drafts
+     WHERE page_key = $1
+     RETURNING id`,
+    [pageKey],
+  )
+
+  return Boolean(res.rows[0]?.id)
+}
+
+async function markPageStructureDraftStale(pageKey: string): Promise<PageStructureDraftRow | null> {
+  await ensurePageStructureDraftsSchema()
+  await pool.query(
+    `UPDATE page_structure_drafts
+     SET draft_status = 'stale',
+         updated_at = NOW()
+     WHERE page_key = $1`,
+    [pageKey],
+  )
+  return getPageStructureDraft(pageKey)
+}
+
+export async function listPageStructureSnapshots(
+  pageKey: string,
+  limit = 20,
+): Promise<PageStructureSnapshotRow[]> {
+  await ensurePageStructureSnapshotsSchema()
+  const safeLimit = Math.min(50, Math.max(1, limit))
+  const res = await pool.query<DbPageStructureSnapshotRow>(
+    `SELECT
+       s.id,
+       s.page_key,
+       s.base_hash,
+       s.modules,
+       s.created_at::text AS created_at,
+       u.email AS created_by_email,
+       s.schema_version,
+       s.summary,
+       s.image_refs
+     FROM page_structure_snapshots s
+     LEFT JOIN users u ON u.id = s.created_by
+     WHERE s.page_key = $1
+     ORDER BY s.created_at DESC
+     LIMIT $2`,
+    [pageKey, safeLimit],
+  )
+
+  return res.rows.map(normalizeStructureSnapshotRow)
+}
+
+export async function getPageStructureSnapshot(snapshotId: string): Promise<PageStructureSnapshotRow | null> {
+  await ensurePageStructureSnapshotsSchema()
+  const res = await pool.query<DbPageStructureSnapshotRow>(
+    `SELECT
+       s.id,
+       s.page_key,
+       s.base_hash,
+       s.modules,
+       s.created_at::text AS created_at,
+       u.email AS created_by_email,
+       s.schema_version,
+       s.summary,
+       s.image_refs
+     FROM page_structure_snapshots s
+     LEFT JOIN users u ON u.id = s.created_by
+     WHERE s.id = $1
+     LIMIT 1`,
+    [snapshotId],
+  )
+
+  return res.rows[0] ? normalizeStructureSnapshotRow(res.rows[0]) : null
+}
+
+export async function restorePageStructureSnapshotToDraft(
+  pageKey: string,
+  snapshotId: string,
+  adminId: string,
+): Promise<PageStructureDraftRow | null> {
+  const snapshot = await getPageStructureSnapshot(snapshotId)
+  if (!snapshot || snapshot.page_key !== pageKey) return null
+
+  const liveModules = await listPageModules(pageKey)
+  const baseModules = liveModules.map(pageModuleToStructureModule)
+  const baseHash = pageStructureHashFromModules(baseModules)
+  const baseUpdatedAt = latestModuleUpdatedAt(liveModules)
+  const summary = buildPageStructureSummary(snapshot.modules)
+  const imageRefs = extractPageStructureImageRefs(snapshot.modules)
+
+  await ensurePageStructureDraftsSchema()
+  await pool.query(
+    `INSERT INTO page_structure_drafts (
+       id, page_key, base_hash, base_updated_at, modules, updated_by,
+       updated_at, draft_status, schema_version, summary, image_refs
+     )
+     VALUES ($1, $2, $3, $4, $5::jsonb, $6, NOW(), 'active', $7, $8::jsonb, $9::jsonb)
+     ON CONFLICT (page_key)
+     DO UPDATE SET
+       base_hash = EXCLUDED.base_hash,
+       base_updated_at = EXCLUDED.base_updated_at,
+       modules = EXCLUDED.modules,
+       updated_by = EXCLUDED.updated_by,
+       updated_at = NOW(),
+       draft_status = 'active',
+       schema_version = EXCLUDED.schema_version,
+       summary = EXCLUDED.summary,
+       image_refs = EXCLUDED.image_refs`,
+    [
+      randomUUID(),
+      pageKey,
+      baseHash,
+      baseUpdatedAt,
+      JSON.stringify(snapshot.modules),
+      adminId,
+      PAGE_STRUCTURE_SCHEMA_VERSION,
+      JSON.stringify(summary),
+      JSON.stringify(imageRefs),
+    ],
+  )
+
+  return getPageStructureDraft(pageKey)
+}
+
+export async function publishPageStructureDraft(
+  pageKey: string,
+  adminId: string,
+): Promise<PageStructurePublishResult | null> {
+  const draft = await getPageStructureDraft(pageKey)
+  if (!draft) return null
+
+  const liveModules = await listPageModules(pageKey)
+  const liveStructureModules = liveModules.map(pageModuleToStructureModule)
+  const currentHash = pageStructureHashFromModules(liveStructureModules)
+  const draftHash = pageStructureHashFromModules(draft.modules)
+
+  if (draftHash === currentHash) {
+    return {
+      conflict: false,
+      noChanges: true,
+      draft,
+      publishedModules: [],
+      currentHash,
+    }
+  }
+
+  if (draft.base_hash && draft.base_hash !== currentHash) {
+    const staleDraft = await markPageStructureDraftStale(pageKey)
+    return {
+      conflict: true,
+      draft: staleDraft ?? draft,
+      publishedModules: [],
+      currentHash,
+    }
+  }
+
+  await ensurePageStructureSnapshotsSchema()
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+
+    const snapshotSummary = buildPageStructureSummary(liveStructureModules)
+    const snapshotImageRefs = extractPageStructureImageRefs(liveStructureModules)
+    await client.query(
+      `INSERT INTO page_structure_snapshots (
+         id, page_key, base_hash, modules, created_by, created_at,
+         schema_version, summary, image_refs
+       )
+       VALUES ($1, $2, $3, $4::jsonb, $5, NOW(), $6, $7::jsonb, $8::jsonb)`,
+      [
+        randomUUID(),
+        pageKey,
+        currentHash,
+        JSON.stringify(liveStructureModules),
+        adminId,
+        PAGE_STRUCTURE_SCHEMA_VERSION,
+        JSON.stringify(snapshotSummary),
+        JSON.stringify(snapshotImageRefs),
+      ],
+    )
+
+    const liveByKey = new Map(liveModules.map((pageModule) => [pageModule.module_key, pageModule]))
+
+    for (const structureModule of draft.modules) {
+      if (structureModule.status === 'removed') {
+        await client.query(
+          `UPDATE page_modules
+           SET is_visible = FALSE,
+               sort_order = $3,
+               updated_by = $4,
+               updated_at = NOW()
+           WHERE page_key = $1 AND module_key = $2`,
+          [pageKey, structureModule.moduleKey, structureModule.sortOrder, adminId],
+        )
+        continue
+      }
+
+      if (!liveByKey.has(structureModule.moduleKey)) {
+        throw new Error(`Cannot publish structure module without live module: ${pageKey}:${structureModule.moduleKey}`)
+      }
+
+      await client.query(
+        `UPDATE page_modules
+         SET module_type = $3,
+             is_visible = $4,
+             sort_order = $5,
+             updated_by = $6,
+             updated_at = NOW()
+         WHERE page_key = $1 AND module_key = $2`,
+        [
+          pageKey,
+          structureModule.moduleKey,
+          structureModule.moduleType,
+          structureModule.status === 'hidden' ? false : structureModule.isVisible,
+          structureModule.sortOrder,
+          adminId,
+        ],
+      )
+    }
+
+    await client.query(
+      `DELETE FROM page_structure_drafts
+       WHERE page_key = $1`,
+      [pageKey],
+    )
+
+    await client.query(
+      `DELETE FROM page_structure_snapshots
+       WHERE page_key = $1
+         AND id NOT IN (
+           SELECT id
+           FROM page_structure_snapshots
+           WHERE page_key = $1
+           ORDER BY created_at DESC
+           LIMIT $2
+         )`,
+      [pageKey, 30],
+    )
+
+    await client.query('COMMIT')
+  } catch (err) {
+    await client.query('ROLLBACK')
+    throw err
+  } finally {
+    client.release()
+  }
+
+  return {
+    conflict: false,
+    draft,
+    publishedModules: await listPageModules(pageKey),
+  }
 }
 
 export async function savePageModuleDraft(

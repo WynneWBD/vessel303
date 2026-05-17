@@ -26,6 +26,8 @@ export type MediaReferenceCounts = {
   pages: number
   pageDrafts: number
   pageSnapshots: number
+  pageStructureDrafts: number
+  pageStructureSnapshots: number
   total: number
 }
 
@@ -43,6 +45,8 @@ export type MediaReferenceItems = {
   pages: MediaReferenceItem[]
   pageDrafts: MediaReferenceItem[]
   pageSnapshots: MediaReferenceItem[]
+  pageStructureDrafts: MediaReferenceItem[]
+  pageStructureSnapshots: MediaReferenceItem[]
 }
 
 export type MediaReferenceDetails = MediaReferenceCounts & {
@@ -67,6 +71,20 @@ type PageDraftRefRow = {
   title_en: string | null
   updated_at: string
   updated_by_email: string | null
+}
+
+type PageStructureDraftRefRow = {
+  id: string
+  page_key: string
+  updated_at: string
+  updated_by_email: string | null
+}
+
+type PageStructureSnapshotRefRow = {
+  id: string
+  page_key: string
+  created_at: string
+  created_by_email: string | null
 }
 
 const MEDIA_REFERENCE_DETAIL_LIMIT = 10
@@ -297,9 +315,84 @@ async function listPageModuleDraftReferences(url: string): Promise<PageDraftRefR
   return res.rows
 }
 
+async function countPageStructureDraftReferences(url: string): Promise<number> {
+  if (!(await tableExists('public.page_structure_drafts'))) return 0
+
+  return countRows(
+    `SELECT COUNT(*)::text AS count
+     FROM page_structure_drafts
+     WHERE strpos(COALESCE(modules::text, ''), $1) > 0
+        OR image_refs @> $2::jsonb`,
+    [url, JSON.stringify([url])],
+  )
+}
+
+async function listPageStructureDraftReferences(url: string): Promise<PageStructureDraftRefRow[]> {
+  if (!(await tableExists('public.page_structure_drafts'))) return []
+
+  const res = await pool.query<PageStructureDraftRefRow>(
+    `SELECT
+       d.id,
+       d.page_key,
+       d.updated_at::text AS updated_at,
+       u.email AS updated_by_email
+     FROM page_structure_drafts d
+     LEFT JOIN users u ON u.id = d.updated_by
+     WHERE strpos(COALESCE(d.modules::text, ''), $1) > 0
+        OR d.image_refs @> $2::jsonb
+     ORDER BY d.updated_at DESC
+     LIMIT $3`,
+    [url, JSON.stringify([url]), MEDIA_REFERENCE_DETAIL_LIMIT],
+  )
+
+  return res.rows
+}
+
+async function countPageStructureSnapshotReferences(url: string): Promise<number> {
+  if (!(await tableExists('public.page_structure_snapshots'))) return 0
+
+  return countRows(
+    `SELECT COUNT(*)::text AS count
+     FROM page_structure_snapshots
+     WHERE strpos(COALESCE(modules::text, ''), $1) > 0
+        OR image_refs @> $2::jsonb`,
+    [url, JSON.stringify([url])],
+  )
+}
+
+async function listPageStructureSnapshotReferences(url: string): Promise<PageStructureSnapshotRefRow[]> {
+  if (!(await tableExists('public.page_structure_snapshots'))) return []
+
+  const res = await pool.query<PageStructureSnapshotRefRow>(
+    `SELECT
+       s.id,
+       s.page_key,
+       s.created_at::text AS created_at,
+       u.email AS created_by_email
+     FROM page_structure_snapshots s
+     LEFT JOIN users u ON u.id = s.created_by
+     WHERE strpos(COALESCE(s.modules::text, ''), $1) > 0
+        OR s.image_refs @> $2::jsonb
+     ORDER BY s.created_at DESC
+     LIMIT $3`,
+    [url, JSON.stringify([url]), MEDIA_REFERENCE_DETAIL_LIMIT],
+  )
+
+  return res.rows
+}
+
 export async function countMediaReferences(url: string): Promise<MediaReferenceCounts> {
   const jsonArray = JSON.stringify([url])
-  const [news, products, projects, pages, pageDrafts, pageSnapshots] = await Promise.all([
+  const [
+    news,
+    products,
+    projects,
+    pages,
+    pageDrafts,
+    pageSnapshots,
+    pageStructureDrafts,
+    pageStructureSnapshots,
+  ] = await Promise.all([
     countNewsReferencingImage(url),
     countRows(
       `SELECT COUNT(*)::text AS count
@@ -330,6 +423,8 @@ export async function countMediaReferences(url: string): Promise<MediaReferenceC
     ),
     countPageModuleDraftReferences(url),
     countPageModuleSnapshotReferences(url),
+    countPageStructureDraftReferences(url),
+    countPageStructureSnapshotReferences(url),
   ])
 
   return {
@@ -339,7 +434,9 @@ export async function countMediaReferences(url: string): Promise<MediaReferenceC
     pages,
     pageDrafts,
     pageSnapshots,
-    total: news + products + projects + pages + pageDrafts + pageSnapshots,
+    pageStructureDrafts,
+    pageStructureSnapshots,
+    total: news + products + projects + pages + pageDrafts + pageSnapshots + pageStructureDrafts + pageStructureSnapshots,
   }
 }
 
@@ -381,7 +478,17 @@ export async function getMediaReferenceDetails(url: string): Promise<MediaRefere
     title_en: string | null
   }
 
-  const [counts, newsRes, productsRes, projectsRes, pagesRes, pageDraftsRes, pageSnapshotsRes] = await Promise.all([
+  const [
+    counts,
+    newsRes,
+    productsRes,
+    projectsRes,
+    pagesRes,
+    pageDraftsRes,
+    pageSnapshotsRes,
+    pageStructureDraftsRes,
+    pageStructureSnapshotsRes,
+  ] = await Promise.all([
     countMediaReferences(url),
     pool.query<NewsRefRow>(
       `SELECT id::text AS id, slug, title_zh, title_en,
@@ -439,6 +546,8 @@ export async function getMediaReferenceDetails(url: string): Promise<MediaRefere
     ),
     listPageModuleDraftReferences(url),
     listPageModuleSnapshotReferences(url),
+    listPageStructureDraftReferences(url),
+    listPageStructureSnapshotReferences(url),
   ])
 
   return {
@@ -497,6 +606,24 @@ export async function getMediaReferenceDetails(url: string): Promise<MediaRefere
           '历史快照引用',
           `${row.page_key}:${row.module_key}`,
           row.created_by_email ? `操作人: ${row.created_by_email}` : '操作人: 未知',
+        ],
+      })),
+      pageStructureDrafts: pageStructureDraftsRes.map((row) => ({
+        id: row.id,
+        title: `${row.page_key} 页面结构草稿`,
+        href: '/admin/pages/visual',
+        fields: [
+          '页面结构草稿引用',
+          row.updated_by_email ? `操作人 ${row.updated_by_email}` : '操作人 未知',
+        ],
+      })),
+      pageStructureSnapshots: pageStructureSnapshotsRes.map((row) => ({
+        id: row.id,
+        title: `${row.page_key} 页面结构快照`,
+        href: '/admin/pages/visual',
+        fields: [
+          '页面结构快照引用',
+          row.created_by_email ? `操作人 ${row.created_by_email}` : '操作人 未知',
         ],
       })),
     },

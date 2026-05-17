@@ -75,6 +75,8 @@ const emptyMediaReferenceItems = (): MediaReferenceItems => ({
   pages: [],
   pageDrafts: [],
   pageSnapshots: [],
+  pageStructureDrafts: [],
+  pageStructureSnapshots: [],
 })
 
 const EMPTY_MEDIA_REFERENCES: MediaReferenceDetails = {
@@ -84,6 +86,8 @@ const EMPTY_MEDIA_REFERENCES: MediaReferenceDetails = {
   pages: 0,
   pageDrafts: 0,
   pageSnapshots: 0,
+  pageStructureDrafts: 0,
+  pageStructureSnapshots: 0,
   total: 0,
   items: emptyMediaReferenceItems(),
 }
@@ -920,6 +924,18 @@ function MediaDetailSheet({
                       · 历史快照 {refs.pageSnapshots} 条
                     </span>
                   )}
+                  {refs.pageStructureDrafts > 0 && (
+                    <span className="text-[#8A8580]">
+                      {' '}
+                      · 页面结构草稿 {refs.pageStructureDrafts} 条
+                    </span>
+                  )}
+                  {refs.pageStructureSnapshots > 0 && (
+                    <span className="text-[#8A8580]">
+                      {' '}
+                      · 页面结构快照 {refs.pageStructureSnapshots} 条
+                    </span>
+                  )}
                 </div>
                 {refs.total > 0 && (
                   <div className="mt-1.5 text-xs text-[#E36F2C]">
@@ -954,6 +970,16 @@ function MediaDetailSheet({
                       label="历史快照引用"
                       count={refs.pageSnapshots}
                       items={refs.items.pageSnapshots}
+                    />
+                    <ReferenceSourceList
+                      label="页面结构草稿引用"
+                      count={refs.pageStructureDrafts}
+                      items={refs.items.pageStructureDrafts}
+                    />
+                    <ReferenceSourceList
+                      label="页面结构快照引用"
+                      count={refs.pageStructureSnapshots}
+                      items={refs.items.pageStructureSnapshots}
                     />
                   </div>
                 )}
