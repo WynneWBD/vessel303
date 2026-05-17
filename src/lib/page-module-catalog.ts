@@ -1,0 +1,182 @@
+export type PageModuleCatalogPage = 'home' | 'about' | 'all'
+
+export type PageModuleCatalogStatus = 'planned' | 'locked' | 'not_open'
+
+export type PageModuleCatalogItem = {
+  id: string
+  name: string
+  pages: PageModuleCatalogPage[]
+  status: PageModuleCatalogStatus
+  canAdd: boolean
+  canDelete: boolean
+  canSort: boolean
+  description: string
+  unavailableReason?: string
+}
+
+export const PLANNED_PAGE_MODULE_CATALOG: PageModuleCatalogItem[] = [
+  {
+    id: 'cta-section',
+    name: 'CTA 区',
+    pages: ['all'],
+    status: 'planned',
+    canAdd: true,
+    canDelete: true,
+    canSort: true,
+    description: '用于放置标题、说明文字和一个或两个按钮，适合承接咨询、下载、跳转等动作。',
+    unavailableReason: '需要页面级结构草稿和页面级快照后再开放。',
+  },
+  {
+    id: 'simple-text',
+    name: '简单文字区',
+    pages: ['all'],
+    status: 'planned',
+    canAdd: true,
+    canDelete: true,
+    canSort: true,
+    description: '用于展示小标题、标题和正文，不允许自定义字体、颜色或排版。',
+    unavailableReason: '需要先定义字段 schema、默认内容和发布前检查。',
+  },
+  {
+    id: 'text-image',
+    name: '图文区',
+    pages: ['all'],
+    status: 'planned',
+    canAdd: true,
+    canDelete: true,
+    canSort: true,
+    description: '固定左右图文结构，只允许更换图片、文字和链接。',
+    unavailableReason: '需要先确认 Home 试点插入区和图片必填规则。',
+  },
+  {
+    id: 'gallery',
+    name: '图片组 / Gallery',
+    pages: ['all'],
+    status: 'planned',
+    canAdd: true,
+    canDelete: true,
+    canSort: true,
+    description: '用于展示多张图片和可选说明，适合工厂、资质、案例图片墙。',
+    unavailableReason: '需要页面级快照纳入图片引用保护后再开放。',
+  },
+  {
+    id: 'faq',
+    name: 'FAQ',
+    pages: ['all'],
+    status: 'planned',
+    canAdd: true,
+    canDelete: true,
+    canSort: true,
+    description: '固定问答列表结构，适合常见问题、服务说明和运营补充说明。',
+    unavailableReason: '需要先确认字段长度和多语言内容规则。',
+  },
+  {
+    id: 'logo-wall',
+    name: '合作伙伴 / Logo wall',
+    pages: ['all'],
+    status: 'planned',
+    canAdd: true,
+    canDelete: true,
+    canSort: true,
+    description: '用于展示合作伙伴、客户或认证 logo，只允许编辑图片、名称和链接。',
+    unavailableReason: '需要先限制图片比例和每组最大数量。',
+  },
+  {
+    id: 'stats',
+    name: '统计区',
+    pages: ['all'],
+    status: 'planned',
+    canAdd: true,
+    canDelete: true,
+    canSort: true,
+    description: '固定 3-6 个统计数字项，适合展示产能、经验、项目数量等信息。',
+    unavailableReason: '需要先定义数字、单位和说明字段的校验规则。',
+  },
+]
+
+export const RESTRICTED_PAGE_MODULE_CATALOG: PageModuleCatalogItem[] = [
+  {
+    id: 'navbar',
+    name: 'Navbar',
+    pages: ['all'],
+    status: 'locked',
+    canAdd: false,
+    canDelete: false,
+    canSort: false,
+    description: '页面导航属于全站核心结构，不进入运营模块库。',
+    unavailableReason: '会影响全站入口、SEO 和用户路径，需要继续由代码控制。',
+  },
+  {
+    id: 'footer',
+    name: 'Footer',
+    pages: ['all'],
+    status: 'locked',
+    canAdd: false,
+    canDelete: false,
+    canSort: false,
+    description: '页脚属于全站核心结构，不进入运营模块库。',
+    unavailableReason: '包含全站链接、联系信息和合规内容，需要继续由代码控制。',
+  },
+  {
+    id: 'global-map-preview',
+    name: 'GlobalMapPreview',
+    pages: ['about'],
+    status: 'locked',
+    canAdd: false,
+    canDelete: false,
+    canSort: false,
+    description: 'About 页里的全球地图预览保持锁定。',
+    unavailableReason: '它依赖 /global 地图链路和项目数据，不属于 visual editor 第一阶段。',
+  },
+  {
+    id: 'dynamic-content',
+    name: '产品 / 项目 / 新闻动态数据区',
+    pages: ['all'],
+    status: 'not_open',
+    canAdd: false,
+    canDelete: false,
+    canSort: false,
+    description: '从产品、项目、新闻 CMS 自动读取的数据区暂不纳入页面模块库。',
+    unavailableReason: '这些内容有独立 CMS 和数据规则，不能和页面结构编辑混在一起。',
+  },
+  {
+    id: 'pricing-membership-agent',
+    name: '价格 / 会员 / 代理模块',
+    pages: ['all'],
+    status: 'not_open',
+    canAdd: false,
+    canDelete: false,
+    canSort: false,
+    description: '涉及商业规则或权限规则的模块暂不开放。',
+    unavailableReason: '这类模块会影响业务流程，不适合在页面搭建 MVP 中开放。',
+  },
+  {
+    id: 'free-html',
+    name: '自由 HTML',
+    pages: ['all'],
+    status: 'not_open',
+    canAdd: false,
+    canDelete: false,
+    canSort: false,
+    description: '不提供自由 HTML 插入能力。',
+    unavailableReason: '会破坏品牌样式、页面稳定性和安全边界。',
+  },
+  {
+    id: 'custom-css',
+    name: '自定义 CSS',
+    pages: ['all'],
+    status: 'not_open',
+    canAdd: false,
+    canDelete: false,
+    canSort: false,
+    description: '不提供自定义 CSS 能力。',
+    unavailableReason: '会绕过受控设计系统，导致前台视觉和响应式不可控。',
+  },
+]
+
+export const PAGE_STRUCTURE_BOUNDARY_NOTES = [
+  '当前 C4-1 只完成动态渲染基础，不等于已经支持整页搭建。',
+  '当前不支持整页模块新增、删除、拖拽排序，也不会保存结构草稿。',
+  '后续必须先做页面级结构草稿和页面级快照，再开放结构编辑。',
+  'Home 将作为第一批结构编辑试点；About 暂不开放结构编辑。',
+]

@@ -7,11 +7,15 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpRight,
+  CheckCircle2,
+  CircleSlash2,
   Clock3,
   Eye,
   ImageIcon,
+  Layers3,
   Link2,
   LocateFixed,
+  LockKeyhole,
   Monitor,
   MousePointer2,
   Plus,
@@ -30,6 +34,14 @@ import { Textarea } from '@/components/ui/textarea'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import PageModuleImagePicker from '@/components/admin/PageModuleImagePicker'
 import { useUnsavedChangesWarning } from '@/components/admin/useUnsavedChangesWarning'
+import {
+  PAGE_STRUCTURE_BOUNDARY_NOTES,
+  PLANNED_PAGE_MODULE_CATALOG,
+  RESTRICTED_PAGE_MODULE_CATALOG,
+  type PageModuleCatalogItem,
+  type PageModuleCatalogPage,
+  type PageModuleCatalogStatus,
+} from '@/lib/page-module-catalog'
 import type { PageModuleItem, PageModuleLiveState, PageModuleRow, PageModuleSnapshotRow } from '@/lib/page-modules-db'
 
 type PageKey = 'home' | 'about'
@@ -124,6 +136,129 @@ function isPageKey(value: string): value is PageKey {
 
 function pageLabel(pageKey: string) {
   return isPageKey(pageKey) ? PAGE_LABELS[pageKey] : pageKey
+}
+
+const CATALOG_PAGE_LABELS = {
+  home: 'Home',
+  about: 'About',
+  all: 'All',
+} satisfies Record<PageModuleCatalogPage, string>
+
+function catalogPagesLabel(pages: PageModuleCatalogPage[]) {
+  return pages.map((page) => CATALOG_PAGE_LABELS[page]).join(' / ')
+}
+
+function catalogStatusLabel(status: PageModuleCatalogStatus) {
+  if (status === 'planned') return '可规划'
+  if (status === 'locked') return '锁定'
+  return '暂不开放'
+}
+
+function catalogStatusClassName(status: PageModuleCatalogStatus) {
+  if (status === 'planned') return 'bg-[#E36F2C]/10 text-[#E36F2C]'
+  if (status === 'locked') return 'bg-[#F5F2ED] text-[#6B625B]'
+  return 'bg-[#F5F2ED] text-[#8A8580]'
+}
+
+function CapabilityBadge({ enabled, label }: { enabled: boolean; label: string }) {
+  return (
+    <span
+      className={`inline-flex rounded-full px-2 py-0.5 text-[11px] ${
+        enabled ? 'bg-[#E36F2C]/10 text-[#E36F2C]' : 'bg-[#F5F2ED] text-[#8A8580]'
+      }`}
+    >
+      {label}：{enabled ? '规划支持' : '不支持'}
+    </span>
+  )
+}
+
+function ModuleCatalogCard({ item }: { item: PageModuleCatalogItem }) {
+  const StatusIcon = item.status === 'planned' ? CheckCircle2 : item.status === 'locked' ? LockKeyhole : CircleSlash2
+  const reasonLabel = item.status === 'planned' ? '开放前置条件' : '暂不开放原因'
+
+  return (
+    <div className="rounded-md border border-[#E5DED4] bg-white p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-[#2C2A28]">{item.name}</p>
+          <p className="mt-1 text-xs text-[#8A8580]">适用页面：{catalogPagesLabel(item.pages)}</p>
+        </div>
+        <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[11px] ${catalogStatusClassName(item.status)}`}>
+          <StatusIcon size={13} />
+          {catalogStatusLabel(item.status)}
+        </span>
+      </div>
+
+      <p className="mt-3 text-xs leading-5 text-[#6B625B]">{item.description}</p>
+
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        <CapabilityBadge label="可新增" enabled={item.canAdd} />
+        <CapabilityBadge label="可删除" enabled={item.canDelete} />
+        <CapabilityBadge label="可排序" enabled={item.canSort} />
+      </div>
+
+      {item.unavailableReason ? (
+        <p className="mt-3 rounded-md bg-[#FAF7F2] px-2 py-2 text-xs leading-5 text-[#8A8580]">
+          {reasonLabel}：{item.unavailableReason}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+function ModuleCatalogPanel() {
+  return (
+    <section className="rounded-lg border border-[#E5DED4] bg-white p-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#2C2A28]">
+            <Layers3 size={16} className="text-[#E36F2C]" />
+            <span>模块库</span>
+          </div>
+          <p className="mt-1 max-w-4xl text-xs leading-5 text-[#8A8580]">
+            C4-2a 只读展示未来可规划的受控模块类型。这里不会新增页面模块，不会保存结构草稿，也不会写入数据库。
+          </p>
+        </div>
+        <span className="inline-flex w-fit rounded-full bg-[#F5F2ED] px-3 py-1 text-xs font-medium text-[#6B625B]">
+          只读展示，无添加按钮
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_320px]">
+        <div>
+          <p className="text-xs font-semibold text-[#2C2A28]">可新增模块候选</p>
+          <p className="mt-1 text-xs leading-5 text-[#8A8580]">这些模块只是规划候选，后续要等页面级结构草稿和页面级快照完成后再开放。</p>
+          <div className="mt-3 space-y-2">
+            {PLANNED_PAGE_MODULE_CATALOG.map((item) => (
+              <ModuleCatalogCard key={item.id} item={item} />
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-[#2C2A28]">暂不开放 / 锁定模块</p>
+          <p className="mt-1 text-xs leading-5 text-[#8A8580]">这些模块不进入第一批结构编辑，避免破坏全站结构、数据链路或品牌样式。</p>
+          <div className="mt-3 space-y-2">
+            {RESTRICTED_PAGE_MODULE_CATALOG.map((item) => (
+              <ModuleCatalogCard key={item.id} item={item} />
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
+          <p className="text-xs font-semibold text-[#2C2A28]">页面结构边界</p>
+          <ul className="mt-3 space-y-2 text-xs leading-5 text-[#6B625B]">
+            {PAGE_STRUCTURE_BOUNDARY_NOTES.map((note) => (
+              <li key={note} className="flex gap-2">
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E36F2C]" />
+                <span>{note}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  )
 }
 
 function moduleSelector(id: string) {
@@ -1264,6 +1399,8 @@ export default function PageVisualEditorClient({
           </div>
         </div>
       </section>
+
+      <ModuleCatalogPanel />
 
       <div className="grid flex-1 grid-cols-1 gap-5 xl:grid-cols-[270px_minmax(0,1fr)_420px]">
         <aside className="rounded-lg border border-[#E5DED4] bg-white">
