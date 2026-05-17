@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import ProtectedImage from '@/components/ProtectedImage';
 import Link from 'next/link';
@@ -9,6 +9,12 @@ import Footer from '@/components/Footer';
 import TechDrawer from '@/components/TechDrawer';
 import GlobalMapPreview from '@/components/GlobalMapPreview';
 import { useLanguage } from '@/contexts/LanguageContext';
+import {
+  isResolvedPageModuleVisible,
+  resolveDynamicPageModules,
+  type PageModuleRegistryEntry,
+  type ResolvedPageModule,
+} from '@/lib/page-module-rendering';
 
 type Tech = 'viie' | 'vols' | 'vipc';
 
@@ -34,8 +40,34 @@ type RemotePageModuleItem = {
 };
 
 type RemotePageModule = {
+  module_key: string;
+  module_type?: string;
   is_visible?: boolean;
+  sort_order?: number;
   items?: RemotePageModuleItem[];
+};
+
+type RemotePageModulesResponse = {
+  data?: RemotePageModule[] | null;
+};
+
+const ABOUT_MODULE_REGISTRY = [
+  { rendererKey: 'about.hero', pageKey: 'about', moduleKey: 'hero', moduleType: 'fixed-content', defaultSortOrder: 10, dynamicEnabled: true },
+  { rendererKey: 'about.stats', pageKey: 'about', moduleKey: 'stats', moduleType: 'stats', defaultSortOrder: 20, dynamicEnabled: true },
+  { rendererKey: 'about.brandStory', pageKey: 'about', moduleKey: 'brand-story', moduleType: 'fixed-content', defaultSortOrder: 30, dynamicEnabled: true },
+  { rendererKey: 'about.factory', pageKey: 'about', moduleKey: 'factory', moduleType: 'gallery-with-captions', defaultSortOrder: 40, dynamicEnabled: true },
+  { rendererKey: 'about.timeline', pageKey: 'about', moduleKey: 'timeline', moduleType: 'list', defaultSortOrder: 45, dynamicEnabled: true },
+  { rendererKey: 'about.technologies', pageKey: 'about', moduleKey: 'technologies', moduleType: 'list', defaultSortOrder: 50, dynamicEnabled: true },
+  { rendererKey: 'about.recognitionAwards', pageKey: 'about', moduleKey: 'recognition-awards', moduleType: 'gallery-with-captions', defaultSortOrder: 70, dynamicEnabled: true },
+  { rendererKey: 'about.partners', pageKey: 'about', moduleKey: 'partners', moduleType: 'gallery', defaultSortOrder: 80, dynamicEnabled: true },
+  { rendererKey: 'about.founder', pageKey: 'about', moduleKey: 'founder', moduleType: 'fixed-content', defaultSortOrder: 90, dynamicEnabled: true },
+  { rendererKey: 'about.services', pageKey: 'about', moduleKey: 'services', moduleType: 'list', defaultSortOrder: 100, dynamicEnabled: true },
+] satisfies PageModuleRegistryEntry[];
+
+const ABOUT_ORDER_GROUPS = {
+  hero: 10_000,
+  preCertifications: 30_000,
+  postCertifications: 50_000,
 };
 
 // ─── scroll reveal ────────────────────────────────────────────────────────────
@@ -74,40 +106,83 @@ function Reveal({
   );
 }
 
-function useAboutModule(moduleKey: string) {
-  const [pageModule, setPageModule] = useState<RemotePageModule | null>(null);
+function useAboutPageModules() {
+  const [pageModules, setPageModules] = useState<RemotePageModule[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    const sp = new URLSearchParams({ module: moduleKey });
+    const sp = new URLSearchParams();
     const currentParams = new URLSearchParams(window.location.search);
     const previewVersion = currentParams.get('visualPreview');
     if (currentParams.get('visualDraft') === '1') sp.set('draft', '1');
     if (previewVersion) sp.set('visualPreview', previewVersion);
+    const queryString = sp.toString();
+    const url = queryString ? `/api/page-modules/about?${queryString}` : '/api/page-modules/about';
 
-    async function loadModule() {
+    async function loadModules() {
       try {
-        const res = await fetch(`/api/page-modules/about?${sp.toString()}`, { cache: 'no-store' });
+        const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) return;
-        const data = await res.json();
-        if (!cancelled) setPageModule(data?.data ?? null);
+        const data = (await res.json()) as RemotePageModulesResponse;
+        if (!cancelled && Array.isArray(data?.data)) setPageModules(data.data);
       } catch {
         // Keep static fallback content if the CMS endpoint is unavailable.
       }
     }
 
-    loadModule();
+    loadModules();
     return () => { cancelled = true; };
-  }, [moduleKey]);
+  }, []);
 
-  return pageModule;
+  return pageModules;
+}
+
+function resolvedModuleByKey(resolvedModules: ResolvedPageModule<RemotePageModule>[], moduleKey: string) {
+  return resolvedModules.find((resolved) => resolved.registry.moduleKey === moduleKey);
+}
+
+function pageModuleFromResolved(resolvedModules: ResolvedPageModule<RemotePageModule>[], moduleKey: string) {
+  return resolvedModuleByKey(resolvedModules, moduleKey)?.pageModule ?? null;
+}
+
+function visibleResolvedModule(resolvedModules: ResolvedPageModule<RemotePageModule>[], moduleKey: string) {
+  const resolved = resolvedModuleByKey(resolvedModules, moduleKey);
+  return resolved ? isResolvedPageModuleVisible(resolved) : true;
+}
+
+function clampedSortOrder(value: unknown, fallback: number) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(0, Math.min(9999, parsed));
+}
+
+function moduleVisualOrder(
+  resolvedModules: ResolvedPageModule<RemotePageModule>[],
+  moduleKey: string,
+  groupBase: number,
+  fallbackSortOrder: number,
+) {
+  const resolved = resolvedModuleByKey(resolvedModules, moduleKey);
+  return groupBase + clampedSortOrder(resolved?.sortOrder, fallbackSortOrder);
+}
+
+function hasModuleItemArray(pageModule: RemotePageModule | null) {
+  return Array.isArray(pageModule?.items);
+}
+
+function moduleItemSortOrder(item: RemotePageModuleItem) {
+  const sortOrder = Number(item.sort_order);
+  return Number.isFinite(sortOrder) ? sortOrder : 0;
+}
+
+function allModuleItems(pageModule: RemotePageModule | null) {
+  if (!pageModule || pageModule.is_visible === false || !Array.isArray(pageModule.items)) return [];
+  return [...pageModule.items].sort((a, b) => moduleItemSortOrder(a) - moduleItemSortOrder(b));
 }
 
 function moduleItems(pageModule: RemotePageModule | null) {
-  if (!pageModule || pageModule.is_visible === false || !Array.isArray(pageModule.items)) return [];
-  return [...pageModule.items]
+  return allModuleItems(pageModule)
     .filter((item) => item.is_visible !== false)
-    .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0));
 }
 
 function itemById(items: RemotePageModuleItem[], id: string) {
@@ -357,31 +432,39 @@ export default function AboutPage() {
   const [activeSection, setActiveSection] = useState('brand-story');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeTech, setActiveTech] = useState<Tech | null>(null);
-  const [awards, setAwards] = useState(AWARDS);
-  const heroModule = useAboutModule('hero');
-  const statsModule = useAboutModule('stats');
-  const brandStoryModule = useAboutModule('brand-story');
-  const factoryModule = useAboutModule('factory');
-  const timelineModule = useAboutModule('timeline');
-  const technologiesModule = useAboutModule('technologies');
-  const founderModule = useAboutModule('founder');
-  const servicesModule = useAboutModule('services');
-  const partnersModule = useAboutModule('partners');
+  const pageModules = useAboutPageModules();
+  const dynamicModules = useMemo(
+    () => resolveDynamicPageModules(pageModules, ABOUT_MODULE_REGISTRY),
+    [pageModules],
+  );
+  const heroModule = pageModuleFromResolved(dynamicModules, 'hero');
+  const statsModule = pageModuleFromResolved(dynamicModules, 'stats');
+  const brandStoryModule = pageModuleFromResolved(dynamicModules, 'brand-story');
+  const factoryModule = pageModuleFromResolved(dynamicModules, 'factory');
+  const timelineModule = pageModuleFromResolved(dynamicModules, 'timeline');
+  const technologiesModule = pageModuleFromResolved(dynamicModules, 'technologies');
+  const recognitionAwardsModule = pageModuleFromResolved(dynamicModules, 'recognition-awards');
+  const founderModule = pageModuleFromResolved(dynamicModules, 'founder');
+  const servicesModule = pageModuleFromResolved(dynamicModules, 'services');
+  const partnersModule = pageModuleFromResolved(dynamicModules, 'partners');
   const heroItems = moduleItems(heroModule);
   const statsItems = moduleItems(statsModule);
   const storyItems = moduleItems(brandStoryModule);
   const factoryItems = moduleItems(factoryModule);
   const timelineItems = moduleItems(timelineModule);
   const techModuleItems = moduleItems(technologiesModule);
+  const recognitionAwardItems = allModuleItems(recognitionAwardsModule);
   const founderItems = moduleItems(founderModule);
   const serviceModuleItems = moduleItems(servicesModule);
   const partnerItems = moduleItems(partnersModule);
+  const showHero = visibleResolvedModule(dynamicModules, 'hero');
   const heroImage = itemById(heroItems, 'about-hero-image')?.image_url || '/images/about/about_scene-01.jpg';
   const storyImage = itemById(storyItems, 'story-image')?.image_url || '/images/about/about_factory-02.jpg';
   const storyBadge = itemById(storyItems, 'story-badge');
-  const aboutStats = statsModule?.is_visible === false
+  const showStats = visibleResolvedModule(dynamicModules, 'stats');
+  const aboutStats = !showStats
     ? []
-    : statsModule
+    : hasModuleItemArray(statsModule)
     ? statsItems.map((item, index) => ({
         id: item.id ?? `about-stat-${String(index + 1).padStart(2, '0')}`,
         value: localValue(item, zh, STATS[index]?.value ?? ''),
@@ -394,7 +477,7 @@ export default function AboutPage() {
         en: item.en,
         zh: item.zh,
       }));
-  const showBrandStory = brandStoryModule?.is_visible !== false;
+  const showBrandStory = visibleResolvedModule(dynamicModules, 'brand-story');
   const storyParagraphFallbacks = [
     {
       id: 'story-paragraph-01',
@@ -418,7 +501,7 @@ export default function AboutPage() {
       text: localContent(itemById(storyItems, item.id), zh, zh ? item.zh : item.en),
     }))
     .filter((item) => Boolean(item.text));
-  const showFactory = factoryModule?.is_visible !== false;
+  const showFactory = visibleResolvedModule(dynamicModules, 'factory');
   const factoryHeroImage = itemById(factoryItems, 'factory-image-hero')?.image_url || FACTORY_HERO;
   const factoryGridImages = ['factory-image-01', 'factory-image-02', 'factory-image-03', 'factory-image-04']
     .map((id, index) => ({
@@ -426,8 +509,8 @@ export default function AboutPage() {
       src: itemById(factoryItems, id)?.image_url || FACTORY_GRID[index],
     }))
     .filter((item): item is { id: string; src: string } => Boolean(item.src));
-  const showTimeline = timelineModule?.is_visible !== false;
-  const timelineEntries = timelineModule
+  const showTimeline = visibleResolvedModule(dynamicModules, 'timeline');
+  const timelineEntries = hasModuleItemArray(timelineModule)
     ? timelineItems
         .filter((item) => typeof item.id === 'string' && item.id.startsWith('timeline-') && item.id !== 'timeline-kicker' && item.id !== 'timeline-heading')
         .map((item, index) => ({
@@ -441,7 +524,7 @@ export default function AboutPage() {
         year: item.year,
         text: zh ? item.zh : item.en,
       }));
-  const showTechnologies = technologiesModule?.is_visible !== false;
+  const showTechnologies = visibleResolvedModule(dynamicModules, 'technologies');
   const technologyFallbacks = [
     {
       id: 'tech-viie',
@@ -468,7 +551,7 @@ export default function AboutPage() {
       descZh: '工厂100%成品出厂，现场2小时完成安装，符合40尺平架集装箱规格，已合规交付30余国。',
     },
   ];
-  const technologyCards = technologiesModule
+  const technologyCards = hasModuleItemArray(technologiesModule)
     ? technologyFallbacks
         .map((fallback) => {
           const item = itemById(techModuleItems, fallback.id);
@@ -483,7 +566,7 @@ export default function AboutPage() {
         })
         .filter((item): item is (typeof technologyFallbacks)[number] => Boolean(item))
     : technologyFallbacks;
-  const showFounder = founderModule?.is_visible !== false;
+  const showFounder = visibleResolvedModule(dynamicModules, 'founder');
   const founderPhoto = itemById(founderItems, 'founder-photo')?.image_url || '/images/about/about_team-05.jpg';
   const founderTags = ['founder-tag-01', 'founder-tag-02', 'founder-tag-03']
     .map((id) => {
@@ -494,8 +577,8 @@ export default function AboutPage() {
       return localText(itemById(founderItems, id), zh, fallback[index] ?? '');
     })
     .filter(Boolean);
-  const showServices = servicesModule?.is_visible !== false;
-  const serviceCards = servicesModule
+  const showServices = visibleResolvedModule(dynamicModules, 'services');
+  const serviceCards = hasModuleItemArray(servicesModule)
     ? SERVICES.map((fallback, index) => {
         const item = itemById(serviceModuleItems, `service-${String(index + 1).padStart(2, '0')}`);
         if (!item) return null;
@@ -508,8 +591,8 @@ export default function AboutPage() {
         };
       }).filter((item): item is (typeof SERVICES)[number] => Boolean(item))
     : SERVICES;
-  const showPartners = partnersModule?.is_visible !== false;
-  const partnerImages = partnersModule
+  const showPartners = visibleResolvedModule(dynamicModules, 'partners');
+  const partnerImages = hasModuleItemArray(partnersModule)
     ? partnerItems
         .filter((item) => Boolean(item.image_url))
         .map((item, index) => ({
@@ -522,6 +605,21 @@ export default function AboutPage() {
         src,
         alt: `Partner ${index + 1}`,
       }));
+  const showRecognitionAwards = visibleResolvedModule(dynamicModules, 'recognition-awards');
+  const awards = showRecognitionAwards && hasModuleItemArray(recognitionAwardsModule)
+    ? AWARDS.map((award) => {
+        const value = recognitionAwardItems.find((item) => item.image_url === award.src || item.id === award.id);
+        if (!value) return award;
+        return {
+          ...award,
+          zh: value.label_zh || award.zh,
+          en: value.label_en || award.en,
+          isVisible: value.is_visible !== false,
+        };
+      }).filter((award) => award.isVisible)
+    : showRecognitionAwards
+    ? AWARDS
+    : [];
 
   const openTech = (tech: Tech) => {
     setActiveTech(tech);
@@ -543,58 +641,15 @@ export default function AboutPage() {
     return () => observers.forEach((obs) => obs?.disconnect());
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadAwards() {
-      try {
-        const res = await fetch('/api/page-modules/about?module=recognition-awards', { cache: 'no-store' });
-        if (!res.ok) return;
-        const data = await res.json();
-        const pageModule = data?.data;
-        if (!pageModule || pageModule.is_visible === false || !Array.isArray(pageModule.items)) {
-          if (!cancelled && pageModule?.is_visible === false) setAwards([]);
-          return;
-        }
-
-        const remote = new Map<string, RemotePageModuleItem>();
-        for (const item of pageModule.items as unknown[]) {
-          if (!item || typeof item !== 'object') continue;
-          const value = item as RemotePageModuleItem;
-          const key = value.image_url || value.id || '';
-          if (key) remote.set(key, value);
-        }
-
-        const merged = AWARDS
-          .map((award) => {
-            const value = remote.get(award.src) ?? remote.get(award.id);
-            if (!value) return award;
-            return {
-              ...award,
-              zh: value.label_zh || award.zh,
-              en: value.label_en || award.en,
-              isVisible: value.is_visible !== false,
-            };
-          })
-          .filter((award) => award.isVisible);
-
-        if (!cancelled) setAwards(merged);
-      } catch {
-        // Keep the static fallback content if the CMS endpoint is unavailable.
-      }
-    }
-
-    loadAwards();
-    return () => { cancelled = true; };
-  }, []);
-
   return (
     <div className="min-h-screen flex flex-col bg-[#241F1B]">
       <Navbar />
 
       {/* ── S1 Hero ───────────────────────────────────────────── */}
+      {showHero ? (
       <section
         className="relative h-[90vh] min-h-[600px] flex items-end"
+        style={{ order: moduleVisualOrder(dynamicModules, 'hero', ABOUT_ORDER_GROUPS.hero, 10) }}
         data-page-module="about:hero"
         data-page-key="about"
         data-module-key="hero"
@@ -641,14 +696,18 @@ export default function AboutPage() {
           </p>
         </div>
       </section>
+      ) : null}
 
       {/* ── Anchor Nav ───────────────────────────────────────── */}
-      <AnchorNav activeSection={activeSection} zh={zh} />
+      <div style={{ order: 20_000 }}>
+        <AnchorNav activeSection={activeSection} zh={zh} />
+      </div>
 
       {/* ── S2 Stats bar ─────────────────────────────────────── */}
       {aboutStats.length > 0 ? (
         <section
           className="bg-[#F5F2ED] border-b border-[#E5E0DA]"
+          style={{ order: moduleVisualOrder(dynamicModules, 'stats', ABOUT_ORDER_GROUPS.preCertifications, 20) }}
           data-page-module="about:stats"
           data-page-key="about"
           data-module-key="stats"
@@ -684,6 +743,7 @@ export default function AboutPage() {
       <section
         id="brand-story"
         className="bg-[#F5F2ED] py-24 px-6"
+        style={{ order: moduleVisualOrder(dynamicModules, 'brand-story', ABOUT_ORDER_GROUPS.preCertifications, 30) }}
         data-page-module="about:brand-story"
         data-page-key="about"
         data-module-key="brand-story"
@@ -770,6 +830,7 @@ export default function AboutPage() {
       {showFactory ? (
       <section
         className="bg-[#241F1B] py-24 px-6"
+        style={{ order: moduleVisualOrder(dynamicModules, 'factory', ABOUT_ORDER_GROUPS.preCertifications, 40) }}
         data-page-module="about:factory"
         data-page-key="about"
         data-module-key="factory"
@@ -843,6 +904,7 @@ export default function AboutPage() {
       {showTimeline && timelineEntries.length > 0 ? (
       <section
         className="bg-[#F5F2ED] py-24 px-6"
+        style={{ order: moduleVisualOrder(dynamicModules, 'timeline', ABOUT_ORDER_GROUPS.preCertifications, 45) }}
         data-page-module="about:timeline"
         data-page-key="about"
         data-module-key="timeline"
@@ -902,6 +964,7 @@ export default function AboutPage() {
       <section
         id="technologies"
         className="bg-[#F5F2ED] py-20 px-6"
+        style={{ order: moduleVisualOrder(dynamicModules, 'technologies', ABOUT_ORDER_GROUPS.preCertifications, 50) }}
         data-page-module="about:technologies"
         data-page-key="about"
         data-module-key="technologies"
@@ -978,7 +1041,7 @@ export default function AboutPage() {
       ) : null}
 
       {/* ── S8 Certifications ────────────────────────────────── */}
-      <section id="certifications" className="bg-[#241F1B] py-24 px-6">
+      <section id="certifications" className="bg-[#241F1B] py-24 px-6" style={{ order: 40_000 }}>
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-12">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
@@ -1050,6 +1113,7 @@ export default function AboutPage() {
             </div>
           </Reveal>
 
+          {awards.length > 0 ? (
           <div
             className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
             data-page-module="about:recognition-awards"
@@ -1082,6 +1146,7 @@ export default function AboutPage() {
               </Reveal>
             ))}
           </div>
+          ) : null}
         </div>
       </section>
 
@@ -1089,6 +1154,7 @@ export default function AboutPage() {
       {showPartners && partnerImages.length > 0 ? (
       <section
         className="bg-[#F5F2ED] py-24 px-6"
+        style={{ order: moduleVisualOrder(dynamicModules, 'partners', ABOUT_ORDER_GROUPS.postCertifications, 80) }}
         data-page-module="about:partners"
         data-page-key="about"
         data-module-key="partners"
@@ -1155,6 +1221,7 @@ export default function AboutPage() {
       <section
         id="founder"
         className="bg-[#241F1B] py-24 px-6"
+        style={{ order: moduleVisualOrder(dynamicModules, 'founder', ABOUT_ORDER_GROUPS.postCertifications, 90) }}
         data-page-module="about:founder"
         data-page-key="about"
         data-module-key="founder"
@@ -1252,6 +1319,7 @@ export default function AboutPage() {
       {showServices ? (
       <section
         className="bg-[#F5F2ED] py-24 px-6"
+        style={{ order: moduleVisualOrder(dynamicModules, 'services', ABOUT_ORDER_GROUPS.postCertifications, 100) }}
         data-page-module="about:services"
         data-page-key="about"
         data-module-key="services"
@@ -1311,7 +1379,7 @@ export default function AboutPage() {
       ) : null}
 
       {/* ── S10 Global reach ─────────────────────────────────── */}
-      <section className="bg-[#241F1B] py-16 px-6">
+      <section className="bg-[#241F1B] py-16 px-6" style={{ order: 60_000 }}>
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-8">
             <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
@@ -1351,7 +1419,7 @@ export default function AboutPage() {
       </section>
 
       {/* ── CTA ──────────────────────────────────────────────── */}
-      <section className="bg-[#E36F2C] py-20 px-6">
+      <section className="bg-[#E36F2C] py-20 px-6" style={{ order: 70_000 }}>
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-8">
           <div>
             <h2
@@ -1385,14 +1453,18 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <Footer />
+      <div style={{ order: 80_000 }}>
+        <Footer />
+      </div>
 
-      <TechDrawer
-        isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        tech={activeTech}
-        lang={lang}
-      />
+      <div style={{ order: 90_000 }}>
+        <TechDrawer
+          isOpen={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          tech={activeTech}
+          lang={lang}
+        />
+      </div>
     </div>
   );
 }
