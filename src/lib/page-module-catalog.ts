@@ -24,7 +24,7 @@ export const PLANNED_PAGE_MODULE_CATALOG: PageModuleCatalogItem[] = [
     canDelete: true,
     canSort: true,
     description: '用于放置标题、说明文字和一个或两个按钮，适合承接咨询、下载、跳转等动作。',
-    unavailableReason: '需要页面级结构草稿和页面级快照后再开放。',
+    unavailableReason: 'C4-2c 仅开放 Home 的 credentials 后、CoreTech 前安全插入区。',
   },
   {
     id: 'simple-text',
@@ -35,7 +35,7 @@ export const PLANNED_PAGE_MODULE_CATALOG: PageModuleCatalogItem[] = [
     canDelete: true,
     canSort: true,
     description: '用于展示小标题、标题和正文，不允许自定义字体、颜色或排版。',
-    unavailableReason: '需要先定义字段 schema、默认内容和发布前检查。',
+    unavailableReason: 'C4-2c 仅开放 Home 的 credentials 后、CoreTech 前安全插入区。',
   },
   {
     id: 'text-image',

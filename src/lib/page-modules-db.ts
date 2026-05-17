@@ -1,5 +1,13 @@
 import { createHash, randomUUID } from 'crypto'
 import { pool } from '@/lib/db'
+import {
+  clonePageModuleTemplateContent,
+  getPageModuleTemplate,
+  getPageModuleTemplateByModuleType,
+  isTemplateBackedPageModule,
+  isPageModuleTemplateAllowedOnPage,
+  type PageModuleTemplate,
+} from '@/lib/page-module-templates'
 
 export type PageModuleItem = {
   id: string
@@ -1270,9 +1278,12 @@ function pageModuleToLiveState(pageModule: PageModuleRow): PageModuleLiveState {
 }
 
 function pageModuleToStructureModule(pageModule: PageModuleRow): PageStructureModule {
+  const template = getPageModuleTemplateByModuleType(pageModule.module_type)
+  const templateAllowed = Boolean(template && isPageModuleTemplateAllowedOnPage(template, pageModule.page_key))
+
   return {
     moduleKey: pageModule.module_key,
-    rendererKey: pageStructureRendererKey(pageModule.page_key, pageModule.module_key),
+    rendererKey: templateAllowed && template ? template.rendererKey : pageStructureRendererKey(pageModule.page_key, pageModule.module_key),
     moduleType: pageModule.module_type,
     sortOrder: Number(pageModule.sort_order) || 0,
     isVisible: pageModule.is_visible,
@@ -1280,7 +1291,7 @@ function pageModuleToStructureModule(pageModule: PageModuleRow): PageStructureMo
     locked: pageModule.module_key === 'hero',
     required: pageModule.module_key === 'hero',
     sourceModuleKey: null,
-    createdFromTemplate: null,
+    createdFromTemplate: templateAllowed && template ? template.templateId : null,
   }
 }
 
@@ -1347,6 +1358,78 @@ function pageStructureHashFromModules(modules: PageStructureModule[]) {
     .sort((a, b) => a.sortOrder - b.sortOrder || a.moduleKey.localeCompare(b.moduleKey))
 
   return createHash('sha256').update(JSON.stringify(comparable)).digest('hex')
+}
+
+function sortPageStructureModules(modules: PageStructureModule[]) {
+  return [...modules].sort((a, b) => a.sortOrder - b.sortOrder || a.moduleKey.localeCompare(b.moduleKey))
+}
+
+function shortModuleKeySuffix() {
+  return randomUUID().replace(/-/g, '').slice(0, 6)
+}
+
+function countTemplateInstances(modules: PageStructureModule[], template: PageModuleTemplate) {
+  return modules.filter((module) => (
+    module.status !== 'removed' &&
+    (module.createdFromTemplate === template.templateId || module.moduleType === template.moduleType)
+  )).length
+}
+
+function nextHomeInsertSortOrder(modules: PageStructureModule[]) {
+  const credentials = modules.find((module) => module.moduleKey === 'credentials')
+  const base = Number(credentials?.sortOrder) || 20
+  const insertAreaModules = modules.filter((module) => (
+    module.status !== 'removed' &&
+    module.moduleKey !== 'hero' &&
+    module.moduleKey !== 'credentials' &&
+    Number(module.sortOrder) > base
+  ))
+  const highest = insertAreaModules.reduce((max, module) => Math.max(max, Number(module.sortOrder) || 0), base)
+  return highest + 10
+}
+
+function buildTemplateModuleInput(template: PageModuleTemplate, sortOrder: number): PageModuleInput {
+  const content = clonePageModuleTemplateContent(template)
+  return {
+    title_zh: content.title_zh,
+    title_en: content.title_en,
+    description_zh: content.description_zh,
+    description_en: content.description_en,
+    items: content.items,
+    is_visible: content.is_visible,
+    sort_order: sortOrder,
+  }
+}
+
+function isTemplateBackedLivePageModule(pageModule: PageModuleRow) {
+  return isTemplateBackedPageModule(pageModule.page_key, pageModule.module_type)
+}
+
+async function updatePageStructureDraftModules(pageKey: string, modules: PageStructureModule[], adminId: string) {
+  const normalizedModules = sortPageStructureModules(modules)
+  const summary = buildPageStructureSummary(normalizedModules)
+  const imageRefs = extractPageStructureImageRefs(normalizedModules)
+
+  await ensurePageStructureDraftsSchema()
+  await pool.query(
+    `UPDATE page_structure_drafts
+     SET modules = $2::jsonb,
+         updated_by = $3,
+         updated_at = NOW(),
+         draft_status = 'active',
+         schema_version = $4,
+         summary = $5::jsonb,
+         image_refs = $6::jsonb
+     WHERE page_key = $1`,
+    [
+      pageKey,
+      JSON.stringify(normalizedModules),
+      adminId,
+      PAGE_STRUCTURE_SCHEMA_VERSION,
+      JSON.stringify(summary),
+      JSON.stringify(imageRefs),
+    ],
+  )
 }
 
 function latestModuleUpdatedAt(modules: PageModuleRow[]) {
@@ -1868,14 +1951,124 @@ export async function createPageStructureDraft(pageKey: string, adminId: string)
 
 export async function deletePageStructureDraft(pageKey: string): Promise<boolean> {
   await ensurePageStructureDraftsSchema()
-  const res = await pool.query<{ id: string }>(
-    `DELETE FROM page_structure_drafts
-     WHERE page_key = $1
-     RETURNING id`,
-    [pageKey],
-  )
+  const draft = await getPageStructureDraft(pageKey)
+  const addedModuleKeys = draft?.modules
+    .filter((module) => module.status === 'added')
+    .map((module) => module.moduleKey) ?? []
+  if (addedModuleKeys.length > 0) await ensurePageModuleDraftsSchema()
 
-  return Boolean(res.rows[0]?.id)
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    if (addedModuleKeys.length > 0) {
+      await client.query(
+        `DELETE FROM page_module_drafts
+         WHERE page_key = $1 AND module_key = ANY($2::text[])`,
+        [pageKey, addedModuleKeys],
+      )
+    }
+
+    const res = await client.query<{ id: string }>(
+      `DELETE FROM page_structure_drafts
+       WHERE page_key = $1
+       RETURNING id`,
+      [pageKey],
+    )
+
+    await client.query('COMMIT')
+    return Boolean(res.rows[0]?.id)
+  } catch (err) {
+    await client.query('ROLLBACK')
+    throw err
+  } finally {
+    client.release()
+  }
+}
+
+export async function addPageStructureDraftModule(
+  pageKey: string,
+  templateId: string,
+  adminId: string,
+): Promise<{ draft: PageStructureDraftRow; pageModule: PageModuleRow }> {
+  const template = getPageModuleTemplate(templateId)
+  if (!template || !isPageModuleTemplateAllowedOnPage(template, pageKey)) {
+    throw new Error('Template not available for this page')
+  }
+
+  if (pageKey !== 'home') {
+    throw new Error('Only Home supports adding modules in C4-2c')
+  }
+
+  const draft = await createPageStructureDraft(pageKey, adminId)
+  if (draft.draft_status === 'stale') {
+    throw new Error('Structure draft is stale')
+  }
+
+  if (countTemplateInstances(draft.modules, template) >= template.maxInstances) {
+    throw new Error('Template instance limit reached')
+  }
+
+  const liveModules = await listPageModules(pageKey)
+  const moduleDrafts = await listPageModuleDrafts(pageKey)
+  const usedKeys = new Set([
+    ...draft.modules.map((module) => module.moduleKey),
+    ...liveModules.map((module) => module.module_key),
+    ...moduleDrafts.map((module) => module.module_key),
+  ])
+
+  let moduleKey = ''
+  for (let i = 0; i < 20; i += 1) {
+    const candidate = `${template.templateId}-${shortModuleKeySuffix()}`
+    if (!usedKeys.has(candidate)) {
+      moduleKey = candidate
+      break
+    }
+  }
+  if (!moduleKey) throw new Error('Failed to generate module key')
+
+  const sortOrder = nextHomeInsertSortOrder(draft.modules)
+  const structureModule: PageStructureModule = {
+    moduleKey,
+    rendererKey: template.rendererKey,
+    moduleType: template.moduleType,
+    sortOrder,
+    isVisible: true,
+    status: 'added',
+    locked: false,
+    required: false,
+    sourceModuleKey: null,
+    createdFromTemplate: template.templateId,
+  }
+  const modules = sortPageStructureModules([...draft.modules, structureModule])
+  const input = buildTemplateModuleInput(template, sortOrder)
+
+  await updatePageStructureDraftModules(pageKey, modules, adminId)
+  const pageModule = await savePageModuleDraft(pageKey, moduleKey, input, adminId, template.moduleType)
+  const nextDraft = await getPageStructureDraft(pageKey)
+  if (!nextDraft || !pageModule) throw new Error('Failed to add module to structure draft')
+
+  return { draft: nextDraft, pageModule }
+}
+
+export async function deleteAddedPageStructureDraftModule(
+  pageKey: string,
+  moduleKey: string,
+  adminId: string,
+): Promise<PageStructureDraftRow | null> {
+  const draft = await getPageStructureDraft(pageKey)
+  if (!draft || draft.draft_status === 'discarded') return null
+
+  const target = draft.modules.find((module) => module.moduleKey === moduleKey)
+  if (!target) return draft
+  if (target.status !== 'added') {
+    throw new Error('Only draft-added modules can be deleted')
+  }
+
+  const modules = draft.modules.filter((module) => module.moduleKey !== moduleKey)
+  await updatePageStructureDraftModules(pageKey, modules, adminId)
+  await deletePageModuleDraft(pageKey, moduleKey)
+
+  return getPageStructureDraft(pageKey)
 }
 
 async function markPageStructureDraftStale(pageKey: string): Promise<PageStructureDraftRow | null> {
@@ -1949,6 +2142,11 @@ export async function restorePageStructureSnapshotToDraft(
   const snapshot = await getPageStructureSnapshot(snapshotId)
   if (!snapshot || snapshot.page_key !== pageKey) return null
 
+  const existingDraft = await getPageStructureDraft(pageKey)
+  const existingAddedModuleKeys = existingDraft?.modules
+    .filter((module) => module.status === 'added')
+    .map((module) => module.moduleKey) ?? []
+  if (existingAddedModuleKeys.length > 0) await ensurePageModuleDraftsSchema()
   const liveModules = await listPageModules(pageKey)
   const baseModules = liveModules.map(pageModuleToStructureModule)
   const baseHash = pageStructureHashFromModules(baseModules)
@@ -1957,6 +2155,14 @@ export async function restorePageStructureSnapshotToDraft(
   const imageRefs = extractPageStructureImageRefs(snapshot.modules)
 
   await ensurePageStructureDraftsSchema()
+  if (existingAddedModuleKeys.length > 0) {
+    await pool.query(
+      `DELETE FROM page_module_drafts
+       WHERE page_key = $1 AND module_key = ANY($2::text[])`,
+      [pageKey, existingAddedModuleKeys],
+    )
+  }
+
   await pool.query(
     `INSERT INTO page_structure_drafts (
        id, page_key, base_hash, base_updated_at, modules, updated_by,
@@ -2048,6 +2254,18 @@ export async function publishPageStructureDraft(
     )
 
     const liveByKey = new Map(liveModules.map((pageModule) => [pageModule.module_key, pageModule]))
+    const draftContentByKey = new Map((await listPageModuleDrafts(pageKey)).map((pageModule) => [pageModule.module_key, pageModule]))
+    const publishedAddedKeys: string[] = []
+    const targetModuleKeys = new Set(draft.modules.map((structureModule) => structureModule.moduleKey))
+    const liveModulesMissingFromTarget = liveModules.filter((pageModule) => !targetModuleKeys.has(pageModule.module_key))
+    const removableLiveOnlyKeys: string[] = []
+
+    for (const pageModule of liveModulesMissingFromTarget) {
+      if (!isTemplateBackedLivePageModule(pageModule)) {
+        throw new Error(`Cannot remove non-template module missing from target structure: ${pageKey}:${pageModule.module_key}`)
+      }
+      removableLiveOnlyKeys.push(pageModule.module_key)
+    }
 
     for (const structureModule of draft.modules) {
       if (structureModule.status === 'removed') {
@@ -2060,6 +2278,42 @@ export async function publishPageStructureDraft(
            WHERE page_key = $1 AND module_key = $2`,
           [pageKey, structureModule.moduleKey, structureModule.sortOrder, adminId],
         )
+        continue
+      }
+
+      if (structureModule.status === 'added') {
+        const draftContent = draftContentByKey.get(structureModule.moduleKey)
+        if (!draftContent) {
+          throw new Error(`Cannot publish added module without content draft: ${pageKey}:${structureModule.moduleKey}`)
+        }
+
+        const inserted = await client.query(
+          `INSERT INTO page_modules (
+             id, page_key, module_key, module_type, title_zh, title_en,
+             description_zh, description_en, items, is_visible, sort_order, updated_by, updated_at
+           )
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12, NOW())
+           ON CONFLICT (page_key, module_key)
+           DO NOTHING`,
+          [
+            `${pageKey}:${structureModule.moduleKey}`,
+            pageKey,
+            structureModule.moduleKey,
+            structureModule.moduleType,
+            draftContent.title_zh,
+            draftContent.title_en,
+            draftContent.description_zh,
+            draftContent.description_en,
+            JSON.stringify(draftContent.items),
+            structureModule.isVisible,
+            structureModule.sortOrder,
+            adminId,
+          ],
+        )
+        if (inserted.rowCount !== 1) {
+          throw new Error(`Failed to insert added module: ${pageKey}:${structureModule.moduleKey}`)
+        }
+        publishedAddedKeys.push(structureModule.moduleKey)
         continue
       }
 
@@ -2086,11 +2340,32 @@ export async function publishPageStructureDraft(
       )
     }
 
+    if (removableLiveOnlyKeys.length > 0) {
+      await client.query(
+        `DELETE FROM page_modules
+         WHERE page_key = $1 AND module_key = ANY($2::text[])`,
+        [pageKey, removableLiveOnlyKeys],
+      )
+      await client.query(
+        `DELETE FROM page_module_drafts
+         WHERE page_key = $1 AND module_key = ANY($2::text[])`,
+        [pageKey, removableLiveOnlyKeys],
+      )
+    }
+
     await client.query(
       `DELETE FROM page_structure_drafts
        WHERE page_key = $1`,
       [pageKey],
     )
+
+    if (publishedAddedKeys.length > 0) {
+      await client.query(
+        `DELETE FROM page_module_drafts
+         WHERE page_key = $1 AND module_key = ANY($2::text[])`,
+        [pageKey, publishedAddedKeys],
+      )
+    }
 
     await client.query(
       `DELETE FROM page_structure_snapshots
@@ -2125,11 +2400,14 @@ export async function savePageModuleDraft(
   moduleKey: string,
   input: PageModuleInput,
   adminId: string,
+  moduleTypeOverride?: string,
 ): Promise<PageModuleRow | null> {
   await ensurePageModuleDraftsSchema()
   const live = await getPageModule(pageKey, moduleKey)
   const fallback = getDefaultPageModule(pageKey, moduleKey)
-  const moduleType = live?.module_type ?? fallback?.module_type ?? 'fixed-content'
+  const structureDraft = !live && !fallback ? await getPageStructureDraft(pageKey) : null
+  const structureDraftModule = structureDraft?.modules.find((module) => module.moduleKey === moduleKey)
+  const moduleType = moduleTypeOverride ?? live?.module_type ?? fallback?.module_type ?? structureDraftModule?.moduleType ?? 'fixed-content'
   const id = live?.id ?? fallback?.id ?? `${pageKey}:${moduleKey}`
   const baseUpdatedAt = live?.updated_at || null
 
@@ -2410,6 +2688,12 @@ export async function publishPageModuleDraft(
   moduleKey: string,
   adminId: string,
 ): Promise<PageModuleRow | null> {
+  const structureDraft = await getPageStructureDraft(pageKey)
+  const structureDraftModule = structureDraft?.modules.find((module) => module.moduleKey === moduleKey)
+  if (structureDraftModule?.status === 'added') {
+    throw new Error('Draft-added modules must be published through the page structure draft')
+  }
+
   const draft = await getPageModuleDraft(pageKey, moduleKey)
   if (!draft) return null
 

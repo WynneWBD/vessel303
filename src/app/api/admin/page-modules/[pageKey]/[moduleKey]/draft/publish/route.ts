@@ -28,7 +28,15 @@ export async function POST(_req: Request, ctx: Ctx) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  const pageModule = await publishPageModuleDraft(pageKey, moduleKey, admin.id)
+  let pageModule = null
+  try {
+    pageModule = await publishPageModuleDraft(pageKey, moduleKey, admin.id)
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Publish draft failed' },
+      { status: 400 },
+    )
+  }
   if (!pageModule) return NextResponse.json({ error: 'Draft not found' }, { status: 404 })
 
   revalidatePageModulePath(pageKey)

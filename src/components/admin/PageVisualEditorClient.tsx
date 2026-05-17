@@ -42,6 +42,11 @@ import {
   type PageModuleCatalogPage,
   type PageModuleCatalogStatus,
 } from '@/lib/page-module-catalog'
+import {
+  HOME_ADDABLE_PAGE_MODULE_TEMPLATES,
+  isTemplateBackedPageModule,
+  type PageModuleTemplateId,
+} from '@/lib/page-module-templates'
 import type {
   PageModuleItem,
   PageModuleLiveState,
@@ -213,7 +218,17 @@ function ModuleCatalogCard({ item }: { item: PageModuleCatalogItem }) {
   )
 }
 
-function ModuleCatalogPanel() {
+function ModuleCatalogPanel({
+  selectedPage,
+  currentStructureDraft,
+  structureBusy,
+  onAddTemplate,
+}: {
+  selectedPage: PageKey
+  currentStructureDraft: PageStructureDraftRow | null
+  structureBusy: string | null
+  onAddTemplate: (templateId: PageModuleTemplateId) => void
+}) {
   return (
     <section className="rounded-lg border border-[#E5DED4] bg-white p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -223,22 +238,46 @@ function ModuleCatalogPanel() {
             <span>模块库</span>
           </div>
           <p className="mt-1 max-w-4xl text-xs leading-5 text-[#8A8580]">
-            C4-2a 只读展示未来可规划的受控模块类型。这里不会新增页面模块，不会保存结构草稿，也不会写入数据库。
+            C4-2c 只允许 Home 在 credentials 后、CoreTech 前添加 simple-text 和 cta-section。About 暂不开放添加入口。
           </p>
         </div>
         <span className="inline-flex w-fit rounded-full bg-[#F5F2ED] px-3 py-1 text-xs font-medium text-[#6B625B]">
-          只读展示，无添加按钮
+          Home 安全插入区
         </span>
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_320px]">
         <div>
           <p className="text-xs font-semibold text-[#2C2A28]">可新增模块候选</p>
-          <p className="mt-1 text-xs leading-5 text-[#8A8580]">这些模块只是规划候选，后续要等页面级结构草稿和页面级快照完成后再开放。</p>
+          <p className="mt-1 text-xs leading-5 text-[#8A8580]">本轮只开放 simple-text 和 cta-section 到 Home 结构草稿；新增后不会立即影响普通前台。</p>
           <div className="mt-3 space-y-2">
-            {PLANNED_PAGE_MODULE_CATALOG.map((item) => (
-              <ModuleCatalogCard key={item.id} item={item} />
-            ))}
+            {PLANNED_PAGE_MODULE_CATALOG.map((item) => {
+              const template = HOME_ADDABLE_PAGE_MODULE_TEMPLATES.find((entry) => entry.templateId === item.id)
+              const canAddToHome = selectedPage === 'home' && Boolean(template)
+              const stale = currentStructureDraft?.draft_status === 'stale'
+              return (
+                <div key={item.id} className="rounded-md border border-[#E5DED4]">
+                  <ModuleCatalogCard item={item} />
+                  {canAddToHome && template ? (
+                    <div className="border-t border-[#E5DED4] bg-[#FAF7F2] px-3 py-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={Boolean(structureBusy) || stale}
+                        onClick={() => onAddTemplate(template.templateId)}
+                      >
+                        <Plus size={14} />
+                        {currentStructureDraft ? '添加到结构草稿' : '创建草稿并添加'}
+                      </Button>
+                      <p className="mt-2 text-[11px] leading-4 text-[#8A8580]">
+                        仅进入 Home 结构草稿，发布前普通前台不可见。
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              )
+            })}
           </div>
         </div>
 
@@ -358,8 +397,19 @@ function modulesEqual(a: PageModuleRow | undefined, b: PageModuleRow | undefined
 
 function filterEditableModules(modules: PageModuleRow[]) {
   return modules
-    .filter((pageModule) => EDITABLE_MODULE_ID_SET.has(moduleId(pageModule)))
-    .sort((a, b) => EDITABLE_MODULE_IDS.indexOf(moduleId(a)) - EDITABLE_MODULE_IDS.indexOf(moduleId(b)))
+    .filter((pageModule) => (
+      EDITABLE_MODULE_ID_SET.has(moduleId(pageModule)) ||
+      isTemplateBackedPageModule(pageModule.page_key, pageModule.module_type)
+    ))
+    .sort((a, b) => {
+      const aStaticIndex = EDITABLE_MODULE_IDS.indexOf(moduleId(a))
+      const bStaticIndex = EDITABLE_MODULE_IDS.indexOf(moduleId(b))
+      if (aStaticIndex >= 0 && bStaticIndex >= 0) return aStaticIndex - bStaticIndex
+      if (a.page_key === b.page_key) {
+        return Number(a.sort_order) - Number(b.sort_order) || a.module_key.localeCompare(b.module_key)
+      }
+      return a.page_key.localeCompare(b.page_key)
+    })
 }
 
 function sortedItems(items: PageModuleItem[]) {
@@ -794,6 +844,12 @@ export default function PageVisualEditorClient({
   const activePageKey = active?.page_key ?? ''
   const activeModuleKey = active?.module_key ?? ''
   const activeItems = useMemo(() => (active ? sortedItems(active.items) : []), [active])
+  const currentStructureModulesByKey = useMemo(
+    () => new Map((currentStructureDraft?.modules ?? []).map((pageModule) => [pageModule.moduleKey, pageModule])),
+    [currentStructureDraft],
+  )
+  const activeStructureModule = active ? currentStructureModulesByKey.get(active.module_key) ?? null : null
+  const activeIsDraftAdded = activeStructureModule?.status === 'added'
   const activeHasSavedDraft = active?.has_draft === true
   const activeDraftUpdatedAt = active?.draft_updated_at ? formatSnapshotTime(active.draft_updated_at) : null
   const activeLiveUpdatedAt = active?.live_updated_at ? formatSnapshotTime(active.live_updated_at) : null
@@ -1229,6 +1285,94 @@ export default function PageVisualEditorClient({
     }
   }
 
+  const reloadPreviewModules = async (pageKey: PageKey) => {
+    const sp = new URLSearchParams({ draft: '1', visualPreview: String(Date.now()) })
+    const res = await fetch(`/api/page-modules/${pageKey}?${sp.toString()}`, { cache: 'no-store' })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok || !Array.isArray(data.data)) {
+      throw new Error(typeof data.error === 'string' ? data.error : '刷新页面模块失败')
+    }
+
+    const nextModules = filterEditableModules(data.data as PageModuleRow[]).map(cloneModule)
+    setModules((prev) => [
+      ...prev.filter((pageModule) => pageModule.page_key !== pageKey),
+      ...nextModules,
+    ])
+    setSavedModules((prev) => [
+      ...prev.filter((pageModule) => pageModule.page_key !== pageKey),
+      ...nextModules.map(cloneModule),
+    ])
+    return nextModules
+  }
+
+  const addStructureModule = async (templateId: PageModuleTemplateId) => {
+    if (selectedPage !== 'home') {
+      toast.error('C4-2c 只支持 Home 新增模块')
+      return
+    }
+    if (hasAnyUnsavedChanges) {
+      toast.error('请先保存或撤销当前未保存修改，再新增结构模块')
+      return
+    }
+
+    setStructureBusy(`add:${templateId}`)
+    try {
+      const res = await fetch('/api/admin/page-structures/home/draft/modules', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ templateId }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : '新增结构模块失败')
+
+      upsertStructureDraft(data.data as PageStructureDraftRow)
+      const nextModules = await reloadPreviewModules('home')
+      const added = data.module as PageModuleRow | undefined
+      if (added?.module_key) {
+        setSelectedPage('home')
+        setSelectedModuleId(`home:${added.module_key}`)
+      } else if (nextModules[0]) {
+        setSelectedModuleId(moduleId(nextModules[0]))
+      }
+      setPreviewVersion(Date.now())
+      setFrameLoaded(false)
+      toast.success('模块已添加到 Home 结构草稿，普通前台暂不可见。')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '新增结构模块失败')
+    } finally {
+      setStructureBusy(null)
+    }
+  }
+
+  const deleteAddedStructureModule = async (pageModule: PageModuleRow) => {
+    if (pageModule.page_key !== 'home') return
+    if (hasAnyUnsavedChanges) {
+      toast.error('请先保存或撤销当前未保存修改，再删除草稿新增模块')
+      return
+    }
+
+    setStructureBusy(`delete-added:${pageModule.module_key}`)
+    try {
+      const res = await fetch(`/api/admin/page-structures/home/draft/modules/${pageModule.module_key}`, {
+        method: 'DELETE',
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : '删除草稿新增模块失败')
+
+      upsertStructureDraft(data.data as PageStructureDraftRow)
+      const nextModules = await reloadPreviewModules('home')
+      const nextActive = nextModules.find((item) => item.page_key === selectedPage) ?? nextModules[0]
+      if (nextActive) setSelectedModuleId(moduleId(nextActive))
+      setPreviewVersion(Date.now())
+      setFrameLoaded(false)
+      toast.success('草稿新增模块已删除，不影响线上页面。')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '删除草稿新增模块失败')
+    } finally {
+      setStructureBusy(null)
+    }
+  }
+
   const createStructureDraft = async () => {
     const pageKey = selectedPage
     setStructureBusy(`create:${pageKey}`)
@@ -1257,6 +1401,9 @@ export default function PageVisualEditorClient({
       if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : '丢弃结构草稿失败')
 
       removeStructureDraft(pageKey)
+      const nextModules = await reloadPreviewModules(pageKey)
+      const nextActive = nextModules.find((item) => item.page_key === pageKey)
+      if (nextActive) setSelectedModuleId(moduleId(nextActive))
       setStructureDiscardConfirmOpen(false)
       setPreviewVersion(Date.now())
       setFrameLoaded(false)
@@ -1329,6 +1476,7 @@ export default function PageVisualEditorClient({
       if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : '恢复页面级快照失败')
 
       upsertStructureDraft(data.data as PageStructureDraftRow)
+      await reloadPreviewModules(selectedPage)
       setStructureRestoreSnapshot(null)
       setPreviewVersion(Date.now())
       setFrameLoaded(false)
@@ -1589,7 +1737,12 @@ export default function PageVisualEditorClient({
         </div>
       </section>
 
-      <ModuleCatalogPanel />
+      <ModuleCatalogPanel
+        selectedPage={selectedPage}
+        currentStructureDraft={currentStructureDraft}
+        structureBusy={structureBusy}
+        onAddTemplate={addStructureModule}
+      />
 
       <section className="rounded-lg border border-[#E5DED4] bg-white p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -1754,6 +1907,7 @@ export default function PageVisualEditorClient({
               const selected = activeModuleId === id
               const located = locatedModules[id] === true
               const dirty = dirtyIds.has(id)
+              const draftAdded = currentStructureModulesByKey.get(pageModule.module_key)?.status === 'added'
               return (
                 <button
                   key={id}
@@ -1795,6 +1949,11 @@ export default function PageVisualEditorClient({
                       {pageModule.has_draft ? (
                         <span className="inline-flex rounded-full bg-[#E36F2C]/10 px-2 py-0.5 text-[11px] text-[#E36F2C]">
                           有草稿
+                        </span>
+                      ) : null}
+                      {draftAdded ? (
+                        <span className="inline-flex rounded-full bg-[#E36F2C]/10 px-2 py-0.5 text-[11px] text-[#E36F2C]">
+                          新增草稿
                         </span>
                       ) : null}
                       {dirty ? (
@@ -1904,6 +2063,24 @@ export default function PageVisualEditorClient({
                 <p className="text-xs text-[#8A8580]">{pageLabel(active.page_key)} / {active.module_key}</p>
                 <h2 className="mt-1 text-lg font-semibold text-[#2C2A28]">{readableModuleTitle(active)}</h2>
                 <p className="mt-2 text-sm leading-6 text-[#8A8580]">{active.description_zh}</p>
+                {activeIsDraftAdded ? (
+                  <div className="mt-3 rounded-md border border-[#F1D0BD] bg-[#FFF7F1] p-3">
+                    <p className="text-xs leading-5 text-[#B54318]">
+                      这是只存在于结构草稿里的新增模块；删除只会移除草稿模块和对应内容草稿，不影响线上。
+                    </p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="mt-2"
+                      disabled={Boolean(structureBusy) || hasAnyUnsavedChanges}
+                      onClick={() => deleteAddedStructureModule(active)}
+                    >
+                      <Trash2 size={14} />
+                      删除草稿新增模块
+                    </Button>
+                  </div>
+                ) : null}
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs">
@@ -1934,9 +2111,15 @@ export default function PageVisualEditorClient({
                   <Button
                     type="button"
                     size="sm"
-                    disabled={!activeHasSavedDraft || activeHasUnsavedChanges || publishing}
+                    disabled={!activeHasSavedDraft || activeHasUnsavedChanges || publishing || activeIsDraftAdded}
                     onClick={requestPublish}
-                    title={activeHasUnsavedChanges ? '请先保存草稿' : '发布草稿到前台'}
+                    title={
+                      activeIsDraftAdded
+                        ? '新增模块必须通过页面级结构草稿发布'
+                        : activeHasUnsavedChanges
+                          ? '请先保存草稿'
+                          : '发布草稿到前台'
+                    }
                   >
                     <ArrowUpRight size={14} />
                     {publishing ? '发布中...' : '发布草稿'}
@@ -1955,6 +2138,11 @@ export default function PageVisualEditorClient({
                 </div>
                 {activeHasUnsavedChanges ? (
                   <p className="mt-2 text-xs text-[#E36F2C]">当前还有未保存草稿修改，先保存草稿后才能发布。</p>
+                ) : null}
+                {activeIsDraftAdded ? (
+                  <p className="mt-2 text-xs text-[#E36F2C]">
+                    新增模块不能单独发布内容草稿；请由 admin 发布页面级结构草稿后上线。
+                  </p>
                 ) : null}
               </div>
 

@@ -15,6 +15,7 @@ import {
   type PageModuleRegistryEntry,
   type ResolvedPageModule,
 } from '@/lib/page-module-rendering';
+import { getPageModuleTemplateByModuleType, isTemplateBackedPageModule } from '@/lib/page-module-templates';
 
 type Tech = 'viie' | 'vols' | 'vipc';
 type Lang = 'zh' | 'en';
@@ -25,6 +26,8 @@ type HomeModuleItem = {
   href?: string;
   value_zh?: string;
   value_en?: string;
+  content_zh?: string;
+  content_en?: string;
   label_zh: string;
   label_en: string;
   is_visible: boolean;
@@ -36,6 +39,10 @@ type HomePageModule = {
   page_key?: string;
   module_key: string;
   module_type?: string;
+  title_zh?: string;
+  title_en?: string;
+  description_zh?: string;
+  description_en?: string;
   is_visible: boolean;
   sort_order: number;
   items?: HomeModuleItem[];
@@ -115,6 +122,22 @@ function localizedValue(item: HomeModuleItem | undefined, lang: Lang, fallback: 
   if (!item) return fallback;
   if (!item.is_visible) return '';
   return (lang === 'zh' ? item.value_zh : item.value_en) || fallback;
+}
+
+function localizedContent(item: HomeModuleItem | undefined, lang: Lang, fallback: string) {
+  if (!item) return fallback;
+  if (!item.is_visible) return '';
+  return (lang === 'zh' ? item.content_zh : item.content_en) || fallback;
+}
+
+function localizedModuleTitle(pageModule: HomePageModule | null, lang: Lang, fallback: string) {
+  if (!pageModule) return fallback;
+  return (lang === 'zh' ? pageModule.title_zh : pageModule.title_en) || fallback;
+}
+
+function localizedModuleDescription(pageModule: HomePageModule | null, lang: Lang, fallback: string) {
+  if (!pageModule) return fallback;
+  return (lang === 'zh' ? pageModule.description_zh : pageModule.description_en) || fallback;
 }
 
 function externalLinkProps(href: string) {
@@ -316,6 +339,170 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
   );
 }
 
+function findModuleItem(pageModule: HomePageModule | null, itemId: string) {
+  return sortModuleItems(pageModule).find((item) => item.id === itemId);
+}
+
+function SimpleTextSection({ pageModule }: { pageModule: HomePageModule | null }) {
+  const { lang } = useLanguage();
+  if (!pageModule || !pageModule.is_visible) return null;
+
+  const eyebrow = localizedLabel(findModuleItem(pageModule, 'eyebrow'), lang, '');
+  const title = localizedModuleTitle(pageModule, lang, '');
+  const description = localizedModuleDescription(pageModule, lang, '');
+  const body = localizedContent(findModuleItem(pageModule, 'body'), lang, description);
+
+  if (!title && !body) return null;
+
+  return (
+    <section
+      className="bg-[#FAF7F2] py-20 border-b border-[#E5DED4]"
+      data-page-module={`home:${pageModule.module_key}`}
+      data-page-key="home"
+      data-module-key={pageModule.module_key}
+    >
+      <div className="max-w-4xl mx-auto px-6 text-center">
+        {eyebrow ? (
+          <p
+            className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-5 font-medium"
+            data-page-module-item="eyebrow"
+            data-page-module-field={`label_${lang}`}
+          >
+            {eyebrow}
+          </p>
+        ) : null}
+        {title ? (
+          <h2
+            className="text-3xl lg:text-4xl font-light text-[#2C2A28] mb-5 font-[family-name:var(--font-heading)]"
+            data-page-module-field={`title_${lang}`}
+          >
+            {title}
+          </h2>
+        ) : null}
+        {body ? (
+          <p
+            className="text-sm sm:text-base leading-8 text-[#6B625B] max-w-3xl mx-auto"
+            data-page-module-item="body"
+            data-page-module-field={`content_${lang}`}
+          >
+            {body}
+          </p>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function CtaModuleSection({ pageModule }: { pageModule: HomePageModule | null }) {
+  const { lang } = useLanguage();
+  if (!pageModule || !pageModule.is_visible) return null;
+
+  const eyebrow = localizedLabel(findModuleItem(pageModule, 'eyebrow'), lang, '');
+  const title = localizedModuleTitle(pageModule, lang, '');
+  const description = localizedModuleDescription(pageModule, lang, '');
+  const primary = findModuleItem(pageModule, 'primary-cta');
+  const secondary = findModuleItem(pageModule, 'secondary-cta');
+  const primaryLabel = localizedLabel(primary, lang, '');
+  const secondaryLabel = localizedLabel(secondary, lang, '');
+  const primaryHref = primary?.href || 'https://en.303vessel.cn/contact.html';
+  const secondaryHref = secondary?.href || 'https://en.303vessel.cn/products_list.html';
+
+  if (!title && !description && !primaryLabel && !secondaryLabel) return null;
+
+  return (
+    <section
+      className="bg-[#241F1B] py-20"
+      data-page-module={`home:${pageModule.module_key}`}
+      data-page-key="home"
+      data-module-key={pageModule.module_key}
+    >
+      <div className="max-w-5xl mx-auto px-6 text-center">
+        {eyebrow ? (
+          <p
+            className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-5 font-medium"
+            data-page-module-item="eyebrow"
+            data-page-module-field={`label_${lang}`}
+          >
+            {eyebrow}
+          </p>
+        ) : null}
+        {title ? (
+          <h2
+            className="text-3xl lg:text-5xl font-light text-white mb-5 font-[family-name:var(--font-heading)]"
+            data-page-module-field={`title_${lang}`}
+          >
+            {title}
+          </h2>
+        ) : null}
+        {description ? (
+          <p
+            className="text-sm sm:text-base leading-8 text-white/65 max-w-2xl mx-auto mb-9"
+            data-page-module-field={`description_${lang}`}
+          >
+            {description}
+          </p>
+        ) : null}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          {primaryLabel ? (
+            <Link
+              href={primaryHref}
+              {...externalLinkProps(primaryHref)}
+              className="bg-[#E36F2C] text-white px-10 py-4 text-sm tracking-wider hover:bg-[#C85A1F] transition-colors"
+              data-page-module-item="primary-cta"
+              data-page-module-field={`label_${lang}`}
+            >
+              {primaryLabel}
+            </Link>
+          ) : null}
+          {secondaryLabel ? (
+            <Link
+              href={secondaryHref}
+              {...externalLinkProps(secondaryHref)}
+              className="border border-white/25 text-white/80 px-10 py-4 text-sm tracking-wider hover:border-white/60 transition-colors"
+              data-page-module-item="secondary-cta"
+              data-page-module-field={`label_${lang}`}
+            >
+              {secondaryLabel}
+            </Link>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function resolveHomeDynamicModules(pageModules: HomePageModule[] | null) {
+  const fixed = resolveDynamicPageModules(pageModules, HOME_MODULE_REGISTRY);
+  const fixedModuleKeys = new Set(HOME_MODULE_REGISTRY.map((entry) => entry.moduleKey));
+  const templateModules = (pageModules ?? [])
+    .filter((pageModule) => (
+      !fixedModuleKeys.has(pageModule.module_key) &&
+      isTemplateBackedPageModule('home', pageModule.module_type ?? '')
+    ))
+    .map<ResolvedPageModule<HomePageModule> | null>((pageModule) => {
+      const template = getPageModuleTemplateByModuleType(pageModule.module_type ?? '');
+      if (!template) return null;
+
+      return {
+        registry: {
+          rendererKey: template.rendererKey,
+          pageKey: 'home',
+          moduleKey: pageModule.module_key,
+          moduleType: template.moduleType,
+          defaultSortOrder: Number(pageModule.sort_order) || 30,
+          dynamicEnabled: true,
+        },
+        pageModule,
+        sortOrder: Number(pageModule.sort_order) || 30,
+      };
+    })
+    .filter((resolved): resolved is ResolvedPageModule<HomePageModule> => Boolean(resolved));
+
+  return [...fixed, ...templateModules].sort((a, b) => (
+    a.sortOrder - b.sortOrder || a.registry.moduleKey.localeCompare(b.registry.moduleKey)
+  ));
+}
+
 function renderHomeDynamicModule(resolved: ResolvedPageModule<HomePageModule>) {
   if (!isResolvedPageModuleVisible(resolved)) return null;
 
@@ -324,6 +511,10 @@ function renderHomeDynamicModule(resolved: ResolvedPageModule<HomePageModule>) {
       return <HeroSection key={resolved.registry.rendererKey} pageModule={resolved.pageModule} />;
     case 'home.credentials':
       return <CredentialsBar key={resolved.registry.rendererKey} pageModule={resolved.pageModule} />;
+    case 'home.simpleText':
+      return <SimpleTextSection key={resolved.pageModule?.module_key ?? resolved.registry.moduleKey} pageModule={resolved.pageModule} />;
+    case 'home.ctaSection':
+      return <CtaModuleSection key={resolved.pageModule?.module_key ?? resolved.registry.moduleKey} pageModule={resolved.pageModule} />;
     default:
       return null;
   }
@@ -810,7 +1001,7 @@ export default function HomePage() {
   const [activeTech, setActiveTech] = useState<Tech | null>(null);
   const pageModules = useHomePageModules();
   const dynamicModules = useMemo(
-    () => resolveDynamicPageModules(pageModules, HOME_MODULE_REGISTRY),
+    () => resolveHomeDynamicModules(pageModules),
     [pageModules],
   );
 
