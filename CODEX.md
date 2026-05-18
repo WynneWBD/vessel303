@@ -213,7 +213,7 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 - 01 产品中心：V9 CMS 详情页第一版模板优化已完成并上线；后续再扩展字段、内容和批量数据。
 - 02 后台运营 / 设置：后台运营体验 A 包 A1-A6 已完成并上线：`/admin` 工作台按 `admin` / `operator` 分层；高风险操作统一确认弹窗；产品 / 项目 / 新闻 / 设置长表单已有未保存提醒；线索 / 用户 / 媒体接入分页；媒体详情可显示具体引用来源并跳转编辑；生产环境已关闭“新建测试线索”入口，API 也拒绝 `admin_test` 测试线索创建。A 包不涉及数据库结构变更，不涉及 Resend / Vercel 配置；媒体真实上传 / 删除端到端测试仍需单独授权。
 - 后台 B 包内容运营效率升级已完成：新闻 / 产品 / 项目列表筛选状态写入 URL，前台预览入口统一，内容完整度提示和产品 / 项目 / 新闻发布前检查已上线，设置页最近操作可读化，设置项接管计划已作为只读说明展示。B 包不涉及数据库结构变更、API / 权限改造或 `/global` 地图底层；设置项接管计划不会写入新配置，也没有新增前台接管字段。
-- 后台 2.0 阶段 1 信息架构任务书已确认：运营易用优先，学习 300.cn 操作习惯但不照搬自由建站器。1A 先做 AdminShell 菜单重组和 `/admin/pages/visual` 主入口提升；旧 `/admin/pages` 降级为 admin-only 高级维护 / 表单模式入口。1B 做 `/admin/members` 会员基础 admin-only 只读列表 / 详情，读取 `role=user`，不开放修改身份、禁用 / 启用、导出；支付、订单、会员价、代理价、国家版本暂不做；`/global` warning 仍归 04。
+- 后台 2.0 方向已调整为“重建新后台，不改造旧后台”：`/admin` 将成为全新 2.0 运营控制台，`/admin/legacy` 作为旧后台维护入口；新后台学习 300.cn 操作心智，但不照搬自由建站器，核心原则是复用旧数据、不复用旧交互。阶段 A 采用过渡隔离：`/admin/legacy` 先作为 admin-only 旧后台索引入口，旧功能路由暂不迁移；`operator` 不显示 legacy 入口，但在新内容管理完成前可暂时直接访问旧内容维护路由：`/admin/products`、`/admin/projects`、`/admin/news`、`/admin/leads`、`/admin/media`；旧 `/admin/pages`、`/admin/users`、`/admin/settings` 仍 admin-only。会员基础管理放后续阶段，支付、订单、会员价、代理价、国家版本暂不做；`/global` warning 仍归 04。
 - 03 项目案例 / 项目 CMS：当前 3 个 Excel/static 样板项目已进入 CMS 发布链路；旧 `foshan-shishan-cultural-camp` 保持 draft，不显示在 `/cases`，不进入 `/global`。
 - 04 Global 地图专项：`/global` 地图底层仍归 04；03 不直接修改地图底层。
 - 05 测试 / 提交 / 推送 / 上线：继续统一验收、提交、push `main` 和 Vercel 上线控制。
