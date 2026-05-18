@@ -10,20 +10,24 @@ import { getUserSummary, type UserSummary } from '@/lib/users-db'
 import { countCatalogProductsByStatus } from '@/lib/product-catalog-db'
 import { countProjectCasesByStatus } from '@/lib/project-cases-db'
 import {
+  Activity,
   ArrowRight,
   BarChart3,
   CheckCircle2,
   CircleDashed,
   Clock3,
   ExternalLink,
+  FileText,
   Globe2,
   Image as ImageIcon,
   Inbox,
   LayoutTemplate,
   LogOut,
   MapPinned,
+  Monitor,
   Newspaper,
   Package,
+  Search,
   Settings,
   ShieldCheck,
   Users,
@@ -43,42 +47,47 @@ type StatusSummary = {
   total: number
 }
 
+type LeadSummary = {
+  total: number
+  new: number
+  contacting: number
+  quoted: number
+  won: number
+  lost: number
+}
+
 type RecentContentSummary = {
   products: number
   projects: number
   news: number
 }
 
-type QuickAction = {
+type SystemCheck = {
   label: string
-  description: string
+  ok: boolean
+}
+
+type TopNavItem = {
+  label: string
+  href: string
+  adminOnly?: boolean
+}
+
+type ActionItem = {
+  label: string
   href: string
   Icon: LucideIcon
   primary?: boolean
 }
 
-type ConsoleEntry = {
-  title: string
-  description: string
+type OperationTile = {
+  label: string
   href?: string
   Icon: LucideIcon
-  metric?: string
   status?: string
+  adminOnly?: boolean
   external?: boolean
-  disabled?: boolean
-}
-
-type ConsoleSection = {
-  title: string
-  description: string
-  entries: ConsoleEntry[]
-}
-
-type StatusCard = {
-  label: string
-  value: string
-  detail: string
-  ok: boolean
+  muted?: boolean
 }
 
 type TodoItem = {
@@ -89,15 +98,19 @@ type TodoItem = {
   ok: boolean
 }
 
-type SystemCheck = {
-  label: string
-  ok: boolean
-}
-
 const EMPTY_STATUS_SUMMARY: StatusSummary = {
   draft: 0,
   published: 0,
   total: 0,
+}
+
+const EMPTY_LEAD_SUMMARY: LeadSummary = {
+  total: 0,
+  new: 0,
+  contacting: 0,
+  quoted: 0,
+  won: 0,
+  lost: 0,
 }
 
 const EMPTY_RECENT_SUMMARY: RecentContentSummary = {
@@ -128,6 +141,24 @@ const RECENT_CONTENT_SQL = {
       AND created_at >= NOW() - INTERVAL '30 days'
   `,
 } as const
+
+const TOP_NAV: TopNavItem[] = [
+  { label: '概况', href: '#overview' },
+  { label: '网站管理', href: '#website' },
+  { label: '内容管理', href: '#content' },
+  { label: '客户与会员', href: '#customer' },
+  { label: '数据与状态', href: '#status' },
+  { label: '管理设置', href: '#maintenance', adminOnly: true },
+]
+
+const QUICK_ACTIONS: ActionItem[] = [
+  { label: '编辑网站', href: '/admin/pages/visual', Icon: LayoutTemplate, primary: true },
+  { label: '发布产品', href: '/admin/products', Icon: Package },
+  { label: '发布项目', href: '/admin/projects', Icon: MapPinned },
+  { label: '发布新闻', href: '/admin/news', Icon: Newspaper },
+  { label: '处理线索', href: '/admin/leads?status=new', Icon: Inbox },
+  { label: '管理图片', href: '/admin/media', Icon: ImageIcon },
+]
 
 function formatNumber(n: number): string {
   return n.toLocaleString('zh-CN')
@@ -199,6 +230,25 @@ async function getRecentContentSummary(): Promise<RecentContentSummary> {
   return { products, projects, news }
 }
 
+async function getLeadSummary(): Promise<LeadSummary> {
+  const [newCount, contacting, quoted, won, lost] = await Promise.all([
+    countLeadsByStatus('new'),
+    countLeadsByStatus('contacting'),
+    countLeadsByStatus('quoted'),
+    countLeadsByStatus('won'),
+    countLeadsByStatus('lost'),
+  ])
+
+  return {
+    total: newCount + contacting + quoted + won + lost,
+    new: newCount,
+    contacting,
+    quoted,
+    won,
+    lost,
+  }
+}
+
 function getSystemChecks(): SystemCheck[] {
   return [
     { label: '登录安全', ok: Boolean(process.env.AUTH_SECRET) },
@@ -210,156 +260,69 @@ function getSystemChecks(): SystemCheck[] {
   ]
 }
 
-function buildQuickActions(): QuickAction[] {
-  return [
-    {
-      label: '编辑网站',
-      description: '修改页面文案、图片和模块内容',
-      href: '/admin/pages/visual',
-      Icon: LayoutTemplate,
-      primary: true,
-    },
-    {
-      label: '发布产品',
-      description: '维护产品内容、图片和发布状态',
-      href: '/admin/products',
-      Icon: Package,
-    },
-    {
-      label: '发布项目',
-      description: '维护案例内容和地图展示资料',
-      href: '/admin/projects',
-      Icon: MapPinned,
-    },
-    {
-      label: '发布新闻',
-      description: '维护新闻标题、封面和正文',
-      href: '/admin/news',
-      Icon: Newspaper,
-    },
-    {
-      label: '处理线索',
-      description: '查看待跟进的新询盘',
-      href: '/admin/leads?status=new',
-      Icon: Inbox,
-    },
-    {
-      label: '管理图片',
-      description: '查看图片、上传记录和引用来源',
-      href: '/admin/media',
-      Icon: ImageIcon,
-    },
-  ]
+function userStatusText(summary: UserSummary | null): string {
+  if (!summary) return '读取失败'
+  return `管理员 ${summary.admins} / 运营 ${summary.operators}`
 }
 
-function buildStatusCards({
-  newLeadCount,
+function buildTodos({
+  leadSummary,
   pageDraftCount,
-  uploadCount,
-  uploadBytes,
-  draftTotal,
-}: {
-  newLeadCount: number
-  pageDraftCount: number
-  uploadCount: number
-  uploadBytes: number
-  draftTotal: number
-}): StatusCard[] {
-  return [
-    {
-      label: '当前站点',
-      value: '运营中',
-      detail: 'www.vessel303.com',
-      ok: true,
-    },
-    {
-      label: '待处理线索',
-      value: formatNumber(newLeadCount),
-      detail: newLeadCount > 0 ? '建议优先跟进' : '暂无新线索',
-      ok: newLeadCount === 0,
-    },
-    {
-      label: '待发布内容',
-      value: formatNumber(draftTotal),
-      detail: draftTotal > 0 ? '有草稿需要检查' : '暂无草稿积压',
-      ok: draftTotal === 0,
-    },
-    {
-      label: '页面草稿',
-      value: formatNumber(pageDraftCount),
-      detail: pageDraftCount > 0 ? '进入编辑网站检查发布' : '暂无页面草稿',
-      ok: pageDraftCount === 0,
-    },
-    {
-      label: '媒体空间',
-      value: formatBytes(uploadBytes),
-      detail: `${formatNumber(uploadCount)} 张图片记录`,
-      ok: uploadBytes <= STORAGE_WARNING_BYTES,
-    },
-  ]
-}
-
-function buildTodoItems({
-  newLeadCount,
-  newsSummary,
   productSummary,
   projectSummary,
-  pageDraftCount,
+  newsSummary,
   uploadBytes,
   configIssues,
   isAdmin,
 }: {
-  newLeadCount: number
-  newsSummary: StatusSummary
+  leadSummary: LeadSummary
+  pageDraftCount: number
   productSummary: StatusSummary
   projectSummary: StatusSummary
-  pageDraftCount: number
+  newsSummary: StatusSummary
   uploadBytes: number
   configIssues: number
   isAdmin: boolean
 }): TodoItem[] {
   const todos: TodoItem[] = [
     {
-      title: '新线索待处理',
-      detail: newLeadCount > 0 ? '进入线索列表分配和跟进' : '当前没有新的待处理线索',
+      title: '待处理线索',
+      detail: leadSummary.new > 0 ? '有新询盘需要跟进' : '暂无新询盘',
       href: '/admin/leads?status=new',
-      count: newLeadCount,
-      ok: newLeadCount === 0,
+      count: leadSummary.new,
+      ok: leadSummary.new === 0,
     },
     {
-      title: '页面草稿待检查',
-      detail: pageDraftCount > 0 ? '进入网站编辑器查看并确认是否发布' : '暂无页面草稿待处理',
+      title: '页面草稿',
+      detail: pageDraftCount > 0 ? '需要进入网站编辑器确认' : '暂无页面草稿',
       href: '/admin/pages/visual',
       count: pageDraftCount,
       ok: pageDraftCount === 0,
     },
     {
-      title: '产品草稿',
-      detail: productSummary.draft > 0 ? '检查封面、图库、英文内容和发布状态' : '暂无产品草稿',
-      href: '/admin/products?status=draft',
-      count: productSummary.draft,
-      ok: productSummary.draft === 0,
-    },
-    {
       title: '项目草稿',
-      detail: projectSummary.draft > 0 ? '检查封面、图库、坐标和项目资料' : '暂无项目草稿',
+      detail: projectSummary.draft > 0 ? '检查封面、坐标和图库' : '暂无项目草稿',
       href: '/admin/projects?status=draft',
       count: projectSummary.draft,
       ok: projectSummary.draft === 0,
     },
     {
+      title: '产品草稿',
+      detail: productSummary.draft > 0 ? '检查图片、英文和详情' : '暂无产品草稿',
+      href: '/admin/products?status=draft',
+      count: productSummary.draft,
+      ok: productSummary.draft === 0,
+    },
+    {
       title: '新闻草稿',
-      detail: newsSummary.draft > 0 ? '检查标题、封面、正文和发布状态' : '暂无新闻草稿',
+      detail: newsSummary.draft > 0 ? '检查标题、封面和正文' : '暂无新闻草稿',
       href: '/admin/news?status=draft',
       count: newsSummary.draft,
       ok: newsSummary.draft === 0,
     },
     {
-      title: '媒体使用状态',
-      detail:
-        uploadBytes > STORAGE_WARNING_BYTES
-          ? '图片空间使用偏高，建议清理无引用图片'
-          : '当前图片空间状态正常',
+      title: '媒体空间',
+      detail: uploadBytes > STORAGE_WARNING_BYTES ? '空间使用偏高，建议检查素材' : '当前状态正常',
       href: '/admin/media',
       ok: uploadBytes <= STORAGE_WARNING_BYTES,
     },
@@ -367,8 +330,8 @@ function buildTodoItems({
 
   if (isAdmin) {
     todos.push({
-      title: '系统配置状态',
-      detail: configIssues > 0 ? '有配置项需要管理员处理' : '关键配置已就绪',
+      title: '系统配置',
+      detail: configIssues > 0 ? '有配置项需要处理' : '关键配置已就绪',
       href: '/admin/settings',
       count: configIssues,
       ok: configIssues === 0,
@@ -378,394 +341,746 @@ function buildTodoItems({
   return todos
 }
 
-function buildUserStatusDetail(summary: UserSummary | null): string {
-  if (!summary) return '账号状态读取失败'
-  return `管理员 ${summary.admins} / 运营人员 ${summary.operators} / 禁用 ${summary.disabled}`
-}
-
-function buildSections({
+function buildOperationTiles({
   role,
-  newLeadCount,
-  newsSummary,
-  productSummary,
-  projectSummary,
-  recentSummary,
+  leadSummary,
   uploadCount,
-  uploadBytes,
   userSummary,
-  configIssues,
 }: {
   role: AdminRole
-  newLeadCount: number
-  newsSummary: StatusSummary
-  productSummary: StatusSummary
-  projectSummary: StatusSummary
-  recentSummary: RecentContentSummary
+  leadSummary: LeadSummary
   uploadCount: number
-  uploadBytes: number
   userSummary: UserSummary | null
-  configIssues: number
-}): ConsoleSection[] {
-  const isAdmin = role === 'admin'
-  const sections: ConsoleSection[] = [
-    {
-      title: '网站管理',
-      description: '处理官网页面、图片素材和全球地图展示入口。',
-      entries: [
-        {
-          title: '编辑网站',
-          description: '进入页面编辑器，修改首页和主要页面的文案、图片与模块内容。',
-          href: '/admin/pages/visual',
-          Icon: LayoutTemplate,
-          metric: '进入',
-          status: '日常入口',
-        },
-        {
-          title: '管理图片',
-          description: '查看图片数量、空间使用、上传记录和引用来源。',
-          href: '/admin/media',
-          Icon: ImageIcon,
-          metric: formatNumber(uploadCount),
-          status: uploadBytes > STORAGE_WARNING_BYTES ? '建议关注' : '正常',
-        },
-        {
-          title: '全球地图',
-          description: '查看前台全球项目地图；管理能力后续单独规划。',
-          href: '/global',
-          Icon: Globe2,
-          metric: '查看',
-          status: '前台页面',
-          external: true,
-        },
-      ],
-    },
-    {
-      title: '内容管理',
-      description: '集中处理产品、项目案例和新闻的发布与内容完善。',
-      entries: [
-        {
-          title: '产品',
-          description: '维护产品资料、图片、详情内容和发布状态。',
-          href: '/admin/products',
-          Icon: Package,
-          metric: formatNumber(productSummary.draft),
-          status: `草稿 / 已发布 ${formatNumber(productSummary.published)}`,
-        },
-        {
-          title: '项目案例',
-          description: '维护案例资料、图库、坐标和地图展示状态。',
-          href: '/admin/projects',
-          Icon: MapPinned,
-          metric: formatNumber(projectSummary.draft),
-          status: `草稿 / 已发布 ${formatNumber(projectSummary.published)}`,
-        },
-        {
-          title: '新闻',
-          description: '维护新闻标题、封面、正文和发布状态。',
-          href: '/admin/news',
-          Icon: Newspaper,
-          metric: formatNumber(newsSummary.draft),
-          status: `草稿 / 已发布 ${formatNumber(newsSummary.published)}`,
-        },
-      ],
-    },
-    {
-      title: '客户与会员',
-      description: '跟进询盘和会员相关工作；会员管理先由管理员规划。',
-      entries: [
-        {
-          title: '新线索',
-          description: '优先处理尚未跟进的新询盘。',
-          href: '/admin/leads?status=new',
-          Icon: Inbox,
-          metric: formatNumber(newLeadCount),
-          status: newLeadCount > 0 ? '待处理' : '暂无新增',
-        },
-        {
-          title: '全部线索',
-          description: '查看、筛选和导出所有线索。',
-          href: '/admin/leads',
-          Icon: Users,
-          metric: '进入',
-          status: '线索中心',
-        },
-      ],
-    },
-    {
-      title: '数据与状态',
-      description: '先聚合内容和素材状态，后续再接入更完整的数据分析。',
-      entries: [
-        {
-          title: '近 30 天新增',
-          description: `产品 ${formatNumber(recentSummary.products)} / 项目 ${formatNumber(
-            recentSummary.projects,
-          )} / 新闻 ${formatNumber(recentSummary.news)}`,
-          Icon: Clock3,
-          metric: formatNumber(recentSummary.products + recentSummary.projects + recentSummary.news),
-          status: '内容变化',
-          disabled: true,
-        },
-        {
-          title: '内容待补',
-          description: '产品、项目、新闻列表已提供完整度提示，可进入对应列表逐项处理。',
-          Icon: CheckCircle2,
-          metric: formatNumber(productSummary.draft + projectSummary.draft + newsSummary.draft),
-          status: '按列表处理',
-          disabled: true,
-        },
-        {
-          title: '访问与转化',
-          description: '后续用于查看访问、线索转化和内容表现。',
-          Icon: BarChart3,
-          metric: '规划中',
-          status: '暂未接入',
-          disabled: true,
-        },
-      ],
-    },
+}): OperationTile[] {
+  const tiles: OperationTile[] = [
+    { label: '页面编辑', href: '/admin/pages/visual', Icon: LayoutTemplate, status: '日常入口' },
+    { label: '导航与页面', href: '/admin/pages/visual', Icon: Monitor, status: '页面管理' },
+    { label: '产品管理', href: '/admin/products', Icon: Package, status: '发布内容' },
+    { label: '项目案例', href: '/admin/projects', Icon: MapPinned, status: '地图资料' },
+    { label: '新闻资讯', href: '/admin/news', Icon: Newspaper, status: '内容更新' },
+    { label: '图片素材', href: '/admin/media', Icon: ImageIcon, status: `${formatNumber(uploadCount)} 张` },
+    { label: '线索中心', href: '/admin/leads', Icon: Inbox, status: `${formatNumber(leadSummary.new)} 待处理` },
+    { label: '全球地图', href: '/global', Icon: Globe2, status: '查看前台', external: true },
+    { label: '内容体检', href: '#status', Icon: CheckCircle2, status: '完整度' },
+    { label: 'SEO 状态', Icon: Search, status: '规划中', muted: true },
+    { label: '访问分析', Icon: BarChart3, status: '规划中', muted: true },
   ]
 
-  if (isAdmin) {
-    sections[2].entries.push({
-      title: '会员管理',
-      description: '后续区分后台账号和普通会员；本阶段不做会员价、订单或支付。',
-      Icon: Users,
-      metric: '规划中',
-      status: '管理员规划',
-      disabled: true,
-    })
-
-    sections.push({
-      title: '维护中心',
-      description: '管理员使用，日常运营优先从上方入口完成。',
-      entries: [
-        {
-          title: '高级维护',
-          description: '集中查看少量不适合放在日常运营首页的维护入口。',
-          href: '/admin/legacy',
-          Icon: Wrench,
-          metric: '进入',
-          status: '管理员',
-        },
-        {
-          title: '表单模式',
-          description: '用于管理员处理页面模块的备用表单编辑。',
-          href: '/admin/pages',
-          Icon: LayoutTemplate,
-          metric: '进入',
-          status: '高级',
-        },
-        {
-          title: '后台账号',
-          description: buildUserStatusDetail(userSummary),
-          href: '/admin/users',
-          Icon: ShieldCheck,
-          metric: userSummary ? formatNumber(userSummary.total) : '-',
-          status: userSummary && userSummary.untagged > 0 ? '有待标记' : '正常',
-        },
-        {
-          title: '站点设置',
-          description: '查看站点配置状态和基础设置。',
-          href: '/admin/settings',
-          Icon: Settings,
-          metric: configIssues > 0 ? formatNumber(configIssues) : '0',
-          status: configIssues > 0 ? '需处理' : '已配置',
-        },
-      ],
-    })
+  if (role === 'admin') {
+    tiles.push(
+      {
+        label: '会员管理',
+        Icon: Users,
+        status: '规划中',
+        muted: true,
+        adminOnly: true,
+      },
+      {
+        label: '后台账号',
+        href: '/admin/users',
+        Icon: ShieldCheck,
+        status: userSummary ? `${formatNumber(userSummary.total)} 个账号` : '账号',
+        adminOnly: true,
+      },
+      {
+        label: '站点设置',
+        href: '/admin/settings',
+        Icon: Settings,
+        status: '配置',
+        adminOnly: true,
+      },
+      {
+        label: '维护中心',
+        href: '/admin/legacy',
+        Icon: Wrench,
+        status: '管理员',
+        adminOnly: true,
+      },
+    )
   }
 
-  return sections
+  return tiles
 }
 
-function QuickActionLink({ action }: { action: QuickAction }) {
+function TopBar({
+  role,
+  email,
+}: {
+  role: AdminRole
+  email?: string | null
+}) {
+  const visibleNav = TOP_NAV.filter((item) => !item.adminOnly || role === 'admin')
+
+  return (
+    <header className="sticky top-0 z-30 border-b border-white/15 bg-[#1889B6] text-white shadow-sm">
+      <div className="mx-auto flex min-h-16 w-full max-w-[1520px] items-center gap-4 px-4 lg:px-8">
+        <Link
+          href="/admin"
+          className="flex h-12 w-32 shrink-0 items-center justify-center bg-[#E36F2C] text-sm font-bold tracking-wide"
+        >
+          VESSEL
+        </Link>
+        <nav className="hidden h-16 items-center gap-1 lg:flex">
+          {visibleNav.map((item) => (
+            <a
+              key={item.label}
+              href={item.href}
+              className="flex h-16 items-center border-b-2 border-transparent px-5 text-sm font-medium text-white/86 transition hover:border-white hover:text-white"
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+        <div className="ml-auto flex min-w-0 items-center gap-3">
+          <span className="hidden max-w-64 truncate text-xs text-white/76 md:inline">
+            {role === 'admin' ? '管理员' : '运营人员'} · {email}
+          </span>
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              className="inline-flex h-9 items-center gap-2 rounded-md border border-white/20 bg-white/12 px-3 text-xs font-semibold text-white transition hover:bg-white/20"
+            >
+              <LogOut size={14} />
+              退出
+            </button>
+          </form>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+function Hero({
+  role,
+  leadSummary,
+  productSummary,
+  projectSummary,
+  newsSummary,
+  pageDraftCount,
+  uploadBytes,
+}: {
+  role: AdminRole
+  leadSummary: LeadSummary
+  productSummary: StatusSummary
+  projectSummary: StatusSummary
+  newsSummary: StatusSummary
+  pageDraftCount: number
+  uploadBytes: number
+}) {
+  const draftTotal = productSummary.draft + projectSummary.draft + newsSummary.draft
+  const contentTotal = productSummary.total + projectSummary.total + newsSummary.total
+
+  return (
+    <section
+      id="overview"
+      className="border-b border-[#D8E7E8] bg-[linear-gradient(135deg,#DDF6F8_0%,#F4FBFC_58%,#FFF3E7_100%)]"
+    >
+      <div className="mx-auto flex w-full max-w-[1520px] flex-col gap-6 px-4 py-7 lg:px-8">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-3xl font-bold text-[#1E2C31] md:text-4xl">运营管理控制台</h1>
+            <p className="mt-2 text-sm text-[#61767D]">网站状态、内容更新、线索处理和素材管理集中在这里。</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {QUICK_ACTIONS.map((action) => (
+              <ActionButton key={action.label} action={action} compact />
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.25fr_1fr_1fr_1fr]">
+          <div className="rounded-md border border-white/70 bg-white/78 p-5 shadow-sm">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm text-[#61767D]">当前站点</p>
+                <p className="mt-2 text-2xl font-bold text-[#1E2C31]">运营中</p>
+              </div>
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                正常
+              </span>
+            </div>
+            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <SiteChip label="主站域名" value="www.vessel303.com" href="https://www.vessel303.com" />
+              <SiteChip label="页面入口" value="编辑网站" href="/admin/pages/visual" />
+            </div>
+          </div>
+
+          <HeroMetric
+            label="内容总量"
+            value={contentTotal}
+            detail={`草稿 ${formatNumber(draftTotal)} / 页面草稿 ${formatNumber(pageDraftCount)}`}
+            href="#content"
+            tone="blue"
+          />
+          <HeroMetric
+            label="待处理线索"
+            value={leadSummary.new}
+            detail={`线索总量 ${formatNumber(leadSummary.total)}`}
+            href="/admin/leads?status=new"
+            tone={leadSummary.new > 0 ? 'orange' : 'green'}
+          />
+          <HeroMetric
+            label="媒体空间"
+            value={formatBytes(uploadBytes)}
+            detail={uploadBytes > STORAGE_WARNING_BYTES ? '建议检查素材' : '状态正常'}
+            href="/admin/media"
+            tone={uploadBytes > STORAGE_WARNING_BYTES ? 'orange' : 'green'}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <SiteContextCard label="网站管理" title="编辑页面和素材" href="/admin/pages/visual" Icon={LayoutTemplate} />
+          <SiteContextCard label="内容经营" title="产品 / 项目 / 新闻" href="#content" Icon={Package} />
+          <SiteContextCard label="客户跟进" title="新线索优先处理" href="/admin/leads?status=new" Icon={Inbox} />
+          <SiteContextCard
+            label={role === 'admin' ? '管理设置' : '运营状态'}
+            title={role === 'admin' ? '账号与配置' : '查看待办'}
+            href={role === 'admin' ? '#maintenance' : '#customer'}
+            Icon={role === 'admin' ? Settings : Activity}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function ActionButton({
+  action,
+  compact = false,
+}: {
+  action: ActionItem
+  compact?: boolean
+}) {
   const Icon = action.Icon
   return (
     <Link
       href={action.href}
-      className={`group flex min-h-24 items-center gap-4 rounded-lg border p-4 transition hover:-translate-y-0.5 hover:shadow-sm ${
+      className={`inline-flex items-center justify-center gap-2 rounded-md text-sm font-semibold transition ${
+        compact ? 'h-10 px-3' : 'h-11 px-4'
+      } ${
         action.primary
-          ? 'border-[#E36F2C] bg-[#E36F2C] text-white'
-          : 'border-[#E5DED4] bg-white text-[#2C2A28] hover:border-[#E36F2C]/50'
+          ? 'bg-[#E36F2C] text-white shadow-sm hover:bg-[#C95E22]'
+          : 'border border-[#D8E7E8] bg-white text-[#1E2C31] hover:border-[#E36F2C]/55 hover:text-[#E36F2C]'
       }`}
     >
+      <Icon size={16} />
+      {action.label}
+    </Link>
+  )
+}
+
+function SiteChip({
+  label,
+  value,
+  href,
+}: {
+  label: string
+  value: string
+  href: string
+}) {
+  const external = href.startsWith('http')
+
+  return (
+    <Link
+      href={href}
+      target={external ? '_blank' : undefined}
+      rel={external ? 'noreferrer' : undefined}
+      className="flex min-h-16 items-center justify-between gap-3 rounded-md border border-[#D8E7E8] bg-white px-4 py-3 transition hover:border-[#1889B6]/60"
+    >
+      <span>
+        <span className="block text-xs text-[#61767D]">{label}</span>
+        <span className="mt-1 block text-sm font-semibold text-[#1E2C31]">{value}</span>
+      </span>
+      <ArrowRight size={15} className="shrink-0 text-[#9FB0B4]" />
+    </Link>
+  )
+}
+
+function HeroMetric({
+  label,
+  value,
+  detail,
+  href,
+  tone,
+}: {
+  label: string
+  value: number | string
+  detail: string
+  href: string
+  tone: 'blue' | 'green' | 'orange'
+}) {
+  const toneClass =
+    tone === 'orange'
+      ? 'from-[#FF9F2F] to-[#F06B22]'
+      : tone === 'green'
+        ? 'from-[#20B486] to-[#118F79]'
+        : 'from-[#1889B6] to-[#3078C8]'
+
+  return (
+    <Link
+      href={href}
+      className={`group flex min-h-40 flex-col justify-between rounded-md bg-gradient-to-br ${toneClass} p-5 text-white shadow-sm transition hover:-translate-y-0.5`}
+    >
+      <span className="flex items-center justify-between gap-3">
+        <span className="text-sm font-medium text-white/82">{label}</span>
+        <ArrowRight size={17} className="text-white/76 transition group-hover:translate-x-0.5" />
+      </span>
+      <span>
+        <span className="block text-4xl font-bold">{typeof value === 'number' ? formatNumber(value) : value}</span>
+        <span className="mt-2 block text-sm text-white/82">{detail}</span>
+      </span>
+    </Link>
+  )
+}
+
+function SiteContextCard({
+  label,
+  title,
+  href,
+  Icon,
+}: {
+  label: string
+  title: string
+  href: string
+  Icon: LucideIcon
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex min-h-20 items-center gap-4 rounded-md border border-[#D8E7E8] bg-white/84 px-4 py-3 transition hover:-translate-y-0.5 hover:border-[#1889B6]/60"
+    >
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
+        <Icon size={19} />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-xs text-[#61767D]">{label}</span>
+        <span className="mt-1 block truncate text-sm font-semibold text-[#1E2C31]">{title}</span>
+      </span>
+    </Link>
+  )
+}
+
+function ContentCards({
+  productSummary,
+  projectSummary,
+  newsSummary,
+  recentSummary,
+  pageDraftCount,
+}: {
+  productSummary: StatusSummary
+  projectSummary: StatusSummary
+  newsSummary: StatusSummary
+  recentSummary: RecentContentSummary
+  pageDraftCount: number
+}) {
+  return (
+    <section id="content" className="space-y-4">
+      <SectionTitle title="内容经营" detail="跟 300 一样，先看数量和近 30 天变化，再进入发布动作。" />
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
+        <ContentStatCard
+          title="产品"
+          total={productSummary.total}
+          recent={recentSummary.products}
+          draft={productSummary.draft}
+          href="/admin/products"
+          action="发布产品"
+          Icon={Package}
+          color="blue"
+        />
+        <ContentStatCard
+          title="项目案例"
+          total={projectSummary.total}
+          recent={recentSummary.projects}
+          draft={projectSummary.draft}
+          href="/admin/projects"
+          action="发布项目"
+          Icon={MapPinned}
+          color="teal"
+        />
+        <ContentStatCard
+          title="新闻"
+          total={newsSummary.total}
+          recent={recentSummary.news}
+          draft={newsSummary.draft}
+          href="/admin/news"
+          action="发布新闻"
+          Icon={Newspaper}
+          color="orange"
+        />
+        <ContentStatCard
+          title="页面草稿"
+          total={pageDraftCount}
+          recent={0}
+          draft={pageDraftCount}
+          href="/admin/pages/visual"
+          action="编辑网站"
+          Icon={LayoutTemplate}
+          color="gray"
+          recentLabel="等待发布"
+        />
+      </div>
+    </section>
+  )
+}
+
+function ContentStatCard({
+  title,
+  total,
+  recent,
+  draft,
+  href,
+  action,
+  Icon,
+  color,
+  recentLabel = '近 30 天新增',
+}: {
+  title: string
+  total: number
+  recent: number
+  draft: number
+  href: string
+  action: string
+  Icon: LucideIcon
+  color: 'blue' | 'teal' | 'orange' | 'gray'
+  recentLabel?: string
+}) {
+  const accent =
+    color === 'orange'
+      ? 'bg-[#FFF2E7] text-[#E36F2C]'
+      : color === 'teal'
+        ? 'bg-[#E7F7F4] text-[#159477]'
+        : color === 'gray'
+          ? 'bg-[#F0F2F2] text-[#61767D]'
+          : 'bg-[#EAF4FF] text-[#3078C8]'
+
+  return (
+    <Link
+      href={href}
+      className="group flex min-h-52 flex-col justify-between rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#E36F2C]/55"
+    >
+      <span className="flex items-start justify-between gap-4">
+        <span>
+          <span className="block text-sm text-[#61767D]">{title}</span>
+          <span className="mt-2 block text-4xl font-bold text-[#1E2C31]">{formatNumber(total)}</span>
+        </span>
+        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${accent}`}>
+          <Icon size={20} />
+        </span>
+      </span>
+      <span className="grid grid-cols-2 gap-3">
+        <span className="border-l border-[#D8E7E8] pl-3">
+          <span className="block text-xs text-[#61767D]">{recentLabel}</span>
+          <span className="mt-1 block text-lg font-semibold text-[#1E2C31]">{formatNumber(recent)}</span>
+        </span>
+        <span className="border-l border-[#D8E7E8] pl-3">
+          <span className="block text-xs text-[#61767D]">草稿</span>
+          <span className="mt-1 block text-lg font-semibold text-[#1E2C31]">{formatNumber(draft)}</span>
+        </span>
+      </span>
+      <span className="flex items-center justify-between border-t border-[#E6EEEE] pt-4 text-sm font-semibold text-[#E36F2C]">
+        {action}
+        <ArrowRight size={16} className="transition group-hover:translate-x-0.5" />
+      </span>
+    </Link>
+  )
+}
+
+function SectionTitle({
+  title,
+  detail,
+}: {
+  title: string
+  detail?: string
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <h2 className="text-xl font-bold text-[#1E2C31]">{title}</h2>
+      {detail && <p className="text-sm text-[#61767D]">{detail}</p>}
+    </div>
+  )
+}
+
+function OperationGrid({
+  tiles,
+}: {
+  tiles: OperationTile[]
+}) {
+  return (
+    <section id="website" className="space-y-4">
+      <SectionTitle title="业务入口" detail="把日常操作做成应用入口，减少在旧目录里找功能。" />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+        {tiles.map((tile) => (
+          <OperationTileCard key={`${tile.label}-${tile.href ?? tile.status}`} tile={tile} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function OperationTileCard({ tile }: { tile: OperationTile }) {
+  const Icon = tile.Icon
+  const content = (
+    <>
       <span
-        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${
-          action.primary ? 'bg-white/16 text-white' : 'bg-[#F5F2ED] text-[#E36F2C]'
+        className={`flex h-11 w-11 items-center justify-center rounded-md ${
+          tile.muted ? 'bg-[#F0F2F2] text-[#8DA0A5]' : 'bg-[#EAF6F8] text-[#1889B6]'
         }`}
       >
         <Icon size={20} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold">{action.label}</span>
-        <span
-          className={`mt-1 block text-xs leading-5 ${
-            action.primary ? 'text-white/78' : 'text-[#8A8580]'
-          }`}
-        >
-          {action.description}
+        <span className="block truncate text-sm font-semibold text-[#1E2C31]">{tile.label}</span>
+        <span className="mt-1 flex items-center gap-1 text-xs text-[#61767D]">
+          {tile.status ?? '进入'}
+          {tile.external && <ExternalLink size={12} />}
         </span>
       </span>
-      <ArrowRight
-        size={16}
-        className={action.primary ? 'text-white/80' : 'text-[#C4B9AB] group-hover:text-[#E36F2C]'}
-      />
+    </>
+  )
+
+  const className = `flex min-h-20 items-center gap-3 rounded-md border p-4 text-left transition ${
+    tile.muted
+      ? 'border-[#D8E7E8] bg-[#F5F8F8] opacity-80'
+      : 'border-[#D8E7E8] bg-white hover:-translate-y-0.5 hover:border-[#1889B6]/60 hover:shadow-sm'
+  }`
+
+  if (!tile.href || tile.muted) return <div className={className}>{content}</div>
+
+  return (
+    <Link
+      href={tile.href}
+      target={tile.external ? '_blank' : undefined}
+      rel={tile.external ? 'noreferrer' : undefined}
+      className={className}
+    >
+      {content}
     </Link>
   )
 }
 
-function StatusOverview({ cards }: { cards: StatusCard[] }) {
+function CustomerPanel({
+  leadSummary,
+  role,
+}: {
+  leadSummary: LeadSummary
+  role: AdminRole
+}) {
   return (
-    <section className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-semibold text-[#2C2A28]">网站状态</h2>
-        <p className="mt-1 text-sm text-[#8A8580]">先确认站点、线索、草稿和图片空间是否需要处理。</p>
-      </div>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
-        {cards.map((item) => (
-          <div key={item.label} className="rounded-lg border border-[#E5DED4] bg-white px-4 py-4">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-xs text-[#8A8580]">{item.label}</span>
-              {item.ok ? (
-                <CheckCircle2 size={15} className="text-emerald-700" />
-              ) : (
-                <CircleDashed size={15} className="text-[#E36F2C]" />
-              )}
-            </div>
-            <p
-              className="mt-3 text-2xl font-bold text-[#2C2A28]"
-              style={{ fontFamily: 'DM Sans, sans-serif' }}
-            >
-              {item.value}
-            </p>
-            <p className="mt-1 text-xs text-[#8A8580]">{item.detail}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function TodoList({ items }: { items: TodoItem[] }) {
-  return (
-    <section className="rounded-lg border border-[#E5DED4] bg-white p-5">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-[#2C2A28]">待处理事项</h2>
-          <p className="mt-1 text-sm text-[#8A8580]">优先处理有数量和橙色提示的事项。</p>
-        </div>
-      </div>
-      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {items.map((item) => {
-          const body = (
-            <div
-              className={`flex min-h-24 gap-3 rounded-lg border p-4 ${
-                item.ok ? 'border-[#E5DED4] bg-[#FAF7F2]' : 'border-[#E36F2C]/35 bg-[#FFF7EF]'
-              }`}
-            >
-              <span
-                className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
-                  item.ok ? 'bg-white text-emerald-700' : 'bg-white text-[#E36F2C]'
-                }`}
-              >
-                {item.ok ? <CheckCircle2 size={16} /> : <CircleDashed size={16} />}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-semibold text-[#2C2A28]">{item.title}</span>
-                  {typeof item.count === 'number' && (
-                    <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-[#E36F2C]">
-                      {formatNumber(item.count)}
-                    </span>
-                  )}
-                </span>
-                <span className="mt-2 block text-xs leading-5 text-[#8A8580]">{item.detail}</span>
-              </span>
-            </div>
-          )
-
-          if (!item.href) return <div key={item.title}>{body}</div>
-          return (
-            <Link key={item.title} href={item.href} className="block transition hover:-translate-y-0.5">
-              {body}
-            </Link>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
-
-function ConsoleEntryCard({ entry }: { entry: ConsoleEntry }) {
-  const Icon = entry.Icon
-  const content = (
-    <>
-      <div className="flex items-start justify-between gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#F5F2ED] text-[#E36F2C]">
-          <Icon size={18} />
-        </span>
-        <span className="inline-flex min-h-6 items-center rounded-full border border-[#E5DED4] bg-[#FAF7F2] px-2 text-xs text-[#8A8580]">
-          {entry.status ?? '进入'}
-        </span>
-      </div>
-      <div className="mt-4">
-        <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-[#2C2A28]">{entry.title}</h3>
-          {entry.external && <ExternalLink size={13} className="text-[#C4B9AB]" />}
-        </div>
-        <p className="mt-2 min-h-10 text-xs leading-5 text-[#8A8580]">{entry.description}</p>
-      </div>
-      <div className="mt-4 flex items-end justify-between gap-4">
-        <span
-          className="text-2xl font-bold text-[#2C2A28]"
-          style={{ fontFamily: 'DM Sans, sans-serif' }}
+    <section id="customer" className="space-y-4">
+      <SectionTitle title="客户与会员" />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Link
+          href="/admin/leads"
+          className="flex min-h-36 flex-col justify-between rounded-md border border-[#D8E7E8] bg-white p-5 transition hover:-translate-y-0.5 hover:border-[#E36F2C]/55"
         >
-          {entry.metric ?? '进入'}
-        </span>
-        {entry.href && !entry.disabled ? (
-          <span className="text-xs font-semibold text-[#E36F2C]">进入</span>
-        ) : (
-          <span className="text-xs font-semibold text-[#C4B9AB]">规划中</span>
-        )}
-      </div>
-    </>
-  )
-
-  const className = `block min-h-48 rounded-lg border p-5 transition ${
-    entry.disabled
-      ? 'border-[#E5DED4] bg-[#FAF7F2] opacity-80'
-      : 'border-[#E5DED4] bg-white hover:-translate-y-0.5 hover:border-[#E36F2C]/50 hover:shadow-sm'
-  }`
-
-  if (entry.href && !entry.disabled) {
-    return (
-      <Link
-        href={entry.href}
-        target={entry.external ? '_blank' : undefined}
-        rel={entry.external ? 'noreferrer' : undefined}
-        className={className}
-      >
-        {content}
-      </Link>
-    )
-  }
-
-  return <div className={className}>{content}</div>
-}
-
-function SectionBlock({ section }: { section: ConsoleSection }) {
-  return (
-    <section className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold text-[#2C2A28]">{section.title}</h2>
-        <p className="text-sm leading-6 text-[#8A8580]">{section.description}</p>
-      </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {section.entries.map((entry) => (
-          <ConsoleEntryCard key={entry.title} entry={entry} />
-        ))}
+          <span className="flex items-center justify-between">
+            <span className="text-sm text-[#61767D]">线索总量</span>
+            <Users size={18} className="text-[#1889B6]" />
+          </span>
+          <span className="text-4xl font-bold text-[#1E2C31]">{formatNumber(leadSummary.total)}</span>
+          <span className="text-sm font-semibold text-[#E36F2C]">查看全部线索</span>
+        </Link>
+        <Link
+          href="/admin/leads?status=new"
+          className="flex min-h-36 flex-col justify-between rounded-md border border-[#D8E7E8] bg-white p-5 transition hover:-translate-y-0.5 hover:border-[#E36F2C]/55"
+        >
+          <span className="flex items-center justify-between">
+            <span className="text-sm text-[#61767D]">待处理线索</span>
+            <Inbox size={18} className="text-[#E36F2C]" />
+          </span>
+          <span className="text-4xl font-bold text-[#1E2C31]">{formatNumber(leadSummary.new)}</span>
+          <span className="text-sm font-semibold text-[#E36F2C]">立即处理</span>
+        </Link>
+        <div className="flex min-h-36 flex-col justify-between rounded-md border border-[#D8E7E8] bg-[#F5F8F8] p-5">
+          <span className="flex items-center justify-between">
+            <span className="text-sm text-[#61767D]">会员管理</span>
+            <Users size={18} className="text-[#8DA0A5]" />
+          </span>
+          <span className="text-2xl font-bold text-[#1E2C31]">{role === 'admin' ? '基础管理待建' : '管理员处理'}</span>
+          <span className="text-sm text-[#61767D]">不含支付、订单、会员价</span>
+        </div>
       </div>
     </section>
+  )
+}
+
+function StatusPanel({
+  recentSummary,
+  uploadBytes,
+  uploadCount,
+  configIssues,
+  isAdmin,
+}: {
+  recentSummary: RecentContentSummary
+  uploadBytes: number
+  uploadCount: number
+  configIssues: number
+  isAdmin: boolean
+}) {
+  return (
+    <section id="status" className="space-y-4">
+      <SectionTitle title="数据与状态" />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <StatusLineCard
+          title="近 30 天内容变化"
+          value={recentSummary.products + recentSummary.projects + recentSummary.news}
+          detail={`产品 ${formatNumber(recentSummary.products)} / 项目 ${formatNumber(
+            recentSummary.projects,
+          )} / 新闻 ${formatNumber(recentSummary.news)}`}
+          Icon={Clock3}
+        />
+        <StatusLineCard
+          title="图片与文件空间"
+          value={formatBytes(uploadBytes)}
+          detail={`${formatNumber(uploadCount)} 张图片记录`}
+          Icon={ImageIcon}
+        />
+        <StatusLineCard
+          title={isAdmin ? '配置状态' : '运营数据'}
+          value={isAdmin ? (configIssues > 0 ? '需处理' : '已配置') : '规划中'}
+          detail={isAdmin ? `${formatNumber(configIssues)} 项需处理` : '访问与转化后续接入'}
+          Icon={isAdmin ? Settings : BarChart3}
+        />
+      </div>
+    </section>
+  )
+}
+
+function StatusLineCard({
+  title,
+  value,
+  detail,
+  Icon,
+}: {
+  title: string
+  value: number | string
+  detail: string
+  Icon: LucideIcon
+}) {
+  return (
+    <div className="flex min-h-32 items-center gap-4 rounded-md border border-[#D8E7E8] bg-white p-5">
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
+        <Icon size={21} />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm text-[#61767D]">{title}</span>
+        <span className="mt-1 block text-2xl font-bold text-[#1E2C31]">
+          {typeof value === 'number' ? formatNumber(value) : value}
+        </span>
+        <span className="mt-1 block text-xs text-[#61767D]">{detail}</span>
+      </span>
+    </div>
+  )
+}
+
+function TodoRail({
+  items,
+}: {
+  items: TodoItem[]
+}) {
+  return (
+    <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+      <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="border-b border-[#E6EEEE] px-5 py-4">
+          <h2 className="text-lg font-bold text-[#1E2C31]">待处理事项</h2>
+          <p className="mt-1 text-xs text-[#61767D]">先处理橙色提示项。</p>
+        </div>
+        <div className="divide-y divide-[#E6EEEE]">
+          {items.map((item) => (
+            <TodoRow key={item.title} item={item} />
+          ))}
+        </div>
+      </section>
+    </aside>
+  )
+}
+
+function TodoRow({ item }: { item: TodoItem }) {
+  const content = (
+    <span className="flex gap-3 px-5 py-4">
+      <span
+        className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
+          item.ok ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FFF2E7] text-[#E36F2C]'
+        }`}
+      >
+        {item.ok ? <CheckCircle2 size={16} /> : <CircleDashed size={16} />}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center justify-between gap-3">
+          <span className="text-sm font-semibold text-[#1E2C31]">{item.title}</span>
+          {typeof item.count === 'number' && (
+            <span className="rounded-full bg-[#F5F8F8] px-2 py-0.5 text-xs font-semibold text-[#E36F2C]">
+              {formatNumber(item.count)}
+            </span>
+          )}
+        </span>
+        <span className="mt-1 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+      </span>
+    </span>
+  )
+
+  if (!item.href) return <div>{content}</div>
+
+  return (
+    <Link href={item.href} className="block transition hover:bg-[#F8FBFB]">
+      {content}
+    </Link>
+  )
+}
+
+function MaintenanceBlock({
+  isAdmin,
+  userSummary,
+  configIssues,
+}: {
+  isAdmin: boolean
+  userSummary: UserSummary | null
+  configIssues: number
+}) {
+  if (!isAdmin) return null
+
+  return (
+    <section id="maintenance" className="space-y-4">
+      <SectionTitle title="维护中心" detail="管理员低频使用，不作为日常运营入口。" />
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+        <MaintenanceLink title="高级维护" detail="集中入口" href="/admin/legacy" Icon={Wrench} />
+        <MaintenanceLink title="表单模式" detail="页面备用编辑" href="/admin/pages" Icon={FileText} />
+        <MaintenanceLink title="后台账号" detail={userStatusText(userSummary)} href="/admin/users" Icon={ShieldCheck} />
+        <MaintenanceLink
+          title="站点设置"
+          detail={configIssues > 0 ? `${formatNumber(configIssues)} 项需处理` : '已配置'}
+          href="/admin/settings"
+          Icon={Settings}
+        />
+      </div>
+    </section>
+  )
+}
+
+function MaintenanceLink({
+  title,
+  detail,
+  href,
+  Icon,
+}: {
+  title: string
+  detail: string
+  href: string
+  Icon: LucideIcon
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex min-h-24 items-center gap-3 rounded-md border border-[#D8E7E8] bg-white p-4 transition hover:-translate-y-0.5 hover:border-[#E36F2C]/55"
+    >
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#F5F8F8] text-[#61767D]">
+        <Icon size={18} />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold text-[#1E2C31]">{title}</span>
+        <span className="mt-1 block truncate text-xs text-[#61767D]">{detail}</span>
+      </span>
+    </Link>
   )
 }
 
@@ -784,7 +1099,7 @@ export default async function AdminConsolePage() {
   const isAdmin = role === 'admin'
 
   const [
-    newLeadCount,
+    leadSummary,
     newsSummary,
     productSummary,
     projectSummary,
@@ -794,7 +1109,7 @@ export default async function AdminConsolePage() {
     recentSummary,
     userSummary,
   ] = await Promise.all([
-    safeLoad('count new leads', () => countLeadsByStatus('new'), 0),
+    safeLoad('lead summary', () => getLeadSummary(), EMPTY_LEAD_SUMMARY),
     safeLoad('count news', () => countNewsByStatus(), EMPTY_STATUS_SUMMARY),
     safeLoad('count products', () => countCatalogProductsByStatus(), EMPTY_STATUS_SUMMARY),
     safeLoad('count projects', () => countProjectCasesByStatus(), EMPTY_STATUS_SUMMARY),
@@ -809,90 +1124,67 @@ export default async function AdminConsolePage() {
 
   const checks = isAdmin ? getSystemChecks() : []
   const configIssues = checks.filter((item) => !item.ok).length
-  const draftTotal = productSummary.draft + projectSummary.draft + newsSummary.draft
-  const statusCards = buildStatusCards({
-    newLeadCount,
+  const todos = buildTodos({
+    leadSummary,
     pageDraftCount,
-    uploadCount,
-    uploadBytes,
-    draftTotal,
-  })
-  const todoItems = buildTodoItems({
-    newLeadCount,
-    newsSummary,
     productSummary,
     projectSummary,
-    pageDraftCount,
+    newsSummary,
     uploadBytes,
     configIssues,
     isAdmin,
   })
-  const sections = buildSections({
+  const operationTiles = buildOperationTiles({
     role,
-    newLeadCount,
-    newsSummary,
-    productSummary,
-    projectSummary,
-    recentSummary,
+    leadSummary,
     uploadCount,
-    uploadBytes,
     userSummary,
-    configIssues,
   })
 
   return (
-    <main className="min-h-screen bg-[#F5F2ED] text-[#2C2A28]" style={{ fontFamily: 'Inter, sans-serif' }}>
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-6 md:px-8 lg:px-10">
-        <header className="flex flex-col gap-5 rounded-lg border border-[#E5DED4] bg-white px-5 py-5 md:px-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-[#E36F2C]">VESSEL 运营后台</p>
-            <h1
-              className="mt-2 text-3xl font-bold text-[#2C2A28]"
-              style={{ fontFamily: 'DM Sans, sans-serif' }}
-            >
-              运营管理控制台
-            </h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#8A8580]">
-              先看网站状态和待处理事项，再进入发布、图片、线索和页面编辑。
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-3 sm:flex-row sm:items-center">
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-[#2C2A28]">
-                {role === 'admin' ? '管理员' : '运营人员'}
-              </div>
-              <div className="mt-1 truncate text-xs text-[#8A8580]">{session.user.email}</div>
+    <main className="min-h-screen bg-[#EEF5F3] text-[#1E2C31]" style={{ fontFamily: 'Inter, sans-serif' }}>
+      <TopBar role={role} email={session.user.email} />
+      <Hero
+        role={role}
+        leadSummary={leadSummary}
+        productSummary={productSummary}
+        projectSummary={projectSummary}
+        newsSummary={newsSummary}
+        pageDraftCount={pageDraftCount}
+        uploadBytes={uploadBytes}
+      />
+
+      <div className="mx-auto grid w-full max-w-[1520px] grid-cols-1 gap-6 px-4 py-7 lg:px-8 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="space-y-8">
+          <section className="space-y-4">
+            <SectionTitle title="快捷发布" />
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+              {QUICK_ACTIONS.map((action) => (
+                <ActionButton key={action.label} action={action} />
+              ))}
             </div>
-            <form action={logoutAction}>
-              <button
-                type="submit"
-                className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#E5DED4] bg-white px-3 text-xs font-semibold text-[#6B625B] transition hover:border-[#E36F2C]/50 hover:text-[#E36F2C]"
-              >
-                <LogOut size={14} />
-                退出
-              </button>
-            </form>
-          </div>
-        </header>
+          </section>
 
-        <StatusOverview cards={statusCards} />
-        <TodoList items={todoItems} />
+          <ContentCards
+            productSummary={productSummary}
+            projectSummary={projectSummary}
+            newsSummary={newsSummary}
+            recentSummary={recentSummary}
+            pageDraftCount={pageDraftCount}
+          />
+          <OperationGrid tiles={operationTiles} />
+          <CustomerPanel leadSummary={leadSummary} role={role} />
+          <StatusPanel
+            recentSummary={recentSummary}
+            uploadBytes={uploadBytes}
+            uploadCount={uploadCount}
+            configIssues={configIssues}
+            isAdmin={isAdmin}
+          />
+          <MaintenanceBlock isAdmin={isAdmin} userSummary={userSummary} configIssues={configIssues} />
+        </div>
 
-        <section className="flex flex-col gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-[#2C2A28]">快捷发布</h2>
-            <p className="mt-1 text-sm text-[#8A8580]">常用运营动作放在第一屏，减少查找路径。</p>
-          </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {buildQuickActions().map((action) => (
-              <QuickActionLink key={action.label} action={action} />
-            ))}
-          </div>
-        </section>
-
-        {sections.map((section) => (
-          <SectionBlock key={section.title} section={section} />
-        ))}
+        <TodoRail items={todos} />
       </div>
     </main>
   )
