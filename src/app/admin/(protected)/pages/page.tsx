@@ -1,3 +1,5 @@
+import { auth } from '@/auth'
+import { redirect } from 'next/navigation'
 import PageModulesClient from '@/components/admin/PageModulesClient'
 import {
   defaultSiteSettings,
@@ -20,7 +22,15 @@ function firstSearchParam(value: string | string[] | undefined): string | undefi
 }
 
 export default async function PagesAdminPage({ searchParams }: PagesAdminPageProps) {
-  const sp = searchParams ? await searchParams : {}
+  const sp: { module?: string | string[] } = searchParams ? await searchParams : {}
+  const session = await auth()
+  if (!session?.user) {
+    redirect('/admin/login')
+  }
+  if (session.user.role !== 'admin') {
+    redirect('/admin?error=forbidden')
+  }
+
   const initialModuleId = firstSearchParam(sp.module)
 
   const [modules, settings] = await Promise.all([

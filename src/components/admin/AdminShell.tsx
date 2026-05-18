@@ -31,7 +31,7 @@ const menuItems: MenuItem[] = [
   { label: '2.0 控制台', href: '/admin', Icon: LayoutDashboard, title: '2.0 控制台 Dashboard' },
   { label: '线索管理', href: '/admin/leads', Icon: Inbox, title: '线索管理 Leads' },
   { label: '用户管理', href: '/admin/users', Icon: Users, title: '用户管理 Users', superAdminOnly: true },
-  { label: '页面模块', href: '/admin/pages', Icon: LayoutTemplate, title: '页面模块 Pages' },
+  { label: '页面模块', href: '/admin/pages', Icon: LayoutTemplate, title: '页面模块 Pages', superAdminOnly: true },
   { label: '新闻管理', href: '/admin/news', Icon: Newspaper, title: '新闻管理 News' },
   { label: '产品管理', href: '/admin/products', Icon: Package, title: '产品管理 Products' },
   { label: '项目案例', href: '/admin/projects', Icon: MapPinned, title: '项目案例 Projects' },
