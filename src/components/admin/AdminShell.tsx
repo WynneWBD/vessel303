@@ -28,7 +28,7 @@ type MenuItem = {
 }
 
 const menuItems: MenuItem[] = [
-  { label: '概览', href: '/admin', Icon: LayoutDashboard, title: '概览 Dashboard' },
+  { label: '2.0 控制台', href: '/admin', Icon: LayoutDashboard, title: '2.0 控制台 Dashboard' },
   { label: '线索管理', href: '/admin/leads', Icon: Inbox, title: '线索管理 Leads' },
   { label: '用户管理', href: '/admin/users', Icon: Users, title: '用户管理 Users', superAdminOnly: true },
   { label: '页面模块', href: '/admin/pages', Icon: LayoutTemplate, title: '页面模块 Pages' },
@@ -73,7 +73,7 @@ export default function AdminShell({
   const pathname = usePathname() ?? '/admin'
   const visibleMenuItems = menuItems.filter((item) => role === 'admin' || !item.superAdminOnly)
   const current = visibleMenuItems.find((m) => isActive(pathname, m.href))
-  const headerTitle = current?.title ?? '概览 Dashboard'
+  const headerTitle = current?.title ?? '旧后台维护 Legacy'
 
   const badgeFor = (href: string): string | undefined => {
     if (href === '/admin/leads' && leadBadge > 0) return clampBadge(leadBadge)
