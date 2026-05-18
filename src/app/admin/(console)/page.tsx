@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { logoutAction } from '@/app/admin/actions'
+import { pool } from '@/lib/db'
 import { countLeadsByStatus } from '@/lib/leads-db'
 import { countNewsByStatus } from '@/lib/news-db'
 import { countUploads, sumStorageSize } from '@/lib/uploads-db'
@@ -13,6 +14,7 @@ import {
   BarChart3,
   CheckCircle2,
   CircleDashed,
+  Clock3,
   ExternalLink,
   Globe2,
   Image as ImageIcon,
@@ -31,7 +33,7 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Admin 2.0 - VESSEL' }
+export const metadata = { title: '运营管理控制台 - VESSEL' }
 
 type AdminRole = 'admin' | 'operator'
 
@@ -39,6 +41,12 @@ type StatusSummary = {
   draft: number
   published: number
   total: number
+}
+
+type RecentContentSummary = {
+  products: number
+  projects: number
+  news: number
 }
 
 type QuickAction = {
@@ -66,6 +74,21 @@ type ConsoleSection = {
   entries: ConsoleEntry[]
 }
 
+type StatusCard = {
+  label: string
+  value: string
+  detail: string
+  ok: boolean
+}
+
+type TodoItem = {
+  title: string
+  detail: string
+  href?: string
+  count?: number
+  ok: boolean
+}
+
 type SystemCheck = {
   label: string
   ok: boolean
@@ -77,7 +100,38 @@ const EMPTY_STATUS_SUMMARY: StatusSummary = {
   total: 0,
 }
 
-const WARNING_BYTES = 800 * 1024 * 1024
+const EMPTY_RECENT_SUMMARY: RecentContentSummary = {
+  products: 0,
+  projects: 0,
+  news: 0,
+}
+
+const STORAGE_WARNING_BYTES = 800 * 1024 * 1024
+
+const RECENT_CONTENT_SQL = {
+  products: `
+    SELECT COUNT(*)::text AS count
+    FROM product_catalog
+    WHERE deleted_at IS NULL
+      AND created_at >= NOW() - INTERVAL '30 days'
+  `,
+  projects: `
+    SELECT COUNT(*)::text AS count
+    FROM project_cases
+    WHERE deleted_at IS NULL
+      AND created_at >= NOW() - INTERVAL '30 days'
+  `,
+  news: `
+    SELECT COUNT(*)::text AS count
+    FROM news
+    WHERE deleted_at IS NULL
+      AND created_at >= NOW() - INTERVAL '30 days'
+  `,
+} as const
+
+function formatNumber(n: number): string {
+  return n.toLocaleString('zh-CN')
+}
 
 function formatBytes(n: number): string {
   if (!n) return '0 B'
@@ -91,67 +145,242 @@ async function safeLoad<T>(label: string, loader: () => Promise<T>, fallback: T)
   try {
     return await loader()
   } catch (err) {
-    console.error(`[admin-2-console] ${label} failed`, err)
+    console.error(`[admin-console] ${label} failed`, err)
     return fallback
   }
 }
 
-function getSystemChecks(): SystemCheck[] {
-  return [
-    { label: 'Auth Secret', ok: Boolean(process.env.AUTH_SECRET) },
-    { label: 'Google OAuth', ok: Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET) },
-    { label: 'Resend API', ok: Boolean(process.env.RESEND_API_KEY) },
-    { label: 'Resend From', ok: Boolean(process.env.RESEND_FROM) },
-    { label: 'Vercel Blob', ok: Boolean(process.env.BLOB_READ_WRITE_TOKEN) },
-    { label: 'MapTiler Key', ok: Boolean(process.env.MAPTILER_KEY) },
-  ]
+async function countRecentContent(kind: keyof RecentContentSummary): Promise<number> {
+  const res = await pool.query<{ count: string }>(RECENT_CONTENT_SQL[kind])
+  return parseInt(res.rows[0]?.count ?? '0', 10)
 }
 
-function buildUserStatusDetail(summary: UserSummary | null): string {
-  if (!summary) return '用户状态读取失败'
-  return `管理员 ${summary.admins} / 运营人员 ${summary.operators} / 禁用 ${summary.disabled}`
+async function tableExists(tableName: string): Promise<boolean> {
+  const res = await pool.query<{ table_name: string | null }>(
+    'SELECT to_regclass($1) AS table_name',
+    [tableName],
+  )
+  return Boolean(res.rows[0]?.table_name)
+}
+
+async function countPageDrafts(): Promise<number> {
+  const [moduleDraftsReady, structureDraftsReady] = await Promise.all([
+    tableExists('public.page_module_drafts'),
+    tableExists('public.page_structure_drafts'),
+  ])
+  const [moduleDrafts, structureDrafts] = await Promise.all([
+    moduleDraftsReady
+      ? pool.query<{ count: string }>(
+          `SELECT COUNT(*)::text AS count
+           FROM page_module_drafts`,
+        )
+      : Promise.resolve({ rows: [{ count: '0' }] }),
+    structureDraftsReady
+      ? pool.query<{ count: string }>(
+          `SELECT COUNT(*)::text AS count
+           FROM page_structure_drafts
+           WHERE draft_status <> 'discarded'`,
+        )
+      : Promise.resolve({ rows: [{ count: '0' }] }),
+  ])
+
+  return (
+    parseInt(moduleDrafts.rows[0]?.count ?? '0', 10) +
+    parseInt(structureDrafts.rows[0]?.count ?? '0', 10)
+  )
+}
+
+async function getRecentContentSummary(): Promise<RecentContentSummary> {
+  const [products, projects, news] = await Promise.all([
+    countRecentContent('products'),
+    countRecentContent('projects'),
+    countRecentContent('news'),
+  ])
+  return { products, projects, news }
+}
+
+function getSystemChecks(): SystemCheck[] {
+  return [
+    { label: '登录安全', ok: Boolean(process.env.AUTH_SECRET) },
+    { label: '第三方登录', ok: Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET) },
+    { label: '邮件发信', ok: Boolean(process.env.RESEND_API_KEY) },
+    { label: '发件身份', ok: Boolean(process.env.RESEND_FROM) },
+    { label: '图片存储', ok: Boolean(process.env.BLOB_READ_WRITE_TOKEN) },
+    { label: '地图服务', ok: Boolean(process.env.MAPTILER_KEY) },
+  ]
 }
 
 function buildQuickActions(): QuickAction[] {
   return [
     {
       label: '编辑网站',
-      description: '进入可视化页面运营中心',
+      description: '修改页面文案、图片和模块内容',
       href: '/admin/pages/visual',
       Icon: LayoutTemplate,
       primary: true,
     },
     {
       label: '发布产品',
-      description: '维护产品内容与发布状态',
+      description: '维护产品内容、图片和发布状态',
       href: '/admin/products',
       Icon: Package,
     },
     {
       label: '发布项目',
-      description: '维护案例内容和地图入图信息',
+      description: '维护案例内容和地图展示资料',
       href: '/admin/projects',
       Icon: MapPinned,
     },
     {
       label: '发布新闻',
-      description: '维护新闻草稿和发布内容',
+      description: '维护新闻标题、封面和正文',
       href: '/admin/news',
       Icon: Newspaper,
     },
     {
-      label: '查看新线索',
-      description: '处理待跟进询盘',
+      label: '处理线索',
+      description: '查看待跟进的新询盘',
       href: '/admin/leads?status=new',
       Icon: Inbox,
     },
     {
-      label: '打开媒体库',
-      description: '查看图片、引用和上传入口',
+      label: '管理图片',
+      description: '查看图片、上传记录和引用来源',
       href: '/admin/media',
       Icon: ImageIcon,
     },
   ]
+}
+
+function buildStatusCards({
+  newLeadCount,
+  pageDraftCount,
+  uploadCount,
+  uploadBytes,
+  draftTotal,
+}: {
+  newLeadCount: number
+  pageDraftCount: number
+  uploadCount: number
+  uploadBytes: number
+  draftTotal: number
+}): StatusCard[] {
+  return [
+    {
+      label: '当前站点',
+      value: '运营中',
+      detail: 'www.vessel303.com',
+      ok: true,
+    },
+    {
+      label: '待处理线索',
+      value: formatNumber(newLeadCount),
+      detail: newLeadCount > 0 ? '建议优先跟进' : '暂无新线索',
+      ok: newLeadCount === 0,
+    },
+    {
+      label: '待发布内容',
+      value: formatNumber(draftTotal),
+      detail: draftTotal > 0 ? '有草稿需要检查' : '暂无草稿积压',
+      ok: draftTotal === 0,
+    },
+    {
+      label: '页面草稿',
+      value: formatNumber(pageDraftCount),
+      detail: pageDraftCount > 0 ? '进入编辑网站检查发布' : '暂无页面草稿',
+      ok: pageDraftCount === 0,
+    },
+    {
+      label: '媒体空间',
+      value: formatBytes(uploadBytes),
+      detail: `${formatNumber(uploadCount)} 张图片记录`,
+      ok: uploadBytes <= STORAGE_WARNING_BYTES,
+    },
+  ]
+}
+
+function buildTodoItems({
+  newLeadCount,
+  newsSummary,
+  productSummary,
+  projectSummary,
+  pageDraftCount,
+  uploadBytes,
+  configIssues,
+  isAdmin,
+}: {
+  newLeadCount: number
+  newsSummary: StatusSummary
+  productSummary: StatusSummary
+  projectSummary: StatusSummary
+  pageDraftCount: number
+  uploadBytes: number
+  configIssues: number
+  isAdmin: boolean
+}): TodoItem[] {
+  const todos: TodoItem[] = [
+    {
+      title: '新线索待处理',
+      detail: newLeadCount > 0 ? '进入线索列表分配和跟进' : '当前没有新的待处理线索',
+      href: '/admin/leads?status=new',
+      count: newLeadCount,
+      ok: newLeadCount === 0,
+    },
+    {
+      title: '页面草稿待检查',
+      detail: pageDraftCount > 0 ? '进入网站编辑器查看并确认是否发布' : '暂无页面草稿待处理',
+      href: '/admin/pages/visual',
+      count: pageDraftCount,
+      ok: pageDraftCount === 0,
+    },
+    {
+      title: '产品草稿',
+      detail: productSummary.draft > 0 ? '检查封面、图库、英文内容和发布状态' : '暂无产品草稿',
+      href: '/admin/products?status=draft',
+      count: productSummary.draft,
+      ok: productSummary.draft === 0,
+    },
+    {
+      title: '项目草稿',
+      detail: projectSummary.draft > 0 ? '检查封面、图库、坐标和项目资料' : '暂无项目草稿',
+      href: '/admin/projects?status=draft',
+      count: projectSummary.draft,
+      ok: projectSummary.draft === 0,
+    },
+    {
+      title: '新闻草稿',
+      detail: newsSummary.draft > 0 ? '检查标题、封面、正文和发布状态' : '暂无新闻草稿',
+      href: '/admin/news?status=draft',
+      count: newsSummary.draft,
+      ok: newsSummary.draft === 0,
+    },
+    {
+      title: '媒体使用状态',
+      detail:
+        uploadBytes > STORAGE_WARNING_BYTES
+          ? '图片空间使用偏高，建议清理无引用图片'
+          : '当前图片空间状态正常',
+      href: '/admin/media',
+      ok: uploadBytes <= STORAGE_WARNING_BYTES,
+    },
+  ]
+
+  if (isAdmin) {
+    todos.push({
+      title: '系统配置状态',
+      detail: configIssues > 0 ? '有配置项需要管理员处理' : '关键配置已就绪',
+      href: '/admin/settings',
+      count: configIssues,
+      ok: configIssues === 0,
+    })
+  }
+
+  return todos
+}
+
+function buildUserStatusDetail(summary: UserSummary | null): string {
+  if (!summary) return '账号状态读取失败'
+  return `管理员 ${summary.admins} / 运营人员 ${summary.operators} / 禁用 ${summary.disabled}`
 }
 
 function buildSections({
@@ -160,6 +389,7 @@ function buildSections({
   newsSummary,
   productSummary,
   projectSummary,
+  recentSummary,
   uploadCount,
   uploadBytes,
   userSummary,
@@ -170,6 +400,7 @@ function buildSections({
   newsSummary: StatusSummary
   productSummary: StatusSummary
   projectSummary: StatusSummary
+  recentSummary: RecentContentSummary
   uploadCount: number
   uploadBytes: number
   userSummary: UserSummary | null
@@ -179,97 +410,115 @@ function buildSections({
   const sections: ConsoleSection[] = [
     {
       title: '网站管理',
-      description: '编辑官网页面、管理图片资产，并保留 Global Map 的只读入口。',
+      description: '处理官网页面、图片素材和全球地图展示入口。',
       entries: [
         {
           title: '编辑网站',
-          description: '页面可视化运营中心，日常页面修改优先从这里进入。',
+          description: '进入页面编辑器，修改首页和主要页面的文案、图片与模块内容。',
           href: '/admin/pages/visual',
           Icon: LayoutTemplate,
-          metric: 'Visual',
-          status: '主入口',
+          metric: '进入',
+          status: '日常入口',
         },
         {
-          title: '媒体库',
-          description: '查看图片、上传状态和引用来源。',
+          title: '管理图片',
+          description: '查看图片数量、空间使用、上传记录和引用来源。',
           href: '/admin/media',
           Icon: ImageIcon,
-          metric: uploadCount.toLocaleString(),
-          status: uploadBytes > WARNING_BYTES ? `已用 ${formatBytes(uploadBytes)}` : '正常',
+          metric: formatNumber(uploadCount),
+          status: uploadBytes > STORAGE_WARNING_BYTES ? '建议关注' : '正常',
         },
         {
-          title: 'Global Map',
-          description: '阶段 A 仅查看前台地图；管理能力后续单独规划。',
+          title: '全球地图',
+          description: '查看前台全球项目地图；管理能力后续单独规划。',
           href: '/global',
           Icon: Globe2,
-          metric: '只读',
-          status: '规划中',
+          metric: '查看',
+          status: '前台页面',
           external: true,
         },
       ],
     },
     {
       title: '内容管理',
-      description: '产品、项目案例、新闻仍沿用旧维护页，后续会按 300 式运营逻辑重做。',
+      description: '集中处理产品、项目案例和新闻的发布与内容完善。',
       entries: [
         {
           title: '产品',
-          description: '维护产品草稿、发布状态、图片和详情内容。',
+          description: '维护产品资料、图片、详情内容和发布状态。',
           href: '/admin/products',
           Icon: Package,
-          metric: productSummary.draft.toLocaleString(),
-          status: `草稿 / 已发布 ${productSummary.published}`,
+          metric: formatNumber(productSummary.draft),
+          status: `草稿 / 已发布 ${formatNumber(productSummary.published)}`,
         },
         {
           title: '项目案例',
-          description: '维护案例内容、完整度和地图入图资料。',
+          description: '维护案例资料、图库、坐标和地图展示状态。',
           href: '/admin/projects',
           Icon: MapPinned,
-          metric: projectSummary.draft.toLocaleString(),
-          status: `草稿 / 已发布 ${projectSummary.published}`,
+          metric: formatNumber(projectSummary.draft),
+          status: `草稿 / 已发布 ${formatNumber(projectSummary.published)}`,
         },
         {
           title: '新闻',
-          description: '维护新闻草稿、封面、正文和发布状态。',
+          description: '维护新闻标题、封面、正文和发布状态。',
           href: '/admin/news',
           Icon: Newspaper,
-          metric: newsSummary.draft.toLocaleString(),
-          status: `草稿 / 已发布 ${newsSummary.published}`,
+          metric: formatNumber(newsSummary.draft),
+          status: `草稿 / 已发布 ${formatNumber(newsSummary.published)}`,
         },
       ],
     },
     {
-      title: '客户与线索',
-      description: '集中处理询盘和跟进状态，避免新线索被遗漏。',
+      title: '客户与会员',
+      description: '跟进询盘和会员相关工作；会员管理先由管理员规划。',
       entries: [
         {
           title: '新线索',
-          description: '只看待跟进线索。',
+          description: '优先处理尚未跟进的新询盘。',
           href: '/admin/leads?status=new',
           Icon: Inbox,
-          metric: newLeadCount.toLocaleString(),
+          metric: formatNumber(newLeadCount),
           status: newLeadCount > 0 ? '待处理' : '暂无新增',
         },
         {
           title: '全部线索',
-          description: '查看、筛选和导出线索。',
+          description: '查看、筛选和导出所有线索。',
           href: '/admin/leads',
           Icon: Users,
-          metric: 'CRM',
-          status: '旧维护页',
+          metric: '进入',
+          status: '线索中心',
         },
       ],
     },
     {
-      title: '数据分析',
-      description: '阶段 A 先保留运营视角入口，不接入新数据看板。',
+      title: '数据与状态',
+      description: '先聚合内容和素材状态，后续再接入更完整的数据分析。',
       entries: [
+        {
+          title: '近 30 天新增',
+          description: `产品 ${formatNumber(recentSummary.products)} / 项目 ${formatNumber(
+            recentSummary.projects,
+          )} / 新闻 ${formatNumber(recentSummary.news)}`,
+          Icon: Clock3,
+          metric: formatNumber(recentSummary.products + recentSummary.projects + recentSummary.news),
+          status: '内容变化',
+          disabled: true,
+        },
+        {
+          title: '内容待补',
+          description: '产品、项目、新闻列表已提供完整度提示，可进入对应列表逐项处理。',
+          Icon: CheckCircle2,
+          metric: formatNumber(productSummary.draft + projectSummary.draft + newsSummary.draft),
+          status: '按列表处理',
+          disabled: true,
+        },
         {
           title: '访问与转化',
           description: '后续用于查看访问、线索转化和内容表现。',
           Icon: BarChart3,
           metric: '规划中',
-          status: '只读规划',
+          status: '暂未接入',
           disabled: true,
         },
       ],
@@ -277,58 +526,53 @@ function buildSections({
   ]
 
   if (isAdmin) {
-    sections.push(
-      {
-        title: '会员管理',
-        description: '阶段 A 仅保留入口规划；基础会员管理放到后续 1B。',
-        entries: [
-          {
-            title: '会员管理',
-            description: '后续区分后台账号与普通会员，先不做会员价、订单或支付。',
-            Icon: Users,
-            metric: '1B',
-            status: '规划中',
-            disabled: true,
-          },
-        ],
-      },
-      {
-        title: '系统与权限',
-        description: '管理员专用，用于账号、权限和站点配置状态检查。',
-        entries: [
-          {
-            title: '后台账号',
-            description: buildUserStatusDetail(userSummary),
-            href: '/admin/users',
-            Icon: ShieldCheck,
-            metric: userSummary ? userSummary.total.toLocaleString() : '-',
-            status: userSummary && userSummary.untagged > 0 ? '有待标记用户' : '正常',
-          },
-          {
-            title: '站点设置',
-            description: '查看站点设置、配置状态和最近操作。',
-            href: '/admin/settings',
-            Icon: Settings,
-            metric: configIssues > 0 ? configIssues.toLocaleString() : '0',
-            status: configIssues > 0 ? '需处理' : '已配置',
-          },
-        ],
-      },
-      {
-        title: 'Legacy 维护',
-        description: '旧后台只用于数据维护、排障和开发回溯，日常运营优先使用新版控制台。',
-        entries: [
-          {
-            title: '进入旧后台维护索引',
-            description: '索引旧产品、项目、新闻、线索、媒体、页面表单、用户和设置入口。',
-            href: '/admin/legacy',
-            Icon: Wrench,
-            metric: 'Admin',
-            status: '维护入口',
-          },
-        ],
-      },
-    )
+    sections[2].entries.push({
+      title: '会员管理',
+      description: '后续区分后台账号和普通会员；本阶段不做会员价、订单或支付。',
+      Icon: Users,
+      metric: '规划中',
+      status: '管理员规划',
+      disabled: true,
+    })
+
+    sections.push({
+      title: '维护中心',
+      description: '管理员使用，日常运营优先从上方入口完成。',
+      entries: [
+        {
+          title: '高级维护',
+          description: '集中查看少量不适合放在日常运营首页的维护入口。',
+          href: '/admin/legacy',
+          Icon: Wrench,
+          metric: '进入',
+          status: '管理员',
+        },
+        {
+          title: '表单模式',
+          description: '用于管理员处理页面模块的备用表单编辑。',
+          href: '/admin/pages',
+          Icon: LayoutTemplate,
+          metric: '进入',
+          status: '高级',
+        },
+        {
+          title: '后台账号',
+          description: buildUserStatusDetail(userSummary),
+          href: '/admin/users',
+          Icon: ShieldCheck,
+          metric: userSummary ? formatNumber(userSummary.total) : '-',
+          status: userSummary && userSummary.untagged > 0 ? '有待标记' : '正常',
+        },
+        {
+          title: '站点设置',
+          description: '查看站点配置状态和基础设置。',
+          href: '/admin/settings',
+          Icon: Settings,
+          metric: configIssues > 0 ? formatNumber(configIssues) : '0',
+          status: configIssues > 0 ? '需处理' : '已配置',
+        },
+      ],
+    })
   }
 
   return sections
@@ -370,6 +614,88 @@ function QuickActionLink({ action }: { action: QuickAction }) {
   )
 }
 
+function StatusOverview({ cards }: { cards: StatusCard[] }) {
+  return (
+    <section className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-lg font-semibold text-[#2C2A28]">网站状态</h2>
+        <p className="mt-1 text-sm text-[#8A8580]">先确认站点、线索、草稿和图片空间是否需要处理。</p>
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+        {cards.map((item) => (
+          <div key={item.label} className="rounded-lg border border-[#E5DED4] bg-white px-4 py-4">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs text-[#8A8580]">{item.label}</span>
+              {item.ok ? (
+                <CheckCircle2 size={15} className="text-emerald-700" />
+              ) : (
+                <CircleDashed size={15} className="text-[#E36F2C]" />
+              )}
+            </div>
+            <p
+              className="mt-3 text-2xl font-bold text-[#2C2A28]"
+              style={{ fontFamily: 'DM Sans, sans-serif' }}
+            >
+              {item.value}
+            </p>
+            <p className="mt-1 text-xs text-[#8A8580]">{item.detail}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function TodoList({ items }: { items: TodoItem[] }) {
+  return (
+    <section className="rounded-lg border border-[#E5DED4] bg-white p-5">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-[#2C2A28]">待处理事项</h2>
+          <p className="mt-1 text-sm text-[#8A8580]">优先处理有数量和橙色提示的事项。</p>
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {items.map((item) => {
+          const body = (
+            <div
+              className={`flex min-h-24 gap-3 rounded-lg border p-4 ${
+                item.ok ? 'border-[#E5DED4] bg-[#FAF7F2]' : 'border-[#E36F2C]/35 bg-[#FFF7EF]'
+              }`}
+            >
+              <span
+                className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
+                  item.ok ? 'bg-white text-emerald-700' : 'bg-white text-[#E36F2C]'
+                }`}
+              >
+                {item.ok ? <CheckCircle2 size={16} /> : <CircleDashed size={16} />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-semibold text-[#2C2A28]">{item.title}</span>
+                  {typeof item.count === 'number' && (
+                    <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-[#E36F2C]">
+                      {formatNumber(item.count)}
+                    </span>
+                  )}
+                </span>
+                <span className="mt-2 block text-xs leading-5 text-[#8A8580]">{item.detail}</span>
+              </span>
+            </div>
+          )
+
+          if (!item.href) return <div key={item.title}>{body}</div>
+          return (
+            <Link key={item.title} href={item.href} className="block transition hover:-translate-y-0.5">
+              {body}
+            </Link>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 function ConsoleEntryCard({ entry }: { entry: ConsoleEntry }) {
   const Icon = entry.Icon
   const content = (
@@ -379,7 +705,7 @@ function ConsoleEntryCard({ entry }: { entry: ConsoleEntry }) {
           <Icon size={18} />
         </span>
         <span className="inline-flex min-h-6 items-center rounded-full border border-[#E5DED4] bg-[#FAF7F2] px-2 text-xs text-[#8A8580]">
-          {entry.status ?? '入口'}
+          {entry.status ?? '进入'}
         </span>
       </div>
       <div className="mt-4">
@@ -443,46 +769,6 @@ function SectionBlock({ section }: { section: ConsoleSection }) {
   )
 }
 
-function SystemStatusStrip({
-  role,
-  checks,
-  uploadBytes,
-}: {
-  role: AdminRole
-  checks: SystemCheck[]
-  uploadBytes: number
-}) {
-  const issueCount = checks.filter((item) => !item.ok).length
-  const items = [
-    { label: '当前角色', value: role === 'admin' ? '管理员' : '运营人员', ok: true },
-    { label: '媒体库', value: formatBytes(uploadBytes), ok: uploadBytes <= WARNING_BYTES },
-    {
-      label: '系统配置',
-      value: role === 'admin' ? (issueCount > 0 ? `${issueCount} 项需处理` : '已配置') : '管理员可见',
-      ok: role !== 'admin' || issueCount === 0,
-    },
-    { label: '页面管理', value: 'Visual 主入口', ok: true },
-  ]
-
-  return (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-      {items.map((item) => (
-        <div key={item.label} className="rounded-lg border border-[#E5DED4] bg-white px-4 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-[#8A8580]">{item.label}</span>
-            {item.ok ? (
-              <CheckCircle2 size={15} className="text-emerald-700" />
-            ) : (
-              <CircleDashed size={15} className="text-[#E36F2C]" />
-            )}
-          </div>
-          <p className="mt-2 text-sm font-semibold text-[#2C2A28]">{item.value}</p>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 export default async function AdminConsolePage() {
   const session = await auth()
   if (!session?.user) {
@@ -502,16 +788,20 @@ export default async function AdminConsolePage() {
     newsSummary,
     productSummary,
     projectSummary,
+    pageDraftCount,
     uploadCount,
     uploadBytes,
+    recentSummary,
     userSummary,
   ] = await Promise.all([
     safeLoad('count new leads', () => countLeadsByStatus('new'), 0),
     safeLoad('count news', () => countNewsByStatus(), EMPTY_STATUS_SUMMARY),
     safeLoad('count products', () => countCatalogProductsByStatus(), EMPTY_STATUS_SUMMARY),
     safeLoad('count projects', () => countProjectCasesByStatus(), EMPTY_STATUS_SUMMARY),
+    safeLoad('count page drafts', () => countPageDrafts(), 0),
     safeLoad('count uploads', () => countUploads(), 0),
     safeLoad('sum upload storage', () => sumStorageSize(), 0),
+    safeLoad('count recent content', () => getRecentContentSummary(), EMPTY_RECENT_SUMMARY),
     isAdmin
       ? safeLoad<UserSummary | null>('user summary', () => getUserSummary(), null)
       : Promise.resolve(null),
@@ -519,12 +809,31 @@ export default async function AdminConsolePage() {
 
   const checks = isAdmin ? getSystemChecks() : []
   const configIssues = checks.filter((item) => !item.ok).length
+  const draftTotal = productSummary.draft + projectSummary.draft + newsSummary.draft
+  const statusCards = buildStatusCards({
+    newLeadCount,
+    pageDraftCount,
+    uploadCount,
+    uploadBytes,
+    draftTotal,
+  })
+  const todoItems = buildTodoItems({
+    newLeadCount,
+    newsSummary,
+    productSummary,
+    projectSummary,
+    pageDraftCount,
+    uploadBytes,
+    configIssues,
+    isAdmin,
+  })
   const sections = buildSections({
     role,
     newLeadCount,
     newsSummary,
     productSummary,
     projectSummary,
+    recentSummary,
     uploadCount,
     uploadBytes,
     userSummary,
@@ -536,7 +845,7 @@ export default async function AdminConsolePage() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-6 md:px-8 lg:px-10">
         <header className="flex flex-col gap-5 rounded-lg border border-[#E5DED4] bg-white px-5 py-5 md:px-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-[#E36F2C]">VESSEL Admin 2.0</p>
+            <p className="text-sm font-semibold text-[#E36F2C]">VESSEL 运营后台</p>
             <h1
               className="mt-2 text-3xl font-bold text-[#2C2A28]"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
@@ -544,7 +853,7 @@ export default async function AdminConsolePage() {
               运营管理控制台
             </h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[#8A8580]">
-              新后台按运营路径组织入口；旧后台仅保留数据维护、排障和开发回溯价值。
+              先看网站状态和待处理事项，再进入发布、图片、线索和页面编辑。
             </p>
           </div>
           <div className="flex flex-col gap-3 rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-3 sm:flex-row sm:items-center">
@@ -566,12 +875,13 @@ export default async function AdminConsolePage() {
           </div>
         </header>
 
-        <SystemStatusStrip role={role} checks={checks} uploadBytes={uploadBytes} />
+        <StatusOverview cards={statusCards} />
+        <TodoList items={todoItems} />
 
         <section className="flex flex-col gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-[#2C2A28]">快捷动作</h2>
-            <p className="mt-1 text-sm text-[#8A8580]">把高频运营动作放到第一屏，减少进入旧后台目录的次数。</p>
+            <h2 className="text-lg font-semibold text-[#2C2A28]">快捷发布</h2>
+            <p className="mt-1 text-sm text-[#8A8580]">常用运营动作放在第一屏，减少查找路径。</p>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {buildQuickActions().map((action) => (
