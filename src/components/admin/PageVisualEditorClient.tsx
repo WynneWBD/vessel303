@@ -53,6 +53,7 @@ import type {
   PageModuleRow,
   PageModuleSnapshotRow,
   PageStructureDraftRow,
+  PageStructureModule,
   PageStructureSnapshotRow,
 } from '@/lib/page-modules-db'
 
@@ -126,7 +127,7 @@ const OPERATING_WORKFLOW = [
 ]
 
 const OPERATING_GUARDRAILS = [
-  '当前只编辑已有页面模块和模块内受控字段，不支持整页模块级新增、删除、拖拽排序。',
+  '仅支持 Home 安全插入区内 simple-text / cta-section 的有限新增、排序、隐藏；仍不支持整页自由拖拽、跨区排序、About 新增、核心模块删除。',
   '不能自由改字体、颜色、间距、布局、SEO、导航和页脚；这些仍由代码和品牌规则控制。',
   '恢复快照只会恢复到草稿，不会直接影响前台；恢复后仍需要预览、检查并手动发布。',
   '发现图片、链接、空内容、隐藏模块等检查提醒时，先确认业务意图，再保存或发布。',
@@ -410,6 +411,29 @@ function filterEditableModules(modules: PageModuleRow[]) {
       }
       return a.page_key.localeCompare(b.page_key)
     })
+}
+
+function isSafeHomeStructureModule(pageModule: PageStructureModule) {
+  return (
+    pageModule.status !== 'removed' &&
+    !pageModule.locked &&
+    !pageModule.required &&
+    (
+      isTemplateBackedPageModule('home', pageModule.moduleType) ||
+      pageModule.createdFromTemplate === 'simple-text' ||
+      pageModule.createdFromTemplate === 'cta-section'
+    )
+  )
+}
+
+function isStructureModuleVisible(pageModule: PageStructureModule) {
+  if (pageModule.status === 'hidden') return false
+  if (pageModule.isVisible === false) return false
+  return true
+}
+
+function getNextStructureVisibility(pageModule: PageStructureModule) {
+  return !isStructureModuleVisible(pageModule)
 }
 
 function sortedItems(items: PageModuleItem[]) {
@@ -848,8 +872,17 @@ export default function PageVisualEditorClient({
     () => new Map((currentStructureDraft?.modules ?? []).map((pageModule) => [pageModule.moduleKey, pageModule])),
     [currentStructureDraft],
   )
+  const currentSafeStructureModules = useMemo(
+    () => selectedPage === 'home'
+      ? (currentStructureDraft?.modules ?? [])
+          .filter(isSafeHomeStructureModule)
+          .sort((a, b) => a.sortOrder - b.sortOrder || a.moduleKey.localeCompare(b.moduleKey))
+      : [],
+    [currentStructureDraft, selectedPage],
+  )
   const activeStructureModule = active ? currentStructureModulesByKey.get(active.module_key) ?? null : null
   const activeIsDraftAdded = activeStructureModule?.status === 'added'
+  const activeIsStructureManagedTemplate = activeStructureModule ? isSafeHomeStructureModule(activeStructureModule) : false
   const activeHasSavedDraft = active?.has_draft === true
   const activeDraftUpdatedAt = active?.draft_updated_at ? formatSnapshotTime(active.draft_updated_at) : null
   const activeLiveUpdatedAt = active?.live_updated_at ? formatSnapshotTime(active.live_updated_at) : null
@@ -1373,6 +1406,69 @@ export default function PageVisualEditorClient({
     }
   }
 
+  const reorderSafeStructureModules = async (moduleKeys: string[]) => {
+    if (selectedPage !== 'home') return
+
+    setStructureBusy('reorder:home')
+    try {
+      const res = await fetch('/api/admin/page-structures/home/draft/modules/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ moduleKeys }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : '调整结构排序失败')
+
+      upsertStructureDraft(data.data as PageStructureDraftRow)
+      await reloadPreviewModules('home')
+      setPreviewVersion(Date.now())
+      setFrameLoaded(false)
+      toast.success('结构草稿排序已更新，普通前台暂不变化。')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '调整结构排序失败')
+    } finally {
+      setStructureBusy(null)
+    }
+  }
+
+  const moveSafeStructureModule = async (moduleKey: string, direction: -1 | 1) => {
+    const moduleKeys = currentSafeStructureModules.map((pageModule) => pageModule.moduleKey)
+    const index = moduleKeys.indexOf(moduleKey)
+    const nextIndex = index + direction
+    if (index < 0 || nextIndex < 0 || nextIndex >= moduleKeys.length) return
+
+    const next = [...moduleKeys]
+    const current = next[index]
+    next[index] = next[nextIndex]
+    next[nextIndex] = current
+    await reorderSafeStructureModules(next)
+  }
+
+  const setStructureModuleVisibility = async (moduleKey: string, isVisible: boolean) => {
+    if (selectedPage !== 'home') return
+
+    setStructureBusy(`visibility:${moduleKey}`)
+    try {
+      const res = await fetch(`/api/admin/page-structures/home/draft/modules/${encodeURIComponent(moduleKey)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isVisible }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : '调整结构显示状态失败')
+
+      upsertStructureDraft(data.data as PageStructureDraftRow)
+      await reloadPreviewModules('home')
+      setPreviewVersion(Date.now())
+      setFrameLoaded(false)
+      toast.success(isVisible ? '结构草稿模块已恢复显示。' : '结构草稿模块已隐藏。')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '调整结构显示状态失败')
+    } finally {
+      setStructureBusy(null)
+    }
+  }
+
   const createStructureDraft = async () => {
     const pageKey = selectedPage
     setStructureBusy(`create:${pageKey}`)
@@ -1843,6 +1939,113 @@ export default function PageVisualEditorClient({
                 丢弃结构草稿
               </Button>
             </div>
+
+            {selectedPage === 'home' && currentStructureDraft ? (
+              <div className="mt-4 rounded-md border border-[#E5DED4] bg-white p-3">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-[#2C2A28]">Home 安全插入区</p>
+                    <p className="mt-1 text-xs leading-5 text-[#8A8580]">
+                      只允许调整 simple-text / cta-section，位置固定在 credentials 后、CoreTech 前。
+                    </p>
+                  </div>
+                  <span className="inline-flex w-fit rounded-full bg-[#F5F2ED] px-2 py-1 text-[11px] text-[#6B625B]">
+                    {currentSafeStructureModules.length} 个可调整模块
+                  </span>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {currentSafeStructureModules.length > 0 ? (
+                    currentSafeStructureModules.map((structureModule, index) => {
+                      const pageModule = modules.find((item) => (
+                        item.page_key === 'home' && item.module_key === structureModule.moduleKey
+                      ))
+                      const first = index === 0
+                      const last = index === currentSafeStructureModules.length - 1
+                      const visible = isStructureModuleVisible(structureModule)
+                      const hidden = !visible
+                      return (
+                        <div
+                          key={structureModule.moduleKey}
+                          className={`rounded-md border p-2 ${
+                            hidden
+                              ? 'border-[#E5DED4] bg-[#F5F2ED] text-[#8A8580]'
+                              : 'border-[#E5DED4] bg-[#FAF7F2] text-[#2C2A28]'
+                          }`}
+                        >
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0">
+                              <p className="truncate text-xs font-semibold">
+                                {pageModule?.title_zh || structureModule.moduleKey}
+                              </p>
+                              <p className="mt-1 truncate font-mono text-[11px] text-[#8A8580]">
+                                home:{structureModule.moduleKey} · {structureModule.moduleType}
+                              </p>
+                              {hidden ? (
+                                <p className="mt-1 text-[11px] text-[#B54318]">结构草稿中隐藏</p>
+                              ) : null}
+                            </div>
+                            <div className="flex shrink-0 flex-wrap gap-1">
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7"
+                                disabled={first || Boolean(structureBusy)}
+                                title="上移"
+                                aria-label="上移"
+                                onClick={(event) => {
+                                  event.preventDefault()
+                                  event.stopPropagation()
+                                  void moveSafeStructureModule(structureModule.moduleKey, -1)
+                                }}
+                              >
+                                <ArrowUp size={14} />
+                              </Button>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7"
+                                disabled={last || Boolean(structureBusy)}
+                                title="下移"
+                                aria-label="下移"
+                                onClick={(event) => {
+                                  event.preventDefault()
+                                  event.stopPropagation()
+                                  void moveSafeStructureModule(structureModule.moduleKey, 1)
+                                }}
+                              >
+                                <ArrowDown size={14} />
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                disabled={Boolean(structureBusy)}
+                                onClick={(event) => {
+                                  event.preventDefault()
+                                  event.stopPropagation()
+                                  void setStructureModuleVisibility(
+                                    structureModule.moduleKey,
+                                    getNextStructureVisibility(structureModule),
+                                  )
+                                }}
+                              >
+                                {visible ? '隐藏' : '恢复显示'}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })
+                  ) : (
+                    <p className="text-xs leading-5 text-[#8A8580]">
+                      当前结构草稿里还没有 C4-2c 新增模板模块。先从模块库添加 simple-text 或 cta-section。
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
@@ -2310,8 +2513,17 @@ export default function PageVisualEditorClient({
                   <p className="text-sm font-medium text-[#2C2A28]">前台显示</p>
                   <p className="mt-1 text-xs text-[#8A8580]">关闭后先保存草稿，发布后前台才会隐藏整个模块。</p>
                 </div>
-                <Switch checked={active.is_visible} onCheckedChange={(checked) => patchActive({ is_visible: checked })} />
+                <Switch
+                  checked={active.is_visible}
+                  disabled={activeIsStructureManagedTemplate}
+                  onCheckedChange={(checked) => patchActive({ is_visible: checked })}
+                />
               </div>
+              {activeIsStructureManagedTemplate ? (
+                <p className="text-xs leading-5 text-[#E36F2C]">
+                  这个模块由页面结构草稿控制显示/隐藏，请使用上方 Home 安全插入区的“隐藏 / 恢复显示”。
+                </p>
+              ) : null}
 
               <div className="space-y-3">
                 <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">

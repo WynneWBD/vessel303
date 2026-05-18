@@ -1405,6 +1405,31 @@ function isTemplateBackedLivePageModule(pageModule: PageModuleRow) {
   return isTemplateBackedPageModule(pageModule.page_key, pageModule.module_type)
 }
 
+function isTemplateBackedStructureModule(pageKey: string, structureModule: PageStructureModule) {
+  if (pageKey !== 'home') return false
+  const template = structureModule.createdFromTemplate
+    ? getPageModuleTemplate(structureModule.createdFromTemplate)
+    : getPageModuleTemplateByModuleType(structureModule.moduleType)
+
+  if (!template || !isPageModuleTemplateAllowedOnPage(template, pageKey)) return false
+  return (
+    structureModule.moduleType === template.moduleType ||
+    structureModule.rendererKey === template.rendererKey ||
+    structureModule.createdFromTemplate === template.templateId
+  )
+}
+
+function getSafeHomeInsertModules(modules: PageStructureModule[]) {
+  return sortPageStructureModules(
+    modules.filter((structureModule) => (
+      structureModule.status !== 'removed' &&
+      !structureModule.locked &&
+      !structureModule.required &&
+      isTemplateBackedStructureModule('home', structureModule)
+    )),
+  )
+}
+
 async function updatePageStructureDraftModules(pageKey: string, modules: PageStructureModule[], adminId: string) {
   const normalizedModules = sortPageStructureModules(modules)
   const summary = buildPageStructureSummary(normalizedModules)
@@ -2068,6 +2093,86 @@ export async function deleteAddedPageStructureDraftModule(
   await updatePageStructureDraftModules(pageKey, modules, adminId)
   await deletePageModuleDraft(pageKey, moduleKey)
 
+  return getPageStructureDraft(pageKey)
+}
+
+export async function updatePageStructureDraftModuleVisibility(
+  pageKey: string,
+  moduleKey: string,
+  isVisible: boolean,
+  adminId: string,
+): Promise<PageStructureDraftRow | null> {
+  if (pageKey !== 'home') {
+    throw new Error('Only Home supports structure module visibility in C4-2d')
+  }
+
+  const draft = await getPageStructureDraft(pageKey)
+  if (!draft || draft.draft_status === 'discarded') return null
+  if (draft.draft_status === 'stale') {
+    throw new Error('Structure draft is stale')
+  }
+
+  const target = draft.modules.find((module) => module.moduleKey === moduleKey)
+  if (!target) return null
+  if (!isTemplateBackedStructureModule(pageKey, target) || target.locked || target.required || target.status === 'removed') {
+    throw new Error('Only C4-2c template modules can be hidden or shown')
+  }
+
+  const modules = draft.modules.map((structureModule) => {
+    if (structureModule.moduleKey !== moduleKey) return structureModule
+    return {
+      ...structureModule,
+      isVisible,
+      status: structureModule.status === 'added'
+        ? 'added'
+        : isVisible
+          ? 'existing'
+          : 'hidden',
+    } satisfies PageStructureModule
+  })
+
+  await updatePageStructureDraftModules(pageKey, modules, adminId)
+  return getPageStructureDraft(pageKey)
+}
+
+export async function reorderPageStructureDraftSafeHomeModules(
+  pageKey: string,
+  moduleKeys: string[],
+  adminId: string,
+): Promise<PageStructureDraftRow | null> {
+  if (pageKey !== 'home') {
+    throw new Error('Only Home supports structure module reorder in C4-2d')
+  }
+
+  const draft = await getPageStructureDraft(pageKey)
+  if (!draft || draft.draft_status === 'discarded') return null
+  if (draft.draft_status === 'stale') {
+    throw new Error('Structure draft is stale')
+  }
+
+  const safeModules = getSafeHomeInsertModules(draft.modules)
+  if (safeModules.length === 0) {
+    throw new Error('No C4-2c template modules to reorder')
+  }
+
+  const uniqueModuleKeys = [...new Set(moduleKeys)]
+  const safeKeys = safeModules.map((module) => module.moduleKey)
+  const sameLength = uniqueModuleKeys.length === safeKeys.length
+  const sameMembers = sameLength && safeKeys.every((key) => uniqueModuleKeys.includes(key))
+  if (!sameMembers) {
+    throw new Error('Reorder payload must contain only all Home safe insert modules')
+  }
+
+  const credentials = draft.modules.find((module) => module.moduleKey === 'credentials')
+  const base = Number(credentials?.sortOrder) || 20
+  const nextSortOrders = new Map(uniqueModuleKeys.map((moduleKey, index) => [moduleKey, base + (index + 1) * 10]))
+  const modules = draft.modules.map((structureModule) => {
+    const nextSortOrder = nextSortOrders.get(structureModule.moduleKey)
+    if (!nextSortOrder) return structureModule
+    return { ...structureModule, sortOrder: nextSortOrder }
+  })
+
+  await updatePageStructureDraftModules(pageKey, modules, adminId)
   return getPageStructureDraft(pageKey)
 }
 
