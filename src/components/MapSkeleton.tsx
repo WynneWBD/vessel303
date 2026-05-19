@@ -15,7 +15,7 @@ export default function MapSkeleton() {
       style={{
         position: 'absolute',
         inset: 0,
-        background: '#241F1B',
+        background: '#F5F2ED',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -35,7 +35,7 @@ export default function MapSkeleton() {
         />
         <div
           style={{
-            color: 'rgba(240,240,240,0.55)',
+            color: '#8A7D74',
             fontSize: 12,
             letterSpacing: '0.15em',
             fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",

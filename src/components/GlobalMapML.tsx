@@ -19,10 +19,10 @@ import { SHOWCASE_MARKERS, HQ_MARKER, type ShowcaseMarker } from '@/data/showcas
 // rejecting calls before our transformRequest rewrites them.
 maptilerConfig.apiKey = 'proxied'
 
-// Pin to streets-v2-dark via our edge proxy. The first mainland-China visitor
+// Pin to streets-v2-light via our edge proxy. The first mainland-China visitor
 // pays the cold-miss penalty (one edge round-trip); everyone after that hits
 // the cached tile within ~30–80 ms from HK/Tokyo/Singapore.
-const STYLE_URL = '/api/map/maps/streets-v2-dark/style.json'
+const STYLE_URL = '/api/map/maps/streets-v2-light/style.json'
 
 // Any MapTiler URL the SDK computes internally still needs to be redirected
 // through the proxy — this handler rewrites https://api.maptiler.com/* at
@@ -657,17 +657,17 @@ export default function GlobalMapML({
       : 'Map style failed to load. Please retry shortly.'
 
   return (
-    <div style={{ position: 'relative', height: '100%', width: '100%', background: '#241F1B', pointerEvents: previewMode ? 'none' : 'auto' }}>
+    <div style={{ position: 'relative', height: '100%', width: '100%', background: '#F5F2ED', pointerEvents: previewMode ? 'none' : 'auto' }}>
       <div
         ref={containerRef}
-        style={{ height: '100%', width: '100%', background: '#241F1B' }}
+        style={{ height: '100%', width: '100%', background: '#F5F2ED' }}
       />
       <div
         aria-hidden={mapReady && !loadError}
         style={{
           position: 'absolute',
           inset: 0,
-          background: '#241F1B',
+          background: '#F5F2ED',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -687,11 +687,11 @@ export default function GlobalMapML({
               color: '#E36F2C', fontSize: 22, fontWeight: 600,
             }}>!</div>
             <div style={{
-              color: '#F5F2ED', fontSize: 14, fontWeight: 600, letterSpacing: '0.08em',
+              color: '#2C2A28', fontSize: 14, fontWeight: 600, letterSpacing: '0.08em',
               fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",
             }}>{errorTitle}</div>
             <div style={{
-              color: 'rgba(240,240,240,0.55)', fontSize: 12, lineHeight: 1.6,
+              color: '#6B625B', fontSize: 12, lineHeight: 1.6,
               fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",
             }}>{errorBody}</div>
             {loadError !== 'init-failed' && (
@@ -724,7 +724,7 @@ export default function GlobalMapML({
             />
             <div
               style={{
-                color: 'rgba(240,240,240,0.55)',
+                color: '#8A7D74',
                 fontSize: 12,
                 letterSpacing: '0.15em',
                 fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",

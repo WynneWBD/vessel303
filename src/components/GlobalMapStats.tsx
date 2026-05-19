@@ -19,9 +19,9 @@ export default function GlobalMapStats() {
         top: 0,
         left: 0,
         right: 0,
-        background: '#241F1B',
+        background: '#F5F2ED',
         zIndex: 1000,
-        borderBottom: '1px solid rgba(227,111,44,0.25)',
+        borderBottom: '1px solid #E5DED4',
       }}
     >
       {/* ── Row 1: Brand + desktop stats + lang switcher ── */}
@@ -45,7 +45,7 @@ export default function GlobalMapStats() {
           </span>
           <div style={{ width: 1, height: 20, background: 'rgba(138,133,128,0.4)' }} />
           <span
-            style={{ color: 'rgba(255,255,255,0.40)', fontSize: 13, letterSpacing: '0.1em' }}
+            style={{ color: '#8A7D74', fontSize: 13, letterSpacing: '0.1em' }}
           >
             {zh ? '全球营地部署' : 'Global Map'}
           </span>
@@ -60,25 +60,25 @@ export default function GlobalMapStats() {
             <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
               {countries}
             </span>
-            <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 12, marginLeft: 4 }}>
+            <span style={{ color: '#8A7D74', fontSize: 12, marginLeft: 4 }}>
               {zh ? '国家/地区' : 'Countries'}
             </span>
           </div>
-          <div style={{ width: 1, height: 16, background: 'rgba(138,133,128,0.3)' }} />
+          <div style={{ width: 1, height: 16, background: '#E5DED4' }} />
           <div style={{ textAlign: 'center' }}>
             <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
               {campCount}
             </span>
-            <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 12, marginLeft: 4 }}>
+            <span style={{ color: '#8A7D74', fontSize: 12, marginLeft: 4 }}>
               {zh ? '个营地' : 'Camps'}
             </span>
           </div>
-          <div style={{ width: 1, height: 16, background: 'rgba(138,133,128,0.3)' }} />
+          <div style={{ width: 1, height: 16, background: '#E5DED4' }} />
           <div style={{ textAlign: 'center' }}>
             <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
               {totalDevices}
             </span>
-            <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 12, marginLeft: 4 }}>
+            <span style={{ color: '#8A7D74', fontSize: 12, marginLeft: 4 }}>
               {zh ? '台设备' : 'Devices'}
             </span>
           </div>
@@ -87,7 +87,7 @@ export default function GlobalMapStats() {
         {/* Lang switcher: always visible; ml-auto on mobile pushes it right */}
         <div
           className="ml-auto md:ml-0"
-          style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(255,255,255,0.15)', overflow: 'hidden', flexShrink: 0 }}
+          style={{ display: 'flex', alignItems: 'center', border: '1px solid #E5DED4', overflow: 'hidden', flexShrink: 0 }}
         >
           <button
             onClick={() => setLang('en')}
@@ -98,14 +98,14 @@ export default function GlobalMapStats() {
               cursor: 'pointer',
               border: 'none',
               background: lang === 'en' ? '#E36F2C' : 'transparent',
-              color: lang === 'en' ? '#F5F2ED' : 'rgba(255,255,255,0.4)',
+              color: lang === 'en' ? '#F5F2ED' : '#8A7D74',
               fontWeight: lang === 'en' ? 700 : 400,
               transition: 'all 0.15s',
             }}
           >
             EN
           </button>
-          <div style={{ width: 1, height: 12, background: 'rgba(255,255,255,0.15)' }} />
+          <div style={{ width: 1, height: 12, background: '#E5DED4' }} />
           <button
             onClick={() => setLang('zh')}
             style={{
@@ -115,7 +115,7 @@ export default function GlobalMapStats() {
               cursor: 'pointer',
               border: 'none',
               background: lang === 'zh' ? '#E36F2C' : 'transparent',
-              color: lang === 'zh' ? '#F5F2ED' : 'rgba(255,255,255,0.4)',
+              color: lang === 'zh' ? '#F5F2ED' : '#8A7D74',
               fontWeight: lang === 'zh' ? 700 : 400,
               transition: 'all 0.15s',
             }}
@@ -128,31 +128,31 @@ export default function GlobalMapStats() {
       {/* ── Row 2: mobile-only stats ── */}
       <div
         className="flex md:hidden items-center justify-center gap-4 w-full h-9"
-        style={{ borderTop: '1px solid rgba(227,111,44,0.15)', padding: '0 24px' }}
+        style={{ borderTop: '1px solid #E5DED4', padding: '0 24px' }}
       >
         <div>
           <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 14, letterSpacing: '0.05em' }}>
             {countries}
           </span>
-          <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 11, marginLeft: 3 }}>
+          <span style={{ color: '#8A7D74', fontSize: 11, marginLeft: 3 }}>
             {zh ? '国家/地区' : 'Countries'}
           </span>
         </div>
-        <span style={{ color: 'rgba(138,133,128,0.4)', fontSize: 12 }}>·</span>
+        <span style={{ color: '#C4B9AB', fontSize: 12 }}>·</span>
         <div>
           <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 14, letterSpacing: '0.05em' }}>
             {campCount}
           </span>
-          <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 11, marginLeft: 3 }}>
+          <span style={{ color: '#8A7D74', fontSize: 11, marginLeft: 3 }}>
             {zh ? '个营地' : 'Camps'}
           </span>
         </div>
-        <span style={{ color: 'rgba(138,133,128,0.4)', fontSize: 12 }}>·</span>
+        <span style={{ color: '#C4B9AB', fontSize: 12 }}>·</span>
         <div>
           <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 14, letterSpacing: '0.05em' }}>
             {totalDevices}
           </span>
-          <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 11, marginLeft: 3 }}>
+          <span style={{ color: '#8A7D74', fontSize: 11, marginLeft: 3 }}>
             {zh ? '台设备' : 'Devices'}
           </span>
         </div>

@@ -24,7 +24,7 @@ export default async function GlobalPage() {
     })
 
   return (
-    <div style={{ overflow: 'hidden', height: '100vh', background: '#241F1B' }}>
+    <div style={{ overflow: 'hidden', height: '100vh', background: '#F5F2ED' }}>
       {/* Preload the style.json through our edge proxy so the browser starts
           fetching it in parallel with the map JS chunk, instead of waiting
           for maplibre-gl to finish parsing before requesting it. Saves one
@@ -36,7 +36,7 @@ export default async function GlobalPage() {
       <link
         rel="preload"
         as="fetch"
-        href="/api/map/maps/streets-v2-dark/style.json"
+        href="/api/map/maps/streets-v2-light/style.json"
       />
       <GlobalMapStats />
       {/* mobile navbar = row1(56px) + row2(36px) = 92px; desktop = 56px */}

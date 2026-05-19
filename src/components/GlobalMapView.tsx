@@ -165,7 +165,7 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
       height: 'calc(100vh - 56px)',
       overflow: 'hidden',
       display: 'flex',
-      background: '#241F1B',
+      background: '#F5F2ED',
     }}>
 
       {/* ── Map — shrinks to 30% when detail panel is open ── */}
@@ -193,7 +193,7 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
         transform: panelOpen ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform 300ms ease-out',
         zIndex: 100,
-        borderLeft: '1px solid #3A302A',
+        borderLeft: '1px solid #E5DED4',
         background: '#F5F2ED',
       }}>
         {selectedProject ? (
