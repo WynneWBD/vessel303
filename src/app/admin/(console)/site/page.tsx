@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { AdminTopNav } from '@/components/admin/AdminTopNav'
+import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { pool } from '@/lib/db'
 import { countUploads, sumStorageSize } from '@/lib/uploads-db'
 import {
@@ -9,10 +9,14 @@ import {
   CheckCircle2,
   CircleDashed,
   Eye,
+  FileText,
   Globe2,
   Image as ImageIcon,
   LayoutTemplate,
+  ListChecks,
   MapPinned,
+  Navigation,
+  SearchCheck,
   Settings,
   ShieldCheck,
   Wrench,
@@ -26,6 +30,7 @@ export const metadata = { title: '网站管理 - VESSEL' }
 type AdminRole = 'admin' | 'operator'
 
 type SiteStat = {
+  id?: string
   title: string
   value: string | number
   detail: string
@@ -120,6 +125,58 @@ const SITE_APPS: SiteApp[] = [
   },
 ]
 
+function getSiteSideNav({
+  pageDraftCount,
+  uploadCount,
+  uploadBytes,
+  configIssues,
+  isAdmin,
+}: {
+  pageDraftCount: number
+  uploadCount: number
+  uploadBytes: number
+  configIssues: number
+  isAdmin: boolean
+}): AdminSideNavGroup[] {
+  const todoCount = pageDraftCount + (uploadBytes > STORAGE_WARNING_BYTES ? 1 : 0) + (isAdmin ? configIssues : 0)
+
+  return [
+    {
+      title: '网站运营',
+      items: [
+        { key: 'overview', label: '网站概览', href: '/admin/site', Icon: LayoutTemplate },
+        { key: 'visual', label: '编辑网站', href: '/admin/pages/visual', Icon: FileText },
+        { key: 'drafts', label: '页面草稿', href: '#drafts', badge: pageDraftCount, Icon: CircleDashed },
+        { key: 'todo', label: '网站待办', href: '#todo', badge: todoCount, Icon: ListChecks },
+      ],
+    },
+    {
+      title: '资源与页面',
+      items: [
+        { key: 'media', label: '图片素材', href: '/admin/media', badge: uploadCount, Icon: ImageIcon },
+        { key: 'home', label: '查看主站', href: '/', Icon: Eye },
+        { key: 'global', label: 'Global 查看', href: '/global', Icon: MapPinned },
+      ],
+    },
+    {
+      title: '后续规划',
+      items: [
+        { key: 'seo', label: 'SEO 检查', planned: true, Icon: SearchCheck },
+        { key: 'navigation', label: '导航管理', planned: true, Icon: Navigation },
+        { key: 'page-settings', label: '页面设置', planned: true, Icon: Settings },
+      ],
+    },
+    {
+      title: '高级维护',
+      items: [
+        { key: 'form-mode', label: '表单模式', href: '/admin/pages', adminOnly: true, Icon: Wrench },
+        { key: 'settings', label: '站点设置', href: '/admin/settings', adminOnly: true, Icon: Settings },
+        { key: 'legacy', label: '维护入口', href: '/admin/legacy', adminOnly: true, Icon: ShieldCheck },
+      ],
+    },
+  ]
+}
+
 function formatNumber(n: number): string {
   return n.toLocaleString('zh-CN')
 }
@@ -209,8 +266,8 @@ function Hero({
   visibleModules: number
 }) {
   return (
-    <section className="border-b border-[#D8E7E8] bg-[linear-gradient(135deg,#DDF6F8_0%,#F4FBFC_62%,#FFF3E7_100%)]">
-      <div className="mx-auto flex w-full max-w-[1520px] flex-col gap-5 px-4 py-7 lg:px-8">
+    <section id="overview" className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#DDF6F8_0%,#F4FBFC_62%,#FFF3E7_100%)] p-5 shadow-sm md:p-6">
+      <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <p className="text-sm font-semibold text-[#1889B6]">网站管理</p>
@@ -244,6 +301,7 @@ function Hero({
             </div>
           </div>
           <StatCard
+            id="drafts"
             title="页面草稿"
             value={pageDraftCount}
             detail={pageDraftCount > 0 ? '等待确认发布' : '暂无待发布草稿'}
@@ -323,7 +381,7 @@ function DomainCard({ site }: { site: SiteDomain }) {
   )
 }
 
-function StatCard({ title, value, detail, href, tone }: SiteStat) {
+function StatCard({ id, title, value, detail, href, tone }: SiteStat) {
   const toneClass =
     tone === 'orange'
       ? 'from-[#FF9F2F] to-[#F06B22]'
@@ -350,9 +408,9 @@ function StatCard({ title, value, detail, href, tone }: SiteStat) {
 
   const className = `group flex min-h-40 flex-col justify-between rounded-md bg-gradient-to-br ${toneClass} p-5 text-white shadow-sm transition hover:-translate-y-0.5`
 
-  if (!href) return <div className={className}>{content}</div>
+  if (!href) return <div id={id} className={className}>{content}</div>
   return (
-    <Link href={href} className={className}>
+    <Link id={id} href={href} className={className}>
       {content}
     </Link>
   )
@@ -477,7 +535,7 @@ function TodoPanel({
 
   return (
     <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-      <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <section id="todo" className="scroll-mt-24 rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="border-b border-[#E6EEEE] px-5 py-4">
           <h2 className="text-lg font-bold text-[#1E2C31]">网站待办</h2>
           <p className="mt-1 text-xs text-[#61767D]">只显示需要运营关注的状态。</p>
@@ -575,17 +633,31 @@ export default async function AdminSitePage() {
   const configIssues = getConfigIssueCount()
   const adminRole: AdminRole = role
   const isAdmin = adminRole === 'admin'
+  const sideNavGroups = getSiteSideNav({
+    pageDraftCount,
+    uploadCount,
+    uploadBytes,
+    configIssues,
+    isAdmin,
+  })
 
   return (
-    <main className="min-h-screen bg-[#EEF5F3] text-[#1E2C31]" style={{ fontFamily: 'Inter, sans-serif' }}>
-      <AdminTopNav active="site" role={adminRole} email={session.user.email} />
+    <AdminSectionShell
+      topNavActive="site"
+      role={adminRole}
+      email={session.user.email}
+      title="网站管理"
+      description="编辑页面、管理图片素材，并查看主站和 Global 展示。"
+      sideNavGroups={sideNavGroups}
+      activeItem="overview"
+    >
       <Hero
         pageDraftCount={pageDraftCount}
         uploadCount={uploadCount}
         uploadBytes={uploadBytes}
         visibleModules={visibleModules}
       />
-      <div className="mx-auto grid w-full max-w-[1520px] grid-cols-1 gap-6 px-4 py-7 lg:px-8 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-8">
           <AppGrid role={adminRole} />
           <WorkflowPanel />
@@ -598,6 +670,6 @@ export default async function AdminSitePage() {
           isAdmin={isAdmin}
         />
       </div>
-    </main>
+    </AdminSectionShell>
   )
 }
