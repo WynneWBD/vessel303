@@ -216,7 +216,7 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 - 后台 2.0 阶段 A 已开始落地：`/admin` 已脱离旧 `AdminShell` 并重建为运营控制台，`/admin/legacy` 是 admin-only 旧后台维护入口；旧 `/admin/pages`、`/admin/users`、`/admin/settings` 保持 admin-only，`operator` 过渡期仍可访问 `/admin/products`、`/admin/projects`、`/admin/news`、`/admin/leads`、`/admin/media`，旧内容路由暂不迁移。A3 已上线 `/admin/site`，`/admin` 的网站管理入口已指向 `/admin/site`，`/admin/pages/visual` 是编辑网站主入口，`/admin/media` 是图片管理入口，`/global` 只是查看入口；`operator` 可进 `/admin/site` 但不显示维护中心、表单模式、设置、账号和 Legacy，`admin` 可见维护中心和 admin-only 入口。A4 已上线 `/admin/content` 内容管理二级入口页，`/admin` 的内容管理入口已指向 `/admin/content`，聚合产品 / 项目 / 新闻三个内容域，展示内容状态总览、草稿、近 30 天新增、快捷发布、待补内容和内容运营流程；旧 `/admin/products`、`/admin/projects`、`/admin/news` 暂保留原路径和旧页面；`operator` / `admin` 均可访问 `/admin/content`，普通 `user` 不能进入后台。A3/A4 不改数据库、API、旧后台业务页或 `/global` 地图底层，且 A4 不改旧内容保存 / 发布 / 删除逻辑；支付、订单、会员价、代理价、国家版本暂不做；`/global` warning 仍归 04。
 - 后台 2.0 开发规则：重大产品设计前必须做 300.cn 对照确认；普通 bug、文案、API、权限、lint/build 不必每轮访问。若对 300 交互不确定，先回 300.cn 只读观察，不凭记忆硬做；300 负责启发路径，vessel 负责收口边界。
 - 03 项目案例 / 项目 CMS：当前 3 个 Excel/static 样板项目已进入 CMS 发布链路；旧 `foshan-shishan-cultural-camp` 保持 draft，不显示在 `/cases`，不进入 `/global`。
-- 04 Global 地图专项：`/global` 地图底层仍归 04；03 不直接修改地图底层。
+- 04 Global 地图专项：`/global` 地图底层仍归 04；03 不直接修改地图底层。`/global` 营地详情首开速度第一阶段已上线：`77b053d perf(global): speed up project detail loading`；预加载 `ProjectDetail` 和 `showcaseProjects`，详情基础文字先显示，轮播图片按当前图加载；未改 `/api/map/[...path]`、runtime、点位、CMS、坐标、HQ，未替换 / 压缩 / 删除图片素材；剩余大图体积治理交 03 / 媒体侧，MapTiler `key=proxied` 403 属既有地图链路问题，`/global` edge runtime warning 仍归 04。
 - 05 测试 / 提交 / 推送 / 上线：继续统一验收、提交、push `main` 和 Vercel 上线控制。
 - 06 文档整理：继续维护 V9、`CODEX.md` 和文档库。
 - 07 使用规范与故障排查：沉淀 Codex 使用规范、Browser Use / 工具故障和流程问题。
