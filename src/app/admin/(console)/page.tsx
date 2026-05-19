@@ -108,7 +108,7 @@ const STORAGE_WARNING_BYTES = 800 * 1024 * 1024
 
 const TOP_NAV: TopNavItem[] = [
   { label: '概况', href: '#overview' },
-  { label: '网站管理', href: '/admin/pages/visual' },
+  { label: '网站管理', href: '/admin/site' },
   { label: '内容管理', href: '#content' },
   { label: '客户与会员', href: '#customer' },
   { label: '数据与状态', href: '#status' },
@@ -423,7 +423,7 @@ function Hero({
             </div>
             <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <SiteChip label="主站域名" value="www.vessel303.com" href="https://www.vessel303.com" />
-              <SiteChip label="网站编辑" value="进入页面管理" href="/admin/pages/visual" />
+              <SiteChip label="网站管理" value="页面、素材、状态" href="/admin/site" />
             </div>
           </div>
 
