@@ -13,9 +13,41 @@ const GlobalMapDynamic = dynamic(() => import('./GlobalMapML'), {
   loading: () => <MapSkeleton />,
 })
 
-// Detail panel chunk (~25 KB gz) — only fetched after the user clicks a
-// marker, so the map first-paint never pays its cost.
-const ProjectDetailDynamic = dynamic(() => import('./ProjectDetail'), {
+type ShowcaseProjectsModule = typeof import('@/data/showcaseProjects')
+
+let showcaseProjectsModulePromise: Promise<ShowcaseProjectsModule> | null = null
+
+function loadProjectDetailModule() {
+  return import('./ProjectDetail')
+}
+
+function loadShowcaseProjectsModule() {
+  showcaseProjectsModulePromise ??= import('@/data/showcaseProjects')
+  return showcaseProjectsModulePromise
+}
+
+function scheduleIdlePreload(work: () => void) {
+  if (typeof window === 'undefined') return undefined
+
+  const idleWindow = window as Window & typeof globalThis & {
+    requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number
+    cancelIdleCallback?: (handle: number) => void
+  }
+
+  if (idleWindow.requestIdleCallback) {
+    const handle = idleWindow.requestIdleCallback(work, { timeout: 3500 })
+    return () => {
+      idleWindow.cancelIdleCallback?.(handle)
+    }
+  }
+
+  const handle = window.setTimeout(work, 1800)
+  return () => {
+    window.clearTimeout(handle)
+  }
+}
+
+const ProjectDetailDynamic = dynamic(loadProjectDetailModule, {
   ssr: false,
 })
 
@@ -29,12 +61,19 @@ function setCampParam(id: string | null) {
   window.history.replaceState({}, '', url)
 }
 
-// Shown inside the right-hand panel during the brief gap between marker click
-// and project detail being ready (chunk + showcaseProjects.ts download). Only
-// appears on the very first marker click of the session; subsequent clicks
-// hit the cached module and render content synchronously.
-function PanelLoadingSpinner({ lang, onClose }: { lang: string; onClose: () => void }) {
+// Shown immediately after marker click so the user can see which camp is
+// opening while the full detail chunk/data finishes loading.
+function PanelLoadingPreview({
+  marker,
+  lang,
+  onClose,
+}: {
+  marker: ShowcaseMarker
+  lang: string
+  onClose: () => void
+}) {
   const zh = lang === 'zh'
+  const markerName = marker.name[zh ? 'zh' : 'en'] ?? marker.name.en
   return (
     <div style={{
       height: '100%',
@@ -43,6 +82,7 @@ function PanelLoadingSpinner({ lang, onClose }: { lang: string; onClose: () => v
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      padding: 28,
     }}>
       <button
         onClick={onClose}
@@ -59,7 +99,13 @@ function PanelLoadingSpinner({ lang, onClose }: { lang: string; onClose: () => v
       >
         ×
       </button>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+      <div style={{
+        width: 'min(420px, 100%)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        gap: 14,
+      }}>
         <div style={{
           width: 28, height: 28,
           border: '2px solid rgba(227,111,44,0.25)',
@@ -68,13 +114,32 @@ function PanelLoadingSpinner({ lang, onClose }: { lang: string; onClose: () => v
           animation: 'vessel-panel-spin 0.9s linear infinite',
         }} />
         <div style={{
-          color: '#8A7D74',
+          color: '#E36F2C',
           fontSize: 12,
           letterSpacing: '0.15em',
+          textTransform: 'uppercase',
           fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",
         }}>
-          {zh ? '加载项目详情' : 'LOADING PROJECT'}
+          {zh ? '正在打开营地' : 'OPENING CAMP'}
         </div>
+        <h2 style={{
+          color: '#241F1B',
+          fontSize: 24,
+          lineHeight: 1.25,
+          margin: 0,
+          fontFamily: "var(--font-heading), 'DM Sans', sans-serif",
+        }}>
+          {markerName}
+        </h2>
+        <p style={{
+          color: '#8A7D74',
+          fontSize: 14,
+          lineHeight: 1.7,
+          margin: 0,
+          fontFamily: "var(--font-body), 'Inter', sans-serif",
+        }}>
+          {zh ? '详情正在加载，基础信息会优先显示。' : 'Project details are loading now.'}
+        </p>
       </div>
       <style>{`@keyframes vessel-panel-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
@@ -89,6 +154,8 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
   const [resetViewKey, setResetViewKey] = useState(0)
   const { lang } = useLanguage()
   const panelOpen = selectedMarker !== null
+  const detailRequestId = useRef(0)
+  const mirroredUrlOnce = useRef(false)
   const cmsProjectById = useMemo(() => new Map(cmsProjects.map((p) => [p.id, p])), [cmsProjects])
   const showcaseMarkers = useMemo<ShowcaseMarker[]>(() => {
     const cmsMarkers = cmsProjects.map((project) => ({
@@ -103,22 +170,27 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
     ]
   }, [cmsProjects])
 
-  // Async-load the full ShowcaseProject for a given marker id. First call
-  // pays a chunk download; subsequent calls reuse the cached module.
-  const loadProjectDetails = useCallback(async (markerId: string) => {
+  useEffect(() => {
+    return scheduleIdlePreload(() => {
+      void loadProjectDetailModule()
+      void loadShowcaseProjectsModule()
+    })
+  }, [])
+
+  // Async-load the full ShowcaseProject for a given marker id. The idle
+  // preloader warms this in the background; first-click still reuses the same
+  // promise if preloading has not finished yet.
+  const loadProjectDetails = useCallback(async (markerId: string, requestId: number) => {
     const cmsProject = cmsProjectById.get(markerId)
     if (cmsProject) {
+      if (requestId !== detailRequestId.current) return
       setSelectedProject(cmsProject)
       return
     }
-    const { SHOWCASE_PROJECTS } = await import('@/data/showcaseProjects')
+    const { SHOWCASE_PROJECTS } = await loadShowcaseProjectsModule()
+    if (requestId !== detailRequestId.current) return
     const project = SHOWCASE_PROJECTS.find((p) => p.id === markerId) ?? null
-    setSelectedProject((prev) => {
-      // If user navigated away or switched markers while we were loading,
-      // bail out so we don't stomp the newer selection.
-      if (prev && prev.id !== markerId) return prev
-      return project
-    })
+    setSelectedProject(project)
   }, [cmsProjectById])
 
   // ── Deep link: open ?camp=<id> on mount ────────────────────────────────
@@ -131,22 +203,35 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
     if (!campId) return
     const marker = showcaseMarkers.find((m) => m.id === campId)
     if (!marker) return
-    setSelectedMarker(marker)
-    loadProjectDetails(marker.id)
+    const frame = requestAnimationFrame(() => {
+      const requestId = detailRequestId.current + 1
+      detailRequestId.current = requestId
+      setSelectedMarker(marker)
+      setSelectedProject(null)
+      loadProjectDetails(marker.id, requestId)
+    })
+    return () => cancelAnimationFrame(frame)
   }, [searchParams, loadProjectDetails, showcaseMarkers])
 
   // Mirror state → URL
   useEffect(() => {
+    if (!mirroredUrlOnce.current) {
+      mirroredUrlOnce.current = true
+      return
+    }
     setCampParam(selectedMarker?.id ?? null)
   }, [selectedMarker])
 
   const handleShowcaseSelect = useCallback((marker: ShowcaseMarker) => {
+    const requestId = detailRequestId.current + 1
+    detailRequestId.current = requestId
     setSelectedMarker(marker)
     setSelectedProject(null)  // clear stale content while new details load
-    loadProjectDetails(marker.id)
+    loadProjectDetails(marker.id, requestId)
   }, [loadProjectDetails])
 
   const handleClose = useCallback(() => {
+    detailRequestId.current += 1
     setSelectedMarker(null)
     setSelectedProject(null)
     setResetViewKey(k => k + 1)
@@ -203,7 +288,7 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
             onClose={handleClose}
           />
         ) : panelOpen ? (
-          <PanelLoadingSpinner lang={lang} onClose={handleClose} />
+          selectedMarker && <PanelLoadingPreview marker={selectedMarker} lang={lang} onClose={handleClose} />
         ) : null}
       </div>
     </div>

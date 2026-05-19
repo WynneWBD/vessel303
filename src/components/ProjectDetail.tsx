@@ -121,7 +121,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
 
   // Carousel auto-advance
   useEffect(() => {
-    if (!project) return
+    if (!project || project.images.length <= 1) return
     const id = setInterval(() => {
       setCurrentImg(i => (i + 1) % project.images.length)
     }, 4000)
@@ -143,6 +143,8 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
   const name = project.name[t]
   const location = project.location[t]
   const description = project.description[t]
+  const safeCurrentImg = project.images[currentImg] ? currentImg : 0
+  const currentImageSrc = project.images[safeCurrentImg]
 
   return (
     <div
@@ -160,26 +162,26 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
       {/* ── 1. Image Carousel ────────────────────────────────────────────── */}
       <div style={{ position: 'relative', height: '50vh', minHeight: 280, overflow: 'hidden', background: '#0A0A0A', flexShrink: 0 }}>
 
-        {/* Images */}
-        {project.images.map((src, i) => (
+        {/* Current image only. Avoid mounting the full carousel image set on open. */}
+        {currentImageSrc && (
           <div
-            key={src}
+            key={currentImageSrc}
             style={{
               position: 'absolute', inset: 0,
-              opacity: i === currentImg ? 1 : 0,
+              opacity: 1,
               transition: 'opacity 0.9s ease',
             }}
           >
             <ProtectedImage
-              src={src}
-              alt={`${name} ${i + 1}`}
+              src={currentImageSrc}
+              alt={`${name} ${safeCurrentImg + 1}`}
               fill
               sizes="70vw"
               style={{ objectFit: 'cover' }}
-              priority={i === 0}
+              priority={safeCurrentImg === 0}
             />
           </div>
-        ))}
+        )}
 
         {/* Gradient overlays */}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 30%, transparent 50%, rgba(0,0,0,0.8) 100%)', pointerEvents: 'none' }} />
@@ -519,9 +521,41 @@ function GalleryThumb({
   src: string; alt: string; onClick: () => void
 }) {
   const [hovered, setHovered] = useState(false)
+  const [shouldLoad, setShouldLoad] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    if (typeof IntersectionObserver === 'undefined') {
+      const frame = requestAnimationFrame(() => setShouldLoad(true))
+      return () => cancelAnimationFrame(frame)
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldLoad(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '180px 0px' }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  const handleClick = () => {
+    setShouldLoad(true)
+    onClick()
+  }
+
   return (
     <div
-      onClick={onClick}
+      ref={ref}
+      onClick={handleClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -530,19 +564,22 @@ function GalleryThumb({
         overflow: 'hidden',
         borderRadius: 4,
         cursor: 'zoom-in',
+        background: '#E5DED4',
       }}
     >
-      <ProtectedImage
-        src={src}
-        alt={alt}
-        fill
-        sizes="35vw"
-        style={{
-          objectFit: 'cover',
-          transform: hovered ? 'scale(1.06)' : 'scale(1)',
-          transition: 'transform 0.35s ease',
-        }}
-      />
+      {shouldLoad ? (
+        <ProtectedImage
+          src={src}
+          alt={alt}
+          fill
+          sizes="35vw"
+          style={{
+            objectFit: 'cover',
+            transform: hovered ? 'scale(1.06)' : 'scale(1)',
+            transition: 'transform 0.35s ease',
+          }}
+        />
+      ) : null}
     </div>
   )
 }
