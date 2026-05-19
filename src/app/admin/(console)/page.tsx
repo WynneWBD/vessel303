@@ -110,7 +110,7 @@ const TOP_NAV: TopNavItem[] = [
   { label: '概况', href: '#overview' },
   { label: '网站管理', href: '/admin/site' },
   { label: '内容管理', href: '/admin/content' },
-  { label: '客户与会员', href: '#customer' },
+  { label: '客户与会员', href: '/admin/customers' },
   { label: '数据与状态', href: '#status' },
   { label: '管理设置', href: '#maintenance', adminOnly: true },
 ]
