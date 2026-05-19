@@ -1,12 +1,15 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { AdminTopNav } from '@/components/admin/AdminTopNav'
+import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { pool } from '@/lib/db'
 import {
+  Archive,
   ArrowRight,
   CheckCircle2,
   CircleDashed,
+  FileText,
+  ListChecks,
   LayoutTemplate,
   MapPinned,
   Newspaper,
@@ -14,6 +17,7 @@ import {
   Plus,
   SearchCheck,
   Settings,
+  Tags,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -181,6 +185,38 @@ function getTotals(summary: ContentDashboardSummary) {
   return { draft, published, total, recent }
 }
 
+function getContentSideNav(summary: ContentDashboardSummary): AdminSideNavGroup[] {
+  const totals = getTotals(summary)
+
+  return [
+    {
+      title: '内容运营',
+      items: [
+        { key: 'overview', label: '内容概览', href: '/admin/content', Icon: LayoutTemplate },
+        { key: 'todo', label: '待补内容', href: '#todo', badge: totals.draft, Icon: CircleDashed },
+        { key: 'drafts', label: '草稿内容', href: '#drafts', badge: totals.draft, Icon: FileText },
+        { key: 'checks', label: '发布前检查', href: '#checks', Icon: SearchCheck },
+      ],
+    },
+    {
+      title: '内容类型',
+      items: [
+        { key: 'products', label: '产品管理', href: '/admin/products', badge: summary.products.total, Icon: Package },
+        { key: 'projects', label: '项目案例', href: '/admin/projects', badge: summary.projects.total, Icon: MapPinned },
+        { key: 'news', label: '新闻资讯', href: '/admin/news', badge: summary.news.total, Icon: Newspaper },
+      ],
+    },
+    {
+      title: '后续规划',
+      items: [
+        { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },
+        { key: 'recycle', label: '回收站', planned: true, Icon: Archive },
+        { key: 'bulk-check', label: '批量内容检查', planned: true, Icon: ListChecks },
+      ],
+    },
+  ]
+}
+
 function buildTodos({
   summary,
   missingProjectCoordinates,
@@ -224,8 +260,8 @@ function Hero({ summary }: { summary: ContentDashboardSummary }) {
   const totals = getTotals(summary)
 
   return (
-    <section className="border-b border-[#D8E7E8] bg-[linear-gradient(135deg,#DDF6F8_0%,#F4FBFC_62%,#FFF3E7_100%)]">
-      <div className="mx-auto flex w-full max-w-[1520px] flex-col gap-5 px-4 py-7 lg:px-8">
+    <section id="overview" className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#DDF6F8_0%,#F4FBFC_62%,#FFF3E7_100%)] p-5 shadow-sm md:p-6">
+      <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <p className="text-sm font-semibold text-[#1889B6]">内容管理</p>
@@ -323,7 +359,7 @@ function SectionTitle({ title, detail }: { title: string; detail?: string }) {
 
 function ContentDomainGrid({ summary }: { summary: ContentDashboardSummary }) {
   return (
-    <section className="space-y-4">
+    <section id="drafts" className="scroll-mt-24 space-y-4">
       <SectionTitle title="内容经营" detail="按内容域查看总量、草稿和近 30 天新增。" />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         {CONTENT_DOMAINS.map((domain) => (
@@ -444,7 +480,7 @@ function WorkflowPanel() {
 function TodoPanel({ items }: { items: TodoItem[] }) {
   return (
     <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-      <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <section id="todo" className="scroll-mt-24 rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="border-b border-[#E6EEEE] px-5 py-4">
           <h2 className="text-lg font-bold text-[#1E2C31]">待补内容</h2>
           <p className="mt-1 text-xs text-[#61767D]">只做提醒，不阻止发布。</p>
@@ -455,7 +491,7 @@ function TodoPanel({ items }: { items: TodoItem[] }) {
           ))}
         </div>
       </section>
-      <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+      <section id="checks" className="scroll-mt-24 rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
             <SearchCheck size={19} />
@@ -554,12 +590,20 @@ export default async function AdminContentPage() {
   const adminRole: AdminRole = role
   const isAdmin = adminRole === 'admin'
   const todos = buildTodos({ summary, missingProjectCoordinates })
+  const sideNavGroups = getContentSideNav(summary)
 
   return (
-    <main className="min-h-screen bg-[#EEF5F3] text-[#1E2C31]" style={{ fontFamily: 'Inter, sans-serif' }}>
-      <AdminTopNav active="content" role={adminRole} email={session.user.email} />
+    <AdminSectionShell
+      topNavActive="content"
+      role={adminRole}
+      email={session.user.email}
+      title="内容管理"
+      description="发布产品、项目和新闻，检查草稿与待补内容。"
+      sideNavGroups={sideNavGroups}
+      activeItem="overview"
+    >
       <Hero summary={summary} />
-      <div className="mx-auto grid w-full max-w-[1520px] grid-cols-1 gap-6 px-4 py-7 lg:px-8 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="space-y-8">
           <ContentDomainGrid summary={summary} />
           <ActionMatrix />
@@ -568,6 +612,6 @@ export default async function AdminContentPage() {
         </div>
         <TodoPanel items={todos} />
       </div>
-    </main>
+    </AdminSectionShell>
   )
 }
