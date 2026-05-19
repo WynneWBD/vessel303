@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { logoutAction } from '@/app/admin/actions'
+import { AdminTopNav } from '@/components/admin/AdminTopNav'
 import { pool } from '@/lib/db'
 import { countLeadsByStatus } from '@/lib/leads-db'
 import { countNewsByStatus } from '@/lib/news-db'
@@ -19,7 +19,6 @@ import {
   Image as ImageIcon,
   Inbox,
   LayoutTemplate,
-  LogOut,
   MapPinned,
   Newspaper,
   Package,
@@ -62,12 +61,6 @@ type SystemCheck = {
   ok: boolean
 }
 
-type TopNavItem = {
-  label: string
-  href: string
-  adminOnly?: boolean
-}
-
 type ActionItem = {
   label: string
   href: string
@@ -105,15 +98,6 @@ const EMPTY_RECENT_SUMMARY: RecentContentSummary = {
 }
 
 const STORAGE_WARNING_BYTES = 800 * 1024 * 1024
-
-const TOP_NAV: TopNavItem[] = [
-  { label: '概况', href: '#overview' },
-  { label: '网站管理', href: '/admin/site' },
-  { label: '内容管理', href: '/admin/content' },
-  { label: '客户与会员', href: '/admin/customers' },
-  { label: '数据与状态', href: '#status' },
-  { label: '管理设置', href: '#maintenance', adminOnly: true },
-]
 
 const QUICK_ACTIONS: ActionItem[] = [
   { label: '编辑网站', href: '/admin/pages/visual', Icon: LayoutTemplate, primary: true },
@@ -324,54 +308,6 @@ function buildTodos({
   }
 
   return todos
-}
-
-function TopBar({
-  role,
-  email,
-}: {
-  role: AdminRole
-  email?: string | null
-}) {
-  const visibleNav = TOP_NAV.filter((item) => !item.adminOnly || role === 'admin')
-
-  return (
-    <header className="sticky top-0 z-30 border-b border-white/15 bg-[#1889B6] text-white shadow-sm">
-      <div className="mx-auto flex min-h-16 w-full max-w-[1520px] items-center gap-4 px-4 lg:px-8">
-        <Link
-          href="/admin"
-          className="flex h-12 w-32 shrink-0 items-center justify-center bg-[#E36F2C] text-sm font-bold tracking-wide"
-        >
-          VESSEL
-        </Link>
-        <nav className="hidden h-16 items-center gap-1 lg:flex">
-          {visibleNav.map((item) => (
-            <a
-              key={item.label}
-              href={item.href}
-              className="flex h-16 items-center border-b-2 border-transparent px-5 text-sm font-medium text-white/86 transition hover:border-white hover:text-white"
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-        <div className="ml-auto flex min-w-0 items-center gap-3">
-          <span className="hidden max-w-64 truncate text-xs text-white/76 md:inline">
-            {role === 'admin' ? '管理员' : '运营人员'} · {email}
-          </span>
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="inline-flex h-9 items-center gap-2 rounded-md border border-white/20 bg-white/12 px-3 text-xs font-semibold text-white transition hover:bg-white/20"
-            >
-              <LogOut size={14} />
-              退出
-            </button>
-          </form>
-        </div>
-      </div>
-    </header>
-  )
 }
 
 function Hero({
@@ -955,7 +891,7 @@ export default async function AdminConsolePage() {
 
   return (
     <main className="min-h-screen bg-[#EEF5F3] text-[#1E2C31]" style={{ fontFamily: 'Inter, sans-serif' }}>
-      <TopBar role={role} email={session.user.email} />
+      <AdminTopNav active="overview" role={role} email={session.user.email} />
       <Hero
         leadSummary={leadSummary}
         productSummary={productSummary}
