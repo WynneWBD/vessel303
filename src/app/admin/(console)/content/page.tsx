@@ -75,7 +75,7 @@ const CONTENT_DOMAINS: ContentDomain[] = [
     key: 'products',
     title: '产品',
     detail: '维护产品资料、封面、图库、详情和发布状态。',
-    href: '/admin/products',
+    href: '/admin/content/products',
     newHref: '/admin/products/new',
     Icon: Package,
     action: '发布产品',
@@ -201,7 +201,7 @@ function getContentSideNav(summary: ContentDashboardSummary): AdminSideNavGroup[
     {
       title: '内容类型',
       items: [
-        { key: 'products', label: '产品管理', href: '/admin/products', badge: summary.products.total, Icon: Package },
+        { key: 'products', label: '产品管理', href: '/admin/content/products', badge: summary.products.total, Icon: Package },
         { key: 'projects', label: '项目案例', href: '/admin/projects', badge: summary.projects.total, Icon: MapPinned },
         { key: 'news', label: '新闻资讯', href: '/admin/news', badge: summary.news.total, Icon: Newspaper },
       ],
@@ -428,7 +428,7 @@ function SmallStat({ label, value }: { label: string; value: number }) {
 
 function ActionMatrix() {
   const actions = [
-    { label: '产品管理', href: '/admin/products', Icon: Package },
+    { label: '产品管理', href: '/admin/content/products', Icon: Package },
     { label: '项目案例', href: '/admin/projects', Icon: MapPinned },
     { label: '新闻资讯', href: '/admin/news', Icon: Newspaper },
   ]
