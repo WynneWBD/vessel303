@@ -1,18 +1,23 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { AdminTopNav } from '@/components/admin/AdminTopNav'
+import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { pool } from '@/lib/db'
 import {
   ArrowRight,
+  BadgeCheck,
   CheckCircle2,
+  Clock3,
   CircleDashed,
   Download,
+  FileText,
   Inbox,
+  ListChecks,
   MessageSquareText,
   SearchCheck,
   Settings,
   UserRoundCheck,
+  UserRoundX,
   Users,
   type LucideIcon,
 } from 'lucide-react'
@@ -137,6 +142,46 @@ const ACTIONS: ActionItem[] = [
   },
 ]
 
+function getCustomerSideNav(summary: LeadSummary): AdminSideNavGroup[] {
+  return [
+    {
+      title: '线索运营',
+      items: [
+        { key: 'overview', label: '客户概览', href: '/admin/customers', Icon: Users },
+        { key: 'new', label: '新线索', href: '/admin/leads?status=new', badge: summary.new, Icon: Inbox },
+        { key: 'all', label: '全部线索', href: '/admin/leads', badge: summary.total, Icon: MessageSquareText },
+        {
+          key: 'contacting',
+          label: '跟进中',
+          href: '/admin/leads?status=contacting',
+          badge: summary.contacting,
+          Icon: Clock3,
+        },
+        { key: 'quoted', label: '已报价', href: '/admin/leads?status=quoted', badge: summary.quoted, Icon: FileText },
+        { key: 'won', label: '已成交', href: '/admin/leads?status=won', badge: summary.won, Icon: BadgeCheck },
+        { key: 'lost', label: '已关闭', href: '/admin/leads?status=lost', badge: summary.lost, Icon: UserRoundX },
+      ],
+    },
+    {
+      title: '待处理',
+      items: [
+        { key: 'todo', label: '新线索待跟进', href: '#todo', badge: summary.new, Icon: ListChecks },
+        { key: 'recent7', label: '近 7 天新增', href: '#recent', badge: summary.recent7, Icon: Clock3 },
+        { key: 'recent30', label: '近 30 天新增', href: '#recent', badge: summary.recent30, Icon: SearchCheck },
+      ],
+    },
+    {
+      title: '后续规划',
+      items: [
+        { key: 'customer-files', label: '客户档案', planned: true, Icon: Users },
+        { key: 'members', label: '会员管理', planned: true, adminOnly: true, Icon: UserRoundCheck },
+        { key: 'followups', label: '跟进记录', planned: true, Icon: FileText },
+        { key: 'chat', label: '在线沟通', planned: true, Icon: MessageSquareText },
+      ],
+    },
+  ]
+}
+
 function formatNumber(n: number): string {
   return n.toLocaleString('zh-CN')
 }
@@ -230,8 +275,8 @@ function buildTodos(summary: LeadSummary): TodoItem[] {
 
 function Hero({ summary }: { summary: LeadSummary }) {
   return (
-    <section className="border-b border-[#D8E7E8] bg-[linear-gradient(135deg,#DDF6F8_0%,#F4FBFC_62%,#FFF3E7_100%)]">
-      <div className="mx-auto flex w-full max-w-[1520px] flex-col gap-5 px-4 py-7 lg:px-8">
+    <section id="overview" className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#DDF6F8_0%,#F4FBFC_62%,#FFF3E7_100%)] p-5 shadow-sm md:p-6">
+      <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <p className="text-sm font-semibold text-[#1889B6]">客户与线索</p>
@@ -249,7 +294,7 @@ function Hero({ summary }: { summary: LeadSummary }) {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
           <HeroMetric title="线索总量" value={summary.total} detail="全部有效线索" />
           <HeroMetric title="新线索" value={summary.new} detail="待处理询盘" tone={summary.new > 0 ? 'orange' : 'green'} />
-          <HeroMetric title="近 7 天新增" value={summary.recent7} detail={`近 30 天 ${formatNumber(summary.recent30)}`} tone="green" />
+          <HeroMetric id="recent" title="近 7 天新增" value={summary.recent7} detail={`近 30 天 ${formatNumber(summary.recent30)}`} tone="green" />
           <HeroMetric title="跟进中" value={summary.contacting} detail="需要持续更新" tone="blue" />
         </div>
       </div>
@@ -284,11 +329,13 @@ function PrimaryAction({
 }
 
 function HeroMetric({
+  id,
   title,
   value,
   detail,
   tone = 'blue',
 }: {
+  id?: string
   title: string
   value: number
   detail: string
@@ -302,7 +349,7 @@ function HeroMetric({
         : 'from-[#1889B6] to-[#3078C8]'
 
   return (
-    <div className={`flex min-h-36 flex-col justify-between rounded-md bg-gradient-to-br ${toneClass} p-5 text-white`}>
+    <div id={id} className={`flex min-h-36 flex-col justify-between rounded-md bg-gradient-to-br ${toneClass} p-5 text-white`}>
       <span className="text-sm font-medium text-white/82">{title}</span>
       <span>
         <span className="block text-4xl font-bold">{formatNumber(value)}</span>
@@ -423,7 +470,7 @@ function WorkflowPanel() {
 function TodoPanel({ items, isAdmin }: { items: TodoItem[]; isAdmin: boolean }) {
   return (
     <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-      <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <section id="todo" className="scroll-mt-24 rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="border-b border-[#E6EEEE] px-5 py-4">
           <h2 className="text-lg font-bold text-[#1E2C31]">待处理事项</h2>
           <p className="mt-1 text-xs text-[#61767D]">优先处理橙色提示项。</p>
@@ -536,12 +583,20 @@ export default async function AdminCustomersPage() {
   const adminRole: AdminRole = role
   const isAdmin = adminRole === 'admin'
   const todos = buildTodos(summary)
+  const sideNavGroups = getCustomerSideNav(summary)
 
   return (
-    <main className="min-h-screen bg-[#EEF5F3] text-[#1E2C31]" style={{ fontFamily: 'Inter, sans-serif' }}>
-      <AdminTopNav active="customers" role={adminRole} email={session.user.email} />
+    <AdminSectionShell
+      topNavActive="customers"
+      role={adminRole}
+      email={session.user.email}
+      title="客户与线索"
+      description="处理新线索，并查看报价、成交和关闭状态。"
+      sideNavGroups={sideNavGroups}
+      activeItem="overview"
+    >
       <Hero summary={summary} />
-      <div className="mx-auto grid w-full max-w-[1520px] grid-cols-1 gap-6 px-4 py-7 lg:px-8 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-8">
           <StatusGrid summary={summary} />
           <ActionGrid />
@@ -550,6 +605,6 @@ export default async function AdminCustomersPage() {
         </div>
         <TodoPanel items={todos} isAdmin={isAdmin} />
       </div>
-    </main>
+    </AdminSectionShell>
   )
 }
