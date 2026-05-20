@@ -147,6 +147,7 @@ function getSideNavGroups(stats: ProductStats): AdminSideNavGroup[] {
       items: [
         { key: 'overview', label: '内容概览', href: '/admin/content', Icon: Layers3 },
         { key: 'products', label: '产品管理', href: '/admin/content/products', badge: stats.total, Icon: Package },
+        { key: 'product-list', label: '产品列表', href: '/admin/content/products/list', Icon: ListChecks },
         { key: 'drafts', label: '草稿内容', href: '#drafts', badge: stats.draft, Icon: FileText },
         { key: 'todo', label: '待补内容', href: '#todo', badge: getTodoCount(stats), Icon: CircleDashed },
         { key: 'checks', label: '发布前检查', href: '#checks', Icon: SearchCheck },
@@ -189,7 +190,7 @@ function getStatusEntries(stats: ProductStats): StatusEntry[] {
       title: '全部产品',
       value: stats.total,
       detail: '进入产品列表继续筛选和编辑',
-      href: '/admin/products',
+      href: '/admin/content/products/list',
       Icon: Package,
       tone: 'blue',
     },
@@ -197,7 +198,7 @@ function getStatusEntries(stats: ProductStats): StatusEntry[] {
       title: '已发布',
       value: stats.published,
       detail: '前台产品页正在展示的内容',
-      href: '/admin/products?status=published',
+      href: '/admin/content/products/list?status=published',
       Icon: CheckCircle2,
       tone: 'green',
     },
@@ -205,7 +206,7 @@ function getStatusEntries(stats: ProductStats): StatusEntry[] {
       title: '草稿',
       value: stats.draft,
       detail: '等待补齐或发布的产品',
-      href: '/admin/products?status=draft',
+      href: '/admin/content/products/list?status=draft',
       Icon: FileText,
       tone: 'orange',
     },
@@ -213,7 +214,7 @@ function getStatusEntries(stats: ProductStats): StatusEntry[] {
       title: '近 30 天新增',
       value: stats.recent,
       detail: '最近创建的产品内容',
-      href: '/admin/products',
+      href: '/admin/content/products/list',
       Icon: Sparkles,
       tone: 'neutral',
     },
@@ -280,8 +281,8 @@ function Hero({ stats }: { stats: ProductStats }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <PrimaryAction href="/admin/products/new" Icon={Plus} label="新增产品" primary />
-          <PrimaryAction href="/admin/products?status=draft" Icon={FileText} label="查看草稿" />
-          <PrimaryAction href="/admin/products" Icon={Package} label="进入产品列表" />
+          <PrimaryAction href="/admin/content/products/list?status=draft" Icon={FileText} label="查看草稿" />
+          <PrimaryAction href="/admin/content/products/list" Icon={Package} label="进入产品列表" />
         </div>
       </div>
       <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -450,9 +451,9 @@ function TodoStat({ entry }: { entry: TodoEntry }) {
 function ActionPanel() {
   const actions = [
     { label: '新增产品', detail: '创建新草稿并进入产品表单', href: '/admin/products/new', Icon: Plus },
-    { label: '查看草稿', detail: '处理待补齐或待发布的产品', href: '/admin/products?status=draft', Icon: FileText },
-    { label: '查看已发布', detail: '检查前台正在展示的产品', href: '/admin/products?status=published', Icon: CheckCircle2 },
-    { label: '进入产品列表', detail: '继续搜索、筛选和编辑产品', href: '/admin/products', Icon: Package },
+    { label: '查看草稿', detail: '处理待补齐或待发布的产品', href: '/admin/content/products/list?status=draft', Icon: FileText },
+    { label: '查看已发布', detail: '检查前台正在展示的产品', href: '/admin/content/products/list?status=published', Icon: CheckCircle2 },
+    { label: '进入产品列表', detail: '继续搜索、筛选和编辑产品', href: '/admin/content/products/list', Icon: Package },
   ]
 
   return (
