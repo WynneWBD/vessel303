@@ -428,17 +428,14 @@ function SmallStat({ label, value }: { label: string; value: number }) {
 
 function ActionMatrix() {
   const actions = [
-    { label: '查看产品', href: '/admin/products', Icon: Package },
-    { label: '查看项目', href: '/admin/projects', Icon: MapPinned },
-    { label: '查看新闻', href: '/admin/news', Icon: Newspaper },
-    { label: '发布产品', href: '/admin/products/new', Icon: Plus },
-    { label: '发布项目', href: '/admin/projects/new', Icon: Plus },
-    { label: '发布新闻', href: '/admin/news/new', Icon: Plus },
+    { label: '产品管理', href: '/admin/products', Icon: Package },
+    { label: '项目案例', href: '/admin/projects', Icon: MapPinned },
+    { label: '新闻资讯', href: '/admin/news', Icon: Newspaper },
   ]
 
   return (
     <section className="space-y-4">
-      <SectionTitle title="常用动作" />
+      <SectionTitle title="管理入口" detail="查看已有内容，继续筛选、编辑和发布。" />
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         {actions.map((action) => (
           <Link
@@ -603,7 +600,7 @@ export default async function AdminContentPage() {
       activeItem="overview"
     >
       <Hero summary={summary} />
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-8">
           <ContentDomainGrid summary={summary} />
           <ActionMatrix />

@@ -430,7 +430,7 @@ function AppGrid({ role }: { role: AdminRole }) {
 
   return (
     <section className="space-y-4">
-      <SectionTitle title="常用管理" detail="把网站相关操作集中在一个页面，日常不用回旧目录里找。" />
+      <SectionTitle title="常用管理" detail="网站相关操作集中在这里，日常编辑更容易找到入口。" />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {visibleApps.map((app) => (
           <AppCard key={app.title} app={app} />
@@ -579,11 +579,11 @@ function MaintenanceBlock({ configIssues }: { configIssues: number }) {
     <section id="maintenance" className="rounded-md border border-dashed border-[#D8E7E8] bg-white/70 p-5">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-base font-bold text-[#1E2C31]">维护中心</h2>
-          <p className="mt-1 text-xs text-[#61767D]">仅管理员使用，日常运营优先使用上方网站管理入口。</p>
+          <h2 className="text-base font-bold text-[#1E2C31]">管理设置</h2>
+          <p className="mt-1 text-xs text-[#61767D]">仅管理员使用，网站运营优先使用上方入口。</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <MaintenanceLink href="/admin/legacy" label="高级维护" Icon={Wrench} />
+          <MaintenanceLink href="/admin/legacy" label="维护入口" Icon={Wrench} />
           <MaintenanceLink href="/admin/pages" label="表单模式" Icon={LayoutTemplate} />
           <MaintenanceLink href="/admin/settings" label={configIssues > 0 ? '配置需处理' : '站点设置'} Icon={Settings} />
           <MaintenanceLink href="/admin/users" label="后台账号" Icon={ShieldCheck} />

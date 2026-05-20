@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   Clock3,
   CircleDashed,
-  Download,
   FileText,
   Inbox,
   ListChecks,
@@ -123,22 +122,22 @@ const ACTIONS: ActionItem[] = [
     primary: true,
   },
   {
-    label: '查看全部线索',
-    detail: '查看、筛选、更新线索状态。',
-    href: '/admin/leads',
-    Icon: MessageSquareText,
+    label: '跟进中',
+    detail: '查看正在沟通的线索。',
+    href: '/admin/leads?status=contacting',
+    Icon: Clock3,
   },
   {
-    label: '进入线索管理',
-    detail: '继续使用现有线索列表维护。',
+    label: '已报价',
+    detail: '查看已进入报价阶段的线索。',
+    href: '/admin/leads?status=quoted',
+    Icon: FileText,
+  },
+  {
+    label: '线索管理',
+    detail: '查看、筛选、更新全部线索。',
     href: '/admin/leads',
     Icon: SearchCheck,
-  },
-  {
-    label: '导出线索',
-    detail: '在线索管理页使用已有导出能力。',
-    href: '/admin/leads',
-    Icon: Download,
   },
 ]
 
