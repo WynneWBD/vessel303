@@ -690,7 +690,7 @@ function ProductRow({ product }: { product: ProductListRow }) {
             </span>
           )}
           <Link
-            href={`/admin/products/${product.id}/edit`}
+            href={`/admin/content/products/${product.id}/edit`}
             className="inline-flex h-9 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95E22]"
           >
             <Pencil size={14} />

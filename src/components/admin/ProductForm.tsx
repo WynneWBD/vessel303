@@ -404,10 +404,18 @@ export default function ProductForm({
   mode,
   product,
   maxUploadMb = 20,
+  backHref = '/admin/products',
+  backLabel = '返回产品列表',
+  title,
+  previewPolicy = 'always',
 }: {
   mode: 'create' | 'edit'
   product?: CatalogProductRow | null
   maxUploadMb?: number
+  backHref?: string
+  backLabel?: string
+  title?: string
+  previewPolicy?: 'always' | 'published-only'
 }) {
   const router = useRouter()
   const [form, setForm] = useState<FormState>(() => fromProduct(product))
@@ -426,6 +434,7 @@ export default function ProductForm({
     completeness.issues.length - visibleCompletenessIssues.length,
   )
   const hasUnsavedChanges = useMemo(() => JSON.stringify(form) !== JSON.stringify(savedForm), [form, savedForm])
+  const showPreviewLink = mode === 'edit' && (previewPolicy === 'always' || form.status === 'published')
 
   useUnsavedChangesWarning(hasUnsavedChanges)
 
@@ -585,17 +594,17 @@ export default function ProductForm({
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <Link
-            href="/admin/products"
+            href={backHref}
             className="inline-flex items-center gap-2 text-xs text-[#8A8580] hover:text-[#E36F2C] mb-2"
           >
             <ArrowLeft size={14} />
-            返回产品列表
+            {backLabel}
           </Link>
           <h1
             className="text-[#2C2A28]"
             style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 24, fontWeight: 700 }}
           >
-            {mode === 'create' ? '新建产品' : '编辑产品'}
+            {title ?? (mode === 'create' ? '新建产品' : '编辑产品')}
           </h1>
         </div>
 
@@ -605,7 +614,7 @@ export default function ProductForm({
               有未保存修改
             </span>
           ) : null}
-          {mode === 'edit' && (
+          {showPreviewLink && (
             <Link
               href={previewHref}
               target="_blank"
@@ -627,7 +636,7 @@ export default function ProductForm({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-        <div className="rounded-lg border border-[#E5DED4] bg-[#FFFFFF] p-5 space-y-5">
+        <div id="basic-info" className="scroll-mt-24 rounded-lg border border-[#E5DED4] bg-[#FFFFFF] p-5 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="产品 ID / URL Slug" hint="新建后不可修改。示例: e7-custom-france">
               <Input
@@ -699,7 +708,7 @@ export default function ProductForm({
             </Field>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div id="product-copy" className="scroll-mt-24 grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="中文标签" hint="一行一个，也支持英文逗号分隔。">
               <Textarea value={form.tags_cn} onChange={(e) => patch('tags_cn', e.target.value)} />
             </Field>
@@ -714,7 +723,7 @@ export default function ProductForm({
             </Field>
           </div>
 
-          <div className="border-t border-[#E5DED4] pt-5 space-y-4">
+          <div id="product-details" className="scroll-mt-24 border-t border-[#E5DED4] pt-5 space-y-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
                 <h2 className="text-sm font-semibold text-[#2C2A28]">详情页内容</h2>
@@ -786,7 +795,7 @@ export default function ProductForm({
               />
             </Field>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div id="product-specs" className="scroll-mt-24 grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label="中文规格参数" hint="一行一个，格式：参数名: 参数值。">
                 <Textarea
                   className="min-h-32"
@@ -805,7 +814,7 @@ export default function ProductForm({
               </Field>
             </div>
 
-            <div className="border-t border-[#E5DED4] pt-5 space-y-4">
+            <div id="product-modules" className="scroll-mt-24 border-t border-[#E5DED4] pt-5 space-y-4">
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
                   <h2 className="text-sm font-semibold text-[#2C2A28]">详情页模块</h2>
@@ -1004,7 +1013,7 @@ export default function ProductForm({
           </div>
         </div>
 
-        <aside className="rounded-lg border border-[#E5DED4] bg-[#FFFFFF] p-5 space-y-5 h-fit">
+        <aside id="product-media" className="scroll-mt-24 rounded-lg border border-[#E5DED4] bg-[#FFFFFF] p-5 space-y-5 h-fit">
           <Field label="状态">
             <Select
               value={form.status}
@@ -1030,7 +1039,7 @@ export default function ProductForm({
             <Input value={form.image} onChange={(e) => patch('image', e.target.value)} placeholder="/images/products/..." />
           </Field>
 
-          <div className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4">
+          <div id="publish-check" className="scroll-mt-24 rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-medium text-[#2C2A28]">发布前检查</div>
               <Badge className={`${completenessBadgeClass(completeness.level)} text-xs`}>
