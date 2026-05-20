@@ -1,20 +1,25 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { AdminTopNav } from '@/components/admin/AdminTopNav'
+import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { pool } from '@/lib/db'
 import { normalizeMediaMaxUploadMb } from '@/lib/admin-settings-db'
 import {
+  Activity,
   AlertCircle,
   ArrowRight,
+  BarChart3,
   CheckCircle2,
   CircleDashed,
   FileText,
+  Globe2,
   Image as ImageIcon,
   Inbox,
   LayoutTemplate,
+  ListChecks,
   MapPinned,
   Package,
+  Settings,
   ShieldCheck,
   type LucideIcon,
 } from 'lucide-react'
@@ -60,6 +65,7 @@ type ProjectMapSummary = {
 }
 
 type StatusItem = {
+  id?: string
   title: string
   value: string | number
   detail: string
@@ -114,6 +120,110 @@ const EMPTY_PROJECT_MAP_SUMMARY: ProjectMapSummary = {
 }
 
 const STORAGE_WARNING_BYTES = 800 * 1024 * 1024
+
+function getStatusSideNav({
+  content,
+  leads,
+  pages,
+  media,
+  map,
+  configIssues,
+  isAdmin,
+}: {
+  content: Record<ContentKind, ContentSummary>
+  leads: LeadSummary
+  pages: PageSummary
+  media: MediaSummary
+  map: ProjectMapSummary
+  configIssues: number
+  isAdmin: boolean
+}): AdminSideNavGroup[] {
+  const contentDrafts = content.products.draft + content.projects.draft + content.news.draft
+  const attentionCount =
+    contentDrafts +
+    leads.new +
+    pages.drafts +
+    map.missingCoordinates +
+    (media.bytes > STORAGE_WARNING_BYTES ? 1 : 0) +
+    (isAdmin ? configIssues : 0)
+
+  return [
+    {
+      title: '状态总览',
+      items: [
+        { key: 'overview', label: '状态概览', href: '/admin/status', Icon: Activity },
+        {
+          key: 'todo',
+          label: '风险提醒',
+          href: '#todo',
+          badge: attentionCount > 0 ? attentionCount : undefined,
+          Icon: ListChecks,
+        },
+      ],
+    },
+    {
+      title: '运营状态',
+      items: [
+        {
+          key: 'website',
+          label: '网站状态',
+          href: '#website',
+          badge: pages.drafts > 0 ? pages.drafts : undefined,
+          Icon: Globe2,
+        },
+        {
+          key: 'content',
+          label: '内容状态',
+          href: '#content',
+          badge: contentDrafts > 0 ? contentDrafts : undefined,
+          Icon: FileText,
+        },
+        {
+          key: 'leads',
+          label: '线索状态',
+          href: '#leads',
+          badge: leads.new > 0 ? leads.new : undefined,
+          Icon: Inbox,
+        },
+        {
+          key: 'media',
+          label: '媒体状态',
+          href: '#media',
+          badge: media.count > 0 ? formatNumber(media.count) : undefined,
+          Icon: ImageIcon,
+        },
+        {
+          key: 'map',
+          label: '项目地图字段',
+          href: '#map',
+          badge: map.missingCoordinates > 0 ? map.missingCoordinates : undefined,
+          Icon: MapPinned,
+        },
+      ],
+    },
+    {
+      title: '系统状态',
+      items: [
+        {
+          key: 'config',
+          label: '配置状态',
+          href: '#config',
+          badge: configIssues > 0 ? configIssues : undefined,
+          adminOnly: true,
+          Icon: Settings,
+        },
+      ],
+    },
+    {
+      title: '后续规划',
+      items: [
+        { key: 'seo', label: 'SEO 数据', planned: true, Icon: BarChart3 },
+        { key: 'traffic', label: '访问分析', planned: true, Icon: BarChart3 },
+        { key: 'logs', label: '操作日志', planned: true, Icon: ShieldCheck },
+      ],
+    },
+  ]
+}
 
 function formatNumber(n: number): string {
   return n.toLocaleString('zh-CN')
@@ -388,12 +498,15 @@ function Hero({
   const totals = getTotals(content)
 
   return (
-    <section className="border-b border-[#D8E7E8] bg-[linear-gradient(135deg,#DDF6F8_0%,#F4FBFC_62%,#FFF3E7_100%)]">
-      <div className="mx-auto flex w-full max-w-[1520px] flex-col gap-5 px-4 py-7 lg:px-8">
+    <section
+      id="overview"
+      className="scroll-mt-24 rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#DDF6F8_0%,#F4FBFC_62%,#FFF3E7_100%)] p-5 shadow-sm md:p-6"
+    >
+      <div className="flex flex-col gap-5">
         <div>
           <p className="text-sm font-semibold text-[#1889B6]">数据与状态</p>
           <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">运营状态中心</h1>
-          <p className="mt-2 text-sm text-[#61767D]">集中查看网站、内容、线索、图片和配置状态。</p>
+          <p className="mt-2 text-sm text-[#61767D]">集中查看网站、内容、线索和图片状态。</p>
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
@@ -473,6 +586,7 @@ function StatusGrid({
       value: '运营中',
       detail: pages.drafts > 0 ? `${formatNumber(pages.drafts)} 个页面草稿待确认` : '暂无页面草稿',
       href: '/admin/site',
+      id: 'website',
       Icon: LayoutTemplate,
       tone: pages.drafts > 0 ? 'orange' : 'green',
     },
@@ -481,6 +595,7 @@ function StatusGrid({
       value: contentTotals.total,
       detail: `草稿 ${formatNumber(contentTotals.draft)} / 近 30 天新增 ${formatNumber(contentTotals.recent30)}`,
       href: '/admin/content',
+      id: 'content',
       Icon: FileText,
       tone: contentTotals.draft > 0 ? 'orange' : 'blue',
     },
@@ -489,6 +604,7 @@ function StatusGrid({
       value: leads.total,
       detail: `新线索 ${formatNumber(leads.new)} / 跟进中 ${formatNumber(leads.contacting)}`,
       href: '/admin/customers',
+      id: 'leads',
       Icon: Inbox,
       tone: leads.new > 0 ? 'orange' : 'green',
     },
@@ -497,6 +613,7 @@ function StatusGrid({
       value: media.count,
       detail: `${formatBytes(media.bytes)} / 单图上限 ${formatNumber(media.maxUploadMb)} MB`,
       href: '/admin/media',
+      id: 'media',
       Icon: ImageIcon,
       tone: media.bytes > STORAGE_WARNING_BYTES ? 'orange' : 'blue',
     },
@@ -505,6 +622,7 @@ function StatusGrid({
       value: map.missingCoordinates,
       detail: map.unpublishedWithCoordinates > 0 ? `${formatNumber(map.unpublishedWithCoordinates)} 个有坐标待发布` : '按现有字段只读统计',
       href: '/admin/projects?mapStatus=missing-coordinates',
+      id: 'map',
       Icon: MapPinned,
       tone: map.missingCoordinates > 0 ? 'orange' : 'green',
     },
@@ -535,8 +653,9 @@ function StatusCard({ item }: { item: StatusItem }) {
 
   return (
     <Link
+      id={item.id}
       href={item.href ?? '/admin/status'}
-      className="group flex min-h-44 flex-col justify-between rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60"
+      className="group flex min-h-44 scroll-mt-24 flex-col justify-between rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60"
     >
       <span className="flex items-start justify-between gap-4">
         <span className={`flex h-11 w-11 items-center justify-center rounded-md ${accent}`}>
@@ -604,23 +723,11 @@ function SmallStat({ label, value }: { label: string; value: number }) {
 
 function ConfigPanel({ checks, isAdmin }: { checks: ConfigCheck[]; isAdmin: boolean }) {
   if (!isAdmin) {
-    return (
-      <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#F0F2F2] text-[#61767D]">
-            <ShieldCheck size={19} />
-          </span>
-          <div>
-            <h2 className="text-sm font-bold text-[#1E2C31]">系统配置</h2>
-            <p className="mt-1 text-xs leading-5 text-[#61767D]">配置状态由管理员维护，运营人员只处理内容、图片和线索。</p>
-          </div>
-        </div>
-      </section>
-    )
+    return null
   }
 
   return (
-    <section className="space-y-4">
+    <section id="config" className="scroll-mt-24 space-y-4">
       <SectionTitle title="配置状态" detail="只显示是否配置，不显示任何密钥或环境变量值。" />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         {checks.map((check) => (
@@ -650,7 +757,7 @@ function ConfigPanel({ checks, isAdmin }: { checks: ConfigCheck[]; isAdmin: bool
 function TodoPanel({ items }: { items: TodoItem[] }) {
   return (
     <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-      <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <section id="todo" className="scroll-mt-24 rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="border-b border-[#E6EEEE] px-5 py-4">
           <h2 className="text-lg font-bold text-[#1E2C31]">待处理事项</h2>
           <p className="mt-1 text-xs text-[#61767D]">状态页只做提醒，处理仍进入对应管理页。</p>
@@ -724,13 +831,29 @@ export default async function AdminStatusPage() {
     configIssues,
     isAdmin,
   })
+  const sideNavGroups = getStatusSideNav({
+    content,
+    leads,
+    pages,
+    media,
+    map,
+    configIssues,
+    isAdmin,
+  })
 
   return (
-    <main className="min-h-screen bg-[#EEF5F3] text-[#1E2C31]" style={{ fontFamily: 'Inter, sans-serif' }}>
-      <AdminTopNav active="status" role={adminRole} email={session.user.email} />
+    <AdminSectionShell
+      topNavActive="status"
+      role={adminRole}
+      email={session.user.email}
+      title="数据与状态"
+      description={isAdmin ? '集中查看网站、内容、线索、媒体和配置状态。' : '集中查看网站、内容、线索和媒体状态。'}
+      sideNavGroups={sideNavGroups}
+      activeItem="overview"
+    >
       <Hero content={content} leads={leads} pages={pages} media={media} />
 
-      <div className="mx-auto grid w-full max-w-[1520px] grid-cols-1 gap-6 px-4 py-7 lg:px-8 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-8">
           <StatusGrid content={content} leads={leads} pages={pages} media={media} map={map} />
           <ContentBreakdown content={content} />
@@ -738,6 +861,6 @@ export default async function AdminStatusPage() {
         </div>
         <TodoPanel items={todos} />
       </div>
-    </main>
+    </AdminSectionShell>
   )
 }
