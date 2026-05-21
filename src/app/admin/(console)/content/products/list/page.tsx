@@ -548,7 +548,7 @@ function FilterPanel({ filters, options }: { filters: FilterState; options: Prod
 
 function QuickActions() {
   const links: QuickLink[] = [
-    { label: '新增产品', href: '/admin/products/new', Icon: Plus, primary: true },
+    { label: '新增产品', href: '/admin/content/products/new', Icon: Plus, primary: true },
     { label: '查看草稿', href: '/admin/content/products/list?status=draft', Icon: FileText },
     { label: '查看已发布', href: '/admin/content/products/list?status=published', Icon: CheckCircle2 },
     { label: '维护列表', href: '/admin/products', Icon: Package },
@@ -730,7 +730,7 @@ function EmptyState({ filters }: { filters: FilterState }) {
           </Link>
         )}
         <Link
-          href="/admin/products/new"
+          href="/admin/content/products/new"
           className="inline-flex h-10 items-center rounded-md bg-[#E36F2C] px-4 text-sm font-semibold text-white transition hover:bg-[#C95E22]"
         >
           新增产品

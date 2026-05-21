@@ -101,7 +101,7 @@ const STORAGE_WARNING_BYTES = 800 * 1024 * 1024
 
 const QUICK_ACTIONS: ActionItem[] = [
   { label: '编辑网站', href: '/admin/pages/visual', Icon: LayoutTemplate, primary: true },
-  { label: '发布产品', href: '/admin/products', Icon: Package },
+  { label: '发布产品', href: '/admin/content/products/new', Icon: Package },
   { label: '发布项目', href: '/admin/projects', Icon: MapPinned },
   { label: '发布新闻', href: '/admin/news', Icon: Newspaper },
   { label: '处理线索', href: '/admin/leads?status=new', Icon: Inbox },
@@ -278,7 +278,7 @@ function buildTodos({
     {
       title: '产品草稿',
       detail: productSummary.draft > 0 ? '检查图片、英文和详情' : '暂无产品草稿',
-      href: '/admin/products?status=draft',
+      href: '/admin/content/products/list?status=draft',
       count: productSummary.draft,
       ok: productSummary.draft === 0,
     },
@@ -502,7 +502,7 @@ function ContentCards({
           total={productSummary.total}
           recent={recentSummary.products}
           draft={productSummary.draft}
-          href="/admin/products"
+          href="/admin/content/products/new"
           action="发布产品"
           Icon={Package}
           color="blue"

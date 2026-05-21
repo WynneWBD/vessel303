@@ -76,7 +76,7 @@ const CONTENT_DOMAINS: ContentDomain[] = [
     title: '产品',
     detail: '维护产品资料、封面、图库、详情和发布状态。',
     href: '/admin/content/products',
-    newHref: '/admin/products/new',
+    newHref: '/admin/content/products/new',
     Icon: Package,
     action: '发布产品',
     tone: 'blue',
@@ -271,7 +271,7 @@ function Hero({ summary }: { summary: ContentDashboardSummary }) {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <PrimaryAction href="/admin/products/new" Icon={Package} label="发布产品" primary />
+            <PrimaryAction href="/admin/content/products/new" Icon={Package} label="发布产品" primary />
             <PrimaryAction href="/admin/projects/new" Icon={MapPinned} label="发布项目" />
             <PrimaryAction href="/admin/news/new" Icon={Newspaper} label="发布新闻" />
           </div>

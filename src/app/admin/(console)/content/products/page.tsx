@@ -280,7 +280,7 @@ function Hero({ stats }: { stats: ProductStats }) {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <PrimaryAction href="/admin/products/new" Icon={Plus} label="新增产品" primary />
+          <PrimaryAction href="/admin/content/products/new" Icon={Plus} label="新增产品" primary />
           <PrimaryAction href="/admin/content/products/list?status=draft" Icon={FileText} label="查看草稿" />
           <PrimaryAction href="/admin/content/products/list" Icon={Package} label="进入产品列表" />
         </div>
@@ -362,7 +362,7 @@ function SectionTitle({ title, detail }: { title: string; detail?: string }) {
 function StatusGrid({ stats }: { stats: ProductStats }) {
   return (
     <section id="drafts" className="scroll-mt-24 space-y-4">
-      <SectionTitle title="产品状态入口" detail="按当前处理目标进入旧产品列表，继续筛选、编辑和发布。" />
+      <SectionTitle title="产品状态入口" detail="按当前处理目标进入新版产品列表，继续筛选、编辑和发布。" />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {getStatusEntries(stats).map((entry) => (
           <StatusCard key={entry.title} entry={entry} />
@@ -450,7 +450,7 @@ function TodoStat({ entry }: { entry: TodoEntry }) {
 
 function ActionPanel() {
   const actions = [
-    { label: '新增产品', detail: '创建新草稿并进入产品表单', href: '/admin/products/new', Icon: Plus },
+    { label: '新增产品', detail: '创建新草稿并进入新版产品表单', href: '/admin/content/products/new', Icon: Plus },
     { label: '查看草稿', detail: '处理待补齐或待发布的产品', href: '/admin/content/products/list?status=draft', Icon: FileText },
     { label: '查看已发布', detail: '检查前台正在展示的产品', href: '/admin/content/products/list?status=published', Icon: CheckCircle2 },
     { label: '进入产品列表', detail: '继续搜索、筛选和编辑产品', href: '/admin/content/products/list', Icon: Package },
@@ -458,7 +458,7 @@ function ActionPanel() {
 
   return (
     <section className="space-y-4">
-      <SectionTitle title="常用动作" detail="这里进入旧产品维护页处理实际编辑和高风险操作。" />
+      <SectionTitle title="常用动作" detail="这里进入新版产品链路处理日常新建、筛选和编辑。" />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         {actions.map((action) => (
           <Link
