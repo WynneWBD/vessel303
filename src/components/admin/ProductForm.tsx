@@ -5,7 +5,8 @@ import type { ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { Save, Send, ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import { Save, Send, ArrowLeft, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import MediaImagePicker, { MediaGalleryPicker } from '@/components/admin/MediaImagePicker'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -51,6 +52,15 @@ type FormState = {
 }
 
 type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
+type DetailModuleCompletenessLevel = '完整' | '待补内容' | '缺图片'
+
+const detailModuleTypeOptions: { type: CatalogDetailModuleType; label: string; optionLabel: string }[] = [
+  { type: 'highlights', label: '产品亮点', optionLabel: '产品亮点 Highlights' },
+  { type: 'scenarios', label: '使用场景', optionLabel: '使用场景 Scenarios' },
+  { type: 'customization', label: '定制范围', optionLabel: '定制范围 Customization' },
+  { type: 'faq', label: 'FAQ', optionLabel: 'FAQ' },
+  { type: 'content', label: '图文内容', optionLabel: '图文内容 Content' },
+]
 
 const emptyState: FormState = {
   id: '',
@@ -158,6 +168,38 @@ function completenessBadgeClass(level: CompletenessLevel) {
   if (level === '完整') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
   if (level === '待补素材') return 'border-orange-200 bg-orange-50 text-orange-700'
   return 'border-zinc-200 bg-zinc-50 text-zinc-600'
+}
+
+function detailModuleBadgeClass(level: DetailModuleCompletenessLevel) {
+  if (level === '完整') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  if (level === '缺图片') return 'border-orange-200 bg-orange-50 text-orange-700'
+  return 'border-zinc-200 bg-zinc-50 text-zinc-600'
+}
+
+function getDetailModuleTypeLabel(type: CatalogDetailModuleType) {
+  return detailModuleTypeOptions.find((option) => option.type === type)?.label ?? '图文内容'
+}
+
+function getDetailModuleCompleteness(module: CatalogDetailModule): {
+  level: DetailModuleCompletenessLevel
+  issues: string[]
+} {
+  const issues: string[] = []
+  const hasTitle = hasText(module.title_cn) || hasText(module.title_en)
+  const hasBody = hasText(module.body_cn) || hasText(module.body_en)
+  const hasItems = (module.items_cn ?? []).length > 0 || (module.items_en ?? []).length > 0
+  const hasImage = hasText(module.image_url) || (module.images ?? []).length > 0
+  const imageRecommendedTypes: CatalogDetailModuleType[] = ['content', 'scenarios', 'customization']
+
+  if (!hasTitle) issues.push('缺标题')
+  if (!hasBody && !hasItems) {
+    issues.push(module.type === 'faq' || module.type === 'highlights' ? '缺列表项' : '缺正文')
+  }
+  if (imageRecommendedTypes.includes(module.type) && !hasImage) issues.push('缺图片')
+
+  if (issues.length === 0) return { level: '完整', issues }
+  if (issues.includes('缺图片')) return { level: '缺图片', issues }
+  return { level: '待补内容', issues }
 }
 
 function formatSpecItems(items: { label: string; value: string }[]) {
@@ -448,12 +490,15 @@ export default function ProductForm({
   const [form, setForm] = useState<FormState>(() => fromProduct(product))
   const [savedForm, setSavedForm] = useState<FormState>(() => fromProduct(product))
   const [saving, setSaving] = useState(false)
+  const [collapsedDetailModules, setCollapsedDetailModules] = useState<Record<string, boolean>>({})
+  const [deletingDetailModule, setDeletingDetailModule] = useState<CatalogDetailModule | null>(null)
 
   const previewHref = useMemo(() => {
     if (!form.id) return '/products'
     return form.detailSlug ? `/products/${form.detailSlug}` : `/products/${form.id}`
   }, [form.detailSlug, form.id])
   const galleryUrls = useMemo(() => splitLines(form.gallery), [form.gallery])
+  const normalizedDetailModules = useMemo(() => normalizeDetailModules(form.detail_modules), [form.detail_modules])
   const completeness = getProductCompleteness(form, galleryUrls)
   const visibleCompletenessIssues = completeness.issues.slice(0, 3)
   const hiddenCompletenessIssueCount = Math.max(
@@ -545,6 +590,25 @@ export default function ProductForm({
       ...prev,
       detail_modules: prev.detail_modules.filter((module) => module.id !== id),
     }))
+    setCollapsedDetailModules((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }
+
+  const confirmRemoveDetailModule = () => {
+    if (!deletingDetailModule) return
+    removeDetailModule(deletingDetailModule.id)
+    setDeletingDetailModule(null)
+    toast.success('已从当前表单移除详情内容块，保存后才会写入。')
+  }
+
+  const toggleDetailModuleCollapsed = (key: string) => {
+    setCollapsedDetailModules((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }))
   }
 
   const buildPayload = (nextStatus?: CatalogProductStatus) => ({
@@ -617,6 +681,7 @@ export default function ProductForm({
   }
 
   return (
+    <>
     <div className="flex flex-col gap-6 max-w-6xl">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
@@ -853,8 +918,8 @@ export default function ProductForm({
 
         <FormSection
           id="details"
-          title="详情模块"
-          description="维护通用详情页的图文模块、模块图片和展示顺序。"
+          title="详情内容"
+          description="用内容块维护产品详情页。修改后仍需点击保存，才会写入产品数据。"
           actions={(
             <>
               <Button type="button" size="sm" variant="outline" onClick={applyStandardDetailTemplates}>
@@ -869,185 +934,306 @@ export default function ProductForm({
           )}
         >
           <div className="flex flex-wrap gap-2">
-            {[
-              ['highlights', '亮点'],
-              ['scenarios', '场景'],
-              ['customization', '定制范围'],
-              ['faq', 'FAQ'],
-              ['content', '图文内容'],
-            ].map(([type, label]) => (
+            {detailModuleTypeOptions.map((option) => (
               <Button
-                key={type}
+                key={option.type}
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => addDetailModuleTemplate(type as CatalogDetailModuleType)}
+                onClick={() => addDetailModuleTemplate(option.type)}
               >
-                + {label}
+                + {option.label}
               </Button>
             ))}
           </div>
 
-          {form.detail_modules.length > 0 ? (
+          {normalizedDetailModules.length > 0 ? (
             <div className="space-y-4">
-              {normalizeDetailModules(form.detail_modules).map((module) => (
-                <div key={module.id} className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4 space-y-4">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div className="min-w-0">
-                      <p className="truncate text-xs text-[#8A8580]">{module.id}</p>
-                      <p className="mt-1 text-sm font-semibold text-[#2C2A28]">{module.title_cn || '未命名模块'}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <label className="flex items-center gap-2 text-xs text-[#8A8580]">
-                        <input
-                          type="checkbox"
-                          checked={module.is_visible}
-                          onChange={(e) => patchDetailModule(module.id, { is_visible: e.target.checked })}
-                          className="h-4 w-4 accent-[#E36F2C]"
-                        />
-                        显示
-                      </label>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 text-[#8A8580] hover:text-red-600"
-                        aria-label="删除详情模块"
-                        onClick={() => removeDetailModule(module.id)}
-                      >
-                        <Trash2 size={15} />
-                      </Button>
-                    </div>
-                  </div>
+              {normalizedDetailModules.map((module, index) => {
+                const moduleKey = module.id || `detail-module-${index + 1}`
+                const isCollapsed = collapsedDetailModules[moduleKey] === true
+                const moduleCompleteness = getDetailModuleCompleteness(module)
+                const visibleModuleIssues = moduleCompleteness.issues.slice(0, 3)
+                const hiddenModuleIssueCount = Math.max(0, moduleCompleteness.issues.length - visibleModuleIssues.length)
+                const moduleTitle = module.title_cn || module.title_en || `未命名内容块 ${index + 1}`
 
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <Field label="模块 ID">
-                      <Input
-                        value={module.id}
-                        onChange={(e) => patchDetailModule(module.id, { id: normalizeId(e.target.value) })}
-                      />
-                    </Field>
-                    <Field label="模块类型">
-                      <Select
-                        value={module.type}
-                        onChange={(e) => patchDetailModule(module.id, { type: e.target.value as CatalogDetailModuleType })}
-                      >
-                        <option value="highlights">亮点 Highlights</option>
-                        <option value="scenarios">场景 Scenarios</option>
-                        <option value="faq">FAQ</option>
-                        <option value="content">图文内容 Content</option>
-                        <option value="customization">定制范围 Customization</option>
-                      </Select>
-                    </Field>
-                    <Field label="排序">
-                      <Input
-                        type="number"
-                        value={module.sort_order}
-                        onChange={(e) => patchDetailModule(module.id, { sort_order: Number(e.target.value) || 0 })}
-                      />
-                    </Field>
-                    <Field label="模块主图 URL">
-                      <MediaImagePicker
-                        value={module.image_url || null}
-                        maxUploadMb={maxUploadMb}
-                        title="选择模块主图"
-                        description="从图片库选择一张模块主图，或直接上传新图。"
-                        emptyLabel="选择/上传模块主图"
-                        onChange={(url) => patchDetailModule(module.id, { image_url: url ?? '' })}
-                      />
-                      <Input
-                        value={module.image_url ?? ''}
-                        onChange={(e) => patchDetailModule(module.id, { image_url: e.target.value })}
-                        placeholder="/images/products/..."
-                      />
-                    </Field>
-                  </div>
+                return (
+                  <div key={moduleKey} className="overflow-hidden rounded-lg border border-[#E5DED4] bg-[#FAF7F2]">
+                    <div className="border-b border-[#E5DED4] bg-white p-4">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0 space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge className="border-[#E5DED4] bg-[#F5F2ED] text-xs text-[#6B6560]">
+                              {getDetailModuleTypeLabel(module.type)}
+                            </Badge>
+                            <Badge
+                              className={
+                                module.is_visible
+                                  ? 'border-emerald-200 bg-emerald-50 text-xs text-emerald-700'
+                                  : 'border-zinc-200 bg-zinc-50 text-xs text-zinc-500'
+                              }
+                            >
+                              {module.is_visible ? '显示' : '隐藏'}
+                            </Badge>
+                            <Badge className={detailModuleBadgeClass(moduleCompleteness.level) + ' text-xs'}>
+                              {moduleCompleteness.level}
+                            </Badge>
+                          </div>
+                          <div>
+                            <h3 className="truncate text-sm font-semibold text-[#2C2A28]">{moduleTitle}</h3>
+                            <p className="mt-1 text-xs leading-relaxed text-[#8A8580]">
+                              第 {index + 1} 个内容块。调整内容后，需要点击保存才会写入产品详情。
+                            </p>
+                          </div>
+                          {visibleModuleIssues.length > 0 ? (
+                            <div className="flex flex-wrap gap-1.5">
+                              {visibleModuleIssues.map((issue) => (
+                                <span
+                                  key={issue}
+                                  className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-600"
+                                >
+                                  {issue}
+                                </span>
+                              ))}
+                              {hiddenModuleIssueCount > 0 ? (
+                                <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-500">
+                                  还有 {hiddenModuleIssueCount} 项
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Field label="中文标题">
-                      <Input value={module.title_cn} onChange={(e) => patchDetailModule(module.id, { title_cn: e.target.value })} />
-                    </Field>
-                    <Field label="英文标题">
-                      <Input value={module.title_en} onChange={(e) => patchDetailModule(module.id, { title_en: e.target.value })} />
-                    </Field>
-                    <Field label="中文正文">
-                      <Textarea
-                        className="min-h-24"
-                        value={module.body_cn ?? ''}
-                        onChange={(e) => patchDetailModule(module.id, { body_cn: e.target.value })}
-                      />
-                    </Field>
-                    <Field label="英文正文">
-                      <Textarea
-                        className="min-h-24"
-                        value={module.body_en ?? ''}
-                        onChange={(e) => patchDetailModule(module.id, { body_en: e.target.value })}
-                      />
-                    </Field>
-                    <Field label="中文列表项" hint="一行一个，格式：标题: 说明。FAQ 可写 问题: 答案。">
-                      <Textarea
-                        className="min-h-28"
-                        value={formatModuleItems(module.items_cn)}
-                        onChange={(e) => patchDetailModule(module.id, { items_cn: parseModuleItems(e.target.value) })}
-                      />
-                    </Field>
-                    <Field label="英文列表项" hint="One per line: Title: Description.">
-                      <Textarea
-                        className="min-h-28"
-                        value={formatModuleItems(module.items_en)}
-                        onChange={(e) => patchDetailModule(module.id, { items_en: parseModuleItems(e.target.value) })}
-                      />
-                    </Field>
-                  </div>
-
-                  <Field label="模块图片组 URL" hint="一行一张图，用于图文模块或 FAQ/场景补充图片。">
-                    <MediaGalleryPicker
-                      value={module.images ?? []}
-                      maxUploadMb={maxUploadMb}
-                      title="选择模块图片"
-                      description="可多选，已选顺序就是该模块图片组顺序。"
-                      emptyLabel="选择模块图片"
-                      actionLabel="添加/更换模块图片"
-                      onChange={(urls) => patchDetailModule(module.id, { images: urls })}
-                    />
-                    <div className="flex flex-wrap gap-2">
-                      {module.image_url ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            const next = Array.from(new Set([module.image_url, ...(module.images ?? [])].filter(Boolean))) as string[]
-                            patchDetailModule(module.id, { images: next })
-                          }}
-                        >
-                          将主图加入图片组
-                        </Button>
-                      ) : null}
-                      {galleryUrls.length > 0 ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => patchDetailModule(module.id, { images: galleryUrls })}
-                        >
-                          使用详情图库
-                        </Button>
-                      ) : null}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <label className="flex items-center gap-2 rounded-md border border-[#E5DED4] bg-[#FAF7F2] px-2.5 py-1.5 text-xs text-[#6B6560]">
+                            <input
+                              type="checkbox"
+                              checked={module.is_visible}
+                              onChange={(e) => patchDetailModule(module.id, { is_visible: e.target.checked })}
+                              className="h-4 w-4 accent-[#E36F2C]"
+                            />
+                            显示
+                          </label>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => toggleDetailModuleCollapsed(moduleKey)}
+                          >
+                            {isCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                            {isCollapsed ? '展开' : '收起'}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-[#8A8580] hover:text-red-600"
+                            aria-label="删除详情内容块"
+                            onClick={() => setDeletingDetailModule(module)}
+                          >
+                            <Trash2 size={15} />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                    <Textarea
-                      className="min-h-24"
-                      value={(module.images ?? []).join('\n')}
-                      onChange={(e) => patchDetailModule(module.id, { images: splitLines(e.target.value) })}
-                      placeholder="/images/products/detail-01.jpg"
-                    />
-                  </Field>
-                </div>
-              ))}
+
+                    {!isCollapsed ? (
+                      <div className="space-y-5 p-4">
+                        <div className="rounded-md border border-[#E5DED4] bg-white p-4 space-y-4">
+                          <div>
+                            <h4 className="text-xs font-semibold text-[#2C2A28]">标题与正文</h4>
+                            <p className="mt-1 text-[11px] leading-relaxed text-[#8A8580]">
+                              维护这个内容块在详情页中的主标题和说明文字。
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Field label="中文标题">
+                              <Input
+                                value={module.title_cn}
+                                onChange={(e) => patchDetailModule(module.id, { title_cn: e.target.value })}
+                              />
+                            </Field>
+                            <Field label="英文标题">
+                              <Input
+                                value={module.title_en}
+                                onChange={(e) => patchDetailModule(module.id, { title_en: e.target.value })}
+                              />
+                            </Field>
+                            <Field label="中文正文">
+                              <Textarea
+                                className="min-h-24"
+                                value={module.body_cn ?? ''}
+                                onChange={(e) => patchDetailModule(module.id, { body_cn: e.target.value })}
+                              />
+                            </Field>
+                            <Field label="英文正文">
+                              <Textarea
+                                className="min-h-24"
+                                value={module.body_en ?? ''}
+                                onChange={(e) => patchDetailModule(module.id, { body_en: e.target.value })}
+                              />
+                            </Field>
+                          </div>
+                        </div>
+
+                        <div className="rounded-md border border-[#E5DED4] bg-white p-4 space-y-4">
+                          <div>
+                            <h4 className="text-xs font-semibold text-[#2C2A28]">列表项</h4>
+                            <p className="mt-1 text-[11px] leading-relaxed text-[#8A8580]">
+                              用于亮点、场景、FAQ 或定制范围。每行一个条目。
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Field label="中文列表项" hint="一行一个，格式：标题: 说明。FAQ 可写 问题: 答案。">
+                              <Textarea
+                                className="min-h-28"
+                                value={formatModuleItems(module.items_cn)}
+                                onChange={(e) => patchDetailModule(module.id, { items_cn: parseModuleItems(e.target.value) })}
+                              />
+                            </Field>
+                            <Field label="英文列表项" hint="One per line: Title: Description.">
+                              <Textarea
+                                className="min-h-28"
+                                value={formatModuleItems(module.items_en)}
+                                onChange={(e) => patchDetailModule(module.id, { items_en: parseModuleItems(e.target.value) })}
+                              />
+                            </Field>
+                          </div>
+                        </div>
+
+                        <div className="rounded-md border border-[#E5DED4] bg-white p-4 space-y-4">
+                          <div>
+                            <h4 className="text-xs font-semibold text-[#2C2A28]">图片素材</h4>
+                            <p className="mt-1 text-[11px] leading-relaxed text-[#8A8580]">
+                              可选择模块主图或图片组。上传和选择只会回填当前表单，仍需点击保存。
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-4">
+                            <Field label="模块主图 URL">
+                              <MediaImagePicker
+                                value={module.image_url || null}
+                                maxUploadMb={maxUploadMb}
+                                title="选择模块主图"
+                                description="从图片库选择一张模块主图，或直接上传新图。"
+                                emptyLabel="选择/上传模块主图"
+                                onChange={(url) => patchDetailModule(module.id, { image_url: url ?? '' })}
+                              />
+                              <Input
+                                value={module.image_url ?? ''}
+                                onChange={(e) => patchDetailModule(module.id, { image_url: e.target.value })}
+                                placeholder="/images/products/..."
+                              />
+                            </Field>
+                            <Field label="模块图片组 URL" hint="一行一张图，用于图文模块或 FAQ/场景补充图片。">
+                              <MediaGalleryPicker
+                                value={module.images ?? []}
+                                maxUploadMb={maxUploadMb}
+                                title="选择模块图片"
+                                description="可多选，已选顺序就是该模块图片组顺序。"
+                                emptyLabel="选择模块图片"
+                                actionLabel="添加/更换模块图片"
+                                onChange={(urls) => patchDetailModule(module.id, { images: urls })}
+                              />
+                              <div className="flex flex-wrap gap-2">
+                                {module.image_url ? (
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const next = Array.from(new Set([module.image_url, ...(module.images ?? [])].filter(Boolean))) as string[]
+                                      patchDetailModule(module.id, { images: next })
+                                    }}
+                                  >
+                                    将主图加入图片组
+                                  </Button>
+                                ) : null}
+                                {galleryUrls.length > 0 ? (
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => patchDetailModule(module.id, { images: galleryUrls })}
+                                  >
+                                    使用详情图库
+                                  </Button>
+                                ) : null}
+                              </div>
+                              <Textarea
+                                className="min-h-24"
+                                value={(module.images ?? []).join('\n')}
+                                onChange={(e) => patchDetailModule(module.id, { images: splitLines(e.target.value) })}
+                                placeholder="/images/products/detail-01.jpg"
+                              />
+                            </Field>
+                          </div>
+                        </div>
+
+                        <div className="rounded-md border border-[#E5DED4] bg-white p-4 space-y-4">
+                          <div>
+                            <h4 className="text-xs font-semibold text-[#2C2A28]">高级设置</h4>
+                            <p className="mt-1 text-[11px] leading-relaxed text-[#8A8580]">
+                              这些字段用于识别内容块和控制展示顺序，一般只在维护时调整。
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <Field label="模块 ID">
+                              <Input
+                                value={module.id}
+                                onChange={(e) => patchDetailModule(module.id, { id: normalizeId(e.target.value) })}
+                              />
+                            </Field>
+                            <Field label="模块类型">
+                              <Select
+                                value={module.type}
+                                onChange={(e) => patchDetailModule(module.id, { type: e.target.value as CatalogDetailModuleType })}
+                              >
+                                {detailModuleTypeOptions.map((option) => (
+                                  <option key={option.type} value={option.type}>{option.optionLabel}</option>
+                                ))}
+                              </Select>
+                            </Field>
+                            <Field label="排序">
+                              <Input
+                                type="number"
+                                value={module.sort_order}
+                                onChange={(e) => patchDetailModule(module.id, { sort_order: Number(e.target.value) || 0 })}
+                              />
+                            </Field>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                )
+              })}
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed border-[#E5DED4] bg-[#FAF7F2] p-6 text-sm text-[#8A8580]">
-              暂无详情模块。可以先新增一个亮点模块，前台会显示在产品卖点之后。
+            <div className="rounded-lg border border-dashed border-[#E5DED4] bg-[#FAF7F2] p-6">
+              <div className="max-w-2xl space-y-3">
+                <div>
+                  <p className="text-sm font-semibold text-[#2C2A28]">暂无详情内容块</p>
+                  <p className="mt-1 text-xs leading-relaxed text-[#8A8580]">
+                    可以先添加产品亮点、使用场景、FAQ、图文内容或定制范围。新增后仍需点击保存才会写入产品。
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {detailModuleTypeOptions.map((option) => (
+                    <Button
+                      key={option.type}
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addDetailModuleTemplate(option.type)}
+                    >
+                      + {option.label}
+                    </Button>
+                  ))}
+                  <Button type="button" size="sm" onClick={applyStandardDetailTemplates}>
+                    生成标准详情模块
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
         </FormSection>
@@ -1155,5 +1341,23 @@ export default function ProductForm({
         </FormSection>
       </div>
     </div>
+    <AdminConfirmDialog
+      open={Boolean(deletingDetailModule)}
+      onOpenChange={(open) => {
+        if (!open) setDeletingDetailModule(null)
+      }}
+      title="确认移除这个详情内容块？"
+      description={(
+        <>
+          这只会先从当前表单里移除
+          <strong> {deletingDetailModule?.title_cn || deletingDetailModule?.title_en || '未命名内容块'} </strong>
+          ，前台和数据库不会立即变化。确认无误后，还需要点击保存才会写入产品详情。
+        </>
+      )}
+      confirmLabel="确认移除"
+      tone="danger"
+      onConfirm={confirmRemoveDetailModule}
+    />
+    </>
   )
 }
