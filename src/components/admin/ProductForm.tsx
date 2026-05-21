@@ -477,6 +477,7 @@ export default function ProductForm({
   backLabel = '返回产品列表',
   title,
   previewPolicy = 'always',
+  createRedirectBase = '/admin/products',
 }: {
   mode: 'create' | 'edit'
   product?: CatalogProductRow | null
@@ -485,6 +486,7 @@ export default function ProductForm({
   backLabel?: string
   title?: string
   previewPolicy?: 'always' | 'published-only'
+  createRedirectBase?: string
 }) {
   const router = useRouter()
   const [form, setForm] = useState<FormState>(() => fromProduct(product))
@@ -671,7 +673,8 @@ export default function ProductForm({
       setForm(nextForm)
       setSavedForm(nextForm)
       if (mode === 'create') {
-        router.push(`/admin/products/${data.data.id}/edit`)
+        const base = createRedirectBase.replace(/\/$/, '')
+        router.push(`${base}/${data.data.id}/edit`)
       } else {
         router.refresh()
       }
