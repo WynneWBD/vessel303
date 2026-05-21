@@ -29,6 +29,7 @@ export default async function EditProductPage({
       mode="edit"
       product={product}
       maxUploadMb={normalizeMediaMaxUploadMb(settings.mediaMaxUploadMb)}
+      previewPolicy="published-only"
     />
   )
 }

@@ -492,6 +492,7 @@ export default function ProductForm({
   const [saving, setSaving] = useState(false)
   const [collapsedDetailModules, setCollapsedDetailModules] = useState<Record<string, boolean>>({})
   const [deletingDetailModule, setDeletingDetailModule] = useState<CatalogDetailModule | null>(null)
+  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false)
 
   const previewHref = useMemo(() => {
     if (!form.id) return '/products'
@@ -507,6 +508,7 @@ export default function ProductForm({
   )
   const hasUnsavedChanges = useMemo(() => JSON.stringify(form) !== JSON.stringify(savedForm), [form, savedForm])
   const showPreviewLink = mode === 'edit' && (previewPolicy === 'always' || form.status === 'published')
+  const isCurrentlyPublished = form.status === 'published'
 
   useUnsavedChangesWarning(hasUnsavedChanges)
 
@@ -680,6 +682,11 @@ export default function ProductForm({
     }
   }
 
+  const handleConfirmPublish = async () => {
+    await handleSave('published')
+    setPublishConfirmOpen(false)
+  }
+
   return (
     <>
     <div className="flex flex-col gap-6 max-w-6xl">
@@ -718,9 +725,9 @@ export default function ProductForm({
           )}
           <Button variant="outline" size="sm" disabled={saving} onClick={() => handleSave()}>
             <Save size={15} />
-            保存草稿
+            保存当前内容
           </Button>
-          <Button size="sm" disabled={saving} onClick={() => handleSave('published')}>
+          <Button size="sm" disabled={saving} onClick={() => setPublishConfirmOpen(true)}>
             <Send size={15} />
             保存并发布
           </Button>
@@ -1271,11 +1278,14 @@ export default function ProductForm({
         <FormSection
           id="publish-check"
           title="发布检查"
-          description="检查状态、完整度和预览入口；这里不新增发布限制。"
+          description="检查状态、完整度和前台预览；这里只做提醒，不新增发布限制。"
         >
           <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-5">
             <div className="space-y-4">
-              <Field label="状态">
+              <Field
+                label="状态"
+                hint="普通保存会按这里的状态写入；需要明确上线时，请使用“保存并发布”。"
+              >
                 <Select
                   value={form.status}
                   onChange={(e) => patch('status', e.target.value as CatalogProductStatus)}
@@ -1285,10 +1295,16 @@ export default function ProductForm({
                 </Select>
               </Field>
 
-              <div className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4 text-xs leading-relaxed text-[#6B6560]">
-                {form.status === 'published'
-                  ? '当前为已发布产品，保存后会影响前台展示。'
-                  : '当前为草稿，发布前不会在前台公开展示。'}
+              <div
+                className={`rounded-lg border p-4 text-xs leading-relaxed ${
+                  isCurrentlyPublished
+                    ? 'border-[#F2C6A7] bg-[#FFF7F0] text-[#8A3F16]'
+                    : 'border-[#E5DED4] bg-[#FAF7F2] text-[#6B6560]'
+                }`}
+              >
+                {isCurrentlyPublished
+                  ? '当前状态为已发布。点击“保存当前内容”也会更新前台展示；点击“保存并发布”会再次确认后保存为已发布。'
+                  : '当前状态为草稿。点击“保存当前内容”只保存草稿；点击“保存并发布”会先确认，再公开到前台。'}
               </div>
 
               {showPreviewLink ? (
@@ -1315,7 +1331,7 @@ export default function ProductForm({
                 </Badge>
               </div>
               <p className="mt-2 text-xs leading-relaxed text-[#6B6560]">
-                只做运营提示，不新增保存或发布限制。
+                只做运营提示，不阻止保存或发布。发布前请人工确认图片、中英文内容和详情模块。
               </p>
               {visibleCompletenessIssues.length > 0 ? (
                 <div className="mt-3 flex flex-wrap gap-1.5">
@@ -1357,6 +1373,24 @@ export default function ProductForm({
       confirmLabel="确认移除"
       tone="danger"
       onConfirm={confirmRemoveDetailModule}
+    />
+    <AdminConfirmDialog
+      open={publishConfirmOpen}
+      onOpenChange={setPublishConfirmOpen}
+      title={isCurrentlyPublished ? '确认保存并更新前台？' : '确认保存并发布这个产品？'}
+      description={(
+        <>
+          {isCurrentlyPublished
+            ? '这个产品当前已经发布。确认后会保存当前表单内容，并继续作为已发布产品展示在前台。'
+            : '确认后会保存当前表单内容，并把产品状态改为已发布，前台产品页会对外展示。'}
+          <br />
+          发布前检查只做提醒，不会自动阻止发布，请确认缺项和图片素材没有问题。
+        </>
+      )}
+      confirmLabel={isCurrentlyPublished ? '确认更新前台' : '确认发布'}
+      tone="warning"
+      loading={saving}
+      onConfirm={handleConfirmPublish}
     />
     </>
   )
