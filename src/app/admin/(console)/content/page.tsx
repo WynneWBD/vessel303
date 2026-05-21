@@ -228,7 +228,7 @@ function buildTodos({
     {
       title: '产品草稿',
       detail: summary.products.draft > 0 ? '检查图片、英文和详情' : '暂无产品草稿',
-      href: '/admin/products?status=draft',
+      href: '/admin/content/products/list?status=draft',
       count: summary.products.draft,
       ok: summary.products.draft === 0,
     },

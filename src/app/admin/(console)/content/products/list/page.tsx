@@ -814,7 +814,7 @@ export default async function AdminContentProductsListPage({ searchParams }: Pag
             <p className="text-sm font-semibold text-[#1889B6]">产品管理</p>
             <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">产品列表</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-              按状态、系列和完整度快速找到要处理的产品；编辑和发布仍进入产品维护页完成。
+              按状态、系列和完整度快速找到要处理的产品；日常编辑进入新版编辑页，维护列表仅作为备用入口。
             </p>
           </div>
           <QuickActions />
