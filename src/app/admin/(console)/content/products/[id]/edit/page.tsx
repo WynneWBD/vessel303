@@ -83,38 +83,38 @@ type EditSection = {
 
 const EDIT_SECTIONS: EditSection[] = [
   {
-    key: 'basic-info',
+    key: 'basic',
     title: '基础信息',
     detail: '名称、系列、类型、代际、排序',
-    href: '#basic-info',
+    href: '#basic',
     Icon: Pencil,
   },
   {
-    key: 'product-media',
+    key: 'media',
     title: '图片素材',
     detail: '封面图、图库、图片 URL',
-    href: '#product-media',
+    href: '#media',
     Icon: ImageIcon,
   },
   {
-    key: 'product-copy',
+    key: 'content',
     title: '中英文内容',
     detail: '标签、亮点、简介',
-    href: '#product-copy',
+    href: '#content',
     Icon: FileText,
   },
   {
-    key: 'product-details',
+    key: 'details',
     title: '详情内容',
     detail: '详情介绍、详情图库',
-    href: '#product-details',
+    href: '#details',
     Icon: Layers3,
   },
   {
-    key: 'product-specs',
+    key: 'specs',
     title: '规格参数',
     detail: '中英文规格项',
-    href: '#product-specs',
+    href: '#specs',
     Icon: Settings2,
   },
   {
