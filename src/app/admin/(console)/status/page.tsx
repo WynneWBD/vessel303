@@ -676,7 +676,7 @@ function StatusCard({ item }: { item: StatusItem }) {
 
 function ContentBreakdown({ content }: { content: Record<ContentKind, ContentSummary> }) {
   const rows = [
-    { label: '产品', href: '/admin/products', data: content.products, Icon: Package },
+    { label: '产品', href: '/admin/content/products', data: content.products, Icon: Package },
     { label: '项目案例', href: '/admin/projects', data: content.projects, Icon: MapPinned },
     { label: '新闻', href: '/admin/news', data: content.news, Icon: FileText },
   ]
