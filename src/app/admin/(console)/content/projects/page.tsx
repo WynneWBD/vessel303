@@ -174,7 +174,7 @@ function getSideNavGroups(stats: ProjectStats): AdminSideNavGroup[] {
     {
       title: '项目展示',
       items: [
-        { key: 'case-list', label: '过渡维护列表', href: '/admin/projects', Icon: ListChecks },
+        { key: 'project-list', label: '项目列表', href: '/admin/content/projects/list', Icon: ListChecks },
         { key: 'case-create', label: '新增项目', href: '/admin/projects/new', Icon: Plus },
         { key: 'cases-front', label: '查看案例列表', href: '/cases', Icon: ExternalLink },
         { key: 'global-map', label: '查看 Global 地图', href: '/global', Icon: Globe2 },
@@ -183,7 +183,6 @@ function getSideNavGroups(stats: ProjectStats): AdminSideNavGroup[] {
     {
       title: '后续规划',
       items: [
-        { key: 'project-list-2', label: '新版项目列表', planned: true, Icon: ListChecks },
         { key: 'project-detail-2', label: '案例详情页', planned: true, Icon: FileText },
         { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },
         { key: 'recycle', label: '回收站', planned: true, Icon: Archive },
@@ -198,7 +197,7 @@ function getStatusEntries(stats: ProjectStats): StatusEntry[] {
       title: '全部项目',
       value: stats.total,
       detail: '正式项目案例内容总量',
-      href: '/admin/projects',
+      href: '/admin/content/projects/list',
       Icon: MapPinned,
       tone: 'blue',
     },
@@ -206,7 +205,7 @@ function getStatusEntries(stats: ProjectStats): StatusEntry[] {
       title: '已发布',
       value: stats.published,
       detail: '正在 /cases 中展示的案例',
-      href: '/admin/projects?status=published',
+      href: '/admin/content/projects/list?status=published',
       Icon: CheckCircle2,
       tone: 'green',
     },
@@ -214,7 +213,7 @@ function getStatusEntries(stats: ProjectStats): StatusEntry[] {
       title: '草稿',
       value: stats.draft,
       detail: '等待补齐或发布的项目',
-      href: '/admin/projects?status=draft',
+      href: '/admin/content/projects/list?status=draft',
       Icon: FileText,
       tone: 'orange',
     },
@@ -222,7 +221,7 @@ function getStatusEntries(stats: ProjectStats): StatusEntry[] {
       title: '近 30 天新增',
       value: stats.recent,
       detail: '按创建时间统计',
-      href: '/admin/projects',
+      href: '/admin/content/projects/list',
       Icon: Layers3,
       tone: 'neutral',
     },
@@ -283,8 +282,8 @@ function Hero({ stats }: { stats: ProjectStats }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <PrimaryAction href="/admin/projects/new" Icon={Plus} label="新增项目" primary />
-          <PrimaryAction href="/admin/projects?status=draft" Icon={FileText} label="查看草稿" />
-          <PrimaryAction href="/admin/projects" Icon={ListChecks} label="过渡维护列表" />
+          <PrimaryAction href="/admin/content/projects/list?status=draft" Icon={FileText} label="查看草稿" />
+          <PrimaryAction href="/admin/content/projects/list" Icon={ListChecks} label="项目列表" />
         </div>
       </div>
       <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -364,7 +363,7 @@ function SectionTitle({ title, detail }: { title: string; detail?: string }) {
 function StatusGrid({ stats }: { stats: ProjectStats }) {
   return (
     <section id="drafts" className="scroll-mt-24 space-y-4">
-      <SectionTitle title="项目状态入口" detail="第一阶段继续进入过渡维护列表处理筛选、编辑和发布，后续再接新版项目列表。" />
+      <SectionTitle title="项目状态入口" detail="进入新版项目列表，查看全部、草稿、已发布和缺坐标状态；发布和编辑仍保留旧维护入口。" />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {getStatusEntries(stats).map((entry) => (
           <StatusCard key={entry.title} entry={entry} />
@@ -462,14 +461,14 @@ function GlobalStatusPanel({ stats }: { stats: ProjectStats }) {
           title="缺坐标"
           value={stats.missingCoordinates}
           detail="不影响正式案例内容建设，只影响地图点位"
-          href="/admin/projects?mapStatus=missing-coordinates"
+          href="/admin/content/projects/list?view=missing-coordinates"
           tone="orange"
         />
         <GlobalMetric
           title="有坐标待发布"
           value={stats.unpublishedWithCoordinates}
           detail="发布后才会进入 Global 地图"
-          href="/admin/projects?mapStatus=unpublished-with-coordinates"
+          href="/admin/content/projects/list?view=unpublished-with-coordinates"
           tone="blue"
         />
         <GlobalMetric
@@ -519,14 +518,15 @@ function GlobalMetric({
 function ActionPanel() {
   const actions = [
     { label: '新增项目', detail: '第一阶段继续使用过渡维护表单', href: '/admin/projects/new', Icon: Plus },
-    { label: '项目维护列表', detail: '筛选、编辑、发布和下架仍在这里处理', href: '/admin/projects', Icon: ListChecks },
+    { label: '项目列表', detail: '查看项目状态、完整度和 Global 入图状态', href: '/admin/content/projects/list', Icon: ListChecks },
+    { label: '过渡维护列表', detail: '发布、下架等操作仍在这里处理', href: '/admin/projects', Icon: ListChecks },
     { label: '查看案例列表', detail: '查看前台 /cases 当前展示效果', href: '/cases', Icon: ExternalLink },
     { label: '查看 Global', detail: '只查看地图展示，不进入管理能力', href: '/global', Icon: Globe2 },
   ]
 
   return (
     <section className="space-y-4">
-      <SectionTitle title="常用入口" detail="B2-1 只建立项目案例运营入口；列表、新建和编辑新版化留到后续步骤。" />
+      <SectionTitle title="常用入口" detail="B2-2 已接入新版项目列表；新建和编辑仍保留旧维护入口，后续再逐步新版化。" />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         {actions.map((action) => (
           <Link
@@ -575,7 +575,7 @@ function WorkflowPanel() {
 }
 
 function PlanningPanel() {
-  const items = ['新版项目列表', '新版项目新建', '新版项目编辑', '正式案例详情页', '询盘入口接线索']
+  const items = ['新版项目新建', '新版项目编辑', '正式案例详情页', '询盘入口接线索']
 
   return (
     <section className="rounded-md border border-dashed border-[#D8E7E8] bg-white/70 p-5">
@@ -585,7 +585,7 @@ function PlanningPanel() {
         </span>
         <div>
           <h2 className="text-base font-bold text-[#1E2C31]">后续规划</h2>
-          <p className="mt-1 text-xs text-[#61767D]">这些能力后续分步建设，不在 B2-1 中开放。</p>
+          <p className="mt-1 text-xs text-[#61767D]">新版列表已开放；新建、编辑、详情页和询盘入口后续分步建设。</p>
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
