@@ -84,8 +84,8 @@ const CONTENT_DOMAINS: ContentDomain[] = [
   {
     key: 'projects',
     title: '项目案例',
-    detail: '维护案例图片、简介、坐标和 Global 展示资料。',
-    href: '/admin/projects',
+    detail: '维护正式项目案例内容；Global 只作为地图展示渠道。',
+    href: '/admin/content/projects',
     newHref: '/admin/projects/new',
     Icon: MapPinned,
     action: '发布项目',
@@ -202,7 +202,7 @@ function getContentSideNav(summary: ContentDashboardSummary): AdminSideNavGroup[
       title: '内容类型',
       items: [
         { key: 'products', label: '产品管理', href: '/admin/content/products', badge: summary.products.total, Icon: Package },
-        { key: 'projects', label: '项目案例', href: '/admin/projects', badge: summary.projects.total, Icon: MapPinned },
+        { key: 'projects', label: '项目案例', href: '/admin/content/projects', badge: summary.projects.total, Icon: MapPinned },
         { key: 'news', label: '新闻资讯', href: '/admin/news', badge: summary.news.total, Icon: Newspaper },
       ],
     },
@@ -235,7 +235,7 @@ function buildTodos({
     {
       title: '项目草稿',
       detail: summary.projects.draft > 0 ? '检查封面、图库和坐标' : '暂无项目草稿',
-      href: '/admin/projects?status=draft',
+      href: '/admin/content/projects',
       count: summary.projects.draft,
       ok: summary.projects.draft === 0,
     },
@@ -249,7 +249,7 @@ function buildTodos({
     {
       title: '项目地图信息',
       detail: missingProjectCoordinates > 0 ? '有项目缺少坐标' : '项目坐标状态正常',
-      href: '/admin/projects?mapStatus=missing-coordinates',
+      href: '/admin/content/projects',
       count: missingProjectCoordinates,
       ok: missingProjectCoordinates === 0,
     },
@@ -429,7 +429,7 @@ function SmallStat({ label, value }: { label: string; value: number }) {
 function ActionMatrix() {
   const actions = [
     { label: '产品管理', href: '/admin/content/products', Icon: Package },
-    { label: '项目案例', href: '/admin/projects', Icon: MapPinned },
+    { label: '项目案例', href: '/admin/content/projects', Icon: MapPinned },
     { label: '新闻资讯', href: '/admin/news', Icon: Newspaper },
   ]
 
