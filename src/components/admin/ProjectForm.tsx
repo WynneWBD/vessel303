@@ -282,6 +282,37 @@ function Field({ label, children, hint }: { label: string; children: ReactNode; 
   )
 }
 
+function FormSection({
+  id,
+  title,
+  description,
+  children,
+  tone = 'default',
+}: {
+  id: string
+  title: string
+  description: string
+  children: ReactNode
+  tone?: 'default' | 'global' | 'warning'
+}) {
+  const toneClass =
+    tone === 'global'
+      ? 'border-[#D8E7E8] bg-[#F7FAFA]'
+      : tone === 'warning'
+        ? 'border-[#F2C6A7] bg-[#FFF7F0]'
+        : 'border-[#E5DED4] bg-[#FFFFFF]'
+
+  return (
+    <section id={id} className={`scroll-mt-24 rounded-lg border p-5 space-y-5 ${toneClass}`}>
+      <div>
+        <h2 className="text-sm font-semibold text-[#2C2A28]">{title}</h2>
+        <p className="mt-1 text-xs leading-relaxed text-[#8A8580]">{description}</p>
+      </div>
+      {children}
+    </section>
+  )
+}
+
 export default function ProjectForm({
   mode,
   project,
@@ -457,14 +488,13 @@ export default function ProjectForm({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-        <div className="rounded-lg border border-[#E5DED4] bg-[#FFFFFF] p-5 space-y-5">
+        <div className="space-y-5">
+          <FormSection
+            id="basic"
+            title="基础信息"
+            description="先确认项目名称、地点和类型。案例 ID 和排序属于维护字段，日常运营通常不需要频繁调整。"
+          >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="案例 ID / Slug" hint="新建后不可修改。示例: shanxi-yunqiu-home">
-              <Input value={form.id} disabled={mode === 'edit'} onChange={(e) => patch('id', normalizeId(e.target.value))} />
-            </Field>
-            <Field label="排序">
-              <Input type="number" value={form.sort_order} onChange={(e) => patch('sort_order', e.target.value)} />
-            </Field>
             <Field label="中文名称">
               <Input value={form.name_zh} onChange={(e) => patch('name_zh', e.target.value)} />
             </Field>
@@ -483,23 +513,47 @@ export default function ProjectForm({
             <Field label="英文项目类型">
               <Input value={form.project_type_en} onChange={(e) => patch('project_type_en', e.target.value)} />
             </Field>
+            <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3 md:col-span-2">
+              <div className="mb-3 text-xs font-semibold text-[#8A8580]">维护字段</div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Field label="案例 ID / Slug" hint="新建后不可修改。示例: shanxi-yunqiu-home">
+                  <Input value={form.id} disabled={mode === 'edit'} onChange={(e) => patch('id', normalizeId(e.target.value))} />
+                </Field>
+                <Field label="排序">
+                  <Input type="number" value={form.sort_order} onChange={(e) => patch('sort_order', e.target.value)} />
+                </Field>
+              </div>
+            </div>
           </div>
+          </FormSection>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Field label="面积">
-              <Input value={form.area_display} onChange={(e) => patch('area_display', e.target.value)} />
-            </Field>
-            <Field label="投资额">
-              <Input value={form.investment_display} onChange={(e) => patch('investment_display', e.target.value)} />
-            </Field>
-            <Field label="舱数">
-              <Input value={form.units_display} onChange={(e) => patch('units_display', e.target.value)} />
-            </Field>
-            <Field label="产品型号">
-              <Input value={form.products} onChange={(e) => patch('products', e.target.value)} />
-            </Field>
-          </div>
+          <FormSection
+            id="media"
+            title="图片素材"
+            description="图片影响案例列表和后续详情展示。选择图片只回填当前表单，保存后才会写入项目。"
+          >
+          <Field label="封面图">
+            <CoverImagePicker value={form.cover_image_url || null} onChange={(url) => patch('cover_image_url', url ?? '')} />
+          </Field>
+          <Field label="封面 URL">
+            <Input value={form.cover_image_url} onChange={(e) => patch('cover_image_url', e.target.value)} />
+          </Field>
+          <Field label="案例图库">
+            <ProductGalleryPicker value={imageUrls} onChange={(urls) => patch('images', urls.join('\n'))} />
+            <Textarea
+              className="min-h-28"
+              value={form.images}
+              onChange={(e) => patch('images', e.target.value)}
+              placeholder="/images/projects/example/image-01.jpg"
+            />
+          </Field>
+          </FormSection>
 
+          <FormSection
+            id="content"
+            title="案例内容"
+            description="这是正式项目案例内容，不等同于 Global 地图说明。中英文简介和标签会影响后续案例页展示质量。"
+          >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="中文简介">
               <Textarea className="min-h-32" value={form.description_zh} onChange={(e) => patch('description_zh', e.target.value)} />
@@ -514,13 +568,57 @@ export default function ProjectForm({
               <Textarea value={form.tags_en} onChange={(e) => patch('tags_en', e.target.value)} />
             </Field>
           </div>
+          </FormSection>
 
-          <div className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4 space-y-4">
-            <div>
-              <h2 className="text-sm font-semibold text-[#2C2A28]">/global 详情内容</h2>
-              <p className="mt-1 text-xs leading-relaxed text-[#8A8580]">
-                用于地图右侧详情面板。留空时会继续使用项目基础信息自动生成兜底内容。
-              </p>
+          <FormSection
+            id="params"
+            title="项目参数"
+            description="用于展示项目规模和相关产品，帮助运营判断案例是否具备正式展示信息。"
+          >
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Field label="面积">
+              <Input value={form.area_display} onChange={(e) => patch('area_display', e.target.value)} />
+            </Field>
+            <Field label="投资额">
+              <Input value={form.investment_display} onChange={(e) => patch('investment_display', e.target.value)} />
+            </Field>
+            <Field label="舱数">
+              <Input value={form.units_display} onChange={(e) => patch('units_display', e.target.value)} />
+            </Field>
+            <Field label="产品型号">
+              <Input value={form.products} onChange={(e) => patch('products', e.target.value)} />
+            </Field>
+          </div>
+          </FormSection>
+
+          <FormSection
+            id="global"
+            title="Global 入图信息"
+            description="这些字段只影响 Global 地图点位和地图展示，不是正式案例详情页。坐标缺失只代表暂不能入图，不代表案例内容错误。"
+            tone="global"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Field label="国家/地区">
+                <Input className="bg-white" value={form.country} onChange={(e) => patch('country', e.target.value)} />
+              </Field>
+              <Field label="纬度" hint="-90 到 90">
+                <Input
+                  type="number"
+                  step="0.000001"
+                  className="bg-white"
+                  value={form.latitude}
+                  onChange={(e) => patch('latitude', e.target.value)}
+                />
+              </Field>
+              <Field label="经度" hint="-180 到 180">
+                <Input
+                  type="number"
+                  step="0.000001"
+                  className="bg-white"
+                  value={form.longitude}
+                  onChange={(e) => patch('longitude', e.target.value)}
+                />
+              </Field>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <Field label="开业时间">
@@ -605,44 +703,22 @@ export default function ProjectForm({
                 />
               </Field>
             </div>
-          </div>
-
-          <Field label="案例图库">
-            <ProductGalleryPicker value={imageUrls} onChange={(urls) => patch('images', urls.join('\n'))} />
-            <Textarea
-              className="min-h-28"
-              value={form.images}
-              onChange={(e) => patch('images', e.target.value)}
-              placeholder="/images/projects/example/image-01.jpg"
-            />
-          </Field>
+          </FormSection>
         </div>
 
-        <aside className="rounded-lg border border-[#E5DED4] bg-[#FFFFFF] p-5 space-y-5 h-fit">
+        <aside className="h-fit">
+          <FormSection
+            id="publish-check"
+            title="发布检查"
+            description="这里仅做运营提醒，不阻止保存或发布。已发布项目保存后会影响公开案例内容；坐标有效时也会影响 Global 地图展示。"
+            tone="warning"
+          >
           <Field label="状态">
             <Select value={form.status} onChange={(e) => patch('status', e.target.value as ProjectCaseStatus)}>
               <option value="draft">草稿</option>
               <option value="published">已发布</option>
             </Select>
           </Field>
-
-          <Field label="封面图">
-            <CoverImagePicker value={form.cover_image_url || null} onChange={(url) => patch('cover_image_url', url ?? '')} />
-          </Field>
-          <Field label="封面 URL">
-            <Input value={form.cover_image_url} onChange={(e) => patch('cover_image_url', e.target.value)} />
-          </Field>
-          <Field label="国家/地区">
-            <Input value={form.country} onChange={(e) => patch('country', e.target.value)} />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="纬度" hint="-90 到 90">
-              <Input type="number" step="0.000001" value={form.latitude} onChange={(e) => patch('latitude', e.target.value)} />
-            </Field>
-            <Field label="经度" hint="-180 到 180">
-              <Input type="number" step="0.000001" value={form.longitude} onChange={(e) => patch('longitude', e.target.value)} />
-            </Field>
-          </div>
 
           <div className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4">
             <div className="flex items-center justify-between gap-3">
@@ -704,6 +780,7 @@ export default function ProjectForm({
               </Link>
             ) : null}
           </div>
+          </FormSection>
         </aside>
       </div>
     </div>

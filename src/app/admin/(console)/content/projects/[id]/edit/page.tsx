@@ -81,42 +81,42 @@ const EDIT_SECTIONS: EditSection[] = [
     key: 'basic',
     title: '基础信息',
     detail: '名称、地点、类型、排序',
-    href: '#project-form',
+    href: '#basic',
     Icon: Pencil,
   },
   {
     key: 'media',
     title: '图片素材',
     detail: '封面图、图库、图片 URL',
-    href: '#project-form',
+    href: '#media',
     Icon: ImageIcon,
   },
   {
     key: 'content',
     title: '案例内容',
     detail: '简介、标签、相关产品',
-    href: '#project-form',
+    href: '#content',
     Icon: FileText,
   },
   {
     key: 'params',
     title: '项目参数',
     detail: '面积、投资、数量、产品型号',
-    href: '#project-form',
+    href: '#params',
     Icon: Settings2,
   },
   {
     key: 'global-info',
     title: 'Global 入图信息',
     detail: '国家、坐标、地图展示资料',
-    href: '#project-form',
+    href: '#global',
     Icon: MapPinned,
   },
   {
     key: 'publish-check',
     title: '发布检查',
     detail: '状态、完整度、展示影响',
-    href: '#project-form',
+    href: '#publish-check',
     Icon: SearchCheck,
   },
 ]
@@ -415,7 +415,7 @@ function EditSectionGrid() {
           <span>
             <span className="block text-sm font-semibold text-[#1E2C31]">{section.title}</span>
             <span className="mt-1 block text-xs leading-5 text-[#61767D]">
-              {section.detail}。本轮先定位到表单，B2-3-2 再拆分字段。
+              {section.detail}。点击可跳到对应编辑区块。
             </span>
           </span>
         </Link>
