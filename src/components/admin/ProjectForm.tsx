@@ -316,9 +316,19 @@ function FormSection({
 export default function ProjectForm({
   mode,
   project,
+  backHref = '/admin/projects',
+  backLabel = '返回案例列表',
+  title,
+  createRedirectBase = '/admin/projects',
+  showPreviewLink = true,
 }: {
   mode: 'create' | 'edit'
   project?: ProjectCaseRow | null
+  backHref?: string
+  backLabel?: string
+  title?: string
+  createRedirectBase?: string
+  showPreviewLink?: boolean
 }) {
   const router = useRouter()
   const [form, setForm] = useState<FormState>(() => fromProject(project))
@@ -439,7 +449,8 @@ export default function ProjectForm({
       setForm(nextForm)
       setSavedForm(nextForm)
       if (mode === 'create') {
-        router.push(`/admin/projects/${data.data.id}/edit`)
+        const base = createRedirectBase.replace(/\/$/, '')
+        router.push(`${base}/${data.data.id}/edit`)
       } else {
         router.refresh()
       }
@@ -454,12 +465,12 @@ export default function ProjectForm({
     <div className="flex flex-col gap-6 max-w-6xl">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <Link href="/admin/projects" className="inline-flex items-center gap-2 text-xs text-[#8A8580] hover:text-[#E36F2C] mb-2">
+          <Link href={backHref} className="inline-flex items-center gap-2 text-xs text-[#8A8580] hover:text-[#E36F2C] mb-2">
             <ArrowLeft size={14} />
-            返回案例列表
+            {backLabel}
           </Link>
           <h1 className="text-[#2C2A28]" style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 24, fontWeight: 700 }}>
-            {mode === 'create' ? '新建项目案例' : '编辑项目案例'}
+            {title ?? (mode === 'create' ? '新建项目案例' : '编辑项目案例')}
           </h1>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -468,14 +479,16 @@ export default function ProjectForm({
               有未保存修改
             </span>
           ) : null}
-          <Link
-            href="/cases"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-9 items-center justify-center rounded-md border border-[#E5DED4] px-3 text-sm font-medium text-[#2C2A28] hover:bg-[#FFFFFF]"
-          >
-            预览列表
-          </Link>
+          {showPreviewLink ? (
+            <Link
+              href="/cases"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-9 items-center justify-center rounded-md border border-[#E5DED4] px-3 text-sm font-medium text-[#2C2A28] hover:bg-[#FFFFFF]"
+            >
+              预览列表
+            </Link>
+          ) : null}
           <Button variant="outline" size="sm" disabled={saving} onClick={() => handleSave()}>
             <Save size={15} />
             保存草稿
