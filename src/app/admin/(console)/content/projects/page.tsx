@@ -363,7 +363,7 @@ function SectionTitle({ title, detail }: { title: string; detail?: string }) {
 function StatusGrid({ stats }: { stats: ProjectStats }) {
   return (
     <section id="drafts" className="scroll-mt-24 space-y-4">
-      <SectionTitle title="项目状态入口" detail="进入新版项目列表，查看全部、草稿、已发布和缺坐标状态；发布和编辑仍保留旧维护入口。" />
+      <SectionTitle title="项目状态入口" detail="进入新版项目列表，查看全部、草稿、已发布和缺坐标状态；新建和编辑已进入新版链路。" />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {getStatusEntries(stats).map((entry) => (
           <StatusCard key={entry.title} entry={entry} />
@@ -526,7 +526,7 @@ function ActionPanel() {
 
   return (
     <section className="space-y-4">
-      <SectionTitle title="常用入口" detail="B2-2 已接入新版项目列表；新建和编辑仍保留旧维护入口，后续再逐步新版化。" />
+      <SectionTitle title="常用入口" detail="新建和编辑已进入新版链路；发布、下架、删除等高风险操作仍在维护入口处理。" />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         {actions.map((action) => (
           <Link

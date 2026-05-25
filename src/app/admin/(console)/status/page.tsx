@@ -458,7 +458,7 @@ function buildTodos({
     {
       title: '项目地图信息',
       detail: map.missingCoordinates > 0 ? '有项目缺少坐标' : '项目地图字段状态正常',
-      href: '/admin/projects?mapStatus=missing-coordinates',
+      href: '/admin/content/projects/list?view=missing-coordinates',
       count: map.missingCoordinates,
       ok: map.missingCoordinates === 0,
     },
@@ -621,7 +621,7 @@ function StatusGrid({
       title: '项目地图字段',
       value: map.missingCoordinates,
       detail: map.unpublishedWithCoordinates > 0 ? `${formatNumber(map.unpublishedWithCoordinates)} 个有坐标待发布` : '按现有字段只读统计',
-      href: '/admin/projects?mapStatus=missing-coordinates',
+      href: '/admin/content/projects/list?view=missing-coordinates',
       id: 'map',
       Icon: MapPinned,
       tone: map.missingCoordinates > 0 ? 'orange' : 'green',
@@ -677,7 +677,7 @@ function StatusCard({ item }: { item: StatusItem }) {
 function ContentBreakdown({ content }: { content: Record<ContentKind, ContentSummary> }) {
   const rows = [
     { label: '产品', href: '/admin/content/products', data: content.products, Icon: Package },
-    { label: '项目案例', href: '/admin/projects', data: content.projects, Icon: MapPinned },
+    { label: '项目案例', href: '/admin/content/projects', data: content.projects, Icon: MapPinned },
     { label: '新闻', href: '/admin/news', data: content.news, Icon: FileText },
   ]
 
