@@ -241,7 +241,7 @@ function getSideNavGroups(project: ProjectCaseRow): AdminSideNavGroup[] {
       items: [
         { key: 'project-new', label: '新增项目', href: '/admin/content/projects/new', Icon: FileText },
         { key: 'form-sections', label: '表单分区优化', planned: true, Icon: SearchCheck },
-        { key: 'case-detail', label: '正式案例详情页', planned: true, Icon: ExternalLink },
+        { key: 'case-detail', label: '查看案例详情页', href: `/cases/${project.id}`, Icon: ExternalLink },
       ],
     },
   ]
@@ -445,7 +445,7 @@ function GlobalStatusPanel({ project }: { project: ProjectCaseRow }) {
           <div>
             <h2 className="text-sm font-bold text-[#1E2C31]">Global 入图提示</h2>
             <p className="mt-1 text-xs leading-5 text-[#61767D]">
-              {globalStatus.detail} Global 只负责地图可视化展示，正式案例详情页会在后续单独规划。
+              {globalStatus.detail} Global 只负责地图可视化展示，正式案例详情页归 /cases/[id]。
             </p>
           </div>
         </div>

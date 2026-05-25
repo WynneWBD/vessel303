@@ -183,9 +183,9 @@ function getSideNavGroups(stats: ProjectStats): AdminSideNavGroup[] {
     {
       title: '后续规划',
       items: [
-        { key: 'project-detail-2', label: '案例详情页', planned: true, Icon: FileText },
         { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },
         { key: 'recycle', label: '回收站', planned: true, Icon: Archive },
+        { key: 'lead-cta', label: '询盘入口接线索', planned: true, Icon: FileText },
       ],
     },
   ]
@@ -454,7 +454,7 @@ function GlobalStatusPanel({ stats }: { stats: ProjectStats }) {
     <section className="space-y-4">
       <SectionTitle
         title="Global 入图状态"
-        detail="Global 只作为地图展示渠道：已发布且有坐标的项目可进入地图；正式项目详情页后续单独建设。"
+        detail="Global 只作为地图展示渠道：已发布且有坐标的项目可进入地图；正式项目详情页已归 /cases/[id]。"
       />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <GlobalMetric
@@ -553,7 +553,7 @@ function WorkflowPanel() {
     { title: '建立案例内容', detail: '先补项目名称、地点、类型、参数、相关产品和简介。' },
     { title: '补齐图片素材', detail: '封面和图库决定项目案例的第一展示质量。' },
     { title: '区分展示渠道', detail: '正式案例页面和 Global 地图分开管理，坐标只影响入图。' },
-    { title: '发布与转化', detail: '后续接正式详情页和询盘入口，本轮不改前台。' },
+    { title: '发布与转化', detail: '已发布项目进入 /cases/[id]；询盘入口继续走现有联系入口，后续可接线索。' },
   ]
 
   return (
@@ -585,7 +585,7 @@ function PlanningPanel() {
         </span>
         <div>
           <h2 className="text-base font-bold text-[#1E2C31]">后续规划</h2>
-          <p className="mt-1 text-xs text-[#61767D]">新版列表已开放；新建、编辑、详情页和询盘入口后续分步建设。</p>
+          <p className="mt-1 text-xs text-[#61767D]">新版列表、新建、编辑和正式案例详情页已开放；询盘入口接线索后续单独建设。</p>
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">

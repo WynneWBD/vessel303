@@ -576,7 +576,7 @@ export async function getMediaReferenceDetails(url: string): Promise<MediaRefere
       projects: projectsRes.rows.map((row) => ({
         id: row.id,
         title: firstText(row.name_zh, row.name_en, row.id),
-        href: `/admin/projects/${row.id}/edit`,
+        href: `/admin/content/projects/${row.id}/edit`,
         fields: collectFields([
           [row.in_cover, '封面图'],
           [row.in_images, '图库'],

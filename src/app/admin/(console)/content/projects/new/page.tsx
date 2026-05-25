@@ -101,8 +101,8 @@ function getSideNavGroups(): AdminSideNavGroup[] {
     {
       title: '后续规划',
       items: [
-        { key: 'case-detail', label: '正式案例详情页', planned: true, Icon: FileText },
         { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },
+        { key: 'lead-cta', label: '询盘入口接线索', planned: true, Icon: FileText },
       ],
     },
   ]
@@ -182,7 +182,7 @@ function RiskNotice() {
         <div className="min-w-0">
           <h2 className="text-sm font-bold text-[#8A3F16]">保存前请确认必填内容</h2>
           <p className="mt-1 text-xs leading-5 text-[#8A3F16]">
-            新建项目会写入项目案例数据。图片上传会立即进入媒体库，选择图片只回填表单，最终仍要保存项目才生效。坐标和 Global 字段只影响地图入图，不代表正式案例详情页已经完成。
+            新建项目会写入项目案例数据。图片上传会立即进入媒体库，选择图片只回填表单，最终仍要保存项目才生效。坐标和 Global 字段只影响地图入图；发布后正式案例详情页归 /cases/[id]。
           </p>
         </div>
       </div>

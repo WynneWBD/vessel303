@@ -109,7 +109,7 @@ export default function Navbar() {
 
   const navLinks: NavLink[] = [
     { label: t(i18n.nav.products), href: '/products' },
-    { label: t(i18n.nav.cases), href: '/global' },
+    { label: t(i18n.nav.cases), href: '/cases' },
     { label: t(i18n.nav.about), href: '/about' },
     { label: t(i18n.nav.faq), href: '/faq' },
     { label: t(i18n.nav.news), href: '/news' },

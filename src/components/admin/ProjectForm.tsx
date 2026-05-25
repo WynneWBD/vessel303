@@ -543,7 +543,7 @@ export default function ProjectForm({
           <FormSection
             id="media"
             title="图片素材"
-            description="图片影响案例列表和后续详情展示。选择图片只回填当前表单，保存后才会写入项目。"
+            description="图片影响案例列表和详情页展示。选择图片只回填当前表单，保存后才会写入项目。"
           >
           <Field label="封面图">
             <CoverImagePicker value={form.cover_image_url || null} onChange={(url) => patch('cover_image_url', url ?? '')} />
@@ -565,7 +565,7 @@ export default function ProjectForm({
           <FormSection
             id="content"
             title="案例内容"
-            description="这是正式项目案例内容，不等同于 Global 地图说明。中英文简介和标签会影响后续案例页展示质量。"
+            description="这是正式项目案例内容，不等同于 Global 地图说明。中英文简介和标签会影响案例列表与详情页展示质量。"
           >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="中文简介">
