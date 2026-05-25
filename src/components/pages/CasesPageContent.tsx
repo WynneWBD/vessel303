@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import PageHero from '@/components/PageHero'
@@ -142,15 +143,15 @@ export default function CasesPageContent({ cases }: { cases: ProjectCaseRow[] })
                       </div>
                     )}
 
-                    <a
-                      href={`/global?camp=${item.id}`}
+                    <Link
+                      href={`/cases/${item.id}`}
                       className="inline-flex items-center gap-2 text-[#E36F2C] text-xs hover:underline tracking-wider"
                     >
                       {t(i18n.cases.viewDetail)}
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                       </svg>
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </div>

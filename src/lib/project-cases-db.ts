@@ -290,6 +290,16 @@ export async function getProjectCaseById(id: string) {
   return rows[0] ? rowToProjectCase(rows[0]) : null
 }
 
+export async function getPublishedProjectCaseById(id: string) {
+  await ensureProjectCasesSchema()
+  const { rows } = await pool.query(
+    `SELECT ${COLUMNS} FROM project_cases
+     WHERE id = $1 AND status = 'published' AND deleted_at IS NULL`,
+    [id],
+  )
+  return rows[0] ? rowToProjectCase(rows[0]) : null
+}
+
 export async function isProjectCaseIdTaken(id: string, exceptId?: string) {
   await ensureProjectCasesSchema()
   const params: unknown[] = [id]
