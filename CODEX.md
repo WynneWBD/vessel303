@@ -1,6 +1,6 @@
 # CODEX.md - vessel303.com Codex 接手文档
 
-最后更新：2026-05-15
+最后更新：2026-05-25
 
 这是 `vessel303.com` 给 Codex 使用的接手文档和操作指南。每次新对话或开始大改动时，先读 `AGENTS.md`，再读本文件。
 
@@ -99,7 +99,7 @@ Codex 默认工作方式：
 
 产品中心：先做 1 个标准产品详情页模型，不急着恢复或导入全部 39 SKU。字段和详情页结构确认后，再批量导入后台 CMS。缺失字段不显示，不用 TBD 硬填。
 
-项目案例：`project_cases` 当前非删除 9 条、published 8 条、draft 1 条、map-ready CMS 项目 3 条；不建议一次性导入 40 项，继续小批量样板策略。缺失字段不显示。`/cases` 空规格字段已隐藏，不显示 `-`，不用 TBD 硬填。
+项目案例：`project_cases` 当前非删除 9 条、published 8 条、draft 1 条、map-ready CMS 项目 3 条；不建议一次性导入 40 项，继续小批量样板策略。缺失字段不显示。`/cases` 列表已指向 `/cases/[id]` 正式详情页，空规格字段隐藏，不显示 `-`，不用 TBD 硬填。
 
 Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳定性优先于功能扩展。
 
@@ -183,7 +183,7 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 
 官网前台：
 
-- 首页、产品列表、V9 Gen6 详情、About、FAQ、Cases、News、Contact、`/global`、Display 等页面已存在。
+- 首页、产品列表、V9 Gen6 详情、About、FAQ、`/cases` 列表、`/cases/[id]` 项目案例详情、News、Contact、`/global`、Display 等页面已存在。
 - `/contact` 保留为跳转/承接页，已读取后台设置 `contactUrl`，异常时回退统一外部联系页。
 - `/global` 使用 MapLibre/MapTiler，是高风险稳定模块；当前 CMS 接管同 ID static 点位的样板项目为 `astrobase-mamison`、`japan-space-vessel`、`guangdong-foshan`。
 
@@ -204,7 +204,7 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 - `/admin/news`：新闻管理，已能新建、编辑、发布、取消发布，并在前台展示。
 - `/admin/settings`：总管理专用。设置页已上线，`site_settings` 已初始化；保存设置会写数据库并产生后台审计日志。
 - `/admin/products`：产品 CMS 已接入产品列表和通用详情页，支持新建、编辑、复制为草稿、发布/下架、删除、筛选、图片选择/上传、前台预览、详情介绍、详情图库选择器、图库排序、规格参数，以及通用详情页模块（亮点、场景、FAQ、图文内容、定制范围）；固定精细详情页如 `e7`、`v9-gen6` 仍保留原页面。
-- `/admin/projects`：项目 / 案例 CMS 已接入，支持新建、编辑、发布/下架、删除、筛选、封面图、图库排序、中英文案例内容、地图发布校验、地图状态筛选，以及 `/global` 详情里的统计数据、预订链接、设施亮点、交通指引和周边景点；前台 `/cases` 已优先读取数据库并保留静态兜底；带经纬度的已发布项目会进入 `/global` 地图点位和详情面板；产品/项目表单图片控件误触发和窄列布局已修复。
+- `/admin/projects`：项目 / 案例 CMS 已接入，支持新建、编辑、发布/下架、删除、筛选、封面图、图库排序、中英文案例内容、地图发布校验、地图状态筛选，以及 `/global` 详情里的统计数据、预订链接、设施亮点、交通指引和周边景点；前台 `/cases` 列表和 `/cases/[id]` 详情已优先读取数据库并保留静态兜底；带经纬度的已发布项目会进入 `/global` 地图点位和详情面板；产品/项目表单图片控件误触发和窄列布局已修复。
 - `/admin/pages`：页面模块 CMS 已上线，首页首屏/数据区、关于我们首屏、数据条、品牌故事、智造实力、品牌历程、三大技术、认证荣誉、合作伙伴、创始人、服务体系已接入前台；后台支持模块显示/隐藏、文字图片编辑、列表项新增/删除/排序、图片选择/上传、未保存防误操作。
 - `/admin/pages/visual`：08 C4-2d 已上线，Home 安全插入区内 C4-2c 新增模板模块支持排序和结构隐藏；当前只支持 `simple-text` / `cta-section`，操作包括上移、下移、结构层隐藏、恢复显示；结构隐藏使用 `page_structure_drafts.modules` 的结构层 `isVisible` / `status`，不是内容 item 的 `is_visible`；operator 可排序、隐藏、恢复显示、预览、丢弃但不能发布结构草稿，admin 才能发布；发布后普通前台 `/` 按目标顺序和隐藏状态展示，并可通过页面级快照恢复原结构。
 
@@ -235,8 +235,9 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 - 后台 2.0 B2-3-4-1 已上线：`e469477 feat(admin): add project create console`，full SHA `e4694778fddff402f5f8bec30b3b4d67b39c5d07`，Vercel deployment `dpl_ByNn885nn8JA9YNVELLaq1cjMHsm`，Vercel 状态 READY；新增 `/admin/content/projects/new` 新版项目案例新建页，使用 `AdminSectionShell` 并复用 `ProjectForm mode="create"`，返回 `/admin/content/projects/list`，不显示误导性的前台案例详情预览入口。`ProjectForm` 新增带默认值的可选参数 `backHref` / `backLabel` / `title` / `createRedirectBase` / `showPreviewLink`；旧 `/admin/projects/new` 不传参数时创建成功仍跳 `/admin/projects/{id}/edit`，新版传 `createRedirectBase="/admin/content/projects"` 后代码路径跳 `/admin/content/projects/{id}/edit`。项目案例是正式内容体系，Global 是地图可视化展示渠道，坐标 / Global 字段只影响地图入图；未改 API、数据库、权限、保存 / 发布 / 下架 / 删除 / 上传逻辑、`/global`、MapLibre、MapTiler、`/api/map`、`/cases` 或项目内容，旧项目后台路径仍保留为维护备用入口；本地 Chrome 对 `localhost` 的 `ERR_BLOCKED_BY_CLIENT` 已记录为客户端 / 扩展拦截问题，05 没有继续把本地 Chrome 拦截当作代码失败，而是采用本地 HTTP route 检查 + 线上 Chrome 登录态只读补验；`/global edge runtime warning` 仍归 04。B2-3-4-2 新增入口收口已上线，B2-4-1 项目案例 2.0 主路径漏口小修已上线；后续建议 B2-5-0 前台 `/cases` 列表和详情页规划，或先做 B2 后台项目案例链路整体回归盘点，尚未开始开发。
 - 后台 2.0 B2-3-4-2 已上线：`31b626c fix(admin): route project creation to 2 console`，full SHA `31b626cc0ee9e9bd1f72d0d2ca4c08d8ce277c2d`，Vercel deployment `dpl_7kbttuJTxFXr4U8KD7qrWuJ9J7eA`，Vercel 状态 READY；新版后台“发布项目 / 新增项目”入口已统一收口到 `/admin/content/projects/new`，覆盖 `/admin`、`/admin/content`、`/admin/content/projects`、`/admin/content/projects/list` 新增项目和空状态入口、`/admin/content/projects/{id}/edit` 左侧新增项目入口。项目案例后台 2.0 主路径已基本闭合为 `/admin/content/projects -> /admin/content/projects/list -> /admin/content/projects/new 或 /admin/content/projects/{id}/edit`；旧 `/admin/projects`、旧 `/admin/projects/new`、旧 `/admin/projects/{id}/edit` 仍保留为维护备用入口。项目案例是正式内容体系，Global 仍是独立地图可视化展示渠道，不是项目案例详情页；未改 `ProjectForm`、API、数据库、权限、保存 / 发布 / 下架 / 删除 / 上传逻辑、`/global`、MapLibre、MapTiler、`/api/map`、`/cases` 或业务数据，`/global edge runtime warning` 仍归 04。验收记录：`git diff --check`、targeted eslint、`tsc --noEmit`、`next build --webpack` 通过，后台未登录路径 302 到登录页，`/`、`/about`、`/cases`、`/global` 均 200 且无 `__next_error__`；未保存、未发布、未上传、未删除、未改业务数据。B2-4-1 项目案例 2.0 主路径漏口小修已上线；后续建议 B2-5-0 前台 `/cases` 列表和详情页规划，或先做 B2 后台项目案例链路整体回归盘点，尚未开始开发。
 - 后台 2.0 B2-4-1 已上线：`629f516 fix(admin): close project console path gaps`，full SHA `629f516b4fa03b6ea107163df870f2cadc9ace92`，Vercel deployment `dpl_JAvUyqsDG8cBnP7Hhpoj8xQvRSLY`，Vercel 状态 READY；项目案例 2.0 主路径漏口小修完成。`/admin/status` 的“项目地图信息”和“项目地图字段”入口已从旧 `/admin/projects?mapStatus=missing-coordinates` 改到 `/admin/content/projects/list?view=missing-coordinates`，“内容变化 / 项目案例”入口已从旧 `/admin/projects` 改到 `/admin/content/projects`；`/admin/content/projects` 过期文案已修正为新建和编辑已进入新版链路，发布、下架、删除等高风险操作仍在维护入口处理。项目案例后台 2.0 主路径保持 `/admin/content/projects -> /admin/content/projects/list -> /admin/content/projects/new 或 /admin/content/projects/{id}/edit`，旧项目后台路径仍保留为维护备用入口；项目案例是正式内容体系，Global 是独立地图可视化展示渠道，不是项目案例详情页。未改 `ProjectForm`、API、数据库、权限、保存 / 发布 / 下架 / 删除 / 上传逻辑、`/global`、MapLibre、MapTiler、`/api/map`、`/cases` 或业务数据，`/global edge runtime warning` 仍归 04；验收记录：`git diff --check`、targeted eslint、`tsc --noEmit`、`next build --webpack` 通过，后台未登录路径 302 到 `/admin/login`，`/`、`/about`、`/cases`、`/global` 均 200 且无 `__next_error__`，未保存、未发布、未上传、未删除、未改业务数据。后续建议 B2-5-0 前台 `/cases` 列表和详情页规划，或先做 B2 后台项目案例链路整体回归盘点，尚未开始开发。
+- 前台项目案例 B2-5-1 已上线：`cc2419d feat(cases): add project detail pages`，full SHA `cc2419d15d0f8deefe80e9eb22b32118a1977aa8`，Vercel deployment `dpl_8WC3C5HV6CG4CH6Mvm6bEkeu8mF8`，Vercel 状态 READY；新增 `/cases/[id]` 项目案例详情页，`/cases` 列表卡片已从 `/global?camp=...` 改为进入正式案例详情。详情页只展示 published 且未删除项目，数据库异常时才回退同 ID 的静态 published 样板；缺失字段隐藏，询盘入口继续走 `https://en.303vessel.cn/contact.html`。本轮只读对照 300.cn 后台“项目案例 / 案例展示 / 项目案例”列表和已发布案例，不复刻 300 的隐藏、删除、撤销发布、翻译、营销页等后台操作；未改数据库、API、后台保存 / 发布 / 删除 / 上传、权限、`/global`、MapLibre、MapTiler 或 `/api/map`。验收记录：`git diff --check`、targeted eslint、`tsc --noEmit`、`next build --webpack` 通过；本地 `/cases`、`/cases/xunliao-bay-holiday-planet`、`/about`、`/global` 均 200 且无 `__next_error__`；线上 `/cases`、`/cases/xunliao-bay-holiday-planet`、`/global` 均 200 且无 `__next_error__`。
 - 后台 2.0 开发规则：重大产品设计前必须做 300.cn 对照确认；普通 bug、文案、API、权限、lint/build 不必每轮访问。若对 300 交互不确定，先回 300.cn 只读观察，不凭记忆硬做；300 负责启发路径，vessel 负责收口边界。
-- 03 项目案例 / 项目 CMS：当前 3 个 Excel/static 样板项目已进入 CMS 发布链路；旧 `foshan-shishan-cultural-camp` 保持 draft，不显示在 `/cases`，不进入 `/global`。
+- 03 项目案例 / 项目 CMS：当前 3 个 Excel/static 样板项目已进入 CMS 发布链路；旧 `foshan-shishan-cultural-camp` 保持 draft，不显示在 `/cases`，不进入 `/global`。前台 `/cases` 列表已进入正式 `/cases/[id]` 详情页链路，Global 仍只是地图展示渠道。
 - 04 Global 地图专项：`/global` 地图底层仍归 04；03 不直接修改地图底层。`/global` 营地详情首开速度第一阶段已上线：`77b053d perf(global): speed up project detail loading`；预加载 `ProjectDetail` 和 `showcaseProjects`，详情基础文字先显示，轮播图片按当前图加载；未改 `/api/map/[...path]`、runtime、点位、CMS、坐标、HQ，未替换 / 压缩 / 删除图片素材；剩余大图体积治理交 03 / 媒体侧，MapTiler `key=proxied` 403 属既有地图链路问题，`/global` edge runtime warning 仍归 04。
 - 05 测试 / 提交 / 推送 / 上线：继续统一验收、提交、push `main` 和 Vercel 上线控制。
 - 06 文档整理：继续维护 V9、`CODEX.md` 和文档库。
@@ -486,6 +487,8 @@ Vercel Serverless 有 4.5MB request body 限制。大文件不能直接通过普
 
 前台动态内容：
 
+- `/cases`
+- `/cases/[id]`
 - `/news`
 - `/news/[slug]`
 - `/products/[slug]`
@@ -515,7 +518,7 @@ curl -I https://www.vessel303.com/news/<slug>
 
 ## 当前已知后续事项
 
-- 03 项目案例 / 项目 CMS：继续小批量样板策略；发布更多项目前先补齐封面图、图库、经纬度、简介、舱数/规模、设施、交通、周边。
+- 03 项目案例 / 项目 CMS：继续小批量样板策略；`/cases` 列表与 `/cases/[id]` 详情页已打通，发布更多项目前先补齐封面图、图库、经纬度、简介、舱数/规模、设施、交通、周边。
 - 04 Global 地图专项：地图底层仍归 04；更多 `/global` 点位接入前先等 03 数据基线稳定。
 - 02 后台运营 / 设置：`site_settings` 已初始化并接管 `/contact` 的 `contactUrl`；后续扩展范围单独确认。
 - 后台运营体验 A / B 包：A1-A6 和 B1-B6 已上线；媒体真实上传 / 删除端到端测试仍需单独授权。
