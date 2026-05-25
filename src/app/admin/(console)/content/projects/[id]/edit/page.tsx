@@ -239,7 +239,7 @@ function getSideNavGroups(project: ProjectCaseRow): AdminSideNavGroup[] {
     {
       title: '后续规划',
       items: [
-        { key: 'project-new-2', label: '新版项目新建', planned: true, Icon: FileText },
+        { key: 'project-new', label: '新增项目', href: '/admin/content/projects/new', Icon: FileText },
         { key: 'form-sections', label: '表单分区优化', planned: true, Icon: SearchCheck },
         { key: 'case-detail', label: '正式案例详情页', planned: true, Icon: ExternalLink },
       ],

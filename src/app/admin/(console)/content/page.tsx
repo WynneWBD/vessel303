@@ -86,7 +86,7 @@ const CONTENT_DOMAINS: ContentDomain[] = [
     title: '项目案例',
     detail: '维护正式项目案例内容；Global 只作为地图展示渠道。',
     href: '/admin/content/projects',
-    newHref: '/admin/projects/new',
+    newHref: '/admin/content/projects/new',
     Icon: MapPinned,
     action: '发布项目',
     tone: 'green',
@@ -272,7 +272,7 @@ function Hero({ summary }: { summary: ContentDashboardSummary }) {
           </div>
           <div className="flex flex-wrap gap-2">
             <PrimaryAction href="/admin/content/products/new" Icon={Package} label="发布产品" primary />
-            <PrimaryAction href="/admin/projects/new" Icon={MapPinned} label="发布项目" />
+            <PrimaryAction href="/admin/content/projects/new" Icon={MapPinned} label="发布项目" />
             <PrimaryAction href="/admin/news/new" Icon={Newspaper} label="发布新闻" />
           </div>
         </div>

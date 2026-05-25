@@ -102,7 +102,7 @@ const STORAGE_WARNING_BYTES = 800 * 1024 * 1024
 const QUICK_ACTIONS: ActionItem[] = [
   { label: '编辑网站', href: '/admin/pages/visual', Icon: LayoutTemplate, primary: true },
   { label: '发布产品', href: '/admin/content/products/new', Icon: Package },
-  { label: '发布项目', href: '/admin/projects', Icon: MapPinned },
+  { label: '发布项目', href: '/admin/content/projects/new', Icon: MapPinned },
   { label: '发布新闻', href: '/admin/news', Icon: Newspaper },
   { label: '处理线索', href: '/admin/leads?status=new', Icon: Inbox },
   { label: '管理图片', href: '/admin/media', Icon: ImageIcon },
@@ -271,7 +271,7 @@ function buildTodos({
     {
       title: '项目草稿',
       detail: projectSummary.draft > 0 ? '检查封面、坐标和图库' : '暂无项目草稿',
-      href: '/admin/projects?status=draft',
+      href: '/admin/content/projects/list?status=draft',
       count: projectSummary.draft,
       ok: projectSummary.draft === 0,
     },
@@ -512,7 +512,7 @@ function ContentCards({
           total={projectSummary.total}
           recent={recentSummary.projects}
           draft={projectSummary.draft}
-          href="/admin/projects"
+          href="/admin/content/projects/new"
           action="发布项目"
           Icon={MapPinned}
           color="teal"

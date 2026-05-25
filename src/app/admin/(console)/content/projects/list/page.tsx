@@ -387,7 +387,7 @@ function getSideNavGroups(summary: ProjectSummary): AdminSideNavGroup[] {
     {
       title: '后续规划',
       items: [
-        { key: 'project-new-2', label: '新版项目新建', planned: true, Icon: Plus },
+        { key: 'project-new', label: '新增项目', href: '/admin/content/projects/new', Icon: Plus },
         { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },
         { key: 'recycle', label: '回收站', planned: true, Icon: Archive },
       ],
@@ -525,7 +525,7 @@ function QuickActions() {
   return (
     <div className="flex flex-wrap gap-2">
       <Link
-        href="/admin/projects/new"
+        href="/admin/content/projects/new"
         className="inline-flex h-10 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-sm font-semibold text-white transition hover:bg-[#C95E22]"
       >
         <Plus size={16} />
@@ -734,7 +734,7 @@ function EmptyState({ filters }: { filters: FilterState }) {
           </Link>
         )}
         <Link
-          href="/admin/projects/new"
+          href="/admin/content/projects/new"
           className="inline-flex h-10 items-center rounded-md bg-[#E36F2C] px-4 text-sm font-semibold text-white transition hover:bg-[#C95E22]"
         >
           新增项目

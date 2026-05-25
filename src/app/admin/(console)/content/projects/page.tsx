@@ -175,7 +175,7 @@ function getSideNavGroups(stats: ProjectStats): AdminSideNavGroup[] {
       title: '项目展示',
       items: [
         { key: 'project-list', label: '项目列表', href: '/admin/content/projects/list', Icon: ListChecks },
-        { key: 'case-create', label: '新增项目', href: '/admin/projects/new', Icon: Plus },
+        { key: 'case-create', label: '新增项目', href: '/admin/content/projects/new', Icon: Plus },
         { key: 'cases-front', label: '查看案例列表', href: '/cases', Icon: ExternalLink },
         { key: 'global-map', label: '查看 Global 地图', href: '/global', Icon: Globe2 },
       ],
@@ -281,7 +281,7 @@ function Hero({ stats }: { stats: ProjectStats }) {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <PrimaryAction href="/admin/projects/new" Icon={Plus} label="新增项目" primary />
+          <PrimaryAction href="/admin/content/projects/new" Icon={Plus} label="新增项目" primary />
           <PrimaryAction href="/admin/content/projects/list?status=draft" Icon={FileText} label="查看草稿" />
           <PrimaryAction href="/admin/content/projects/list" Icon={ListChecks} label="项目列表" />
         </div>
@@ -517,9 +517,9 @@ function GlobalMetric({
 
 function ActionPanel() {
   const actions = [
-    { label: '新增项目', detail: '第一阶段继续使用过渡维护表单', href: '/admin/projects/new', Icon: Plus },
+    { label: '新增项目', detail: '使用新版项目新建页创建草稿', href: '/admin/content/projects/new', Icon: Plus },
     { label: '项目列表', detail: '查看项目状态、完整度和 Global 入图状态', href: '/admin/content/projects/list', Icon: ListChecks },
-    { label: '过渡维护列表', detail: '发布、下架等操作仍在这里处理', href: '/admin/projects', Icon: ListChecks },
+    { label: '维护列表', detail: '发布、下架等操作仍在这里处理', href: '/admin/projects', Icon: ListChecks },
     { label: '查看案例列表', detail: '查看前台 /cases 当前展示效果', href: '/cases', Icon: ExternalLink },
     { label: '查看 Global', detail: '只查看地图展示，不进入管理能力', href: '/global', Icon: Globe2 },
   ]
