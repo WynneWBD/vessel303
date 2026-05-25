@@ -1,12 +1,100 @@
 'use client'
 
 import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import PageHero from '@/components/PageHero'
 import { useT, useLanguage } from '@/contexts/LanguageContext'
 import { i18n } from '@/lib/i18n'
 import type { ProjectCaseRow } from '@/lib/project-cases-static'
+
+type CaseFilter = 'all' | 'tourism' | 'commercial' | 'public' | 'overseas'
+
+const tourismKeywords = [
+  'tourism',
+  'resort',
+  'camp',
+  'glamping',
+  'scenic',
+  'alpine',
+  'grassland',
+  'eco',
+  'cultural tourism',
+  '文旅',
+  '度假',
+  '营地',
+  '野奢',
+  '高原',
+  '草原',
+  '生态',
+  '景区',
+  '滨海',
+  '亲子',
+  '湖景',
+]
+
+const commercialKeywords = [
+  'commercial',
+  'showroom',
+  'brand',
+  'technology',
+  'smart home',
+  '商业',
+  '品牌',
+  '展馆',
+  '体验空间',
+  '科技',
+  '智能家居',
+  '合作',
+]
+
+const publicKeywords = [
+  'public',
+  'facility',
+  'facilities',
+  'municipal',
+  '公共',
+  '公建',
+  '政务',
+  '设施',
+]
+
+function searchableText(item: ProjectCaseRow) {
+  return [
+    item.name_zh,
+    item.name_en,
+    item.location_zh,
+    item.location_en,
+    item.project_type_zh,
+    item.project_type_en,
+    item.description_zh,
+    item.description_en,
+    item.tags_zh.join(' '),
+    item.tags_en.join(' '),
+    item.country,
+  ].join(' ').toLowerCase()
+}
+
+function matchesKeyword(text: string, keywords: string[]) {
+  return keywords.some((keyword) => text.includes(keyword.toLowerCase()))
+}
+
+function isOverseasCase(item: ProjectCaseRow) {
+  const country = item.country.trim().toLowerCase()
+  return country.length > 0 && country !== '中国' && country !== 'china'
+}
+
+function matchesFilter(item: ProjectCaseRow, filter: CaseFilter) {
+  if (filter === 'all') return true
+  if (filter === 'overseas') return isOverseasCase(item)
+
+  const text = searchableText(item)
+  if (filter === 'tourism') return matchesKeyword(text, tourismKeywords)
+  if (filter === 'commercial') return matchesKeyword(text, commercialKeywords)
+  return matchesKeyword(text, publicKeywords)
+}
 
 function Placeholder({ label, className }: { label: string; className?: string }) {
   return (
@@ -20,6 +108,18 @@ export default function CasesPageContent({ cases }: { cases: ProjectCaseRow[] })
   const t = useT()
   const { lang } = useLanguage()
   const zh = lang === 'zh'
+  const [activeFilter, setActiveFilter] = useState<CaseFilter>('all')
+  const filters: { key: CaseFilter; label: string }[] = [
+    { key: 'all', label: t(i18n.cases.filterAll) },
+    { key: 'tourism', label: t(i18n.cases.filterTourism) },
+    { key: 'commercial', label: t(i18n.cases.filterCommercial) },
+    { key: 'public', label: t(i18n.cases.filterPublic) },
+    { key: 'overseas', label: t(i18n.cases.filterOverseas) },
+  ]
+  const visibleCases = useMemo(
+    () => cases.filter((item) => matchesFilter(item, activeFilter)),
+    [cases, activeFilter],
+  )
 
   return (
     <main className="bg-[#FAF7F2] text-[#2C2A28]">
@@ -53,28 +153,25 @@ export default function CasesPageContent({ cases }: { cases: ProjectCaseRow[] })
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex flex-wrap gap-3 mb-10">
-          {[
-            t(i18n.cases.filterAll),
-            t(i18n.cases.filterTourism),
-            t(i18n.cases.filterCommercial),
-            t(i18n.cases.filterPublic),
-            t(i18n.cases.filterOverseas),
-          ].map((tab, i) => (
+          {filters.map((filter) => (
             <button
-              key={tab}
+              key={filter.key}
+              type="button"
+              aria-pressed={activeFilter === filter.key}
+              onClick={() => setActiveFilter(filter.key)}
               className={`text-sm px-4 py-1.5 border tracking-wider transition-colors ${
-                i === 0
+                activeFilter === filter.key
                   ? 'border-[#E36F2C] text-[#E36F2C] bg-[#E36F2C]/5'
                   : 'border-[#E5DED4] text-[#6B6560] hover:border-[#BBBBBB] hover:text-[#555555]'
               }`}
             >
-              {tab}
+              {filter.label}
             </button>
           ))}
         </div>
 
         <div className="space-y-6">
-          {cases.map((item, i) => {
+          {visibleCases.map((item, i) => {
             const name = zh ? item.name_zh : item.name_en
             const location = zh ? item.location_zh : item.location_en
             const type = zh ? item.project_type_zh : item.project_type_en
@@ -148,15 +245,23 @@ export default function CasesPageContent({ cases }: { cases: ProjectCaseRow[] })
                       className="inline-flex items-center gap-2 text-[#E36F2C] text-xs hover:underline tracking-wider"
                     >
                       {t(i18n.cases.viewDetail)}
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                      </svg>
+                      <ArrowRight className="h-3 w-3" aria-hidden="true" />
                     </Link>
                   </div>
                 </div>
               </div>
             )
           })}
+          {visibleCases.length === 0 && (
+            <div className="border border-dashed border-[#D7CEC2] bg-white px-6 py-12 text-center">
+              <div className="text-sm font-semibold tracking-wider text-[#2C2A28]">
+                {zh ? '当前筛选暂无已发布案例' : 'No published cases match this filter yet'}
+              </div>
+              <p className="mt-2 text-xs tracking-wider text-[#8A8580]">
+                {zh ? '请切换到全部案例查看已发布内容。' : 'Switch back to all cases to view published projects.'}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="mt-16 text-center p-12 border border-[#E36F2C]/15 bg-[#E36F2C]/3">

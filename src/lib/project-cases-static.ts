@@ -227,7 +227,7 @@ const staticProjectCaseSeeds: StaticProjectCaseSeed[] = [
     country: '中国',
     latitude: null,
     longitude: null,
-    status: 'published',
+    status: 'draft',
     sort_order: 5,
     created_at: '',
     updated_at: '',
@@ -275,3 +275,7 @@ export const staticProjectCases: ProjectCaseRow[] = staticProjectCaseSeeds.map((
   global_nearby_en: [],
   ...item,
 }))
+
+export const staticPublishedProjectCases = staticProjectCases.filter(
+  (item) => item.status === 'published' && !item.deleted_at,
+)

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import CasesPageContent from '@/components/pages/CasesPageContent'
 import { listPublishedProjectCases } from '@/lib/project-cases-db'
-import { staticProjectCases } from '@/lib/project-cases-static'
+import { staticPublishedProjectCases } from '@/lib/project-cases-static'
 import { buildPageMetadata } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
@@ -16,8 +16,8 @@ export const metadata: Metadata = buildPageMetadata({
 export default async function CasesPage() {
   const cases = await listPublishedProjectCases().catch((err) => {
     console.error('[cases] project case db unavailable', err)
-    return staticProjectCases
+    return staticPublishedProjectCases
   })
 
-  return <CasesPageContent cases={cases.length > 0 ? cases : staticProjectCases} />
+  return <CasesPageContent cases={cases.length > 0 ? cases : staticPublishedProjectCases} />
 }

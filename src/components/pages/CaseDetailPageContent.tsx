@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import PageHero from '@/components/PageHero'
@@ -11,6 +12,20 @@ const CONTACT_URL = 'https://en.303vessel.cn/contact.html'
 
 function text(value: string | null | undefined) {
   return value?.trim() ?? ''
+}
+
+function formatDate(value: string | null | undefined, zh: boolean) {
+  const raw = text(value)
+  if (!raw) return ''
+
+  const date = new Date(raw)
+  if (Number.isNaN(date.getTime())) return ''
+
+  return new Intl.DateTimeFormat(zh ? 'zh-CN' : 'en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  }).format(date)
 }
 
 function hasCoordinates(project: ProjectCaseRow) {
@@ -32,7 +47,13 @@ function ProjectImage({ src, alt, className }: { src: string | null | undefined;
   )
 }
 
-export default function CaseDetailPageContent({ project }: { project: ProjectCaseRow }) {
+export default function CaseDetailPageContent({
+  project,
+  relatedCases = [],
+}: {
+  project: ProjectCaseRow
+  relatedCases?: ProjectCaseRow[]
+}) {
   const { lang } = useLanguage()
   const zh = lang === 'zh'
   const name = zh ? project.name_zh : project.name_en
@@ -55,6 +76,22 @@ export default function CaseDetailPageContent({ project }: { project: ProjectCas
     { label: zh ? '采购产品' : 'Products', value: text(project.products) },
   ].filter((item) => item.value.length > 0)
 
+  const contentDate = formatDate(project.created_at || project.updated_at, zh)
+  const contentStatus = [
+    { label: zh ? '内容分类' : 'Category', value: zh ? '项目案例' : 'Project Case' },
+    { label: zh ? '发布状态' : 'Status', value: zh ? '已发布' : 'Published' },
+    { label: zh ? '内容时间' : 'Content Date', value: contentDate },
+  ].filter((item) => item.value.length > 0)
+  const dataRows = [
+    { label: zh ? '项目名称' : 'Project Name', value: name },
+    { label: zh ? '案例分类' : 'Case Category', value: zh ? '项目案例' : 'Project Case' },
+    { label: zh ? '项目类型' : 'Project Type', value: type },
+    { label: zh ? '项目地点' : 'Location', value: location },
+    { label: zh ? '占地面积' : 'Site Area', value: text(project.area_display) },
+    { label: zh ? '投资规模' : 'Investment', value: text(project.investment_display) },
+    { label: zh ? '采购数量' : 'Units Purchased', value: text(project.units_display) },
+    { label: zh ? '采购产品' : 'Products', value: text(project.products) },
+  ].filter((item) => item.value.length > 0)
   const showGlobalLink = hasCoordinates(project)
 
   return (
@@ -90,6 +127,15 @@ export default function CaseDetailPageContent({ project }: { project: ProjectCas
 
             <h1 className="text-2xl font-black tracking-wide text-[#2C2A28]">{name}</h1>
             <p className="mt-3 text-sm leading-7 text-[#6B6560]">{description}</p>
+
+            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              {contentStatus.map((item) => (
+                <div key={item.label} className="border border-[#E5DED4] bg-[#FAF7F2] px-4 py-3">
+                  <div className="text-[10px] tracking-wider text-[#8A8580]">{item.label}</div>
+                  <div className="mt-1 text-sm font-semibold leading-6 text-[#2C2A28]">{item.value}</div>
+                </div>
+              ))}
+            </div>
 
             <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
               {specs.map((spec) => (
@@ -147,6 +193,14 @@ export default function CaseDetailPageContent({ project }: { project: ProjectCas
                   {project.products}
                 </p>
               )}
+              <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2">
+                {dataRows.map((row) => (
+                  <div key={row.label} className="border border-[#E5DED4] bg-white px-4 py-3">
+                    <div className="text-[10px] tracking-wider text-[#8A8580]">{row.label}</div>
+                    <div className="mt-1 text-sm font-semibold leading-6 text-[#2C2A28]">{row.value}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -178,6 +232,55 @@ export default function CaseDetailPageContent({ project }: { project: ProjectCas
                   className="aspect-[4/3] w-full border border-[#E5DED4]"
                 />
               ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {relatedCases.length > 0 && (
+        <section className="border-t border-[#E5DED4] bg-[#F5F2ED] py-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-8 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+              <div>
+                <div className="mb-2 text-xs font-medium uppercase tracking-[0.3em] text-[#E36F2C]">
+                  {zh ? '相关案例' : 'Related Cases'}
+                </div>
+                <h2 className="text-2xl font-black tracking-wide text-[#2C2A28]">
+                  {zh ? '继续查看项目案例' : 'Explore More Project Cases'}
+                </h2>
+              </div>
+              <Link href="/cases" className="inline-flex items-center gap-2 text-sm tracking-wider text-[#E36F2C] hover:underline">
+                {zh ? '查看全部案例' : 'View all cases'}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              {relatedCases.map((item) => {
+                const relatedName = zh ? item.name_zh : item.name_en
+                const relatedType = zh ? item.project_type_zh : item.project_type_en
+                const relatedLocation = zh ? item.location_zh : item.location_en
+                const relatedImage = item.cover_image_url || item.images[0] || null
+
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/cases/${item.id}`}
+                    className="group border border-[#E5DED4] bg-white transition-colors hover:border-[#E36F2C]/35"
+                  >
+                    <ProjectImage src={relatedImage} alt={relatedName} className="aspect-[4/3] w-full border-b border-[#E5DED4]" />
+                    <div className="p-5">
+                      <div className="mb-2 text-[10px] tracking-wider text-[#8A8580]">{relatedLocation}</div>
+                      <h3 className="text-base font-black leading-6 tracking-wide text-[#2C2A28]">{relatedName}</h3>
+                      {relatedType && <div className="mt-2 text-xs leading-5 tracking-wider text-[#6B6560]">{relatedType}</div>}
+                      <div className="mt-4 inline-flex items-center gap-2 text-xs tracking-wider text-[#E36F2C] group-hover:underline">
+                        {zh ? '查看详情' : 'View Details'}
+                        <ArrowRight className="h-3 w-3" aria-hidden="true" />
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           </div>
         </section>
