@@ -388,7 +388,6 @@ function getSideNavGroups(summary: ProjectSummary): AdminSideNavGroup[] {
       title: '后续规划',
       items: [
         { key: 'project-new-2', label: '新版项目新建', planned: true, Icon: Plus },
-        { key: 'project-edit-2', label: '新版项目编辑', planned: true, Icon: FileText },
         { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },
         { key: 'recycle', label: '回收站', planned: true, Icon: Archive },
       ],
@@ -693,7 +692,7 @@ function ProjectRow({ project }: { project: ProjectListRow }) {
             </Link>
           ) : null}
           <Link
-            href={`/admin/projects/${project.id}/edit`}
+            href={`/admin/content/projects/${project.id}/edit`}
             className="inline-flex h-9 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95E22]"
           >
             <Pencil size={14} />
