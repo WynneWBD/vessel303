@@ -18,6 +18,7 @@ import { UNSAVED_CHANGES_MESSAGE, useUnsavedChangesWarning } from './useUnsavedC
 interface Props {
   initialData?: NewsRow
   mode: 'create' | 'edit'
+  basePath?: '/admin/news' | '/admin/content/news'
 }
 
 const EMPTY_DOC: JSONContent = { type: 'doc', content: [] }
@@ -114,8 +115,10 @@ type SavedNews = {
   status: NewsStatus
 }
 
-export default function NewsForm({ initialData, mode }: Props) {
+export default function NewsForm({ initialData, mode, basePath = '/admin/news' }: Props) {
   const router = useRouter()
+  const listPath = basePath === '/admin/content/news' ? `${basePath}/list` : basePath
+  const editPath = (id: number) => `${basePath}/${id}/edit`
 
   const [currentId, setCurrentId] = useState(initialData?.id ?? null)
   const [currentStatus, setCurrentStatus] = useState<NewsStatus>(
@@ -223,7 +226,7 @@ export default function NewsForm({ initialData, mode }: Props) {
       if (saved) setSavedSnapshot(JSON.stringify({ ...formBody, status: saved.status }))
       if (mode === 'create' && saved) {
         toast.success('已保存草稿')
-        router.push(`/admin/news/${saved.id}/edit`)
+        router.push(editPath(saved.id))
       } else {
         toast.success(currentStatus === 'published' ? '已保存更新' : '已保存草稿')
         router.refresh()
@@ -258,7 +261,7 @@ export default function NewsForm({ initialData, mode }: Props) {
       setCurrentStatus(data.data.status)
       setSavedSnapshot(JSON.stringify({ ...formBody, status: data.data.status }))
       toast.success(isPublished ? '已取消发布' : '已发布')
-      router.push(`/admin/news/${saved.id}/edit`)
+      router.push(editPath(saved.id))
       router.refresh()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '操作失败')
@@ -270,7 +273,7 @@ export default function NewsForm({ initialData, mode }: Props) {
   const isPublished = currentStatus === 'published'
   const handleBackToList = () => {
     if (!hasUnsavedChanges || window.confirm(UNSAVED_CHANGES_MESSAGE)) {
-      router.push('/admin/news')
+      router.push(listPath)
     }
   }
   const requestPublishToggle = () => {
@@ -309,7 +312,7 @@ export default function NewsForm({ initialData, mode }: Props) {
           )}
         </div>
 
-        <div className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4">
+        <div id="publish-check" className="scroll-mt-24 rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="text-sm font-medium text-[#2C2A28]">发布前检查</div>
             <Badge className={`${completenessBadgeClass(completeness.level)} text-xs`}>
@@ -341,7 +344,7 @@ export default function NewsForm({ initialData, mode }: Props) {
         </div>
 
         {/* Slug */}
-        <div className="flex flex-col gap-1.5">
+        <div id="basic" className="scroll-mt-24 flex flex-col gap-1.5">
           <label className="text-sm text-[#8A8580]">
             Slug{' '}
             <span className="text-[#4A4744]">— 用于 URL,如 vessel-2026-launch</span>
@@ -355,13 +358,13 @@ export default function NewsForm({ initialData, mode }: Props) {
         </div>
 
         {/* Cover image */}
-        <div className="flex flex-col gap-1.5">
+        <div id="media" className="scroll-mt-24 flex flex-col gap-1.5">
           <label className="text-sm text-[#8A8580]">封面图</label>
           <CoverImagePicker value={coverImageUrl} onChange={setCoverImageUrl} />
         </div>
 
         {/* Language tabs */}
-        <div>
+        <div id="content" className="scroll-mt-24">
           <div className="flex border-b border-[#E5DED4] mb-5">
             {(['zh', 'en'] as const).map((lang) => (
               <button

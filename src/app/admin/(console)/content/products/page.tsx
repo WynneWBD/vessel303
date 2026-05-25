@@ -157,7 +157,7 @@ function getSideNavGroups(stats: ProductStats): AdminSideNavGroup[] {
       title: '内容类型',
       items: [
         { key: 'projects', label: '项目案例', planned: true, Icon: Layers3 },
-        { key: 'news', label: '新闻资讯', planned: true, Icon: FileText },
+        { key: 'news', label: '新闻资讯', href: '/admin/content/news', Icon: FileText },
       ],
     },
     {

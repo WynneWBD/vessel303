@@ -678,7 +678,7 @@ function ContentBreakdown({ content }: { content: Record<ContentKind, ContentSum
   const rows = [
     { label: '产品', href: '/admin/content/products', data: content.products, Icon: Package },
     { label: '项目案例', href: '/admin/content/projects', data: content.projects, Icon: MapPinned },
-    { label: '新闻', href: '/admin/news', data: content.news, Icon: FileText },
+    { label: '新闻', href: '/admin/content/news', data: content.news, Icon: FileText },
   ]
 
   return (

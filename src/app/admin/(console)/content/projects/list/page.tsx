@@ -381,7 +381,7 @@ function getSideNavGroups(summary: ProjectSummary): AdminSideNavGroup[] {
     {
       title: '内容类型',
       items: [
-        { key: 'news', label: '新闻资讯', href: '/admin/news', Icon: Newspaper },
+        { key: 'news', label: '新闻资讯', href: '/admin/content/news', Icon: Newspaper },
       ],
     },
     {

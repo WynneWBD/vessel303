@@ -103,7 +103,7 @@ const QUICK_ACTIONS: ActionItem[] = [
   { label: '编辑网站', href: '/admin/pages/visual', Icon: LayoutTemplate, primary: true },
   { label: '发布产品', href: '/admin/content/products/new', Icon: Package },
   { label: '发布项目', href: '/admin/content/projects/new', Icon: MapPinned },
-  { label: '发布新闻', href: '/admin/news', Icon: Newspaper },
+  { label: '发布新闻', href: '/admin/content/news/new', Icon: Newspaper },
   { label: '处理线索', href: '/admin/leads?status=new', Icon: Inbox },
   { label: '管理图片', href: '/admin/media', Icon: ImageIcon },
 ]
@@ -285,7 +285,7 @@ function buildTodos({
     {
       title: '新闻草稿',
       detail: newsSummary.draft > 0 ? '检查标题、封面和正文' : '暂无新闻草稿',
-      href: '/admin/news?status=draft',
+      href: '/admin/content/news/list?status=draft',
       count: newsSummary.draft,
       ok: newsSummary.draft === 0,
     },
@@ -522,7 +522,7 @@ function ContentCards({
           total={newsSummary.total}
           recent={recentSummary.news}
           draft={newsSummary.draft}
-          href="/admin/news"
+          href="/admin/content/news/new"
           action="发布新闻"
           Icon={Newspaper}
           color="orange"

@@ -165,7 +165,7 @@ function getSideNavGroups(stats: ProjectStats): AdminSideNavGroup[] {
         { key: 'overview', label: '内容概览', href: '/admin/content', Icon: Layers3 },
         { key: 'products', label: '产品管理', href: '/admin/content/products', Icon: Package },
         { key: 'projects', label: '项目案例', href: '/admin/content/projects', badge: stats.total, Icon: MapPinned },
-        { key: 'news', label: '新闻资讯', href: '/admin/news', Icon: Newspaper },
+        { key: 'news', label: '新闻资讯', href: '/admin/content/news', Icon: Newspaper },
         { key: 'drafts', label: '草稿内容', href: '#drafts', badge: stats.draft, Icon: FileText },
         { key: 'todo', label: '待补内容', href: '#todo', badge: getTodoCount(stats), Icon: CircleDashed },
         { key: 'checks', label: '发布前检查', href: '#checks', Icon: SearchCheck },

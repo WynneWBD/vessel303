@@ -164,7 +164,7 @@ function formatTarget(targetType: string | null, targetId: string | null) {
 
 function getTargetHref(targetType: string | null, targetId: string | null) {
   if (!targetType) return null
-  if (targetType === 'news' && targetId) return `/admin/news/${targetId}/edit`
+  if (targetType === 'news' && targetId) return `/admin/content/news/${targetId}/edit`
   if (targetType === 'product' && targetId) return `/admin/products/${targetId}/edit`
   if (targetType === 'project' && targetId) return `/admin/content/projects/${targetId}/edit`
   if (targetType === 'page_module' && targetId) return `/admin/pages?module=${encodeURIComponent(targetId)}`

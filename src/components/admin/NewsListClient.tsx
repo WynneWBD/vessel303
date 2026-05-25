@@ -16,6 +16,10 @@ type NewsItem = {
   slug: string
   title_zh: string
   title_en: string
+  content_zh?: unknown
+  content_en?: unknown
+  excerpt_zh?: string | null
+  excerpt_en?: string | null
   cover_image_url: string | null
   status: 'draft' | 'published'
   updated_at: string
@@ -41,6 +45,29 @@ function hasText(value: string | null | undefined) {
   return Boolean(value?.trim())
 }
 
+function hasRichTextContent(value: unknown) {
+  let found = false
+
+  const visit = (node: unknown) => {
+    if (found) return
+    if (Array.isArray(node)) {
+      node.forEach(visit)
+      return
+    }
+    if (!node || typeof node !== 'object') return
+
+    const current = node as { text?: unknown; content?: unknown }
+    if (typeof current.text === 'string' && current.text.trim()) {
+      found = true
+      return
+    }
+    visit(current.content)
+  }
+
+  visit(value)
+  return found
+}
+
 function getNewsCompleteness(item: NewsItem): {
   level: CompletenessLevel
   issues: string[]
@@ -50,6 +77,10 @@ function getNewsCompleteness(item: NewsItem): {
   if (!hasText(item.cover_image_url)) issues.push('缺封面')
   if (!hasText(item.title_zh)) issues.push('缺中文标题')
   if (!hasText(item.title_en)) issues.push('缺英文标题')
+  if (!hasText(item.excerpt_zh)) issues.push('缺中文摘要')
+  if (!hasText(item.excerpt_en)) issues.push('缺英文摘要')
+  if (!hasRichTextContent(item.content_zh)) issues.push('缺中文正文')
+  if (!hasRichTextContent(item.content_en)) issues.push('缺英文正文')
 
   if (issues.length === 0) {
     return { level: '完整', issues }
@@ -73,11 +104,13 @@ export default function NewsListClient({
   initialTotal,
   initialFilters = { status: '', search: '' },
   initialPage = 1,
+  basePath = '/admin/news',
 }: {
   initialRows: NewsItem[]
   initialTotal: number
   initialFilters?: Filters
   initialPage?: number
+  basePath?: '/admin/news' | '/admin/content/news'
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -179,7 +212,7 @@ export default function NewsListClient({
           新闻管理 News
         </h1>
         <Button asChild size="sm">
-          <Link href="/admin/news/new">
+          <Link href={`${basePath}/new`}>
             <Plus size={16} />
             新建新闻
           </Link>
@@ -228,7 +261,7 @@ export default function NewsListClient({
         <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#E5DED4] bg-[#FFFFFF] py-20">
           <p className="text-[#C4B9AB]">暂无新闻</p>
           <Button asChild size="sm" variant="outline">
-            <Link href="/admin/news/new">+ 新建第一条新闻</Link>
+            <Link href={`${basePath}/new`}>+ 新建第一条新闻</Link>
           </Button>
         </div>
       ) : (
@@ -336,7 +369,7 @@ export default function NewsListClient({
                   </span>
                 )}
                 <Button asChild variant="ghost" size="icon" className="h-8 w-8">
-                  <Link href={`/admin/news/${item.id}/edit`} title="编辑">
+                  <Link href={`${basePath}/${item.id}/edit`} title="编辑">
                     <Pencil size={14} />
                   </Link>
                 </Button>

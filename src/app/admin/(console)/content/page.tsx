@@ -95,8 +95,8 @@ const CONTENT_DOMAINS: ContentDomain[] = [
     key: 'news',
     title: '新闻',
     detail: '维护新闻标题、封面、正文、预览和发布状态。',
-    href: '/admin/news',
-    newHref: '/admin/news/new',
+    href: '/admin/content/news',
+    newHref: '/admin/content/news/new',
     Icon: Newspaper,
     action: '发布新闻',
     tone: 'orange',
@@ -203,7 +203,7 @@ function getContentSideNav(summary: ContentDashboardSummary): AdminSideNavGroup[
       items: [
         { key: 'products', label: '产品管理', href: '/admin/content/products', badge: summary.products.total, Icon: Package },
         { key: 'projects', label: '项目案例', href: '/admin/content/projects', badge: summary.projects.total, Icon: MapPinned },
-        { key: 'news', label: '新闻资讯', href: '/admin/news', badge: summary.news.total, Icon: Newspaper },
+        { key: 'news', label: '新闻资讯', href: '/admin/content/news', badge: summary.news.total, Icon: Newspaper },
       ],
     },
     {
@@ -242,7 +242,7 @@ function buildTodos({
     {
       title: '新闻草稿',
       detail: summary.news.draft > 0 ? '检查标题、封面和正文' : '暂无新闻草稿',
-      href: '/admin/news?status=draft',
+      href: '/admin/content/news/list?status=draft',
       count: summary.news.draft,
       ok: summary.news.draft === 0,
     },
@@ -273,7 +273,7 @@ function Hero({ summary }: { summary: ContentDashboardSummary }) {
           <div className="flex flex-wrap gap-2">
             <PrimaryAction href="/admin/content/products/new" Icon={Package} label="发布产品" primary />
             <PrimaryAction href="/admin/content/projects/new" Icon={MapPinned} label="发布项目" />
-            <PrimaryAction href="/admin/news/new" Icon={Newspaper} label="发布新闻" />
+            <PrimaryAction href="/admin/content/news/new" Icon={Newspaper} label="发布新闻" />
           </div>
         </div>
 
@@ -430,7 +430,7 @@ function ActionMatrix() {
   const actions = [
     { label: '产品管理', href: '/admin/content/products', Icon: Package },
     { label: '项目案例', href: '/admin/content/projects', Icon: MapPinned },
-    { label: '新闻资讯', href: '/admin/news', Icon: Newspaper },
+    { label: '新闻资讯', href: '/admin/content/news', Icon: Newspaper },
   ]
 
   return (
