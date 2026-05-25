@@ -102,7 +102,6 @@ function getSideNavGroups(): AdminSideNavGroup[] {
       title: '后续规划',
       items: [
         { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },
-        { key: 'lead-cta', label: '询盘入口接线索', planned: true, Icon: FileText },
       ],
     },
   ]

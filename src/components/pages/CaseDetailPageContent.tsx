@@ -5,10 +5,9 @@ import { ArrowRight } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import PageHero from '@/components/PageHero'
+import CaseInquiryForm from '@/components/pages/CaseInquiryForm'
 import { useLanguage } from '@/contexts/LanguageContext'
 import type { ProjectCaseRow } from '@/lib/project-cases-static'
-
-const CONTACT_URL = 'https://en.303vessel.cn/contact.html'
 
 function text(value: string | null | undefined) {
   return value?.trim() ?? ''
@@ -62,6 +61,7 @@ export default function CaseDetailPageContent({
   const description = zh ? project.description_zh : project.description_en
   const tags = zh ? project.tags_zh : project.tags_en
   const heroImage = project.cover_image_url || project.images[0] || null
+  const productsDisplay = text(project.products)
   const gallery = [
     project.cover_image_url,
     ...project.images,
@@ -93,6 +93,7 @@ export default function CaseDetailPageContent({
     { label: zh ? '采购产品' : 'Products', value: text(project.products) },
   ].filter((item) => item.value.length > 0)
   const showGlobalLink = hasCoordinates(project)
+  const inquiryAnchor = '#case-inquiry'
 
   return (
     <main className="bg-[#FAF7F2] text-[#2C2A28]">
@@ -148,13 +149,17 @@ export default function CaseDetailPageContent({
 
             <div className="mt-8 flex flex-col gap-3">
               <a
-                href={CONTACT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={inquiryAnchor}
                 className="bg-[#E36F2C] px-6 py-3 text-center text-sm font-bold tracking-wider text-white transition-colors hover:bg-[#C85A1F]"
               >
-                {zh ? '咨询类似项目' : 'Inquire About Similar Projects'}
+                {zh ? '咨询类似项目方案' : 'Inquire About a Similar Project'}
               </a>
+              <Link
+                href="/contact"
+                className="border border-[#E36F2C]/40 px-6 py-3 text-center text-sm tracking-wider text-[#E36F2C] transition-colors hover:bg-[#E36F2C]/5"
+              >
+                {zh ? '进入联系页面' : 'Open Contact Page'}
+              </Link>
               {showGlobalLink && (
                 <Link
                   href={`/global?camp=${project.id}`}
@@ -203,6 +208,60 @@ export default function CaseDetailPageContent({
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section id="case-inquiry" className="scroll-mt-24 border-b border-[#E5DED4] bg-[#241F1B] py-16 text-white">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:px-8">
+          <div className="space-y-6">
+            <div>
+              <div className="mb-3 text-xs font-medium uppercase tracking-[0.3em] text-[#E36F2C]">
+                {zh ? '项目询盘' : 'Project Inquiry'}
+              </div>
+              <h2 className="text-3xl font-black tracking-wide text-white">
+                {zh ? '基于这个案例沟通你的项目' : 'Plan your project from this reference'}
+              </h2>
+              <p className="mt-4 max-w-xl text-sm leading-8 text-white/72">
+                {zh
+                  ? '填写场地、预算阶段和产品需求，项目顾问会结合本案例的配置与落地条件继续跟进。'
+                  : 'Share your site, budget stage and product needs. Our project team will follow up with this case as the reference.'}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
+              <div className="border border-white/12 bg-white/[0.04] px-4 py-3">
+                <div className="text-[10px] uppercase tracking-wider text-white/45">
+                  {zh ? '参考案例' : 'Reference Case'}
+                </div>
+                <div className="mt-1 text-sm font-semibold leading-6 text-white">{name}</div>
+              </div>
+              {productsDisplay && (
+                <div className="border border-white/12 bg-white/[0.04] px-4 py-3">
+                  <div className="text-[10px] uppercase tracking-wider text-white/45">
+                    {zh ? '相关产品' : 'Related Products'}
+                  </div>
+                  <div className="mt-1 text-sm font-semibold leading-6 text-white">{productsDisplay}</div>
+                </div>
+              )}
+              {location && (
+                <div className="border border-white/12 bg-white/[0.04] px-4 py-3">
+                  <div className="text-[10px] uppercase tracking-wider text-white/45">
+                    {zh ? '参考地点' : 'Reference Location'}
+                  </div>
+                  <div className="mt-1 text-sm font-semibold leading-6 text-white">{location}</div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <CaseInquiryForm
+            projectId={project.id}
+            projectName={name}
+            projectType={type}
+            projectLocation={location}
+            products={productsDisplay}
+            zh={zh}
+          />
         </div>
       </section>
 

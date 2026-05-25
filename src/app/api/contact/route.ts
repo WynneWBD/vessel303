@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { Resend } from 'resend';
 import { z } from 'zod';
+import { createLead } from '@/lib/leads-db';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -28,18 +29,53 @@ const schema = z.object({
   quantity: z.string().optional().default(''),
   model: z.string().optional().default(''),
   remarks: z.string().optional().default(''),
+  source: z.string().max(160).optional().default('website_contact'),
 });
+
+type ContactFormData = z.infer<typeof schema>;
+
+function clean(value: string | null | undefined) {
+  return value?.trim() ?? '';
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function compactLines(lines: Array<string | false>) {
+  return lines.filter((line): line is string => Boolean(line)).join('\n');
+}
+
+function buildLeadMessage(d: ContactFormData) {
+  return compactLines([
+    clean(d.remarks),
+    clean(d.projectType) && `Project type: ${clean(d.projectType)}`,
+    clean(d.quantity) && `Quantity: ${clean(d.quantity)}`,
+    clean(d.model) && `Model: ${clean(d.model)}`,
+  ]) || clean(d.inquiryType);
+}
+
+function getLeadSource(d: ContactFormData) {
+  return clean(d.source) || 'website_contact';
+}
 
 function row(label: string, value: string) {
   if (!value) return '';
+  const safeLabel = escapeHtml(label);
+  const safeValue = escapeHtml(value);
   return `
     <tr>
-      <td style="padding:8px 12px;color:#999;font-size:13px;white-space:nowrap;border-bottom:1px solid #222;">${label}</td>
-      <td style="padding:8px 12px;color:#eee;font-size:13px;border-bottom:1px solid #222;">${value}</td>
+      <td style="padding:8px 12px;color:#999;font-size:13px;white-space:nowrap;border-bottom:1px solid #222;">${safeLabel}</td>
+      <td style="padding:8px 12px;color:#eee;font-size:13px;white-space:pre-wrap;border-bottom:1px solid #222;">${safeValue}</td>
     </tr>`;
 }
 
-function notificationHtml(d: z.infer<typeof schema>, isBEnd: boolean) {
+function notificationHtml(d: ContactFormData, isBEnd: boolean) {
   const tag = isBEnd ? 'B端线索' : 'C端线索';
   const tagColor = isBEnd ? '#E36F2C' : '#E36F2C';
   return `<!DOCTYPE html>
@@ -67,6 +103,7 @@ function notificationHtml(d: z.infer<typeof schema>, isBEnd: boolean) {
         ${row('项目类型', d.projectType ?? '')}
         ${row('采购数量', d.quantity ? d.quantity + ' 台' : '')}
         ${row('产品型号', d.model ?? '')}
+        ${row('来源', getLeadSource(d))}
         ${row('备注', d.remarks ?? '')}
       </table>
     </div>
@@ -83,7 +120,7 @@ function notificationHtml(d: z.infer<typeof schema>, isBEnd: boolean) {
 </html>`;
 }
 
-function confirmationHtml(d: z.infer<typeof schema>) {
+function confirmationHtml(d: ContactFormData) {
   return `<!DOCTYPE html>
 <html lang="zh">
 <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
@@ -146,38 +183,73 @@ export async function POST(req: NextRequest) {
   }
 
   const data = parsed.data;
-  const isBEnd = B_END_TYPES.has(data.inquiryType);
+  const source = getLeadSource(data);
+  const isBEnd =
+    B_END_TYPES.has(data.inquiryType) ||
+    data.inquiryType === 'Project Case Inquiry' ||
+    source.startsWith('case_detail:');
   const subject = isBEnd
     ? '【B端线索】新采购咨询 - VESSEL 微宿'
     : '【C端线索】新营地咨询 - VESSEL 微宿';
 
   const { from, notifyTo } = getMailConfig();
 
-  // Send notification to team (must succeed)
-  const { error: notifyError } = await resend.emails.send({
-    from,
-    to: notifyTo,
-    subject,
-    html: notificationHtml(data, isBEnd),
-  });
+  let leadCreated = false;
+  let leadId: string | null = null;
+  try {
+    const lead = await createLead({
+      email: data.email,
+      name: data.name,
+      phone: data.phone,
+      company: clean(data.company) || null,
+      country: clean(data.location) || null,
+      inquiry_type: data.inquiryType,
+      sku_interest: clean(data.model) || clean(data.projectType) || null,
+      message: buildLeadMessage(data),
+      source,
+    });
+    leadCreated = true;
+    leadId = lead.id;
+  } catch (err) {
+    console.error('[contact] lead insert failed:', err);
+  }
+
+  let notifyError: unknown = null;
+  try {
+    const result = await resend.emails.send({
+      from,
+      to: notifyTo,
+      subject,
+      html: notificationHtml(data, isBEnd),
+    });
+    notifyError = result.error ?? null;
+  } catch (err) {
+    notifyError = err;
+  }
 
   if (notifyError) {
     console.error('Resend notification error:', notifyError);
-    return Response.json({ error: '邮件发送失败，请稍后再试' }, { status: 500 });
+    if (!leadCreated) {
+      return Response.json({ error: '提交失败，请稍后再试' }, { status: 500 });
+    }
   }
 
   // Send confirmation to user (best-effort — don't fail the request if this fails)
-  if (data.email) {
-    const { error: confirmError } = await resend.emails.send({
-      from,
-      to: data.email,
-      subject: '感谢您的咨询 — VESSEL 微宿® 已收到您的留言',
-      html: confirmationHtml(data),
-    });
-    if (confirmError) {
+  if (!notifyError && data.email) {
+    try {
+      const { error: confirmError } = await resend.emails.send({
+        from,
+        to: data.email,
+        subject: '感谢您的咨询 — VESSEL 微宿® 已收到您的留言',
+        html: confirmationHtml(data),
+      });
+      if (confirmError) {
+        console.warn('Resend confirmation email error:', confirmError);
+      }
+    } catch (confirmError) {
       console.warn('Resend confirmation email error:', confirmError);
     }
   }
 
-  return Response.json({ success: true });
+  return Response.json({ success: true, leadCreated, leadId });
 }

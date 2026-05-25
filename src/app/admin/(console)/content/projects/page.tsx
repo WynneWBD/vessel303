@@ -185,7 +185,6 @@ function getSideNavGroups(stats: ProjectStats): AdminSideNavGroup[] {
       items: [
         { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },
         { key: 'recycle', label: '回收站', planned: true, Icon: Archive },
-        { key: 'lead-cta', label: '询盘入口接线索', planned: true, Icon: FileText },
       ],
     },
   ]
@@ -553,7 +552,7 @@ function WorkflowPanel() {
     { title: '建立案例内容', detail: '先补项目名称、地点、类型、参数、相关产品和简介。' },
     { title: '补齐图片素材', detail: '封面和图库决定项目案例的第一展示质量。' },
     { title: '区分展示渠道', detail: '正式案例页面和 Global 地图分开管理，坐标只影响入图。' },
-    { title: '发布与转化', detail: '已发布项目进入 /cases/[id]；询盘入口继续走现有联系入口，后续可接线索。' },
+    { title: '发布与转化', detail: '已发布项目进入 /cases/[id]；案例详情询盘入口已接入现有线索。' },
   ]
 
   return (
@@ -575,7 +574,7 @@ function WorkflowPanel() {
 }
 
 function PlanningPanel() {
-  const items = ['新版项目新建', '新版项目编辑', '正式案例详情页', '询盘入口接线索']
+  const items = ['新版项目新建', '新版项目编辑', '正式案例详情页', '案例询盘接线索']
 
   return (
     <section className="rounded-md border border-dashed border-[#D8E7E8] bg-white/70 p-5">
@@ -585,7 +584,7 @@ function PlanningPanel() {
         </span>
         <div>
           <h2 className="text-base font-bold text-[#1E2C31]">后续规划</h2>
-          <p className="mt-1 text-xs text-[#61767D]">新版列表、新建、编辑和正式案例详情页已开放；询盘入口接线索后续单独建设。</p>
+          <p className="mt-1 text-xs text-[#61767D]">新版列表、新建、编辑、正式案例详情页和案例询盘入口已开放；后续重点回到分类、回收站与内容素材补齐。</p>
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
