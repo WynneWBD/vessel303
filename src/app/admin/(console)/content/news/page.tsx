@@ -206,10 +206,10 @@ function OperationRoadmap({ stats }: { stats: NewsStats }) {
   const plans: OperationPlan[] = [
     {
       title: '分类管理',
-      status: 'B3-4',
-      detail: '300 列表有“所属分类”和“分类管理”，当前新闻表没有分类字段。',
-      evidence: '已进入 B3-4 字段方案和安全入口，不新增数据库结构。',
-      next: '查看分类方案页，确认字段、迁移和表单接入顺序。',
+      status: 'B3-5',
+      detail: '300 列表有“所属分类”和“分类管理”，当前新闻表已接入分类字段。',
+      evidence: '已新增 news_categories 和 news.category_id，表单保存与列表筛选已接入。',
+      next: '查看分类管理页，确认分类数量、分类状态和新闻引用数量。',
       href: '/admin/content/news/categories',
       Icon: Tags,
       tone: 'blue',
@@ -325,7 +325,7 @@ function OperationBoundary() {
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">后续再做</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
-            回收站恢复、真实批量写入、定时发布和权限分级单独排期；分类先进入 B3-4 字段方案。
+            分类新增 / 编辑、回收站恢复、真实批量写入、定时发布和权限分级单独排期。
           </p>
         </div>
       </div>

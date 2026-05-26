@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
-import { getNewsById, updateNews, softDeleteNews, isSlugTaken } from '@/lib/news-db'
+import { getNewsById, updateNews, softDeleteNews, getNewsCategoryById, isSlugTaken } from '@/lib/news-db'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,6 +45,7 @@ const patchSchema = z.object({
   excerpt_zh: z.string().max(500).nullable().optional(),
   excerpt_en: z.string().max(500).nullable().optional(),
   cover_image_url: z.string().url().nullable().optional(),
+  category_id: z.number().int().positive().nullable().optional(),
 })
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {
@@ -74,6 +75,13 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     const taken = await isSlugTaken(parsed.data.slug, id)
     if (taken) {
       return NextResponse.json({ error: 'Slug already in use' }, { status: 409 })
+    }
+  }
+
+  if (parsed.data.category_id != null) {
+    const category = await getNewsCategoryById(parsed.data.category_id, { visibleOnly: true })
+    if (!category) {
+      return NextResponse.json({ error: 'Invalid news category' }, { status: 400 })
     }
   }
 

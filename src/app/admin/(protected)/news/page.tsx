@@ -1,4 +1,4 @@
-import { listNews, type NewsStatus } from '@/lib/news-db'
+import { listNews, listNewsCategories, type NewsStatus } from '@/lib/news-db'
 import NewsListClient from '@/components/admin/NewsListClient'
 
 export const dynamic = 'force-dynamic'
@@ -23,18 +23,24 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
   const sp = await searchParams
   const statusParam = firstParam(sp.status)
   const search = firstParam(sp.search)?.trim() ?? ''
+  const categoryParam = Number(firstParam(sp.category))
+  const categoryId = Number.isInteger(categoryParam) && categoryParam > 0 ? categoryParam : undefined
   const page = positivePage(firstParam(sp.page))
   const status = STATUSES.has(statusParam ?? '') ? statusParam as NewsStatus : undefined
 
-  const { rows, total } = await listNews({
-    status,
-    search,
-    limit: LIMIT,
-    offset: (page - 1) * LIMIT,
-  }).catch(() => ({
-    rows: [],
-    total: 0,
-  }))
+  const [{ rows, total }, categories] = await Promise.all([
+    listNews({
+      status,
+      search,
+      categoryId,
+      limit: LIMIT,
+      offset: (page - 1) * LIMIT,
+    }).catch(() => ({
+      rows: [],
+      total: 0,
+    })),
+    listNewsCategories().catch(() => []),
+  ])
 
   return (
     <NewsListClient
@@ -44,7 +50,9 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
       initialFilters={{
         status: status ?? '',
         search,
+        category: categoryId ? String(categoryId) : '',
       }}
+      initialCategories={categories}
     />
   )
 }

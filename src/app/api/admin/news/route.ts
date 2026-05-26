@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
-import { listNews, createNews, isSlugTaken } from '@/lib/news-db'
+import { listNews, createNews, getNewsCategoryById, isSlugTaken } from '@/lib/news-db'
 import type { NewsStatus } from '@/lib/news-db'
 
 export const dynamic = 'force-dynamic'
@@ -31,10 +31,13 @@ export async function GET(req: NextRequest) {
   const status = statusValues.includes(rawStatus as NewsStatus)
     ? (rawStatus as NewsStatus)
     : undefined
+  const rawCategory = Number(sp.get('category'))
+  const categoryId = Number.isInteger(rawCategory) && rawCategory > 0 ? rawCategory : undefined
 
   const result = await listNews({
     status,
     search: sp.get('search') ?? undefined,
+    categoryId,
     limit,
     offset,
   })
@@ -51,6 +54,7 @@ const createSchema = z.object({
   excerpt_zh: z.string().max(500).nullable().optional(),
   excerpt_en: z.string().max(500).nullable().optional(),
   cover_image_url: z.string().url().nullable().optional(),
+  category_id: z.number().int().positive().nullable().optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -75,6 +79,13 @@ export async function POST(req: NextRequest) {
   const taken = await isSlugTaken(parsed.data.slug)
   if (taken) {
     return NextResponse.json({ error: 'Slug already in use' }, { status: 409 })
+  }
+
+  if (parsed.data.category_id != null) {
+    const category = await getNewsCategoryById(parsed.data.category_id, { visibleOnly: true })
+    if (!category) {
+      return NextResponse.json({ error: 'Invalid news category' }, { status: 400 })
+    }
   }
 
   const news = await createNews({ ...parsed.data, author_id: admin.id })

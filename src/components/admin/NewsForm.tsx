@@ -1,10 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import type { JSONContent } from '@tiptap/core'
-import type { NewsRow, NewsStatus } from '@/lib/news-db'
+import type { NewsCategoryRow, NewsRow, NewsStatus } from '@/lib/news-db'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,12 +26,10 @@ const EMPTY_DOC: JSONContent = { type: 'doc', content: [] }
 
 type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
 
-const CATEGORY_PREVIEW_OPTIONS = [
-  '公司资讯',
-  '产品与展会',
-  '项目案例',
-  '行业观察',
-]
+type NewsCategoryOption = Pick<
+  NewsCategoryRow,
+  'id' | 'slug' | 'title_zh' | 'title_en' | 'news_count'
+>
 
 function coerceJSON(v: unknown): JSONContent {
   if (v && typeof v === 'object' && !Array.isArray(v)) return v as JSONContent
@@ -121,6 +119,7 @@ type SavedNews = {
   id: number
   slug: string
   status: NewsStatus
+  category_id: number | null
 }
 
 export default function NewsForm({ initialData, mode, basePath = '/admin/news' }: Props) {
@@ -142,6 +141,11 @@ export default function NewsForm({ initialData, mode, basePath = '/admin/news' }
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(
     initialData?.cover_image_url ?? null,
   )
+  const [categoryId, setCategoryId] = useState(
+    initialData?.category_id ? String(initialData.category_id) : '',
+  )
+  const [categories, setCategories] = useState<NewsCategoryOption[]>([])
+  const [categoriesLoading, setCategoriesLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'zh' | 'en'>('zh')
   const [submitting, setSubmitting] = useState(false)
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false)
@@ -155,7 +159,8 @@ export default function NewsForm({ initialData, mode, basePath = '/admin/news' }
     excerpt_zh: excerptZh.trim() || null,
     excerpt_en: excerptEn.trim() || null,
     cover_image_url: coverImageUrl,
-  }), [contentEn, contentZh, coverImageUrl, excerptEn, excerptZh, slug, titleEn, titleZh])
+    category_id: categoryId ? Number(categoryId) : null,
+  }), [categoryId, contentEn, contentZh, coverImageUrl, excerptEn, excerptZh, slug, titleEn, titleZh])
   const completeness = getNewsCompleteness({
     slug,
     titleZh,
@@ -179,6 +184,30 @@ export default function NewsForm({ initialData, mode, basePath = '/admin/news' }
   const hasUnsavedChanges = currentSnapshot !== savedSnapshot
 
   useUnsavedChangesWarning(hasUnsavedChanges)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadCategories = async () => {
+      setCategoriesLoading(true)
+      try {
+        const res = await fetch('/api/admin/news/categories', { cache: 'no-store' })
+        if (!res.ok) throw new Error('load failed')
+        const data = await res.json() as { data: NewsCategoryOption[] }
+        if (!cancelled) setCategories(data.data)
+      } catch {
+        if (!cancelled) setCategories([])
+      } finally {
+        if (!cancelled) setCategoriesLoading(false)
+      }
+    }
+
+    void loadCategories()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const buildBody = () => formBody
 
@@ -370,26 +399,40 @@ export default function NewsForm({ initialData, mode, basePath = '/admin/news' }
             <div>
               <label className="text-sm font-medium text-[#2C2A28]">所属分类</label>
               <p className="mt-1 text-xs leading-5 text-[#6B6560]">
-                B3-4 只做字段方案和表单预留位，当前不会写入 API 请求，也不会改变新闻保存、发布或前台展示。
+                B3-5 已接入真实分类字段；保存草稿、保存更新和发布前保存都会同步所属分类。
               </p>
             </div>
             <Badge className="border-[#D8E7E8] bg-[#F7FAFA] text-xs text-[#61767D]">
-              暂未启用保存
+              已启用保存
             </Badge>
           </div>
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
             <div className="flex flex-wrap gap-2">
-              {CATEGORY_PREVIEW_OPTIONS.map((option) => (
+              {categories.length > 0 ? categories.map((option) => (
                 <span
-                  key={option}
+                  key={option.id}
                   className="rounded-full border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-1 text-xs font-semibold text-[#61767D]"
                 >
-                  {option}
+                  {option.title_zh}
                 </span>
-              ))}
+              )) : (
+                <span className="rounded-full border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-1 text-xs font-semibold text-[#61767D]">
+                  {categoriesLoading ? '分类加载中' : '暂无可选分类'}
+                </span>
+              )}
             </div>
-            <Select disabled value="" onChange={() => undefined} className="w-full">
-              <option value="">分类字段尚未接入</option>
+            <Select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="w-full"
+              disabled={categoriesLoading || categories.length === 0}
+            >
+              <option value="">不选择分类</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.title_zh}
+                </option>
+              ))}
             </Select>
           </div>
         </div>

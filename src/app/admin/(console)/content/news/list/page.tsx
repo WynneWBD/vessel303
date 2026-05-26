@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import NewsListClient from '@/components/admin/NewsListClient'
-import { listNews, type NewsStatus } from '@/lib/news-db'
+import { listNews, listNewsCategories, type NewsStatus } from '@/lib/news-db'
 import {
   EMPTY_NEWS_STATS,
   NewsConsoleShell,
@@ -45,19 +45,23 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
   const sp = await searchParams
   const statusParam = firstParam(sp.status)
   const search = firstParam(sp.search)?.trim() ?? ''
+  const categoryParam = Number(firstParam(sp.category))
+  const categoryId = Number.isInteger(categoryParam) && categoryParam > 0 ? categoryParam : undefined
   const page = positivePage(firstParam(sp.page))
   const status = STATUSES.has(statusParam ?? '') ? statusParam as NewsStatus : undefined
 
-  const [{ rows, total }, stats] = await Promise.all([
+  const [{ rows, total }, categories, stats] = await Promise.all([
     listNews({
       status,
       search,
+      categoryId,
       limit: LIMIT,
       offset: (page - 1) * LIMIT,
     }).catch(() => ({
       rows: [],
       total: 0,
     })),
+    listNewsCategories().catch(() => []),
     safeLoad('news stats', () => getNewsStats(), EMPTY_NEWS_STATS),
   ])
 
@@ -79,7 +83,7 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
           <div className="flex flex-wrap gap-2">
             <PrimaryAction href="/admin/content/news/new" Icon={Plus} label="新增新闻" primary />
             <PrimaryAction href="/admin/content/news/list?status=draft" Icon={FileText} label="查看草稿" />
-            <PrimaryAction href="/admin/content/news/categories" Icon={Tags} label="分类方案" />
+            <PrimaryAction href="/admin/content/news/categories" Icon={Tags} label="分类管理" />
             <PrimaryAction href="/admin/content/news" Icon={ListChecks} label="新闻概览" />
           </div>
         </div>
@@ -92,7 +96,9 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
           initialFilters={{
             status: status ?? '',
             search,
+            category: categoryId ? String(categoryId) : '',
           }}
+          initialCategories={categories}
           basePath="/admin/content/news"
         />
       </section>

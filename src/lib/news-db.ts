@@ -1,6 +1,21 @@
 import { pool } from '@/lib/db'
 
 export type NewsStatus = 'draft' | 'published'
+export type NewsCategoryStatus = 'visible' | 'hidden'
+
+export interface NewsCategoryRow {
+  id: number
+  slug: string
+  title_zh: string
+  title_en: string
+  description_zh: string | null
+  description_en: string | null
+  sort_order: number
+  status: NewsCategoryStatus
+  news_count?: number
+  created_at: string
+  updated_at: string
+}
 
 export interface NewsRow {
   id: number
@@ -12,6 +27,10 @@ export interface NewsRow {
   excerpt_zh: string | null
   excerpt_en: string | null
   cover_image_url: string | null
+  category_id: number | null
+  category_slug: string | null
+  category_title_zh: string | null
+  category_title_en: string | null
   status: NewsStatus
   published_at: string | null
   author_id: string | null
@@ -28,6 +47,10 @@ export interface NewsListItem {
   excerpt_zh: string | null
   excerpt_en: string | null
   cover_image_url: string | null
+  category_id: number | null
+  category_slug: string | null
+  category_title_zh: string | null
+  category_title_en: string | null
   published_at: string | null
 }
 
@@ -38,55 +61,77 @@ export type NewsStatusSummary = {
 }
 
 const NEWS_COLUMNS = `
-  id, slug, title_zh, title_en, content_zh, content_en,
-  excerpt_zh, excerpt_en, cover_image_url, status,
-  published_at::text AS published_at,
-  author_id,
-  created_at::text AS created_at,
-  updated_at::text AS updated_at,
-  deleted_at::text AS deleted_at
+  n.id, n.slug, n.title_zh, n.title_en, n.content_zh, n.content_en,
+  n.excerpt_zh, n.excerpt_en, n.cover_image_url,
+  n.category_id,
+  c.slug AS category_slug,
+  c.title_zh AS category_title_zh,
+  c.title_en AS category_title_en,
+  n.status,
+  n.published_at::text AS published_at,
+  n.author_id,
+  n.created_at::text AS created_at,
+  n.updated_at::text AS updated_at,
+  n.deleted_at::text AS deleted_at
 `
 
 const NEWS_LIST_COLUMNS = `
-  id, slug, title_zh, title_en, excerpt_zh, excerpt_en, cover_image_url,
-  published_at::text AS published_at
+  n.id, n.slug, n.title_zh, n.title_en, n.excerpt_zh, n.excerpt_en, n.cover_image_url,
+  n.category_id,
+  c.slug AS category_slug,
+  c.title_zh AS category_title_zh,
+  c.title_en AS category_title_en,
+  n.published_at::text AS published_at
+`
+
+const NEWS_FROM = `
+  news n
+  LEFT JOIN news_categories c
+    ON c.id = n.category_id
+   AND c.deleted_at IS NULL
 `
 
 export async function listNews({
   status,
   search,
+  categoryId,
   limit,
   offset,
 }: {
   status?: NewsStatus
   search?: string
+  categoryId?: number
   limit: number
   offset: number
 }) {
-  const conds: string[] = ['deleted_at IS NULL']
+  const conds: string[] = ['n.deleted_at IS NULL']
   const params: unknown[] = []
 
   if (status) {
     params.push(status)
-    conds.push(`status = $${params.length}`)
+    conds.push(`n.status = $${params.length}`)
   }
   if (search) {
     params.push(`%${search}%`)
     const i = params.length
-    conds.push(`(title_zh ILIKE $${i} OR title_en ILIKE $${i})`)
+    conds.push(`(n.title_zh ILIKE $${i} OR n.title_en ILIKE $${i})`)
+  }
+  if (categoryId) {
+    params.push(categoryId)
+    conds.push(`n.category_id = $${params.length}`)
   }
 
   const where = `WHERE ${conds.join(' AND ')}`
 
   const countRes = await pool.query<{ count: string }>(
-    `SELECT COUNT(*)::text AS count FROM news ${where}`,
+    `SELECT COUNT(*)::text AS count FROM news n ${where}`,
     params,
   )
   const total = parseInt(countRes.rows[0]?.count ?? '0', 10)
 
   const listRes = await pool.query<NewsRow>(
-    `SELECT ${NEWS_COLUMNS} FROM news ${where}
-     ORDER BY updated_at DESC
+    `SELECT ${NEWS_COLUMNS} FROM ${NEWS_FROM} ${where}
+     ORDER BY n.updated_at DESC
      LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
     [...params, limit, offset],
   )
@@ -102,15 +147,15 @@ export async function listPublishedNews({
   offset: number
 }) {
   const countRes = await pool.query<{ count: string }>(
-    `SELECT COUNT(*)::text AS count FROM news
-     WHERE status = 'published' AND deleted_at IS NULL`,
+    `SELECT COUNT(*)::text AS count FROM news n
+     WHERE n.status = 'published' AND n.deleted_at IS NULL`,
   )
   const total = parseInt(countRes.rows[0]?.count ?? '0', 10)
 
   const listRes = await pool.query<NewsListItem>(
-    `SELECT ${NEWS_LIST_COLUMNS} FROM news
-     WHERE status = 'published' AND deleted_at IS NULL
-     ORDER BY published_at DESC
+    `SELECT ${NEWS_LIST_COLUMNS} FROM ${NEWS_FROM}
+     WHERE n.status = 'published' AND n.deleted_at IS NULL
+     ORDER BY n.published_at DESC
      LIMIT $1 OFFSET $2`,
     [limit, offset],
   )
@@ -120,7 +165,7 @@ export async function listPublishedNews({
 
 export async function getNewsById(id: number) {
   const res = await pool.query<NewsRow>(
-    `SELECT ${NEWS_COLUMNS} FROM news WHERE id = $1 AND deleted_at IS NULL`,
+    `SELECT ${NEWS_COLUMNS} FROM ${NEWS_FROM} WHERE n.id = $1 AND n.deleted_at IS NULL`,
     [id],
   )
   return res.rows[0] ?? null
@@ -128,8 +173,8 @@ export async function getNewsById(id: number) {
 
 export async function getNewsBySlug(slug: string) {
   const res = await pool.query<NewsRow>(
-    `SELECT ${NEWS_COLUMNS} FROM news
-     WHERE slug = $1 AND status = 'published' AND deleted_at IS NULL`,
+    `SELECT ${NEWS_COLUMNS} FROM ${NEWS_FROM}
+     WHERE n.slug = $1 AND n.status = 'published' AND n.deleted_at IS NULL`,
     [slug],
   )
   return res.rows[0] ?? null
@@ -144,16 +189,17 @@ export type CreateNewsInput = {
   excerpt_zh?: string | null
   excerpt_en?: string | null
   cover_image_url?: string | null
+  category_id?: number | null
   author_id?: string | null
 }
 
 export async function createNews(input: CreateNewsInput) {
-  const res = await pool.query<NewsRow>(
+  const res = await pool.query<{ id: number }>(
     `INSERT INTO news
        (slug, title_zh, title_en, content_zh, content_en,
-        excerpt_zh, excerpt_en, cover_image_url, author_id, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft')
-     RETURNING ${NEWS_COLUMNS}`,
+        excerpt_zh, excerpt_en, cover_image_url, category_id, author_id, status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'draft')
+     RETURNING id`,
     [
       input.slug,
       input.title_zh,
@@ -163,10 +209,13 @@ export async function createNews(input: CreateNewsInput) {
       input.excerpt_zh ?? null,
       input.excerpt_en ?? null,
       input.cover_image_url ?? null,
+      input.category_id ?? null,
       input.author_id ?? null,
     ],
   )
-  return res.rows[0]
+  const created = await getNewsById(res.rows[0].id)
+  if (!created) throw new Error('Created news not found')
+  return created
 }
 
 export type UpdateNewsInput = {
@@ -178,6 +227,7 @@ export type UpdateNewsInput = {
   excerpt_zh?: string | null
   excerpt_en?: string | null
   cover_image_url?: string | null
+  category_id?: number | null
 }
 
 export async function updateNews(id: number, input: UpdateNewsInput) {
@@ -193,6 +243,7 @@ export async function updateNews(id: number, input: UpdateNewsInput) {
     ['excerpt_zh', 'excerpt_zh'],
     ['excerpt_en', 'excerpt_en'],
     ['cover_image_url', 'cover_image_url'],
+    ['category_id', 'category_id'],
   ]
 
   for (const [key, col] of fields) {
@@ -206,38 +257,38 @@ export async function updateNews(id: number, input: UpdateNewsInput) {
 
   sets.push('updated_at = NOW()')
 
-  const res = await pool.query<NewsRow>(
+  const res = await pool.query<{ id: number }>(
     `UPDATE news SET ${sets.join(', ')}
      WHERE id = $1 AND deleted_at IS NULL
-     RETURNING ${NEWS_COLUMNS}`,
+     RETURNING id`,
     params,
   )
-  return res.rows[0] ?? null
+  return res.rows[0]?.id ? getNewsById(res.rows[0].id) : null
 }
 
 export async function publishNews(id: number) {
   // Keep original published_at on re-publish; only update updated_at
-  const res = await pool.query<NewsRow>(
+  const res = await pool.query<{ id: number }>(
     `UPDATE news
        SET status = 'published',
            published_at = COALESCE(published_at, NOW()),
            updated_at = NOW()
      WHERE id = $1 AND deleted_at IS NULL
-     RETURNING ${NEWS_COLUMNS}`,
+     RETURNING id`,
     [id],
   )
-  return res.rows[0] ?? null
+  return res.rows[0]?.id ? getNewsById(res.rows[0].id) : null
 }
 
 export async function unpublishNews(id: number) {
-  const res = await pool.query<NewsRow>(
+  const res = await pool.query<{ id: number }>(
     `UPDATE news
        SET status = 'draft', published_at = NULL, updated_at = NOW()
      WHERE id = $1 AND deleted_at IS NULL
-     RETURNING ${NEWS_COLUMNS}`,
+     RETURNING id`,
     [id],
   )
-  return res.rows[0] ?? null
+  return res.rows[0]?.id ? getNewsById(res.rows[0].id) : null
 }
 
 export async function softDeleteNews(id: number) {
@@ -286,4 +337,67 @@ export async function isSlugTaken(slug: string, excludeId?: number) {
     params,
   )
   return res.rows[0]?.exists ?? false
+}
+
+export async function listNewsCategories({
+  includeHidden = false,
+}: {
+  includeHidden?: boolean
+} = {}) {
+  const conds = ['c.deleted_at IS NULL']
+  if (!includeHidden) conds.push(`c.status = 'visible'`)
+
+  type NewsCategoryQueryRow = Omit<NewsCategoryRow, 'news_count'> & { news_count: string }
+
+  const res = await pool.query<NewsCategoryQueryRow>(
+    `SELECT
+       c.id,
+       c.slug,
+       c.title_zh,
+       c.title_en,
+       c.description_zh,
+       c.description_en,
+       c.sort_order,
+       c.status,
+       c.created_at::text AS created_at,
+       c.updated_at::text AS updated_at,
+       COUNT(n.id)::text AS news_count
+     FROM news_categories c
+     LEFT JOIN news n
+       ON n.category_id = c.id
+      AND n.deleted_at IS NULL
+     WHERE ${conds.join(' AND ')}
+     GROUP BY c.id
+     ORDER BY c.sort_order ASC, c.id ASC`,
+  )
+
+  return res.rows.map((row) => ({
+    ...row,
+    news_count: parseInt(String(row.news_count ?? '0'), 10),
+  }))
+}
+
+export async function getNewsCategoryById(id: number, { visibleOnly = false } = {}) {
+  const conds = ['id = $1', 'deleted_at IS NULL']
+  if (visibleOnly) conds.push(`status = 'visible'`)
+
+  const res = await pool.query<NewsCategoryRow>(
+    `SELECT
+       id,
+       slug,
+       title_zh,
+       title_en,
+       description_zh,
+       description_en,
+       sort_order,
+       status,
+       created_at::text AS created_at,
+       updated_at::text AS updated_at
+     FROM news_categories
+     WHERE ${conds.join(' AND ')}
+     LIMIT 1`,
+    [id],
+  )
+
+  return res.rows[0] ?? null
 }

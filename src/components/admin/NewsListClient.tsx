@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
+import type { NewsCategoryRow } from '@/lib/news-db'
 
 type NewsItem = {
   id: number
@@ -33,15 +34,20 @@ type NewsItem = {
   excerpt_zh?: string | null
   excerpt_en?: string | null
   cover_image_url: string | null
+  category_id: number | null
+  category_slug: string | null
+  category_title_zh: string | null
+  category_title_en: string | null
   status: 'draft' | 'published'
   updated_at: string
 }
 
-type Filters = { status: string; search: string }
+type Filters = { status: string; search: string; category: string }
+type NewsCategoryOption = Pick<NewsCategoryRow, 'id' | 'slug' | 'title_zh' | 'title_en' | 'news_count'>
 type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
 
 const LIMIT = 20
-const TABLE_GRID_COLUMNS = '36px 60px 1fr 90px 140px 120px'
+const TABLE_GRID_COLUMNS = '36px 60px 1fr 118px 90px 140px 120px'
 const STATUS_QUICK_FILTERS: Array<{ label: string; value: Filters['status'] }> = [
   { label: '全部', value: '' },
   { label: '草稿', value: 'draft' },
@@ -124,14 +130,16 @@ function completenessBadgeClass(level: CompletenessLevel) {
 export default function NewsListClient({
   initialRows,
   initialTotal,
-  initialFilters = { status: '', search: '' },
+  initialFilters = { status: '', search: '', category: '' },
   initialPage = 1,
+  initialCategories = [],
   basePath = '/admin/news',
 }: {
   initialRows: NewsItem[]
   initialTotal: number
   initialFilters?: Filters
   initialPage?: number
+  initialCategories?: NewsCategoryOption[]
   basePath?: '/admin/news' | '/admin/content/news'
 }) {
   const router = useRouter()
@@ -151,6 +159,7 @@ export default function NewsListClient({
     try {
       const sp = new URLSearchParams()
       if (f.status) sp.set('status', f.status)
+      if (f.category) sp.set('category', f.category)
       if (f.search) sp.set('search', f.search)
       sp.set('page', String(p))
       sp.set('limit', String(LIMIT))
@@ -169,6 +178,7 @@ export default function NewsListClient({
   useEffect(() => {
     const sp = new URLSearchParams()
     if (filters.status) sp.set('status', filters.status)
+    if (filters.category) sp.set('category', filters.category)
     if (filters.search.trim()) sp.set('search', filters.search.trim())
     if (page > 1) sp.set('page', String(page))
     const query = sp.toString()
@@ -285,15 +295,27 @@ export default function NewsListClient({
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-3 max-w-xl">
-        <Select
-          value={filters.status}
-          onChange={(e) => handleFilterChange({ status: e.target.value })}
-          className="w-36"
-        >
-          <option value="">全部状态</option>
-          <option value="draft">草稿</option>
-          <option value="published">已发布</option>
-        </Select>
+          <Select
+            value={filters.status}
+            onChange={(e) => handleFilterChange({ status: e.target.value })}
+            className="w-36"
+          >
+            <option value="">全部状态</option>
+            <option value="draft">草稿</option>
+            <option value="published">已发布</option>
+          </Select>
+          <Select
+            value={filters.category}
+            onChange={(e) => handleFilterChange({ category: e.target.value })}
+            className="w-40"
+          >
+            <option value="">全部分类</option>
+            {initialCategories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.title_zh}
+              </option>
+            ))}
+          </Select>
         <Input
           placeholder="搜索标题…"
           value={filters.search}
@@ -357,6 +379,7 @@ export default function NewsListClient({
             </label>
             <span>封面</span>
             <span>标题</span>
+            <span>所属分类</span>
             <span>状态</span>
             <span>更新时间</span>
             <span>操作</span>
@@ -424,6 +447,16 @@ export default function NewsListClient({
                     </span>
                   ) : null}
                 </div>
+              </div>
+
+              <div>
+                {item.category_title_zh ? (
+                  <Badge className="border-[#D8E7E8] bg-[#F7FAFA] text-xs text-[#61767D]">
+                    {item.category_title_zh}
+                  </Badge>
+                ) : (
+                  <span className="text-xs text-[#C4B9AB]">未分类</span>
+                )}
               </div>
 
               {/* Status badge */}

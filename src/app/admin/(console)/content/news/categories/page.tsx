@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
+import { listNewsCategories, type NewsCategoryRow } from '@/lib/news-db'
 import {
   EMPTY_NEWS_STATS,
   NewsConsoleShell,
@@ -22,7 +23,7 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: '新闻分类方案 - VESSEL' }
+export const metadata = { title: '新闻分类管理 - VESSEL' }
 
 type CategoryCandidate = {
   title: string
@@ -140,10 +141,10 @@ function Hero() {
         <div className="min-w-0">
           <PrimaryAction href="/admin/content/news" Icon={ArrowLeft} label="返回新闻概览" />
           <div className="mt-5">
-            <p className="text-sm font-semibold text-[#1889B6]">B3-4</p>
-            <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">新闻分类字段方案</h1>
+            <p className="text-sm font-semibold text-[#1889B6]">B3-5</p>
+            <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">新闻分类管理</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-              参照 300 的所属分类和分类管理心智，先把字段、迁移顺序和表单预留位收口清楚。
+              参照 300 的所属分类和分类管理心智，分类表和新闻所属分类字段已接入保存链路。
             </p>
           </div>
         </div>
@@ -166,15 +167,15 @@ function ReferencePanel() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <ReferenceCard
           title="列表字段"
-          detail="300 新闻列表包含封面图、资讯标题、所属分类、发布状态、创建时间和操作。"
+          detail="300 创新故事列表包含发布状态、发布时间、创新故事分类、标题和操作。"
         />
         <ReferenceCard
           title="分类入口"
-          detail="顶部有分类管理，弹层里有全部分类、添加分类、分类名称、查看、编辑和更多。"
+          detail="顶部有分类管理，分类页包含全部分类、添加分类、分类名称、状态和操作。"
         />
         <ReferenceCard
           title="当前分类"
-          detail="已观察到公司资讯、国际新闻、最新资讯等现有分类；vessel 先抽象为候选口径。"
+          detail="已观察到多场景适用、四种交互方式等分类；vessel 先接入公司资讯等 B2B 新闻口径。"
         />
       </div>
     </section>
@@ -198,7 +199,7 @@ function CategoryCandidates() {
     <section className="space-y-4">
       <SectionTitle
         title="第一阶段候选分类"
-        detail="这是字段方案，不是正式写入的数据；后续接表前仍可调整。"
+        detail="这些默认分类已经作为 B3-5 初始分类写入 news_categories；后续新增 / 编辑分类再单独开放。"
       />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
         {CATEGORY_CANDIDATES.map((category) => (
@@ -219,6 +220,46 @@ function CategoryCandidates() {
             </p>
           </div>
         ))}
+      </div>
+    </section>
+  )
+}
+
+function LiveCategoryTable({ categories }: { categories: NewsCategoryRow[] }) {
+  return (
+    <section className="space-y-4">
+      <SectionTitle
+        title="当前分类"
+        detail="来自 news_categories 表；本轮可选择、可保存、可筛选，分类新增 / 编辑仍后续单独开放。"
+      />
+      <div className="overflow-x-auto rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="min-w-[760px]">
+          <div className="grid grid-cols-[180px_180px_110px_90px_minmax(0,1fr)] gap-4 border-b border-[#D8E7E8] bg-[#F7FAFA] px-4 py-3 text-xs font-bold text-[#61767D]">
+            <span>中文分类</span>
+            <span>英文分类</span>
+            <span>新闻数量</span>
+            <span>状态</span>
+            <span>说明</span>
+          </div>
+          {categories.map((category) => (
+            <div
+              key={category.id}
+              className="grid grid-cols-[180px_180px_110px_90px_minmax(0,1fr)] gap-4 border-b border-[#EEF3F3] px-4 py-3 text-xs text-[#61767D] last:border-b-0"
+            >
+              <span>
+                <span className="block font-semibold text-[#1E2C31]">{category.title_zh}</span>
+                <span className="mt-1 block text-[#1889B6]">{category.slug}</span>
+              </span>
+              <span>{category.title_en}</span>
+              <span>{category.news_count ?? 0}</span>
+              <span>{category.status === 'visible' ? '显示' : '隐藏'}</span>
+              <span className="leading-5">{category.description_zh ?? '暂无说明'}</span>
+            </div>
+          ))}
+          {categories.length === 0 ? (
+            <div className="px-4 py-8 text-center text-sm text-[#8A8580]">暂无分类</div>
+          ) : null}
+        </div>
       </div>
     </section>
   )
@@ -259,7 +300,7 @@ function FieldPlanTable() {
 function RolloutPlan() {
   return (
     <section className="space-y-4">
-      <SectionTitle title="后续落地顺序" detail="B3-4 只收口方案；真正写库需要另开 B3-5 或迁移任务。" />
+      <SectionTitle title="后续落地顺序" detail="B3-5 已完成分类建表和保存接入；新增 / 编辑分类和批量转移仍后置。" />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         {STEP_PLAN.map((step) => (
           <div key={step.title} className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
@@ -282,19 +323,19 @@ function BoundaryPanel() {
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">本轮做什么</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
-            新增分类方案页、侧边栏入口、概览入口和表单分类预留位。
+            新增分类表、新闻分类字段、表单保存、列表分类展示和分类筛选。
           </p>
         </div>
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">本轮不做什么</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
-            不建表、不迁移、不写分类、不开放真实筛选、批量转移或删除分类。
+            不开放分类新增 / 编辑 / 删除，不批量回填旧新闻，不做批量转移。
           </p>
         </div>
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">验收重点</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
-            路由可访问、导航可进入、表单不提交分类字段、旧新闻发布链路不变。
+            分类页显示数据库分类，新闻表单可保存分类，列表可显示和筛选分类。
           </p>
         </div>
       </div>
@@ -311,7 +352,10 @@ export default async function AdminContentNewsCategoriesPage() {
     redirect('/admin/login?error=unauthorized')
   }
 
-  const stats = await safeLoad('news stats', () => getNewsStats(), EMPTY_NEWS_STATS)
+  const [stats, categories] = await Promise.all([
+    safeLoad('news stats', () => getNewsStats(), EMPTY_NEWS_STATS),
+    listNewsCategories({ includeHidden: true }).catch(() => []),
+  ])
 
   return (
     <NewsConsoleShell
@@ -322,6 +366,7 @@ export default async function AdminContentNewsCategoriesPage() {
     >
       <Hero />
       <ReferencePanel />
+      <LiveCategoryTable categories={categories} />
       <CategoryCandidates />
       <FieldPlanTable />
       <RolloutPlan />
