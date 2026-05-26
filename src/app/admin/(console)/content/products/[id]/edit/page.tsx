@@ -5,10 +5,12 @@ import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/Ad
 import ProductForm from '@/components/admin/ProductForm'
 import { defaultSiteSettings, normalizeMediaMaxUploadMb } from '@/lib/admin-settings-db'
 import { pool } from '@/lib/db'
-import type {
-  CatalogProductRow,
-  CatalogProductStatus,
-  CatalogProductType,
+import {
+  ensureProductCatalogSchema,
+  listProductCategories,
+  type CatalogProductRow,
+  type CatalogProductStatus,
+  type CatalogProductType,
 } from '@/lib/product-catalog-db'
 import type {
   CatalogDetailModule,
@@ -66,6 +68,11 @@ type ProductDbRow = {
   detail_modules: CatalogDetailModule[] | null
   is_custom: boolean
   detail_slug: string | null
+  category_id: number | null
+  seo_title_zh: string | null
+  seo_title_en: string | null
+  seo_description_zh: string | null
+  seo_description_en: string | null
   status: CatalogProductStatus
   sort_order: number
   created_at: string
@@ -88,6 +95,13 @@ const EDIT_SECTIONS: EditSection[] = [
     detail: '名称、系列、类型、代际、排序',
     href: '#basic',
     Icon: Pencil,
+  },
+  {
+    key: 'seo',
+    title: 'SEO 信息',
+    detail: '搜索标题、搜索摘要',
+    href: '#seo',
+    Icon: SearchCheck,
   },
   {
     key: 'media',
@@ -171,6 +185,14 @@ function rowToProduct(row: ProductDbRow): CatalogProductRow {
     detail_modules: row.detail_modules ?? [],
     isCustom: row.is_custom,
     detailSlug: row.detail_slug ?? undefined,
+    category_id: row.category_id ?? null,
+    category_slug: null,
+    category_title_zh: null,
+    category_title_en: null,
+    seo_title_zh: row.seo_title_zh ?? null,
+    seo_title_en: row.seo_title_en ?? null,
+    seo_description_zh: row.seo_description_zh ?? null,
+    seo_description_en: row.seo_description_en ?? null,
     status: row.status,
     sort_order: row.sort_order,
     created_at: row.created_at,
@@ -181,6 +203,7 @@ function rowToProduct(row: ProductDbRow): CatalogProductRow {
 
 async function getProductReadOnly(id: string): Promise<CatalogProductRow | null> {
   if (!(await tableExists('public.product_catalog'))) return null
+  await ensureProductCatalogSchema()
 
   const res = await pool.query<ProductDbRow>(
     `SELECT
@@ -208,6 +231,11 @@ async function getProductReadOnly(id: string): Promise<CatalogProductRow | null>
        COALESCE(detail_modules, '[]'::jsonb) AS detail_modules,
        is_custom,
        detail_slug,
+       category_id,
+       seo_title_zh,
+       seo_title_en,
+       seo_description_zh,
+       seo_description_en,
        status,
        sort_order,
        created_at::text AS created_at,
@@ -256,7 +284,7 @@ function getSideNavGroups(product: CatalogProductRow): AdminSideNavGroup[] {
     {
       title: '后续规划',
       items: [
-        { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },
+        { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
         { key: 'publish-flow', label: '发布审核', planned: true, Icon: SearchCheck },
       ],
     },
@@ -396,7 +424,7 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
   }
 
   const { id } = await params
-  const [product, maxUploadMb] = await Promise.all([
+  const [product, maxUploadMb, categories] = await Promise.all([
     getProductReadOnly(id).catch((err) => {
       console.error('[admin-content-product-edit] load product failed', err)
       return null
@@ -404,6 +432,10 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
     getMediaMaxUploadMbReadOnly().catch((err) => {
       console.error('[admin-content-product-edit] load media limit failed', err)
       return defaultSiteSettings.mediaMaxUploadMb
+    }),
+    listProductCategories({ includeHidden: true }).catch((err) => {
+      console.error('[admin-content-product-edit] load product categories failed', err)
+      return []
     }),
   ])
 
@@ -433,6 +465,7 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
           backLabel="返回产品列表"
           title="编辑产品内容"
           previewPolicy="published-only"
+          categories={categories}
         />
       </section>
     </AdminSectionShell>

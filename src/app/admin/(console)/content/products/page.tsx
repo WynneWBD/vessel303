@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { pool } from '@/lib/db'
+import { ensureProductCatalogSchema, listProductCategories } from '@/lib/product-catalog-db'
 import {
   Archive,
   ArrowRight,
@@ -39,6 +40,10 @@ type ProductStats = {
   missingTags: number
   missingFeatures: number
   missingDetailModules: number
+  missingCategory: number
+  missingSeo: number
+  deleted: number
+  categories: number
 }
 
 type ProductStatsRow = Record<keyof ProductStats, string>
@@ -71,6 +76,10 @@ const EMPTY_PRODUCT_STATS: ProductStats = {
   missingTags: 0,
   missingFeatures: 0,
   missingDetailModules: 0,
+  missingCategory: 0,
+  missingSeo: 0,
+  deleted: 0,
+  categories: 0,
 }
 
 function formatNumber(value: number): string {
@@ -100,29 +109,47 @@ async function safeLoad<T>(label: string, loader: () => Promise<T>, fallback: T)
 
 async function getProductStats(): Promise<ProductStats> {
   if (!(await tableExists('public.product_catalog'))) return EMPTY_PRODUCT_STATS
+  await ensureProductCatalogSchema()
 
-  const res = await pool.query<ProductStatsRow>(
+  const [res, categories] = await Promise.all([
+    pool.query<ProductStatsRow>(
     `SELECT
-       COUNT(*)::text AS total,
-       COUNT(*) FILTER (WHERE status = 'published')::text AS published,
-       COUNT(*) FILTER (WHERE status = 'draft')::text AS draft,
-       COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days')::text AS recent,
-       COUNT(*) FILTER (WHERE NULLIF(BTRIM(image), '') IS NULL)::text AS "missingCover",
-       COUNT(*) FILTER (WHERE jsonb_array_length(COALESCE(gallery, '[]'::jsonb)) = 0)::text AS "missingGallery",
-       COUNT(*) FILTER (WHERE NULLIF(BTRIM(description_cn), '') IS NULL)::text AS "missingCnDescription",
-       COUNT(*) FILTER (WHERE NULLIF(BTRIM(description_en), '') IS NULL)::text AS "missingEnDescription",
+       COUNT(*) FILTER (WHERE deleted_at IS NULL)::text AS total,
+       COUNT(*) FILTER (WHERE deleted_at IS NULL AND status = 'published')::text AS published,
+       COUNT(*) FILTER (WHERE deleted_at IS NULL AND status = 'draft')::text AS draft,
+       COUNT(*) FILTER (WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '30 days')::text AS recent,
+       COUNT(*) FILTER (WHERE deleted_at IS NULL AND NULLIF(BTRIM(image), '') IS NULL)::text AS "missingCover",
+       COUNT(*) FILTER (WHERE deleted_at IS NULL AND jsonb_array_length(COALESCE(gallery, '[]'::jsonb)) = 0)::text AS "missingGallery",
+       COUNT(*) FILTER (WHERE deleted_at IS NULL AND NULLIF(BTRIM(description_cn), '') IS NULL)::text AS "missingCnDescription",
+       COUNT(*) FILTER (WHERE deleted_at IS NULL AND NULLIF(BTRIM(description_en), '') IS NULL)::text AS "missingEnDescription",
        COUNT(*) FILTER (
-         WHERE jsonb_array_length(COALESCE(tags_cn, '[]'::jsonb)) = 0
+         WHERE deleted_at IS NULL
+           AND (jsonb_array_length(COALESCE(tags_cn, '[]'::jsonb)) = 0
             OR jsonb_array_length(COALESCE(tags_en, '[]'::jsonb)) = 0
+           )
        )::text AS "missingTags",
        COUNT(*) FILTER (
-         WHERE jsonb_array_length(COALESCE(features_cn, '[]'::jsonb)) = 0
+         WHERE deleted_at IS NULL
+           AND (jsonb_array_length(COALESCE(features_cn, '[]'::jsonb)) = 0
             OR jsonb_array_length(COALESCE(features_en, '[]'::jsonb)) = 0
+           )
        )::text AS "missingFeatures",
-       COUNT(*) FILTER (WHERE jsonb_array_length(COALESCE(detail_modules, '[]'::jsonb)) = 0)::text AS "missingDetailModules"
-     FROM product_catalog
-     WHERE deleted_at IS NULL`,
-  )
+       COUNT(*) FILTER (WHERE deleted_at IS NULL AND jsonb_array_length(COALESCE(detail_modules, '[]'::jsonb)) = 0)::text AS "missingDetailModules",
+       COUNT(*) FILTER (WHERE deleted_at IS NULL AND category_id IS NULL)::text AS "missingCategory",
+       COUNT(*) FILTER (
+         WHERE deleted_at IS NULL
+           AND (
+             NULLIF(BTRIM(COALESCE(seo_title_zh, '')), '') IS NULL
+             OR NULLIF(BTRIM(COALESCE(seo_title_en, '')), '') IS NULL
+             OR NULLIF(BTRIM(COALESCE(seo_description_zh, '')), '') IS NULL
+             OR NULLIF(BTRIM(COALESCE(seo_description_en, '')), '') IS NULL
+           )
+       )::text AS "missingSeo",
+       COUNT(*) FILTER (WHERE deleted_at IS NOT NULL)::text AS deleted
+     FROM product_catalog`,
+    ),
+    listProductCategories({ includeHidden: true }).catch(() => []),
+  ])
   const row = res.rows[0]
 
   return {
@@ -137,6 +164,10 @@ async function getProductStats(): Promise<ProductStats> {
     missingTags: parseCount(row?.missingTags),
     missingFeatures: parseCount(row?.missingFeatures),
     missingDetailModules: parseCount(row?.missingDetailModules),
+    missingCategory: parseCount(row?.missingCategory),
+    missingSeo: parseCount(row?.missingSeo),
+    deleted: parseCount(row?.deleted),
+    categories: categories.length,
   }
 }
 
@@ -163,10 +194,10 @@ function getSideNavGroups(stats: ProductStats): AdminSideNavGroup[] {
     {
       title: '后续规划',
       items: [
-        { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },
-        { key: 'recycle', label: '回收站', planned: true, Icon: Archive },
+        { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', badge: stats.categories, Icon: Tags },
+        { key: 'recycle', label: '产品回收站', href: '/admin/content/products/recycle', badge: stats.deleted, Icon: Archive },
         { key: 'bulk-check', label: '批量检查', planned: true, Icon: ListChecks },
-        { key: 'seo', label: 'SEO 字段治理', planned: true, Icon: Sparkles },
+        { key: 'seo', label: 'SEO 字段治理', href: '/admin/content/products/list?view=incomplete', badge: stats.missingSeo, Icon: Sparkles },
       ],
     },
   ]
@@ -181,6 +212,8 @@ function getTodoCount(stats: ProductStats): number {
     stats.missingTags,
     stats.missingFeatures,
     stats.missingDetailModules,
+    stats.missingCategory,
+    stats.missingSeo,
   ].filter((count) => count > 0).length
 }
 
@@ -265,6 +298,18 @@ function getTodoEntries(stats: ProductStats): TodoEntry[] {
       count: stats.missingDetailModules,
       Icon: Layers3,
     },
+    {
+      title: '未分类',
+      detail: '还没有归入产品分类',
+      count: stats.missingCategory,
+      Icon: Tags,
+    },
+    {
+      title: '缺 SEO',
+      detail: '搜索标题或摘要未补齐',
+      count: stats.missingSeo,
+      Icon: Sparkles,
+    },
   ]
 }
 
@@ -289,7 +334,7 @@ function Hero({ stats }: { stats: ProductStats }) {
         <HeroMetric title="产品总数" value={stats.total} detail={`已发布 ${formatNumber(stats.published)}`} />
         <HeroMetric title="草稿产品" value={stats.draft} detail="等待补齐或发布" tone="orange" />
         <HeroMetric title="近 30 天新增" value={stats.recent} detail="按创建时间统计" tone="green" />
-        <HeroMetric title="待补类型" value={getTodoCount(stats)} detail="只做提醒，不阻止发布" tone="blue" />
+        <HeroMetric title="待补类型" value={getTodoCount(stats)} detail={`分类 ${formatNumber(stats.categories)} / 回收站 ${formatNumber(stats.deleted)}`} tone="blue" />
       </div>
     </section>
   )
@@ -409,7 +454,7 @@ function TodoPanel({ stats }: { stats: ProductStats }) {
     <section id="todo" className="scroll-mt-24 space-y-4">
       <SectionTitle title="待补内容" detail="按现有字段做只读统计，只提醒运营补齐，不改变发布规则。" />
       <div className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-7">
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-3 2xl:grid-cols-9">
           {entries.map((entry) => (
             <TodoStat key={entry.title} entry={entry} />
           ))}
@@ -454,12 +499,14 @@ function ActionPanel() {
     { label: '查看草稿', detail: '处理待补齐或待发布的产品', href: '/admin/content/products/list?status=draft', Icon: FileText },
     { label: '查看已发布', detail: '检查前台正在展示的产品', href: '/admin/content/products/list?status=published', Icon: CheckCircle2 },
     { label: '进入产品列表', detail: '继续搜索、筛选和编辑产品', href: '/admin/content/products/list', Icon: Package },
+    { label: '分类管理', detail: '维护产品分类、排序和显示状态', href: '/admin/content/products/categories', Icon: Tags },
+    { label: '产品回收站', detail: '恢复误删产品为草稿', href: '/admin/content/products/recycle', Icon: Archive },
   ]
 
   return (
     <section className="space-y-4">
       <SectionTitle title="常用动作" detail="这里进入新版产品链路处理日常新建、筛选和编辑。" />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {actions.map((action) => (
           <Link
             key={action.href}
@@ -507,7 +554,7 @@ function WorkflowPanel() {
 }
 
 function PlanningPanel() {
-  const items = ['分类', '标签', '回收站', '批量检查', 'SEO 字段治理']
+  const items = ['属性模板', '标记管理', '品牌管理', '筛选管理', '橱窗管理', '批量检查']
 
   return (
     <section className="rounded-md border border-dashed border-[#D8E7E8] bg-white/70 p-5">
@@ -517,7 +564,7 @@ function PlanningPanel() {
         </span>
         <div>
           <h2 className="text-base font-bold text-[#1E2C31]">后续规划</h2>
-          <p className="mt-1 text-xs text-[#61767D]">这些能力暂不开放，后续单独立项。</p>
+          <p className="mt-1 text-xs text-[#61767D]">对照 300 产品管理，分类、回收站、低风险批量转分类和 SEO 已进入 B4；以下能力后续单独立项。</p>
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">

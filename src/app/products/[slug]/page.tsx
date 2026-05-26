@@ -37,9 +37,15 @@ export async function generateMetadata({
     catalogProduct = findStaticCatalogProduct(slug);
   }
   if (catalogProduct) {
+    const title = catalogProduct.seo_title_en
+      || catalogProduct.seo_title_zh
+      || `${catalogProduct.name_en} | VESSEL 微宿®`;
+    const description = catalogProduct.seo_description_en
+      || catalogProduct.seo_description_zh
+      || `${catalogProduct.name_cn} · ${catalogProduct.size} · ${catalogProduct.features_cn.join('，')}`;
     return {
-      title: `${catalogProduct.name_en} | VESSEL 微宿®`,
-      description: `${catalogProduct.name_cn} · ${catalogProduct.size} · ${catalogProduct.features_cn.join('，')}`,
+      title,
+      description,
     };
   }
 

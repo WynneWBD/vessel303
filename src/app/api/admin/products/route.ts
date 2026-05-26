@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
 import {
   createCatalogProduct,
+  getProductCategoryById,
   isCatalogProductIdTaken,
   isCatalogProductUrlSlugTaken,
   isReservedProductId,
@@ -83,6 +84,11 @@ const productSchema = z.object({
   detail_modules: z.array(detailModuleSchema).max(16).optional().default([]),
   isCustom: z.boolean(),
   detailSlug: detailSlugSchema,
+  category_id: z.number().int().positive().nullable().optional(),
+  seo_title_zh: z.string().max(160).nullable().optional(),
+  seo_title_en: z.string().max(160).nullable().optional(),
+  seo_description_zh: z.string().max(300).nullable().optional(),
+  seo_description_en: z.string().max(300).nullable().optional(),
   status: z.enum(statusValues).optional(),
   sort_order: z.coerce.number().int().min(0).max(9999).optional(),
 })
@@ -105,10 +111,13 @@ export async function GET(req: NextRequest) {
   const series = seriesValues.includes(rawSeries as ProductSeriesCode)
     ? (rawSeries as ProductSeriesCode)
     : undefined
+  const rawCategory = Number(sp.get('category'))
+  const categoryId = Number.isInteger(rawCategory) && rawCategory > 0 ? rawCategory : undefined
 
   const result = await listCatalogProducts({
     status,
     series,
+    categoryId,
     search: sp.get('search') ?? undefined,
     limit,
     offset,
@@ -153,6 +162,13 @@ export async function POST(req: NextRequest) {
     const slugTaken = await isCatalogProductUrlSlugTaken(parsed.data.detailSlug)
     if (slugTaken) {
       return NextResponse.json({ error: 'Detail page slug already in use' }, { status: 409 })
+    }
+  }
+
+  if (parsed.data.category_id != null) {
+    const category = await getProductCategoryById(parsed.data.category_id, { visibleOnly: true })
+    if (!category) {
+      return NextResponse.json({ error: 'Invalid product category' }, { status: 400 })
     }
   }
 

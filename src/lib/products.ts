@@ -565,6 +565,14 @@ export interface CatalogProduct {
   isCustom: boolean;
   /** If set, "查看详情" links to /products/{detailSlug}; otherwise links to /contact */
   detailSlug?: string;
+  category_id?: number | null;
+  category_slug?: string | null;
+  category_title_zh?: string | null;
+  category_title_en?: string | null;
+  seo_title_zh?: string | null;
+  seo_title_en?: string | null;
+  seo_description_zh?: string | null;
+  seo_description_en?: string | null;
 }
 
 export const catalogProducts: CatalogProduct[] = [

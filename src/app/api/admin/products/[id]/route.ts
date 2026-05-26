@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
 import {
   getCatalogProductById,
+  getProductCategoryById,
   isCatalogProductUrlSlugTaken,
   isReservedProductId,
   softDeleteCatalogProduct,
@@ -82,6 +83,11 @@ const patchSchema = z.object({
   detail_modules: z.array(detailModuleSchema).max(16).optional(),
   isCustom: z.boolean().optional(),
   detailSlug: detailSlugSchema,
+  category_id: z.number().int().positive().nullable().optional(),
+  seo_title_zh: z.string().max(160).nullable().optional(),
+  seo_title_en: z.string().max(160).nullable().optional(),
+  seo_description_zh: z.string().max(300).nullable().optional(),
+  seo_description_en: z.string().max(300).nullable().optional(),
   status: z.enum(statusValues).optional(),
   sort_order: z.coerce.number().int().min(0).max(9999).optional(),
 })
@@ -126,6 +132,13 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     const slugTaken = await isCatalogProductUrlSlugTaken(parsed.data.detailSlug, id)
     if (slugTaken) {
       return NextResponse.json({ error: 'Detail page slug already in use' }, { status: 409 })
+    }
+  }
+
+  if (parsed.data.category_id != null) {
+    const category = await getProductCategoryById(parsed.data.category_id)
+    if (!category) {
+      return NextResponse.json({ error: 'Invalid product category' }, { status: 400 })
     }
   }
 

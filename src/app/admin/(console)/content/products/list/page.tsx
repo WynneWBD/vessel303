@@ -2,7 +2,14 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import ProductBatchCategoryBar from '@/components/admin/ProductBatchCategoryBar'
 import { pool } from '@/lib/db'
+import {
+  countDeletedCatalogProducts,
+  ensureProductCatalogSchema,
+  listProductCategories,
+  type ProductCategoryRow,
+} from '@/lib/product-catalog-db'
 import {
   Archive,
   CheckCircle2,
@@ -42,6 +49,7 @@ type FilterState = {
   search: string
   series: string
   productType: string
+  category: string
   page: number
 }
 
@@ -50,6 +58,7 @@ type ProductSummary = {
   published: number
   draft: number
   incomplete: number
+  deleted: number
 }
 
 type ProductListRow = {
@@ -69,6 +78,10 @@ type ProductListRow = {
   features_en: unknown[] | null
   detail_modules: unknown[] | null
   detail_slug: string | null
+  category_id: number | null
+  category_slug: string | null
+  category_title_zh: string | null
+  category_title_en: string | null
   status: ProductStatus
   created_at: string
   updated_at: string
@@ -82,6 +95,7 @@ type ProductListResult = {
 type ProductOptions = {
   series: string[]
   productTypes: string[]
+  categories: Pick<ProductCategoryRow, 'id' | 'title_zh' | 'title_en'>[]
 }
 
 type StatCard = {
@@ -103,11 +117,13 @@ const EMPTY_SUMMARY: ProductSummary = {
   published: 0,
   draft: 0,
   incomplete: 0,
+  deleted: 0,
 }
 
 const EMPTY_OPTIONS: ProductOptions = {
   series: [],
   productTypes: [],
+  categories: [],
 }
 
 const PRODUCT_INCOMPLETE_SQL = `(
@@ -120,6 +136,18 @@ const PRODUCT_INCOMPLETE_SQL = `(
   OR jsonb_array_length(COALESCE(features_cn, '[]'::jsonb)) = 0
   OR jsonb_array_length(COALESCE(features_en, '[]'::jsonb)) = 0
   OR jsonb_array_length(COALESCE(detail_modules, '[]'::jsonb)) = 0
+)`
+
+const PRODUCT_INCOMPLETE_SQL_ALIASED = `(
+  NULLIF(BTRIM(pc.image), '') IS NULL
+  OR jsonb_array_length(COALESCE(pc.gallery, '[]'::jsonb)) = 0
+  OR NULLIF(BTRIM(pc.description_cn), '') IS NULL
+  OR NULLIF(BTRIM(pc.description_en), '') IS NULL
+  OR jsonb_array_length(COALESCE(pc.tags_cn, '[]'::jsonb)) = 0
+  OR jsonb_array_length(COALESCE(pc.tags_en, '[]'::jsonb)) = 0
+  OR jsonb_array_length(COALESCE(pc.features_cn, '[]'::jsonb)) = 0
+  OR jsonb_array_length(COALESCE(pc.features_en, '[]'::jsonb)) = 0
+  OR jsonb_array_length(COALESCE(pc.detail_modules, '[]'::jsonb)) = 0
 )`
 
 function firstParam(value: string | string[] | undefined): string | undefined {
@@ -146,6 +174,7 @@ function parseFilters(sp: Record<string, string | string[] | undefined>): Filter
     search: firstParam(sp.search)?.trim() ?? '',
     series: firstParam(sp.series)?.trim() ?? '',
     productType: firstParam(sp.type)?.trim() ?? '',
+    category: firstParam(sp.category)?.trim() ?? '',
     page: normalizePage(firstParam(sp.page)),
   }
 }
@@ -222,6 +251,7 @@ function createHref(filters: FilterState, patch: Partial<FilterState & { clearSe
   if (!patch.clearSearch && next.search) params.set('search', next.search)
   if (next.series) params.set('series', next.series)
   if (next.productType) params.set('type', next.productType)
+  if (next.category) params.set('category', next.category)
   if (next.page > 1) params.set('page', String(next.page))
 
   const query = params.toString()
@@ -229,39 +259,45 @@ function createHref(filters: FilterState, patch: Partial<FilterState & { clearSe
 }
 
 function buildWhere(filters: FilterState): { where: string; params: unknown[] } {
-  const conditions = ['deleted_at IS NULL']
+  const conditions = ['pc.deleted_at IS NULL']
   const params: unknown[] = []
 
   if (filters.status) {
     params.push(filters.status)
-    conditions.push(`status = $${params.length}`)
+    conditions.push(`pc.status = $${params.length}`)
   }
 
   if (filters.view === 'incomplete') {
-    conditions.push(PRODUCT_INCOMPLETE_SQL)
+    conditions.push(PRODUCT_INCOMPLETE_SQL_ALIASED)
   }
 
   if (filters.search) {
     params.push(`%${filters.search}%`)
     conditions.push(`(
-      id ILIKE $${params.length}
-      OR name_cn ILIKE $${params.length}
-      OR name_en ILIKE $${params.length}
-      OR COALESCE(detail_slug, '') ILIKE $${params.length}
-      OR product_series ILIKE $${params.length}
-      OR product_type ILIKE $${params.length}
-      OR gen ILIKE $${params.length}
+      pc.id ILIKE $${params.length}
+      OR pc.name_cn ILIKE $${params.length}
+      OR pc.name_en ILIKE $${params.length}
+      OR COALESCE(pc.detail_slug, '') ILIKE $${params.length}
+      OR pc.product_series ILIKE $${params.length}
+      OR pc.product_type ILIKE $${params.length}
+      OR pc.gen ILIKE $${params.length}
     )`)
   }
 
   if (filters.series) {
     params.push(filters.series)
-    conditions.push(`product_series = $${params.length}`)
+    conditions.push(`pc.product_series = $${params.length}`)
   }
 
   if (filters.productType) {
     params.push(filters.productType)
-    conditions.push(`product_type = $${params.length}`)
+    conditions.push(`pc.product_type = $${params.length}`)
+  }
+
+  const categoryId = Number(filters.category)
+  if (Number.isInteger(categoryId) && categoryId > 0) {
+    params.push(categoryId)
+    conditions.push(`pc.category_id = $${params.length}`)
   }
 
   return { where: `WHERE ${conditions.join(' AND ')}`, params }
@@ -283,13 +319,15 @@ async function safeLoad<T>(label: string, loader: () => Promise<T>, fallback: T)
 
 async function getProductSummary(): Promise<ProductSummary> {
   if (!(await tableExists('public.product_catalog'))) return EMPTY_SUMMARY
+  await ensureProductCatalogSchema()
 
-  const res = await pool.query<{
+  const [res, deleted] = await Promise.all([
+    pool.query<{
     total: string
     published: string
     draft: string
     incomplete: string
-  }>(
+    }>(
     `SELECT
        COUNT(*)::text AS total,
        COUNT(*) FILTER (WHERE status = 'published')::text AS published,
@@ -297,20 +335,24 @@ async function getProductSummary(): Promise<ProductSummary> {
        COUNT(*) FILTER (WHERE ${PRODUCT_INCOMPLETE_SQL})::text AS incomplete
      FROM product_catalog
      WHERE deleted_at IS NULL`,
-  )
+    ),
+    countDeletedCatalogProducts().catch(() => 0),
+  ])
   const row = res.rows[0]
   return {
     total: parseCount(row?.total),
     published: parseCount(row?.published),
     draft: parseCount(row?.draft),
     incomplete: parseCount(row?.incomplete),
+    deleted,
   }
 }
 
 async function getProductOptions(): Promise<ProductOptions> {
   if (!(await tableExists('public.product_catalog'))) return EMPTY_OPTIONS
+  await ensureProductCatalogSchema()
 
-  const [seriesRes, typeRes] = await Promise.all([
+  const [seriesRes, typeRes, categories] = await Promise.all([
     pool.query<{ value: string }>(
       `SELECT DISTINCT product_series AS value
        FROM product_catalog
@@ -323,46 +365,60 @@ async function getProductOptions(): Promise<ProductOptions> {
        WHERE deleted_at IS NULL AND NULLIF(BTRIM(product_type), '') IS NOT NULL
        ORDER BY product_type`,
     ),
+    listProductCategories({ includeHidden: false }).catch(() => []),
   ])
 
   return {
     series: seriesRes.rows.map((row) => row.value),
     productTypes: typeRes.rows.map((row) => row.value),
+    categories: categories.map((category) => ({
+      id: category.id,
+      title_zh: category.title_zh,
+      title_en: category.title_en,
+    })),
   }
 }
 
 async function getProducts(filters: FilterState): Promise<ProductListResult> {
   if (!(await tableExists('public.product_catalog'))) return { rows: [], total: 0 }
+  await ensureProductCatalogSchema()
 
   const { where, params } = buildWhere(filters)
-  const countRes = await pool.query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM product_catalog ${where}`, params)
+  const countRes = await pool.query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM product_catalog pc ${where}`, params)
   const total = parseCount(countRes.rows[0]?.count)
   const offset = (filters.page - 1) * PAGE_SIZE
 
   const listRes = await pool.query<ProductListRow>(
     `SELECT
-       id,
-       product_series,
-       name_cn,
-       name_en,
-       gen,
-       product_type,
-       image,
-       description_cn,
-       description_en,
-       COALESCE(gallery, '[]'::jsonb) AS gallery,
-       COALESCE(tags_cn, '[]'::jsonb) AS tags_cn,
-       COALESCE(tags_en, '[]'::jsonb) AS tags_en,
-       COALESCE(features_cn, '[]'::jsonb) AS features_cn,
-       COALESCE(features_en, '[]'::jsonb) AS features_en,
-       COALESCE(detail_modules, '[]'::jsonb) AS detail_modules,
-       detail_slug,
-       status,
-       created_at::text AS created_at,
-       updated_at::text AS updated_at
-     FROM product_catalog
+       pc.id,
+       pc.product_series,
+       pc.name_cn,
+       pc.name_en,
+       pc.gen,
+       pc.product_type,
+       pc.image,
+       pc.description_cn,
+       pc.description_en,
+       COALESCE(pc.gallery, '[]'::jsonb) AS gallery,
+       COALESCE(pc.tags_cn, '[]'::jsonb) AS tags_cn,
+       COALESCE(pc.tags_en, '[]'::jsonb) AS tags_en,
+       COALESCE(pc.features_cn, '[]'::jsonb) AS features_cn,
+       COALESCE(pc.features_en, '[]'::jsonb) AS features_en,
+       COALESCE(pc.detail_modules, '[]'::jsonb) AS detail_modules,
+       pc.detail_slug,
+       pc.category_id,
+       c.slug AS category_slug,
+       c.title_zh AS category_title_zh,
+       c.title_en AS category_title_en,
+       pc.status,
+       pc.created_at::text AS created_at,
+       pc.updated_at::text AS updated_at
+     FROM product_catalog pc
+     LEFT JOIN product_categories c
+       ON c.id = pc.category_id
+      AND c.deleted_at IS NULL
      ${where}
-     ORDER BY updated_at DESC, sort_order ASC, id ASC
+     ORDER BY pc.updated_at DESC, pc.sort_order ASC, pc.id ASC
      LIMIT $${params.length + 1}
      OFFSET $${params.length + 2}`,
     [...params, PAGE_SIZE, offset],
@@ -394,8 +450,8 @@ function getSideNavGroups(summary: ProductSummary): AdminSideNavGroup[] {
     {
       title: '后续规划',
       items: [
-        { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },
-        { key: 'recycle', label: '回收站', planned: true, Icon: Archive },
+        { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
+        { key: 'recycle', label: '产品回收站', href: '/admin/content/products/recycle', badge: summary.deleted, Icon: Archive },
         { key: 'bulk-check', label: '批量检查', planned: true, Icon: ListChecks },
       ],
     },
@@ -485,7 +541,7 @@ function FilterPanel({ filters, options }: { filters: FilterState; options: Prod
     <form action="/admin/content/products/list" className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
       {filters.status && <input type="hidden" name="status" value={filters.status} />}
       {filters.view && <input type="hidden" name="view" value={filters.view} />}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(220px,1fr)_180px_180px_auto_auto]">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(220px,1fr)_160px_160px_160px_auto_auto]">
         <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold text-[#61767D]">
           搜索产品
           <span className="relative">
@@ -528,6 +584,21 @@ function FilterPanel({ filters, options }: { filters: FilterState; options: Prod
             ))}
           </select>
         </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-[#61767D]">
+          分类
+          <select
+            name="category"
+            defaultValue={filters.category}
+            className="h-10 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm text-[#1E2C31] outline-none transition focus:border-[#1889B6]"
+          >
+            <option value="">全部分类</option>
+            {options.categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.title_zh}
+              </option>
+            ))}
+          </select>
+        </label>
         <button
           type="submit"
           className="mt-auto inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#1889B6] px-4 text-sm font-semibold text-white transition hover:bg-[#126D91]"
@@ -551,7 +622,8 @@ function QuickActions() {
     { label: '新增产品', href: '/admin/content/products/new', Icon: Plus, primary: true },
     { label: '查看草稿', href: '/admin/content/products/list?status=draft', Icon: FileText },
     { label: '查看已发布', href: '/admin/content/products/list?status=published', Icon: CheckCircle2 },
-    { label: '维护列表', href: '/admin/products', Icon: Package },
+    { label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
+    { label: '回收站', href: '/admin/content/products/recycle', Icon: Archive },
   ]
 
   return (
@@ -578,10 +650,12 @@ function ProductList({
   rows,
   total,
   filters,
+  categories,
 }: {
   rows: ProductListRow[]
   total: number
   filters: FilterState
+  categories: Pick<ProductCategoryRow, 'id' | 'title_zh' | 'title_en'>[]
 }) {
   if (rows.length === 0) {
     return <EmptyState filters={filters} />
@@ -597,6 +671,7 @@ function ProductList({
           </p>
         </div>
       </div>
+      <ProductBatchCategoryBar categories={categories} />
       <div className="space-y-3">
         {rows.map((product) => (
           <ProductRow key={product.id} product={product} />
@@ -616,7 +691,15 @@ function ProductRow({ product }: { product: ProductListRow }) {
 
   return (
     <article className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm transition hover:border-[#1889B6]/55 hover:shadow-md">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[96px_minmax(0,1fr)_220px_168px] lg:items-center">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[28px_96px_minmax(0,1fr)_220px_168px] lg:items-center">
+        <label className="flex h-9 w-9 items-center justify-center rounded-md border border-[#D8E7E8] bg-white" title="选择产品">
+          <input
+            type="checkbox"
+            value={product.id}
+            data-product-batch-checkbox
+            className="h-4 w-4 accent-[#E36F2C]"
+          />
+        </label>
         <div className="h-24 w-full overflow-hidden rounded-md bg-[#E6EEEE] lg:h-16 lg:w-24">
           {hasText(product.image) ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -669,6 +752,7 @@ function ProductRow({ product }: { product: ProductListRow }) {
         <div className="grid grid-cols-2 gap-3 rounded-md bg-[#F7FAFA] p-3 text-xs lg:grid-cols-1">
           <ProductMeta label="系列" value={`${product.product_series} ${product.gen}`} />
           <ProductMeta label="类型" value={getProductTypeLabel(product.product_type)} />
+          <ProductMeta label="分类" value={product.category_title_zh ?? '未分类'} />
           <ProductMeta label="更新时间" value={formatDate(product.updated_at)} />
         </div>
 
@@ -712,7 +796,7 @@ function ProductMeta({ label, value }: { label: string; value: string }) {
 }
 
 function EmptyState({ filters }: { filters: FilterState }) {
-  const hasFilter = Boolean(filters.status || filters.view || filters.search || filters.series || filters.productType)
+  const hasFilter = Boolean(filters.status || filters.view || filters.search || filters.series || filters.productType || filters.category)
   return (
     <section className="rounded-md border border-dashed border-[#D8E7E8] bg-white p-10 text-center">
       <Package className="mx-auto text-[#8A9EA4]" size={36} />
@@ -825,7 +909,7 @@ export default async function AdminContentProductsListPage({ searchParams }: Pag
         <SummaryCards summary={summary} />
         <StatusTabs filters={filters} summary={summary} />
         <FilterPanel filters={filters} options={options} />
-        <ProductList rows={list.rows} total={list.total} filters={filters} />
+        <ProductList rows={list.rows} total={list.total} filters={filters} categories={options.categories} />
       </div>
     </AdminSectionShell>
   )

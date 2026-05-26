@@ -5,7 +5,7 @@ import {
   getSiteSettings,
   normalizeMediaMaxUploadMb,
 } from '@/lib/admin-settings-db'
-import { getCatalogProductById } from '@/lib/product-catalog-db'
+import { getCatalogProductById, listProductCategories } from '@/lib/product-catalog-db'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,12 +15,13 @@ export default async function EditProductPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const [product, settings] = await Promise.all([
+  const [product, settings, categories] = await Promise.all([
     getCatalogProductById(id).catch((err) => {
       console.error('[admin/products/edit] load failed', err)
       return null
     }),
     getSiteSettings().catch(() => defaultSiteSettings),
+    listProductCategories({ includeHidden: true }).catch(() => []),
   ])
 
   if (!product) notFound()
@@ -30,6 +31,7 @@ export default async function EditProductPage({
       product={product}
       maxUploadMb={normalizeMediaMaxUploadMb(settings.mediaMaxUploadMb)}
       previewPolicy="published-only"
+      categories={categories}
     />
   )
 }

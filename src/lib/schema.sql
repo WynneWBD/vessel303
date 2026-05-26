@@ -34,6 +34,25 @@ CREATE TABLE IF NOT EXISTS products (
 
 -- Product CMS for /products listing and generic product detail pages.
 -- Existing static catalog entries are copied into this table on first runtime use.
+CREATE TABLE IF NOT EXISTS product_categories (
+  id              SERIAL PRIMARY KEY,
+  slug            VARCHAR(120) UNIQUE NOT NULL,
+  title_zh        VARCHAR(160) NOT NULL,
+  title_en        VARCHAR(160) NOT NULL,
+  description_zh  TEXT,
+  description_en  TEXT,
+  sort_order      INTEGER NOT NULL DEFAULT 0,
+  status          VARCHAR(20) NOT NULL DEFAULT 'visible'
+                  CHECK (status IN ('visible','hidden')),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at      TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_categories_status_sort
+  ON product_categories (status, sort_order)
+  WHERE deleted_at IS NULL;
+
 CREATE TABLE IF NOT EXISTS product_catalog (
   id             TEXT        PRIMARY KEY,
   product_series TEXT        NOT NULL,
@@ -59,6 +78,11 @@ CREATE TABLE IF NOT EXISTS product_catalog (
   detail_modules JSONB       NOT NULL DEFAULT '[]',
   is_custom      BOOLEAN     NOT NULL DEFAULT FALSE,
   detail_slug    TEXT,
+  category_id    INTEGER REFERENCES product_categories(id) ON DELETE SET NULL,
+  seo_title_zh   VARCHAR(160),
+  seo_title_en   VARCHAR(160),
+  seo_description_zh VARCHAR(300),
+  seo_description_en VARCHAR(300),
   status         TEXT        NOT NULL DEFAULT 'draft',
   sort_order     INTEGER     NOT NULL DEFAULT 0,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -73,6 +97,10 @@ CREATE INDEX IF NOT EXISTS idx_product_catalog_public
 CREATE INDEX IF NOT EXISTS idx_product_catalog_detail_slug
   ON product_catalog (detail_slug)
   WHERE deleted_at IS NULL AND detail_slug IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_product_catalog_category_id
+  ON product_catalog (category_id)
+  WHERE deleted_at IS NULL;
 
 CREATE TABLE IF NOT EXISTS project_cases (
   id                 TEXT        PRIMARY KEY,

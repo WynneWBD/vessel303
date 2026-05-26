@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import type { CatalogProductRow, CatalogProductStatus } from '@/lib/product-catalog-db'
+import type { CatalogProductRow, CatalogProductStatus, ProductCategoryRow } from '@/lib/product-catalog-db'
 import type {
   CatalogDetailModule,
   CatalogDetailModuleItem,
@@ -47,12 +47,18 @@ type FormState = {
   detail_modules: CatalogDetailModule[]
   isCustom: boolean
   detailSlug: string
+  category_id: string
+  seo_title_zh: string
+  seo_title_en: string
+  seo_description_zh: string
+  seo_description_en: string
   status: CatalogProductStatus
   sort_order: string
 }
 
 type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
 type DetailModuleCompletenessLevel = '完整' | '待补内容' | '缺图片'
+type ProductCategoryOption = Pick<ProductCategoryRow, 'id' | 'title_zh' | 'title_en' | 'status'>
 
 const detailModuleTypeOptions: { type: CatalogDetailModuleType; label: string; optionLabel: string }[] = [
   { type: 'highlights', label: '产品亮点', optionLabel: '产品亮点 Highlights' },
@@ -87,6 +93,11 @@ const emptyState: FormState = {
   detail_modules: [],
   isCustom: false,
   detailSlug: '',
+  category_id: '',
+  seo_title_zh: '',
+  seo_title_en: '',
+  seo_description_zh: '',
+  seo_description_en: '',
   status: 'draft',
   sort_order: '999',
 }
@@ -118,6 +129,11 @@ function fromProduct(product?: CatalogProductRow | null): FormState {
     detail_modules: normalizeDetailModules(product.detail_modules ?? []),
     isCustom: product.isCustom,
     detailSlug: product.detailSlug ?? '',
+    category_id: product.category_id ? String(product.category_id) : '',
+    seo_title_zh: product.seo_title_zh ?? '',
+    seo_title_en: product.seo_title_en ?? '',
+    seo_description_zh: product.seo_description_zh ?? '',
+    seo_description_en: product.seo_description_en ?? '',
     status: product.status,
     sort_order: String(product.sort_order),
   }
@@ -478,6 +494,7 @@ export default function ProductForm({
   title,
   previewPolicy = 'always',
   createRedirectBase = '/admin/products',
+  categories = [],
 }: {
   mode: 'create' | 'edit'
   product?: CatalogProductRow | null
@@ -487,6 +504,7 @@ export default function ProductForm({
   title?: string
   previewPolicy?: 'always' | 'published-only'
   createRedirectBase?: string
+  categories?: ProductCategoryOption[]
 }) {
   const router = useRouter()
   const [form, setForm] = useState<FormState>(() => fromProduct(product))
@@ -651,6 +669,11 @@ export default function ProductForm({
     })),
     isCustom: form.isCustom,
     detailSlug: form.detailSlug.trim() || null,
+    category_id: form.category_id ? Number(form.category_id) : null,
+    seo_title_zh: form.seo_title_zh.trim() || null,
+    seo_title_en: form.seo_title_en.trim() || null,
+    seo_description_zh: form.seo_description_zh.trim() || null,
+    seo_description_en: form.seo_description_en.trim() || null,
     status: nextStatus ?? form.status,
     sort_order: Number(form.sort_order || 999),
   })
@@ -795,7 +818,7 @@ export default function ProductForm({
             </Field>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Field label="类型">
               <Select
                 value={form.productType}
@@ -804,6 +827,21 @@ export default function ProductForm({
                 <option value="compact">Compact / 紧凑型</option>
                 <option value="standard">Standard / 标准型</option>
                 <option value="luxury">Luxury / 豪华型</option>
+              </Select>
+            </Field>
+            <Field label="所属分类" hint={categories.length === 0 ? '暂无分类，可先到分类管理维护。' : undefined}>
+              <Select
+                value={form.category_id}
+                onChange={(e) => patch('category_id', e.target.value)}
+                disabled={categories.length === 0}
+              >
+                <option value="">未分类</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.title_zh}
+                    {category.status === 'hidden' ? '（隐藏）' : ''}
+                  </option>
+                ))}
               </Select>
             </Field>
             <Field label="中文徽标">
@@ -827,6 +865,49 @@ export default function ProductForm({
               />
               <span className="text-sm text-[#C4B9AB]">定制案例</span>
             </label>
+          </div>
+        </FormSection>
+
+        <FormSection
+          id="seo"
+          title="SEO 信息"
+          description="维护产品详情页的搜索标题和摘要；留空时会使用产品名称、尺寸和卖点自动生成。"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Field label="中文 SEO 标题">
+              <Input
+                value={form.seo_title_zh}
+                onChange={(e) => patch('seo_title_zh', e.target.value)}
+                maxLength={160}
+                placeholder="例如：E7 Gen6 旗舰太空舱民宿"
+              />
+            </Field>
+            <Field label="英文 SEO 标题">
+              <Input
+                value={form.seo_title_en}
+                onChange={(e) => patch('seo_title_en', e.target.value)}
+                maxLength={160}
+                placeholder="Example: E7 Gen6 Flagship Prefab Cabin"
+              />
+            </Field>
+            <Field label="中文 SEO 描述">
+              <Textarea
+                className="min-h-24"
+                value={form.seo_description_zh}
+                onChange={(e) => patch('seo_description_zh', e.target.value)}
+                maxLength={300}
+                placeholder="用于搜索结果摘要，建议 80-150 字。"
+              />
+            </Field>
+            <Field label="英文 SEO 描述">
+              <Textarea
+                className="min-h-24"
+                value={form.seo_description_en}
+                onChange={(e) => patch('seo_description_en', e.target.value)}
+                maxLength={300}
+                placeholder="Used for search result snippets. Keep it concise."
+              />
+            </Field>
           </div>
         </FormSection>
 

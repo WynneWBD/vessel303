@@ -5,6 +5,7 @@ import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/Ad
 import ProductForm from '@/components/admin/ProductForm'
 import { defaultSiteSettings, normalizeMediaMaxUploadMb } from '@/lib/admin-settings-db'
 import { pool } from '@/lib/db'
+import { listProductCategories } from '@/lib/product-catalog-db'
 import {
   AlertTriangle,
   ArrowLeft,
@@ -42,6 +43,13 @@ const EDIT_SECTIONS: EditSection[] = [
     detail: '名称、系列、类型、代际、排序',
     href: '#basic',
     Icon: Pencil,
+  },
+  {
+    key: 'seo',
+    title: 'SEO 信息',
+    detail: '搜索标题、搜索摘要',
+    href: '#seo',
+    Icon: SearchCheck,
   },
   {
     key: 'media',
@@ -122,7 +130,7 @@ function getSideNavGroups(): AdminSideNavGroup[] {
     {
       title: '后续规划',
       items: [
-        { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },
+        { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
         { key: 'publish-flow', label: '发布审核', planned: true, Icon: SearchCheck },
       ],
     },
@@ -226,6 +234,10 @@ export default async function AdminContentProductNewPage() {
     console.error('[admin-content-product-new] load media limit failed', err)
     return defaultSiteSettings.mediaMaxUploadMb
   })
+  const categories = await listProductCategories({ includeHidden: true }).catch((err) => {
+    console.error('[admin-content-product-new] load product categories failed', err)
+    return []
+  })
   const adminRole: AdminRole = role
 
   return (
@@ -250,6 +262,7 @@ export default async function AdminContentProductNewPage() {
           title="新建产品内容"
           previewPolicy="published-only"
           createRedirectBase="/admin/content/products"
+          categories={categories}
         />
       </section>
     </AdminSectionShell>
