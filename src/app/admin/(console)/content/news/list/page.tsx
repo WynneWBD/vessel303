@@ -19,6 +19,7 @@ export const metadata = { title: '新闻列表 - VESSEL' }
 
 const LIMIT = 20
 const STATUSES = new Set(['draft', 'published'])
+const SCHEDULES = new Set(['scheduled'])
 
 type NewsListPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -49,12 +50,15 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
   const categoryId = Number.isInteger(categoryParam) && categoryParam > 0 ? categoryParam : undefined
   const page = positivePage(firstParam(sp.page))
   const status = STATUSES.has(statusParam ?? '') ? statusParam as NewsStatus : undefined
+  const scheduleParam = firstParam(sp.schedule)
+  const schedule = SCHEDULES.has(scheduleParam ?? '') ? scheduleParam as 'scheduled' : undefined
 
   const [{ rows, total }, categories, stats] = await Promise.all([
     listNews({
       status,
       search,
       categoryId,
+      scheduledOnly: schedule === 'scheduled',
       limit: LIMIT,
       offset: (page - 1) * LIMIT,
     }).catch(() => ({
@@ -77,7 +81,7 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
           <div>
             <SectionTitle title="新闻列表" detail="筛选、预览、编辑和删除新闻内容。" />
             <p className="mt-2 text-xs leading-5 text-[#61767D]">
-              参照 300 的新闻列表保留状态筛选、搜索、发布状态和操作入口；B3-9 仅开放批量转分类，批量发布、删除和定时任务暂不启用。
+              参照 300 的新闻列表保留状态筛选、搜索、发布状态和操作入口；B3-10 已开放单篇定时字段和定时筛选，批量定时、批量发布和删除暂不启用。
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -98,6 +102,7 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
             status: status ?? '',
             search,
             category: categoryId ? String(categoryId) : '',
+            schedule: schedule ?? '',
           }}
           initialCategories={categories}
           basePath="/admin/content/news"

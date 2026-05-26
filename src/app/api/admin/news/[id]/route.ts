@@ -22,6 +22,14 @@ function parseId(raw: string) {
   return Number.isFinite(n) && n > 0 ? n : null
 }
 
+const scheduledAtSchema = z.preprocess(
+  (value) => (value === '' ? null : value),
+  z.string()
+    .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})?$/)
+    .nullable()
+    .optional(),
+)
+
 export async function GET(_req: NextRequest, ctx: Ctx) {
   const admin = await requireAdmin()
   if (admin instanceof Response) return admin
@@ -46,6 +54,7 @@ const patchSchema = z.object({
   excerpt_en: z.string().max(500).nullable().optional(),
   cover_image_url: z.string().url().nullable().optional(),
   category_id: z.number().int().positive().nullable().optional(),
+  scheduled_at: scheduledAtSchema,
 })
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {

@@ -68,6 +68,14 @@ function getStatusEntries(stats: NewsStats): StatusEntry[] {
       tone: 'orange',
     },
     {
+      title: '定时发布',
+      value: stats.scheduled,
+      detail: '已设置计划发布时间的草稿新闻',
+      href: '/admin/content/news/list?schedule=scheduled',
+      Icon: CalendarClock,
+      tone: 'blue',
+    },
+    {
       title: '待补内容',
       value: stats.incomplete,
       detail: '缺标题、封面、摘要或正文',
@@ -99,7 +107,7 @@ function Hero({ stats }: { stats: NewsStats }) {
         <HeroMetric title="新闻总数" value={stats.total} detail={`已发布 ${formatNumber(stats.published)}`} />
         <HeroMetric title="草稿新闻" value={stats.draft} detail="等待补齐或发布" tone="orange" />
         <HeroMetric title="近 30 天新增" value={stats.recent} detail="按创建时间统计" tone="green" />
-        <HeroMetric title="待补新闻" value={stats.incomplete} detail="只做提醒，不阻止发布" tone="blue" />
+        <HeroMetric title="定时发布" value={stats.scheduled} detail="已设置计划发布时间" tone="blue" />
       </div>
     </section>
   )
@@ -138,7 +146,7 @@ function StatusGrid({ stats }: { stats: NewsStats }) {
   return (
     <section className="space-y-4">
       <SectionTitle title="发布状态" detail="按 300 后台的列表思路，把状态、待补和入口集中在新闻域内。" />
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
         {getStatusEntries(stats).map((entry) => (
           <StatusCard key={entry.title} entry={entry} />
         ))}
@@ -236,12 +244,13 @@ function OperationRoadmap({ stats }: { stats: NewsStats }) {
     },
     {
       title: '定时发布',
-      status: '需排期',
-      detail: '当前只有即时发布和 published_at，没有 scheduled_at 或后台任务。',
-      evidence: '不在本轮伪造定时任务，避免运营误以为已能自动上线。',
-      next: '后续需要新增字段、任务执行器、失败提示和上线验收。',
+      status: `B3-10 · ${formatNumber(stats.scheduled)} 条`,
+      detail: '已新增 scheduled_at 字段和后台筛选入口，用于记录单篇新闻的计划发布时间。',
+      evidence: '表单可保存 / 清除计划发布时间；列表可筛选定时发布草稿，前台仍只展示已发布新闻。',
+      next: '自动执行器、失败重试和批量定时任务后续单独排期，避免运营误以为排期后已自动上线。',
+      href: '/admin/content/news/list?schedule=scheduled',
       Icon: CalendarClock,
-      tone: 'neutral',
+      tone: 'blue',
     },
   ]
 
@@ -249,7 +258,7 @@ function OperationRoadmap({ stats }: { stats: NewsStats }) {
     <section id="b3-3-plan" className="scroll-mt-24 space-y-4">
       <SectionTitle
         title="B3-3 运营能力规划"
-        detail="按 300 新闻后台对照分类、回收站、批量操作和定时发布；本轮只落安全入口和状态说明。"
+        detail="按 300 新闻后台对照分类、回收站、批量操作和定时发布；B3-10 先落单篇排期字段和状态入口。"
       />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
         {plans.map((plan) => (
@@ -327,7 +336,7 @@ function OperationBoundary() {
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">后续再做</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
-            永久删除、真实批量写入、定时发布和权限分级单独排期。
+            永久删除、批量发布 / 删除、定时自动执行器和权限分级单独排期。
           </p>
         </div>
       </div>

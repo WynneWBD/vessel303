@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 
 const LIMIT = 20
 const STATUSES = new Set(['draft', 'published'])
+const SCHEDULES = new Set(['scheduled'])
 
 type NewsPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -27,12 +28,15 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
   const categoryId = Number.isInteger(categoryParam) && categoryParam > 0 ? categoryParam : undefined
   const page = positivePage(firstParam(sp.page))
   const status = STATUSES.has(statusParam ?? '') ? statusParam as NewsStatus : undefined
+  const scheduleParam = firstParam(sp.schedule)
+  const schedule = SCHEDULES.has(scheduleParam ?? '') ? scheduleParam as 'scheduled' : undefined
 
   const [{ rows, total }, categories] = await Promise.all([
     listNews({
       status,
       search,
       categoryId,
+      scheduledOnly: schedule === 'scheduled',
       limit: LIMIT,
       offset: (page - 1) * LIMIT,
     }).catch(() => ({
@@ -51,6 +55,7 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
         status: status ?? '',
         search,
         category: categoryId ? String(categoryId) : '',
+        schedule: schedule ?? '',
       }}
       initialCategories={categories}
     />

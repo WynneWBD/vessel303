@@ -8,6 +8,15 @@ import type { NewsStatus } from '@/lib/news-db'
 export const dynamic = 'force-dynamic'
 
 const statusValues = ['draft', 'published'] as const
+const scheduleValues = ['scheduled'] as const
+
+const scheduledAtSchema = z.preprocess(
+  (value) => (value === '' ? null : value),
+  z.string()
+    .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})?$/)
+    .nullable()
+    .optional(),
+)
 
 function normalizeSlug(value: string) {
   return value
@@ -33,11 +42,14 @@ export async function GET(req: NextRequest) {
     : undefined
   const rawCategory = Number(sp.get('category'))
   const categoryId = Number.isInteger(rawCategory) && rawCategory > 0 ? rawCategory : undefined
+  const rawSchedule = sp.get('schedule')
+  const scheduledOnly = scheduleValues.includes(rawSchedule as 'scheduled')
 
   const result = await listNews({
     status,
     search: sp.get('search') ?? undefined,
     categoryId,
+    scheduledOnly,
     limit,
     offset,
   })
@@ -55,6 +67,7 @@ const createSchema = z.object({
   excerpt_en: z.string().max(500).nullable().optional(),
   cover_image_url: z.string().url().nullable().optional(),
   category_id: z.number().int().positive().nullable().optional(),
+  scheduled_at: scheduledAtSchema,
 })
 
 export async function POST(req: NextRequest) {

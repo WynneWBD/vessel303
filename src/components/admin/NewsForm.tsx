@@ -116,11 +116,29 @@ function completenessBadgeClass(level: CompletenessLevel) {
   return 'border-zinc-200 bg-zinc-50 text-zinc-600'
 }
 
+function toDateTimeLocalValue(value: string | null | undefined) {
+  if (!value) return ''
+  const d = new Date(value)
+  if (isNaN(d.getTime())) return ''
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+function fromDateTimeLocalValue(value: string) {
+  if (!value) return null
+  const d = new Date(value)
+  return isNaN(d.getTime()) ? null : value
+}
+
+function getDateTimeLocalMin() {
+  return toDateTimeLocalValue(new Date().toISOString())
+}
+
 type SavedNews = {
   id: number
   slug: string
   status: NewsStatus
   category_id: number | null
+  scheduled_at: string | null
 }
 
 export default function NewsForm({
@@ -150,6 +168,7 @@ export default function NewsForm({
   const [categoryId, setCategoryId] = useState(
     initialData?.category_id ? String(initialData.category_id) : '',
   )
+  const [scheduledAt, setScheduledAt] = useState(toDateTimeLocalValue(initialData?.scheduled_at))
   const [categories, setCategories] = useState<NewsCategoryOption[]>(initialCategories)
   const [categoriesLoading, setCategoriesLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'zh' | 'en'>('zh')
@@ -166,7 +185,8 @@ export default function NewsForm({
     excerpt_en: excerptEn.trim() || null,
     cover_image_url: coverImageUrl,
     category_id: categoryId ? Number(categoryId) : null,
-  }), [categoryId, contentEn, contentZh, coverImageUrl, excerptEn, excerptZh, slug, titleEn, titleZh])
+    scheduled_at: fromDateTimeLocalValue(scheduledAt),
+  }), [categoryId, contentEn, contentZh, coverImageUrl, excerptEn, excerptZh, scheduledAt, slug, titleEn, titleZh])
   const completeness = getNewsCompleteness({
     slug,
     titleZh,
@@ -242,6 +262,7 @@ export default function NewsForm({
       const saved = data.data as SavedNews
       setCurrentId(saved.id)
       setCurrentStatus(saved.status)
+      setScheduledAt(toDateTimeLocalValue(saved.scheduled_at))
       return saved
     } else {
       const res = await fetch(`/api/admin/news/${currentId}`, {
@@ -253,6 +274,7 @@ export default function NewsForm({
       if (!res.ok) throw new Error(data.error ?? '保存失败')
       const saved = data.data as SavedNews
       setCurrentStatus(saved.status)
+      setScheduledAt(toDateTimeLocalValue(saved.scheduled_at))
       return saved
     }
   }
@@ -303,7 +325,8 @@ export default function NewsForm({
       }
       const data = await res.json() as { data: SavedNews }
       setCurrentStatus(data.data.status)
-      setSavedSnapshot(JSON.stringify({ ...formBody, status: data.data.status }))
+      setScheduledAt(toDateTimeLocalValue(data.data.scheduled_at))
+      setSavedSnapshot(JSON.stringify({ ...formBody, scheduled_at: data.data.scheduled_at, status: data.data.status }))
       toast.success(isPublished ? '已取消发布' : '已发布')
       router.push(editPath(saved.id))
       router.refresh()
@@ -315,6 +338,7 @@ export default function NewsForm({
   }
 
   const isPublished = currentStatus === 'published'
+  const isScheduled = !isPublished && Boolean(scheduledAt)
   const handleBackToList = () => {
     if (!hasUnsavedChanges || window.confirm(UNSAVED_CHANGES_MESSAGE)) {
       router.push(listPath)
@@ -341,7 +365,7 @@ export default function NewsForm({
               {mode === 'create' ? '新建新闻' : '编辑新闻'}
             </h1>
             <p className="mt-1 text-sm text-[#8A8580]">
-              {isPublished ? '当前状态: 已发布' : '当前状态: 草稿'}
+              {isPublished ? '当前状态: 已发布' : isScheduled ? '当前状态: 定时发布草稿' : '当前状态: 草稿'}
             </p>
           </div>
           {isPublished && slug && (
@@ -442,6 +466,45 @@ export default function NewsForm({
               ))}
             </Select>
           </div>
+        </div>
+
+        <div id="schedule" className="scroll-mt-24 rounded-lg border border-[#E5DED4] bg-white p-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <label className="text-sm font-medium text-[#2C2A28]">定时发布</label>
+              <p className="mt-1 text-xs leading-5 text-[#6B6560]">
+                B3-10 先保存单篇新闻的计划发布时间，并在列表里形成定时队列；自动执行器后续单独上线。
+              </p>
+            </div>
+            <Badge className="border-sky-200 bg-sky-50 text-xs text-sky-700">
+              B3-10
+            </Badge>
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-[#61767D]">计划发布时间</span>
+              <Input
+                type="datetime-local"
+                value={scheduledAt}
+                min={getDateTimeLocalMin()}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                disabled={isPublished}
+                data-testid="news-scheduled-at-input"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!scheduledAt || isPublished}
+              onClick={() => setScheduledAt('')}
+              data-testid="news-scheduled-clear-button"
+            >
+              清除定时
+            </Button>
+          </div>
+          <p className="mt-3 text-xs leading-5 text-[#8A8580]">
+            保存后新闻仍是草稿，不会自动出现在前台 `/news`。如果直接点击“保存并发布”，系统会按即时发布处理并清除定时。
+          </p>
         </div>
 
         {/* Cover image */}

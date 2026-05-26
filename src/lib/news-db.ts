@@ -33,6 +33,7 @@ export interface NewsRow {
   category_title_en: string | null
   status: NewsStatus
   published_at: string | null
+  scheduled_at: string | null
   author_id: string | null
   created_at: string
   updated_at: string
@@ -52,6 +53,7 @@ export interface NewsListItem {
   category_title_zh: string | null
   category_title_en: string | null
   published_at: string | null
+  scheduled_at: string | null
 }
 
 export type NewsStatusSummary = {
@@ -81,6 +83,7 @@ const NEWS_COLUMNS = `
   c.title_en AS category_title_en,
   n.status,
   n.published_at::text AS published_at,
+  n.scheduled_at::text AS scheduled_at,
   n.author_id,
   n.created_at::text AS created_at,
   n.updated_at::text AS updated_at,
@@ -93,7 +96,8 @@ const NEWS_LIST_COLUMNS = `
   c.slug AS category_slug,
   c.title_zh AS category_title_zh,
   c.title_en AS category_title_en,
-  n.published_at::text AS published_at
+  n.published_at::text AS published_at,
+  n.scheduled_at::text AS scheduled_at
 `
 
 const NEWS_FROM = `
@@ -107,12 +111,14 @@ export async function listNews({
   status,
   search,
   categoryId,
+  scheduledOnly,
   limit,
   offset,
 }: {
   status?: NewsStatus
   search?: string
   categoryId?: number
+  scheduledOnly?: boolean
   limit: number
   offset: number
 }) {
@@ -132,6 +138,10 @@ export async function listNews({
     params.push(categoryId)
     conds.push(`n.category_id = $${params.length}`)
   }
+  if (scheduledOnly) {
+    conds.push(`n.status = 'draft'`)
+    conds.push(`n.scheduled_at IS NOT NULL`)
+  }
 
   const where = `WHERE ${conds.join(' AND ')}`
 
@@ -143,7 +153,7 @@ export async function listNews({
 
   const listRes = await pool.query<NewsRow>(
     `SELECT ${NEWS_COLUMNS} FROM ${NEWS_FROM} ${where}
-     ORDER BY n.updated_at DESC
+     ORDER BY COALESCE(n.scheduled_at, n.updated_at) DESC
      LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
     [...params, limit, offset],
   )
@@ -238,6 +248,7 @@ export type CreateNewsInput = {
   excerpt_en?: string | null
   cover_image_url?: string | null
   category_id?: number | null
+  scheduled_at?: string | null
   author_id?: string | null
 }
 
@@ -245,8 +256,8 @@ export async function createNews(input: CreateNewsInput) {
   const res = await pool.query<{ id: number }>(
     `INSERT INTO news
        (slug, title_zh, title_en, content_zh, content_en,
-        excerpt_zh, excerpt_en, cover_image_url, category_id, author_id, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'draft')
+        excerpt_zh, excerpt_en, cover_image_url, category_id, scheduled_at, author_id, status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'draft')
      RETURNING id`,
     [
       input.slug,
@@ -258,6 +269,7 @@ export async function createNews(input: CreateNewsInput) {
       input.excerpt_en ?? null,
       input.cover_image_url ?? null,
       input.category_id ?? null,
+      input.scheduled_at ?? null,
       input.author_id ?? null,
     ],
   )
@@ -276,6 +288,7 @@ export type UpdateNewsInput = {
   excerpt_en?: string | null
   cover_image_url?: string | null
   category_id?: number | null
+  scheduled_at?: string | null
 }
 
 export async function updateNews(id: number, input: UpdateNewsInput) {
@@ -292,6 +305,7 @@ export async function updateNews(id: number, input: UpdateNewsInput) {
     ['excerpt_en', 'excerpt_en'],
     ['cover_image_url', 'cover_image_url'],
     ['category_id', 'category_id'],
+    ['scheduled_at', 'scheduled_at'],
   ]
 
   for (const [key, col] of fields) {
@@ -338,6 +352,7 @@ export async function publishNews(id: number) {
     `UPDATE news
        SET status = 'published',
            published_at = COALESCE(published_at, NOW()),
+           scheduled_at = NULL,
            updated_at = NOW()
      WHERE id = $1 AND deleted_at IS NULL
      RETURNING id`,
@@ -349,7 +364,10 @@ export async function publishNews(id: number) {
 export async function unpublishNews(id: number) {
   const res = await pool.query<{ id: number }>(
     `UPDATE news
-       SET status = 'draft', published_at = NULL, updated_at = NOW()
+       SET status = 'draft',
+           published_at = NULL,
+           scheduled_at = NULL,
+           updated_at = NOW()
      WHERE id = $1 AND deleted_at IS NULL
      RETURNING id`,
     [id],
@@ -373,6 +391,7 @@ export async function restoreNewsAsDraft(id: number) {
        SET deleted_at = NULL,
            status = 'draft',
            published_at = NULL,
+           scheduled_at = NULL,
            updated_at = NOW()
      WHERE id = $1 AND deleted_at IS NOT NULL
      RETURNING id`,

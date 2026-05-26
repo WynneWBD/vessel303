@@ -39,19 +39,21 @@ type NewsItem = {
   category_title_zh: string | null
   category_title_en: string | null
   status: 'draft' | 'published'
+  scheduled_at: string | null
   updated_at: string
 }
 
-type Filters = { status: string; search: string; category: string }
+type Filters = { status: string; search: string; category: string; schedule: string }
 type NewsCategoryOption = Pick<NewsCategoryRow, 'id' | 'slug' | 'title_zh' | 'title_en' | 'news_count'>
 type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
 
 const LIMIT = 20
-const TABLE_GRID_COLUMNS = '36px 60px 1fr 118px 90px 140px 120px'
-const STATUS_QUICK_FILTERS: Array<{ label: string; value: Filters['status'] }> = [
-  { label: '全部', value: '' },
-  { label: '草稿', value: 'draft' },
-  { label: '已发布', value: 'published' },
+const TABLE_GRID_COLUMNS = '36px 60px 1fr 118px 92px 150px 120px'
+const STATUS_QUICK_FILTERS: Array<{ label: string; status: Filters['status']; schedule?: Filters['schedule'] }> = [
+  { label: '全部', status: '', schedule: '' },
+  { label: '草稿', status: 'draft', schedule: '' },
+  { label: '已发布', status: 'published', schedule: '' },
+  { label: '定时', status: '', schedule: 'scheduled' },
 ]
 const DISABLED_BATCH_ACTIONS: Array<{ label: string; Icon: LucideIcon }> = [
   { label: '发布', Icon: Send },
@@ -66,6 +68,10 @@ function formatDate(ts: string) {
   const d = new Date(ts)
   if (isNaN(d.getTime())) return ts
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+function isScheduled(item: NewsItem) {
+  return item.status === 'draft' && Boolean(item.scheduled_at)
 }
 
 function hasText(value: string | null | undefined) {
@@ -129,7 +135,7 @@ function completenessBadgeClass(level: CompletenessLevel) {
 export default function NewsListClient({
   initialRows,
   initialTotal,
-  initialFilters = { status: '', search: '', category: '' },
+  initialFilters = { status: '', search: '', category: '', schedule: '' },
   initialPage = 1,
   initialCategories = [],
   basePath = '/admin/news',
@@ -162,6 +168,7 @@ export default function NewsListClient({
       const sp = new URLSearchParams()
       if (f.status) sp.set('status', f.status)
       if (f.category) sp.set('category', f.category)
+      if (f.schedule) sp.set('schedule', f.schedule)
       if (f.search) sp.set('search', f.search)
       sp.set('page', String(p))
       sp.set('limit', String(LIMIT))
@@ -181,6 +188,7 @@ export default function NewsListClient({
     const sp = new URLSearchParams()
     if (filters.status) sp.set('status', filters.status)
     if (filters.category) sp.set('category', filters.category)
+    if (filters.schedule) sp.set('schedule', filters.schedule)
     if (filters.search.trim()) sp.set('search', filters.search.trim())
     if (page > 1) sp.set('page', String(page))
     const query = sp.toString()
@@ -326,9 +334,9 @@ export default function NewsListClient({
             <button
               key={option.label}
               type="button"
-              onClick={() => handleFilterChange({ status: option.value })}
+              onClick={() => handleFilterChange({ status: option.status, schedule: option.schedule ?? '' })}
               className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                filters.status === option.value
+                filters.status === option.status && filters.schedule === (option.schedule ?? '')
                   ? 'border-[#E36F2C] bg-[#E36F2C]/10 text-[#E36F2C]'
                   : 'border-[#E5DED4] bg-white text-[#8A8580] hover:text-[#2C2A28]'
               }`}
@@ -340,12 +348,21 @@ export default function NewsListClient({
         <div className="flex flex-wrap items-center gap-3 max-w-xl">
           <Select
             value={filters.status}
-            onChange={(e) => handleFilterChange({ status: e.target.value })}
+            onChange={(e) => handleFilterChange({ status: e.target.value, schedule: '' })}
             className="w-36"
           >
             <option value="">全部状态</option>
             <option value="draft">草稿</option>
             <option value="published">已发布</option>
+          </Select>
+          <Select
+            value={filters.schedule}
+            onChange={(e) => handleFilterChange({ schedule: e.target.value, status: e.target.value ? '' : filters.status })}
+            className="w-36"
+            data-testid="news-schedule-filter"
+          >
+            <option value="">全部排期</option>
+            <option value="scheduled">定时发布</option>
           </Select>
           <Select
             value={filters.category}
@@ -373,7 +390,7 @@ export default function NewsListClient({
           <div>
             <p className="text-sm font-semibold text-[#1E2C31]">批量操作</p>
             <p className="mt-1 text-xs leading-5 text-[#61767D]">
-              对照 300 底部批量工具栏；B3-9 只开放批量转分类，发布、删除和定时任务继续后置。
+              对照 300 底部批量工具栏；B3-10 已开放单篇定时字段，批量定时、批量发布和删除继续后置。
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -411,7 +428,7 @@ export default function NewsListClient({
                 key={label}
                 type="button"
                 disabled
-                title={selectedCount > 0 ? 'B3-9 仅开放批量转分类，其他批量写入暂不执行' : '先选择新闻；B3-9 仅开放批量转分类'}
+                title={selectedCount > 0 ? 'B3-10 仍不开放高风险批量写入' : '先选择新闻；B3-10 仍只保留低风险批量转分类'}
                 className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#9AA9AD] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <Icon size={13} />
@@ -451,7 +468,7 @@ export default function NewsListClient({
             <span>标题</span>
             <span>所属分类</span>
             <span>状态</span>
-            <span>更新时间</span>
+            <span>排期/更新</span>
             <span>操作</span>
           </div>
 
@@ -537,6 +554,10 @@ export default function NewsListClient({
                   <Badge className="bg-green-600/20 text-green-400 border-green-600/30 text-xs">
                     已发布
                   </Badge>
+                ) : isScheduled(item) ? (
+                  <Badge className="border-sky-200 bg-sky-50 text-sky-700 text-xs">
+                    定时
+                  </Badge>
                 ) : (
                   <Badge className="bg-[#E5DED4] text-[#8A8580] border-[#C4B9AB] text-xs">
                     草稿
@@ -545,7 +566,16 @@ export default function NewsListClient({
               </div>
 
               {/* Updated at */}
-              <p className="text-xs text-[#8A8580]">{formatDate(item.updated_at)}</p>
+              <p className="text-xs leading-5 text-[#8A8580]">
+                {isScheduled(item) && item.scheduled_at ? (
+                  <>
+                    <span className="block font-semibold text-sky-700">{formatDate(item.scheduled_at)}</span>
+                    <span className="block">定时发布</span>
+                  </>
+                ) : (
+                  formatDate(item.updated_at)
+                )}
+              </p>
 
               {/* Actions */}
               <div className="flex items-center gap-1">

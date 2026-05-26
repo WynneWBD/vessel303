@@ -25,6 +25,7 @@ export type NewsStats = {
   total: number
   published: number
   draft: number
+  scheduled: number
   deleted: number
   recent: number
   incomplete: number
@@ -43,6 +44,7 @@ export const EMPTY_NEWS_STATS: NewsStats = {
   total: 0,
   published: 0,
   draft: 0,
+  scheduled: 0,
   deleted: 0,
   recent: 0,
   incomplete: 0,
@@ -106,6 +108,7 @@ export async function getNewsStats(): Promise<NewsStats> {
        COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL})::text AS total,
        COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND status = 'published')::text AS published,
        COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND status = 'draft')::text AS draft,
+       COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND status = 'draft' AND scheduled_at IS NOT NULL)::text AS scheduled,
        COUNT(*) FILTER (WHERE deleted_at IS NOT NULL)::text AS deleted,
        COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND created_at >= NOW() - INTERVAL '30 days')::text AS recent,
        COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND ${NEWS_INCOMPLETE_SQL})::text AS incomplete,
@@ -124,6 +127,7 @@ export async function getNewsStats(): Promise<NewsStats> {
     total: parseCount(row?.total),
     published: parseCount(row?.published),
     draft: parseCount(row?.draft),
+    scheduled: parseCount(row?.scheduled),
     deleted: parseCount(row?.deleted),
     recent: parseCount(row?.recent),
     incomplete: parseCount(row?.incomplete),
@@ -166,7 +170,7 @@ export function getNewsSideNavGroups(stats: NewsStats): AdminSideNavGroup[] {
       items: [
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/news/categories', Icon: Tags },
         { key: 'recycle', label: '新闻回收站', href: '/admin/content/news/recycle', badge: stats.deleted, Icon: Archive },
-        { key: 'scheduled', label: '定时发布', planned: true, Icon: Clock3 },
+        { key: 'scheduled', label: '定时发布', href: '/admin/content/news/list?schedule=scheduled', badge: stats.scheduled, Icon: Clock3 },
         { key: 'seo', label: 'SEO 字段治理', planned: true, Icon: SearchCheck },
       ],
     },
@@ -268,6 +272,13 @@ export const NEWS_EDIT_SECTIONS: Array<{
   href: string
   Icon: LucideIcon
 }> = [
+  {
+    key: 'schedule',
+    title: '定时发布',
+    detail: '计划发布时间，B3-10 先保存排期字段',
+    href: '#schedule',
+    Icon: Clock3,
+  },
   {
     key: 'basic',
     title: '基础信息',
