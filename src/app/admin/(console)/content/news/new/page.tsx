@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import NewsForm from '@/components/admin/NewsForm'
+import { listNewsCategories } from '@/lib/news-db'
 import {
   EMPTY_NEWS_STATS,
   NEWS_EDIT_SECTIONS,
@@ -45,7 +46,10 @@ export default async function AdminContentNewsNewPage() {
     redirect('/admin/login?error=unauthorized')
   }
 
-  const stats = await safeLoad('news stats', () => getNewsStats(), EMPTY_NEWS_STATS)
+  const [stats, categories] = await Promise.all([
+    safeLoad('news stats', () => getNewsStats(), EMPTY_NEWS_STATS),
+    listNewsCategories().catch(() => []),
+  ])
 
   return (
     <NewsConsoleShell
@@ -78,7 +82,7 @@ export default async function AdminContentNewsNewPage() {
             </div>
           </div>
         </aside>
-        <NewsForm mode="create" basePath="/admin/content/news" />
+        <NewsForm mode="create" basePath="/admin/content/news" initialCategories={categories} />
       </section>
     </NewsConsoleShell>
   )

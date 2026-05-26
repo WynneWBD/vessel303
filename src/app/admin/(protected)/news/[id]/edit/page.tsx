@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getNewsById } from '@/lib/news-db'
+import { getNewsById, listNewsCategories } from '@/lib/news-db'
 import NewsForm from '@/components/admin/NewsForm'
 
 export const dynamic = 'force-dynamic'
@@ -13,8 +13,11 @@ export default async function EditNewsPage({
   const id = parseInt(raw, 10)
   if (!Number.isFinite(id) || id <= 0) redirect('/admin/news')
 
-  const news = await getNewsById(id).catch(() => null)
+  const [news, categories] = await Promise.all([
+    getNewsById(id).catch(() => null),
+    listNewsCategories().catch(() => []),
+  ])
   if (!news) redirect('/admin/news')
 
-  return <NewsForm mode="edit" initialData={news} />
+  return <NewsForm mode="edit" initialData={news} initialCategories={categories} />
 }

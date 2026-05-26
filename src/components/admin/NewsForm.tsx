@@ -16,12 +16,6 @@ import CoverImagePicker from './CoverImagePicker'
 import AdminConfirmDialog from './AdminConfirmDialog'
 import { UNSAVED_CHANGES_MESSAGE, useUnsavedChangesWarning } from './useUnsavedChangesWarning'
 
-interface Props {
-  initialData?: NewsRow
-  mode: 'create' | 'edit'
-  basePath?: '/admin/news' | '/admin/content/news'
-}
-
 const EMPTY_DOC: JSONContent = { type: 'doc', content: [] }
 
 type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
@@ -30,6 +24,13 @@ type NewsCategoryOption = Pick<
   NewsCategoryRow,
   'id' | 'slug' | 'title_zh' | 'title_en' | 'news_count'
 >
+
+interface Props {
+  initialData?: NewsRow
+  mode: 'create' | 'edit'
+  basePath?: '/admin/news' | '/admin/content/news'
+  initialCategories?: NewsCategoryOption[]
+}
 
 function coerceJSON(v: unknown): JSONContent {
   if (v && typeof v === 'object' && !Array.isArray(v)) return v as JSONContent
@@ -122,7 +123,12 @@ type SavedNews = {
   category_id: number | null
 }
 
-export default function NewsForm({ initialData, mode, basePath = '/admin/news' }: Props) {
+export default function NewsForm({
+  initialData,
+  mode,
+  basePath = '/admin/news',
+  initialCategories = [],
+}: Props) {
   const router = useRouter()
   const listPath = basePath === '/admin/content/news' ? `${basePath}/list` : basePath
   const editPath = (id: number) => `${basePath}/${id}/edit`
@@ -144,7 +150,7 @@ export default function NewsForm({ initialData, mode, basePath = '/admin/news' }
   const [categoryId, setCategoryId] = useState(
     initialData?.category_id ? String(initialData.category_id) : '',
   )
-  const [categories, setCategories] = useState<NewsCategoryOption[]>([])
+  const [categories, setCategories] = useState<NewsCategoryOption[]>(initialCategories)
   const [categoriesLoading, setCategoriesLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'zh' | 'en'>('zh')
   const [submitting, setSubmitting] = useState(false)
@@ -187,16 +193,17 @@ export default function NewsForm({ initialData, mode, basePath = '/admin/news' }
 
   useEffect(() => {
     let cancelled = false
+    const hasServerCategories = initialCategories.length > 0
 
     const loadCategories = async () => {
-      setCategoriesLoading(true)
+      if (!hasServerCategories) setCategoriesLoading(true)
       try {
         const res = await fetch('/api/admin/news/categories', { cache: 'no-store' })
         if (!res.ok) throw new Error('load failed')
         const data = await res.json() as { data: NewsCategoryOption[] }
         if (!cancelled) setCategories(data.data)
       } catch {
-        if (!cancelled) setCategories([])
+        if (!cancelled && !hasServerCategories) setCategories([])
       } finally {
         if (!cancelled) setCategoriesLoading(false)
       }
@@ -207,7 +214,7 @@ export default function NewsForm({ initialData, mode, basePath = '/admin/news' }
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [initialCategories.length])
 
   const buildBody = () => formBody
 

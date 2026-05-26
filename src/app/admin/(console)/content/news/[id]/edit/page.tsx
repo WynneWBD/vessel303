@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import NewsForm from '@/components/admin/NewsForm'
-import { getNewsById } from '@/lib/news-db'
+import { getNewsById, listNewsCategories } from '@/lib/news-db'
 import {
   EMPTY_NEWS_STATS,
   NEWS_EDIT_SECTIONS,
@@ -63,9 +63,10 @@ export default async function AdminContentNewsEditPage({ params }: PageProps) {
   const id = parseId(raw)
   if (!id) notFound()
 
-  const [news, stats] = await Promise.all([
+  const [news, stats, categories] = await Promise.all([
     getNewsById(id).catch(() => null),
     safeLoad('news stats', () => getNewsStats(), EMPTY_NEWS_STATS),
+    listNewsCategories().catch(() => []),
   ])
   if (!news) notFound()
 
@@ -100,7 +101,12 @@ export default async function AdminContentNewsEditPage({ params }: PageProps) {
             </div>
           </div>
         </aside>
-        <NewsForm mode="edit" initialData={news} basePath="/admin/content/news" />
+        <NewsForm
+          mode="edit"
+          initialData={news}
+          basePath="/admin/content/news"
+          initialCategories={categories}
+        />
       </section>
     </NewsConsoleShell>
   )

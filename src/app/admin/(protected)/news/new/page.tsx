@@ -1,5 +1,8 @@
 import NewsForm from '@/components/admin/NewsForm'
+import { listNewsCategories } from '@/lib/news-db'
 
-export default function NewNewsPage() {
-  return <NewsForm mode="create" />
+export default async function NewNewsPage() {
+  const categories = await listNewsCategories().catch(() => [])
+
+  return <NewsForm mode="create" initialCategories={categories} />
 }
