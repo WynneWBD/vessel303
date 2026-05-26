@@ -314,6 +314,24 @@ export async function updateNews(id: number, input: UpdateNewsInput) {
   return res.rows[0]?.id ? getNewsById(res.rows[0].id) : null
 }
 
+export async function bulkUpdateNewsCategory(ids: number[], categoryId: number) {
+  const uniqueIds = Array.from(new Set(ids.filter((id) => Number.isInteger(id) && id > 0)))
+  if (uniqueIds.length === 0) return { updatedIds: [], updatedCount: 0 }
+
+  const res = await pool.query<{ id: number }>(
+    `UPDATE news
+       SET category_id = $1,
+           updated_at = NOW()
+     WHERE id = ANY($2::int[])
+       AND deleted_at IS NULL
+     RETURNING id`,
+    [categoryId, uniqueIds],
+  )
+
+  const updatedIds = res.rows.map((row) => row.id)
+  return { updatedIds, updatedCount: updatedIds.length }
+}
+
 export async function publishNews(id: number) {
   // Keep original published_at on re-publish; only update updated_at
   const res = await pool.query<{ id: number }>(

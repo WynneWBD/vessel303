@@ -53,12 +53,11 @@ const STATUS_QUICK_FILTERS: Array<{ label: string; value: Filters['status'] }> =
   { label: '草稿', value: 'draft' },
   { label: '已发布', value: 'published' },
 ]
-const BATCH_ACTIONS: Array<{ label: string; Icon: LucideIcon }> = [
+const DISABLED_BATCH_ACTIONS: Array<{ label: string; Icon: LucideIcon }> = [
   { label: '发布', Icon: Send },
   { label: '定时任务', Icon: CalendarClock },
   { label: '置顶', Icon: Pin },
   { label: '状态', Icon: ToggleLeft },
-  { label: '转移', Icon: Tag },
   { label: '删除', Icon: Trash2 },
   { label: '翻译', Icon: Languages },
 ]
@@ -152,6 +151,9 @@ export default function NewsListClient({
   const [pendingDelete, setPendingDelete] = useState<NewsItem | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [selectedIds, setSelectedIds] = useState<number[]>([])
+  const [batchCategoryId, setBatchCategoryId] = useState('')
+  const [pendingBatchCategoryId, setPendingBatchCategoryId] = useState('')
+  const [movingCategory, setMovingCategory] = useState(false)
   const didSkipInitialLoad = useRef(false)
 
   const reload = useCallback(async (f: Filters, p: number) => {
@@ -251,6 +253,47 @@ export default function NewsListClient({
     }
   }
 
+  const handleStartBatchCategory = () => {
+    if (selectedIds.length === 0) {
+      toast.error('请先选择新闻')
+      return
+    }
+    if (!batchCategoryId) {
+      toast.error('请选择目标分类')
+      return
+    }
+    setPendingBatchCategoryId(batchCategoryId)
+  }
+
+  const handleConfirmBatchCategory = async () => {
+    const categoryId = Number(pendingBatchCategoryId)
+    if (!Number.isInteger(categoryId) || categoryId <= 0) return
+
+    setMovingCategory(true)
+    try {
+      const res = await fetch('/api/admin/news/batch/category', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedIds, category_id: categoryId }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(data.error ?? '批量转移失败')
+      }
+      const updatedCount = Number(data.data?.updatedCount ?? 0)
+      toast.success(`已转移 ${updatedCount} 条新闻`)
+      setSelectedIds([])
+      setPendingBatchCategoryId('')
+      await reload(filters, page)
+      router.refresh()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '批量转移失败')
+    } finally {
+      setMovingCategory(false)
+    }
+  }
+
+  const pendingBatchCategory = initialCategories.find((category) => String(category.id) === pendingBatchCategoryId)
   const totalPages = Math.max(1, Math.ceil(total / LIMIT))
 
   return (
@@ -328,21 +371,47 @@ export default function NewsListClient({
       <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <p className="text-sm font-semibold text-[#1E2C31]">批量操作预演</p>
+            <p className="text-sm font-semibold text-[#1E2C31]">批量操作</p>
             <p className="mt-1 text-xs leading-5 text-[#61767D]">
-              对照 300 底部批量工具栏；本轮只支持选择计数，真实批量写入暂不开放。
+              对照 300 底部批量工具栏；B3-9 只开放批量转分类，发布、删除和定时任务继续后置。
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-[#D8E7E8] bg-white px-2.5 py-1 text-xs font-semibold text-[#61767D]">
               已选 {selectedCount} 条
             </span>
-            {BATCH_ACTIONS.map(({ label, Icon }) => (
+            <Select
+              value={batchCategoryId}
+              onChange={(e) => setBatchCategoryId(e.target.value)}
+              disabled={selectedCount === 0 || movingCategory}
+              className="h-8 w-36 text-xs"
+              data-testid="news-batch-category-select"
+            >
+              <option value="">目标分类</option>
+              {initialCategories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.title_zh}
+                </option>
+              ))}
+            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              disabled={selectedCount === 0 || !batchCategoryId || movingCategory}
+              onClick={handleStartBatchCategory}
+              data-testid="news-batch-category-button"
+            >
+              <Tag size={13} />
+              转移分类
+            </Button>
+            {DISABLED_BATCH_ACTIONS.map(({ label, Icon }) => (
               <button
                 key={label}
                 type="button"
                 disabled
-                title={selectedCount > 0 ? 'B3-3 只读规划中，暂不执行真实批量操作' : '先选择新闻；B3-3 暂不执行真实批量操作'}
+                title={selectedCount > 0 ? 'B3-9 仅开放批量转分类，其他批量写入暂不执行' : '先选择新闻；B3-9 仅开放批量转分类'}
                 className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#9AA9AD] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <Icon size={13} />
@@ -373,6 +442,7 @@ export default function NewsListClient({
                 type="checkbox"
                 checked={allCurrentPageSelected}
                 onChange={toggleAllCurrentPage}
+                data-testid="news-list-select-current-page"
                 className="h-4 w-4 rounded border-[#C4B9AB]"
                 aria-label="选择当前页新闻"
               />
@@ -394,6 +464,7 @@ export default function NewsListClient({
             return (
             <div
               key={item.id}
+              data-testid={`news-list-row-${item.slug}`}
               className="grid gap-3 items-center px-4 py-3 border-b border-[#E5DED4] last:border-b-0 hover:bg-[#FAF7F2] transition-colors"
               style={{ gridTemplateColumns: TABLE_GRID_COLUMNS }}
             >
@@ -402,6 +473,7 @@ export default function NewsListClient({
                   type="checkbox"
                   checked={selectedIds.includes(item.id)}
                   onChange={() => toggleSelected(item.id)}
+                  data-testid={`news-list-select-${item.slug}`}
                   className="h-4 w-4 rounded border-[#C4B9AB]"
                   aria-label={`选择新闻 ${item.title_zh || item.title_en || item.id}`}
                 />
@@ -553,6 +625,18 @@ export default function NewsListClient({
         tone="danger"
         loading={confirmingDelete}
         onConfirm={handleConfirmDelete}
+      />
+
+      <AdminConfirmDialog
+        open={!!pendingBatchCategoryId}
+        onOpenChange={(open) => {
+          if (!open) setPendingBatchCategoryId('')
+        }}
+        title="确认批量转移分类？"
+        description={`将 ${selectedCount} 条新闻转移到“${pendingBatchCategory?.title_zh ?? ''}”。本操作不会发布、删除或改变前台可见状态。`}
+        confirmLabel="确认转移"
+        loading={movingCategory}
+        onConfirm={handleConfirmBatchCategory}
       />
     </div>
   )
