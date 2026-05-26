@@ -4,7 +4,19 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ExternalLink, Plus, Pencil, Trash2 } from 'lucide-react'
+import {
+  CalendarClock,
+  ExternalLink,
+  Languages,
+  Pencil,
+  Pin,
+  Plus,
+  Send,
+  Tag,
+  ToggleLeft,
+  Trash2,
+  type LucideIcon,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
@@ -29,10 +41,20 @@ type Filters = { status: string; search: string }
 type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
 
 const LIMIT = 20
+const TABLE_GRID_COLUMNS = '36px 60px 1fr 90px 140px 120px'
 const STATUS_QUICK_FILTERS: Array<{ label: string; value: Filters['status'] }> = [
   { label: '全部', value: '' },
   { label: '草稿', value: 'draft' },
   { label: '已发布', value: 'published' },
+]
+const BATCH_ACTIONS: Array<{ label: string; Icon: LucideIcon }> = [
+  { label: '发布', Icon: Send },
+  { label: '定时任务', Icon: CalendarClock },
+  { label: '置顶', Icon: Pin },
+  { label: '状态', Icon: ToggleLeft },
+  { label: '转移', Icon: Tag },
+  { label: '删除', Icon: Trash2 },
+  { label: '翻译', Icon: Languages },
 ]
 
 function formatDate(ts: string) {
@@ -121,6 +143,7 @@ export default function NewsListClient({
   const [loading, setLoading] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<NewsItem | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<number[]>([])
   const didSkipInitialLoad = useRef(false)
 
   const reload = useCallback(async (f: Filters, p: number) => {
@@ -152,6 +175,11 @@ export default function NewsListClient({
     window.history.replaceState(null, '', query ? `${pathname}?${query}` : pathname)
   }, [filters, page, pathname])
 
+  useEffect(() => {
+    const visibleIds = new Set(rows.map((row) => row.id))
+    setSelectedIds((current) => current.filter((id) => visibleIds.has(id)))
+  }, [rows])
+
   // Debounce search; immediate on status change
   useEffect(() => {
     if (!didSkipInitialLoad.current) {
@@ -181,6 +209,25 @@ export default function NewsListClient({
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '删除失败')
     }
+  }
+
+  const selectedCount = selectedIds.length
+  const allCurrentPageSelected = rows.length > 0 && rows.every((row) => selectedIds.includes(row.id))
+
+  const toggleAllCurrentPage = () => {
+    const currentPageIds = rows.map((row) => row.id)
+    setSelectedIds((current) => {
+      if (currentPageIds.every((id) => current.includes(id))) {
+        return current.filter((id) => !currentPageIds.includes(id))
+      }
+      return Array.from(new Set([...current, ...currentPageIds]))
+    })
+  }
+
+  const toggleSelected = (id: number) => {
+    setSelectedIds((current) => (
+      current.includes(id) ? current.filter((itemId) => itemId !== id) : [...current, id]
+    ))
   }
 
   const handleConfirmDelete = async () => {
@@ -256,6 +303,34 @@ export default function NewsListClient({
         </div>
       </div>
 
+      <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-[#1E2C31]">批量操作预演</p>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">
+              对照 300 底部批量工具栏；本轮只支持选择计数，真实批量写入暂不开放。
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-[#D8E7E8] bg-white px-2.5 py-1 text-xs font-semibold text-[#61767D]">
+              已选 {selectedCount} 条
+            </span>
+            {BATCH_ACTIONS.map(({ label, Icon }) => (
+              <button
+                key={label}
+                type="button"
+                disabled
+                title={selectedCount > 0 ? 'B3-3 只读规划中，暂不执行真实批量操作' : '先选择新闻；B3-3 暂不执行真实批量操作'}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#9AA9AD] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                <Icon size={13} />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Table */}
       {rows.length === 0 && !loading ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#E5DED4] bg-[#FFFFFF] py-20">
@@ -269,8 +344,17 @@ export default function NewsListClient({
           {/* Table head */}
           <div
             className="grid gap-3 px-4 py-3 text-xs text-[#8A8580] bg-[#FAF7F2] border-b border-[#E5DED4]"
-            style={{ gridTemplateColumns: '60px 1fr 90px 140px 120px' }}
+            style={{ gridTemplateColumns: TABLE_GRID_COLUMNS }}
           >
+            <label className="flex items-center justify-center" title="选择当前页新闻">
+              <input
+                type="checkbox"
+                checked={allCurrentPageSelected}
+                onChange={toggleAllCurrentPage}
+                className="h-4 w-4 rounded border-[#C4B9AB]"
+                aria-label="选择当前页新闻"
+              />
+            </label>
             <span>封面</span>
             <span>标题</span>
             <span>状态</span>
@@ -288,8 +372,18 @@ export default function NewsListClient({
             <div
               key={item.id}
               className="grid gap-3 items-center px-4 py-3 border-b border-[#E5DED4] last:border-b-0 hover:bg-[#FAF7F2] transition-colors"
-              style={{ gridTemplateColumns: '60px 1fr 90px 140px 120px' }}
+              style={{ gridTemplateColumns: TABLE_GRID_COLUMNS }}
             >
+              <label className="flex items-center justify-center" title="选择这条新闻">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(item.id)}
+                  onChange={() => toggleSelected(item.id)}
+                  className="h-4 w-4 rounded border-[#C4B9AB]"
+                  aria-label={`选择新闻 ${item.title_zh || item.title_en || item.id}`}
+                />
+              </label>
+
               {/* Cover */}
               <div className="w-[60px] h-[38px] rounded overflow-hidden bg-[#E5DED4] shrink-0">
                 {item.cover_image_url ? (

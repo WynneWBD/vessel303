@@ -14,6 +14,8 @@ import {
   type NewsStats,
 } from './_news-console'
 import {
+  Archive,
+  CalendarClock,
   CheckCircle2,
   CircleDashed,
   FileText,
@@ -22,6 +24,7 @@ import {
   Newspaper,
   Plus,
   SearchCheck,
+  Tags,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -188,6 +191,102 @@ function TodoPanel({ stats }: { stats: NewsStats }) {
   )
 }
 
+type OperationPlan = {
+  title: string
+  status: string
+  detail: string
+  evidence: string
+  next: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange' | 'neutral'
+}
+
+function OperationRoadmap({ stats }: { stats: NewsStats }) {
+  const plans: OperationPlan[] = [
+    {
+      title: '分类管理',
+      status: '需要字段',
+      detail: '300 列表有“所属分类”和“分类管理”，当前新闻表没有分类字段。',
+      evidence: '本轮只做入口口径和后续拆分，不新增数据库结构。',
+      next: '下一轮先定分类口径，再加表字段、筛选和迁移。',
+      Icon: Tags,
+      tone: 'blue',
+    },
+    {
+      title: '回收站',
+      status: `${formatNumber(stats.deleted)} 条`,
+      detail: '现有删除是软删除，前台和列表已经排除 deleted_at 不为空的新闻。',
+      evidence: '可以统计已删除数量，但恢复、永久删除需要独立 API 和权限确认。',
+      next: '后续单独做只读列表、恢复确认和 admin-only 永久删除边界。',
+      Icon: Archive,
+      tone: 'green',
+    },
+    {
+      title: '批量操作',
+      status: '预演中',
+      detail: '300 底部有发布、定时任务、置顶、状态、转移、删除、翻译等批量按钮。',
+      evidence: '新闻列表已补批量选择和禁用按钮，先避免误触发真实批量写入。',
+      next: '等权限分级确定后，再逐个开放发布、删除和状态类动作。',
+      Icon: ListChecks,
+      tone: 'orange',
+    },
+    {
+      title: '定时发布',
+      status: '需排期',
+      detail: '当前只有即时发布和 published_at，没有 scheduled_at 或后台任务。',
+      evidence: '不在本轮伪造定时任务，避免运营误以为已能自动上线。',
+      next: '后续需要新增字段、任务执行器、失败提示和上线验收。',
+      Icon: CalendarClock,
+      tone: 'neutral',
+    },
+  ]
+
+  return (
+    <section id="b3-3-plan" className="scroll-mt-24 space-y-4">
+      <SectionTitle
+        title="B3-3 运营能力规划"
+        detail="按 300 新闻后台对照分类、回收站、批量操作和定时发布；本轮只落安全入口和状态说明。"
+      />
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
+        {plans.map((plan) => (
+          <OperationPlanCard key={plan.title} plan={plan} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function OperationPlanCard({ plan }: { plan: OperationPlan }) {
+  const Icon = plan.Icon
+  const accent =
+    plan.tone === 'orange'
+      ? 'bg-[#FFF2E7] text-[#E36F2C]'
+      : plan.tone === 'green'
+        ? 'bg-[#E7F7F4] text-[#159477]'
+        : plan.tone === 'neutral'
+          ? 'bg-[#F0F2F2] text-[#61767D]'
+          : 'bg-[#EAF4FF] text-[#3078C8]'
+
+  return (
+    <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <span className={`flex h-11 w-11 items-center justify-center rounded-md ${accent}`}>
+          <Icon size={20} />
+        </span>
+        <span className="rounded-full border border-[#D8E7E8] bg-[#F7FAFA] px-2.5 py-1 text-xs font-bold text-[#61767D]">
+          {plan.status}
+        </span>
+      </div>
+      <h3 className="mt-5 text-sm font-bold text-[#1E2C31]">{plan.title}</h3>
+      <p className="mt-2 text-xs leading-5 text-[#61767D]">{plan.detail}</p>
+      <p className="mt-3 text-xs leading-5 text-[#3F5359]">{plan.evidence}</p>
+      <p className="mt-3 border-t border-[#E6EEEE] pt-3 text-xs leading-5 text-[#61767D]">
+        {plan.next}
+      </p>
+    </div>
+  )
+}
+
 function OperationBoundary() {
   return (
     <section className="rounded-md border border-dashed border-[#D8E7E8] bg-white/76 p-5">
@@ -207,7 +306,7 @@ function OperationBoundary() {
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">后续再做</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
-            分类、回收站、批量操作、定时发布和权限分级单独排期。
+            分类、回收站恢复、真实批量写入、定时发布和权限分级单独排期。
           </p>
         </div>
       </div>
@@ -236,6 +335,7 @@ export default async function AdminContentNewsPage() {
       <Hero stats={stats} />
       <StatusGrid stats={stats} />
       <TodoPanel stats={stats} />
+      <OperationRoadmap stats={stats} />
       <OperationBoundary />
     </NewsConsoleShell>
   )

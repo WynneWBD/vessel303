@@ -73,7 +73,7 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
           <div>
             <SectionTitle title="新闻列表" detail="筛选、预览、编辑和删除新闻内容。" />
             <p className="mt-2 text-xs leading-5 text-[#61767D]">
-              参照 300 的新闻列表保留状态筛选、搜索、发布状态和操作入口；分类、回收站、批量操作暂不启用。
+              参照 300 的新闻列表保留状态筛选、搜索、发布状态和操作入口；B3-3 已补批量操作预演，真实批量写入和定时任务暂不启用。
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

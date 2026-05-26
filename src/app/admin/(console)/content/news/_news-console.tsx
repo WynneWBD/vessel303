@@ -25,6 +25,7 @@ export type NewsStats = {
   total: number
   published: number
   draft: number
+  deleted: number
   recent: number
   incomplete: number
   missingCover: number
@@ -42,6 +43,7 @@ export const EMPTY_NEWS_STATS: NewsStats = {
   total: 0,
   published: 0,
   draft: 0,
+  deleted: 0,
   recent: 0,
   incomplete: 0,
   missingCover: 0,
@@ -76,6 +78,8 @@ const NEWS_INCOMPLETE_SQL = `(
   OR ${MISSING_EN_CONTENT_SQL}
 )`
 
+const ACTIVE_NEWS_SQL = 'deleted_at IS NULL'
+
 function parseCount(value: string | undefined): number {
   return parseInt(value ?? '0', 10)
 }
@@ -99,20 +103,20 @@ export async function getNewsStats(): Promise<NewsStats> {
 
   const res = await pool.query<NewsStatsRow>(
     `SELECT
-       COUNT(*)::text AS total,
-       COUNT(*) FILTER (WHERE status = 'published')::text AS published,
-       COUNT(*) FILTER (WHERE status = 'draft')::text AS draft,
-       COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days')::text AS recent,
-       COUNT(*) FILTER (WHERE ${NEWS_INCOMPLETE_SQL})::text AS incomplete,
-       COUNT(*) FILTER (WHERE NULLIF(BTRIM(COALESCE(cover_image_url, '')), '') IS NULL)::text AS "missingCover",
-       COUNT(*) FILTER (WHERE NULLIF(BTRIM(COALESCE(title_zh, '')), '') IS NULL)::text AS "missingZhTitle",
-       COUNT(*) FILTER (WHERE NULLIF(BTRIM(COALESCE(title_en, '')), '') IS NULL)::text AS "missingEnTitle",
-       COUNT(*) FILTER (WHERE NULLIF(BTRIM(COALESCE(excerpt_zh, '')), '') IS NULL)::text AS "missingZhExcerpt",
-       COUNT(*) FILTER (WHERE NULLIF(BTRIM(COALESCE(excerpt_en, '')), '') IS NULL)::text AS "missingEnExcerpt",
-       COUNT(*) FILTER (WHERE ${MISSING_ZH_CONTENT_SQL})::text AS "missingZhContent",
-       COUNT(*) FILTER (WHERE ${MISSING_EN_CONTENT_SQL})::text AS "missingEnContent"
-     FROM news
-     WHERE deleted_at IS NULL`,
+       COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL})::text AS total,
+       COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND status = 'published')::text AS published,
+       COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND status = 'draft')::text AS draft,
+       COUNT(*) FILTER (WHERE deleted_at IS NOT NULL)::text AS deleted,
+       COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND created_at >= NOW() - INTERVAL '30 days')::text AS recent,
+       COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND ${NEWS_INCOMPLETE_SQL})::text AS incomplete,
+       COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND NULLIF(BTRIM(COALESCE(cover_image_url, '')), '') IS NULL)::text AS "missingCover",
+       COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND NULLIF(BTRIM(COALESCE(title_zh, '')), '') IS NULL)::text AS "missingZhTitle",
+       COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND NULLIF(BTRIM(COALESCE(title_en, '')), '') IS NULL)::text AS "missingEnTitle",
+       COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND NULLIF(BTRIM(COALESCE(excerpt_zh, '')), '') IS NULL)::text AS "missingZhExcerpt",
+       COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND NULLIF(BTRIM(COALESCE(excerpt_en, '')), '') IS NULL)::text AS "missingEnExcerpt",
+       COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND ${MISSING_ZH_CONTENT_SQL})::text AS "missingZhContent",
+       COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND ${MISSING_EN_CONTENT_SQL})::text AS "missingEnContent"
+     FROM news`,
   )
   const row = res.rows[0]
 
@@ -120,6 +124,7 @@ export async function getNewsStats(): Promise<NewsStats> {
     total: parseCount(row?.total),
     published: parseCount(row?.published),
     draft: parseCount(row?.draft),
+    deleted: parseCount(row?.deleted),
     recent: parseCount(row?.recent),
     incomplete: parseCount(row?.incomplete),
     missingCover: parseCount(row?.missingCover),
@@ -157,10 +162,10 @@ export function getNewsSideNavGroups(stats: NewsStats): AdminSideNavGroup[] {
       ],
     },
     {
-      title: '后续规划',
+      title: 'B3-3 规划',
       items: [
         { key: 'taxonomy', label: '分类管理', planned: true, Icon: Tags },
-        { key: 'recycle', label: '回收站', planned: true, Icon: Archive },
+        { key: 'recycle', label: '回收站', planned: true, badge: stats.deleted, Icon: Archive },
         { key: 'scheduled', label: '定时发布', planned: true, Icon: Clock3 },
         { key: 'seo', label: 'SEO 字段治理', planned: true, Icon: SearchCheck },
       ],
