@@ -36,6 +36,7 @@ export type NewsStats = {
   missingEnExcerpt: number
   missingZhContent: number
   missingEnContent: number
+  missingSeo: number
 }
 
 type NewsStatsRow = Record<keyof NewsStats, string>
@@ -55,6 +56,7 @@ export const EMPTY_NEWS_STATS: NewsStats = {
   missingEnExcerpt: 0,
   missingZhContent: 0,
   missingEnContent: 0,
+  missingSeo: 0,
 }
 
 const EMPTY_NEWS_CONTENT_SQL = `(
@@ -118,7 +120,16 @@ export async function getNewsStats(): Promise<NewsStats> {
        COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND NULLIF(BTRIM(COALESCE(excerpt_zh, '')), '') IS NULL)::text AS "missingZhExcerpt",
        COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND NULLIF(BTRIM(COALESCE(excerpt_en, '')), '') IS NULL)::text AS "missingEnExcerpt",
        COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND ${MISSING_ZH_CONTENT_SQL})::text AS "missingZhContent",
-       COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND ${MISSING_EN_CONTENT_SQL})::text AS "missingEnContent"
+       COUNT(*) FILTER (WHERE ${ACTIVE_NEWS_SQL} AND ${MISSING_EN_CONTENT_SQL})::text AS "missingEnContent",
+       COUNT(*) FILTER (
+         WHERE ${ACTIVE_NEWS_SQL}
+           AND (
+             NULLIF(BTRIM(COALESCE(seo_title_zh, '')), '') IS NULL
+             OR NULLIF(BTRIM(COALESCE(seo_title_en, '')), '') IS NULL
+             OR NULLIF(BTRIM(COALESCE(seo_description_zh, '')), '') IS NULL
+             OR NULLIF(BTRIM(COALESCE(seo_description_en, '')), '') IS NULL
+           )
+       )::text AS "missingSeo"
      FROM news`,
   )
   const row = res.rows[0]
@@ -138,6 +149,7 @@ export async function getNewsStats(): Promise<NewsStats> {
     missingEnExcerpt: parseCount(row?.missingEnExcerpt),
     missingZhContent: parseCount(row?.missingZhContent),
     missingEnContent: parseCount(row?.missingEnContent),
+    missingSeo: parseCount(row?.missingSeo),
   }
 }
 
@@ -171,7 +183,7 @@ export function getNewsSideNavGroups(stats: NewsStats): AdminSideNavGroup[] {
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/news/categories', Icon: Tags },
         { key: 'recycle', label: '新闻回收站', href: '/admin/content/news/recycle', badge: stats.deleted, Icon: Archive },
         { key: 'scheduled', label: '定时发布', href: '/admin/content/news/list?schedule=scheduled', badge: stats.scheduled, Icon: Clock3 },
-        { key: 'seo', label: 'SEO 字段治理', planned: true, Icon: SearchCheck },
+        { key: 'seo', label: 'SEO 字段治理', href: '/admin/content/news#b3-3-plan', badge: stats.missingSeo, Icon: SearchCheck },
       ],
     },
   ]
@@ -292,6 +304,13 @@ export const NEWS_EDIT_SECTIONS: Array<{
     detail: '分类字段已接入保存',
     href: '#taxonomy',
     Icon: Tags,
+  },
+  {
+    key: 'seo',
+    title: 'SEO 字段',
+    detail: '搜索标题、搜索描述',
+    href: '#seo',
+    Icon: SearchCheck,
   },
   {
     key: 'media',

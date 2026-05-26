@@ -26,6 +26,10 @@ export interface NewsRow {
   content_en: unknown
   excerpt_zh: string | null
   excerpt_en: string | null
+  seo_title_zh: string | null
+  seo_title_en: string | null
+  seo_description_zh: string | null
+  seo_description_en: string | null
   cover_image_url: string | null
   category_id: number | null
   category_slug: string | null
@@ -76,7 +80,9 @@ export type UpdateNewsCategoryInput = Partial<CreateNewsCategoryInput>
 
 const NEWS_COLUMNS = `
   n.id, n.slug, n.title_zh, n.title_en, n.content_zh, n.content_en,
-  n.excerpt_zh, n.excerpt_en, n.cover_image_url,
+  n.excerpt_zh, n.excerpt_en,
+  n.seo_title_zh, n.seo_title_en, n.seo_description_zh, n.seo_description_en,
+  n.cover_image_url,
   n.category_id,
   c.slug AS category_slug,
   c.title_zh AS category_title_zh,
@@ -246,6 +252,10 @@ export type CreateNewsInput = {
   content_en?: unknown
   excerpt_zh?: string | null
   excerpt_en?: string | null
+  seo_title_zh?: string | null
+  seo_title_en?: string | null
+  seo_description_zh?: string | null
+  seo_description_en?: string | null
   cover_image_url?: string | null
   category_id?: number | null
   scheduled_at?: string | null
@@ -256,8 +266,10 @@ export async function createNews(input: CreateNewsInput) {
   const res = await pool.query<{ id: number }>(
     `INSERT INTO news
        (slug, title_zh, title_en, content_zh, content_en,
-        excerpt_zh, excerpt_en, cover_image_url, category_id, scheduled_at, author_id, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'draft')
+        excerpt_zh, excerpt_en, seo_title_zh, seo_title_en,
+        seo_description_zh, seo_description_en, cover_image_url, category_id,
+        scheduled_at, author_id, status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'draft')
      RETURNING id`,
     [
       input.slug,
@@ -267,6 +279,10 @@ export async function createNews(input: CreateNewsInput) {
       input.content_en ?? {},
       input.excerpt_zh ?? null,
       input.excerpt_en ?? null,
+      input.seo_title_zh ?? null,
+      input.seo_title_en ?? null,
+      input.seo_description_zh ?? null,
+      input.seo_description_en ?? null,
       input.cover_image_url ?? null,
       input.category_id ?? null,
       input.scheduled_at ?? null,
@@ -286,6 +302,10 @@ export type UpdateNewsInput = {
   content_en?: unknown
   excerpt_zh?: string | null
   excerpt_en?: string | null
+  seo_title_zh?: string | null
+  seo_title_en?: string | null
+  seo_description_zh?: string | null
+  seo_description_en?: string | null
   cover_image_url?: string | null
   category_id?: number | null
   scheduled_at?: string | null
@@ -303,6 +323,10 @@ export async function updateNews(id: number, input: UpdateNewsInput) {
     ['content_en', 'content_en'],
     ['excerpt_zh', 'excerpt_zh'],
     ['excerpt_en', 'excerpt_en'],
+    ['seo_title_zh', 'seo_title_zh'],
+    ['seo_title_en', 'seo_title_en'],
+    ['seo_description_zh', 'seo_description_zh'],
+    ['seo_description_en', 'seo_description_en'],
     ['cover_image_url', 'cover_image_url'],
     ['category_id', 'category_id'],
     ['scheduled_at', 'scheduled_at'],

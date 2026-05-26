@@ -162,6 +162,10 @@ export default function NewsForm({
   const [contentEn, setContentEn] = useState<JSONContent>(coerceJSON(initialData?.content_en))
   const [excerptZh, setExcerptZh] = useState(initialData?.excerpt_zh ?? '')
   const [excerptEn, setExcerptEn] = useState(initialData?.excerpt_en ?? '')
+  const [seoTitleZh, setSeoTitleZh] = useState(initialData?.seo_title_zh ?? '')
+  const [seoTitleEn, setSeoTitleEn] = useState(initialData?.seo_title_en ?? '')
+  const [seoDescriptionZh, setSeoDescriptionZh] = useState(initialData?.seo_description_zh ?? '')
+  const [seoDescriptionEn, setSeoDescriptionEn] = useState(initialData?.seo_description_en ?? '')
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(
     initialData?.cover_image_url ?? null,
   )
@@ -183,10 +187,29 @@ export default function NewsForm({
     content_en: contentEn,
     excerpt_zh: excerptZh.trim() || null,
     excerpt_en: excerptEn.trim() || null,
+    seo_title_zh: seoTitleZh.trim() || null,
+    seo_title_en: seoTitleEn.trim() || null,
+    seo_description_zh: seoDescriptionZh.trim() || null,
+    seo_description_en: seoDescriptionEn.trim() || null,
     cover_image_url: coverImageUrl,
     category_id: categoryId ? Number(categoryId) : null,
     scheduled_at: fromDateTimeLocalValue(scheduledAt),
-  }), [categoryId, contentEn, contentZh, coverImageUrl, excerptEn, excerptZh, scheduledAt, slug, titleEn, titleZh])
+  }), [
+    categoryId,
+    contentEn,
+    contentZh,
+    coverImageUrl,
+    excerptEn,
+    excerptZh,
+    scheduledAt,
+    seoDescriptionEn,
+    seoDescriptionZh,
+    seoTitleEn,
+    seoTitleZh,
+    slug,
+    titleEn,
+    titleZh,
+  ])
   const completeness = getNewsCompleteness({
     slug,
     titleZh,
@@ -508,6 +531,68 @@ export default function NewsForm({
           <p className="mt-3 text-xs leading-5 text-[#8A8580]">
             格式为 YYYY-MM-DDTHH:mm。保存后新闻仍是草稿，不会自动出现在前台 `/news`。如果直接点击“保存并发布”，系统会按即时发布处理并清除定时。
           </p>
+        </div>
+
+        <div id="seo" className="scroll-mt-24 rounded-lg border border-[#E5DED4] bg-white p-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <label className="text-sm font-medium text-[#2C2A28]">SEO 字段</label>
+              <p className="mt-1 text-xs leading-5 text-[#6B6560]">
+                B3-11 先接入单篇新闻的搜索标题和描述；留空时前台继续使用新闻标题和摘要作为兜底。
+              </p>
+            </div>
+            <Badge className="border-violet-200 bg-violet-50 text-xs text-violet-700">
+              B3-11
+            </Badge>
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-[#61767D]">中文 SEO 标题</span>
+              <Input
+                value={seoTitleZh}
+                onChange={(e) => setSeoTitleZh(e.target.value)}
+                placeholder="用于搜索结果标题，可留空"
+                maxLength={160}
+                data-testid="news-seo-title-zh-input"
+              />
+              <span className="text-[11px] text-[#8A8580]">{seoTitleZh.length}/160</span>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-[#61767D]">English SEO Title</span>
+              <Input
+                value={seoTitleEn}
+                onChange={(e) => setSeoTitleEn(e.target.value)}
+                placeholder="Optional search result title"
+                maxLength={160}
+                data-testid="news-seo-title-en-input"
+              />
+              <span className="text-[11px] text-[#8A8580]">{seoTitleEn.length}/160</span>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-[#61767D]">中文 SEO 描述</span>
+              <Textarea
+                value={seoDescriptionZh}
+                onChange={(e) => setSeoDescriptionZh(e.target.value)}
+                placeholder="用于搜索结果描述，可留空"
+                maxLength={300}
+                rows={3}
+                data-testid="news-seo-description-zh-input"
+              />
+              <span className="text-[11px] text-[#8A8580]">{seoDescriptionZh.length}/300</span>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-[#61767D]">English SEO Description</span>
+              <Textarea
+                value={seoDescriptionEn}
+                onChange={(e) => setSeoDescriptionEn(e.target.value)}
+                placeholder="Optional search result description"
+                maxLength={300}
+                rows={3}
+                data-testid="news-seo-description-en-input"
+              />
+              <span className="text-[11px] text-[#8A8580]">{seoDescriptionEn.length}/300</span>
+            </div>
+          </div>
         </div>
 
         {/* Cover image */}

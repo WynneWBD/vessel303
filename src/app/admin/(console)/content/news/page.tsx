@@ -194,6 +194,7 @@ function TodoPanel({ stats }: { stats: NewsStats }) {
         <TodoMetric title="缺中文正文" detail="中文新闻详情内容为空" count={stats.missingZhContent} Icon={Newspaper} />
         <TodoMetric title="缺英文正文" detail="英文新闻详情内容为空" count={stats.missingEnContent} Icon={Newspaper} />
         <TodoMetric title="缺标题" detail="标题是发布和前台入口的基础" count={stats.missingZhTitle + stats.missingEnTitle} Icon={SearchCheck} />
+        <TodoMetric title="缺 SEO 字段" detail="搜索标题或描述尚未单独维护" count={stats.missingSeo} Icon={SearchCheck} />
       </div>
     </section>
   )
@@ -252,15 +253,25 @@ function OperationRoadmap({ stats }: { stats: NewsStats }) {
       Icon: CalendarClock,
       tone: 'blue',
     },
+    {
+      title: 'SEO 字段治理',
+      status: `B3-11 · ${formatNumber(stats.missingSeo)} 条待补`,
+      detail: '300 后台有 SEO 信息维护入口，当前新闻详情页需要能单独控制搜索标题和描述。',
+      evidence: '已新增单篇新闻 SEO 标题和 SEO 描述字段，前台详情页 metadata 会优先读取 SEO 字段。',
+      next: '进入新闻编辑页，在“SEO 字段”区域维护搜索标题和描述；关键词和批量 SEO 后续单独排期。',
+      href: '/admin/content/news/list',
+      Icon: SearchCheck,
+      tone: 'green',
+    },
   ]
 
   return (
     <section id="b3-3-plan" className="scroll-mt-24 space-y-4">
       <SectionTitle
         title="B3-3 运营能力规划"
-        detail="按 300 新闻后台对照分类、回收站、批量操作和定时发布；B3-10 先落单篇排期字段和状态入口。"
+        detail="按 300 新闻后台对照分类、回收站、批量操作、定时发布和 SEO；B3-11 先落单篇 SEO 标题与描述。"
       />
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
         {plans.map((plan) => (
           <OperationPlanCard key={plan.title} plan={plan} />
         ))}
@@ -336,7 +347,7 @@ function OperationBoundary() {
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">后续再做</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
-            永久删除、批量发布 / 删除、定时自动执行器和权限分级单独排期。
+            永久删除、批量发布 / 删除、定时自动执行器、批量 SEO 和权限分级单独排期。
           </p>
         </div>
       </div>

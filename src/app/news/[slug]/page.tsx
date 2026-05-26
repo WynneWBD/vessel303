@@ -47,15 +47,18 @@ export async function generateMetadata({
     })
   }
 
-  const title = textFallback(news.title_en, news.title_zh, 'VESSEL® News')
+  const fallbackTitle = textFallback(news.title_en, news.title_zh, 'VESSEL® News')
+  const title = textFallback(news.seo_title_en, news.seo_title_zh) || `${fallbackTitle} | VESSEL® News`
   const description = textFallback(
+    news.seo_description_en,
+    news.seo_description_zh,
     news.excerpt_en,
     news.excerpt_zh,
     'VESSEL® brand news, product updates and smart prefab architecture project highlights.',
   )
 
   return buildPageMetadata({
-    title: `${title} | VESSEL® News`,
+    title,
     description,
     path: `/news/${news.slug}`,
     image: news.cover_image_url,
