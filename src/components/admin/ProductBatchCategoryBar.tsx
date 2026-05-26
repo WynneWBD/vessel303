@@ -10,6 +10,8 @@ import type { ProductCategoryRow } from '@/lib/product-catalog-db'
 
 type ProductCategoryOption = Pick<ProductCategoryRow, 'id' | 'title_zh' | 'title_en'>
 
+const plannedBatchActions = ['转移橱窗', '标记', '状态', '置顶', '删除', '翻译']
+
 export default function ProductBatchCategoryBar({
   categories,
 }: {
@@ -133,6 +135,16 @@ export default function ProductBatchCategoryBar({
             <Tag size={13} />
             转移分类
           </Button>
+          <span className="hidden h-5 w-px bg-[#D8E7E8] xl:inline-flex" />
+          {plannedBatchActions.map((action) => (
+            <span
+              key={action}
+              className="inline-flex h-8 items-center rounded-md border border-dashed border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#9AA9AD]"
+              title="对照 300 产品列表批量工具栏；本阶段只展示规划位，不开放批量写入。"
+            >
+              {action}
+            </span>
+          ))}
         </div>
       </div>
     </div>

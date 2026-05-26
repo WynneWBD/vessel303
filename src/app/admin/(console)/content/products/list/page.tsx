@@ -42,6 +42,7 @@ const PAGE_SIZE = 50
 type AdminRole = 'admin' | 'operator'
 type ProductStatus = 'draft' | 'published'
 type ProductView = '' | 'incomplete'
+type ProductIssue = '' | 'media' | 'content' | 'category' | 'attributes' | 'seo'
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -50,6 +51,7 @@ type PageProps = {
 type FilterState = {
   status: ProductStatus | ''
   view: ProductView
+  issue: ProductIssue
   search: string
   series: string
   productType: string
@@ -89,6 +91,10 @@ type ProductListRow = {
   category_title_en: string | null
   attribute_option_count: number | string
   attribute_labels_zh: string[] | null
+  seo_title_zh: string | null
+  seo_title_en: string | null
+  seo_description_zh: string | null
+  seo_description_en: string | null
   status: ProductStatus
   created_at: string
   updated_at: string
@@ -135,6 +141,17 @@ const EMPTY_OPTIONS: ProductOptions = {
   attributeTemplates: [],
 }
 
+const PRODUCT_ISSUE_OPTIONS: { value: ProductIssue; label: string }[] = [
+  { value: '', label: '全部缺项' },
+  { value: 'media', label: '缺素材' },
+  { value: 'content', label: '缺内容' },
+  { value: 'category', label: '未分类' },
+  { value: 'attributes', label: '缺属性' },
+  { value: 'seo', label: '缺 SEO' },
+]
+
+const PRIORITY_ISSUES = ['缺封面', '缺图库', '未分类', '缺 SEO']
+
 const PRODUCT_INCOMPLETE_SQL = `(
   NULLIF(BTRIM(image), '') IS NULL
   OR jsonb_array_length(COALESCE(gallery, '[]'::jsonb)) = 0
@@ -145,10 +162,15 @@ const PRODUCT_INCOMPLETE_SQL = `(
   OR jsonb_array_length(COALESCE(features_cn, '[]'::jsonb)) = 0
   OR jsonb_array_length(COALESCE(features_en, '[]'::jsonb)) = 0
   OR jsonb_array_length(COALESCE(detail_modules, '[]'::jsonb)) = 0
+  OR category_id IS NULL
   OR NOT EXISTS (
     SELECT 1 FROM product_attribute_values pav
     WHERE pav.product_id = product_catalog.id
   )
+  OR NULLIF(BTRIM(COALESCE(seo_title_zh, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(seo_title_en, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(seo_description_zh, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(seo_description_en, '')), '') IS NULL
 )`
 
 const PRODUCT_INCOMPLETE_SQL_ALIASED = `(
@@ -161,10 +183,42 @@ const PRODUCT_INCOMPLETE_SQL_ALIASED = `(
   OR jsonb_array_length(COALESCE(pc.features_cn, '[]'::jsonb)) = 0
   OR jsonb_array_length(COALESCE(pc.features_en, '[]'::jsonb)) = 0
   OR jsonb_array_length(COALESCE(pc.detail_modules, '[]'::jsonb)) = 0
+  OR pc.category_id IS NULL
   OR NOT EXISTS (
     SELECT 1 FROM product_attribute_values pav
     WHERE pav.product_id = pc.id
   )
+  OR NULLIF(BTRIM(COALESCE(pc.seo_title_zh, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(pc.seo_title_en, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(pc.seo_description_zh, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(pc.seo_description_en, '')), '') IS NULL
+)`
+
+const PRODUCT_MISSING_MEDIA_SQL_ALIASED = `(
+  NULLIF(BTRIM(pc.image), '') IS NULL
+  OR jsonb_array_length(COALESCE(pc.gallery, '[]'::jsonb)) = 0
+)`
+
+const PRODUCT_MISSING_CONTENT_SQL_ALIASED = `(
+  NULLIF(BTRIM(pc.description_cn), '') IS NULL
+  OR NULLIF(BTRIM(pc.description_en), '') IS NULL
+  OR jsonb_array_length(COALESCE(pc.tags_cn, '[]'::jsonb)) = 0
+  OR jsonb_array_length(COALESCE(pc.tags_en, '[]'::jsonb)) = 0
+  OR jsonb_array_length(COALESCE(pc.features_cn, '[]'::jsonb)) = 0
+  OR jsonb_array_length(COALESCE(pc.features_en, '[]'::jsonb)) = 0
+  OR jsonb_array_length(COALESCE(pc.detail_modules, '[]'::jsonb)) = 0
+)`
+
+const PRODUCT_MISSING_ATTRIBUTES_SQL_ALIASED = `NOT EXISTS (
+  SELECT 1 FROM product_attribute_values pav
+  WHERE pav.product_id = pc.id
+)`
+
+const PRODUCT_MISSING_SEO_SQL_ALIASED = `(
+  NULLIF(BTRIM(COALESCE(pc.seo_title_zh, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(pc.seo_title_en, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(pc.seo_description_zh, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(pc.seo_description_en, '')), '') IS NULL
 )`
 
 function firstParam(value: string | string[] | undefined): string | undefined {
@@ -179,6 +233,10 @@ function normalizeView(value: string | undefined): ProductView {
   return value === 'incomplete' ? 'incomplete' : ''
 }
 
+function normalizeIssue(value: string | undefined): ProductIssue {
+  return PRODUCT_ISSUE_OPTIONS.some((option) => option.value === value) ? (value as ProductIssue) : ''
+}
+
 function normalizePage(value: string | undefined): number {
   const page = Number(value)
   return Number.isInteger(page) && page > 0 ? page : 1
@@ -188,6 +246,7 @@ function parseFilters(sp: Record<string, string | string[] | undefined>): Filter
   return {
     status: normalizeStatus(firstParam(sp.status)),
     view: normalizeView(firstParam(sp.view)),
+    issue: normalizeIssue(firstParam(sp.issue)),
     search: firstParam(sp.search)?.trim() ?? '',
     series: firstParam(sp.series)?.trim() ?? '',
     productType: firstParam(sp.type)?.trim() ?? '',
@@ -240,21 +299,59 @@ function getProductIssues(product: ProductListRow): string[] {
   if (!hasItems(product.tags_cn) || !hasItems(product.tags_en)) issues.push('缺标签')
   if (!hasItems(product.features_cn) || !hasItems(product.features_en)) issues.push('缺亮点')
   if (!hasItems(product.detail_modules)) issues.push('缺详情模块')
+  if (!product.category_id) issues.push('未分类')
   if (Number(product.attribute_option_count ?? 0) === 0) issues.push('缺产品属性')
+  if (
+    !hasText(product.seo_title_zh)
+    || !hasText(product.seo_title_en)
+    || !hasText(product.seo_description_zh)
+    || !hasText(product.seo_description_en)
+  ) {
+    issues.push('缺 SEO')
+  }
 
-  return issues
+  return sortIssues(issues)
 }
 
 function getCompletenessLabel(issues: string[]): string {
   if (issues.length === 0) return '完整'
   if (issues.includes('缺封面') || issues.includes('缺图库')) return '待补素材'
+  if (issues.includes('未分类') || issues.includes('缺 SEO')) return '优先处理'
   return '可展示但待补充'
 }
 
 function completenessClass(label: string): string {
   if (label === '完整') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
   if (label === '待补素材') return 'border-orange-200 bg-orange-50 text-orange-700'
+  if (label === '优先处理') return 'border-[#F2C6A7] bg-[#FFF7F0] text-[#B85D21]'
   return 'border-zinc-200 bg-zinc-50 text-zinc-600'
+}
+
+function issueClass(issue: string): string {
+  if (PRIORITY_ISSUES.includes(issue)) {
+    return 'border-[#F2C6A7] bg-[#FFF7F0] font-semibold text-[#B85D21]'
+  }
+  return 'border-zinc-200 bg-zinc-50 text-zinc-600'
+}
+
+function sortIssues(issues: string[]): string[] {
+  return [...issues].sort((a, b) => {
+    const aIndex = PRIORITY_ISSUES.indexOf(a)
+    const bIndex = PRIORITY_ISSUES.indexOf(b)
+    if (aIndex === -1 && bIndex === -1) return 0
+    if (aIndex === -1) return 1
+    if (bIndex === -1) return -1
+    return aIndex - bIndex
+  })
+}
+
+function getIssueCondition(issue: ProductIssue): string | null {
+  if (issue === 'media') return PRODUCT_MISSING_MEDIA_SQL_ALIASED
+  if (issue === 'content') return PRODUCT_MISSING_CONTENT_SQL_ALIASED
+  if (issue === 'category') return 'pc.category_id IS NULL'
+  if (issue === 'attributes') return PRODUCT_MISSING_ATTRIBUTES_SQL_ALIASED
+  if (issue === 'seo') return PRODUCT_MISSING_SEO_SQL_ALIASED
+  return null
 }
 
 function createHref(filters: FilterState, patch: Partial<FilterState & { clearSearch: boolean }>): string {
@@ -267,6 +364,7 @@ function createHref(filters: FilterState, patch: Partial<FilterState & { clearSe
 
   if (next.status) params.set('status', next.status)
   if (next.view) params.set('view', next.view)
+  if (next.issue) params.set('issue', next.issue)
   if (!patch.clearSearch && next.search) params.set('search', next.search)
   if (next.series) params.set('series', next.series)
   if (next.productType) params.set('type', next.productType)
@@ -289,6 +387,11 @@ function buildWhere(filters: FilterState): { where: string; params: unknown[] } 
 
   if (filters.view === 'incomplete') {
     conditions.push(PRODUCT_INCOMPLETE_SQL_ALIASED)
+  }
+
+  const issueCondition = getIssueCondition(filters.issue)
+  if (issueCondition) {
+    conditions.push(issueCondition)
   }
 
   if (filters.search) {
@@ -445,6 +548,10 @@ async function getProducts(filters: FilterState): Promise<ProductListResult> {
        c.title_en AS category_title_en,
        COALESCE(attr.option_count, 0)::int AS attribute_option_count,
        COALESCE(attr.labels_zh, ARRAY[]::text[]) AS attribute_labels_zh,
+       pc.seo_title_zh,
+       pc.seo_title_en,
+       pc.seo_description_zh,
+       pc.seo_description_en,
        pc.status,
        pc.created_at::text AS created_at,
        pc.updated_at::text AS updated_at
@@ -542,17 +649,17 @@ function SummaryCards({ summary }: { summary: ProductSummary }) {
 
 function StatusTabs({ filters, summary }: { filters: FilterState; summary: ProductSummary }) {
   const tabs = [
-    { label: '全部', href: createHref(filters, { status: '', view: '' }), active: !filters.status && !filters.view, count: summary.total },
+    { label: '全部', href: createHref(filters, { status: '', view: '', issue: '' }), active: !filters.status && !filters.view && !filters.issue, count: summary.total },
     {
       label: '已发布',
-      href: createHref(filters, { status: 'published', view: '' }),
-      active: filters.status === 'published' && !filters.view,
+      href: createHref(filters, { status: 'published', view: '', issue: '' }),
+      active: filters.status === 'published' && !filters.view && !filters.issue,
       count: summary.published,
     },
     {
       label: '草稿',
-      href: createHref(filters, { status: 'draft', view: '' }),
-      active: filters.status === 'draft' && !filters.view,
+      href: createHref(filters, { status: 'draft', view: '', issue: '' }),
+      active: filters.status === 'draft' && !filters.view && !filters.issue,
       count: summary.draft,
     },
     {
@@ -590,7 +697,7 @@ function FilterPanel({ filters, options }: { filters: FilterState; options: Prod
     <form action="/admin/content/products/list" className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
       {filters.status && <input type="hidden" name="status" value={filters.status} />}
       {filters.view && <input type="hidden" name="view" value={filters.view} />}
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(220px,1fr)_140px_140px_150px_190px_auto_auto]">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(220px,1fr)_140px_140px_150px_150px_190px_auto_auto]">
         <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold text-[#61767D]">
           搜索产品
           <span className="relative">
@@ -644,6 +751,20 @@ function FilterPanel({ filters, options }: { filters: FilterState; options: Prod
             {options.categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.title_zh}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-[#61767D]">
+          缺项
+          <select
+            name="issue"
+            defaultValue={filters.issue}
+            className="h-10 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm text-[#1E2C31] outline-none transition focus:border-[#1889B6]"
+          >
+            {PRODUCT_ISSUE_OPTIONS.map((option) => (
+              <option key={option.value || 'all'} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>
@@ -807,7 +928,7 @@ function ProductRow({ product }: { product: ProductListRow }) {
               </span>
             ) : (
               visibleIssues.map((issue) => (
-                <span key={issue} className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-600">
+                <span key={issue} className={`rounded-full border px-2 py-0.5 text-xs ${issueClass(issue)}`}>
                   {issue}
                 </span>
               ))
@@ -895,6 +1016,7 @@ function EmptyState({ filters }: { filters: FilterState }) {
   const hasFilter = Boolean(
     filters.status
     || filters.view
+    || filters.issue
     || filters.search
     || filters.series
     || filters.productType

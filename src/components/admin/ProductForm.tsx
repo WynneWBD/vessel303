@@ -74,6 +74,8 @@ const detailModuleTypeOptions: { type: CatalogDetailModuleType; label: string; o
   { type: 'content', label: '图文内容', optionLabel: '图文内容 Content' },
 ]
 
+const priorityProductIssues = ['缺封面', '缺详情图库', '未分类', '缺 SEO']
+
 const emptyState: FormState = {
   id: '',
   productSeries: 'E7',
@@ -175,7 +177,16 @@ function getProductCompleteness(form: FormState, galleryUrls: string[]): {
   if (splitLines(form.features_cn).length === 0 || splitLines(form.features_en).length === 0) {
     issues.push('缺亮点')
   }
+  if (!form.category_id) issues.push('未分类')
   if (form.attribute_option_ids.length === 0) issues.push('缺产品属性')
+  if (
+    !hasText(form.seo_title_zh)
+    || !hasText(form.seo_title_en)
+    || !hasText(form.seo_description_zh)
+    || !hasText(form.seo_description_en)
+  ) {
+    issues.push('缺 SEO')
+  }
   if (visibleDetailModules.length === 0) issues.push('缺详情模块')
 
   if (issues.length === 0) {
@@ -183,10 +194,21 @@ function getProductCompleteness(form: FormState, galleryUrls: string[]): {
   }
 
   if (issues.includes('缺封面') || issues.includes('缺详情图库')) {
-    return { level: '待补素材', issues }
+    return { level: '待补素材', issues: sortProductIssues(issues) }
   }
 
-  return { level: '可展示但待补充', issues }
+  return { level: '可展示但待补充', issues: sortProductIssues(issues) }
+}
+
+function sortProductIssues(issues: string[]) {
+  return [...issues].sort((a, b) => {
+    const aIndex = priorityProductIssues.indexOf(a)
+    const bIndex = priorityProductIssues.indexOf(b)
+    if (aIndex === -1 && bIndex === -1) return 0
+    if (aIndex === -1) return 1
+    if (bIndex === -1) return -1
+    return aIndex - bIndex
+  })
 }
 
 function completenessBadgeClass(level: CompletenessLevel) {
@@ -1451,7 +1473,7 @@ export default function ProductForm({
         <FormSection
           id="publish-check"
           title="发布检查"
-          description="检查状态、完整度和前台预览；这里只做提醒，不新增发布限制。"
+          description="检查状态、完整度、分类、属性、SEO 和前台预览；这里只做提醒，不新增发布限制。"
         >
           <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-5">
             <div className="space-y-4">
@@ -1504,7 +1526,7 @@ export default function ProductForm({
                 </Badge>
               </div>
               <p className="mt-2 text-xs leading-relaxed text-[#6B6560]">
-                只做运营提示，不阻止保存或发布。发布前请人工确认图片、中英文内容和详情模块。
+                只做运营提示，不阻止保存或发布。发布前请人工确认图片、中英文内容、分类、属性、SEO 和详情模块。
               </p>
               {visibleCompletenessIssues.length > 0 ? (
                 <div className="mt-3 flex flex-wrap gap-1.5">
@@ -1557,7 +1579,7 @@ export default function ProductForm({
             ? '这个产品当前已经发布。确认后会保存当前表单内容，并继续作为已发布产品展示在前台。'
             : '确认后会保存当前表单内容，并把产品状态改为已发布，前台产品页会对外展示。'}
           <br />
-          发布前检查只做提醒，不会自动阻止发布，请确认缺项和图片素材没有问题。
+          发布前检查只做提醒，不会自动阻止发布，请确认缺项、分类、属性、SEO 和图片素材没有问题。
         </>
       )}
       confirmLabel={isCurrentlyPublished ? '确认更新前台' : '确认发布'}

@@ -64,6 +64,7 @@ type TodoEntry = {
   title: string
   detail: string
   count: number
+  href: string
   Icon: LucideIcon
 }
 
@@ -213,7 +214,7 @@ function getSideNavGroups(stats: ProductStats): AdminSideNavGroup[] {
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', badge: stats.attributes, Icon: SlidersHorizontal },
         { key: 'recycle', label: '产品回收站', href: '/admin/content/products/recycle', badge: stats.deleted, Icon: Archive },
         { key: 'bulk-check', label: '批量检查', planned: true, Icon: ListChecks },
-        { key: 'seo', label: 'SEO 字段治理', href: '/admin/content/products/list?view=incomplete', badge: stats.missingSeo, Icon: Sparkles },
+        { key: 'seo', label: 'SEO 字段治理', href: '/admin/content/products/list?view=incomplete&issue=seo', badge: stats.missingSeo, Icon: Sparkles },
       ],
     },
   ]
@@ -277,60 +278,70 @@ function getTodoEntries(stats: ProductStats): TodoEntry[] {
       title: '缺封面',
       detail: '产品列表和详情页缺少第一视觉',
       count: stats.missingCover,
+      href: '/admin/content/products/list?view=incomplete&issue=media',
       Icon: ImageIcon,
     },
     {
       title: '缺图库',
       detail: '详情页缺少多图展示素材',
       count: stats.missingGallery,
+      href: '/admin/content/products/list?view=incomplete&issue=media',
       Icon: ImageIcon,
     },
     {
       title: '缺中文简介',
       detail: '中文内容还需要补齐',
       count: stats.missingCnDescription,
+      href: '/admin/content/products/list?view=incomplete&issue=content',
       Icon: FileText,
     },
     {
       title: '缺英文简介',
       detail: '海外官网展示需要英文简介',
       count: stats.missingEnDescription,
+      href: '/admin/content/products/list?view=incomplete&issue=content',
       Icon: FileText,
     },
     {
       title: '缺标签',
       detail: '缺少产品定位和筛选信息',
       count: stats.missingTags,
+      href: '/admin/content/products/list?view=incomplete&issue=content',
       Icon: Tags,
     },
     {
       title: '缺亮点',
       detail: '产品卖点还不够清楚',
       count: stats.missingFeatures,
+      href: '/admin/content/products/list?view=incomplete&issue=content',
       Icon: Sparkles,
     },
     {
       title: '缺详情模块',
       detail: '详情页缺少结构化展示内容',
       count: stats.missingDetailModules,
+      href: '/admin/content/products/list?view=incomplete&issue=content',
       Icon: Layers3,
     },
     {
       title: '未分类',
       detail: '还没有归入产品分类',
       count: stats.missingCategory,
+      href: '/admin/content/products/list?view=incomplete&issue=category',
       Icon: Tags,
     },
     {
       title: '缺产品属性',
       detail: '缺少属性模板中的筛选信息',
       count: stats.missingAttributes,
+      href: '/admin/content/products/list?view=incomplete&issue=attributes',
       Icon: SlidersHorizontal,
     },
     {
       title: '缺 SEO',
       detail: '搜索标题或摘要未补齐',
       count: stats.missingSeo,
+      href: '/admin/content/products/list?view=incomplete&issue=seo',
       Icon: Sparkles,
     },
   ]
@@ -497,7 +508,10 @@ function TodoStat({ entry }: { entry: TodoEntry }) {
   const isOk = entry.count === 0
 
   return (
-    <div className="p-4">
+    <Link
+      href={entry.href}
+      className="block p-4 transition hover:bg-[#F7FAFA]"
+    >
       <div className="flex items-center gap-2">
         <span
           className={`flex h-8 w-8 items-center justify-center rounded-md ${
@@ -512,7 +526,7 @@ function TodoStat({ entry }: { entry: TodoEntry }) {
         {formatNumber(entry.count)}
       </p>
       <p className="mt-2 text-xs leading-5 text-[#61767D]">{entry.detail}</p>
-    </div>
+    </Link>
   )
 }
 
