@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ExternalLink, RotateCcw } from 'lucide-react'
+import { RotateCcw } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
@@ -118,11 +118,6 @@ export default function NewsRecycleClient({
             </div>
             <p className="text-xs text-[#61767D]">{formatDate(item.deleted_at)}</p>
             <div className="flex items-center gap-1.5">
-              <Button asChild variant="ghost" size="icon" className="h-8 w-8" title="打开编辑页">
-                <Link href={`/admin/content/news/${item.id}/edit`}>
-                  <ExternalLink size={14} />
-                </Link>
-              </Button>
               <Button
                 type="button"
                 variant="outline"
@@ -133,6 +128,7 @@ export default function NewsRecycleClient({
                 <RotateCcw size={14} />
                 恢复
               </Button>
+              <span className="text-[11px] text-[#8A9AA0]">恢复后可编辑</span>
             </div>
             </div>
           ))}
