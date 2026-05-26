@@ -197,6 +197,7 @@ type OperationPlan = {
   detail: string
   evidence: string
   next: string
+  href?: string
   Icon: LucideIcon
   tone: 'blue' | 'green' | 'orange' | 'neutral'
 }
@@ -205,10 +206,11 @@ function OperationRoadmap({ stats }: { stats: NewsStats }) {
   const plans: OperationPlan[] = [
     {
       title: '分类管理',
-      status: '需要字段',
+      status: 'B3-4',
       detail: '300 列表有“所属分类”和“分类管理”，当前新闻表没有分类字段。',
-      evidence: '本轮只做入口口径和后续拆分，不新增数据库结构。',
-      next: '下一轮先定分类口径，再加表字段、筛选和迁移。',
+      evidence: '已进入 B3-4 字段方案和安全入口，不新增数据库结构。',
+      next: '查看分类方案页，确认字段、迁移和表单接入顺序。',
+      href: '/admin/content/news/categories',
       Icon: Tags,
       tone: 'blue',
     },
@@ -267,8 +269,8 @@ function OperationPlanCard({ plan }: { plan: OperationPlan }) {
           ? 'bg-[#F0F2F2] text-[#61767D]'
           : 'bg-[#EAF4FF] text-[#3078C8]'
 
-  return (
-    <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+  const content = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <span className={`flex h-11 w-11 items-center justify-center rounded-md ${accent}`}>
           <Icon size={20} />
@@ -283,6 +285,23 @@ function OperationPlanCard({ plan }: { plan: OperationPlan }) {
       <p className="mt-3 border-t border-[#E6EEEE] pt-3 text-xs leading-5 text-[#61767D]">
         {plan.next}
       </p>
+    </>
+  )
+
+  if (plan.href) {
+    return (
+      <Link
+        href={plan.href}
+        className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60"
+      >
+        {content}
+      </Link>
+    )
+  }
+
+  return (
+    <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+      {content}
     </div>
   )
 }
@@ -306,7 +325,7 @@ function OperationBoundary() {
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">后续再做</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
-            分类、回收站恢复、真实批量写入、定时发布和权限分级单独排期。
+            回收站恢复、真实批量写入、定时发布和权限分级单独排期；分类先进入 B3-4 字段方案。
           </p>
         </div>
       </div>

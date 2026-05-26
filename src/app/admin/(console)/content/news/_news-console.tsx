@@ -164,7 +164,7 @@ export function getNewsSideNavGroups(stats: NewsStats): AdminSideNavGroup[] {
     {
       title: 'B3-3 规划',
       items: [
-        { key: 'taxonomy', label: '分类管理', planned: true, Icon: Tags },
+        { key: 'taxonomy', label: '分类方案', href: '/admin/content/news/categories', Icon: Tags },
         { key: 'recycle', label: '回收站', planned: true, badge: stats.deleted, Icon: Archive },
         { key: 'scheduled', label: '定时发布', planned: true, Icon: Clock3 },
         { key: 'seo', label: 'SEO 字段治理', planned: true, Icon: SearchCheck },
@@ -274,6 +274,13 @@ export const NEWS_EDIT_SECTIONS: Array<{
     detail: 'Slug、标题、发布状态',
     href: '#basic',
     Icon: FileText,
+  },
+  {
+    key: 'taxonomy',
+    title: '分类预留',
+    detail: '所属分类字段方案',
+    href: '#taxonomy',
+    Icon: Tags,
   },
   {
     key: 'media',

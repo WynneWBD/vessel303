@@ -8,6 +8,7 @@ import type { NewsRow, NewsStatus } from '@/lib/news-db'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import NewsEditor from './NewsEditor'
@@ -24,6 +25,13 @@ interface Props {
 const EMPTY_DOC: JSONContent = { type: 'doc', content: [] }
 
 type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
+
+const CATEGORY_PREVIEW_OPTIONS = [
+  '公司资讯',
+  '产品与展会',
+  '项目案例',
+  '行业观察',
+]
 
 function coerceJSON(v: unknown): JSONContent {
   if (v && typeof v === 'object' && !Array.isArray(v)) return v as JSONContent
@@ -355,6 +363,35 @@ export default function NewsForm({ initialData, mode, basePath = '/admin/news' }
             onChange={(e) => setSlug(e.target.value)}
             placeholder="vessel-2026-launch"
           />
+        </div>
+
+        <div id="taxonomy" className="scroll-mt-24 rounded-lg border border-[#E5DED4] bg-white p-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <label className="text-sm font-medium text-[#2C2A28]">所属分类</label>
+              <p className="mt-1 text-xs leading-5 text-[#6B6560]">
+                B3-4 只做字段方案和表单预留位，当前不会写入 API 请求，也不会改变新闻保存、发布或前台展示。
+              </p>
+            </div>
+            <Badge className="border-[#D8E7E8] bg-[#F7FAFA] text-xs text-[#61767D]">
+              暂未启用保存
+            </Badge>
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+            <div className="flex flex-wrap gap-2">
+              {CATEGORY_PREVIEW_OPTIONS.map((option) => (
+                <span
+                  key={option}
+                  className="rounded-full border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-1 text-xs font-semibold text-[#61767D]"
+                >
+                  {option}
+                </span>
+              ))}
+            </div>
+            <Select disabled value="" onChange={() => undefined} className="w-full">
+              <option value="">分类字段尚未接入</option>
+            </Select>
+          </div>
         </div>
 
         {/* Cover image */}

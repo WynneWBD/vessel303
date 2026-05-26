@@ -11,7 +11,7 @@ import {
   safeLoad,
   type AdminRole,
 } from '../_news-console'
-import { FileText, ListChecks, Plus } from 'lucide-react'
+import { FileText, ListChecks, Plus, Tags } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -79,6 +79,7 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
           <div className="flex flex-wrap gap-2">
             <PrimaryAction href="/admin/content/news/new" Icon={Plus} label="新增新闻" primary />
             <PrimaryAction href="/admin/content/news/list?status=draft" Icon={FileText} label="查看草稿" />
+            <PrimaryAction href="/admin/content/news/categories" Icon={Tags} label="分类方案" />
             <PrimaryAction href="/admin/content/news" Icon={ListChecks} label="新闻概览" />
           </div>
         </div>
