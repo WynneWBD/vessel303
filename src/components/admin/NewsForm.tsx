@@ -129,8 +129,8 @@ function fromDateTimeLocalValue(value: string) {
   return isNaN(d.getTime()) ? null : value
 }
 
-function getDateTimeLocalMin() {
-  return toDateTimeLocalValue(new Date().toISOString())
+function isScheduledAtValue(value: string) {
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value) && !isNaN(new Date(value).getTime())
 }
 
 type SavedNews = {
@@ -243,6 +243,9 @@ export default function NewsForm({
     if (!cleanSlug) return 'Slug 不能为空'
     if (!titleZh.trim()) return '中文标题不能为空'
     if (!titleEn.trim()) return '英文标题不能为空'
+    if (scheduledAt && !isScheduledAtValue(scheduledAt)) {
+      return '计划发布时间格式应为 YYYY-MM-DDTHH:mm，例如 2026-06-30T09:30'
+    }
     return null
   }
 
@@ -484,10 +487,10 @@ export default function NewsForm({
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-semibold text-[#61767D]">计划发布时间</span>
               <Input
-                type="datetime-local"
+                type="text"
                 value={scheduledAt}
-                min={getDateTimeLocalMin()}
                 onChange={(e) => setScheduledAt(e.target.value)}
+                placeholder="2026-06-30T09:30"
                 disabled={isPublished}
                 data-testid="news-scheduled-at-input"
               />
@@ -503,7 +506,7 @@ export default function NewsForm({
             </Button>
           </div>
           <p className="mt-3 text-xs leading-5 text-[#8A8580]">
-            保存后新闻仍是草稿，不会自动出现在前台 `/news`。如果直接点击“保存并发布”，系统会按即时发布处理并清除定时。
+            格式为 YYYY-MM-DDTHH:mm。保存后新闻仍是草稿，不会自动出现在前台 `/news`。如果直接点击“保存并发布”，系统会按即时发布处理并清除定时。
           </p>
         </div>
 
