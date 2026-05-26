@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import ProductBatchCategoryBar from '@/components/admin/ProductBatchCategoryBar'
+import ProductListDeleteAction from '@/components/admin/ProductListDeleteAction'
 import { pool } from '@/lib/db'
 import {
   countDeletedCatalogProducts,
@@ -780,6 +781,10 @@ function ProductRow({ product }: { product: ProductListRow }) {
             <Pencil size={14} />
             编辑
           </Link>
+          <ProductListDeleteAction
+            productId={product.id}
+            productName={product.name_cn || product.name_en || product.id}
+          />
         </div>
       </div>
     </article>
