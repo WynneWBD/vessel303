@@ -206,21 +206,25 @@ export default function NewsCategoryManagerClient({
         <h3 className="text-sm font-bold text-[#1E2C31]">新增分类</h3>
         <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-[150px_150px_150px_90px_120px_minmax(0,1fr)]">
           <Input
+            data-testid="news-category-create-slug"
             placeholder="slug"
             value={createForm.slug}
             onChange={(e) => setCreateForm((form) => ({ ...form, slug: e.target.value }))}
           />
           <Input
+            data-testid="news-category-create-title-zh"
             placeholder="中文分类"
             value={createForm.title_zh}
             onChange={(e) => setCreateForm((form) => ({ ...form, title_zh: e.target.value }))}
           />
           <Input
+            data-testid="news-category-create-title-en"
             placeholder="英文分类"
             value={createForm.title_en}
             onChange={(e) => setCreateForm((form) => ({ ...form, title_en: e.target.value }))}
           />
           <Input
+            data-testid="news-category-create-sort-order"
             type="number"
             min={0}
             max={9999}
@@ -229,6 +233,7 @@ export default function NewsCategoryManagerClient({
             onChange={(e) => setCreateForm((form) => ({ ...form, sort_order: e.target.value }))}
           />
           <Select
+            data-testid="news-category-create-status"
             value={createForm.status}
             onChange={(e) => setCreateForm((form) => ({ ...form, status: e.target.value as NewsCategoryStatus }))}
           >
@@ -239,6 +244,7 @@ export default function NewsCategoryManagerClient({
             type="button"
             onClick={handleCreate}
             disabled={loading}
+            data-testid="news-category-create-submit"
             className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#E36F2C] px-3 text-sm font-semibold text-white transition hover:bg-[#C95E22] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Plus size={16} />
@@ -247,12 +253,14 @@ export default function NewsCategoryManagerClient({
         </div>
         <div className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2">
           <textarea
+            data-testid="news-category-create-description-zh"
             placeholder="中文说明"
             value={createForm.description_zh}
             onChange={(e) => setCreateForm((form) => ({ ...form, description_zh: e.target.value }))}
             className="min-h-20 rounded-md border border-[#E5DED4] bg-white px-3 py-2 text-sm text-[#2C2A28] outline-none transition focus:border-[#E36F2C] focus:ring-2 focus:ring-[#E36F2C]/40"
           />
           <textarea
+            data-testid="news-category-create-description-en"
             placeholder="英文说明"
             value={createForm.description_en}
             onChange={(e) => setCreateForm((form) => ({ ...form, description_en: e.target.value }))}
@@ -277,6 +285,7 @@ export default function NewsCategoryManagerClient({
             return (
               <div
                 key={category.id}
+                data-testid={`news-category-row-${category.slug}`}
                 className="grid grid-cols-[170px_170px_90px_90px_90px_minmax(0,1fr)_160px] gap-4 border-b border-[#EEF3F3] px-4 py-3 text-xs text-[#61767D] last:border-b-0"
               >
                 {editing ? (
@@ -329,6 +338,7 @@ export default function NewsCategoryManagerClient({
                         onClick={() => handleUpdate(category.id, editForm)}
                         disabled={loading}
                         title="保存分类"
+                        data-testid={`news-category-save-${category.slug}`}
                         className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-[#E36F2C] text-white transition hover:bg-[#C95E22] disabled:opacity-60"
                       >
                         <Check size={15} />
@@ -338,6 +348,7 @@ export default function NewsCategoryManagerClient({
                         onClick={cancelEdit}
                         disabled={loading}
                         title="取消编辑"
+                        data-testid={`news-category-cancel-${category.slug}`}
                         className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#61767D] transition hover:text-[#1E2C31] disabled:opacity-60"
                       >
                         <X size={15} />
@@ -365,6 +376,7 @@ export default function NewsCategoryManagerClient({
                         onClick={() => beginEdit(category)}
                         disabled={loading}
                         title="编辑分类"
+                        data-testid={`news-category-edit-${category.slug}`}
                         className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#61767D] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C] disabled:opacity-60"
                       >
                         <Pencil size={15} />
@@ -374,6 +386,7 @@ export default function NewsCategoryManagerClient({
                         onClick={() => handleToggleStatus(category)}
                         disabled={loading}
                         title={category.status === 'visible' ? '隐藏分类' : '显示分类'}
+                        data-testid={`news-category-toggle-${category.slug}`}
                         className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#61767D] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C] disabled:opacity-60"
                       >
                         {category.status === 'visible' ? <EyeOff size={15} /> : <Eye size={15} />}
