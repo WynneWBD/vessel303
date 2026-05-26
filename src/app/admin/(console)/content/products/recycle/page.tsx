@@ -15,6 +15,7 @@ import {
   ListChecks,
   Package,
   Search,
+  SlidersHorizontal,
   Tags,
 } from 'lucide-react'
 
@@ -52,6 +53,7 @@ function getSideNavGroups({
         { key: 'product-list', label: '产品列表', href: '/admin/content/products/list', Icon: ListChecks },
         { key: 'drafts', label: '草稿内容', href: '/admin/content/products/list?status=draft', badge: draft, Icon: FileText },
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
+        { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
         { key: 'recycle', label: '产品回收站', href: '/admin/content/products/recycle', badge: deleted, Icon: Archive },
       ],
     },

@@ -13,7 +13,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import type { CatalogProductRow, CatalogProductStatus, ProductCategoryRow } from '@/lib/product-catalog-db'
+import type {
+  CatalogProductRow,
+  CatalogProductStatus,
+  ProductAttributeTemplateWithOptions,
+  ProductCategoryRow,
+} from '@/lib/product-catalog-db'
 import type {
   CatalogDetailModule,
   CatalogDetailModuleItem,
@@ -48,6 +53,7 @@ type FormState = {
   isCustom: boolean
   detailSlug: string
   category_id: string
+  attribute_option_ids: number[]
   seo_title_zh: string
   seo_title_en: string
   seo_description_zh: string
@@ -94,6 +100,7 @@ const emptyState: FormState = {
   isCustom: false,
   detailSlug: '',
   category_id: '',
+  attribute_option_ids: [],
   seo_title_zh: '',
   seo_title_en: '',
   seo_description_zh: '',
@@ -130,6 +137,7 @@ function fromProduct(product?: CatalogProductRow | null): FormState {
     isCustom: product.isCustom,
     detailSlug: product.detailSlug ?? '',
     category_id: product.category_id ? String(product.category_id) : '',
+    attribute_option_ids: product.attribute_option_ids ?? [],
     seo_title_zh: product.seo_title_zh ?? '',
     seo_title_en: product.seo_title_en ?? '',
     seo_description_zh: product.seo_description_zh ?? '',
@@ -167,6 +175,7 @@ function getProductCompleteness(form: FormState, galleryUrls: string[]): {
   if (splitLines(form.features_cn).length === 0 || splitLines(form.features_en).length === 0) {
     issues.push('缺亮点')
   }
+  if (form.attribute_option_ids.length === 0) issues.push('缺产品属性')
   if (visibleDetailModules.length === 0) issues.push('缺详情模块')
 
   if (issues.length === 0) {
@@ -495,6 +504,7 @@ export default function ProductForm({
   previewPolicy = 'always',
   createRedirectBase = '/admin/products',
   categories = [],
+  attributeTemplates = [],
 }: {
   mode: 'create' | 'edit'
   product?: CatalogProductRow | null
@@ -505,6 +515,7 @@ export default function ProductForm({
   previewPolicy?: 'always' | 'published-only'
   createRedirectBase?: string
   categories?: ProductCategoryOption[]
+  attributeTemplates?: ProductAttributeTemplateWithOptions[]
 }) {
   const router = useRouter()
   const [form, setForm] = useState<FormState>(() => fromProduct(product))
@@ -529,6 +540,7 @@ export default function ProductForm({
   const hasUnsavedChanges = useMemo(() => JSON.stringify(form) !== JSON.stringify(savedForm), [form, savedForm])
   const showPreviewLink = mode === 'edit' && (previewPolicy === 'always' || form.status === 'published')
   const isCurrentlyPublished = form.status === 'published'
+  const selectedAttributeIds = useMemo(() => new Set(form.attribute_option_ids), [form.attribute_option_ids])
 
   useUnsavedChangesWarning(hasUnsavedChanges)
 
@@ -543,6 +555,18 @@ export default function ProductForm({
         module.id === id ? { ...module, ...patch } : module
       )),
     }))
+  }
+
+  const toggleAttributeOption = (optionId: number, checked: boolean) => {
+    setForm((prev) => {
+      const current = new Set(prev.attribute_option_ids)
+      if (checked) current.add(optionId)
+      else current.delete(optionId)
+      return {
+        ...prev,
+        attribute_option_ids: Array.from(current).sort((a, b) => a - b),
+      }
+    })
   }
 
   const addDetailModule = () => {
@@ -670,6 +694,7 @@ export default function ProductForm({
     isCustom: form.isCustom,
     detailSlug: form.detailSlug.trim() || null,
     category_id: form.category_id ? Number(form.category_id) : null,
+    attribute_option_ids: form.attribute_option_ids,
     seo_title_zh: form.seo_title_zh.trim() || null,
     seo_title_en: form.seo_title_en.trim() || null,
     seo_description_zh: form.seo_description_zh.trim() || null,
@@ -866,6 +891,70 @@ export default function ProductForm({
               <span className="text-sm text-[#C4B9AB]">定制案例</span>
             </label>
           </div>
+        </FormSection>
+
+        <FormSection
+          id="attributes"
+          title="产品属性 / 筛选属性"
+          description="对照 300 属性模板；用于后台筛选和后续前台筛选底座，不影响当前前台产品详情展示。"
+        >
+          {attributeTemplates.length === 0 ? (
+            <div className="rounded-md border border-dashed border-[#E5DED4] bg-[#FAF7F2] px-4 py-5 text-sm text-[#8A8580]">
+              暂无属性模板。可先到属性模板管理维护应用场景、交付方式、认证 / 标准等属性组。
+            </div>
+          ) : (
+            <div className="space-y-4" data-testid="product-attributes-section">
+              {attributeTemplates.map((template) => (
+                <div key={template.id} className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-4">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h3 className="text-sm font-semibold text-[#2C2A28]">{template.title_zh}</h3>
+                      <p className="text-xs text-[#8A8580]">{template.title_en}</p>
+                    </div>
+                    {template.status === 'hidden' ? (
+                      <span className="inline-flex w-fit rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-xs font-semibold text-zinc-500">
+                        隐藏模板
+                      </span>
+                    ) : null}
+                  </div>
+                  {template.description_zh ? (
+                    <p className="mt-2 text-xs leading-5 text-[#6B6560]">{template.description_zh}</p>
+                  ) : null}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {template.options.length === 0 ? (
+                      <span className="text-xs text-[#8A8580]">暂无选项</span>
+                    ) : (
+                      template.options.map((option) => {
+                        const checked = selectedAttributeIds.has(option.id)
+                        return (
+                          <label
+                            key={option.id}
+                            data-testid={`product-attribute-option-${template.slug}-${option.slug}`}
+                            className={`inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs font-semibold transition ${
+                              checked
+                                ? 'border-[#E36F2C] bg-[#FFF2E7] text-[#B85D21]'
+                                : 'border-[#E5DED4] bg-white text-[#6B6560] hover:border-[#E36F2C]/50'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => toggleAttributeOption(option.id, e.target.checked)}
+                              className="h-4 w-4 accent-[#E36F2C]"
+                            />
+                            <span>{option.label_zh}</span>
+                            {option.status === 'hidden' ? (
+                              <span className="font-normal text-[#8A8580]">隐藏</span>
+                            ) : null}
+                          </label>
+                        )
+                      })
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </FormSection>
 
         <FormSection

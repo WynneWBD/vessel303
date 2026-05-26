@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { pool } from '@/lib/db'
-import { ensureProductCatalogSchema, listProductCategories } from '@/lib/product-catalog-db'
+import { ensureProductCatalogSchema, listProductAttributeTemplates, listProductCategories } from '@/lib/product-catalog-db'
 import {
   Archive,
   ArrowRight,
@@ -17,6 +17,7 @@ import {
   Package,
   Plus,
   SearchCheck,
+  SlidersHorizontal,
   Sparkles,
   Tags,
   type LucideIcon,
@@ -42,8 +43,10 @@ type ProductStats = {
   missingDetailModules: number
   missingCategory: number
   missingSeo: number
+  missingAttributes: number
   deleted: number
   categories: number
+  attributes: number
 }
 
 type ProductStatsRow = Record<keyof ProductStats, string>
@@ -78,8 +81,10 @@ const EMPTY_PRODUCT_STATS: ProductStats = {
   missingDetailModules: 0,
   missingCategory: 0,
   missingSeo: 0,
+  missingAttributes: 0,
   deleted: 0,
   categories: 0,
+  attributes: 0,
 }
 
 function formatNumber(value: number): string {
@@ -111,7 +116,7 @@ async function getProductStats(): Promise<ProductStats> {
   if (!(await tableExists('public.product_catalog'))) return EMPTY_PRODUCT_STATS
   await ensureProductCatalogSchema()
 
-  const [res, categories] = await Promise.all([
+  const [res, categories, attributes] = await Promise.all([
     pool.query<ProductStatsRow>(
     `SELECT
        COUNT(*) FILTER (WHERE deleted_at IS NULL)::text AS total,
@@ -145,10 +150,18 @@ async function getProductStats(): Promise<ProductStats> {
              OR NULLIF(BTRIM(COALESCE(seo_description_en, '')), '') IS NULL
            )
        )::text AS "missingSeo",
+       COUNT(*) FILTER (
+         WHERE deleted_at IS NULL
+           AND NOT EXISTS (
+             SELECT 1 FROM product_attribute_values pav
+             WHERE pav.product_id = product_catalog.id
+           )
+       )::text AS "missingAttributes",
        COUNT(*) FILTER (WHERE deleted_at IS NOT NULL)::text AS deleted
      FROM product_catalog`,
     ),
     listProductCategories({ includeHidden: true }).catch(() => []),
+    listProductAttributeTemplates({ includeHidden: true }).catch(() => []),
   ])
   const row = res.rows[0]
 
@@ -166,8 +179,10 @@ async function getProductStats(): Promise<ProductStats> {
     missingDetailModules: parseCount(row?.missingDetailModules),
     missingCategory: parseCount(row?.missingCategory),
     missingSeo: parseCount(row?.missingSeo),
+    missingAttributes: parseCount(row?.missingAttributes),
     deleted: parseCount(row?.deleted),
     categories: categories.length,
+    attributes: attributes.length,
   }
 }
 
@@ -195,6 +210,7 @@ function getSideNavGroups(stats: ProductStats): AdminSideNavGroup[] {
       title: '后续规划',
       items: [
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', badge: stats.categories, Icon: Tags },
+        { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', badge: stats.attributes, Icon: SlidersHorizontal },
         { key: 'recycle', label: '产品回收站', href: '/admin/content/products/recycle', badge: stats.deleted, Icon: Archive },
         { key: 'bulk-check', label: '批量检查', planned: true, Icon: ListChecks },
         { key: 'seo', label: 'SEO 字段治理', href: '/admin/content/products/list?view=incomplete', badge: stats.missingSeo, Icon: Sparkles },
@@ -213,6 +229,7 @@ function getTodoCount(stats: ProductStats): number {
     stats.missingFeatures,
     stats.missingDetailModules,
     stats.missingCategory,
+    stats.missingAttributes,
     stats.missingSeo,
   ].filter((count) => count > 0).length
 }
@@ -303,6 +320,12 @@ function getTodoEntries(stats: ProductStats): TodoEntry[] {
       detail: '还没有归入产品分类',
       count: stats.missingCategory,
       Icon: Tags,
+    },
+    {
+      title: '缺产品属性',
+      detail: '缺少属性模板中的筛选信息',
+      count: stats.missingAttributes,
+      Icon: SlidersHorizontal,
     },
     {
       title: '缺 SEO',
@@ -454,7 +477,7 @@ function TodoPanel({ stats }: { stats: ProductStats }) {
     <section id="todo" className="scroll-mt-24 space-y-4">
       <SectionTitle title="待补内容" detail="按现有字段做只读统计，只提醒运营补齐，不改变发布规则。" />
       <div className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-3 2xl:grid-cols-9">
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-3 2xl:grid-cols-10">
           {entries.map((entry) => (
             <TodoStat key={entry.title} entry={entry} />
           ))}
@@ -500,6 +523,7 @@ function ActionPanel() {
     { label: '查看已发布', detail: '检查前台正在展示的产品', href: '/admin/content/products/list?status=published', Icon: CheckCircle2 },
     { label: '进入产品列表', detail: '继续搜索、筛选和编辑产品', href: '/admin/content/products/list', Icon: Package },
     { label: '分类管理', detail: '维护产品分类、排序和显示状态', href: '/admin/content/products/categories', Icon: Tags },
+    { label: '属性模板', detail: '维护产品属性模板和筛选选项', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
     { label: '产品回收站', detail: '恢复误删产品为草稿', href: '/admin/content/products/recycle', Icon: Archive },
   ]
 
@@ -554,7 +578,7 @@ function WorkflowPanel() {
 }
 
 function PlanningPanel() {
-  const items = ['属性模板', '标记管理', '品牌管理', '筛选管理', '橱窗管理', '批量检查']
+  const items = ['标记管理', '品牌管理', '筛选管理', '橱窗管理', '批量检查']
 
   return (
     <section className="rounded-md border border-dashed border-[#D8E7E8] bg-white/70 p-5">
@@ -564,7 +588,7 @@ function PlanningPanel() {
         </span>
         <div>
           <h2 className="text-base font-bold text-[#1E2C31]">后续规划</h2>
-          <p className="mt-1 text-xs text-[#61767D]">对照 300 产品管理，分类、回收站、低风险批量转分类和 SEO 已进入 B4；以下能力后续单独立项。</p>
+          <p className="mt-1 text-xs text-[#61767D]">对照 300 产品管理，分类、属性模板、回收站、低风险批量转分类和 SEO 已进入 B4；以下能力后续单独立项。</p>
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">

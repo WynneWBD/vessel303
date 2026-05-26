@@ -85,6 +85,7 @@ const productSchema = z.object({
   isCustom: z.boolean(),
   detailSlug: detailSlugSchema,
   category_id: z.number().int().positive().nullable().optional(),
+  attribute_option_ids: z.array(z.number().int().positive()).max(80).optional().default([]),
   seo_title_zh: z.string().max(160).nullable().optional(),
   seo_title_en: z.string().max(160).nullable().optional(),
   seo_description_zh: z.string().max(300).nullable().optional(),

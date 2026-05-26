@@ -8,7 +8,9 @@ import { pool } from '@/lib/db'
 import {
   countDeletedCatalogProducts,
   ensureProductCatalogSchema,
+  listProductAttributeTemplatesWithOptions,
   listProductCategories,
+  type ProductAttributeTemplateWithOptions,
   type ProductCategoryRow,
 } from '@/lib/product-catalog-db'
 import {
@@ -26,6 +28,7 @@ import {
   Plus,
   Search,
   SearchCheck,
+  SlidersHorizontal,
   Tags,
   type LucideIcon,
 } from 'lucide-react'
@@ -51,6 +54,7 @@ type FilterState = {
   series: string
   productType: string
   category: string
+  attribute: string
   page: number
 }
 
@@ -83,6 +87,8 @@ type ProductListRow = {
   category_slug: string | null
   category_title_zh: string | null
   category_title_en: string | null
+  attribute_option_count: number | string
+  attribute_labels_zh: string[] | null
   status: ProductStatus
   created_at: string
   updated_at: string
@@ -97,6 +103,7 @@ type ProductOptions = {
   series: string[]
   productTypes: string[]
   categories: Pick<ProductCategoryRow, 'id' | 'title_zh' | 'title_en'>[]
+  attributeTemplates: ProductAttributeTemplateWithOptions[]
 }
 
 type StatCard = {
@@ -125,6 +132,7 @@ const EMPTY_OPTIONS: ProductOptions = {
   series: [],
   productTypes: [],
   categories: [],
+  attributeTemplates: [],
 }
 
 const PRODUCT_INCOMPLETE_SQL = `(
@@ -137,6 +145,10 @@ const PRODUCT_INCOMPLETE_SQL = `(
   OR jsonb_array_length(COALESCE(features_cn, '[]'::jsonb)) = 0
   OR jsonb_array_length(COALESCE(features_en, '[]'::jsonb)) = 0
   OR jsonb_array_length(COALESCE(detail_modules, '[]'::jsonb)) = 0
+  OR NOT EXISTS (
+    SELECT 1 FROM product_attribute_values pav
+    WHERE pav.product_id = product_catalog.id
+  )
 )`
 
 const PRODUCT_INCOMPLETE_SQL_ALIASED = `(
@@ -149,6 +161,10 @@ const PRODUCT_INCOMPLETE_SQL_ALIASED = `(
   OR jsonb_array_length(COALESCE(pc.features_cn, '[]'::jsonb)) = 0
   OR jsonb_array_length(COALESCE(pc.features_en, '[]'::jsonb)) = 0
   OR jsonb_array_length(COALESCE(pc.detail_modules, '[]'::jsonb)) = 0
+  OR NOT EXISTS (
+    SELECT 1 FROM product_attribute_values pav
+    WHERE pav.product_id = pc.id
+  )
 )`
 
 function firstParam(value: string | string[] | undefined): string | undefined {
@@ -176,6 +192,7 @@ function parseFilters(sp: Record<string, string | string[] | undefined>): Filter
     series: firstParam(sp.series)?.trim() ?? '',
     productType: firstParam(sp.type)?.trim() ?? '',
     category: firstParam(sp.category)?.trim() ?? '',
+    attribute: firstParam(sp.attribute)?.trim() ?? '',
     page: normalizePage(firstParam(sp.page)),
   }
 }
@@ -223,6 +240,7 @@ function getProductIssues(product: ProductListRow): string[] {
   if (!hasItems(product.tags_cn) || !hasItems(product.tags_en)) issues.push('缺标签')
   if (!hasItems(product.features_cn) || !hasItems(product.features_en)) issues.push('缺亮点')
   if (!hasItems(product.detail_modules)) issues.push('缺详情模块')
+  if (Number(product.attribute_option_count ?? 0) === 0) issues.push('缺产品属性')
 
   return issues
 }
@@ -253,6 +271,7 @@ function createHref(filters: FilterState, patch: Partial<FilterState & { clearSe
   if (next.series) params.set('series', next.series)
   if (next.productType) params.set('type', next.productType)
   if (next.category) params.set('category', next.category)
+  if (next.attribute) params.set('attribute', next.attribute)
   if (next.page > 1) params.set('page', String(next.page))
 
   const query = params.toString()
@@ -299,6 +318,17 @@ function buildWhere(filters: FilterState): { where: string; params: unknown[] } 
   if (Number.isInteger(categoryId) && categoryId > 0) {
     params.push(categoryId)
     conditions.push(`pc.category_id = $${params.length}`)
+  }
+
+  const attributeOptionId = Number(filters.attribute)
+  if (Number.isInteger(attributeOptionId) && attributeOptionId > 0) {
+    params.push(attributeOptionId)
+    conditions.push(`EXISTS (
+      SELECT 1
+      FROM product_attribute_values pav
+      WHERE pav.product_id = pc.id
+        AND pav.option_id = $${params.length}
+    )`)
   }
 
   return { where: `WHERE ${conditions.join(' AND ')}`, params }
@@ -353,7 +383,7 @@ async function getProductOptions(): Promise<ProductOptions> {
   if (!(await tableExists('public.product_catalog'))) return EMPTY_OPTIONS
   await ensureProductCatalogSchema()
 
-  const [seriesRes, typeRes, categories] = await Promise.all([
+  const [seriesRes, typeRes, categories, attributeTemplates] = await Promise.all([
     pool.query<{ value: string }>(
       `SELECT DISTINCT product_series AS value
        FROM product_catalog
@@ -367,6 +397,7 @@ async function getProductOptions(): Promise<ProductOptions> {
        ORDER BY product_type`,
     ),
     listProductCategories({ includeHidden: false }).catch(() => []),
+    listProductAttributeTemplatesWithOptions({ includeHidden: false }).catch(() => []),
   ])
 
   return {
@@ -377,6 +408,7 @@ async function getProductOptions(): Promise<ProductOptions> {
       title_zh: category.title_zh,
       title_en: category.title_en,
     })),
+    attributeTemplates,
   }
 }
 
@@ -411,6 +443,8 @@ async function getProducts(filters: FilterState): Promise<ProductListResult> {
        c.slug AS category_slug,
        c.title_zh AS category_title_zh,
        c.title_en AS category_title_en,
+       COALESCE(attr.option_count, 0)::int AS attribute_option_count,
+       COALESCE(attr.labels_zh, ARRAY[]::text[]) AS attribute_labels_zh,
        pc.status,
        pc.created_at::text AS created_at,
        pc.updated_at::text AS updated_at
@@ -418,6 +452,19 @@ async function getProducts(filters: FilterState): Promise<ProductListResult> {
      LEFT JOIN product_categories c
        ON c.id = pc.category_id
       AND c.deleted_at IS NULL
+     LEFT JOIN LATERAL (
+       SELECT
+         COUNT(DISTINCT o.id)::int AS option_count,
+         ARRAY_AGG(DISTINCT CONCAT(t.title_zh, '：', o.label_zh)) AS labels_zh
+       FROM product_attribute_values pav
+       JOIN product_attribute_options o
+         ON o.id = pav.option_id
+        AND o.deleted_at IS NULL
+       JOIN product_attribute_templates t
+         ON t.id = pav.template_id
+        AND t.deleted_at IS NULL
+       WHERE pav.product_id = pc.id
+     ) attr ON true
      ${where}
      ORDER BY pc.updated_at DESC, pc.sort_order ASC, pc.id ASC
      LIMIT $${params.length + 1}
@@ -452,6 +499,7 @@ function getSideNavGroups(summary: ProductSummary): AdminSideNavGroup[] {
       title: '后续规划',
       items: [
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
+        { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
         { key: 'recycle', label: '产品回收站', href: '/admin/content/products/recycle', badge: summary.deleted, Icon: Archive },
         { key: 'bulk-check', label: '批量检查', planned: true, Icon: ListChecks },
       ],
@@ -542,7 +590,7 @@ function FilterPanel({ filters, options }: { filters: FilterState; options: Prod
     <form action="/admin/content/products/list" className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
       {filters.status && <input type="hidden" name="status" value={filters.status} />}
       {filters.view && <input type="hidden" name="view" value={filters.view} />}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(220px,1fr)_160px_160px_160px_auto_auto]">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(220px,1fr)_140px_140px_150px_190px_auto_auto]">
         <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold text-[#61767D]">
           搜索产品
           <span className="relative">
@@ -600,6 +648,25 @@ function FilterPanel({ filters, options }: { filters: FilterState; options: Prod
             ))}
           </select>
         </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-[#61767D]">
+          属性
+          <select
+            name="attribute"
+            defaultValue={filters.attribute}
+            className="h-10 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm text-[#1E2C31] outline-none transition focus:border-[#1889B6]"
+          >
+            <option value="">全部属性</option>
+            {options.attributeTemplates.map((template) => (
+              <optgroup key={template.id} label={template.title_zh}>
+                {template.options.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label_zh}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </label>
         <button
           type="submit"
           className="mt-auto inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#1889B6] px-4 text-sm font-semibold text-white transition hover:bg-[#126D91]"
@@ -624,6 +691,7 @@ function QuickActions() {
     { label: '查看草稿', href: '/admin/content/products/list?status=draft', Icon: FileText },
     { label: '查看已发布', href: '/admin/content/products/list?status=published', Icon: CheckCircle2 },
     { label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
+    { label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
     { label: '回收站', href: '/admin/content/products/recycle', Icon: Archive },
   ]
 
@@ -688,6 +756,8 @@ function ProductRow({ product }: { product: ProductListRow }) {
   const label = getCompletenessLabel(issues)
   const visibleIssues = issues.slice(0, 3)
   const hiddenIssueCount = Math.max(0, issues.length - visibleIssues.length)
+  const attributeLabels = (product.attribute_labels_zh ?? []).slice(0, 3)
+  const hiddenAttributeCount = Math.max(0, Number(product.attribute_option_count ?? 0) - attributeLabels.length)
   const published = product.status === 'published'
 
   return (
@@ -748,12 +818,33 @@ function ProductRow({ product }: { product: ProductListRow }) {
               </span>
             )}
           </div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {attributeLabels.length > 0 ? (
+              <>
+                {attributeLabels.map((attribute) => (
+                  <span key={attribute} className="rounded-full border border-[#D8E7E8] bg-[#F0F7F8] px-2 py-0.5 text-xs font-semibold text-[#1889B6]">
+                    {attribute}
+                  </span>
+                ))}
+                {hiddenAttributeCount > 0 ? (
+                  <span className="rounded-full border border-[#D8E7E8] bg-white px-2 py-0.5 text-xs text-[#61767D]">
+                    还有 {hiddenAttributeCount} 个属性
+                  </span>
+                ) : null}
+              </>
+            ) : (
+              <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-600">
+                缺产品属性
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 rounded-md bg-[#F7FAFA] p-3 text-xs lg:grid-cols-1">
           <ProductMeta label="系列" value={`${product.product_series} ${product.gen}`} />
           <ProductMeta label="类型" value={getProductTypeLabel(product.product_type)} />
           <ProductMeta label="分类" value={product.category_title_zh ?? '未分类'} />
+          <ProductMeta label="属性" value={`${Number(product.attribute_option_count ?? 0)} 个`} />
           <ProductMeta label="更新时间" value={formatDate(product.updated_at)} />
         </div>
 
@@ -801,7 +892,15 @@ function ProductMeta({ label, value }: { label: string; value: string }) {
 }
 
 function EmptyState({ filters }: { filters: FilterState }) {
-  const hasFilter = Boolean(filters.status || filters.view || filters.search || filters.series || filters.productType || filters.category)
+  const hasFilter = Boolean(
+    filters.status
+    || filters.view
+    || filters.search
+    || filters.series
+    || filters.productType
+    || filters.category
+    || filters.attribute
+  )
   return (
     <section className="rounded-md border border-dashed border-[#D8E7E8] bg-white p-10 text-center">
       <Package className="mx-auto text-[#8A9EA4]" size={36} />

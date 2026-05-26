@@ -7,6 +7,8 @@ import { defaultSiteSettings, normalizeMediaMaxUploadMb } from '@/lib/admin-sett
 import { pool } from '@/lib/db'
 import {
   ensureProductCatalogSchema,
+  listProductAttributeOptionIds,
+  listProductAttributeTemplatesWithOptions,
   listProductCategories,
   type CatalogProductRow,
   type CatalogProductStatus,
@@ -29,6 +31,7 @@ import {
   Pencil,
   SearchCheck,
   Settings2,
+  SlidersHorizontal,
   Tags,
   type LucideIcon,
 } from 'lucide-react'
@@ -75,6 +78,7 @@ type ProductDbRow = {
   seo_description_en: string | null
   status: CatalogProductStatus
   sort_order: number
+  attribute_option_ids?: number[]
   created_at: string
   updated_at: string
   deleted_at: string | null
@@ -102,6 +106,13 @@ const EDIT_SECTIONS: EditSection[] = [
     detail: '搜索标题、搜索摘要',
     href: '#seo',
     Icon: SearchCheck,
+  },
+  {
+    key: 'attributes',
+    title: '产品属性',
+    detail: '属性模板、筛选属性',
+    href: '#attributes',
+    Icon: SlidersHorizontal,
   },
   {
     key: 'media',
@@ -195,6 +206,7 @@ function rowToProduct(row: ProductDbRow): CatalogProductRow {
     seo_description_en: row.seo_description_en ?? null,
     status: row.status,
     sort_order: row.sort_order,
+    attribute_option_ids: row.attribute_option_ids ?? [],
     created_at: row.created_at,
     updated_at: row.updated_at,
     deleted_at: row.deleted_at,
@@ -248,7 +260,10 @@ async function getProductReadOnly(id: string): Promise<CatalogProductRow | null>
   )
 
   const row = res.rows[0]
-  return row ? rowToProduct(row) : null
+  if (!row) return null
+  const product = rowToProduct(row)
+  product.attribute_option_ids = await listProductAttributeOptionIds(id)
+  return product
 }
 
 function formatDate(value: string): string {
@@ -282,9 +297,10 @@ function getSideNavGroups(product: CatalogProductRow): AdminSideNavGroup[] {
       })),
     },
     {
-      title: '后续规划',
+      title: '产品治理',
       items: [
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
+        { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
         { key: 'publish-flow', label: '发布审核', planned: true, Icon: SearchCheck },
       ],
     },
@@ -424,7 +440,7 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
   }
 
   const { id } = await params
-  const [product, maxUploadMb, categories] = await Promise.all([
+  const [product, maxUploadMb, categories, attributeTemplates] = await Promise.all([
     getProductReadOnly(id).catch((err) => {
       console.error('[admin-content-product-edit] load product failed', err)
       return null
@@ -435,6 +451,10 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
     }),
     listProductCategories({ includeHidden: true }).catch((err) => {
       console.error('[admin-content-product-edit] load product categories failed', err)
+      return []
+    }),
+    listProductAttributeTemplatesWithOptions({ includeHidden: true }).catch((err) => {
+      console.error('[admin-content-product-edit] load product attributes failed', err)
       return []
     }),
   ])
@@ -466,6 +486,7 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
           title="编辑产品内容"
           previewPolicy="published-only"
           categories={categories}
+          attributeTemplates={attributeTemplates}
         />
       </section>
     </AdminSectionShell>

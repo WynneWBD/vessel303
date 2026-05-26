@@ -5,7 +5,7 @@ import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/Ad
 import ProductForm from '@/components/admin/ProductForm'
 import { defaultSiteSettings, normalizeMediaMaxUploadMb } from '@/lib/admin-settings-db'
 import { pool } from '@/lib/db'
-import { listProductCategories } from '@/lib/product-catalog-db'
+import { listProductAttributeTemplatesWithOptions, listProductCategories } from '@/lib/product-catalog-db'
 import {
   AlertTriangle,
   ArrowLeft,
@@ -18,6 +18,7 @@ import {
   Plus,
   SearchCheck,
   Settings2,
+  SlidersHorizontal,
   Tags,
   type LucideIcon,
 } from 'lucide-react'
@@ -50,6 +51,13 @@ const EDIT_SECTIONS: EditSection[] = [
     detail: '搜索标题、搜索摘要',
     href: '#seo',
     Icon: SearchCheck,
+  },
+  {
+    key: 'attributes',
+    title: '产品属性',
+    detail: '属性模板、筛选属性',
+    href: '#attributes',
+    Icon: SlidersHorizontal,
   },
   {
     key: 'media',
@@ -128,9 +136,10 @@ function getSideNavGroups(): AdminSideNavGroup[] {
       })),
     },
     {
-      title: '后续规划',
+      title: '产品治理',
       items: [
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
+        { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
         { key: 'publish-flow', label: '发布审核', planned: true, Icon: SearchCheck },
       ],
     },
@@ -234,10 +243,16 @@ export default async function AdminContentProductNewPage() {
     console.error('[admin-content-product-new] load media limit failed', err)
     return defaultSiteSettings.mediaMaxUploadMb
   })
-  const categories = await listProductCategories({ includeHidden: true }).catch((err) => {
-    console.error('[admin-content-product-new] load product categories failed', err)
-    return []
-  })
+  const [categories, attributeTemplates] = await Promise.all([
+    listProductCategories({ includeHidden: true }).catch((err) => {
+      console.error('[admin-content-product-new] load product categories failed', err)
+      return []
+    }),
+    listProductAttributeTemplatesWithOptions({ includeHidden: true }).catch((err) => {
+      console.error('[admin-content-product-new] load product attributes failed', err)
+      return []
+    }),
+  ])
   const adminRole: AdminRole = role
 
   return (
@@ -263,6 +278,7 @@ export default async function AdminContentProductNewPage() {
           previewPolicy="published-only"
           createRedirectBase="/admin/content/products"
           categories={categories}
+          attributeTemplates={attributeTemplates}
         />
       </section>
     </AdminSectionShell>

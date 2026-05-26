@@ -10,6 +10,7 @@ import {
 export type CatalogProductStatus = 'draft' | 'published'
 export type CatalogProductType = CatalogProduct['productType']
 export type ProductCategoryStatus = 'visible' | 'hidden'
+export type ProductAttributeStatus = 'visible' | 'hidden'
 
 export type ProductCategoryRow = {
   id: number
@@ -25,6 +26,41 @@ export type ProductCategoryRow = {
   product_count?: number
 }
 
+export type ProductAttributeTemplateRow = {
+  id: number
+  slug: string
+  title_zh: string
+  title_en: string
+  description_zh: string | null
+  description_en: string | null
+  sort_order: number
+  status: ProductAttributeStatus
+  created_at: string
+  updated_at: string
+  option_count?: number
+  product_count?: number
+}
+
+export type ProductAttributeOptionRow = {
+  id: number
+  template_id: number
+  template_slug?: string
+  template_title_zh?: string
+  template_title_en?: string
+  slug: string
+  label_zh: string
+  label_en: string
+  sort_order: number
+  status: ProductAttributeStatus
+  created_at: string
+  updated_at: string
+  product_count?: number
+}
+
+export type ProductAttributeTemplateWithOptions = ProductAttributeTemplateRow & {
+  options: ProductAttributeOptionRow[]
+}
+
 export type CatalogProductRow = CatalogProduct & {
   category_id: number | null
   category_slug: string | null
@@ -36,6 +72,7 @@ export type CatalogProductRow = CatalogProduct & {
   seo_description_en: string | null
   status: CatalogProductStatus
   sort_order: number
+  attribute_option_ids: number[]
   created_at: string
   updated_at: string
   deleted_at: string | null
@@ -82,6 +119,7 @@ export type CatalogProductInput = {
   seo_description_en?: string | null
   status?: CatalogProductStatus
   sort_order?: number
+  attribute_option_ids?: number[]
 }
 
 export type CreateProductCategoryInput = {
@@ -95,6 +133,29 @@ export type CreateProductCategoryInput = {
 }
 
 export type UpdateProductCategoryInput = Partial<CreateProductCategoryInput>
+
+export type CreateProductAttributeTemplateInput = {
+  slug: string
+  title_zh: string
+  title_en: string
+  description_zh?: string | null
+  description_en?: string | null
+  sort_order?: number
+  status?: ProductAttributeStatus
+}
+
+export type UpdateProductAttributeTemplateInput = Partial<CreateProductAttributeTemplateInput>
+
+export type CreateProductAttributeOptionInput = {
+  template_id: number
+  slug: string
+  label_zh: string
+  label_en: string
+  sort_order?: number
+  status?: ProductAttributeStatus
+}
+
+export type UpdateProductAttributeOptionInput = Partial<Omit<CreateProductAttributeOptionInput, 'template_id'>>
 
 const RESERVED_IDS = new Set(['e7', 'e6', 'e3', 'v9', 'v5', 's5', 'e7-gen5', 'v9-gen6'])
 
@@ -138,6 +199,7 @@ function rowToCatalogProduct(row: {
   created_at: string
   updated_at: string
   deleted_at: string | null
+  attribute_option_ids?: number[] | null
 }): CatalogProductRow {
   return {
     id: row.id,
@@ -174,6 +236,7 @@ function rowToCatalogProduct(row: {
     seo_description_en: row.seo_description_en ?? null,
     status: row.status,
     sort_order: row.sort_order,
+    attribute_option_ids: row.attribute_option_ids ?? [],
     created_at: row.created_at,
     updated_at: row.updated_at,
     deleted_at: row.deleted_at,
@@ -216,6 +279,78 @@ const DEFAULT_PRODUCT_CATEGORIES: CreateProductCategoryInput[] = [
     description_zh: '面向海外法规、气候和交付方式适配的定制产品。',
     description_en: 'Custom products adapted for overseas codes, climates and delivery.',
     sort_order: 30,
+  },
+]
+
+const DEFAULT_PRODUCT_ATTRIBUTE_TEMPLATES: (CreateProductAttributeTemplateInput & {
+  options: Omit<CreateProductAttributeOptionInput, 'template_id'>[]
+})[] = [
+  {
+    slug: 'application-scenario',
+    title_zh: '应用场景',
+    title_en: 'Application Scenario',
+    description_zh: '用于区分度假营地、酒店民宿、商业展示等产品适用方向。',
+    description_en: 'Classifies product-fit scenarios such as resorts, hospitality and commercial showcases.',
+    sort_order: 10,
+    options: [
+      { slug: 'resort-camp', label_zh: '度假营地', label_en: 'Resort Camp', sort_order: 10 },
+      { slug: 'hotel-hospitality', label_zh: '酒店民宿', label_en: 'Hotel & Hospitality', sort_order: 20 },
+      { slug: 'commercial-showcase', label_zh: '商业展示', label_en: 'Commercial Showcase', sort_order: 30 },
+      { slug: 'remote-deployment', label_zh: '远程部署', label_en: 'Remote Deployment', sort_order: 40 },
+    ],
+  },
+  {
+    slug: 'delivery-method',
+    title_zh: '交付方式',
+    title_en: 'Delivery Method',
+    description_zh: '用于运营人员标记产品常见运输、安装和项目交付方式。',
+    description_en: 'Marks common transport, installation and project delivery methods.',
+    sort_order: 20,
+    options: [
+      { slug: 'flat-rack', label_zh: '平板柜运输', label_en: 'Flat-rack Transport', sort_order: 10 },
+      { slug: 'containerized', label_zh: '集装箱运输', label_en: 'Containerized Transport', sort_order: 20 },
+      { slug: 'modular-assembly', label_zh: '模块化组装', label_en: 'Modular Assembly', sort_order: 30 },
+    ],
+  },
+  {
+    slug: 'compliance-standard',
+    title_zh: '认证 / 标准',
+    title_en: 'Compliance Standard',
+    description_zh: '用于标记产品资料中可确认的认证、规范或标准适配方向。',
+    description_en: 'Tracks confirmed certification, code or compliance directions.',
+    sort_order: 30,
+    options: [
+      { slug: 'eu-ready', label_zh: '欧盟方向', label_en: 'EU-ready', sort_order: 10 },
+      { slug: 'us-ready', label_zh: '北美方向', label_en: 'US-ready', sort_order: 20 },
+      { slug: 'project-specific', label_zh: '项目定制', label_en: 'Project-specific', sort_order: 30 },
+    ],
+  },
+  {
+    slug: 'climate-adaptation',
+    title_zh: '环境适应',
+    title_en: 'Climate Adaptation',
+    description_zh: '用于标记高寒、高温、海滨、山地等环境适应方向。',
+    description_en: 'Marks climate and site-adaptation directions such as cold, hot, coastal or mountain sites.',
+    sort_order: 40,
+    options: [
+      { slug: 'cold-region', label_zh: '寒冷地区', label_en: 'Cold Region', sort_order: 10 },
+      { slug: 'hot-region', label_zh: '高温地区', label_en: 'Hot Region', sort_order: 20 },
+      { slug: 'coastal-site', label_zh: '海滨场地', label_en: 'Coastal Site', sort_order: 30 },
+      { slug: 'mountain-site', label_zh: '山地场地', label_en: 'Mountain Site', sort_order: 40 },
+    ],
+  },
+  {
+    slug: 'configuration-level',
+    title_zh: '配置等级',
+    title_en: 'Configuration Level',
+    description_zh: '用于粗分紧凑、标准、旗舰等产品配置方向。',
+    description_en: 'Classifies compact, standard and flagship configuration directions.',
+    sort_order: 50,
+    options: [
+      { slug: 'compact', label_zh: '紧凑配置', label_en: 'Compact', sort_order: 10 },
+      { slug: 'standard', label_zh: '标准配置', label_en: 'Standard', sort_order: 20 },
+      { slug: 'flagship', label_zh: '旗舰配置', label_en: 'Flagship', sort_order: 30 },
+    ],
   },
 ]
 
@@ -294,6 +429,61 @@ async function seedProductCategoriesIfEmpty() {
   }
 }
 
+async function seedProductAttributeTemplatesIfEmpty() {
+  const countRes = await pool.query<{ count: string }>(
+    `SELECT COUNT(*)::text AS count FROM product_attribute_templates WHERE deleted_at IS NULL`,
+  )
+  if (parseInt(countRes.rows[0]?.count ?? '0', 10) > 0) return
+
+  for (const template of DEFAULT_PRODUCT_ATTRIBUTE_TEMPLATES) {
+    const templateRes = await pool.query<{ id: number }>(
+      `INSERT INTO product_attribute_templates
+         (slug, title_zh, title_en, description_zh, description_en, sort_order, status)
+       VALUES ($1, $2, $3, $4, $5, $6, 'visible')
+       ON CONFLICT (slug) DO UPDATE
+          SET title_zh = EXCLUDED.title_zh,
+              title_en = EXCLUDED.title_en,
+              description_zh = EXCLUDED.description_zh,
+              description_en = EXCLUDED.description_en,
+              sort_order = EXCLUDED.sort_order,
+              updated_at = NOW()
+       WHERE product_attribute_templates.deleted_at IS NULL
+       RETURNING id`,
+      [
+        template.slug,
+        template.title_zh,
+        template.title_en,
+        template.description_zh ?? null,
+        template.description_en ?? null,
+        template.sort_order ?? 100,
+      ],
+    )
+    const templateId = templateRes.rows[0]?.id
+    if (!templateId) continue
+
+    for (const option of template.options) {
+      await pool.query(
+        `INSERT INTO product_attribute_options
+           (template_id, slug, label_zh, label_en, sort_order, status)
+         VALUES ($1, $2, $3, $4, $5, 'visible')
+         ON CONFLICT (template_id, slug) DO UPDATE
+            SET label_zh = EXCLUDED.label_zh,
+                label_en = EXCLUDED.label_en,
+                sort_order = EXCLUDED.sort_order,
+                updated_at = NOW()
+         WHERE product_attribute_options.deleted_at IS NULL`,
+        [
+          templateId,
+          option.slug,
+          option.label_zh,
+          option.label_en,
+          option.sort_order ?? 100,
+        ],
+      )
+    }
+  }
+}
+
 export async function ensureProductCatalogSchema() {
   schemaReady ??= (async () => {
     await pool.query(`
@@ -351,6 +541,48 @@ export async function ensureProductCatalogSchema() {
       )
     `)
     await pool.query(`
+      CREATE TABLE IF NOT EXISTS product_attribute_templates (
+        id              SERIAL PRIMARY KEY,
+        slug            VARCHAR(120) UNIQUE NOT NULL,
+        title_zh        VARCHAR(160) NOT NULL,
+        title_en        VARCHAR(160) NOT NULL,
+        description_zh  TEXT,
+        description_en  TEXT,
+        sort_order      INTEGER NOT NULL DEFAULT 0,
+        status          VARCHAR(20) NOT NULL DEFAULT 'visible'
+                        CHECK (status IN ('visible','hidden')),
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        deleted_at      TIMESTAMPTZ
+      )
+    `)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS product_attribute_options (
+        id              SERIAL PRIMARY KEY,
+        template_id     INTEGER NOT NULL REFERENCES product_attribute_templates(id) ON DELETE CASCADE,
+        slug            VARCHAR(120) NOT NULL,
+        label_zh        VARCHAR(160) NOT NULL,
+        label_en        VARCHAR(160) NOT NULL,
+        sort_order      INTEGER NOT NULL DEFAULT 0,
+        status          VARCHAR(20) NOT NULL DEFAULT 'visible'
+                        CHECK (status IN ('visible','hidden')),
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        deleted_at      TIMESTAMPTZ,
+        UNIQUE (template_id, slug)
+      )
+    `)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS product_attribute_values (
+        product_id      TEXT NOT NULL REFERENCES product_catalog(id) ON DELETE CASCADE,
+        template_id     INTEGER NOT NULL REFERENCES product_attribute_templates(id) ON DELETE CASCADE,
+        option_id       INTEGER NOT NULL REFERENCES product_attribute_options(id) ON DELETE CASCADE,
+        sort_order      INTEGER NOT NULL DEFAULT 0,
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (product_id, template_id, option_id)
+      )
+    `)
+    await pool.query(`
       ALTER TABLE product_catalog
         ADD COLUMN IF NOT EXISTS description_cn TEXT NOT NULL DEFAULT '',
         ADD COLUMN IF NOT EXISTS description_en TEXT NOT NULL DEFAULT '',
@@ -384,6 +616,24 @@ export async function ensureProductCatalogSchema() {
        ON product_catalog (category_id)
        WHERE deleted_at IS NULL`,
     )
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_product_attribute_templates_status_sort
+       ON product_attribute_templates (status, sort_order)
+       WHERE deleted_at IS NULL`,
+    )
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_product_attribute_options_template_sort
+       ON product_attribute_options (template_id, status, sort_order)
+       WHERE deleted_at IS NULL`,
+    )
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_product_attribute_values_product
+       ON product_attribute_values (product_id)`,
+    )
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_product_attribute_values_option
+       ON product_attribute_values (option_id)`,
+    )
     await pool.query(`
       DO $$
       BEGIN
@@ -399,6 +649,7 @@ export async function ensureProductCatalogSchema() {
       END $$;
     `)
     await seedProductCategoriesIfEmpty()
+    await seedProductAttributeTemplatesIfEmpty()
     await seedCatalogProductsIfEmpty()
   })()
 
@@ -495,7 +746,10 @@ export async function getCatalogProductById(id: string) {
     `SELECT ${COLUMNS} FROM product_catalog WHERE id = $1 AND deleted_at IS NULL`,
     [id],
   )
-  return rows[0] ? rowToCatalogProduct(rows[0]) : null
+  if (!rows[0]) return null
+  const product = rowToCatalogProduct(rows[0])
+  product.attribute_option_ids = await listProductAttributeOptionIds(id)
+  return product
 }
 
 export async function isCatalogProductIdTaken(id: string, exceptId?: string) {
@@ -593,13 +847,18 @@ export async function createCatalogProduct(input: CatalogProductInput) {
       input.sort_order ?? 999,
     ],
   )
-  return rowToCatalogProduct(res.rows[0])
+  const product = rowToCatalogProduct(res.rows[0])
+  if (input.attribute_option_ids) {
+    product.attribute_option_ids = await replaceProductAttributeValues(product.id, input.attribute_option_ids)
+  }
+  return product
 }
 
 export type UpdateCatalogProductInput = Partial<CatalogProductInput>
 
 export async function updateCatalogProduct(id: string, input: UpdateCatalogProductInput) {
   await ensureProductCatalogSchema()
+  const shouldReplaceAttributes = 'attribute_option_ids' in input
   const fields: [keyof UpdateCatalogProductInput, string, (v: unknown) => unknown][] = [
     ['productSeries', 'product_series', (v) => v],
     ['name_cn', 'name_cn', (v) => v],
@@ -643,7 +902,12 @@ export async function updateCatalogProduct(id: string, input: UpdateCatalogProdu
     }
   }
 
-  if (sets.length === 0) return getCatalogProductById(id)
+  if (sets.length === 0) {
+    if (shouldReplaceAttributes) {
+      await replaceProductAttributeValues(id, input.attribute_option_ids ?? [])
+    }
+    return getCatalogProductById(id)
+  }
   sets.push('updated_at = NOW()')
 
   const res = await pool.query(
@@ -653,7 +917,12 @@ export async function updateCatalogProduct(id: string, input: UpdateCatalogProdu
      RETURNING ${COLUMNS}`,
     params,
   )
-  return res.rows[0] ? rowToCatalogProduct(res.rows[0]) : null
+  if (!res.rows[0]) return null
+  if (shouldReplaceAttributes) {
+    await replaceProductAttributeValues(id, input.attribute_option_ids ?? [])
+    return getCatalogProductById(id)
+  }
+  return rowToCatalogProduct(res.rows[0])
 }
 
 export async function softDeleteCatalogProduct(id: string) {
@@ -679,7 +948,8 @@ export async function restoreCatalogProductAsDraft(id: string) {
      RETURNING ${COLUMNS}`,
     [id],
   )
-  return res.rows[0] ? rowToCatalogProduct(res.rows[0]) : null
+  if (!res.rows[0]) return null
+  return rowToCatalogProduct(res.rows[0])
 }
 
 export async function listDeletedCatalogProducts({
@@ -917,6 +1187,378 @@ export async function updateProductCategory(id: number, input: UpdateProductCate
   )
 
   return res.rows[0]?.id ? getProductCategoryById(res.rows[0].id) : null
+}
+
+export async function listProductAttributeTemplates({
+  includeHidden = false,
+}: {
+  includeHidden?: boolean
+} = {}) {
+  await ensureProductCatalogSchema()
+  const templateConds = ['t.deleted_at IS NULL']
+  const optionJoinConds = ['o.template_id = t.id', 'o.deleted_at IS NULL']
+  if (!includeHidden) {
+    templateConds.push(`t.status = 'visible'`)
+    optionJoinConds.push(`o.status = 'visible'`)
+  }
+
+  type TemplateQueryRow = Omit<ProductAttributeTemplateRow, 'option_count' | 'product_count'> & {
+    option_count: string
+    product_count: string
+  }
+
+  const res = await pool.query<TemplateQueryRow>(
+    `SELECT
+       t.id,
+       t.slug,
+       t.title_zh,
+       t.title_en,
+       t.description_zh,
+       t.description_en,
+       t.sort_order,
+       t.status,
+       t.created_at::text AS created_at,
+       t.updated_at::text AS updated_at,
+       COUNT(DISTINCT o.id)::text AS option_count,
+       COUNT(DISTINCT pc.id)::text AS product_count
+     FROM product_attribute_templates t
+     LEFT JOIN product_attribute_options o
+       ON ${optionJoinConds.join(' AND ')}
+     LEFT JOIN product_attribute_values pav
+       ON pav.template_id = t.id
+     LEFT JOIN product_catalog pc
+       ON pc.id = pav.product_id
+      AND pc.deleted_at IS NULL
+     WHERE ${templateConds.join(' AND ')}
+     GROUP BY t.id
+     ORDER BY t.sort_order ASC, t.id ASC`,
+  )
+
+  return res.rows.map((row) => ({
+    ...row,
+    option_count: parseInt(row.option_count ?? '0', 10),
+    product_count: parseInt(row.product_count ?? '0', 10),
+  }))
+}
+
+export async function listProductAttributeTemplatesWithOptions({
+  includeHidden = false,
+}: {
+  includeHidden?: boolean
+} = {}) {
+  const templates = await listProductAttributeTemplates({ includeHidden })
+  if (templates.length === 0) return []
+
+  const templateIds = templates.map((template) => template.id)
+  const optionConds = ['o.deleted_at IS NULL', 'o.template_id = ANY($1::int[])']
+  if (!includeHidden) optionConds.push(`o.status = 'visible'`)
+
+  type OptionQueryRow = ProductAttributeOptionRow & { product_count: string }
+
+  const optionsRes = await pool.query<OptionQueryRow>(
+    `SELECT
+       o.id,
+       o.template_id,
+       t.slug AS template_slug,
+       t.title_zh AS template_title_zh,
+       t.title_en AS template_title_en,
+       o.slug,
+       o.label_zh,
+       o.label_en,
+       o.sort_order,
+       o.status,
+       o.created_at::text AS created_at,
+       o.updated_at::text AS updated_at,
+       COUNT(DISTINCT pc.id)::text AS product_count
+     FROM product_attribute_options o
+     JOIN product_attribute_templates t
+       ON t.id = o.template_id
+      AND t.deleted_at IS NULL
+     LEFT JOIN product_attribute_values pav
+       ON pav.option_id = o.id
+     LEFT JOIN product_catalog pc
+       ON pc.id = pav.product_id
+      AND pc.deleted_at IS NULL
+     WHERE ${optionConds.join(' AND ')}
+     GROUP BY o.id, t.id
+     ORDER BY t.sort_order ASC, o.sort_order ASC, o.id ASC`,
+    [templateIds],
+  )
+
+  const optionsByTemplate = new Map<number, ProductAttributeOptionRow[]>()
+  for (const option of optionsRes.rows) {
+    const list = optionsByTemplate.get(option.template_id) ?? []
+    list.push({
+      ...option,
+      product_count: parseInt(String(option.product_count ?? '0'), 10),
+    })
+    optionsByTemplate.set(option.template_id, list)
+  }
+
+  return templates.map((template) => ({
+    ...template,
+    options: optionsByTemplate.get(template.id) ?? [],
+  }))
+}
+
+export async function getProductAttributeTemplateById(id: number) {
+  await ensureProductCatalogSchema()
+  const res = await pool.query<ProductAttributeTemplateRow>(
+    `SELECT
+       id,
+       slug,
+       title_zh,
+       title_en,
+       description_zh,
+       description_en,
+       sort_order,
+       status,
+       created_at::text AS created_at,
+       updated_at::text AS updated_at
+     FROM product_attribute_templates
+     WHERE id = $1 AND deleted_at IS NULL
+     LIMIT 1`,
+    [id],
+  )
+  return res.rows[0] ?? null
+}
+
+export async function getProductAttributeOptionById(id: number) {
+  await ensureProductCatalogSchema()
+  const res = await pool.query<ProductAttributeOptionRow>(
+    `SELECT
+       o.id,
+       o.template_id,
+       t.slug AS template_slug,
+       t.title_zh AS template_title_zh,
+       t.title_en AS template_title_en,
+       o.slug,
+       o.label_zh,
+       o.label_en,
+       o.sort_order,
+       o.status,
+       o.created_at::text AS created_at,
+       o.updated_at::text AS updated_at
+     FROM product_attribute_options o
+     JOIN product_attribute_templates t
+       ON t.id = o.template_id
+      AND t.deleted_at IS NULL
+     WHERE o.id = $1 AND o.deleted_at IS NULL
+     LIMIT 1`,
+    [id],
+  )
+  return res.rows[0] ?? null
+}
+
+export async function isProductAttributeTemplateSlugTaken(slug: string, excludeId?: number) {
+  await ensureProductCatalogSchema()
+  const params: unknown[] = [slug]
+  let extra = ''
+  if (excludeId != null) {
+    params.push(excludeId)
+    extra = `AND id != $${params.length}`
+  }
+
+  const res = await pool.query<{ exists: boolean }>(
+    `SELECT EXISTS(
+       SELECT 1 FROM product_attribute_templates WHERE slug = $1 AND deleted_at IS NULL ${extra}
+     ) AS exists`,
+    params,
+  )
+  return res.rows[0]?.exists ?? false
+}
+
+export async function isProductAttributeOptionSlugTaken(templateId: number, slug: string, excludeId?: number) {
+  await ensureProductCatalogSchema()
+  const params: unknown[] = [templateId, slug]
+  let extra = ''
+  if (excludeId != null) {
+    params.push(excludeId)
+    extra = `AND id != $${params.length}`
+  }
+
+  const res = await pool.query<{ exists: boolean }>(
+    `SELECT EXISTS(
+       SELECT 1
+       FROM product_attribute_options
+       WHERE template_id = $1 AND slug = $2 AND deleted_at IS NULL ${extra}
+     ) AS exists`,
+    params,
+  )
+  return res.rows[0]?.exists ?? false
+}
+
+export async function createProductAttributeTemplate(input: CreateProductAttributeTemplateInput) {
+  await ensureProductCatalogSchema()
+  const res = await pool.query<{ id: number }>(
+    `INSERT INTO product_attribute_templates
+       (slug, title_zh, title_en, description_zh, description_en, sort_order, status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING id`,
+    [
+      input.slug,
+      input.title_zh,
+      input.title_en,
+      input.description_zh ?? null,
+      input.description_en ?? null,
+      input.sort_order ?? 100,
+      input.status ?? 'visible',
+    ],
+  )
+
+  const created = await getProductAttributeTemplateById(res.rows[0].id)
+  if (!created) throw new Error('Created product attribute template not found')
+  return created
+}
+
+export async function updateProductAttributeTemplate(id: number, input: UpdateProductAttributeTemplateInput) {
+  await ensureProductCatalogSchema()
+  const sets: string[] = []
+  const params: unknown[] = [id]
+
+  const fields: [keyof UpdateProductAttributeTemplateInput, string][] = [
+    ['slug', 'slug'],
+    ['title_zh', 'title_zh'],
+    ['title_en', 'title_en'],
+    ['description_zh', 'description_zh'],
+    ['description_en', 'description_en'],
+    ['sort_order', 'sort_order'],
+    ['status', 'status'],
+  ]
+
+  for (const [key, col] of fields) {
+    if (key in input) {
+      params.push(input[key])
+      sets.push(`${col} = $${params.length}`)
+    }
+  }
+
+  if (sets.length === 0) return getProductAttributeTemplateById(id)
+  sets.push('updated_at = NOW()')
+
+  const res = await pool.query<{ id: number }>(
+    `UPDATE product_attribute_templates SET ${sets.join(', ')}
+     WHERE id = $1 AND deleted_at IS NULL
+     RETURNING id`,
+    params,
+  )
+
+  return res.rows[0]?.id ? getProductAttributeTemplateById(res.rows[0].id) : null
+}
+
+export async function createProductAttributeOption(input: CreateProductAttributeOptionInput) {
+  await ensureProductCatalogSchema()
+  const res = await pool.query<{ id: number }>(
+    `INSERT INTO product_attribute_options
+       (template_id, slug, label_zh, label_en, sort_order, status)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     RETURNING id`,
+    [
+      input.template_id,
+      input.slug,
+      input.label_zh,
+      input.label_en,
+      input.sort_order ?? 100,
+      input.status ?? 'visible',
+    ],
+  )
+
+  const created = await getProductAttributeOptionById(res.rows[0].id)
+  if (!created) throw new Error('Created product attribute option not found')
+  return created
+}
+
+export async function updateProductAttributeOption(id: number, input: UpdateProductAttributeOptionInput) {
+  await ensureProductCatalogSchema()
+  const sets: string[] = []
+  const params: unknown[] = [id]
+
+  const fields: [keyof UpdateProductAttributeOptionInput, string][] = [
+    ['slug', 'slug'],
+    ['label_zh', 'label_zh'],
+    ['label_en', 'label_en'],
+    ['sort_order', 'sort_order'],
+    ['status', 'status'],
+  ]
+
+  for (const [key, col] of fields) {
+    if (key in input) {
+      params.push(input[key])
+      sets.push(`${col} = $${params.length}`)
+    }
+  }
+
+  if (sets.length === 0) return getProductAttributeOptionById(id)
+  sets.push('updated_at = NOW()')
+
+  const res = await pool.query<{ id: number }>(
+    `UPDATE product_attribute_options SET ${sets.join(', ')}
+     WHERE id = $1 AND deleted_at IS NULL
+     RETURNING id`,
+    params,
+  )
+
+  return res.rows[0]?.id ? getProductAttributeOptionById(res.rows[0].id) : null
+}
+
+export async function listProductAttributeOptionIds(productId: string) {
+  await ensureProductCatalogSchema()
+  const res = await pool.query<{ option_id: number }>(
+    `SELECT pav.option_id
+     FROM product_attribute_values pav
+     JOIN product_attribute_options o
+       ON o.id = pav.option_id
+      AND o.deleted_at IS NULL
+     JOIN product_attribute_templates t
+       ON t.id = pav.template_id
+      AND t.deleted_at IS NULL
+     WHERE pav.product_id = $1
+     ORDER BY t.sort_order ASC, o.sort_order ASC, o.id ASC`,
+    [productId],
+  )
+  return res.rows.map((row) => row.option_id)
+}
+
+export async function replaceProductAttributeValues(productId: string, optionIds: number[]) {
+  await ensureProductCatalogSchema()
+  const uniqueIds = Array.from(new Set(optionIds.filter((id) => Number.isInteger(id) && id > 0))).slice(0, 80)
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    await client.query(`DELETE FROM product_attribute_values WHERE product_id = $1`, [productId])
+
+    if (uniqueIds.length > 0) {
+      const optionsRes = await client.query<{ id: number; template_id: number; sort_order: number }>(
+        `SELECT o.id, o.template_id, o.sort_order
+         FROM product_attribute_options o
+         JOIN product_attribute_templates t
+           ON t.id = o.template_id
+          AND t.deleted_at IS NULL
+         WHERE o.id = ANY($1::int[])
+           AND o.deleted_at IS NULL`,
+        [uniqueIds],
+      )
+
+      for (const option of optionsRes.rows) {
+        await client.query(
+          `INSERT INTO product_attribute_values
+             (product_id, template_id, option_id, sort_order)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (product_id, template_id, option_id) DO NOTHING`,
+          [productId, option.template_id, option.id, option.sort_order],
+        )
+      }
+    }
+
+    await client.query('COMMIT')
+  } catch (err) {
+    await client.query('ROLLBACK')
+    throw err
+  } finally {
+    client.release()
+  }
+
+  return listProductAttributeOptionIds(productId)
 }
 
 export async function countCatalogProductsByStatus() {
