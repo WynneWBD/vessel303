@@ -15,7 +15,7 @@ export default async function EditNewsPage({
 
   const [news, categories] = await Promise.all([
     getNewsById(id).catch(() => null),
-    listNewsCategories().catch(() => []),
+    listNewsCategories({ includeHidden: true }).catch(() => []),
   ])
   if (!news) redirect('/admin/news')
 

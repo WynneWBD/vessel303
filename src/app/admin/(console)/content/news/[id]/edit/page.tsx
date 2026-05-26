@@ -66,7 +66,7 @@ export default async function AdminContentNewsEditPage({ params }: PageProps) {
   const [news, stats, categories] = await Promise.all([
     getNewsById(id).catch(() => null),
     safeLoad('news stats', () => getNewsStats(), EMPTY_NEWS_STATS),
-    listNewsCategories().catch(() => []),
+    listNewsCategories({ includeHidden: true }).catch(() => []),
   ])
   if (!news) notFound()
 

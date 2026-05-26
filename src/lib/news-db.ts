@@ -60,6 +60,18 @@ export type NewsStatusSummary = {
   total: number
 }
 
+export type CreateNewsCategoryInput = {
+  slug: string
+  title_zh: string
+  title_en: string
+  description_zh?: string | null
+  description_en?: string | null
+  sort_order?: number
+  status?: NewsCategoryStatus
+}
+
+export type UpdateNewsCategoryInput = Partial<CreateNewsCategoryInput>
+
 const NEWS_COLUMNS = `
   n.id, n.slug, n.title_zh, n.title_en, n.content_zh, n.content_en,
   n.excerpt_zh, n.excerpt_en, n.cover_image_url,
@@ -400,4 +412,78 @@ export async function getNewsCategoryById(id: number, { visibleOnly = false } = 
   )
 
   return res.rows[0] ?? null
+}
+
+export async function isNewsCategorySlugTaken(slug: string, excludeId?: number) {
+  const params: unknown[] = [slug]
+  let extra = ''
+  if (excludeId != null) {
+    params.push(excludeId)
+    extra = `AND id != $${params.length}`
+  }
+
+  const res = await pool.query<{ exists: boolean }>(
+    `SELECT EXISTS(
+       SELECT 1 FROM news_categories WHERE slug = $1 AND deleted_at IS NULL ${extra}
+     ) AS exists`,
+    params,
+  )
+  return res.rows[0]?.exists ?? false
+}
+
+export async function createNewsCategory(input: CreateNewsCategoryInput) {
+  const res = await pool.query<{ id: number }>(
+    `INSERT INTO news_categories
+       (slug, title_zh, title_en, description_zh, description_en, sort_order, status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING id`,
+    [
+      input.slug,
+      input.title_zh,
+      input.title_en,
+      input.description_zh ?? null,
+      input.description_en ?? null,
+      input.sort_order ?? 100,
+      input.status ?? 'visible',
+    ],
+  )
+
+  const created = await getNewsCategoryById(res.rows[0].id)
+  if (!created) throw new Error('Created news category not found')
+  return created
+}
+
+export async function updateNewsCategory(id: number, input: UpdateNewsCategoryInput) {
+  const sets: string[] = []
+  const params: unknown[] = [id]
+
+  const fields: [keyof UpdateNewsCategoryInput, string][] = [
+    ['slug', 'slug'],
+    ['title_zh', 'title_zh'],
+    ['title_en', 'title_en'],
+    ['description_zh', 'description_zh'],
+    ['description_en', 'description_en'],
+    ['sort_order', 'sort_order'],
+    ['status', 'status'],
+  ]
+
+  for (const [key, col] of fields) {
+    if (key in input) {
+      params.push(input[key])
+      sets.push(`${col} = $${params.length}`)
+    }
+  }
+
+  if (sets.length === 0) return getNewsCategoryById(id)
+
+  sets.push('updated_at = NOW()')
+
+  const res = await pool.query<{ id: number }>(
+    `UPDATE news_categories SET ${sets.join(', ')}
+     WHERE id = $1 AND deleted_at IS NULL
+     RETURNING id`,
+    params,
+  )
+
+  return res.rows[0]?.id ? getNewsCategoryById(res.rows[0].id) : null
 }

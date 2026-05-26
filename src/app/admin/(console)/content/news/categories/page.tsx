@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { listNewsCategories, type NewsCategoryRow } from '@/lib/news-db'
+import NewsCategoryManagerClient from '@/components/admin/NewsCategoryManagerClient'
+import { listNewsCategories } from '@/lib/news-db'
 import {
   EMPTY_NEWS_STATS,
   NewsConsoleShell,
@@ -141,10 +142,10 @@ function Hero() {
         <div className="min-w-0">
           <PrimaryAction href="/admin/content/news" Icon={ArrowLeft} label="返回新闻概览" />
           <div className="mt-5">
-            <p className="text-sm font-semibold text-[#1889B6]">B3-5</p>
+            <p className="text-sm font-semibold text-[#1889B6]">B3-7</p>
             <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">新闻分类管理</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-              参照 300 的所属分类和分类管理心智，分类表和新闻所属分类字段已接入保存链路。
+              参照 300 的所属分类和分类管理心智，分类表已支持新增、编辑、排序和显示 / 隐藏。
             </p>
           </div>
         </div>
@@ -225,46 +226,6 @@ function CategoryCandidates() {
   )
 }
 
-function LiveCategoryTable({ categories }: { categories: NewsCategoryRow[] }) {
-  return (
-    <section className="space-y-4">
-      <SectionTitle
-        title="当前分类"
-        detail="来自 news_categories 表；本轮可选择、可保存、可筛选，分类新增 / 编辑仍后续单独开放。"
-      />
-      <div className="overflow-x-auto rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-        <div className="min-w-[760px]">
-          <div className="grid grid-cols-[180px_180px_110px_90px_minmax(0,1fr)] gap-4 border-b border-[#D8E7E8] bg-[#F7FAFA] px-4 py-3 text-xs font-bold text-[#61767D]">
-            <span>中文分类</span>
-            <span>英文分类</span>
-            <span>新闻数量</span>
-            <span>状态</span>
-            <span>说明</span>
-          </div>
-          {categories.map((category) => (
-            <div
-              key={category.id}
-              className="grid grid-cols-[180px_180px_110px_90px_minmax(0,1fr)] gap-4 border-b border-[#EEF3F3] px-4 py-3 text-xs text-[#61767D] last:border-b-0"
-            >
-              <span>
-                <span className="block font-semibold text-[#1E2C31]">{category.title_zh}</span>
-                <span className="mt-1 block text-[#1889B6]">{category.slug}</span>
-              </span>
-              <span>{category.title_en}</span>
-              <span>{category.news_count ?? 0}</span>
-              <span>{category.status === 'visible' ? '显示' : '隐藏'}</span>
-              <span className="leading-5">{category.description_zh ?? '暂无说明'}</span>
-            </div>
-          ))}
-          {categories.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-[#8A8580]">暂无分类</div>
-          ) : null}
-        </div>
-      </div>
-    </section>
-  )
-}
-
 function FieldPlanTable() {
   return (
     <section className="space-y-4">
@@ -300,7 +261,7 @@ function FieldPlanTable() {
 function RolloutPlan() {
   return (
     <section className="space-y-4">
-      <SectionTitle title="后续落地顺序" detail="B3-5 已完成分类建表和保存接入；新增 / 编辑分类和批量转移仍后置。" />
+      <SectionTitle title="后续落地顺序" detail="B3-7 已开放分类新增 / 编辑 / 隐藏；批量转移仍交 B3-9。" />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         {STEP_PLAN.map((step) => (
           <div key={step.title} className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
@@ -323,19 +284,19 @@ function BoundaryPanel() {
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">本轮做什么</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
-            新增分类表、新闻分类字段、表单保存、列表分类展示和分类筛选。
+            新增、编辑、排序和显示 / 隐藏新闻分类；隐藏不会物理删除分类，也不会改动已绑定新闻。
           </p>
         </div>
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">本轮不做什么</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
-            不开放分类新增 / 编辑 / 删除，不批量回填旧新闻，不做批量转移。
+            不做分类物理删除，不批量回填旧新闻，不做批量转移，不改权限分级。
           </p>
         </div>
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">验收重点</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
-            分类页显示数据库分类，新闻表单可保存分类，列表可显示和筛选分类。
+            分类页可新增、编辑、隐藏并恢复显示；新闻表单仍只使用可见分类。
           </p>
         </div>
       </div>
@@ -366,7 +327,7 @@ export default async function AdminContentNewsCategoriesPage() {
     >
       <Hero />
       <ReferencePanel />
-      <LiveCategoryTable categories={categories} />
+      <NewsCategoryManagerClient initialCategories={categories} />
       <CategoryCandidates />
       <FieldPlanTable />
       <RolloutPlan />

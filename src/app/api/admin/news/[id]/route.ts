@@ -79,7 +79,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   }
 
   if (parsed.data.category_id != null) {
-    const category = await getNewsCategoryById(parsed.data.category_id, { visibleOnly: true })
+    const category = await getNewsCategoryById(parsed.data.category_id)
     if (!category) {
       return NextResponse.json({ error: 'Invalid news category' }, { status: 400 })
     }
