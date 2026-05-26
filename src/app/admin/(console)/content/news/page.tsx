@@ -216,10 +216,11 @@ function OperationRoadmap({ stats }: { stats: NewsStats }) {
     },
     {
       title: '回收站',
-      status: `${formatNumber(stats.deleted)} 条`,
+      status: `B3-8 · ${formatNumber(stats.deleted)} 条`,
       detail: '现有删除是软删除，前台和列表已经排除 deleted_at 不为空的新闻。',
-      evidence: '可以统计已删除数量，但恢复、永久删除需要独立 API 和权限确认。',
-      next: '后续单独做只读列表、恢复确认和 admin-only 永久删除边界。',
+      evidence: '已提供回收站列表和恢复为草稿能力，恢复不会直接重新发布到前台。',
+      next: '进入回收站检查已删除新闻；永久删除、批量恢复和权限分级后续单独排期。',
+      href: '/admin/content/news/recycle',
       Icon: Archive,
       tone: 'green',
     },
@@ -325,7 +326,7 @@ function OperationBoundary() {
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">后续再做</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
-            分类新增 / 编辑、回收站恢复、真实批量写入、定时发布和权限分级单独排期。
+            永久删除、真实批量写入、定时发布和权限分级单独排期。
           </p>
         </div>
       </div>

@@ -151,6 +151,42 @@ export async function listNews({
   return { rows: listRes.rows, total }
 }
 
+export async function listDeletedNews({
+  search,
+  limit,
+  offset,
+}: {
+  search?: string
+  limit: number
+  offset: number
+}) {
+  const conds: string[] = ['n.deleted_at IS NOT NULL']
+  const params: unknown[] = []
+
+  if (search) {
+    params.push(`%${search}%`)
+    const i = params.length
+    conds.push(`(n.title_zh ILIKE $${i} OR n.title_en ILIKE $${i} OR n.slug ILIKE $${i})`)
+  }
+
+  const where = `WHERE ${conds.join(' AND ')}`
+
+  const countRes = await pool.query<{ count: string }>(
+    `SELECT COUNT(*)::text AS count FROM news n ${where}`,
+    params,
+  )
+  const total = parseInt(countRes.rows[0]?.count ?? '0', 10)
+
+  const listRes = await pool.query<NewsRow>(
+    `SELECT ${NEWS_COLUMNS} FROM ${NEWS_FROM} ${where}
+     ORDER BY n.deleted_at DESC, n.updated_at DESC
+     LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+    [...params, limit, offset],
+  )
+
+  return { rows: listRes.rows, total }
+}
+
 export async function listPublishedNews({
   limit,
   offset,
@@ -311,6 +347,20 @@ export async function softDeleteNews(id: number) {
     [id],
   )
   return res.rows[0]?.id ?? null
+}
+
+export async function restoreNewsAsDraft(id: number) {
+  const res = await pool.query<{ id: number }>(
+    `UPDATE news
+       SET deleted_at = NULL,
+           status = 'draft',
+           published_at = NULL,
+           updated_at = NOW()
+     WHERE id = $1 AND deleted_at IS NOT NULL
+     RETURNING id`,
+    [id],
+  )
+  return res.rows[0]?.id ? getNewsById(res.rows[0].id) : null
 }
 
 export async function countNewsByStatus(): Promise<NewsStatusSummary> {
