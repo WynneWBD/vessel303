@@ -101,7 +101,7 @@ Codex 默认工作方式：
 
 项目案例：`project_cases` 当前非删除 9 条、published 8 条、draft 1 条、map-ready CMS 项目 3 条；不建议一次性导入 40 项，继续小批量样板策略。缺失字段不显示。`/cases` 列表已指向 `/cases/[id]` 正式详情页，筛选按钮已真实生效，详情页已补齐 300.cn 对照字段和相关案例入口；B2-6 全链路回归已完成，前台主导航 Cases 已回到 `/cases`，后台项目引用入口已收口到新版 `/admin/content/projects/{id}/edit`；B2-7 已把案例详情主 CTA 接到页面内 `#case-inquiry`，表单提交走现有 `/api/contact` 并写入 `leads`；Global 仍只作为独立地图展示渠道；空规格字段隐藏，不显示 `-`，不用 TBD 硬填。
 
-新闻资讯：B3-0/1/2 已完成新闻后台 2.0 主路径，正式路径为 `/admin/content/news -> /admin/content/news/list -> /admin/content/news/new 或 /admin/content/news/{id}/edit`；旧 `/admin/news`、旧 new / edit 路径继续作为维护备用。新闻 2.0 已参照 300.cn 新闻资讯模块收口状态筛选、搜索、添加、编辑、预览、发布前检查和删除入口；B3-3 已补 300 对照运营能力规划，在 `/admin/content/news` 展示分类管理、回收站、批量操作、定时发布的安全边界，在 `/admin/content/news/list` 补批量选择和禁用批量操作预演；分类字段、恢复 / 永久删除、真实批量写入、定时任务和权限分级仍作为后续任务，不在本轮展开。真实测试新闻 `vessel-news-console-2-test-20260525` 已完成发布、前台验证和删除验证，删除后前台详情页返回 404。
+新闻资讯：B3-0/1/2 已完成新闻后台 2.0 主路径，正式路径为 `/admin/content/news -> /admin/content/news/list -> /admin/content/news/new 或 /admin/content/news/{id}/edit`；旧 `/admin/news`、旧 new / edit 路径继续作为维护备用。新闻 2.0 已参照 300.cn 新闻资讯模块收口状态筛选、搜索、添加、编辑、预览、发布前检查和删除入口；B3-3 已补 300 对照运营能力规划，在 `/admin/content/news` 展示分类管理、回收站、批量操作、定时发布的安全边界，在 `/admin/content/news/list` 补批量选择和禁用批量操作预演；B3-4 已新增 `/admin/content/news/categories` 新闻分类字段方案页，并在 `/admin/content/news/new` / edit 表单补 `所属分类` 预留位；当前分类只读展示、禁用保存，不写 API，不改数据库。分类真实建表、`news.category_id` 保存、前后台分类筛选、回收站恢复 / 永久删除、真实批量写入、定时任务和权限分级仍作为后续任务，不在本轮展开。真实测试新闻 `vessel-news-console-2-test-20260525` 已完成发布、前台验证和删除验证，删除后前台详情页返回 404。
 
 Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳定性优先于功能扩展。
 
@@ -244,6 +244,7 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 - 项目案例 B2-7 案例详情 CTA / 询盘入口接线索已上线：`5057a61 feat(cases): connect case inquiries to leads`，full SHA `5057a610fd769ee6d04b707073129c18cab1d752`，Vercel deployment `dpl_72L769PEKZtgeSZyGKyA9piPRCkn`，Vercel 状态 READY；`/cases/[id]` 主 CTA 已锚到页面内 `#case-inquiry`，新增案例询盘表单，提交走 `/api/contact` 并写入现有 `leads`，`source` 为 `case_detail:{projectId}`；邮件通知保留为辅助通道，线索写入成功时邮件失败不阻塞前台提交。300.cn 只读对照确认 300 详情页主要走联系 / 预约入口，本轮没有保存、发布、上传或删除 300 内容；未改数据库结构、权限、认证、支付、订单、`/global`、MapLibre、MapTiler 或 `/api/map`，未在线上提交表单或写生产业务数据。验收记录：`git diff --check`、targeted eslint、`tsc --noEmit`、`next build --webpack` 通过；本地 `/cases`、`/cases/xunliao-bay-holiday-planet`、`/global` 均 200，后台项目入口未登录跳 `/admin/login`；线上 `/cases`、`/cases/xunliao-bay-holiday-planet`、`/global` 均 200，详情页含 `#case-inquiry` 与 `Send Case Inquiry`，页面 `data-dpl-id` 为 `dpl_72L769PEKZtgeSZyGKyA9piPRCkn`。
 - 后台 2.0 B3-0/1/2 新闻后台 2.0 已上线：`4172843 feat(admin): add news content console`，full SHA `4172843814f8c863178c92eb92dc78d515883cc1`，Vercel deployment `dpl_A61RLh9J86LJjLDN3gfmVh5SJ7Kb`，Vercel 状态 READY；新增 `/admin/content/news` 新闻运营入口、`/admin/content/news/list` 新版新闻列表、`/admin/content/news/new` 新版新建页、`/admin/content/news/{id}/edit` 新版编辑页，并将 `/admin`、`/admin/content`、`/admin/status`、产品 / 项目内容区和设置页的新闻入口收口到新版路径。`NewsForm` 和 `NewsListClient` 已支持新版 basePath，保留旧 `/admin/news`、旧 new / edit 路径作为维护备用。300.cn 只读对照确认新闻资讯模块的列表、添加、分类管理、回收站、排序、发布、定时任务、状态和删除操作心智；本轮只实现 B3-0/1/2 主路径，不做分类、回收站、批量操作、定时发布或权限分级。真实验收发布测试新闻 `vessel-news-console-2-test-20260525`，前台 `/news` 和详情页验证通过；Wynne 确认后已删除该测试新闻，后台刷新回到 1 条，前台列表不再展示，详情页返回 404。未改数据库结构、权限、认证、支付、订单、`/global`、MapLibre、MapTiler 或 `/api/map`；`/global edge runtime warning` 仍归 04。
 - 后台 2.0 B3-3 新闻运营能力规划已上线：`b77fb32 feat(admin): add news operations planning`，full SHA `b77fb3257ebbd0676929ab6c8d9b9e6d12327af8`，Vercel deployment `dpl_2PpAsGMjAuUHBTsGd4WTtutC18qD`，Vercel 状态 READY；参照 300.cn 新闻资讯后台的分类管理、回收站、批量操作和定时任务心智，`/admin/content/news` 已新增 B3-3 运营能力规划面板，明确分类需要字段、回收站当前只统计软删除数量、批量操作先做预演、定时发布需要后续任务字段和执行器；`/admin/content/news/list` 已新增批量选择和禁用批量操作工具栏，显示已选数量但不执行真实批量发布、删除、状态、转移或翻译。未改数据库结构、API、保存 / 发布 / 删除逻辑、权限、认证、支付、订单、`/global`、MapLibre、MapTiler 或 `/api/map`；未写生产业务数据。验收记录：`git diff --check`、targeted eslint、`tsc --noEmit`、`next build --webpack` 通过；线上 `/news` 200 且页面 `data-dpl-id` 为 `dpl_2PpAsGMjAuUHBTsGd4WTtutC18qD`，未登录 `/admin/content/news` 302 到 `/admin/login`，已登录 Chrome 验收确认 `/admin/content/news` 显示 B3-3 规划面板、`/admin/content/news/list` 显示批量操作预演且浏览器 error 日志为空。`/global edge runtime warning` 仍归 04。
+- 后台 2.0 B3-4 新闻分类字段方案已上线：`00b177e feat(admin): add news category planning`，full SHA `00b177e369a8a3021e9fb44cf0091497513fa954`，Vercel deployment `dpl_8uVqhyUnc32RofeTeDN9VngAYqKK`，Vercel 状态 READY；参照 300.cn 新闻资讯后台的 `所属分类` 列和 `分类管理` 入口，新增 `/admin/content/news/categories` 分类方案页，记录 300 对照、候选分类、字段方案和后续落地顺序；新闻概览、列表和左侧二级导航已加入分类方案入口；`NewsForm` 新增 `所属分类` 预留位，显示候选分类和禁用下拉，但不写入 `formBody`、POST/PATCH 或数据库。未改数据库结构、API、保存 / 发布 / 删除逻辑、权限、认证、支付、订单、`/global`、MapLibre、MapTiler 或 `/api/map`；未写生产业务数据。验收记录：`git diff --check`、targeted eslint、`tsc --noEmit`、`next build --webpack` 通过；本地 `/admin/content/news/categories` 和 `/admin/content/news` 未登录均 302 到 `/admin/login`，`/news` 200；线上 `/news` 200 且页面 `data-dpl-id` 为 `dpl_8uVqhyUnc32RofeTeDN9VngAYqKK`，未登录 `/admin/content/news/categories` 302 到 `/admin/login`，已登录 Chrome 验收确认分类方案页和新闻新建页分类预留位可见，浏览器 error 日志为空。`/global edge runtime warning` 仍归 04。
 - 后台 2.0 开发规则：重大产品设计前必须做 300.cn 对照确认；普通 bug、文案、API、权限、lint/build 不必每轮访问。若对 300 交互不确定，先回 300.cn 只读观察，不凭记忆硬做；300 负责启发路径，vessel 负责收口边界。
 - 03 项目案例 / 项目 CMS：当前 3 个 Excel/static 样板项目已进入 CMS 发布链路；旧 `foshan-shishan-cultural-camp` 保持 draft，不显示在 `/cases`，不进入 `/global`。前台 `/cases` 列表已进入正式 `/cases/[id]` 详情页链路，筛选、300.cn 对照字段、相关案例入口、B2-6 全链路回归和 B2-7 案例询盘接线索已完成，Global 仍只是地图展示渠道。
 - 04 Global 地图专项：`/global` 地图底层仍归 04；03 不直接修改地图底层。`/global` 营地详情首开速度第一阶段已上线：`77b053d perf(global): speed up project detail loading`；预加载 `ProjectDetail` 和 `showcaseProjects`，详情基础文字先显示，轮播图片按当前图加载；未改 `/api/map/[...path]`、runtime、点位、CMS、坐标、HQ，未替换 / 压缩 / 删除图片素材；剩余大图体积治理交 03 / 媒体侧，MapTiler `key=proxied` 403 属既有地图链路问题，`/global` edge runtime warning 仍归 04。
@@ -299,7 +300,8 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 - `/admin`、`/admin/content`、`/admin/status` 和内容域内新闻入口已收口到新版路径。
 - B3-0/1/2 已完成真实发布和删除验收；测试新闻删除后 `/news/vessel-news-console-2-test-20260525` 返回 404。
 - B3-3 已完成分类管理、回收站、批量操作和定时发布的只读规划入口；`/admin/content/news/list` 已有批量选择和禁用批量操作预演。
-- 分类字段、回收站恢复 / 永久删除、真实批量写入、定时任务执行器和权限分级仍是后续任务，不要混入普通新闻主路径小修。
+- B3-4 已完成 `/admin/content/news/categories` 分类字段方案页和 `NewsForm` 的 `所属分类` 预留位，当前只读展示、禁用保存。
+- 分类真实建表、`news.category_id` 保存、前后台筛选、回收站恢复 / 永久删除、真实批量写入、定时任务执行器和权限分级仍是后续任务，不要混入普通新闻主路径小修。
 
 2026-04-27 修过的重要 bug：
 
@@ -538,7 +540,7 @@ curl -I https://www.vessel303.com/news/<slug>
 ## 当前已知后续事项
 
 - 03 项目案例 / 项目 CMS：继续小批量样板策略；B2-5 前台 `/cases` 列表与 `/cases/[id]` 详情页已完成筛选、详情字段和相关案例入口，B2-6 全链路回归与 B2-7 案例询盘接线索已完成。发布更多项目前先补齐封面图、图库、经纬度、简介、舱数/规模、设施、交通、周边。下一步建议 03 先补 3-5 个重点案例素材，02 暂不马上开 Global 数据基线。
-- 02 后台运营 / 新闻：B3-0/1/2 新闻后台 2.0 主路径已完成并通过真实发布 / 删除验收；B3-3 已完成新闻分类 / 回收站 / 批量操作 / 定时发布只读规划和批量操作预演。下一步若继续新闻模块，可单独做分类字段方案、回收站恢复、真实批量操作或定时发布执行器；权限分级仍建议等更多后台开发任务稳定后单独做。
+- 02 后台运营 / 新闻：B3-0/1/2 新闻后台 2.0 主路径已完成并通过真实发布 / 删除验收；B3-3 已完成新闻分类 / 回收站 / 批量操作 / 定时发布只读规划和批量操作预演；B3-4 已完成新闻分类字段方案页和表单分类预留位。下一步若继续新闻模块，可单独做分类真实建表与保存接入、回收站恢复、真实批量操作或定时发布执行器；权限分级仍建议等更多后台开发任务稳定后单独做。
 - 04 Global 地图专项：地图底层仍归 04；更多 `/global` 点位接入前先等 03 数据基线稳定。
 - 02 后台运营 / 设置：`site_settings` 已初始化并接管 `/contact` 的 `contactUrl`；后续扩展范围单独确认。
 - 后台运营体验 A / B 包：A1-A6 和 B1-B6 已上线；媒体真实上传 / 删除端到端测试仍需单独授权。
