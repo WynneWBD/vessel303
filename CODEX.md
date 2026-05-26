@@ -101,6 +101,8 @@ Codex 默认工作方式：
 
 项目案例：`project_cases` 当前非删除 9 条、published 8 条、draft 1 条、map-ready CMS 项目 3 条；不建议一次性导入 40 项，继续小批量样板策略。缺失字段不显示。`/cases` 列表已指向 `/cases/[id]` 正式详情页，筛选按钮已真实生效，详情页已补齐 300.cn 对照字段和相关案例入口；B2-6 全链路回归已完成，前台主导航 Cases 已回到 `/cases`，后台项目引用入口已收口到新版 `/admin/content/projects/{id}/edit`；B2-7 已把案例详情主 CTA 接到页面内 `#case-inquiry`，表单提交走现有 `/api/contact` 并写入 `leads`；Global 仍只作为独立地图展示渠道；空规格字段隐藏，不显示 `-`，不用 TBD 硬填。
 
+新闻资讯：B3-0/1/2 已完成新闻后台 2.0 主路径，正式路径为 `/admin/content/news -> /admin/content/news/list -> /admin/content/news/new 或 /admin/content/news/{id}/edit`；旧 `/admin/news`、旧 new / edit 路径继续作为维护备用。新闻 2.0 已参照 300.cn 新闻资讯模块收口状态筛选、搜索、添加、编辑、预览、发布前检查和删除入口；分类管理、回收站、批量操作、定时发布、权限分级仍作为后续任务，不在本轮展开。真实测试新闻 `vessel-news-console-2-test-20260525` 已完成发布、前台验证和删除验证，删除后前台详情页返回 404。
+
 Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳定性优先于功能扩展。
 
 价格与会员：价格体系、会员体系、代理后台、中文站、支付系统是中长期专项。价格规则未确认前，不把游客价、注册会员价、代理价、国家价写死。
@@ -201,7 +203,8 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 - `/admin/leads`：线索列表、筛选、详情、状态更新、CSV 导出。
 - `/admin/users`：总管理专用。用户列表、角色/身份/禁用管理、CSV 导出、服务端自我保护。
 - `/admin/media`：基于 Vercel Blob 的图片库，使用 client upload；已补充上传限制提示、引用统计文案、新闻正文引用删除保护。
-- `/admin/news`：新闻管理，已能新建、编辑、发布、取消发布，并在前台展示。
+- `/admin/content/news`：新闻后台 2.0 主路径，包含新闻概览、列表、新建、编辑、预览、发布前检查、发布 / 取消发布和删除入口。
+- `/admin/news`：旧新闻管理维护备用路径，仍能新建、编辑、发布、取消发布，并在前台展示。
 - `/admin/settings`：总管理专用。设置页已上线，`site_settings` 已初始化；保存设置会写数据库并产生后台审计日志。
 - `/admin/products`：产品 CMS 已接入产品列表和通用详情页，支持新建、编辑、复制为草稿、发布/下架、删除、筛选、图片选择/上传、前台预览、详情介绍、详情图库选择器、图库排序、规格参数，以及通用详情页模块（亮点、场景、FAQ、图文内容、定制范围）；固定精细详情页如 `e7`、`v9-gen6` 仍保留原页面。
 - `/admin/projects`：项目 / 案例 CMS 已接入，支持新建、编辑、发布/下架、删除、筛选、封面图、图库排序、中英文案例内容、地图发布校验、地图状态筛选，以及 `/global` 详情里的统计数据、预订链接、设施亮点、交通指引和周边景点；前台 `/cases` 列表和 `/cases/[id]` 详情已优先读取数据库并保留静态兜底；带经纬度的已发布项目会进入 `/global` 地图点位和详情面板；产品/项目表单图片控件误触发和窄列布局已修复。
@@ -239,6 +242,7 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 - 前台项目案例 B2-5-2 已上线：`20ab9e3 feat(cases): complete project case frontend`，full SHA `20ab9e3feb02b8e1e140e05cc7efbafb6d9a286c`，Vercel deployment `dpl_Prib2ELhvMTpnDa8yzpFyWgyzPci`，Vercel 状态 READY；`/cases` 筛选按钮已从静态视觉标签改为真实筛选，`/cases/[id]` 详情页已按 300.cn 项目案例字段补齐内容分类、发布状态、内容时间、项目名称、项目类型、项目地点、占地面积、投资规模、采购数量、采购产品和相关案例入口。静态兜底已改为只展示 published 项目，旧 `foshan-shishan-cultural-camp` 保持 draft，空字段继续隐藏；询盘入口继续走现有 leads / 联系外链，不做复杂预订系统。300.cn 对照只读核对列表、编辑字段、设置 / SEO / 标签 / 相关页签和发布 / 隐藏 / 删除 / 翻译等后台操作；本轮不复刻 300 的高风险后台动作，不改数据库结构、API、后台保存 / 发布 / 删除 / 上传、权限、`/global`、MapLibre、MapTiler 或 `/api/map`。验收记录：`git diff --check`、targeted eslint、`tsc --noEmit`、`next build --webpack` 通过；本地 `/cases`、`/cases/xunliao-bay-holiday-planet`、`/global` 均 200 且无 `__next_error__`，Chrome 只读验收确认筛选和详情字段可用；线上 `/cases`、`/cases/xunliao-bay-holiday-planet`、`/global` 均 200，页面 `data-dpl-id` 为 `dpl_Prib2ELhvMTpnDa8yzpFyWgyzPci`。
 - 项目案例 B2-6 全链路回归已上线：`d32b777 fix(admin): close project case regression gaps`，full SHA `d32b777bb82324cdaa6fc4d83511519a699304e9`，Vercel deployment `dpl_AHEiyGkfbrimJK5DYYvZ8zTfTqxY`，Vercel 状态 READY；本轮先只读对照 300.cn 后台“网站管理 > 数字门户全球营销版 > 项目案例 > 案例展示 > 项目案例”，确认 300 侧列表字段、编辑字段、设置 / SEO / 标签 / 相关页签和发布 / 隐藏 / 删除 / 翻译等操作心智；随后仅做 B2-6-1 小修：前台主导航 Cases 从 `/global` 回到正式 `/cases`，后台项目 2.0 文案改为 `/cases/[id]` 已承接正式详情页，项目引用入口从旧 `/admin/projects/{id}/edit` 收口到 `/admin/content/projects/{id}/edit`。未改数据库、API、权限、保存 / 发布 / 删除 / 上传、`/global`、MapLibre、MapTiler 或 `/api/map`；300 后台只读，未保存、未发布、未上传、未删除。验收记录：`git diff --check`、targeted eslint、`tsc --noEmit`、`next build --webpack` 通过；本地 `/cases`、`/cases/xunliao-bay-holiday-planet`、`/global` 均 200，后台新旧项目入口未登录均跳 `/admin/login` 且跟随后无 `__next_error__`；线上 `/cases`、`/cases/xunliao-bay-holiday-planet`、`/global` 均 200 且页面 `data-dpl-id` 为 `dpl_AHEiyGkfbrimJK5DYYvZ8zTfTqxY`，线上 `/admin/content/projects` 与旧 `/admin/projects` 均受登录保护跳转。
 - 项目案例 B2-7 案例详情 CTA / 询盘入口接线索已上线：`5057a61 feat(cases): connect case inquiries to leads`，full SHA `5057a610fd769ee6d04b707073129c18cab1d752`，Vercel deployment `dpl_72L769PEKZtgeSZyGKyA9piPRCkn`，Vercel 状态 READY；`/cases/[id]` 主 CTA 已锚到页面内 `#case-inquiry`，新增案例询盘表单，提交走 `/api/contact` 并写入现有 `leads`，`source` 为 `case_detail:{projectId}`；邮件通知保留为辅助通道，线索写入成功时邮件失败不阻塞前台提交。300.cn 只读对照确认 300 详情页主要走联系 / 预约入口，本轮没有保存、发布、上传或删除 300 内容；未改数据库结构、权限、认证、支付、订单、`/global`、MapLibre、MapTiler 或 `/api/map`，未在线上提交表单或写生产业务数据。验收记录：`git diff --check`、targeted eslint、`tsc --noEmit`、`next build --webpack` 通过；本地 `/cases`、`/cases/xunliao-bay-holiday-planet`、`/global` 均 200，后台项目入口未登录跳 `/admin/login`；线上 `/cases`、`/cases/xunliao-bay-holiday-planet`、`/global` 均 200，详情页含 `#case-inquiry` 与 `Send Case Inquiry`，页面 `data-dpl-id` 为 `dpl_72L769PEKZtgeSZyGKyA9piPRCkn`。
+- 后台 2.0 B3-0/1/2 新闻后台 2.0 已上线：`4172843 feat(admin): add news content console`，full SHA `4172843814f8c863178c92eb92dc78d515883cc1`，Vercel deployment `dpl_A61RLh9J86LJjLDN3gfmVh5SJ7Kb`，Vercel 状态 READY；新增 `/admin/content/news` 新闻运营入口、`/admin/content/news/list` 新版新闻列表、`/admin/content/news/new` 新版新建页、`/admin/content/news/{id}/edit` 新版编辑页，并将 `/admin`、`/admin/content`、`/admin/status`、产品 / 项目内容区和设置页的新闻入口收口到新版路径。`NewsForm` 和 `NewsListClient` 已支持新版 basePath，保留旧 `/admin/news`、旧 new / edit 路径作为维护备用。300.cn 只读对照确认新闻资讯模块的列表、添加、分类管理、回收站、排序、发布、定时任务、状态和删除操作心智；本轮只实现 B3-0/1/2 主路径，不做分类、回收站、批量操作、定时发布或权限分级。真实验收发布测试新闻 `vessel-news-console-2-test-20260525`，前台 `/news` 和详情页验证通过；Wynne 确认后已删除该测试新闻，后台刷新回到 1 条，前台列表不再展示，详情页返回 404。未改数据库结构、权限、认证、支付、订单、`/global`、MapLibre、MapTiler 或 `/api/map`；`/global edge runtime warning` 仍归 04。
 - 后台 2.0 开发规则：重大产品设计前必须做 300.cn 对照确认；普通 bug、文案、API、权限、lint/build 不必每轮访问。若对 300 交互不确定，先回 300.cn 只读观察，不凭记忆硬做；300 负责启发路径，vessel 负责收口边界。
 - 03 项目案例 / 项目 CMS：当前 3 个 Excel/static 样板项目已进入 CMS 发布链路；旧 `foshan-shishan-cultural-camp` 保持 draft，不显示在 `/cases`，不进入 `/global`。前台 `/cases` 列表已进入正式 `/cases/[id]` 详情页链路，筛选、300.cn 对照字段、相关案例入口、B2-6 全链路回归和 B2-7 案例询盘接线索已完成，Global 仍只是地图展示渠道。
 - 04 Global 地图专项：`/global` 地图底层仍归 04；03 不直接修改地图底层。`/global` 营地详情首开速度第一阶段已上线：`77b053d perf(global): speed up project detail loading`；预加载 `ProjectDetail` 和 `showcaseProjects`，详情基础文字先显示，轮播图片按当前图加载；未改 `/api/map/[...path]`、runtime、点位、CMS、坐标、HQ，未替换 / 压缩 / 删除图片素材；剩余大图体积治理交 03 / 媒体侧，MapTiler `key=proxied` 403 属既有地图链路问题，`/global` edge runtime warning 仍归 04。
@@ -252,7 +256,7 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 
 ## 新闻模块当前状态
 
-截至 2026-04-27，新闻发布已经上线。
+截至 2026-05-25，新闻发布和新闻后台 2.0 主路径已经上线。
 
 关键文件：
 
@@ -265,6 +269,11 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 - `src/components/admin/NewsForm.tsx`
 - `src/components/admin/NewsEditor.tsx`
 - `src/components/admin/CoverImagePicker.tsx`
+- `src/app/admin/(console)/content/news/page.tsx`
+- `src/app/admin/(console)/content/news/list/page.tsx`
+- `src/app/admin/(console)/content/news/new/page.tsx`
+- `src/app/admin/(console)/content/news/[id]/edit/page.tsx`
+- `src/app/admin/(console)/content/news/_news-console.tsx`
 - `src/app/admin/(protected)/news/page.tsx`
 - `src/app/admin/(protected)/news/new/page.tsx`
 - `src/app/admin/(protected)/news/[id]/edit/page.tsx`
@@ -284,6 +293,11 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 - 已发布新闻出现在 `/news`。
 - 新闻详情页在 `/news/[slug]` 渲染。
 - 前台新闻页面动态读取 Neon 数据库。
+- 新版后台主路径是 `/admin/content/news -> /admin/content/news/list -> /admin/content/news/new 或 /admin/content/news/{id}/edit`。
+- 旧 `/admin/news`、旧 new / edit 路径继续作为维护备用。
+- `/admin`、`/admin/content`、`/admin/status` 和内容域内新闻入口已收口到新版路径。
+- B3-0/1/2 已完成真实发布和删除验收；测试新闻删除后 `/news/vessel-news-console-2-test-20260525` 返回 404。
+- 分类管理、回收站、批量操作、定时发布和权限分级仍是后续任务，不要混入普通新闻主路径小修。
 
 2026-04-27 修过的重要 bug：
 
@@ -521,7 +535,8 @@ curl -I https://www.vessel303.com/news/<slug>
 
 ## 当前已知后续事项
 
-- 03 项目案例 / 项目 CMS：继续小批量样板策略；B2-5 前台 `/cases` 列表与 `/cases/[id]` 详情页已完成筛选、详情字段和相关案例入口，B2-6 全链路回归与 B2-7 案例询盘接线索已完成。发布更多项目前先补齐封面图、图库、经纬度、简介、舱数/规模、设施、交通、周边。下一步建议 03 先补 3-5 个重点案例素材，02 暂不马上开 Global 数据基线；后续再评估 B3 新闻 2.0 或案例转化数据回访。
+- 03 项目案例 / 项目 CMS：继续小批量样板策略；B2-5 前台 `/cases` 列表与 `/cases/[id]` 详情页已完成筛选、详情字段和相关案例入口，B2-6 全链路回归与 B2-7 案例询盘接线索已完成。发布更多项目前先补齐封面图、图库、经纬度、简介、舱数/规模、设施、交通、周边。下一步建议 03 先补 3-5 个重点案例素材，02 暂不马上开 Global 数据基线。
+- 02 后台运营 / 新闻：B3-0/1/2 新闻后台 2.0 主路径已完成并通过真实发布 / 删除验收；下一步可在 B3-3 做新闻分类 / 回收站 / 批量操作 / 定时发布只读规划，或先转入页面编辑器 / admin 权限分级排期。
 - 04 Global 地图专项：地图底层仍归 04；更多 `/global` 点位接入前先等 03 数据基线稳定。
 - 02 后台运营 / 设置：`site_settings` 已初始化并接管 `/contact` 的 `contactUrl`；后续扩展范围单独确认。
 - 后台运营体验 A / B 包：A1-A6 和 B1-B6 已上线；媒体真实上传 / 删除端到端测试仍需单独授权。
