@@ -14,6 +14,15 @@ import {
   type ProductCategoryRow,
 } from '@/lib/product-catalog-db'
 import {
+  ensureProductOperationsSchema,
+  listProductBrands,
+  listProductMarks,
+  listProductShowcases,
+  type ProductBrandRow,
+  type ProductMarkRow,
+  type ProductShowcaseRow,
+} from '@/lib/product-operations-db'
+import {
   Archive,
   CheckCircle2,
   CircleDashed,
@@ -57,6 +66,9 @@ type FilterState = {
   productType: string
   category: string
   attribute: string
+  brand: string
+  mark: string
+  showcase: string
   page: number
 }
 
@@ -89,8 +101,13 @@ type ProductListRow = {
   category_slug: string | null
   category_title_zh: string | null
   category_title_en: string | null
+  brand_id: number | null
+  brand_title_zh: string | null
+  brand_title_en: string | null
   attribute_option_count: number | string
   attribute_labels_zh: string[] | null
+  mark_labels_zh: string[] | null
+  showcase_titles_zh: string[] | null
   seo_title_zh: string | null
   seo_title_en: string | null
   seo_description_zh: string | null
@@ -110,6 +127,9 @@ type ProductOptions = {
   productTypes: string[]
   categories: Pick<ProductCategoryRow, 'id' | 'title_zh' | 'title_en'>[]
   attributeTemplates: ProductAttributeTemplateWithOptions[]
+  brands: Pick<ProductBrandRow, 'id' | 'title_zh' | 'title_en' | 'status'>[]
+  marks: Pick<ProductMarkRow, 'id' | 'title_zh' | 'title_en' | 'status'>[]
+  showcases: Pick<ProductShowcaseRow, 'id' | 'title_zh' | 'title_en' | 'status'>[]
 }
 
 type StatCard = {
@@ -139,6 +159,9 @@ const EMPTY_OPTIONS: ProductOptions = {
   productTypes: [],
   categories: [],
   attributeTemplates: [],
+  brands: [],
+  marks: [],
+  showcases: [],
 }
 
 const PRODUCT_ISSUE_OPTIONS: { value: ProductIssue; label: string }[] = [
@@ -252,6 +275,9 @@ function parseFilters(sp: Record<string, string | string[] | undefined>): Filter
     productType: firstParam(sp.type)?.trim() ?? '',
     category: firstParam(sp.category)?.trim() ?? '',
     attribute: firstParam(sp.attribute)?.trim() ?? '',
+    brand: firstParam(sp.brand)?.trim() ?? '',
+    mark: firstParam(sp.mark)?.trim() ?? '',
+    showcase: firstParam(sp.showcase)?.trim() ?? '',
     page: normalizePage(firstParam(sp.page)),
   }
 }
@@ -370,6 +396,9 @@ function createHref(filters: FilterState, patch: Partial<FilterState & { clearSe
   if (next.productType) params.set('type', next.productType)
   if (next.category) params.set('category', next.category)
   if (next.attribute) params.set('attribute', next.attribute)
+  if (next.brand) params.set('brand', next.brand)
+  if (next.mark) params.set('mark', next.mark)
+  if (next.showcase) params.set('showcase', next.showcase)
   if (next.page > 1) params.set('page', String(next.page))
 
   const query = params.toString()
@@ -434,6 +463,34 @@ function buildWhere(filters: FilterState): { where: string; params: unknown[] } 
     )`)
   }
 
+  const brandId = Number(filters.brand)
+  if (Number.isInteger(brandId) && brandId > 0) {
+    params.push(brandId)
+    conditions.push(`pc.brand_id = $${params.length}`)
+  }
+
+  const markId = Number(filters.mark)
+  if (Number.isInteger(markId) && markId > 0) {
+    params.push(markId)
+    conditions.push(`EXISTS (
+      SELECT 1
+      FROM product_mark_values pmv
+      WHERE pmv.product_id = pc.id
+        AND pmv.mark_id = $${params.length}
+    )`)
+  }
+
+  const showcaseId = Number(filters.showcase)
+  if (Number.isInteger(showcaseId) && showcaseId > 0) {
+    params.push(showcaseId)
+    conditions.push(`EXISTS (
+      SELECT 1
+      FROM product_showcase_items psi
+      WHERE psi.product_id = pc.id
+        AND psi.showcase_id = $${params.length}
+    )`)
+  }
+
   return { where: `WHERE ${conditions.join(' AND ')}`, params }
 }
 
@@ -484,9 +541,9 @@ async function getProductSummary(): Promise<ProductSummary> {
 
 async function getProductOptions(): Promise<ProductOptions> {
   if (!(await tableExists('public.product_catalog'))) return EMPTY_OPTIONS
-  await ensureProductCatalogSchema()
+  await ensureProductOperationsSchema()
 
-  const [seriesRes, typeRes, categories, attributeTemplates] = await Promise.all([
+  const [seriesRes, typeRes, categories, attributeTemplates, brands, marks, showcases] = await Promise.all([
     pool.query<{ value: string }>(
       `SELECT DISTINCT product_series AS value
        FROM product_catalog
@@ -501,6 +558,9 @@ async function getProductOptions(): Promise<ProductOptions> {
     ),
     listProductCategories({ includeHidden: false }).catch(() => []),
     listProductAttributeTemplatesWithOptions({ includeHidden: false }).catch(() => []),
+    listProductBrands({ includeHidden: false }).catch(() => []),
+    listProductMarks({ includeHidden: false }).catch(() => []),
+    listProductShowcases({ includeHidden: false }).catch(() => []),
   ])
 
   return {
@@ -512,12 +572,30 @@ async function getProductOptions(): Promise<ProductOptions> {
       title_en: category.title_en,
     })),
     attributeTemplates,
+    brands: brands.map((brand) => ({
+      id: brand.id,
+      title_zh: brand.title_zh,
+      title_en: brand.title_en,
+      status: brand.status,
+    })),
+    marks: marks.map((mark) => ({
+      id: mark.id,
+      title_zh: mark.title_zh,
+      title_en: mark.title_en,
+      status: mark.status,
+    })),
+    showcases: showcases.map((showcase) => ({
+      id: showcase.id,
+      title_zh: showcase.title_zh,
+      title_en: showcase.title_en,
+      status: showcase.status,
+    })),
   }
 }
 
 async function getProducts(filters: FilterState): Promise<ProductListResult> {
   if (!(await tableExists('public.product_catalog'))) return { rows: [], total: 0 }
-  await ensureProductCatalogSchema()
+  await ensureProductOperationsSchema()
 
   const { where, params } = buildWhere(filters)
   const countRes = await pool.query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM product_catalog pc ${where}`, params)
@@ -546,8 +624,13 @@ async function getProducts(filters: FilterState): Promise<ProductListResult> {
        c.slug AS category_slug,
        c.title_zh AS category_title_zh,
        c.title_en AS category_title_en,
+       pc.brand_id,
+       b.title_zh AS brand_title_zh,
+       b.title_en AS brand_title_en,
        COALESCE(attr.option_count, 0)::int AS attribute_option_count,
        COALESCE(attr.labels_zh, ARRAY[]::text[]) AS attribute_labels_zh,
+       COALESCE(mark_agg.labels_zh, ARRAY[]::text[]) AS mark_labels_zh,
+       COALESCE(showcase_agg.titles_zh, ARRAY[]::text[]) AS showcase_titles_zh,
        pc.seo_title_zh,
        pc.seo_title_en,
        pc.seo_description_zh,
@@ -559,6 +642,9 @@ async function getProducts(filters: FilterState): Promise<ProductListResult> {
      LEFT JOIN product_categories c
        ON c.id = pc.category_id
       AND c.deleted_at IS NULL
+     LEFT JOIN product_brands b
+       ON b.id = pc.brand_id
+      AND b.deleted_at IS NULL
      LEFT JOIN LATERAL (
        SELECT
          COUNT(DISTINCT o.id)::int AS option_count,
@@ -572,6 +658,22 @@ async function getProducts(filters: FilterState): Promise<ProductListResult> {
         AND t.deleted_at IS NULL
        WHERE pav.product_id = pc.id
      ) attr ON true
+     LEFT JOIN LATERAL (
+       SELECT ARRAY_AGG(DISTINCT m.title_zh) AS labels_zh
+       FROM product_mark_values pmv
+       JOIN product_marks m
+         ON m.id = pmv.mark_id
+        AND m.deleted_at IS NULL
+       WHERE pmv.product_id = pc.id
+     ) mark_agg ON true
+     LEFT JOIN LATERAL (
+       SELECT ARRAY_AGG(DISTINCT s.title_zh) AS titles_zh
+       FROM product_showcase_items psi
+       JOIN product_showcases s
+         ON s.id = psi.showcase_id
+        AND s.deleted_at IS NULL
+       WHERE psi.product_id = pc.id
+     ) showcase_agg ON true
      ${where}
      ORDER BY pc.updated_at DESC, pc.sort_order ASC, pc.id ASC
      LIMIT $${params.length + 1}
@@ -607,6 +709,10 @@ function getSideNavGroups(summary: ProductSummary): AdminSideNavGroup[] {
       items: [
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
+        { key: 'marks', label: '标记管理', href: '/admin/content/products/marks', Icon: Tags },
+        { key: 'brands', label: '品牌管理', href: '/admin/content/products/brands', Icon: Package },
+        { key: 'filters', label: '筛选管理', href: '/admin/content/products/filters', Icon: Filter },
+        { key: 'showcases', label: '橱窗管理', href: '/admin/content/products/showcases', Icon: ListChecks },
         { key: 'recycle', label: '产品回收站', href: '/admin/content/products/recycle', badge: summary.deleted, Icon: Archive },
         { key: 'bulk-check', label: '批量检查', planned: true, Icon: ListChecks },
       ],
@@ -697,7 +803,7 @@ function FilterPanel({ filters, options }: { filters: FilterState; options: Prod
     <form action="/admin/content/products/list" className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
       {filters.status && <input type="hidden" name="status" value={filters.status} />}
       {filters.view && <input type="hidden" name="view" value={filters.view} />}
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(220px,1fr)_140px_140px_150px_150px_190px_auto_auto]">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
         <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold text-[#61767D]">
           搜索产品
           <span className="relative">
@@ -788,6 +894,51 @@ function FilterPanel({ filters, options }: { filters: FilterState; options: Prod
             ))}
           </select>
         </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-[#61767D]">
+          品牌
+          <select
+            name="brand"
+            defaultValue={filters.brand}
+            className="h-10 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm text-[#1E2C31] outline-none transition focus:border-[#1889B6]"
+          >
+            <option value="">全部品牌</option>
+            {options.brands.map((brand) => (
+              <option key={brand.id} value={brand.id}>
+                {brand.title_zh}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-[#61767D]">
+          标记
+          <select
+            name="mark"
+            defaultValue={filters.mark}
+            className="h-10 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm text-[#1E2C31] outline-none transition focus:border-[#1889B6]"
+          >
+            <option value="">全部标记</option>
+            {options.marks.map((mark) => (
+              <option key={mark.id} value={mark.id}>
+                {mark.title_zh}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-[#61767D]">
+          橱窗
+          <select
+            name="showcase"
+            defaultValue={filters.showcase}
+            className="h-10 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm text-[#1E2C31] outline-none transition focus:border-[#1889B6]"
+          >
+            <option value="">全部橱窗</option>
+            {options.showcases.map((showcase) => (
+              <option key={showcase.id} value={showcase.id}>
+                {showcase.title_zh}
+              </option>
+            ))}
+          </select>
+        </label>
         <button
           type="submit"
           className="mt-auto inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#1889B6] px-4 text-sm font-semibold text-white transition hover:bg-[#126D91]"
@@ -813,6 +964,10 @@ function QuickActions() {
     { label: '查看已发布', href: '/admin/content/products/list?status=published', Icon: CheckCircle2 },
     { label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
     { label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
+    { label: '标记管理', href: '/admin/content/products/marks', Icon: Tags },
+    { label: '品牌管理', href: '/admin/content/products/brands', Icon: Package },
+    { label: '筛选管理', href: '/admin/content/products/filters', Icon: Filter },
+    { label: '橱窗管理', href: '/admin/content/products/showcases', Icon: ListChecks },
     { label: '回收站', href: '/admin/content/products/recycle', Icon: Archive },
   ]
 
@@ -841,11 +996,15 @@ function ProductList({
   total,
   filters,
   categories,
+  marks,
+  showcases,
 }: {
   rows: ProductListRow[]
   total: number
   filters: FilterState
   categories: Pick<ProductCategoryRow, 'id' | 'title_zh' | 'title_en'>[]
+  marks: Pick<ProductMarkRow, 'id' | 'title_zh' | 'title_en' | 'status'>[]
+  showcases: Pick<ProductShowcaseRow, 'id' | 'title_zh' | 'title_en' | 'status'>[]
 }) {
   if (rows.length === 0) {
     return <EmptyState filters={filters} />
@@ -861,7 +1020,7 @@ function ProductList({
           </p>
         </div>
       </div>
-      <ProductBatchCategoryBar categories={categories} />
+      <ProductBatchCategoryBar categories={categories} marks={marks} showcases={showcases} />
       <div className="space-y-3">
         {rows.map((product) => (
           <ProductRow key={product.id} product={product} />
@@ -879,6 +1038,8 @@ function ProductRow({ product }: { product: ProductListRow }) {
   const hiddenIssueCount = Math.max(0, issues.length - visibleIssues.length)
   const attributeLabels = (product.attribute_labels_zh ?? []).slice(0, 3)
   const hiddenAttributeCount = Math.max(0, Number(product.attribute_option_count ?? 0) - attributeLabels.length)
+  const markLabels = (product.mark_labels_zh ?? []).slice(0, 3)
+  const showcaseTitles = (product.showcase_titles_zh ?? []).slice(0, 2)
   const published = product.status === 'published'
 
   return (
@@ -959,13 +1120,34 @@ function ProductRow({ product }: { product: ProductListRow }) {
               </span>
             )}
           </div>
+          {(markLabels.length > 0 || showcaseTitles.length > 0 || product.brand_title_zh) ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {product.brand_title_zh ? (
+                <span className="rounded-full border border-[#F2C6A7] bg-[#FFF7F0] px-2 py-0.5 text-xs font-semibold text-[#B85D21]">
+                  品牌：{product.brand_title_zh}
+                </span>
+              ) : null}
+              {markLabels.map((mark) => (
+                <span key={mark} className="rounded-full border border-[#D8E7E8] bg-white px-2 py-0.5 text-xs font-semibold text-[#61767D]">
+                  {mark}
+                </span>
+              ))}
+              {showcaseTitles.map((showcase) => (
+                <span key={showcase} className="rounded-full border border-[#D8E7E8] bg-[#F7FAFA] px-2 py-0.5 text-xs font-semibold text-[#1889B6]">
+                  橱窗：{showcase}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-2 gap-3 rounded-md bg-[#F7FAFA] p-3 text-xs lg:grid-cols-1">
           <ProductMeta label="系列" value={`${product.product_series} ${product.gen}`} />
           <ProductMeta label="类型" value={getProductTypeLabel(product.product_type)} />
           <ProductMeta label="分类" value={product.category_title_zh ?? '未分类'} />
+          <ProductMeta label="品牌" value={product.brand_title_zh ?? '未标记'} />
           <ProductMeta label="属性" value={`${Number(product.attribute_option_count ?? 0)} 个`} />
+          <ProductMeta label="橱窗" value={showcaseTitles.length > 0 ? showcaseTitles.join(' / ') : '未加入'} />
           <ProductMeta label="更新时间" value={formatDate(product.updated_at)} />
         </div>
 
@@ -1022,6 +1204,9 @@ function EmptyState({ filters }: { filters: FilterState }) {
     || filters.productType
     || filters.category
     || filters.attribute
+    || filters.brand
+    || filters.mark
+    || filters.showcase
   )
   return (
     <section className="rounded-md border border-dashed border-[#D8E7E8] bg-white p-10 text-center">
@@ -1135,7 +1320,14 @@ export default async function AdminContentProductsListPage({ searchParams }: Pag
         <SummaryCards summary={summary} />
         <StatusTabs filters={filters} summary={summary} />
         <FilterPanel filters={filters} options={options} />
-        <ProductList rows={list.rows} total={list.total} filters={filters} categories={options.categories} />
+        <ProductList
+          rows={list.rows}
+          total={list.total}
+          filters={filters}
+          categories={options.categories}
+          marks={options.marks}
+          showcases={options.showcases}
+        />
       </div>
     </AdminSectionShell>
   )

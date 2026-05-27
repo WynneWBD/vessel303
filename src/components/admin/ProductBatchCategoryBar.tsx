@@ -3,28 +3,47 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Tag } from 'lucide-react'
+import { ListChecks, Tag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import type { ProductCategoryRow } from '@/lib/product-catalog-db'
+import type { ProductMarkRow, ProductShowcaseRow } from '@/lib/product-operations-db'
 
 type ProductCategoryOption = Pick<ProductCategoryRow, 'id' | 'title_zh' | 'title_en'>
+type ProductMarkOption = Pick<ProductMarkRow, 'id' | 'title_zh' | 'title_en' | 'status'>
+type ProductShowcaseOption = Pick<ProductShowcaseRow, 'id' | 'title_zh' | 'title_en' | 'status'>
 
-const plannedBatchActions = ['转移橱窗', '标记', '状态', '置顶', '删除', '翻译']
+const plannedBatchActions = ['状态', '置顶', '删除', '翻译']
 
 export default function ProductBatchCategoryBar({
   categories,
+  marks = [],
+  showcases = [],
 }: {
   categories: ProductCategoryOption[]
+  marks?: ProductMarkOption[]
+  showcases?: ProductShowcaseOption[]
 }) {
   const router = useRouter()
   const [selectedCount, setSelectedCount] = useState(0)
   const [categoryId, setCategoryId] = useState('')
+  const [markId, setMarkId] = useState('')
+  const [showcaseId, setShowcaseId] = useState('')
   const [moving, setMoving] = useState(false)
+  const [marking, setMarking] = useState(false)
+  const [showcasing, setShowcasing] = useState(false)
 
   const categoryName = useMemo(
     () => categories.find((category) => String(category.id) === categoryId)?.title_zh ?? '',
     [categories, categoryId],
+  )
+  const markName = useMemo(
+    () => marks.find((mark) => String(mark.id) === markId)?.title_zh ?? '',
+    [marks, markId],
+  )
+  const showcaseName = useMemo(
+    () => showcases.find((showcase) => String(showcase.id) === showcaseId)?.title_zh ?? '',
+    [showcases, showcaseId],
   )
 
   const refreshSelectedCount = () => {
@@ -51,10 +70,21 @@ export default function ProductBatchCategoryBar({
     refreshSelectedCount()
   }
 
-  const moveCategory = async () => {
-    const ids = Array.from(document.querySelectorAll<HTMLInputElement>('[data-product-batch-checkbox]:checked'))
+  const getSelectedIds = () => (
+    Array.from(document.querySelectorAll<HTMLInputElement>('[data-product-batch-checkbox]:checked'))
       .map((checkbox) => checkbox.value)
       .filter(Boolean)
+  )
+
+  const clearSelection = () => {
+    document.querySelectorAll<HTMLInputElement>('[data-product-batch-checkbox]').forEach((checkbox) => {
+      checkbox.checked = false
+    })
+    setSelectedCount(0)
+  }
+
+  const moveCategory = async () => {
+    const ids = getSelectedIds()
 
     if (ids.length === 0) {
       toast.error('请先选择产品')
@@ -77,15 +107,76 @@ export default function ProductBatchCategoryBar({
       if (!res.ok) throw new Error(data.error ?? '批量转移失败')
 
       toast.success(`已转移 ${Number(data.data?.updatedCount ?? 0)} 个产品`)
-      document.querySelectorAll<HTMLInputElement>('[data-product-batch-checkbox]').forEach((checkbox) => {
-        checkbox.checked = false
-      })
-      setSelectedCount(0)
+      clearSelection()
       router.refresh()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '批量转移失败')
     } finally {
       setMoving(false)
+    }
+  }
+
+  const addMark = async () => {
+    const ids = getSelectedIds()
+    if (ids.length === 0) {
+      toast.error('请先选择产品')
+      return
+    }
+    if (!markId) {
+      toast.error('请选择标记')
+      return
+    }
+    if (!window.confirm(`确认给 ${ids.length} 个产品添加“${markName}”标记？`)) return
+
+    setMarking(true)
+    try {
+      const res = await fetch('/api/admin/products/batch/marks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, mark_id: Number(markId) }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error ?? '批量标记失败')
+
+      toast.success(`已标记 ${Number(data.data?.updatedCount ?? 0)} 个产品`)
+      clearSelection()
+      router.refresh()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '批量标记失败')
+    } finally {
+      setMarking(false)
+    }
+  }
+
+  const addShowcase = async () => {
+    const ids = getSelectedIds()
+    if (ids.length === 0) {
+      toast.error('请先选择产品')
+      return
+    }
+    if (!showcaseId) {
+      toast.error('请选择橱窗')
+      return
+    }
+    if (!window.confirm(`确认将 ${ids.length} 个产品加入“${showcaseName}”橱窗？`)) return
+
+    setShowcasing(true)
+    try {
+      const res = await fetch('/api/admin/products/batch/showcases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, showcase_id: Number(showcaseId) }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error ?? '转移橱窗失败')
+
+      toast.success(`已加入橱窗 ${Number(data.data?.updatedCount ?? 0)} 个产品`)
+      clearSelection()
+      router.refresh()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '转移橱窗失败')
+    } finally {
+      setShowcasing(false)
     }
   }
 
@@ -95,7 +186,7 @@ export default function ProductBatchCategoryBar({
         <div>
           <p className="text-sm font-semibold text-[#1E2C31]">批量操作</p>
           <p className="mt-1 text-xs leading-5 text-[#61767D]">
-            对照 300 产品列表底部工具栏；当前只开放低风险的批量转移分类。
+            对照 300 产品列表底部工具栏；当前开放批量转移分类、标记、转移橱窗。
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -134,6 +225,58 @@ export default function ProductBatchCategoryBar({
           >
             <Tag size={13} />
             转移分类
+          </Button>
+          <Select
+            value={markId}
+            onChange={(e) => setMarkId(e.target.value)}
+            disabled={selectedCount === 0 || marking || marks.length === 0}
+            className="h-8 w-36 text-xs"
+            data-testid="product-batch-mark-select"
+          >
+            <option value="">目标标记</option>
+            {marks.map((mark) => (
+              <option key={mark.id} value={mark.id}>
+                {mark.title_zh}{mark.status === 'hidden' ? '（隐藏）' : ''}
+              </option>
+            ))}
+          </Select>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs"
+            disabled={selectedCount === 0 || !markId || marking}
+            onClick={addMark}
+            data-testid="product-batch-mark-button"
+          >
+            <Tag size={13} />
+            标记
+          </Button>
+          <Select
+            value={showcaseId}
+            onChange={(e) => setShowcaseId(e.target.value)}
+            disabled={selectedCount === 0 || showcasing || showcases.length === 0}
+            className="h-8 w-36 text-xs"
+            data-testid="product-batch-showcase-select"
+          >
+            <option value="">目标橱窗</option>
+            {showcases.map((showcase) => (
+              <option key={showcase.id} value={showcase.id}>
+                {showcase.title_zh}{showcase.status === 'hidden' ? '（隐藏）' : ''}
+              </option>
+            ))}
+          </Select>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs"
+            disabled={selectedCount === 0 || !showcaseId || showcasing}
+            onClick={addShowcase}
+            data-testid="product-batch-showcase-button"
+          >
+            <ListChecks size={13} />
+            转移橱窗
           </Button>
           <span className="hidden h-5 w-px bg-[#D8E7E8] xl:inline-flex" />
           {plannedBatchActions.map((action) => (

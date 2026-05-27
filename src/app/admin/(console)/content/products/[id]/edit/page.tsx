@@ -14,6 +14,12 @@ import {
   type CatalogProductStatus,
   type CatalogProductType,
 } from '@/lib/product-catalog-db'
+import {
+  getProductOperationAssignments,
+  listProductBrands,
+  listProductMarks,
+  listProductShowcases,
+} from '@/lib/product-operations-db'
 import type {
   CatalogDetailModule,
   CatalogSpecItem,
@@ -263,7 +269,8 @@ async function getProductReadOnly(id: string): Promise<CatalogProductRow | null>
   if (!row) return null
   const product = rowToProduct(row)
   product.attribute_option_ids = await listProductAttributeOptionIds(id)
-  return product
+  const assignments = await getProductOperationAssignments(id)
+  return { ...product, ...assignments }
 }
 
 function formatDate(value: string): string {
@@ -440,7 +447,7 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
   }
 
   const { id } = await params
-  const [product, maxUploadMb, categories, attributeTemplates] = await Promise.all([
+  const [product, maxUploadMb, categories, attributeTemplates, brands, marks, showcases] = await Promise.all([
     getProductReadOnly(id).catch((err) => {
       console.error('[admin-content-product-edit] load product failed', err)
       return null
@@ -455,6 +462,18 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
     }),
     listProductAttributeTemplatesWithOptions({ includeHidden: true }).catch((err) => {
       console.error('[admin-content-product-edit] load product attributes failed', err)
+      return []
+    }),
+    listProductBrands({ includeHidden: true }).catch((err) => {
+      console.error('[admin-content-product-edit] load product brands failed', err)
+      return []
+    }),
+    listProductMarks({ includeHidden: true }).catch((err) => {
+      console.error('[admin-content-product-edit] load product marks failed', err)
+      return []
+    }),
+    listProductShowcases({ includeHidden: true }).catch((err) => {
+      console.error('[admin-content-product-edit] load product showcases failed', err)
       return []
     }),
   ])
@@ -487,6 +506,9 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
           previewPolicy="published-only"
           categories={categories}
           attributeTemplates={attributeTemplates}
+          brands={brands}
+          marks={marks}
+          showcases={showcases}
         />
       </section>
     </AdminSectionShell>

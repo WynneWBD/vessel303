@@ -102,6 +102,175 @@ CREATE INDEX IF NOT EXISTS idx_product_catalog_category_id
   ON product_catalog (category_id)
   WHERE deleted_at IS NULL;
 
+CREATE TABLE IF NOT EXISTS product_attribute_templates (
+  id              SERIAL PRIMARY KEY,
+  slug            VARCHAR(120) UNIQUE NOT NULL,
+  title_zh        VARCHAR(160) NOT NULL,
+  title_en        VARCHAR(160) NOT NULL,
+  description_zh  TEXT,
+  description_en  TEXT,
+  sort_order      INTEGER NOT NULL DEFAULT 0,
+  status          VARCHAR(20) NOT NULL DEFAULT 'visible'
+                  CHECK (status IN ('visible','hidden')),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at      TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS product_attribute_options (
+  id              SERIAL PRIMARY KEY,
+  template_id     INTEGER NOT NULL REFERENCES product_attribute_templates(id) ON DELETE CASCADE,
+  slug            VARCHAR(120) NOT NULL,
+  label_zh        VARCHAR(160) NOT NULL,
+  label_en        VARCHAR(160) NOT NULL,
+  sort_order      INTEGER NOT NULL DEFAULT 0,
+  status          VARCHAR(20) NOT NULL DEFAULT 'visible'
+                  CHECK (status IN ('visible','hidden')),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at      TIMESTAMPTZ,
+  UNIQUE (template_id, slug)
+);
+
+CREATE TABLE IF NOT EXISTS product_attribute_values (
+  product_id      TEXT NOT NULL REFERENCES product_catalog(id) ON DELETE CASCADE,
+  template_id     INTEGER NOT NULL REFERENCES product_attribute_templates(id) ON DELETE CASCADE,
+  option_id       INTEGER NOT NULL REFERENCES product_attribute_options(id) ON DELETE CASCADE,
+  sort_order      INTEGER NOT NULL DEFAULT 0,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (product_id, template_id, option_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_attribute_templates_status_sort
+  ON product_attribute_templates (status, sort_order)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_product_attribute_options_template_sort
+  ON product_attribute_options (template_id, status, sort_order)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_product_attribute_values_product
+  ON product_attribute_values (product_id);
+
+CREATE INDEX IF NOT EXISTS idx_product_attribute_values_option
+  ON product_attribute_values (option_id);
+
+CREATE TABLE IF NOT EXISTS product_marks (
+  id              SERIAL PRIMARY KEY,
+  slug            VARCHAR(120) UNIQUE NOT NULL,
+  title_zh        VARCHAR(160) NOT NULL,
+  title_en        VARCHAR(160) NOT NULL,
+  description_zh  TEXT,
+  description_en  TEXT,
+  color           VARCHAR(32),
+  sort_order      INTEGER NOT NULL DEFAULT 0,
+  status          VARCHAR(20) NOT NULL DEFAULT 'visible'
+                  CHECK (status IN ('visible','hidden')),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at      TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS product_brands (
+  id              SERIAL PRIMARY KEY,
+  slug            VARCHAR(120) UNIQUE NOT NULL,
+  title_zh        VARCHAR(160) NOT NULL,
+  title_en        VARCHAR(160) NOT NULL,
+  description_zh  TEXT,
+  description_en  TEXT,
+  logo_url        TEXT,
+  sort_order      INTEGER NOT NULL DEFAULT 0,
+  status          VARCHAR(20) NOT NULL DEFAULT 'visible'
+                  CHECK (status IN ('visible','hidden')),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at      TIMESTAMPTZ
+);
+
+ALTER TABLE product_catalog
+  ADD COLUMN IF NOT EXISTS brand_id INTEGER REFERENCES product_brands(id) ON DELETE SET NULL;
+
+CREATE TABLE IF NOT EXISTS product_filter_groups (
+  id              SERIAL PRIMARY KEY,
+  slug            VARCHAR(120) UNIQUE NOT NULL,
+  title_zh        VARCHAR(160) NOT NULL,
+  title_en        VARCHAR(160) NOT NULL,
+  description_zh  TEXT,
+  description_en  TEXT,
+  scope           VARCHAR(30) NOT NULL DEFAULT 'all'
+                  CHECK (scope IN ('all','category','brand')),
+  sort_order      INTEGER NOT NULL DEFAULT 0,
+  status          VARCHAR(20) NOT NULL DEFAULT 'visible'
+                  CHECK (status IN ('visible','hidden')),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at      TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS product_filter_group_templates (
+  group_id        INTEGER NOT NULL REFERENCES product_filter_groups(id) ON DELETE CASCADE,
+  template_id     INTEGER NOT NULL REFERENCES product_attribute_templates(id) ON DELETE CASCADE,
+  sort_order      INTEGER NOT NULL DEFAULT 0,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (group_id, template_id)
+);
+
+CREATE TABLE IF NOT EXISTS product_showcases (
+  id              SERIAL PRIMARY KEY,
+  slug            VARCHAR(120) UNIQUE NOT NULL,
+  title_zh        VARCHAR(160) NOT NULL,
+  title_en        VARCHAR(160) NOT NULL,
+  description_zh  TEXT,
+  description_en  TEXT,
+  sort_order      INTEGER NOT NULL DEFAULT 0,
+  status          VARCHAR(20) NOT NULL DEFAULT 'visible'
+                  CHECK (status IN ('visible','hidden')),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at      TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS product_showcase_items (
+  showcase_id     INTEGER NOT NULL REFERENCES product_showcases(id) ON DELETE CASCADE,
+  product_id      TEXT NOT NULL REFERENCES product_catalog(id) ON DELETE CASCADE,
+  sort_order      INTEGER NOT NULL DEFAULT 0,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (showcase_id, product_id)
+);
+
+CREATE TABLE IF NOT EXISTS product_mark_values (
+  product_id      TEXT NOT NULL REFERENCES product_catalog(id) ON DELETE CASCADE,
+  mark_id         INTEGER NOT NULL REFERENCES product_marks(id) ON DELETE CASCADE,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (product_id, mark_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_marks_status_sort
+  ON product_marks (status, sort_order)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_product_brands_status_sort
+  ON product_brands (status, sort_order)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_product_filter_groups_status_sort
+  ON product_filter_groups (status, sort_order)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_product_showcases_status_sort
+  ON product_showcases (status, sort_order)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_product_catalog_brand_id
+  ON product_catalog (brand_id)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_product_mark_values_mark
+  ON product_mark_values (mark_id);
+
+CREATE INDEX IF NOT EXISTS idx_product_showcase_items_product
+  ON product_showcase_items (product_id);
+
 CREATE TABLE IF NOT EXISTS project_cases (
   id                 TEXT        PRIMARY KEY,
   name_zh            TEXT        NOT NULL,

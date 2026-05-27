@@ -19,6 +19,7 @@ import type {
   ProductAttributeTemplateWithOptions,
   ProductCategoryRow,
 } from '@/lib/product-catalog-db'
+import type { ProductBrandRow, ProductMarkRow, ProductShowcaseRow } from '@/lib/product-operations-db'
 import type {
   CatalogDetailModule,
   CatalogDetailModuleItem,
@@ -53,7 +54,10 @@ type FormState = {
   isCustom: boolean
   detailSlug: string
   category_id: string
+  brand_id: string
   attribute_option_ids: number[]
+  mark_ids: number[]
+  showcase_ids: number[]
   seo_title_zh: string
   seo_title_en: string
   seo_description_zh: string
@@ -65,6 +69,9 @@ type FormState = {
 type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
 type DetailModuleCompletenessLevel = '完整' | '待补内容' | '缺图片'
 type ProductCategoryOption = Pick<ProductCategoryRow, 'id' | 'title_zh' | 'title_en' | 'status'>
+type ProductBrandOption = Pick<ProductBrandRow, 'id' | 'title_zh' | 'title_en' | 'status'>
+type ProductMarkOption = Pick<ProductMarkRow, 'id' | 'title_zh' | 'title_en' | 'status'>
+type ProductShowcaseOption = Pick<ProductShowcaseRow, 'id' | 'title_zh' | 'title_en' | 'status'>
 
 const detailModuleTypeOptions: { type: CatalogDetailModuleType; label: string; optionLabel: string }[] = [
   { type: 'highlights', label: '产品亮点', optionLabel: '产品亮点 Highlights' },
@@ -102,7 +109,10 @@ const emptyState: FormState = {
   isCustom: false,
   detailSlug: '',
   category_id: '',
+  brand_id: '',
   attribute_option_ids: [],
+  mark_ids: [],
+  showcase_ids: [],
   seo_title_zh: '',
   seo_title_en: '',
   seo_description_zh: '',
@@ -113,6 +123,11 @@ const emptyState: FormState = {
 
 function fromProduct(product?: CatalogProductRow | null): FormState {
   if (!product) return emptyState
+  const operationProduct = product as CatalogProductRow & {
+    brand_id?: number | null
+    mark_ids?: number[]
+    showcase_ids?: number[]
+  }
   return {
     id: product.id,
     productSeries: product.productSeries,
@@ -139,7 +154,10 @@ function fromProduct(product?: CatalogProductRow | null): FormState {
     isCustom: product.isCustom,
     detailSlug: product.detailSlug ?? '',
     category_id: product.category_id ? String(product.category_id) : '',
+    brand_id: operationProduct.brand_id ? String(operationProduct.brand_id) : '',
     attribute_option_ids: product.attribute_option_ids ?? [],
+    mark_ids: operationProduct.mark_ids ?? [],
+    showcase_ids: operationProduct.showcase_ids ?? [],
     seo_title_zh: product.seo_title_zh ?? '',
     seo_title_en: product.seo_title_en ?? '',
     seo_description_zh: product.seo_description_zh ?? '',
@@ -527,6 +545,9 @@ export default function ProductForm({
   createRedirectBase = '/admin/products',
   categories = [],
   attributeTemplates = [],
+  brands = [],
+  marks = [],
+  showcases = [],
 }: {
   mode: 'create' | 'edit'
   product?: CatalogProductRow | null
@@ -538,6 +559,9 @@ export default function ProductForm({
   createRedirectBase?: string
   categories?: ProductCategoryOption[]
   attributeTemplates?: ProductAttributeTemplateWithOptions[]
+  brands?: ProductBrandOption[]
+  marks?: ProductMarkOption[]
+  showcases?: ProductShowcaseOption[]
 }) {
   const router = useRouter()
   const [form, setForm] = useState<FormState>(() => fromProduct(product))
@@ -563,6 +587,8 @@ export default function ProductForm({
   const showPreviewLink = mode === 'edit' && (previewPolicy === 'always' || form.status === 'published')
   const isCurrentlyPublished = form.status === 'published'
   const selectedAttributeIds = useMemo(() => new Set(form.attribute_option_ids), [form.attribute_option_ids])
+  const selectedMarkIds = useMemo(() => new Set(form.mark_ids), [form.mark_ids])
+  const selectedShowcaseIds = useMemo(() => new Set(form.showcase_ids), [form.showcase_ids])
 
   useUnsavedChangesWarning(hasUnsavedChanges)
 
@@ -587,6 +613,30 @@ export default function ProductForm({
       return {
         ...prev,
         attribute_option_ids: Array.from(current).sort((a, b) => a - b),
+      }
+    })
+  }
+
+  const toggleMark = (markId: number, checked: boolean) => {
+    setForm((prev) => {
+      const current = new Set(prev.mark_ids)
+      if (checked) current.add(markId)
+      else current.delete(markId)
+      return {
+        ...prev,
+        mark_ids: Array.from(current).sort((a, b) => a - b),
+      }
+    })
+  }
+
+  const toggleShowcase = (showcaseId: number, checked: boolean) => {
+    setForm((prev) => {
+      const current = new Set(prev.showcase_ids)
+      if (checked) current.add(showcaseId)
+      else current.delete(showcaseId)
+      return {
+        ...prev,
+        showcase_ids: Array.from(current).sort((a, b) => a - b),
       }
     })
   }
@@ -716,7 +766,10 @@ export default function ProductForm({
     isCustom: form.isCustom,
     detailSlug: form.detailSlug.trim() || null,
     category_id: form.category_id ? Number(form.category_id) : null,
+    brand_id: form.brand_id ? Number(form.brand_id) : null,
     attribute_option_ids: form.attribute_option_ids,
+    mark_ids: form.mark_ids,
+    showcase_ids: form.showcase_ids,
     seo_title_zh: form.seo_title_zh.trim() || null,
     seo_title_en: form.seo_title_en.trim() || null,
     seo_description_zh: form.seo_description_zh.trim() || null,
@@ -865,7 +918,7 @@ export default function ProductForm({
             </Field>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <Field label="类型">
               <Select
                 value={form.productType}
@@ -887,6 +940,21 @@ export default function ProductForm({
                   <option key={category.id} value={category.id}>
                     {category.title_zh}
                     {category.status === 'hidden' ? '（隐藏）' : ''}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="品牌" hint={brands.length === 0 ? '暂无品牌，可先到品牌管理维护。' : undefined}>
+              <Select
+                value={form.brand_id}
+                onChange={(e) => patch('brand_id', e.target.value)}
+                disabled={brands.length === 0}
+              >
+                <option value="">未标记</option>
+                {brands.map((brand) => (
+                  <option key={brand.id} value={brand.id}>
+                    {brand.title_zh}
+                    {brand.status === 'hidden' ? '（隐藏）' : ''}
                   </option>
                 ))}
               </Select>
@@ -977,6 +1045,78 @@ export default function ProductForm({
               ))}
             </div>
           )}
+          <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-4 space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-[#2C2A28]">运营标记 / 橱窗</h3>
+              <p className="mt-1 text-xs leading-5 text-[#8A8580]">
+                对照 300 的标记管理和橱窗管理；只影响后台运营归类和后续展示策略，不改变当前产品详情页排版。
+              </p>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs font-semibold text-[#6B6560]">产品标记</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {marks.length === 0 ? (
+                    <span className="text-xs text-[#8A8580]">暂无标记，可先到标记管理维护。</span>
+                  ) : (
+                    marks.map((mark) => {
+                      const checked = selectedMarkIds.has(mark.id)
+                      return (
+                        <label
+                          key={mark.id}
+                          className={`inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs font-semibold transition ${
+                            checked
+                              ? 'border-[#E36F2C] bg-[#FFF2E7] text-[#B85D21]'
+                              : 'border-[#E5DED4] bg-white text-[#6B6560] hover:border-[#E36F2C]/50'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) => toggleMark(mark.id, e.target.checked)}
+                            className="h-4 w-4 accent-[#E36F2C]"
+                          />
+                          <span>{mark.title_zh}</span>
+                          {mark.status === 'hidden' ? <span className="font-normal text-[#8A8580]">隐藏</span> : null}
+                        </label>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-[#6B6560]">产品橱窗</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {showcases.length === 0 ? (
+                    <span className="text-xs text-[#8A8580]">暂无橱窗，可先到橱窗管理维护。</span>
+                  ) : (
+                    showcases.map((showcase) => {
+                      const checked = selectedShowcaseIds.has(showcase.id)
+                      return (
+                        <label
+                          key={showcase.id}
+                          className={`inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs font-semibold transition ${
+                            checked
+                              ? 'border-[#1889B6] bg-[#F0F7F8] text-[#1889B6]'
+                              : 'border-[#E5DED4] bg-white text-[#6B6560] hover:border-[#1889B6]/50'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) => toggleShowcase(showcase.id, e.target.checked)}
+                            className="h-4 w-4 accent-[#1889B6]"
+                          />
+                          <span>{showcase.title_zh}</span>
+                          {showcase.status === 'hidden' ? <span className="font-normal text-[#8A8580]">隐藏</span> : null}
+                        </label>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </FormSection>
 
         <FormSection

@@ -10,6 +10,13 @@ import {
   softDeleteCatalogProduct,
   updateCatalogProduct,
 } from '@/lib/product-catalog-db'
+import {
+  getProductBrandById,
+  getProductMarkById,
+  getProductOperationAssignments,
+  getProductShowcaseById,
+  updateProductOperationAssignments,
+} from '@/lib/product-operations-db'
 
 export const dynamic = 'force-dynamic'
 
@@ -84,6 +91,9 @@ const patchSchema = z.object({
   isCustom: z.boolean().optional(),
   detailSlug: detailSlugSchema,
   category_id: z.number().int().positive().nullable().optional(),
+  brand_id: z.number().int().positive().nullable().optional(),
+  mark_ids: z.array(z.number().int().positive()).max(80).optional(),
+  showcase_ids: z.array(z.number().int().positive()).max(80).optional(),
   attribute_option_ids: z.array(z.number().int().positive()).max(80).optional(),
   seo_title_zh: z.string().max(160).nullable().optional(),
   seo_title_en: z.string().max(160).nullable().optional(),
@@ -93,6 +103,32 @@ const patchSchema = z.object({
   sort_order: z.coerce.number().int().min(0).max(9999).optional(),
 })
 
+async function validateProductOperations(input: {
+  brand_id?: number | null
+  mark_ids?: number[]
+  showcase_ids?: number[]
+}) {
+  if (input.brand_id != null && !(await getProductBrandById(input.brand_id))) {
+    return NextResponse.json({ error: 'Invalid product brand' }, { status: 400 })
+  }
+
+  if (input.mark_ids) {
+    const marks = await Promise.all(input.mark_ids.map((id) => getProductMarkById(id)))
+    if (marks.some((mark) => !mark)) {
+      return NextResponse.json({ error: 'Invalid product mark' }, { status: 400 })
+    }
+  }
+
+  if (input.showcase_ids) {
+    const showcases = await Promise.all(input.showcase_ids.map((id) => getProductShowcaseById(id)))
+    if (showcases.some((showcase) => !showcase)) {
+      return NextResponse.json({ error: 'Invalid product showcase' }, { status: 400 })
+    }
+  }
+
+  return null
+}
+
 export async function GET(_req: NextRequest, ctx: Ctx) {
   const admin = await requireAdmin()
   if (admin instanceof Response) return admin
@@ -101,7 +137,8 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
   const product = await getCatalogProductById(id)
   if (!product) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  return NextResponse.json({ data: product })
+  const assignments = await getProductOperationAssignments(id)
+  return NextResponse.json({ data: { ...product, ...assignments } })
 }
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {
@@ -143,11 +180,22 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     }
   }
 
-  const updated = await updateCatalogProduct(id, parsed.data)
+  const validationError = await validateProductOperations(parsed.data)
+  if (validationError) return validationError
+
+  const { brand_id, mark_ids, showcase_ids, ...catalogInput } = parsed.data
+  const updated = await updateCatalogProduct(id, catalogInput)
   if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  const operationPatch = {
+    ...('brand_id' in parsed.data ? { brand_id: brand_id ?? null } : {}),
+    ...('mark_ids' in parsed.data ? { mark_ids: mark_ids ?? [] } : {}),
+    ...('showcase_ids' in parsed.data ? { showcase_ids: showcase_ids ?? [] } : {}),
+  }
+  const assignments = await updateProductOperationAssignments(id, operationPatch)
+
   await logAdminAction(admin.id, 'product.update', 'product', id)
-  return NextResponse.json({ data: updated })
+  return NextResponse.json({ data: { ...updated, ...assignments } })
 }
 
 export async function DELETE(_req: NextRequest, ctx: Ctx) {

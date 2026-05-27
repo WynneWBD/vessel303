@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { pool } from '@/lib/db'
 import { ensureProductCatalogSchema, listProductAttributeTemplates, listProductCategories } from '@/lib/product-catalog-db'
+import { listProductBrands, listProductFilterGroups, listProductMarks, listProductShowcases } from '@/lib/product-operations-db'
 import {
   Archive,
   ArrowRight,
@@ -11,6 +12,7 @@ import {
   CircleDashed,
   ClipboardCheck,
   FileText,
+  Filter,
   ImageIcon,
   Layers3,
   ListChecks,
@@ -47,6 +49,10 @@ type ProductStats = {
   deleted: number
   categories: number
   attributes: number
+  marks: number
+  brands: number
+  filters: number
+  showcases: number
 }
 
 type ProductStatsRow = Record<keyof ProductStats, string>
@@ -86,6 +92,10 @@ const EMPTY_PRODUCT_STATS: ProductStats = {
   deleted: 0,
   categories: 0,
   attributes: 0,
+  marks: 0,
+  brands: 0,
+  filters: 0,
+  showcases: 0,
 }
 
 function formatNumber(value: number): string {
@@ -117,7 +127,7 @@ async function getProductStats(): Promise<ProductStats> {
   if (!(await tableExists('public.product_catalog'))) return EMPTY_PRODUCT_STATS
   await ensureProductCatalogSchema()
 
-  const [res, categories, attributes] = await Promise.all([
+  const [res, categories, attributes, marks, brands, filters, showcases] = await Promise.all([
     pool.query<ProductStatsRow>(
     `SELECT
        COUNT(*) FILTER (WHERE deleted_at IS NULL)::text AS total,
@@ -163,6 +173,10 @@ async function getProductStats(): Promise<ProductStats> {
     ),
     listProductCategories({ includeHidden: true }).catch(() => []),
     listProductAttributeTemplates({ includeHidden: true }).catch(() => []),
+    listProductMarks({ includeHidden: true }).catch(() => []),
+    listProductBrands({ includeHidden: true }).catch(() => []),
+    listProductFilterGroups({ includeHidden: true }).catch(() => []),
+    listProductShowcases({ includeHidden: true }).catch(() => []),
   ])
   const row = res.rows[0]
 
@@ -184,6 +198,10 @@ async function getProductStats(): Promise<ProductStats> {
     deleted: parseCount(row?.deleted),
     categories: categories.length,
     attributes: attributes.length,
+    marks: marks.length,
+    brands: brands.length,
+    filters: filters.length,
+    showcases: showcases.length,
   }
 }
 
@@ -212,6 +230,10 @@ function getSideNavGroups(stats: ProductStats): AdminSideNavGroup[] {
       items: [
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', badge: stats.categories, Icon: Tags },
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', badge: stats.attributes, Icon: SlidersHorizontal },
+        { key: 'marks', label: '标记管理', href: '/admin/content/products/marks', badge: stats.marks, Icon: Tags },
+        { key: 'brands', label: '品牌管理', href: '/admin/content/products/brands', badge: stats.brands, Icon: Package },
+        { key: 'filters', label: '筛选管理', href: '/admin/content/products/filters', badge: stats.filters, Icon: Filter },
+        { key: 'showcases', label: '橱窗管理', href: '/admin/content/products/showcases', badge: stats.showcases, Icon: ListChecks },
         { key: 'recycle', label: '产品回收站', href: '/admin/content/products/recycle', badge: stats.deleted, Icon: Archive },
         { key: 'bulk-check', label: '批量检查', planned: true, Icon: ListChecks },
         { key: 'seo', label: 'SEO 字段治理', href: '/admin/content/products/list?view=incomplete&issue=seo', badge: stats.missingSeo, Icon: Sparkles },
@@ -538,6 +560,10 @@ function ActionPanel() {
     { label: '进入产品列表', detail: '继续搜索、筛选和编辑产品', href: '/admin/content/products/list', Icon: Package },
     { label: '分类管理', detail: '维护产品分类、排序和显示状态', href: '/admin/content/products/categories', Icon: Tags },
     { label: '属性模板', detail: '维护产品属性模板和筛选选项', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
+    { label: '标记管理', detail: '维护产品运营标记并支持批量打标', href: '/admin/content/products/marks', Icon: Tags },
+    { label: '品牌管理', detail: '维护品牌并绑定到产品表单', href: '/admin/content/products/brands', Icon: Package },
+    { label: '筛选管理', detail: '组合属性模板形成筛选组', href: '/admin/content/products/filters', Icon: Filter },
+    { label: '橱窗管理', detail: '把重点产品编组成展示橱窗', href: '/admin/content/products/showcases', Icon: ListChecks },
     { label: '产品回收站', detail: '恢复误删产品为草稿', href: '/admin/content/products/recycle', Icon: Archive },
   ]
 
@@ -592,7 +618,7 @@ function WorkflowPanel() {
 }
 
 function PlanningPanel() {
-  const items = ['标记管理', '品牌管理', '筛选管理', '橱窗管理', '批量检查']
+  const items = ['批量检查', '状态/置顶批量操作', '权限矩阵']
 
   return (
     <section className="rounded-md border border-dashed border-[#D8E7E8] bg-white/70 p-5">

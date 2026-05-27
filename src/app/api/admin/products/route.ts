@@ -11,6 +11,12 @@ import {
   listCatalogProducts,
   type CatalogProductStatus,
 } from '@/lib/product-catalog-db'
+import {
+  getProductBrandById,
+  getProductMarkById,
+  getProductShowcaseById,
+  updateProductOperationAssignments,
+} from '@/lib/product-operations-db'
 import type { ProductSeriesCode } from '@/lib/products'
 
 export const dynamic = 'force-dynamic'
@@ -85,6 +91,9 @@ const productSchema = z.object({
   isCustom: z.boolean(),
   detailSlug: detailSlugSchema,
   category_id: z.number().int().positive().nullable().optional(),
+  brand_id: z.number().int().positive().nullable().optional(),
+  mark_ids: z.array(z.number().int().positive()).max(80).optional().default([]),
+  showcase_ids: z.array(z.number().int().positive()).max(80).optional().default([]),
   attribute_option_ids: z.array(z.number().int().positive()).max(80).optional().default([]),
   seo_title_zh: z.string().max(160).nullable().optional(),
   seo_title_en: z.string().max(160).nullable().optional(),
@@ -93,6 +102,32 @@ const productSchema = z.object({
   status: z.enum(statusValues).optional(),
   sort_order: z.coerce.number().int().min(0).max(9999).optional(),
 })
+
+async function validateProductOperations(input: {
+  brand_id?: number | null
+  mark_ids?: number[]
+  showcase_ids?: number[]
+}) {
+  if (input.brand_id != null && !(await getProductBrandById(input.brand_id))) {
+    return NextResponse.json({ error: 'Invalid product brand' }, { status: 400 })
+  }
+
+  if (input.mark_ids) {
+    const marks = await Promise.all(input.mark_ids.map((id) => getProductMarkById(id)))
+    if (marks.some((mark) => !mark)) {
+      return NextResponse.json({ error: 'Invalid product mark' }, { status: 400 })
+    }
+  }
+
+  if (input.showcase_ids) {
+    const showcases = await Promise.all(input.showcase_ids.map((id) => getProductShowcaseById(id)))
+    if (showcases.some((showcase) => !showcase)) {
+      return NextResponse.json({ error: 'Invalid product showcase' }, { status: 400 })
+    }
+  }
+
+  return null
+}
 
 export async function GET(req: NextRequest) {
   const admin = await requireAdmin()
@@ -173,8 +208,17 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const product = await createCatalogProduct(parsed.data)
+  const validationError = await validateProductOperations(parsed.data)
+  if (validationError) return validationError
+
+  const { brand_id, mark_ids, showcase_ids, ...catalogInput } = parsed.data
+  const product = await createCatalogProduct(catalogInput)
+  const assignments = await updateProductOperationAssignments(product.id, {
+    brand_id: brand_id ?? null,
+    mark_ids,
+    showcase_ids,
+  })
   await logAdminAction(admin.id, 'product.create', 'product', product.id)
 
-  return NextResponse.json({ data: product }, { status: 201 })
+  return NextResponse.json({ data: { ...product, ...assignments } }, { status: 201 })
 }

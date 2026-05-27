@@ -6,6 +6,7 @@ import ProductForm from '@/components/admin/ProductForm'
 import { defaultSiteSettings, normalizeMediaMaxUploadMb } from '@/lib/admin-settings-db'
 import { pool } from '@/lib/db'
 import { listProductAttributeTemplatesWithOptions, listProductCategories } from '@/lib/product-catalog-db'
+import { listProductBrands, listProductMarks, listProductShowcases } from '@/lib/product-operations-db'
 import {
   AlertTriangle,
   ArrowLeft,
@@ -243,13 +244,25 @@ export default async function AdminContentProductNewPage() {
     console.error('[admin-content-product-new] load media limit failed', err)
     return defaultSiteSettings.mediaMaxUploadMb
   })
-  const [categories, attributeTemplates] = await Promise.all([
+  const [categories, attributeTemplates, brands, marks, showcases] = await Promise.all([
     listProductCategories({ includeHidden: true }).catch((err) => {
       console.error('[admin-content-product-new] load product categories failed', err)
       return []
     }),
     listProductAttributeTemplatesWithOptions({ includeHidden: true }).catch((err) => {
       console.error('[admin-content-product-new] load product attributes failed', err)
+      return []
+    }),
+    listProductBrands({ includeHidden: true }).catch((err) => {
+      console.error('[admin-content-product-new] load product brands failed', err)
+      return []
+    }),
+    listProductMarks({ includeHidden: true }).catch((err) => {
+      console.error('[admin-content-product-new] load product marks failed', err)
+      return []
+    }),
+    listProductShowcases({ includeHidden: true }).catch((err) => {
+      console.error('[admin-content-product-new] load product showcases failed', err)
       return []
     }),
   ])
@@ -279,6 +292,9 @@ export default async function AdminContentProductNewPage() {
           createRedirectBase="/admin/content/products"
           categories={categories}
           attributeTemplates={attributeTemplates}
+          brands={brands}
+          marks={marks}
+          showcases={showcases}
         />
       </section>
     </AdminSectionShell>
