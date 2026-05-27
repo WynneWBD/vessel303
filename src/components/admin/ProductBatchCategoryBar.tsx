@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { ListChecks, Tag } from 'lucide-react'
+import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import type { ProductCategoryRow } from '@/lib/product-catalog-db'
@@ -12,6 +13,12 @@ import type { ProductMarkRow, ProductShowcaseRow } from '@/lib/product-operation
 type ProductCategoryOption = Pick<ProductCategoryRow, 'id' | 'title_zh' | 'title_en'>
 type ProductMarkOption = Pick<ProductMarkRow, 'id' | 'title_zh' | 'title_en' | 'status'>
 type ProductShowcaseOption = Pick<ProductShowcaseRow, 'id' | 'title_zh' | 'title_en' | 'status'>
+type PendingBatchAction = {
+  ids: string[]
+  kind: 'category' | 'mark' | 'showcase'
+  targetId: string
+  targetName: string
+}
 
 const plannedBatchActions = ['状态', '置顶', '删除', '翻译']
 
@@ -32,6 +39,8 @@ export default function ProductBatchCategoryBar({
   const [moving, setMoving] = useState(false)
   const [marking, setMarking] = useState(false)
   const [showcasing, setShowcasing] = useState(false)
+  const [pendingAction, setPendingAction] = useState<PendingBatchAction | null>(null)
+  const busy = moving || marking || showcasing
 
   const categoryName = useMemo(
     () => categories.find((category) => String(category.id) === categoryId)?.title_zh ?? '',
@@ -83,25 +92,13 @@ export default function ProductBatchCategoryBar({
     setSelectedCount(0)
   }
 
-  const moveCategory = async () => {
-    const ids = getSelectedIds()
-
-    if (ids.length === 0) {
-      toast.error('请先选择产品')
-      return
-    }
-    if (!categoryId) {
-      toast.error('请选择目标分类')
-      return
-    }
-    if (!window.confirm(`确认将 ${ids.length} 个产品转移到“${categoryName}”？`)) return
-
+  const runMoveCategory = async (ids: string[], targetId: string) => {
     setMoving(true)
     try {
       const res = await fetch('/api/admin/products/batch/category', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids, category_id: Number(categoryId) }),
+        body: JSON.stringify({ ids, category_id: Number(targetId) }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error ?? '批量转移失败')
@@ -116,24 +113,13 @@ export default function ProductBatchCategoryBar({
     }
   }
 
-  const addMark = async () => {
-    const ids = getSelectedIds()
-    if (ids.length === 0) {
-      toast.error('请先选择产品')
-      return
-    }
-    if (!markId) {
-      toast.error('请选择标记')
-      return
-    }
-    if (!window.confirm(`确认给 ${ids.length} 个产品添加“${markName}”标记？`)) return
-
+  const runAddMark = async (ids: string[], targetId: string) => {
     setMarking(true)
     try {
       const res = await fetch('/api/admin/products/batch/marks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids, mark_id: Number(markId) }),
+        body: JSON.stringify({ ids, mark_id: Number(targetId) }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error ?? '批量标记失败')
@@ -148,24 +134,13 @@ export default function ProductBatchCategoryBar({
     }
   }
 
-  const addShowcase = async () => {
-    const ids = getSelectedIds()
-    if (ids.length === 0) {
-      toast.error('请先选择产品')
-      return
-    }
-    if (!showcaseId) {
-      toast.error('请选择橱窗')
-      return
-    }
-    if (!window.confirm(`确认将 ${ids.length} 个产品加入“${showcaseName}”橱窗？`)) return
-
+  const runAddShowcase = async (ids: string[], targetId: string) => {
     setShowcasing(true)
     try {
       const res = await fetch('/api/admin/products/batch/showcases', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids, showcase_id: Number(showcaseId) }),
+        body: JSON.stringify({ ids, showcase_id: Number(targetId) }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error ?? '转移橱窗失败')
@@ -179,6 +154,71 @@ export default function ProductBatchCategoryBar({
       setShowcasing(false)
     }
   }
+
+  const requestBatchAction = (kind: PendingBatchAction['kind']) => {
+    const ids = getSelectedIds()
+    if (ids.length === 0) {
+      toast.error('请先选择产品')
+      return
+    }
+
+    if (kind === 'category') {
+      if (!categoryId) {
+        toast.error('请选择目标分类')
+        return
+      }
+      setPendingAction({ ids, kind, targetId: categoryId, targetName: categoryName })
+      return
+    }
+
+    if (kind === 'mark') {
+      if (!markId) {
+        toast.error('请选择标记')
+        return
+      }
+      setPendingAction({ ids, kind, targetId: markId, targetName: markName })
+      return
+    }
+
+    if (!showcaseId) {
+      toast.error('请选择橱窗')
+      return
+    }
+    setPendingAction({ ids, kind, targetId: showcaseId, targetName: showcaseName })
+  }
+
+  const handleConfirmBatchAction = async () => {
+    if (!pendingAction) return
+
+    if (pendingAction.kind === 'category') {
+      await runMoveCategory(pendingAction.ids, pendingAction.targetId)
+    } else if (pendingAction.kind === 'mark') {
+      await runAddMark(pendingAction.ids, pendingAction.targetId)
+    } else {
+      await runAddShowcase(pendingAction.ids, pendingAction.targetId)
+    }
+    setPendingAction(null)
+  }
+
+  const confirmCopy = pendingAction
+    ? {
+        category: {
+          title: '确认转移产品分类',
+          description: `确认将 ${pendingAction.ids.length} 个产品转移到“${pendingAction.targetName}”？`,
+          confirmLabel: '确认转移',
+        },
+        mark: {
+          title: '确认批量添加标记',
+          description: `确认给 ${pendingAction.ids.length} 个产品添加“${pendingAction.targetName}”标记？`,
+          confirmLabel: '确认标记',
+        },
+        showcase: {
+          title: '确认加入产品橱窗',
+          description: `确认将 ${pendingAction.ids.length} 个产品加入“${pendingAction.targetName}”橱窗？`,
+          confirmLabel: '确认加入',
+        },
+      }[pendingAction.kind]
+    : null
 
   return (
     <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3">
@@ -220,7 +260,7 @@ export default function ProductBatchCategoryBar({
             size="sm"
             className="h-8 text-xs"
             disabled={selectedCount === 0 || !categoryId || moving}
-            onClick={moveCategory}
+            onClick={() => requestBatchAction('category')}
             data-testid="product-batch-category-button"
           >
             <Tag size={13} />
@@ -246,7 +286,7 @@ export default function ProductBatchCategoryBar({
             size="sm"
             className="h-8 text-xs"
             disabled={selectedCount === 0 || !markId || marking}
-            onClick={addMark}
+            onClick={() => requestBatchAction('mark')}
             data-testid="product-batch-mark-button"
           >
             <Tag size={13} />
@@ -272,7 +312,7 @@ export default function ProductBatchCategoryBar({
             size="sm"
             className="h-8 text-xs"
             disabled={selectedCount === 0 || !showcaseId || showcasing}
-            onClick={addShowcase}
+            onClick={() => requestBatchAction('showcase')}
             data-testid="product-batch-showcase-button"
           >
             <ListChecks size={13} />
@@ -290,6 +330,19 @@ export default function ProductBatchCategoryBar({
           ))}
         </div>
       </div>
+      {confirmCopy ? (
+        <AdminConfirmDialog
+          open={Boolean(pendingAction)}
+          onOpenChange={(open) => {
+            if (!open) setPendingAction(null)
+          }}
+          title={confirmCopy.title}
+          description={confirmCopy.description}
+          confirmLabel={confirmCopy.confirmLabel}
+          loading={busy}
+          onConfirm={handleConfirmBatchAction}
+        />
+      ) : null}
     </div>
   )
 }
