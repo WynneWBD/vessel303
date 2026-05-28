@@ -8,13 +8,18 @@ import {
   ArrowRight,
   CheckCircle2,
   CircleDashed,
+  FileArchive,
+  FileQuestion,
   FileText,
+  GalleryHorizontalEnd,
+  Lightbulb,
   ListChecks,
   LayoutTemplate,
   MapPinned,
   Newspaper,
   Package,
   Plus,
+  Presentation,
   SearchCheck,
   Settings,
   Tags,
@@ -55,6 +60,14 @@ type ContentDomain = {
   Icon: LucideIcon
   action: string
   tone: 'blue' | 'green' | 'orange'
+}
+
+type SecondaryContentDomain = {
+  key: string
+  title: string
+  detail: string
+  href: string
+  Icon: LucideIcon
 }
 
 const EMPTY_SUMMARY: ContentSummary = {
@@ -100,6 +113,44 @@ const CONTENT_DOMAINS: ContentDomain[] = [
     Icon: Newspaper,
     action: '发布新闻',
     tone: 'orange',
+  },
+]
+
+const SECONDARY_CONTENT_DOMAINS: SecondaryContentDomain[] = [
+  {
+    key: 'faq',
+    title: 'FAQ',
+    detail: '常见问题分类、排序、草稿、发布和隐藏。',
+    href: '/admin/content/faq',
+    Icon: FileQuestion,
+  },
+  {
+    key: 'media-kit',
+    title: '文件下载',
+    detail: 'Media Kit 资源和申请线索入口。',
+    href: '/admin/content/media-kit',
+    Icon: FileArchive,
+  },
+  {
+    key: 'scenarios',
+    title: '场景方案',
+    detail: '固定场景页 tourism / commercial / public。',
+    href: '/admin/content/scenarios',
+    Icon: Presentation,
+  },
+  {
+    key: 'display',
+    title: 'Display 展示',
+    detail: '展示页读取橱窗或后台配置内容。',
+    href: '/admin/content/display',
+    Icon: GalleryHorizontalEnd,
+  },
+  {
+    key: 'innovation',
+    title: '技术专题',
+    detail: 'VI/IE、VIPC、VOLS 固定专题内容。',
+    href: '/admin/content/innovation',
+    Icon: Lightbulb,
   },
 ]
 
@@ -204,6 +255,11 @@ function getContentSideNav(summary: ContentDashboardSummary): AdminSideNavGroup[
         { key: 'products', label: '产品管理', href: '/admin/content/products', badge: summary.products.total, Icon: Package },
         { key: 'projects', label: '项目案例', href: '/admin/content/projects', badge: summary.projects.total, Icon: MapPinned },
         { key: 'news', label: '新闻资讯', href: '/admin/content/news', badge: summary.news.total, Icon: Newspaper },
+        { key: 'faq', label: 'FAQ', href: '/admin/content/faq', Icon: FileQuestion },
+        { key: 'media-kit', label: '文件下载', href: '/admin/content/media-kit', Icon: FileArchive },
+        { key: 'scenarios', label: '场景方案', href: '/admin/content/scenarios', Icon: Presentation },
+        { key: 'display', label: 'Display 展示', href: '/admin/content/display', Icon: GalleryHorizontalEnd },
+        { key: 'innovation', label: '技术专题', href: '/admin/content/innovation', Icon: Lightbulb },
       ],
     },
     {
@@ -283,8 +339,8 @@ function Hero({ summary }: { summary: ContentDashboardSummary }) {
           <HeroMetric title="近 30 天新增" value={totals.recent} detail="产品 / 项目 / 新闻" tone="green" />
           <HeroMetric
             title="内容域"
-            value={CONTENT_DOMAINS.length}
-            detail="产品、项目、新闻"
+            value={CONTENT_DOMAINS.length + SECONDARY_CONTENT_DOMAINS.length}
+            detail="核心 CMS + 固定内容"
             tone="blue"
           />
         </div>
@@ -366,7 +422,31 @@ function ContentDomainGrid({ summary }: { summary: ContentDashboardSummary }) {
           <ContentDomainCard key={domain.key} domain={domain} summary={summary[domain.key]} />
         ))}
       </div>
+      <SecondaryContentGrid />
     </section>
+  )
+}
+
+function SecondaryContentGrid() {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+      {SECONDARY_CONTENT_DOMAINS.map((domain) => {
+        const Icon = domain.Icon
+        return (
+          <Link
+            key={domain.key}
+            href={domain.href}
+            className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60 hover:shadow-sm"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
+              <Icon size={18} />
+            </span>
+            <span className="mt-4 block text-sm font-bold text-[#1E2C31]">{domain.title}</span>
+            <span className="mt-2 block text-xs leading-5 text-[#61767D]">{domain.detail}</span>
+          </Link>
+        )
+      })}
+    </div>
   )
 }
 
@@ -431,6 +511,11 @@ function ActionMatrix() {
     { label: '产品管理', href: '/admin/content/products', Icon: Package },
     { label: '项目案例', href: '/admin/content/projects', Icon: MapPinned },
     { label: '新闻资讯', href: '/admin/content/news', Icon: Newspaper },
+    { label: 'FAQ', href: '/admin/content/faq', Icon: FileQuestion },
+    { label: '文件下载', href: '/admin/content/media-kit', Icon: FileArchive },
+    { label: '场景方案', href: '/admin/content/scenarios', Icon: Presentation },
+    { label: 'Display 展示', href: '/admin/content/display', Icon: GalleryHorizontalEnd },
+    { label: '技术专题', href: '/admin/content/innovation', Icon: Lightbulb },
   ]
 
   return (

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import InnovationCmsBlock from '@/components/tech/InnovationCmsBlock';
 import VipcContent from '@/components/tech/VipcContent';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -24,6 +25,8 @@ export default function VipcPage() {
           </Link>
         </div>
       </div>
+
+      <InnovationCmsBlock slug="vipc" lang={lang} />
 
       <VipcContent lang={lang} />
 

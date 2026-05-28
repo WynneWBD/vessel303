@@ -4,6 +4,9 @@ import type { Metadata } from 'next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHero from '@/components/PageHero';
+import { getPublicB9ContentItem, type B9ContentItem } from '@/lib/b9-content-db';
+
+export const dynamic = 'force-dynamic';
 
 type ScenarioSlug = 'tourism' | 'commercial' | 'public';
 
@@ -176,6 +179,103 @@ const scenarios: ScenarioData[] = [
   },
 ];
 
+function asString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function asStringArray(value: unknown): string[] | null {
+  if (!Array.isArray(value)) return null;
+  const items = value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0).map((item) => item.trim());
+  return items.length > 0 ? items : null;
+}
+
+function asSpecs(value: unknown): ScenarioData['specs'] | null {
+  if (!Array.isArray(value)) return null;
+  const items = value
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const record = item as Record<string, unknown>;
+      const label = asString(record.label);
+      const itemValue = asString(record.value);
+      return label && itemValue ? { label, value: itemValue } : null;
+    })
+    .filter((item): item is { label: string; value: string } => Boolean(item));
+  return items.length > 0 ? items : null;
+}
+
+function asFeatures(value: unknown): ScenarioData['features'] | null {
+  if (!Array.isArray(value)) return null;
+  const items = value
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const record = item as Record<string, unknown>;
+      const title = asString(record.title);
+      const desc = asString(record.desc);
+      return title && desc ? { title, desc } : null;
+    })
+    .filter((item): item is { title: string; desc: string } => Boolean(item));
+  return items.length > 0 ? items : null;
+}
+
+function asProcess(value: unknown): ScenarioData['process'] | null {
+  if (!Array.isArray(value)) return null;
+  const items = value
+    .map((item, index) => {
+      if (!item || typeof item !== 'object') return null;
+      const record = item as Record<string, unknown>;
+      const title = asString(record.title);
+      const desc = asString(record.desc);
+      const step = asString(record.step) ?? String(index + 1).padStart(2, '0');
+      return title && desc ? { step, title, desc } : null;
+    })
+    .filter((item): item is { step: string; title: string; desc: string } => Boolean(item));
+  return items.length > 0 ? items : null;
+}
+
+function asCases(value: unknown): ScenarioData['cases'] | null {
+  if (!Array.isArray(value)) return null;
+  const items = value
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const record = item as Record<string, unknown>;
+      const name = asString(record.name);
+      const location = asString(record.location) ?? '';
+      const desc = asString(record.desc) ?? '';
+      return name ? { name, location, desc } : null;
+    })
+    .filter((item): item is { name: string; location: string; desc: string } => Boolean(item));
+  return items.length > 0 ? items : null;
+}
+
+function applyScenarioCms(scenario: ScenarioData, cms: B9ContentItem | null): ScenarioData {
+  if (!cms) return scenario;
+  const payload = cms.payload ?? {};
+  return {
+    ...scenario,
+    label: asString(payload.label) ?? scenario.label,
+    title: cms.title_zh || scenario.title,
+    titleGold: asString(payload.titleGold) ?? scenario.titleGold,
+    subtitle: cms.summary_zh || scenario.subtitle,
+    intro: cms.body_zh || cms.summary_zh || scenario.intro,
+    heroTagline: asString(payload.heroTagline) ?? cms.summary_zh ?? scenario.heroTagline,
+    specs: asSpecs(payload.specs) ?? scenario.specs,
+    features: asFeatures(payload.features) ?? scenario.features,
+    process: asProcess(payload.process) ?? scenario.process,
+    recommendedProducts: asStringArray(payload.recommendedProducts) ?? scenario.recommendedProducts,
+    cases: asCases(payload.cases) ?? scenario.cases,
+    accentColor: asString(payload.accentColor) ?? scenario.accentColor,
+  };
+}
+
+async function loadScenarioCms(slug: ScenarioSlug) {
+  try {
+    return await getPublicB9ContentItem('scenario', slug);
+  } catch (err) {
+    console.error(`[scenarios/${slug}] CMS load failed, using static fallback`, err);
+    return null;
+  }
+}
+
 export async function generateStaticParams() {
   return scenarios.map((s) => ({ slug: s.slug }));
 }
@@ -186,7 +286,10 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const scenario = scenarios.find((s) => s.slug === slug);
+  const baseScenario = scenarios.find((s) => s.slug === slug);
+  const scenario = baseScenario
+    ? applyScenarioCms(baseScenario, await loadScenarioCms(baseScenario.slug))
+    : null;
   if (!scenario) return {};
   return {
     title: `${scenario.label} | VESSEL 微宿®`,
@@ -208,8 +311,9 @@ export default async function ScenarioPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const scenario = scenarios.find((s) => s.slug === slug);
-  if (!scenario) notFound();
+  const baseScenario = scenarios.find((s) => s.slug === slug);
+  if (!baseScenario) notFound();
+  const scenario = applyScenarioCms(baseScenario, await loadScenarioCms(baseScenario.slug));
 
   const otherScenarios = scenarios.filter((s) => s.slug !== scenario.slug);
 

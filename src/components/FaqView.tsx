@@ -1,0 +1,228 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+import { useLanguage } from '@/contexts/LanguageContext'
+
+export type FaqCategoryView = {
+  key: string
+  zh: string
+  en: string
+}
+
+export type FaqItemView = {
+  id: string
+  category: string
+  question_zh: string
+  question_en: string
+  answer_zh: string
+  answer_en: string
+}
+
+function AccordionItem({
+  question,
+  answer,
+  isOpen,
+  onToggle,
+}: {
+  question: string
+  answer: string
+  isOpen: boolean
+  onToggle: () => void
+}) {
+  return (
+    <div className={`border-b border-[#E5E0DA] transition-colors ${isOpen ? 'bg-white' : 'bg-transparent'}`}>
+      <button
+        className="group flex w-full items-start justify-between gap-4 px-6 py-5 text-left"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+      >
+        <span
+          className={`text-base font-medium leading-snug transition-colors ${
+            isOpen ? 'text-[#2C2A28]' : 'text-[#2C2A28]/80 group-hover:text-[#E36F2C]'
+          }`}
+          style={{ fontFamily: 'var(--font-dm-sans, DM Sans, sans-serif)' }}
+        >
+          {question}
+        </span>
+        <span
+          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-all ${
+            isOpen
+              ? 'border-[#E36F2C] bg-[#E36F2C] text-white'
+              : 'border-[#C4B9AB] text-[#8A8580] group-hover:border-[#E36F2C] group-hover:text-[#E36F2C]'
+          }`}
+        >
+          <svg
+            className={`h-3.5 w-3.5 transition-transform ${isOpen ? 'rotate-45' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v14M5 12h14" />
+          </svg>
+        </span>
+      </button>
+
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isOpen ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="ml-6 border-l-2 border-[#E36F2C] px-6 pb-6">
+          <p
+            className="text-sm leading-relaxed text-[#2C2A28]/70"
+            style={{ fontFamily: 'var(--font-inter, Inter, sans-serif)' }}
+          >
+            {answer}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function FaqView({
+  categories,
+  items,
+}: {
+  categories: FaqCategoryView[]
+  items: FaqItemView[]
+}) {
+  const { lang } = useLanguage()
+  const [openId, setOpenId] = useState<string | null>(null)
+  const [activeCategory, setActiveCategory] = useState<string | null>(null)
+
+  const toggle = (id: string) => setOpenId(openId === id ? null : id)
+
+  const filteredCategories = activeCategory
+    ? categories.filter((c) => c.key === activeCategory)
+    : categories
+
+  return (
+    <div className="flex min-h-screen flex-col" style={{ backgroundColor: '#F5F2ED' }}>
+      <Navbar />
+
+      <section className="px-4 pb-16 pt-28" style={{ backgroundColor: '#241F1B' }}>
+        <div className="mx-auto max-w-4xl">
+          <p className="mb-4 text-xs font-medium uppercase tracking-[0.35em] text-[#E36F2C]">
+            {lang === 'zh' ? '常见问题' : 'Frequently Asked Questions'}
+          </p>
+          <h1
+            className="mb-5 text-5xl font-bold leading-none tracking-tight text-[#F5F2ED] sm:text-6xl"
+            style={{ fontFamily: 'var(--font-dm-sans, DM Sans, sans-serif)' }}
+          >
+            FAQ
+          </h1>
+          <p className="max-w-xl text-base leading-relaxed text-[#C9BEB4] sm:text-lg">
+            {lang === 'zh'
+              ? '关于 VESSEL 产品、运输、安装、认证及商务条款的专业解答。'
+              : 'Expert answers on VESSEL products, transport, installation, certifications, and commercial terms.'}
+          </p>
+        </div>
+      </section>
+
+      <div className="sticky top-16 z-30 border-b border-[#E5E0DA]" style={{ backgroundColor: '#F5F2ED' }}>
+        <div className="mx-auto max-w-4xl overflow-x-auto px-4">
+          <div className="flex min-w-max gap-1 py-3">
+            <button
+              onClick={() => setActiveCategory(null)}
+              className={`rounded-sm px-3.5 py-1.5 text-xs font-medium tracking-wider whitespace-nowrap transition-all ${
+                activeCategory === null
+                  ? 'bg-[#241F1B] text-[#F5F2ED]'
+                  : 'text-[#8A8580] hover:bg-[#E5E0DA] hover:text-[#2C2A28]'
+              }`}
+            >
+              {lang === 'zh' ? '全部' : 'All'}
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat.key}
+                onClick={() => setActiveCategory(activeCategory === cat.key ? null : cat.key)}
+                className={`rounded-sm px-3.5 py-1.5 text-xs font-medium tracking-wider whitespace-nowrap transition-all ${
+                  activeCategory === cat.key
+                    ? 'bg-[#E36F2C] text-white'
+                    : 'text-[#8A8580] hover:bg-[#E5E0DA] hover:text-[#2C2A28]'
+                }`}
+              >
+                {lang === 'zh' ? cat.zh : cat.en}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <main className="flex-1 px-4 py-12">
+        <div className="mx-auto max-w-4xl space-y-10">
+          {filteredCategories.map((cat) => {
+            const categoryItems = items.filter((item) => item.category === cat.key)
+            if (categoryItems.length === 0) return null
+            return (
+              <section key={cat.key}>
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="h-5 w-1 shrink-0 rounded-full bg-[#E36F2C]" />
+                  <h2
+                    className="text-sm font-semibold uppercase tracking-[0.2em] text-[#2C2A28]/50"
+                    style={{ fontFamily: 'var(--font-dm-sans, DM Sans, sans-serif)' }}
+                  >
+                    {lang === 'zh' ? cat.zh : cat.en}
+                  </h2>
+                </div>
+
+                <div className="overflow-hidden rounded-sm border border-[#E5E0DA]">
+                  {categoryItems.map((item) => (
+                    <AccordionItem
+                      key={item.id}
+                      question={lang === 'zh' ? item.question_zh : item.question_en}
+                      answer={lang === 'zh' ? item.answer_zh : item.answer_en}
+                      isOpen={openId === item.id}
+                      onToggle={() => toggle(item.id)}
+                    />
+                  ))}
+                </div>
+              </section>
+            )
+          })}
+        </div>
+      </main>
+
+      <section style={{ backgroundColor: '#241F1B' }} className="px-4 py-16">
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="mb-3 text-xs font-medium uppercase tracking-[0.3em] text-[#E36F2C]">
+            {lang === 'zh' ? '还有问题？' : 'Still have questions?'}
+          </p>
+          <h2
+            className="mb-4 text-3xl font-bold text-[#F5F2ED] sm:text-4xl"
+            style={{ fontFamily: 'var(--font-dm-sans, DM Sans, sans-serif)' }}
+          >
+            {lang === 'zh' ? '我们的团队随时为您解答' : 'Our team is ready to help'}
+          </h2>
+          <p className="mx-auto mb-8 max-w-md text-sm leading-relaxed text-[#C9BEB4]">
+            {lang === 'zh'
+              ? '提交您的项目需求，专业顾问将在 24 小时内与您联系。'
+              : 'Submit your project requirements and a specialist will contact you within 24 hours.'}
+          </p>
+          <div className="flex flex-col justify-center gap-3 sm:flex-row">
+            <Link
+              href="https://en.303vessel.cn/contact.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block bg-[#E36F2C] px-8 py-3.5 text-sm font-semibold tracking-wider text-white transition-colors hover:bg-[#C85A1F]"
+            >
+              {lang === 'zh' ? '联系我们' : 'Contact VESSEL'}
+            </Link>
+            <Link
+              href="/global"
+              className="inline-block border border-white/20 px-8 py-3.5 text-sm font-medium tracking-wider text-white/70 transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
+            >
+              {lang === 'zh' ? '查看全球项目' : 'View Global Projects'}
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  )
+}

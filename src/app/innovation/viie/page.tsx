@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import InnovationCmsBlock from '@/components/tech/InnovationCmsBlock';
 import ViieContent from '@/components/tech/ViieContent';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -24,6 +25,8 @@ export default function ViIePage() {
           </Link>
         </div>
       </div>
+
+      <InnovationCmsBlock slug="viie" lang={lang} />
 
       <ViieContent lang={lang} />
 

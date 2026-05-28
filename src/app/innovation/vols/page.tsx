@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import InnovationCmsBlock from '@/components/tech/InnovationCmsBlock';
 import VolsContent from '@/components/tech/VolsContent';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -24,6 +25,8 @@ export default function VolsPage() {
           </Link>
         </div>
       </div>
+
+      <InnovationCmsBlock slug="vols" lang={lang} />
 
       <VolsContent lang={lang} />
 

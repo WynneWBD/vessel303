@@ -5,7 +5,40 @@ import Image from 'next/image';
 import { useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
 
-const slides = [
+type DisplaySlide = {
+  model: string;
+  gen: string;
+  tag: string;
+  size: string;
+  capacity: string;
+  tagline: string;
+  features: string[];
+  price: string;
+  image: string;
+};
+
+type DisplayContentRow = {
+  id: number;
+  model?: string;
+  gen?: string;
+  tag?: string;
+  size?: string;
+  capacity?: string;
+  tagline?: string;
+  features?: string[];
+  price?: string;
+  image?: string;
+  title_zh: string;
+  title_en: string;
+  summary_zh: string | null;
+  summary_en: string | null;
+  body_zh: string | null;
+  body_en: string | null;
+  cover_image_url: string | null;
+  payload: Record<string, unknown>;
+};
+
+const STATIC_SLIDES: DisplaySlide[] = [
   {
     model: 'E7',
     gen: 'Gen6',
@@ -76,11 +109,45 @@ const slides = [
 
 const INTERVAL = 5000;
 
+function asText(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function asTextArray(value: unknown): string[] | null {
+  if (!Array.isArray(value)) return null;
+  const items = value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0).map((item) => item.trim());
+  return items.length > 0 ? items : null;
+}
+
+function mapDisplayRow(row: DisplayContentRow): DisplaySlide {
+  const payload = row.payload ?? {};
+  const features = row.features
+    ?? asTextArray(payload.features)
+    ?? row.body_zh?.split('\n').map((line) => line.trim()).filter(Boolean)
+    ?? row.body_en?.split('\n').map((line) => line.trim()).filter(Boolean)
+    ?? [];
+
+  return {
+    model: row.model ?? asText(payload.model) ?? row.title_en ?? row.title_zh,
+    gen: row.gen ?? asText(payload.gen) ?? row.summary_en ?? 'CMS',
+    tag: row.tag ?? row.summary_zh ?? asText(payload.tag) ?? '精选展示',
+    size: row.size ?? asText(payload.size) ?? '规格待补',
+    capacity: row.capacity ?? asText(payload.capacity) ?? 'Capacity on request',
+    tagline: row.tagline ?? row.body_en ?? row.body_zh ?? row.title_en ?? row.title_zh,
+    features: features.length > 0 ? features.slice(0, 3) : ['CMS managed showcase', 'Product details on request'],
+    price: row.price ?? asText(payload.price) ?? 'Inquire for pricing',
+    image: row.image || row.cover_image_url || '/images/e7-gen6.jpg',
+  };
+}
+
 export default function DisplayPage() {
   const t = useT();
   const [current, setCurrent] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [managedSlides, setManagedSlides] = useState<DisplaySlide[]>([]);
+  const slides = managedSlides.length > 0 ? managedSlides : STATIC_SLIDES;
+  const slideCount = slides.length;
 
   // Touch tracking
   const touchStartX = useRef<number | null>(null);
@@ -96,21 +163,40 @@ export default function DisplayPage() {
   }, [transitioning]);
 
   const prev = useCallback(() => {
-    goTo((current - 1 + slides.length) % slides.length);
-  }, [current, goTo]);
+    goTo((current - 1 + slideCount) % slideCount);
+  }, [current, goTo, slideCount]);
 
   const next = useCallback(() => {
-    goTo((current + 1) % slides.length);
-  }, [current, goTo]);
+    goTo((current + 1) % slideCount);
+  }, [current, goTo, slideCount]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/site-content/display-slides')
+      .then((res) => (res.ok ? res.json() : { data: [] }))
+      .then((data) => {
+        if (!cancelled && Array.isArray(data.data)) {
+          const mapped = data.data.map(mapDisplayRow).filter(Boolean);
+          setManagedSlides(mapped);
+          setCurrent((currentIndex) => currentIndex % Math.max(mapped.length || STATIC_SLIDES.length, 1));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setManagedSlides([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Auto-advance
   useEffect(() => {
     if (paused) return;
     const id = setInterval(() => {
-      setCurrent((c) => (c + 1) % slides.length);
+      setCurrent((c) => (c + 1) % slideCount);
     }, INTERVAL);
     return () => clearInterval(id);
-  }, [paused]);
+  }, [paused, slideCount]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -136,7 +222,11 @@ export default function DisplayPage() {
     // Only handle horizontal swipes (horizontal movement > vertical, and at least 40px)
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
       setPaused(true);
-      dx < 0 ? next() : prev();
+      if (dx < 0) {
+        next();
+      } else {
+        prev();
+      }
     }
     touchStartX.current = null;
     touchStartY.current = null;
@@ -144,7 +234,7 @@ export default function DisplayPage() {
 
   const slide = slides[current];
   const idx   = String(current + 1).padStart(2, '0');
-  const total = String(slides.length).padStart(2, '0');
+  const total = String(slideCount).padStart(2, '0');
 
   return (
     <div

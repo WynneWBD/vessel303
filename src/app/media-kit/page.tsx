@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useT } from '@/contexts/LanguageContext';
@@ -8,9 +8,22 @@ import { i18n } from '@/lib/i18n';
 
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 
+type MediaKitResource = {
+  id: number;
+  title_zh: string;
+  title_en: string;
+  summary_zh: string | null;
+  summary_en: string | null;
+  file_url: string | null;
+  cta_label_zh: string | null;
+  cta_label_en: string | null;
+  cta_href: string | null;
+};
+
 export default function MediaKitPage() {
   const t = useT();
   const [status, setStatus] = useState<Status>('idle');
+  const [resources, setResources] = useState<MediaKitResource[]>([]);
 
   const useCaseOptions = [
     { value: 'press',    label: t(i18n.mediaKit.useCasePress) },
@@ -20,7 +33,24 @@ export default function MediaKitPage() {
     { value: 'other',    label: t(i18n.mediaKit.useCaseOther) },
   ];
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/site-content/media-kit')
+      .then((res) => (res.ok ? res.json() : { data: [] }))
+      .then((data) => {
+        if (!cancelled && Array.isArray(data.data)) {
+          setResources(data.data);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setResources([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (status === 'submitting') return;
     setStatus('submitting');
@@ -153,18 +183,50 @@ export default function MediaKitPage() {
           </div>
 
           {/* Usage notes */}
-          <aside className="bg-white border border-[#E5DED4] p-8 h-fit shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
-            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-4">
-              {t(i18n.mediaKit.noteTitle)}
-            </p>
-            <ul className="space-y-4 text-[#6B625B] text-sm leading-relaxed">
-              {[i18n.mediaKit.note1, i18n.mediaKit.note2, i18n.mediaKit.note3].map((k, i) => (
-                <li key={i} className="flex gap-3">
-                  <span className="text-[#E36F2C] shrink-0">·</span>
-                  <span>{t(k)}</span>
-                </li>
-              ))}
-            </ul>
+          <aside className="space-y-5">
+            {resources.length > 0 && (
+              <section className="bg-white border border-[#E5DED4] p-8 h-fit shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
+                <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-4">
+                  Available Assets
+                </p>
+                <div className="space-y-4">
+                  {resources.map((resource) => (
+                    <article key={resource.id} className="border-b border-[#E5E0DA] pb-4 last:border-0 last:pb-0">
+                      <h3 className="text-sm font-bold text-[#2C2A28]">{resource.title_en || resource.title_zh}</h3>
+                      {(resource.summary_en || resource.summary_zh) && (
+                        <p className="mt-2 text-xs leading-5 text-[#6B625B]">
+                          {resource.summary_en || resource.summary_zh}
+                        </p>
+                      )}
+                      {(resource.cta_href || resource.file_url) && (
+                        <a
+                          href={resource.cta_href || resource.file_url || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-3 inline-flex text-xs font-semibold text-[#E36F2C] hover:text-[#C85A1F]"
+                        >
+                          {resource.cta_label_en || 'Request access'}
+                        </a>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <section className="bg-white border border-[#E5DED4] p-8 h-fit shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
+              <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-4">
+                {t(i18n.mediaKit.noteTitle)}
+              </p>
+              <ul className="space-y-4 text-[#6B625B] text-sm leading-relaxed">
+                {[i18n.mediaKit.note1, i18n.mediaKit.note2, i18n.mediaKit.note3].map((k, i) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="text-[#E36F2C] shrink-0">·</span>
+                    <span>{t(k)}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
           </aside>
         </div>
       </section>

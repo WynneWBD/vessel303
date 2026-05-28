@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { Resend } from 'resend';
 import { z } from 'zod';
+import { createLead } from '@/lib/leads-db';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -160,29 +161,63 @@ export async function POST(req: NextRequest) {
 
   const data = parsed.data;
   const { from, notifyTo } = getMailConfig();
+  let leadCreated = false;
+  let leadId: string | null = null;
 
-  const { error: notifyError } = await resend.emails.send({
-    from,
-    to: notifyTo,
-    replyTo: data.email,
-    subject: `【Media Kit】${data.company} · ${USE_CASE_LABELS[data.useCase]}`,
-    html: notificationHtml(data),
-  });
+  try {
+    const lead = await createLead({
+      email: data.email,
+      name: data.name,
+      phone: data.phone,
+      company: data.company,
+      country: data.country,
+      inquiry_type: 'Media Kit Request',
+      sku_interest: USE_CASE_LABELS[data.useCase],
+      message: data.message || USE_CASE_LABELS[data.useCase],
+      source: 'media-kit',
+    });
+    leadCreated = true;
+    leadId = lead.id;
+  } catch (err) {
+    console.error('[media-kit] lead insert failed:', err);
+  }
+
+  let notifyError: unknown = null;
+  try {
+    const result = await resend.emails.send({
+      from,
+      to: notifyTo,
+      replyTo: data.email,
+      subject: `【Media Kit】${data.company} · ${USE_CASE_LABELS[data.useCase]}`,
+      html: notificationHtml(data),
+    });
+    notifyError = result.error ?? null;
+  } catch (err) {
+    notifyError = err;
+  }
 
   if (notifyError) {
     console.error('Resend notification error:', notifyError);
-    return Response.json({ error: 'Email delivery failed' }, { status: 500 });
+    if (!leadCreated) {
+      return Response.json({ error: 'Email delivery failed' }, { status: 500 });
+    }
   }
 
-  const { error: confirmError } = await resend.emails.send({
-    from,
-    to: data.email,
-    subject: 'Request Received — VESSEL® Media Kit',
-    html: confirmationHtml(data),
-  });
-  if (confirmError) {
-    console.warn('Resend confirmation error:', confirmError);
+  if (!notifyError) {
+    try {
+      const { error: confirmError } = await resend.emails.send({
+        from,
+        to: data.email,
+        subject: 'Request Received — VESSEL® Media Kit',
+        html: confirmationHtml(data),
+      });
+      if (confirmError) {
+        console.warn('Resend confirmation error:', confirmError);
+      }
+    } catch (confirmError) {
+      console.warn('Resend confirmation error:', confirmError);
+    }
   }
 
-  return Response.json({ success: true });
+  return Response.json({ success: true, leadCreated, leadId });
 }
