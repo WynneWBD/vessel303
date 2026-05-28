@@ -173,6 +173,7 @@ function getNavigationSideNav(isAdmin: boolean): AdminSideNavGroup[] {
         { key: 'pages', label: '页面清单', href: '/admin/site/pages', Icon: ListChecks },
         { key: 'navigation', label: '导航管理', href: '/admin/site/navigation', Icon: Navigation },
         { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },
+        { key: 'settings', label: '网站信息', href: '/admin/site/settings', Icon: Settings },
         { key: 'visual', label: '编辑网站', href: '/admin/pages/visual', Icon: FileText },
       ],
     },
@@ -188,7 +189,7 @@ function getNavigationSideNav(isAdmin: boolean): AdminSideNavGroup[] {
     {
       title: '后续规划',
       items: [
-        { key: 'settings', label: '网站信息', planned: true, Icon: Settings },
+        { key: 'third-party', label: '第三方代码', planned: true, Icon: Settings },
       ],
     },
     {

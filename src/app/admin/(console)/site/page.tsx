@@ -145,6 +145,12 @@ const SITE_APPS: SiteApp[] = [
     href: '/admin/site/seo',
     Icon: Globe2,
   },
+  {
+    title: '网站信息',
+    detail: '对照 300 网站信息、三方代码和搜索引擎连接，查看当前接管边界。',
+    href: '/admin/site/settings',
+    Icon: Settings,
+  },
 ]
 
 const SITE_PUBLISH_APPS: SitePublishApp[] = [
@@ -201,6 +207,7 @@ function getSiteSideNav({
         { key: 'pages', label: '页面清单', href: '/admin/site/pages', Icon: ListChecks },
         { key: 'navigation', label: '导航管理', href: '/admin/site/navigation', Icon: Navigation },
         { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },
+        { key: 'settings', label: '网站信息', href: '/admin/site/settings', Icon: Settings },
         { key: 'visual', label: '编辑网站', href: '/admin/pages/visual', Icon: FileText },
         { key: 'drafts', label: '页面草稿', href: '#drafts', badge: pageDraftCount, Icon: CircleDashed },
         { key: 'todo', label: '网站待办', href: '#todo', badge: todoCount, Icon: ListChecks },
