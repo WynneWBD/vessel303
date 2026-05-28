@@ -127,7 +127,7 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 - 05 测试 / 提交 / 推送 / 上线：统一验收、检查、提交、push `main`、Vercel 上线控制。
 - 06 文档整理 / Handoff 重写：文档库整理、handoff 重写、`CODEX.md` 更新。
 - 07 使用规范与故障排查：Codex 使用规范、Browser Use / 工具故障排查、流程问题沉淀。
-- 08 可视化页面编辑器：`/admin/pages/visual`、页面模块可视化预览、受控字段编辑、模块高亮、点击定位、草稿预览 / 发布上线、发布前检查、差异摘要、快照恢复、模块内 item 管理、模块注册表 / 动态渲染基础、只读模块库、Home 结构草稿新增 / 排序 / 结构隐藏受控模块和后续运营使用规范；不负责普通后台 A/B 包、产品 / 项目 CMS、`/global` 地图、会员支付。
+- 08 可视化页面编辑器：`/admin/pages/visual`、页面模块可视化预览、受控字段编辑、模块高亮、点击定位、草稿预览 / 发布上线、发布前检查、差异摘要、快照恢复、模块内 item 管理、模块注册表 / 动态渲染基础、只读模块库、Home 结构草稿新增 / 排序 / 结构隐藏受控模块和运营使用规范口径收口；不负责普通后台 A/B 包、产品 / 项目 CMS、`/global` 地图、会员支付。
 
 实际修改 `AGENTS.md` 或 `CODEX.md` 前，必须先给 Wynne 看草稿并获得授权；后续提交、推送按 05 默认验收/上线流程执行。
 
@@ -213,7 +213,7 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 - `/admin/products`：产品 CMS 已接入产品列表和通用详情页，支持新建、编辑、复制为草稿、发布/下架、删除、筛选、图片选择/上传、前台预览、详情介绍、详情图库选择器、图库排序、规格参数，以及通用详情页模块（亮点、场景、FAQ、图文内容、定制范围）；固定精细详情页如 `e7`、`v9-gen6` 仍保留原页面。
 - `/admin/projects`：项目 / 案例 CMS 已接入，支持新建、编辑、发布/下架、删除、筛选、封面图、图库排序、中英文案例内容、地图发布校验、地图状态筛选，以及 `/global` 详情里的统计数据、预订链接、设施亮点、交通指引和周边景点；前台 `/cases` 列表和 `/cases/[id]` 详情已优先读取数据库并保留静态兜底；带经纬度的已发布项目会进入 `/global` 地图点位和详情面板；产品/项目表单图片控件误触发和窄列布局已修复。
 - `/admin/pages`：页面模块 CMS 已上线，首页首屏/数据区、关于我们首屏、数据条、品牌故事、智造实力、品牌历程、三大技术、认证荣誉、合作伙伴、创始人、服务体系已接入前台；后台支持模块显示/隐藏、文字图片编辑、列表项新增/删除/排序、图片选择/上传、未保存防误操作。
-- `/admin/pages/visual`：08 C4-2d 已上线，Home 安全插入区内 C4-2c 新增模板模块支持排序和结构隐藏；当前只支持 `simple-text` / `cta-section`，操作包括上移、下移、结构层隐藏、恢复显示；结构隐藏使用 `page_structure_drafts.modules` 的结构层 `isVisible` / `status`，不是内容 item 的 `is_visible`；operator 可排序、隐藏、恢复显示、预览、丢弃但不能发布结构草稿，admin 才能发布；发布后普通前台 `/` 按目标顺序和隐藏状态展示，并可通过页面级快照恢复原结构。
+- `/admin/pages/visual`：08 C4-2e 已上线，Home 安全插入区内 C4-2c 新增模板模块支持排序和结构隐藏；当前只支持 `simple-text` / `cta-section`，操作包括上移、下移、结构层隐藏、恢复显示；结构隐藏使用 `page_structure_drafts.modules` 的结构层 `isVisible` / `status`，不是内容 item 的 `is_visible`；operator 可排序、隐藏、恢复显示、预览、丢弃但不能发布结构草稿，admin 才能发布；发布后普通前台 `/` 按目标顺序和隐藏状态展示，并可通过页面级快照恢复原结构。C4-2e 已将顶部说明和页面结构边界从旧 C4-1/C4-2b 口径对齐到当前 Home 安全插入区能力；核心模块、About 结构、自由样式 / 自由布局仍锁定。
 
 ## 当前阶段工作重点
 
@@ -278,6 +278,7 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 - 06 文档整理：继续维护 V9、`CODEX.md` 和文档库。
 - 07 使用规范与故障排查：沉淀 Codex 使用规范、Browser Use / 工具故障和流程问题。
 - 08 可视化页面编辑器：C4-2d Home 安全插入区排序与结构隐藏已上线；可见时“隐藏”发送 `{ isVisible: false }`，隐藏时显示“结构草稿中隐藏”，“恢复显示”发送 `{ isVisible: true }`；测试数据 `C4-2D-QA-20260517` 已清理，无残留；当前仍只支持 Home credentials 后、CoreTech 前的安全插入区，不支持 About、核心模块、整页自由拖拽、跨区排序、自由 HTML / CSS、删除核心模块、产品 / 项目 / 新闻详情或 `/global`；本机 Turbopack `os error 5` 属于本地环境问题，`next build --webpack` 和 Vercel build 已通过；`/global` edge runtime warning 仍归 04 地图专项。
+- 08 可视化页面编辑器：C4-2e 可视化编辑器运营使用规范口径小修已上线：`811efee fix(admin): clarify visual editor guardrails`，full SHA `811efee3d1deffdc180aa5ba92040b4ce549077f`，Vercel deployment `dpl_B4vFHT3sYhNJ7bkRkMEYu1qtqGyy`，Vercel 状态 `READY`，deployment URL `https://vessel303-5ht797ic0-vessel303.vercel.app`，production alias 已包含 `https://www.vessel303.com`。本轮只修正 `/admin/pages/visual` 的运营使用规范和页面结构边界文案，将过期的“不支持结构草稿 / 新增 / 排序”口径对齐为当前 Home 安全插入区可新增、排序、结构隐藏 / 恢复 `simple-text` / `cta-section`，同时明确核心模块、About 结构、自由样式 / 自由布局仍锁定。未改数据库、API、保存 / 发布 / 删除、权限、认证、支付、订单、会员、`/global`、MapLibre、MapTiler 或 `/api/map`。验收记录：`git diff --check`、targeted eslint、`tsc --noEmit`、`next build --webpack` 通过，构建仅出现既有 `/global` edge runtime warning；本地 `/admin/pages/visual` 未登录 307 到 `/admin/login`；线上首页 200，线上 `/admin/pages/visual` 未登录 302 到登录页，已登录 Chrome 打开生产后台确认可见更新后的 Home 安全插入区 / 核心模块锁定口径，无 `__next_error__` / Application error。
 - 价格、会员、代理、支付：单独专项，不在普通 CMS 任务中写死规则。
 - Resend：正式发件身份仍未配置，缺少 `RESEND_FROM` / `CONTACT_NOTIFY_TO` / `MEDIA_KIT_NOTIFY_TO` 和域名验证信息。
 - Vercel edge runtime warning：仍来自 `/api/map/[...path]`，归入 `/global` 地图专项，暂不处理。
@@ -580,7 +581,7 @@ curl -I https://www.vessel303.com/news/<slug>
 - 04 Global 地图专项：地图底层仍归 04；更多 `/global` 点位接入前先等 03 数据基线稳定。
 - 02 后台运营 / 设置：`site_settings` 已初始化并接管 `/contact` 的 `contactUrl`；后续扩展范围单独确认。
 - 后台运营体验 A / B 包：A1-A6、B1-B5 以及新 B6 运营数据中心和 B6-7 访问分析准备页已上线；媒体真实上传 / 删除端到端测试仍需单独授权。
-- 08 可视化页面编辑器：C4-2d Home 安全插入区排序与结构隐藏已上线；旧 `/admin/pages` 仍只是备用表单编辑器，主线继续是 `/admin/pages/visual`；后续继续补运营使用规范和页面级结构保护，不要扩成自由建站器。
+- 08 可视化页面编辑器：C4-2e 运营使用规范口径小修已上线；旧 `/admin/pages` 仍只是备用表单编辑器，主线继续是 `/admin/pages/visual`；后续继续补页面级结构保护和更细的发布保护，不要扩成自由建站器。
 - 价格、会员、代理、支付：单独专项，不在普通 CMS 任务中顺手实现。
 - Resend：正式发件身份仍未配置。
 - Vercel edge runtime warning：归入 `/global` 地图专项，暂不处理。
