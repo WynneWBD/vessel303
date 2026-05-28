@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
@@ -9,6 +10,7 @@ import {
   isCatalogProductUrlSlugTaken,
   isReservedProductId,
   listCatalogProducts,
+  PRODUCT_PUBLIC_CACHE_TAG,
   type CatalogProductStatus,
 } from '@/lib/product-catalog-db'
 import {
@@ -125,6 +127,13 @@ const productSchema = z.object({
   sort_order: z.coerce.number().int().min(0).max(9999).optional(),
 })
 
+function revalidatePublicProductRoutes(id: string, detailSlug?: string | null) {
+  revalidateTag(PRODUCT_PUBLIC_CACHE_TAG, { expire: 0 })
+  revalidatePath('/products')
+  revalidatePath(`/products/${id}`)
+  if (detailSlug && detailSlug !== id) revalidatePath(`/products/${detailSlug}`)
+}
+
 async function validateProductOperations(input: {
   brand_id?: number | null
   mark_ids?: number[]
@@ -240,6 +249,7 @@ export async function POST(req: NextRequest) {
     mark_ids,
     showcase_ids,
   })
+  revalidatePublicProductRoutes(product.id, product.detailSlug)
   await logAdminAction(admin.id, 'product.create', 'product', product.id)
 
   return NextResponse.json({ data: { ...product, ...assignments } }, { status: 201 })

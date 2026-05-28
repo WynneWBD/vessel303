@@ -3,9 +3,9 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { catalogProducts } from '@/lib/products';
 import {
+  listPublishedCatalogProductsPage,
   listProductAttributeTemplatesWithOptions,
   listProductCategories,
-  listPublishedCatalogProducts,
 } from '@/lib/product-catalog-db';
 import ProductsPageContent from '@/components/pages/ProductsPageContent';
 import type { CatalogProduct } from '@/lib/products';
@@ -30,6 +30,11 @@ function firstParam(value: string | string[] | undefined) {
 function normalizePage(value: string | undefined) {
   const page = Number(value);
   return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
+function positiveIntegerParam(value: string) {
+  const num = Number(value);
+  return Number.isInteger(num) && num > 0 ? num : undefined;
 }
 
 function productMatchesSearch(product: CatalogProduct, query: string) {
@@ -70,9 +75,17 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     attribute: firstParam(sp.attribute)?.trim() ?? '',
     page: normalizePage(firstParam(sp.page)),
   };
-  const products = await listPublishedCatalogProducts().catch((err) => {
+  const categoryId = positiveIntegerParam(filters.category);
+  const attributeOptionId = positiveIntegerParam(filters.attribute);
+  let catalogResult = await listPublishedCatalogProductsPage({
+    search: filters.q,
+    categoryId,
+    attributeOptionId,
+    limit: PAGE_SIZE,
+    offset: (filters.page - 1) * PAGE_SIZE,
+  }).catch((err) => {
     console.error('[products] catalog db unavailable, falling back to static catalog', err);
-    return catalogProducts;
+    return null;
   });
   const [categories, attributeTemplates] = await Promise.all([
     listProductCategories({ includeHidden: false }).catch((err) => {
@@ -84,18 +97,50 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       return [];
     }),
   ]);
-  const filtered = products.filter((product) => productMatchesFilters(product, filters));
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage = Math.min(filters.page, totalPages);
-  const pageProducts = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  let pageProducts: CatalogProduct[];
+  let allProductsCount: number;
+  let total: number;
+  let totalPages: number;
+  let currentPage: number;
+
+  if (catalogResult) {
+    total = catalogResult.total;
+    totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    currentPage = Math.min(filters.page, totalPages);
+
+    if (currentPage !== filters.page && total > 0) {
+      const clampedResult = await listPublishedCatalogProductsPage({
+        search: filters.q,
+        categoryId,
+        attributeOptionId,
+        limit: PAGE_SIZE,
+        offset: (currentPage - 1) * PAGE_SIZE,
+      }).catch((err) => {
+        console.error('[products] catalog db page clamp failed', err);
+        return null;
+      });
+      if (clampedResult) catalogResult = clampedResult;
+    }
+
+    pageProducts = catalogResult.rows;
+    allProductsCount = catalogResult.allProductsCount;
+  } else {
+    const filtered = catalogProducts.filter((product) => productMatchesFilters(product, filters));
+    total = filtered.length;
+    totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    currentPage = Math.min(filters.page, totalPages);
+    pageProducts = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+    allProductsCount = catalogProducts.length;
+  }
 
   return (
     <main className="bg-[#F5F2ED] text-[#2C2A28]">
       <Navbar />
       <ProductsPageContent
         products={pageProducts}
-        allProductsCount={products.length}
-        total={filtered.length}
+        allProductsCount={allProductsCount}
+        total={total}
         pageSize={PAGE_SIZE}
         currentPage={currentPage}
         totalPages={totalPages}

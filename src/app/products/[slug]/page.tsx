@@ -55,7 +55,10 @@ export async function generateMetadata({
   }
 
   // Legacy DB product
-  const product = await getProductBySlug(slug);
+  const product = await getProductBySlug(slug).catch((err) => {
+    console.error('[products/metadata] legacy product db unavailable', err);
+    return null;
+  });
   if (!product) return {};
   return {
     title: `${product.model} ${product.gen} | VESSEL 微宿®`,
@@ -79,8 +82,7 @@ export default async function ProductDetailPage({
     catalogProduct = findStaticCatalogProduct(slug);
   }
   if (catalogProduct) {
-    const [session, relatedProducts, attributeLabels] = await Promise.all([
-      auth(),
+    const [relatedProducts, attributeLabels] = await Promise.all([
       listPublicRelatedCatalogProducts(catalogProduct.related_product_ids, catalogProduct.id).catch((err) => {
         console.error('[products/detail] load related products failed', err);
         return [];
@@ -95,7 +97,6 @@ export default async function ProductDetailPage({
         <Navbar />
         <CatalogProductDetailContent
           product={catalogProduct}
-          isLoggedIn={!!session?.user}
           relatedProducts={relatedProducts}
           attributeLabels={attributeLabels}
         />
@@ -105,7 +106,10 @@ export default async function ProductDetailPage({
   }
 
   // ── 2. Legacy rich DB product ────────────────────────────
-  const product = await getProductBySlug(slug);
+  const product = await getProductBySlug(slug).catch((err) => {
+    console.error('[products/detail] legacy product db unavailable', err);
+    return null;
+  });
   if (!product) notFound();
 
   const [session, prevProduct, nextProduct] = await Promise.all([

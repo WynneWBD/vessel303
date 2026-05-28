@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache'
 import { pool } from '@/lib/db'
 import {
   catalogProducts,
@@ -103,6 +104,20 @@ export type ListCatalogProductsFilter = {
   offset: number
 }
 
+export type ListPublishedCatalogProductsPageFilter = {
+  search?: string
+  categoryId?: number
+  attributeOptionId?: number
+  limit: number
+  offset: number
+}
+
+export type ListPublishedCatalogProductsPageResult = {
+  rows: CatalogProduct[]
+  total: number
+  allProductsCount: number
+}
+
 export type CatalogProductInput = {
   id: string
   productSeries: ProductSeriesCode
@@ -180,6 +195,8 @@ export type CreateProductAttributeOptionInput = {
 export type UpdateProductAttributeOptionInput = Partial<Omit<CreateProductAttributeOptionInput, 'template_id'>>
 
 const RESERVED_IDS = new Set(['e7', 'e6', 'e3', 'v9', 'v5', 's5', 'e7-gen5', 'v9-gen6'])
+export const PRODUCT_PUBLIC_CACHE_TAG = 'product-public'
+const PRODUCT_PUBLIC_CACHE_REVALIDATE_SECONDS = 120
 
 let schemaReady: Promise<void> | null = null
 
@@ -791,6 +808,52 @@ function buildWhere(filter: Partial<ListCatalogProductsFilter>, publicOnly = fal
   return { where: `WHERE ${conds.join(' AND ')}`, params }
 }
 
+function buildPublicProductsWhere(filter: {
+  search: string
+  categoryId: number | null
+  attributeOptionId: number | null
+}) {
+  const conds = [`status = 'published'`, 'deleted_at IS NULL']
+  const params: unknown[] = []
+
+  if (filter.categoryId) {
+    params.push(filter.categoryId)
+    conds.push(`category_id = $${params.length}`)
+  }
+
+  if (filter.attributeOptionId) {
+    params.push(filter.attributeOptionId)
+    conds.push(`EXISTS (
+      SELECT 1
+      FROM product_attribute_values pav
+      WHERE pav.product_id = product_catalog.id
+        AND pav.option_id = $${params.length}
+    )`)
+  }
+
+  if (filter.search) {
+    params.push(`%${filter.search}%`)
+    const i = params.length
+    conds.push(`(
+      id ILIKE $${i}
+      OR product_series ILIKE $${i}
+      OR name_cn ILIKE $${i}
+      OR name_en ILIKE $${i}
+      OR gen ILIKE $${i}
+      OR size ILIKE $${i}
+      OR COALESCE(detail_slug, '') ILIKE $${i}
+      OR COALESCE(array_to_string(tags_cn, ' '), '') ILIKE $${i}
+      OR COALESCE(array_to_string(tags_en, ' '), '') ILIKE $${i}
+      OR COALESCE(array_to_string(features_cn, ' '), '') ILIKE $${i}
+      OR COALESCE(array_to_string(features_en, ' '), '') ILIKE $${i}
+      OR COALESCE(array_to_string(keywords_zh, ' '), '') ILIKE $${i}
+      OR COALESCE(array_to_string(keywords_en, ' '), '') ILIKE $${i}
+    )`)
+  }
+
+  return { where: `WHERE ${conds.join(' AND ')}`, params }
+}
+
 export async function listPublishedCatalogProducts(): Promise<CatalogProduct[]> {
   await ensureProductCatalogSchema()
   const { rows } = await pool.query(
@@ -799,6 +862,67 @@ export async function listPublishedCatalogProducts(): Promise<CatalogProduct[]> 
      ORDER BY sort_order ASC, updated_at DESC`,
   )
   return rows.map(rowToCatalogProduct)
+}
+
+const listPublishedCatalogProductsPageCached = unstable_cache(
+  async (
+    search: string,
+    categoryId: number | null,
+    attributeOptionId: number | null,
+    limit: number,
+    offset: number,
+  ): Promise<ListPublishedCatalogProductsPageResult> => {
+    await ensureProductCatalogSchema()
+    const { where, params } = buildPublicProductsWhere({ search, categoryId, attributeOptionId })
+    const safeLimit = Math.min(48, Math.max(1, limit))
+    const safeOffset = Math.max(0, offset)
+
+    const [countRes, listRes, allCountRes] = await Promise.all([
+      pool.query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count FROM product_catalog ${where}`,
+        params,
+      ),
+      pool.query(
+        `SELECT ${COLUMNS} FROM product_catalog ${where}
+         ORDER BY sort_order ASC, updated_at DESC
+         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, safeLimit, safeOffset],
+      ),
+      pool.query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count
+         FROM product_catalog
+         WHERE status = 'published' AND deleted_at IS NULL`,
+      ),
+    ])
+
+    return {
+      rows: listRes.rows.map(rowToCatalogProduct),
+      total: parseInt(countRes.rows[0]?.count ?? '0', 10),
+      allProductsCount: parseInt(allCountRes.rows[0]?.count ?? '0', 10),
+    }
+  },
+  ['product-public-list-page'],
+  { revalidate: PRODUCT_PUBLIC_CACHE_REVALIDATE_SECONDS, tags: [PRODUCT_PUBLIC_CACHE_TAG] },
+)
+
+export async function listPublishedCatalogProductsPage(
+  filter: ListPublishedCatalogProductsPageFilter,
+): Promise<ListPublishedCatalogProductsPageResult> {
+  const search = (filter.search ?? '').trim().slice(0, 120)
+  const categoryId = Number.isInteger(filter.categoryId) && Number(filter.categoryId) > 0
+    ? Number(filter.categoryId)
+    : null
+  const attributeOptionId = Number.isInteger(filter.attributeOptionId) && Number(filter.attributeOptionId) > 0
+    ? Number(filter.attributeOptionId)
+    : null
+
+  return listPublishedCatalogProductsPageCached(
+    search,
+    categoryId,
+    attributeOptionId,
+    filter.limit,
+    filter.offset,
+  )
 }
 
 export async function getPublicCatalogProductById(id: string): Promise<CatalogProduct | null> {
@@ -811,7 +935,7 @@ export async function getPublicCatalogProductById(id: string): Promise<CatalogPr
   return rows[0] ? rowToCatalogProduct(rows[0]) : null
 }
 
-export async function getPublicCatalogProductBySlug(slug: string): Promise<CatalogProduct | null> {
+async function getPublicCatalogProductBySlugUncached(slug: string): Promise<CatalogProduct | null> {
   await ensureProductCatalogSchema()
   const allowDetailSlug = !isReservedProductId(slug)
   const { rows } = await pool.query(
@@ -826,13 +950,24 @@ export async function getPublicCatalogProductBySlug(slug: string): Promise<Catal
   return rows[0] ? rowToCatalogProduct(rows[0]) : null
 }
 
-export async function listPublicRelatedCatalogProducts(
-  ids: string[] | undefined,
-  currentId?: string,
-  limit = 12,
+const getPublicCatalogProductBySlugCached = unstable_cache(
+  getPublicCatalogProductBySlugUncached,
+  ['product-public-detail'],
+  { revalidate: PRODUCT_PUBLIC_CACHE_REVALIDATE_SECONDS, tags: [PRODUCT_PUBLIC_CACHE_TAG] },
+)
+
+export async function getPublicCatalogProductBySlug(slug: string): Promise<CatalogProduct | null> {
+  return getPublicCatalogProductBySlugCached(slug.trim())
+}
+
+async function listPublicRelatedCatalogProductsUncached(
+  idsKey: string,
+  currentId: string | null,
+  limit: number,
 ): Promise<CatalogProduct[]> {
   await ensureProductCatalogSchema()
-  const orderedIds = Array.from(new Set((ids ?? []).map((id) => id.trim()).filter(Boolean)))
+  const parsedIds = JSON.parse(idsKey) as string[]
+  const orderedIds = Array.from(new Set(parsedIds.map((id) => id.trim()).filter(Boolean)))
     .filter((id) => id !== currentId)
     .slice(0, Math.max(1, limit))
 
@@ -843,7 +978,7 @@ export async function listPublicRelatedCatalogProducts(
          AND ($1::text IS NULL OR id <> $1)
        ORDER BY sort_order ASC, updated_at DESC
        LIMIT $2`,
-      [currentId ?? null, limit],
+      [currentId, limit],
     )
     return rows.map(rowToCatalogProduct)
   }
@@ -860,7 +995,23 @@ export async function listPublicRelatedCatalogProducts(
   return rows.map(rowToCatalogProduct)
 }
 
-export async function listProductAttributeLabelsForProduct(productId: string): Promise<ProductAttributeLabel[]> {
+const listPublicRelatedCatalogProductsCached = unstable_cache(
+  listPublicRelatedCatalogProductsUncached,
+  ['product-public-related'],
+  { revalidate: PRODUCT_PUBLIC_CACHE_REVALIDATE_SECONDS, tags: [PRODUCT_PUBLIC_CACHE_TAG] },
+)
+
+export async function listPublicRelatedCatalogProducts(
+  ids: string[] | undefined,
+  currentId?: string,
+  limit = 12,
+): Promise<CatalogProduct[]> {
+  const orderedIds = Array.from(new Set((ids ?? []).map((id) => id.trim()).filter(Boolean)))
+  const safeLimit = Math.min(24, Math.max(1, limit))
+  return listPublicRelatedCatalogProductsCached(JSON.stringify(orderedIds), currentId ?? null, safeLimit)
+}
+
+async function listProductAttributeLabelsForProductUncached(productId: string): Promise<ProductAttributeLabel[]> {
   await ensureProductCatalogSchema()
   const { rows } = await pool.query<ProductAttributeLabel>(
     `SELECT
@@ -882,6 +1033,16 @@ export async function listProductAttributeLabelsForProduct(productId: string): P
     [productId],
   )
   return rows
+}
+
+const listProductAttributeLabelsForProductCached = unstable_cache(
+  listProductAttributeLabelsForProductUncached,
+  ['product-public-attribute-labels'],
+  { revalidate: PRODUCT_PUBLIC_CACHE_REVALIDATE_SECONDS, tags: [PRODUCT_PUBLIC_CACHE_TAG] },
+)
+
+export async function listProductAttributeLabelsForProduct(productId: string): Promise<ProductAttributeLabel[]> {
+  return listProductAttributeLabelsForProductCached(productId.trim())
 }
 
 export async function listCatalogProducts(filter: ListCatalogProductsFilter) {

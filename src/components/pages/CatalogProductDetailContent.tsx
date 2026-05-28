@@ -9,7 +9,6 @@ import type { CatalogProduct, CatalogCommercialTerms } from '@/lib/products';
 
 interface Props {
   product: CatalogProduct;
-  isLoggedIn: boolean;
   relatedProducts?: CatalogProduct[];
   attributeLabels?: ProductAttributeLabel[];
 }

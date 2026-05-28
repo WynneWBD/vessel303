@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
@@ -7,6 +8,7 @@ import {
   getProductCategoryById,
   isCatalogProductUrlSlugTaken,
   isReservedProductId,
+  PRODUCT_PUBLIC_CACHE_TAG,
   softDeleteCatalogProduct,
   updateCatalogProduct,
 } from '@/lib/product-catalog-db'
@@ -125,6 +127,13 @@ const patchSchema = z.object({
   sort_order: z.coerce.number().int().min(0).max(9999).optional(),
 })
 
+function revalidatePublicProductRoutes(id: string, detailSlug?: string | null) {
+  revalidateTag(PRODUCT_PUBLIC_CACHE_TAG, { expire: 0 })
+  revalidatePath('/products')
+  revalidatePath(`/products/${id}`)
+  if (detailSlug && detailSlug !== id) revalidatePath(`/products/${detailSlug}`)
+}
+
 async function validateProductOperations(input: {
   brand_id?: number | null
   mark_ids?: number[]
@@ -216,6 +225,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   }
   const assignments = await updateProductOperationAssignments(id, operationPatch)
 
+  revalidatePublicProductRoutes(updated.id, updated.detailSlug)
   await logAdminAction(admin.id, 'product.update', 'product', id)
   return NextResponse.json({ data: { ...updated, ...assignments } })
 }
@@ -228,6 +238,7 @@ export async function DELETE(_req: NextRequest, ctx: Ctx) {
   const deletedId = await softDeleteCatalogProduct(id)
   if (!deletedId) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  revalidatePublicProductRoutes(id)
   await logAdminAction(admin.id, 'product.delete', 'product', id)
   return NextResponse.json({ data: { ok: true, id: deletedId } })
 }

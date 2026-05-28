@@ -44,6 +44,8 @@ const FREE_QUOTA_BYTES = 1 * 1024 * 1024 * 1024 // 1 GB
 const WARNING_BYTES = 800 * 1024 * 1024
 const BATCH_LIMIT = 20
 const BYTES_PER_MB = 1024 * 1024
+const RECOMMENDED_FRONTEND_IMAGE_BYTES = 2 * BYTES_PER_MB
+const RECOMMENDED_FRONTEND_IMAGE_MB = RECOMMENDED_FRONTEND_IMAGE_BYTES / BYTES_PER_MB
 const ADMIN_TIMEZONE_OFFSET_MINUTES = 8 * 60
 const ACCEPT = 'image/jpeg,image/png,image/webp,image/gif,image/svg+xml'
 const ACCEPT_MIMES = new Set([
@@ -355,6 +357,10 @@ export default function MediaClient({
       toast.error(`${rejected.length} 个文件被拒: ${rejected[0].name} — ${rejected[0].reason}`)
     }
     if (!accepted.length) return
+    const largeImages = accepted.filter((f) => f.size > RECOMMENDED_FRONTEND_IMAGE_BYTES)
+    if (largeImages.length) {
+      toast.warning(`${largeImages.length} 张图片超过 ${RECOMMENDED_FRONTEND_IMAGE_MB} MB,建议压缩后再用于首页、产品或案例前台`)
+    }
 
     const newTasks: UploadTask[] = accepted.map((f) => ({
       id: crypto.randomUUID(),
@@ -504,6 +510,9 @@ export default function MediaClient({
           <p className="text-[11px] text-[#8A8580]">
             支持 JPEG / PNG / WebP / GIF / SVG · 最大 {uploadLimitMb} MB · 一次最多 {BATCH_LIMIT} 张
           </p>
+          <p className="text-[11px] text-[#A76632]">
+            前台图片建议压缩到 {RECOMMENDED_FRONTEND_IMAGE_MB} MB 以内，首页、产品卡片和案例列表优先使用小图。
+          </p>
         </div>
       </div>
 
@@ -637,6 +646,9 @@ export default function MediaClient({
           <p className="text-sm text-white/80">
             支持 JPEG / PNG / WebP / GIF / SVG · 最大 {uploadLimitMb} MB · 一次最多 {BATCH_LIMIT} 张
           </p>
+          <p className="text-xs text-white/75">
+            前台图片建议压缩到 {RECOMMENDED_FRONTEND_IMAGE_MB} MB 以内
+          </p>
         </div>
       )}
 
@@ -680,11 +692,7 @@ function MediaCard({ upload, onClick }: { upload: Upload; onClick: () => void })
   }
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group relative aspect-square overflow-hidden rounded-md border border-[#E5DED4] bg-[#FAF7F2] text-left focus:outline-none focus:ring-2 focus:ring-[#E36F2C]"
-    >
+    <div className="group relative aspect-square overflow-hidden rounded-md border border-[#E5DED4] bg-[#FAF7F2]">
       {!loaded && (
         <div className="absolute inset-0 bg-[#E5DED4] animate-pulse" aria-hidden />
       )}
@@ -692,14 +700,21 @@ function MediaCard({ upload, onClick }: { upload: Upload; onClick: () => void })
       <img
         src={upload.url}
         alt={upload.filename ?? ''}
+        loading="lazy"
+        decoding="async"
         className={`h-full w-full object-cover transition-opacity ${
           loaded ? 'opacity-100' : 'opacity-0'
         }`}
         onLoad={() => setLoaded(true)}
         onError={() => setLoaded(true)}
       />
-      {/* hover gradient + actions */}
-      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/80 to-transparent px-2 py-1.5 text-[11px] text-white">
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={`查看 ${upload.filename ?? '图片'} 详情`}
+        className="absolute inset-0 z-10 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#E36F2C]"
+      />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex items-center justify-between gap-2 bg-gradient-to-t from-black/80 to-transparent px-2 py-1.5 text-[11px] text-white">
         <span className="truncate" title={upload.filename ?? ''}>
           {upload.filename ?? '—'}
         </span>
@@ -707,7 +722,7 @@ function MediaCard({ upload, onClick }: { upload: Upload; onClick: () => void })
           {upload.size ? formatBytes(upload.size) : ''}
         </span>
       </div>
-      <div className="absolute right-1.5 top-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="absolute right-1.5 top-1.5 z-30 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
         <button
           type="button"
           onClick={copyUrl}
@@ -718,11 +733,11 @@ function MediaCard({ upload, onClick }: { upload: Upload; onClick: () => void })
         </button>
       </div>
       {copyOk && (
-        <div className="absolute left-1.5 top-1.5 rounded-sm bg-green-600/90 px-1.5 py-0.5 text-[10px] text-white">
+        <div className="pointer-events-none absolute left-1.5 top-1.5 z-30 rounded-sm bg-green-600/90 px-1.5 py-0.5 text-[10px] text-white">
           已复制
         </div>
       )}
-    </button>
+    </div>
   )
 }
 

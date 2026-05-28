@@ -151,11 +151,11 @@ function externalLinkProps(href: string) {
 // ─── Hero ────────────────────────────────────────────────
 
 const HERO_IMAGES = [
-  '/images/hero/homepage_banner-01.jpg',
-  '/images/hero/homepage_banner-02.png',
-  '/images/hero/homepage_banner-03.jpg',
-  '/images/hero/homepage_banner-04.jpg',
-  '/images/hero/homepage_banner-05.jpg',
+  '/images/hero/optimized/homepage_banner-01.jpg',
+  '/images/hero/optimized/homepage_banner-02.jpg',
+  '/images/hero/optimized/homepage_banner-03.jpg',
+  '/images/hero/optimized/homepage_banner-04.jpg',
+  '/images/hero/optimized/homepage_banner-05.jpg',
 ];
 
 function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
@@ -181,6 +181,14 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const primaryHref = primaryCta?.href || 'https://en.303vessel.cn/products_list.html';
   const secondaryHref = secondaryCta?.href || 'https://en.303vessel.cn/contact.html';
   const activeImage = current % heroImages.length;
+  const visibleHeroImages = useMemo(() => {
+    const nextImage = (activeImage + 1) % heroImages.length;
+    return Array.from(new Set([activeImage, nextImage])).map((index) => ({
+      index,
+      src: heroImages[index],
+      active: index === activeImage,
+    }));
+  }, [activeImage, heroImages]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -197,16 +205,17 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
       data-module-key="hero"
     >
       {/* Carousel images */}
-      {heroImages.map((src, i) => (
+      {visibleHeroImages.map(({ src, index, active }) => (
         <Image
           key={src}
           src={src}
           alt="VESSEL architecture"
           fill
-          priority={i === 0}
+          priority={active && index === 0}
           sizes="100vw"
-          className={`object-cover transition-opacity duration-1000 ${i === activeImage ? 'opacity-100' : 'opacity-0'}`}
-          data-page-module-item={`hero-image-${String(i + 1).padStart(2, '0')}`}
+          quality={78}
+          className={`object-cover transition-opacity duration-1000 ${active ? 'opacity-100' : 'opacity-0'}`}
+          data-page-module-item={`hero-image-${String(index + 1).padStart(2, '0')}`}
           data-page-module-field="image_url"
         />
       ))}
