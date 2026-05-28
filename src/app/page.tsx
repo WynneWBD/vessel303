@@ -158,6 +158,21 @@ const HERO_IMAGES = [
   '/images/hero/optimized/homepage_banner-05.jpg',
 ];
 
+function optimizedHeroImageUrl(imageUrl: string) {
+  const trimmed = imageUrl.trim();
+  if (!trimmed) return trimmed;
+
+  try {
+    const pathname = new URL(trimmed, 'https://www.vessel303.com').pathname;
+    const match = pathname.match(/^\/images\/hero\/homepage_banner-(0[1-5])\.jpg$/i);
+    if (match) return `/images/hero/optimized/homepage_banner-${match[1]}.jpg`;
+  } catch {
+    return trimmed;
+  }
+
+  return trimmed;
+}
+
 function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const t = useT();
   const { lang } = useLanguage();
@@ -166,7 +181,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const heroImages = useMemo(() => {
     const editableImages = items
       .filter((item) => typeof item.id === 'string' && item.id.startsWith('hero-image') && item.is_visible && item.image_url)
-      .map((item) => item.image_url as string);
+      .map((item) => optimizedHeroImageUrl(item.image_url as string));
 
     return editableImages.length > 0 ? editableImages : HERO_IMAGES;
   }, [items]);
