@@ -108,6 +108,12 @@ const SITE_APPS: SiteApp[] = [
     Icon: ListChecks,
   },
   {
+    title: '导航管理',
+    detail: '对照 300 管理导航，盘点前台主导航、行动按钮和页脚入口。',
+    href: '/admin/site/navigation',
+    Icon: Navigation,
+  },
+  {
     title: '管理图片',
     detail: '上传、查找图片，并查看图片被哪些内容引用。',
     href: '/admin/media',
@@ -193,6 +199,7 @@ function getSiteSideNav({
       items: [
         { key: 'overview', label: '网站概览', href: '/admin/site', Icon: LayoutTemplate },
         { key: 'pages', label: '页面清单', href: '/admin/site/pages', Icon: ListChecks },
+        { key: 'navigation', label: '导航管理', href: '/admin/site/navigation', Icon: Navigation },
         { key: 'visual', label: '编辑网站', href: '/admin/pages/visual', Icon: FileText },
         { key: 'drafts', label: '页面草稿', href: '#drafts', badge: pageDraftCount, Icon: CircleDashed },
         { key: 'todo', label: '网站待办', href: '#todo', badge: todoCount, Icon: ListChecks },
@@ -210,7 +217,6 @@ function getSiteSideNav({
       title: '后续规划',
       items: [
         { key: 'seo', label: 'SEO 检查', planned: true, Icon: SearchCheck },
-        { key: 'navigation', label: '导航管理', planned: true, Icon: Navigation },
         { key: 'page-settings', label: '页面设置', planned: true, Icon: Settings },
       ],
     },
