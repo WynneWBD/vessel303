@@ -38,7 +38,7 @@ export async function generateMetadata({
 
   // Catalog product (CMS first, static fallback for build/dev resilience)
   let catalogProduct = await getPublicCatalogProductBySlug(slug).catch(() => undefined);
-  if (catalogProduct === undefined) {
+  if (!catalogProduct) {
     catalogProduct = findStaticCatalogProduct(slug);
   }
   if (catalogProduct) {
@@ -75,7 +75,7 @@ export default async function ProductDetailPage({
       console.error('[products/detail] catalog db unavailable', err);
       return undefined;
     });
-  if (catalogProduct === undefined) {
+  if (!catalogProduct) {
     catalogProduct = findStaticCatalogProduct(slug);
   }
   if (catalogProduct) {
