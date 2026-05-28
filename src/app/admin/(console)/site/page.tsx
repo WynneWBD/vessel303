@@ -16,6 +16,8 @@ import {
   ListChecks,
   MapPinned,
   Navigation,
+  Newspaper,
+  Package,
   SearchCheck,
   Settings,
   ShieldCheck,
@@ -45,6 +47,14 @@ type SiteApp = {
   Icon: LucideIcon
   adminOnly?: boolean
   muted?: boolean
+}
+
+type SitePublishApp = {
+  title: string
+  detail: string
+  href: string
+  Icon: LucideIcon
+  action: string
 }
 
 type SiteDomain = {
@@ -92,6 +102,12 @@ const SITE_APPS: SiteApp[] = [
     Icon: LayoutTemplate,
   },
   {
+    title: '页面清单',
+    detail: '按页面查看可编辑范围、内容来源、草稿状态和前台入口。',
+    href: '/admin/site/pages',
+    Icon: ListChecks,
+  },
+  {
     title: '管理图片',
     detail: '上传、查找图片，并查看图片被哪些内容引用。',
     href: '/admin/media',
@@ -125,6 +141,37 @@ const SITE_APPS: SiteApp[] = [
   },
 ]
 
+const SITE_PUBLISH_APPS: SitePublishApp[] = [
+  {
+    title: '发布产品',
+    detail: '产品内容、分类、SEO、属性和橱窗继续走产品 2.0 主路径。',
+    href: '/admin/content/products/new',
+    Icon: Package,
+    action: '新建产品',
+  },
+  {
+    title: '发布项目案例',
+    detail: '正式项目案例内容走项目 2.0 主路径，Global 仅作地图展示渠道。',
+    href: '/admin/content/projects/new',
+    Icon: MapPinned,
+    action: '新建案例',
+  },
+  {
+    title: '发布新闻',
+    detail: '新闻分类、封面、定时和 SEO 字段走新闻 2.0 主路径。',
+    href: '/admin/content/news/new',
+    Icon: Newspaper,
+    action: '新建新闻',
+  },
+  {
+    title: '编辑页面草稿',
+    detail: 'Home / About 的受控模块先保存为草稿，发布前必须预览校对。',
+    href: '/admin/pages/visual',
+    Icon: LayoutTemplate,
+    action: '进入编辑',
+  },
+]
+
 function getSiteSideNav({
   pageDraftCount,
   uploadCount,
@@ -145,6 +192,7 @@ function getSiteSideNav({
       title: '网站运营',
       items: [
         { key: 'overview', label: '网站概览', href: '/admin/site', Icon: LayoutTemplate },
+        { key: 'pages', label: '页面清单', href: '/admin/site/pages', Icon: ListChecks },
         { key: 'visual', label: '编辑网站', href: '/admin/pages/visual', Icon: FileText },
         { key: 'drafts', label: '页面草稿', href: '#drafts', badge: pageDraftCount, Icon: CircleDashed },
         { key: 'todo', label: '网站待办', href: '#todo', badge: todoCount, Icon: ListChecks },
@@ -440,6 +488,41 @@ function AppGrid({ role }: { role: AdminRole }) {
   )
 }
 
+function PublishGrid() {
+  return (
+    <section className="space-y-4">
+      <SectionTitle
+        title="发布与更新"
+        detail="对照 300 后台，把产品、项目、新闻和页面草稿的主动动作收到网站管理首页。"
+      />
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {SITE_PUBLISH_APPS.map((app) => {
+          const Icon = app.Icon
+          return (
+            <Link
+              key={app.title}
+              href={app.href}
+              className="group flex min-h-36 flex-col justify-between rounded-md border border-[#D8E7E8] bg-white p-4 transition hover:-translate-y-0.5 hover:border-[#E36F2C]/55 hover:shadow-sm"
+            >
+              <span>
+                <span className="flex h-10 w-10 items-center justify-center rounded-md bg-[#FFF2E7] text-[#E36F2C]">
+                  <Icon size={19} />
+                </span>
+                <span className="mt-3 block text-sm font-bold text-[#1E2C31]">{app.title}</span>
+                <span className="mt-1 block text-xs leading-5 text-[#61767D]">{app.detail}</span>
+              </span>
+              <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#E36F2C]">
+                {app.action}
+                <ArrowRight size={14} className="transition group-hover:translate-x-0.5" />
+              </span>
+            </Link>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 function AppCard({ app }: { app: SiteApp }) {
   const Icon = app.Icon
   const content = (
@@ -659,6 +742,7 @@ export default async function AdminSitePage() {
       />
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-8">
+          <PublishGrid />
           <AppGrid role={adminRole} />
           <WorkflowPanel />
           {isAdmin && <MaintenanceBlock configIssues={configIssues} />}
