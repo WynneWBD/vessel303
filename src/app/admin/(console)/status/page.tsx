@@ -1,714 +1,192 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { auth } from '@/auth'
-import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
-import { pool } from '@/lib/db'
-import { normalizeMediaMaxUploadMb } from '@/lib/admin-settings-db'
 import {
-  Activity,
-  AlertCircle,
-  ArrowRight,
-  BarChart3,
-  CheckCircle2,
-  CircleDashed,
-  FileText,
-  Globe2,
-  Image as ImageIcon,
-  Inbox,
-  LayoutTemplate,
-  ListChecks,
-  MapPinned,
-  Package,
-  Settings,
-  ShieldCheck,
-  type LucideIcon,
-} from 'lucide-react'
+  formatBytes,
+  formatNumber,
+  loadStatusOverview,
+  sumContent,
+} from '@/lib/admin-status-metrics'
+import {
+  ActionCard,
+  ActivityList,
+  buildStatusBadges,
+  MetricCard,
+  SectionTitle,
+  StatusPageShell,
+  StatusPill,
+  STATUS_ICONS,
+} from './_components'
+import { getStatusAccess } from './_access'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: '数据与状态 - VESSEL' }
+export const metadata = { title: '运营数据中心 - VESSEL' }
 
-type AdminRole = 'admin' | 'operator'
-
-type ContentKind = 'products' | 'projects' | 'news'
-
-type ContentSummary = {
-  total: number
-  draft: number
-  published: number
-  recent30: number
-}
-
-type LeadSummary = {
-  total: number
-  new: number
-  contacting: number
-  recent7: number
-  recent30: number
-}
-
-type MediaSummary = {
-  count: number
-  bytes: number
-  maxUploadMb: number
-}
-
-type PageSummary = {
-  drafts: number
-  structureDrafts: number
-  moduleDrafts: number
-}
-
-type ProjectMapSummary = {
-  missingCoordinates: number
-  unpublishedWithCoordinates: number
-}
-
-type StatusItem = {
-  id?: string
-  title: string
-  value: string | number
-  detail: string
-  href?: string
-  Icon: LucideIcon
-  tone: 'blue' | 'green' | 'orange' | 'gray'
-}
-
-type TodoItem = {
-  title: string
-  detail: string
-  href?: string
-  count?: number
-  ok: boolean
-  adminOnly?: boolean
-}
-
-type ConfigCheck = {
-  label: string
-  ok: boolean
-}
-
-const EMPTY_CONTENT_SUMMARY: Record<ContentKind, ContentSummary> = {
-  products: { total: 0, draft: 0, published: 0, recent30: 0 },
-  projects: { total: 0, draft: 0, published: 0, recent30: 0 },
-  news: { total: 0, draft: 0, published: 0, recent30: 0 },
-}
-
-const EMPTY_LEAD_SUMMARY: LeadSummary = {
-  total: 0,
-  new: 0,
-  contacting: 0,
-  recent7: 0,
-  recent30: 0,
-}
-
-const EMPTY_MEDIA_SUMMARY: MediaSummary = {
-  count: 0,
-  bytes: 0,
-  maxUploadMb: 20,
-}
-
-const EMPTY_PAGE_SUMMARY: PageSummary = {
-  drafts: 0,
-  structureDrafts: 0,
-  moduleDrafts: 0,
-}
-
-const EMPTY_PROJECT_MAP_SUMMARY: ProjectMapSummary = {
-  missingCoordinates: 0,
-  unpublishedWithCoordinates: 0,
-}
-
-const STORAGE_WARNING_BYTES = 800 * 1024 * 1024
-
-function getStatusSideNav({
-  content,
-  leads,
-  pages,
-  media,
-  map,
-  configIssues,
-  isAdmin,
-}: {
-  content: Record<ContentKind, ContentSummary>
-  leads: LeadSummary
-  pages: PageSummary
-  media: MediaSummary
-  map: ProjectMapSummary
-  configIssues: number
-  isAdmin: boolean
-}): AdminSideNavGroup[] {
-  const contentDrafts = content.products.draft + content.projects.draft + content.news.draft
-  const attentionCount =
-    contentDrafts +
-    leads.new +
-    pages.drafts +
-    map.missingCoordinates +
-    (media.bytes > STORAGE_WARNING_BYTES ? 1 : 0) +
-    (isAdmin ? configIssues : 0)
-
-  return [
-    {
-      title: '状态总览',
-      items: [
-        { key: 'overview', label: '状态概览', href: '/admin/status', Icon: Activity },
-        {
-          key: 'todo',
-          label: '风险提醒',
-          href: '#todo',
-          badge: attentionCount > 0 ? attentionCount : undefined,
-          Icon: ListChecks,
-        },
-      ],
-    },
-    {
-      title: '运营状态',
-      items: [
-        {
-          key: 'website',
-          label: '网站状态',
-          href: '#website',
-          badge: pages.drafts > 0 ? pages.drafts : undefined,
-          Icon: Globe2,
-        },
-        {
-          key: 'content',
-          label: '内容状态',
-          href: '#content',
-          badge: contentDrafts > 0 ? contentDrafts : undefined,
-          Icon: FileText,
-        },
-        {
-          key: 'leads',
-          label: '线索状态',
-          href: '#leads',
-          badge: leads.new > 0 ? leads.new : undefined,
-          Icon: Inbox,
-        },
-        {
-          key: 'media',
-          label: '媒体状态',
-          href: '#media',
-          badge: media.count > 0 ? formatNumber(media.count) : undefined,
-          Icon: ImageIcon,
-        },
-        {
-          key: 'map',
-          label: '项目地图字段',
-          href: '#map',
-          badge: map.missingCoordinates > 0 ? map.missingCoordinates : undefined,
-          Icon: MapPinned,
-        },
-      ],
-    },
-    {
-      title: '系统状态',
-      items: [
-        {
-          key: 'config',
-          label: '配置状态',
-          href: '#config',
-          badge: configIssues > 0 ? configIssues : undefined,
-          adminOnly: true,
-          Icon: Settings,
-        },
-      ],
-    },
-    {
-      title: '后续规划',
-      items: [
-        { key: 'seo', label: 'SEO 数据', planned: true, Icon: BarChart3 },
-        { key: 'traffic', label: '访问分析', planned: true, Icon: BarChart3 },
-        { key: 'logs', label: '操作日志', planned: true, Icon: ShieldCheck },
-      ],
-    },
-  ]
-}
-
-function formatNumber(n: number): string {
-  return n.toLocaleString('zh-CN')
-}
-
-function formatBytes(n: number): string {
-  if (!n) return '0 B'
-  if (n < 1024) return `${n} B`
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
-  if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} MB`
-  return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`
-}
-
-async function safeLoad<T>(label: string, loader: () => Promise<T>, fallback: T): Promise<T> {
-  try {
-    return await loader()
-  } catch (err) {
-    console.error(`[admin-status] ${label} failed`, err)
-    return fallback
-  }
-}
-
-async function tableExists(tableName: string): Promise<boolean> {
-  const res = await pool.query<{ table_name: string | null }>(
-    'SELECT to_regclass($1) AS table_name',
-    [tableName],
-  )
-  return Boolean(res.rows[0]?.table_name)
-}
-
-async function countContent(kind: ContentKind): Promise<ContentSummary> {
-  const tableName = kind === 'products' ? 'product_catalog' : kind === 'projects' ? 'project_cases' : 'news'
-  if (!(await tableExists(`public.${tableName}`))) return EMPTY_CONTENT_SUMMARY[kind]
-
-  const res = await pool.query<{
-    total: string
-    draft: string
-    published: string
-    recent30: string
-  }>(
-    `SELECT
-       COUNT(*)::text AS total,
-       COUNT(*) FILTER (WHERE status = 'draft')::text AS draft,
-       COUNT(*) FILTER (WHERE status = 'published')::text AS published,
-       COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days')::text AS recent30
-     FROM ${tableName}
-     WHERE deleted_at IS NULL`,
-  )
-  const row = res.rows[0]
-  return {
-    total: parseInt(row?.total ?? '0', 10),
-    draft: parseInt(row?.draft ?? '0', 10),
-    published: parseInt(row?.published ?? '0', 10),
-    recent30: parseInt(row?.recent30 ?? '0', 10),
-  }
-}
-
-async function getContentSummary(): Promise<Record<ContentKind, ContentSummary>> {
-  const [products, projects, news] = await Promise.all([
-    countContent('products'),
-    countContent('projects'),
-    countContent('news'),
-  ])
-  return { products, projects, news }
-}
-
-async function getLeadSummary(): Promise<LeadSummary> {
-  if (!(await tableExists('public.leads'))) return EMPTY_LEAD_SUMMARY
-
-  const res = await pool.query<{
-    total: string
-    new_count: string
-    contacting: string
-    recent7: string
-    recent30: string
-  }>(
-    `SELECT
-       COUNT(*)::text AS total,
-       COUNT(*) FILTER (WHERE status = 'new')::text AS new_count,
-       COUNT(*) FILTER (WHERE status = 'contacting')::text AS contacting,
-       COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '7 days')::text AS recent7,
-       COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days')::text AS recent30
-     FROM leads
-     WHERE deleted_at IS NULL`,
-  )
-  const row = res.rows[0]
-  return {
-    total: parseInt(row?.total ?? '0', 10),
-    new: parseInt(row?.new_count ?? '0', 10),
-    contacting: parseInt(row?.contacting ?? '0', 10),
-    recent7: parseInt(row?.recent7 ?? '0', 10),
-    recent30: parseInt(row?.recent30 ?? '0', 10),
-  }
-}
-
-async function getMediaSummary(): Promise<MediaSummary> {
-  const mediaMaxUploadMb = normalizeMediaMaxUploadMb((await getSettingValue('mediaMaxUploadMb')) ?? 20)
-  if (!(await tableExists('public.uploads'))) {
-    return { ...EMPTY_MEDIA_SUMMARY, maxUploadMb: mediaMaxUploadMb }
-  }
-
-  const res = await pool.query<{ count: string; bytes: string }>(
-    `SELECT COUNT(*)::text AS count, COALESCE(SUM(size), 0)::text AS bytes
-     FROM uploads`,
-  )
-  return {
-    count: parseInt(res.rows[0]?.count ?? '0', 10),
-    bytes: parseInt(res.rows[0]?.bytes ?? '0', 10),
-    maxUploadMb: mediaMaxUploadMb,
-  }
-}
-
-async function getSettingValue(key: string): Promise<unknown> {
-  if (!(await tableExists('public.site_settings'))) return null
-  const res = await pool.query<{ value: unknown }>(
-    'SELECT value FROM site_settings WHERE key = $1 LIMIT 1',
-    [key],
-  )
-  return res.rows[0]?.value ?? null
-}
-
-async function getPageSummary(): Promise<PageSummary> {
-  const [moduleReady, structureReady] = await Promise.all([
-    tableExists('public.page_module_drafts'),
-    tableExists('public.page_structure_drafts'),
-  ])
-  const [moduleRes, structureRes] = await Promise.all([
-    moduleReady
-      ? pool.query<{ count: string }>('SELECT COUNT(*)::text AS count FROM page_module_drafts')
-      : Promise.resolve({ rows: [{ count: '0' }] }),
-    structureReady
-      ? pool.query<{ count: string }>(
-          `SELECT COUNT(*)::text AS count
-           FROM page_structure_drafts
-           WHERE draft_status <> 'discarded'`,
-        )
-      : Promise.resolve({ rows: [{ count: '0' }] }),
-  ])
-  const moduleDrafts = parseInt(moduleRes.rows[0]?.count ?? '0', 10)
-  const structureDrafts = parseInt(structureRes.rows[0]?.count ?? '0', 10)
-  return {
-    moduleDrafts,
-    structureDrafts,
-    drafts: moduleDrafts + structureDrafts,
-  }
-}
-
-async function getProjectMapSummary(): Promise<ProjectMapSummary> {
-  if (!(await tableExists('public.project_cases'))) return EMPTY_PROJECT_MAP_SUMMARY
-
-  const res = await pool.query<{
-    missing_coordinates: string
-    unpublished_with_coordinates: string
-  }>(
-    `SELECT
-       COUNT(*) FILTER (WHERE latitude IS NULL OR longitude IS NULL)::text AS missing_coordinates,
-       COUNT(*) FILTER (
-         WHERE status <> 'published'
-           AND latitude IS NOT NULL
-           AND longitude IS NOT NULL
-       )::text AS unpublished_with_coordinates
-     FROM project_cases
-     WHERE deleted_at IS NULL`,
-  )
-  return {
-    missingCoordinates: parseInt(res.rows[0]?.missing_coordinates ?? '0', 10),
-    unpublishedWithCoordinates: parseInt(res.rows[0]?.unpublished_with_coordinates ?? '0', 10),
-  }
-}
-
-async function getConfigChecks(): Promise<ConfigCheck[]> {
-  const [contactUrl, mediaMaxUploadMb] = await Promise.all([
-    getSettingValue('contactUrl'),
-    getSettingValue('mediaMaxUploadMb'),
-  ])
-  return [
-    { label: 'Resend 发件', ok: Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM) },
-    { label: '图片存储', ok: Boolean(process.env.BLOB_READ_WRITE_TOKEN) },
-    { label: '联系入口', ok: typeof contactUrl === 'string' && contactUrl.trim().length > 0 },
-    { label: '上传上限', ok: mediaMaxUploadMb != null && normalizeMediaMaxUploadMb(mediaMaxUploadMb) > 0 },
-  ]
-}
-
-function getTotals(content: Record<ContentKind, ContentSummary>) {
-  return {
-    total: content.products.total + content.projects.total + content.news.total,
-    draft: content.products.draft + content.projects.draft + content.news.draft,
-    recent30: content.products.recent30 + content.projects.recent30 + content.news.recent30,
-  }
-}
-
-function buildTodos({
-  content,
-  leads,
-  pages,
-  media,
-  map,
-  configIssues,
-  isAdmin,
-}: {
-  content: Record<ContentKind, ContentSummary>
-  leads: LeadSummary
-  pages: PageSummary
-  media: MediaSummary
-  map: ProjectMapSummary
-  configIssues: number
-  isAdmin: boolean
-}): TodoItem[] {
-  const contentDrafts = content.products.draft + content.projects.draft + content.news.draft
-  const todos: TodoItem[] = [
-    {
-      title: '新线索',
-      detail: leads.new > 0 ? '有新询盘需要处理' : '暂无新线索',
-      href: '/admin/leads?status=new',
-      count: leads.new,
-      ok: leads.new === 0,
-    },
-    {
-      title: '内容草稿',
-      detail: contentDrafts > 0 ? '检查产品、项目和新闻草稿' : '暂无内容草稿',
-      href: '/admin/content',
-      count: contentDrafts,
-      ok: contentDrafts === 0,
-    },
-    {
-      title: '页面草稿',
-      detail: pages.drafts > 0 ? '进入网站编辑确认页面草稿' : '暂无页面草稿',
-      href: '/admin/pages/visual',
-      count: pages.drafts,
-      ok: pages.drafts === 0,
-    },
-    {
-      title: '项目地图信息',
-      detail: map.missingCoordinates > 0 ? '有项目缺少坐标' : '项目地图字段状态正常',
-      href: '/admin/content/projects/list?view=missing-coordinates',
-      count: map.missingCoordinates,
-      ok: map.missingCoordinates === 0,
-    },
-    {
-      title: '媒体空间',
-      detail: media.bytes > STORAGE_WARNING_BYTES ? '建议整理图片素材' : '当前空间状态正常',
-      href: '/admin/media',
-      ok: media.bytes <= STORAGE_WARNING_BYTES,
-    },
-  ]
-
-  if (isAdmin) {
-    todos.push({
-      title: '系统配置',
-      detail: configIssues > 0 ? '有配置项需要处理' : '关键配置状态正常',
-      href: '/admin/settings',
-      count: configIssues,
-      ok: configIssues === 0,
-      adminOnly: true,
-    })
-  }
-
-  return todos
-}
-
-function Hero({
-  content,
-  leads,
-  pages,
-  media,
-}: {
-  content: Record<ContentKind, ContentSummary>
-  leads: LeadSummary
-  pages: PageSummary
-  media: MediaSummary
-}) {
-  const totals = getTotals(content)
+export default async function AdminStatusPage() {
+  const { role, email } = await getStatusAccess()
+  const overview = await loadStatusOverview()
+  const contentTotals = sumContent(overview.content)
+  const siteIssues =
+    overview.site.pages.total +
+    overview.site.seo.missing +
+    (overview.site.media.bytes > 800 * 1024 * 1024 ? 1 : 0) +
+    (role === 'admin' ? overview.site.configChecks.filter((item) => !item.ok).length : 0)
 
   return (
-    <section
-      id="overview"
-      className="scroll-mt-24 rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#DDF6F8_0%,#F4FBFC_62%,#FFF3E7_100%)] p-5 shadow-sm md:p-6"
+    <StatusPageShell
+      role={role}
+      email={email}
+      activeItem="overview"
+      badges={buildStatusBadges(overview, role)}
     >
-      <div className="flex flex-col gap-5">
-        <div>
-          <p className="text-sm font-semibold text-[#1889B6]">数据与状态</p>
-          <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">运营状态中心</h1>
-          <p className="mt-2 text-sm text-[#61767D]">集中查看网站、内容、线索和图片状态。</p>
+      <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#DDF6F8_0%,#F4FBFC_62%,#FFF3E7_100%)] p-5 shadow-sm md:p-6">
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-[#1889B6]">B6 数据分析 / 运营统计</p>
+              <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">运营数据中心</h1>
+              <p className="mt-2 text-sm text-[#61767D]">
+                先看今日待办、内容缺口、线索漏斗和站点健康；统计只读，不写业务数据。
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <StatusPill ok label="只读统计" />
+              <StatusPill ok label="不接外部流量分析" />
+              <StatusPill ok label="不触碰 /global" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+            <MetricCard
+              title="内容草稿"
+              value={contentTotals.draft}
+              detail={`内容总量 ${formatNumber(contentTotals.total)} / 近 30 天新增 ${formatNumber(contentTotals.recent30)}`}
+              href="/admin/status/content"
+              Icon={STATUS_ICONS.FileText}
+              tone={contentTotals.draft > 0 ? 'orange' : 'green'}
+            />
+            <MetricCard
+              title="新线索"
+              value={overview.leads.new}
+              detail={`线索总量 ${formatNumber(overview.leads.total)} / 超 7 天未更新 ${formatNumber(overview.leads.staleFollowups)}`}
+              href="/admin/status/leads"
+              Icon={STATUS_ICONS.Inbox}
+              tone={overview.leads.new > 0 ? 'orange' : 'green'}
+            />
+            <MetricCard
+              title="站点待处理"
+              value={siteIssues}
+              detail={`页面草稿 ${formatNumber(overview.site.pages.total)} / SEO 缺项 ${formatNumber(overview.site.seo.missing)}`}
+              href="/admin/status/site"
+              Icon={STATUS_ICONS.Globe2}
+              tone={siteIssues > 0 ? 'orange' : 'green'}
+            />
+            <MetricCard
+              title="媒体空间"
+              value={formatBytes(overview.site.media.bytes)}
+              detail={`${formatNumber(overview.site.media.count)} 个素材 / 单图上限 ${formatNumber(overview.site.media.maxUploadMb)} MB`}
+              href="/admin/media"
+              Icon={STATUS_ICONS.Package}
+              tone={overview.site.media.bytes > 800 * 1024 * 1024 ? 'orange' : 'blue'}
+            />
+          </div>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="space-y-8">
+          <section className="space-y-4">
+            <SectionTitle title="核心工作台" detail="所有入口都回到现有业务页面处理，数据中心只做判断和分流。" />
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <ActionCard
+                title="处理内容缺口"
+                detail={`当前 ${formatNumber(contentTotals.issues)} 个内容项需要补齐关键字段。`}
+                href="/admin/status/content"
+                Icon={STATUS_ICONS.FileText}
+                primary
+              />
+              <ActionCard
+                title="跟进新线索"
+                detail={`新线索 ${formatNumber(overview.leads.new)}，跟进中 ${formatNumber(overview.leads.contacting)}。`}
+                href="/admin/leads?status=new"
+                Icon={STATUS_ICONS.Inbox}
+              />
+              <ActionCard
+                title="检查站点健康"
+                detail="页面草稿、SEO、sitemap、robots 和媒体空间集中查看。"
+                href="/admin/status/site"
+                Icon={STATUS_ICONS.Globe2}
+              />
+              <ActionCard
+                title="查看近期变化"
+                detail="按更新时间聚合内容、线索、媒体和页面草稿。"
+                href="/admin/status/activity"
+                Icon={STATUS_ICONS.ListChecks}
+              />
+            </div>
+          </section>
+
+          <section className="space-y-4">
+            <SectionTitle title="内容变化" detail="按现有产品、项目案例、新闻表只读统计。" />
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              {Object.values(overview.content).map((item) => (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60"
+                >
+                  <span className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-semibold text-[#1E2C31]">{item.label}</span>
+                    <span className="text-xs font-semibold text-[#1889B6]">进入管理</span>
+                  </span>
+                  <span className="mt-5 grid grid-cols-3 gap-3">
+                    <SmallStat label="总量" value={item.total} />
+                    <SmallStat label="草稿" value={item.draft} />
+                    <SmallStat label="缺项" value={item.issues} />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section className="space-y-4">
+            <SectionTitle title="近期变化" detail="只读聚合最近内容和运营动作，不替代完整审计日志。" />
+            <ActivityList items={overview.activity} />
+          </section>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-          <HeroMetric title="当前站点" value="运营中" detail="主站状态正常" tone="green" href="/" />
-          <HeroMetric title="内容草稿" value={totals.draft} detail={`近 30 天新增 ${formatNumber(totals.recent30)}`} tone={totals.draft > 0 ? 'orange' : 'blue'} href="/admin/content" />
-          <HeroMetric title="新线索" value={leads.new} detail={`近 7 天新增 ${formatNumber(leads.recent7)}`} tone={leads.new > 0 ? 'orange' : 'green'} href="/admin/customers" />
-          <HeroMetric title="页面草稿" value={pages.drafts} detail={`图片 ${formatNumber(media.count)} / ${formatBytes(media.bytes)}`} tone={pages.drafts > 0 ? 'orange' : 'blue'} href="/admin/site" />
-        </div>
+        <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+          <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+            <div className="border-b border-[#E6EEEE] px-5 py-4">
+              <h2 className="text-lg font-bold text-[#1E2C31]">今日优先级</h2>
+              <p className="mt-1 text-xs text-[#61767D]">按影响运营效率的顺序排列。</p>
+            </div>
+            <div className="divide-y divide-[#E6EEEE]">
+              <PriorityRow
+                ok={overview.leads.new === 0}
+                title="新线索"
+                detail={overview.leads.new > 0 ? '优先进入线索列表处理' : '暂无新线索'}
+                count={overview.leads.new}
+                href="/admin/leads?status=new"
+              />
+              <PriorityRow
+                ok={contentTotals.issues === 0}
+                title="内容缺项"
+                detail={contentTotals.issues > 0 ? '优先补齐影响展示和 SEO 的字段' : '内容关键字段状态正常'}
+                count={contentTotals.issues}
+                href="/admin/status/content"
+              />
+              <PriorityRow
+                ok={overview.site.pages.total === 0}
+                title="页面草稿"
+                detail={overview.site.pages.total > 0 ? '进入可视化编辑器确认草稿' : '暂无页面草稿'}
+                count={overview.site.pages.total}
+                href="/admin/pages/visual"
+              />
+            </div>
+          </section>
+        </aside>
       </div>
-    </section>
-  )
-}
-
-function HeroMetric({
-  title,
-  value,
-  detail,
-  tone,
-  href,
-}: {
-  title: string
-  value: number | string
-  detail: string
-  tone: 'blue' | 'green' | 'orange'
-  href: string
-}) {
-  const toneClass =
-    tone === 'orange'
-      ? 'from-[#FF9F2F] to-[#F06B22]'
-      : tone === 'green'
-        ? 'from-[#20B486] to-[#118F79]'
-        : 'from-[#1889B6] to-[#3078C8]'
-
-  return (
-    <Link
-      href={href}
-      className={`group flex min-h-36 flex-col justify-between rounded-md bg-gradient-to-br ${toneClass} p-5 text-white shadow-sm transition hover:-translate-y-0.5`}
-    >
-      <span className="flex items-center justify-between gap-3">
-        <span className="text-sm font-medium text-white/82">{title}</span>
-        <ArrowRight size={17} className="text-white/76 transition group-hover:translate-x-0.5" />
-      </span>
-      <span>
-        <span className="block text-4xl font-bold">{typeof value === 'number' ? formatNumber(value) : value}</span>
-        <span className="mt-2 block text-sm text-white/82">{detail}</span>
-      </span>
-    </Link>
-  )
-}
-
-function SectionTitle({ title, detail }: { title: string; detail?: string }) {
-  return (
-    <div>
-      <h2 className="text-xl font-bold text-[#1E2C31]">{title}</h2>
-      {detail && <p className="mt-1 text-sm text-[#61767D]">{detail}</p>}
-    </div>
-  )
-}
-
-function StatusGrid({
-  content,
-  leads,
-  pages,
-  media,
-  map,
-}: {
-  content: Record<ContentKind, ContentSummary>
-  leads: LeadSummary
-  pages: PageSummary
-  media: MediaSummary
-  map: ProjectMapSummary
-}) {
-  const contentTotals = getTotals(content)
-  const items: StatusItem[] = [
-    {
-      title: '网站状态',
-      value: '运营中',
-      detail: pages.drafts > 0 ? `${formatNumber(pages.drafts)} 个页面草稿待确认` : '暂无页面草稿',
-      href: '/admin/site',
-      id: 'website',
-      Icon: LayoutTemplate,
-      tone: pages.drafts > 0 ? 'orange' : 'green',
-    },
-    {
-      title: '内容状态',
-      value: contentTotals.total,
-      detail: `草稿 ${formatNumber(contentTotals.draft)} / 近 30 天新增 ${formatNumber(contentTotals.recent30)}`,
-      href: '/admin/content',
-      id: 'content',
-      Icon: FileText,
-      tone: contentTotals.draft > 0 ? 'orange' : 'blue',
-    },
-    {
-      title: '线索状态',
-      value: leads.total,
-      detail: `新线索 ${formatNumber(leads.new)} / 跟进中 ${formatNumber(leads.contacting)}`,
-      href: '/admin/customers',
-      id: 'leads',
-      Icon: Inbox,
-      tone: leads.new > 0 ? 'orange' : 'green',
-    },
-    {
-      title: '媒体状态',
-      value: media.count,
-      detail: `${formatBytes(media.bytes)} / 单图上限 ${formatNumber(media.maxUploadMb)} MB`,
-      href: '/admin/media',
-      id: 'media',
-      Icon: ImageIcon,
-      tone: media.bytes > STORAGE_WARNING_BYTES ? 'orange' : 'blue',
-    },
-    {
-      title: '项目地图字段',
-      value: map.missingCoordinates,
-      detail: map.unpublishedWithCoordinates > 0 ? `${formatNumber(map.unpublishedWithCoordinates)} 个有坐标待发布` : '按现有字段只读统计',
-      href: '/admin/content/projects/list?view=missing-coordinates',
-      id: 'map',
-      Icon: MapPinned,
-      tone: map.missingCoordinates > 0 ? 'orange' : 'green',
-    },
-  ]
-
-  return (
-    <section className="space-y-4">
-      <SectionTitle title="状态总览" detail="先看异常和待办，再进入对应管理页处理。" />
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-        {items.map((item) => (
-          <StatusCard key={item.title} item={item} />
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function StatusCard({ item }: { item: StatusItem }) {
-  const Icon = item.Icon
-  const accent =
-    item.tone === 'orange'
-      ? 'bg-[#FFF2E7] text-[#E36F2C]'
-      : item.tone === 'green'
-        ? 'bg-[#E7F7F4] text-[#159477]'
-        : item.tone === 'gray'
-          ? 'bg-[#F0F2F2] text-[#61767D]'
-          : 'bg-[#EAF4FF] text-[#3078C8]'
-
-  return (
-    <Link
-      id={item.id}
-      href={item.href ?? '/admin/status'}
-      className="group flex min-h-44 scroll-mt-24 flex-col justify-between rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60"
-    >
-      <span className="flex items-start justify-between gap-4">
-        <span className={`flex h-11 w-11 items-center justify-center rounded-md ${accent}`}>
-          <Icon size={20} />
-        </span>
-        <ArrowRight size={15} className="text-[#9FB0B4] transition group-hover:translate-x-0.5 group-hover:text-[#E36F2C]" />
-      </span>
-      <span>
-        <span className="block text-sm text-[#61767D]">{item.title}</span>
-        <span className="mt-2 block text-3xl font-bold text-[#1E2C31]">
-          {typeof item.value === 'number' ? formatNumber(item.value) : item.value}
-        </span>
-        <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
-      </span>
-    </Link>
-  )
-}
-
-function ContentBreakdown({ content }: { content: Record<ContentKind, ContentSummary> }) {
-  const rows = [
-    { label: '产品', href: '/admin/content/products', data: content.products, Icon: Package },
-    { label: '项目案例', href: '/admin/content/projects', data: content.projects, Icon: MapPinned },
-    { label: '新闻', href: '/admin/content/news', data: content.news, Icon: FileText },
-  ]
-
-  return (
-    <section className="space-y-4">
-      <SectionTitle title="内容变化" detail="总数、草稿和近 30 天新增集中查看。" />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {rows.map((row) => (
-          <Link
-            key={row.label}
-            href={row.href}
-            className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60"
-          >
-            <span className="flex items-center justify-between gap-3">
-              <span className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
-                  <row.Icon size={19} />
-                </span>
-                <span className="text-sm font-semibold text-[#1E2C31]">{row.label}</span>
-              </span>
-              <ArrowRight size={15} className="text-[#9FB0B4]" />
-            </span>
-            <span className="mt-5 grid grid-cols-3 gap-3">
-              <SmallStat label="总数" value={row.data.total} />
-              <SmallStat label="草稿" value={row.data.draft} />
-              <SmallStat label="近 30 天" value={row.data.recent30} />
-            </span>
-          </Link>
-        ))}
-      </div>
-    </section>
+    </StatusPageShell>
   )
 }
 
@@ -721,146 +199,35 @@ function SmallStat({ label, value }: { label: string; value: number }) {
   )
 }
 
-function ConfigPanel({ checks, isAdmin }: { checks: ConfigCheck[]; isAdmin: boolean }) {
-  if (!isAdmin) {
-    return null
-  }
-
+function PriorityRow({
+  ok,
+  title,
+  detail,
+  count,
+  href,
+}: {
+  ok: boolean
+  title: string
+  detail: string
+  count: number
+  href: string
+}) {
   return (
-    <section id="config" className="scroll-mt-24 space-y-4">
-      <SectionTitle title="配置状态" detail="只显示是否配置，不显示任何密钥或环境变量值。" />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {checks.map((check) => (
-          <Link
-            key={check.label}
-            href="/admin/settings"
-            className="flex min-h-24 items-center gap-3 rounded-md border border-[#D8E7E8] bg-white p-4 transition hover:-translate-y-0.5 hover:border-[#1889B6]/60"
-          >
-            <span
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${
-                check.ok ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FFF2E7] text-[#E36F2C]'
-              }`}
-            >
-              {check.ok ? <CheckCircle2 size={17} /> : <AlertCircle size={17} />}
-            </span>
-            <span>
-              <span className="block text-sm font-semibold text-[#1E2C31]">{check.label}</span>
-              <span className="mt-1 block text-xs text-[#61767D]">{check.ok ? '已配置' : '需处理'}</span>
-            </span>
-          </Link>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function TodoPanel({ items }: { items: TodoItem[] }) {
-  return (
-    <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-      <section id="todo" className="scroll-mt-24 rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-        <div className="border-b border-[#E6EEEE] px-5 py-4">
-          <h2 className="text-lg font-bold text-[#1E2C31]">待处理事项</h2>
-          <p className="mt-1 text-xs text-[#61767D]">状态页只做提醒，处理仍进入对应管理页。</p>
-        </div>
-        <div className="divide-y divide-[#E6EEEE]">
-          {items.map((item) => (
-            <TodoRow key={item.title} item={item} />
-          ))}
-        </div>
-      </section>
-    </aside>
-  )
-}
-
-function TodoRow({ item }: { item: TodoItem }) {
-  const content = (
-    <span className="flex items-start gap-3">
+    <Link href={href} className="flex gap-3 px-5 py-4 transition hover:bg-[#F7FAFA]">
       <span
         className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
-          item.ok ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FFF2E7] text-[#E36F2C]'
+          ok ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FFF2E7] text-[#E36F2C]'
         }`}
       >
-        {item.ok ? <CheckCircle2 size={16} /> : <CircleDashed size={16} />}
+        {ok ? <STATUS_ICONS.CheckCircle2 size={16} /> : <STATUS_ICONS.AlertCircle size={16} />}
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center justify-between gap-3">
-          <span className="text-sm font-semibold text-[#1E2C31]">{item.title}</span>
-          {item.count != null && <span className="text-sm font-bold text-[#E36F2C]">{formatNumber(item.count)}</span>}
+          <span className="text-sm font-semibold text-[#1E2C31]">{title}</span>
+          <span className="text-sm font-bold text-[#E36F2C]">{formatNumber(count)}</span>
         </span>
-        <span className="mt-1 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+        <span className="mt-1 block text-xs leading-5 text-[#61767D]">{detail}</span>
       </span>
-    </span>
-  )
-
-  if (!item.href) return <div className="block px-5 py-4">{content}</div>
-  return (
-    <Link href={item.href} className="block px-5 py-4 transition hover:bg-[#F7FAFA]">
-      {content}
     </Link>
-  )
-}
-
-export default async function AdminStatusPage() {
-  const session = await auth()
-  if (!session?.user) {
-    redirect('/admin/login')
-  }
-
-  const role = session.user.role
-  if (role !== 'admin' && role !== 'operator') {
-    redirect('/admin/login?error=unauthorized')
-  }
-
-  const adminRole: AdminRole = role
-  const isAdmin = adminRole === 'admin'
-  const [content, leads, media, pages, map, configChecks] = await Promise.all([
-    safeLoad('content summary', () => getContentSummary(), EMPTY_CONTENT_SUMMARY),
-    safeLoad('lead summary', () => getLeadSummary(), EMPTY_LEAD_SUMMARY),
-    safeLoad('media summary', () => getMediaSummary(), EMPTY_MEDIA_SUMMARY),
-    safeLoad('page summary', () => getPageSummary(), EMPTY_PAGE_SUMMARY),
-    safeLoad('project map summary', () => getProjectMapSummary(), EMPTY_PROJECT_MAP_SUMMARY),
-    isAdmin ? safeLoad('config checks', () => getConfigChecks(), []) : Promise.resolve([]),
-  ])
-  const configIssues = configChecks.filter((item) => !item.ok).length
-  const todos = buildTodos({
-    content,
-    leads,
-    pages,
-    media,
-    map,
-    configIssues,
-    isAdmin,
-  })
-  const sideNavGroups = getStatusSideNav({
-    content,
-    leads,
-    pages,
-    media,
-    map,
-    configIssues,
-    isAdmin,
-  })
-
-  return (
-    <AdminSectionShell
-      topNavActive="status"
-      role={adminRole}
-      email={session.user.email}
-      title="数据与状态"
-      description={isAdmin ? '集中查看网站、内容、线索、媒体和配置状态。' : '集中查看网站、内容、线索和媒体状态。'}
-      sideNavGroups={sideNavGroups}
-      activeItem="overview"
-    >
-      <Hero content={content} leads={leads} pages={pages} media={media} />
-
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-8">
-          <StatusGrid content={content} leads={leads} pages={pages} media={media} map={map} />
-          <ContentBreakdown content={content} />
-          <ConfigPanel checks={configChecks} isAdmin={isAdmin} />
-        </div>
-        <TodoPanel items={todos} />
-      </div>
-    </AdminSectionShell>
   )
 }
