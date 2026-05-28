@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { normalizeMediaMaxUploadMb } from '@/lib/admin-settings-db'
 import { pool } from '@/lib/db'
 
@@ -64,6 +66,27 @@ export type SiteMetrics = {
   configChecks: ConfigCheck[]
   sitemapOk: boolean
   robotsOk: boolean
+}
+
+export type AnalyticsReadinessState = 'active' | 'partial' | 'planned' | 'hold'
+
+export type AnalyticsReadinessItem = {
+  key: string
+  title: string
+  status: string
+  state: AnalyticsReadinessState
+  detail: string
+  href?: string
+  adminNote?: string
+}
+
+export type AnalyticsReadinessMetrics = {
+  readyCount: number
+  issueCount: number
+  scriptReady: boolean
+  searchReady: boolean
+  siteFilesReady: boolean
+  items: AnalyticsReadinessItem[]
 }
 
 export type ActivityItem = {
@@ -526,6 +549,75 @@ export async function loadSiteMetrics(): Promise<SiteMetrics> {
     configChecks,
     sitemapOk: true,
     robotsOk: true,
+  }
+}
+
+function readinessLabel(ok: boolean): string {
+  return ok ? '已准备' : '未准备'
+}
+
+export function loadAnalyticsReadinessMetrics(): AnalyticsReadinessMetrics {
+  const robotsReady = existsSync(join(process.cwd(), 'public', 'robots.txt'))
+  const sitemapStaticReady = existsSync(join(process.cwd(), 'public', 'sitemap.xml'))
+  const sitemapRouteReady = existsSync(join(process.cwd(), 'src', 'app', 'sitemap.ts'))
+  const gaReady = Boolean(process.env.NEXT_PUBLIC_GA_ID || process.env.NEXT_PUBLIC_GTAG_ID)
+  const gtmReady = Boolean(process.env.NEXT_PUBLIC_GTM_ID)
+  const googleVerifyReady = Boolean(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION)
+  const siteFilesReady = robotsReady && (sitemapStaticReady || sitemapRouteReady)
+  const scriptReady = gaReady || gtmReady
+  const searchReady = googleVerifyReady && siteFilesReady
+
+  const items: AnalyticsReadinessItem[] = [
+    {
+      key: 'traffic-script',
+      title: '访问统计脚本',
+      status: scriptReady ? '已有统计入口配置' : '未接入',
+      state: scriptReady ? 'partial' : 'planned',
+      detail: '只检查 Google Analytics / Tag Manager 是否具备配置入口，不在本页粘贴或保存第三方代码。',
+      href: '/admin/site/settings',
+      adminNote: '仅显示是否存在配置，不展示实际 tracking id 或脚本内容。',
+    },
+    {
+      key: 'search-verify',
+      title: 'Search Console 验证',
+      status: googleVerifyReady ? '验证标识已准备' : '缺少验证标识',
+      state: googleVerifyReady ? 'partial' : 'planned',
+      detail: '搜索平台验证需要产品侧确认域名、账号和收录策略后再接入；当前不自动提交搜索引擎。',
+      href: '/admin/site/settings',
+      adminNote: '仅检查验证标识是否存在，不读取第三方平台数据。',
+    },
+    {
+      key: 'site-files',
+      title: 'Sitemap / Robots',
+      status: siteFilesReady ? '站点文件已准备' : '站点文件待检查',
+      state: siteFilesReady ? 'active' : 'planned',
+      detail: `robots ${readinessLabel(robotsReady)} / sitemap ${readinessLabel(sitemapStaticReady || sitemapRouteReady)}。`,
+      href: '/admin/site/seo',
+    },
+    {
+      key: 'vercel-analytics',
+      title: 'Vercel Web Analytics',
+      status: '后续接入',
+      state: 'planned',
+      detail: '当前不接 Vercel Analytics SDK，也不读取 Vercel 流量 API；后续作为外部分析专项处理。',
+      href: '/admin/status',
+    },
+    {
+      key: 'privacy-review',
+      title: '隐私与 Cookie 边界',
+      status: '需要上线前确认',
+      state: 'hold',
+      detail: '访问统计属于第三方追踪能力，正式上线前需要确认隐私文案、Cookie 告知和目标市场合规口径。',
+    },
+  ]
+
+  return {
+    readyCount: items.filter((item) => item.state === 'active' || item.state === 'partial').length,
+    issueCount: items.filter((item) => item.state === 'planned' || item.state === 'hold').length,
+    scriptReady,
+    searchReady,
+    siteFilesReady,
+    items,
   }
 }
 

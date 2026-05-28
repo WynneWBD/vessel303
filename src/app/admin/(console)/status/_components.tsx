@@ -115,6 +115,12 @@ export function getStatusSideNav(badges: StatusBadges): AdminSideNavGroup[] {
           badge: badges.activityCount && badges.activityCount > 0 ? formatNumber(badges.activityCount) : undefined,
           Icon: ListChecks,
         },
+        {
+          key: 'traffic',
+          label: '访问分析准备',
+          href: '/admin/status/traffic',
+          Icon: BarChart3,
+        },
       ],
     },
     {
@@ -140,7 +146,6 @@ export function getStatusSideNav(badges: StatusBadges): AdminSideNavGroup[] {
     {
       title: '后续规划',
       items: [
-        { key: 'traffic', label: '访问分析', planned: true, Icon: BarChart3 },
         { key: 'search-console', label: '搜索表现', planned: true, Icon: SearchCheck },
         { key: 'audit-log', label: '完整操作日志', planned: true, adminOnly: true, Icon: ShieldCheck },
       ],
@@ -326,5 +331,7 @@ export const STATUS_ICONS = {
   ListChecks,
   Newspaper,
   Package,
+  SearchCheck,
   Settings,
+  ShieldCheck,
 }
