@@ -4,8 +4,8 @@ import Footer from '@/components/Footer';
 import { catalogProducts } from '@/lib/products';
 import {
   listPublishedCatalogProductsPage,
-  listProductAttributeTemplatesWithOptions,
-  listProductCategories,
+  listPublicProductAttributeTemplatesWithOptions,
+  listPublicProductCategories,
 } from '@/lib/product-catalog-db';
 import ProductsPageContent from '@/components/pages/ProductsPageContent';
 import type { CatalogProduct } from '@/lib/products';
@@ -88,11 +88,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     return null;
   });
   const [categories, attributeTemplates] = await Promise.all([
-    listProductCategories({ includeHidden: false }).catch((err) => {
+    listPublicProductCategories().catch((err) => {
       console.error('[products] load categories failed', err);
       return [];
     }),
-    listProductAttributeTemplatesWithOptions({ includeHidden: false }).catch((err) => {
+    listPublicProductAttributeTemplatesWithOptions().catch((err) => {
       console.error('[products] load attribute templates failed', err);
       return [];
     }),

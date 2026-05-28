@@ -872,7 +872,6 @@ const listPublishedCatalogProductsPageCached = unstable_cache(
     limit: number,
     offset: number,
   ): Promise<ListPublishedCatalogProductsPageResult> => {
-    await ensureProductCatalogSchema()
     const { where, params } = buildPublicProductsWhere({ search, categoryId, attributeOptionId })
     const safeLimit = Math.min(48, Math.max(1, limit))
     const safeOffset = Math.max(0, offset)
@@ -936,7 +935,6 @@ export async function getPublicCatalogProductById(id: string): Promise<CatalogPr
 }
 
 async function getPublicCatalogProductBySlugUncached(slug: string): Promise<CatalogProduct | null> {
-  await ensureProductCatalogSchema()
   const allowDetailSlug = !isReservedProductId(slug)
   const { rows } = await pool.query(
     `SELECT ${COLUMNS} FROM product_catalog
@@ -965,7 +963,6 @@ async function listPublicRelatedCatalogProductsUncached(
   currentId: string | null,
   limit: number,
 ): Promise<CatalogProduct[]> {
-  await ensureProductCatalogSchema()
   const parsedIds = JSON.parse(idsKey) as string[]
   const orderedIds = Array.from(new Set(parsedIds.map((id) => id.trim()).filter(Boolean)))
     .filter((id) => id !== currentId)
@@ -1012,7 +1009,6 @@ export async function listPublicRelatedCatalogProducts(
 }
 
 async function listProductAttributeLabelsForProductUncached(productId: string): Promise<ProductAttributeLabel[]> {
-  await ensureProductCatalogSchema()
   const { rows } = await pool.query<ProductAttributeLabel>(
     `SELECT
        t.slug AS template_slug,
@@ -1427,6 +1423,47 @@ export async function listProductCategories({
   }))
 }
 
+const listPublicProductCategoriesCached = unstable_cache(
+  async (): Promise<ProductCategoryRow[]> => {
+    type ProductCategoryQueryRow = Omit<ProductCategoryRow, 'product_count'> & { product_count: string }
+
+    const res = await pool.query<ProductCategoryQueryRow>(
+      `SELECT
+         c.id,
+         c.slug,
+         c.title_zh,
+         c.title_en,
+         c.description_zh,
+         c.description_en,
+         c.sort_order,
+         c.status,
+         c.created_at::text AS created_at,
+         c.updated_at::text AS updated_at,
+         COUNT(pc.id)::text AS product_count
+       FROM product_categories c
+       LEFT JOIN product_catalog pc
+         ON pc.category_id = c.id
+        AND pc.status = 'published'
+        AND pc.deleted_at IS NULL
+       WHERE c.deleted_at IS NULL
+         AND c.status = 'visible'
+       GROUP BY c.id
+       ORDER BY c.sort_order ASC, c.id ASC`,
+    )
+
+    return res.rows.map((row) => ({
+      ...row,
+      product_count: parseInt(String(row.product_count ?? '0'), 10),
+    }))
+  },
+  ['product-public-categories'],
+  { revalidate: PRODUCT_PUBLIC_CACHE_REVALIDATE_SECONDS, tags: [PRODUCT_PUBLIC_CACHE_TAG] },
+)
+
+export async function listPublicProductCategories() {
+  return listPublicProductCategoriesCached()
+}
+
 export async function getProductCategoryById(id: number, { visibleOnly = false } = {}) {
   await ensureProductCatalogSchema()
   const conds = ['id = $1', 'deleted_at IS NULL']
@@ -1639,6 +1676,110 @@ export async function listProductAttributeTemplatesWithOptions({
     ...template,
     options: optionsByTemplate.get(template.id) ?? [],
   }))
+}
+
+const listPublicProductAttributeTemplatesWithOptionsCached = unstable_cache(
+  async (): Promise<ProductAttributeTemplateWithOptions[]> => {
+    type TemplateQueryRow = Omit<ProductAttributeTemplateRow, 'option_count' | 'product_count'> & {
+      option_count: string
+      product_count: string
+    }
+
+    const templatesRes = await pool.query<TemplateQueryRow>(
+      `SELECT
+         t.id,
+         t.slug,
+         t.title_zh,
+         t.title_en,
+         t.description_zh,
+         t.description_en,
+         t.sort_order,
+         t.status,
+         t.created_at::text AS created_at,
+         t.updated_at::text AS updated_at,
+         COUNT(DISTINCT o.id)::text AS option_count,
+         COUNT(DISTINCT pc.id)::text AS product_count
+       FROM product_attribute_templates t
+       LEFT JOIN product_attribute_options o
+         ON o.template_id = t.id
+        AND o.deleted_at IS NULL
+        AND o.status = 'visible'
+       LEFT JOIN product_attribute_values pav
+         ON pav.template_id = t.id
+       LEFT JOIN product_catalog pc
+         ON pc.id = pav.product_id
+        AND pc.status = 'published'
+        AND pc.deleted_at IS NULL
+       WHERE t.deleted_at IS NULL
+         AND t.status = 'visible'
+       GROUP BY t.id
+       ORDER BY t.sort_order ASC, t.id ASC`,
+    )
+    const templates = templatesRes.rows.map((row) => ({
+      ...row,
+      option_count: parseInt(row.option_count ?? '0', 10),
+      product_count: parseInt(row.product_count ?? '0', 10),
+    }))
+    if (templates.length === 0) return []
+
+    const templateIds = templates.map((template) => template.id)
+    type OptionQueryRow = ProductAttributeOptionRow & { product_count: string }
+
+    const optionsRes = await pool.query<OptionQueryRow>(
+      `SELECT
+         o.id,
+         o.template_id,
+         t.slug AS template_slug,
+         t.title_zh AS template_title_zh,
+         t.title_en AS template_title_en,
+         o.slug,
+         o.label_zh,
+         o.label_en,
+         o.sort_order,
+         o.status,
+         o.created_at::text AS created_at,
+         o.updated_at::text AS updated_at,
+         COUNT(DISTINCT pc.id)::text AS product_count
+       FROM product_attribute_options o
+       JOIN product_attribute_templates t
+         ON t.id = o.template_id
+        AND t.deleted_at IS NULL
+        AND t.status = 'visible'
+       LEFT JOIN product_attribute_values pav
+         ON pav.option_id = o.id
+       LEFT JOIN product_catalog pc
+         ON pc.id = pav.product_id
+        AND pc.status = 'published'
+        AND pc.deleted_at IS NULL
+       WHERE o.deleted_at IS NULL
+         AND o.status = 'visible'
+         AND o.template_id = ANY($1::int[])
+       GROUP BY o.id, t.id
+       ORDER BY t.sort_order ASC, o.sort_order ASC, o.id ASC`,
+      [templateIds],
+    )
+
+    const optionsByTemplate = new Map<number, ProductAttributeOptionRow[]>()
+    for (const option of optionsRes.rows) {
+      const list = optionsByTemplate.get(option.template_id) ?? []
+      list.push({
+        ...option,
+        product_count: parseInt(String(option.product_count ?? '0'), 10),
+      })
+      optionsByTemplate.set(option.template_id, list)
+    }
+
+    return templates.map((template) => ({
+      ...template,
+      options: optionsByTemplate.get(template.id) ?? [],
+    }))
+  },
+  ['product-public-attribute-templates'],
+  { revalidate: PRODUCT_PUBLIC_CACHE_REVALIDATE_SECONDS, tags: [PRODUCT_PUBLIC_CACHE_TAG] },
+)
+
+export async function listPublicProductAttributeTemplatesWithOptions() {
+  return listPublicProductAttributeTemplatesWithOptionsCached()
 }
 
 export async function getProductAttributeTemplateById(id: number) {
