@@ -1700,7 +1700,8 @@ export default function PageVisualEditorClient({
           </h1>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-[#8A8580]">
             受控可视化编辑，只能修改已接入 page_modules 的文字、链接、图片和模块显示状态。
-            支持重复型模块内的项目新增、删除、排序；不支持新增、删除、排序页面模块，也不能自由修改样式或布局。
+            支持重复型模块内的项目新增、删除、排序；Home 安全插入区支持 simple-text / cta-section 的有限新增、排序和结构隐藏。
+            核心模块、About 结构、自由样式和自由布局仍保持锁定。
             当前编辑的是草稿预览：保存草稿不会影响前台，点击发布后才会上线；发布前会自动保留当前线上版本快照。
           </p>
         </div>
@@ -1848,7 +1849,7 @@ export default function PageVisualEditorClient({
               <span>页面级结构草稿</span>
             </div>
             <p className="mt-1 max-w-4xl text-xs leading-5 text-[#8A8580]">
-              C4-2b 只建立整页结构草稿底座。当前仍不开放整页模块新增、删除或拖拽排序；结构草稿用于后续安全预览和一次性发布。
+              页面级结构草稿用于 Home 安全插入区的有限新增、排序、隐藏和恢复。About 与核心模块仍锁定；结构草稿用于安全预览和一次性发布。
             </p>
           </div>
           <span

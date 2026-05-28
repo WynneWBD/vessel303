@@ -175,8 +175,8 @@ export const RESTRICTED_PAGE_MODULE_CATALOG: PageModuleCatalogItem[] = [
 ]
 
 export const PAGE_STRUCTURE_BOUNDARY_NOTES = [
-  '当前 C4-1 只完成动态渲染基础，不等于已经支持整页搭建。',
-  '当前不支持整页模块新增、删除、拖拽排序，也不会保存结构草稿。',
-  '后续必须先做页面级结构草稿和页面级快照，再开放结构编辑。',
-  'Home 将作为第一批结构编辑试点；About 暂不开放结构编辑。',
+  '当前只开放 Home 安全插入区，不等于已经支持整页自由搭建。',
+  'Home 安全插入区支持 simple-text / cta-section 新增、排序、结构隐藏和恢复；核心模块仍锁定。',
+  '页面级结构草稿和快照已接入；恢复快照只会回到草稿，发布后才影响前台。',
+  'About 暂只支持已有模块内容编辑，不开放结构新增、排序或隐藏。',
 ]
