@@ -103,6 +103,8 @@ Codex 默认工作方式：
 
 数据分析 / 运营统计：B6 已重新定义为内部运营数据中心，不再沿用早期旧 B 包“设置项接管 B6”编号。`/admin/status` 已升级为“运营数据中心”，并新增 `/admin/status/content`、`/admin/status/leads`、`/admin/status/site`、`/admin/status/activity`、`/admin/status/traffic` 只读子页；统计集中读取现有 `product_catalog`、`project_cases`、`news`、`leads`、`uploads`、页面草稿表和 `site_settings`，表不存在或查询失败时降级显示，不应 500。B6 当前阶段不改数据库、不写业务数据、不接 GA / Search Console / Vercel Analytics API、不注入第三方统计脚本、不做会员 / 订单 / 支付、不碰 `/global` 底层；`operator` 可看运营统计，`admin` 才显示配置状态详情。
 
+性能 / 图片 / 前台速度：07 负责全站性能专项，包括首页首屏速度、产品列表打开速度、图片体积、前台缓存、Lighthouse / Chrome Network 基线和线上轻量测速。产品中心体验问题由 01 配合，后台 API、CMS 查询或后台实现瓶颈由 02 处理，05 负责验收性能改动是否真实改善。后续建议从 B8 性能基线开始，不直接在普通后台任务里混入大图替换或缓存策略重构。
+
 项目案例：`project_cases` 当前非删除 9 条、published 8 条、draft 1 条、map-ready CMS 项目 3 条；不建议一次性导入 40 项，继续小批量样板策略。缺失字段不显示。`/cases` 列表已指向 `/cases/[id]` 正式详情页，筛选按钮已真实生效，详情页已补齐 300.cn 对照字段和相关案例入口；B2-6 全链路回归已完成，前台主导航 Cases 已回到 `/cases`，后台项目引用入口已收口到新版 `/admin/content/projects/{id}/edit`；B2-7 已把案例详情主 CTA 接到页面内 `#case-inquiry`，表单提交走现有 `/api/contact` 并写入 `leads`；Global 仍只作为独立地图展示渠道；空规格字段隐藏，不显示 `-`，不用 TBD 硬填。
 
 新闻资讯：B3-0/1/2 已完成新闻后台 2.0 主路径，正式路径为 `/admin/content/news -> /admin/content/news/list -> /admin/content/news/new 或 /admin/content/news/{id}/edit`；旧 `/admin/news`、旧 new / edit 路径继续作为维护备用。新闻 2.0 已参照 300.cn 新闻资讯模块收口状态筛选、搜索、添加、编辑、预览、发布前检查和删除入口；B3-3 已补 300 对照运营能力规划，在 `/admin/content/news` 展示分类管理、回收站、批量操作、定时发布的安全边界，在 `/admin/content/news/list` 补批量选择和禁用批量操作预演；B3-4 已新增 `/admin/content/news/categories` 新闻分类字段方案页；B3-5 已完成新闻分类真实建表与保存接入，新增 `news_categories` 表、`news.category_id` nullable 字段、后台分类 API、表单保存 / 发布前保存同步分类、后台列表分类列与分类筛选，默认分类为 `公司资讯`、`产品与展会`、`项目案例`、`行业观察`；B3-6 已完成新闻全链路只读回归；B3-7 已开放新闻分类新增、编辑、排序、显示 / 隐藏和稳定测试定位，不做分类物理删除；B3-8 已开放新闻回收站列表和恢复为草稿，不做永久删除；B3-9 已开放低风险批量转分类，不开放批量发布、批量删除、永久删除或翻译；B3-10 已开放单篇新闻定时发布第一阶段，新增 nullable `news.scheduled_at`、定时筛选、表单保存 / 清除计划发布时间和概览定时入口，但不做自动执行器、失败重试或批量定时；B3-11 已开放新闻 SEO 字段治理第一阶段，新增 nullable `news.seo_title_zh`、`news.seo_title_en`、`news.seo_description_zh`、`news.seo_description_en`，编辑页可保存搜索标题 / 描述，前台 `/news/[slug]` metadata 优先读取 SEO 字段；B3-12 已完成生产环境真实全链路回归，作为运营人员从新建草稿、封面、分类、定时、SEO、发布、前台验证、取消发布、批量转分类、软删除、回收站恢复到最终清理均跑通，未发现需要 02 修复的问题。旧 `/admin/news`、旧 new / edit 路径也已接入服务端预加载分类，避免浏览器插件拦截客户端分类 API 时下拉不可用。定时自动执行器、关键词、批量 SEO、SEO 自动生成、权限分级仍作为后续任务，不在普通主路径小修中混入。真实测试新闻 `vessel-news-console-2-test-20260525` 已完成发布、前台验证、删除验证、B3-8 恢复验收、B3-9 批量转分类验收、B3-10 定时保存 / 清除验收和 B3-11 SEO 字段保存验收；B3-12 真实回归测试新闻 `b3-12-news-full-chain-qa-20260526` 已完成发布 / 取消发布 / 回收站恢复全链路，最终 soft-deleted 留在回收站，未永久删除，前台列表不展示，详情页返回 404。
@@ -119,15 +121,39 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 
 当前分工：
 
-- 00 项目总控与需求确认：盘点、拆任务、确认风险、协调各线，不改文件。
-- 01 产品中心 / 产品 CMS：产品列表、产品数据、产品详情页模板、价格显示策略配合研究。
-- 02 后台运营 / 设置：后台设置、`site_settings`、测试账号、媒体库、邮件配置状态。
+- 00 项目总控：统一接收 Wynne 需求，拆任务，判断归属，调度 01 / 02 / 05 / 06 / 07，判断问题是否需要上报 Wynne；默认不直接开发、不直接验收、不写文档。
+- 01 产品中心 / 产品 CMS：负责产品中心前台体验、产品列表、产品详情页、产品数据口径、产品 CMS 展示字段、价格展示策略和产品内容运营路径；不负责后台 2.0 通用框架、commit / push / 上线。
+- 02 后台 2.0 / 运营后台开发：负责后台 2.0、运营后台产品化、300.cn 对照、后台代码开发、后台 API / CMS 读写链路和普通 bug 小修；不负责提交、push、上线，不改 `AGENTS.md`，除非 Wynne 明确授权。
 - 03 项目案例 / 项目 CMS：项目数据、项目详情页模型、项目 ID 体系、`/cases` 数据接入。
 - 04 Global 地图专项：`/global` 地图链路、MapTiler/MapLibre、点位数据接入风险控制。
-- 05 测试 / 提交 / 推送 / 上线：统一验收、检查、提交、push `main`、Vercel 上线控制。
-- 06 文档整理 / Handoff 重写：文档库整理、handoff 重写、`CODEX.md` 更新。
-- 07 使用规范与故障排查：Codex 使用规范、Browser Use / 工具故障排查、流程问题沉淀。
+- 05 验收 / 提交 / 推送 / 上线：统一验收、检查、真实场景测试、commit、push `main`、等待 Vercel READY、线上轻量检查；05 不主动改业务代码，除非 Wynne 明确授权或 00 明确交回小修。
+- 06 文档整理 / Handoff 重写：负责 `CODEX.md`、V9 handoff、admin 2.0 plan、docx 等文档收口；repo-git 内默认只允许 `CODEX.md` 进入 Git；06 不提交、不 push、不上线，交 05 复验。
+- 07 性能 / 图片 / 前台速度专项：负责全站响应速度、首页图片、产品列表打开速度、图片体积治理、缓存策略、前台性能基线、Lighthouse / Chrome Network / 线上轻量测速；发现后台 API 或 CMS 查询瓶颈时交 02，发现产品体验取舍时交 01。
 - 08 可视化页面编辑器：`/admin/pages/visual`、页面模块可视化预览、受控字段编辑、模块高亮、点击定位、草稿预览 / 发布上线、发布前检查、差异摘要、快照恢复、模块内 item 管理、模块注册表 / 动态渲染基础、只读模块库、Home 结构草稿新增 / 排序 / 结构隐藏受控模块和运营使用规范口径收口；不负责普通后台 A/B 包、产品 / 项目 CMS、`/global` 地图、会员支付。
+
+默认自动流转规则：
+
+1. 00 拆任务并分派给对应线程。
+2. 01 / 02 / 07 按职责规划或开发；重大产品设计先只读对照 300.cn，普通 bug / 文案 / lint / build / 小修不必每次看 300。
+3. 开发线程完成后交 05 验收。
+4. 05 验收通过后可以按授权 commit、push `main`、等待 Vercel READY，并做线上轻量检查。
+5. 代码上线后交 06 做文档收口。
+6. 06 完成后交 05 复验文档，只 stage 并提交授权的 repo 文件。
+7. 05 文档复验、push、Vercel READY 和线上轻量检查通过后，由 00 只汇报最终结果。
+
+必须打断 Wynne 的情况：
+
+- 需求本身存在业务争议，需要 Wynne 判断产品方向。
+- 需要改超出当前任务授权范围的文件。
+- 需要删除文件或数据、执行数据库迁移、写生产业务数据。
+- 涉及权限、认证、支付、订单、会员、代理商、生产敏感配置。
+- 需要改 `/global`、MapLibre、MapTiler、`/api/map` 底层链路。
+- 需要在 300.cn 执行真实保存、发布、删除、付款或上传。
+- `lint`、`tsc`、`build`、浏览器验收、Vercel READY 或线上检查失败。
+- git 工作区出现未知改动、未知文件、未知 commit 或无法解释的 diff。
+- 发现可能造成线上事故的风险。
+
+普通状态不要打断 Wynne：线程开始、规划完成、验收中、文档编写中、Vercel 部署中，均由 00 内部继续推进。
 
 实际修改 `AGENTS.md` 或 `CODEX.md` 前，必须先给 Wynne 看草稿并获得授权；后续提交、推送按 05 默认验收/上线流程执行。
 
@@ -277,7 +303,7 @@ Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳�
 - 04 Global 地图专项：`/global` 地图底层仍归 04；03 不直接修改地图底层。`/global` 营地详情首开速度第一阶段已上线：`77b053d perf(global): speed up project detail loading`；预加载 `ProjectDetail` 和 `showcaseProjects`，详情基础文字先显示，轮播图片按当前图加载；未改 `/api/map/[...path]`、runtime、点位、CMS、坐标、HQ，未替换 / 压缩 / 删除图片素材；剩余大图体积治理交 03 / 媒体侧，MapTiler `key=proxied` 403 属既有地图链路问题，`/global` edge runtime warning 仍归 04。
 - 05 测试 / 提交 / 推送 / 上线：继续统一验收、提交、push `main` 和 Vercel 上线控制。
 - 06 文档整理：继续维护 V9、`CODEX.md` 和文档库。
-- 07 使用规范与故障排查：沉淀 Codex 使用规范、Browser Use / 工具故障和流程问题。
+- 07 性能 / 图片 / 前台速度专项：负责首页、产品中心和全站前台响应速度，先做 B8 性能基线，再按图片体积、缓存、产品列表和首页首屏拆小步优化；工具故障和流程问题沉淀转入 00 / 06 文档规则管理。
 - 08 可视化页面编辑器：C4-2d Home 安全插入区排序与结构隐藏已上线；可见时“隐藏”发送 `{ isVisible: false }`，隐藏时显示“结构草稿中隐藏”，“恢复显示”发送 `{ isVisible: true }`；测试数据 `C4-2D-QA-20260517` 已清理，无残留；当前仍只支持 Home credentials 后、CoreTech 前的安全插入区，不支持 About、核心模块、整页自由拖拽、跨区排序、自由 HTML / CSS、删除核心模块、产品 / 项目 / 新闻详情或 `/global`；本机 Turbopack `os error 5` 属于本地环境问题，`next build --webpack` 和 Vercel build 已通过；`/global` edge runtime warning 仍归 04 地图专项。
 - 08 可视化页面编辑器：C4-2e 可视化编辑器运营使用规范口径小修已上线：`811efee fix(admin): clarify visual editor guardrails`，full SHA `811efee3d1deffdc180aa5ba92040b4ce549077f`，Vercel deployment `dpl_B4vFHT3sYhNJ7bkRkMEYu1qtqGyy`，Vercel 状态 `READY`，deployment URL `https://vessel303-5ht797ic0-vessel303.vercel.app`，production alias 已包含 `https://www.vessel303.com`。本轮只修正 `/admin/pages/visual` 的运营使用规范和页面结构边界文案，将过期的“不支持结构草稿 / 新增 / 排序”口径对齐为当前 Home 安全插入区可新增、排序、结构隐藏 / 恢复 `simple-text` / `cta-section`，同时明确核心模块、About 结构、自由样式 / 自由布局仍锁定。未改数据库、API、保存 / 发布 / 删除、权限、认证、支付、订单、会员、`/global`、MapLibre、MapTiler 或 `/api/map`。验收记录：`git diff --check`、targeted eslint、`tsc --noEmit`、`next build --webpack` 通过，构建仅出现既有 `/global` edge runtime warning；本地 `/admin/pages/visual` 未登录 307 到 `/admin/login`；线上首页 200，线上 `/admin/pages/visual` 未登录 302 到登录页，已登录 Chrome 打开生产后台确认可见更新后的 Home 安全插入区 / 核心模块锁定口径，无 `__next_error__` / Application error。
 - 价格、会员、代理、支付：单独专项，不在普通 CMS 任务中写死规则。
