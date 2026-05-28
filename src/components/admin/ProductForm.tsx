@@ -21,6 +21,7 @@ import type {
 } from '@/lib/product-catalog-db'
 import type { ProductBrandRow, ProductMarkRow, ProductShowcaseRow } from '@/lib/product-operations-db'
 import type {
+  CatalogCommercialTerms,
   CatalogDetailModule,
   CatalogDetailModuleItem,
   CatalogDetailModuleType,
@@ -53,6 +54,12 @@ type FormState = {
   detail_modules: CatalogDetailModule[]
   isCustom: boolean
   detailSlug: string
+  price_display_zh: string
+  price_display_en: string
+  commercial_terms: CatalogCommercialTerms
+  keywords_zh: string
+  keywords_en: string
+  related_product_ids: string[]
   category_id: string
   brand_id: string
   attribute_option_ids: number[]
@@ -72,6 +79,21 @@ type ProductCategoryOption = Pick<ProductCategoryRow, 'id' | 'title_zh' | 'title
 type ProductBrandOption = Pick<ProductBrandRow, 'id' | 'title_zh' | 'title_en' | 'status'>
 type ProductMarkOption = Pick<ProductMarkRow, 'id' | 'title_zh' | 'title_en' | 'status'>
 type ProductShowcaseOption = Pick<ProductShowcaseRow, 'id' | 'title_zh' | 'title_en' | 'status'>
+type ProductRelatedOption = Pick<CatalogProductRow, 'id' | 'name_cn' | 'name_en' | 'status'>
+
+const commercialTermFields: Array<{
+  zh: keyof CatalogCommercialTerms
+  en: keyof CatalogCommercialTerms
+  label: string
+}> = [
+  { zh: 'delivery_method_zh', en: 'delivery_method_en', label: 'Delivery Method' },
+  { zh: 'shipping_location_zh', en: 'shipping_location_en', label: 'Shipping Location' },
+  { zh: 'payment_terms_zh', en: 'payment_terms_en', label: 'Payment Terms' },
+  { zh: 'delivery_time_zh', en: 'delivery_time_en', label: 'Delivery Time' },
+  { zh: 'electrical_standard_zh', en: 'electrical_standard_en', label: 'Electrical & Plumbing' },
+  { zh: 'warranty_support_zh', en: 'warranty_support_en', label: 'Warranty Support' },
+  { zh: 'moq_zh', en: 'moq_en', label: 'MOQ' },
+]
 
 const detailModuleTypeOptions: { type: CatalogDetailModuleType; label: string; optionLabel: string }[] = [
   { type: 'highlights', label: '产品亮点', optionLabel: '产品亮点 Highlights' },
@@ -108,6 +130,12 @@ const emptyState: FormState = {
   detail_modules: [],
   isCustom: false,
   detailSlug: '',
+  price_display_zh: '',
+  price_display_en: '',
+  commercial_terms: {},
+  keywords_zh: '',
+  keywords_en: '',
+  related_product_ids: [],
   category_id: '',
   brand_id: '',
   attribute_option_ids: [],
@@ -153,6 +181,12 @@ function fromProduct(product?: CatalogProductRow | null): FormState {
     detail_modules: normalizeDetailModules(product.detail_modules ?? []),
     isCustom: product.isCustom,
     detailSlug: product.detailSlug ?? '',
+    price_display_zh: product.price_display_zh ?? '',
+    price_display_en: product.price_display_en ?? '',
+    commercial_terms: product.commercial_terms ?? {},
+    keywords_zh: (product.keywords_zh ?? []).join('\n'),
+    keywords_en: (product.keywords_en ?? []).join('\n'),
+    related_product_ids: product.related_product_ids ?? [],
     category_id: product.category_id ? String(product.category_id) : '',
     brand_id: operationProduct.brand_id ? String(operationProduct.brand_id) : '',
     attribute_option_ids: product.attribute_option_ids ?? [],
@@ -178,6 +212,12 @@ function hasText(value: string | null | undefined) {
   return Boolean(value?.trim())
 }
 
+function hasCommercialTerms(terms: CatalogCommercialTerms) {
+  return commercialTermFields.some((field) => (
+    hasText(String(terms[field.zh] ?? '')) || hasText(String(terms[field.en] ?? ''))
+  ))
+}
+
 function getProductCompleteness(form: FormState, galleryUrls: string[]): {
   level: CompletenessLevel
   issues: string[]
@@ -197,6 +237,10 @@ function getProductCompleteness(form: FormState, galleryUrls: string[]): {
   }
   if (!form.category_id) issues.push('未分类')
   if (form.attribute_option_ids.length === 0) issues.push('缺产品属性')
+  if (!hasText(form.price_display_zh) && !hasText(form.price_display_en)) issues.push('缺价格展示')
+  if (!hasCommercialTerms(form.commercial_terms)) issues.push('缺商务条款')
+  if (splitLines(form.keywords_zh).length === 0 && splitLines(form.keywords_en).length === 0) issues.push('缺关键词')
+  if (form.related_product_ids.length === 0) issues.push('缺相关产品')
   if (
     !hasText(form.seo_title_zh)
     || !hasText(form.seo_title_en)
@@ -548,6 +592,7 @@ export default function ProductForm({
   brands = [],
   marks = [],
   showcases = [],
+  relatedProductOptions = [],
 }: {
   mode: 'create' | 'edit'
   product?: CatalogProductRow | null
@@ -562,6 +607,7 @@ export default function ProductForm({
   brands?: ProductBrandOption[]
   marks?: ProductMarkOption[]
   showcases?: ProductShowcaseOption[]
+  relatedProductOptions?: ProductRelatedOption[]
 }) {
   const router = useRouter()
   const [form, setForm] = useState<FormState>(() => fromProduct(product))
@@ -589,6 +635,7 @@ export default function ProductForm({
   const selectedAttributeIds = useMemo(() => new Set(form.attribute_option_ids), [form.attribute_option_ids])
   const selectedMarkIds = useMemo(() => new Set(form.mark_ids), [form.mark_ids])
   const selectedShowcaseIds = useMemo(() => new Set(form.showcase_ids), [form.showcase_ids])
+  const selectedRelatedProductIds = useMemo(() => new Set(form.related_product_ids), [form.related_product_ids])
 
   useUnsavedChangesWarning(hasUnsavedChanges)
 
@@ -637,6 +684,29 @@ export default function ProductForm({
       return {
         ...prev,
         showcase_ids: Array.from(current).sort((a, b) => a - b),
+      }
+    })
+  }
+
+  const patchCommercialTerm = (key: keyof CatalogCommercialTerms, value: string) => {
+    setForm((prev) => ({
+      ...prev,
+      commercial_terms: {
+        ...prev.commercial_terms,
+        [key]: value,
+      },
+    }))
+  }
+
+  const toggleRelatedProduct = (productId: string, checked: boolean) => {
+    setForm((prev) => {
+      const current = new Set(prev.related_product_ids)
+      if (checked) current.add(productId)
+      else current.delete(productId)
+      current.delete(prev.id)
+      return {
+        ...prev,
+        related_product_ids: Array.from(current).sort(),
       }
     })
   }
@@ -765,6 +835,14 @@ export default function ProductForm({
     })),
     isCustom: form.isCustom,
     detailSlug: form.detailSlug.trim() || null,
+    price_display_zh: form.price_display_zh.trim() || null,
+    price_display_en: form.price_display_en.trim() || null,
+    commercial_terms: Object.fromEntries(
+      Object.entries(form.commercial_terms).map(([key, value]) => [key, String(value ?? '').trim()]),
+    ),
+    keywords_zh: splitLines(form.keywords_zh),
+    keywords_en: splitLines(form.keywords_en),
+    related_product_ids: form.related_product_ids.filter((id) => id !== form.id),
     category_id: form.category_id ? Number(form.category_id) : null,
     brand_id: form.brand_id ? Number(form.brand_id) : null,
     attribute_option_ids: form.attribute_option_ids,
@@ -980,6 +1058,106 @@ export default function ProductForm({
               />
               <span className="text-sm text-[#C4B9AB]">定制案例</span>
             </label>
+          </div>
+        </FormSection>
+
+        <FormSection
+          id="commercial"
+          title="300 Business Terms"
+          description="Aligns with 300 product detail pricing and business terms. Display and inquiry only; no orders or payment."
+        >
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Field label="Price display ZH">
+              <Input
+                value={form.price_display_zh}
+                onChange={(e) => patch('price_display_zh', e.target.value)}
+                placeholder="EXW/CNY 296,000"
+              />
+            </Field>
+            <Field label="Price display EN">
+              <Input
+                value={form.price_display_en}
+                onChange={(e) => patch('price_display_en', e.target.value)}
+                placeholder="Example: EXW/CNY 296,000"
+              />
+            </Field>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {commercialTermFields.map((field) => (
+              <div key={field.label} className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-4">
+                <p className="mb-3 text-xs font-semibold text-[#6B6560]">{field.label}</p>
+                <div className="grid grid-cols-1 gap-3">
+                  <Input
+                    value={String(form.commercial_terms[field.zh] ?? '')}
+                    onChange={(e) => patchCommercialTerm(field.zh, e.target.value)}
+                    placeholder="Chinese"
+                  />
+                  <Input
+                    value={String(form.commercial_terms[field.en] ?? '')}
+                    onChange={(e) => patchCommercialTerm(field.en, e.target.value)}
+                    placeholder="English"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </FormSection>
+
+        <FormSection
+          id="relations"
+          title="Keywords / Related Products"
+          description="Aligns with the 300 Key words and Related Products areas for the public detail page and admin checks."
+        >
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Field label="Keywords ZH" hint="One per line; commas are also supported.">
+              <Textarea value={form.keywords_zh} onChange={(e) => patch('keywords_zh', e.target.value)} />
+            </Field>
+            <Field label="Keywords EN">
+              <Textarea value={form.keywords_en} onChange={(e) => patch('keywords_en', e.target.value)} />
+            </Field>
+          </div>
+          <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-4">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-[#2C2A28]">Related products</h3>
+                <p className="text-xs text-[#8A8580]">The public page only shows published related products.</p>
+              </div>
+              <span className="text-xs font-semibold text-[#1889B6]">
+                Selected {form.related_product_ids.length}
+              </span>
+            </div>
+            <div className="mt-3 grid max-h-80 grid-cols-1 gap-2 overflow-auto pr-1 md:grid-cols-2">
+              {relatedProductOptions.length === 0 ? (
+                <p className="text-xs text-[#8A8580]">No product options yet.</p>
+              ) : (
+                relatedProductOptions
+                  .filter((item) => item.id !== form.id)
+                  .map((item) => {
+                    const checked = selectedRelatedProductIds.has(item.id)
+                    return (
+                      <label
+                        key={item.id}
+                        className={`flex cursor-pointer items-start gap-2 rounded-md border px-3 py-2 text-xs transition ${
+                          checked
+                            ? 'border-[#1889B6] bg-[#F0F7F8] text-[#1E2C31]'
+                            : 'border-[#E5DED4] bg-white text-[#6B6560] hover:border-[#1889B6]/50'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => toggleRelatedProduct(item.id, e.target.checked)}
+                          className="mt-0.5 h-4 w-4 accent-[#1889B6]"
+                        />
+                        <span>
+                          <span className="block font-semibold">{item.name_cn}</span>
+                          <span className="mt-0.5 block text-[#8A8580]">{item.name_en || item.id}</span>
+                        </span>
+                      </label>
+                    )
+                  })
+              )}
+            </div>
           </div>
         </FormSection>
 

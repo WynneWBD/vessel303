@@ -1,498 +1,316 @@
 'use client';
 
-import ProtectedImage from '@/components/ProtectedImage';
 import Link from 'next/link';
-import { useState, useMemo } from 'react';
-import { useT } from '@/contexts/LanguageContext';
+import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { i18n } from '@/lib/i18n';
-import type { CatalogProduct, ProductSeriesCode } from '@/lib/products';
+import type { ProductAttributeTemplateWithOptions, ProductCategoryRow } from '@/lib/product-catalog-db';
+import type { CatalogProduct } from '@/lib/products';
 
-type SizeFilter = 'all' | 'small' | 'medium' | 'large';
-type TypeFilter = 'all' | 'compact' | 'standard' | 'luxury';
-type GenFilter = 'all' | 6 | 5;
-type SeriesFilter = 'all' | ProductSeriesCode;
-type SortKey = 'default' | 'price_asc' | 'price_desc' | 'area_asc' | 'area_desc';
-type ViewMode = 'grid' | 'list';
+type DirectoryFilters = {
+  q: string;
+  category: string;
+  attribute: string;
+  page: number;
+};
 
-const SERIES_LIST: SeriesFilter[] = ['all', 'E3', 'E5', 'E6', 'E7', 'V3', 'V5', 'V7', 'V9', 'S5'];
+type DirectoryCategory = Pick<ProductCategoryRow, 'id' | 'title_zh' | 'title_en'>;
 
 interface Props {
   products: CatalogProduct[];
+  allProductsCount: number;
+  total: number;
+  pageSize: number;
+  currentPage: number;
+  totalPages: number;
+  filters: DirectoryFilters;
+  categories: DirectoryCategory[];
+  attributeTemplates: ProductAttributeTemplateWithOptions[];
 }
 
-function Select({
-  value,
-  onChange,
-  options,
-  active,
+function buildHref(filters: DirectoryFilters, patch: Partial<DirectoryFilters>) {
+  const next = { ...filters, ...patch };
+  const params = new URLSearchParams();
+  if (next.q.trim()) params.set('q', next.q.trim());
+  if (next.category) params.set('category', next.category);
+  if (next.attribute) params.set('attribute', next.attribute);
+  if (next.page > 1) params.set('page', String(next.page));
+  const query = params.toString();
+  return query ? `/products?${query}` : '/products';
+}
+
+function productHref(product: CatalogProduct) {
+  return `/products/${product.detailSlug || product.id}`;
+}
+
+function productPrice(product: CatalogProduct, lang: 'en' | 'zh') {
+  const price = lang === 'en' ? product.price_display_en : product.price_display_zh;
+  return price || product.price_display_en || product.price_display_zh || 'Inquire for pricing';
+}
+
+function Sidebar({
+  categories,
+  attributeTemplates,
+  filters,
 }: {
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-  active: boolean;
+  categories: DirectoryCategory[];
+  attributeTemplates: ProductAttributeTemplateWithOptions[];
+  filters: DirectoryFilters;
 }) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={`text-xs px-3 py-2 border tracking-wider bg-white outline-none cursor-pointer transition-colors ${
-        active
-          ? 'border-[#E36F2C]/60 text-[#E36F2C]'
-          : 'border-[#E5DED4] text-[#5F5750] hover:border-[#C4B9AB]'
-      }`}
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value} className="bg-white text-[#2C2A28]">
-          {o.label}
-        </option>
-      ))}
-    </select>
-  );
-}
-
-function GridCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType<typeof useT>; lang: 'en' | 'zh' }) {
-  const tags = lang === 'en' ? product.tags_en : product.tags_cn;
-  const features = lang === 'en' ? product.features_en : product.features_cn;
-  const badge = lang === 'en' ? product.badge_en : product.badge_cn;
-  const href = product.detailSlug ? `/products/${product.detailSlug}` : `/products/${product.id}`;
-
-  return (
-    <div className="group flex flex-col bg-white border border-[#E5DED4] hover:border-[#E36F2C]/45 transition-all duration-300 overflow-hidden shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
-      {/* Image area */}
-      <div className="relative aspect-video overflow-hidden bg-[#E5DED4]">
-        <ProtectedImage
-          src={product.image}
-          alt={lang === 'en' ? product.name_en : product.name_cn}
-          fill
-          loading="lazy"
-          className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
-        {/* Top-left: Gen tag */}
-        <div className="absolute top-3 left-3">
-          <span className="text-[10px] font-bold px-2 py-1 bg-[#241F1B]/80 text-white tracking-wider">
-            {product.gen}
-          </span>
-        </div>
-        {/* Top-right: Area */}
-        <div className="absolute top-3 right-3">
-          <span className="text-[10px] font-bold px-2 py-1 bg-white text-[#241F1B] tracking-wider">
-            {product.size}
-          </span>
-        </div>
-        {/* Bottom-left: Badge */}
-        <div className="absolute bottom-3 left-3">
-          <span className="text-[10px] font-bold px-2.5 py-1 bg-[#E36F2C] text-white tracking-wider">
-            {badge}
-          </span>
-        </div>
-        {/* Bottom-right: Custom indicator */}
-        {product.isCustom && (
-          <div className="absolute bottom-3 right-3">
-            <span className="text-[10px] px-2 py-1 bg-[#241F1B]/70 text-white tracking-wider border border-white/30">
-              {lang === 'en' ? 'Custom' : '定制'}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-5 flex flex-col flex-1">
-        {/* Model name */}
-        <h3 className="text-[#2C2A28] text-base font-black tracking-wider mb-1 leading-snug">
-          {lang === 'en' ? product.name_en : product.name_cn}
-        </h3>
-
-        {/* Tags */}
-        {tags && tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-[10px] px-2 py-0.5 bg-[#FAF7F2] text-[#5F5750] border border-[#E5DED4] tracking-wider"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Features */}
-        {features && features.length > 0 && (
-          <ul className="space-y-1 mb-4 flex-1">
-            {features.map((f) => (
-              <li key={f} className="flex items-start gap-1.5 text-xs text-[#5F5750]">
-                <span className="text-[#E36F2C] mt-0.5 text-[10px] shrink-0">▸</span>
-                <span className="tracking-wide leading-relaxed">{f}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <div className="border-t border-[#E5DED4] pt-4 mt-auto">
-          {/* Price row */}
-          <div className="flex items-center gap-2 mb-3">
-            <svg className="w-3 h-3 text-[#999999] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <span className="text-[#8A7D74] text-xs tracking-wider">{t(i18n.products.loginToView)}</span>
-          </div>
-
-          {/* CTA */}
-          <Link
-            href={href}
-            className="block text-center text-xs py-2.5 font-semibold tracking-wider bg-[#E36F2C] text-white border border-[#E36F2C] hover:bg-[#C85A1F] hover:border-[#C85A1F] transition-all duration-200"
-          >
-            {t(i18n.products.viewDetails)}
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ListCard({ product, t, lang }: { product: CatalogProduct; t: ReturnType<typeof useT>; lang: 'en' | 'zh' }) {
-  const tags = lang === 'en' ? product.tags_en : product.tags_cn;
-  const features = lang === 'en' ? product.features_en : product.features_cn;
-  const badge = lang === 'en' ? product.badge_en : product.badge_cn;
-  const href = product.detailSlug ? `/products/${product.detailSlug}` : `/products/${product.id}`;
-
-  return (
-    <div className="group flex bg-white border border-[#E5DED4] hover:border-[#E36F2C]/45 transition-all duration-300 overflow-hidden shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
-      {/* Image */}
-      <div className="relative w-[240px] shrink-0 overflow-hidden bg-[#E5DED4]">
-        <ProtectedImage
-          src={product.image}
-          alt={lang === 'en' ? product.name_en : product.name_cn}
-          fill
-          loading="lazy"
-          className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
-          sizes="240px"
-        />
-        <div className="absolute bottom-2 left-2">
-          <span className="text-[10px] font-bold px-2 py-1 bg-[#E36F2C] text-white tracking-wider">
-            {badge}
-          </span>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 p-6 flex flex-col justify-between">
-        <div>
-          <div className="flex items-start justify-between gap-4 mb-3">
-            <div>
-              <div className="text-[#E36F2C] text-[10px] tracking-[0.25em] uppercase mb-1">
-                {product.gen} · {product.size}
-              </div>
-              <h3 className="text-[#2C2A28] text-lg font-black tracking-wider leading-snug">
-                {lang === 'en' ? product.name_en : product.name_cn}
-              </h3>
-            </div>
-            <div className="flex flex-col items-end gap-1 shrink-0">
-              <span className="text-[10px] font-bold px-2 py-1 bg-[#241F1B]/70 text-white tracking-wider">
-                {product.gen}
-              </span>
-              {product.isCustom && (
-                <span className="text-[10px] px-2 py-0.5 border border-[#E5DED4] text-[#5F5750] tracking-wider">
-                  {lang === 'en' ? 'Custom' : '定制'}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {tags && tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {tags.map((tag) => (
-                <span key={tag} className="text-[10px] px-2 py-0.5 bg-[#FAF7F2] text-[#5F5750] border border-[#E5DED4] tracking-wider">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {features && features.length > 0 && (
-            <div className="flex flex-wrap gap-x-6 gap-y-1">
-              {features.map((f) => (
-                <span key={f} className="flex items-center gap-1.5 text-xs text-[#5F5750]">
-                  <span className="text-[#E36F2C] text-[10px]">▸</span>
-                  {f}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#E5DED4]">
-          <div className="flex items-center gap-2 text-[#999999] text-xs">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <span className="tracking-wider">{t(i18n.products.loginToView)}</span>
-          </div>
-          <Link
-            href={href}
-            className="text-xs px-5 py-2 font-semibold tracking-wider bg-[#E36F2C] text-white border border-[#E36F2C] hover:bg-[#C85A1F] hover:border-[#C85A1F] transition-all duration-200"
-          >
-            {t(i18n.products.viewDetails)}
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function ProductsPageContent({ products }: Props) {
-  const t = useT();
   const { lang } = useLanguage();
 
-  const [seriesFilter, setSeriesFilter] = useState<SeriesFilter>('all');
-  const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
-  const [genFilter, setGenFilter] = useState<GenFilter>('all');
-  const [sortKey, setSortKey] = useState<SortKey>('default');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  return (
+    <aside className="space-y-5">
+      <div className="border border-[#DADDE1] bg-white">
+        <div className="border-b border-[#DADDE1] bg-[#F5F7F8] px-4 py-3 text-sm font-bold text-[#1F2A31]">
+          Product Categories 产品分类
+        </div>
+        <div className="divide-y divide-[#ECEFF1]">
+          <Link
+            href={buildHref(filters, { category: '', page: 1 })}
+            className={`block px-4 py-3 text-sm transition ${
+              !filters.category ? 'bg-[#EAF4F6] font-semibold text-[#147C94]' : 'text-[#5C6670] hover:bg-[#F7FAFA]'
+            }`}
+          >
+            All Products
+          </Link>
+          {categories.map((category) => (
+            <Link
+              key={category.id}
+              href={buildHref(filters, { category: String(category.id), page: 1 })}
+              className={`block px-4 py-3 text-sm transition ${
+                filters.category === String(category.id)
+                  ? 'bg-[#EAF4F6] font-semibold text-[#147C94]'
+                  : 'text-[#5C6670] hover:bg-[#F7FAFA]'
+              }`}
+            >
+              {lang === 'en' ? category.title_en : category.title_zh}
+            </Link>
+          ))}
+        </div>
+      </div>
 
-  const filtered = useMemo(() => {
-    let list = [...products];
+      {attributeTemplates.map((template) => (
+        <div key={template.id} className="border border-[#DADDE1] bg-white">
+          <div className="border-b border-[#DADDE1] bg-[#F5F7F8] px-4 py-3">
+            <p className="text-sm font-bold text-[#1F2A31]">
+              {template.title_en} <span className="font-medium text-[#7A838B]">{template.title_zh}</span>
+            </p>
+          </div>
+          <div className="divide-y divide-[#ECEFF1]">
+            {template.options.map((option) => (
+              <Link
+                key={option.id}
+                href={buildHref(filters, { attribute: String(option.id), page: 1 })}
+                className={`block px-4 py-2.5 text-sm transition ${
+                  filters.attribute === String(option.id)
+                    ? 'bg-[#FFF4EC] font-semibold text-[#C65F22]'
+                    : 'text-[#5C6670] hover:bg-[#F7FAFA]'
+                }`}
+              >
+                {option.label_en} <span className="text-[#8A9299]">{option.label_zh}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ))}
+    </aside>
+  );
+}
 
-    if (seriesFilter !== 'all') list = list.filter((p) => p.productSeries === seriesFilter);
-    if (sizeFilter === 'small')  list = list.filter((p) => p.area <= 25);
-    if (sizeFilter === 'medium') list = list.filter((p) => p.area > 25 && p.area <= 35);
-    if (sizeFilter === 'large')  list = list.filter((p) => p.area > 35);
-    if (typeFilter !== 'all') list = list.filter((p) => p.productType === typeFilter);
-    if (genFilter !== 'all')  list = list.filter((p) => p.generation === genFilter);
+function ProductCard({ product }: { product: CatalogProduct }) {
+  const { lang } = useLanguage();
+  const name = lang === 'en' ? product.name_en : product.name_cn;
+  const badge = lang === 'en' ? product.badge_en : product.badge_cn;
+  const tags = lang === 'en' ? product.tags_en : product.tags_cn;
 
-    switch (sortKey) {
-      case 'price_asc':  list.sort((a, b) => a.area - b.area); break;
-      case 'price_desc': list.sort((a, b) => b.area - a.area); break;
-      case 'area_asc':   list.sort((a, b) => a.area - b.area); break;
-      case 'area_desc':  list.sort((a, b) => b.area - a.area); break;
-    }
+  return (
+    <article className="group flex min-h-full flex-col border border-[#DADDE1] bg-white transition hover:border-[#147C94]/60 hover:shadow-[0_14px_40px_rgba(24,44,54,0.12)]">
+      <Link href={productHref(product)} className="relative block aspect-[4/3] overflow-hidden bg-[#EEF1F3]">
+        <ProtectedImage
+          src={product.image}
+          alt={name}
+          fill
+          loading="lazy"
+          className="object-cover transition duration-500 group-hover:scale-105"
+          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 280px"
+        />
+        <div className="absolute left-3 top-3 bg-[#1F2A31]/88 px-2.5 py-1 text-[11px] font-bold text-white">
+          {product.gen}
+        </div>
+        {badge ? (
+          <div className="absolute bottom-3 left-3 bg-[#E36F2C] px-2.5 py-1 text-[11px] font-bold text-white">
+            {badge}
+          </div>
+        ) : null}
+      </Link>
+      <div className="flex flex-1 flex-col p-4">
+        <Link href={productHref(product)} className="text-base font-bold leading-snug text-[#1F2A31] hover:text-[#147C94]">
+          {name}
+        </Link>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <span className="border border-[#DADDE1] px-2 py-0.5 text-[11px] text-[#65707A]">{product.size}</span>
+          <span className="border border-[#DADDE1] px-2 py-0.5 text-[11px] text-[#65707A]">{product.productSeries}</span>
+          {tags.slice(0, 2).map((tag) => (
+            <span key={tag} className="border border-[#DADDE1] px-2 py-0.5 text-[11px] text-[#65707A]">
+              {tag}
+            </span>
+          ))}
+        </div>
+        <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#ECEFF1] pt-3">
+          <span className="min-w-0 truncate text-sm font-semibold text-[#C65F22]">{productPrice(product, lang)}</span>
+          <Link
+            href={productHref(product)}
+            className="shrink-0 bg-[#147C94] px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#0E6479]"
+          >
+            Details
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
 
-    return list;
-  }, [products, seriesFilter, sizeFilter, typeFilter, genFilter, sortKey]);
-  const availableSeries = useMemo(() => {
-    const series = Array.from(new Set(products.map((p) => p.productSeries)));
-    return series.length > 0 ? series.join(' / ') : '—';
-  }, [products]);
+function Pagination({
+  filters,
+  currentPage,
+  totalPages,
+}: {
+  filters: DirectoryFilters;
+  currentPage: number;
+  totalPages: number;
+}) {
+  if (totalPages <= 1) return null;
+  const pages = Array.from({ length: totalPages }, (_, index) => index + 1).slice(0, 8);
 
-  const sizeOptions = [
-    { value: 'all', label: t(i18n.products.filterSizeAll) },
-    { value: 'small', label: t(i18n.products.filterSizeS) },
-    { value: 'medium', label: t(i18n.products.filterSizeM) },
-    { value: 'large', label: t(i18n.products.filterSizeL) },
-  ];
-  const typeOptions = [
-    { value: 'all', label: t(i18n.products.filterTypeAll) },
-    { value: 'compact', label: t(i18n.products.filterTypeCompact) },
-    { value: 'standard', label: t(i18n.products.filterTypeStd) },
-    { value: 'luxury', label: t(i18n.products.filterTypeLux) },
-  ];
-  const genOptions = [
-    { value: 'all', label: t(i18n.products.filterGenAll) },
-    { value: '6', label: t(i18n.products.filterGen6) },
-    { value: '5', label: t(i18n.products.filterGen5) },
-  ];
-  const sortOptions = [
-    { value: 'default', label: t(i18n.products.sortDefault) },
-    { value: 'price_asc', label: t(i18n.products.sortPriceAsc) },
-    { value: 'price_desc', label: t(i18n.products.sortPriceDesc) },
-    { value: 'area_asc', label: t(i18n.products.sortAreaAsc) },
-    { value: 'area_desc', label: t(i18n.products.sortAreaDesc) },
-  ];
-  const heroSubtitle =
-    lang === 'zh'
-      ? '45天预制 · 2小时安装 · 欧盟/美国认证 · 全球交付'
-      : '45-day production · 2-hour install · EU+US certified · global delivery';
-  const heroSummary = [
-    [lang === 'zh' ? '可选型号' : 'Available models', String(products.length)],
-    [lang === 'zh' ? '当前系列' : 'Series', availableSeries],
-    [lang === 'zh' ? '筛选维度' : 'Filters', lang === 'zh' ? '型号 / 面积 / 类型 / 代际' : 'Series / Size / Type / Gen'],
-  ];
-  const resultCountText =
-    lang === 'zh'
-      ? `当前 ${filtered.length} 款可选型号`
-      : `${filtered.length} ${filtered.length === 1 ? 'model' : 'models'} available`;
+  return (
+    <nav className="mt-8 flex flex-wrap items-center justify-center gap-2">
+      <Link
+        href={buildHref(filters, { page: Math.max(1, currentPage - 1) })}
+        className="border border-[#DADDE1] bg-white px-3 py-2 text-sm font-semibold text-[#5C6670] hover:border-[#147C94]"
+      >
+        &lt;
+      </Link>
+      {pages.map((page) => (
+        <Link
+          key={page}
+          href={buildHref(filters, { page })}
+          className={`border px-3 py-2 text-sm font-semibold ${
+            page === currentPage
+              ? 'border-[#147C94] bg-[#147C94] text-white'
+              : 'border-[#DADDE1] bg-white text-[#5C6670] hover:border-[#147C94]'
+          }`}
+        >
+          {page}
+        </Link>
+      ))}
+      <Link
+        href={buildHref(filters, { page: Math.min(totalPages, currentPage + 1) })}
+        className="border border-[#DADDE1] bg-white px-3 py-2 text-sm font-semibold text-[#5C6670] hover:border-[#147C94]"
+      >
+        &gt;
+      </Link>
+    </nav>
+  );
+}
+
+export default function ProductsPageContent({
+  products,
+  allProductsCount,
+  total,
+  pageSize,
+  currentPage,
+  totalPages,
+  filters,
+  categories,
+  attributeTemplates,
+}: Props) {
+  const { lang } = useLanguage();
+  const rangeStart = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const rangeEnd = Math.min(total, currentPage * pageSize);
 
   return (
     <>
-      <section className="relative overflow-hidden bg-[#F5F2ED] border-b border-[#E5DED4] pt-28 sm:pt-32 pb-8">
-        <div className="absolute inset-x-0 top-0 h-1 bg-[#E36F2C]" />
-        <div className="absolute right-0 top-0 h-full w-2/3 bg-[radial-gradient(circle_at_82%_28%,rgba(227,111,44,0.10),transparent_38%)] pointer-events-none" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <nav className="flex items-center gap-2 text-xs text-[#8A7D74] mb-7 tracking-wider">
-            <Link href="/" className="hover:text-[#E36F2C] transition-colors">
-              {t(i18n.productDetail.home)}
-            </Link>
-            <span>/</span>
-            <span>{t(i18n.nav.products)}</span>
-          </nav>
-
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] gap-8 lg:gap-12 items-end">
-            <div className="max-w-4xl">
-              <div className="flex flex-wrap items-center gap-3 mb-4">
-                <span className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-semibold">
-                  VESSEL®
-                </span>
-                <span className="h-px w-10 bg-[#E36F2C]/35" />
-                <span className="text-[#8A7D74] text-xs tracking-[0.22em] uppercase">
-                  {t(i18n.products.heroLabel)}
-                </span>
-              </div>
-              <h1 className="text-[#241F1B] text-4xl sm:text-5xl lg:text-[54px] font-black leading-tight tracking-normal mb-4 max-w-4xl">
-                {t(i18n.products.heroTitleGold)}
-              </h1>
-              <p className="text-[#6B625B] text-base sm:text-lg leading-relaxed max-w-2xl">
-                {heroSubtitle}
-              </p>
-            </div>
-
-            <div className="hidden lg:block border-l border-[#E5DED4] pl-8 py-1">
-              <div className="text-[#E36F2C] text-[11px] tracking-[0.28em] uppercase font-semibold mb-4">
-                {lang === 'zh' ? '目录摘要' : 'Catalog Summary'}
-              </div>
-              <div className="space-y-3">
-                {heroSummary.map(([label, value]) => (
-                  <div key={label} className="flex items-baseline justify-between gap-5 border-b border-[#E5DED4]/70 pb-3 last:border-b-0 last:pb-0">
-                    <span className="text-[#8A7D74] text-xs tracking-wider">{label}</span>
-                    <span className="text-[#2C2A28] text-sm font-semibold tracking-wider text-right">{value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+      <section className="border-b border-[#DADDE1] bg-[#EEF3F5] pt-28 sm:pt-32">
+        <div className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+          <div className="text-xs text-[#65707A]">
+            <Link href="/" className="hover:text-[#147C94]">Home</Link>
+            <span className="mx-2">/</span>
+            <span>Product_list</span>
           </div>
+          <h1 className="mt-6 text-4xl font-black tracking-normal text-[#1F2A31] sm:text-5xl">
+            PRODUCTS
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5C6670]">
+            {lang === 'en'
+              ? 'Browse VESSEL product models by category, configuration, area and country.'
+              : '按分类、配置、面积和国家浏览 VESSEL 产品目录。'}
+          </p>
         </div>
       </section>
 
-      {/* Key specs bar */}
-      <div className="bg-[#FAF7F2] border-b border-[#E5DED4]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-wrap gap-6 justify-center">
-            {[
-              [t(i18n.products.specSize), t(i18n.products.specSizeVal)],
-              [t(i18n.products.specProd), t(i18n.products.specProdVal)],
-              [t(i18n.products.specInstall), t(i18n.products.specInstallVal)],
-              [t(i18n.products.specTemp), t(i18n.products.specTempVal)],
-              [t(i18n.products.specTransport), t(i18n.products.specTransportVal)],
-              [t(i18n.products.specHS), t(i18n.products.specHSVal)],
-            ].map(([k, v]) => (
-              <div key={k} className="flex items-center gap-2 text-sm">
-                <span className="text-[#8A7D74] tracking-wider">{k}</span>
-                <span className="text-[#E36F2C] font-semibold tracking-wider">{v}</span>
+      <section className="bg-[#F7F8F8] py-8">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 sm:px-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-8">
+          <div className="lg:hidden">
+            <details className="border border-[#DADDE1] bg-white">
+              <summary className="cursor-pointer px-4 py-3 text-sm font-bold text-[#1F2A31]">Filters</summary>
+              <div className="border-t border-[#DADDE1] p-4">
+                <Sidebar categories={categories} attributeTemplates={attributeTemplates} filters={filters} />
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Sticky filter bar */}
-      <div className="sticky top-[72px] z-30 bg-[#F5F2ED]/95 backdrop-blur-sm border-b border-[#E5DED4]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-2">
-
-          {/* Row 1: Series quick filter */}
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-            {SERIES_LIST.map((s) => (
-              <button
-                key={s}
-                onClick={() => setSeriesFilter(s)}
-                className={`shrink-0 text-xs font-bold px-3 py-1.5 tracking-widest border transition-all duration-150 ${
-                  seriesFilter === s
-                    ? 'bg-[#E36F2C] text-white border-[#E36F2C]'
-                    : 'bg-transparent text-[#E36F2C]/80 border-[#E36F2C]/40 hover:border-[#E36F2C] hover:text-[#E36F2C]'
-                }`}
-              >
-                {s === 'all' ? (lang === 'en' ? 'ALL' : '全部') : s}
-              </button>
-            ))}
+            </details>
           </div>
 
-          {/* Row 2: Dropdowns + sort + view */}
-          <div className="flex flex-wrap items-center gap-2 mt-1">
-            <Select
-              value={sizeFilter}
-              onChange={(v) => setSizeFilter(v as SizeFilter)}
-              options={sizeOptions}
-              active={sizeFilter !== 'all'}
-            />
-            <Select
-              value={typeFilter}
-              onChange={(v) => setTypeFilter(v as TypeFilter)}
-              options={typeOptions}
-              active={typeFilter !== 'all'}
-            />
-            <Select
-              value={String(genFilter)}
-              onChange={(v) => setGenFilter(v === 'all' ? 'all' : Number(v) as 5 | 6)}
-              options={genOptions}
-              active={genFilter !== 'all'}
-            />
+          <div className="hidden lg:block">
+            <Sidebar categories={categories} attributeTemplates={attributeTemplates} filters={filters} />
+          </div>
 
-            <div className="flex-1" />
-
-            <Select
-              value={sortKey}
-              onChange={(v) => setSortKey(v as SortKey)}
-              options={sortOptions}
-              active={sortKey !== 'default'}
-            />
-
-            {/* View toggle */}
-            <div className="flex border border-[#E5DED4] overflow-hidden bg-white">
-              <button
-                onClick={() => setViewMode('grid')}
-                title={t(i18n.products.gridView)}
-                className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-[#E36F2C] text-white' : 'text-[#8A7D74] hover:text-[#2C2A28]'}`}
-              >
-                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16">
-                  <rect x="0" y="0" width="6" height="6" /><rect x="10" y="0" width="6" height="6" />
-                  <rect x="0" y="10" width="6" height="6" /><rect x="10" y="10" width="6" height="6" />
-                </svg>
+          <div className="min-w-0">
+            <form action="/products" className="mb-5 flex flex-col gap-3 border border-[#DADDE1] bg-white p-4 sm:flex-row">
+              <input type="hidden" name="category" value={filters.category} />
+              <input type="hidden" name="attribute" value={filters.attribute} />
+              <input
+                name="q"
+                defaultValue={filters.q}
+                placeholder="Search 搜索"
+                className="min-h-11 flex-1 border border-[#DADDE1] px-3 text-sm outline-none focus:border-[#147C94]"
+              />
+              <button className="min-h-11 bg-[#147C94] px-5 text-sm font-bold uppercase tracking-[0.08em] text-white hover:bg-[#0E6479]">
+                Search
               </button>
-              <button
-                onClick={() => setViewMode('list')}
-                title={t(i18n.products.listView)}
-                className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-[#E36F2C] text-white' : 'text-[#8A7D74] hover:text-[#2C2A28]'}`}
-              >
-                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16">
-                  <rect x="0" y="0" width="16" height="3" /><rect x="0" y="6" width="16" height="3" />
-                  <rect x="0" y="12" width="16" height="3" />
-                </svg>
-              </button>
+              {(filters.q || filters.category || filters.attribute) ? (
+                <Link
+                  href="/products"
+                  className="inline-flex min-h-11 items-center justify-center border border-[#DADDE1] px-4 text-sm font-semibold text-[#5C6670] hover:border-[#147C94]"
+                >
+                  Reset
+                </Link>
+              ) : null}
+            </form>
+
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-[#65707A]">
+              <span>
+                Products {rangeStart}-{rangeEnd} of {total}
+              </span>
+              <span>
+                Catalog total: {allProductsCount}
+              </span>
             </div>
-          </div>
 
-          {/* Count */}
-          <div className="mt-1.5 text-[#8A7D74] text-xs tracking-wider">
-            {resultCountText}
+            {products.length === 0 ? (
+              <div className="border border-dashed border-[#C7CDD2] bg-white py-20 text-center text-sm text-[#65707A]">
+                No matching products.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
+
+            <Pagination filters={filters} currentPage={currentPage} totalPages={totalPages} />
           </div>
         </div>
-      </div>
-
-      {/* Product grid / list */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {filtered.length === 0 ? (
-          <div className="py-24 text-center text-[#999999] text-sm tracking-wider">
-            {t(i18n.products.noResults)}
-          </div>
-        ) : viewMode === 'grid' ? (
-          <div className={`grid grid-cols-1 sm:grid-cols-2 gap-5 transition-opacity duration-150 ${
-            filtered.length === 1 ? 'lg:grid-cols-[minmax(0,520px)] justify-center' : 'lg:grid-cols-4'
-          }`}>
-            {filtered.map((p) => (
-              <GridCard key={p.id} product={p} t={t} lang={lang} />
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-4 transition-opacity duration-150">
-            {filtered.map((p) => (
-              <ListCard key={p.id} product={p} t={t} lang={lang} />
-            ))}
-          </div>
-        )}
-      </div>
+      </section>
     </>
   );
 }

@@ -3,591 +3,309 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import ProtectedImage from '@/components/ProtectedImage';
-import { useT } from '@/contexts/LanguageContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { i18n } from '@/lib/i18n';
-import type { CatalogProduct } from '@/lib/products';
+import type { ProductAttributeLabel } from '@/lib/product-catalog-db';
+import type { CatalogProduct, CatalogCommercialTerms } from '@/lib/products';
 
 interface Props {
   product: CatalogProduct;
   isLoggedIn: boolean;
+  relatedProducts?: CatalogProduct[];
+  attributeLabels?: ProductAttributeLabel[];
 }
 
 type DetailModule = NonNullable<CatalogProduct['detail_modules']>[number];
 type DetailModuleItem = NonNullable<DetailModule['items_cn']>[number];
-type SpecRow = { label: string; value: string };
-
-const TYPE_LABEL: Record<string, { cn: string; en: string }> = {
-  compact: { cn: '紧凑型', en: 'Compact' },
-  standard: { cn: '标准型', en: 'Standard' },
-  luxury: { cn: '豪华型', en: 'Luxury' },
-};
 
 const CONTACT_URL = 'https://en.303vessel.cn/contact.html';
 
-function uniqueImageList(sources: Array<string | null | undefined>) {
-  return Array.from(
-    new Set(
-      sources
-        .map((src) => src?.trim())
-        .filter((src): src is string => Boolean(src)),
-    ),
+const TERM_FIELDS: Array<{
+  key: string;
+  zh: keyof CatalogCommercialTerms;
+  en: keyof CatalogCommercialTerms;
+}> = [
+  { key: 'Delivery Method', zh: 'delivery_method_zh', en: 'delivery_method_en' },
+  { key: 'Shipping Location', zh: 'shipping_location_zh', en: 'shipping_location_en' },
+  { key: 'Payment Terms', zh: 'payment_terms_zh', en: 'payment_terms_en' },
+  { key: 'Delivery Time', zh: 'delivery_time_zh', en: 'delivery_time_en' },
+  { key: 'Electrical & Plumbing', zh: 'electrical_standard_zh', en: 'electrical_standard_en' },
+  { key: 'Warranty Support', zh: 'warranty_support_zh', en: 'warranty_support_en' },
+  { key: 'MOQ', zh: 'moq_zh', en: 'moq_en' },
+];
+
+function uniqueImages(values: Array<string | undefined | null>) {
+  return Array.from(new Set(values.map((value) => value?.trim()).filter((value): value is string => Boolean(value))));
+}
+
+function hasText(value: string | undefined | null) {
+  return Boolean(value?.trim());
+}
+
+function productHref(product: CatalogProduct) {
+  return `/products/${product.detailSlug || product.id}`;
+}
+
+function SectionTitle({ label, title }: { label: string; title: string }) {
+  return (
+    <div className="mb-5">
+      <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#147C94]">{label}</p>
+      <h2 className="mt-2 text-2xl font-black tracking-normal text-[#1F2A31]">{title}</h2>
+    </div>
   );
 }
 
-function hasModuleContent(module: DetailModule, lang: 'en' | 'zh') {
+function DetailModuleBlock({ module, lang, name }: { module: DetailModule; lang: 'en' | 'zh'; name: string }) {
   const title = lang === 'en' ? module.title_en : module.title_cn;
   const body = lang === 'en' ? module.body_en : module.body_cn;
   const items = lang === 'en' ? module.items_en ?? [] : module.items_cn ?? [];
-  const images = uniqueImageList([module.image_url, ...(module.images ?? [])]);
+  const images = uniqueImages([module.image_url, ...(module.images ?? [])]);
+  if (!hasText(title) && !hasText(body) && items.length === 0 && images.length === 0) return null;
 
-  return Boolean(title || body || items.length > 0 || images.length > 0);
-}
-
-function normalizeSpecLabel(label: string) {
-  return label.trim().toLowerCase().replace(/\s+/g, '');
-}
-
-function uniqueSpecRows(rows: SpecRow[]) {
-  const seen = new Set<string>();
-
-  return rows.filter((row) => {
-    const key = normalizeSpecLabel(row.label);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function SectionLabel({
-  label,
-  title,
-  body,
-}: {
-  label?: string;
-  title?: string;
-  body?: string;
-}) {
   return (
-    <div className="mb-5">
-      {label ? (
-        <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#E36F2C]">
-          {label}
-        </div>
-      ) : null}
-      {title ? (
-        <h2 className="text-2xl font-black leading-tight tracking-normal text-[#2C2A28] sm:text-3xl">
-          {title}
-        </h2>
-      ) : null}
-      {body ? (
-        <p className="mt-3 max-w-3xl whitespace-pre-line text-sm leading-8 text-[#5F5750] sm:text-base">
-          {body}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-function ModuleImage({
-  src,
-  alt,
-  priority = false,
-  contain = false,
-}: {
-  src: string;
-  alt: string;
-  priority?: boolean;
-  contain?: boolean;
-}) {
-  return (
-    <div className="relative aspect-[4/3] overflow-hidden border border-[#E5DED4] bg-[#FAF7F2]">
-      <ProtectedImage
-        src={src}
-        alt={alt}
-        fill
-        priority={priority}
-        loading={priority ? undefined : 'lazy'}
-        className={contain ? 'object-contain p-4' : 'object-cover'}
-        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 34vw"
-      />
-    </div>
-  );
-}
-
-function ItemCard({ item, index }: { item: DetailModuleItem; index: number }) {
-  return (
-    <div className="border border-[#E5DED4] bg-white p-4">
-      <div className="mb-2 flex items-center gap-3">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center bg-[#E36F2C] text-[11px] font-bold text-white">
-          {String(index + 1).padStart(2, '0')}
-        </span>
-        <div className="text-sm font-semibold leading-snug text-[#2C2A28]">
-          {item.title}
-        </div>
-      </div>
-      {item.body ? (
-        <p className="text-sm leading-relaxed text-[#6B625B]">{item.body}</p>
-      ) : null}
-    </div>
-  );
-}
-
-export default function CatalogProductDetailContent({ product }: Props) {
-  const t = useT();
-  const { lang } = useLanguage();
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
-
-  const name = lang === 'en' ? product.name_en : product.name_cn;
-  const badge = lang === 'en' ? product.badge_en : product.badge_cn;
-  const tags = lang === 'en' ? product.tags_en : product.tags_cn;
-  const features = lang === 'en' ? product.features_en : product.features_cn;
-  const description = lang === 'en' ? product.description_en : product.description_cn;
-  const customSpecs = lang === 'en' ? product.specs_en ?? [] : product.specs_cn ?? [];
-  const typeLabel = TYPE_LABEL[product.productType] ?? TYPE_LABEL.standard;
-
-  const detailModules = (product.detail_modules ?? [])
-    .filter((module) => module.is_visible !== false)
-    .filter((module) => hasModuleContent(module, lang))
-    .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0));
-
-  const specRows = uniqueSpecRows([
-    {
-      label: t(i18n.productDetail.specArea),
-      value: product.size,
-    },
-    {
-      label: lang === 'en' ? 'Generation' : '代别',
-      value: product.gen,
-    },
-    {
-      label: t(i18n.productDetail.specSeries),
-      value: `VESSEL ${product.productSeries}`,
-    },
-    {
-      label: lang === 'en' ? 'Type' : '产品类型',
-      value: lang === 'en' ? typeLabel.en : typeLabel.cn,
-    },
-    ...customSpecs,
-  ].filter((row): row is SpecRow => Boolean(row.label && row.value)));
-
-  const media = useMemo(
-    () => uniqueImageList([product.image, ...(product.gallery ?? [])]),
-    [product.gallery, product.image],
-  );
-  const activeImage = media[activeImageIndex] ?? media[0] ?? product.image;
-
-  const quickStats = (features.length > 0
-    ? features.slice(0, 4).map((feature) => ({ label: feature, value: '' }))
-    : specRows.slice(0, 4)).filter((item) => item.label || item.value);
-
-  const renderModuleImages = (images: string[], title: string) => {
-    if (images.length === 0) return null;
-
-    return (
-      <div className={images.length === 1 ? 'mt-5' : 'mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2'}>
-        {images.map((src, index) => (
-          <ModuleImage
-            key={`${src}-${index}`}
-            src={src}
-            alt={`${title || name} ${index + 1}`}
-            contain={src.includes('exploded') || src.includes('structure')}
-          />
-        ))}
-      </div>
-    );
-  };
-
-  const renderFaqModule = (
-    module: DetailModule,
-    title: string,
-    body: string | undefined,
-    items: DetailModuleItem[],
-  ) => (
-    <section key={module.id} className="border border-[#E5DED4] bg-[#FAF7F2] p-5 sm:p-7">
-      <SectionLabel label="FAQ" title={title} body={body} />
+    <section className="border border-[#DADDE1] bg-white p-5">
+      {title ? <h3 className="text-lg font-bold text-[#1F2A31]">{title}</h3> : null}
+      {body ? <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#5C6670]">{body}</p> : null}
       {items.length > 0 ? (
-        <div className="space-y-3">
-          {items.map((item, index) => (
-            <details key={`${item.title}-${index}`} open={index === 0} className="group border border-[#E5DED4] bg-white">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 text-left">
-                <span className="text-sm font-semibold leading-snug text-[#2C2A28]">{item.title}</span>
-                <span className="text-lg leading-none text-[#E36F2C] transition-transform group-open:rotate-90">›</span>
-              </summary>
-              {item.body ? (
-                <div className="border-t border-[#E5DED4] px-4 pb-4 pt-3 text-sm leading-relaxed text-[#6B625B]">
-                  {item.body}
-                </div>
-              ) : null}
-            </details>
-          ))}
-        </div>
-      ) : null}
-    </section>
-  );
-
-  const renderScenarioModule = (
-    module: DetailModule,
-    title: string,
-    body: string | undefined,
-    items: DetailModuleItem[],
-    images: string[],
-  ) => (
-    <section key={module.id}>
-      <SectionLabel
-        label={lang === 'en' ? 'Use cases' : '应用场景'}
-        title={title}
-        body={body}
-      />
-      {items.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {items.map((item, index) => (
-            <div key={`${item.title}-${index}`} className="overflow-hidden border border-[#E5DED4] bg-white">
-              {images[index] ? (
-                <ModuleImage src={images[index]} alt={item.title} />
-              ) : null}
-              <div className="p-4">
-                <div className="text-sm font-semibold leading-snug text-[#2C2A28]">{item.title}</div>
-                {item.body ? (
-                  <p className="mt-2 text-xs leading-relaxed text-[#6B625B]">{item.body}</p>
-                ) : null}
-              </div>
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {items.map((item: DetailModuleItem, index: number) => (
+            <div key={`${item.title}-${index}`} className="border border-[#ECEFF1] bg-[#F7F8F8] p-4">
+              <p className="text-sm font-semibold text-[#1F2A31]">{item.title}</p>
+              {item.body ? <p className="mt-2 text-sm leading-6 text-[#65707A]">{item.body}</p> : null}
             </div>
           ))}
         </div>
-      ) : renderModuleImages(images, title)}
-    </section>
-  );
-
-  const renderCustomizationModule = (
-    module: DetailModule,
-    title: string,
-    body: string | undefined,
-    items: DetailModuleItem[],
-    images: string[],
-  ) => (
-    <section key={module.id} className="border border-[#E36F2C]/25 bg-[#E36F2C]/5 p-5 sm:p-7">
-      <SectionLabel
-        label={lang === 'en' ? 'Available options' : '可选配置'}
-        title={title}
-        body={body}
-      />
-      {items.length > 0 ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {items.map((item, index) => (
-            <ItemCard key={`${item.title}-${index}`} item={item} index={index} />
-          ))}
-        </div>
       ) : null}
-      {renderModuleImages(images, title)}
-    </section>
-  );
-
-  const renderHighlightModule = (
-    module: DetailModule,
-    title: string,
-    body: string | undefined,
-    items: DetailModuleItem[],
-    images: string[],
-  ) => (
-    <section key={module.id}>
-      <SectionLabel
-        label={lang === 'en' ? 'Design highlights' : '设计亮点'}
-        title={title}
-        body={body}
-      />
-      {items.length > 0 ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {items.map((item, index) => (
-            <ItemCard key={`${item.title}-${index}`} item={item} index={index} />
-          ))}
-        </div>
-      ) : null}
-      {renderModuleImages(images, title)}
-    </section>
-  );
-
-  const renderContentModule = (
-    module: DetailModule,
-    title: string,
-    body: string | undefined,
-    items: DetailModuleItem[],
-    images: string[],
-  ) => {
-    const denseList = items.length > 4;
-
-    return (
-      <section key={module.id} className="border-t border-[#E5DED4] pt-9">
-        <SectionLabel label={lang === 'en' ? 'Details' : '详情内容'} title={title} body={body} />
-        {images.length > 0 ? (
-          <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {images.slice(0, 4).map((src, index) => (
-              <ModuleImage
-                key={`${src}-${index}`}
+      {images.length > 0 ? (
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {images.slice(0, 4).map((src, index) => (
+            <div key={`${src}-${index}`} className="relative aspect-[4/3] overflow-hidden bg-[#EEF1F3]">
+              <ProtectedImage
                 src={src}
-                alt={`${title || name} ${index + 1}`}
-                contain={src.includes('exploded') || src.includes('structure')}
+                alt={`${name} detail ${index + 1}`}
+                fill
+                loading="lazy"
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 50vw"
               />
-            ))}
-          </div>
-        ) : null}
-        {items.length > 0 ? (
-          denseList ? (
-            <div className="divide-y divide-[#E5DED4] border border-[#E5DED4] bg-white">
-              {items.map((item, index) => (
-                <div key={`${item.title}-${index}`} className="grid gap-2 p-4 sm:grid-cols-[220px_minmax(0,1fr)]">
-                  <div className="text-sm font-semibold leading-snug text-[#2C2A28]">{item.title}</div>
-                  {item.body ? (
-                    <p className="text-sm leading-relaxed text-[#6B625B]">{item.body}</p>
-                  ) : null}
-                </div>
-              ))}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {items.map((item, index) => (
-                <ItemCard key={`${item.title}-${index}`} item={item} index={index} />
-              ))}
-            </div>
-          )
-        ) : null}
-      </section>
-    );
-  };
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
 
-  const renderDetailModule = (module: DetailModule) => {
-    const title = lang === 'en' ? module.title_en : module.title_cn;
-    const body = lang === 'en' ? module.body_en : module.body_cn;
-    const items = lang === 'en' ? module.items_en ?? [] : module.items_cn ?? [];
-    const images = uniqueImageList([module.image_url, ...(module.images ?? [])]);
-
-    if (module.type === 'faq') return renderFaqModule(module, title, body, items);
-    if (module.type === 'scenarios') return renderScenarioModule(module, title, body, items, images);
-    if (module.type === 'customization') return renderCustomizationModule(module, title, body, items, images);
-    if (module.type === 'highlights') return renderHighlightModule(module, title, body, items, images);
-
-    return renderContentModule(module, title, body, items, images);
-  };
-
+function RelatedCard({ product }: { product: CatalogProduct }) {
+  const { lang } = useLanguage();
+  const name = lang === 'en' ? product.name_en : product.name_cn;
   return (
-    <main className="bg-white text-[#2C2A28]">
-      <section className="relative min-h-[460px] overflow-hidden bg-[#1C1A18] sm:min-h-[540px]">
+    <Link href={productHref(product)} className="group border border-[#DADDE1] bg-white transition hover:border-[#147C94]/60">
+      <span className="relative block aspect-[4/3] overflow-hidden bg-[#EEF1F3]">
         <ProtectedImage
           src={product.image}
           alt={name}
           fill
-          priority
-          className="object-cover object-center"
-          sizes="100vw"
+          loading="lazy"
+          className="object-cover transition duration-500 group-hover:scale-105"
+          sizes="(max-width: 768px) 50vw, 220px"
         />
-        <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#1C1A18] via-[#1C1A18]/60 to-[#1C1A18]/10" />
+      </span>
+      <span className="block p-3 text-sm font-semibold leading-snug text-[#1F2A31] group-hover:text-[#147C94]">
+        {name}
+      </span>
+    </Link>
+  );
+}
 
-        <div className="absolute inset-x-0 top-6 z-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-2 text-xs tracking-wider text-white/70">
-              <Link href="/" className="hover:text-[#E36F2C]">
-                {t(i18n.productDetail.home)}
-              </Link>
-              <span>/</span>
-              <Link href="/products" className="hover:text-[#E36F2C]">
-                {t(i18n.productDetail.breadcrumbProducts)}
-              </Link>
-              <span>/</span>
-              <span className="text-white">{name}</span>
-            </div>
+export default function CatalogProductDetailContent({
+  product,
+  relatedProducts = [],
+  attributeLabels = [],
+}: Props) {
+  const { lang } = useLanguage();
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const name = lang === 'en' ? product.name_en : product.name_cn;
+  const description = lang === 'en' ? product.description_en : product.description_cn;
+  const badge = lang === 'en' ? product.badge_en : product.badge_cn;
+  const features = lang === 'en' ? product.features_en : product.features_cn;
+  const keywords = (lang === 'en' ? product.keywords_en : product.keywords_zh) ?? [];
+  const fallbackKeywords = lang === 'en' ? product.tags_en : product.tags_cn;
+  const displayKeywords = keywords.length > 0 ? keywords : fallbackKeywords;
+  const price = (lang === 'en' ? product.price_display_en : product.price_display_zh)
+    || product.price_display_en
+    || product.price_display_zh
+    || 'Inquire for pricing';
+  const terms = product.commercial_terms ?? {};
+  const media = useMemo(() => uniqueImages([product.image, ...(product.gallery ?? [])]), [product.gallery, product.image]);
+  const activeImage = media[activeImageIndex] ?? media[0] ?? product.image;
+  const visibleModules = (product.detail_modules ?? [])
+    .filter((module) => module.is_visible !== false)
+    .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0));
+  const termRows = TERM_FIELDS
+    .map((field) => ({
+      label: field.key,
+      value: String((lang === 'en' ? terms[field.en] : terms[field.zh]) || terms[field.en] || terms[field.zh] || '').trim(),
+    }))
+    .filter((row) => row.value);
+
+  return (
+    <main className="bg-[#F7F8F8] text-[#1F2A31]">
+      <section className="border-b border-[#DADDE1] bg-white pt-28 sm:pt-32">
+        <div className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
+          <div className="mb-6 text-xs text-[#65707A]">
+            <Link href="/" className="hover:text-[#147C94]">Home</Link>
+            <span className="mx-2">/</span>
+            <Link href="/products" className="hover:text-[#147C94]">ALL Products</Link>
+            <span className="mx-2">/</span>
+            <span>{name}</span>
           </div>
-        </div>
 
-        <div className="absolute inset-x-0 bottom-0 z-20">
-          <div className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              {badge ? (
-                <span className="bg-[#E36F2C] px-2.5 py-1 text-[10px] font-bold tracking-wider text-white">
-                  {badge}
-                </span>
-              ) : null}
-              {product.isCustom ? (
-                <span className="border border-white/35 px-2.5 py-1 text-[10px] tracking-wider text-white/80">
-                  {lang === 'en' ? 'Custom Case' : '定制案例'}
-                </span>
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
+            <div className="min-w-0">
+              <div className="relative aspect-[4/3] overflow-hidden border border-[#DADDE1] bg-[#EEF1F3]">
+                <ProtectedImage
+                  src={activeImage}
+                  alt={name}
+                  fill
+                  priority
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 62vw"
+                />
+              </div>
+              {media.length > 1 ? (
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                  {media.map((src, index) => (
+                    <button
+                      key={`${src}-${index}`}
+                      type="button"
+                      onClick={() => setActiveImageIndex(index)}
+                      className={`relative h-16 w-20 shrink-0 overflow-hidden border-2 ${
+                        index === activeImageIndex ? 'border-[#147C94]' : 'border-[#DADDE1] opacity-70'
+                      }`}
+                      aria-label={`View image ${index + 1}`}
+                    >
+                      <ProtectedImage src={src} alt={`${name} thumbnail ${index + 1}`} fill className="object-cover" sizes="80px" />
+                    </button>
+                  ))}
+                </div>
               ) : null}
             </div>
-            <h1 className="max-w-5xl text-3xl font-black leading-tight tracking-normal text-white sm:text-5xl lg:text-6xl">
-              <span className="text-[#E36F2C]">VESSEL</span>
-              <span className="ml-3">{name}</span>
-            </h1>
-            {description ? (
-              <p className="mt-5 max-w-3xl whitespace-pre-line text-sm leading-8 text-white/78 sm:text-base">
-                {description}
-              </p>
-            ) : null}
+
+            <aside className="border border-[#DADDE1] bg-[#F7F8F8] p-5 lg:self-start">
+              {badge ? <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-[#C65F22]">{badge}</p> : null}
+              <h1 className="text-3xl font-black leading-tight tracking-normal text-[#1F2A31]">{name}</h1>
+              {description ? <p className="mt-4 whitespace-pre-line text-sm leading-7 text-[#5C6670]">{description}</p> : null}
+              <div className="mt-5 border-t border-[#DADDE1] pt-5">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#65707A]">Price</p>
+                <p className="mt-2 text-xl font-black text-[#C65F22]">{price}</p>
+              </div>
+              {termRows.length > 0 ? (
+                <div className="mt-5 border-t border-[#DADDE1] pt-5">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#65707A]">Business Terms</p>
+                  <dl className="mt-3 space-y-2">
+                    {termRows.map((row) => (
+                      <div key={row.label} className="grid grid-cols-[150px_minmax(0,1fr)] gap-3 text-sm">
+                        <dt className="text-[#65707A]">{row.label}</dt>
+                        <dd className="font-semibold text-[#1F2A31]">{row.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              ) : null}
+              <Link
+                href={CONTACT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 block bg-[#147C94] px-5 py-3 text-center text-sm font-bold uppercase tracking-[0.12em] text-white hover:bg-[#0E6479]"
+              >
+                Consult
+              </Link>
+            </aside>
           </div>
         </div>
       </section>
 
-      {quickStats.length > 0 ? (
-        <section className="border-b border-[#E5DED4] bg-[#241F1B]">
-          <div className="mx-auto grid max-w-7xl grid-cols-1 divide-y divide-white/10 px-4 sm:grid-cols-2 sm:divide-x sm:divide-y-0 sm:px-6 lg:grid-cols-4 lg:px-8">
-            {quickStats.map((item, index) => (
-              <div key={`${item.label}-${index}`} className="px-0 py-4 sm:px-5">
-                {item.value ? (
-                  <>
-                    <div className="text-[10px] uppercase tracking-[0.18em] text-white/50">{item.label}</div>
-                    <div className="mt-1 text-base font-bold tracking-normal text-white">{item.value}</div>
-                  </>
-                ) : (
-                  <div className="text-sm font-semibold leading-relaxed tracking-normal text-white">
-                    {item.label}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-11">
-            {media.length > 0 ? (
-              <section>
-                <div className="relative aspect-[4/3] overflow-hidden bg-[#111111]">
-                  <ProtectedImage
-                    src={activeImage}
-                    alt={`${name} ${activeImageIndex + 1}`}
-                    fill
-                    priority
-                    className="object-cover object-center"
-                    sizes="(max-width: 1024px) 100vw, 66vw"
-                  />
-                  {media.length > 1 ? (
-                    <div className="absolute bottom-3 right-3 z-20 bg-[#241F1B]/75 px-2.5 py-1 text-[10px] tracking-widest text-white/70">
-                      {Math.min(activeImageIndex + 1, media.length)} / {media.length}
-                    </div>
-                  ) : null}
-                </div>
-
-                {media.length > 1 ? (
-                  <div className="mt-2 flex gap-2 overflow-x-auto pb-2">
-                    {media.map((src, index) => (
-                      <button
-                        key={`${src}-${index}`}
-                        type="button"
-                        onClick={() => setActiveImageIndex(index)}
-                        aria-label={`${lang === 'en' ? 'View image' : '查看图片'} ${index + 1}`}
-                        className={`relative h-16 w-20 shrink-0 overflow-hidden border-2 transition-opacity sm:h-20 sm:w-24 ${
-                          index === activeImageIndex
-                            ? 'border-[#E36F2C] opacity-100'
-                            : 'border-[#E5DED4] opacity-60 hover:opacity-90'
-                        }`}
-                      >
-                        <ProtectedImage
-                          src={src}
-                          alt={`${name} thumbnail ${index + 1}`}
-                          fill
-                          className="object-cover"
-                          sizes="96px"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </section>
-            ) : null}
-
-            {tags.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="border border-[#E0DCD6] bg-[#FAF7F2] px-3 py-1.5 text-xs tracking-wider text-[#5F5750]"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-
+      <section className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
+        <div className="min-w-0 space-y-8">
+          <section className="border border-[#DADDE1] bg-white p-5">
+            <SectionTitle label="Product Description" title={name} />
+            {description ? <p className="whitespace-pre-line text-sm leading-8 text-[#5C6670]">{description}</p> : null}
             {features.length > 0 ? (
-              <section>
-                <SectionLabel label={lang === 'en' ? 'Key features' : '核心亮点'} />
-                <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {features.map((feature, index) => (
-                    <li key={`${feature}-${index}`} className="flex gap-3 border border-[#E5DED4] bg-[#FAF7F2] p-4">
-                      <span className="mt-0.5 text-sm text-[#E36F2C]">▸</span>
-                      <span className="text-sm leading-relaxed tracking-normal text-[#5A5A5A]">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-
-            {detailModules.length > 0 ? (
-              <div className="space-y-11">{detailModules.map(renderDetailModule)}</div>
-            ) : null}
-
-            {specRows.length > 0 ? (
-              <section>
-                <SectionLabel label={lang === 'en' ? 'Technical specs' : '规格参数'} />
-                <div className="grid grid-cols-1 border border-[#E5DED4] sm:grid-cols-2">
-                  {specRows.map(({ label, value }) => (
-                    <div key={`${label}-${value}`} className="border-b border-[#E5DED4] bg-white p-5 sm:border-r">
-                      <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-[#8A8580]">{label}</div>
-                      <div className="text-base font-bold leading-snug tracking-normal text-[#2C2A28]">{value}</div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ) : null}
-          </div>
-
-          <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
-            <div className="border border-[#E5DED4] bg-white p-6 shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
-              <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#E36F2C]">
-                {lang === 'en' ? 'Project quote' : '项目报价'}
-              </div>
-              <h2 className="text-2xl font-black leading-tight tracking-normal text-[#2C2A28]">
-                {lang === 'en' ? 'Inquire for project pricing' : '获取项目报价'}
-              </h2>
-              <p className="mt-4 text-sm leading-relaxed text-[#6B625B]">
-                {lang === 'en'
-                  ? 'Pricing depends on configuration, destination, quantity, and project requirements. Send your requirements to receive a project quote.'
-                  : '价格会根据配置、交付地、采购数量和项目要求核算。请提交需求，由顾问提供项目报价。'}
-              </p>
-            </div>
-
-            <div className="border border-[#E5DED4] bg-[#FAF7F2] p-5">
-              <div className="mb-4 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#E36F2C]">
-                {lang === 'en' ? 'Quick summary' : '产品概览'}
-              </div>
-              <dl className="space-y-3">
-                {specRows.slice(0, 5).map(({ label, value }) => (
-                  <div key={`${label}-${value}-side`} className="flex justify-between gap-4 border-b border-[#E5DED4] pb-3 text-sm last:border-b-0 last:pb-0">
-                    <dt className="shrink-0 text-[#8A8580]">{label}</dt>
-                    <dd className="text-right font-semibold text-[#2C2A28]">{value}</dd>
-                  </div>
+              <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {features.map((feature) => (
+                  <li key={feature} className="border border-[#ECEFF1] bg-[#F7F8F8] p-4 text-sm leading-6 text-[#1F2A31]">
+                    {feature}
+                  </li>
                 ))}
-              </dl>
-            </div>
+              </ul>
+            ) : null}
+          </section>
 
+          {visibleModules.map((module) => (
+            <DetailModuleBlock key={module.id} module={module} lang={lang} name={name} />
+          ))}
+
+          <section className="border border-[#DADDE1] bg-white p-5">
+            <SectionTitle label="Contact Us" title="Consult" />
+            <p className="text-sm leading-7 text-[#5C6670]">
+              Please send your project destination, quantity, configuration and delivery requirement. We will contact you as soon as possible.
+            </p>
             <Link
               href={CONTACT_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="block bg-[#E36F2C] py-4 text-center text-sm font-bold uppercase tracking-[0.2em] text-white transition-colors duration-200 hover:bg-[#C85A1F]"
+              className="mt-5 inline-flex bg-[#E36F2C] px-5 py-3 text-sm font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C65F22]"
             >
-              {lang === 'en' ? 'Inquire now' : '立即询价'}
+              Contact Us
             </Link>
-
-            <Link
-              href="/products"
-              className="block border border-[#E36F2C]/20 py-3 text-center text-xs font-semibold uppercase tracking-[0.2em] text-[#E36F2C]/80 transition-colors duration-200 hover:border-[#E36F2C]/50 hover:text-[#E36F2C]"
-            >
-              {t(i18n.productDetail.otherProducts)}
-            </Link>
-          </aside>
+          </section>
         </div>
-      </div>
+
+        <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
+          <div className="border border-[#DADDE1] bg-white p-5">
+            <SectionTitle label="Classification" title="Products" />
+            <div className="space-y-2 text-sm">
+              <Link href="/products" className="block text-[#147C94] hover:underline">ALL Products</Link>
+              {product.category_title_en || product.category_title_zh ? (
+                <p>{lang === 'en' ? product.category_title_en : product.category_title_zh}</p>
+              ) : null}
+              <p>{product.size}</p>
+              <p>{product.productSeries} / {product.gen}</p>
+              {attributeLabels.map((item) => (
+                <p key={`${item.template_slug}-${item.option_slug}`}>
+                  {lang === 'en' ? item.label_en : item.label_zh}
+                </p>
+              ))}
+            </div>
+          </div>
+
+          {displayKeywords.length > 0 ? (
+            <div className="border border-[#DADDE1] bg-white p-5">
+              <SectionTitle label="Key words" title="Keywords" />
+              <div className="flex flex-wrap gap-2">
+                {displayKeywords.map((keyword) => (
+                  <span key={keyword} className="border border-[#DADDE1] px-2.5 py-1 text-xs text-[#5C6670]">
+                    {keyword}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </aside>
+      </section>
+
+      {relatedProducts.length > 0 ? (
+        <section className="border-t border-[#DADDE1] bg-white py-10">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <SectionTitle label="Related Products" title="Related Products" />
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
+              {relatedProducts.map((item) => (
+                <RelatedCard key={item.id} product={item} />
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }

@@ -46,6 +46,9 @@ type ProductStats = {
   missingCategory: number
   missingSeo: number
   missingAttributes: number
+  missingCommercialTerms: number
+  missingKeywords: number
+  missingRelatedProducts: number
   deleted: number
   categories: number
   attributes: number
@@ -89,6 +92,9 @@ const EMPTY_PRODUCT_STATS: ProductStats = {
   missingCategory: 0,
   missingSeo: 0,
   missingAttributes: 0,
+  missingCommercialTerms: 0,
+  missingKeywords: 0,
+  missingRelatedProducts: 0,
   deleted: 0,
   categories: 0,
   attributes: 0,
@@ -168,6 +174,22 @@ async function getProductStats(): Promise<ProductStats> {
              WHERE pav.product_id = product_catalog.id
            )
        )::text AS "missingAttributes",
+       COUNT(*) FILTER (
+         WHERE deleted_at IS NULL
+           AND (
+             commercial_terms IS NULL
+             OR commercial_terms = '{}'::jsonb
+           )
+       )::text AS "missingCommercialTerms",
+       COUNT(*) FILTER (
+         WHERE deleted_at IS NULL
+           AND COALESCE(cardinality(keywords_zh), 0) = 0
+           AND COALESCE(cardinality(keywords_en), 0) = 0
+       )::text AS "missingKeywords",
+       COUNT(*) FILTER (
+         WHERE deleted_at IS NULL
+           AND COALESCE(cardinality(related_product_ids), 0) = 0
+       )::text AS "missingRelatedProducts",
        COUNT(*) FILTER (WHERE deleted_at IS NOT NULL)::text AS deleted
      FROM product_catalog`,
     ),
@@ -195,6 +217,9 @@ async function getProductStats(): Promise<ProductStats> {
     missingCategory: parseCount(row?.missingCategory),
     missingSeo: parseCount(row?.missingSeo),
     missingAttributes: parseCount(row?.missingAttributes),
+    missingCommercialTerms: parseCount(row?.missingCommercialTerms),
+    missingKeywords: parseCount(row?.missingKeywords),
+    missingRelatedProducts: parseCount(row?.missingRelatedProducts),
     deleted: parseCount(row?.deleted),
     categories: categories.length,
     attributes: attributes.length,
@@ -254,6 +279,9 @@ function getTodoCount(stats: ProductStats): number {
     stats.missingCategory,
     stats.missingAttributes,
     stats.missingSeo,
+    stats.missingCommercialTerms,
+    stats.missingKeywords,
+    stats.missingRelatedProducts,
   ].filter((count) => count > 0).length
 }
 
@@ -358,6 +386,27 @@ function getTodoEntries(stats: ProductStats): TodoEntry[] {
       count: stats.missingAttributes,
       href: '/admin/content/products/list?view=incomplete&issue=attributes',
       Icon: SlidersHorizontal,
+    },
+    {
+      title: 'Missing business terms',
+      detail: 'Price or trade terms need 300-style detail copy',
+      count: stats.missingCommercialTerms,
+      href: '/admin/content/products/list?view=incomplete&issue=commercial',
+      Icon: FileText,
+    },
+    {
+      title: 'Missing keywords',
+      detail: 'Product detail pages need search keywords',
+      count: stats.missingKeywords,
+      href: '/admin/content/products/list?view=incomplete&issue=keywords',
+      Icon: Tags,
+    },
+    {
+      title: 'Missing related products',
+      detail: 'Product detail pages need related product picks',
+      count: stats.missingRelatedProducts,
+      href: '/admin/content/products/list?view=incomplete&issue=related',
+      Icon: Package,
     },
     {
       title: '缺 SEO',

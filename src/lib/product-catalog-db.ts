@@ -2,6 +2,7 @@ import { pool } from '@/lib/db'
 import {
   catalogProducts,
   type CatalogProduct,
+  type CatalogCommercialTerms,
   type CatalogDetailModule,
   type CatalogSpecItem,
   type ProductSeriesCode,
@@ -57,6 +58,15 @@ export type ProductAttributeOptionRow = {
   product_count?: number
 }
 
+export type ProductAttributeLabel = {
+  template_slug: string
+  template_title_zh: string
+  template_title_en: string
+  option_slug: string
+  label_zh: string
+  label_en: string
+}
+
 export type ProductAttributeTemplateWithOptions = ProductAttributeTemplateRow & {
   options: ProductAttributeOptionRow[]
 }
@@ -66,6 +76,12 @@ export type CatalogProductRow = CatalogProduct & {
   category_slug: string | null
   category_title_zh: string | null
   category_title_en: string | null
+  price_display_zh: string | null
+  price_display_en: string | null
+  commercial_terms: CatalogCommercialTerms | null
+  keywords_zh: string[]
+  keywords_en: string[]
+  related_product_ids: string[]
   seo_title_zh: string | null
   seo_title_en: string | null
   seo_description_zh: string | null
@@ -113,6 +129,12 @@ export type CatalogProductInput = {
   isCustom: boolean
   detailSlug?: string | null
   category_id?: number | null
+  price_display_zh?: string | null
+  price_display_en?: string | null
+  commercial_terms?: CatalogCommercialTerms | null
+  keywords_zh?: string[]
+  keywords_en?: string[]
+  related_product_ids?: string[]
   seo_title_zh?: string | null
   seo_title_en?: string | null
   seo_description_zh?: string | null
@@ -190,6 +212,12 @@ function rowToCatalogProduct(row: {
   category_slug?: string | null
   category_title_zh?: string | null
   category_title_en?: string | null
+  price_display_zh?: string | null
+  price_display_en?: string | null
+  commercial_terms?: CatalogCommercialTerms | null
+  keywords_zh?: string[] | null
+  keywords_en?: string[] | null
+  related_product_ids?: string[] | null
   seo_title_zh: string | null
   seo_title_en: string | null
   seo_description_zh: string | null
@@ -230,6 +258,12 @@ function rowToCatalogProduct(row: {
     category_slug: row.category_slug ?? null,
     category_title_zh: row.category_title_zh ?? null,
     category_title_en: row.category_title_en ?? null,
+    price_display_zh: row.price_display_zh ?? null,
+    price_display_en: row.price_display_en ?? null,
+    commercial_terms: row.commercial_terms ?? null,
+    keywords_zh: row.keywords_zh ?? [],
+    keywords_en: row.keywords_en ?? [],
+    related_product_ids: row.related_product_ids ?? [],
     seo_title_zh: row.seo_title_zh ?? null,
     seo_title_en: row.seo_title_en ?? null,
     seo_description_zh: row.seo_description_zh ?? null,
@@ -248,6 +282,8 @@ const COLUMNS = `
   product_type, badge_cn, badge_en, tags_cn, tags_en, features_cn, features_en,
   image, description_cn, description_en, gallery, specs_cn, specs_en,
   detail_modules, is_custom, detail_slug, category_id,
+  price_display_zh, price_display_en, commercial_terms, keywords_zh, keywords_en,
+  related_product_ids,
   seo_title_zh, seo_title_en, seo_description_zh, seo_description_en,
   status, sort_order,
   created_at::text AS created_at,
@@ -352,6 +388,70 @@ const DEFAULT_PRODUCT_ATTRIBUTE_TEMPLATES: (CreateProductAttributeTemplateInput 
       { slug: 'flagship', label_zh: '旗舰配置', label_en: 'Flagship', sort_order: 30 },
     ],
   },
+  {
+    slug: 'default-configuration',
+    title_zh: '默认配置',
+    title_en: 'Default Configuration',
+    description_zh: '对齐 300 产品目录左侧默认配置筛选。',
+    description_en: 'Matches the 300 product directory Default Configuration filter.',
+    sort_order: 60,
+    options: [
+      { slug: 'chn-standard', label_zh: 'CHN 国标版', label_en: 'CHN Standard', sort_order: 10 },
+      { slug: 'pro-full', label_zh: 'Pro 满配版', label_en: 'Pro Full Configuration', sort_order: 20 },
+      { slug: 'resort-flagship', label_zh: 'Resort 旗舰版', label_en: 'Resort Flagship', sort_order: 30 },
+    ],
+  },
+  {
+    slug: 'product-configuration',
+    title_zh: '热销配置',
+    title_en: 'Product Configuration',
+    description_zh: '对齐 300 产品目录热销配置筛选。',
+    description_en: 'Matches the 300 product directory Product Configuration filter.',
+    sort_order: 70,
+    options: [
+      { slug: 'chn-standard', label_zh: 'CHN国标版', label_en: 'CHN Standard', sort_order: 10 },
+      { slug: 'pro-full', label_zh: 'Pro 满配版', label_en: 'Pro Full Configuration', sort_order: 20 },
+      { slug: 'resort-flagship', label_zh: 'Resort 旗舰版', label_en: 'Resort Flagship', sort_order: 30 },
+    ],
+  },
+  {
+    slug: 'area',
+    title_zh: '面积',
+    title_en: 'Area',
+    description_zh: '对齐 300 产品目录面积筛选。',
+    description_en: 'Matches the 300 product directory Area filter.',
+    sort_order: 80,
+    options: [
+      { slug: '6-19', label_zh: '6-19㎡', label_en: '6-19 sqm', sort_order: 10 },
+      { slug: '20-29', label_zh: '20-29㎡', label_en: '20-29 sqm', sort_order: 20 },
+      { slug: '30-39', label_zh: '30-39㎡', label_en: '30-39 sqm', sort_order: 30 },
+      { slug: '40-99', label_zh: '40㎡-99㎡', label_en: '40-99 sqm', sort_order: 40 },
+      { slug: '100-above', label_zh: '100㎡ Above', label_en: '100 sqm Above', sort_order: 50 },
+    ],
+  },
+  {
+    slug: 'country',
+    title_zh: '国家',
+    title_en: 'Country',
+    description_zh: '对齐 300 产品目录国家筛选。',
+    description_en: 'Matches the 300 product directory Country filter.',
+    sort_order: 90,
+    options: [
+      { slug: 'china', label_zh: 'China 中国', label_en: 'China', sort_order: 10 },
+      { slug: 'us', label_zh: 'US 美国', label_en: 'US', sort_order: 20 },
+      { slug: 'japan', label_zh: 'Japan 日本', label_en: 'Japan', sort_order: 30 },
+      { slug: 'mexico', label_zh: 'Mexico 墨西哥', label_en: 'Mexico', sort_order: 40 },
+      { slug: 'new-zealand', label_zh: 'New Zealand 新西兰', label_en: 'New Zealand', sort_order: 50 },
+      { slug: 'saudi-arabia', label_zh: 'Saudi Arabia 沙特', label_en: 'Saudi Arabia', sort_order: 60 },
+      { slug: 'russia', label_zh: 'Russia 俄罗斯', label_en: 'Russia', sort_order: 70 },
+      { slug: 'slovakia', label_zh: 'Slovakia 斯洛伐克', label_en: 'Slovakia', sort_order: 80 },
+      { slug: 'uk', label_zh: 'UK 英国', label_en: 'UK', sort_order: 90 },
+      { slug: 'argentina', label_zh: 'Argentina 阿根廷', label_en: 'Argentina', sort_order: 100 },
+      { slug: 'thailand', label_zh: 'Thailand 泰国', label_en: 'Thailand', sort_order: 110 },
+      { slug: 'israel', label_zh: 'Israel 以色列', label_en: 'Israel', sort_order: 120 },
+      { slug: 'pakistan', label_zh: 'Pakistan 巴基斯坦', label_en: 'Pakistan', sort_order: 130 },
+    ],
+  },
 ]
 
 async function seedCatalogProductsIfEmpty() {
@@ -430,24 +530,12 @@ async function seedProductCategoriesIfEmpty() {
 }
 
 async function seedProductAttributeTemplatesIfEmpty() {
-  const countRes = await pool.query<{ count: string }>(
-    `SELECT COUNT(*)::text AS count FROM product_attribute_templates WHERE deleted_at IS NULL`,
-  )
-  if (parseInt(countRes.rows[0]?.count ?? '0', 10) > 0) return
-
   for (const template of DEFAULT_PRODUCT_ATTRIBUTE_TEMPLATES) {
     const templateRes = await pool.query<{ id: number }>(
       `INSERT INTO product_attribute_templates
          (slug, title_zh, title_en, description_zh, description_en, sort_order, status)
        VALUES ($1, $2, $3, $4, $5, $6, 'visible')
-       ON CONFLICT (slug) DO UPDATE
-          SET title_zh = EXCLUDED.title_zh,
-              title_en = EXCLUDED.title_en,
-              description_zh = EXCLUDED.description_zh,
-              description_en = EXCLUDED.description_en,
-              sort_order = EXCLUDED.sort_order,
-              updated_at = NOW()
-       WHERE product_attribute_templates.deleted_at IS NULL
+       ON CONFLICT (slug) DO NOTHING
        RETURNING id`,
       [
         template.slug,
@@ -458,7 +546,17 @@ async function seedProductAttributeTemplatesIfEmpty() {
         template.sort_order ?? 100,
       ],
     )
-    const templateId = templateRes.rows[0]?.id
+    let templateId = templateRes.rows[0]?.id
+    if (!templateId) {
+      const existingRes = await pool.query<{ id: number }>(
+        `SELECT id
+         FROM product_attribute_templates
+         WHERE slug = $1 AND deleted_at IS NULL
+         LIMIT 1`,
+        [template.slug],
+      )
+      templateId = existingRes.rows[0]?.id
+    }
     if (!templateId) continue
 
     for (const option of template.options) {
@@ -466,12 +564,7 @@ async function seedProductAttributeTemplatesIfEmpty() {
         `INSERT INTO product_attribute_options
            (template_id, slug, label_zh, label_en, sort_order, status)
          VALUES ($1, $2, $3, $4, $5, 'visible')
-         ON CONFLICT (template_id, slug) DO UPDATE
-            SET label_zh = EXCLUDED.label_zh,
-                label_en = EXCLUDED.label_en,
-                sort_order = EXCLUDED.sort_order,
-                updated_at = NOW()
-         WHERE product_attribute_options.deleted_at IS NULL`,
+         ON CONFLICT (template_id, slug) DO NOTHING`,
         [
           templateId,
           option.slug,
@@ -529,6 +622,12 @@ export async function ensureProductCatalogSchema() {
         is_custom      BOOLEAN     NOT NULL DEFAULT FALSE,
         detail_slug    TEXT,
         category_id    INTEGER,
+        price_display_zh VARCHAR(160),
+        price_display_en VARCHAR(160),
+        commercial_terms JSONB     NOT NULL DEFAULT '{}',
+        keywords_zh    TEXT[]      NOT NULL DEFAULT '{}',
+        keywords_en    TEXT[]      NOT NULL DEFAULT '{}',
+        related_product_ids TEXT[] NOT NULL DEFAULT '{}',
         seo_title_zh   VARCHAR(160),
         seo_title_en   VARCHAR(160),
         seo_description_zh VARCHAR(300),
@@ -591,6 +690,12 @@ export async function ensureProductCatalogSchema() {
         ADD COLUMN IF NOT EXISTS specs_en JSONB NOT NULL DEFAULT '[]',
         ADD COLUMN IF NOT EXISTS detail_modules JSONB NOT NULL DEFAULT '[]',
         ADD COLUMN IF NOT EXISTS category_id INTEGER,
+        ADD COLUMN IF NOT EXISTS price_display_zh VARCHAR(160),
+        ADD COLUMN IF NOT EXISTS price_display_en VARCHAR(160),
+        ADD COLUMN IF NOT EXISTS commercial_terms JSONB NOT NULL DEFAULT '{}',
+        ADD COLUMN IF NOT EXISTS keywords_zh TEXT[] NOT NULL DEFAULT '{}',
+        ADD COLUMN IF NOT EXISTS keywords_en TEXT[] NOT NULL DEFAULT '{}',
+        ADD COLUMN IF NOT EXISTS related_product_ids TEXT[] NOT NULL DEFAULT '{}',
         ADD COLUMN IF NOT EXISTS seo_title_zh VARCHAR(160),
         ADD COLUMN IF NOT EXISTS seo_title_en VARCHAR(160),
         ADD COLUMN IF NOT EXISTS seo_description_zh VARCHAR(300),
@@ -721,6 +826,64 @@ export async function getPublicCatalogProductBySlug(slug: string): Promise<Catal
   return rows[0] ? rowToCatalogProduct(rows[0]) : null
 }
 
+export async function listPublicRelatedCatalogProducts(
+  ids: string[] | undefined,
+  currentId?: string,
+  limit = 12,
+): Promise<CatalogProduct[]> {
+  await ensureProductCatalogSchema()
+  const orderedIds = Array.from(new Set((ids ?? []).map((id) => id.trim()).filter(Boolean)))
+    .filter((id) => id !== currentId)
+    .slice(0, Math.max(1, limit))
+
+  if (orderedIds.length === 0) {
+    const { rows } = await pool.query(
+      `SELECT ${COLUMNS} FROM product_catalog
+       WHERE status = 'published' AND deleted_at IS NULL
+         AND ($1::text IS NULL OR id <> $1)
+       ORDER BY sort_order ASC, updated_at DESC
+       LIMIT $2`,
+      [currentId ?? null, limit],
+    )
+    return rows.map(rowToCatalogProduct)
+  }
+
+  const { rows } = await pool.query(
+    `SELECT ${COLUMNS} FROM product_catalog
+     WHERE status = 'published'
+       AND deleted_at IS NULL
+       AND id = ANY($1::text[])
+     ORDER BY array_position($1::text[], id) ASC
+     LIMIT $2`,
+    [orderedIds, limit],
+  )
+  return rows.map(rowToCatalogProduct)
+}
+
+export async function listProductAttributeLabelsForProduct(productId: string): Promise<ProductAttributeLabel[]> {
+  await ensureProductCatalogSchema()
+  const { rows } = await pool.query<ProductAttributeLabel>(
+    `SELECT
+       t.slug AS template_slug,
+       t.title_zh AS template_title_zh,
+       t.title_en AS template_title_en,
+       o.slug AS option_slug,
+       o.label_zh,
+       o.label_en
+     FROM product_attribute_values pav
+     JOIN product_attribute_templates t
+       ON t.id = pav.template_id
+      AND t.deleted_at IS NULL
+     JOIN product_attribute_options o
+       ON o.id = pav.option_id
+      AND o.deleted_at IS NULL
+     WHERE pav.product_id = $1
+     ORDER BY t.sort_order ASC, o.sort_order ASC, o.id ASC`,
+    [productId],
+  )
+  return rows
+}
+
 export async function listCatalogProducts(filter: ListCatalogProductsFilter) {
   await ensureProductCatalogSchema()
   const { where, params } = buildWhere(filter)
@@ -802,6 +965,8 @@ export async function createCatalogProduct(input: CatalogProductInput) {
        product_type, badge_cn, badge_en, tags_cn, tags_en, features_cn, features_en,
        image, description_cn, description_en, gallery, specs_cn, specs_en,
        detail_modules, is_custom, detail_slug, category_id,
+       price_display_zh, price_display_en, commercial_terms, keywords_zh, keywords_en,
+       related_product_ids,
        seo_title_zh, seo_title_en, seo_description_zh, seo_description_en,
        status, sort_order
      ) VALUES (
@@ -809,8 +974,10 @@ export async function createCatalogProduct(input: CatalogProductInput) {
        $9, $10, $11, $12, $13, $14, $15,
        $16, $17, $18, $19, $20, $21,
        $22, $23, $24, $25,
-       $26, $27, $28, $29,
-       $30, $31
+       $26, $27, $28::jsonb, $29::text[], $30::text[],
+       $31::text[],
+       $32, $33, $34, $35,
+       $36, $37
      )
      RETURNING ${COLUMNS}`,
     [
@@ -839,6 +1006,12 @@ export async function createCatalogProduct(input: CatalogProductInput) {
       input.isCustom,
       input.detailSlug || null,
       input.category_id ?? null,
+      input.price_display_zh ?? null,
+      input.price_display_en ?? null,
+      JSON.stringify(input.commercial_terms ?? {}),
+      input.keywords_zh ?? [],
+      input.keywords_en ?? [],
+      input.related_product_ids ?? [],
       input.seo_title_zh ?? null,
       input.seo_title_en ?? null,
       input.seo_description_zh ?? null,
@@ -884,6 +1057,12 @@ export async function updateCatalogProduct(id: string, input: UpdateCatalogProdu
     ['isCustom', 'is_custom', (v) => v],
     ['detailSlug', 'detail_slug', (v) => v || null],
     ['category_id', 'category_id', (v) => v ?? null],
+    ['price_display_zh', 'price_display_zh', (v) => v || null],
+    ['price_display_en', 'price_display_en', (v) => v || null],
+    ['commercial_terms', 'commercial_terms', (v) => JSON.stringify(v ?? {})],
+    ['keywords_zh', 'keywords_zh', (v) => Array.isArray(v) ? v : []],
+    ['keywords_en', 'keywords_en', (v) => Array.isArray(v) ? v : []],
+    ['related_product_ids', 'related_product_ids', (v) => Array.isArray(v) ? v : []],
     ['seo_title_zh', 'seo_title_zh', (v) => v || null],
     ['seo_title_en', 'seo_title_en', (v) => v || null],
     ['seo_description_zh', 'seo_description_zh', (v) => v || null],

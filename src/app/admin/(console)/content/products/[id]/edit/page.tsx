@@ -7,6 +7,7 @@ import { defaultSiteSettings, normalizeMediaMaxUploadMb } from '@/lib/admin-sett
 import { pool } from '@/lib/db'
 import {
   ensureProductCatalogSchema,
+  listCatalogProducts,
   listProductAttributeOptionIds,
   listProductAttributeTemplatesWithOptions,
   listProductCategories,
@@ -78,6 +79,12 @@ type ProductDbRow = {
   is_custom: boolean
   detail_slug: string | null
   category_id: number | null
+  price_display_zh: string | null
+  price_display_en: string | null
+  commercial_terms: CatalogProductRow['commercial_terms']
+  keywords_zh: string[] | null
+  keywords_en: string[] | null
+  related_product_ids: string[] | null
   seo_title_zh: string | null
   seo_title_en: string | null
   seo_description_zh: string | null
@@ -112,6 +119,20 @@ const EDIT_SECTIONS: EditSection[] = [
     detail: '搜索标题、搜索摘要',
     href: '#seo',
     Icon: SearchCheck,
+  },
+  {
+    key: 'commercial',
+    title: 'Business Terms',
+    detail: 'Price display and 300-style trade terms',
+    href: '#commercial',
+    Icon: FileText,
+  },
+  {
+    key: 'relations',
+    title: 'Keywords / Related',
+    detail: 'Keywords and related product picks',
+    href: '#relations',
+    Icon: Tags,
   },
   {
     key: 'attributes',
@@ -202,6 +223,12 @@ function rowToProduct(row: ProductDbRow): CatalogProductRow {
     detail_modules: row.detail_modules ?? [],
     isCustom: row.is_custom,
     detailSlug: row.detail_slug ?? undefined,
+    price_display_zh: row.price_display_zh ?? null,
+    price_display_en: row.price_display_en ?? null,
+    commercial_terms: row.commercial_terms ?? null,
+    keywords_zh: row.keywords_zh ?? [],
+    keywords_en: row.keywords_en ?? [],
+    related_product_ids: row.related_product_ids ?? [],
     category_id: row.category_id ?? null,
     category_slug: null,
     category_title_zh: null,
@@ -250,6 +277,12 @@ async function getProductReadOnly(id: string): Promise<CatalogProductRow | null>
        is_custom,
        detail_slug,
        category_id,
+       price_display_zh,
+       price_display_en,
+       COALESCE(commercial_terms, '{}'::jsonb) AS commercial_terms,
+       COALESCE(keywords_zh, ARRAY[]::text[]) AS keywords_zh,
+       COALESCE(keywords_en, ARRAY[]::text[]) AS keywords_en,
+       COALESCE(related_product_ids, ARRAY[]::text[]) AS related_product_ids,
        seo_title_zh,
        seo_title_en,
        seo_description_zh,
@@ -447,7 +480,7 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
   }
 
   const { id } = await params
-  const [product, maxUploadMb, categories, attributeTemplates, brands, marks, showcases] = await Promise.all([
+  const [product, maxUploadMb, categories, attributeTemplates, brands, marks, showcases, relatedProducts] = await Promise.all([
     getProductReadOnly(id).catch((err) => {
       console.error('[admin-content-product-edit] load product failed', err)
       return null
@@ -475,6 +508,10 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
     listProductShowcases({ includeHidden: true }).catch((err) => {
       console.error('[admin-content-product-edit] load product showcases failed', err)
       return []
+    }),
+    listCatalogProducts({ limit: 300, offset: 0 }).catch((err) => {
+      console.error('[admin-content-product-edit] load related products failed', err)
+      return { rows: [], total: 0 }
     }),
   ])
 
@@ -509,6 +546,7 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
           brands={brands}
           marks={marks}
           showcases={showcases}
+          relatedProductOptions={relatedProducts.rows}
         />
       </section>
     </AdminSectionShell>

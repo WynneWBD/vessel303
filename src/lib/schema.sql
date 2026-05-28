@@ -79,6 +79,12 @@ CREATE TABLE IF NOT EXISTS product_catalog (
   is_custom      BOOLEAN     NOT NULL DEFAULT FALSE,
   detail_slug    TEXT,
   category_id    INTEGER REFERENCES product_categories(id) ON DELETE SET NULL,
+  price_display_zh VARCHAR(160),
+  price_display_en VARCHAR(160),
+  commercial_terms JSONB     NOT NULL DEFAULT '{}',
+  keywords_zh    TEXT[]      NOT NULL DEFAULT '{}',
+  keywords_en    TEXT[]      NOT NULL DEFAULT '{}',
+  related_product_ids TEXT[] NOT NULL DEFAULT '{}',
   seo_title_zh   VARCHAR(160),
   seo_title_en   VARCHAR(160),
   seo_description_zh VARCHAR(300),
@@ -101,6 +107,14 @@ CREATE INDEX IF NOT EXISTS idx_product_catalog_detail_slug
 CREATE INDEX IF NOT EXISTS idx_product_catalog_category_id
   ON product_catalog (category_id)
   WHERE deleted_at IS NULL;
+
+ALTER TABLE product_catalog
+  ADD COLUMN IF NOT EXISTS price_display_zh VARCHAR(160),
+  ADD COLUMN IF NOT EXISTS price_display_en VARCHAR(160),
+  ADD COLUMN IF NOT EXISTS commercial_terms JSONB NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS keywords_zh TEXT[] NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS keywords_en TEXT[] NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS related_product_ids TEXT[] NOT NULL DEFAULT '{}';
 
 CREATE TABLE IF NOT EXISTS product_attribute_templates (
   id              SERIAL PRIMARY KEY,

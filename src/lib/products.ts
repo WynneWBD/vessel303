@@ -539,6 +539,23 @@ export interface CatalogDetailModule {
   sort_order: number;
 }
 
+export interface CatalogCommercialTerms {
+  delivery_method_zh?: string;
+  delivery_method_en?: string;
+  shipping_location_zh?: string;
+  shipping_location_en?: string;
+  payment_terms_zh?: string;
+  payment_terms_en?: string;
+  delivery_time_zh?: string;
+  delivery_time_en?: string;
+  electrical_standard_zh?: string;
+  electrical_standard_en?: string;
+  warranty_support_zh?: string;
+  warranty_support_en?: string;
+  moq_zh?: string;
+  moq_en?: string;
+}
+
 export interface CatalogProduct {
   id: string;
   productSeries: ProductSeriesCode;
@@ -565,10 +582,17 @@ export interface CatalogProduct {
   isCustom: boolean;
   /** If set, "查看详情" links to /products/{detailSlug}; otherwise links to /contact */
   detailSlug?: string;
+  price_display_zh?: string | null;
+  price_display_en?: string | null;
+  commercial_terms?: CatalogCommercialTerms | null;
+  keywords_zh?: string[];
+  keywords_en?: string[];
+  related_product_ids?: string[];
   category_id?: number | null;
   category_slug?: string | null;
   category_title_zh?: string | null;
   category_title_en?: string | null;
+  attribute_option_ids?: number[];
   seo_title_zh?: string | null;
   seo_title_en?: string | null;
   seo_description_zh?: string | null;

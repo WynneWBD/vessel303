@@ -26,6 +26,22 @@ const statusValues = ['draft', 'published'] as const
 const seriesValues = ['E3', 'E5', 'E6', 'E7', 'V3', 'V5', 'V7', 'V9', 'S5'] as const
 const productTypeValues = ['compact', 'standard', 'luxury'] as const
 const detailModuleTypeValues = ['highlights', 'scenarios', 'faq', 'content', 'customization'] as const
+const commercialTermsSchema = z.object({
+  delivery_method_zh: z.string().max(160).optional(),
+  delivery_method_en: z.string().max(160).optional(),
+  shipping_location_zh: z.string().max(160).optional(),
+  shipping_location_en: z.string().max(160).optional(),
+  payment_terms_zh: z.string().max(220).optional(),
+  payment_terms_en: z.string().max(220).optional(),
+  delivery_time_zh: z.string().max(160).optional(),
+  delivery_time_en: z.string().max(160).optional(),
+  electrical_standard_zh: z.string().max(160).optional(),
+  electrical_standard_en: z.string().max(160).optional(),
+  warranty_support_zh: z.string().max(220).optional(),
+  warranty_support_en: z.string().max(220).optional(),
+  moq_zh: z.string().max(80).optional(),
+  moq_en: z.string().max(80).optional(),
+})
 const specItemSchema = z.object({
   label: z.string().min(1).max(80),
   value: z.string().min(1).max(160),
@@ -90,6 +106,12 @@ const patchSchema = z.object({
   detail_modules: z.array(detailModuleSchema).max(16).optional(),
   isCustom: z.boolean().optional(),
   detailSlug: detailSlugSchema,
+  price_display_zh: z.string().max(160).nullable().optional(),
+  price_display_en: z.string().max(160).nullable().optional(),
+  commercial_terms: commercialTermsSchema.optional(),
+  keywords_zh: z.array(z.string().min(1).max(80)).max(30).optional(),
+  keywords_en: z.array(z.string().min(1).max(80)).max(30).optional(),
+  related_product_ids: z.array(z.string().min(1).max(160)).max(24).optional(),
   category_id: z.number().int().positive().nullable().optional(),
   brand_id: z.number().int().positive().nullable().optional(),
   mark_ids: z.array(z.number().int().positive()).max(80).optional(),

@@ -6,7 +6,12 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { getProductBySlug } from '@/lib/db-products';
 import { catalogProducts } from '@/lib/products';
-import { getPublicCatalogProductBySlug, isReservedProductId } from '@/lib/product-catalog-db';
+import {
+  getPublicCatalogProductBySlug,
+  isReservedProductId,
+  listProductAttributeLabelsForProduct,
+  listPublicRelatedCatalogProducts,
+} from '@/lib/product-catalog-db';
 import { auth } from '@/auth';
 import ProductDetailContent from '@/components/pages/ProductDetailContent';
 import CatalogProductDetailContent from '@/components/pages/CatalogProductDetailContent';
@@ -74,13 +79,25 @@ export default async function ProductDetailPage({
     catalogProduct = findStaticCatalogProduct(slug);
   }
   if (catalogProduct) {
-    const session = await auth();
+    const [session, relatedProducts, attributeLabels] = await Promise.all([
+      auth(),
+      listPublicRelatedCatalogProducts(catalogProduct.related_product_ids, catalogProduct.id).catch((err) => {
+        console.error('[products/detail] load related products failed', err);
+        return [];
+      }),
+      listProductAttributeLabelsForProduct(catalogProduct.id).catch((err) => {
+        console.error('[products/detail] load attribute labels failed', err);
+        return [];
+      }),
+    ]);
     return (
       <>
         <Navbar />
         <CatalogProductDetailContent
           product={catalogProduct}
           isLoggedIn={!!session?.user}
+          relatedProducts={relatedProducts}
+          attributeLabels={attributeLabels}
         />
         <Footer />
       </>

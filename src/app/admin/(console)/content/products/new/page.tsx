@@ -5,7 +5,7 @@ import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/Ad
 import ProductForm from '@/components/admin/ProductForm'
 import { defaultSiteSettings, normalizeMediaMaxUploadMb } from '@/lib/admin-settings-db'
 import { pool } from '@/lib/db'
-import { listProductAttributeTemplatesWithOptions, listProductCategories } from '@/lib/product-catalog-db'
+import { listCatalogProducts, listProductAttributeTemplatesWithOptions, listProductCategories } from '@/lib/product-catalog-db'
 import { listProductBrands, listProductMarks, listProductShowcases } from '@/lib/product-operations-db'
 import {
   AlertTriangle,
@@ -52,6 +52,20 @@ const EDIT_SECTIONS: EditSection[] = [
     detail: '搜索标题、搜索摘要',
     href: '#seo',
     Icon: SearchCheck,
+  },
+  {
+    key: 'commercial',
+    title: 'Business Terms',
+    detail: 'Price display and 300-style trade terms',
+    href: '#commercial',
+    Icon: FileText,
+  },
+  {
+    key: 'relations',
+    title: 'Keywords / Related',
+    detail: 'Keywords and related product picks',
+    href: '#relations',
+    Icon: Tags,
   },
   {
     key: 'attributes',
@@ -244,7 +258,7 @@ export default async function AdminContentProductNewPage() {
     console.error('[admin-content-product-new] load media limit failed', err)
     return defaultSiteSettings.mediaMaxUploadMb
   })
-  const [categories, attributeTemplates, brands, marks, showcases] = await Promise.all([
+  const [categories, attributeTemplates, brands, marks, showcases, relatedProducts] = await Promise.all([
     listProductCategories({ includeHidden: true }).catch((err) => {
       console.error('[admin-content-product-new] load product categories failed', err)
       return []
@@ -264,6 +278,10 @@ export default async function AdminContentProductNewPage() {
     listProductShowcases({ includeHidden: true }).catch((err) => {
       console.error('[admin-content-product-new] load product showcases failed', err)
       return []
+    }),
+    listCatalogProducts({ limit: 300, offset: 0 }).catch((err) => {
+      console.error('[admin-content-product-new] load related products failed', err)
+      return { rows: [], total: 0 }
     }),
   ])
   const adminRole: AdminRole = role
@@ -295,6 +313,7 @@ export default async function AdminContentProductNewPage() {
           brands={brands}
           marks={marks}
           showcases={showcases}
+          relatedProductOptions={relatedProducts.rows}
         />
       </section>
     </AdminSectionShell>

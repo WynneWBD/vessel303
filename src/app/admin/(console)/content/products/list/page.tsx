@@ -51,7 +51,7 @@ const PAGE_SIZE = 50
 type AdminRole = 'admin' | 'operator'
 type ProductStatus = 'draft' | 'published'
 type ProductView = '' | 'incomplete'
-type ProductIssue = '' | 'media' | 'content' | 'category' | 'attributes' | 'seo'
+type ProductIssue = '' | 'media' | 'content' | 'category' | 'attributes' | 'seo' | 'commercial' | 'keywords' | 'related'
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -108,6 +108,12 @@ type ProductListRow = {
   attribute_labels_zh: string[] | null
   mark_labels_zh: string[] | null
   showcase_titles_zh: string[] | null
+  price_display_zh: string | null
+  price_display_en: string | null
+  commercial_terms: Record<string, string> | null
+  keywords_zh: string[] | null
+  keywords_en: string[] | null
+  related_product_ids: string[] | null
   seo_title_zh: string | null
   seo_title_en: string | null
   seo_description_zh: string | null
@@ -171,6 +177,9 @@ const PRODUCT_ISSUE_OPTIONS: { value: ProductIssue; label: string }[] = [
   { value: 'category', label: '未分类' },
   { value: 'attributes', label: '缺属性' },
   { value: 'seo', label: '缺 SEO' },
+  { value: 'commercial', label: 'Missing business terms' },
+  { value: 'keywords', label: 'Missing keywords' },
+  { value: 'related', label: 'Missing related products' },
 ]
 
 const PRIORITY_ISSUES = ['缺封面', '缺图库', '未分类', '缺 SEO']
@@ -194,6 +203,13 @@ const PRODUCT_INCOMPLETE_SQL = `(
   OR NULLIF(BTRIM(COALESCE(seo_title_en, '')), '') IS NULL
   OR NULLIF(BTRIM(COALESCE(seo_description_zh, '')), '') IS NULL
   OR NULLIF(BTRIM(COALESCE(seo_description_en, '')), '') IS NULL
+  OR commercial_terms IS NULL
+  OR commercial_terms = '{}'::jsonb
+  OR (
+    COALESCE(cardinality(keywords_zh), 0) = 0
+    AND COALESCE(cardinality(keywords_en), 0) = 0
+  )
+  OR COALESCE(cardinality(related_product_ids), 0) = 0
 )`
 
 const PRODUCT_INCOMPLETE_SQL_ALIASED = `(
@@ -215,6 +231,13 @@ const PRODUCT_INCOMPLETE_SQL_ALIASED = `(
   OR NULLIF(BTRIM(COALESCE(pc.seo_title_en, '')), '') IS NULL
   OR NULLIF(BTRIM(COALESCE(pc.seo_description_zh, '')), '') IS NULL
   OR NULLIF(BTRIM(COALESCE(pc.seo_description_en, '')), '') IS NULL
+  OR pc.commercial_terms IS NULL
+  OR pc.commercial_terms = '{}'::jsonb
+  OR (
+    COALESCE(cardinality(pc.keywords_zh), 0) = 0
+    AND COALESCE(cardinality(pc.keywords_en), 0) = 0
+  )
+  OR COALESCE(cardinality(pc.related_product_ids), 0) = 0
 )`
 
 const PRODUCT_MISSING_MEDIA_SQL_ALIASED = `(
@@ -243,6 +266,18 @@ const PRODUCT_MISSING_SEO_SQL_ALIASED = `(
   OR NULLIF(BTRIM(COALESCE(pc.seo_description_zh, '')), '') IS NULL
   OR NULLIF(BTRIM(COALESCE(pc.seo_description_en, '')), '') IS NULL
 )`
+
+const PRODUCT_MISSING_COMMERCIAL_SQL_ALIASED = `(
+  pc.commercial_terms IS NULL
+  OR pc.commercial_terms = '{}'::jsonb
+)`
+
+const PRODUCT_MISSING_KEYWORDS_SQL_ALIASED = `(
+  COALESCE(cardinality(pc.keywords_zh), 0) = 0
+  AND COALESCE(cardinality(pc.keywords_en), 0) = 0
+)`
+
+const PRODUCT_MISSING_RELATED_SQL_ALIASED = `COALESCE(cardinality(pc.related_product_ids), 0) = 0`
 
 function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value
@@ -327,6 +362,9 @@ function getProductIssues(product: ProductListRow): string[] {
   if (!hasItems(product.detail_modules)) issues.push('缺详情模块')
   if (!product.category_id) issues.push('未分类')
   if (Number(product.attribute_option_count ?? 0) === 0) issues.push('缺产品属性')
+  if (!product.commercial_terms || Object.keys(product.commercial_terms).length === 0) issues.push('Missing business terms')
+  if (!hasItems(product.keywords_zh) && !hasItems(product.keywords_en)) issues.push('Missing keywords')
+  if (!hasItems(product.related_product_ids)) issues.push('Missing related products')
   if (
     !hasText(product.seo_title_zh)
     || !hasText(product.seo_title_en)
@@ -377,6 +415,9 @@ function getIssueCondition(issue: ProductIssue): string | null {
   if (issue === 'category') return 'pc.category_id IS NULL'
   if (issue === 'attributes') return PRODUCT_MISSING_ATTRIBUTES_SQL_ALIASED
   if (issue === 'seo') return PRODUCT_MISSING_SEO_SQL_ALIASED
+  if (issue === 'commercial') return PRODUCT_MISSING_COMMERCIAL_SQL_ALIASED
+  if (issue === 'keywords') return PRODUCT_MISSING_KEYWORDS_SQL_ALIASED
+  if (issue === 'related') return PRODUCT_MISSING_RELATED_SQL_ALIASED
   return null
 }
 
@@ -631,6 +672,12 @@ async function getProducts(filters: FilterState): Promise<ProductListResult> {
        COALESCE(attr.labels_zh, ARRAY[]::text[]) AS attribute_labels_zh,
        COALESCE(mark_agg.labels_zh, ARRAY[]::text[]) AS mark_labels_zh,
        COALESCE(showcase_agg.titles_zh, ARRAY[]::text[]) AS showcase_titles_zh,
+       pc.price_display_zh,
+       pc.price_display_en,
+       COALESCE(pc.commercial_terms, '{}'::jsonb) AS commercial_terms,
+       COALESCE(pc.keywords_zh, ARRAY[]::text[]) AS keywords_zh,
+       COALESCE(pc.keywords_en, ARRAY[]::text[]) AS keywords_en,
+       COALESCE(pc.related_product_ids, ARRAY[]::text[]) AS related_product_ids,
        pc.seo_title_zh,
        pc.seo_title_en,
        pc.seo_description_zh,
