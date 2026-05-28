@@ -141,9 +141,9 @@ const SITE_APPS: SiteApp[] = [
   },
   {
     title: 'SEO 检查',
-    detail: '后续接入页面标题、描述和收录提示。',
+    detail: '对照 300 TDK 设置，查看页面和内容详情的 SEO 覆盖情况。',
+    href: '/admin/site/seo',
     Icon: Globe2,
-    muted: true,
   },
 ]
 
@@ -200,6 +200,7 @@ function getSiteSideNav({
         { key: 'overview', label: '网站概览', href: '/admin/site', Icon: LayoutTemplate },
         { key: 'pages', label: '页面清单', href: '/admin/site/pages', Icon: ListChecks },
         { key: 'navigation', label: '导航管理', href: '/admin/site/navigation', Icon: Navigation },
+        { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },
         { key: 'visual', label: '编辑网站', href: '/admin/pages/visual', Icon: FileText },
         { key: 'drafts', label: '页面草稿', href: '#drafts', badge: pageDraftCount, Icon: CircleDashed },
         { key: 'todo', label: '网站待办', href: '#todo', badge: todoCount, Icon: ListChecks },
@@ -216,7 +217,6 @@ function getSiteSideNav({
     {
       title: '后续规划',
       items: [
-        { key: 'seo', label: 'SEO 检查', planned: true, Icon: SearchCheck },
         { key: 'page-settings', label: '页面设置', planned: true, Icon: Settings },
       ],
     },
