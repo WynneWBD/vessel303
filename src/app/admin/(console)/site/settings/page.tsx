@@ -251,6 +251,7 @@ function configuredLabel(ok: boolean): string {
 function getSearchItems(): SearchItem[] {
   const robotsReady = existsSync(join(process.cwd(), 'public', 'robots.txt'))
   const sitemapReady = existsSync(join(process.cwd(), 'public', 'sitemap.xml'))
+  const sitemapRouteReady = existsSync(join(process.cwd(), 'src', 'app', 'sitemap.ts'))
   const gaReady = Boolean(process.env.NEXT_PUBLIC_GA_ID || process.env.NEXT_PUBLIC_GTAG_ID)
   const gtmReady = Boolean(process.env.NEXT_PUBLIC_GTM_ID)
   const googleVerifyReady = Boolean(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION)
@@ -265,9 +266,9 @@ function getSearchItems(): SearchItem[] {
     },
     {
       title: 'Sitemap',
-      status: sitemapReady ? '已存在' : '待补',
-      state: sitemapReady ? 'active' : 'planned',
-      detail: 'robots 已引用 sitemap.xml，但动态 sitemap 需要单独做生成与线上验证，不在本页直接提交搜索引擎。',
+      status: sitemapReady ? 'public/sitemap.xml 已存在' : sitemapRouteReady ? 'app/sitemap.ts 已接管' : '待补',
+      state: sitemapReady || sitemapRouteReady ? 'active' : 'planned',
+      detail: 'robots 已引用 sitemap.xml；当前只生成站点地图，不在本页直接提交搜索引擎。',
       Icon: SearchCheck,
     },
     {

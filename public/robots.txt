@@ -4,4 +4,4 @@ Disallow: /api/admin/
 
 Allow: /
 
-Sitemap: https://vessel303.com/sitemap.xml
+Sitemap: https://www.vessel303.com/sitemap.xml
