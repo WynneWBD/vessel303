@@ -433,7 +433,7 @@ export async function upsertB9ContentItem(input: UpsertB9ContentItemInput, id?: 
        ($1, $2, $3, $4, $5,
         $6, $7, $8, $9,
         $10, $11, $12, $13, $14,
-        $15::jsonb, $16, $17,
+        $15::jsonb, $16::text, $17,
         CASE WHEN $16::text = 'published' THEN NOW() ELSE NULL END)
      RETURNING id`,
     [
