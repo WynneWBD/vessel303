@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { defaultSiteSettings, getSiteSettings } from '@/lib/admin-settings-db'
+import { recordSiteEventSafe } from '@/lib/site-analytics'
 import { buildPageMetadata } from '@/lib/seo'
 
-export const revalidate = 300
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = buildPageMetadata({
   title: 'Contact VESSEL® | Project Inquiry',
@@ -51,6 +52,16 @@ export default async function ContactPage({
   const sp = searchParams ? await searchParams : {}
   const sourceParam = sp.source
   const source = Array.isArray(sourceParam) ? sourceParam[0] : sourceParam
+
+  await Promise.race([
+    recordSiteEventSafe({
+      eventName: 'contact_redirect',
+      path: '/contact',
+      source: source || 'website_contact',
+      metadata: { target: 'configured_contact_url' },
+    }),
+    new Promise((resolve) => setTimeout(resolve, 150)),
+  ])
 
   redirect(appendSource(contactUrl, source))
 }

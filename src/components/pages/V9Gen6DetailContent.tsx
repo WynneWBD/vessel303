@@ -6,6 +6,7 @@ import { useState, useCallback, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
+import { trackFormSubmitSuccess } from '@/lib/site-analytics-client';
 import { buildLeadSource, compactLeadMessage, SITE_CONTACT_HREF } from '@/lib/site-links';
 
 // ─── Gallery images (按指定顺序) ─────────────────────────────────────────────
@@ -226,6 +227,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('sending');
+    const source = buildLeadSource('product_detail', 'v9-gen6', 'quick_inquiry');
     try {
       const r = await fetch('/api/contact', {
         method: 'POST',
@@ -246,10 +248,15 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
           ]),
           company: '',
           projectType: 'Product Inquiry',
-          source: buildLeadSource('product_detail', 'v9-gen6', 'quick_inquiry'),
+          source,
         }),
       });
-      setStatus(r.ok ? 'sent' : 'error');
+      if (r.ok) {
+        trackFormSubmitSuccess(source, 'V9 Gen6 Quick Inquiry');
+        setStatus('sent');
+      } else {
+        setStatus('error');
+      }
     } catch { setStatus('error'); }
   };
 

@@ -5,6 +5,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
+import { trackFormSubmitSuccess } from '@/lib/site-analytics-client';
+import { buildLeadSource } from '@/lib/site-links';
 
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -74,6 +76,7 @@ export default function MediaKitPage() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(await res.text());
+      trackFormSubmitSuccess(buildLeadSource('media_kit', payload.useCase, 'request_form'), 'Media Kit Request');
       setStatus('success');
       form.reset();
     } catch {

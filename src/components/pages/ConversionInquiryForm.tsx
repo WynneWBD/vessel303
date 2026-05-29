@@ -2,6 +2,7 @@
 
 import { type FormEvent, useState } from 'react'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { trackFormSubmitSuccess } from '@/lib/site-analytics-client'
 
 type FormState = {
   name: string
@@ -99,6 +100,7 @@ export default function ConversionInquiryForm({
         const data = (await res.json().catch(() => ({}))) as { error?: string }
         throw new Error(data.error || 'Submit failed')
       }
+      trackFormSubmitSuccess(source, inquiryType)
       setForm(EMPTY_FORM)
       setStatus('success')
     } catch (err) {

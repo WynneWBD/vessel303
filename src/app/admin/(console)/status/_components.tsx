@@ -117,7 +117,7 @@ export function getStatusSideNav(badges: StatusBadges): AdminSideNavGroup[] {
         },
         {
           key: 'traffic',
-          label: '访问分析准备',
+          label: '网站数据分析',
           href: '/admin/status/traffic',
           Icon: BarChart3,
         },

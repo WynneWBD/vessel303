@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react'
 import { CheckCircle2, Loader2, Send } from 'lucide-react'
+import { trackFormSubmitSuccess } from '@/lib/site-analytics-client'
 import { buildLeadSource } from '@/lib/site-links'
 
 type CaseInquiryFormProps = {
@@ -71,6 +72,7 @@ export default function CaseInquiryForm(props: CaseInquiryFormProps) {
 
     const projectType = clean(props.projectType) || 'Project Case'
     const products = clean(props.products)
+    const source = buildLeadSource('case_detail', props.projectId, 'inquiry_form')
 
     try {
       const res = await fetch('/api/contact', {
@@ -87,7 +89,7 @@ export default function CaseInquiryForm(props: CaseInquiryFormProps) {
           quantity: '',
           model: products,
           remarks: buildRemarks(form, props),
-          source: buildLeadSource('case_detail', props.projectId, 'inquiry_form'),
+          source,
         }),
       })
       const data = (await res.json().catch(() => ({}))) as { error?: string }
@@ -98,6 +100,7 @@ export default function CaseInquiryForm(props: CaseInquiryFormProps) {
         return
       }
 
+      trackFormSubmitSuccess(source, 'Project Case Inquiry')
       setStatus('success')
       setForm(INITIAL_FORM)
     } catch {

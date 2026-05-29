@@ -363,3 +363,34 @@ CREATE TABLE IF NOT EXISTS page_modules (
 
 CREATE INDEX IF NOT EXISTS idx_page_modules_page
   ON page_modules (page_key, sort_order);
+
+CREATE TABLE IF NOT EXISTS site_events (
+  id              BIGSERIAL   PRIMARY KEY,
+  event_name      VARCHAR(64) NOT NULL,
+  path            TEXT        NOT NULL,
+  source          VARCHAR(160),
+  source_type     VARCHAR(40),
+  referrer        TEXT,
+  utm_source      VARCHAR(120),
+  utm_medium      VARCHAR(120),
+  utm_campaign    VARCHAR(160),
+  utm_term        VARCHAR(160),
+  utm_content     VARCHAR(160),
+  device_type     VARCHAR(32),
+  visitor_id_hash VARCHAR(64),
+  session_id_hash VARCHAR(64),
+  metadata        JSONB       NOT NULL DEFAULT '{}'::jsonb,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_site_events_created_at
+  ON site_events (created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_site_events_event_created
+  ON site_events (event_name, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_site_events_path_created
+  ON site_events (path, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_site_events_source_type_created
+  ON site_events (source_type, created_at DESC);

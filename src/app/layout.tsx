@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { DM_Sans, Inter } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import SessionProviderWrapper from "@/components/SessionProviderWrapper";
 import ImageProtection from "@/components/ImageProtection";
+import SiteAnalyticsTracker from "@/components/SiteAnalyticsTracker";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { DEFAULT_OG_IMAGE, DEFAULT_SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
 
@@ -59,6 +61,9 @@ export default function RootLayout({
         <LanguageProvider>
           <SessionProviderWrapper>{children}</SessionProviderWrapper>
         </LanguageProvider>
+        <Suspense fallback={null}>
+          <SiteAnalyticsTracker />
+        </Suspense>
         <ImageProtection />
       </body>
     </html>

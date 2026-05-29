@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
+import { trackFormSubmitSuccess } from '@/lib/site-analytics-client';
 import { buildLeadSource } from '@/lib/site-links';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
@@ -70,12 +71,13 @@ export default function ContactForm() {
     setErrorMsg('');
 
     try {
+      const source = buildLeadSource('website_contact', 'general_form');
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
-          source: buildLeadSource('website_contact', 'general_form'),
+          source,
         }),
       });
       const data = await res.json();
@@ -83,6 +85,7 @@ export default function ContactForm() {
         setErrorMsg(data.error ?? t(i18n.form.submitFailed));
         setStatus('error');
       } else {
+        trackFormSubmitSuccess(source, form.inquiryType);
         setStatus('success');
       }
     } catch {
