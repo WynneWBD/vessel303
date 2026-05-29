@@ -1,10 +1,10 @@
 import FaqView, { type FaqCategoryView, type FaqItemView } from '@/components/FaqView'
 import { FAQ_CATEGORIES, FAQ_DATA } from '@/data/faq'
-import { listB9ContentCategories, listPublicB9ContentItems } from '@/lib/b9-content-db'
+import { listPublicB9ContentCategories, listPublicB9ContentItems } from '@/lib/b9-content-db'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
-const FAQ_CMS_TIMEOUT_MS = 250
+const FAQ_CMS_TIMEOUT_MS = 5000
 
 function fallbackFaq() {
   return {
@@ -23,10 +23,10 @@ async function loadFaqContent(): Promise<{ categories: FaqCategoryView[]; items:
   try {
     const [categories, rows] = await Promise.race([
       Promise.all([
-        listB9ContentCategories('faq'),
+        listPublicB9ContentCategories('faq'),
         listPublicB9ContentItems('faq'),
       ]),
-      timeoutReject<[Awaited<ReturnType<typeof listB9ContentCategories>>, Awaited<ReturnType<typeof listPublicB9ContentItems>>]>(
+      timeoutReject<[Awaited<ReturnType<typeof listPublicB9ContentCategories>>, Awaited<ReturnType<typeof listPublicB9ContentItems>>]>(
         FAQ_CMS_TIMEOUT_MS,
         'FAQ CMS load',
       ),

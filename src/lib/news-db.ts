@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache'
 import { pool } from '@/lib/db'
 
 export type NewsStatus = 'draft' | 'published'
@@ -65,6 +66,9 @@ export type NewsStatusSummary = {
   published: number
   total: number
 }
+
+export const NEWS_PUBLIC_CACHE_TAG = 'news-public'
+const NEWS_PUBLIC_CACHE_SECONDS = 300
 
 export type CreateNewsCategoryInput = {
   slug: string
@@ -203,6 +207,30 @@ export async function listDeletedNews({
   return { rows: listRes.rows, total }
 }
 
+const listPublishedNewsCached = unstable_cache(
+  async (limit: number, offset: number) => {
+    const safeLimit = Math.min(50, Math.max(1, limit))
+    const safeOffset = Math.max(0, offset)
+    const countRes = await pool.query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM news n
+       WHERE n.status = 'published' AND n.deleted_at IS NULL`,
+    )
+    const total = parseInt(countRes.rows[0]?.count ?? '0', 10)
+
+    const listRes = await pool.query<NewsListItem>(
+      `SELECT ${NEWS_LIST_COLUMNS} FROM ${NEWS_FROM}
+       WHERE n.status = 'published' AND n.deleted_at IS NULL
+       ORDER BY n.published_at DESC
+       LIMIT $1 OFFSET $2`,
+      [safeLimit, safeOffset],
+    )
+
+    return { rows: listRes.rows, total }
+  },
+  ['news-public-list'],
+  { revalidate: NEWS_PUBLIC_CACHE_SECONDS, tags: [NEWS_PUBLIC_CACHE_TAG] },
+)
+
 export async function listPublishedNews({
   limit,
   offset,
@@ -210,21 +238,7 @@ export async function listPublishedNews({
   limit: number
   offset: number
 }) {
-  const countRes = await pool.query<{ count: string }>(
-    `SELECT COUNT(*)::text AS count FROM news n
-     WHERE n.status = 'published' AND n.deleted_at IS NULL`,
-  )
-  const total = parseInt(countRes.rows[0]?.count ?? '0', 10)
-
-  const listRes = await pool.query<NewsListItem>(
-    `SELECT ${NEWS_LIST_COLUMNS} FROM ${NEWS_FROM}
-     WHERE n.status = 'published' AND n.deleted_at IS NULL
-     ORDER BY n.published_at DESC
-     LIMIT $1 OFFSET $2`,
-    [limit, offset],
-  )
-
-  return { rows: listRes.rows, total }
+  return listPublishedNewsCached(limit, offset)
 }
 
 export async function getNewsById(id: number) {
@@ -235,13 +249,21 @@ export async function getNewsById(id: number) {
   return res.rows[0] ?? null
 }
 
+const getNewsBySlugCached = unstable_cache(
+  async (slug: string) => {
+    const res = await pool.query<NewsRow>(
+      `SELECT ${NEWS_COLUMNS} FROM ${NEWS_FROM}
+       WHERE n.slug = $1 AND n.status = 'published' AND n.deleted_at IS NULL`,
+      [slug],
+    )
+    return res.rows[0] ?? null
+  },
+  ['news-public-detail'],
+  { revalidate: NEWS_PUBLIC_CACHE_SECONDS, tags: [NEWS_PUBLIC_CACHE_TAG] },
+)
+
 export async function getNewsBySlug(slug: string) {
-  const res = await pool.query<NewsRow>(
-    `SELECT ${NEWS_COLUMNS} FROM ${NEWS_FROM}
-     WHERE n.slug = $1 AND n.status = 'published' AND n.deleted_at IS NULL`,
-    [slug],
-  )
-  return res.rows[0] ?? null
+  return getNewsBySlugCached(slug.trim())
 }
 
 export type CreateNewsInput = {

@@ -205,6 +205,25 @@ export async function createUpload(input: CreateUploadInput): Promise<Upload> {
   return res.rows[0]
 }
 
+export async function updateUploadVariants(id: string, variants: ImageVariants): Promise<Upload | null> {
+  await ensureUploadVariantsColumn()
+
+  const res = await pool.query<Upload>(
+    `WITH updated AS (
+       UPDATE uploads
+          SET variants = $2::jsonb
+        WHERE id = $1
+        RETURNING id
+     )
+     SELECT ${UPLOAD_COLUMNS}
+       FROM uploads u
+       LEFT JOIN users usr ON usr.id = u.uploaded_by
+      WHERE u.id = (SELECT id FROM updated)`,
+    [id, JSON.stringify(variants ?? {})],
+  )
+  return res.rows[0] ?? null
+}
+
 export async function deleteUploadRow(id: string) {
   const res = await pool.query<{ id: string }>(
     `DELETE FROM uploads WHERE id = $1 RETURNING id`,

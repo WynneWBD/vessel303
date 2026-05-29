@@ -3,7 +3,7 @@ import { listPublicB9ContentItems } from '@/lib/b9-content-db'
 import { listPublishedCatalogProducts } from '@/lib/product-catalog-db'
 import { getUploadVariantsByUrls, mapUploadImageUrl } from '@/lib/upload-image-variants'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 function compactList(value: string | null | undefined) {
   return (value ?? '')

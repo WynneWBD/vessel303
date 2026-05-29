@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
-import { getNewsById, updateNews, softDeleteNews, getNewsCategoryById, isSlugTaken } from '@/lib/news-db'
+import { getNewsById, updateNews, softDeleteNews, getNewsCategoryById, isSlugTaken, NEWS_PUBLIC_CACHE_TAG } from '@/lib/news-db'
 
 export const dynamic = 'force-dynamic'
 
 type Ctx = { params: Promise<{ id: string }> }
+
+function revalidateNewsPublicRoutes(...slugs: Array<string | null | undefined>) {
+  revalidateTag(NEWS_PUBLIC_CACHE_TAG, { expire: 0 })
+  revalidatePath('/news')
+  revalidatePath('/sitemap.xml')
+  for (const slug of slugs) {
+    if (slug) revalidatePath(`/news/${slug}`)
+  }
+}
 
 function normalizeSlug(value: string) {
   return value
@@ -98,10 +108,12 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     }
   }
 
+  const existing = await getNewsById(id)
   const updated = await updateNews(id, parsed.data)
   if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   await logAdminAction(admin.id, 'news.update', 'news', String(id))
+  revalidateNewsPublicRoutes(existing?.slug, updated.slug)
 
   return NextResponse.json({ data: updated })
 }
@@ -114,10 +126,12 @@ export async function DELETE(_req: NextRequest, ctx: Ctx) {
   const id = parseId(raw)
   if (!id) return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
 
+  const existing = await getNewsById(id)
   const deletedId = await softDeleteNews(id)
   if (!deletedId) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   await logAdminAction(admin.id, 'news.delete', 'news', String(id))
+  revalidateNewsPublicRoutes(existing?.slug)
 
   return NextResponse.json({ data: { ok: true, id: deletedId } })
 }

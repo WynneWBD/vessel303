@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
 import {
+  NEWS_PUBLIC_CACHE_TAG,
   createNewsCategory,
   isNewsCategorySlugTaken,
   listNewsCategories,
@@ -64,6 +66,9 @@ export async function POST(req: NextRequest) {
   }
 
   const category = await createNewsCategory(parsed.data)
+  revalidateTag(NEWS_PUBLIC_CACHE_TAG, { expire: 0 })
+  revalidatePath('/news')
+  revalidatePath('/sitemap.xml')
   await logAdminAction(admin.id, 'news-category.create', 'news_categories', String(category.id))
 
   return NextResponse.json({ data: category }, { status: 201 })

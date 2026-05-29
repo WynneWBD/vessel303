@@ -48,7 +48,7 @@ const STATIC_SLIDES: DisplaySlide[] = [
     tagline: '全能型旅居新旗舰，经典范式的自我超越',
     features: ['流线型轮廓 · 飞翼式门檐', '日式三分离卫浴', 'VIIE Gen6 全屋智控'],
     price: '¥ 488,000 起',
-    image: '/images/e7-gen6.jpg',
+    image: '/images/e7-gen6-optimized.webp',
   },
   {
     model: 'E6',
@@ -136,7 +136,7 @@ function mapDisplayRow(row: DisplayContentRow): DisplaySlide {
     tagline: row.tagline ?? row.body_en ?? row.body_zh ?? row.title_en ?? row.title_zh,
     features: features.length > 0 ? features.slice(0, 3) : ['CMS managed showcase', 'Product details on request'],
     price: row.price ?? asText(payload.price) ?? 'Inquire for pricing',
-    image: row.image || row.cover_image_url || '/images/e7-gen6.jpg',
+    image: row.image || row.cover_image_url || '/images/e7-gen6-optimized.webp',
   };
 }
 

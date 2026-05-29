@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache'
 import { pool } from '@/lib/db'
 import {
   staticProjectCases,
@@ -19,6 +20,8 @@ export type ListProjectCasesFilter = {
 }
 
 let schemaReady: Promise<void> | null = null
+export const PROJECT_CASE_PUBLIC_CACHE_TAG = 'project-case-public'
+const PROJECT_CASE_PUBLIC_CACHE_SECONDS = 300
 
 const COLUMNS = `
   id, name_zh, name_en, location_zh, location_en,
@@ -272,14 +275,22 @@ export async function listProjectCases(filter: ListProjectCasesFilter) {
   return { rows: listRes.rows.map(rowToProjectCase), total }
 }
 
+const listPublishedProjectCasesCached = unstable_cache(
+  async () => {
+    await ensureProjectCasesSchema()
+    const { rows } = await pool.query(
+      `SELECT ${COLUMNS} FROM project_cases
+       WHERE status = 'published' AND deleted_at IS NULL
+       ORDER BY sort_order ASC, updated_at DESC`,
+    )
+    return rows.map(rowToProjectCase)
+  },
+  ['project-case-public-list'],
+  { revalidate: PROJECT_CASE_PUBLIC_CACHE_SECONDS, tags: [PROJECT_CASE_PUBLIC_CACHE_TAG] },
+)
+
 export async function listPublishedProjectCases() {
-  await ensureProjectCasesSchema()
-  const { rows } = await pool.query(
-    `SELECT ${COLUMNS} FROM project_cases
-     WHERE status = 'published' AND deleted_at IS NULL
-     ORDER BY sort_order ASC, updated_at DESC`,
-  )
-  return rows.map(rowToProjectCase)
+  return listPublishedProjectCasesCached()
 }
 
 export async function getProjectCaseById(id: string) {
@@ -291,14 +302,22 @@ export async function getProjectCaseById(id: string) {
   return rows[0] ? rowToProjectCase(rows[0]) : null
 }
 
+const getPublishedProjectCaseByIdCached = unstable_cache(
+  async (id: string) => {
+    await ensureProjectCasesSchema()
+    const { rows } = await pool.query(
+      `SELECT ${COLUMNS} FROM project_cases
+       WHERE id = $1 AND status = 'published' AND deleted_at IS NULL`,
+      [id],
+    )
+    return rows[0] ? rowToProjectCase(rows[0]) : null
+  },
+  ['project-case-public-detail'],
+  { revalidate: PROJECT_CASE_PUBLIC_CACHE_SECONDS, tags: [PROJECT_CASE_PUBLIC_CACHE_TAG] },
+)
+
 export async function getPublishedProjectCaseById(id: string) {
-  await ensureProjectCasesSchema()
-  const { rows } = await pool.query(
-    `SELECT ${COLUMNS} FROM project_cases
-     WHERE id = $1 AND status = 'published' AND deleted_at IS NULL`,
-    [id],
-  )
-  return rows[0] ? rowToProjectCase(rows[0]) : null
+  return getPublishedProjectCaseByIdCached(id.trim())
 }
 
 export async function isProjectCaseIdTaken(id: string, exceptId?: string) {

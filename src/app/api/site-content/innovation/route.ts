@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPublicB9ContentItem } from '@/lib/b9-content-db'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 export async function GET(req: NextRequest) {
   const slug = req.nextUrl.searchParams.get('slug') ?? ''

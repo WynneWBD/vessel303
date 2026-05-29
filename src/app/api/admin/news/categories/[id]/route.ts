@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
 import {
+  NEWS_PUBLIC_CACHE_TAG,
   getNewsCategoryById,
   isNewsCategorySlugTaken,
   updateNewsCategory,
@@ -72,6 +74,9 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   const updated = await updateNewsCategory(id, parsed.data)
   if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  revalidateTag(NEWS_PUBLIC_CACHE_TAG, { expire: 0 })
+  revalidatePath('/news')
+  revalidatePath('/sitemap.xml')
   await logAdminAction(admin.id, 'news-category.update', 'news_categories', String(id))
 
   return NextResponse.json({ data: updated })

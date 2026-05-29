@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
-import { restoreNewsAsDraft } from '@/lib/news-db'
+import { NEWS_PUBLIC_CACHE_TAG, restoreNewsAsDraft } from '@/lib/news-db'
 
 export const dynamic = 'force-dynamic'
 
 type Ctx = { params: Promise<{ id: string }> }
+
+function revalidateNewsPublicRoutes(slug?: string | null) {
+  revalidateTag(NEWS_PUBLIC_CACHE_TAG, { expire: 0 })
+  revalidatePath('/news')
+  revalidatePath('/sitemap.xml')
+  if (slug) revalidatePath(`/news/${slug}`)
+}
 
 function parseId(raw: string) {
   const n = parseInt(raw, 10)
@@ -24,6 +32,7 @@ export async function POST(_req: NextRequest, ctx: Ctx) {
   if (!restored) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   await logAdminAction(admin.id, 'news.restore', 'news', String(id))
+  revalidateNewsPublicRoutes(restored.slug)
 
   return NextResponse.json({ data: restored })
 }

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { defaultSiteSettings, getSiteSettings } from '@/lib/admin-settings-db'
 import { buildPageMetadata } from '@/lib/seo'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 export const metadata: Metadata = buildPageMetadata({
   title: 'Contact VESSEL® | Project Inquiry',

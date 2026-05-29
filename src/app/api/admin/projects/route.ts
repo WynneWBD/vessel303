@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
@@ -6,6 +7,7 @@ import {
   createProjectCase,
   isProjectCaseIdTaken,
   listProjectCases,
+  PROJECT_CASE_PUBLIC_CACHE_TAG,
   type ProjectCaseMapStatus,
   type ProjectCaseStatus,
 } from '@/lib/project-cases-db'
@@ -14,6 +16,13 @@ export const dynamic = 'force-dynamic'
 
 const statusValues = ['draft', 'published'] as const
 const mapStatusValues = ['map-ready', 'missing-coordinates', 'unpublished-with-coordinates'] as const
+
+function revalidateProjectCasePublicRoutes(id?: string) {
+  revalidateTag(PROJECT_CASE_PUBLIC_CACHE_TAG, { expire: 0 })
+  revalidatePath('/cases')
+  revalidatePath('/sitemap.xml')
+  if (id) revalidatePath(`/cases/${id}`)
+}
 
 const globalAmenitySchema = z.object({
   icon: z.string().min(1).max(12),
@@ -131,6 +140,7 @@ export async function POST(req: NextRequest) {
 
   const project = await createProjectCase(parsed.data)
   await logAdminAction(admin.id, 'project.create', 'project', project.id)
+  revalidateProjectCasePublicRoutes(project.id)
 
   return NextResponse.json({ data: project }, { status: 201 })
 }

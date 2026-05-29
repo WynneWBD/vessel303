@@ -16,6 +16,7 @@ import {
   ImagePlus,
   ImageUp,
   ImageOff,
+  RefreshCw,
   SearchX,
   Trash2,
   Upload as UploadIcon,
@@ -420,6 +421,11 @@ export default function MediaClient({
     return { refs: emptyMediaReferences() }
   }
 
+  const handleUploadUpdated = useCallback((nextUpload: Upload) => {
+    setSelected(nextUpload)
+    setUploads((prev) => prev.map((item) => (item.id === nextUpload.id ? nextUpload : item)))
+  }, [])
+
   const handleDelete = async (u: Upload) => {
     try {
       const res = await fetch(`/api/admin/media/${u.id}`, { method: 'DELETE' })
@@ -659,6 +665,7 @@ export default function MediaClient({
         upload={selected}
         onClose={() => setSelected(null)}
         onDelete={setPendingDelete}
+        onUploadUpdated={handleUploadUpdated}
       />
 
       <AdminConfirmDialog
@@ -812,12 +819,15 @@ function MediaDetailSheet({
   upload,
   onClose,
   onDelete,
+  onUploadUpdated,
 }: {
   upload: Upload | null
   onClose: () => void
   onDelete: (u: Upload) => void
+  onUploadUpdated: (u: Upload) => void
 }) {
   const uploadId = upload?.id ?? null
+  const [generatingVariants, setGeneratingVariants] = useState(false)
   const [refsState, setRefsState] = useState<{
     uploadId: string | null
     refs: MediaReferenceDetails
@@ -827,6 +837,9 @@ function MediaDetailSheet({
   const variants = normalizeImageVariants(upload?.variants)
   const variantCount = (['thumb', 'card', 'detail'] as const).filter((role) => variants[role]?.url).length
   const isLargeOriginal = (upload?.size ?? 0) > FRONTEND_RISK_IMAGE_BYTES
+  const canGenerateVariants = Boolean(
+    upload?.mime && ['image/jpeg', 'image/png', 'image/webp'].includes(upload.mime),
+  )
 
   useEffect(() => {
     if (!uploadId) return
@@ -843,6 +856,22 @@ function MediaDetailSheet({
       ignore = true
     }
   }, [uploadId])
+
+  const generateVariants = async () => {
+    if (!upload || !canGenerateVariants) return
+    setGeneratingVariants(true)
+    try {
+      const res = await fetch(`/api/admin/media/${upload.id}/variants`, { method: 'POST' })
+      const data = (await res.json().catch(() => ({}))) as { upload?: Upload; error?: string }
+      if (!res.ok || !data.upload) throw new Error(data.error || 'Variant generation failed')
+      onUploadUpdated(data.upload)
+      toast.success('Variants generated')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Variant generation failed')
+    } finally {
+      setGeneratingVariants(false)
+    }
+  }
 
   const copyUrl = async () => {
     if (!upload) return
@@ -899,6 +928,24 @@ function MediaDetailSheet({
                 <Field label="上传时间" value={formatDate(upload.created_at)} />
                 <Field label="上传者" value={upload.uploaded_by_email} />
               </div>
+
+              {canGenerateVariants && variantCount < 3 ? (
+                <div className="rounded-md border border-[#F2C9A8] bg-[#FFF8F2] p-3 text-sm">
+                  <div className="mb-2 text-xs font-medium text-[#A76632]">
+                    Missing frontend variants. Generate thumb/card/detail before using this image on public pages.
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={generateVariants}
+                    disabled={generatingVariants}
+                  >
+                    <RefreshCw size={14} className={generatingVariants ? 'animate-spin' : ''} />
+                    Generate variants
+                  </Button>
+                </div>
+              ) : null}
 
               {/* URL */}
               <div>

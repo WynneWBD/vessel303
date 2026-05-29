@@ -7,7 +7,7 @@ import PageHero from '@/components/PageHero';
 import { getPublicB9ContentItem, type B9ContentItem } from '@/lib/b9-content-db';
 import { SITE_CONTACT_HREF } from '@/lib/site-links';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 type ScenarioSlug = 'tourism' | 'commercial' | 'public';
 

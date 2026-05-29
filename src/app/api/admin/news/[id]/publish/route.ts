@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
-import { publishNews } from '@/lib/news-db'
+import { NEWS_PUBLIC_CACHE_TAG, publishNews } from '@/lib/news-db'
 
 export const dynamic = 'force-dynamic'
 
 type Ctx = { params: Promise<{ id: string }> }
+
+function revalidateNewsPublicRoutes(slug?: string | null) {
+  revalidateTag(NEWS_PUBLIC_CACHE_TAG, { expire: 0 })
+  revalidatePath('/news')
+  revalidatePath('/sitemap.xml')
+  if (slug) revalidatePath(`/news/${slug}`)
+}
 
 export async function POST(_req: NextRequest, ctx: Ctx) {
   const admin = await requireAdmin()
@@ -21,6 +29,7 @@ export async function POST(_req: NextRequest, ctx: Ctx) {
   if (!news) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   await logAdminAction(admin.id, 'news.publish', 'news', String(id))
+  revalidateNewsPublicRoutes(news.slug)
 
   return NextResponse.json({ data: news })
 }

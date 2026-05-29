@@ -11,7 +11,7 @@ import { buildLeadSource, compactLeadMessage, SITE_CONTACT_HREF } from '@/lib/si
 // ─── Gallery images (按指定顺序) ─────────────────────────────────────────────
 const GALLERY = [
   // 渲染图
-  { src: '/images/products/v9-gen6/main.jpg',        cn: '外观主图',   en: 'Main View' },
+  { src: '/images/products/v9-gen6/main-optimized.webp', cn: '外观主图',   en: 'Main View' },
   { src: '/images/products/v9-gen6/render-03.jpg',   cn: '渲染角度 03', en: 'View 03' },
   { src: '/images/products/v9-gen6/render-05.jpg',   cn: '渲染角度 05', en: 'View 05' },
   { src: '/images/products/v9-gen6/render-07.png',   cn: '渲染角度 07', en: 'View 07' },
@@ -30,7 +30,7 @@ const GALLERY = [
   })),
   { src: '/images/products/v9-gen6/photo-2002.jpg',  cn: '实拍 2002',   en: 'Photo 2002' },
   // 爆炸图
-  { src: '/images/products/v9-gen6/exploded-view.png', cn: '结构爆炸图', en: 'Exploded View' },
+  { src: '/images/products/v9-gen6/exploded-view-optimized.webp', cn: '结构爆炸图', en: 'Exploded View' },
 ];
 
 const PHOTO_START_IDX = 11;
@@ -511,7 +511,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                     className="relative aspect-video bg-white border border-[#E5DED4] overflow-hidden"
                   >
                     <ProtectedImage
-                      src="/images/products/v9-gen6/exploded-view.png"
+                      src="/images/products/v9-gen6/exploded-view-optimized.webp"
                       alt="Exploded structural view"
                       fill
                       loading="lazy"
@@ -591,7 +591,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
                   <div className="relative aspect-video bg-white border border-[#E5DED4]">
                     <ProtectedImage
-                      src="/images/products/v9-gen6/exploded-view.png"
+                      src="/images/products/v9-gen6/exploded-view-optimized.webp"
                       alt="Exploded view"
                       fill
                       className="object-contain p-4"

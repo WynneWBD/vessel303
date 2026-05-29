@@ -854,7 +854,25 @@ function buildPublicProductsWhere(filter: {
   return { where: `WHERE ${conds.join(' AND ')}`, params }
 }
 
+const listPublishedCatalogProductsCached = unstable_cache(
+  async (): Promise<CatalogProduct[]> => {
+    await ensureProductCatalogSchema()
+    const { rows } = await pool.query(
+      `SELECT ${COLUMNS} FROM product_catalog
+       WHERE status = 'published' AND deleted_at IS NULL
+       ORDER BY sort_order ASC, updated_at DESC`,
+    )
+    return rows.map(rowToCatalogProduct)
+  },
+  ['product-public-all'],
+  { revalidate: PRODUCT_PUBLIC_CACHE_REVALIDATE_SECONDS, tags: [PRODUCT_PUBLIC_CACHE_TAG] },
+)
+
 export async function listPublishedCatalogProducts(): Promise<CatalogProduct[]> {
+  return listPublishedCatalogProductsCached()
+}
+
+export async function listPublishedCatalogProductsUncached(): Promise<CatalogProduct[]> {
   await ensureProductCatalogSchema()
   const { rows } = await pool.query(
     `SELECT ${COLUMNS} FROM product_catalog

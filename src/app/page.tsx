@@ -791,7 +791,7 @@ function FlagshipSection() {
         </div>
 
         <div className="relative aspect-[16/9] overflow-hidden bg-[#E5DED4] mb-10 shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
-          <Image src="/images/e7-gen6.jpg" alt="VESSEL E7 Gen6" fill sizes="(max-width: 1280px) 100vw, 1152px" className="object-cover" />
+          <Image src="/images/e7-gen6-optimized.webp" alt="VESSEL E7 Gen6" fill sizes="(max-width: 1280px) 100vw, 1152px" className="object-cover" />
         </div>
 
         <Link
@@ -814,8 +814,8 @@ function TechnologySection() {
   const t = useT();
   const techs = [
     { tag: t(i18n.home.tech1Tag), title: t(i18n.home.tech1Title), body: t(i18n.home.tech1Body), img: '/images/homepage/tech-viie.jpg' },
-    { tag: t(i18n.home.tech2Tag), title: t(i18n.home.tech2Title), body: t(i18n.home.tech2Body), img: '/images/homepage/tech-vols.jpg' },
-    { tag: t(i18n.home.tech3Tag), title: t(i18n.home.tech3Title), body: t(i18n.home.tech3Body), img: '/images/homepage/tech-vipc.jpg' },
+    { tag: t(i18n.home.tech2Tag), title: t(i18n.home.tech2Title), body: t(i18n.home.tech2Body), img: '/images/homepage/tech-vols-optimized.webp' },
+    { tag: t(i18n.home.tech3Tag), title: t(i18n.home.tech3Title), body: t(i18n.home.tech3Body), img: '/images/homepage/tech-vipc-optimized.webp' },
   ];
   return (
     <section className="bg-[#F5F2ED] py-24 lg:py-32 border-y border-[#E5DED4]">

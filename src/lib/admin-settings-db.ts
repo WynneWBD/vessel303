@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache'
 import { pool } from '@/lib/db'
 import { DEFAULT_CONTACT_URL } from '@/lib/site-links'
 
@@ -48,6 +49,8 @@ export const defaultSiteSettings: SiteSettings = {
 
 const SETTING_KEYS = Object.keys(defaultSiteSettings) as SiteSettingKey[]
 const BYTES_PER_MB = 1024 * 1024
+export const SITE_SETTINGS_CACHE_TAG = 'site-settings'
+const SITE_SETTINGS_CACHE_SECONDS = 300
 
 export function normalizeMediaMaxUploadMb(value: unknown): number {
   const n = Number(value)
@@ -99,7 +102,7 @@ export async function ensureAdminSettingsSchema() {
   return schemaReady
 }
 
-export async function getSiteSettings(): Promise<SiteSettings> {
+async function getSiteSettingsUncached(): Promise<SiteSettings> {
   await ensureAdminSettingsSchema()
   const res = await pool.query<{ key: SiteSettingKey; value: unknown }>(
     `SELECT key, value FROM site_settings`,
@@ -111,6 +114,16 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     }
   }
   return normalizeSettings(stored)
+}
+
+const getSiteSettingsCached = unstable_cache(
+  getSiteSettingsUncached,
+  ['site-settings-public'],
+  { revalidate: SITE_SETTINGS_CACHE_SECONDS, tags: [SITE_SETTINGS_CACHE_TAG] },
+)
+
+export async function getSiteSettings(): Promise<SiteSettings> {
+  return getSiteSettingsCached()
 }
 
 export async function updateSiteSettings(input: SiteSettings, adminId: string): Promise<SiteSettings> {
@@ -137,7 +150,7 @@ export async function updateSiteSettings(input: SiteSettings, adminId: string): 
     client.release()
   }
 
-  return getSiteSettings()
+  return getSiteSettingsUncached()
 }
 
 export async function getSettingsUpdatedMeta() {

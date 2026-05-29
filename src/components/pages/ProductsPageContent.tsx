@@ -1,6 +1,8 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
@@ -18,12 +20,7 @@ type DirectoryCategory = Pick<ProductCategoryRow, 'id' | 'title_zh' | 'title_en'
 
 interface Props {
   products: CatalogProduct[];
-  allProductsCount: number;
-  total: number;
   pageSize: number;
-  currentPage: number;
-  totalPages: number;
-  filters: DirectoryFilters;
   categories: DirectoryCategory[];
   attributeTemplates: ProductAttributeTemplateWithOptions[];
 }
@@ -46,6 +43,52 @@ function productHref(product: CatalogProduct) {
 function productPrice(product: CatalogProduct, lang: 'en' | 'zh') {
   const price = lang === 'en' ? product.price_display_en : product.price_display_zh;
   return price || product.price_display_en || product.price_display_zh || 'Inquire for pricing';
+}
+
+function normalizePage(value: string | null) {
+  const page = Number(value);
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
+function productMatchesSearch(product: CatalogProduct, query: string) {
+  if (!query) return true;
+  const q = query.toLowerCase();
+  const text = [
+    product.id,
+    product.productSeries,
+    product.name_cn,
+    product.name_en,
+    product.gen,
+    product.size,
+    ...(product.tags_cn ?? []),
+    ...(product.tags_en ?? []),
+    ...(product.features_cn ?? []),
+    ...(product.features_en ?? []),
+    ...(product.keywords_zh ?? []),
+    ...(product.keywords_en ?? []),
+  ].join(' ').toLowerCase();
+  return text.includes(q);
+}
+
+function productMatchesFilters(product: CatalogProduct, filters: DirectoryFilters) {
+  if (!productMatchesSearch(product, filters.q)) return false;
+  if (filters.category && String(product.category_id ?? '') !== filters.category) return false;
+  if (filters.attribute) {
+    const attributeId = Number(filters.attribute);
+    if (!Number.isInteger(attributeId) || !(product.attribute_option_ids ?? []).includes(attributeId)) return false;
+  }
+  return true;
+}
+
+function useDirectoryFilters(): DirectoryFilters {
+  const searchParams = useSearchParams();
+
+  return useMemo(() => ({
+    q: searchParams.get('q')?.trim() ?? '',
+    category: searchParams.get('category')?.trim() ?? '',
+    attribute: searchParams.get('attribute')?.trim() ?? '',
+    page: normalizePage(searchParams.get('page')),
+  }), [searchParams]);
 }
 
 function Sidebar({
@@ -216,16 +259,21 @@ function Pagination({
 
 export default function ProductsPageContent({
   products,
-  allProductsCount,
-  total,
   pageSize,
-  currentPage,
-  totalPages,
-  filters,
   categories,
   attributeTemplates,
 }: Props) {
   const { lang } = useLanguage();
+  const rawFilters = useDirectoryFilters();
+  const filteredProducts = useMemo(
+    () => products.filter((product) => productMatchesFilters(product, rawFilters)),
+    [products, rawFilters],
+  );
+  const total = filteredProducts.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(rawFilters.page, totalPages);
+  const filters = { ...rawFilters, page: currentPage };
+  const pageProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const rangeStart = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const rangeEnd = Math.min(total, currentPage * pageSize);
 
@@ -292,17 +340,17 @@ export default function ProductsPageContent({
                 Products {rangeStart}-{rangeEnd} of {total}
               </span>
               <span>
-                Catalog total: {allProductsCount}
+                Catalog total: {products.length}
               </span>
             </div>
 
-            {products.length === 0 ? (
+            {pageProducts.length === 0 ? (
               <div className="border border-dashed border-[#C7CDD2] bg-white py-20 text-center text-sm text-[#65707A]">
                 No matching products.
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                {products.map((product) => (
+                {pageProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>

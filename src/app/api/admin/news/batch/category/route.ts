@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
-import { bulkUpdateNewsCategory, getNewsCategoryById } from '@/lib/news-db'
+import { NEWS_PUBLIC_CACHE_TAG, bulkUpdateNewsCategory, getNewsCategoryById } from '@/lib/news-db'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,6 +37,9 @@ export async function POST(req: NextRequest) {
   }
 
   const result = await bulkUpdateNewsCategory(parsed.data.ids, category.id)
+  revalidateTag(NEWS_PUBLIC_CACHE_TAG, { expire: 0 })
+  revalidatePath('/news')
+  revalidatePath('/sitemap.xml')
   await logAdminAction(
     admin.id,
     'news.batch.category',

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { getNewsBySlug } from '@/lib/news-db'
+import { getNewsBySlug, listPublishedNews } from '@/lib/news-db'
 import { generateHTML } from '@tiptap/html'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
@@ -14,9 +14,17 @@ import {
   replaceImageSrcsInHtml,
 } from '@/lib/upload-image-variants'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 const EXTS = [StarterKit, Link]
+
+export async function generateStaticParams() {
+  const { rows } = await listPublishedNews({ limit: 50, offset: 0 }).catch((err) => {
+    console.error('[news/static-params] news db unavailable', err)
+    return { rows: [], total: 0 }
+  })
+  return rows.map((item) => ({ slug: item.slug }))
+}
 
 function toHTML(content: unknown): string {
   if (

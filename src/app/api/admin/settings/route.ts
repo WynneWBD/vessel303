@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { requireSuperAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
-import { getSiteSettings, updateSiteSettings } from '@/lib/admin-settings-db'
+import { SITE_SETTINGS_CACHE_TAG, getSiteSettings, updateSiteSettings } from '@/lib/admin-settings-db'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,6 +53,10 @@ export async function PATCH(req: NextRequest) {
   }
 
   const settings = await updateSiteSettings(parsed.data, admin.id)
+  revalidateTag(SITE_SETTINGS_CACHE_TAG, { expire: 0 })
+  revalidatePath('/contact')
+  revalidatePath('/')
+  revalidatePath('/about')
   await logAdminAction(admin.id, 'settings.update', 'site_settings', 'global')
 
   return NextResponse.json({ data: settings })

@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache'
 import { pool } from '@/lib/db'
 import {
   getImageVariantUrl,
@@ -7,6 +8,8 @@ import {
 } from '@/lib/image-optimization'
 
 let ensureUploadVariantsColumnPromise: Promise<void> | null = null
+export const UPLOAD_VARIANTS_CACHE_TAG = 'upload-image-variants'
+const UPLOAD_VARIANTS_CACHE_SECONDS = 3600
 
 export async function ensureUploadVariantsColumn() {
   if (!ensureUploadVariantsColumnPromise) {
@@ -29,10 +32,8 @@ export function collectImageUrls(values: Array<string | null | undefined>) {
   return Array.from(new Set(values.map((value) => value?.trim()).filter((value): value is string => Boolean(value))))
 }
 
-export async function getUploadVariantsByUrls(urls: Array<string | null | undefined>): Promise<UploadVariantMap> {
-  const uniqueUrls = collectImageUrls(urls)
-  if (uniqueUrls.length === 0) return new Map()
-
+async function loadUploadVariantsByUrls(urlsKey: string): Promise<Array<[string, ImageVariants]>> {
+  const uniqueUrls = JSON.parse(urlsKey) as string[]
   await ensureUploadVariantsColumn()
   const res = await pool.query<{ url: string; variants: unknown }>(
     `SELECT url, variants
@@ -41,7 +42,21 @@ export async function getUploadVariantsByUrls(urls: Array<string | null | undefi
     [uniqueUrls],
   )
 
-  return new Map(res.rows.map((row) => [row.url, normalizeImageVariants(row.variants)]))
+  return res.rows.map((row) => [row.url, normalizeImageVariants(row.variants)])
+}
+
+const getUploadVariantEntriesByUrlsCached = unstable_cache(
+  loadUploadVariantsByUrls,
+  ['upload-image-variants-by-url'],
+  { revalidate: UPLOAD_VARIANTS_CACHE_SECONDS, tags: [UPLOAD_VARIANTS_CACHE_TAG] },
+)
+
+export async function getUploadVariantsByUrls(urls: Array<string | null | undefined>): Promise<UploadVariantMap> {
+  const uniqueUrls = collectImageUrls(urls)
+  if (uniqueUrls.length === 0) return new Map()
+
+  const entries = await getUploadVariantEntriesByUrlsCached(JSON.stringify(uniqueUrls))
+  return new Map(entries)
 }
 
 export function mapUploadImageUrl(

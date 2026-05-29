@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
 import { requireAdmin } from '@/lib/auth-check'
 import { createUpload, listUploads } from '@/lib/uploads-db'
 import { logAdminAction } from '@/lib/leads-db'
 import { generateImageVariants } from '@/lib/media-variant-generation'
+import { UPLOAD_VARIANTS_CACHE_TAG } from '@/lib/upload-image-variants'
 import {
   defaultSiteSettings,
   getMediaUploadLimitBytes,
@@ -131,6 +133,7 @@ export async function POST(request: NextRequest) {
           if (payload.uploadedBy) {
             await logAdminAction(payload.uploadedBy, 'create_upload', 'upload', upload.id)
           }
+          revalidateTag(UPLOAD_VARIANTS_CACHE_TAG, { expire: 0 })
         } catch (err) {
           // Re-throw so handleUpload surfaces the failure; Vercel won't retry DB writes.
           console.error('[media onUploadCompleted] DB insert failed', err)

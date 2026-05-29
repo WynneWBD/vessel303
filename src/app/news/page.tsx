@@ -4,7 +4,7 @@ import NewsListView from '@/components/NewsListView'
 import { buildPageMetadata } from '@/lib/seo'
 import { getUploadVariantsByUrls, mapUploadImageUrl } from '@/lib/upload-image-variants'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 export const metadata: Metadata = buildPageMetadata({
   title: 'News & Events | VESSEL®',

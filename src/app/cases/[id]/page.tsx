@@ -11,10 +11,19 @@ import {
   type UploadVariantMap,
 } from '@/lib/upload-image-variants'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 type Props = {
   params: Promise<{ id: string }>
+}
+
+export async function generateStaticParams() {
+  const cases = await listPublishedProjectCases().catch((err) => {
+    console.error('[cases/static-params] project case db unavailable', err)
+    return staticPublishedProjectCases
+  })
+  const source = cases.length > 0 ? cases : staticPublishedProjectCases
+  return source.map((project) => ({ id: project.id }))
 }
 
 function staticPublishedProjectCase(id: string) {

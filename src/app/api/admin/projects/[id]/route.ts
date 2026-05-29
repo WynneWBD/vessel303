@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
 import {
   getProjectCaseById,
+  PROJECT_CASE_PUBLIC_CACHE_TAG,
   softDeleteProjectCase,
   updateProjectCase,
 } from '@/lib/project-cases-db'
@@ -13,6 +15,13 @@ export const dynamic = 'force-dynamic'
 type Ctx = { params: Promise<{ id: string }> }
 
 const statusValues = ['draft', 'published'] as const
+
+function revalidateProjectCasePublicRoutes(id: string) {
+  revalidateTag(PROJECT_CASE_PUBLIC_CACHE_TAG, { expire: 0 })
+  revalidatePath('/cases')
+  revalidatePath(`/cases/${id}`)
+  revalidatePath('/sitemap.xml')
+}
 
 const globalAmenitySchema = z.object({
   icon: z.string().min(1).max(12),
@@ -101,6 +110,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   await logAdminAction(admin.id, 'project.update', 'project', id)
+  revalidateProjectCasePublicRoutes(id)
   return NextResponse.json({ data: updated })
 }
 
@@ -113,5 +123,6 @@ export async function DELETE(_req: NextRequest, ctx: Ctx) {
   if (!deletedId) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   await logAdminAction(admin.id, 'project.delete', 'project', id)
+  revalidateProjectCasePublicRoutes(id)
   return NextResponse.json({ data: { ok: true, id: deletedId } })
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { listPublicB9ContentItems } from '@/lib/b9-content-db'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 export async function GET() {
   try {

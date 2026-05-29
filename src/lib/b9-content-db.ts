@@ -239,6 +239,37 @@ export async function listB9ContentCategories(kind: B9ContentKind, includeHidden
   return res.rows
 }
 
+const listPublicB9ContentCategoriesCached = unstable_cache(
+  async (kind: B9ContentKind) => {
+    await ensureB9ContentSchema()
+    const res = await pool.query<B9ContentCategory>(
+      `SELECT
+         c.id, c.kind, c.slug, c.title_zh, c.title_en,
+         c.sort_order, c.status,
+         COUNT(i.id)::int AS item_count,
+         c.created_at::text AS created_at,
+         c.updated_at::text AS updated_at
+       FROM site_content_categories c
+       LEFT JOIN site_content_items i
+         ON i.category_id = c.id
+        AND i.deleted_at IS NULL
+       WHERE c.kind = $1
+         AND c.deleted_at IS NULL
+         AND c.status = 'visible'
+       GROUP BY c.id
+       ORDER BY c.sort_order ASC, c.updated_at DESC`,
+      [kind],
+    )
+    return res.rows
+  },
+  ['b9-public-content-categories'],
+  { revalidate: B9_PUBLIC_CACHE_SECONDS, tags: [B9_PUBLIC_CACHE_TAG] },
+)
+
+export async function listPublicB9ContentCategories(kind: B9ContentKind) {
+  return listPublicB9ContentCategoriesCached(kind)
+}
+
 export async function createB9ContentCategory(input: UpsertB9ContentCategoryInput) {
   await ensureB9ContentSchema()
   const slug = normalizeSlug(input.slug)
@@ -328,18 +359,26 @@ export async function getB9ContentItemById(id: number) {
   return res.rows[0] ? rowToItem(res.rows[0]) : null
 }
 
+const getPublicB9ContentItemCached = unstable_cache(
+  async (kind: B9ContentKind, slug: string) => {
+    await ensureB9ContentSchema()
+    const res = await pool.query<B9ContentItem>(
+      `SELECT ${ITEM_COLUMNS} FROM ${ITEM_FROM}
+       WHERE i.kind = $1
+         AND i.slug = $2
+         AND i.status = 'published'
+         AND i.deleted_at IS NULL`,
+      [kind, slug],
+    )
+    return res.rows[0] ? rowToItem(res.rows[0]) : null
+  },
+  ['b9-public-content-item'],
+  { revalidate: B9_PUBLIC_CACHE_SECONDS, tags: [B9_PUBLIC_CACHE_TAG] },
+)
+
 export async function getPublicB9ContentItem(kind: B9ContentKind, slug: string) {
-  await ensureB9ContentSchema()
   const normalizedSlug = normalizeSlug(slug)
-  const res = await pool.query<B9ContentItem>(
-    `SELECT ${ITEM_COLUMNS} FROM ${ITEM_FROM}
-     WHERE i.kind = $1
-       AND i.slug = $2
-       AND i.status = 'published'
-       AND i.deleted_at IS NULL`,
-    [kind, normalizedSlug],
-  )
-  return res.rows[0] ? rowToItem(res.rows[0]) : null
+  return getPublicB9ContentItemCached(kind, normalizedSlug)
 }
 
 const listPublicB9ContentItemsCached = unstable_cache(

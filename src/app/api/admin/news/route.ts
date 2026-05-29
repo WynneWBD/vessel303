@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
-import { listNews, createNews, getNewsCategoryById, isSlugTaken } from '@/lib/news-db'
+import { listNews, createNews, getNewsCategoryById, isSlugTaken, NEWS_PUBLIC_CACHE_TAG } from '@/lib/news-db'
 import type { NewsStatus } from '@/lib/news-db'
 
 export const dynamic = 'force-dynamic'
 
 const statusValues = ['draft', 'published'] as const
 const scheduleValues = ['scheduled'] as const
+
+function revalidateNewsPublicRoutes(slug?: string) {
+  revalidateTag(NEWS_PUBLIC_CACHE_TAG, { expire: 0 })
+  revalidatePath('/news')
+  revalidatePath('/sitemap.xml')
+  if (slug) revalidatePath(`/news/${slug}`)
+}
 
 const scheduledAtSchema = z.preprocess(
   (value) => (value === '' ? null : value),
@@ -107,6 +115,7 @@ export async function POST(req: NextRequest) {
 
   const news = await createNews({ ...parsed.data, author_id: admin.id })
   await logAdminAction(admin.id, 'news.create', 'news', String(news.id))
+  revalidateNewsPublicRoutes(news.slug)
 
   return NextResponse.json({ data: news }, { status: 201 })
 }
