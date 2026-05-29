@@ -70,16 +70,17 @@ const ABOUT_ORDER_GROUPS = {
   postCertifications: 50_000,
 };
 
-const ABOUT_OPTIMIZED_IMAGES = new Map<string, string>([
-  ['/images/about/about_scene-01.jpg', '/images/about/optimized/about_scene-01.jpg'],
-  ['/images/about/about_factory-02.jpg', '/images/about/optimized/about_factory-02.jpg'],
-  ['/images/about/about_factory-05.jpg', '/images/about/optimized/about_factory-05.jpg'],
-  ['/images/about/about_factory-06.png', '/images/about/optimized/about_factory-06.jpg'],
-  ['/images/about/about_team-05.jpg', '/images/about/optimized/about_team-05.jpg'],
-]);
-
 function optimizedAboutImage(src: string) {
-  return ABOUT_OPTIMIZED_IMAGES.get(src) ?? src;
+  if (
+    !src.startsWith('/images/about/') ||
+    src.startsWith('/images/about/optimized/') ||
+    !/\.(jpe?g|png)$/i.test(src)
+  ) {
+    return src;
+  }
+
+  const fileName = src.split('/').pop();
+  return fileName ? `/images/about/optimized/${fileName.replace(/\.(jpe?g|png)$/i, '.jpg')}` : src;
 }
 
 // ─── scroll reveal ────────────────────────────────────────────────────────────
@@ -609,12 +610,12 @@ export default function AboutPage() {
         .filter((item) => Boolean(item.image_url))
         .map((item, index) => ({
           id: item.id ?? `partner-${String(index + 1).padStart(2, '0')}`,
-          src: item.image_url as string,
+          src: optimizedAboutImage(item.image_url as string),
           alt: localText(item, zh, `Partner ${index + 1}`),
         }))
     : PARTNERS.map((src, index) => ({
         id: `partner-${String(index + 1).padStart(2, '0')}`,
-        src,
+        src: optimizedAboutImage(src),
         alt: `Partner ${index + 1}`,
       }));
   const showRecognitionAwards = visibleResolvedModule(dynamicModules, 'recognition-awards');
@@ -1111,7 +1112,7 @@ export default function AboutPage() {
                   <div className="bg-white rounded-lg p-4 flex flex-col gap-3">
                     <div className="relative w-full" style={{ maxHeight: '200px', height: '200px' }}>
                       <Image
-                        src={cert.src}
+                        src={optimizedAboutImage(cert.src)}
                         alt={cert.en}
                         fill
                         className="object-contain"
@@ -1142,7 +1143,7 @@ export default function AboutPage() {
                 >
                   <div className="relative aspect-[3/4]">
                     <Image
-                      src={award.src}
+                      src={optimizedAboutImage(award.src)}
                       alt={zh ? award.zh : award.en}
                       fill
                       className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
@@ -1415,7 +1416,7 @@ export default function AboutPage() {
               aria-label={zh ? '微宿全球营地部署预览地图' : 'VESSEL global camp deployment preview map'}
             >
               <Image
-                src="/images/about/about_globalmap-01.jpg"
+                src={optimizedAboutImage('/images/about/about_globalmap-01.jpg')}
                 alt={zh ? '微宿全球营地部署静态预览' : 'VESSEL global deployment static preview'}
                 fill
                 sizes="(min-width: 1024px) 1152px, 100vw"
