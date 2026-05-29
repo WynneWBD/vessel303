@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type MouseEvent as ReactMouseEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import AuthButton from './AuthButton';
@@ -100,6 +100,26 @@ function SimpleDropdown({ items }: { items: DropdownItem[] }) {
   );
 }
 
+function navigateWithDocumentFallback(event: ReactMouseEvent<HTMLAnchorElement>, href: string, afterNavigate?: () => void) {
+  afterNavigate?.();
+
+  if (
+    event.defaultPrevented ||
+    event.button !== 0 ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey ||
+    href.startsWith('#') ||
+    /^https?:\/\//.test(href)
+  ) {
+    return;
+  }
+
+  event.preventDefault();
+  window.location.assign(href);
+}
+
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -183,6 +203,7 @@ export default function Navbar() {
                   <a
                     href={link.href}
                     className="text-white/65 hover:text-[#E36F2C] text-sm font-medium tracking-wide px-2.5 py-2 transition-colors duration-200 whitespace-nowrap relative group block"
+                    onClick={(event) => navigateWithDocumentFallback(event, link.href)}
                   >
                     {link.label}
                     <span className="absolute bottom-0 left-2.5 w-0 h-px bg-[#E36F2C] transition-all duration-200 group-hover:w-[calc(100%-20px)]" />
@@ -281,7 +302,7 @@ export default function Navbar() {
                   <a
                     href={link.href}
                     className="block text-white/70 hover:text-[#E36F2C] text-sm py-3 px-2 border-b border-white/5 transition-colors tracking-wider"
-                    onClick={() => setIsOpen(false)}
+                    onClick={(event) => navigateWithDocumentFallback(event, link.href, () => setIsOpen(false))}
                   >
                     {link.label}
                   </a>
