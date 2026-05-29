@@ -8,6 +8,7 @@ import {
   isPageModuleTemplateAllowedOnPage,
   type PageModuleTemplate,
 } from '@/lib/page-module-templates'
+import { SITE_CONTACT_HREF, SITE_PRODUCTS_HREF } from '@/lib/site-links'
 
 export type PageModuleItem = {
   id: string
@@ -202,7 +203,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
       },
       {
         id: 'hero-primary-cta',
-        href: 'https://en.303vessel.cn/products_list.html',
+        href: SITE_PRODUCTS_HREF,
         label_zh: '探索产品',
         label_en: 'Explore Products',
         is_visible: true,
@@ -210,7 +211,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
       },
       {
         id: 'hero-secondary-cta',
-        href: 'https://en.303vessel.cn/contact.html',
+        href: SITE_CONTACT_HREF,
         label_zh: '联系我们',
         label_en: 'Get in Touch',
         is_visible: true,

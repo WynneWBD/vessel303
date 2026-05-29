@@ -187,7 +187,8 @@ export async function POST(req: NextRequest) {
   const isBEnd =
     B_END_TYPES.has(data.inquiryType) ||
     data.inquiryType === 'Project Case Inquiry' ||
-    source.startsWith('case_detail:');
+    source.startsWith('case_detail:') ||
+    source.startsWith('product_detail:');
   const subject = isBEnd
     ? '【B端线索】新采购咨询 - VESSEL 微宿'
     : '【C端线索】新营地咨询 - VESSEL 微宿';

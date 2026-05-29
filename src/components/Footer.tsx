@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
+import { SITE_CONTACT_HREF } from '@/lib/site-links';
 
 function SocialIcon({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
   return (
@@ -72,7 +73,7 @@ export default function Footer() {
               {t(i18n.footer.phoneBtn)}
             </a>
             <Link
-              href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
+              href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
               className="border border-[#E36F2C]/40 text-[#E36F2C] text-sm px-6 py-3 hover:bg-[#E36F2C]/10 transition-colors tracking-wider"
             >
               {t(i18n.footer.messageBtn)}

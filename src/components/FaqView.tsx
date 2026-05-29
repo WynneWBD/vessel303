@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { SITE_CONTACT_HREF } from '@/lib/site-links'
 
 export type FaqCategoryView = {
   key: string
@@ -205,7 +206,7 @@ export default function FaqView({
           </p>
           <div className="flex flex-col justify-center gap-3 sm:flex-row">
             <Link
-              href="https://en.303vessel.cn/contact.html"
+              href={SITE_CONTACT_HREF}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block bg-[#E36F2C] px-8 py-3.5 text-sm font-semibold tracking-wider text-white transition-colors hover:bg-[#C85A1F]"

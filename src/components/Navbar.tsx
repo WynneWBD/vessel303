@@ -7,6 +7,7 @@ import AuthButton from './AuthButton';
 import LanguageToggle from './LanguageToggle';
 import { useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
+import { SITE_CONTACT_HREF } from '@/lib/site-links';
 
 interface DropdownItem {
   label: string;
@@ -204,13 +205,13 @@ export default function Navbar() {
           {/* CTA + Toggle */}
           <div className="hidden xl:flex items-center gap-2 shrink-0">
             <Link
-              href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
+              href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
               className="text-white text-sm font-semibold px-3.5 py-2 border border-white/50 hover:bg-[#F5F2ED] hover:text-[#241F1B] transition-all duration-200 tracking-wider whitespace-nowrap"
             >
               {t(i18n.nav.purchaseBtn)}
             </Link>
             <Link
-              href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
+              href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
               className="text-white/75 text-sm font-medium px-3.5 py-2 border border-white/20 hover:border-[#E36F2C] hover:text-[#E36F2C] transition-all duration-200 tracking-wider whitespace-nowrap"
             >
               {t(i18n.nav.bookingBtn)}
@@ -290,14 +291,14 @@ export default function Navbar() {
 
             <div className="flex gap-3 pt-4">
               <Link
-                href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
+                href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
                 className="flex-1 text-center bg-[#241F1B] text-white text-sm font-semibold py-3 border border-white/60 tracking-wider"
                 onClick={() => setIsOpen(false)}
               >
                 {t(i18n.nav.purchaseBtn)}
               </Link>
               <Link
-                href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
+                href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
                 className="flex-1 text-center bg-transparent text-white/80 text-sm py-3 border border-white/25 tracking-wider"
                 onClick={() => setIsOpen(false)}
               >

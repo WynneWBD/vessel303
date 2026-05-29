@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHero from '@/components/PageHero';
 import { getPublicB9ContentItem, type B9ContentItem } from '@/lib/b9-content-db';
+import { SITE_CONTACT_HREF } from '@/lib/site-links';
 
 export const dynamic = 'force-dynamic';
 
@@ -547,7 +548,7 @@ export default async function ScenarioPage({
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
-              href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
+              href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
               className="text-sm font-bold px-8 py-3 tracking-wider transition-colors"
               style={{ background: scenario.accentColor, color: '#FFFFFF' }}
             >

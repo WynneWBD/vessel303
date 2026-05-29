@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
+import { SITE_CONTACT_HREF } from '@/lib/site-links';
 import type { ProductAttributeLabel } from '@/lib/product-catalog-db';
 import type { CatalogProduct, CatalogCommercialTerms } from '@/lib/products';
 
@@ -16,8 +17,6 @@ interface Props {
 
 type DetailModule = NonNullable<CatalogProduct['detail_modules']>[number];
 type DetailModuleItem = NonNullable<DetailModule['items_cn']>[number];
-
-const CONTACT_URL = 'https://en.303vessel.cn/contact.html';
 
 const TERM_FIELDS: Array<{
   key: string;
@@ -213,7 +212,7 @@ export default function CatalogProductDetailContent({
                 </div>
               ) : null}
               <Link
-                href={CONTACT_URL}
+                href={SITE_CONTACT_HREF}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-6 block bg-[#147C94] px-5 py-3 text-center text-sm font-bold uppercase tracking-[0.12em] text-white hover:bg-[#0E6479]"
@@ -251,7 +250,7 @@ export default function CatalogProductDetailContent({
               Please send your project destination, quantity, configuration and delivery requirement. We will contact you as soon as possible.
             </p>
             <Link
-              href={CONTACT_URL}
+              href={SITE_CONTACT_HREF}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-5 inline-flex bg-[#E36F2C] px-5 py-3 text-sm font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C65F22]"

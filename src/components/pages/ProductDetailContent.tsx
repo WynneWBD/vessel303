@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
+import { SITE_CONTACT_HREF } from '@/lib/site-links';
 import type { ProductData } from '@/lib/products';
 
 interface Props {
@@ -99,7 +100,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
           </div>
           <div className="flex gap-3">
             <Link
-              href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
+              href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
               className="text-sm font-bold px-6 py-2.5 tracking-wider transition-colors"
               style={{ background: product.accentColor, color: '#FFFFFF' }}
             >
@@ -300,7 +301,7 @@ export default function ProductDetailContent({ product, isLoggedIn, prevProduct,
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
-              href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
+              href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
               className="text-sm font-bold px-8 py-3 tracking-wider transition-colors"
               style={{ background: product.accentColor, color: '#FFFFFF' }}
             >

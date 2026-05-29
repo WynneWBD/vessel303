@@ -100,7 +100,7 @@ const SETTINGS_TAKEOVER_ITEMS: SettingsTakeoverItem[] = [
     title: '联系入口',
     fields: 'contactUrl',
     state: 'active',
-    detail: '/contact 已读取后台 contactUrl；保存设置会写入 site_settings 并记录日志。',
+    detail: 'B12：前台通用 CTA 统一进入 /contact，再读取 contactUrl；保存设置会写入 site_settings 并记录日志。',
   },
   {
     title: '媒体上传限制',
@@ -118,7 +118,7 @@ const SETTINGS_TAKEOVER_ITEMS: SettingsTakeoverItem[] = [
     title: '销售联系方式',
     fields: 'salesEmail, salesPhone, whatsapp',
     state: 'planned',
-    detail: '建议先确认展示位置、邮件收件逻辑和隐私边界，再接入前台。',
+    detail: '建议先确认展示位置、邮件收件逻辑和隐私边界；B12 只收口 CTA 路径，不开放自由配置。',
   },
   {
     title: '产品旧站入口',
@@ -481,7 +481,7 @@ export default async function SettingsPage() {
             <LinkRow icon={Mail} title="联系邮件" text="Resend API 配置后，联系表单和资料包请求才能稳定发信。" />
             <LinkRow icon={ImageIcon} title="图片上传" text="Vercel Blob 必须使用 client upload，不能改回 API body 上传。" />
             <LinkRow icon={Map} title="全球地图" text="MapTiler proxy 必须带 Referer，transformRequest 必须返回绝对 URL。" />
-            <LinkRow icon={Globe2} title="外部跳转" text="联系入口跳 303vessel.cn/contact.html，产品查看跳 products_list.html。" />
+            <LinkRow icon={Globe2} title="外部跳转" text="联系 CTA 统一走 /contact，产品查看统一走 /products；实际 contactUrl 由站点设置控制。" />
           </CardContent>
         </Card>
 

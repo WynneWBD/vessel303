@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react'
 import { CheckCircle2, Loader2, Send } from 'lucide-react'
+import { buildLeadSource } from '@/lib/site-links'
 
 type CaseInquiryFormProps = {
   projectId: string
@@ -39,6 +40,7 @@ function clean(value: string | null | undefined) {
 function buildRemarks(form: FormState, props: CaseInquiryFormProps) {
   return [
     `Project case: ${props.projectName} (${props.projectId})`,
+    'Entry: case detail inquiry form',
     props.projectType ? `Project type: ${props.projectType}` : '',
     props.projectLocation ? `Reference location: ${props.projectLocation}` : '',
     props.products ? `Related products: ${props.products}` : '',
@@ -85,7 +87,7 @@ export default function CaseInquiryForm(props: CaseInquiryFormProps) {
           quantity: '',
           model: products,
           remarks: buildRemarks(form, props),
-          source: `case_detail:${props.projectId}`,
+          source: buildLeadSource('case_detail', props.projectId, 'inquiry_form'),
         }),
       })
       const data = (await res.json().catch(() => ({}))) as { error?: string }

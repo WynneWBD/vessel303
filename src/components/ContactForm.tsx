@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
+import { buildLeadSource } from '@/lib/site-links';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
@@ -72,7 +73,10 @@ export default function ContactForm() {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          source: buildLeadSource('website_contact', 'general_form'),
+        }),
       });
       const data = await res.json();
       if (!res.ok) {

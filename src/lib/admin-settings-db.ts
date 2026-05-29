@@ -1,4 +1,5 @@
 import { pool } from '@/lib/db'
+import { DEFAULT_CONTACT_URL } from '@/lib/site-links'
 
 export type SiteSettings = {
   siteNameZh: string
@@ -34,7 +35,7 @@ export const defaultSiteSettings: SiteSettings = {
   seoTitleEn: 'VESSEL® | Smart Prefab Architecture',
   seoDescriptionZh: '45天工厂预制，2小时落地安装，欧盟与美国认证，服务全球文旅营地部署。',
   seoDescriptionEn: '45-day factory production, 2-hour on-site installation, EU+US certified smart prefab architecture.',
-  contactUrl: 'https://en.303vessel.cn/contact.html',
+  contactUrl: DEFAULT_CONTACT_URL,
   productsLegacyUrl: 'https://en.303vessel.cn/products_list.html',
   salesEmail: 'vessel.sale@303industries.cn',
   salesPhone: '400-8090-303',

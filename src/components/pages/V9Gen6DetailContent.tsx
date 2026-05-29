@@ -6,6 +6,7 @@ import { useState, useCallback, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
+import { buildLeadSource, compactLeadMessage, SITE_CONTACT_HREF } from '@/lib/site-links';
 
 // ─── Gallery images (按指定顺序) ─────────────────────────────────────────────
 const GALLERY = [
@@ -229,7 +230,24 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
       const r = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inquiryType: '咨询报价', model: 'V9 Gen6', name: form.name, phone: form.phone || form.email, email: form.email || form.phone, location: form.location, quantity: form.quantity, remarks: form.remarks, company: '', projectType: '' }),
+        body: JSON.stringify({
+          inquiryType: '咨询报价',
+          model: 'V9 Gen6',
+          name: form.name,
+          phone: form.phone || form.email,
+          email: form.email || form.phone,
+          location: form.location,
+          quantity: form.quantity,
+          remarks: compactLeadMessage([
+            'Product: V9 Gen6 fixed detail page',
+            `Quantity: ${form.quantity}`,
+            form.location ? `Project location: ${form.location}` : '',
+            form.remarks ? `Client message: ${form.remarks}` : '',
+          ]),
+          company: '',
+          projectType: 'Product Inquiry',
+          source: buildLeadSource('product_detail', 'v9-gen6', 'quick_inquiry'),
+        }),
       });
       setStatus(r.ok ? 'sent' : 'error');
     } catch { setStatus('error'); }
@@ -698,7 +716,7 @@ export default function V9Gen6DetailContent({ isLoggedIn }: Props) {
             {/* 两个按钮 */}
             <div className="grid grid-cols-2 gap-3">
               <Link
-                href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
+                href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
                 className="py-3 text-center text-[11px] font-bold tracking-[0.2em] uppercase bg-[#E36F2C] text-white hover:bg-[#C85A1F] transition-colors"
               >
                 {lang === 'en' ? 'Inquire Now' : '立即咨询'}

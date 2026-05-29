@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { Resend } from 'resend';
 import { z } from 'zod';
 import { createLead } from '@/lib/leads-db';
+import { buildLeadSource, compactLeadMessage } from '@/lib/site-links';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -173,8 +174,12 @@ export async function POST(req: NextRequest) {
       country: data.country,
       inquiry_type: 'Media Kit Request',
       sku_interest: USE_CASE_LABELS[data.useCase],
-      message: data.message || USE_CASE_LABELS[data.useCase],
-      source: 'media-kit',
+      message: compactLeadMessage([
+        'Entry: media kit request form',
+        `Use case: ${USE_CASE_LABELS[data.useCase]}`,
+        data.message ? `Client message: ${data.message}` : '',
+      ]),
+      source: buildLeadSource('media_kit', data.useCase, 'request_form'),
     });
     leadCreated = true;
     leadId = lead.id;

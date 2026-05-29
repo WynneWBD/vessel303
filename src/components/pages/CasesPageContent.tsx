@@ -8,6 +8,7 @@ import Footer from '@/components/Footer'
 import PageHero from '@/components/PageHero'
 import { useT, useLanguage } from '@/contexts/LanguageContext'
 import { i18n } from '@/lib/i18n'
+import { SITE_CONTACT_HREF } from '@/lib/site-links'
 import type { ProjectCaseRow } from '@/lib/project-cases-static'
 
 type CaseFilter = 'all' | 'tourism' | 'commercial' | 'public' | 'overseas'
@@ -270,7 +271,7 @@ export default function CasesPageContent({ cases }: { cases: ProjectCaseRow[] })
           <p className="text-[#6B6560] text-sm mb-8 tracking-wider">{t(i18n.cases.ctaSubtitle)}</p>
           <div className="flex flex-wrap justify-center gap-4">
             <a
-              href="https://en.303vessel.cn/contact.html"
+              href={SITE_CONTACT_HREF}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-[#E36F2C] text-white font-bold text-sm px-8 py-3 hover:bg-[#C85A1F] transition-colors tracking-wider"

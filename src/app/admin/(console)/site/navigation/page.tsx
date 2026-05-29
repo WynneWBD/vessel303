@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import { SITE_CONTACT_HREF } from '@/lib/site-links'
 import {
   ArrowRight,
   CheckCircle2,
@@ -97,30 +98,30 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     label: 'Contact',
     href: '/contact',
     group: '主导航',
-    source: 'Navbar.tsx / site_settings.contactUrl',
+    source: 'Navbar.tsx / CTA helper / site_settings.contactUrl',
     owner: '站点设置',
     status: 'external',
-    note: '站内 /contact 读取联系入口配置并跳转到现有询盘入口。',
+    note: 'B12：站内 /contact 读取 contactUrl 并跳转到现有询盘入口；通用咨询 CTA 统一复用这个规则。',
     Icon: ExternalLink,
   },
   {
     label: 'Purchase',
-    href: 'https://en.303vessel.cn/contact.html',
+    href: SITE_CONTACT_HREF,
     group: '行动按钮',
-    source: 'Navbar.tsx',
+    source: 'Navbar.tsx / CTA helper',
     owner: '联系入口',
     status: 'external',
-    note: '继续使用现有 303vessel.cn 联系入口，不新建复杂预订系统。',
+    note: '按钮先进入 /contact，再读取 contactUrl 跳转；不新建复杂预订系统。',
     Icon: ExternalLink,
   },
   {
     label: 'Book a Visit',
-    href: 'https://en.303vessel.cn/contact.html',
+    href: SITE_CONTACT_HREF,
     group: '行动按钮',
-    source: 'Navbar.tsx',
+    source: 'Navbar.tsx / CTA helper',
     owner: '联系入口',
     status: 'external',
-    note: '与 Purchase 共用现有联系页，后续如做预约系统需单独立项。',
+    note: '与 Purchase 共用 /contact 统一规则，后续如做预约系统需单独立项。',
     Icon: ExternalLink,
   },
   {
@@ -190,7 +191,7 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     source: 'Footer.tsx',
     owner: '站点设置',
     status: 'external',
-    note: '页脚 Contact 继续走统一联系入口。',
+    note: '页脚 Contact 继续走 /contact 统一联系入口。',
     Icon: ExternalLink,
   },
 ]

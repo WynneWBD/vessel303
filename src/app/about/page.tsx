@@ -15,6 +15,7 @@ import {
   type PageModuleRegistryEntry,
   type ResolvedPageModule,
 } from '@/lib/page-module-rendering';
+import { SITE_CONTACT_HREF } from '@/lib/site-links';
 
 type Tech = 'viie' | 'vols' | 'vipc';
 
@@ -1436,7 +1437,7 @@ export default function AboutPage() {
           </div>
           <div className="flex flex-col sm:flex-row gap-3 shrink-0">
             <a
-              href="https://en.303vessel.cn/contact.html"
+              href={SITE_CONTACT_HREF}
               target="_blank"
               rel="noopener noreferrer"
               className="px-9 py-4 bg-white text-[#E36F2C] text-sm font-bold tracking-wider hover:bg-[#F5F2ED] transition-colors whitespace-nowrap"

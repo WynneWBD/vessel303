@@ -1,3 +1,5 @@
+import { SITE_CONTACT_HREF, SITE_PRODUCTS_HREF } from '@/lib/site-links'
+
 export type PageModuleTemplatePage = 'home' | 'about'
 
 export type PageModuleTemplateId = 'simple-text' | 'cta-section'
@@ -119,7 +121,7 @@ export const PAGE_MODULE_TEMPLATES: PageModuleTemplate[] = [
           id: 'primary-cta',
           label_zh: '联系团队',
           label_en: 'Contact Team',
-          href: 'https://en.303vessel.cn/contact.html',
+          href: SITE_CONTACT_HREF,
           is_visible: true,
           sort_order: 20,
         },
@@ -127,7 +129,7 @@ export const PAGE_MODULE_TEMPLATES: PageModuleTemplate[] = [
           id: 'secondary-cta',
           label_zh: '查看产品',
           label_en: 'View Products',
-          href: 'https://en.303vessel.cn/products_list.html',
+          href: SITE_PRODUCTS_HREF,
           is_visible: true,
           sort_order: 30,
         },
