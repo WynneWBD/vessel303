@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { toast } from 'sonner'
 import { FileText, Plus, Save, SlidersHorizontal } from 'lucide-react'
@@ -188,6 +188,7 @@ export default function B9ContentManager({
     status: 'visible',
   })
   const [saving, setSaving] = useState(false)
+  const formRef = useRef<HTMLDivElement>(null)
 
   const sortedRows = useMemo(
     () => [...rows].sort((a, b) => a.sort_order - b.sort_order || b.updated_at.localeCompare(a.updated_at)),
@@ -198,10 +199,42 @@ export default function B9ContentManager({
     setEditing((current) => ({ ...current, [key]: value }))
   }
 
-  const saveItem = async () => {
+  const readEditingForm = (): EditableItem => {
+    const root = formRef.current
+    if (!root) return editing
+    const valueOf = (field: string, fallback = '') => {
+      const element = root.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
+        `[data-b9-field="${field}"]`,
+      )
+      return element ? element.value : fallback
+    }
+    const categoryId = valueOf('category_id', editing.category_id ? String(editing.category_id) : '')
+
+    return {
+      ...editing,
+      slug: valueOf('slug', editing.slug),
+      category_id: categoryId ? Number(categoryId) : null,
+      title_zh: valueOf('title_zh', editing.title_zh),
+      title_en: valueOf('title_en', editing.title_en),
+      summary_zh: valueOf('summary_zh', editing.summary_zh),
+      summary_en: valueOf('summary_en', editing.summary_en),
+      body_zh: valueOf('body_zh', editing.body_zh),
+      body_en: valueOf('body_en', editing.body_en),
+      cover_image_url: valueOf('cover_image_url', editing.cover_image_url),
+      file_url: valueOf('file_url', editing.file_url),
+      cta_label_zh: valueOf('cta_label_zh', editing.cta_label_zh),
+      cta_label_en: valueOf('cta_label_en', editing.cta_label_en),
+      cta_href: valueOf('cta_href', editing.cta_href),
+      payloadText: valueOf('payloadText', editing.payloadText),
+      status: (valueOf('status', editing.status) || 'draft') as B9ContentStatus,
+      sort_order: Number(valueOf('sort_order', String(editing.sort_order))) || 0,
+    }
+  }
+
+  const saveItem = async (item = editing) => {
     let payload: Record<string, unknown>
     try {
-      payload = editing.payloadText.trim() ? JSON.parse(editing.payloadText) : {}
+      payload = item.payloadText.trim() ? JSON.parse(item.payloadText) : {}
       if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
         throw new Error('payload must be an object')
       }
@@ -210,9 +243,9 @@ export default function B9ContentManager({
       return
     }
 
-    if (editing.status === 'published') {
-      const required = [editing.slug, editing.title_zh, editing.title_en]
-      if (kind === 'faq') required.push(editing.body_zh, editing.body_en)
+    if (item.status === 'published') {
+      const required = [item.slug, item.title_zh, item.title_en]
+      if (kind === 'faq') required.push(item.body_zh, item.body_en)
       if (required.some((value) => !String(value ?? '').trim())) {
         toast.error('发布前必须补齐 slug、中英文标题和必填正文')
         return
@@ -223,25 +256,25 @@ export default function B9ContentManager({
     try {
       const body = {
         kind,
-        slug: editing.slug,
-        category_id: editing.category_id,
-        title_zh: editing.title_zh,
-        title_en: editing.title_en,
-        summary_zh: editing.summary_zh || null,
-        summary_en: editing.summary_en || null,
-        body_zh: editing.body_zh || null,
-        body_en: editing.body_en || null,
-        cover_image_url: editing.cover_image_url || null,
-        file_url: editing.file_url || null,
-        cta_label_zh: editing.cta_label_zh || null,
-        cta_label_en: editing.cta_label_en || null,
-        cta_href: editing.cta_href || null,
+        slug: item.slug,
+        category_id: item.category_id,
+        title_zh: item.title_zh,
+        title_en: item.title_en,
+        summary_zh: item.summary_zh || null,
+        summary_en: item.summary_en || null,
+        body_zh: item.body_zh || null,
+        body_en: item.body_en || null,
+        cover_image_url: item.cover_image_url || null,
+        file_url: item.file_url || null,
+        cta_label_zh: item.cta_label_zh || null,
+        cta_label_en: item.cta_label_en || null,
+        cta_href: item.cta_href || null,
         payload,
-        status: editing.status,
-        sort_order: Number(editing.sort_order) || 0,
+        status: item.status,
+        sort_order: Number(item.sort_order) || 0,
       }
-      const res = await fetch(editing.id ? `/api/admin/site-content/${editing.id}` : '/api/admin/site-content', {
-        method: editing.id ? 'PATCH' : 'POST',
+      const res = await fetch(item.id ? `/api/admin/site-content/${item.id}` : '/api/admin/site-content', {
+        method: item.id ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
@@ -341,7 +374,7 @@ export default function B9ContentManager({
 
       <aside className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:self-start xl:overflow-y-auto">
         {mode === 'content' ? (
-          <div className="space-y-4">
+          <div ref={formRef} className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-lg font-bold text-[#1E2C31]">{editing.id ? '编辑内容' : '新增内容'}</h2>
               <Button type="button" variant="outline" size="sm" onClick={() => setEditing(emptyItem(kind))} data-testid="b9-new-content">
@@ -349,7 +382,7 @@ export default function B9ContentManager({
               </Button>
             </div>
 
-            <Button type="button" className="w-full" disabled={saving} onClick={saveItem} data-testid="b9-save-content-top">
+            <Button type="button" className="w-full" disabled={saving} onClick={() => saveItem(readEditingForm())} data-testid="b9-save-content-top">
               <Save size={16} /> {saving ? '保存中...' : '保存内容'}
             </Button>
 
@@ -364,7 +397,7 @@ export default function B9ContentManager({
             )}
 
             <Field label="Slug">
-              <Input value={editing.slug} onChange={(e) => updateEditing('slug', e.target.value)} placeholder="faq-price" />
+              <Input data-b9-field="slug" value={editing.slug} onChange={(e) => updateEditing('slug', e.target.value)} placeholder="faq-price" />
             </Field>
 
             {allowCategories && (
@@ -372,6 +405,7 @@ export default function B9ContentManager({
                 <Select
                   value={editing.category_id ? String(editing.category_id) : ''}
                   onChange={(e) => updateEditing('category_id', e.target.value ? Number(e.target.value) : null)}
+                  data-b9-field="category_id"
                 >
                   <option value="">未分类</option>
                   {categories.map((cat) => (
@@ -382,54 +416,54 @@ export default function B9ContentManager({
             )}
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label={copy.titleZhLabel}><Input value={editing.title_zh} onChange={(e) => updateEditing('title_zh', e.target.value)} /></Field>
-              <Field label={copy.titleEnLabel}><Input value={editing.title_en} onChange={(e) => updateEditing('title_en', e.target.value)} /></Field>
+              <Field label={copy.titleZhLabel}><Input data-b9-field="title_zh" value={editing.title_zh} onChange={(e) => updateEditing('title_zh', e.target.value)} /></Field>
+              <Field label={copy.titleEnLabel}><Input data-b9-field="title_en" value={editing.title_en} onChange={(e) => updateEditing('title_en', e.target.value)} /></Field>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label={copy.summaryZhLabel}><Textarea rows={2} value={editing.summary_zh} onChange={(e) => updateEditing('summary_zh', e.target.value)} /></Field>
-              <Field label={copy.summaryEnLabel}><Textarea rows={2} value={editing.summary_en} onChange={(e) => updateEditing('summary_en', e.target.value)} /></Field>
+              <Field label={copy.summaryZhLabel}><Textarea data-b9-field="summary_zh" rows={2} value={editing.summary_zh} onChange={(e) => updateEditing('summary_zh', e.target.value)} /></Field>
+              <Field label={copy.summaryEnLabel}><Textarea data-b9-field="summary_en" rows={2} value={editing.summary_en} onChange={(e) => updateEditing('summary_en', e.target.value)} /></Field>
             </div>
 
-            <Field label={copy.bodyZhLabel}><Textarea rows={4} value={editing.body_zh} onChange={(e) => updateEditing('body_zh', e.target.value)} /></Field>
-            <Field label={copy.bodyEnLabel}><Textarea rows={4} value={editing.body_en} onChange={(e) => updateEditing('body_en', e.target.value)} /></Field>
+            <Field label={copy.bodyZhLabel}><Textarea data-b9-field="body_zh" rows={4} value={editing.body_zh} onChange={(e) => updateEditing('body_zh', e.target.value)} /></Field>
+            <Field label={copy.bodyEnLabel}><Textarea data-b9-field="body_en" rows={4} value={editing.body_en} onChange={(e) => updateEditing('body_en', e.target.value)} /></Field>
 
             <div className="grid grid-cols-2 gap-3">
               <Field label={copy.fileLabel ?? '封面图链接'}>
-                <Input value={copy.fileLabel ? editing.file_url : editing.cover_image_url} onChange={(e) => updateEditing(copy.fileLabel ? 'file_url' : 'cover_image_url', e.target.value)} />
+                <Input data-b9-field={copy.fileLabel ? 'file_url' : 'cover_image_url'} value={copy.fileLabel ? editing.file_url : editing.cover_image_url} onChange={(e) => updateEditing(copy.fileLabel ? 'file_url' : 'cover_image_url', e.target.value)} />
               </Field>
               {copy.fileLabel && (
                 <Field label="封面图链接">
-                  <Input value={editing.cover_image_url} onChange={(e) => updateEditing('cover_image_url', e.target.value)} />
+                  <Input data-b9-field="cover_image_url" value={editing.cover_image_url} onChange={(e) => updateEditing('cover_image_url', e.target.value)} />
                 </Field>
               )}
             </div>
 
             <div className="grid grid-cols-3 gap-3">
-              <Field label="CTA 中文"><Input value={editing.cta_label_zh} onChange={(e) => updateEditing('cta_label_zh', e.target.value)} /></Field>
-              <Field label="CTA 英文"><Input value={editing.cta_label_en} onChange={(e) => updateEditing('cta_label_en', e.target.value)} /></Field>
-              <Field label="CTA 链接"><Input value={editing.cta_href} onChange={(e) => updateEditing('cta_href', e.target.value)} /></Field>
+              <Field label="CTA 中文"><Input data-b9-field="cta_label_zh" value={editing.cta_label_zh} onChange={(e) => updateEditing('cta_label_zh', e.target.value)} /></Field>
+              <Field label="CTA 英文"><Input data-b9-field="cta_label_en" value={editing.cta_label_en} onChange={(e) => updateEditing('cta_label_en', e.target.value)} /></Field>
+              <Field label="CTA 链接"><Input data-b9-field="cta_href" value={editing.cta_href} onChange={(e) => updateEditing('cta_href', e.target.value)} /></Field>
             </div>
 
             <Field label="JSON 配置">
-              <Textarea rows={5} value={editing.payloadText} onChange={(e) => updateEditing('payloadText', e.target.value)} />
+              <Textarea data-b9-field="payloadText" rows={5} value={editing.payloadText} onChange={(e) => updateEditing('payloadText', e.target.value)} />
               <p className="mt-1 text-xs leading-5 text-[#8A9EA4]">{copy.payloadHelp}</p>
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
               <Field label="状态">
-                <Select value={editing.status} onChange={(e) => updateEditing('status', e.target.value as B9ContentStatus)}>
+                <Select data-b9-field="status" value={editing.status} onChange={(e) => updateEditing('status', e.target.value as B9ContentStatus)}>
                   <option value="draft">draft</option>
                   <option value="published">published</option>
                   <option value="hidden">hidden</option>
                 </Select>
               </Field>
               <Field label="排序">
-                <Input type="number" value={editing.sort_order} onChange={(e) => updateEditing('sort_order', Number(e.target.value))} />
+                <Input data-b9-field="sort_order" type="number" value={editing.sort_order} onChange={(e) => updateEditing('sort_order', Number(e.target.value))} />
               </Field>
             </div>
 
-            <Button type="button" className="w-full" disabled={saving} onClick={saveItem} data-testid="b9-save-content-bottom">
+            <Button type="button" className="w-full" disabled={saving} onClick={() => saveItem(readEditingForm())} data-testid="b9-save-content-bottom">
               <Save size={16} /> {saving ? '保存中...' : '保存内容'}
             </Button>
           </div>
