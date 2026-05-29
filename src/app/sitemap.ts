@@ -32,6 +32,7 @@ type ProjectSitemapRow = {
 const STATIC_ROUTES: StaticRoute[] = [
   { path: '/', changeFrequency: 'weekly', priority: 1 },
   { path: '/products', changeFrequency: 'weekly', priority: 0.9 },
+  { path: '/products/v9-gen6', changeFrequency: 'monthly', priority: 0.82 },
   { path: '/cases', changeFrequency: 'weekly', priority: 0.85 },
   { path: '/news', changeFrequency: 'weekly', priority: 0.75 },
   { path: '/about', changeFrequency: 'monthly', priority: 0.7 },
@@ -40,6 +41,9 @@ const STATIC_ROUTES: StaticRoute[] = [
   { path: '/global', changeFrequency: 'weekly', priority: 0.75 },
   { path: '/display', changeFrequency: 'monthly', priority: 0.55 },
   { path: '/media-kit', changeFrequency: 'monthly', priority: 0.45 },
+  { path: '/scenarios/tourism', changeFrequency: 'monthly', priority: 0.62 },
+  { path: '/scenarios/commercial', changeFrequency: 'monthly', priority: 0.62 },
+  { path: '/scenarios/public', changeFrequency: 'monthly', priority: 0.62 },
   { path: '/innovation/viie', changeFrequency: 'monthly', priority: 0.55 },
   { path: '/innovation/vipc', changeFrequency: 'monthly', priority: 0.55 },
   { path: '/innovation/vols', changeFrequency: 'monthly', priority: 0.55 },

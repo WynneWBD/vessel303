@@ -10,13 +10,16 @@ import {
 } from '@/lib/product-catalog-db';
 import ProductsPageContent from '@/components/pages/ProductsPageContent';
 import { getUploadVariantsByUrls, mapUploadImageUrl } from '@/lib/upload-image-variants';
+import { buildPageMetadata } from '@/lib/seo';
 
 export const revalidate = 300;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: 'Products | VESSEL® Smart Prefab Architecture',
-  description: 'VESSEL® Gen6/Gen5 smart prefab architecture. E3, E5, E6, E7, V3, V5, V7, V9, S5 — 39 variants. EU+US certified.',
-};
+  description:
+    'Browse VESSEL® Gen6 and Gen5 smart prefab architecture for resorts, commercial spaces, public facilities, and custom overseas projects.',
+  path: '/products',
+});
 
 const PAGE_SIZE = 12;
 

@@ -21,6 +21,7 @@ import {
   mapUploadImageUrl,
   type UploadVariantMap,
 } from '@/lib/upload-image-variants';
+import { buildPageMetadata } from '@/lib/seo';
 
 function findStaticCatalogProduct(slug: string) {
   return catalogProducts.find((p) => (
@@ -78,10 +79,12 @@ export async function generateMetadata({
     const description = catalogProduct.seo_description_en
       || catalogProduct.seo_description_zh
       || `${catalogProduct.name_cn} · ${catalogProduct.size} · ${catalogProduct.features_cn.join('，')}`;
-    return {
+    return buildPageMetadata({
       title,
       description,
-    };
+      path: `/products/${catalogProduct.detailSlug || catalogProduct.id}`,
+      image: catalogProduct.image,
+    });
   }
 
   // Legacy DB product
@@ -90,10 +93,12 @@ export async function generateMetadata({
     return null;
   });
   if (!product) return {};
-  return {
+  return buildPageMetadata({
     title: `${product.model} ${product.gen} | VESSEL 微宿®`,
     description: `${product.tagline} — ${product.tagline2}。${product.floorArea}，${product.power}，${product.capacity}。`,
-  };
+    path: `/products/${slug}`,
+    image: product.image,
+  });
 }
 
 export default async function ProductDetailPage({

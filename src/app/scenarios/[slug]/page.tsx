@@ -7,6 +7,7 @@ import PageHero from '@/components/PageHero';
 import ConversionInquiryForm from '@/components/pages/ConversionInquiryForm';
 import { getPublicB9ContentItem, type B9ContentItem } from '@/lib/b9-content-db';
 import { SITE_CONTACT_HREF } from '@/lib/site-links';
+import { buildPageMetadata } from '@/lib/seo';
 
 export const revalidate = 300;
 
@@ -293,10 +294,11 @@ export async function generateMetadata({
     ? applyScenarioCms(baseScenario, await loadScenarioCms(baseScenario.slug))
     : null;
   if (!scenario) return {};
-  return {
+  return buildPageMetadata({
     title: `${scenario.label} | VESSEL 微宿®`,
     description: scenario.intro,
-  };
+    path: `/scenarios/${scenario.slug}`,
+  });
 }
 
 function Placeholder({ label, className }: { label: string; className?: string }) {

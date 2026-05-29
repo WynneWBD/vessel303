@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { existsSync } from 'fs'
+import { join } from 'path'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { pool } from '@/lib/db'
@@ -28,10 +30,11 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'SEO / TDK 检查 - VESSEL' }
+export const metadata = { title: 'SEO / 收录准备中心 - VESSEL' }
 
 type AdminRole = 'admin' | 'operator'
 type SeoStatus = 'ready' | 'partial' | 'derived' | 'protected'
+type IndexStatus = 'ready' | 'waiting' | 'protected'
 
 type StaticSeoPage = {
   title: string
@@ -49,6 +52,13 @@ type ContentSeoSummary = {
   missing: number
   source: string
   href: string
+}
+
+type IndexFoundationItem = {
+  title: string
+  status: IndexStatus
+  detail: string
+  Icon: LucideIcon
 }
 
 const EMPTY_CONTENT_SUMMARY: ContentSeoSummary = {
@@ -89,10 +99,19 @@ const STATIC_SEO_PAGES: StaticSeoPage[] = [
   {
     title: 'Products',
     path: '/products',
-    source: 'page metadata',
-    status: 'partial',
-    detail: '列表页已有基础 title 和 description；详情页优先读取产品 SEO 字段。',
+    source: 'buildPageMetadata',
+    status: 'ready',
+    detail: '产品列表页已有 title、description、canonical、OG 和 Twitter；详情页优先读取产品 SEO 字段。',
     actionHref: '/products',
+    Icon: Package,
+  },
+  {
+    title: 'V9 Gen6 固定精品页',
+    path: '/products/v9-gen6',
+    source: 'buildPageMetadata',
+    status: 'ready',
+    detail: '固定精品产品页已有 canonical、OG 和 Twitter，并已纳入 sitemap 固定路径。',
+    actionHref: '/products/v9-gen6',
     Icon: Package,
   },
   {
@@ -121,6 +140,51 @@ const STATIC_SEO_PAGES: StaticSeoPage[] = [
     detail: '联系入口已有 metadata，但页面会读取 site_settings 后跳转到询盘入口。',
     actionHref: '/contact',
     Icon: ExternalLink,
+  },
+  {
+    title: 'FAQ',
+    path: '/faq',
+    source: 'buildPageMetadata',
+    status: 'ready',
+    detail: '常见问题页已有 metadata，并继续由 FAQ CMS 优先、静态内容兜底。',
+    actionHref: '/faq',
+    Icon: FileText,
+  },
+  {
+    title: 'Media Kit',
+    path: '/media-kit',
+    source: 'route layout metadata',
+    status: 'ready',
+    detail: '媒体资源申请页是 client page，metadata 由 route layout 承载，不改变表单和线索写入逻辑。',
+    actionHref: '/media-kit',
+    Icon: FileText,
+  },
+  {
+    title: 'Scenarios',
+    path: '/scenarios/*',
+    source: 'generateMetadata',
+    status: 'ready',
+    detail: 'tourism、commercial、public 三个固定场景页已有 canonical、OG、Twitter，并进入 sitemap。',
+    actionHref: '/scenarios/tourism',
+    Icon: LayoutTemplate,
+  },
+  {
+    title: 'Display',
+    path: '/display',
+    source: 'route layout metadata',
+    status: 'ready',
+    detail: '展示页是 client showcase，metadata 由 route layout 承载，不改变展示交互。',
+    actionHref: '/display',
+    Icon: LayoutTemplate,
+  },
+  {
+    title: 'Innovation',
+    path: '/innovation/viie|vipc|vols',
+    source: 'route layout metadata',
+    status: 'ready',
+    detail: '三个技术专题页已有独立 title、description、canonical、OG 和 Twitter。',
+    actionHref: '/innovation/viie',
+    Icon: FileText,
   },
   {
     title: 'Global',
@@ -309,6 +373,57 @@ function statusClassName(status: SeoStatus): string {
   return 'bg-[#F5F2ED] text-[#6B625B]'
 }
 
+function indexStatusLabel(status: IndexStatus): string {
+  if (status === 'ready') return '已就绪'
+  if (status === 'protected') return '受保护'
+  return '待接入'
+}
+
+function indexStatusClassName(status: IndexStatus): string {
+  if (status === 'ready') return 'bg-emerald-50 text-emerald-700'
+  if (status === 'protected') return 'bg-[#F5F2ED] text-[#6B625B]'
+  return 'bg-[#FFF2E7] text-[#E36F2C]'
+}
+
+function loadIndexFoundationItems(): IndexFoundationItem[] {
+  const robotsReady = existsSync(join(process.cwd(), 'public', 'robots.txt'))
+  const sitemapStaticReady = existsSync(join(process.cwd(), 'public', 'sitemap.xml'))
+  const sitemapRouteReady = existsSync(join(process.cwd(), 'src', 'app', 'sitemap.ts'))
+
+  return [
+    {
+      title: 'Robots',
+      status: robotsReady ? 'ready' : 'waiting',
+      detail: robotsReady
+        ? 'robots.txt 已存在，继续禁止 /admin/ 与 /api/admin/，公开页面允许抓取。'
+        : 'robots.txt 缺失，需要先补公开抓取和后台禁止规则。',
+      Icon: ShieldCheck,
+    },
+    {
+      title: 'Sitemap',
+      status: sitemapStaticReady || sitemapRouteReady ? 'ready' : 'waiting',
+      detail: sitemapRouteReady
+        ? 'app/sitemap.ts 已生成公开主路径、published 产品、案例和新闻，并补入固定场景与精品产品页。'
+        : sitemapStaticReady
+          ? 'public/sitemap.xml 已存在；后续仍建议统一回 app/sitemap.ts 生成。'
+          : 'sitemap 缺失，Search Console 接入前需要补齐。',
+      Icon: ListChecks,
+    },
+    {
+      title: 'Search Console',
+      status: 'waiting',
+      detail: '本轮只列接入清单，不保存 Google 验证码、不提交 sitemap、不接外部 API。',
+      Icon: SearchCheck,
+    },
+    {
+      title: 'Global 地图',
+      status: 'protected',
+      detail: '只确认索引边界，不修改 /global、MapLibre、MapTiler 或 /api/map 底层。',
+      Icon: LockKeyhole,
+    },
+  ]
+}
+
 function SectionTitle({ title, detail }: { title: string; detail?: string }) {
   return (
     <div>
@@ -351,6 +466,54 @@ function SummaryTile({
       </p>
       <p className="mt-2 text-sm text-white/82">{detail}</p>
     </div>
+  )
+}
+
+function IndexFoundationPanel({ items }: { items: IndexFoundationItem[] }) {
+  const checklist = [
+    '确认 Google 账号与域名所有权验证方式。',
+    '配置验证代码或 DNS TXT 前先由 Wynne 单独授权。',
+    '验证通过后再提交 https://www.vessel303.com/sitemap.xml。',
+    '接入后观察索引覆盖、抓取错误、移动端可用性和热门查询。',
+  ]
+
+  return (
+    <section className="space-y-4">
+      <SectionTitle
+        title="索引基础与 Search Console 接入清单"
+        detail="对照 300 的网站地图、Robots、TDK 设置和搜索引擎连接，本页只做准备状态，不写第三方代码。"
+      />
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
+        {items.map((item) => {
+          const Icon = item.Icon
+          return (
+            <div key={item.title} className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
+                  <Icon size={18} />
+                </span>
+                <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${indexStatusClassName(item.status)}`}>
+                  {indexStatusLabel(item.status)}
+                </span>
+              </div>
+              <h3 className="mt-4 text-base font-bold text-[#1E2C31]">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-[#61767D]">{item.detail}</p>
+            </div>
+          )
+        })}
+      </div>
+      <div className="rounded-md border border-dashed border-[#D8E7E8] bg-white/75 p-5">
+        <h3 className="text-base font-bold text-[#1E2C31]">后续 Google 接入动作</h3>
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+          {checklist.map((item, index) => (
+            <div key={item} className="rounded-md bg-white px-3 py-3 text-sm leading-6 text-[#61767D]">
+              <span className="mb-2 block text-xs font-bold text-[#E36F2C]">STEP {index + 1}</span>
+              {item}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -462,14 +625,14 @@ function StaticSeoCard({ page }: { page: StaticSeoPage }) {
 
 function AlignmentPanel() {
   const items = [
-    '对照 300 的 TDK 设置，本阶段先做检查和入口，不做批量保存。',
-    '产品和新闻已有单篇 SEO 字段，运营补字段仍回到各自 CMS 表单。',
-    '项目案例详情页先用名称、描述和封面派生 metadata，专用 SEO 字段后续单独规划。',
+    '对照 300 的 SEO 优化模块，本阶段覆盖网站地图、Robots、TDK 和 Search Console 接入准备。',
+    '产品、新闻、FAQ、场景和技术专题继续回到各自 CMS 或固定页面来源维护，不做批量 TDK 写入。',
+    'Search Console 只做清单和状态提示，不保存验证码、不提交 sitemap、不接 Google API。',
   ]
 
   return (
     <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-      <SectionTitle title="300 对照边界" detail="300 后台有首页设置、其他页面设置和自定义元标签；vessel 先做可核对、可回到来源后台的安全版本。" />
+      <SectionTitle title="300 对照边界" detail="300 后台把网站地图、Robots、TDK 设置和辅助收录集中在 SEO 优化里；vessel 先做可核对、可上线的安全版本。" />
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
         {items.map((item) => (
           <div key={item} className="rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-4">
@@ -485,8 +648,8 @@ function AlignmentPanel() {
 function GuardrailPanel() {
   const guardrails = [
     '不开放批量 TDK、关键词堆叠、自动生成、结构化标签保存或自定义 meta 保存。',
-    '不修改产品 / 新闻既有 SEO 保存接口，不给项目案例新增 SEO 字段。',
-    '不修改 /global、MapLibre、MapTiler、/api/map 或任何地图 metadata 以外的底层逻辑。',
+    '不保存 Google / Search Console 验证码，不提交 sitemap，不接第三方 API。',
+    '不修改 /global、MapLibre、MapTiler、/api/map 或任何地图底层逻辑。',
   ]
 
   return (
@@ -543,6 +706,7 @@ export default async function AdminSiteSeoPage() {
   const protectedCount = STATIC_SEO_PAGES.filter((page) => page.status === 'protected').length
   const missingTotal = products.missing + news.missing + projects.missing
   const sideNavGroups = getSeoSideNav(adminRole === 'admin')
+  const indexFoundationItems = loadIndexFoundationItems()
 
   return (
     <AdminSectionShell
@@ -550,17 +714,17 @@ export default async function AdminSiteSeoPage() {
       role={adminRole}
       email={session.user.email}
       title="网站管理"
-      description="对照 300 SEO / TDK 设置，先检查现有页面与内容详情的 metadata 覆盖情况。"
+      description="对照 300 SEO 优化模块，集中检查 metadata、sitemap、robots 和 Search Console 接入准备。"
       sideNavGroups={sideNavGroups}
       activeItem="seo"
     >
       <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#F3FBFC_0%,#FFFFFF_58%,#FFF4E9_100%)] p-5 shadow-sm md:p-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-sm font-semibold text-[#1889B6]">B5-4 SEO / TDK</p>
-            <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">SEO / TDK 只读检查</h1>
+            <p className="text-sm font-semibold text-[#1889B6]">B16 SEO / Search Console</p>
+            <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">SEO / 收录准备中心</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-              把 300 的 TDK 管理思路拆成静态页面、产品详情、新闻详情和案例详情四类，先检查覆盖情况，再回到来源后台补内容。
+              把 300 的 SEO 优化心智拆成页面 metadata、sitemap、robots、内容 SEO 缺项和 Search Console 接入清单，先让运营能判断 Google 是否可抓取。
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -585,11 +749,13 @@ export default async function AdminSiteSeoPage() {
           <SummaryTile title="页面已完整" value={staticReady} detail="静态 / 列表页面" tone="green" Icon={Globe2} />
           <SummaryTile title="内容待补" value={missingTotal} detail="已发布内容缺 SEO 或派生字段" tone={missingTotal > 0 ? 'orange' : 'green'} Icon={SearchCheck} />
           <SummaryTile title="详情来源" value={products.published + news.published + projects.published} detail="已发布产品 / 新闻 / 案例" tone="blue" Icon={FileText} />
-          <SummaryTile title="保护项" value={protectedCount} detail="Global 暂不纳入 B5 写入" tone="gray" Icon={LockKeyhole} />
+          <SummaryTile title="保护项" value={protectedCount} detail="Global 暂不纳入 B16 底层改动" tone="gray" Icon={LockKeyhole} />
         </div>
       </section>
 
       <AlignmentPanel />
+
+      <IndexFoundationPanel items={indexFoundationItems} />
 
       <section className="space-y-4">
         <SectionTitle title="内容详情 SEO" detail="运营补字段时回到来源后台，不在网站管理里批量写入。" />
@@ -616,7 +782,7 @@ export default async function AdminSiteSeoPage() {
       </section>
 
       <section className="space-y-4">
-        <SectionTitle title="页面 TDK 盘点" detail="对照 300 的首页设置和其他页面设置，先让运营知道每个页面的当前状态。" />
+        <SectionTitle title="页面 metadata 与 sitemap 覆盖" detail="对照 300 的 TDK 设置和网站地图，让运营知道每个公开页面是否具备基础收录条件。" />
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           {STATIC_SEO_PAGES.map((page) => (
             <StaticSeoCard key={`${page.path}-${page.title}`} page={page} />

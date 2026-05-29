@@ -1,8 +1,16 @@
 import FaqView, { type FaqCategoryView, type FaqItemView } from '@/components/FaqView'
 import { FAQ_CATEGORIES, FAQ_DATA } from '@/data/faq'
 import { listPublicB9ContentCategories, listPublicB9ContentItems } from '@/lib/b9-content-db'
+import { buildPageMetadata } from '@/lib/seo'
 
 export const revalidate = 300
+
+export const metadata = buildPageMetadata({
+  title: 'FAQ | VESSEL® Smart Prefab Architecture',
+  description:
+    'Answers to common questions about VESSEL® smart prefab architecture, customization, delivery, installation, after-sales support, and project planning.',
+  path: '/faq',
+})
 
 const FAQ_CMS_TIMEOUT_MS = 5000
 
