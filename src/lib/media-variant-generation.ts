@@ -15,7 +15,7 @@ const TRANSFORMABLE_MIME = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const VARIANT_SPECS = [
   { role: 'thumb', width: 320, quality: 74 },
   { role: 'card', width: 800, quality: 78 },
-  { role: 'detail', width: 1600, quality: 82 },
+  { role: 'detail', width: 1600, quality: 78 },
 ] as const
 
 function originalVariant(input: GenerateInput): ImageVariant {
