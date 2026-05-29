@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ConversionInquiryForm from '@/components/pages/ConversionInquiryForm';
 import InnovationCmsBlock from '@/components/tech/InnovationCmsBlock';
 import VolsContent from '@/components/tech/VolsContent';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -29,6 +30,20 @@ export default function VolsPage() {
       <InnovationCmsBlock slug="vols" lang={lang} />
 
       <VolsContent lang={lang} />
+
+      <section className="bg-[#F5F2ED] px-4 py-12">
+        <div className="mx-auto max-w-4xl">
+          <ConversionInquiryForm
+            source="innovation:vols:inquiry_form"
+            inquiryType="Innovation Inquiry"
+            model="VOLS"
+            titleEn="Discuss VOLS deployment"
+            titleZh="提交 VOLS 技术咨询"
+            descriptionEn="This request enters the leads console with VOLS source tracking."
+            descriptionZh="该咨询会进入新线索后台，并标记为 VOLS 技术专题来源。"
+          />
+        </div>
+      </section>
 
       <Footer />
     </div>

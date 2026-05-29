@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import ConversionInquiryForm from '@/components/pages/ConversionInquiryForm'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { SITE_CONTACT_HREF } from '@/lib/site-links'
 
@@ -219,6 +220,18 @@ export default function FaqView({
             >
               {lang === 'zh' ? '查看全球项目' : 'View Global Projects'}
             </Link>
+          </div>
+          <div className="mt-8 text-left">
+            <ConversionInquiryForm
+              source="faq:general:inquiry_form"
+              inquiryType="FAQ Inquiry"
+              model="FAQ"
+              titleEn="Send your question"
+              titleZh="提交常见问题咨询"
+              descriptionEn="Questions submitted here enter the new leads console with FAQ source tracking."
+              descriptionZh="这里提交的问题会进入新线索后台，并标记为 FAQ 来源。"
+              compact
+            />
           </div>
         </div>
       </section>

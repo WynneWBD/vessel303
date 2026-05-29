@@ -102,7 +102,7 @@ export default function Footer() {
               {t(i18n.footer.brandDesc)}
             </p>
             <div className="flex flex-wrap gap-2 mb-6">
-              {socialLinks.map((s) => (
+              {socialLinks.filter((s) => s.href.includes('303vessel')).map((s) => (
                 <SocialIcon key={s.label} href={s.href} label={s.label}>
                   {s.icon}
                 </SocialIcon>
@@ -199,9 +199,13 @@ export default function Footer() {
             {t(i18n.footer.copyright)}
           </div>
           <div className="flex items-center gap-4">
-            <Link href="#" className="text-white/20 hover:text-white/40 text-xs tracking-wider transition-colors">{t(i18n.footer.privacy)}</Link>
+            <span className="cursor-not-allowed text-white/20 text-xs tracking-wider" title="待配置">
+              {t(i18n.footer.privacy)}
+            </span>
             <span className="text-white/10">·</span>
-            <Link href="#" className="text-white/20 hover:text-white/40 text-xs tracking-wider transition-colors">{t(i18n.footer.terms)}</Link>
+            <span className="cursor-not-allowed text-white/20 text-xs tracking-wider" title="待配置">
+              {t(i18n.footer.terms)}
+            </span>
             <span className="text-white/10">·</span>
             <span className="text-white/20 text-xs tracking-wider">粤ICP备XXXXXXXX号</span>
           </div>

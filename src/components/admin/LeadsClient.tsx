@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Download, Plus, Trash2, Mail, SearchX, Inbox, Clock3, FileText, BadgeCheck } from 'lucide-react'
+import { Download, Plus, Trash2, Mail, SearchX, Inbox, Clock3, FileText, BadgeCheck, ExternalLink } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,10 +27,12 @@ import {
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import AdminPagination from '@/components/admin/AdminPagination'
 import type { Lead, LeadStatus } from '@/lib/leads-db'
+import { describeLeadSource, LEAD_SOURCE_TYPE_OPTIONS } from '@/lib/lead-source'
 
 type Filters = {
   status: string
   inquiry_type: string
+  source_type: string
   country: string
   search: string
 }
@@ -125,11 +127,12 @@ export default function LeadsClient({
   const hasActiveFilters =
     filters.status !== 'all' ||
     filters.inquiry_type !== 'all' ||
+    filters.source_type !== 'all' ||
     filters.country.trim().length > 0 ||
     filters.search.trim().length > 0
 
   const resetFilters = () => {
-    setFilters({ status: 'all', inquiry_type: 'all', country: '', search: '' })
+    setFilters({ status: 'all', inquiry_type: 'all', source_type: 'all', country: '', search: '' })
     setPage(1)
   }
 
@@ -142,6 +145,7 @@ export default function LeadsClient({
     const sp = new URLSearchParams()
     if (f.status && f.status !== 'all') sp.set('status', f.status)
     if (f.inquiry_type && f.inquiry_type !== 'all') sp.set('inquiry_type', f.inquiry_type)
+    if (f.source_type && f.source_type !== 'all') sp.set('source_type', f.source_type)
     if (f.country) sp.set('country', f.country)
     if (f.search) sp.set('search', f.search)
     if (paging) {
@@ -321,7 +325,7 @@ export default function LeadsClient({
       </section>
 
       {/* Filter bar */}
-      <div className="grid grid-cols-1 gap-3 rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm md:grid-cols-2 xl:grid-cols-5">
         <Select
           value={filters.status}
           onChange={(e) => updateFilters({ status: e.target.value })}
@@ -339,6 +343,16 @@ export default function LeadsClient({
         >
           <option value="all">身份:全部</option>
           {INQUIRY_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </Select>
+        <Select
+          value={filters.source_type}
+          onChange={(e) => updateFilters({ source_type: e.target.value })}
+        >
+          {LEAD_SOURCE_TYPE_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>
@@ -368,6 +382,7 @@ export default function LeadsClient({
                 <th className="text-left font-medium px-4 py-3">公司</th>
                 <th className="text-left font-medium px-4 py-3">国家</th>
                 <th className="text-left font-medium px-4 py-3">身份</th>
+                <th className="text-left font-medium px-4 py-3">来源</th>
                 <th className="text-left font-medium px-4 py-3">SKU 兴趣</th>
                 <th className="text-left font-medium px-4 py-3">创建时间</th>
                 <th className="text-left font-medium px-4 py-3">操作</th>
@@ -376,7 +391,7 @@ export default function LeadsClient({
             <tbody>
               {leads.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-16">
+                  <td colSpan={10} className="px-4 py-16">
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
                       {hasActiveFilters ? (
                         <SearchX size={32} className="text-[#8A9EA4]" />
@@ -414,6 +429,11 @@ export default function LeadsClient({
                   <td className="px-4 py-3 text-[#61767D]">{lead.company ?? '—'}</td>
                   <td className="px-4 py-3 text-[#61767D]">{lead.country ?? '—'}</td>
                   <td className="px-4 py-3 text-[#61767D]">{lead.inquiry_type ?? '—'}</td>
+                  <td className="px-4 py-3">
+                    <span className="inline-flex rounded-full border border-[#D8E7E8] bg-[#F7FAFA] px-2 py-1 text-xs text-[#61767D]">
+                      {describeLeadSource(lead.source).typeLabel}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-[#61767D]">{lead.sku_interest ?? '—'}</td>
                   <td className="px-4 py-3 text-[#8A8580] whitespace-nowrap">
                     {formatDate(lead.created_at)}
@@ -532,6 +552,7 @@ function LeadDetailSheet({
     setNoteAppend('')
     setSaving(false)
   }
+  const sourceInfo = lead ? describeLeadSource(lead.source) : null
 
   return (
     <Sheet
@@ -564,7 +585,26 @@ function LeadDetailSheet({
                 <Field label="国家" value={lead.country} />
                 <Field label="身份" value={lead.inquiry_type} />
                 <Field label="SKU 兴趣" value={lead.sku_interest} />
-                <Field label="来源" value={lead.source} />
+                <div className="col-span-2 rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-3">
+                  <div className="text-xs text-[#8A8580]">来源</div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-[#2C2A28]">
+                    <span className="font-semibold">{sourceInfo?.label ?? lead.source ?? '—'}</span>
+                    <span className="rounded-full bg-white px-2 py-0.5 text-xs text-[#61767D]">
+                      {sourceInfo?.typeLabel ?? '其他来源'}
+                    </span>
+                    {sourceInfo?.href ? (
+                      <a
+                        href={sourceInfo.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-[#E36F2C] hover:underline"
+                      >
+                        打开来源页 <ExternalLink size={12} />
+                      </a>
+                    ) : null}
+                  </div>
+                  <div className="mt-1 break-all text-xs text-[#8A8580]">{lead.source || '—'}</div>
+                </div>
                 <Field label="更新时间" value={formatDate(lead.updated_at)} />
               </div>
 

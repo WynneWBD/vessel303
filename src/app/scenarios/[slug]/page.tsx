@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHero from '@/components/PageHero';
+import ConversionInquiryForm from '@/components/pages/ConversionInquiryForm';
 import { getPublicB9ContentItem, type B9ContentItem } from '@/lib/b9-content-db';
 import { SITE_CONTACT_HREF } from '@/lib/site-links';
 
@@ -533,7 +534,18 @@ export default async function ScenarioPage({
 
       {/* ── CTA ── */}
       <div className="border-t border-[#E5DED4] bg-[#F5F2ED] py-16">
-        <div className="max-w-3xl mx-auto px-4 text-center">
+        <div className="max-w-3xl mx-auto px-4">
+          <ConversionInquiryForm
+            source={`scenario:${scenario.slug}:inquiry_form`}
+            inquiryType="Scenario Inquiry"
+            model={scenario.label}
+            titleEn="Plan this scenario"
+            titleZh="提交场景方案咨询"
+            descriptionEn="Your request enters the VESSEL leads console with this scenario source attached."
+            descriptionZh="该咨询会进入 VESSEL 新线索后台，并标记当前场景来源。"
+          />
+        </div>
+        <div className="max-w-3xl mx-auto px-4 pt-10 text-center">
           <div
             className="text-xs tracking-[0.3em] uppercase mb-4 font-medium"
             style={{ color: scenario.accentColor }}

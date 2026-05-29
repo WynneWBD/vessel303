@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import ConversionInquiryForm from '@/components/pages/ConversionInquiryForm';
 import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
@@ -258,6 +259,16 @@ export default function CatalogProductDetailContent({
               Contact Us
             </Link>
           </section>
+
+          <ConversionInquiryForm
+            source={`product_detail:${product.id}:inquiry_form`}
+            inquiryType="Product Inquiry"
+            model={`${name} (${product.id})`}
+            titleEn="Request a product quote"
+            titleZh="提交产品咨询"
+            descriptionEn="This form writes directly to the VESSEL leads console with the product source attached."
+            descriptionZh="该表单会直接进入 VESSEL 线索后台，并带上当前产品来源。"
+          />
         </div>
 
         <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">

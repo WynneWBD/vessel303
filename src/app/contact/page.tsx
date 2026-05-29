@@ -20,7 +20,22 @@ function timeoutFallback<T>(ms: number, value: T): Promise<T> {
   })
 }
 
-export default async function ContactPage() {
+function appendSource(url: string, source: string | undefined) {
+  if (!source?.trim()) return url
+  try {
+    const target = new URL(url)
+    target.searchParams.set('source', source.trim().slice(0, 160))
+    return target.toString()
+  } catch {
+    return url
+  }
+}
+
+export default async function ContactPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
+}) {
   let contactUrl = defaultSiteSettings.contactUrl
 
   try {
@@ -33,5 +48,9 @@ export default async function ContactPage() {
     console.error('Failed to load contact URL from site_settings:', err)
   }
 
-  redirect(contactUrl)
+  const sp = searchParams ? await searchParams : {}
+  const sourceParam = sp.source
+  const source = Array.isArray(sourceParam) ? sourceParam[0] : sourceParam
+
+  redirect(appendSource(contactUrl, source))
 }

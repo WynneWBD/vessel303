@@ -142,6 +142,7 @@ export default async function AdminCustomerLeadsPage({
   const filters = {
     status: getStr('status') ?? 'all',
     inquiry_type: getStr('inquiry_type') ?? 'all',
+    source_type: getStr('source_type') ?? 'all',
     country: getStr('country') ?? '',
     search: getStr('search') ?? '',
   }
@@ -156,6 +157,7 @@ export default async function AdminCustomerLeadsPage({
         listLeads({
           status: filters.status,
           inquiry_type: filters.inquiry_type,
+          source_type: filters.source_type,
           country: filters.country || undefined,
           search: filters.search || undefined,
           page,

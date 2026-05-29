@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ProtectedImage from '@/components/ProtectedImage'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { SITE_CONTACT_HREF } from '@/lib/site-links'
 import { format, parseISO } from 'date-fns'
 
 type NewsData = {
@@ -41,6 +42,7 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
   const excerpt = lang === 'zh' ? news.excerpt_zh : news.excerpt_en
   const html = lang === 'zh' ? htmlZh : htmlEn
   const dateStr = formatNewsDate(news.published_at, lang)
+  const contactHref = `${SITE_CONTACT_HREF}?source=${encodeURIComponent(`news:${news.slug}:contact_cta`)}`
 
   return (
     <main className="min-h-screen bg-[#FAF7F2] text-[#2C2A28]">
@@ -121,6 +123,22 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
 
       {/* Back link */}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-16">
+        <div className="mb-8 border border-[#E5DED4] bg-white p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#E36F2C]">
+            {lang === 'zh' ? '项目咨询' : 'Inquiry'}
+          </p>
+          <h2 className="mt-2 text-xl font-bold text-[#2C2A28]">
+            {lang === 'zh' ? '想了解新闻中的产品或项目？' : 'Need details about this product or project?'}
+          </h2>
+          <Link
+            href={contactHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex bg-[#E36F2C] px-5 py-3 text-sm font-semibold tracking-wider text-white transition-colors hover:bg-[#C85A1F]"
+          >
+            {lang === 'zh' ? '联系 VESSEL' : 'Contact VESSEL'}
+          </Link>
+        </div>
         <Link
           href="/news"
           className="inline-flex items-center gap-2 text-sm text-[#8A8580] hover:text-[#E36F2C] transition-colors"

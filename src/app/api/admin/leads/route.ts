@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
   const result = await listLeads({
     status: sp.get('status') ?? undefined,
     inquiry_type: sp.get('inquiry_type') ?? undefined,
+    source_type: sp.get('source_type') ?? undefined,
     country: sp.get('country') ?? undefined,
     search: sp.get('search') ?? undefined,
     page: sp.get('page') ? Number(sp.get('page')) : undefined,

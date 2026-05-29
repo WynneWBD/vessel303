@@ -16,6 +16,7 @@ import {
   Image as ImageIcon,
   LayoutTemplate,
   Lightbulb,
+  Link2,
   ListChecks,
   LockKeyhole,
   MapPinned,
@@ -242,6 +243,7 @@ function getSitePagesSideNav({
       title: '网站运营',
       items: [
         { key: 'overview', label: '网站概览', href: '/admin/site', Icon: LayoutTemplate },
+        { key: 'conversion', label: '转化路径', href: '/admin/site/conversion', Icon: Link2 },
         { key: 'pages', label: '页面清单', href: '/admin/site/pages', badge: draftCount, Icon: ListChecks },
         { key: 'navigation', label: '导航管理', href: '/admin/site/navigation', Icon: Navigation },
         { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },

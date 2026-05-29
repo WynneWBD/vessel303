@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
   const rows = await exportLeads({
     status: sp.get('status') ?? undefined,
     inquiry_type: sp.get('inquiry_type') ?? undefined,
+    source_type: sp.get('source_type') ?? undefined,
     country: sp.get('country') ?? undefined,
     search: sp.get('search') ?? undefined,
   })
@@ -35,6 +36,7 @@ export async function GET(req: NextRequest) {
     'Inquiry Type',
     'SKU Interest',
     'Message',
+    'Source',
     'Status',
     'Assigned To',
     'Notes',
@@ -54,6 +56,7 @@ export async function GET(req: NextRequest) {
         r.inquiry_type,
         r.sku_interest,
         r.message,
+        r.source,
         r.status,
         r.assigned_to,
         r.notes,

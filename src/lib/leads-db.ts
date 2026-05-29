@@ -1,4 +1,5 @@
 import { pool } from '@/lib/db'
+import { getLeadSourceWherePatterns } from '@/lib/lead-source'
 
 export type LeadStatus = 'new' | 'contacting' | 'quoted' | 'won' | 'lost'
 
@@ -24,6 +25,7 @@ export type Lead = {
 export type ListLeadsFilter = {
   status?: string
   inquiry_type?: string
+  source_type?: string
   country?: string
   search?: string
   page?: number
@@ -47,6 +49,22 @@ function buildWhere(filter: ListLeadsFilter) {
   if (filter.inquiry_type && filter.inquiry_type !== 'all') {
     params.push(filter.inquiry_type)
     conds.push(`inquiry_type = $${params.length}`)
+  }
+  if (filter.source_type && filter.source_type !== 'all') {
+    const patterns = getLeadSourceWherePatterns(filter.source_type)
+    if (filter.source_type === 'other') {
+      const clauses = patterns.map((pattern) => {
+        params.push(pattern)
+        return `source NOT ILIKE $${params.length}`
+      })
+      conds.push(`(source IS NULL OR (${clauses.join(' AND ')}))`)
+    } else if (patterns.length > 0) {
+      const clauses = patterns.map((pattern) => {
+        params.push(pattern)
+        return `source ILIKE $${params.length}`
+      })
+      conds.push(`(${clauses.join(' OR ')})`)
+    }
   }
   if (filter.country) {
     params.push(`%${filter.country}%`)
