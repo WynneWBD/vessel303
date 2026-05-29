@@ -22,6 +22,7 @@ import {
   type ProductMarkRow,
   type ProductShowcaseRow,
 } from '@/lib/product-operations-db'
+import { getCatalogProductRouteInfo } from '@/lib/product-public-routes'
 import {
   Archive,
   CheckCircle2,
@@ -51,7 +52,7 @@ const PAGE_SIZE = 50
 type AdminRole = 'admin' | 'operator'
 type ProductStatus = 'draft' | 'published'
 type ProductView = '' | 'incomplete'
-type ProductIssue = '' | 'media' | 'content' | 'category' | 'attributes' | 'seo' | 'commercial' | 'keywords' | 'related'
+type ProductIssue = '' | 'media' | 'content' | 'category' | 'attributes' | 'seo' | 'price' | 'commercial' | 'keywords' | 'related'
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -177,6 +178,7 @@ const PRODUCT_ISSUE_OPTIONS: { value: ProductIssue; label: string }[] = [
   { value: 'category', label: '未分类' },
   { value: 'attributes', label: '缺属性' },
   { value: 'seo', label: '缺 SEO' },
+  { value: 'price', label: '缺价格展示' },
   { value: 'commercial', label: 'Missing business terms' },
   { value: 'keywords', label: 'Missing keywords' },
   { value: 'related', label: 'Missing related products' },
@@ -203,6 +205,10 @@ const PRODUCT_INCOMPLETE_SQL = `(
   OR NULLIF(BTRIM(COALESCE(seo_title_en, '')), '') IS NULL
   OR NULLIF(BTRIM(COALESCE(seo_description_zh, '')), '') IS NULL
   OR NULLIF(BTRIM(COALESCE(seo_description_en, '')), '') IS NULL
+  OR (
+    NULLIF(BTRIM(COALESCE(price_display_zh, '')), '') IS NULL
+    AND NULLIF(BTRIM(COALESCE(price_display_en, '')), '') IS NULL
+  )
   OR commercial_terms IS NULL
   OR commercial_terms = '{}'::jsonb
   OR (
@@ -231,6 +237,10 @@ const PRODUCT_INCOMPLETE_SQL_ALIASED = `(
   OR NULLIF(BTRIM(COALESCE(pc.seo_title_en, '')), '') IS NULL
   OR NULLIF(BTRIM(COALESCE(pc.seo_description_zh, '')), '') IS NULL
   OR NULLIF(BTRIM(COALESCE(pc.seo_description_en, '')), '') IS NULL
+  OR (
+    NULLIF(BTRIM(COALESCE(pc.price_display_zh, '')), '') IS NULL
+    AND NULLIF(BTRIM(COALESCE(pc.price_display_en, '')), '') IS NULL
+  )
   OR pc.commercial_terms IS NULL
   OR pc.commercial_terms = '{}'::jsonb
   OR (
@@ -265,6 +275,11 @@ const PRODUCT_MISSING_SEO_SQL_ALIASED = `(
   OR NULLIF(BTRIM(COALESCE(pc.seo_title_en, '')), '') IS NULL
   OR NULLIF(BTRIM(COALESCE(pc.seo_description_zh, '')), '') IS NULL
   OR NULLIF(BTRIM(COALESCE(pc.seo_description_en, '')), '') IS NULL
+)`
+
+const PRODUCT_MISSING_PRICE_SQL_ALIASED = `(
+  NULLIF(BTRIM(COALESCE(pc.price_display_zh, '')), '') IS NULL
+  AND NULLIF(BTRIM(COALESCE(pc.price_display_en, '')), '') IS NULL
 )`
 
 const PRODUCT_MISSING_COMMERCIAL_SQL_ALIASED = `(
@@ -340,7 +355,10 @@ function parseCount(value: string | undefined): number {
 }
 
 function productPreviewHref(product: ProductListRow): string {
-  return `/products/${product.detail_slug || product.id}`
+  return getCatalogProductRouteInfo({
+    id: product.id,
+    detailSlug: product.detail_slug,
+  }).publicHref
 }
 
 function getProductTypeLabel(value: string): string {
@@ -362,6 +380,7 @@ function getProductIssues(product: ProductListRow): string[] {
   if (!hasItems(product.detail_modules)) issues.push('缺详情模块')
   if (!product.category_id) issues.push('未分类')
   if (Number(product.attribute_option_count ?? 0) === 0) issues.push('缺产品属性')
+  if (!hasText(product.price_display_zh) && !hasText(product.price_display_en)) issues.push('缺价格展示')
   if (!product.commercial_terms || Object.keys(product.commercial_terms).length === 0) issues.push('Missing business terms')
   if (!hasItems(product.keywords_zh) && !hasItems(product.keywords_en)) issues.push('Missing keywords')
   if (!hasItems(product.related_product_ids)) issues.push('Missing related products')
@@ -372,6 +391,20 @@ function getProductIssues(product: ProductListRow): string[] {
     || !hasText(product.seo_description_en)
   ) {
     issues.push('缺 SEO')
+  }
+  if (
+    hasText(product.detail_slug)
+    && (
+      !hasText(product.image)
+      || !hasText(product.description_cn)
+      || !hasText(product.description_en)
+      || !hasItems(product.tags_cn)
+      || !hasItems(product.tags_en)
+      || !hasItems(product.features_cn)
+      || !hasItems(product.features_en)
+    )
+  ) {
+    issues.push('精品页绑定缺 CMS 基础字段')
   }
 
   return sortIssues(issues)
@@ -415,6 +448,7 @@ function getIssueCondition(issue: ProductIssue): string | null {
   if (issue === 'category') return 'pc.category_id IS NULL'
   if (issue === 'attributes') return PRODUCT_MISSING_ATTRIBUTES_SQL_ALIASED
   if (issue === 'seo') return PRODUCT_MISSING_SEO_SQL_ALIASED
+  if (issue === 'price') return PRODUCT_MISSING_PRICE_SQL_ALIASED
   if (issue === 'commercial') return PRODUCT_MISSING_COMMERCIAL_SQL_ALIASED
   if (issue === 'keywords') return PRODUCT_MISSING_KEYWORDS_SQL_ALIASED
   if (issue === 'related') return PRODUCT_MISSING_RELATED_SQL_ALIASED
@@ -1088,6 +1122,10 @@ function ProductRow({ product }: { product: ProductListRow }) {
   const markLabels = (product.mark_labels_zh ?? []).slice(0, 3)
   const showcaseTitles = (product.showcase_titles_zh ?? []).slice(0, 2)
   const published = product.status === 'published'
+  const routeInfo = getCatalogProductRouteInfo({
+    id: product.id,
+    detailSlug: product.detail_slug,
+  })
 
   return (
     <article className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm transition hover:border-[#1889B6]/55 hover:shadow-md">
@@ -1129,6 +1167,19 @@ function ProductRow({ product }: { product: ProductListRow }) {
           <p className="mt-1 text-xs text-[#8A9EA4]">
             {product.detail_slug ? `${product.id} / ${product.detail_slug}` : product.id}
           </p>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-[#8A8580]">
+            <span className="rounded-full border border-[#D8E7E8] bg-white px-2 py-0.5 text-[#61767D]">
+              官方前台：{routeInfo.publicLabel}
+            </span>
+            <span className="max-w-[240px] truncate rounded-full border border-[#E5DED4] bg-[#FAF7F2] px-2 py-0.5">
+              {routeInfo.publicHref}
+            </span>
+            {routeInfo.usesCuratedDetail ? (
+              <span className="max-w-[240px] truncate rounded-full border border-[#E5DED4] bg-[#FAF7F2] px-2 py-0.5">
+                CMS：{routeInfo.cmsHref}
+              </span>
+            ) : null}
+          </div>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {visibleIssues.length === 0 ? (
               <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">

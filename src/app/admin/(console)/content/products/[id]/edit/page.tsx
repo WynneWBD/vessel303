@@ -21,6 +21,7 @@ import {
   listProductMarks,
   listProductShowcases,
 } from '@/lib/product-operations-db'
+import { getCatalogProductRouteInfo } from '@/lib/product-public-routes'
 import type {
   CatalogDetailModule,
   CatalogSpecItem,
@@ -313,7 +314,7 @@ function formatDate(value: string): string {
 }
 
 function previewHref(product: CatalogProductRow): string {
-  return `/products/${product.detailSlug || product.id}`
+  return getCatalogProductRouteInfo(product).publicHref
 }
 
 function getSideNavGroups(product: CatalogProductRow): AdminSideNavGroup[] {
@@ -362,6 +363,7 @@ function StatusBadge({ status }: { status: CatalogProductStatus }) {
 
 function Hero({ product }: { product: CatalogProductRow }) {
   const published = product.status === 'published'
+  const routeInfo = getCatalogProductRouteInfo(product)
 
   return (
     <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#E7F7F8_0%,#F7FAFA_58%,#FFF2E7_100%)] p-5 shadow-sm md:p-6">
@@ -393,7 +395,7 @@ function Hero({ product }: { product: CatalogProductRow }) {
               className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
             >
               <CheckCircle2 size={16} />
-              预览前台
+              官方预览
             </Link>
           ) : null}
         </div>
@@ -402,7 +404,7 @@ function Hero({ product }: { product: CatalogProductRow }) {
       <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
         <InfoCard title="产品 ID" value={product.id} />
         <InfoCard title="更新时间" value={formatDate(product.updated_at)} />
-        <InfoCard title="前台状态" value={published ? '保存后会影响前台' : '草稿未公开展示'} tone={published ? 'warning' : 'neutral'} />
+        <InfoCard title="官方前台" value={published ? `${routeInfo.publicLabel} · ${routeInfo.publicHref}` : '草稿未公开展示'} tone={published ? 'warning' : 'neutral'} />
       </div>
     </section>
   )
