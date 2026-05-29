@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, type MouseEvent as ReactMouseEvent } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import AuthButton from './AuthButton';
 import LanguageToggle from './LanguageToggle';
 import { useT } from '@/contexts/LanguageContext';
@@ -38,7 +39,7 @@ function ProductsDropdown({ items }: { items: DropdownItem[] }) {
             {t(i18n.nav.gen6Label)}
           </div>
           {gen6Items.map((item) => (
-            <a
+            <Link
               key={item.href}
               href={item.href}
               className="flex items-center justify-between px-2 py-2.5 text-white/65 hover:text-[#E36F2C] hover:bg-[#E36F2C]/5 transition-colors rounded group"
@@ -47,7 +48,7 @@ function ProductsDropdown({ items }: { items: DropdownItem[] }) {
               {item.sub && (
                 <span className="text-white/25 text-[11px] group-hover:text-[#E36F2C]/50 ml-2 shrink-0">{item.sub}</span>
               )}
-            </a>
+            </Link>
           ))}
         </div>
         {/* Gen5 */}
@@ -71,12 +72,12 @@ function ProductsDropdown({ items }: { items: DropdownItem[] }) {
       </div>
       {allLink && (
         <div className="border-t border-white/5">
-          <a
+          <Link
             href={allLink.href}
             className="block px-5 py-2.5 text-[#E36F2C]/70 hover:text-[#E36F2C] hover:bg-[#E36F2C]/5 text-xs tracking-[0.2em] transition-colors text-center"
           >
             {allLink.label}
-          </a>
+          </Link>
         </div>
       )}
     </div>
@@ -88,39 +89,20 @@ function SimpleDropdown({ items }: { items: DropdownItem[] }) {
     <div className="absolute top-full left-0 mt-1 min-w-[200px] bg-[#241F1B] border border-[#3A302A] shadow-2xl shadow-black/50 z-50">
       <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-[#E36F2C]/60 to-transparent" />
       {items.map((item) => (
-        <a
+        <Link
           key={item.href}
           href={item.href}
           className="flex items-center gap-0 px-4 py-2.5 text-white/65 hover:text-[#E36F2C] hover:bg-[#E36F2C]/5 transition-all duration-150 text-sm border-b border-white/5 last:border-0 tracking-wider border-l-2 border-l-transparent hover:border-l-[#E36F2C] pl-3"
         >
           {item.label}
-        </a>
+        </Link>
       ))}
     </div>
   );
 }
 
-function navigateWithDocumentFallback(event: ReactMouseEvent<HTMLAnchorElement>, href: string, afterNavigate?: () => void) {
-  afterNavigate?.();
-
-  if (
-    event.defaultPrevented ||
-    event.button !== 0 ||
-    event.metaKey ||
-    event.ctrlKey ||
-    event.shiftKey ||
-    event.altKey ||
-    href.startsWith('#') ||
-    /^https?:\/\//.test(href)
-  ) {
-    return;
-  }
-
-  event.preventDefault();
-  window.location.assign(href);
-}
-
 export default function Navbar() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -142,6 +124,17 @@ export default function Navbar() {
     window.addEventListener('scroll', handler, { passive: true });
     return () => window.removeEventListener('scroll', handler);
   }, []);
+
+  useEffect(() => {
+    const idle = window.requestIdleCallback ?? ((callback) => window.setTimeout(callback, 800));
+    const cancelIdle = window.cancelIdleCallback ?? window.clearTimeout;
+    const handle = idle(() => {
+      ['/', '/products', '/cases', '/about', '/faq', '/news', '/contact'].forEach((href) => {
+        router.prefetch(href);
+      });
+    });
+    return () => cancelIdle(handle);
+  }, [router]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -200,14 +193,13 @@ export default function Navbar() {
                     <span className="absolute bottom-0 left-2.5 w-0 h-px bg-[#E36F2C] transition-all duration-200 group-hover:w-[calc(100%-20px)]" />
                   </button>
                 ) : (
-                  <a
+                  <Link
                     href={link.href}
                     className="text-white/65 hover:text-[#E36F2C] text-sm font-medium tracking-wide px-2.5 py-2 transition-colors duration-200 whitespace-nowrap relative group block"
-                    onClick={(event) => navigateWithDocumentFallback(event, link.href)}
                   >
                     {link.label}
                     <span className="absolute bottom-0 left-2.5 w-0 h-px bg-[#E36F2C] transition-all duration-200 group-hover:w-[calc(100%-20px)]" />
-                  </a>
+                  </Link>
                 )}
 
                 {/* Dropdown */}
@@ -285,7 +277,7 @@ export default function Navbar() {
                     {mobileOpen === link.label && (
                       <div className="pl-4 pb-2 space-y-0.5 border-l border-[#E36F2C]/20 ml-2">
                         {link.dropdown.map((item) => (
-                          <a
+                          <Link
                             key={item.href}
                             href={item.href}
                             className="flex items-center justify-between text-white/50 hover:text-[#E36F2C] text-sm py-2 px-2 transition-colors"
@@ -293,19 +285,19 @@ export default function Navbar() {
                           >
                             <span>{item.label}</span>
                             {item.sub && <span className="text-white/25 text-xs">{item.sub}</span>}
-                          </a>
+                          </Link>
                         ))}
                       </div>
                     )}
                   </>
                 ) : (
-                  <a
+                  <Link
                     href={link.href}
                     className="block text-white/70 hover:text-[#E36F2C] text-sm py-3 px-2 border-b border-white/5 transition-colors tracking-wider"
-                    onClick={(event) => navigateWithDocumentFallback(event, link.href, () => setIsOpen(false))}
+                    onClick={() => setIsOpen(false)}
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 )}
               </div>
             ))}

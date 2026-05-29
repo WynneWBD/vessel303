@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import type { ImageProps } from 'next/image';
+import { canUseNextImageOptimization } from '@/lib/image-optimization';
 
 type ProtectedImageProps = ImageProps & {
   containerClassName?: string;
@@ -18,6 +19,7 @@ export default function ProtectedImage({
   ...props
 }: ProtectedImageProps) {
   const isExternal = typeof src === 'string' && /^https?:\/\//.test(src)
+  const shouldUsePlainImage = isExternal && !canUseNextImageOptimization(src)
 
   return (
     <div
@@ -28,7 +30,7 @@ export default function ProtectedImage({
           : { position: 'relative', display: 'inline-block' }
         }
     >
-      {isExternal ? (
+      {shouldUsePlainImage ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={src}

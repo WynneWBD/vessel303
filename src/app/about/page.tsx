@@ -14,6 +14,7 @@ import {
   type PageModuleRegistryEntry,
   type ResolvedPageModule,
 } from '@/lib/page-module-rendering';
+import { canUseNextImageOptimization } from '@/lib/image-optimization';
 import { SITE_CONTACT_HREF } from '@/lib/site-links';
 
 type Tech = 'viie' | 'vols' | 'vipc';
@@ -673,8 +674,9 @@ export default function AboutPage() {
           fill
           priority
           sizes="100vw"
+          quality={78}
           className="object-cover"
-          unoptimized
+          unoptimized={!canUseNextImageOptimization(heroImage)}
           data-page-module-item="about-hero-image"
           data-page-module-field="image_url"
         />
@@ -814,8 +816,9 @@ export default function AboutPage() {
                 alt="VESSEL factory aerial"
                 fill
                 sizes="(min-width: 1024px) 40vw, 100vw"
+                quality={78}
                 className="object-cover"
-                unoptimized
+                unoptimized={!canUseNextImageOptimization(storyImage)}
               />
             </div>
             {/* stat badge */}
@@ -1115,8 +1118,10 @@ export default function AboutPage() {
                         src={optimizedAboutImage(cert.src)}
                         alt={cert.en}
                         fill
+                        sizes="(min-width: 640px) 50vw, 100vw"
+                        quality={78}
                         className="object-contain"
-                        unoptimized
+                        unoptimized={!canUseNextImageOptimization(optimizedAboutImage(cert.src))}
                       />
                     </div>
                     <p className="text-[#8A8580] text-xs leading-snug text-center">
@@ -1146,8 +1151,10 @@ export default function AboutPage() {
                       src={optimizedAboutImage(award.src)}
                       alt={zh ? award.zh : award.en}
                       fill
+                      sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
+                      quality={78}
                       className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
-                      unoptimized
+                      unoptimized={!canUseNextImageOptimization(optimizedAboutImage(award.src))}
                       data-page-module-field="image_url"
                     />
                   </div>
@@ -1220,8 +1227,10 @@ export default function AboutPage() {
                     src={partner.src}
                     alt={partner.alt}
                     fill
+                    sizes="(min-width: 1024px) 12.5vw, (min-width: 640px) 16vw, 25vw"
+                    quality={78}
                     className="object-contain p-3"
-                    unoptimized
+                    unoptimized={!canUseNextImageOptimization(partner.src)}
                   />
                 </div>
               </Reveal>
@@ -1272,8 +1281,9 @@ export default function AboutPage() {
                 alt={localText(itemById(founderItems, 'founder-name'), zh, zh ? '王帅斌' : 'Wang Shuaibin')}
                 fill
                 sizes="256px"
+                quality={78}
                 className="object-cover object-top"
-                unoptimized
+                unoptimized={!canUseNextImageOptimization(founderPhoto)}
               />
             </div>
             <div className="pt-2">
