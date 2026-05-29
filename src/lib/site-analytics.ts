@@ -33,6 +33,8 @@ export type AnalyticsWindowMetric = {
   contactRedirects: number
   formSubmits: number
   leads: number
+  testEvents: number
+  testLeads: number
   conversionRate: number
 }
 
@@ -86,6 +88,8 @@ export const EMPTY_ANALYTICS_DASHBOARD: SiteAnalyticsDashboard = {
     contactRedirects: 0,
     formSubmits: 0,
     leads: 0,
+    testEvents: 0,
+    testLeads: 0,
     conversionRate: 0,
   })),
   topPages: [],
@@ -97,6 +101,21 @@ export const EMPTY_ANALYTICS_DASHBOARD: SiteAnalyticsDashboard = {
 }
 
 let ensurePromise: Promise<void> | null = null
+
+const REAL_EVENT_CONDITION = "source_type <> 'admin-test'"
+const TEST_EVENT_CONDITION = "source_type = 'admin-test'"
+const REAL_LEAD_CONDITION = `
+  deleted_at IS NULL
+  AND COALESCE(source, '') NOT ILIKE 'admin_test%'
+  AND COALESCE(message, '') NOT ILIKE '%Codex B% test%'
+`
+const TEST_LEAD_CONDITION = `
+  deleted_at IS NULL
+  AND (
+    COALESCE(source, '') ILIKE 'admin_test%'
+    OR COALESCE(message, '') ILIKE '%Codex B% test%'
+  )
+`
 
 export async function ensureSiteAnalyticsTables() {
   ensurePromise ??= (async () => {
@@ -233,13 +252,15 @@ async function loadWindowMetric(days: number): Promise<AnalyticsWindowMetric> {
       cta_clicks: string
       contact_redirects: string
       form_submits: string
+      test_events: string
     }>(
       `SELECT
-         COUNT(*) FILTER (WHERE event_name = 'page_view')::text AS page_views,
-         COUNT(DISTINCT visitor_id_hash) FILTER (WHERE event_name = 'page_view' AND visitor_id_hash IS NOT NULL)::text AS visitors,
-         COUNT(*) FILTER (WHERE event_name = 'cta_click')::text AS cta_clicks,
-         COUNT(*) FILTER (WHERE event_name = 'contact_redirect')::text AS contact_redirects,
-         COUNT(*) FILTER (WHERE event_name = 'form_submit_success')::text AS form_submits
+         COUNT(*) FILTER (WHERE event_name = 'page_view' AND ${REAL_EVENT_CONDITION})::text AS page_views,
+         COUNT(DISTINCT visitor_id_hash) FILTER (WHERE event_name = 'page_view' AND visitor_id_hash IS NOT NULL AND ${REAL_EVENT_CONDITION})::text AS visitors,
+         COUNT(*) FILTER (WHERE event_name = 'cta_click' AND ${REAL_EVENT_CONDITION})::text AS cta_clicks,
+         COUNT(*) FILTER (WHERE event_name = 'contact_redirect' AND ${REAL_EVENT_CONDITION})::text AS contact_redirects,
+         COUNT(*) FILTER (WHERE event_name = 'form_submit_success' AND ${REAL_EVENT_CONDITION})::text AS form_submits,
+         COUNT(*) FILTER (WHERE ${TEST_EVENT_CONDITION})::text AS test_events
        FROM site_events
        WHERE created_at >= NOW() - ($1::int * INTERVAL '1 day')`,
       [days],
@@ -249,7 +270,7 @@ async function loadWindowMetric(days: number): Promise<AnalyticsWindowMetric> {
 
   const row = eventRes.rows[0]
   const pageViews = toInt(row?.page_views)
-  const leads = leadRes
+  const leads = leadRes.leads
   return {
     days,
     pageViews,
@@ -258,19 +279,25 @@ async function loadWindowMetric(days: number): Promise<AnalyticsWindowMetric> {
     contactRedirects: toInt(row?.contact_redirects),
     formSubmits: toInt(row?.form_submits),
     leads,
+    testEvents: toInt(row?.test_events),
+    testLeads: leadRes.testLeads,
     conversionRate: pageViews > 0 ? leads / pageViews : 0,
   }
 }
 
 async function loadLeadCount(days: number) {
-  if (!(await tableExists('public.leads'))) return 0
-  const res = await pool.query<{ count: string }>(
-    `SELECT COUNT(*)::text AS count
+  if (!(await tableExists('public.leads'))) return { leads: 0, testLeads: 0 }
+  const res = await pool.query<{ count: string; test_count: string }>(
+    `SELECT COUNT(*) FILTER (WHERE ${REAL_LEAD_CONDITION})::text AS count,
+            COUNT(*) FILTER (WHERE ${TEST_LEAD_CONDITION})::text AS test_count
      FROM leads
-     WHERE deleted_at IS NULL AND created_at >= NOW() - ($1::int * INTERVAL '1 day')`,
+     WHERE created_at >= NOW() - ($1::int * INTERVAL '1 day')`,
     [days],
   )
-  return toInt(res.rows[0]?.count)
+  return {
+    leads: toInt(res.rows[0]?.count),
+    testLeads: toInt(res.rows[0]?.test_count),
+  }
 }
 
 async function loadLeadSourceCounts(days: number) {
@@ -278,7 +305,8 @@ async function loadLeadSourceCounts(days: number) {
   const res = await pool.query<{ source: string | null; count: string }>(
     `SELECT source, COUNT(*)::text AS count
      FROM leads
-     WHERE deleted_at IS NULL AND created_at >= NOW() - ($1::int * INTERVAL '1 day')
+     WHERE ${REAL_LEAD_CONDITION}
+       AND created_at >= NOW() - ($1::int * INTERVAL '1 day')
      GROUP BY source`,
     [days],
   )
@@ -310,7 +338,9 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
           `SELECT path AS key, COUNT(*)::text AS value,
                   COUNT(DISTINCT visitor_id_hash) FILTER (WHERE visitor_id_hash IS NOT NULL)::text AS secondary
            FROM site_events
-           WHERE event_name = 'page_view' AND created_at >= NOW() - INTERVAL '30 days'
+           WHERE event_name = 'page_view'
+             AND ${REAL_EVENT_CONDITION}
+             AND created_at >= NOW() - INTERVAL '30 days'
            GROUP BY path
            ORDER BY COUNT(*) DESC
            LIMIT 10`,
@@ -325,7 +355,9 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
         loadRankRows(
           `SELECT COALESCE(NULLIF(referrer, ''), 'Direct / unknown') AS key, COUNT(*)::text AS value
            FROM site_events
-           WHERE event_name = 'page_view' AND created_at >= NOW() - INTERVAL '30 days'
+           WHERE event_name = 'page_view'
+             AND ${REAL_EVENT_CONDITION}
+             AND created_at >= NOW() - INTERVAL '30 days'
            GROUP BY COALESCE(NULLIF(referrer, ''), 'Direct / unknown')
            ORDER BY COUNT(*) DESC
            LIMIT 8`,
@@ -336,6 +368,7 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
           `SELECT COALESCE(NULLIF(source_type, ''), 'other') AS key, COUNT(*)::text AS value
            FROM site_events
            WHERE event_name IN ('cta_click', 'contact_redirect', 'form_submit_success')
+             AND ${REAL_EVENT_CONDITION}
              AND created_at >= NOW() - INTERVAL '30 days'
            GROUP BY COALESCE(NULLIF(source_type, ''), 'other')
            ORDER BY COUNT(*) DESC
@@ -348,7 +381,8 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
                   COUNT(*)::text AS value,
                   COUNT(*) FILTER (WHERE event_name IN ('cta_click', 'contact_redirect', 'form_submit_success'))::text AS secondary
            FROM site_events
-           WHERE created_at >= NOW() - INTERVAL '30 days'
+           WHERE ${REAL_EVENT_CONDITION}
+             AND created_at >= NOW() - INTERVAL '30 days'
            GROUP BY path
            ORDER BY COUNT(*) FILTER (WHERE event_name = 'page_view') DESC, COUNT(*) DESC
            LIMIT 10`,
@@ -370,6 +404,7 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
         }>(
           `SELECT event_name, path, source, source_type, created_at::text
            FROM site_events
+           WHERE ${REAL_EVENT_CONDITION}
            ORDER BY created_at DESC
            LIMIT 12`,
         ),
@@ -404,7 +439,8 @@ export async function loadConversionPathAnalytics(days = 30): Promise<Record<str
       pool.query<{ event_name: string; path: string; source_type: string | null; count: string }>(
         `SELECT event_name, path, source_type, COUNT(*)::text AS count
          FROM site_events
-         WHERE created_at >= NOW() - ($1::int * INTERVAL '1 day')
+         WHERE ${REAL_EVENT_CONDITION}
+           AND created_at >= NOW() - ($1::int * INTERVAL '1 day')
          GROUP BY event_name, path, source_type`,
         [days],
       ),

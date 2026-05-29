@@ -74,6 +74,7 @@ export default async function AdminSiteConversionPage() {
   const thirtyDays = dashboard.windows.find((item) => item.days === 30) ?? dashboard.windows[1] ?? dashboard.windows[0]
   const totalViews = thirtyDays?.pageViews ?? 0
   const totalLeads = thirtyDays?.leads ?? 0
+  const excludedTestLeads = thirtyDays?.testLeads ?? 0
 
   return (
     <AdminSectionShell
@@ -90,7 +91,7 @@ export default async function AdminSiteConversionPage() {
           <StatCard label="已进入线索" value={capturedCount} detail="表单会写入 leads 并可在 2.0 处理" />
           <StatCard label="部分追踪" value={partialCount} detail="主要是 CTA 来源参数或外部承接" />
           <StatCard label="外部承接" value={externalCount} detail="/contact 默认仍跳 300 联系页" />
-          <StatCard label="30 天真实转化" value={totalLeads} detail={`访问 ${totalViews}，转化率 ${formatAnalyticsPercent(totalViews > 0 ? totalLeads / totalViews : 0)}`} />
+          <StatCard label="30 天真实转化" value={totalLeads} detail={`访问 ${totalViews}，转化率 ${formatAnalyticsPercent(totalViews > 0 ? totalLeads / totalViews : 0)}；已排除测试线索 ${excludedTestLeads}`} />
         </section>
 
         <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">

@@ -53,6 +53,7 @@ export default async function AdminStatusTrafficPage() {
               <StatusPill ok={analytics.available} label={analytics.available ? '事件表可用' : '事件表未就绪'} />
               <StatusPill ok label="不采集表单隐私" />
               <StatusPill ok label="不接第三方 API" />
+              <StatusPill ok label={`已排除测试数据 ${formatNumber(thirtyDays.testEvents)} 事件 / ${formatNumber(thirtyDays.testLeads)} 线索`} />
             </div>
           </div>
         </div>
@@ -82,7 +83,7 @@ export default async function AdminStatusTrafficPage() {
           <MetricCard
             title="线索"
             value={thirtyDays.leads}
-            detail={`近 7 天 ${formatNumber(sevenDays.leads)} 条 leads`}
+            detail={`近 7 天 ${formatNumber(sevenDays.leads)} 条 leads；不含 Codex 测试线索`}
             href="/admin/customers/leads"
             Icon={STATUS_ICONS.Inbox}
             tone="green"
@@ -90,7 +91,7 @@ export default async function AdminStatusTrafficPage() {
           <MetricCard
             title="访问转化率"
             value={formatAnalyticsPercent(thirtyDays.conversionRate)}
-            detail="线索数 / 页面访问数，先做运营参考。"
+            detail="真实线索数 / 页面访问数，已排除 admin_test 和 Codex 测试。"
             Icon={STATUS_ICONS.ShieldCheck}
             tone="blue"
           />
