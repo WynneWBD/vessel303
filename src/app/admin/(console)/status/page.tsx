@@ -107,7 +107,7 @@ export default async function AdminStatusPage() {
               <ActionCard
                 title="跟进新线索"
                 detail={`新线索 ${formatNumber(overview.leads.new)}，跟进中 ${formatNumber(overview.leads.contacting)}。`}
-                href="/admin/leads?status=new"
+                href="/admin/customers/leads?status=new"
                 Icon={STATUS_ICONS.Inbox}
               />
               <ActionCard
@@ -166,7 +166,7 @@ export default async function AdminStatusPage() {
                 title="新线索"
                 detail={overview.leads.new > 0 ? '优先进入线索列表处理' : '暂无新线索'}
                 count={overview.leads.new}
-                href="/admin/leads?status=new"
+                href="/admin/customers/leads?status=new"
               />
               <PriorityRow
                 ok={contentTotals.issues === 0}

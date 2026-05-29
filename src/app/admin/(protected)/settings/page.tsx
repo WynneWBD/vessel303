@@ -168,7 +168,7 @@ function getTargetHref(targetType: string | null, targetId: string | null) {
   if (targetType === 'product' && targetId) return `/admin/products/${targetId}/edit`
   if (targetType === 'project' && targetId) return `/admin/content/projects/${targetId}/edit`
   if (targetType === 'page_module' && targetId) return `/admin/pages?module=${encodeURIComponent(targetId)}`
-  if (targetType === 'lead') return '/admin/leads'
+  if (targetType === 'lead') return '/admin/customers/leads'
   if (targetType === 'upload') return '/admin/media'
   if (targetType === 'user') return '/admin/users'
   if (targetType === 'site_settings') return '/admin/settings'

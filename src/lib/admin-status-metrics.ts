@@ -730,7 +730,7 @@ async function loadLeadActivity(): Promise<ActivityItem[]> {
     sourceLabel: '线索',
     title: firstText(row.name, row.company, row.email),
     detail: `线索状态：${row.status}`,
-    href: '/admin/leads',
+    href: '/admin/customers/leads',
     changedAt: row.changed_at,
   }))
 }

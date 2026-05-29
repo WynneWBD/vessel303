@@ -40,7 +40,7 @@ export default async function AdminStatusActivityPage() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <MetricCard title="近期变化" value={activity.length} detail="最多展示最近 32 条只读变化。" Icon={STATUS_ICONS.ListChecks} />
           <MetricCard title="内容变化" value={(counts.products ?? 0) + (counts.projects ?? 0) + (counts.news ?? 0)} detail="产品、项目案例和新闻更新。" href="/admin/content" Icon={STATUS_ICONS.FileText} />
-          <MetricCard title="线索变化" value={counts.leads ?? 0} detail="最近更新的线索记录。" href="/admin/leads" Icon={STATUS_ICONS.Inbox} />
+          <MetricCard title="线索变化" value={counts.leads ?? 0} detail="最近更新的线索记录。" href="/admin/customers/leads" Icon={STATUS_ICONS.Inbox} />
           <MetricCard title="页面 / 媒体" value={(counts.pages ?? 0) + (counts.media ?? 0)} detail="页面草稿和媒体素材变化。" href="/admin/site" Icon={STATUS_ICONS.LayoutTemplate} />
         </div>
 
@@ -52,4 +52,3 @@ export default async function AdminStatusActivityPage() {
     </StatusPageShell>
   )
 }
-

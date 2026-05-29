@@ -104,7 +104,7 @@ const QUICK_ACTIONS: ActionItem[] = [
   { label: '发布产品', href: '/admin/content/products/new', Icon: Package },
   { label: '发布项目', href: '/admin/content/projects/new', Icon: MapPinned },
   { label: '发布新闻', href: '/admin/content/news/new', Icon: Newspaper },
-  { label: '处理线索', href: '/admin/leads?status=new', Icon: Inbox },
+  { label: '处理线索', href: '/admin/customers/leads?status=new', Icon: Inbox },
   { label: '管理图片', href: '/admin/media', Icon: ImageIcon },
 ]
 
@@ -257,7 +257,7 @@ function buildTodos({
     {
       title: '待处理线索',
       detail: leadSummary.new > 0 ? '有新询盘需要跟进' : '暂无新询盘',
-      href: '/admin/leads?status=new',
+      href: '/admin/customers/leads?status=new',
       count: leadSummary.new,
       ok: leadSummary.new === 0,
     },
@@ -374,7 +374,7 @@ function Hero({
             label="待处理线索"
             value={leadSummary.new}
             detail={`线索总量 ${formatNumber(leadSummary.total)}`}
-            href="/admin/leads?status=new"
+            href="/admin/customers/leads?status=new"
             tone={leadSummary.new > 0 ? 'orange' : 'green'}
           />
           <HeroMetric
@@ -611,7 +611,7 @@ function CustomerPanel({ leadSummary, role }: { leadSummary: LeadSummary; role: 
       <SectionTitle title="客户与会员" />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Link
-          href="/admin/leads"
+          href="/admin/customers/leads"
           className="flex min-h-32 flex-col justify-between rounded-md border border-[#D8E7E8] bg-white p-5 transition hover:-translate-y-0.5 hover:border-[#E36F2C]/55"
         >
           <span className="flex items-center justify-between">
@@ -622,7 +622,7 @@ function CustomerPanel({ leadSummary, role }: { leadSummary: LeadSummary; role: 
           <span className="text-sm font-semibold text-[#E36F2C]">查看全部线索</span>
         </Link>
         <Link
-          href="/admin/leads?status=new"
+          href="/admin/customers/leads?status=new"
           className="flex min-h-32 flex-col justify-between rounded-md border border-[#D8E7E8] bg-white p-5 transition hover:-translate-y-0.5 hover:border-[#E36F2C]/55"
         >
           <span className="flex items-center justify-between">

@@ -552,7 +552,7 @@ function UserDetailSheet({
               <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-4 flex flex-col gap-2 text-sm">
                 <div className="text-xs text-[#8A8580] mb-1">关联数据</div>
                 <Link
-                  href={`/admin/leads?search=${encodeURIComponent(user.email)}`}
+                  href={`/admin/customers/leads?search=${encodeURIComponent(user.email)}`}
                   className="flex items-center justify-between text-[#2C2A28] hover:text-[#E36F2C]"
                 >
                   <span>提交线索</span>

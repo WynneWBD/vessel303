@@ -79,35 +79,35 @@ const STATUS_CARDS: StatusCardConfig[] = [
   {
     label: '新线索',
     value: 'new',
-    href: '/admin/leads?status=new',
+    href: '/admin/customers/leads?status=new',
     detail: '需要优先处理',
     tone: 'orange',
   },
   {
     label: '跟进中',
     value: 'contacting',
-    href: '/admin/leads?status=contacting',
+    href: '/admin/customers/leads?status=contacting',
     detail: '正在沟通',
     tone: 'blue',
   },
   {
     label: '已报价',
     value: 'quoted',
-    href: '/admin/leads?status=quoted',
+    href: '/admin/customers/leads?status=quoted',
     detail: '等待反馈',
     tone: 'blue',
   },
   {
     label: '已成交',
     value: 'won',
-    href: '/admin/leads?status=won',
+    href: '/admin/customers/leads?status=won',
     detail: '成交线索',
     tone: 'green',
   },
   {
     label: '已关闭',
     value: 'lost',
-    href: '/admin/leads?status=lost',
+    href: '/admin/customers/leads?status=lost',
     detail: '归档线索',
     tone: 'gray',
   },
@@ -117,26 +117,26 @@ const ACTIONS: ActionItem[] = [
   {
     label: '处理新线索',
     detail: '进入新线索列表，优先跟进询盘。',
-    href: '/admin/leads?status=new',
+    href: '/admin/customers/leads?status=new',
     Icon: Inbox,
     primary: true,
   },
   {
     label: '跟进中',
     detail: '查看正在沟通的线索。',
-    href: '/admin/leads?status=contacting',
+    href: '/admin/customers/leads?status=contacting',
     Icon: Clock3,
   },
   {
     label: '已报价',
     detail: '查看已进入报价阶段的线索。',
-    href: '/admin/leads?status=quoted',
+    href: '/admin/customers/leads?status=quoted',
     Icon: FileText,
   },
   {
     label: '线索管理',
     detail: '查看、筛选、更新全部线索。',
-    href: '/admin/leads',
+    href: '/admin/customers/leads',
     Icon: SearchCheck,
   },
 ]
@@ -147,18 +147,18 @@ function getCustomerSideNav(summary: LeadSummary): AdminSideNavGroup[] {
       title: '线索运营',
       items: [
         { key: 'overview', label: '客户概览', href: '/admin/customers', Icon: Users },
-        { key: 'new', label: '新线索', href: '/admin/leads?status=new', badge: summary.new, Icon: Inbox },
-        { key: 'all', label: '全部线索', href: '/admin/leads', badge: summary.total, Icon: MessageSquareText },
+        { key: 'new', label: '新线索', href: '/admin/customers/leads?status=new', badge: summary.new, Icon: Inbox },
+        { key: 'all', label: '全部线索', href: '/admin/customers/leads', badge: summary.total, Icon: MessageSquareText },
         {
           key: 'contacting',
           label: '跟进中',
-          href: '/admin/leads?status=contacting',
+          href: '/admin/customers/leads?status=contacting',
           badge: summary.contacting,
           Icon: Clock3,
         },
-        { key: 'quoted', label: '已报价', href: '/admin/leads?status=quoted', badge: summary.quoted, Icon: FileText },
-        { key: 'won', label: '已成交', href: '/admin/leads?status=won', badge: summary.won, Icon: BadgeCheck },
-        { key: 'lost', label: '已关闭', href: '/admin/leads?status=lost', badge: summary.lost, Icon: UserRoundX },
+        { key: 'quoted', label: '已报价', href: '/admin/customers/leads?status=quoted', badge: summary.quoted, Icon: FileText },
+        { key: 'won', label: '已成交', href: '/admin/customers/leads?status=won', badge: summary.won, Icon: BadgeCheck },
+        { key: 'lost', label: '已关闭', href: '/admin/customers/leads?status=lost', badge: summary.lost, Icon: UserRoundX },
       ],
     },
     {
@@ -251,21 +251,21 @@ function buildTodos(summary: LeadSummary): TodoItem[] {
     {
       title: '新线索待跟进',
       detail: summary.new > 0 ? '有新询盘需要处理' : '暂无新线索',
-      href: '/admin/leads?status=new',
+      href: '/admin/customers/leads?status=new',
       count: summary.new,
       ok: summary.new === 0,
     },
     {
       title: '跟进中线索',
       detail: summary.contacting > 0 ? '保持沟通并更新状态' : '暂无跟进中线索',
-      href: '/admin/leads?status=contacting',
+      href: '/admin/customers/leads?status=contacting',
       count: summary.contacting,
       ok: summary.contacting === 0,
     },
     {
       title: '超过 7 天未更新',
       detail: summary.staleFollowups > 0 ? '建议检查跟进记录' : '暂无长时间未更新线索',
-      href: '/admin/leads',
+      href: '/admin/customers/leads',
       count: summary.staleFollowups,
       ok: summary.staleFollowups === 0,
     },
@@ -285,8 +285,8 @@ function Hero({ summary }: { summary: LeadSummary }) {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <PrimaryAction href="/admin/leads?status=new" Icon={Inbox} label="处理新线索" primary />
-            <PrimaryAction href="/admin/leads" Icon={MessageSquareText} label="查看全部线索" />
+            <PrimaryAction href="/admin/customers/leads?status=new" Icon={Inbox} label="处理新线索" primary />
+            <PrimaryAction href="/admin/customers/leads" Icon={MessageSquareText} label="查看全部线索" />
           </div>
         </div>
 

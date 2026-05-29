@@ -15,11 +15,11 @@ export const dynamic = 'force-dynamic'
 export const metadata = { title: '线索漏斗 - 运营数据中心 - VESSEL' }
 
 const FUNNEL_STEPS = [
-  { key: 'new', label: '新线索', href: '/admin/leads?status=new' },
-  { key: 'contacting', label: '跟进中', href: '/admin/leads?status=contacting' },
-  { key: 'quoted', label: '已报价', href: '/admin/leads?status=quoted' },
-  { key: 'won', label: '已成交', href: '/admin/leads?status=won' },
-  { key: 'lost', label: '已关闭', href: '/admin/leads?status=lost' },
+  { key: 'new', label: '新线索', href: '/admin/customers/leads?status=new' },
+  { key: 'contacting', label: '跟进中', href: '/admin/customers/leads?status=contacting' },
+  { key: 'quoted', label: '已报价', href: '/admin/customers/leads?status=quoted' },
+  { key: 'won', label: '已成交', href: '/admin/customers/leads?status=won' },
+  { key: 'lost', label: '已关闭', href: '/admin/customers/leads?status=lost' },
 ] as const
 
 export default async function AdminStatusLeadsPage() {
@@ -49,14 +49,14 @@ export default async function AdminStatusLeadsPage() {
             title="线索总量"
             value={leads.total}
             detail={`近 30 天新增 ${formatNumber(leads.recent30)} / 近 7 天新增 ${formatNumber(leads.recent7)}`}
-            href="/admin/leads"
+            href="/admin/customers/leads"
             Icon={STATUS_ICONS.Inbox}
           />
           <MetricCard
             title="新线索"
             value={leads.new}
             detail="需要运营人员优先查看、分配或回复。"
-            href="/admin/leads?status=new"
+            href="/admin/customers/leads?status=new"
             Icon={STATUS_ICONS.AlertCircle}
             tone={leads.new > 0 ? 'orange' : 'green'}
           />
@@ -64,7 +64,7 @@ export default async function AdminStatusLeadsPage() {
             title="超 7 天未更新"
             value={leads.staleFollowups}
             detail="仅统计新线索和跟进中线索，用于提醒跟进断点。"
-            href="/admin/leads"
+            href="/admin/customers/leads"
             Icon={STATUS_ICONS.ListChecks}
             tone={leads.staleFollowups > 0 ? 'orange' : 'green'}
           />
@@ -72,7 +72,7 @@ export default async function AdminStatusLeadsPage() {
             title="成交占比"
             value={`${wonRate}%`}
             detail={`已成交 ${formatNumber(leads.won)} / 已关闭 ${formatNumber(leads.lost)}`}
-            href="/admin/leads?status=won"
+            href="/admin/customers/leads?status=won"
             Icon={STATUS_ICONS.BarChart3}
             tone="blue"
           />
@@ -111,14 +111,14 @@ export default async function AdminStatusLeadsPage() {
             <ActionCard
               title="处理新线索"
               detail={`${formatNumber(leads.new)} 条新线索等待首次处理。`}
-              href="/admin/leads?status=new"
+              href="/admin/customers/leads?status=new"
               Icon={STATUS_ICONS.Inbox}
               primary={leads.new > 0}
             />
             <ActionCard
               title="查看跟进中"
               detail={`${formatNumber(leads.contacting)} 条线索仍在跟进中。`}
-              href="/admin/leads?status=contacting"
+              href="/admin/customers/leads?status=contacting"
               Icon={STATUS_ICONS.ListChecks}
               primary={leads.staleFollowups > 0}
             />
@@ -134,4 +134,3 @@ export default async function AdminStatusLeadsPage() {
     </StatusPageShell>
   )
 }
-

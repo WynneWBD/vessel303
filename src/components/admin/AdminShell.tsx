@@ -29,7 +29,7 @@ type MenuItem = {
 
 const menuItems: MenuItem[] = [
   { label: '2.0 控制台', href: '/admin', Icon: LayoutDashboard, title: '2.0 控制台 Dashboard' },
-  { label: '线索管理', href: '/admin/leads', Icon: Inbox, title: '线索管理 Leads' },
+  { label: '线索管理', href: '/admin/customers/leads', Icon: Inbox, title: '线索管理 Leads' },
   { label: '用户管理', href: '/admin/users', Icon: Users, title: '用户管理 Users', superAdminOnly: true },
   { label: '页面模块', href: '/admin/pages', Icon: LayoutTemplate, title: '页面模块 Pages', superAdminOnly: true },
   { label: '新闻管理', href: '/admin/news', Icon: Newspaper, title: '新闻管理 News' },
@@ -76,7 +76,7 @@ export default function AdminShell({
   const headerTitle = current?.title ?? '旧后台维护 Legacy'
 
   const badgeFor = (href: string): string | undefined => {
-    if (href === '/admin/leads' && leadBadge > 0) return clampBadge(leadBadge)
+    if (href === '/admin/customers/leads' && leadBadge > 0) return clampBadge(leadBadge)
     if (href === '/admin/users' && userBadge > 0) return clampBadge(userBadge)
     if (href === '/admin/media' && mediaBadge > 0) return clampBadge(mediaBadge)
     if (href === '/admin/news' && newsBadge > 0) return clampBadge(newsBadge)

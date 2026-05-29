@@ -47,7 +47,7 @@ const legacyEntries: LegacyEntry[] = [
   {
     title: '线索维护',
     description: '旧线索列表、筛选、详情和导出。',
-    href: '/admin/leads',
+    href: '/admin/customers/leads',
     Icon: Inbox,
   },
   {

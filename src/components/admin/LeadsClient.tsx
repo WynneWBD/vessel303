@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Download, Plus, Trash2, Mail, SearchX } from 'lucide-react'
+import { Download, Plus, Trash2, Mail, SearchX, Inbox, Clock3, FileText, BadgeCheck } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,6 +35,15 @@ type Filters = {
   search: string
 }
 
+export type LeadDashboardSummary = {
+  total: number
+  new: number
+  contacting: number
+  quoted: number
+  won: number
+  lost: number
+}
+
 const STATUS_OPTIONS: { value: LeadStatus; label: string }[] = [
   { value: 'new', label: '新' },
   { value: 'contacting', label: '跟进中' },
@@ -57,17 +66,17 @@ const STATUS_LABEL: Record<string, string> = Object.fromEntries(
 function statusBadgeClass(status: string) {
   switch (status) {
     case 'new':
-      return 'bg-red-600/20 text-red-400 border-red-600/30'
+      return 'border-orange-200 bg-orange-50 text-orange-700'
     case 'contacting':
-      return 'bg-[#E36F2C]/20 text-[#E36F2C] border-[#E36F2C]/30'
+      return 'border-sky-200 bg-sky-50 text-sky-700'
     case 'quoted':
-      return 'bg-blue-600/20 text-blue-400 border-blue-600/30'
+      return 'border-blue-200 bg-blue-50 text-blue-700'
     case 'won':
-      return 'bg-green-600/20 text-green-400 border-green-600/30'
+      return 'border-emerald-200 bg-emerald-50 text-emerald-700'
     case 'lost':
-      return 'bg-gray-600/20 text-gray-400 border-gray-600/30'
+      return 'border-slate-200 bg-slate-50 text-slate-600'
     default:
-      return 'bg-gray-600/20 text-gray-400 border-gray-600/30'
+      return 'border-slate-200 bg-slate-50 text-slate-600'
   }
 }
 
@@ -89,6 +98,8 @@ export default function LeadsClient({
   initialPage,
   initialLimit,
   allowTestLeadCreation,
+  allowDelete = false,
+  summary,
 }: {
   initialLeads: Lead[]
   initialTotal: number
@@ -96,6 +107,8 @@ export default function LeadsClient({
   initialPage: number
   initialLimit: number
   allowTestLeadCreation: boolean
+  allowDelete?: boolean
+  summary?: LeadDashboardSummary
 }) {
   const router = useRouter()
   const [filters, setFilters] = useState<Filters>(initialFilters)
@@ -282,30 +295,33 @@ export default function LeadsClient({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Title + actions */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1
-          className="text-[#2C2A28]"
-          style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em' }}
-        >
-          线索管理
-        </h1>
-        <div className="flex items-center gap-2">
-          {allowTestLeadCreation ? (
-            <Button variant="outline" size="sm" onClick={() => setNewOpen(true)}>
-              <Plus size={16} />
-              新建测试线索
+      <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold tracking-[0.22em] text-[#1889B6] uppercase">B11 Leads 2.0</p>
+            <h1 className="mt-2 text-2xl font-bold text-[#1E2C31]">线索管理 2.0</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
+              新后台统一处理官网表单、案例询盘和 Media Kit 申请。旧 /admin/leads 只做兼容入口，不再展示旧侧边栏。
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {allowTestLeadCreation ? (
+              <Button variant="outline" size="sm" onClick={() => setNewOpen(true)}>
+                <Plus size={16} />
+                新建测试线索
+              </Button>
+            ) : null}
+            <Button variant="outline" size="sm" onClick={handleExport}>
+              <Download size={16} />
+              导出 CSV
             </Button>
-          ) : null}
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download size={16} />
-            导出 CSV
-          </Button>
+          </div>
         </div>
-      </div>
+        {summary && <LeadSummaryGrid summary={summary} />}
+      </section>
 
       {/* Filter bar */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 gap-3 rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm md:grid-cols-2 lg:grid-cols-4">
         <Select
           value={filters.status}
           onChange={(e) => updateFilters({ status: e.target.value })}
@@ -341,11 +357,11 @@ export default function LeadsClient({
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border border-[#E5DED4] bg-[#FFFFFF] overflow-hidden">
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#E5DED4] text-[#8A8580]">
+              <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
                 <th className="text-left font-medium px-4 py-3">状态</th>
                 <th className="text-left font-medium px-4 py-3">邮箱</th>
                 <th className="text-left font-medium px-4 py-3">姓名</th>
@@ -363,11 +379,11 @@ export default function LeadsClient({
                   <td colSpan={9} className="px-4 py-16">
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
                       {hasActiveFilters ? (
-                        <SearchX size={32} className="text-[#4A4744]" />
+                        <SearchX size={32} className="text-[#8A9EA4]" />
                       ) : (
-                        <Mail size={32} className="text-[#4A4744]" />
+                        <Mail size={32} className="text-[#8A9EA4]" />
                       )}
-                      <p className="text-[#C4B9AB]">
+                      <p className="text-[#61767D]">
                         {hasActiveFilters ? '没有找到符合条件的线索' : '暂无线索'}
                       </p>
                       <p className="text-xs text-[#6B6560]">
@@ -385,7 +401,7 @@ export default function LeadsClient({
               {leads.map((lead) => (
                 <tr
                   key={lead.id}
-                  className="border-b border-[#E5DED4] hover:bg-[#FAF7F2] cursor-pointer transition-colors"
+                  className="cursor-pointer border-b border-[#E6EEEE] transition-colors hover:bg-[#F7FAFA]"
                   onClick={() => handleSelect(lead)}
                 >
                   <td className="px-4 py-3">
@@ -394,11 +410,11 @@ export default function LeadsClient({
                     </Badge>
                   </td>
                   <td className="px-4 py-3 text-[#2C2A28]">{lead.email}</td>
-                  <td className="px-4 py-3 text-[#C4B9AB]">{lead.name ?? '—'}</td>
-                  <td className="px-4 py-3 text-[#C4B9AB]">{lead.company ?? '—'}</td>
-                  <td className="px-4 py-3 text-[#C4B9AB]">{lead.country ?? '—'}</td>
-                  <td className="px-4 py-3 text-[#C4B9AB]">{lead.inquiry_type ?? '—'}</td>
-                  <td className="px-4 py-3 text-[#C4B9AB]">{lead.sku_interest ?? '—'}</td>
+                  <td className="px-4 py-3 text-[#61767D]">{lead.name ?? '—'}</td>
+                  <td className="px-4 py-3 text-[#61767D]">{lead.company ?? '—'}</td>
+                  <td className="px-4 py-3 text-[#61767D]">{lead.country ?? '—'}</td>
+                  <td className="px-4 py-3 text-[#61767D]">{lead.inquiry_type ?? '—'}</td>
+                  <td className="px-4 py-3 text-[#61767D]">{lead.sku_interest ?? '—'}</td>
                   <td className="px-4 py-3 text-[#8A8580] whitespace-nowrap">
                     {formatDate(lead.created_at)}
                   </td>
@@ -433,7 +449,7 @@ export default function LeadsClient({
         lead={selected}
         onClose={() => setSelected(null)}
         onSave={handleSave}
-        onDelete={setPendingDelete}
+        onDelete={allowDelete ? setPendingDelete : undefined}
       />
 
       {allowTestLeadCreation ? (
@@ -461,6 +477,35 @@ export default function LeadsClient({
   )
 }
 
+function LeadSummaryGrid({ summary }: { summary: LeadDashboardSummary }) {
+  const items = [
+    { label: '全部线索', value: summary.total, detail: '当前未删除线索', Icon: Mail, tone: 'bg-[#F0F7F8] text-[#1889B6]' },
+    { label: '新线索', value: summary.new, detail: '需要优先跟进', Icon: Inbox, tone: 'bg-[#FFF2E7] text-[#E36F2C]' },
+    { label: '跟进中', value: summary.contacting, detail: '正在沟通', Icon: Clock3, tone: 'bg-sky-50 text-sky-700' },
+    { label: '已报价', value: summary.quoted, detail: '等待客户反馈', Icon: FileText, tone: 'bg-blue-50 text-blue-700' },
+    { label: '已成交', value: summary.won, detail: '成交线索', Icon: BadgeCheck, tone: 'bg-emerald-50 text-emerald-700' },
+  ]
+
+  return (
+    <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      {items.map(({ label, value, detail, Icon, tone }) => (
+        <div key={label} className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-[#61767D]">{label}</p>
+              <p className="mt-3 text-3xl font-bold text-[#1E2C31]">{value.toLocaleString('zh-CN')}</p>
+              <p className="mt-1 text-xs text-[#8A9EA4]">{detail}</p>
+            </div>
+            <span className={`flex h-9 w-9 items-center justify-center rounded-md ${tone}`}>
+              <Icon size={17} />
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function LeadDetailSheet({
   lead,
   onClose,
@@ -473,7 +518,7 @@ function LeadDetailSheet({
     lead: Lead,
     patch: { status: LeadStatus; assigned_to: string; note_append: string },
   ) => Promise<void>
-  onDelete: (lead: Lead) => void
+  onDelete?: (lead: Lead) => void
 }) {
   const [status, setStatus] = useState<LeadStatus>(lead?.status ?? 'new')
   const [assignedTo, setAssignedTo] = useState(lead?.assigned_to ?? '')
@@ -578,15 +623,17 @@ function LeadDetailSheet({
             </div>
 
             <SheetFooter>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => onDelete(lead)}
-                disabled={saving}
-              >
-                <Trash2 size={16} />
-                删除
-              </Button>
+              {onDelete && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => onDelete(lead)}
+                  disabled={saving}
+                >
+                  <Trash2 size={16} />
+                  删除
+                </Button>
+              )}
               <Button size="sm" onClick={handleSave} disabled={saving}>
                 {saving ? '保存中…' : '保存'}
               </Button>
