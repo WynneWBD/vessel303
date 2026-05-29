@@ -7,7 +7,6 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import TechDrawer from '@/components/TechDrawer';
-import GlobalMapPreview from '@/components/GlobalMapPreview';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   isResolvedPageModuleVisible,
@@ -70,6 +69,18 @@ const ABOUT_ORDER_GROUPS = {
   preCertifications: 30_000,
   postCertifications: 50_000,
 };
+
+const ABOUT_OPTIMIZED_IMAGES = new Map<string, string>([
+  ['/images/about/about_scene-01.jpg', '/images/about/optimized/about_scene-01.jpg'],
+  ['/images/about/about_factory-02.jpg', '/images/about/optimized/about_factory-02.jpg'],
+  ['/images/about/about_factory-05.jpg', '/images/about/optimized/about_factory-05.jpg'],
+  ['/images/about/about_factory-06.png', '/images/about/optimized/about_factory-06.jpg'],
+  ['/images/about/about_team-05.jpg', '/images/about/optimized/about_team-05.jpg'],
+]);
+
+function optimizedAboutImage(src: string) {
+  return ABOUT_OPTIMIZED_IMAGES.get(src) ?? src;
+}
 
 // ─── scroll reveal ────────────────────────────────────────────────────────────
 
@@ -459,8 +470,8 @@ export default function AboutPage() {
   const serviceModuleItems = moduleItems(servicesModule);
   const partnerItems = moduleItems(partnersModule);
   const showHero = visibleResolvedModule(dynamicModules, 'hero');
-  const heroImage = itemById(heroItems, 'about-hero-image')?.image_url || '/images/about/about_scene-01.jpg';
-  const storyImage = itemById(storyItems, 'story-image')?.image_url || '/images/about/about_factory-02.jpg';
+  const heroImage = optimizedAboutImage(itemById(heroItems, 'about-hero-image')?.image_url || '/images/about/about_scene-01.jpg');
+  const storyImage = optimizedAboutImage(itemById(storyItems, 'story-image')?.image_url || '/images/about/about_factory-02.jpg');
   const storyBadge = itemById(storyItems, 'story-badge');
   const showStats = visibleResolvedModule(dynamicModules, 'stats');
   const aboutStats = !showStats
@@ -503,11 +514,11 @@ export default function AboutPage() {
     }))
     .filter((item) => Boolean(item.text));
   const showFactory = visibleResolvedModule(dynamicModules, 'factory');
-  const factoryHeroImage = itemById(factoryItems, 'factory-image-hero')?.image_url || FACTORY_HERO;
+  const factoryHeroImage = optimizedAboutImage(itemById(factoryItems, 'factory-image-hero')?.image_url || FACTORY_HERO);
   const factoryGridImages = ['factory-image-01', 'factory-image-02', 'factory-image-03', 'factory-image-04']
     .map((id, index) => ({
       id,
-      src: itemById(factoryItems, id)?.image_url || FACTORY_GRID[index],
+      src: optimizedAboutImage(itemById(factoryItems, id)?.image_url || FACTORY_GRID[index]),
     }))
     .filter((item): item is { id: string; src: string } => Boolean(item.src));
   const showTimeline = visibleResolvedModule(dynamicModules, 'timeline');
@@ -568,7 +579,7 @@ export default function AboutPage() {
         .filter((item): item is (typeof technologyFallbacks)[number] => Boolean(item))
     : technologyFallbacks;
   const showFounder = visibleResolvedModule(dynamicModules, 'founder');
-  const founderPhoto = itemById(founderItems, 'founder-photo')?.image_url || '/images/about/about_team-05.jpg';
+  const founderPhoto = optimizedAboutImage(itemById(founderItems, 'founder-photo')?.image_url || '/images/about/about_team-05.jpg');
   const founderTags = ['founder-tag-01', 'founder-tag-02', 'founder-tag-03']
     .map((id) => {
       const fallback = zh
@@ -660,6 +671,7 @@ export default function AboutPage() {
           alt="VESSEL® brand"
           fill
           priority
+          sizes="100vw"
           className="object-cover"
           unoptimized
           data-page-module-item="about-hero-image"
@@ -800,6 +812,7 @@ export default function AboutPage() {
                 src={storyImage}
                 alt="VESSEL factory aerial"
                 fill
+                sizes="(min-width: 1024px) 40vw, 100vw"
                 className="object-cover"
                 unoptimized
               />
@@ -879,7 +892,7 @@ export default function AboutPage() {
                 data-page-module-item="factory-image-hero"
                 data-page-module-field="image_url"
               >
-                <ProtectedImage src={factoryHeroImage} alt="VESSEL factory" fill className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" unoptimized />
+                <ProtectedImage src={factoryHeroImage} alt="VESSEL factory" fill sizes="(min-width: 1024px) 1152px, 100vw" className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" />
               </div>
             </Reveal>
             <div className="grid grid-cols-2 gap-2">
@@ -891,7 +904,7 @@ export default function AboutPage() {
                     data-page-module-item={item.id}
                     data-page-module-field="image_url"
                   >
-                    <ProtectedImage src={item.src} alt={`VESSEL factory ${i + 2}`} fill className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" unoptimized />
+                    <ProtectedImage src={item.src} alt={`VESSEL factory ${i + 2}`} fill sizes="(min-width: 1024px) 576px, 50vw" className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" />
                   </div>
                 </Reveal>
               ))}
@@ -1257,6 +1270,7 @@ export default function AboutPage() {
                 src={founderPhoto}
                 alt={localText(itemById(founderItems, 'founder-name'), zh, zh ? '王帅斌' : 'Wang Shuaibin')}
                 fill
+                sizes="256px"
                 className="object-cover object-top"
                 unoptimized
               />
@@ -1396,11 +1410,28 @@ export default function AboutPage() {
 
           <Reveal delay={80}>
             <div
-              className="rounded-lg overflow-hidden border border-[#3A302A] shadow-[0_24px_80px_rgba(0,0,0,0.22)]"
+              className="relative rounded-lg overflow-hidden border border-[#3A302A] shadow-[0_24px_80px_rgba(0,0,0,0.22)]"
               style={{ height: '520px' }}
               aria-label={zh ? '微宿全球营地部署预览地图' : 'VESSEL global camp deployment preview map'}
             >
-              <GlobalMapPreview />
+              <Image
+                src="/images/about/about_globalmap-01.jpg"
+                alt={zh ? '微宿全球营地部署静态预览' : 'VESSEL global deployment static preview'}
+                fill
+                sizes="(min-width: 1024px) 1152px, 100vw"
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#241F1B]/75 via-transparent to-transparent" />
+              <div className="absolute bottom-5 left-5 right-5">
+                <p className="text-xs uppercase tracking-[0.3em] text-[#E36F2C]">
+                  {zh ? '静态预览' : 'Static Preview'}
+                </p>
+                <p className="mt-1 max-w-md text-sm leading-relaxed text-white/75">
+                  {zh
+                    ? '完整点位、缩放和项目详情请进入 Global 地图。'
+                    : 'Open the full Global map for live pins, zoom and project details.'}
+                </p>
+              </div>
             </div>
             <div className="mt-4 flex flex-col gap-2 text-right sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs leading-relaxed text-[#8A8580]">

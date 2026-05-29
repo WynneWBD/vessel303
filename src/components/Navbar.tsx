@@ -38,7 +38,7 @@ function ProductsDropdown({ items }: { items: DropdownItem[] }) {
             {t(i18n.nav.gen6Label)}
           </div>
           {gen6Items.map((item) => (
-            <Link
+            <a
               key={item.href}
               href={item.href}
               className="flex items-center justify-between px-2 py-2.5 text-white/65 hover:text-[#E36F2C] hover:bg-[#E36F2C]/5 transition-colors rounded group"
@@ -47,7 +47,7 @@ function ProductsDropdown({ items }: { items: DropdownItem[] }) {
               {item.sub && (
                 <span className="text-white/25 text-[11px] group-hover:text-[#E36F2C]/50 ml-2 shrink-0">{item.sub}</span>
               )}
-            </Link>
+            </a>
           ))}
         </div>
         {/* Gen5 */}
@@ -56,7 +56,7 @@ function ProductsDropdown({ items }: { items: DropdownItem[] }) {
             {t(i18n.nav.gen5Label)}
           </div>
           {gen5Items.map((item) => (
-            <Link
+            <a
               key={item.href}
               href={item.href}
               className="flex items-center justify-between px-2 py-2.5 text-white/65 hover:text-[#E36F2C] hover:bg-[#E36F2C]/5 transition-colors rounded group"
@@ -65,18 +65,18 @@ function ProductsDropdown({ items }: { items: DropdownItem[] }) {
               {item.sub && (
                 <span className="text-white/25 text-[11px] group-hover:text-[#E36F2C]/50 ml-2 shrink-0">{item.sub}</span>
               )}
-            </Link>
+            </a>
           ))}
         </div>
       </div>
       {allLink && (
         <div className="border-t border-white/5">
-          <Link
+          <a
             href={allLink.href}
             className="block px-5 py-2.5 text-[#E36F2C]/70 hover:text-[#E36F2C] hover:bg-[#E36F2C]/5 text-xs tracking-[0.2em] transition-colors text-center"
           >
             {allLink.label}
-          </Link>
+          </a>
         </div>
       )}
     </div>
@@ -88,13 +88,13 @@ function SimpleDropdown({ items }: { items: DropdownItem[] }) {
     <div className="absolute top-full left-0 mt-1 min-w-[200px] bg-[#241F1B] border border-[#3A302A] shadow-2xl shadow-black/50 z-50">
       <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-[#E36F2C]/60 to-transparent" />
       {items.map((item) => (
-        <Link
+        <a
           key={item.href}
           href={item.href}
           className="flex items-center gap-0 px-4 py-2.5 text-white/65 hover:text-[#E36F2C] hover:bg-[#E36F2C]/5 transition-all duration-150 text-sm border-b border-white/5 last:border-0 tracking-wider border-l-2 border-l-transparent hover:border-l-[#E36F2C] pl-3"
         >
           {item.label}
-        </Link>
+        </a>
       ))}
     </div>
   );
@@ -180,13 +180,13 @@ export default function Navbar() {
                     <span className="absolute bottom-0 left-2.5 w-0 h-px bg-[#E36F2C] transition-all duration-200 group-hover:w-[calc(100%-20px)]" />
                   </button>
                 ) : (
-                  <Link
+                  <a
                     href={link.href}
                     className="text-white/65 hover:text-[#E36F2C] text-sm font-medium tracking-wide px-2.5 py-2 transition-colors duration-200 whitespace-nowrap relative group block"
                   >
                     {link.label}
                     <span className="absolute bottom-0 left-2.5 w-0 h-px bg-[#E36F2C] transition-all duration-200 group-hover:w-[calc(100%-20px)]" />
-                  </Link>
+                  </a>
                 )}
 
                 {/* Dropdown */}
@@ -204,18 +204,18 @@ export default function Navbar() {
 
           {/* CTA + Toggle */}
           <div className="hidden xl:flex items-center gap-2 shrink-0">
-            <Link
+            <a
               href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
               className="text-white text-sm font-semibold px-3.5 py-2 border border-white/50 hover:bg-[#F5F2ED] hover:text-[#241F1B] transition-all duration-200 tracking-wider whitespace-nowrap"
             >
               {t(i18n.nav.purchaseBtn)}
-            </Link>
-            <Link
+            </a>
+            <a
               href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
               className="text-white/75 text-sm font-medium px-3.5 py-2 border border-white/20 hover:border-[#E36F2C] hover:text-[#E36F2C] transition-all duration-200 tracking-wider whitespace-nowrap"
             >
               {t(i18n.nav.bookingBtn)}
-            </Link>
+            </a>
             <LanguageToggle />
             <AuthButton />
           </div>
@@ -264,7 +264,7 @@ export default function Navbar() {
                     {mobileOpen === link.label && (
                       <div className="pl-4 pb-2 space-y-0.5 border-l border-[#E36F2C]/20 ml-2">
                         {link.dropdown.map((item) => (
-                          <Link
+                          <a
                             key={item.href}
                             href={item.href}
                             className="flex items-center justify-between text-white/50 hover:text-[#E36F2C] text-sm py-2 px-2 transition-colors"
@@ -272,38 +272,38 @@ export default function Navbar() {
                           >
                             <span>{item.label}</span>
                             {item.sub && <span className="text-white/25 text-xs">{item.sub}</span>}
-                          </Link>
+                          </a>
                         ))}
                       </div>
                     )}
                   </>
                 ) : (
-                  <Link
+                  <a
                     href={link.href}
                     className="block text-white/70 hover:text-[#E36F2C] text-sm py-3 px-2 border-b border-white/5 transition-colors tracking-wider"
                     onClick={() => setIsOpen(false)}
                   >
                     {link.label}
-                  </Link>
+                  </a>
                 )}
               </div>
             ))}
 
             <div className="flex gap-3 pt-4">
-              <Link
+              <a
                 href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
                 className="flex-1 text-center bg-[#241F1B] text-white text-sm font-semibold py-3 border border-white/60 tracking-wider"
                 onClick={() => setIsOpen(false)}
               >
                 {t(i18n.nav.purchaseBtn)}
-              </Link>
-              <Link
+              </a>
+              <a
                 href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
                 className="flex-1 text-center bg-transparent text-white/80 text-sm py-3 border border-white/25 tracking-wider"
                 onClick={() => setIsOpen(false)}
               >
                 {t(i18n.nav.bookingBtn)}
-              </Link>
+              </a>
             </div>
             <div className="pt-3 flex items-center justify-between px-1">
               <LanguageToggle />
