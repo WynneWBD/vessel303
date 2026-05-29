@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useState } from 'react'
 import { ImagePlus, RefreshCw, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,12 +10,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { getImageVariantUrl } from '@/lib/image-optimization'
 
 interface MediaItem {
   id: string
   url: string
   filename: string | null
   size: number | null
+  variants?: unknown
 }
 
 interface Props {
@@ -28,8 +30,7 @@ export default function CoverImagePicker({ value, onChange }: Props) {
   const [images, setImages] = useState<MediaItem[]>([])
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (!open) return
+  const loadImages = useCallback(() => {
     setLoading(true)
     fetch('/api/admin/media?limit=100', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
@@ -38,7 +39,12 @@ export default function CoverImagePicker({ value, onChange }: Props) {
       })
       .catch(() => void 0)
       .finally(() => setLoading(false))
-  }, [open])
+  }, [])
+
+  const openPicker = () => {
+    setOpen(true)
+    loadImages()
+  }
 
   const handlePick = (url: string) => {
     onChange(url)
@@ -54,7 +60,7 @@ export default function CoverImagePicker({ value, onChange }: Props) {
             <img src={value} alt="封面图" className="w-full h-full object-cover" />
           </div>
           <div className="flex flex-col gap-2 pt-1">
-            <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
+            <Button type="button" variant="outline" size="sm" onClick={openPicker}>
               <RefreshCw size={14} />
               更换
             </Button>
@@ -73,7 +79,7 @@ export default function CoverImagePicker({ value, onChange }: Props) {
       ) : (
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={openPicker}
           className="flex flex-col items-center justify-center gap-2 w-full h-32 rounded-lg border border-dashed border-[#E5DED4] hover:border-[#E36F2C] text-[#8A8580] hover:text-[#E36F2C] transition-colors bg-[#FFFFFF]"
         >
           <ImagePlus size={24} />
@@ -81,7 +87,13 @@ export default function CoverImagePicker({ value, onChange }: Props) {
         </button>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen)
+          if (nextOpen) loadImages()
+        }}
+      >
         <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>选择封面图</DialogTitle>
@@ -110,7 +122,7 @@ export default function CoverImagePicker({ value, onChange }: Props) {
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={img.url}
+                      src={getImageVariantUrl(img.url, img.variants, 'thumb')}
                       alt={img.filename ?? ''}
                       className="w-full h-full object-cover"
                     />

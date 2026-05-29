@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import PageHero from '@/components/PageHero'
 import CaseInquiryForm from '@/components/pages/CaseInquiryForm'
+import ProtectedImage from '@/components/ProtectedImage'
 import { useLanguage } from '@/contexts/LanguageContext'
 import type { ProjectCaseRow } from '@/lib/project-cases-static'
 
@@ -41,8 +42,15 @@ function ProjectImage({ src, alt, className }: { src: string | null | undefined;
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt={alt} className={`object-cover ${className}`} />
+    <div className={`relative overflow-hidden bg-[#E5DED4] ${className}`}>
+      <ProtectedImage
+        src={src}
+        alt={alt}
+        fill
+        className="object-cover"
+        sizes="(max-width: 768px) 100vw, 50vw"
+      />
+    </div>
   )
 }
 

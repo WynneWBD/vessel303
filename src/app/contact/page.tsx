@@ -12,11 +12,22 @@ export const metadata: Metadata = buildPageMetadata({
   path: '/contact',
 })
 
+const CONTACT_SETTINGS_TIMEOUT_MS = 250
+
+function timeoutFallback<T>(ms: number, value: T): Promise<T> {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(value), ms)
+  })
+}
+
 export default async function ContactPage() {
   let contactUrl = defaultSiteSettings.contactUrl
 
   try {
-    const settings = await getSiteSettings()
+    const settings = await Promise.race([
+      getSiteSettings(),
+      timeoutFallback(CONTACT_SETTINGS_TIMEOUT_MS, defaultSiteSettings),
+    ])
     contactUrl = settings.contactUrl || contactUrl
   } catch (err) {
     console.error('Failed to load contact URL from site_settings:', err)

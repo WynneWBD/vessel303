@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import ProtectedImage from '@/components/ProtectedImage'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { format, parseISO } from 'date-fns'
 
@@ -87,11 +88,12 @@ export default function NewsListView({ rows }: { rows: NewsItem[] }) {
                   {/* Cover */}
                   <div className="relative h-48 overflow-hidden bg-[#FAF7F2] shrink-0">
                     {item.cover_image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <ProtectedImage
                         src={item.cover_image_url}
                         alt={title}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, 33vw"
                       />
                     ) : (
                       <div

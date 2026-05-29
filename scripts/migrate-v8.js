@@ -81,9 +81,14 @@ async function migrate() {
         filename    text,
         size        integer,
         mime        text,
+        variants    jsonb NOT NULL DEFAULT '{}'::jsonb,
         uploaded_by uuid REFERENCES users(id),
         created_at  timestamp DEFAULT now()
       )
+    `);
+    await client.query(`
+      ALTER TABLE uploads
+      ADD COLUMN IF NOT EXISTS variants jsonb NOT NULL DEFAULT '{}'::jsonb
     `);
     console.log('✓ uploads table ready');
 

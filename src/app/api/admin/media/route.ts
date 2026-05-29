@@ -3,6 +3,7 @@ import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
 import { requireAdmin } from '@/lib/auth-check'
 import { createUpload, listUploads } from '@/lib/uploads-db'
 import { logAdminAction } from '@/lib/leads-db'
+import { generateImageVariants } from '@/lib/media-variant-generation'
 import {
   defaultSiteSettings,
   getMediaUploadLimitBytes,
@@ -92,6 +93,27 @@ export async function POST(request: NextRequest) {
         }
 
         const filename = payload.originalName || blob.pathname.split('/').pop() || 'unknown'
+        let variants = undefined
+
+        try {
+          variants = await generateImageVariants({
+            url: blob.url,
+            blobPath: blob.pathname,
+            filename,
+            size: payload.size ?? 0,
+            mime: blob.contentType || 'application/octet-stream',
+          })
+        } catch (err) {
+          console.error('[media onUploadCompleted] variant generation failed', err)
+          variants = {
+            original: {
+              url: blob.url,
+              blob_path: blob.pathname,
+              size: payload.size ?? 0,
+              mime: blob.contentType || 'application/octet-stream',
+            },
+          }
+        }
 
         try {
           const upload = await createUpload({
@@ -102,6 +124,7 @@ export async function POST(request: NextRequest) {
             // (already bounded by maximumSizeInBytes so it can't be spoofed higher)
             size: payload.size ?? 0,
             mime: blob.contentType || 'application/octet-stream',
+            variants,
             uploaded_by: payload.uploadedBy,
           })
 

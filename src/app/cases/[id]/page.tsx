@@ -4,6 +4,12 @@ import CaseDetailPageContent from '@/components/pages/CaseDetailPageContent'
 import { getPublishedProjectCaseById, listPublishedProjectCases } from '@/lib/project-cases-db'
 import { staticPublishedProjectCases, type ProjectCaseRow } from '@/lib/project-cases-static'
 import { buildPageMetadata } from '@/lib/seo'
+import {
+  collectImageUrls,
+  getUploadVariantsByUrls,
+  mapUploadImageUrl,
+  type UploadVariantMap,
+} from '@/lib/upload-image-variants'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,6 +19,18 @@ type Props = {
 
 function staticPublishedProjectCase(id: string) {
   return staticPublishedProjectCases.find((item) => item.id === id) ?? null
+}
+
+function caseImageUrls(project: ProjectCaseRow) {
+  return collectImageUrls([project.cover_image_url, ...project.images])
+}
+
+function applyCaseImageVariants(project: ProjectCaseRow, variantsByUrl: UploadVariantMap, preferred: 'card' | 'detail') {
+  return {
+    ...project,
+    cover_image_url: mapUploadImageUrl(project.cover_image_url, variantsByUrl, preferred) || project.cover_image_url,
+    images: project.images.map((image) => mapUploadImageUrl(image, variantsByUrl, preferred) || image),
+  }
 }
 
 async function loadPublishedProjectCase(id: string): Promise<ProjectCaseRow | null> {
@@ -66,6 +84,15 @@ export default async function CaseDetailPage({ params }: Props) {
   if (!project) notFound()
 
   const relatedCases = await loadRelatedProjectCases(project.id)
+  const imageVariants = await getUploadVariantsByUrls([
+    ...caseImageUrls(project),
+    ...relatedCases.flatMap(caseImageUrls),
+  ]).catch((err) => {
+    console.error('[cases/detail] load case image variants failed', err)
+    return new Map()
+  })
+  const displayProject = applyCaseImageVariants(project, imageVariants, 'detail')
+  const displayRelatedCases = relatedCases.map((item) => applyCaseImageVariants(item, imageVariants, 'card'))
 
-  return <CaseDetailPageContent project={project} relatedCases={relatedCases} />
+  return <CaseDetailPageContent project={displayProject} relatedCases={displayRelatedCases} />
 }

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { listPublishedNews } from '@/lib/news-db'
 import NewsListView from '@/components/NewsListView'
 import { buildPageMetadata } from '@/lib/seo'
+import { getUploadVariantsByUrls, mapUploadImageUrl } from '@/lib/upload-image-variants'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,6 +18,14 @@ export default async function NewsPage() {
     rows: [],
     total: 0,
   }))
+  const imageVariants = await getUploadVariantsByUrls(rows.map((item) => item.cover_image_url)).catch((err) => {
+    console.error('[news] load news image variants failed', err)
+    return new Map()
+  })
+  const displayRows = rows.map((item) => ({
+    ...item,
+    cover_image_url: mapUploadImageUrl(item.cover_image_url, imageVariants, 'card') || item.cover_image_url,
+  }))
 
-  return <NewsListView rows={rows} />
+  return <NewsListView rows={displayRows} />
 }

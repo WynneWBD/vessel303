@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { getImageVariantUrl } from '@/lib/image-optimization'
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ type MediaItem = {
   url: string
   filename: string | null
   size: number | null
+  variants?: unknown
 }
 
 type CommonPickerProps = {
@@ -590,7 +592,7 @@ function MediaGrid({
               }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.url} alt={img.filename ?? ''} className="h-full w-full object-cover" />
+              <img src={getImageVariantUrl(img.url, img.variants, 'thumb')} alt={img.filename ?? ''} className="h-full w-full object-cover" />
               {active ? (
                 <span className="absolute left-1.5 top-1.5 rounded bg-[#E36F2C] px-1.5 py-0.5 text-[10px] font-semibold text-white">
                   {activeLabel}

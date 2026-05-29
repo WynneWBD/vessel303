@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import ProtectedImage from '@/components/ProtectedImage'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { format, parseISO } from 'date-fns'
 
@@ -49,11 +50,13 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
       <section className="relative pt-28 bg-[#241F1B]">
         {news.cover_image_url ? (
           <div className="relative h-[420px] overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <ProtectedImage
               src={news.cover_image_url}
               alt={title}
-              className="h-full w-full object-cover"
+              fill
+              priority
+              className="object-cover"
+              sizes="100vw"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#241F1B] via-[#241F1B]/45 to-transparent" />
             {/* Title overlay */}

@@ -4,6 +4,8 @@ import { listB9ContentCategories, listPublicB9ContentItems } from '@/lib/b9-cont
 
 export const dynamic = 'force-dynamic'
 
+const FAQ_CMS_TIMEOUT_MS = 250
+
 function fallbackFaq() {
   return {
     categories: FAQ_CATEGORIES,
@@ -11,11 +13,23 @@ function fallbackFaq() {
   }
 }
 
+function timeoutReject<T>(ms: number, label: string): Promise<T> {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
+  })
+}
+
 async function loadFaqContent(): Promise<{ categories: FaqCategoryView[]; items: FaqItemView[] }> {
   try {
-    const [categories, rows] = await Promise.all([
-      listB9ContentCategories('faq'),
-      listPublicB9ContentItems('faq'),
+    const [categories, rows] = await Promise.race([
+      Promise.all([
+        listB9ContentCategories('faq'),
+        listPublicB9ContentItems('faq'),
+      ]),
+      timeoutReject<[Awaited<ReturnType<typeof listB9ContentCategories>>, Awaited<ReturnType<typeof listPublicB9ContentItems>>]>(
+        FAQ_CMS_TIMEOUT_MS,
+        'FAQ CMS load',
+      ),
     ])
 
     if (rows.length === 0) return fallbackFaq()

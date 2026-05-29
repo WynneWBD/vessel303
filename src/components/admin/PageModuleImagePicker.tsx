@@ -12,12 +12,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { getImageVariantUrl } from '@/lib/image-optimization'
 
 type MediaItem = {
   id: string
   url: string
   filename: string | null
   size: number | null
+  variants?: unknown
 }
 
 type Props = {
@@ -257,7 +259,11 @@ export default function PageModuleImagePicker({ value, maxUploadMb, onChange }: 
                       }`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={img.url} alt={img.filename ?? ''} className="h-full w-full object-cover" />
+                      <img
+                        src={getImageVariantUrl(img.url, img.variants, 'thumb')}
+                        alt={img.filename ?? ''}
+                        className="h-full w-full object-cover"
+                      />
                       {active ? (
                         <span className="absolute left-1.5 top-1.5 rounded bg-[#E36F2C] px-1.5 py-0.5 text-[10px] font-semibold text-white">
                           当前

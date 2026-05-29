@@ -9,6 +9,7 @@ import {
 } from '@/lib/product-catalog-db';
 import ProductsPageContent from '@/components/pages/ProductsPageContent';
 import type { CatalogProduct } from '@/lib/products';
+import { getUploadVariantsByUrls, mapUploadImageUrl } from '@/lib/upload-image-variants';
 
 export const dynamic = 'force-dynamic';
 
@@ -134,11 +135,20 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     allProductsCount = catalogProducts.length;
   }
 
+  const imageVariants = await getUploadVariantsByUrls(pageProducts.map((product) => product.image)).catch((err) => {
+    console.error('[products] load product image variants failed', err);
+    return new Map();
+  });
+  const displayProducts = pageProducts.map((product) => ({
+    ...product,
+    image: mapUploadImageUrl(product.image, imageVariants, 'card') || product.image,
+  }));
+
   return (
     <main className="bg-[#F5F2ED] text-[#2C2A28]">
       <Navbar />
       <ProductsPageContent
-        products={pageProducts}
+        products={displayProducts}
         allProductsCount={allProductsCount}
         total={total}
         pageSize={PAGE_SIZE}

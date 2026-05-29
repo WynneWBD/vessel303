@@ -23,6 +23,8 @@ interface NavLink {
   dropdown?: DropdownItem[];
 }
 
+const NATIVE_NAVIGATION_HREFS = new Set(['/faq', '/contact']);
+
 function ProductsDropdown({ items }: { items: DropdownItem[] }) {
   const gen6Items = items.slice(0, 4);
   const gen5Items = items.slice(4, 6);
@@ -129,7 +131,7 @@ export default function Navbar() {
     const idle = window.requestIdleCallback ?? ((callback) => window.setTimeout(callback, 800));
     const cancelIdle = window.cancelIdleCallback ?? window.clearTimeout;
     const handle = idle(() => {
-      ['/', '/products', '/cases', '/about', '/faq', '/news', '/contact'].forEach((href) => {
+      ['/', '/products', '/cases', '/about', '/news'].forEach((href) => {
         router.prefetch(href);
       });
     });
@@ -192,6 +194,14 @@ export default function Navbar() {
                     </svg>
                     <span className="absolute bottom-0 left-2.5 w-0 h-px bg-[#E36F2C] transition-all duration-200 group-hover:w-[calc(100%-20px)]" />
                   </button>
+                ) : NATIVE_NAVIGATION_HREFS.has(link.href) ? (
+                  <a
+                    href={link.href}
+                    className="text-white/65 hover:text-[#E36F2C] text-sm font-medium tracking-wide px-2.5 py-2 transition-colors duration-200 whitespace-nowrap relative group block"
+                  >
+                    {link.label}
+                    <span className="absolute bottom-0 left-2.5 w-0 h-px bg-[#E36F2C] transition-all duration-200 group-hover:w-[calc(100%-20px)]" />
+                  </a>
                 ) : (
                   <Link
                     href={link.href}
@@ -290,6 +300,14 @@ export default function Navbar() {
                       </div>
                     )}
                   </>
+                ) : NATIVE_NAVIGATION_HREFS.has(link.href) ? (
+                  <a
+                    href={link.href}
+                    className="block text-white/70 hover:text-[#E36F2C] text-sm py-3 px-2 border-b border-white/5 transition-colors tracking-wider"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.label}
+                  </a>
                 ) : (
                   <Link
                     href={link.href}

@@ -7,6 +7,12 @@ import Link from '@tiptap/extension-link'
 import type { JSONContent } from '@tiptap/core'
 import NewsDetailView from '@/components/NewsDetailView'
 import { buildPageMetadata } from '@/lib/seo'
+import {
+  extractImageSrcsFromHtml,
+  getUploadVariantsByUrls,
+  mapUploadImageUrl,
+  replaceImageSrcsInHtml,
+} from '@/lib/upload-image-variants'
 
 export const dynamic = 'force-dynamic'
 
@@ -77,6 +83,20 @@ export default async function NewsSlugPage({
 
   const htmlZh = toHTML(news.content_zh)
   const htmlEn = toHTML(news.content_en)
+  const imageVariants = await getUploadVariantsByUrls([
+    news.cover_image_url,
+    ...extractImageSrcsFromHtml(htmlZh),
+    ...extractImageSrcsFromHtml(htmlEn),
+  ]).catch((err) => {
+    console.error('[news/detail] load news image variants failed', err)
+    return new Map()
+  })
+  const displayNews = {
+    ...news,
+    cover_image_url: mapUploadImageUrl(news.cover_image_url, imageVariants, 'detail') || news.cover_image_url,
+  }
+  const displayHtmlZh = replaceImageSrcsInHtml(htmlZh, imageVariants, 'detail')
+  const displayHtmlEn = replaceImageSrcsInHtml(htmlEn, imageVariants, 'detail')
 
-  return <NewsDetailView news={news} htmlZh={htmlZh} htmlEn={htmlEn} />
+  return <NewsDetailView news={displayNews} htmlZh={displayHtmlZh} htmlEn={displayHtmlEn} />
 }

@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import PageHero from '@/components/PageHero'
+import ProtectedImage from '@/components/ProtectedImage'
 import { useT, useLanguage } from '@/contexts/LanguageContext'
 import { i18n } from '@/lib/i18n'
 import { SITE_CONTACT_HREF } from '@/lib/site-links'
@@ -191,9 +192,14 @@ export default function CasesPageContent({ cases }: { cases: ProjectCaseRow[] })
               >
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
                   {item.cover_image_url ? (
-                    <div className="h-52 md:h-auto bg-[#E5DED4] overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={item.cover_image_url} alt={name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <div className="relative h-52 overflow-hidden bg-[#E5DED4] md:h-auto">
+                      <ProtectedImage
+                        src={item.cover_image_url}
+                        alt={name}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                      />
                     </div>
                   ) : (
                     <Placeholder label={`${name} · 现场图片`} className="h-52 md:h-auto" />

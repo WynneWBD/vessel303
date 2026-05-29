@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/sheet'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import AdminPagination from '@/components/admin/AdminPagination'
+import { getImageVariantUrl, normalizeImageVariants } from '@/lib/image-optimization'
 import type {
   MediaReferenceDetails,
   MediaReferenceItems,
@@ -46,6 +47,7 @@ const BATCH_LIMIT = 20
 const BYTES_PER_MB = 1024 * 1024
 const RECOMMENDED_FRONTEND_IMAGE_BYTES = 2 * BYTES_PER_MB
 const RECOMMENDED_FRONTEND_IMAGE_MB = RECOMMENDED_FRONTEND_IMAGE_BYTES / BYTES_PER_MB
+const FRONTEND_RISK_IMAGE_BYTES = 1.5 * BYTES_PER_MB
 const ADMIN_TIMEZONE_OFFSET_MINUTES = 8 * 60
 const ACCEPT = 'image/jpeg,image/png,image/webp,image/gif,image/svg+xml'
 const ACCEPT_MIMES = new Set([
@@ -678,6 +680,8 @@ export default function MediaClient({
 function MediaCard({ upload, onClick }: { upload: Upload; onClick: () => void }) {
   const [loaded, setLoaded] = useState(false)
   const [copyOk, setCopyOk] = useState(false)
+  const thumbUrl = getImageVariantUrl(upload.url, upload.variants, 'thumb')
+  const isLargeOriginal = (upload.size ?? 0) > FRONTEND_RISK_IMAGE_BYTES
 
   const copyUrl = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -698,7 +702,7 @@ function MediaCard({ upload, onClick }: { upload: Upload; onClick: () => void })
       )}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={upload.url}
+        src={thumbUrl || upload.url}
         alt={upload.filename ?? ''}
         loading="lazy"
         decoding="async"
@@ -722,6 +726,11 @@ function MediaCard({ upload, onClick }: { upload: Upload; onClick: () => void })
           {upload.size ? formatBytes(upload.size) : ''}
         </span>
       </div>
+      {isLargeOriginal ? (
+        <div className="pointer-events-none absolute left-1.5 top-1.5 z-30 rounded-sm bg-[#E36F2C] px-1.5 py-0.5 text-[10px] font-semibold text-white">
+          LARGE
+        </div>
+      ) : null}
       <div className="absolute right-1.5 top-1.5 z-30 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
         <button
           type="button"
@@ -814,6 +823,10 @@ function MediaDetailSheet({
     refs: MediaReferenceDetails
   }>(() => ({ uploadId: null, refs: emptyMediaReferences() }))
   const refs = refsState.uploadId === uploadId ? refsState.refs : EMPTY_MEDIA_REFERENCES
+  const detailPreviewUrl = upload ? getImageVariantUrl(upload.url, upload.variants, 'detail') : ''
+  const variants = normalizeImageVariants(upload?.variants)
+  const variantCount = (['thumb', 'card', 'detail'] as const).filter((role) => variants[role]?.url).length
+  const isLargeOriginal = (upload?.size ?? 0) > FRONTEND_RISK_IMAGE_BYTES
 
   useEffect(() => {
     if (!uploadId) return
@@ -862,7 +875,7 @@ function MediaDetailSheet({
               <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] overflow-hidden flex items-center justify-center max-h-[400px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={upload.url}
+                  src={detailPreviewUrl || upload.url}
                   alt={upload.filename ?? ''}
                   className="max-h-[400px] max-w-full object-contain"
                 />
@@ -877,6 +890,12 @@ function MediaDetailSheet({
                   value={upload.size ? formatBytes(upload.size) : null}
                 />
                 <Field label="MIME" value={mimeLabel(upload.mime)} />
+                <Field label="Variants" value={`${variantCount}/3 generated`} />
+                <Field
+                  label="Frontend risk"
+                  value={isLargeOriginal ? 'Original > 1.5 MB. Use card/detail variants.' : 'OK'}
+                  fullWidth
+                />
                 <Field label="上传时间" value={formatDate(upload.created_at)} />
                 <Field label="上传者" value={upload.uploaded_by_email} />
               </div>

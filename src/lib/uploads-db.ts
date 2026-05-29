@@ -1,4 +1,6 @@
 import { pool } from '@/lib/db'
+import { ensureUploadVariantsColumn } from '@/lib/upload-image-variants'
+import type { ImageVariants } from '@/lib/image-optimization'
 
 export type Upload = {
   id: string
@@ -7,6 +9,7 @@ export type Upload = {
   filename: string | null
   size: number | null
   mime: string | null
+  variants: ImageVariants
   uploaded_by: string | null
   uploaded_by_email: string | null
   created_at: string
@@ -91,6 +94,7 @@ const MEDIA_REFERENCE_DETAIL_LIMIT = 10
 
 const UPLOAD_COLUMNS = `
   u.id, u.url, u.blob_path, u.filename, u.size, u.mime,
+  COALESCE(u.variants, '{}'::jsonb) AS variants,
   u.uploaded_by, usr.email AS uploaded_by_email, u.created_at
 `
 
@@ -125,6 +129,8 @@ function buildWhere(filter: UploadFilter) {
 }
 
 export async function listUploads(filter: UploadFilter) {
+  await ensureUploadVariantsColumn()
+
   const page = Math.max(1, filter.page ?? 1)
   const limit = Math.min(200, Math.max(1, filter.limit ?? 50))
   const offset = (page - 1) * limit
@@ -151,6 +157,8 @@ export async function listUploads(filter: UploadFilter) {
 }
 
 export async function getUpload(id: string) {
+  await ensureUploadVariantsColumn()
+
   const res = await pool.query<Upload>(
     `SELECT ${UPLOAD_COLUMNS}
        FROM uploads u
@@ -167,21 +175,32 @@ export type CreateUploadInput = {
   filename: string
   size: number
   mime: string
+  variants?: ImageVariants
   uploaded_by: string
 }
 
 export async function createUpload(input: CreateUploadInput): Promise<Upload> {
+  await ensureUploadVariantsColumn()
+
   const res = await pool.query<Upload>(
     `WITH inserted AS (
-       INSERT INTO uploads (url, blob_path, filename, size, mime, uploaded_by)
-       VALUES ($1, $2, $3, $4, $5, $6)
+       INSERT INTO uploads (url, blob_path, filename, size, mime, variants, uploaded_by)
+       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
        RETURNING id
      )
      SELECT ${UPLOAD_COLUMNS}
        FROM uploads u
        LEFT JOIN users usr ON usr.id = u.uploaded_by
       WHERE u.id = (SELECT id FROM inserted)`,
-    [input.url, input.blob_path, input.filename, input.size, input.mime, input.uploaded_by],
+    [
+      input.url,
+      input.blob_path,
+      input.filename,
+      input.size,
+      input.mime,
+      JSON.stringify(input.variants ?? {}),
+      input.uploaded_by,
+    ],
   )
   return res.rows[0]
 }

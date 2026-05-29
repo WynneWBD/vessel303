@@ -10,12 +10,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { getImageVariantUrl } from '@/lib/image-optimization'
 
 interface MediaItem {
   id: string
   url: string
   filename: string | null
   size: number | null
+  variants?: unknown
 }
 
 interface Props {
@@ -216,7 +218,7 @@ export default function ProductGalleryPicker({
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={img.url}
+                        src={getImageVariantUrl(img.url, img.variants, 'thumb')}
                         alt={img.filename ?? ''}
                         className="w-full h-full object-cover"
                       />

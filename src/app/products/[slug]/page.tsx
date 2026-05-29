@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { getProductBySlug } from '@/lib/db-products';
-import { catalogProducts } from '@/lib/products';
+import { catalogProducts, type CatalogProduct } from '@/lib/products';
 import {
   getPublicCatalogProductBySlug,
   isReservedProductId,
@@ -15,11 +15,41 @@ import {
 import { auth } from '@/auth';
 import ProductDetailContent from '@/components/pages/ProductDetailContent';
 import CatalogProductDetailContent from '@/components/pages/CatalogProductDetailContent';
+import {
+  collectImageUrls,
+  getUploadVariantsByUrls,
+  mapUploadImageUrl,
+  type UploadVariantMap,
+} from '@/lib/upload-image-variants';
 
 function findStaticCatalogProduct(slug: string) {
   return catalogProducts.find((p) => (
     p.id === slug || (!isReservedProductId(slug) && p.detailSlug === slug)
   )) ?? null;
+}
+
+function catalogProductImageUrls(product: CatalogProduct) {
+  return collectImageUrls([
+    product.image,
+    ...(product.gallery ?? []),
+    ...((product.detail_modules ?? []).flatMap((module) => [
+      module.image_url,
+      ...(module.images ?? []),
+    ])),
+  ]);
+}
+
+function applyCatalogProductImageVariants(product: CatalogProduct, variantsByUrl: UploadVariantMap) {
+  return {
+    ...product,
+    image: mapUploadImageUrl(product.image, variantsByUrl, 'detail') || product.image,
+    gallery: product.gallery?.map((image) => mapUploadImageUrl(image, variantsByUrl, 'detail') || image),
+    detail_modules: product.detail_modules?.map((module) => ({
+      ...module,
+      image_url: mapUploadImageUrl(module.image_url, variantsByUrl, 'detail') || module.image_url,
+      images: module.images?.map((image) => mapUploadImageUrl(image, variantsByUrl, 'detail') || image),
+    })),
+  };
 }
 
 // All catalog product ids + legacy DB slugs
@@ -92,12 +122,25 @@ export default async function ProductDetailPage({
         return [];
       }),
     ]);
+    const imageVariants = await getUploadVariantsByUrls([
+      ...catalogProductImageUrls(catalogProduct),
+      ...relatedProducts.map((product) => product.image),
+    ]).catch((err) => {
+      console.error('[products/detail] load product image variants failed', err);
+      return new Map();
+    });
+    const displayProduct = applyCatalogProductImageVariants(catalogProduct, imageVariants);
+    const displayRelatedProducts = relatedProducts.map((product) => ({
+      ...product,
+      image: mapUploadImageUrl(product.image, imageVariants, 'card') || product.image,
+    }));
+
     return (
       <>
         <Navbar />
         <CatalogProductDetailContent
-          product={catalogProduct}
-          relatedProducts={relatedProducts}
+          product={displayProduct}
+          relatedProducts={displayRelatedProducts}
           attributeLabels={attributeLabels}
         />
         <Footer />
