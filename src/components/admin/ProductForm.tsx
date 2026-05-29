@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { Save, Send, ArrowLeft, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Save, Send, ArrowLeft, Plus, Trash2, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import MediaImagePicker, { MediaGalleryPicker } from '@/components/admin/MediaImagePicker'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { getCatalogProductRouteInfo } from '@/lib/product-public-routes'
 import type {
   CatalogProductRow,
   CatalogProductStatus,
@@ -224,6 +225,15 @@ function getProductCompleteness(form: FormState, galleryUrls: string[]): {
 } {
   const issues: string[] = []
   const visibleDetailModules = form.detail_modules.filter((module) => module.is_visible !== false)
+  const missingBaseForCuratedDetail = hasText(form.detailSlug) && (
+    !hasText(form.image)
+    || !hasText(form.description_cn)
+    || !hasText(form.description_en)
+    || splitLines(form.tags_cn).length === 0
+    || splitLines(form.tags_en).length === 0
+    || splitLines(form.features_cn).length === 0
+    || splitLines(form.features_en).length === 0
+  )
 
   if (!hasText(form.image)) issues.push('缺封面')
   if (galleryUrls.length === 0) issues.push('缺详情图库')
@@ -250,6 +260,7 @@ function getProductCompleteness(form: FormState, galleryUrls: string[]): {
     issues.push('缺 SEO')
   }
   if (visibleDetailModules.length === 0) issues.push('缺详情模块')
+  if (missingBaseForCuratedDetail) issues.push('精品页绑定缺 CMS 基础字段')
 
   if (issues.length === 0) {
     return { level: '完整', issues }
@@ -617,10 +628,13 @@ export default function ProductForm({
   const [deletingDetailModule, setDeletingDetailModule] = useState<CatalogDetailModule | null>(null)
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false)
 
-  const previewHref = useMemo(() => {
-    if (!form.id) return '/products'
-    return form.detailSlug ? `/products/${form.detailSlug}` : `/products/${form.id}`
-  }, [form.detailSlug, form.id])
+  const routeInfo = useMemo(() => getCatalogProductRouteInfo({
+    id: form.id,
+    detailSlug: form.detailSlug,
+  }), [form.detailSlug, form.id])
+  const previewHref = routeInfo.publicHref
+  const cmsPreviewHref = routeInfo.cmsHref
+  const curatedPreviewHref = routeInfo.curatedHref
   const galleryUrls = useMemo(() => splitLines(form.gallery), [form.gallery])
   const normalizedDetailModules = useMemo(() => normalizeDetailModules(form.detail_modules), [form.detail_modules])
   const completeness = getProductCompleteness(form, galleryUrls)
@@ -924,7 +938,7 @@ export default function ProductForm({
               rel="noopener noreferrer"
               className="inline-flex h-9 items-center justify-center rounded-md border border-[#E5DED4] px-3 text-sm font-medium text-[#2C2A28] hover:bg-[#FFFFFF]"
             >
-              预览
+              官方预览
             </Link>
           )}
           <Button variant="outline" size="sm" disabled={saving} onClick={() => handleSave()}>
@@ -1046,7 +1060,7 @@ export default function ProductForm({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="详情页 Slug" hint="普通新产品建议留空，系统会用产品 ID 生成通用详情页；只有要复用已有精细页时才填 e7、v9-gen6 等固定 slug。">
+            <Field label="详情页 Slug" hint="普通新产品建议留空，系统会用产品 ID 生成 CMS 通用详情页；只有要复用已有固定精细页时才填 e7、v9-gen6 等 slug。">
               <Input value={form.detailSlug} onChange={(e) => patch('detailSlug', normalizeId(e.target.value))} />
             </Field>
             <label className="flex items-center gap-3 rounded-md border border-[#E5DED4] bg-[#FAF7F2] px-3 py-3 self-end">
@@ -1058,6 +1072,75 @@ export default function ProductForm({
               />
               <span className="text-sm text-[#C4B9AB]">定制案例</span>
             </label>
+          </div>
+
+          <div className="rounded-lg border border-[#D8E7E8] bg-[#F7FAFA] p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-[#1E2C31]">前台页面状态</h3>
+                <p className="mt-1 text-xs leading-relaxed text-[#61767D]">
+                  对照 300 产品后台的产品入口心智：产品卡片和相关产品默认打开官方前台页；CMS 通用详情页始终保留为内容兜底和运营核对入口。
+                </p>
+              </div>
+              <Badge className="w-fit border-[#D8E7E8] bg-white text-[#1889B6] text-xs">
+                {routeInfo.publicLabel}
+              </Badge>
+            </div>
+            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div className="rounded-md border border-[#D8E7E8] bg-white p-3">
+                <p className="text-[11px] font-bold uppercase text-[#8A9EA4]">官方前台入口</p>
+                <p className="mt-1 truncate text-sm font-semibold text-[#1E2C31]">{routeInfo.publicHref}</p>
+                <p className="mt-1 text-xs leading-relaxed text-[#61767D]">
+                  产品列表、Related Products 和后台主预览都使用这个入口。
+                </p>
+                {showPreviewLink ? (
+                  <Link
+                    href={routeInfo.publicHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]"
+                  >
+                    打开官方页 <ExternalLink size={13} />
+                  </Link>
+                ) : null}
+              </div>
+              <div className="rounded-md border border-[#D8E7E8] bg-white p-3">
+                <p className="text-[11px] font-bold uppercase text-[#8A9EA4]">CMS 通用详情</p>
+                <p className="mt-1 truncate text-sm font-semibold text-[#1E2C31]">{cmsPreviewHref}</p>
+                <p className="mt-1 text-xs leading-relaxed text-[#61767D]">
+                  使用当前表单的图库、商务条款、关键词、详情模块和相关产品。
+                </p>
+                {showPreviewLink ? (
+                  <Link
+                    href={cmsPreviewHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]"
+                  >
+                    打开 CMS 页 <ExternalLink size={13} />
+                  </Link>
+                ) : null}
+              </div>
+              <div className="rounded-md border border-[#D8E7E8] bg-white p-3">
+                <p className="text-[11px] font-bold uppercase text-[#8A9EA4]">固定精细页绑定</p>
+                <p className="mt-1 truncate text-sm font-semibold text-[#1E2C31]">
+                  {curatedPreviewHref ?? '未绑定'}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-[#61767D]">
+                  绑定后官方入口会优先打开固定精细页，但 CMS 基础字段仍会影响列表、SEO 和兜底详情。
+                </p>
+                {showPreviewLink && curatedPreviewHref ? (
+                  <Link
+                    href={curatedPreviewHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]"
+                  >
+                    打开精细页 <ExternalLink size={13} />
+                  </Link>
+                ) : null}
+              </div>
+            </div>
           </div>
         </FormSection>
 
@@ -1821,14 +1904,37 @@ export default function ProductForm({
               </div>
 
               {showPreviewLink ? (
-                <Link
-                  href={previewHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-9 items-center justify-center rounded-md border border-[#E5DED4] px-3 text-sm font-medium text-[#2C2A28] hover:bg-[#FFFFFF]"
-                >
-                  打开前台预览
-                </Link>
+                <div className="space-y-2 rounded-lg border border-[#E5DED4] bg-white p-3 text-xs">
+                  <Link
+                    href={previewHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-3 rounded-md border border-[#D8E7E8] px-3 py-2 font-semibold text-[#1E2C31] hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
+                  >
+                    <span>官方前台页 · {routeInfo.publicLabel}</span>
+                    <ExternalLink size={13} />
+                  </Link>
+                  <Link
+                    href={cmsPreviewHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-3 rounded-md border border-[#D8E7E8] px-3 py-2 text-[#61767D] hover:border-[#1889B6]/60 hover:text-[#1889B6]"
+                  >
+                    <span>CMS 通用详情页</span>
+                    <ExternalLink size={13} />
+                  </Link>
+                  {curatedPreviewHref ? (
+                    <Link
+                      href={curatedPreviewHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between gap-3 rounded-md border border-[#D8E7E8] px-3 py-2 text-[#61767D] hover:border-[#1889B6]/60 hover:text-[#1889B6]"
+                    >
+                      <span>固定精细页</span>
+                      <ExternalLink size={13} />
+                    </Link>
+                  ) : null}
+                </div>
               ) : (
                 <div className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4 text-xs leading-relaxed text-[#8A8580]">
                   草稿产品暂不提供前台预览入口。
@@ -1844,7 +1950,7 @@ export default function ProductForm({
                 </Badge>
               </div>
               <p className="mt-2 text-xs leading-relaxed text-[#6B6560]">
-                只做运营提示，不阻止保存或发布。发布前请人工确认图片、中英文内容、分类、属性、SEO 和详情模块。
+                只做运营提示，不阻止保存或发布。发布前请人工确认图片、中英文内容、分类、属性、SEO、详情模块和前台页面绑定关系。
               </p>
               {visibleCompletenessIssues.length > 0 ? (
                 <div className="mt-3 flex flex-wrap gap-1.5">
@@ -1897,7 +2003,7 @@ export default function ProductForm({
             ? '这个产品当前已经发布。确认后会保存当前表单内容，并继续作为已发布产品展示在前台。'
             : '确认后会保存当前表单内容，并把产品状态改为已发布，前台产品页会对外展示。'}
           <br />
-          发布前检查只做提醒，不会自动阻止发布，请确认缺项、分类、属性、SEO 和图片素材没有问题。
+          发布前检查只做提醒，不会自动阻止发布，请确认缺项、分类、属性、SEO、图片素材和前台页面绑定关系没有问题。
         </>
       )}
       confirmLabel={isCurrentlyPublished ? '确认更新前台' : '确认发布'}

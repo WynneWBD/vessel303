@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
 import type { ProductAttributeTemplateWithOptions, ProductCategoryRow } from '@/lib/product-catalog-db';
 import type { CatalogProduct } from '@/lib/products';
 
@@ -39,7 +40,7 @@ function buildHref(filters: DirectoryFilters, patch: Partial<DirectoryFilters>) 
 }
 
 function productHref(product: CatalogProduct) {
-  return `/products/${product.detailSlug || product.id}`;
+  return getCatalogProductPublicHref(product);
 }
 
 function productPrice(product: CatalogProduct, lang: 'en' | 'zh') {

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
 import type { ProductAttributeLabel } from '@/lib/product-catalog-db';
 import type { CatalogProduct, CatalogCommercialTerms } from '@/lib/products';
 
@@ -41,7 +42,7 @@ function hasText(value: string | undefined | null) {
 }
 
 function productHref(product: CatalogProduct) {
-  return `/products/${product.detailSlug || product.id}`;
+  return getCatalogProductPublicHref(product);
 }
 
 function SectionTitle({ label, title }: { label: string; title: string }) {

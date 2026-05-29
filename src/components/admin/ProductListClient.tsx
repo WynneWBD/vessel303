@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import type { CatalogProductRow, CatalogProductStatus } from '@/lib/product-catalog-db'
-import type { ProductSeriesCode } from '@/lib/products'
+import { getCatalogProductPublicHref, getCatalogProductRouteInfo } from '@/lib/product-public-routes'
+import type { CatalogCommercialTerms, ProductSeriesCode } from '@/lib/products'
 
 type Filters = { status: string; series: string; search: string }
 type PendingAction =
@@ -33,7 +34,7 @@ function formatDate(ts: string) {
 }
 
 function productHref(item: CatalogProductRow) {
-  return `/products/${item.detailSlug || item.id}`
+  return getCatalogProductPublicHref(item)
 }
 
 function cloneId(id: string) {
@@ -44,11 +45,24 @@ function hasText(value: string | null | undefined) {
   return Boolean(value?.trim())
 }
 
+function hasCommercialTerms(terms: CatalogCommercialTerms | null | undefined) {
+  return Object.values(terms ?? {}).some((value) => hasText(String(value ?? '')))
+}
+
 function getProductCompleteness(item: CatalogProductRow): {
   level: CompletenessLevel
   issues: string[]
 } {
   const issues: string[] = []
+  const missingBaseForCuratedDetail = Boolean(item.detailSlug) && (
+    !hasText(item.image)
+    || !hasText(item.description_cn)
+    || !hasText(item.description_en)
+    || item.tags_cn.length === 0
+    || item.tags_en.length === 0
+    || item.features_cn.length === 0
+    || item.features_en.length === 0
+  )
 
   if (!hasText(item.image)) issues.push('缺封面')
   if ((item.gallery ?? []).length === 0) issues.push('缺详情图库')
@@ -56,7 +70,14 @@ function getProductCompleteness(item: CatalogProductRow): {
   if (!hasText(item.description_en)) issues.push('缺英文简介')
   if (item.tags_cn.length === 0 || item.tags_en.length === 0) issues.push('缺标签')
   if (item.features_cn.length === 0 || item.features_en.length === 0) issues.push('缺亮点')
+  if (!item.category_id) issues.push('未分类')
+  if ((item.attribute_option_ids ?? []).length === 0) issues.push('缺产品属性')
+  if (!hasText(item.price_display_zh) && !hasText(item.price_display_en)) issues.push('缺价格展示')
+  if (!hasCommercialTerms(item.commercial_terms)) issues.push('缺商务条款')
+  if ((item.keywords_zh ?? []).length === 0 && (item.keywords_en ?? []).length === 0) issues.push('缺关键词')
+  if ((item.related_product_ids ?? []).length === 0) issues.push('缺相关产品')
   if ((item.detail_modules ?? []).length === 0) issues.push('缺详情模块')
+  if (missingBaseForCuratedDetail) issues.push('精品页绑定缺 CMS 基础字段')
 
   if (issues.length === 0) {
     return { level: '完整', issues }
@@ -370,6 +391,7 @@ export default function ProductListClient({
             const completeness = getProductCompleteness(item)
             const visibleIssues = completeness.issues.slice(0, 3)
             const hiddenIssueCount = Math.max(0, completeness.issues.length - visibleIssues.length)
+            const routeInfo = getCatalogProductRouteInfo(item)
 
             return (
             <div
@@ -389,6 +411,19 @@ export default function ProductListClient({
               <div className="min-w-0">
                 <p className="text-sm text-[#2C2A28] truncate font-medium">{item.name_cn}</p>
                 <p className="text-xs text-[#6B6560] truncate mt-0.5">{item.id} · {item.name_en}</p>
+                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-[#8A8580]">
+                  <span className="rounded-full border border-[#D8E7E8] bg-white px-2 py-0.5 text-[#61767D]">
+                    官方前台：{routeInfo.publicLabel}
+                  </span>
+                  <span className="max-w-[220px] truncate rounded-full border border-[#E5DED4] bg-[#FAF7F2] px-2 py-0.5">
+                    {routeInfo.publicHref}
+                  </span>
+                  {routeInfo.usesCuratedDetail ? (
+                    <span className="max-w-[220px] truncate rounded-full border border-[#E5DED4] bg-[#FAF7F2] px-2 py-0.5">
+                      CMS：{routeInfo.cmsHref}
+                    </span>
+                  ) : null}
+                </div>
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   <Badge className={`${completenessBadgeClass(completeness.level)} text-[11px]`}>
                     {completeness.level}
@@ -432,7 +467,7 @@ export default function ProductListClient({
                     href={productHref(item)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    title="查看前台产品"
+                    title={`查看官方前台产品：${routeInfo.publicHref}`}
                     className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-[#E36F2C] hover:bg-[#E36F2C]/10 transition-colors"
                   >
                     <ExternalLink size={14} />
