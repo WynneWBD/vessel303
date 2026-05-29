@@ -339,15 +339,19 @@ export default function B9ContentManager({
         </div>
       </section>
 
-      <aside className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm xl:sticky xl:top-24 xl:self-start">
+      <aside className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:self-start xl:overflow-y-auto">
         {mode === 'content' ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-lg font-bold text-[#1E2C31]">{editing.id ? '编辑内容' : '新增内容'}</h2>
-              <Button type="button" variant="outline" size="sm" onClick={() => setEditing(emptyItem(kind))}>
+              <Button type="button" variant="outline" size="sm" onClick={() => setEditing(emptyItem(kind))} data-testid="b9-new-content">
                 <Plus size={15} /> 新建
               </Button>
             </div>
+
+            <Button type="button" className="w-full" disabled={saving} onClick={saveItem} data-testid="b9-save-content-top">
+              <Save size={16} /> {saving ? '保存中...' : '保存内容'}
+            </Button>
 
             {fixedSlugs.length > 0 && (
               <div>
@@ -425,7 +429,7 @@ export default function B9ContentManager({
               </Field>
             </div>
 
-            <Button type="button" className="w-full" disabled={saving} onClick={saveItem}>
+            <Button type="button" className="w-full" disabled={saving} onClick={saveItem} data-testid="b9-save-content-bottom">
               <Save size={16} /> {saving ? '保存中...' : '保存内容'}
             </Button>
           </div>
@@ -446,7 +450,7 @@ export default function B9ContentManager({
               </Field>
               <Field label="排序"><Input type="number" value={categoryDraft.sort_order} onChange={(e) => setCategoryDraft((c) => ({ ...c, sort_order: Number(e.target.value) }))} /></Field>
             </div>
-            <Button type="button" className="w-full" disabled={saving} onClick={saveCategory}>
+            <Button type="button" className="w-full" disabled={saving} onClick={saveCategory} data-testid="b9-save-category">
               <Save size={16} /> 保存分类
             </Button>
             <div className="divide-y divide-[#E6EEEE] rounded-md border border-[#E6EEEE]">
