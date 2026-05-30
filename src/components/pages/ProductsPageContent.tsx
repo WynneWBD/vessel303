@@ -162,6 +162,24 @@ function Sidebar({
           </div>
         </div>
       ))}
+
+      <div className="border border-[#DADDE1] bg-[#1F2A31] p-5 text-white">
+        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#F2A36F]">Contact Us</p>
+        <h2 className="mt-3 text-lg font-black leading-snug">
+          {lang === 'zh' ? '找不到合适型号？' : 'Need a matching model?'}
+        </h2>
+        <p className="mt-3 text-sm leading-6 text-white/65">
+          {lang === 'zh'
+            ? '提交项目国家、场景、数量和交付要求，后台会按产品目录来源进入线索。'
+            : 'Send country, scenario, quantity, and delivery notes. The lead keeps product catalog source context.'}
+        </p>
+        <Link
+          href={buildContactHref('products:sidebar_contact_card')}
+          className="mt-5 inline-flex min-h-10 w-full items-center justify-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#C85A1F]"
+        >
+          {lang === 'zh' ? '提交需求' : 'Send Requirement'}
+        </Link>
+      </div>
     </aside>
   );
 }
@@ -173,8 +191,8 @@ function ProductCard({ product }: { product: CatalogProduct }) {
   const tags = lang === 'en' ? product.tags_en : product.tags_cn;
 
   return (
-    <article className="group flex min-h-full flex-col border border-[#DADDE1] bg-white transition hover:border-[#147C94]/60 hover:shadow-[0_14px_40px_rgba(24,44,54,0.12)]">
-      <Link href={productHref(product)} className="relative block aspect-[4/3] overflow-hidden bg-[#EEF1F3]">
+    <article className="group flex min-h-full flex-col border border-[#DADDE1] bg-white transition hover:-translate-y-0.5 hover:border-[#147C94]/60 hover:shadow-[0_18px_46px_rgba(24,44,54,0.13)]">
+      <Link href={productHref(product)} className="relative block aspect-square overflow-hidden bg-[#EEF1F3]">
         <ProtectedImage
           src={product.image}
           alt={name}
@@ -183,7 +201,7 @@ function ProductCard({ product }: { product: CatalogProduct }) {
           className="object-cover transition duration-500 group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 280px"
         />
-        <div className="absolute left-3 top-3 bg-[#1F2A31]/88 px-2.5 py-1 text-[11px] font-bold text-white">
+        <div className="absolute left-3 top-3 bg-[#1F2A31]/88 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-white">
           {product.gen}
         </div>
         {badge ? (
@@ -193,12 +211,14 @@ function ProductCard({ product }: { product: CatalogProduct }) {
         ) : null}
       </Link>
       <div className="flex flex-1 flex-col p-4">
+        <div className="mb-2 flex items-center justify-between gap-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8A9299]">
+          <span>{product.productSeries}</span>
+          <span>{product.size}</span>
+        </div>
         <Link href={productHref(product)} className="text-base font-bold leading-snug text-[#1F2A31] hover:text-[#147C94]">
           {name}
         </Link>
         <div className="mt-2 flex flex-wrap gap-1.5">
-          <span className="border border-[#DADDE1] px-2 py-0.5 text-[11px] text-[#65707A]">{product.size}</span>
-          <span className="border border-[#DADDE1] px-2 py-0.5 text-[11px] text-[#65707A]">{product.productSeries}</span>
           {tags.slice(0, 2).map((tag) => (
             <span key={tag} className="border border-[#DADDE1] px-2 py-0.5 text-[11px] text-[#65707A]">
               {tag}
@@ -289,6 +309,7 @@ export default function ProductsPageContent({
   const pageProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const rangeStart = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const rangeEnd = Math.min(total, currentPage * pageSize);
+  const heroPreviewProducts = products.slice(0, 3);
   const catalogHighlights = [
     {
       label: lang === 'zh' ? '产品总量' : 'Catalog',
@@ -310,33 +331,80 @@ export default function ProductsPageContent({
   return (
     <>
       <section className="border-b border-[#DADDE1] bg-[#EEF3F5] pt-28 sm:pt-32">
-        <div className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
-          <div className="text-xs text-[#65707A]">
-            <Link href="/" className="hover:text-[#147C94]">Home</Link>
-            <span className="mx-2">/</span>
-            <span>Product_list</span>
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 pb-8 sm:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(420px,1.1fr)] lg:items-end lg:px-8">
+          <div>
+            <div className="text-xs text-[#65707A]">
+              <Link href="/" className="hover:text-[#147C94]">Home</Link>
+              <span className="mx-2">/</span>
+              <span>Product_list</span>
+            </div>
+            <h1 className="mt-6 text-4xl font-black tracking-normal text-[#1F2A31] sm:text-5xl">
+              PRODUCTS
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5C6670]">
+              {lang === 'en'
+                ? 'Browse VESSEL product models by category, configuration, area and country.'
+                : '按分类、配置、面积和国家浏览 VESSEL 产品目录。'}
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href={buildContactHref('products:catalog_inquiry_cta')}
+                className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#C85A1F]"
+              >
+                {lang === 'zh' ? '提交产品需求' : 'Send product brief'}
+              </Link>
+              <Link
+                href="/cases"
+                className="inline-flex min-h-11 items-center justify-center border border-[#C7CDD2] bg-white px-5 text-sm font-semibold text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94]"
+              >
+                {lang === 'zh' ? '查看项目案例' : 'View project cases'}
+              </Link>
+            </div>
           </div>
-          <h1 className="mt-6 text-4xl font-black tracking-normal text-[#1F2A31] sm:text-5xl">
-            PRODUCTS
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5C6670]">
-            {lang === 'en'
-              ? 'Browse VESSEL product models by category, configuration, area and country.'
-              : '按分类、配置、面积和国家浏览 VESSEL 产品目录。'}
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href={buildContactHref('products:catalog_inquiry_cta')}
-              className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#C85A1F]"
-            >
-              {lang === 'zh' ? '提交产品需求' : 'Send product brief'}
-            </Link>
-            <Link
-              href="/cases"
-              className="inline-flex min-h-11 items-center justify-center border border-[#C7CDD2] bg-white px-5 text-sm font-semibold text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94]"
-            >
-              {lang === 'zh' ? '查看项目案例' : 'View project cases'}
-            </Link>
+
+          <div className="grid grid-cols-[1.15fr_0.85fr] gap-3">
+            {heroPreviewProducts[0] ? (
+              <Link href={productHref(heroPreviewProducts[0])} className="group relative min-h-[260px] overflow-hidden border border-white bg-[#DDE7EA] shadow-sm">
+                <ProtectedImage
+                  src={heroPreviewProducts[0].image}
+                  alt={lang === 'en' ? heroPreviewProducts[0].name_en : heroPreviewProducts[0].name_cn}
+                  fill
+                  priority
+                  className="object-cover transition duration-500 group-hover:scale-105"
+                  sizes="(max-width: 1024px) 62vw, 460px"
+                />
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#1F2A31]/86 to-transparent p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#F2A36F]">Featured Product</p>
+                  <p className="mt-2 text-base font-black text-white">{lang === 'en' ? heroPreviewProducts[0].name_en : heroPreviewProducts[0].name_cn}</p>
+                </div>
+              </Link>
+            ) : null}
+            <div className="grid gap-3">
+              {heroPreviewProducts.slice(1, 3).map((product) => (
+                <Link key={product.id} href={productHref(product)} className="group relative min-h-[124px] overflow-hidden border border-white bg-[#DDE7EA] shadow-sm">
+                  <ProtectedImage
+                    src={product.image}
+                    alt={lang === 'en' ? product.name_en : product.name_cn}
+                    fill
+                    priority={false}
+                    loading="lazy"
+                    className="object-cover transition duration-500 group-hover:scale-105"
+                    sizes="(max-width: 1024px) 34vw, 260px"
+                  />
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#1F2A31]/78 to-transparent p-3">
+                    <p className="text-xs font-bold text-white">{lang === 'en' ? product.name_en : product.name_cn}</p>
+                  </div>
+                </Link>
+              ))}
+              <div className="border border-[#DADDE1] bg-white p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#147C94]">Buyer Route</p>
+                <p className="mt-2 text-xs leading-5 text-[#65707A]">
+                  {lang === 'zh'
+                    ? '先筛选目录，再看详情与商务条款，最后提交可追踪询盘。'
+                    : 'Filter catalog, inspect terms, then submit a traceable inquiry.'}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

@@ -122,6 +122,7 @@ export default function CasesPageContent({ cases }: { cases: ProjectCaseRow[] })
     () => cases.filter((item) => matchesFilter(item, activeFilter)),
     [cases, activeFilter],
   )
+  const featuredCases = cases.filter((item) => item.cover_image_url).slice(0, 3)
   const caseHighlights = [
     {
       label: zh ? '项目筛选' : 'Project filter',
@@ -169,6 +170,62 @@ export default function CasesPageContent({ cases }: { cases: ProjectCaseRow[] })
           </div>
         </div>
       </div>
+
+      {featuredCases.length > 0 ? (
+        <section className="border-b border-[#E5DED4] bg-white">
+          <div className="mx-auto grid max-w-7xl gap-4 px-4 py-6 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
+            <Link href={`/cases/${featuredCases[0].id}`} className="group relative min-h-[300px] overflow-hidden bg-[#E5DED4]">
+              <ProtectedImage
+                src={featuredCases[0].cover_image_url || ''}
+                alt={zh ? featuredCases[0].name_zh : featuredCases[0].name_en}
+                fill
+                className="object-cover transition duration-500 group-hover:scale-105"
+                sizes="(max-width: 1024px) 100vw, 58vw"
+              />
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#241F1B]/88 to-transparent p-5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#E36F2C]">
+                  {zh ? '精选案例' : 'Featured Case'}
+                </p>
+                <h2 className="mt-2 text-xl font-black text-white">{zh ? featuredCases[0].name_zh : featuredCases[0].name_en}</h2>
+                <p className="mt-1 text-sm text-white/65">{zh ? featuredCases[0].location_zh : featuredCases[0].location_en}</p>
+              </div>
+            </Link>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+              {featuredCases.slice(1, 3).map((item) => (
+                <Link key={item.id} href={`/cases/${item.id}`} className="group grid grid-cols-[140px_minmax(0,1fr)] overflow-hidden border border-[#E5DED4] bg-[#FAF7F2]">
+                  <span className="relative min-h-[150px] overflow-hidden bg-[#E5DED4]">
+                    <ProtectedImage
+                      src={item.cover_image_url || ''}
+                      alt={zh ? item.name_zh : item.name_en}
+                      fill
+                      loading="lazy"
+                      className="object-cover transition duration-500 group-hover:scale-105"
+                      sizes="140px"
+                    />
+                  </span>
+                  <span className="flex min-w-0 flex-col justify-center p-4">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#E36F2C]">
+                      {zh ? '项目证据' : 'Project Proof'}
+                    </span>
+                    <span className="mt-2 text-sm font-black leading-snug text-[#2C2A28]">{zh ? item.name_zh : item.name_en}</span>
+                    <span className="mt-1 text-xs leading-5 text-[#6B6560]">{zh ? item.location_zh : item.location_en}</span>
+                  </span>
+                </Link>
+              ))}
+              <div className="border border-[#E5DED4] bg-[#241F1B] p-5 text-white">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#E36F2C]">
+                  {zh ? '运营链路' : 'Operating Route'}
+                </p>
+                <p className="mt-3 text-sm leading-6 text-white/65">
+                  {zh
+                    ? '先用场景筛选案例，再进入详情页提交带案例来源的项目询盘。'
+                    : 'Filter by scenario, inspect case details, then submit a case-source inquiry.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <section className="border-b border-[#E5DED4] bg-white">
         <div className="mx-auto grid max-w-7xl gap-4 px-4 py-6 sm:px-6 md:grid-cols-3 lg:px-8">

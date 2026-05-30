@@ -52,7 +52,7 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     source: 'Navbar.tsx',
     owner: '产品管理 2.0',
     status: 'cms',
-    note: '列表和详情内容由产品后台维护，导航位置暂不开放后台排序。',
+    note: '列表和详情内容由产品后台维护；B22 已强化目录感、产品图占比、移动端筛选和详情锚点，导航位置暂不开放后台排序。',
     Icon: Package,
   },
   {
@@ -72,7 +72,7 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     source: 'Navbar.tsx',
     owner: '页面可视化编辑',
     status: 'live',
-    note: 'About 模块内容可编辑；B21 已把品牌判断路径接到产品中心和咨询入口，导航文字和位置仍由代码控制。',
+    note: 'About 模块内容可编辑；B22 已把首屏和品牌判断路径接到产品中心和咨询入口，导航文字和位置仍由代码控制。',
     Icon: FileText,
   },
   {
@@ -82,7 +82,7 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     source: 'Navbar.tsx',
     owner: 'FAQ CMS',
     status: 'cms',
-    note: '常见问题内容由固定 FAQ CMS 维护；B21 已补 FAQ owner、显示数量和线索承接提示，导航文字和位置仍由代码控制。',
+    note: '常见问题内容由固定 FAQ CMS 维护；B22 已补 FAQ 使用路径、显示数量和线索承接提示，导航文字和位置仍由代码控制。',
     Icon: ListChecks,
   },
   {
@@ -132,7 +132,7 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     source: 'Footer.tsx',
     owner: '页面可视化编辑',
     status: 'live',
-    note: '页脚入口与顶部 About 保持一致；B21 页脚补充 300 对齐的产品目录、项目证据和咨询路径说明。',
+    note: '页脚入口与顶部 About 保持一致；B22 继续对齐 300 的产品目录、项目证据、移动端体验和咨询路径说明。',
     Icon: FileText,
   },
   {
@@ -419,7 +419,7 @@ export default async function AdminSiteNavigationPage() {
             <p className="text-sm font-semibold text-[#1889B6]">B5-3 导航管理</p>
             <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">网站导航只读盘点</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-              当前阶段把前台导航、行动按钮和页脚入口集中给运营人员查看；B21 补充产品目录、项目案例、FAQ、About 和页脚的 300 对齐精修边界，避免在代码、CMS 和站点设置之间来回查找。
+              当前阶段把前台导航、行动按钮和页脚入口集中给运营人员查看；B22 补充产品目录、产品详情、项目案例、FAQ、About 和内容专题的 300 对齐精修边界，避免在代码、CMS 和站点设置之间来回查找。
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

@@ -6,7 +6,7 @@ import Footer from '@/components/Footer';
 import PageHero from '@/components/PageHero';
 import ConversionInquiryForm from '@/components/pages/ConversionInquiryForm';
 import { getPublicB9ContentItem, type B9ContentItem } from '@/lib/b9-content-db';
-import { SITE_CONTACT_HREF } from '@/lib/site-links';
+import { buildContactHref } from '@/lib/site-links';
 import { buildPageMetadata } from '@/lib/seo';
 
 export const revalidate = 300;
@@ -562,7 +562,7 @@ export default async function ScenarioPage({
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
-              href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
+              href={buildContactHref(`scenario:${scenario.slug}:contact_cta`)}
               className="text-sm font-bold px-8 py-3 tracking-wider transition-colors"
               style={{ background: scenario.accentColor, color: '#FFFFFF' }}
             >

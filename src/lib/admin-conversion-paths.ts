@@ -35,7 +35,7 @@ export const CONVERSION_PATHS: ConversionPathItem[] = [
     leadCapture: 'Writes to leads',
     sourceRule: 'product_detail:{productId}:inquiry_form',
     status: 'lead',
-    risk: 'B21 list cards now expose Details and Inquiry side by side; fixed boutique product pages keep their existing custom forms/CTA.',
+    risk: 'B22 strengthens catalog visuals, mobile filtering, detail anchors, and source-aware inquiry paths; fixed boutique product pages keep their existing custom forms/CTA.',
   },
   {
     key: 'cases',
@@ -46,7 +46,7 @@ export const CONVERSION_PATHS: ConversionPathItem[] = [
     leadCapture: 'Writes to leads',
     sourceRule: 'case_detail:{caseId}:inquiry_form',
     status: 'lead',
-    risk: 'B21 list proof cards explain project filters and source tracking; Global remains a map display channel and is not managed here.',
+    risk: 'B22 adds image-led case proof and scenario filtering cues; Global remains a map display channel and is not managed here.',
   },
   {
     key: 'faq',
@@ -57,7 +57,7 @@ export const CONVERSION_PATHS: ConversionPathItem[] = [
     leadCapture: 'Writes to leads',
     sourceRule: 'faq:general:inquiry_form',
     status: 'lead',
-    risk: 'B21 adds FAQ owner and answer-count cues; FAQ content is CMS-managed and navigation order remains code-controlled.',
+    risk: 'B22 adds FAQ buyer-path cues; FAQ content is CMS-managed and navigation order remains code-controlled.',
   },
   {
     key: 'media-kit',

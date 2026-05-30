@@ -134,31 +134,50 @@ export default function FaqView({
       <Navbar />
 
       <section className="px-4 pb-16 pt-28" style={{ backgroundColor: '#241F1B' }}>
-        <div className="mx-auto max-w-4xl">
-          <p className="mb-4 text-xs font-medium uppercase tracking-[0.35em] text-[#E36F2C]">
-            {lang === 'zh' ? '常见问题' : 'Frequently Asked Questions'}
-          </p>
-          <h1
-            className="mb-5 text-5xl font-bold leading-none tracking-tight text-[#F5F2ED] sm:text-6xl"
-            style={{ fontFamily: 'var(--font-dm-sans, DM Sans, sans-serif)' }}
-          >
-            FAQ
-          </h1>
-          <p className="max-w-xl text-base leading-relaxed text-[#C9BEB4] sm:text-lg">
-            {lang === 'zh'
-              ? '关于 VESSEL 产品、运输、安装、认证及商务条款的专业解答。'
-              : 'Expert answers on VESSEL products, transport, installation, certifications, and commercial terms.'}
-          </p>
-          <div className="mt-8 flex flex-wrap gap-2">
-            <span className="border border-white/15 px-3 py-1.5 text-xs tracking-wider text-white/55">
-              {lang === 'zh' ? `${categories.length} 个分类` : `${categories.length} categories`}
-            </span>
-            <span className="border border-white/15 px-3 py-1.5 text-xs tracking-wider text-white/55">
-              {lang === 'zh' ? `${items.length} 条问答` : `${items.length} answers`}
-            </span>
-            <span className="border border-[#E36F2C]/40 px-3 py-1.5 text-xs tracking-wider text-[#E36F2C]">
-              {lang === 'zh' ? '可提交线索' : 'Lead tracking ready'}
-            </span>
+        <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
+          <div>
+            <p className="mb-4 text-xs font-medium uppercase tracking-[0.35em] text-[#E36F2C]">
+              {lang === 'zh' ? '常见问题' : 'Frequently Asked Questions'}
+            </p>
+            <h1
+              className="mb-5 text-5xl font-bold leading-none tracking-tight text-[#F5F2ED] sm:text-6xl"
+              style={{ fontFamily: 'var(--font-dm-sans, DM Sans, sans-serif)' }}
+            >
+              FAQ
+            </h1>
+            <p className="max-w-xl text-base leading-relaxed text-[#C9BEB4] sm:text-lg">
+              {lang === 'zh'
+                ? '关于 VESSEL 产品、运输、安装、认证及商务条款的专业解答。'
+                : 'Expert answers on VESSEL products, transport, installation, certifications, and commercial terms.'}
+            </p>
+            <div className="mt-8 flex flex-wrap gap-2">
+              <span className="border border-white/15 px-3 py-1.5 text-xs tracking-wider text-white/55">
+                {lang === 'zh' ? `${categories.length} 个分类` : `${categories.length} categories`}
+              </span>
+              <span className="border border-white/15 px-3 py-1.5 text-xs tracking-wider text-white/55">
+                {lang === 'zh' ? `${items.length} 条问答` : `${items.length} answers`}
+              </span>
+              <span className="border border-[#E36F2C]/40 px-3 py-1.5 text-xs tracking-wider text-[#E36F2C]">
+                {lang === 'zh' ? '可提交线索' : 'Lead tracking ready'}
+              </span>
+            </div>
+          </div>
+          <div className="border border-white/10 bg-white/[0.06] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#E36F2C]">
+              {lang === 'zh' ? '使用路径' : 'Buyer Path'}
+            </p>
+            <div className="mt-4 space-y-3">
+              {[
+                lang === 'zh' ? '先按分类查看运输、安装、认证和商务问题。' : 'Browse transport, installation, certification, and commercial answers by category.',
+                lang === 'zh' ? '仍不清楚时，直接提交 FAQ 来源的项目问题。' : 'If the answer is missing, submit a FAQ-sourced project question.',
+                lang === 'zh' ? '后台线索 2.0 能识别 FAQ 来源并跟进。' : 'The leads console can identify and follow up FAQ-sourced inquiries.',
+              ].map((item, index) => (
+                <div key={item} className="flex gap-3 border border-white/10 bg-[#241F1B]/45 p-3 text-sm leading-6 text-white/70">
+                  <span className="text-[#E36F2C]">{String(index + 1).padStart(2, '0')}</span>
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

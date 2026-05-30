@@ -229,7 +229,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
           fill
           priority={active && index === 0}
           sizes="100vw"
-          quality={78}
+          quality={75}
           className={`object-cover transition-opacity duration-1000 ${active ? 'opacity-100' : 'opacity-0'}`}
           data-page-module-item={`hero-image-${String(index + 1).padStart(2, '0')}`}
           data-page-module-field="image_url"
@@ -597,6 +597,25 @@ function OperatingProofSection() {
               <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.25em] text-[#E36F2C]">{item.label}</p>
               <h3 className="font-[family-name:var(--font-heading)] text-xl font-medium text-[#241F1B]">{item.title}</h3>
               <p className="mt-3 text-sm leading-6 text-[#6B625B]">{item.body}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-8 grid gap-3 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
+          {HERO_IMAGES.slice(0, 3).map((src, index) => (
+            <div key={src} className="relative min-h-[180px] overflow-hidden border border-[#E5DED4] bg-[#E5DED4] md:first:min-h-[260px]">
+              <Image
+                src={src}
+                alt={`VESSEL homepage proof ${index + 1}`}
+                fill
+                loading="lazy"
+                className="object-cover"
+                sizes={index === 0 ? '(max-width: 768px) 100vw, 48vw' : '(max-width: 768px) 100vw, 26vw'}
+              />
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#241F1B]/75 to-transparent p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75">
+                  {index === 0 ? (zh ? '产品与场景先行' : 'Product-led first view') : (zh ? '高清场景证据' : 'Visual proof')}
+                </p>
+              </div>
             </div>
           ))}
         </div>

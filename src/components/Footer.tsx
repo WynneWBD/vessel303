@@ -32,7 +32,7 @@ export default function Footer() {
   const footerProof = [
     lang === 'zh' ? '产品目录 / 案例 / FAQ 统一承接咨询' : 'Product, cases, and FAQ all connect to inquiry paths',
     lang === 'zh' ? '工厂交付、全球项目和技术专题可快速追溯' : 'Factory delivery, global proof, and technology topics stay traceable',
-    lang === 'zh' ? 'B21 已对齐 300 的产品目录、项目证据和咨询路径' : 'B21 aligns catalog, project proof, and inquiry paths with the 300 operating model',
+    lang === 'zh' ? 'B22 已强化 300 式产品目录、项目证据和移动端路径' : 'B22 strengthens 300-style catalog, project proof, and mobile paths',
   ];
 
   return (

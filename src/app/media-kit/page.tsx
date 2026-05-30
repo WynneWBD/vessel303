@@ -103,6 +103,13 @@ export default function MediaKitPage() {
           <p className="text-[#C4B9AB] text-sm sm:text-base leading-relaxed max-w-3xl">
             {t(i18n.mediaKit.heroSubtitle)}
           </p>
+          <div className="mt-8 flex flex-wrap gap-2">
+            {['CMS resources', 'Lead request form', 'Source tracking'].map((item) => (
+              <span key={item} className="border border-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-white/55">
+                {item}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
 

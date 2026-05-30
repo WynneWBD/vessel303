@@ -6,7 +6,7 @@ import ConversionInquiryForm from '@/components/pages/ConversionInquiryForm';
 import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
-import { SITE_CONTACT_HREF } from '@/lib/site-links';
+import { buildContactHref } from '@/lib/site-links';
 import type { ProductAttributeLabel } from '@/lib/product-catalog-db';
 import type { CatalogProduct, CatalogCommercialTerms } from '@/lib/products';
 
@@ -167,6 +167,18 @@ export default function CatalogProductDetailContent({
         || 'Product'),
     },
   ].filter((item) => hasText(item.value));
+  const contactHref = buildContactHref(`product_detail:${product.id}:contact_cta`);
+  const anchorItems = [
+    { href: '#product-description', label: 'Product Description' },
+    { href: '#classification', label: 'Classification' },
+    { href: '#product-inquiry', label: 'Consult' },
+  ];
+  if (displayKeywords.length > 0) {
+    anchorItems.splice(2, 0, { href: '#keywords', label: 'Keywords' });
+  }
+  if (relatedProducts.length > 0) {
+    anchorItems.push({ href: '#related-products', label: 'Related Products' });
+  }
 
   return (
     <main className="bg-[#F3F7F7] text-[#1F2A31]">
@@ -256,7 +268,7 @@ export default function CatalogProductDetailContent({
                   Consult
                 </a>
                 <Link
-                  href={SITE_CONTACT_HREF}
+                  href={contactHref}
                   className="border border-[#147C94]/35 px-5 py-3 text-center text-sm font-bold uppercase tracking-[0.12em] text-[#147C94] hover:bg-[#EAF6F8]"
                 >
                   Contact Us
@@ -267,9 +279,23 @@ export default function CatalogProductDetailContent({
         </div>
       </section>
 
+      <nav className="sticky top-16 z-20 border-b border-[#DADDE1] bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 py-3 sm:px-6 lg:px-8">
+          {anchorItems.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="inline-flex min-h-9 shrink-0 items-center border border-[#DADDE1] px-3 text-xs font-bold uppercase tracking-[0.12em] text-[#65707A] transition hover:border-[#147C94] hover:text-[#147C94]"
+            >
+              {item.label}
+            </a>
+          ))}
+        </div>
+      </nav>
+
       <section className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
         <div className="min-w-0 space-y-8">
-          <section className="rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm">
+          <section id="product-description" className="scroll-mt-32 rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm">
             <SectionTitle label="Product Description" title={name} />
             {description ? <p className="whitespace-pre-line text-sm leading-8 text-[#5C6670]">{description}</p> : null}
             {features.length > 0 ? (
@@ -293,9 +319,7 @@ export default function CatalogProductDetailContent({
               Please send your project destination, quantity, configuration and delivery requirement. We will contact you as soon as possible.
             </p>
             <Link
-              href={SITE_CONTACT_HREF}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={contactHref}
               className="mt-5 inline-flex bg-[#E36F2C] px-5 py-3 text-sm font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C65F22]"
             >
               Contact Us
@@ -316,7 +340,7 @@ export default function CatalogProductDetailContent({
         </div>
 
         <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm">
+          <div id="classification" className="scroll-mt-32 rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm">
             <SectionTitle label="Classification" title="Products" />
             <div className="space-y-2 text-sm">
               <Link href="/products" className="block text-[#147C94] hover:underline">ALL Products</Link>
@@ -334,7 +358,7 @@ export default function CatalogProductDetailContent({
           </div>
 
           {displayKeywords.length > 0 ? (
-            <div className="rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm">
+            <div id="keywords" className="scroll-mt-32 rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm">
               <SectionTitle label="Key words" title="Keywords" />
               <div className="flex flex-wrap gap-2">
                 {displayKeywords.map((keyword) => (
@@ -349,7 +373,7 @@ export default function CatalogProductDetailContent({
       </section>
 
       {relatedProducts.length > 0 ? (
-        <section className="border-t border-[#DADDE1] bg-white py-10">
+        <section id="related-products" className="scroll-mt-28 border-t border-[#DADDE1] bg-white py-10">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionTitle label="Related Products" title="Related Products" />
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">

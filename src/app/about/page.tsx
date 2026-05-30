@@ -781,6 +781,20 @@ export default function AboutPage() {
                 : 'Since 2018 we have delivered 300+ projects across China and exported to 30+ countries, taking a new Chinese category of experiential tourism to the global market.',
             )}
           </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/products"
+              className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#C85A1F]"
+            >
+              {zh ? '查看产品中心' : 'View Products'}
+            </Link>
+            <Link
+              href={buildContactHref('about:hero_contact_cta')}
+              className="inline-flex min-h-11 items-center justify-center border border-white/25 px-5 text-sm font-bold uppercase tracking-[0.12em] text-white/80 transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
+            >
+              {zh ? '联系咨询' : 'Contact VESSEL'}
+            </Link>
+          </div>
         </div>
       </section>
       ) : null}
