@@ -6,6 +6,7 @@ import SessionProviderWrapper from "@/components/SessionProviderWrapper";
 import ImageProtection from "@/components/ImageProtection";
 import SiteAnalyticsTracker from "@/components/SiteAnalyticsTracker";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { getGoogleSiteVerificationToken } from "@/lib/google-site-verification";
 import { DEFAULT_OG_IMAGE, DEFAULT_SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
 
 const dmSans = DM_Sans({
@@ -21,6 +22,8 @@ const inter = Inter({
   variable: "--font-body",
   display: "swap",
 });
+
+const googleSiteVerification = getGoogleSiteVerificationToken();
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -48,6 +51,13 @@ export const metadata: Metadata = {
     ],
     apple: '/apple-touch-icon.png',
   },
+  ...(googleSiteVerification
+    ? {
+        verification: {
+          google: googleSiteVerification,
+        },
+      }
+    : {}),
 };
 
 export default function RootLayout({

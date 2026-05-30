@@ -5,6 +5,7 @@ import { join } from 'path'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { pool } from '@/lib/db'
+import { hasGoogleSiteVerificationToken } from '@/lib/google-site-verification'
 import {
   ArrowRight,
   CheckCircle2,
@@ -389,6 +390,7 @@ function loadIndexFoundationItems(): IndexFoundationItem[] {
   const robotsReady = existsSync(join(process.cwd(), 'public', 'robots.txt'))
   const sitemapStaticReady = existsSync(join(process.cwd(), 'public', 'sitemap.xml'))
   const sitemapRouteReady = existsSync(join(process.cwd(), 'src', 'app', 'sitemap.ts'))
+  const googleVerifyReady = hasGoogleSiteVerificationToken()
 
   return [
     {
@@ -411,8 +413,10 @@ function loadIndexFoundationItems(): IndexFoundationItem[] {
     },
     {
       title: 'Search Console',
-      status: 'waiting',
-      detail: '本轮只列接入清单，不保存 Google 验证码、不提交 sitemap、不接外部 API。',
+      status: googleVerifyReady ? 'ready' : 'waiting',
+      detail: googleVerifyReady
+        ? 'URL 前缀 Meta 验证标识已配置；线上首页会输出 google-site-verification，下一步在 Search Console 验证并提交 sitemap。'
+        : '等待 Google Search Console URL 前缀 Meta token；token 只通过环境变量配置，不写入代码仓库。',
       Icon: SearchCheck,
     },
     {
@@ -471,17 +475,17 @@ function SummaryTile({
 
 function IndexFoundationPanel({ items }: { items: IndexFoundationItem[] }) {
   const checklist = [
-    '确认 Google 账号与域名所有权验证方式。',
-    '配置验证代码或 DNS TXT 前先由 Wynne 单独授权。',
-    '验证通过后再提交 https://www.vessel303.com/sitemap.xml。',
-    '接入后观察索引覆盖、抓取错误、移动端可用性和热门查询。',
+    '在 Search Console 创建 URL 前缀属性：https://www.vessel303.com/。',
+    '把 Google 提供的 Meta content token 配置到 Vercel 环境变量 NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION。',
+    '部署完成后确认线上首页输出 google-site-verification meta，再点击 Google 验证。',
+    '验证通过后提交 https://www.vessel303.com/sitemap.xml，并等待索引数据回流。',
   ]
 
   return (
     <section className="space-y-4">
       <SectionTitle
         title="索引基础与 Search Console 接入清单"
-        detail="对照 300 的网站地图、Robots、TDK 设置和搜索引擎连接，本页只做准备状态，不写第三方代码。"
+        detail="对照 300 的网站地图、Robots、TDK 设置和搜索引擎连接，本页跟踪 URL 前缀验证、sitemap 提交和后续索引观察。"
       />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
         {items.map((item) => {
@@ -625,9 +629,9 @@ function StaticSeoCard({ page }: { page: StaticSeoPage }) {
 
 function AlignmentPanel() {
   const items = [
-    '对照 300 的 SEO 优化模块，本阶段覆盖网站地图、Robots、TDK 和 Search Console 接入准备。',
+    '对照 300 的 SEO 优化模块，B17 从“准备状态”推进到 Search Console URL 前缀 Meta 验证。',
     '产品、新闻、FAQ、场景和技术专题继续回到各自 CMS 或固定页面来源维护，不做批量 TDK 写入。',
-    'Search Console 只做清单和状态提示，不保存验证码、不提交 sitemap、不接 Google API。',
+    '本轮只接 URL 前缀验证和 sitemap 提交；索引覆盖、查询词和 Google API 数据读取留到后续阶段。',
   ]
 
   return (
@@ -648,7 +652,8 @@ function AlignmentPanel() {
 function GuardrailPanel() {
   const guardrails = [
     '不开放批量 TDK、关键词堆叠、自动生成、结构化标签保存或自定义 meta 保存。',
-    '不保存 Google / Search Console 验证码，不提交 sitemap，不接第三方 API。',
+    '不把 Google token 写入代码仓库或数据库；只通过 Vercel 环境变量输出验证 meta。',
+    '不接 Google API、不读取 Search Console 数据；sitemap 提交由 Search Console 后台完成。',
     '不修改 /global、MapLibre、MapTiler、/api/map 或任何地图底层逻辑。',
   ]
 
@@ -714,17 +719,17 @@ export default async function AdminSiteSeoPage() {
       role={adminRole}
       email={session.user.email}
       title="网站管理"
-      description="对照 300 SEO 优化模块，集中检查 metadata、sitemap、robots 和 Search Console 接入准备。"
+      description="对照 300 SEO 优化模块，集中检查 metadata、sitemap、robots 和 Search Console URL 前缀验证状态。"
       sideNavGroups={sideNavGroups}
       activeItem="seo"
     >
       <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#F3FBFC_0%,#FFFFFF_58%,#FFF4E9_100%)] p-5 shadow-sm md:p-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-sm font-semibold text-[#1889B6]">B16 SEO / Search Console</p>
+            <p className="text-sm font-semibold text-[#1889B6]">B17 Search Console 接入</p>
             <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">SEO / 收录准备中心</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-              把 300 的 SEO 优化心智拆成页面 metadata、sitemap、robots、内容 SEO 缺项和 Search Console 接入清单，先让运营能判断 Google 是否可抓取。
+              把 300 的 SEO 优化心智拆成页面 metadata、sitemap、robots、内容 SEO 缺项和 Search Console 验证状态，让运营知道 Google 是否可抓取、是否已具备验证和提交条件。
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -749,7 +754,7 @@ export default async function AdminSiteSeoPage() {
           <SummaryTile title="页面已完整" value={staticReady} detail="静态 / 列表页面" tone="green" Icon={Globe2} />
           <SummaryTile title="内容待补" value={missingTotal} detail="已发布内容缺 SEO 或派生字段" tone={missingTotal > 0 ? 'orange' : 'green'} Icon={SearchCheck} />
           <SummaryTile title="详情来源" value={products.published + news.published + projects.published} detail="已发布产品 / 新闻 / 案例" tone="blue" Icon={FileText} />
-          <SummaryTile title="保护项" value={protectedCount} detail="Global 暂不纳入 B16 底层改动" tone="gray" Icon={LockKeyhole} />
+          <SummaryTile title="保护项" value={protectedCount} detail="Global 暂不纳入 B17 底层改动" tone="gray" Icon={LockKeyhole} />
         </div>
       </section>
 

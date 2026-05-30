@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { normalizeMediaMaxUploadMb } from '@/lib/admin-settings-db'
 import { pool } from '@/lib/db'
+import { hasGoogleSiteVerificationToken } from '@/lib/google-site-verification'
 
 export type ContentKind = 'products' | 'projects' | 'news'
 
@@ -562,7 +563,7 @@ export function loadAnalyticsReadinessMetrics(): AnalyticsReadinessMetrics {
   const sitemapRouteReady = existsSync(join(process.cwd(), 'src', 'app', 'sitemap.ts'))
   const gaReady = Boolean(process.env.NEXT_PUBLIC_GA_ID || process.env.NEXT_PUBLIC_GTAG_ID)
   const gtmReady = Boolean(process.env.NEXT_PUBLIC_GTM_ID)
-  const googleVerifyReady = Boolean(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION)
+  const googleVerifyReady = hasGoogleSiteVerificationToken()
   const siteFilesReady = robotsReady && (sitemapStaticReady || sitemapRouteReady)
   const scriptReady = gaReady || gtmReady
   const searchReady = googleVerifyReady && siteFilesReady
@@ -580,11 +581,13 @@ export function loadAnalyticsReadinessMetrics(): AnalyticsReadinessMetrics {
     {
       key: 'search-verify',
       title: 'Search Console 验证',
-      status: googleVerifyReady ? '验证标识已准备' : '缺少验证标识',
+      status: googleVerifyReady ? 'URL 前缀验证标识已准备' : '缺少 URL 前缀验证标识',
       state: googleVerifyReady ? 'partial' : 'planned',
-      detail: '搜索平台验证需要产品侧确认域名、账号和收录策略后再接入；当前不自动提交搜索引擎。',
+      detail: googleVerifyReady
+        ? 'NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION 已配置；部署后需在 Search Console 完成 URL 前缀验证和 sitemap 提交。'
+        : '等待 Google 提供的 URL 前缀 Meta token；本页不保存第三方账号或 Google API token。',
       href: '/admin/site/settings',
-      adminNote: '仅检查验证标识是否存在，不读取第三方平台数据。',
+      adminNote: '仅检查验证标识是否存在，不读取第三方平台数据，也不展示 token 内容。',
     },
     {
       key: 'site-files',

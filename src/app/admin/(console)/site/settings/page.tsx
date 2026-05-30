@@ -6,6 +6,7 @@ import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { defaultSiteSettings } from '@/lib/admin-settings-db'
 import { pool } from '@/lib/db'
+import { hasGoogleSiteVerificationToken } from '@/lib/google-site-verification'
 import {
   ArrowRight,
   CheckCircle2,
@@ -255,7 +256,7 @@ function getSearchItems(): SearchItem[] {
   const sitemapRouteReady = existsSync(join(process.cwd(), 'src', 'app', 'sitemap.ts'))
   const gaReady = Boolean(process.env.NEXT_PUBLIC_GA_ID || process.env.NEXT_PUBLIC_GTAG_ID)
   const gtmReady = Boolean(process.env.NEXT_PUBLIC_GTM_ID)
-  const googleVerifyReady = Boolean(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION)
+  const googleVerifyReady = hasGoogleSiteVerificationToken()
 
   return [
     {
@@ -283,7 +284,9 @@ function getSearchItems(): SearchItem[] {
       title: 'Search Console 验证',
       status: configuredLabel(googleVerifyReady),
       state: googleVerifyReady ? 'partial' : 'planned',
-      detail: '搜索平台验证、Bing / Yandex 连接和死链提交都先做状态记录，不在 B5 自动提交。',
+      detail: googleVerifyReady
+        ? 'URL 前缀 Meta 验证标识已配置；线上首页会输出 google-site-verification，仍需在 Search Console 完成验证并提交 sitemap。'
+        : '等待 Search Console URL 前缀 Meta 验证标识；B17 只通过环境变量配置，不把 Google token 写入代码仓库。',
       Icon: Plug,
     },
   ]
