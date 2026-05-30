@@ -666,3 +666,17 @@ curl -I https://www.vessel303.com/news/<slug>
 - 验收摘要：`git diff --check`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 通过；本地 Chrome 抽查 `/`、`/products`、`/faq`、`/media-kit` 无内部说明词；线上 `/`、`/products`、`/faq`、`/media-kit` 均 200 / PRERENDER；未登录 `/admin/site/pages` 302 到 `/admin/login`。
 - 已知边界：本轮完成核心公开面归源第一刀，未做全站深层静态 fallback 清零。Scenarios、部分 Innovation 专题、固定精品产品页、About 遗留结构、产品 / 案例 / 新闻的 legacy fallback 仍需后续 B24 follow-up 逐步归源；但公开页不得再出现 `运营导览`、`对照 300`、`Codex`、`后台 owner`、`B23` 等内部说明。
 - 未改范围：未改数据库结构、未删除业务内容、未改权限 / 认证 / 支付 / 订单 / 会员、未改 `/global`、MapLibre、MapTiler 或 `/api/map`。
+
+## B25 前后台彻底归源重构与 303vessel.cn 展示对齐（2026-05-30）
+
+- Code commit: `2a885d1` / `2a885d19dd67b722fdf9fb3926fbc4063140aab1`
+- Vercel deployment: `dpl_Aj2PTBgMPGhMUHzVRbi5PEJ2CiLo`，状态 `READY`，production alias 包含 `https://www.vessel303.com`
+- 本轮定位：B25 覆盖 B24 follow-up，把“后台决定前台”从核心公开面推进到全站客户可见运行时。前台只负责展示模板、响应式布局、图片加载、交互、路由和表单提交；文字、图片、CTA、导航、Footer、表单 labels、SEO、排序、显示 / 隐藏状态均由后台 published 内容或对应 CMS 决定。
+- 内容来源规则：公开前台不再运行时使用 `DEFAULT_PAGE_MODULES`、`src/data/*` 或本地静态方案作为业务 fallback。后台没有 published 内容时隐藏对应模块；整页无内容时只允许系统级空状态，不允许前台补业务宣传文案。
+- 后台内容承接：`page_modules` 已扩展并补齐 `home`、`about`、`products`、`cases`、`news`、`faq`、`media-kit`、`display`、`scenarios`、`innovation`、`contact`、`auth`、`account`、`site` 等页面 key；B25 backfill 脚本只补缺失 published 内容，不覆盖运营已编辑内容、不删除原内容。
+- 导航 / 页脚 / 共享文案：Navbar、Footer、logo、主导航、语言旁动作、联系入口、登录 / 注册 / 账户中心文案、表单字段、placeholder、成功 / 失败提示、产品 / 案例 / FAQ / Media Kit / Scenarios / Innovation 询盘 labels 均已改为后台模块或 CMS 字段读取。
+- 前台清理范围：Home、Media Kit、FAQ、Scenarios、Innovation、产品通用详情、固定精品页、案例详情、登录、注册、账户中心均已移除运行时业务预设；`/products/v9-gen6` 通过产品 CMS 的 `detailSlug` / 产品 ID 读取内容，`/products/v9-gen6` 与 `/products/v9-gen6-standard` 均保持 200。
+- 禁止项：公开前台源码审计已加入 `scripts/audit-public-content.mjs` 和 `npm run audit:public-content`，用于拦截客户可见业务文案、CTA、placeholder、成功 / 失败提示、内部说明词和业务图片 URL 的运行时硬编码；`/global` 排除在 B25 范围外。
+- 验收摘要：`node scripts/audit-public-content.mjs`、`git diff --check`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；本地和线上 `/`、`/about`、`/products`、`/products/e7-gen6-flagship`、`/products/v9-gen6`、`/products/v9-gen6-standard`、`/cases`、`/cases/xunliao-bay-holiday-planet`、`/faq`、`/media-kit`、`/scenarios/tourism`、`/innovation/viie`、`/news` 均 200；`/contact` 307 到 300 联系页；未登录 `/admin/site/pages` 302 到 `/admin/login`。线上核心公开页为 `PRERENDER`，未引入长期 `no-store`。
+- 未改范围：未删除业务内容、未改权限 / 认证 / 支付 / 订单 / 会员，未改 `/global`、MapLibre、MapTiler 或 `/api/map`。B25 写入的后台初始内容仅用于承接现有展示，原则是只补缺失、不覆盖运营内容。
+- 后续建议：下一步不要再做“前台补文案式精修”。应先让运营在后台补齐真实内容和图片，再由 01 只调整展示模板；若继续深化，优先做 B26 后台可编辑字段体验、内容完整度检查和运营真实改稿验收。
