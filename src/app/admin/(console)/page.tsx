@@ -100,12 +100,12 @@ const EMPTY_RECENT_SUMMARY: RecentContentSummary = {
 const STORAGE_WARNING_BYTES = 800 * 1024 * 1024
 
 const QUICK_ACTIONS: ActionItem[] = [
-  { label: '编辑网站', href: '/admin/pages/visual', Icon: LayoutTemplate, primary: true },
+  { label: '编辑网站', href: '/admin/site/visual', Icon: LayoutTemplate, primary: true },
   { label: '发布产品', href: '/admin/content/products/new', Icon: Package },
   { label: '发布项目', href: '/admin/content/projects/new', Icon: MapPinned },
   { label: '发布新闻', href: '/admin/content/news/new', Icon: Newspaper },
   { label: '处理线索', href: '/admin/customers/leads?status=new', Icon: Inbox },
-  { label: '管理图片', href: '/admin/media', Icon: ImageIcon },
+  { label: '管理图片', href: '/admin/site/media', Icon: ImageIcon },
 ]
 
 const RECENT_CONTENT_SQL = {
@@ -264,7 +264,7 @@ function buildTodos({
     {
       title: '页面草稿',
       detail: pageDraftCount > 0 ? '进入网站编辑器确认' : '暂无页面草稿',
-      href: '/admin/pages/visual',
+      href: '/admin/site/visual',
       count: pageDraftCount,
       ok: pageDraftCount === 0,
     },
@@ -292,7 +292,7 @@ function buildTodos({
     {
       title: '媒体空间',
       detail: uploadBytes > STORAGE_WARNING_BYTES ? '建议检查素材' : '当前状态正常',
-      href: '/admin/media',
+      href: '/admin/site/media',
       ok: uploadBytes <= STORAGE_WARNING_BYTES,
     },
   ]
@@ -381,7 +381,7 @@ function Hero({
             label="媒体空间"
             value={formatBytes(uploadBytes)}
             detail={uploadBytes > STORAGE_WARNING_BYTES ? '建议检查素材' : '状态正常'}
-            href="/admin/media"
+            href="/admin/site/media"
             tone={uploadBytes > STORAGE_WARNING_BYTES ? 'orange' : 'green'}
           />
         </div>
@@ -532,7 +532,7 @@ function ContentCards({
           total={pageDraftCount}
           recent={pageDraftCount}
           draft={pageDraftCount}
-          href="/admin/pages/visual"
+          href="/admin/site/visual"
           action="编辑网站"
           Icon={LayoutTemplate}
           color="gray"
@@ -674,7 +674,7 @@ function StatusPanel({
           title="图片与文件空间"
           value={formatBytes(uploadBytes)}
           detail={`${formatNumber(uploadCount)} 张图片记录`}
-          href="/admin/media"
+          href="/admin/site/media"
           Icon={ImageIcon}
         />
         <StatusLineCard

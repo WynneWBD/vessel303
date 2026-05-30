@@ -54,6 +54,15 @@ function ProjectImage({ src, alt, className }: { src: string | null | undefined;
   )
 }
 
+function CaseMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-[#E5DED4] bg-white px-4 py-3 shadow-sm">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8A8580]">{label}</div>
+      <div className="mt-1 text-sm font-bold leading-6 text-[#2C2A28]">{value}</div>
+    </div>
+  )
+}
+
 export default function CaseDetailPageContent({
   project,
   relatedCases = [],
@@ -119,16 +128,16 @@ export default function CaseDetailPageContent({
         ]}
       />
 
-      <section className="border-b border-[#E5DED4]">
+      <section className="border-b border-[#E5DED4] bg-[linear-gradient(180deg,#FAF7F2_0%,#F4EFE7_100%)]">
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-0 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)] lg:px-8 lg:py-16">
-          <div className="overflow-hidden border border-[#E5DED4] bg-[#E5DED4]">
+          <div className="overflow-hidden rounded-t-md border border-[#E5DED4] bg-[#E5DED4] shadow-sm lg:rounded-l-md lg:rounded-tr-none">
             <ProjectImage src={heroImage} alt={name} className="aspect-[16/10] h-full w-full" />
           </div>
 
-          <aside className="border-x border-b border-[#E5DED4] bg-white p-6 lg:border-l-0 lg:border-t lg:p-8">
+          <aside className="rounded-b-md border-x border-b border-[#E5DED4] bg-white p-6 shadow-sm lg:rounded-r-md lg:rounded-bl-none lg:border-l-0 lg:border-t lg:p-8">
             <div className="mb-5 flex flex-wrap gap-2">
               {tags.map((tag) => (
-                <span key={tag} className="border border-[#E36F2C]/20 bg-[#E36F2C]/10 px-2 py-1 text-[10px] tracking-wider text-[#E36F2C]">
+                <span key={tag} className="rounded-full border border-[#E36F2C]/20 bg-[#E36F2C]/10 px-2 py-1 text-[10px] tracking-wider text-[#E36F2C]">
                   {tag}
                 </span>
               ))}
@@ -139,46 +148,40 @@ export default function CaseDetailPageContent({
 
             <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1">
               {contentStatus.map((item) => (
-                <div key={item.label} className="border border-[#E5DED4] bg-[#FAF7F2] px-4 py-3">
-                  <div className="text-[10px] tracking-wider text-[#8A8580]">{item.label}</div>
-                  <div className="mt-1 text-sm font-semibold leading-6 text-[#2C2A28]">{item.value}</div>
-                </div>
+                <CaseMetric key={item.label} label={item.label} value={item.value} />
               ))}
             </div>
 
             <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
               {specs.map((spec) => (
-                <div key={spec.label} className="border border-[#E5DED4] bg-[#F8F6F2] px-4 py-3">
-                  <div className="text-[10px] tracking-wider text-[#8A8580]">{spec.label}</div>
-                  <div className="mt-1 text-sm font-semibold leading-6 text-[#2C2A28]">{spec.value}</div>
-                </div>
+                <CaseMetric key={spec.label} label={spec.label} value={spec.value} />
               ))}
             </div>
 
             <div className="mt-8 flex flex-col gap-3">
               <a
                 href={inquiryAnchor}
-                className="bg-[#E36F2C] px-6 py-3 text-center text-sm font-bold tracking-wider text-white transition-colors hover:bg-[#C85A1F]"
+                className="rounded-md bg-[#E36F2C] px-6 py-3 text-center text-sm font-bold tracking-wider text-white transition-colors hover:bg-[#C85A1F]"
               >
                 {zh ? '咨询类似项目方案' : 'Inquire About a Similar Project'}
               </a>
               <Link
                 href="/contact"
-                className="border border-[#E36F2C]/40 px-6 py-3 text-center text-sm tracking-wider text-[#E36F2C] transition-colors hover:bg-[#E36F2C]/5"
+                className="rounded-md border border-[#E36F2C]/40 px-6 py-3 text-center text-sm tracking-wider text-[#E36F2C] transition-colors hover:bg-[#E36F2C]/5"
               >
                 {zh ? '进入联系页面' : 'Open Contact Page'}
               </Link>
               {showGlobalLink && (
                 <Link
                   href={`/global?camp=${project.id}`}
-                  className="border border-[#E36F2C]/40 px-6 py-3 text-center text-sm tracking-wider text-[#E36F2C] transition-colors hover:bg-[#E36F2C]/5"
+                  className="rounded-md border border-[#E36F2C]/40 px-6 py-3 text-center text-sm tracking-wider text-[#E36F2C] transition-colors hover:bg-[#E36F2C]/5"
                 >
                   {zh ? '在 Global 地图查看' : 'View on Global Map'}
                 </Link>
               )}
               <Link
                 href="/cases"
-                className="border border-[#C4B9AB] px-6 py-3 text-center text-sm tracking-wider text-[#2C2A28] transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
+                className="rounded-md border border-[#C4B9AB] px-6 py-3 text-center text-sm tracking-wider text-[#2C2A28] transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
               >
                 {zh ? '返回全部案例' : 'Back to All Cases'}
               </Link>
@@ -208,7 +211,7 @@ export default function CaseDetailPageContent({
               )}
               <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2">
                 {dataRows.map((row) => (
-                  <div key={row.label} className="border border-[#E5DED4] bg-white px-4 py-3">
+                  <div key={row.label} className="rounded-md border border-[#E5DED4] bg-white px-4 py-3 shadow-sm">
                     <div className="text-[10px] tracking-wider text-[#8A8580]">{row.label}</div>
                     <div className="mt-1 text-sm font-semibold leading-6 text-[#2C2A28]">{row.value}</div>
                   </div>

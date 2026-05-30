@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
+import { SITE_CONTACT_HREF } from '@/lib/site-links';
 
 type DisplaySlide = {
   model: string;
@@ -15,6 +17,7 @@ type DisplaySlide = {
   features: string[];
   price: string;
   image: string;
+  href?: string;
 };
 
 type DisplayContentRow = {
@@ -49,6 +52,7 @@ const STATIC_SLIDES: DisplaySlide[] = [
     features: ['流线型轮廓 · 飞翼式门檐', '日式三分离卫浴', 'VIIE Gen6 全屋智控'],
     price: '¥ 488,000 起',
     image: '/images/e7-gen6-optimized.webp',
+    href: '/products/e7-gen6-flagship',
   },
   {
     model: 'E6',
@@ -60,6 +64,7 @@ const STATIC_SLIDES: DisplaySlide[] = [
     features: ['180° 全景环绕窗', '第六代锁扣防水屋顶', '一车双运 · 降低物流成本'],
     price: '¥ 388,000 起',
     image: '/images/e6-gen6.jpg',
+    href: '/products/e6-gen6-standard',
   },
   {
     model: 'E3',
@@ -71,6 +76,7 @@ const STATIC_SLIDES: DisplaySlide[] = [
     features: ['游艇式流线立面', '180° 弧形景观窗', '智能电动遮帘'],
     price: '¥ 228,000 起',
     image: '/images/e6-gen6.jpg',
+    href: '/products/e3-gen6-standard',
   },
   {
     model: 'V9',
@@ -82,6 +88,7 @@ const STATIC_SLIDES: DisplaySlide[] = [
     features: ['17.0㎡ 超大采光面积', '岛台一体厨餐空间', 'AI 语音智能控制'],
     price: '¥ 458,000 起',
     image: '/images/v9-gen6.jpg',
+    href: '/products/v9-gen6-standard',
   },
   {
     model: 'V5',
@@ -93,6 +100,7 @@ const STATIC_SLIDES: DisplaySlide[] = [
     features: ['超广角全景玻璃', '精品内嵌吧台', '6 吨轻量化设计'],
     price: '¥ 288,000 起',
     image: '/images/v9-gen6.jpg',
+    href: '/products/v5',
   },
   {
     model: 'S5',
@@ -104,6 +112,7 @@ const STATIC_SLIDES: DisplaySlide[] = [
     features: ['顶部天窗采光系统', '多面大窗全方位视野', '可定制室内布局'],
     price: '¥ 328,000 起',
     image: '/images/e6-gen6.jpg',
+    href: '/products/s5',
   },
 ];
 
@@ -117,6 +126,17 @@ function asTextArray(value: unknown): string[] | null {
   if (!Array.isArray(value)) return null;
   const items = value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0).map((item) => item.trim());
   return items.length > 0 ? items : null;
+}
+
+function inferDisplayHref(model: string | null | undefined): string | undefined {
+  const normalized = model?.toLowerCase().replace(/\s+/g, '') ?? '';
+  if (normalized.startsWith('e7')) return '/products/e7-gen6-flagship';
+  if (normalized.startsWith('e6')) return '/products/e6-gen6-standard';
+  if (normalized.startsWith('e3')) return '/products/e3-gen6-standard';
+  if (normalized.startsWith('v9')) return '/products/v9-gen6-standard';
+  if (normalized.startsWith('v5')) return '/products/v5';
+  if (normalized.startsWith('s5')) return '/products/s5';
+  return undefined;
 }
 
 function mapDisplayRow(row: DisplayContentRow): DisplaySlide {
@@ -137,6 +157,10 @@ function mapDisplayRow(row: DisplayContentRow): DisplaySlide {
     features: features.length > 0 ? features.slice(0, 3) : ['CMS managed showcase', 'Product details on request'],
     price: row.price ?? asText(payload.price) ?? 'Inquire for pricing',
     image: row.image || row.cover_image_url || '/images/e7-gen6-optimized.webp',
+    href: asText(payload.href)
+      ?? asText(payload.product_href)
+      ?? asText(payload.detail_href)
+      ?? inferDisplayHref(row.model ?? asText(payload.model) ?? row.title_en ?? row.title_zh),
   };
 }
 
@@ -432,6 +456,22 @@ export default function DisplayPage() {
             >
               {slide.price}
             </div>
+          </div>
+          <div className="flex flex-wrap justify-end gap-2">
+            {slide.href && (
+              <Link
+                href={slide.href}
+                className="inline-flex min-h-10 items-center border border-white/30 bg-white/12 px-4 text-xs font-bold uppercase tracking-[0.18em] text-white backdrop-blur transition hover:border-[#E36F2C] hover:bg-[#E36F2C]"
+              >
+                Details
+              </Link>
+            )}
+            <Link
+              href={SITE_CONTACT_HREF}
+              className="inline-flex min-h-10 items-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.18em] text-white transition hover:bg-[#C95E22]"
+            >
+              Consult
+            </Link>
           </div>
           <div
             className="bg-white/10 self-center"

@@ -84,7 +84,7 @@ export default async function AdminStatusPage() {
               title="媒体空间"
               value={formatBytes(overview.site.media.bytes)}
               detail={`${formatNumber(overview.site.media.count)} 个素材 / 单图上限 ${formatNumber(overview.site.media.maxUploadMb)} MB`}
-              href="/admin/media"
+              href="/admin/site/media"
               Icon={STATUS_ICONS.Package}
               tone={overview.site.media.bytes > 800 * 1024 * 1024 ? 'orange' : 'blue'}
             />
@@ -180,7 +180,7 @@ export default async function AdminStatusPage() {
                 title="页面草稿"
                 detail={overview.site.pages.total > 0 ? '进入可视化编辑器确认草稿' : '暂无页面草稿'}
                 count={overview.site.pages.total}
-                href="/admin/pages/visual"
+                href="/admin/site/visual"
               />
             </div>
           </section>

@@ -92,7 +92,7 @@ const SITE_PAGES: SitePage[] = [
     source: '页面可视化编辑器',
     detail: '首页 Hero、核心数据和安全插入区由受控模块维护，草稿不会直接影响前台。',
     status: 'editable',
-    editorHref: '/admin/pages/visual',
+    editorHref: '/admin/site/visual',
     viewHref: '/',
     Icon: LayoutTemplate,
     pageKey: 'home',
@@ -105,7 +105,7 @@ const SITE_PAGES: SitePage[] = [
     source: '页面可视化编辑器',
     detail: '关于页品牌、工厂、历程和荣誉等模块可编辑，但不开放新增结构。',
     status: 'editable',
-    editorHref: '/admin/pages/visual',
+    editorHref: '/admin/site/visual',
     viewHref: '/about',
     Icon: FileText,
     pageKey: 'about',
@@ -248,7 +248,7 @@ function getSitePagesSideNav({
         { key: 'navigation', label: '导航管理', href: '/admin/site/navigation', Icon: Navigation },
         { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },
         { key: 'settings', label: '网站信息', href: '/admin/site/settings', Icon: Settings },
-        { key: 'visual', label: '编辑网站', href: '/admin/pages/visual', Icon: FileText },
+        { key: 'visual', label: '编辑网站', href: '/admin/site/visual', Icon: FileText },
       ],
     },
     {
@@ -257,7 +257,7 @@ function getSitePagesSideNav({
         { key: 'products', label: '产品管理', href: '/admin/content/products', Icon: Package },
         { key: 'projects', label: '项目案例', href: '/admin/content/projects', Icon: MapPinned },
         { key: 'news', label: '新闻资讯', href: '/admin/content/news', Icon: Newspaper },
-        { key: 'media', label: '图片素材', href: '/admin/media', Icon: ImageIcon },
+        { key: 'media', label: '图片素材', href: '/admin/site/media', Icon: ImageIcon },
       ],
     },
     {
@@ -651,7 +651,7 @@ export default async function AdminSitePagesPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Link
-              href="/admin/pages/visual"
+              href="/admin/site/visual"
               className="inline-flex h-10 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-sm font-semibold text-white transition hover:bg-[#C95E22]"
             >
               <LayoutTemplate size={16} />

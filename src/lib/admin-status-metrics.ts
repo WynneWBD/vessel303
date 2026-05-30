@@ -757,7 +757,7 @@ async function loadMediaActivity(): Promise<ActivityItem[]> {
     sourceLabel: '媒体',
     title: firstText(row.filename, row.mime, row.id),
     detail: '图片素材上传记录',
-    href: '/admin/media',
+    href: '/admin/site/media',
     changedAt: row.changed_at,
   }))
 }
@@ -804,7 +804,7 @@ async function loadPageActivity(): Promise<ActivityItem[]> {
       sourceLabel: '页面',
       title: firstText(row.title_zh, row.title_en, `${row.page_key}:${row.module_key}`),
       detail: '页面模块草稿更新',
-      href: '/admin/pages/visual',
+      href: '/admin/site/visual',
       changedAt: row.changed_at,
     })),
     ...structureRes.rows.map((row) => ({
@@ -813,7 +813,7 @@ async function loadPageActivity(): Promise<ActivityItem[]> {
       sourceLabel: '页面',
       title: `${row.page_key} 页面结构草稿`,
       detail: '页面结构草稿更新',
-      href: '/admin/pages/visual',
+      href: '/admin/site/visual',
       changedAt: row.changed_at,
     })),
   ]

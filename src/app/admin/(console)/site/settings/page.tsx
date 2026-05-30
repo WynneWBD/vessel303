@@ -103,7 +103,7 @@ const SITE_INFO_ITEMS: InfoItem[] = [
     keys: ['mediaMaxUploadMb'],
     state: 'active',
     detail: '媒体上传上限已作为后台设置基线使用；真实上传 / 删除测试继续单独验收。',
-    href: '/admin/media',
+    href: '/admin/site/media',
     Icon: ImageIcon,
   },
   {
@@ -137,7 +137,7 @@ function getSettingsSideNav(isAdmin: boolean): AdminSideNavGroup[] {
         { key: 'navigation', label: '导航管理', href: '/admin/site/navigation', Icon: Navigation },
         { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },
         { key: 'settings', label: '网站信息', href: '/admin/site/settings', Icon: Settings },
-        { key: 'visual', label: '编辑网站', href: '/admin/pages/visual', Icon: FileText },
+        { key: 'visual', label: '编辑网站', href: '/admin/site/visual', Icon: FileText },
       ],
     },
     {
@@ -146,7 +146,7 @@ function getSettingsSideNav(isAdmin: boolean): AdminSideNavGroup[] {
         { key: 'products', label: '产品管理', href: '/admin/content/products', Icon: Package },
         { key: 'projects', label: '项目案例', href: '/admin/content/projects', Icon: MapPinned },
         { key: 'news', label: '新闻资讯', href: '/admin/content/news', Icon: Newspaper },
-        { key: 'media', label: '图片素材', href: '/admin/media', Icon: ImageIcon },
+        { key: 'media', label: '图片素材', href: '/admin/site/media', Icon: ImageIcon },
       ],
     },
     {

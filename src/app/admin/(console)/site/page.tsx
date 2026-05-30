@@ -99,7 +99,7 @@ const SITE_APPS: SiteApp[] = [
   {
     title: '编辑网站',
     detail: '进入页面可视化编辑，按页面和模块管理内容。',
-    href: '/admin/pages/visual',
+    href: '/admin/site/visual',
     Icon: LayoutTemplate,
   },
   {
@@ -117,7 +117,7 @@ const SITE_APPS: SiteApp[] = [
   {
     title: '管理图片',
     detail: '上传、查找图片，并查看图片被哪些内容引用。',
-    href: '/admin/media',
+    href: '/admin/site/media',
     Icon: ImageIcon,
   },
   {
@@ -179,7 +179,7 @@ const SITE_PUBLISH_APPS: SitePublishApp[] = [
   {
     title: '编辑页面草稿',
     detail: 'Home / About 的受控模块先保存为草稿，发布前必须预览校对。',
-    href: '/admin/pages/visual',
+    href: '/admin/site/visual',
     Icon: LayoutTemplate,
     action: '进入编辑',
   },
@@ -210,7 +210,7 @@ function getSiteSideNav({
         { key: 'navigation', label: '导航管理', href: '/admin/site/navigation', Icon: Navigation },
         { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },
         { key: 'settings', label: '网站信息', href: '/admin/site/settings', Icon: Settings },
-        { key: 'visual', label: '编辑网站', href: '/admin/pages/visual', Icon: FileText },
+        { key: 'visual', label: '编辑网站', href: '/admin/site/visual', Icon: FileText },
         { key: 'drafts', label: '页面草稿', href: '#drafts', badge: pageDraftCount, Icon: CircleDashed },
         { key: 'todo', label: '网站待办', href: '#todo', badge: todoCount, Icon: ListChecks },
       ],
@@ -218,7 +218,7 @@ function getSiteSideNav({
     {
       title: '资源与页面',
       items: [
-        { key: 'media', label: '图片素材', href: '/admin/media', badge: uploadCount, Icon: ImageIcon },
+        { key: 'media', label: '图片素材', href: '/admin/site/media', badge: uploadCount, Icon: ImageIcon },
         { key: 'home', label: '查看主站', href: '/', Icon: Eye },
         { key: 'global', label: 'Global 查看', href: '/global', Icon: MapPinned },
       ],
@@ -340,8 +340,8 @@ function Hero({
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <PrimaryAction href="/admin/pages/visual" Icon={LayoutTemplate} label="编辑网站" primary />
-            <PrimaryAction href="/admin/media" Icon={ImageIcon} label="管理图片" />
+            <PrimaryAction href="/admin/site/visual" Icon={LayoutTemplate} label="编辑网站" primary />
+            <PrimaryAction href="/admin/site/media" Icon={ImageIcon} label="管理图片" />
             <PrimaryAction href="/" Icon={Eye} label="查看主站" />
           </div>
         </div>
@@ -368,21 +368,21 @@ function Hero({
             title="页面草稿"
             value={pageDraftCount}
             detail={pageDraftCount > 0 ? '等待确认发布' : '暂无待发布草稿'}
-            href="/admin/pages/visual"
+            href="/admin/site/visual"
             tone={pageDraftCount > 0 ? 'orange' : 'green'}
           />
           <StatCard
             title="可见模块"
             value={visibleModules}
             detail="Home / About 已接入"
-            href="/admin/pages/visual"
+            href="/admin/site/visual"
             tone="blue"
           />
           <StatCard
             title="图片素材"
             value={uploadCount}
             detail={uploadBytes ? formatBytes(uploadBytes) : '暂无占用'}
-            href="/admin/media"
+            href="/admin/site/media"
             tone={uploadBytes > STORAGE_WARNING_BYTES ? 'orange' : 'green'}
           />
         </div>
@@ -605,13 +605,13 @@ function TodoPanel({
     {
       title: '页面草稿',
       detail: pageDraftCount > 0 ? '有页面内容或结构草稿待确认' : '暂无页面草稿',
-      href: '/admin/pages/visual',
+      href: '/admin/site/visual',
       ok: pageDraftCount === 0,
     },
     {
       title: '图片素材',
       detail: uploadBytes > STORAGE_WARNING_BYTES ? '空间使用偏高，建议整理素材' : '当前状态正常',
-      href: '/admin/media',
+      href: '/admin/site/media',
       ok: uploadBytes <= STORAGE_WARNING_BYTES,
     },
     {

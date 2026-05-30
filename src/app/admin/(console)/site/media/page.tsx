@@ -1,0 +1,126 @@
+import { redirect } from 'next/navigation'
+import { auth } from '@/auth'
+import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import MediaClient from '@/components/admin/MediaClient'
+import {
+  defaultSiteSettings,
+  getSiteSettings,
+  normalizeMediaMaxUploadMb,
+} from '@/lib/admin-settings-db'
+import { listUploads, sumStorageSize } from '@/lib/uploads-db'
+import {
+  Image as ImageIcon,
+  LayoutTemplate,
+  Link2,
+  ListChecks,
+  Navigation,
+  SearchCheck,
+  Settings,
+  Wrench,
+} from 'lucide-react'
+
+export const dynamic = 'force-dynamic'
+
+export const metadata = { title: '图片素材 - VESSEL' }
+
+type AdminRole = 'admin' | 'operator'
+
+function getSiteToolNav(uploadCount: number): AdminSideNavGroup[] {
+  return [
+    {
+      title: '网站运营',
+      items: [
+        { key: 'overview', label: '网站概览', href: '/admin/site', Icon: LayoutTemplate },
+        { key: 'conversion', label: '转化路径', href: '/admin/site/conversion', Icon: Link2 },
+        { key: 'pages', label: '页面清单', href: '/admin/site/pages', Icon: ListChecks },
+        { key: 'navigation', label: '导航管理', href: '/admin/site/navigation', Icon: Navigation },
+        { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },
+        { key: 'settings', label: '网站信息', href: '/admin/site/settings', Icon: Settings },
+      ],
+    },
+    {
+      title: '资源与页面',
+      items: [
+        { key: 'visual', label: '编辑网站', href: '/admin/site/visual', Icon: Wrench },
+        { key: 'media', label: '图片素材', href: '/admin/site/media', badge: uploadCount, Icon: ImageIcon },
+      ],
+    },
+    {
+      title: '高级维护',
+      items: [
+        { key: 'form-mode', label: '表单模式', href: '/admin/pages', adminOnly: true, Icon: Wrench },
+      ],
+    },
+  ]
+}
+
+export default async function SiteMediaPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const session = await auth()
+  if (!session?.user) redirect('/admin/login')
+
+  const role = session.user.role
+  if (role !== 'admin' && role !== 'operator') {
+    redirect('/admin/login?error=unauthorized')
+  }
+
+  const sp = await searchParams
+  const getStr = (key: string) => {
+    const value = sp[key]
+    return Array.isArray(value) ? value[0] : value
+  }
+  const filters = {
+    mime: getStr('mime') ?? 'all',
+    search: getStr('search') ?? '',
+  }
+  const page = Math.max(1, Number(getStr('page') ?? 1) || 1)
+  const limit = Math.min(100, Math.max(20, Number(getStr('limit') ?? 50) || 50))
+
+  const [{ uploads, total }, bytes, settings] = await Promise.all([
+    listUploads({
+      mime: filters.mime,
+      search: filters.search || undefined,
+      page,
+      limit,
+    }),
+    sumStorageSize(),
+    getSiteSettings().catch(() => defaultSiteSettings),
+  ])
+
+  const adminRole: AdminRole = role
+
+  return (
+    <AdminSectionShell
+      topNavActive="site"
+      role={adminRole}
+      email={session.user.email}
+      title="网站管理"
+      description="管理前台图片素材、上传派生图和大图风险提示。"
+      sideNavGroups={getSiteToolNav(total)}
+      activeItem="media"
+    >
+      <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+        <div className="mb-5 flex flex-col gap-2 border-b border-[#E6EEEE] pb-5">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#1889B6]">MEDIA CENTER</p>
+          <h1 className="text-2xl font-bold text-[#1E2C31]">图片素材</h1>
+          <p className="max-w-3xl text-sm leading-6 text-[#61767D]">
+            这里承接前台产品、案例、新闻、页面模块和 Media Kit 的图片素材。运营上传后优先生成缩略图，
+            前台页面按场景读取小图，原图继续保留作为资产。
+          </p>
+        </div>
+        <MediaClient
+          initialUploads={uploads}
+          initialTotal={total}
+          initialBytes={bytes}
+          initialFilters={filters}
+          initialPage={page}
+          initialLimit={limit}
+          maxUploadMb={normalizeMediaMaxUploadMb(settings.mediaMaxUploadMb)}
+        />
+      </section>
+    </AdminSectionShell>
+  )
+}

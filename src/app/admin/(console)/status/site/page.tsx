@@ -42,7 +42,7 @@ export default async function AdminStatusSitePage() {
             title="页面草稿"
             value={site.pages.total}
             detail={`模块草稿 ${formatNumber(site.pages.moduleDrafts)} / 结构草稿 ${formatNumber(site.pages.structureDrafts)}`}
-            href="/admin/pages/visual"
+            href="/admin/site/visual"
             Icon={STATUS_ICONS.LayoutTemplate}
             tone={site.pages.total > 0 ? 'orange' : 'green'}
           />
@@ -58,7 +58,7 @@ export default async function AdminStatusSitePage() {
             title="媒体容量"
             value={formatBytes(site.media.bytes)}
             detail={`${formatNumber(site.media.count)} 个素材 / 单图上限 ${formatNumber(site.media.maxUploadMb)} MB`}
-            href="/admin/media"
+            href="/admin/site/media"
             Icon={STATUS_ICONS.Package}
             tone={site.media.bytes > 800 * 1024 * 1024 ? 'orange' : 'blue'}
           />
@@ -117,7 +117,7 @@ export default async function AdminStatusSitePage() {
             <ActionCard
               title="处理页面草稿"
               detail={`${formatNumber(site.pages.total)} 个页面草稿等待确认。`}
-              href="/admin/pages/visual"
+              href="/admin/site/visual"
               Icon={STATUS_ICONS.LayoutTemplate}
               primary={site.pages.total > 0}
             />
@@ -131,7 +131,7 @@ export default async function AdminStatusSitePage() {
             <ActionCard
               title="管理媒体素材"
               detail="查看素材数量、容量和上传配置。"
-              href="/admin/media"
+              href="/admin/site/media"
               Icon={STATUS_ICONS.Package}
             />
           </div>
@@ -159,4 +159,3 @@ function SeoBox({ label, value, href }: { label: string; value: number; href: st
     </Link>
   )
 }
-

@@ -627,7 +627,7 @@ function MaintenanceBlock() {
         </div>
         <div className="flex flex-wrap gap-2">
           <MaintenanceLink href="/admin/settings" label="站点设置" Icon={Settings} />
-          <MaintenanceLink href="/admin/pages/visual" label="页面管理" Icon={LayoutTemplate} />
+          <MaintenanceLink href="/admin/site/visual" label="页面管理" Icon={LayoutTemplate} />
         </div>
       </div>
     </section>

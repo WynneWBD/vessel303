@@ -208,7 +208,7 @@ function getNavigationSideNav(isAdmin: boolean): AdminSideNavGroup[] {
         { key: 'navigation', label: '导航管理', href: '/admin/site/navigation', Icon: Navigation },
         { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },
         { key: 'settings', label: '网站信息', href: '/admin/site/settings', Icon: Settings },
-        { key: 'visual', label: '编辑网站', href: '/admin/pages/visual', Icon: FileText },
+        { key: 'visual', label: '编辑网站', href: '/admin/site/visual', Icon: FileText },
       ],
     },
     {
@@ -217,7 +217,7 @@ function getNavigationSideNav(isAdmin: boolean): AdminSideNavGroup[] {
         { key: 'products', label: '产品管理', href: '/admin/content/products', Icon: Package },
         { key: 'projects', label: '项目案例', href: '/admin/content/projects', Icon: MapPinned },
         { key: 'news', label: '新闻资讯', href: '/admin/content/news', Icon: Newspaper },
-        { key: 'media', label: '图片素材', href: '/admin/media', Icon: ImageIcon },
+        { key: 'media', label: '图片素材', href: '/admin/site/media', Icon: ImageIcon },
       ],
     },
     {
