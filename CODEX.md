@@ -654,3 +654,15 @@ curl -I https://www.vessel303.com/news/<slug>
 - Chrome 线上抽查：`/products`、`/faq`、`/scenarios/tourism`、`/media-kit` 无 console error、无横向溢出。
 - 未改范围：未改数据库、未写生产业务数据、未改权限 / 认证 / 支付 / 订单 / 会员、未改 `/global`、MapLibre、MapTiler 或 `/api/map`。
 - 后续建议：B24 可进入“内容素材与精品页补齐”或“移动端视觉深测 / 旧素材继续回填”，不要把权限矩阵提前插入前台体验链路。
+
+## B24 后台决定前台内容归源治理（2026-05-30）
+
+- Code commit: `e77c2c0` / `e77c2c09fa65e5343b5299e6f66b820c8fa53659`
+- Vercel deployment: `dpl_4Xay7mv5ikcqLmhKX7JkxP27hWMk`，状态 `READY`，production alias 包含 `https://www.vessel303.com`
+- 硬规则：后台是唯一内容来源，前台只展示后台已发布内容；前台只保留固定展示模板、样式容器、响应式规则和必要系统提示。
+- 前台不得自行写死或改写业务文案、图片、CTA 文案、模块说明、排序、显示 / 隐藏状态；这些必须来自产品 CMS、案例 CMS、新闻 CMS、FAQ CMS、B9 固定内容 CMS、Home / About / page modules、站点设置或导航 / 页脚配置。
+- 已完成代码范围：扩展 `page_modules` 到 `products`、`faq`、`media-kit`、`site` 等公开页面配置；Navbar / Footer 改为读取 `site` 模块；Home、Products、FAQ、Media Kit 改为读取对应后台模块；FAQ 不再使用本地 FAQ 静态数据作为前台内容；Cases、Innovation、Scenarios、产品详情已清理公开页上的内部运营 / 验收说明。
+- 后台编辑范围：`/admin/pages/visual` 与 page module API 已允许 B24 新页面 key；`/admin/site/pages`、`/admin/site/navigation`、`/admin/site/conversion` 继续作为运营说明和 owner 边界入口，不开放自由 HTML / CSS。
+- 验收摘要：`git diff --check`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 通过；本地 Chrome 抽查 `/`、`/products`、`/faq`、`/media-kit` 无内部说明词；线上 `/`、`/products`、`/faq`、`/media-kit` 均 200 / PRERENDER；未登录 `/admin/site/pages` 302 到 `/admin/login`。
+- 已知边界：本轮完成核心公开面归源第一刀，未做全站深层静态 fallback 清零。Scenarios、部分 Innovation 专题、固定精品产品页、About 遗留结构、产品 / 案例 / 新闻的 legacy fallback 仍需后续 B24 follow-up 逐步归源；但公开页不得再出现 `运营导览`、`对照 300`、`Codex`、`后台 owner`、`B23` 等内部说明。
+- 未改范围：未改数据库结构、未删除业务内容、未改权限 / 认证 / 支付 / 订单 / 会员、未改 `/global`、MapLibre、MapTiler 或 `/api/map`。
