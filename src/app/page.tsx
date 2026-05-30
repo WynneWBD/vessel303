@@ -2,13 +2,10 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import ProtectedImage from '@/components/ProtectedImage';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import TechDrawer from '@/components/TechDrawer';
-import { useT, useLanguage } from '@/contexts/LanguageContext';
-import { i18n } from '@/lib/i18n';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   isResolvedPageModuleVisible,
   resolveDynamicPageModules,
@@ -18,7 +15,6 @@ import {
 import { getPageModuleTemplateByModuleType, isTemplateBackedPageModule } from '@/lib/page-module-templates';
 import { buildContactHref, normalizeSiteHref, SITE_PRODUCTS_HREF } from '@/lib/site-links';
 
-type Tech = 'viie' | 'vols' | 'vipc';
 type Lang = 'zh' | 'en';
 
 type HomeModuleItem = {
@@ -68,6 +64,14 @@ const HOME_MODULE_REGISTRY = [
     moduleKey: 'credentials',
     moduleType: 'stats',
     defaultSortOrder: 20,
+    dynamicEnabled: true,
+  },
+  {
+    rendererKey: 'home.operatingProof',
+    pageKey: 'home',
+    moduleKey: 'operating-proof',
+    moduleType: 'fixed-content',
+    defaultSortOrder: 25,
     dynamicEnabled: true,
   },
 ] satisfies PageModuleRegistryEntry[];
@@ -151,14 +155,6 @@ function externalLinkProps(href: string) {
 
 // ─── Hero ────────────────────────────────────────────────
 
-const HERO_IMAGES = [
-  '/images/hero/optimized/homepage_banner-01.jpg',
-  '/images/hero/optimized/homepage_banner-02.jpg',
-  '/images/hero/optimized/homepage_banner-03.jpg',
-  '/images/hero/optimized/homepage_banner-04.jpg',
-  '/images/hero/optimized/homepage_banner-05.jpg',
-];
-
 function optimizedHeroImageUrl(imageUrl: string) {
   const trimmed = imageUrl.trim();
   if (!trimmed) return trimmed;
@@ -175,7 +171,6 @@ function optimizedHeroImageUrl(imageUrl: string) {
 }
 
 function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
-  const t = useT();
   const { lang } = useLanguage();
   const [current, setCurrent] = useState(0);
   const items = useMemo(() => sortModuleItems(pageModule), [pageModule]);
@@ -184,20 +179,21 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
       .filter((item) => typeof item.id === 'string' && item.id.startsWith('hero-image') && item.is_visible && item.image_url)
       .map((item) => optimizedHeroImageUrl(item.image_url as string));
 
-    return editableImages.length > 0 ? editableImages : HERO_IMAGES;
+    return editableImages;
   }, [items]);
   const findItem = (id: string) => items.find((item) => typeof item.id === 'string' && item.id === id);
-  const tagline = localizedLabel(findItem('hero-tagline'), lang, t(i18n.home.heroTagline));
-  const headline = localizedLabel(findItem('hero-headline'), lang, t(i18n.home.heroHeadline));
-  const subtitle = localizedLabel(findItem('hero-subtitle'), lang, t(i18n.home.heroSubtitle));
+  const tagline = localizedLabel(findItem('hero-tagline'), lang, '');
+  const headline = localizedLabel(findItem('hero-headline'), lang, '');
+  const subtitle = localizedLabel(findItem('hero-subtitle'), lang, '');
   const primaryCta = findItem('hero-primary-cta');
   const secondaryCta = findItem('hero-secondary-cta');
-  const primaryLabel = localizedLabel(primaryCta, lang, t(i18n.home.heroCta));
-  const secondaryLabel = localizedLabel(secondaryCta, lang, t(i18n.home.heroCtaSecondary));
+  const primaryLabel = localizedLabel(primaryCta, lang, '');
+  const secondaryLabel = localizedLabel(secondaryCta, lang, '');
   const primaryHref = normalizeSiteHref(primaryCta?.href, SITE_PRODUCTS_HREF);
   const secondaryHref = normalizeSiteHref(secondaryCta?.href, buildContactHref('home:hero_secondary_cta'));
-  const activeImage = current % heroImages.length;
+  const activeImage = heroImages.length > 0 ? current % heroImages.length : 0;
   const visibleHeroImages = useMemo(() => {
+    if (heroImages.length === 0) return [];
     const nextImage = (activeImage + 1) % heroImages.length;
     return Array.from(new Set([activeImage, nextImage])).map((index) => ({
       index,
@@ -207,11 +203,14 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   }, [activeImage, heroImages]);
 
   useEffect(() => {
+    if (heroImages.length === 0) return;
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % heroImages.length);
     }, 5000);
     return () => clearInterval(timer);
   }, [heroImages.length]);
+
+  if (!pageModule || !pageModule.is_visible || heroImages.length === 0 || !headline) return null;
 
   return (
     <section
@@ -305,31 +304,18 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 // ─── Credentials Bar ─────────────────────────────────────
 
 function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
-  const t = useT();
   const { lang } = useLanguage();
   const items = useMemo(() => sortModuleItems(pageModule), [pageModule]);
-  const hasEditableStats = Boolean(pageModule && Array.isArray(pageModule.items) && pageModule.items.length > 0);
-  const defaultStats = [
-    { val: t(i18n.home.credStat1), label: t(i18n.home.credLabel1) },
-    { val: t(i18n.home.credStat2), label: t(i18n.home.credLabel2) },
-    { val: t(i18n.home.credStat3), label: t(i18n.home.credLabel3) },
-    { val: t(i18n.home.credStat4), label: t(i18n.home.credLabel4) },
-  ];
-  const stats = hasEditableStats
-    ? items
-        .filter((item) => item.is_visible)
-        .map((item, index) => ({
-          id: item.id,
-          val: localizedValue(item, lang, defaultStats[index]?.val ?? ''),
-          label: localizedLabel(item, lang, defaultStats[index]?.label ?? ''),
-        }))
-        .filter((stat) => stat.val || stat.label)
-    : defaultStats.map((item, index) => ({
-        id: `cred-stat-${String(index + 1).padStart(2, '0')}`,
-        ...item,
-      }));
+  const stats = items
+    .filter((item) => item.is_visible)
+    .map((item) => ({
+      id: item.id,
+      val: localizedValue(item, lang, ''),
+      label: localizedLabel(item, lang, ''),
+    }))
+    .filter((stat) => stat.val || stat.label);
 
-  if (pageModule && !pageModule.is_visible) return null;
+  if (!pageModule || !pageModule.is_visible) return null;
   if (stats.length === 0) return null;
 
   return (
@@ -536,6 +522,8 @@ function renderHomeDynamicModule(resolved: ResolvedPageModule<HomePageModule>) {
       return <HeroSection key={resolved.registry.rendererKey} pageModule={resolved.pageModule} />;
     case 'home.credentials':
       return <CredentialsBar key={resolved.registry.rendererKey} pageModule={resolved.pageModule} />;
+    case 'home.operatingProof':
+      return <BackendOperatingProofSection key={resolved.registry.rendererKey} pageModule={resolved.pageModule} />;
     case 'home.simpleText':
       return <SimpleTextSection key={resolved.pageModule?.module_key ?? resolved.registry.moduleKey} pageModule={resolved.pageModule} />;
     case 'home.ctaSection':
@@ -545,106 +533,158 @@ function renderHomeDynamicModule(resolved: ResolvedPageModule<HomePageModule>) {
   }
 }
 
-function OperatingProofSection() {
+function BackendOperatingProofSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const { lang } = useLanguage();
-  const zh = lang === 'zh';
-  const items = [
-    {
-      label: zh ? '运营场景' : 'Operating Scenarios',
-      title: zh ? '从度假营地到城市商业' : 'From resort camps to city retail',
-      body: zh
-        ? '把产品、场景、项目案例和咨询入口连成一条可执行路径，方便采购方快速判断适用场景。'
-        : 'Products, scenarios, cases, and inquiry paths are organized as one operating journey for faster buyer evaluation.',
-    },
-    {
-      label: zh ? '交付能力' : 'Delivery Readiness',
-      title: zh ? '工厂预制，项目化交付' : 'Factory-built, project delivered',
-      body: zh
-        ? '首页先展示核心技术、资质、旗舰产品和项目覆盖，再引导进入产品或案例深看。'
-        : 'The homepage introduces core technology, certifications, flagship products, and project coverage before sending visitors deeper.',
-    },
-    {
-      label: zh ? '转化闭环' : 'Conversion Loop',
-      title: zh ? '咨询入口统一可追踪' : 'Trackable inquiry entry points',
-      body: zh
-        ? 'Contact、FAQ、产品详情和内容页的咨询动作都按统一规则进入运营线索。'
-        : 'Contact, FAQ, product detail, and content-page inquiries follow one source-aware conversion rule.',
-    },
-  ];
+  if (!pageModule || !pageModule.is_visible) return null;
+
+  const eyebrow = localizedLabel(findModuleItem(pageModule, 'eyebrow'), lang, '');
+  const intro = findModuleItem(pageModule, 'intro');
+  const title = localizedLabel(intro, lang, localizedModuleTitle(pageModule, lang, ''));
+  const description = localizedContent(intro, lang, localizedModuleDescription(pageModule, lang, ''));
+  const cards = sortModuleItems(pageModule)
+    .filter((item) => item.id.startsWith('card-'))
+    .map((item) => ({
+      id: item.id,
+      title: localizedLabel(item, lang, ''),
+      body: localizedContent(item, lang, ''),
+    }))
+    .filter((item) => item.title || item.body);
+  const images = sortModuleItems(pageModule)
+    .filter((item) => item.id.startsWith('image-') && item.image_url)
+    .slice(0, 3);
+  const primary = findModuleItem(pageModule, 'primary-cta');
+  const secondary = findModuleItem(pageModule, 'secondary-cta');
+  const primaryLabel = localizedLabel(primary, lang, '');
+  const secondaryLabel = localizedLabel(secondary, lang, '');
+  const primaryHref = normalizeSiteHref(primary?.href, SITE_PRODUCTS_HREF);
+  const secondaryHref = normalizeSiteHref(secondary?.href, '/cases');
+
+  if (!title && !description && cards.length === 0 && images.length === 0) return null;
 
   return (
-    <section className="border-b border-[#E5DED4] bg-white py-16">
+    <section
+      className="border-b border-[#E5DED4] bg-white py-16"
+      data-page-module="home:operating-proof"
+      data-page-key="home"
+      data-module-key="operating-proof"
+    >
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid gap-8 lg:grid-cols-[0.9fr_1.4fr] lg:items-end">
           <div>
-            <p className="mb-4 text-xs font-medium uppercase tracking-[0.3em] text-[#E36F2C]">
-              {zh ? '运营导览' : 'Operating Map'}
-            </p>
-            <h2 className="font-[family-name:var(--font-heading)] text-3xl font-light leading-tight text-[#241F1B] lg:text-4xl">
-              {zh ? '让首次访问者先看懂，再进入产品、案例和咨询。' : 'Let first-time buyers understand the path before products, cases, and inquiry.'}
-            </h2>
+            {eyebrow ? (
+              <p
+                className="mb-4 text-xs font-medium uppercase tracking-[0.3em] text-[#E36F2C]"
+                data-page-module-item="eyebrow"
+                data-page-module-field={`label_${lang}`}
+              >
+                {eyebrow}
+              </p>
+            ) : null}
+            {title ? (
+              <h2
+                className="font-[family-name:var(--font-heading)] text-3xl font-light leading-tight text-[#241F1B] lg:text-4xl"
+                data-page-module-item="intro"
+                data-page-module-field={`label_${lang}`}
+              >
+                {title}
+              </h2>
+            ) : null}
           </div>
-          <p className="max-w-2xl text-sm leading-7 text-[#6B625B] lg:ml-auto">
-            {zh
-              ? '对照 300 的建站心智，首页不只是视觉展示，而是把品牌可信度、产品目录、项目案例和联系动作放在同一条运营链路里。'
-              : 'Following the 300 operating mindset, the homepage is not only a visual entry. It connects credibility, product catalog, project proof, and contact actions in one path.'}
-          </p>
+          {description ? (
+            <p
+              className="max-w-2xl text-sm leading-7 text-[#6B625B] lg:ml-auto"
+              data-page-module-item="intro"
+              data-page-module-field={`content_${lang}`}
+            >
+              {description}
+            </p>
+          ) : null}
         </div>
 
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
-          {items.map((item) => (
-            <div key={item.label} className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-6">
-              <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.25em] text-[#E36F2C]">{item.label}</p>
-              <h3 className="font-[family-name:var(--font-heading)] text-xl font-medium text-[#241F1B]">{item.title}</h3>
-              <p className="mt-3 text-sm leading-6 text-[#6B625B]">{item.body}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-8 grid gap-3 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
-          {HERO_IMAGES.slice(0, 3).map((src, index) => (
-            <div key={src} className="relative min-h-[180px] overflow-hidden border border-[#E5DED4] bg-[#E5DED4] md:first:min-h-[260px]">
-              <Image
-                src={src}
-                alt={`VESSEL homepage proof ${index + 1}`}
-                fill
-                loading="lazy"
-                className="object-cover"
-                sizes={index === 0 ? '(max-width: 768px) 100vw, 48vw' : '(max-width: 768px) 100vw, 26vw'}
-              />
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#241F1B]/75 to-transparent p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75">
-                  {index === 0 ? (zh ? '产品与场景先行' : 'Product-led first view') : (zh ? '高清场景证据' : 'Visual proof')}
-                </p>
+        {cards.length > 0 ? (
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {cards.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-6"
+                data-page-module-item={item.id}
+              >
+                {item.title ? (
+                  <h3
+                    className="font-[family-name:var(--font-heading)] text-xl font-medium text-[#241F1B]"
+                    data-page-module-field={`label_${lang}`}
+                  >
+                    {item.title}
+                  </h3>
+                ) : null}
+                {item.body ? (
+                  <p
+                    className="mt-3 text-sm leading-6 text-[#6B625B]"
+                    data-page-module-field={`content_${lang}`}
+                  >
+                    {item.body}
+                  </p>
+                ) : null}
               </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-8 flex flex-col gap-3 border border-[#E5DED4] bg-[#241F1B] p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-[#E36F2C]">
-              {zh ? '300 对齐重点' : '300-aligned path'}
-            </p>
-            <p className="mt-2 text-sm leading-6 text-white/65">
-              {zh
-                ? '先看产品目录和真实项目，再带着场景需求进入咨询。'
-                : 'Start with catalog and real projects, then send an inquiry with scenario context.'}
-            </p>
+            ))}
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/products"
-              className="inline-flex min-h-10 items-center justify-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C85A1F]"
-            >
-              {zh ? '产品目录' : 'Catalog'}
-            </Link>
-            <Link
-              href="/cases"
-              className="inline-flex min-h-10 items-center justify-center border border-white/20 px-4 text-xs font-bold uppercase tracking-[0.12em] text-white/75 hover:border-[#E36F2C] hover:text-[#E36F2C]"
-            >
-              {zh ? '项目案例' : 'Cases'}
-            </Link>
+        ) : null}
+
+        {images.length > 0 ? (
+          <div className="mt-8 grid gap-3 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
+            {images.map((item, index) => (
+              <div
+                key={item.id}
+                className="relative min-h-[180px] overflow-hidden border border-[#E5DED4] bg-[#E5DED4] md:first:min-h-[260px]"
+                data-page-module-item={item.id}
+              >
+                <Image
+                  src={item.image_url as string}
+                  alt={localizedLabel(item, lang, '')}
+                  fill
+                  loading="lazy"
+                  className="object-cover"
+                  sizes={index === 0 ? '(max-width: 768px) 100vw, 48vw' : '(max-width: 768px) 100vw, 26vw'}
+                  data-page-module-field="image_url"
+                />
+                {localizedLabel(item, lang, '') ? (
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#241F1B]/75 to-transparent p-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75">
+                      {localizedLabel(item, lang, '')}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+            ))}
           </div>
-        </div>
+        ) : null}
+
+        {(primaryLabel || secondaryLabel) ? (
+          <div className="mt-8 flex flex-wrap gap-2">
+            {primaryLabel ? (
+              <Link
+                href={primaryHref}
+                {...externalLinkProps(primaryHref)}
+                className="inline-flex min-h-10 items-center justify-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C85A1F]"
+                data-page-module-item="primary-cta"
+                data-page-module-field={`label_${lang}`}
+              >
+                {primaryLabel}
+              </Link>
+            ) : null}
+            {secondaryLabel ? (
+              <Link
+                href={secondaryHref}
+                {...externalLinkProps(secondaryHref)}
+                className="inline-flex min-h-10 items-center justify-center border border-[#241F1B]/20 px-4 text-xs font-bold uppercase tracking-[0.12em] text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]"
+                data-page-module-item="secondary-cta"
+                data-page-module-field={`label_${lang}`}
+              >
+                {secondaryLabel}
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </section>
   );
@@ -652,515 +692,18 @@ function OperatingProofSection() {
 
 // ─── Core Tech Systems ───────────────────────────────────
 
-function CoreTechSection({ onOpenTech }: { onOpenTech: (tech: Tech) => void }) {
-  const t = useT();
-
-  const cards: { tech: Tech; title: string; sub: string; desc: string; icon: React.ReactNode }[] = [
-    {
-      tech: 'viie',
-      title: t(i18n.home.coreViieTitle),
-      sub: t(i18n.home.coreViieSub),
-      desc: t(i18n.home.coreViieDesc),
-      icon: (
-        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="#E36F2C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="4" y="6" width="28" height="20" rx="1.5" />
-          <path d="M12 30h12M18 26v4" />
-          <circle cx="10" cy="12" r="1.4" fill="#E36F2C" />
-          <path d="M14 12h14" strokeWidth="1.3" />
-          <path d="M14 16h10" strokeWidth="1.3" opacity="0.6" />
-          <path d="M14 20h12" strokeWidth="1.3" opacity="0.4" />
-        </svg>
-      ),
-    },
-    {
-      tech: 'vols',
-      title: t(i18n.home.coreVolsTitle),
-      sub: t(i18n.home.coreVolsSub),
-      desc: t(i18n.home.coreVolsDesc),
-      icon: (
-        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="#E36F2C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="18" cy="12" r="4.5" />
-          <path d="M18 3v2.5M18 18v2.5M9 12h2.5M24.5 12H27M11.6 5.6l1.8 1.8M22.6 16.6l1.8 1.8M24.4 5.6l-1.8 1.8M13.4 16.6l-1.8 1.8" />
-          <rect x="10" y="24" width="16" height="8" rx="1" />
-          <path d="M14 24v-1.5h8V24" />
-          <path d="M13 28h2M17 28h2M21 28h2" strokeWidth="1.3" opacity="0.7" />
-        </svg>
-      ),
-    },
-    {
-      tech: 'vipc',
-      title: t(i18n.home.coreVipcTitle),
-      sub: t(i18n.home.coreVipcSub),
-      desc: t(i18n.home.coreVipcDesc),
-      icon: (
-        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="#E36F2C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="4" y="6" width="13" height="10" rx="0.5" />
-          <rect x="19" y="6" width="13" height="10" rx="0.5" />
-          <rect x="4" y="18" width="13" height="12" rx="0.5" />
-          <rect x="19" y="18" width="13" height="12" rx="0.5" />
-          <path d="M8 24h2M13 24h2M23 24h2M28 24h2" strokeWidth="1.3" opacity="0.5" />
-        </svg>
-      ),
-    },
-  ];
-
-  return (
-    <section className="bg-[#FAF7F2] py-20">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center mb-14">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-4 font-medium">
-            {t(i18n.home.coreLabel)}
-          </p>
-          <h2
-            className="text-3xl lg:text-4xl font-light text-[#2C2A28] mb-4"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            {t(i18n.home.coreTitle)}
-          </h2>
-          <p className="text-sm text-[#6B625B] max-w-2xl mx-auto leading-relaxed">
-            {t(i18n.home.coreSub)}
-          </p>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-6">
-          {cards.map((card) => (
-            <button
-              key={card.tech}
-              type="button"
-              onClick={() => onOpenTech(card.tech)}
-              className="group bg-white rounded-lg border border-[#E5DED4] border-t-2 border-t-[#E36F2C] hover:border-[#E36F2C]/45 hover:shadow-[0_18px_50px_rgba(44,42,40,0.10)] p-8 flex flex-col text-left transition-all duration-200 cursor-pointer"
-            >
-              <div className="mb-6">{card.icon}</div>
-              <h3
-                className="text-lg font-medium text-[#2C2A28] mb-1"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
-                {card.title}
-              </h3>
-              <p className="text-xs text-[#E36F2C]/70 tracking-wider uppercase mb-4">{card.sub}</p>
-              <p className="text-sm text-[#6B625B] leading-relaxed flex-1">{card.desc}</p>
-              <div className="mt-6 flex items-center gap-1 text-[#E36F2C] text-sm tracking-wider">
-                <span>{t(i18n.home.coreLearnMore)}</span>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── Certifications ──────────────────────────────────────
-
-function CertificationsSection() {
-  const t = useT();
-  const certs = [
-    {
-      name: t(i18n.home.certEuName),
-      std: t(i18n.home.certEuStd),
-      desc: t(i18n.home.certEuDesc),
-      icon: (
-        <svg viewBox="0 0 190 140" className="h-10 w-auto" fill="#2C2A28">
-          <path d="M70 0C31.3 0 0 31.3 0 70c0 38.7 31.3 70 70 70 18.4 0 35.2-7.1 47.7-18.8l-10.5-11.3C97.4 119.4 84.2 125 70 125c-30.4 0-55-24.6-55-55s24.6-55 55-55c14.2 0 27.4 5.6 37.2 15.1l10.5-11.3C105.2 7.1 88.4 0 70 0z"/>
-          <path d="M190 0h-80v15h65v47.5h-55v15h55V125h-65v15h80z"/>
-        </svg>
-      ),
-    },
-    {
-      name: t(i18n.home.certUsName),
-      std: t(i18n.home.certUsStd),
-      desc: t(i18n.home.certUsDesc),
-      icon: (
-        <svg viewBox="0 0 120 48" className="h-10 w-auto">
-          <rect x="1" y="1" width="118" height="46" rx="6" fill="none" stroke="#2C2A28" strokeWidth="2"/>
-          <text x="60" y="32" textAnchor="middle" fill="#2C2A28" fontSize="22" fontWeight="600" letterSpacing="0.1em" style={{fontFamily: 'var(--font-heading), sans-serif'}}>IBC</text>
-        </svg>
-      ),
-    },
-    {
-      name: t(i18n.home.certIsoName),
-      std: t(i18n.home.certIsoStd),
-      desc: t(i18n.home.certIsoDesc),
-      icon: (
-        <svg viewBox="0 0 160 48" className="h-10 w-auto">
-          <text x="80" y="34" textAnchor="middle" fill="#2C2A28" fontSize="28" fontWeight="300" letterSpacing="0.05em" style={{fontFamily: 'var(--font-heading), sans-serif'}}>ISO</text>
-          <line x1="0" y1="44" x2="160" y2="44" stroke="#E36F2C" strokeWidth="2"/>
-        </svg>
-      ),
-    },
-    {
-      name: t(i18n.home.certAuName),
-      std: t(i18n.home.certAuStd),
-      desc: t(i18n.home.certAuDesc),
-      icon: (
-        <svg viewBox="0 0 48 48" className="h-10 w-auto" fill="none" stroke="#2C2A28" strokeWidth="2">
-          <path d="M24 4L8 14v12c0 10 6.8 19.4 16 22 9.2-2.6 16-12 16-22V14L24 4z"/>
-          <path d="M16 24l6 6 10-12" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      ),
-    },
-  ];
-  return (
-    <section className="bg-[#F5F2ED] py-24 lg:py-32 border-y border-[#E5DED4]">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-4 font-medium">{t(i18n.home.certLabel)}</p>
-          <h2 className="text-3xl lg:text-4xl font-light text-[#2C2A28] mb-4 font-[family-name:var(--font-heading)]">
-            {t(i18n.home.certTitle)}
-          </h2>
-          <p className="text-sm text-[#6B625B] max-w-2xl mx-auto">{t(i18n.home.certSubtitle)}</p>
-        </div>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {certs.map((c, i) => (
-            <div key={i} className="text-center group">
-              <div className="h-14 flex items-center justify-center mb-6 opacity-70 group-hover:opacity-100 transition-opacity">{c.icon}</div>
-              <div className="text-[#2C2A28] text-base font-medium mb-2 font-[family-name:var(--font-heading)]">{c.name}</div>
-              <div className="text-[#A67C5B] text-[11px] tracking-wider font-mono mb-3">{c.std}</div>
-              <p className="text-[#6B625B] text-xs leading-relaxed">{c.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── Philosophy ──────────────────────────────────────────
-
-function PhilosophySection() {
-  const t = useT();
-  return (
-    <section className="bg-[#F5F2ED] py-24 lg:py-32">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <div>
-            <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-6 font-medium">
-              {t(i18n.home.philoLabel)}
-            </p>
-            <h2
-              className="text-3xl lg:text-4xl font-light text-[#1A1A1E] mb-8 leading-snug"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              {t(i18n.home.philoTitle)}
-            </h2>
-            <p className="text-base text-[#4A4744] leading-relaxed">{t(i18n.home.philoBody)}</p>
-          </div>
-          <div className="relative aspect-[4/3] overflow-hidden">
-            <Image src="/images/homepage/story-01.jpg" alt="VESSEL philosophy" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── Flagship ────────────────────────────────────────────
-
-function FlagshipSection() {
-  const t = useT();
-  const specs = [
-    { val: t(i18n.home.flagshipSpec1), label: t(i18n.home.flagshipSpec1L) },
-    { val: t(i18n.home.flagshipSpec2), label: t(i18n.home.flagshipSpec2L) },
-    { val: t(i18n.home.flagshipSpec3), label: t(i18n.home.flagshipSpec3L) },
-  ];
-  return (
-    <section className="bg-[#FAF7F2] py-24 lg:py-32">
-      <div className="max-w-6xl mx-auto px-6">
-        <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-3 font-medium">
-          {t(i18n.home.flagshipLabel)}
-        </p>
-        <p className="text-sm text-[#8A7D74] tracking-wider mb-4">{t(i18n.home.flagshipModel)}</p>
-        <h2
-          className="text-3xl lg:text-5xl font-light text-[#2C2A28] mb-6 leading-tight max-w-2xl"
-          style={{ fontFamily: 'var(--font-heading)' }}
-        >
-          {t(i18n.home.flagshipTitle)}
-        </h2>
-        <p className="text-sm text-[#6B625B] mb-12 max-w-2xl leading-relaxed">
-          {t(i18n.home.flagshipWhy)}
-        </p>
-
-        <div className="flex gap-12 mb-16">
-          {specs.map((s) => (
-            <div key={s.label} className="pr-12 border-r border-[#E5DED4] last:border-0 last:pr-0">
-              <div
-                className="text-3xl lg:text-4xl font-light text-[#E36F2C] mb-1 whitespace-nowrap"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
-                {s.val}
-              </div>
-              <div className="text-xs text-[#8A7D74] tracking-wider">{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="relative aspect-[16/9] overflow-hidden bg-[#E5DED4] mb-10 shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
-          <Image src="/images/e7-gen6-optimized.webp" alt="VESSEL E7 Gen6" fill sizes="(max-width: 1280px) 100vw, 1152px" className="object-cover" />
-        </div>
-
-        <Link
-          href="/products/e7-gen6-flagship"
-          className="inline-flex items-center gap-2 text-[#E36F2C] text-sm tracking-wider hover:text-[#C85A1F] transition-colors"
-        >
-          {t(i18n.home.flagshipCta)}
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </Link>
-      </div>
-    </section>
-  );
-}
-
-// ─── Technology (3-column grid with images) ──────────────
-
-function TechnologySection() {
-  const t = useT();
-  const techs = [
-    { tag: t(i18n.home.tech1Tag), title: t(i18n.home.tech1Title), body: t(i18n.home.tech1Body), img: '/images/homepage/tech-viie.jpg' },
-    { tag: t(i18n.home.tech2Tag), title: t(i18n.home.tech2Title), body: t(i18n.home.tech2Body), img: '/images/homepage/tech-vols-optimized.webp' },
-    { tag: t(i18n.home.tech3Tag), title: t(i18n.home.tech3Title), body: t(i18n.home.tech3Body), img: '/images/homepage/tech-vipc-optimized.webp' },
-  ];
-  return (
-    <section className="bg-[#F5F2ED] py-24 lg:py-32 border-y border-[#E5DED4]">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-4 font-medium">
-            {t(i18n.home.techLabel)}
-          </p>
-          <h2
-            className="text-3xl lg:text-4xl font-light text-[#2C2A28]"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            {t(i18n.home.techTitle)}
-          </h2>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-5">
-          {techs.map((tech) => (
-            <div key={tech.tag} className="bg-white border border-[#E5DED4] rounded-lg flex flex-col overflow-hidden shadow-[0_12px_40px_rgba(44,42,40,0.06)]">
-              <div className="relative aspect-[16/10] bg-[#E5DED4] overflow-hidden">
-                <Image
-                  src={tech.img}
-                  alt={tech.title}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 33vw"
-                  className="object-cover"
-                />
-              </div>
-              <div className="p-8">
-                <p className="text-[#E36F2C] text-xs tracking-[0.3em] font-medium mb-4 uppercase">{tech.tag}</p>
-                <h3
-                  className="text-xl font-medium text-[#2C2A28] mb-4"
-                  style={{ fontFamily: 'var(--font-heading)' }}
-                >
-                  {tech.title}
-                </h3>
-                <p className="text-sm text-[#6B625B] leading-relaxed">{tech.body}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── Projects Grid ───────────────────────────────────────
-
-function ProjectsSection() {
-  const t = useT();
-  const REGIONS = [
-    { label: t(i18n.home.projReg1), desc: t(i18n.home.projReg1Desc), img: '/images/products/region-asia-huawei.jpg' },
-    { label: t(i18n.home.projReg2), desc: t(i18n.home.projReg2Desc), img: '/images/products/region-europe-russia.jpg' },
-    { label: t(i18n.home.projReg3), desc: t(i18n.home.projReg3Desc), img: '/images/products/region-americas.jpg' },
-    { label: t(i18n.home.projReg4), desc: t(i18n.home.projReg4Desc), img: '/images/homepage/region-mideast.jpg' },
-    { label: t(i18n.home.projReg5), desc: t(i18n.home.projReg5Desc), img: '/images/homepage/region-oceania.jpg' },
-    { label: t(i18n.home.projReg6), desc: t(i18n.home.projReg6Desc), img: '/images/products/region-africa.jpg' },
-  ];
-  return (
-    <section className="bg-[#F5F2ED] py-24 lg:py-32">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-4 font-medium">
-            {t(i18n.home.projLabel)}
-          </p>
-          <h2
-            className="text-3xl lg:text-4xl font-light text-[#1A1A1E]"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            {t(i18n.home.projTitle)}
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-12">
-          {REGIONS.map((r) => (
-            <div key={r.label} className="relative aspect-[4/3] overflow-hidden group">
-              <ProtectedImage
-                src={r.img}
-                alt={r.label}
-                fill
-                sizes="(max-width: 1024px) 50vw, 33vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <div className="absolute bottom-0 left-0 p-5">
-                <p
-                  className="text-white text-lg font-medium mb-0.5"
-                  style={{ fontFamily: 'var(--font-heading)' }}
-                >
-                  {r.label}
-                </p>
-                <p className="text-white/60 text-xs">{r.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="text-center">
-          <Link
-            href="/global"
-              className="inline-flex items-center gap-2 text-[#E36F2C] text-sm tracking-wider hover:text-[#C85A1F] transition-colors"
-          >
-            {t(i18n.home.projCta)}
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── Manufacturing ───────────────────────────────────────
-
-function ManufacturingSection() {
-  const t = useT();
-  return (
-    <section className="bg-[#FAF7F2] py-24 lg:py-32">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <div>
-            <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-6 font-medium">
-              {t(i18n.home.mfgLabel)}
-            </p>
-            <h2
-              className="text-3xl lg:text-5xl font-light text-[#2C2A28] mb-8 leading-tight"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              {t(i18n.home.mfgTitle)}
-            </h2>
-            <p className="text-base text-[#6B625B] leading-relaxed">{t(i18n.home.mfgBody)}</p>
-          </div>
-          <div className="relative aspect-[4/3] overflow-hidden bg-[#E5DED4] shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
-            <Image src="/images/homepage/factory-01.jpg" alt="VESSEL factory" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── Scenarios ───────────────────────────────────────────
-
-function ScenariosSection() {
-  const t = useT();
-  const scenes = [
-    { title: t(i18n.home.scen1Title), desc: t(i18n.home.scen1Desc), img: '/images/homepage/scene-tourism.jpg' },
-    { title: t(i18n.home.scen2Title), desc: t(i18n.home.scen2Desc), img: '/images/products/scenario-commercial.jpg' },
-    { title: t(i18n.home.scen3Title), desc: t(i18n.home.scen3Desc), img: '/images/products/scenario-public.jpg' },
-  ];
-  return (
-    <section className="bg-[#F5F2ED] py-24 lg:py-32">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#E36F2C] mb-4 font-medium">{t(i18n.home.scenLabel)}</p>
-          <h2 className="text-3xl lg:text-4xl font-light text-[#1A1A1E] font-[family-name:var(--font-heading)]">{t(i18n.home.scenTitle)}</h2>
-        </div>
-        <div className="grid lg:grid-cols-3 gap-5">
-          {scenes.map((s) => (
-            <div key={s.title} className="group overflow-hidden border border-[#E5E0DA] hover:border-[#E36F2C]/40 transition-colors">
-              <div className="relative aspect-[16/10] overflow-hidden">
-                <Image src={s.img} alt={s.title} fill sizes="(max-width: 1024px) 100vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
-              </div>
-              <div className="p-7">
-                <div className="h-0.5 bg-[#E36F2C] w-8 mb-5" />
-                <h3 className="text-xl font-medium text-[#1A1A1E] mb-2 font-[family-name:var(--font-heading)]">{s.title}</h3>
-                <p className="text-sm text-[#8A8580] leading-relaxed">{s.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── CTA ─────────────────────────────────────────────────
-
-function CtaSection() {
-  const t = useT();
-  return (
-    <section className="bg-[#241F1B] py-32 text-center">
-      <div className="max-w-2xl mx-auto px-6">
-        <h2
-          className="text-3xl lg:text-4xl font-light text-[#F5F2ED] mb-6"
-          style={{ fontFamily: 'var(--font-heading)' }}
-        >
-          {t(i18n.home.ctaTitle)}
-        </h2>
-        <p className="text-base text-[#C9BEB4] mb-10 leading-relaxed">{t(i18n.home.ctaBody)}</p>
-        <Link
-          href={buildContactHref('home:final_cta')}
-          className="inline-block bg-[#E36F2C] text-white px-10 py-4 text-sm tracking-wider hover:bg-[#C85A1F] transition-colors"
-        >
-          {t(i18n.home.ctaBtn)}
-        </Link>
-      </div>
-    </section>
-  );
-}
-
-// ─── Page ────────────────────────────────────────────────
-
 export default function HomePage() {
-  const { lang } = useLanguage();
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [activeTech, setActiveTech] = useState<Tech | null>(null);
   const pageModules = useHomePageModules();
   const dynamicModules = useMemo(
     () => resolveHomeDynamicModules(pageModules),
     [pageModules],
   );
 
-  const openTech = (tech: Tech) => {
-    setActiveTech(tech);
-    setDrawerOpen(true);
-  };
-
   return (
     <main>
       <Navbar />
       {dynamicModules.map(renderHomeDynamicModule)}
-      <OperatingProofSection />
-      <CoreTechSection onOpenTech={openTech} />
-      <CertificationsSection />
-      <PhilosophySection />
-      <FlagshipSection />
-      <TechnologySection />
-      <ProjectsSection />
-      <ManufacturingSection />
-      <ScenariosSection />
-      <CtaSection />
       <Footer />
-      <TechDrawer
-        isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        tech={activeTech}
-        lang={lang}
-      />
     </main>
   );
 }

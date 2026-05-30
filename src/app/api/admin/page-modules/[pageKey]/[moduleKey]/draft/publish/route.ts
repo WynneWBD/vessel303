@@ -2,21 +2,14 @@ import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
-import { publishPageModuleDraft } from '@/lib/page-modules-db'
+import { isPageModulePageKey, pageModulePublicPaths, publishPageModuleDraft } from '@/lib/page-modules-db'
 
 export const dynamic = 'force-dynamic'
 
 type Ctx = { params: Promise<{ pageKey: string; moduleKey: string }> }
 
-const pageKeys = ['home', 'about'] as const
-
-function isPageKey(value: string): value is (typeof pageKeys)[number] {
-  return pageKeys.includes(value as (typeof pageKeys)[number])
-}
-
 function revalidatePageModulePath(pageKey: string) {
-  if (pageKey === 'home') revalidatePath('/')
-  if (pageKey === 'about') revalidatePath('/about')
+  for (const path of pageModulePublicPaths(pageKey)) revalidatePath(path)
 }
 
 export async function POST(_req: Request, ctx: Ctx) {
@@ -24,7 +17,7 @@ export async function POST(_req: Request, ctx: Ctx) {
   if (admin instanceof Response) return admin
 
   const { pageKey, moduleKey } = await ctx.params
-  if (!isPageKey(pageKey)) {
+  if (!isPageModulePageKey(pageKey)) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 

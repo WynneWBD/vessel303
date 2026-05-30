@@ -3,10 +3,19 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useT } from '@/contexts/LanguageContext';
+import { useLanguage, useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
 import { trackFormSubmitSuccess } from '@/lib/site-analytics-client';
 import { buildLeadSource } from '@/lib/site-links';
+import {
+  fetchPublicPageModules,
+  itemById,
+  itemLabel,
+  moduleDescription,
+  moduleMap,
+  moduleTitle,
+  type PublicPageModule,
+} from '@/lib/page-module-client';
 
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -24,8 +33,18 @@ type MediaKitResource = {
 
 export default function MediaKitPage() {
   const t = useT();
+  const { lang } = useLanguage();
   const [status, setStatus] = useState<Status>('idle');
   const [resources, setResources] = useState<MediaKitResource[]>([]);
+  const [pageModules, setPageModules] = useState<PublicPageModule[] | null>(null);
+  const heroModule = moduleMap(pageModules).get('hero') ?? null;
+  const heroEyebrow = itemLabel(itemById(heroModule, 'eyebrow'), lang);
+  const heroTitle = moduleTitle(heroModule, lang);
+  const heroDescription = moduleDescription(heroModule, lang);
+  const formTitle = itemLabel(itemById(heroModule, 'form-title'), lang);
+  const formDescription = itemLabel(itemById(heroModule, 'form-description'), lang);
+  const resourceHeading = itemLabel(itemById(heroModule, 'resource-heading'), lang);
+  const resourceCta = itemLabel(itemById(heroModule, 'resource-cta'), lang);
 
   const useCaseOptions = [
     { value: 'press',    label: t(i18n.mediaKit.useCasePress) },
@@ -37,6 +56,13 @@ export default function MediaKitPage() {
 
   useEffect(() => {
     let cancelled = false;
+    fetchPublicPageModules('media-kit')
+      .then((modules) => {
+        if (!cancelled) setPageModules(modules);
+      })
+      .catch(() => {
+        if (!cancelled) setPageModules(null);
+      });
     fetch('/api/site-content/media-kit')
       .then((res) => (res.ok ? res.json() : { data: [] }))
       .then((data) => {
@@ -91,25 +117,24 @@ export default function MediaKitPage() {
       {/* Hero */}
       <section className="bg-[#241F1B] px-4 pb-12 pt-28 sm:px-6 sm:pb-16">
         <div className="max-w-5xl mx-auto">
-          <p className="text-[#E36F2C] text-xs tracking-[0.35em] uppercase font-medium mb-4">
-            {t(i18n.mediaKit.heroLabel)}
-          </p>
-          <h1
-            className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#F5F2ED] leading-tight mb-6"
-            style={{ fontFamily: 'DM Sans, sans-serif' }}
-          >
-            {t(i18n.mediaKit.heroTitle)}
-          </h1>
-          <p className="text-[#C4B9AB] text-sm sm:text-base leading-relaxed max-w-3xl">
-            {t(i18n.mediaKit.heroSubtitle)}
-          </p>
-          <div className="mt-8 flex flex-wrap gap-2">
-            {['CMS resources', 'Lead request form', 'Source tracking'].map((item) => (
-              <span key={item} className="border border-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-white/55">
-                {item}
-              </span>
-            ))}
-          </div>
+          {heroEyebrow ? (
+            <p className="text-[#E36F2C] text-xs tracking-[0.35em] uppercase font-medium mb-4">
+              {heroEyebrow}
+            </p>
+          ) : null}
+          {heroTitle ? (
+            <h1
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#F5F2ED] leading-tight mb-6"
+              style={{ fontFamily: 'DM Sans, sans-serif' }}
+            >
+              {heroTitle}
+            </h1>
+          ) : null}
+          {heroDescription ? (
+            <p className="text-[#C4B9AB] text-sm sm:text-base leading-relaxed max-w-3xl">
+              {heroDescription}
+            </p>
+          ) : null}
         </div>
       </section>
 
@@ -122,10 +147,10 @@ export default function MediaKitPage() {
               className="text-2xl sm:text-3xl font-bold text-[#2C2A28] mb-3"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
             >
-              {t(i18n.mediaKit.formHeading)}
+              {formTitle}
             </h2>
             <p className="text-[#8A8580] text-sm mb-8 leading-relaxed">
-              {t(i18n.mediaKit.formIntro)}
+              {formDescription}
             </p>
 
             {status === 'success' ? (
@@ -197,7 +222,7 @@ export default function MediaKitPage() {
             {resources.length > 0 && (
               <section className="bg-white border border-[#E5DED4] p-8 h-fit shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
                 <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-4">
-                  Available Assets
+                  {resourceHeading}
                 </p>
                 <div className="space-y-4">
                   {resources.map((resource) => (
@@ -215,7 +240,7 @@ export default function MediaKitPage() {
                           rel="noopener noreferrer"
                           className="mt-3 inline-flex text-xs font-semibold text-[#E36F2C] hover:text-[#C85A1F]"
                         >
-                          {resource.cta_label_en || 'Request access'}
+                          {resource.cta_label_en || resourceCta || resource.title_en || resource.title_zh}
                         </a>
                       )}
                     </article>
@@ -224,19 +249,6 @@ export default function MediaKitPage() {
               </section>
             )}
 
-            <section className="bg-white border border-[#E5DED4] p-8 h-fit shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
-              <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-4">
-                {t(i18n.mediaKit.noteTitle)}
-              </p>
-              <ul className="space-y-4 text-[#6B625B] text-sm leading-relaxed">
-                {[i18n.mediaKit.note1, i18n.mediaKit.note2, i18n.mediaKit.note3].map((k, i) => (
-                  <li key={i} className="flex gap-3">
-                    <span className="text-[#E36F2C] shrink-0">·</span>
-                    <span>{t(k)}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
           </aside>
         </div>
       </section>

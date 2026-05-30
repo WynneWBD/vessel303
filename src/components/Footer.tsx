@@ -1,199 +1,179 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useLanguage, useT } from '@/contexts/LanguageContext';
-import { i18n } from '@/lib/i18n';
-import { buildContactHref } from '@/lib/site-links';
+import { useLanguage } from '@/contexts/LanguageContext';
+import {
+  fetchPublicPageModules,
+  itemContent,
+  itemLabel,
+  itemValue,
+  moduleDescription,
+  moduleMap,
+  moduleTitle,
+  visibleItems,
+  type PublicPageModule,
+} from '@/lib/page-module-client';
 
-export default function Footer() {
-  const t = useT();
+function FooterLinkList({ module }: { module: PublicPageModule | null }) {
   const { lang } = useLanguage();
-
-  const productLinks = [
-    ['E7 Gen6', '38.8㎡', '/products/e7-gen6-flagship'],
-    ['E6 Gen6', '29.6㎡', '/products/e6'],
-    ['E3 Gen6', '19㎡ mini', '/products/e3'],
-    ['V9 Gen6', '38㎡', '/products/v9-gen6-standard'],
-    ['V5 Gen5', '24.8㎡', '/products/v5'],
-    ['S5 Gen5', '29.6㎡', '/products/s5'],
-  ] as const;
-
-  const companyLinks = [
-    { label: t(i18n.nav.about), href: '/about' },
-    { label: t(i18n.nav.cases), href: '/cases' },
-    { label: t(i18n.nav.news), href: '/news' },
-    { label: t(i18n.nav.contact), href: buildContactHref('footer:company_contact') },
-    { label: t(i18n.footer.mediaKit), href: '/media-kit' },
-    { label: t(i18n.nav.scenarioTourism), href: '/scenarios/tourism' },
-    { label: t(i18n.nav.scenarioCommercial), href: '/scenarios/commercial' },
-    { label: t(i18n.nav.scenarioPublic), href: '/scenarios/public' },
-  ];
-  const footerProof = [
-    lang === 'zh' ? '产品目录 / 案例 / FAQ 统一承接咨询' : 'Product, cases, and FAQ all connect to inquiry paths',
-    lang === 'zh' ? '工厂交付、全球项目和技术专题可快速追溯' : 'Factory delivery, global proof, and technology topics stay traceable',
-    lang === 'zh' ? 'B22 已强化 300 式产品目录、项目证据和移动端路径' : 'B22 strengthens 300-style catalog, project proof, and mobile paths',
-  ];
+  const title = moduleTitle(module, lang);
+  const items = visibleItems(module).filter((item) => item.href && itemLabel(item, lang));
+  if (!module || module.is_visible === false || (!title && items.length === 0)) return null;
 
   return (
-    <footer id="contact" className="bg-[#241F1B] border-t border-[#E36F2C]/15">
-      {/* CTA bar */}
-      <div className="bg-[#E36F2C]/5 border-b border-[#E36F2C]/15 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div>
-            <div className="text-white font-bold text-lg tracking-wider mb-1">
-              {t(i18n.footer.ctaTitle)}
-            </div>
-            <div className="text-white/40 text-sm tracking-wider">
-              {t(i18n.footer.ctaSubtitle)}
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <a
-              href="tel:4008090303"
-              className="bg-[#E36F2C] text-white font-bold text-sm px-6 py-3 hover:bg-[#C85A1F] transition-colors tracking-wider"
-            >
-              {t(i18n.footer.phoneBtn)}
-            </a>
+    <div>
+      {title ? (
+        <h4 className="mb-5 text-xs font-semibold uppercase tracking-[0.25em] text-white">{title}</h4>
+      ) : null}
+      <ul className="space-y-2.5">
+        {items.map((item) => (
+          <li key={item.id}>
             <Link
-              href={buildContactHref('footer:message_cta')}
-              className="border border-[#E36F2C]/40 text-[#E36F2C] text-sm px-6 py-3 hover:bg-[#E36F2C]/10 transition-colors tracking-wider"
+              href={item.href as string}
+              className="group flex items-center gap-2 text-sm text-white/40 transition-colors hover:text-[#E36F2C]"
             >
-              {t(i18n.footer.messageBtn)}
+              <span className="text-[#E36F2C]/30 transition-colors group-hover:text-[#E36F2C]">-</span>
+              <span className="tracking-wider">{itemLabel(item, lang)}</span>
+              {itemValue(item, lang) ? (
+                <span className="text-xs text-white/20">{itemValue(item, lang)}</span>
+              ) : null}
             </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default function Footer() {
+  const { lang } = useLanguage();
+  const [siteModules, setSiteModules] = useState<PublicPageModule[] | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchPublicPageModules('site', controller.signal)
+      .then((modules) => setSiteModules(modules))
+      .catch((err) => {
+        if ((err as Error).name !== 'AbortError') console.warn('[footer] site modules unavailable', err);
+      });
+    return () => controller.abort();
+  }, []);
+
+  const modules = moduleMap(siteModules);
+  const cta = modules.get('footer-cta') ?? null;
+  const brand = modules.get('footer-brand') ?? null;
+  const products = modules.get('footer-products') ?? null;
+  const company = modules.get('footer-company') ?? null;
+  const contact = modules.get('footer-contact') ?? null;
+
+  const ctaTitle = moduleTitle(cta, lang);
+  const ctaDescription = moduleDescription(cta, lang);
+  const ctaItems = visibleItems(cta).filter((item) => item.href && itemLabel(item, lang));
+  const brandTitle = moduleTitle(brand, lang);
+  const brandDescription = moduleDescription(brand, lang);
+  const brandItems = visibleItems(brand);
+  const contactItems = visibleItems(contact);
+
+  return (
+    <footer id="contact" className="border-t border-[#E36F2C]/15 bg-[#241F1B]">
+      {cta?.is_visible !== false && (ctaTitle || ctaDescription || ctaItems.length > 0) ? (
+        <div className="border-b border-[#E36F2C]/15 bg-[#E36F2C]/5 py-8">
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:px-6 md:flex-row lg:px-8">
+            <div>
+              {ctaTitle ? <div className="mb-1 text-lg font-bold tracking-wider text-white">{ctaTitle}</div> : null}
+              {ctaDescription ? <div className="text-sm tracking-wider text-white/40">{ctaDescription}</div> : null}
+            </div>
+            {ctaItems.length > 0 ? (
+              <div className="flex flex-wrap gap-3">
+                {ctaItems.map((item, index) => {
+                  const label = itemLabel(item, lang);
+                  const href = item.href as string;
+                  const isExternalAction = href.startsWith('tel:') || href.startsWith('mailto:');
+                  const className = index === 0
+                    ? 'bg-[#E36F2C] px-6 py-3 text-sm font-bold tracking-wider text-white transition-colors hover:bg-[#C85A1F]'
+                    : 'border border-[#E36F2C]/40 px-6 py-3 text-sm tracking-wider text-[#E36F2C] transition-colors hover:bg-[#E36F2C]/10';
+                  return isExternalAction ? (
+                    <a key={item.id} href={href} className={className}>{label}</a>
+                  ) : (
+                    <Link key={item.id} href={href} className={className}>{label}</Link>
+                  );
+                })}
+              </div>
+            ) : null}
           </div>
         </div>
-      </div>
+      ) : null}
 
-      {/* Main */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
-          {/* Brand */}
-          <div className="lg:col-span-2">
-            <div className="mb-4">
-              <Image
-                src="/images/vessel-logo.png"
-                alt="VESSEL 微宿"
-                height={32}
-                width={128}
-                style={{ height: '32px', width: 'auto', objectFit: 'contain', marginBottom: 4 }}
-                unoptimized
-              />
-              <div className="text-white/30 text-xs tracking-[0.3em]">{t(i18n.footer.brandTagline)}</div>
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-5">
+          {brand?.is_visible !== false ? (
+            <div className="lg:col-span-2">
+              <div className="mb-4">
+                <Image
+                  src="/images/vessel-logo.png"
+                  alt={brandTitle || 'VESSEL'}
+                  height={32}
+                  width={128}
+                  style={{ height: '32px', width: 'auto', objectFit: 'contain', marginBottom: 4 }}
+                  unoptimized
+                />
+                {brandItems[0] ? (
+                  <div className="text-xs tracking-[0.3em] text-white/30">{itemLabel(brandItems[0], lang)}</div>
+                ) : null}
+              </div>
+              {brandDescription ? (
+                <p className="mb-5 max-w-xs text-xs leading-relaxed text-white/35">{brandDescription}</p>
+              ) : null}
+              <div className="space-y-1 text-xs text-white/20">
+                {brandItems.slice(1).map((item) => {
+                  const label = itemLabel(item, lang);
+                  if (!label) return null;
+                  if (item.href?.startsWith('mailto:')) {
+                    return <a key={item.id} href={item.href} className="block hover:text-[#E36F2C]">{label}</a>;
+                  }
+                  return <div key={item.id}>{label}</div>;
+                })}
+              </div>
             </div>
-            <p className="text-white/35 text-xs leading-relaxed mb-5 max-w-xs">
-              {t(i18n.footer.brandDesc)}
-            </p>
-            <div className="mb-5 grid max-w-sm gap-2">
-              {footerProof.map((item) => (
-                <div key={item} className="rounded-md border border-white/10 bg-white/[0.03] px-3 py-2 text-xs leading-5 text-white/40">
-                  {item}
-                </div>
-              ))}
+          ) : null}
+
+          <FooterLinkList module={products} />
+          <FooterLinkList module={company} />
+
+          {contact?.is_visible !== false ? (
+            <div>
+              {moduleTitle(contact, lang) ? (
+                <h4 className="mb-5 text-xs font-semibold uppercase tracking-[0.25em] text-white">
+                  {moduleTitle(contact, lang)}
+                </h4>
+              ) : null}
+              <ul className="space-y-4">
+                {contactItems.map((item) => {
+                  const label = itemLabel(item, lang);
+                  const content = itemContent(item, lang);
+                  if (!label) return null;
+                  const body = (
+                    <>
+                      <span className="text-sm text-white/55">{label}</span>
+                      {content ? <span className="mt-0.5 block text-xs text-white/25">{content}</span> : null}
+                    </>
+                  );
+
+                  return (
+                    <li key={item.id} className="text-xs leading-relaxed text-white/40">
+                      {item.href?.startsWith('tel:') || item.href?.startsWith('mailto:') ? (
+                        <a href={item.href} className="transition-colors hover:text-[#E36F2C]">{body}</a>
+                      ) : (
+                        body
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
-            <div className="text-white/20 text-xs space-y-1">
-              <div>WhatsApp: +86 180-2417-6679</div>
-              <div>Email: 303vessel@303industries.cn</div>
-            </div>
-          </div>
-
-          {/* Products */}
-          <div>
-            <h4 className="text-white text-xs font-semibold tracking-[0.25em] mb-5 uppercase">{t(i18n.footer.productsHeading)}</h4>
-            <ul className="space-y-2.5">
-              {productLinks.map(([name, desc, href]) => (
-                <li key={name}>
-                  <Link
-                    href={href}
-                    className="flex items-center gap-2 text-white/40 hover:text-[#E36F2C] transition-colors text-sm group"
-                  >
-                    <span className="text-[#E36F2C]/30 group-hover:text-[#E36F2C] transition-colors">›</span>
-                    <span className="tracking-wider">{name}</span>
-                    <span className="text-white/20 text-xs">{desc}</span>
-                  </Link>
-                </li>
-              ))}
-              <li>
-                <Link href="/products" className="flex items-center gap-2 text-white/40 hover:text-[#E36F2C] transition-colors text-sm group">
-                  <span className="text-[#E36F2C]/30 group-hover:text-[#E36F2C] transition-colors">›</span>
-                  <span className="tracking-wider">{t(i18n.footer.allProducts)}</span>
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Company */}
-          <div>
-            <h4 className="text-white text-xs font-semibold tracking-[0.25em] mb-5 uppercase">{t(i18n.footer.companyHeading)}</h4>
-            <ul className="space-y-2.5">
-              {companyLinks.map(({ label, href }) => (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    className="flex items-center gap-2 text-white/40 hover:text-[#E36F2C] transition-colors text-sm group"
-                  >
-                    <span className="text-[#E36F2C]/30 group-hover:text-[#E36F2C] transition-colors">›</span>
-                    <span className="tracking-wider">{label}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h4 className="text-white text-xs font-semibold tracking-[0.25em] mb-5 uppercase">{t(i18n.footer.contactHeading)}</h4>
-            <ul className="space-y-4">
-              <li className="flex items-start gap-3">
-                <svg className="w-4 h-4 text-[#E36F2C] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                <div>
-                  <a href="tel:4008090303" className="text-white/60 text-sm hover:text-[#E36F2C] transition-colors font-medium tracking-wider">
-                    400-8090-303
-                  </a>
-                  <div className="text-white/25 text-xs mt-0.5">{t(i18n.footer.workHours)}</div>
-                </div>
-              </li>
-              <li className="flex items-start gap-3">
-                <svg className="w-4 h-4 text-[#E36F2C] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <a href="mailto:vessel.sale@303industries.cn" className="text-white/50 text-xs hover:text-[#E36F2C] transition-colors break-all">
-                  vessel.sale@303industries.cn
-                </a>
-              </li>
-              <li className="flex items-start gap-3">
-                <svg className="w-4 h-4 text-[#E36F2C] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span className="text-white/40 text-xs leading-relaxed">{t(i18n.footer.address)}</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom bar */}
-      <div className="border-t border-white/5 py-5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="text-white/20 text-xs tracking-wider">
-            {t(i18n.footer.copyright)}
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="cursor-not-allowed text-white/20 text-xs tracking-wider" title="待配置">
-              {t(i18n.footer.privacy)}
-            </span>
-            <span className="text-white/10">·</span>
-            <span className="cursor-not-allowed text-white/20 text-xs tracking-wider" title="待配置">
-              {t(i18n.footer.terms)}
-            </span>
-            <span className="text-white/10">·</span>
-            <span className="text-white/20 text-xs tracking-wider">
-              {lang === 'zh' ? '备案信息待配置' : 'ICP filing pending'}
-            </span>
-          </div>
+          ) : null}
         </div>
       </div>
     </footer>

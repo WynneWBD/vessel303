@@ -1,12 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ConversionInquiryForm from '@/components/pages/ConversionInquiryForm'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { buildContactHref } from '@/lib/site-links'
+import {
+  fetchPublicPageModules,
+  itemById,
+  itemContent,
+  itemLabel,
+  moduleDescription,
+  moduleMap,
+  moduleTitle,
+  type PublicPageModule,
+} from '@/lib/page-module-client'
 
 export type FaqCategoryView = {
   key: string
@@ -95,167 +104,137 @@ export default function FaqView({
   const { lang } = useLanguage()
   const [openId, setOpenId] = useState<string | null>(null)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [pageModules, setPageModules] = useState<PublicPageModule[] | null>(null)
 
-  const toggle = (id: string) => setOpenId(openId === id ? null : id)
+  useEffect(() => {
+    const controller = new AbortController()
+    fetchPublicPageModules('faq', controller.signal)
+      .then((modules) => setPageModules(modules))
+      .catch((err) => {
+        if ((err as Error).name !== 'AbortError') setPageModules(null)
+      })
+    return () => controller.abort()
+  }, [])
+
+  const modules = moduleMap(pageModules)
+  const heroModule = modules.get('hero') ?? null
+  const heroEyebrow = itemLabel(itemById(heroModule, 'eyebrow'), lang)
+  const heroTitle = moduleTitle(heroModule, lang)
+  const heroDescription = moduleDescription(heroModule, lang)
+  const categoriesLabel = itemLabel(itemById(heroModule, 'categories-label'), lang)
+  const answersLabel = itemLabel(itemById(heroModule, 'answers-label'), lang)
+  const allLabel = itemLabel(itemById(heroModule, 'all-categories-label'), lang)
+  const emptyLabel = itemLabel(itemById(heroModule, 'empty-state'), lang)
+  const contactCta = itemById(heroModule, 'contact-cta')
+  const secondaryCta = itemById(heroModule, 'secondary-cta')
+  const formTitleItem = itemById(heroModule, 'inquiry-title')
+  const formDescriptionItem = itemById(heroModule, 'inquiry-description')
+  const formTitle = itemLabel(formTitleItem, lang)
+  const formDescription = itemContent(formDescriptionItem, lang)
 
   const filteredCategories = activeCategory
-    ? categories.filter((c) => c.key === activeCategory)
+    ? categories.filter((category) => category.key === activeCategory)
     : categories
-  const visibleItemCount = filteredCategories.reduce(
-    (count, cat) => count + items.filter((item) => item.category === cat.key).length,
-    0,
+
+  const visibleItemCount = useMemo(
+    () => filteredCategories.reduce(
+      (count, category) => count + items.filter((item) => item.category === category.key).length,
+      0,
+    ),
+    [filteredCategories, items],
   )
-  const supportCards = [
-    {
-      label: lang === 'zh' ? '采购前' : 'Before Purchase',
-      title: lang === 'zh' ? '确认场景和产品适配' : 'Match scenario and product',
-      body: lang === 'zh'
-        ? '先看安装、运输、交付和认证，再进入产品详情或提交咨询。'
-        : 'Review installation, transport, delivery, and certification before moving into product detail or inquiry.',
-    },
-    {
-      label: lang === 'zh' ? '项目中' : 'During Project',
-      title: lang === 'zh' ? '明确交付边界' : 'Clarify delivery scope',
-      body: lang === 'zh'
-        ? 'FAQ 用来解释常见商务和技术问题，具体配置仍回到产品后台资料。'
-        : 'FAQ explains common commercial and technical questions while detailed configuration stays with product records.',
-    },
-    {
-      label: lang === 'zh' ? '下一步' : 'Next Step',
-      title: lang === 'zh' ? '带着问题提交线索' : 'Submit with project context',
-      body: lang === 'zh'
-        ? '没有答案的问题可直接提交表单，后台会按 FAQ 来源进入线索。'
-        : 'Unanswered questions can be submitted directly and enter the leads console with FAQ source context.',
-    },
-  ]
+
+  const toggle = (id: string) => setOpenId(openId === id ? null : id)
 
   return (
     <div className="flex min-h-screen flex-col" style={{ backgroundColor: '#F5F2ED' }}>
       <Navbar />
 
-      <section className="px-4 pb-12 pt-28 sm:pb-16" style={{ backgroundColor: '#241F1B' }}>
-        <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
-          <div>
-            <p className="mb-4 text-xs font-medium uppercase tracking-[0.35em] text-[#E36F2C]">
-              {lang === 'zh' ? '常见问题' : 'Frequently Asked Questions'}
-            </p>
-            <h1
-              className="mb-5 text-4xl font-bold leading-none tracking-tight text-[#F5F2ED] sm:text-6xl"
-              style={{ fontFamily: 'var(--font-dm-sans, DM Sans, sans-serif)' }}
-            >
-              FAQ
-            </h1>
-            <p className="max-w-xl text-base leading-relaxed text-[#C9BEB4] sm:text-lg">
-              {lang === 'zh'
-                ? '关于 VESSEL 产品、运输、安装、认证及商务条款的专业解答。'
-                : 'Expert answers on VESSEL products, transport, installation, certifications, and commercial terms.'}
-            </p>
-            <div className="mt-8 flex flex-wrap gap-2">
-              <span className="border border-white/15 px-3 py-1.5 text-xs tracking-wider text-white/55">
-                {lang === 'zh' ? `${categories.length} 个分类` : `${categories.length} categories`}
-              </span>
-              <span className="border border-white/15 px-3 py-1.5 text-xs tracking-wider text-white/55">
-                {lang === 'zh' ? `${items.length} 条问答` : `${items.length} answers`}
-              </span>
-              <span className="border border-[#E36F2C]/40 px-3 py-1.5 text-xs tracking-wider text-[#E36F2C]">
-                {lang === 'zh' ? '可提交线索' : 'Lead tracking ready'}
-              </span>
-            </div>
-          </div>
-          <div className="border border-white/10 bg-white/[0.06] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.18)] sm:p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#E36F2C]">
-              {lang === 'zh' ? '使用路径' : 'Buyer Path'}
-            </p>
-            <div className="mt-4 space-y-3">
-              {[
-                lang === 'zh' ? '先按分类查看运输、安装、认证和商务问题。' : 'Browse transport, installation, certification, and commercial answers by category.',
-                lang === 'zh' ? '仍不清楚时，直接提交 FAQ 来源的项目问题。' : 'If the answer is missing, submit a FAQ-sourced project question.',
-                lang === 'zh' ? '后台线索 2.0 能识别 FAQ 来源并跟进。' : 'The leads console can identify and follow up FAQ-sourced inquiries.',
-              ].map((item, index) => (
-                <div key={item} className="flex gap-3 border border-white/10 bg-[#241F1B]/45 p-3 text-sm leading-6 text-white/70">
-                  <span className="text-[#E36F2C]">{String(index + 1).padStart(2, '0')}</span>
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="border-b border-[#E5E0DA] bg-white px-4 py-8">
-        <div className="mx-auto grid max-w-4xl gap-3 md:grid-cols-3">
-          {supportCards.map((card) => (
-            <div key={card.label} className="rounded-md border border-[#E5E0DA] bg-[#F5F2ED] p-5">
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#E36F2C]">
-                {card.label}
+      {(heroEyebrow || heroTitle || heroDescription || categoriesLabel || answersLabel) ? (
+        <section className="px-4 pb-12 pt-28 sm:pb-16" style={{ backgroundColor: '#241F1B' }}>
+          <div className="mx-auto max-w-5xl">
+            {heroEyebrow ? (
+              <p className="mb-4 text-xs font-medium uppercase tracking-[0.35em] text-[#E36F2C]">
+                {heroEyebrow}
               </p>
-              <h2 className="text-base font-semibold text-[#2C2A28]">{card.title}</h2>
-              <p className="mt-2 text-xs leading-5 text-[#6B625B]">{card.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+            ) : null}
+            {heroTitle ? (
+              <h1
+                className="mb-5 text-4xl font-bold leading-none tracking-tight text-[#F5F2ED] sm:text-6xl"
+                style={{ fontFamily: 'var(--font-dm-sans, DM Sans, sans-serif)' }}
+              >
+                {heroTitle}
+              </h1>
+            ) : null}
+            {heroDescription ? (
+              <p className="max-w-2xl text-base leading-relaxed text-[#C9BEB4] sm:text-lg">
+                {heroDescription}
+              </p>
+            ) : null}
+            {(categoriesLabel || answersLabel) ? (
+              <div className="mt-8 flex flex-wrap gap-2">
+                {categoriesLabel ? (
+                  <span className="border border-white/15 px-3 py-1.5 text-xs tracking-wider text-white/55">
+                    {categories.length} {categoriesLabel}
+                  </span>
+                ) : null}
+                {answersLabel ? (
+                  <span className="border border-white/15 px-3 py-1.5 text-xs tracking-wider text-white/55">
+                    {items.length} {answersLabel}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
 
       <div className="sticky top-16 z-30 border-b border-[#E5E0DA]" style={{ backgroundColor: '#F5F2ED' }}>
         <div className="mx-auto max-w-4xl overflow-x-auto px-4">
           <div className="flex min-w-max gap-1 py-3">
-            <button
-              onClick={() => setActiveCategory(null)}
-              className={`rounded-sm px-3.5 py-1.5 text-xs font-medium tracking-wider whitespace-nowrap transition-all ${
-                activeCategory === null
-                  ? 'bg-[#241F1B] text-[#F5F2ED]'
-                  : 'text-[#8A8580] hover:bg-[#E5E0DA] hover:text-[#2C2A28]'
-              }`}
-            >
-              {lang === 'zh' ? '全部' : 'All'}
-            </button>
-            {categories.map((cat) => (
+            {allLabel ? (
               <button
-                key={cat.key}
-                onClick={() => setActiveCategory(activeCategory === cat.key ? null : cat.key)}
+                onClick={() => setActiveCategory(null)}
                 className={`rounded-sm px-3.5 py-1.5 text-xs font-medium tracking-wider whitespace-nowrap transition-all ${
-                  activeCategory === cat.key
+                  activeCategory === null
+                    ? 'bg-[#241F1B] text-[#F5F2ED]'
+                    : 'text-[#8A8580] hover:bg-[#E5E0DA] hover:text-[#2C2A28]'
+                }`}
+              >
+                {allLabel}
+              </button>
+            ) : null}
+            {categories.map((category) => (
+              <button
+                key={category.key}
+                onClick={() => setActiveCategory(activeCategory === category.key ? null : category.key)}
+                className={`rounded-sm px-3.5 py-1.5 text-xs font-medium tracking-wider whitespace-nowrap transition-all ${
+                  activeCategory === category.key
                     ? 'bg-[#E36F2C] text-white'
                     : 'text-[#8A8580] hover:bg-[#E5E0DA] hover:text-[#2C2A28]'
                 }`}
               >
-                {lang === 'zh' ? cat.zh : cat.en}
+                {lang === 'zh' ? category.zh : category.en}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      <section className="border-b border-[#E5E0DA] bg-white px-4 py-4">
-        <div className="mx-auto flex max-w-4xl flex-col gap-3 text-xs text-[#6B625B] sm:flex-row sm:items-center sm:justify-between">
-          <div className="font-semibold tracking-[0.16em] text-[#2C2A28]">
-            {lang === 'zh' ? `当前显示 ${visibleItemCount} 条答案` : `Showing ${visibleItemCount} answers`}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="border border-[#E5E0DA] px-3 py-1.5">
-              {lang === 'zh' ? '后台 owner: FAQ CMS' : 'Owner: FAQ CMS'}
-            </span>
-            <span className="border border-[#E36F2C]/25 px-3 py-1.5 text-[#C65F22]">
-              {lang === 'zh' ? '未解答问题可直接进入线索' : 'Unanswered questions can become leads'}
-            </span>
-          </div>
-        </div>
-      </section>
-
       <main className="flex-1 px-4 py-12">
         <div className="mx-auto max-w-4xl space-y-10">
-          {filteredCategories.map((cat) => {
-            const categoryItems = items.filter((item) => item.category === cat.key)
+          {filteredCategories.map((category) => {
+            const categoryItems = items.filter((item) => item.category === category.key)
             if (categoryItems.length === 0) return null
             return (
-              <section key={cat.key}>
+              <section key={category.key}>
                 <div className="mb-4 flex items-center gap-3">
                   <div className="h-5 w-1 shrink-0 rounded-full bg-[#E36F2C]" />
                   <h2
                     className="text-sm font-semibold uppercase tracking-[0.2em] text-[#2C2A28]/50"
                     style={{ fontFamily: 'var(--font-dm-sans, DM Sans, sans-serif)' }}
                   >
-                    {lang === 'zh' ? cat.zh : cat.en}
+                    {lang === 'zh' ? category.zh : category.en}
                   </h2>
                 </div>
 
@@ -273,58 +252,52 @@ export default function FaqView({
               </section>
             )
           })}
-          {visibleItemCount === 0 ? (
+          {visibleItemCount === 0 && emptyLabel ? (
             <div className="border border-dashed border-[#C4B9AB] bg-white px-6 py-10 text-center text-sm text-[#6B625B]">
-              {lang === 'zh' ? '当前分类暂无已发布问题。' : 'No published questions are available in this category.'}
+              {emptyLabel}
             </div>
           ) : null}
         </div>
       </main>
 
-      <section style={{ backgroundColor: '#241F1B' }} className="px-4 py-16">
-        <div className="mx-auto max-w-4xl text-center">
-          <p className="mb-3 text-xs font-medium uppercase tracking-[0.3em] text-[#E36F2C]">
-            {lang === 'zh' ? '还有问题？' : 'Still have questions?'}
-          </p>
-          <h2
-            className="mb-4 text-3xl font-bold text-[#F5F2ED] sm:text-4xl"
-            style={{ fontFamily: 'var(--font-dm-sans, DM Sans, sans-serif)' }}
-          >
-            {lang === 'zh' ? '我们的团队随时为您解答' : 'Our team is ready to help'}
-          </h2>
-          <p className="mx-auto mb-8 max-w-md text-sm leading-relaxed text-[#C9BEB4]">
-            {lang === 'zh'
-              ? '提交您的项目需求，专业顾问将在 24 小时内与您联系。'
-              : 'Submit your project requirements and a specialist will contact you within 24 hours.'}
-          </p>
-          <div className="flex flex-col justify-center gap-3 sm:flex-row">
-            <Link
-              href={buildContactHref('faq:general:contact_cta')}
-              className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-8 py-3.5 text-sm font-semibold tracking-wider text-white transition-colors hover:bg-[#C85A1F]"
-            >
-              {lang === 'zh' ? '联系我们' : 'Contact VESSEL'}
-            </Link>
-            <Link
-              href="/global"
-              className="inline-flex min-h-11 items-center justify-center border border-white/20 px-8 py-3.5 text-sm font-medium tracking-wider text-white/70 transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
-            >
-              {lang === 'zh' ? '查看全球项目' : 'View Global Projects'}
-            </Link>
+      {(contactCta || secondaryCta || formTitle || formDescription) ? (
+        <section style={{ backgroundColor: '#241F1B' }} className="px-4 py-16">
+          <div className="mx-auto max-w-4xl">
+            {(contactCta || secondaryCta) ? (
+              <div className="mb-8 flex flex-col justify-center gap-3 sm:flex-row">
+                {contactCta && itemLabel(contactCta, lang) && contactCta.href ? (
+                  <Link
+                    href={contactCta.href}
+                    className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-8 py-3.5 text-sm font-semibold tracking-wider text-white transition-colors hover:bg-[#C85A1F]"
+                  >
+                    {itemLabel(contactCta, lang)}
+                  </Link>
+                ) : null}
+                {secondaryCta && itemLabel(secondaryCta, lang) && secondaryCta.href ? (
+                  <Link
+                    href={secondaryCta.href}
+                    className="inline-flex min-h-11 items-center justify-center border border-white/20 px-8 py-3.5 text-sm font-medium tracking-wider text-white/70 transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
+                  >
+                    {itemLabel(secondaryCta, lang)}
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
+            {(formTitle || formDescription) ? (
+              <ConversionInquiryForm
+                source="faq:general:inquiry_form"
+                inquiryType="FAQ Inquiry"
+                model="FAQ"
+                titleEn={formTitleItem?.label_en ?? ''}
+                titleZh={formTitleItem?.label_zh ?? ''}
+                descriptionEn={formDescriptionItem?.content_en ?? ''}
+                descriptionZh={formDescriptionItem?.content_zh ?? ''}
+                compact
+              />
+            ) : null}
           </div>
-          <div className="mt-8 text-left">
-            <ConversionInquiryForm
-              source="faq:general:inquiry_form"
-              inquiryType="FAQ Inquiry"
-              model="FAQ"
-              titleEn="Send your question"
-              titleZh="提交常见问题咨询"
-              descriptionEn="Questions submitted here enter the new leads console with FAQ source tracking."
-              descriptionZh="这里提交的问题会进入新线索后台，并标记为 FAQ 来源。"
-              compact
-            />
-          </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       <Footer />
     </div>

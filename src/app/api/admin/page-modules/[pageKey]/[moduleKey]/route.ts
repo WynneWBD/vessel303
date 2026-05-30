@@ -6,7 +6,9 @@ import { logAdminAction } from '@/lib/leads-db'
 import {
   createPageModuleSnapshot,
   getPageModule,
+  isPageModulePageKey,
   pageModuleInputChanged,
+  pageModulePublicPaths,
   prunePageModuleSnapshots,
   updatePageModule,
 } from '@/lib/page-modules-db'
@@ -14,8 +16,6 @@ import {
 export const dynamic = 'force-dynamic'
 
 type Ctx = { params: Promise<{ pageKey: string; moduleKey: string }> }
-
-const pageKeys = ['home', 'about'] as const
 
 const itemSchema = z.object({
   id: z.string().min(1).max(120),
@@ -41,13 +41,8 @@ const patchSchema = z.object({
   sort_order: z.coerce.number().int().min(0).max(9999),
 })
 
-function isPageKey(value: string): value is (typeof pageKeys)[number] {
-  return pageKeys.includes(value as (typeof pageKeys)[number])
-}
-
 function revalidatePageModulePath(pageKey: string) {
-  if (pageKey === 'home') revalidatePath('/')
-  if (pageKey === 'about') revalidatePath('/about')
+  for (const path of pageModulePublicPaths(pageKey)) revalidatePath(path)
 }
 
 export async function GET(_req: NextRequest, ctx: Ctx) {
@@ -55,7 +50,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
   if (admin instanceof Response) return admin
 
   const { pageKey, moduleKey } = await ctx.params
-  if (!isPageKey(pageKey)) {
+  if (!isPageModulePageKey(pageKey)) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
@@ -70,7 +65,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   if (admin instanceof Response) return admin
 
   const { pageKey, moduleKey } = await ctx.params
-  if (!isPageKey(pageKey)) {
+  if (!isPageModulePageKey(pageKey)) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 

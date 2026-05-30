@@ -31,20 +31,6 @@ export default function VolsPage() {
 
       <VolsContent lang={lang} />
 
-      <section className="border-y border-[#E5DED4] bg-white px-4 py-6 sm:py-8">
-        <div className="mx-auto grid max-w-4xl gap-3 sm:grid-cols-3">
-          {[
-            zh ? '技术专题 CMS' : 'Topic CMS',
-            zh ? '产品/场景可追溯' : 'Product and scenario context',
-            zh ? '咨询进入线索 2.0' : 'Inquiry enters leads 2.0',
-          ].map((item) => (
-            <div key={item} className="border border-[#E5DED4] bg-[#F5F2ED] px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#6B625B]">
-              {item}
-            </div>
-          ))}
-        </div>
-      </section>
-
       <section className="bg-[#F5F2ED] px-4 py-10 sm:py-12">
         <div className="mx-auto max-w-4xl">
           <ConversionInquiryForm
@@ -53,8 +39,8 @@ export default function VolsPage() {
             model="VOLS"
             titleEn="Discuss VOLS deployment"
             titleZh="提交 VOLS 技术咨询"
-            descriptionEn="This request enters the leads console with VOLS source tracking."
-            descriptionZh="该咨询会进入新线索后台，并标记为 VOLS 技术专题来源。"
+            descriptionEn="Share your project context so the team can discuss VOLS deployment with you."
+            descriptionZh="请填写项目背景，团队会与您沟通 VOLS 部署适配方式。"
           />
         </div>
       </section>

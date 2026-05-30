@@ -1,24 +1,18 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
-import { restorePageModuleSnapshotToDraft } from '@/lib/page-modules-db'
+import { isPageModulePageKey, restorePageModuleSnapshotToDraft } from '@/lib/page-modules-db'
 
 export const dynamic = 'force-dynamic'
 
 type Ctx = { params: Promise<{ pageKey: string; moduleKey: string; snapshotId: string }> }
-
-const pageKeys = ['home', 'about'] as const
-
-function isPageKey(value: string): value is (typeof pageKeys)[number] {
-  return pageKeys.includes(value as (typeof pageKeys)[number])
-}
 
 export async function POST(_req: Request, ctx: Ctx) {
   const admin = await requireAdmin()
   if (admin instanceof Response) return admin
 
   const { pageKey, moduleKey, snapshotId } = await ctx.params
-  if (!isPageKey(pageKey)) {
+  if (!isPageModulePageKey(pageKey)) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 

@@ -140,7 +140,7 @@ function useAboutPageModules() {
         const data = (await res.json()) as RemotePageModulesResponse;
         if (!cancelled && Array.isArray(data?.data)) setPageModules(data.data);
       } catch {
-        // Keep static fallback content if the CMS endpoint is unavailable.
+        // Keep the existing client state if the CMS endpoint is unavailable.
       }
     }
 
@@ -203,19 +203,19 @@ function itemById(items: RemotePageModuleItem[], id: string) {
   return items.find((item) => item.id === id);
 }
 
-function localText(item: RemotePageModuleItem | undefined, zh: boolean, fallback: string) {
-  if (!item) return fallback;
-  return (zh ? item.label_zh : item.label_en) || fallback;
+function localText(item: RemotePageModuleItem | undefined, zh: boolean, _fallback: string) {
+  if (!item) return '';
+  return (zh ? item.label_zh : item.label_en) || '';
 }
 
-function localContent(item: RemotePageModuleItem | undefined, zh: boolean, fallback: string) {
-  if (!item) return fallback;
-  return (zh ? item.content_zh : item.content_en) || fallback;
+function localContent(item: RemotePageModuleItem | undefined, zh: boolean, _fallback: string) {
+  if (!item) return '';
+  return (zh ? item.content_zh : item.content_en) || '';
 }
 
-function localValue(item: RemotePageModuleItem | undefined, zh: boolean, fallback: string) {
-  if (!item) return fallback;
-  return (zh ? item.value_zh : item.value_en) || fallback;
+function localValue(item: RemotePageModuleItem | undefined, zh: boolean, _fallback: string) {
+  if (!item) return '';
+  return (zh ? item.value_zh : item.value_en) || '';
 }
 
 // ─── data ────────────────────────────────────────────────────────────────────

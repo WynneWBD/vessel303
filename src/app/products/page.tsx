@@ -11,6 +11,7 @@ import {
 import ProductsPageContent from '@/components/pages/ProductsPageContent';
 import { getUploadVariantsByUrls, mapUploadImageUrl } from '@/lib/upload-image-variants';
 import { buildPageMetadata } from '@/lib/seo';
+import { listPageModules } from '@/lib/page-modules-db';
 
 export const revalidate = 300;
 
@@ -38,6 +39,10 @@ export default async function ProductsPage() {
       return [];
     }),
   ]);
+  const pageModules = await listPageModules('products').catch((err) => {
+    console.error('[products] load page modules failed', err);
+    return [];
+  });
 
   const imageVariants = await getUploadVariantsByUrls(catalogRows.map((product) => product.image)).catch((err) => {
     console.error('[products] load product image variants failed', err);
@@ -57,6 +62,7 @@ export default async function ProductsPage() {
           pageSize={PAGE_SIZE}
           categories={categories}
           attributeTemplates={attributeTemplates}
+          pageModules={pageModules}
         />
       </Suspense>
       <Footer />

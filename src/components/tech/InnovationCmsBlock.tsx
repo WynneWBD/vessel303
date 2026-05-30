@@ -67,9 +67,6 @@ export default function InnovationCmsBlock({
   return (
     <section className="border-y border-[#E5DED4] bg-white">
       <div className="mx-auto max-w-5xl px-6 py-12 lg:px-10">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-[#E36F2C]">
-          CMS Update
-        </p>
         <h1 className="text-3xl font-bold text-[#2C2A28] md:text-4xl">{title}</h1>
         {summary && <p className="mt-4 max-w-3xl text-sm leading-7 text-[#6B625B]">{summary}</p>}
         {body && <p className="mt-6 max-w-4xl whitespace-pre-line text-sm leading-7 text-[#2C2A28]/75">{body}</p>}

@@ -1,5 +1,4 @@
 import FaqView, { type FaqCategoryView, type FaqItemView } from '@/components/FaqView'
-import { FAQ_CATEGORIES, FAQ_DATA } from '@/data/faq'
 import { listPublicB9ContentCategories, listPublicB9ContentItems } from '@/lib/b9-content-db'
 import { buildPageMetadata } from '@/lib/seo'
 
@@ -13,13 +12,6 @@ export const metadata = buildPageMetadata({
 })
 
 const FAQ_CMS_TIMEOUT_MS = 5000
-
-function fallbackFaq() {
-  return {
-    categories: FAQ_CATEGORIES,
-    items: FAQ_DATA,
-  }
-}
 
 function timeoutReject<T>(ms: number, label: string): Promise<T> {
   return new Promise((_, reject) => {
@@ -40,7 +32,7 @@ async function loadFaqContent(): Promise<{ categories: FaqCategoryView[]; items:
       ),
     ])
 
-    if (rows.length === 0) return fallbackFaq()
+    if (rows.length === 0) return { categories: [], items: [] }
 
     const mappedCategories = categories.length > 0
       ? categories.map((cat) => ({ key: cat.slug, zh: cat.title_zh, en: cat.title_en }))
@@ -59,8 +51,8 @@ async function loadFaqContent(): Promise<{ categories: FaqCategoryView[]; items:
 
     return { categories: mappedCategories, items }
   } catch (err) {
-    console.error('[faq] CMS load failed, using static fallback', err)
-    return fallbackFaq()
+    console.error('[faq] CMS load failed', err)
+    return { categories: [], items: [] }
   }
 }
 

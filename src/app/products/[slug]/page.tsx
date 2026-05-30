@@ -67,7 +67,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
 
-  // Catalog product (CMS first, static fallback for build/dev resilience)
+  // Catalog product path.
   let catalogProduct = await getPublicCatalogProductBySlug(slug).catch(() => undefined);
   if (!catalogProduct) {
     catalogProduct = findStaticCatalogProduct(slug);
@@ -108,7 +108,7 @@ export default async function ProductDetailPage({
 }) {
   const { slug } = await params;
 
-  // ── 1. Catalog product (CMS first, static fallback) ─────
+  // ── 1. Catalog product path. ─────
   let catalogProduct = await getPublicCatalogProductBySlug(slug).catch((err) => {
       console.error('[products/detail] catalog db unavailable', err);
       return undefined;

@@ -333,8 +333,8 @@ export default function CatalogProductDetailContent({
               model={`${name} (${product.id})`}
               titleEn="Request a product quote"
               titleZh="提交产品咨询"
-              descriptionEn="This form writes directly to the VESSEL leads console with the product source attached."
-              descriptionZh="该表单会直接进入 VESSEL 线索后台，并带上当前产品来源。"
+              descriptionEn="Share your destination, quantity, configuration, and delivery requirements so the team can follow up."
+              descriptionZh="请填写项目地点、数量、配置和交付要求，团队会尽快跟进。"
             />
           </div>
         </div>

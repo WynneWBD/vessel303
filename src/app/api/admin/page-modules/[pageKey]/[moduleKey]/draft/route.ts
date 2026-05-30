@@ -7,14 +7,13 @@ import {
   getDefaultPageModule,
   getPageModule,
   getPageModuleDraft,
+  isPageModulePageKey,
   savePageModuleDraft,
 } from '@/lib/page-modules-db'
 
 export const dynamic = 'force-dynamic'
 
 type Ctx = { params: Promise<{ pageKey: string; moduleKey: string }> }
-
-const pageKeys = ['home', 'about'] as const
 
 const itemSchema = z.object({
   id: z.string().min(1).max(120),
@@ -40,16 +39,12 @@ const draftSchema = z.object({
   sort_order: z.coerce.number().int().min(0).max(9999),
 })
 
-function isPageKey(value: string): value is (typeof pageKeys)[number] {
-  return pageKeys.includes(value as (typeof pageKeys)[number])
-}
-
 export async function GET(_req: NextRequest, ctx: Ctx) {
   const admin = await requireAdmin()
   if (admin instanceof Response) return admin
 
   const { pageKey, moduleKey } = await ctx.params
-  if (!isPageKey(pageKey)) {
+  if (!isPageModulePageKey(pageKey)) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
@@ -62,7 +57,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   if (admin instanceof Response) return admin
 
   const { pageKey, moduleKey } = await ctx.params
-  if (!isPageKey(pageKey)) {
+  if (!isPageModulePageKey(pageKey)) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
@@ -93,7 +88,7 @@ export async function DELETE(_req: NextRequest, ctx: Ctx) {
   if (admin instanceof Response) return admin
 
   const { pageKey, moduleKey } = await ctx.params
-  if (!isPageKey(pageKey)) {
+  if (!isPageModulePageKey(pageKey)) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 

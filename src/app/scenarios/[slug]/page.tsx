@@ -274,7 +274,7 @@ async function loadScenarioCms(slug: ScenarioSlug) {
   try {
     return await getPublicB9ContentItem('scenario', slug);
   } catch (err) {
-    console.error(`[scenarios/${slug}] CMS load failed, using static fallback`, err);
+    console.error(`[scenarios/${slug}] CMS load failed`, err);
     return null;
   }
 }
@@ -543,8 +543,8 @@ export default async function ScenarioPage({
             model={scenario.label}
             titleEn="Plan this scenario"
             titleZh="提交场景方案咨询"
-            descriptionEn="Your request enters the VESSEL leads console with this scenario source attached."
-            descriptionZh="该咨询会进入 VESSEL 新线索后台，并标记当前场景来源。"
+            descriptionEn="Share your destination, scenario, quantity, and timeline so the team can recommend a suitable solution."
+            descriptionZh="请填写项目地点、场景、数量和时间计划，团队会为您推荐适配方案。"
           />
         </div>
         <div className="max-w-3xl mx-auto px-4 pt-10 text-center">

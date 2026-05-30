@@ -13,6 +13,13 @@ import type { PageModuleItem, PageModuleRow } from '@/lib/page-modules-db'
 const PAGE_LABELS = {
   home: '首页',
   about: '关于我们',
+  products: '产品中心',
+  'media-kit': 'Media Kit',
+  faq: 'FAQ',
+  scenarios: 'Scenarios',
+  innovation: 'Innovation',
+  display: 'Display',
+  site: '导航 / 页脚',
 } satisfies Record<string, string>
 
 function pageLabel(pageKey: string) {
@@ -20,6 +27,7 @@ function pageLabel(pageKey: string) {
 }
 
 function moduleStatus(pageModule: PageModuleRow) {
+  if (['products', 'media-kit', 'faq', 'scenarios', 'innovation', 'display', 'site'].includes(pageModule.page_key)) return '客户可见内容'
   if (pageModule.module_key === 'hero') return '已接入前台'
   if (pageModule.module_key === 'credentials') return '已接入前台'
   if (pageModule.module_key === 'stats') return '已接入前台'
