@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
-import { SITE_CONTACT_HREF } from '@/lib/site-links'
+import { buildContactHref } from '@/lib/site-links'
 import {
   ArrowRight,
   CheckCircle2,
@@ -97,32 +97,32 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
   },
   {
     label: 'Contact',
-    href: '/contact',
+    href: buildContactHref('navbar:contact_nav'),
     group: '主导航',
     source: 'Navbar.tsx / CTA helper / site_settings.contactUrl',
     owner: '站点设置',
     status: 'external',
-    note: 'B12：站内 /contact 读取 contactUrl 并跳转到现有询盘入口；通用咨询 CTA 统一复用这个规则。',
+    note: 'B19：站内 /contact 读取 contactUrl 并跳转到现有询盘入口；导航点击保留 source 供数据分析识别。',
     Icon: ExternalLink,
   },
   {
     label: 'Purchase',
-    href: SITE_CONTACT_HREF,
+    href: buildContactHref('navbar:purchase_cta'),
     group: '行动按钮',
     source: 'Navbar.tsx / CTA helper',
     owner: '联系入口',
     status: 'external',
-    note: '按钮先进入 /contact，再读取 contactUrl 跳转；不新建复杂预订系统。',
+    note: '按钮先进入 /contact，再读取 contactUrl 跳转，并保留 source；不新建复杂预订系统。',
     Icon: ExternalLink,
   },
   {
     label: 'Book a Visit',
-    href: SITE_CONTACT_HREF,
+    href: buildContactHref('navbar:booking_cta'),
     group: '行动按钮',
     source: 'Navbar.tsx / CTA helper',
     owner: '联系入口',
     status: 'external',
-    note: '与 Purchase 共用 /contact 统一规则，后续如做预约系统需单独立项。',
+    note: '与 Purchase 共用 /contact 统一规则，并保留 source；后续如做预约系统需单独立项。',
     Icon: ExternalLink,
   },
   {
@@ -187,12 +187,12 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
   },
   {
     label: 'Contact',
-    href: '/contact',
+    href: buildContactHref('footer:company_contact'),
     group: '页脚导航',
     source: 'Footer.tsx',
     owner: '站点设置',
     status: 'external',
-    note: '页脚 Contact 继续走 /contact 统一联系入口。',
+    note: '页脚 Contact 继续走 /contact 统一联系入口，并保留 source 供数据分析识别。',
     Icon: ExternalLink,
   },
 ]

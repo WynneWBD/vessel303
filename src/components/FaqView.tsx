@@ -6,7 +6,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ConversionInquiryForm from '@/components/pages/ConversionInquiryForm'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { SITE_CONTACT_HREF } from '@/lib/site-links'
+import { buildContactHref } from '@/lib/site-links'
 
 export type FaqCategoryView = {
   key: string
@@ -101,6 +101,10 @@ export default function FaqView({
   const filteredCategories = activeCategory
     ? categories.filter((c) => c.key === activeCategory)
     : categories
+  const visibleItemCount = filteredCategories.reduce(
+    (count, cat) => count + items.filter((item) => item.category === cat.key).length,
+    0,
+  )
 
   return (
     <div className="flex min-h-screen flex-col" style={{ backgroundColor: '#F5F2ED' }}>
@@ -122,6 +126,17 @@ export default function FaqView({
               ? '关于 VESSEL 产品、运输、安装、认证及商务条款的专业解答。'
               : 'Expert answers on VESSEL products, transport, installation, certifications, and commercial terms.'}
           </p>
+          <div className="mt-8 flex flex-wrap gap-2">
+            <span className="border border-white/15 px-3 py-1.5 text-xs tracking-wider text-white/55">
+              {lang === 'zh' ? `${categories.length} 个分类` : `${categories.length} categories`}
+            </span>
+            <span className="border border-white/15 px-3 py-1.5 text-xs tracking-wider text-white/55">
+              {lang === 'zh' ? `${items.length} 条问答` : `${items.length} answers`}
+            </span>
+            <span className="border border-[#E36F2C]/40 px-3 py-1.5 text-xs tracking-wider text-[#E36F2C]">
+              {lang === 'zh' ? '可提交线索' : 'Lead tracking ready'}
+            </span>
+          </div>
         </div>
       </section>
 
@@ -186,6 +201,11 @@ export default function FaqView({
               </section>
             )
           })}
+          {visibleItemCount === 0 ? (
+            <div className="border border-dashed border-[#C4B9AB] bg-white px-6 py-10 text-center text-sm text-[#6B625B]">
+              {lang === 'zh' ? '当前分类暂无已发布问题。' : 'No published questions are available in this category.'}
+            </div>
+          ) : null}
         </div>
       </main>
 
@@ -207,9 +227,7 @@ export default function FaqView({
           </p>
           <div className="flex flex-col justify-center gap-3 sm:flex-row">
             <Link
-              href={SITE_CONTACT_HREF}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={buildContactHref('faq:general:contact_cta')}
               className="inline-block bg-[#E36F2C] px-8 py-3.5 text-sm font-semibold tracking-wider text-white transition-colors hover:bg-[#C85A1F]"
             >
               {lang === 'zh' ? '联系我们' : 'Contact VESSEL'}

@@ -16,7 +16,7 @@ import {
   type ResolvedPageModule,
 } from '@/lib/page-module-rendering';
 import { getPageModuleTemplateByModuleType, isTemplateBackedPageModule } from '@/lib/page-module-templates';
-import { normalizeSiteHref, SITE_CONTACT_HREF, SITE_PRODUCTS_HREF } from '@/lib/site-links';
+import { buildContactHref, normalizeSiteHref, SITE_PRODUCTS_HREF } from '@/lib/site-links';
 
 type Tech = 'viie' | 'vols' | 'vipc';
 type Lang = 'zh' | 'en';
@@ -195,7 +195,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const primaryLabel = localizedLabel(primaryCta, lang, t(i18n.home.heroCta));
   const secondaryLabel = localizedLabel(secondaryCta, lang, t(i18n.home.heroCtaSecondary));
   const primaryHref = normalizeSiteHref(primaryCta?.href, SITE_PRODUCTS_HREF);
-  const secondaryHref = normalizeSiteHref(secondaryCta?.href, SITE_CONTACT_HREF);
+  const secondaryHref = normalizeSiteHref(secondaryCta?.href, buildContactHref('home:hero_secondary_cta'));
   const activeImage = current % heroImages.length;
   const visibleHeroImages = useMemo(() => {
     const nextImage = (activeImage + 1) % heroImages.length;
@@ -429,7 +429,7 @@ function CtaModuleSection({ pageModule }: { pageModule: HomePageModule | null })
   const secondary = findModuleItem(pageModule, 'secondary-cta');
   const primaryLabel = localizedLabel(primary, lang, '');
   const secondaryLabel = localizedLabel(secondary, lang, '');
-  const primaryHref = normalizeSiteHref(primary?.href, SITE_CONTACT_HREF);
+  const primaryHref = normalizeSiteHref(primary?.href, buildContactHref(`home:${pageModule.module_key}:primary_cta`));
   const secondaryHref = normalizeSiteHref(secondary?.href, SITE_PRODUCTS_HREF);
 
   if (!title && !description && !primaryLabel && !secondaryLabel) return null;
@@ -795,7 +795,7 @@ function FlagshipSection() {
         </div>
 
         <Link
-          href="/products/e7-gen6"
+          href="/products/e7-gen6-flagship"
           className="inline-flex items-center gap-2 text-[#E36F2C] text-sm tracking-wider hover:text-[#C85A1F] transition-colors"
         >
           {t(i18n.home.flagshipCta)}
@@ -1008,7 +1008,7 @@ function CtaSection() {
         </h2>
         <p className="text-base text-[#C9BEB4] mb-10 leading-relaxed">{t(i18n.home.ctaBody)}</p>
         <Link
-          href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
+          href={buildContactHref('home:final_cta')}
           className="inline-block bg-[#E36F2C] text-white px-10 py-4 text-sm tracking-wider hover:bg-[#C85A1F] transition-colors"
         >
           {t(i18n.home.ctaBtn)}

@@ -6,6 +6,14 @@ export const SITE_CONTACT_HREF = '/contact'
 
 export const SITE_PRODUCTS_HREF = '/products'
 
+export function buildContactHref(source?: string): string {
+  const value = String(source ?? '').trim()
+  if (!value) return SITE_CONTACT_HREF
+
+  const params = new URLSearchParams({ source: value.slice(0, 160) })
+  return `${SITE_CONTACT_HREF}?${params.toString()}`
+}
+
 export function normalizeSiteHref(href: string | null | undefined, fallback = SITE_CONTACT_HREF): string {
   const value = String(href ?? '').trim()
   if (!value) return fallback

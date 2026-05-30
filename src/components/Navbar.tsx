@@ -8,7 +8,7 @@ import AuthButton from './AuthButton';
 import LanguageToggle from './LanguageToggle';
 import { useT } from '@/contexts/LanguageContext';
 import { i18n } from '@/lib/i18n';
-import { SITE_CONTACT_HREF } from '@/lib/site-links';
+import { buildContactHref } from '@/lib/site-links';
 
 interface DropdownItem {
   label: string;
@@ -22,8 +22,6 @@ interface NavLink {
   href: string;
   dropdown?: DropdownItem[];
 }
-
-const NATIVE_NAVIGATION_HREFS = new Set(['/faq', '/contact']);
 
 function ProductsDropdown({ items }: { items: DropdownItem[] }) {
   const gen6Items = items.slice(0, 4);
@@ -59,7 +57,7 @@ function ProductsDropdown({ items }: { items: DropdownItem[] }) {
             {t(i18n.nav.gen5Label)}
           </div>
           {gen5Items.map((item) => (
-            <a
+            <Link
               key={item.href}
               href={item.href}
               className="flex items-center justify-between px-2 py-2.5 text-white/65 hover:text-[#E36F2C] hover:bg-[#E36F2C]/5 transition-colors rounded group"
@@ -68,7 +66,7 @@ function ProductsDropdown({ items }: { items: DropdownItem[] }) {
               {item.sub && (
                 <span className="text-white/25 text-[11px] group-hover:text-[#E36F2C]/50 ml-2 shrink-0">{item.sub}</span>
               )}
-            </a>
+            </Link>
           ))}
         </div>
       </div>
@@ -194,14 +192,6 @@ export default function Navbar() {
                     </svg>
                     <span className="absolute bottom-0 left-2.5 w-0 h-px bg-[#E36F2C] transition-all duration-200 group-hover:w-[calc(100%-20px)]" />
                   </button>
-                ) : NATIVE_NAVIGATION_HREFS.has(link.href) ? (
-                  <a
-                    href={link.href}
-                    className="text-white/65 hover:text-[#E36F2C] text-sm font-medium tracking-wide px-2.5 py-2 transition-colors duration-200 whitespace-nowrap relative group block"
-                  >
-                    {link.label}
-                    <span className="absolute bottom-0 left-2.5 w-0 h-px bg-[#E36F2C] transition-all duration-200 group-hover:w-[calc(100%-20px)]" />
-                  </a>
                 ) : (
                   <Link
                     href={link.href}
@@ -227,18 +217,18 @@ export default function Navbar() {
 
           {/* CTA + Toggle */}
           <div className="hidden xl:flex items-center gap-2 shrink-0">
-            <a
-              href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
+            <Link
+              href={buildContactHref('navbar:purchase_cta')}
               className="text-white text-sm font-semibold px-3.5 py-2 border border-white/50 hover:bg-[#F5F2ED] hover:text-[#241F1B] transition-all duration-200 tracking-wider whitespace-nowrap"
             >
               {t(i18n.nav.purchaseBtn)}
-            </a>
-            <a
-              href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
+            </Link>
+            <Link
+              href={buildContactHref('navbar:booking_cta')}
               className="text-white/75 text-sm font-medium px-3.5 py-2 border border-white/20 hover:border-[#E36F2C] hover:text-[#E36F2C] transition-all duration-200 tracking-wider whitespace-nowrap"
             >
               {t(i18n.nav.bookingBtn)}
-            </a>
+            </Link>
             <LanguageToggle />
             <AuthButton />
           </div>
@@ -300,14 +290,6 @@ export default function Navbar() {
                       </div>
                     )}
                   </>
-                ) : NATIVE_NAVIGATION_HREFS.has(link.href) ? (
-                  <a
-                    href={link.href}
-                    className="block text-white/70 hover:text-[#E36F2C] text-sm py-3 px-2 border-b border-white/5 transition-colors tracking-wider"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {link.label}
-                  </a>
                 ) : (
                   <Link
                     href={link.href}
@@ -321,20 +303,20 @@ export default function Navbar() {
             ))}
 
             <div className="flex gap-3 pt-4">
-              <a
-                href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
+              <Link
+                href={buildContactHref('navbar:mobile_purchase_cta')}
                 className="flex-1 text-center bg-[#241F1B] text-white text-sm font-semibold py-3 border border-white/60 tracking-wider"
                 onClick={() => setIsOpen(false)}
               >
                 {t(i18n.nav.purchaseBtn)}
-              </a>
-              <a
-                href={SITE_CONTACT_HREF} target="_blank" rel="noopener noreferrer"
+              </Link>
+              <Link
+                href={buildContactHref('navbar:mobile_booking_cta')}
                 className="flex-1 text-center bg-transparent text-white/80 text-sm py-3 border border-white/25 tracking-wider"
                 onClick={() => setIsOpen(false)}
               >
                 {t(i18n.nav.bookingBtn)}
-              </a>
+              </Link>
             </div>
             <div className="pt-3 flex items-center justify-between px-1">
               <LanguageToggle />

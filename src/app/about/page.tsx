@@ -15,7 +15,7 @@ import {
   type ResolvedPageModule,
 } from '@/lib/page-module-rendering';
 import { canUseNextImageOptimization } from '@/lib/image-optimization';
-import { SITE_CONTACT_HREF } from '@/lib/site-links';
+import { buildContactHref } from '@/lib/site-links';
 
 type Tech = 'viie' | 'vols' | 'vipc';
 
@@ -1478,14 +1478,12 @@ export default function AboutPage() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-            <a
-              href={SITE_CONTACT_HREF}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href={buildContactHref('about:final_cta')}
               className="px-9 py-4 bg-white text-[#E36F2C] text-sm font-bold tracking-wider hover:bg-[#F5F2ED] transition-colors whitespace-nowrap"
             >
               {zh ? '联系我们' : 'Contact VESSEL'}
-            </a>
+            </Link>
             <Link
               href="/global"
               className="px-9 py-4 border-2 border-white/40 text-white text-sm font-medium tracking-wider hover:border-white hover:bg-white/10 transition-colors whitespace-nowrap"
