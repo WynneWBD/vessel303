@@ -600,6 +600,32 @@ function OperatingProofSection() {
             </div>
           ))}
         </div>
+        <div className="mt-8 flex flex-col gap-3 border border-[#E5DED4] bg-[#241F1B] p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-[#E36F2C]">
+              {zh ? '300 对齐重点' : '300-aligned path'}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-white/65">
+              {zh
+                ? '先看产品目录和真实项目，再带着场景需求进入咨询。'
+                : 'Start with catalog and real projects, then send an inquiry with scenario context.'}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/products"
+              className="inline-flex min-h-10 items-center justify-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C85A1F]"
+            >
+              {zh ? '产品目录' : 'Catalog'}
+            </Link>
+            <Link
+              href="/cases"
+              className="inline-flex min-h-10 items-center justify-center border border-white/20 px-4 text-xs font-bold uppercase tracking-[0.12em] text-white/75 hover:border-[#E36F2C] hover:text-[#E36F2C]"
+            >
+              {zh ? '项目案例' : 'Cases'}
+            </Link>
+          </div>
+        </div>
       </div>
     </section>
   );

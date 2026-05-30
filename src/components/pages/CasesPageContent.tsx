@@ -9,7 +9,7 @@ import PageHero from '@/components/PageHero'
 import ProtectedImage from '@/components/ProtectedImage'
 import { useT, useLanguage } from '@/contexts/LanguageContext'
 import { i18n } from '@/lib/i18n'
-import { SITE_CONTACT_HREF } from '@/lib/site-links'
+import { buildContactHref } from '@/lib/site-links'
 import type { ProjectCaseRow } from '@/lib/project-cases-static'
 
 type CaseFilter = 'all' | 'tourism' | 'commercial' | 'public' | 'overseas'
@@ -122,6 +122,23 @@ export default function CasesPageContent({ cases }: { cases: ProjectCaseRow[] })
     () => cases.filter((item) => matchesFilter(item, activeFilter)),
     [cases, activeFilter],
   )
+  const caseHighlights = [
+    {
+      label: zh ? '项目筛选' : 'Project filter',
+      title: zh ? '按运营场景先分流' : 'Route by operating scenario',
+      body: zh ? '旅游营地、商业展示、公共设施和海外项目先分组，方便采购方快速找到参考。' : 'Tourism, commercial, public, and overseas filters help buyers find relevant proof faster.',
+    },
+    {
+      label: zh ? '案例证据' : 'Case proof',
+      title: zh ? '图片、参数和产品同时展示' : 'Image, specs, and products together',
+      body: zh ? '每个案例保留封面、地点、项目类型、面积、数量和使用产品，支撑后续咨询判断。' : 'Each case keeps cover, location, type, scale, units, and product references for inquiry context.',
+    },
+    {
+      label: zh ? '转化入口' : 'Conversion',
+      title: zh ? '详情页继续承接线索' : 'Detail pages keep lead context',
+      body: zh ? '列表先筛选，详情页再提交需求，后台能识别案例来源。' : 'The list filters interest, while detail pages submit inquiries with case source tracking.',
+    },
+  ]
 
   return (
     <main className="bg-[#FAF7F2] text-[#2C2A28]">
@@ -152,6 +169,18 @@ export default function CasesPageContent({ cases }: { cases: ProjectCaseRow[] })
           </div>
         </div>
       </div>
+
+      <section className="border-b border-[#E5DED4] bg-white">
+        <div className="mx-auto grid max-w-7xl gap-4 px-4 py-6 sm:px-6 md:grid-cols-3 lg:px-8">
+          {caseHighlights.map((item) => (
+            <div key={item.label} className="border border-[#E5DED4] bg-[#FAF7F2] p-5">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#E36F2C]">{item.label}</p>
+              <h2 className="text-base font-black text-[#2C2A28]">{item.title}</h2>
+              <p className="mt-2 text-xs leading-5 text-[#6B6560]">{item.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex flex-wrap gap-3 mb-10">
@@ -276,14 +305,12 @@ export default function CasesPageContent({ cases }: { cases: ProjectCaseRow[] })
           <h2 className="text-2xl font-black text-[#2C2A28] mb-3">{t(i18n.cases.ctaTitle)}</h2>
           <p className="text-[#6B6560] text-sm mb-8 tracking-wider">{t(i18n.cases.ctaSubtitle)}</p>
           <div className="flex flex-wrap justify-center gap-4">
-            <a
-              href={SITE_CONTACT_HREF}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href={buildContactHref('cases:list_cta')}
               className="bg-[#E36F2C] text-white font-bold text-sm px-8 py-3 hover:bg-[#C85A1F] transition-colors tracking-wider"
             >
               {t(i18n.cases.ctaBtn1)}
-            </a>
+            </Link>
             <a
               href="tel:4008090303"
               className="border border-[#999999] text-[#2C2A28] text-sm px-8 py-3 hover:border-[#E36F2C] hover:text-[#E36F2C] transition-colors tracking-wider"

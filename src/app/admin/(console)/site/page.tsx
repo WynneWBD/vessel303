@@ -178,7 +178,7 @@ const SITE_PUBLISH_APPS: SitePublishApp[] = [
   },
   {
     title: '编辑页面草稿',
-    detail: 'Home / About 的受控模块先保存为草稿；B20 已补品牌叙事和转化说明，发布前必须预览校对。',
+    detail: 'Home / About 的受控模块先保存为草稿；B21 已补 300 对齐的产品目录、项目证据和转化说明，发布前必须预览校对。',
     href: '/admin/site/visual',
     Icon: LayoutTemplate,
     action: '进入编辑',

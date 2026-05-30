@@ -485,6 +485,27 @@ function AboutDecisionSection({ zh }: { zh: boolean }) {
             </div>
           ))}
         </div>
+        <div className="mt-8 flex flex-col gap-3 border border-[#E5E0DA] bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="max-w-2xl text-sm leading-6 text-[#6B625B]">
+            {zh
+              ? '如果客户已经理解品牌可信度，下一步应直接进入产品、项目案例或带来源的咨询路径。'
+              : 'Once buyers understand credibility, the next step should be product review, project proof, or a source-aware inquiry path.'}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/products"
+              className="inline-flex min-h-10 items-center justify-center bg-[#241F1B] px-4 text-xs font-bold uppercase tracking-[0.12em] text-white hover:bg-[#3A302A]"
+            >
+              {zh ? '产品中心' : 'Products'}
+            </Link>
+            <Link
+              href={buildContactHref('about:decision_path_cta')}
+              className="inline-flex min-h-10 items-center justify-center border border-[#E36F2C]/40 px-4 text-xs font-bold uppercase tracking-[0.12em] text-[#C65F22] hover:bg-[#FFF4EC]"
+            >
+              {zh ? '联系咨询' : 'Contact'}
+            </Link>
+          </div>
+        </div>
       </div>
     </section>
   );

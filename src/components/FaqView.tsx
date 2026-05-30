@@ -207,6 +207,22 @@ export default function FaqView({
         </div>
       </div>
 
+      <section className="border-b border-[#E5E0DA] bg-white px-4 py-4">
+        <div className="mx-auto flex max-w-4xl flex-col gap-3 text-xs text-[#6B625B] sm:flex-row sm:items-center sm:justify-between">
+          <div className="font-semibold tracking-[0.16em] text-[#2C2A28]">
+            {lang === 'zh' ? `当前显示 ${visibleItemCount} 条答案` : `Showing ${visibleItemCount} answers`}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <span className="border border-[#E5E0DA] px-3 py-1.5">
+              {lang === 'zh' ? '后台 owner: FAQ CMS' : 'Owner: FAQ CMS'}
+            </span>
+            <span className="border border-[#E36F2C]/25 px-3 py-1.5 text-[#C65F22]">
+              {lang === 'zh' ? '未解答问题可直接进入线索' : 'Unanswered questions can become leads'}
+            </span>
+          </div>
+        </div>
+      </section>
+
       <main className="flex-1 px-4 py-12">
         <div className="mx-auto max-w-4xl space-y-10">
           {filteredCategories.map((cat) => {

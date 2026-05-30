@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
+import { buildContactHref } from '@/lib/site-links';
 import type { ProductAttributeTemplateWithOptions, ProductCategoryRow } from '@/lib/product-catalog-db';
 import type { CatalogProduct } from '@/lib/products';
 
@@ -38,6 +39,10 @@ function buildHref(filters: DirectoryFilters, patch: Partial<DirectoryFilters>) 
 
 function productHref(product: CatalogProduct) {
   return getCatalogProductPublicHref(product);
+}
+
+function productInquiryHref(product: CatalogProduct) {
+  return buildContactHref(`product_list:${product.id}:inquiry_cta`);
 }
 
 function productPrice(product: CatalogProduct, lang: 'en' | 'zh') {
@@ -200,14 +205,22 @@ function ProductCard({ product }: { product: CatalogProduct }) {
             </span>
           ))}
         </div>
-        <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#ECEFF1] pt-3">
+        <div className="mt-4 border-t border-[#ECEFF1] pt-3">
           <span className="min-w-0 truncate text-sm font-semibold text-[#C65F22]">{productPrice(product, lang)}</span>
-          <Link
-            href={productHref(product)}
-            className="shrink-0 bg-[#147C94] px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#0E6479]"
-          >
-            Details
-          </Link>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <Link
+              href={productHref(product)}
+              className="inline-flex min-h-10 items-center justify-center bg-[#147C94] px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#0E6479]"
+            >
+              Details
+            </Link>
+            <Link
+              href={productInquiryHref(product)}
+              className="inline-flex min-h-10 items-center justify-center border border-[#E36F2C]/35 px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-[#C65F22] transition hover:border-[#E36F2C] hover:bg-[#FFF4EC]"
+            >
+              Inquiry
+            </Link>
+          </div>
         </div>
       </div>
     </article>
@@ -276,6 +289,23 @@ export default function ProductsPageContent({
   const pageProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const rangeStart = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const rangeEnd = Math.min(total, currentPage * pageSize);
+  const catalogHighlights = [
+    {
+      label: lang === 'zh' ? '产品总量' : 'Catalog',
+      value: String(products.length),
+      body: lang === 'zh' ? '后台已发布产品进入正式目录' : 'Published products feed the live catalog',
+    },
+    {
+      label: lang === 'zh' ? '筛选维度' : 'Filters',
+      value: String(categories.length + attributeTemplates.length),
+      body: lang === 'zh' ? '分类、配置、面积和国家用于运营筛选' : 'Categories and attributes support buyer filtering',
+    },
+    {
+      label: lang === 'zh' ? '咨询路径' : 'Inquiry',
+      value: 'Source',
+      body: lang === 'zh' ? '列表与详情咨询统一进入可追踪联系路径' : 'List and detail CTAs keep traceable source context',
+    },
+  ];
 
   return (
     <>
@@ -294,6 +324,34 @@ export default function ProductsPageContent({
               ? 'Browse VESSEL product models by category, configuration, area and country.'
               : '按分类、配置、面积和国家浏览 VESSEL 产品目录。'}
           </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href={buildContactHref('products:catalog_inquiry_cta')}
+              className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#C85A1F]"
+            >
+              {lang === 'zh' ? '提交产品需求' : 'Send product brief'}
+            </Link>
+            <Link
+              href="/cases"
+              className="inline-flex min-h-11 items-center justify-center border border-[#C7CDD2] bg-white px-5 text-sm font-semibold text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94]"
+            >
+              {lang === 'zh' ? '查看项目案例' : 'View project cases'}
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-[#DADDE1] bg-white">
+        <div className="mx-auto grid max-w-7xl gap-3 px-4 py-5 sm:px-6 md:grid-cols-3 lg:px-8">
+          {catalogHighlights.map((item) => (
+            <div key={item.label} className="border border-[#E5E9EC] bg-[#FAFBFB] p-4">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#65707A]">{item.label}</p>
+                <p className="text-xl font-black text-[#147C94]">{item.value}</p>
+              </div>
+              <p className="mt-2 text-xs leading-5 text-[#65707A]">{item.body}</p>
+            </div>
+          ))}
         </div>
       </section>
 
