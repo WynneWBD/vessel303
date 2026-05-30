@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { Eye, EyeOff, Plus, Save, Trash2 } from 'lucide-react'
+import { Eye, EyeOff, Plus, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
@@ -14,11 +14,16 @@ const PAGE_LABELS = {
   home: '首页',
   about: '关于我们',
   products: '产品中心',
+  cases: '项目案例',
+  news: '新闻资讯',
   'media-kit': 'Media Kit',
   faq: 'FAQ',
   scenarios: 'Scenarios',
   innovation: 'Innovation',
   display: 'Display',
+  contact: '联系入口',
+  auth: '登录 / 注册',
+  account: '账户中心',
   site: '导航 / 页脚',
 } satisfies Record<string, string>
 
@@ -27,7 +32,7 @@ function pageLabel(pageKey: string) {
 }
 
 function moduleStatus(pageModule: PageModuleRow) {
-  if (['products', 'media-kit', 'faq', 'scenarios', 'innovation', 'display', 'site'].includes(pageModule.page_key)) return '客户可见内容'
+  if (['products', 'cases', 'news', 'media-kit', 'faq', 'scenarios', 'innovation', 'display', 'contact', 'auth', 'account', 'site'].includes(pageModule.page_key)) return '客户可见内容'
   if (pageModule.module_key === 'hero') return '已接入前台'
   if (pageModule.module_key === 'credentials') return '已接入前台'
   if (pageModule.module_key === 'stats') return '已接入前台'
@@ -200,7 +205,8 @@ export default function PageModulesClient({
 
   const removeItem = (id: string) => {
     if (!active) return
-    patchActive({ items: active.items.filter((item) => item.id !== id) })
+    patchItem(id, { is_visible: false })
+    toast.message('已隐藏项目，保存后前台才会同步隐藏')
   }
 
   const isStatsModule = active?.module_type === 'stats'
@@ -278,7 +284,7 @@ export default function PageModulesClient({
             页面模块
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#8A8580]">
-            用受控模块管理首页、关于我们等页面的文字和图片。当前首页首屏、首页数据区、关于我们首屏、数据条、品牌故事、智造实力、品牌历程、三大技术、创始人、服务体系、奖项荣誉、合作伙伴已经接入前台，其他模块先作为后续接入的结构地基。
+            用受控模块管理客户可见文字、图片、按钮、链接、表单说明和导航页脚。前台只展示后台已保存并处于显示状态的内容，不在代码里补业务文案。
           </p>
         </div>
         <div className="flex flex-col items-start gap-2 lg:items-end">
@@ -351,22 +357,22 @@ export default function PageModulesClient({
               <h2 className="mt-1 text-lg font-semibold text-[#2C2A28]">{active.title_zh}</h2>
             </div>
             <div className="flex items-center gap-3 rounded-md border border-[#E5DED4] bg-[#FAF7F2] px-3 py-2">
-              <span className="text-xs text-[#8A8580]">前台显示</span>
+              <span className="text-xs text-[#8A8580]">显示到前台</span>
               <Switch checked={active.is_visible} onCheckedChange={(checked) => patchActive({ is_visible: checked })} />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-5 p-5 xl:grid-cols-2">
             <label className="flex flex-col gap-2">
-              <span className="text-xs font-medium text-[#8A8580]">中文模块名</span>
+              <span className="text-xs font-medium text-[#8A8580]">中文模块名（显示到前台）</span>
               <Input value={active.title_zh} onChange={(e) => patchActive({ title_zh: e.target.value })} />
             </label>
             <label className="flex flex-col gap-2">
-              <span className="text-xs font-medium text-[#8A8580]">英文模块名</span>
+              <span className="text-xs font-medium text-[#8A8580]">英文模块名（显示到前台）</span>
               <Input value={active.title_en} onChange={(e) => patchActive({ title_en: e.target.value })} />
             </label>
             <label className="flex flex-col gap-2">
-              <span className="text-xs font-medium text-[#8A8580]">中文说明</span>
+              <span className="text-xs font-medium text-[#8A8580]">中文说明（显示到前台）</span>
               <Textarea
                 className="min-h-[92px]"
                 value={active.description_zh}
@@ -374,7 +380,7 @@ export default function PageModulesClient({
               />
             </label>
             <label className="flex flex-col gap-2">
-              <span className="text-xs font-medium text-[#8A8580]">英文说明</span>
+              <span className="text-xs font-medium text-[#8A8580]">英文说明（显示到前台）</span>
               <Textarea
                 className="min-h-[92px]"
                 value={active.description_en}
@@ -389,7 +395,7 @@ export default function PageModulesClient({
                 <div>
                   <p className="text-sm font-semibold text-[#2C2A28]">图片与文字项</p>
                   <p className="mt-1 text-xs text-[#8A8580]">
-                    已接入前台的模块保存后会影响网站展示。图片可以从图片库选择、直接上传，或继续手动填写 URL。
+                    这些字段会直接显示到前台。隐藏项目用于下架展示，不做物理删除；图片可以从图片库选择、直接上传或粘贴 URL。
                   </p>
                 </div>
                 <Button type="button" size="sm" variant="outline" onClick={addItem}>
@@ -427,11 +433,12 @@ export default function PageModulesClient({
                             type="button"
                             size="icon"
                             variant="ghost"
-                            className="h-7 w-7 text-[#8A8580] hover:text-red-600"
-                            aria-label="删除项目"
+                            className="h-7 w-7 text-[#8A8580] hover:text-[#E36F2C]"
+                            aria-label="隐藏项目"
+                            title="隐藏项目"
                             onClick={() => removeItem(item.id)}
                           >
-                            <Trash2 size={14} />
+                            <EyeOff size={14} />
                           </Button>
                         </div>
                       </div>
@@ -513,7 +520,7 @@ export default function PageModulesClient({
             </div>
           ) : (
             <div className="border-t border-[#E5DED4] px-5 py-10 text-sm text-[#8A8580]">
-              这个模块暂未接入具体字段。你可以先新增项目作为内容结构，后续会按页面结构逐个增加标题、图片、列表项等可编辑字段。
+              这个模块暂未接入具体字段。你可以先新增项目作为内容结构；保存后前台只会按后台字段显示，不会使用代码补业务文案。
               <div className="mt-4">
                 <Button type="button" size="sm" variant="outline" onClick={addItem}>
                   <Plus size={14} />

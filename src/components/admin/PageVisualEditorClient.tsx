@@ -1087,11 +1087,11 @@ export default function PageVisualEditorClient({
 
   const confirmDeleteItem = useCallback(() => {
     if (!active || !deleteItemId || !canManageRepeatedItems) return
-    patchActive({ items: active.items.filter((item) => item.id !== deleteItemId) })
+    patchItem(deleteItemId, { is_visible: false })
     setSelectedField({ itemId: null, field: null })
     setDeleteItemId(null)
-    toast.message('已删除项目，保存草稿和发布后才会影响前台')
-  }, [active, canManageRepeatedItems, deleteItemId, patchActive])
+    toast.message('已隐藏项目，保存草稿和发布后才会影响前台')
+  }, [active, canManageRepeatedItems, deleteItemId, patchItem])
 
   const scrollModuleIntoView = useCallback((id: string) => {
     const doc = getIframeDocument(iframeRef.current)
@@ -1700,7 +1700,7 @@ export default function PageVisualEditorClient({
           </h1>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-[#8A8580]">
             受控可视化编辑，只能修改已接入 page_modules 的文字、链接、图片和模块显示状态。
-            支持重复型模块内的项目新增、删除、排序；Home 安全插入区支持 simple-text / cta-section 的有限新增、排序和结构隐藏。
+            支持重复型模块内的项目新增、隐藏、恢复和排序；Home 安全插入区支持 simple-text / cta-section 的有限新增、排序和结构隐藏。
             核心模块、About 结构、自由样式和自由布局仍保持锁定。
             当前编辑的是草稿预览：保存草稿不会影响前台，点击发布后才会上线；发布前会自动保留当前线上版本快照。
           </p>
@@ -2532,7 +2532,7 @@ export default function PageVisualEditorClient({
                     <div>
                       <p className="text-sm font-semibold text-[#2C2A28]">模块内项目</p>
                       <p className="mt-1 text-xs leading-5 text-[#8A8580]">
-                        可显示/隐藏项目并调整排序。只有数据条、列表、图片墙这类重复型模块支持新增和删除项目；所有变化都会先保存为草稿。
+                        可显示/隐藏项目并调整排序。只有数据条、列表、图片墙这类重复型模块支持新增项目；移除展示统一使用隐藏，不做物理删除。
                       </p>
                     </div>
                     <Button
@@ -2604,8 +2604,8 @@ export default function PageVisualEditorClient({
                             size="icon"
                             variant="ghost"
                             className="h-7 w-7 text-[#8A8580] hover:text-red-600"
-                            aria-label="删除项目"
-                            title={canManageRepeatedItems ? '删除项目' : '固定内容模块不支持删除项目'}
+                            aria-label="隐藏项目"
+                            title={canManageRepeatedItems ? '隐藏项目' : '固定内容模块不支持隐藏项目'}
                             disabled={!canManageRepeatedItems}
                             onClick={() => setDeleteItemId(item.id)}
                           >
@@ -2855,19 +2855,19 @@ export default function PageVisualEditorClient({
         onOpenChange={(open) => {
           if (!open) setDeleteItemId(null)
         }}
-        title="确认删除这个项目？"
+        title="确认隐藏这个项目？"
         description={
           <span>
-            这只会先成为当前模块的未保存草稿修改。将删除第{' '}
+            这只会先成为当前模块的未保存草稿修改。将隐藏第{' '}
             <strong>{activeItemToDeleteIndex >= 0 ? activeItemToDeleteIndex + 1 : '-'}</strong> 个项目，
             ID 为 <strong>{activeItemToDelete?.id ?? deleteItemId}</strong>，
             当前文字为 <strong>{activeItemToDeleteSummary?.label ?? '-'}</strong>
             {activeItemToDeleteSummary?.value ? <>，值/正文为 <strong>{activeItemToDeleteSummary.value}</strong></> : null}。
-            保存草稿后只会进入草稿预览，发布草稿后才会从前台对应模块中移除。
+            保存草稿后只会进入草稿预览，发布草稿后才会从前台对应模块中隐藏，可通过显示开关恢复。
           </span>
         }
-        confirmLabel="确认删除"
-        tone="danger"
+        confirmLabel="确认隐藏"
+        tone="warning"
         onConfirm={confirmDeleteItem}
       />
 

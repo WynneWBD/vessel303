@@ -2,11 +2,19 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
-import { pool } from '@/lib/db'
 import {
+  CONTENT_CONTRACTS,
+  loadGovernanceContractStatuses,
+  type ContentContractSignal,
+  type GovernanceContractStatus,
+  type GovernanceSourceType,
+} from '@/lib/admin-site-governance'
+import {
+  AlertTriangle,
   ArrowRight,
   CheckCircle2,
   CircleDashed,
+  Database,
   Eye,
   FileArchive,
   FileQuestion,
@@ -15,7 +23,6 @@ import {
   Globe2,
   Image as ImageIcon,
   LayoutTemplate,
-  Lightbulb,
   Link2,
   ListChecks,
   LockKeyhole,
@@ -27,215 +34,22 @@ import {
   SearchCheck,
   Settings,
   ShieldCheck,
+  Sparkles,
   Wrench,
   type LucideIcon,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: '页面清单 - VESSEL' }
+export const metadata = { title: '前台内容来源中心 - VESSEL' }
 
 type AdminRole = 'admin' | 'operator'
-type EditablePageKey = 'home' | 'about'
-type SitePageStatus = 'editable' | 'managed' | 'locked' | 'external'
-
-type SitePage = {
-  key: string
-  title: string
-  path: string
-  group: string
-  source: string
-  detail: string
-  status: SitePageStatus
-  editorHref?: string
-  viewHref: string
-  Icon: LucideIcon
-  pageKey?: EditablePageKey
-}
-
-type PageModuleSummary = {
-  total: number
-  visible: number
-  hidden: number
-  moduleDrafts: number
-  structureDraftStatus: string | null
-  structureModules: number
-  structureVisible: number
-  structureAdded: number
-  structureHidden: number
-  updatedAt: string | null
-  structureUpdatedAt: string | null
-}
-
-const EMPTY_PAGE_SUMMARY: PageModuleSummary = {
-  total: 0,
-  visible: 0,
-  hidden: 0,
-  moduleDrafts: 0,
-  structureDraftStatus: null,
-  structureModules: 0,
-  structureVisible: 0,
-  structureAdded: 0,
-  structureHidden: 0,
-  updatedAt: null,
-  structureUpdatedAt: null,
-}
-
-const EDITABLE_PAGE_KEYS: EditablePageKey[] = ['home', 'about']
-
-const SITE_PAGES: SitePage[] = [
-  {
-    key: 'home',
-    title: '首页',
-    path: '/',
-    group: '页面编辑',
-    source: '页面可视化编辑器',
-    detail: '首页 Hero、核心数据和安全插入区由受控模块维护；B23 继续核查移动端首屏、图片比例、产品/场景视觉和咨询入口，草稿不会直接影响前台。',
-    status: 'editable',
-    editorHref: '/admin/site/visual',
-    viewHref: '/',
-    Icon: LayoutTemplate,
-    pageKey: 'home',
-  },
-  {
-    key: 'about',
-    title: 'About',
-    path: '/about',
-    group: '页面编辑',
-    source: '页面可视化编辑器',
-    detail: '关于页品牌、工厂、历程和荣誉等模块可编辑；B23 继续核查移动端首屏、CTA 层级和品牌判断路径，但不开放新增结构。',
-    status: 'editable',
-    editorHref: '/admin/site/visual',
-    viewHref: '/about',
-    Icon: FileText,
-    pageKey: 'about',
-  },
-  {
-    key: 'products',
-    title: '产品中心',
-    path: '/products',
-    group: '内容 CMS',
-    source: '产品管理 2.0',
-    detail: '产品列表和详情内容由产品管理维护；B23 复核移动端筛选、产品图比例、详情锚点、Related Products 和询盘触达，不进入页面自由搭建器。',
-    status: 'managed',
-    editorHref: '/admin/content/products',
-    viewHref: '/products',
-    Icon: Package,
-  },
-  {
-    key: 'cases',
-    title: '项目案例',
-    path: '/cases',
-    group: '内容 CMS',
-    source: '项目案例 2.0',
-    detail: '项目案例列表和详情由项目后台维护；B23 复核案例图片比例、卡片密度、地点/场景标签和 CTA 排版，Global 只作为地图展示渠道。',
-    status: 'managed',
-    editorHref: '/admin/content/projects',
-    viewHref: '/cases',
-    Icon: MapPinned,
-  },
-  {
-    key: 'news',
-    title: '新闻资讯',
-    path: '/news',
-    group: '内容 CMS',
-    source: '新闻管理 2.0',
-    detail: '新闻列表和详情由新闻后台维护，包含分类、封面、定时和 SEO 字段。',
-    status: 'managed',
-    editorHref: '/admin/content/news',
-    viewHref: '/news',
-    Icon: Newspaper,
-  },
-  {
-    key: 'faq',
-    title: 'FAQ',
-    path: '/faq',
-    group: '固定内容 CMS',
-    source: 'FAQ CMS',
-    detail: '常见问题分类、排序和发布状态由固定内容 CMS 维护；B23 复核移动端阅读节奏、CTA 触达和线索承接提示，前台保留静态兜底。',
-    status: 'managed',
-    editorHref: '/admin/content/faq',
-    viewHref: '/faq',
-    Icon: FileQuestion,
-  },
-  {
-    key: 'media-kit',
-    title: 'Media Kit',
-    path: '/media-kit',
-    group: '固定内容 CMS',
-    source: '文件下载 CMS / leads',
-    detail: '媒体资源列表由 CMS 维护，申请表单进入线索，不做会员权限或复杂密码下载。',
-    status: 'managed',
-    editorHref: '/admin/content/media-kit',
-    viewHref: '/media-kit',
-    Icon: FileArchive,
-  },
-  {
-    key: 'scenarios',
-    title: 'Scenarios',
-    path: '/scenarios/tourism',
-    group: '固定内容 CMS',
-    source: '场景方案 CMS',
-    detail: '固定场景 tourism / commercial / public 由 CMS 覆盖文本、参数、流程和 CTA。',
-    status: 'managed',
-    editorHref: '/admin/content/scenarios',
-    viewHref: '/scenarios/tourism',
-    Icon: Presentation,
-  },
-  {
-    key: 'contact',
-    title: '联系入口',
-    path: '/contact',
-    group: '站点设置',
-    source: 'site_settings.contactUrl / CTA helper',
-    detail: 'B12：通用 Contact / Consult / Inquiry CTA 先进入 /contact，再读取 contactUrl 跳转；自有表单写入 leads 2.0。',
-    status: 'locked',
-    editorHref: '/admin/settings',
-    viewHref: '/contact',
-    Icon: Settings,
-  },
-  {
-    key: 'display',
-    title: 'Display',
-    path: '/display',
-    group: '固定内容 CMS',
-    source: 'Display CMS / product_showcases',
-    detail: '展示页优先读取后台展示配置和产品橱窗，无配置时保留静态兜底。',
-    status: 'managed',
-    editorHref: '/admin/content/display',
-    viewHref: '/display',
-    Icon: GalleryHorizontalEnd,
-  },
-  {
-    key: 'innovation',
-    title: 'Innovation',
-    path: '/innovation/viie',
-    group: '固定内容 CMS',
-    source: '技术专题 CMS',
-    detail: 'VI/IE、VIPC、VOLS 固定专题开放文本、图文段落、参数和 CTA。',
-    status: 'managed',
-    editorHref: '/admin/content/innovation',
-    viewHref: '/innovation/viie',
-    Icon: Lightbulb,
-  },
-  {
-    key: 'global',
-    title: 'Global Map',
-    path: '/global',
-    group: '只读展示',
-    source: '地图专项',
-    detail: 'Global 是独立地图展示渠道，B5 不修改 MapLibre、MapTiler 或 /api/map。',
-    status: 'locked',
-    viewHref: '/global',
-    Icon: Globe2,
-  },
-]
 
 function getSitePagesSideNav({
-  draftCount,
+  issueCount,
   isAdmin,
 }: {
-  draftCount: number
+  issueCount: number
   isAdmin: boolean
 }): AdminSideNavGroup[] {
   return [
@@ -244,8 +58,8 @@ function getSitePagesSideNav({
       items: [
         { key: 'overview', label: '网站概览', href: '/admin/site', Icon: LayoutTemplate },
         { key: 'conversion', label: '转化路径', href: '/admin/site/conversion', Icon: Link2 },
-        { key: 'pages', label: '页面清单', href: '/admin/site/pages', badge: draftCount, Icon: ListChecks },
-        { key: 'navigation', label: '导航管理', href: '/admin/site/navigation', Icon: Navigation },
+        { key: 'pages', label: '内容来源', href: '/admin/site/pages', badge: issueCount, Icon: ListChecks },
+        { key: 'navigation', label: '导航页脚', href: '/admin/site/navigation', Icon: Navigation },
         { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },
         { key: 'settings', label: '网站信息', href: '/admin/site/settings', Icon: Settings },
         { key: 'visual', label: '编辑网站', href: '/admin/site/visual', Icon: FileText },
@@ -257,147 +71,64 @@ function getSitePagesSideNav({
         { key: 'products', label: '产品管理', href: '/admin/content/products', Icon: Package },
         { key: 'projects', label: '项目案例', href: '/admin/content/projects', Icon: MapPinned },
         { key: 'news', label: '新闻资讯', href: '/admin/content/news', Icon: Newspaper },
+        { key: 'faq', label: 'FAQ', href: '/admin/content/faq', Icon: FileQuestion },
+        { key: 'media-kit', label: 'Media Kit', href: '/admin/content/media-kit', Icon: FileArchive },
         { key: 'media', label: '图片素材', href: '/admin/site/media', Icon: ImageIcon },
-      ],
-    },
-    {
-      title: '后续规划',
-      items: [
-        { key: 'admin-settings', label: '站点设置', href: '/admin/settings', adminOnly: true, Icon: Settings },
       ],
     },
     {
       title: '高级维护',
       items: [
         { key: 'form-mode', label: '表单模式', href: '/admin/pages', adminOnly: true, Icon: Wrench },
+        { key: 'admin-settings', label: '站点设置', href: '/admin/settings', adminOnly: true, Icon: Settings },
         { key: 'legacy', label: '维护入口', href: '/admin/legacy', adminOnly: true, Icon: ShieldCheck },
       ].filter((item) => isAdmin || !item.adminOnly),
     },
   ]
 }
 
-function parseCount(value: string | number | null | undefined): number {
-  if (typeof value === 'number') return value
-  const parsed = parseInt(value ?? '0', 10)
-  return Number.isFinite(parsed) ? parsed : 0
+const PAGE_ICON: Record<string, LucideIcon> = {
+  home: LayoutTemplate,
+  about: FileText,
+  products: Package,
+  cases: MapPinned,
+  news: Newspaper,
+  faq: FileQuestion,
+  'media-kit': FileArchive,
+  scenarios: Presentation,
+  innovation: Sparkles,
+  display: GalleryHorizontalEnd,
+  contact: Link2,
+  'site-shell': Navigation,
+  'auth-account': LockKeyhole,
+  global: Globe2,
 }
 
-function getSummaryNumber(summary: unknown, key: string): number {
-  if (!summary || typeof summary !== 'object') return 0
-  const value = (summary as Record<string, unknown>)[key]
-  if (typeof value === 'number') return value
-  if (typeof value === 'string') return parseCount(value)
-  return 0
+const SIGNAL_LABEL: Record<ContentContractSignal, string> = {
+  image: '图片',
+  cta: 'CTA',
+  form: '表单',
+  seo: 'SEO',
+  navigation: '导航',
+  footer: '页脚',
+  source: '来源',
 }
 
-function emptySummaryMap(): Record<EditablePageKey, PageModuleSummary> {
-  return {
-    home: { ...EMPTY_PAGE_SUMMARY },
-    about: { ...EMPTY_PAGE_SUMMARY },
-  }
+const SOURCE_LABEL: Record<GovernanceSourceType, string> = {
+  page_modules: '页面模块',
+  product_cms: '产品 CMS',
+  project_cms: '案例 CMS',
+  news_cms: '新闻 CMS',
+  b9_cms: '固定内容 CMS',
+  site_settings: '站点设置',
+  protected: '受保护专项',
 }
 
-async function safeLoad<T>(label: string, loader: () => Promise<T>, fallback: T): Promise<T> {
-  try {
-    return await loader()
-  } catch (err) {
+function safeLoad<T>(label: string, loader: () => Promise<T>, fallback: T): Promise<T> {
+  return loader().catch((err) => {
     console.error(`[admin-site-pages] ${label} failed`, err)
     return fallback
-  }
-}
-
-async function tableExists(tableName: string): Promise<boolean> {
-  const res = await pool.query<{ table_name: string | null }>(
-    'SELECT to_regclass($1) AS table_name',
-    [tableName],
-  )
-  return Boolean(res.rows[0]?.table_name)
-}
-
-async function loadPageModuleSummaries(): Promise<Record<EditablePageKey, PageModuleSummary>> {
-  const summaries = emptySummaryMap()
-  const pageKeys = EDITABLE_PAGE_KEYS as string[]
-
-  if (await tableExists('public.page_modules')) {
-    const liveRes = await pool.query<{
-      page_key: EditablePageKey
-      total: string
-      visible: string
-      hidden: string
-      updated_at: string | null
-    }>(
-      `SELECT
-         page_key,
-         COUNT(*)::text AS total,
-         COUNT(*) FILTER (WHERE is_visible IS TRUE)::text AS visible,
-         COUNT(*) FILTER (WHERE is_visible IS NOT TRUE)::text AS hidden,
-         MAX(updated_at)::text AS updated_at
-       FROM page_modules
-       WHERE page_key = ANY($1::text[])
-       GROUP BY page_key`,
-      [pageKeys],
-    )
-
-    for (const row of liveRes.rows) {
-      if (!EDITABLE_PAGE_KEYS.includes(row.page_key)) continue
-      summaries[row.page_key] = {
-        ...summaries[row.page_key],
-        total: parseCount(row.total),
-        visible: parseCount(row.visible),
-        hidden: parseCount(row.hidden),
-        updatedAt: row.updated_at,
-      }
-    }
-  }
-
-  if (await tableExists('public.page_module_drafts')) {
-    const draftRes = await pool.query<{ page_key: EditablePageKey; count: string }>(
-      `SELECT page_key, COUNT(*)::text AS count
-       FROM page_module_drafts
-       WHERE page_key = ANY($1::text[])
-       GROUP BY page_key`,
-      [pageKeys],
-    )
-
-    for (const row of draftRes.rows) {
-      if (!EDITABLE_PAGE_KEYS.includes(row.page_key)) continue
-      summaries[row.page_key] = {
-        ...summaries[row.page_key],
-        moduleDrafts: parseCount(row.count),
-      }
-    }
-  }
-
-  if (await tableExists('public.page_structure_drafts')) {
-    const structureRes = await pool.query<{
-      page_key: EditablePageKey
-      draft_status: string
-      updated_at: string | null
-      summary: unknown
-    }>(
-      `SELECT page_key, draft_status, updated_at::text AS updated_at, summary
-       FROM page_structure_drafts
-       WHERE page_key = ANY($1::text[])
-         AND draft_status <> 'discarded'
-       ORDER BY updated_at DESC`,
-      [pageKeys],
-    )
-
-    for (const row of structureRes.rows) {
-      if (!EDITABLE_PAGE_KEYS.includes(row.page_key)) continue
-      summaries[row.page_key] = {
-        ...summaries[row.page_key],
-        structureDraftStatus: row.draft_status,
-        structureModules: getSummaryNumber(row.summary, 'moduleCount'),
-        structureVisible: getSummaryNumber(row.summary, 'visibleCount'),
-        structureAdded: getSummaryNumber(row.summary, 'addedCount'),
-        structureHidden: getSummaryNumber(row.summary, 'hiddenCount'),
-        structureUpdatedAt: row.updated_at,
-      }
-    }
-  }
-
-  return summaries
+  })
 }
 
 function formatDateTime(value: string | null): string {
@@ -412,26 +143,32 @@ function formatDateTime(value: string | null): string {
   }).format(date)
 }
 
-function getStatusLabel(status: SitePageStatus): string {
-  if (status === 'editable') return '可编辑'
-  if (status === 'managed') return '独立 CMS'
-  if (status === 'external') return '外部入口'
-  return '受保护'
+function levelLabel(level: GovernanceContractStatus['issueLevel']): string {
+  if (level === 'ok') return '已闭合'
+  if (level === 'warning') return '需补内容'
+  if (level === 'protected') return '受保护'
+  return '需关注'
 }
 
-function getStatusClassName(status: SitePageStatus): string {
-  if (status === 'editable') return 'bg-[#E36F2C]/10 text-[#E36F2C]'
-  if (status === 'managed') return 'bg-[#EAF6F8] text-[#1889B6]'
-  if (status === 'external') return 'bg-[#F0F2F2] text-[#61767D]'
-  return 'bg-[#F5F2ED] text-[#6B625B]'
+function levelClassName(level: GovernanceContractStatus['issueLevel']): string {
+  if (level === 'ok') return 'bg-emerald-50 text-emerald-700'
+  if (level === 'warning') return 'bg-orange-50 text-orange-700'
+  if (level === 'protected') return 'bg-[#F5F2ED] text-[#6B625B]'
+  return 'bg-[#EAF6F8] text-[#1889B6]'
 }
 
-function draftStatusLabel(status: string | null): string {
-  if (!status) return '无结构草稿'
-  if (status === 'active') return '结构草稿'
-  if (status === 'stale') return '草稿需核对'
-  if (status === 'review') return '等待复核'
-  return status
+function sourceClassName(sourceType: GovernanceSourceType): string {
+  if (sourceType === 'protected') return 'bg-[#F5F2ED] text-[#6B625B]'
+  if (sourceType === 'site_settings') return 'bg-[#F0F2F2] text-[#61767D]'
+  if (sourceType === 'page_modules') return 'bg-[#FFF2E7] text-[#E36F2C]'
+  return 'bg-[#EAF6F8] text-[#1889B6]'
+}
+
+function issueIcon(level: GovernanceContractStatus['issueLevel']) {
+  if (level === 'ok') return <CheckCircle2 size={16} className="text-emerald-600" />
+  if (level === 'protected') return <LockKeyhole size={16} className="text-[#6B625B]" />
+  if (level === 'warning') return <AlertTriangle size={16} className="text-orange-600" />
+  return <CircleDashed size={16} className="text-[#1889B6]" />
 }
 
 function MetricPill({ label, value }: { label: string; value: number | string }) {
@@ -448,85 +185,6 @@ function SectionTitle({ title, detail }: { title: string; detail?: string }) {
     <div>
       <h2 className="text-xl font-bold text-[#1E2C31]">{title}</h2>
       {detail && <p className="mt-1 text-sm text-[#61767D]">{detail}</p>}
-    </div>
-  )
-}
-
-function PageCard({
-  page,
-  summary,
-}: {
-  page: SitePage
-  summary?: PageModuleSummary
-}) {
-  const Icon = page.Icon
-  const editable = page.status === 'editable'
-  const hasDrafts = Boolean(summary && (summary.moduleDrafts > 0 || summary.structureDraftStatus))
-
-  return (
-    <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex min-w-0 items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
-            <Icon size={20} />
-          </span>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-base font-bold text-[#1E2C31]">{page.title}</h3>
-              <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${getStatusClassName(page.status)}`}>
-                {getStatusLabel(page.status)}
-              </span>
-              {hasDrafts && (
-                <span className="rounded-full bg-[#FFF2E7] px-2 py-1 text-[11px] font-semibold text-[#E36F2C]">
-                  有草稿
-                </span>
-              )}
-            </div>
-            <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{page.path} / {page.group}</p>
-            <p className="mt-3 text-sm leading-6 text-[#61767D]">{page.detail}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        <MetricPill label="来源" value={page.source} />
-        {editable && summary ? (
-          <>
-            <MetricPill label="模块" value={summary.total} />
-            <MetricPill label="可见" value={summary.visible} />
-            <MetricPill label="草稿" value={summary.moduleDrafts} />
-            <MetricPill label={draftStatusLabel(summary.structureDraftStatus)} value={summary.structureDraftStatus ? 1 : 0} />
-          </>
-        ) : null}
-      </div>
-
-      {editable && summary ? (
-        <div className="mt-4 rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-3 text-xs leading-5 text-[#61767D]">
-          最近模块更新：{formatDateTime(summary.updatedAt)}；结构草稿更新：{formatDateTime(summary.structureUpdatedAt)}。
-          {summary.structureDraftStatus
-            ? ` 结构草稿包含 ${summary.structureModules} 个模块，其中新增 ${summary.structureAdded} 个、隐藏 ${summary.structureHidden} 个。`
-            : ' 当前没有待发布的结构草稿。'}
-        </div>
-      ) : null}
-
-      <div className="mt-5 flex flex-wrap gap-2">
-        {page.editorHref ? (
-          <Link
-            href={page.editorHref}
-            className="inline-flex h-9 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95E22]"
-          >
-            {editable ? '进入编辑' : '进入管理'}
-            <ArrowRight size={14} />
-          </Link>
-        ) : null}
-        <Link
-          href={page.viewHref}
-          className="inline-flex h-9 items-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]"
-        >
-          查看前台
-          <Eye size={14} />
-        </Link>
-      </div>
     </div>
   )
 }
@@ -554,22 +212,113 @@ function SummaryTile({
   )
 }
 
-function AlignmentPanel() {
-  const items = [
-    '产品、项目、新闻仍走各自 CMS，不混入页面自由编辑。',
-    '导航、TDK、三方代码先作为后续规划，不在本阶段开放保存。',
-    'Global 只作为前台查看入口，地图底层继续归 04 专项。',
-  ]
+function ContractCard({ contract }: { contract: GovernanceContractStatus }) {
+  const Icon = PAGE_ICON[contract.key] ?? FileText
+  const { metrics } = contract
 
   return (
-    <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-      <SectionTitle title="300 对照边界" detail="本页把 300 的网站管理心智拆成可编辑页面、独立 CMS 和受保护设置三类。" />
-      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-        {items.map((item) => (
-          <div key={item} className="rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-4">
-            <CheckCircle2 size={18} className="text-emerald-600" />
-            <p className="mt-3 text-sm leading-6 text-[#1E2C31]">{item}</p>
+    <article className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
+            <Icon size={20} />
+          </span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-base font-bold text-[#1E2C31]">{contract.title}</h3>
+              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${levelClassName(contract.issueLevel)}`}>
+                {issueIcon(contract.issueLevel)}
+                {levelLabel(contract.issueLevel)}
+              </span>
+              <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${sourceClassName(contract.sourceType)}`}>
+                {SOURCE_LABEL[contract.sourceType]}
+              </span>
+            </div>
+            <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{contract.paths.join(' / ')}</p>
+            <p className="mt-3 text-sm leading-6 text-[#61767D]">{contract.note}</p>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
+        <InfoBlock label="后台 owner" value={contract.owner} />
+        <InfoBlock label="内容来源" value={contract.contentSource} />
+        <InfoBlock label="展示规则" value={contract.displayRule} />
+        <InfoBlock label="隐藏规则" value={contract.hiddenRule} />
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <MetricPill label="published" value={metrics.published} />
+        <MetricPill label="draft" value={metrics.draft} />
+        <MetricPill label="hidden" value={metrics.hidden} />
+        <MetricPill label="可见模块" value={metrics.visibleModules} />
+        <MetricPill label="模块草稿" value={metrics.draftModules} />
+        <MetricPill label="最近更新" value={formatDateTime(metrics.latestUpdatedAt)} />
+      </div>
+
+      {contract.signals.length > 0 ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {contract.signals.map((signal) => (
+            <span key={signal} className="rounded-full border border-[#D8E7E8] bg-white px-2.5 py-1 text-xs font-semibold text-[#61767D]">
+              {SIGNAL_LABEL[signal]}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      {contract.issues.length > 0 ? (
+        <div className="mt-4 rounded-md border border-orange-100 bg-orange-50/60 p-3">
+          <p className="text-xs font-bold text-orange-700">质检提示</p>
+          <ul className="mt-2 space-y-1 text-xs leading-5 text-orange-700">
+            {contract.issues.map((issue) => (
+              <li key={issue}>- {issue}</li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <div className="mt-4 rounded-md border border-emerald-100 bg-emerald-50/60 p-3 text-xs leading-5 text-emerald-700">
+          当前来源合同没有阻断项；发布前仍需按 05 流程做前台预览和线上核对。
+        </div>
+      )}
+
+      <div className="mt-5 flex flex-wrap gap-2">
+        {contract.adminHref ? (
+          <Link
+            href={contract.adminHref}
+            className="inline-flex h-9 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95E22]"
+          >
+            进入后台
+            <ArrowRight size={14} />
+          </Link>
+        ) : null}
+        <Link
+          href={contract.previewHref}
+          className="inline-flex h-9 items-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]"
+        >
+          查看前台
+          <Eye size={14} />
+        </Link>
+      </div>
+    </article>
+  )
+}
+
+function InfoBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-[#F7FAFA] px-3 py-2 text-xs leading-5">
+      <span className="font-semibold text-[#8A9EA4]">{label}</span>
+      <span className="ml-2 text-[#1E2C31]">{value}</span>
+    </div>
+  )
+}
+
+function ContractMatrix({ contracts }: { contracts: GovernanceContractStatus[] }) {
+  return (
+    <section className="space-y-4">
+      <SectionTitle title="页面内容合同" detail="前台展示什么，由这里列出的后台 owner 和 published 内容决定；前台模板只负责展示。" />
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        {contracts.map((contract) => (
+          <ContractCard key={contract.key} contract={contract} />
         ))}
       </div>
     </section>
@@ -578,9 +327,9 @@ function AlignmentPanel() {
 
 function GuardrailPanel() {
   const guardrails = [
-    '不开放自由 HTML / CSS / 字体 / 颜色 / 全页拖拽。',
-    '不批量修改 SEO、导航、页脚或全站 TDK。',
-    '真实发布首页或关于页前，05 需要做预览和前台核对。',
+    '前台不得新增客户可见业务文案、图片、CTA 或表单说明。',
+    '后台无 published 内容时，前台隐藏对应模块，不显示代码 fallback。',
+    'Global 只登记边界，不进入本轮页面内容治理。',
   ]
 
   return (
@@ -590,7 +339,7 @@ function GuardrailPanel() {
           <LockKeyhole size={18} />
         </span>
         <div>
-          <h2 className="text-base font-bold text-[#1E2C31]">页面编辑保护线</h2>
+          <h2 className="text-base font-bold text-[#1E2C31]">B26 内容治理硬规则</h2>
           <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">
             {guardrails.map((item) => (
               <p key={item} className="rounded-md bg-white px-3 py-2 text-xs leading-5 text-[#61767D]">
@@ -615,18 +364,33 @@ export default async function AdminSitePagesPage() {
     redirect('/admin/login?error=unauthorized')
   }
 
-  const summaries = await safeLoad('load page module summaries', loadPageModuleSummaries, emptySummaryMap())
   const adminRole: AdminRole = role
-  const draftCount = Object.values(summaries).reduce(
-    (sum, item) => sum + item.moduleDrafts + (item.structureDraftStatus ? 1 : 0),
-    0,
-  )
-  const editableCount = SITE_PAGES.filter((page) => page.status === 'editable').length
-  const managedCount = SITE_PAGES.filter((page) => page.status === 'managed').length
-  const lockedCount = SITE_PAGES.filter((page) => page.status === 'locked').length
-  const visibleModuleCount = Object.values(summaries).reduce((sum, item) => sum + item.visible, 0)
+  const contracts = await safeLoad('load governance contracts', loadGovernanceContractStatuses, CONTENT_CONTRACTS.map((contract) => ({
+    ...contract,
+    metrics: {
+      total: 0,
+      published: 0,
+      draft: 0,
+      hidden: 0,
+      visibleModules: 0,
+      hiddenModules: 0,
+      draftModules: 0,
+      requiredMissing: [],
+      hasCta: false,
+      hasImage: false,
+      latestUpdatedAt: null,
+    },
+    issues: ['数据源暂不可用'],
+    issueLevel: contract.sourceType === 'protected' ? 'protected' : 'notice',
+  } satisfies GovernanceContractStatus)))
+
+  const issueCount = contracts.filter((contract) => contract.issueLevel === 'warning' || contract.issueLevel === 'notice').length
+  const okCount = contracts.filter((contract) => contract.issueLevel === 'ok').length
+  const protectedCount = contracts.filter((contract) => contract.issueLevel === 'protected').length
+  const publishedCount = contracts.reduce((sum, contract) => sum + contract.metrics.published, 0)
+  const draftCount = contracts.reduce((sum, contract) => sum + contract.metrics.draft + contract.metrics.draftModules, 0)
   const sideNavGroups = getSitePagesSideNav({
-    draftCount,
+    issueCount,
     isAdmin: adminRole === 'admin',
   })
 
@@ -636,17 +400,17 @@ export default async function AdminSitePagesPage() {
       role={adminRole}
       email={session.user.email}
       title="网站管理"
-      description="按页面查看可编辑范围、内容来源、草稿状态、前台入口和 B23 移动端/图片比例复核边界。"
+      description="前台内容来源中心：运营先看 owner、来源、状态和缺口，再进入对应后台编辑发布。"
       sideNavGroups={sideNavGroups}
       activeItem="pages"
     >
       <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#F3FBFC_0%,#FFFFFF_58%,#FFF4E9_100%)] p-5 shadow-sm md:p-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-sm font-semibold text-[#1889B6]">B23 页面清单</p>
-            <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">网站页面与编辑范围</h1>
+            <p className="text-sm font-semibold text-[#1889B6]">B26 内容治理</p>
+            <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">前台内容来源中心</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-              运营先确认页面归属，再进入对应后台；B23 已把移动端体感、图片比例、CTA 去向和素材缺口继续标到页面 owner 上。
+              这里把每个公开页面、导航页脚、表单文案和内容 CMS 归到后台 owner。运营改稿、隐藏、发布和前台同步验证都从这里进入，不再把前台当编辑场景。
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -655,42 +419,29 @@ export default async function AdminSitePagesPage() {
               className="inline-flex h-10 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-sm font-semibold text-white transition hover:bg-[#C95E22]"
             >
               <LayoutTemplate size={16} />
-              编辑网站
+              页面模块
             </Link>
             <Link
-              href="/admin/site"
+              href="/admin/site/navigation"
               className="inline-flex h-10 items-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]"
             >
-              <ListChecks size={16} />
-              返回概览
+              <Navigation size={16} />
+              导航页脚
             </Link>
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-4">
-          <SummaryTile title="可视化页面" value={editableCount} detail="Home / About" Icon={LayoutTemplate} />
-          <SummaryTile title="独立 CMS" value={managedCount} detail="产品 / 案例 / 新闻" Icon={FileText} />
-          <SummaryTile title="受保护页面" value={lockedCount} detail="设置或专项维护" Icon={LockKeyhole} />
-          <SummaryTile title="可见模块" value={visibleModuleCount} detail="当前页面模块" Icon={CircleDashed} />
-        </div>
-      </section>
-
-      <AlignmentPanel />
-
-      <section className="space-y-4">
-        <SectionTitle title="页面清单" detail="每个入口都标明内容来源，运营不需要在旧路径和新路径之间来回猜。" />
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          {SITE_PAGES.map((page) => (
-            <PageCard
-              key={page.key}
-              page={page}
-              summary={page.pageKey ? summaries[page.pageKey] : undefined}
-            />
-          ))}
+        <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-5">
+          <SummaryTile title="内容合同" value={contracts.length} detail="公开页面和全站壳" Icon={Database} />
+          <SummaryTile title="已闭合" value={okCount} detail="当前无质检提示" Icon={CheckCircle2} />
+          <SummaryTile title="需关注" value={issueCount} detail="内容或 CTA 缺口" Icon={AlertTriangle} />
+          <SummaryTile title="受保护" value={protectedCount} detail="Global 等专项边界" Icon={LockKeyhole} />
+          <SummaryTile title="published" value={publishedCount} detail={`草稿 ${draftCount}`} Icon={CircleDashed} />
         </div>
       </section>
 
       <GuardrailPanel />
+      <ContractMatrix contracts={contracts} />
     </AdminSectionShell>
   )
 }

@@ -37,8 +37,8 @@ function getSiteToolNav(): AdminSideNavGroup[] {
       items: [
         { key: 'overview', label: '网站概览', href: '/admin/site', Icon: LayoutTemplate },
         { key: 'conversion', label: '转化路径', href: '/admin/site/conversion', Icon: Link2 },
-        { key: 'pages', label: '页面清单', href: '/admin/site/pages', Icon: ListChecks },
-        { key: 'navigation', label: '导航管理', href: '/admin/site/navigation', Icon: Navigation },
+        { key: 'pages', label: '内容来源', href: '/admin/site/pages', Icon: ListChecks },
+        { key: 'navigation', label: '导航页脚', href: '/admin/site/navigation', Icon: Navigation },
         { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },
         { key: 'settings', label: '网站信息', href: '/admin/site/settings', Icon: Settings },
       ],
@@ -89,16 +89,16 @@ export default async function SiteVisualEditorPage() {
       role={currentAdminRole}
       email={session.user.email}
       title="网站管理"
-      description="编辑 Home / About 的受控页面模块，保存草稿后再预览发布。"
+      description="编辑受控页面模块。后台字段决定前台内容，保存草稿后再预览发布。"
       sideNavGroups={getSiteToolNav()}
       activeItem="visual"
     >
       <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
         <div className="mb-5 flex flex-col gap-2 border-b border-[#E6EEEE] pb-5">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#1889B6]">VISUAL EDITOR</p>
-          <h1 className="text-2xl font-bold text-[#1E2C31]">页面可视化编辑</h1>
+          <h1 className="text-2xl font-bold text-[#1E2C31]">页面模块编辑</h1>
           <p className="max-w-3xl text-sm leading-6 text-[#61767D]">
-            这里是 Home / About 的运营主入口。保存草稿不会影响前台，发布前请先检查桌面、平板和移动端预览。
+            这里是受控页面模块的预览发布入口。字段标注为显示到前台时，发布后会直接影响客户可见内容；仅后台说明不会进入前台。
           </p>
         </div>
         <PageVisualEditorClient

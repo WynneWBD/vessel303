@@ -1,9 +1,10 @@
 'use client'
 
+import Link from 'next/link'
 import { useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { toast } from 'sonner'
-import { FileText, Plus, Save, SlidersHorizontal } from 'lucide-react'
+import { Eye, FileText, Plus, Save, Search, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
@@ -18,6 +19,7 @@ import type {
 } from '@/lib/b9-content-db'
 
 type Mode = 'content' | 'category'
+type StatusFilter = 'all' | B9ContentStatus
 
 type ManagerCopy = {
   itemLabel: string
@@ -133,6 +135,16 @@ function itemToEditable(item: B9ContentItem): EditableItem {
   }
 }
 
+function getPreviewHref(kind: B9ContentKind, item: B9ContentItem): string | null {
+  if (item.status !== 'published') return null
+  if (kind === 'faq') return '/faq'
+  if (kind === 'media_file') return '/media-kit'
+  if (kind === 'display_slide') return '/display'
+  if (kind === 'scenario') return item.slug ? `/scenarios/${item.slug}` : '/scenarios/tourism'
+  if (kind === 'innovation') return item.slug ? `/innovation/${item.slug}` : '/innovation/viie'
+  return null
+}
+
 type EditableItem = {
   id: number | null
   kind: B9ContentKind
@@ -180,6 +192,8 @@ export default function B9ContentManager({
   const [categories, setCategories] = useState(initialCategories)
   const [mode, setMode] = useState<Mode>('content')
   const [editing, setEditing] = useState<EditableItem>(() => emptyItem(kind))
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [categoryDraft, setCategoryDraft] = useState<EditableCategory>({
     slug: '',
     title_zh: '',
@@ -190,10 +204,32 @@ export default function B9ContentManager({
   const [saving, setSaving] = useState(false)
   const formRef = useRef<HTMLDivElement>(null)
 
-  const sortedRows = useMemo(
-    () => [...rows].sort((a, b) => a.sort_order - b.sort_order || b.updated_at.localeCompare(a.updated_at)),
-    [rows],
-  )
+  const sortedRows = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase()
+    return [...rows]
+      .filter((row) => {
+        if (statusFilter !== 'all' && row.status !== statusFilter) return false
+        if (!normalizedSearch) return true
+        const haystack = [
+          row.slug,
+          row.title_zh,
+          row.title_en,
+          row.summary_zh ?? '',
+          row.summary_en ?? '',
+          row.category_title_zh ?? '',
+          row.category_title_en ?? '',
+        ].join(' ').toLowerCase()
+        return haystack.includes(normalizedSearch)
+      })
+      .sort((a, b) => a.sort_order - b.sort_order || b.updated_at.localeCompare(a.updated_at))
+  }, [rows, searchTerm, statusFilter])
+
+  const statusCounts = useMemo(() => ({
+    all: rows.length,
+    published: rows.filter((item) => item.status === 'published').length,
+    draft: rows.filter((item) => item.status === 'draft').length,
+    hidden: rows.filter((item) => item.status === 'hidden').length,
+  }), [rows])
 
   const updateEditing = <K extends keyof EditableItem>(key: K, value: EditableItem[K]) => {
     setEditing((current) => ({ ...current, [key]: value }))
@@ -342,31 +378,71 @@ export default function B9ContentManager({
           </div>
         </div>
 
+        <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
+          <label className="relative block">
+            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8A9EA4]" />
+            <Input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="搜索 slug、标题、分类"
+              className="pl-9"
+            />
+          </label>
+          <Select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}>
+            <option value="all">全部状态 ({statusCounts.all})</option>
+            <option value="published">published ({statusCounts.published})</option>
+            <option value="draft">draft ({statusCounts.draft})</option>
+            <option value="hidden">hidden ({statusCounts.hidden})</option>
+          </Select>
+        </div>
+
         <div className="mt-5 overflow-hidden rounded-md border border-[#E6EEEE]">
           {sortedRows.length === 0 ? (
-            <div className="p-8 text-center text-sm text-[#61767D]">暂无 CMS 内容，前台将继续使用静态兜底。</div>
+            <div className="p-8 text-center text-sm text-[#61767D]">暂无符合条件的 CMS 内容；前台只展示 published 内容。</div>
           ) : (
             <div className="divide-y divide-[#E6EEEE]">
-              {sortedRows.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setEditing(itemToEditable(item))}
-                  className="grid w-full grid-cols-1 gap-3 bg-white p-4 text-left transition hover:bg-[#F7FBFB] md:grid-cols-[90px_minmax(0,1fr)_110px_80px]"
-                >
-                  <span className="text-sm font-semibold text-[#1889B6]">#{item.sort_order}</span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-bold text-[#1E2C31]">{item.title_zh || item.title_en || item.slug}</span>
-                    <span className="mt-1 block truncate text-xs text-[#61767D]">
-                      {item.slug}{item.category_title_zh ? ` · ${item.category_title_zh}` : ''}
+              {sortedRows.map((item) => {
+                const previewHref = getPreviewHref(kind, item)
+                return (
+                  <div
+                    key={item.id}
+                    className="grid grid-cols-1 gap-3 bg-white p-4 transition hover:bg-[#F7FBFB] md:grid-cols-[90px_minmax(0,1fr)_110px_160px]"
+                  >
+                    <span className="text-sm font-semibold text-[#1889B6]">#{item.sort_order}</span>
+                    <button type="button" onClick={() => setEditing(itemToEditable(item))} className="min-w-0 text-left">
+                      <span className="block truncate text-sm font-bold text-[#1E2C31]">{item.title_zh || item.title_en || item.slug}</span>
+                      <span className="mt-1 block truncate text-xs text-[#61767D]">
+                        {item.slug}{item.category_title_zh ? ` · ${item.category_title_zh}` : ''}
+                      </span>
+                    </button>
+                    <Badge className={item.status === 'published' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : item.status === 'hidden' ? 'border-zinc-200 bg-zinc-50 text-zinc-600' : 'border-orange-200 bg-orange-50 text-orange-700'}>
+                      {item.status}
+                    </Badge>
+                    <span className="flex flex-wrap items-center gap-2 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setEditing(itemToEditable(item))}
+                        className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] px-2 font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]"
+                      >
+                        编辑
+                      </button>
+                      {previewHref ? (
+                        <Link
+                          href={previewHref}
+                          className="inline-flex h-8 items-center gap-1 rounded-md border border-[#D8E7E8] px-2 font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]"
+                        >
+                          <Eye size={13} />
+                          预览
+                        </Link>
+                      ) : (
+                        <span className="inline-flex h-8 items-center rounded-md bg-[#F5F8F8] px-2 font-semibold text-[#8A9EA4]">
+                          未发布
+                        </span>
+                      )}
                     </span>
-                  </span>
-                  <Badge className={item.status === 'published' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : item.status === 'hidden' ? 'border-zinc-200 bg-zinc-50 text-zinc-600' : 'border-orange-200 bg-orange-50 text-orange-700'}>
-                    {item.status}
-                  </Badge>
-                  <span className="text-xs text-[#8A9EA4]">编辑</span>
-                </button>
-              ))}
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
@@ -380,6 +456,10 @@ export default function B9ContentManager({
               <Button type="button" variant="outline" size="sm" onClick={() => setEditing(emptyItem(kind))} data-testid="b9-new-content">
                 <Plus size={15} /> 新建
               </Button>
+            </div>
+
+            <div className="rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-3 text-xs leading-5 text-[#61767D]">
+              标注为“显示到前台”的字段会直接进入公开页面；JSON 配置仅用于固定模板读取，不允许写自由 HTML/CSS。
             </div>
 
             <Button type="button" className="w-full" disabled={saving} onClick={() => saveItem(readEditingForm())} data-testid="b9-save-content-top">
@@ -396,7 +476,7 @@ export default function B9ContentManager({
               </div>
             )}
 
-            <Field label="Slug">
+            <Field label="Slug（显示到前台路径或内容标识）">
               <Input data-b9-field="slug" value={editing.slug} onChange={(e) => updateEditing('slug', e.target.value)} placeholder="faq-price" />
             </Field>
 
@@ -416,36 +496,36 @@ export default function B9ContentManager({
             )}
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label={copy.titleZhLabel}><Input data-b9-field="title_zh" value={editing.title_zh} onChange={(e) => updateEditing('title_zh', e.target.value)} /></Field>
-              <Field label={copy.titleEnLabel}><Input data-b9-field="title_en" value={editing.title_en} onChange={(e) => updateEditing('title_en', e.target.value)} /></Field>
+              <Field label={`${copy.titleZhLabel}（显示到前台）`}><Input data-b9-field="title_zh" value={editing.title_zh} onChange={(e) => updateEditing('title_zh', e.target.value)} /></Field>
+              <Field label={`${copy.titleEnLabel}（显示到前台）`}><Input data-b9-field="title_en" value={editing.title_en} onChange={(e) => updateEditing('title_en', e.target.value)} /></Field>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label={copy.summaryZhLabel}><Textarea data-b9-field="summary_zh" rows={2} value={editing.summary_zh} onChange={(e) => updateEditing('summary_zh', e.target.value)} /></Field>
-              <Field label={copy.summaryEnLabel}><Textarea data-b9-field="summary_en" rows={2} value={editing.summary_en} onChange={(e) => updateEditing('summary_en', e.target.value)} /></Field>
+              <Field label={`${copy.summaryZhLabel}（显示到前台）`}><Textarea data-b9-field="summary_zh" rows={2} value={editing.summary_zh} onChange={(e) => updateEditing('summary_zh', e.target.value)} /></Field>
+              <Field label={`${copy.summaryEnLabel}（显示到前台）`}><Textarea data-b9-field="summary_en" rows={2} value={editing.summary_en} onChange={(e) => updateEditing('summary_en', e.target.value)} /></Field>
             </div>
 
-            <Field label={copy.bodyZhLabel}><Textarea data-b9-field="body_zh" rows={4} value={editing.body_zh} onChange={(e) => updateEditing('body_zh', e.target.value)} /></Field>
-            <Field label={copy.bodyEnLabel}><Textarea data-b9-field="body_en" rows={4} value={editing.body_en} onChange={(e) => updateEditing('body_en', e.target.value)} /></Field>
+            <Field label={`${copy.bodyZhLabel}（显示到前台）`}><Textarea data-b9-field="body_zh" rows={4} value={editing.body_zh} onChange={(e) => updateEditing('body_zh', e.target.value)} /></Field>
+            <Field label={`${copy.bodyEnLabel}（显示到前台）`}><Textarea data-b9-field="body_en" rows={4} value={editing.body_en} onChange={(e) => updateEditing('body_en', e.target.value)} /></Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label={copy.fileLabel ?? '封面图链接'}>
+              <Field label={`${copy.fileLabel ?? '封面图链接'}（显示到前台）`}>
                 <Input data-b9-field={copy.fileLabel ? 'file_url' : 'cover_image_url'} value={copy.fileLabel ? editing.file_url : editing.cover_image_url} onChange={(e) => updateEditing(copy.fileLabel ? 'file_url' : 'cover_image_url', e.target.value)} />
               </Field>
               {copy.fileLabel && (
-                <Field label="封面图链接">
+                  <Field label="封面图链接（显示到前台）">
                   <Input data-b9-field="cover_image_url" value={editing.cover_image_url} onChange={(e) => updateEditing('cover_image_url', e.target.value)} />
                 </Field>
               )}
             </div>
 
             <div className="grid grid-cols-3 gap-3">
-              <Field label="CTA 中文"><Input data-b9-field="cta_label_zh" value={editing.cta_label_zh} onChange={(e) => updateEditing('cta_label_zh', e.target.value)} /></Field>
-              <Field label="CTA 英文"><Input data-b9-field="cta_label_en" value={editing.cta_label_en} onChange={(e) => updateEditing('cta_label_en', e.target.value)} /></Field>
-              <Field label="CTA 链接"><Input data-b9-field="cta_href" value={editing.cta_href} onChange={(e) => updateEditing('cta_href', e.target.value)} /></Field>
+              <Field label="CTA 中文（显示到前台）"><Input data-b9-field="cta_label_zh" value={editing.cta_label_zh} onChange={(e) => updateEditing('cta_label_zh', e.target.value)} /></Field>
+              <Field label="CTA 英文（显示到前台）"><Input data-b9-field="cta_label_en" value={editing.cta_label_en} onChange={(e) => updateEditing('cta_label_en', e.target.value)} /></Field>
+              <Field label="CTA 链接（显示到前台）"><Input data-b9-field="cta_href" value={editing.cta_href} onChange={(e) => updateEditing('cta_href', e.target.value)} /></Field>
             </div>
 
-            <Field label="JSON 配置">
+            <Field label="JSON 配置（固定模板字段，不是自由 HTML）">
               <Textarea data-b9-field="payloadText" rows={5} value={editing.payloadText} onChange={(e) => updateEditing('payloadText', e.target.value)} />
               <p className="mt-1 text-xs leading-5 text-[#8A9EA4]">{copy.payloadHelp}</p>
             </Field>
