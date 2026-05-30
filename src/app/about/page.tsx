@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import ProtectedImage from '@/components/ProtectedImage';
-import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import TechDrawer from '@/components/TechDrawer';
@@ -15,17 +14,8 @@ import {
   type ResolvedPageModule,
 } from '@/lib/page-module-rendering';
 import { canUseNextImageOptimization } from '@/lib/image-optimization';
-import { buildContactHref } from '@/lib/site-links';
 
 type Tech = 'viie' | 'vols' | 'vipc';
-
-type AwardItem = {
-  id: string;
-  src: string;
-  en: string;
-  zh: string;
-  isVisible: boolean;
-};
 
 type RemotePageModuleItem = {
   id?: string;
@@ -43,6 +33,10 @@ type RemotePageModuleItem = {
 type RemotePageModule = {
   module_key: string;
   module_type?: string;
+  title_zh?: string;
+  title_en?: string;
+  description_zh?: string;
+  description_en?: string;
   is_visible?: boolean;
   sort_order?: number;
   items?: RemotePageModuleItem[];
@@ -161,7 +155,7 @@ function pageModuleFromResolved(resolvedModules: ResolvedPageModule<RemotePageMo
 
 function visibleResolvedModule(resolvedModules: ResolvedPageModule<RemotePageModule>[], moduleKey: string) {
   const resolved = resolvedModuleByKey(resolvedModules, moduleKey);
-  return resolved ? isResolvedPageModuleVisible(resolved) : true;
+  return resolved ? isResolvedPageModuleVisible(resolved) : false;
 }
 
 function clampedSortOrder(value: unknown, fallback: number) {
@@ -204,317 +198,26 @@ function itemById(items: RemotePageModuleItem[], id: string) {
 }
 
 function localText(item: RemotePageModuleItem | undefined, zh: boolean, _fallback: string) {
+  void _fallback;
   if (!item) return '';
   return (zh ? item.label_zh : item.label_en) || '';
 }
 
 function localContent(item: RemotePageModuleItem | undefined, zh: boolean, _fallback: string) {
+  void _fallback;
   if (!item) return '';
   return (zh ? item.content_zh : item.content_en) || '';
 }
 
 function localValue(item: RemotePageModuleItem | undefined, zh: boolean, _fallback: string) {
+  void _fallback;
   if (!item) return '';
   return (zh ? item.value_zh : item.value_en) || '';
-}
-
-// ─── data ────────────────────────────────────────────────────────────────────
-
-const STATS = [
-  { value: '300+',    en: 'Projects Delivered',   zh: '落地项目' },
-  { value: '30+',     en: 'Countries',            zh: '出口国家' },
-  { value: '28,800㎡',en: 'Owned Factory',        zh: '自建工厂' },
-  { value: '150+',    en: 'National Patents',      zh: '国家专利' },
-  { value: '150 units', valueZh: '150 台', en: 'Monthly Capacity', zh: '月产能' },
-  { value: '10M+', valueZh: '1000万+', en: 'Social Followers', zh: '全网粉丝' },
-];
-
-const TIMELINE = [
-  {
-    year: '2018',
-    en: 'Studio 303 Design establishes VESSEL®. First steel-framed prototype completed. First production base set up in Sanshui, Foshan.',
-    zh: 'Studio 303 设计创立 VESSEL 微宿®，完成首台钢结构原型，佛山三水首个生产基地建立。',
-  },
-  {
-    year: '2019',
-    en: 'E7 (originally C70) launches. Featured live on CCTV National News. Projects delivered to Hebei and Sichuan.',
-    zh: 'E7（原 C70）发布，登上央视新闻直播间，河北、四川项目落地。',
-  },
-  {
-    year: '2020',
-    en: 'V Series and E5 launch. Joint R&D partnerships formed with China Aerospace and CRRC.',
-    zh: 'V 系列与 E5 发布，与中国航天、中车集团开展联合研发。',
-  },
-  {
-    year: '2021',
-    en: 'Second production base established. Projects across Inner Mongolia, Yunnan, and Sichuan.',
-    zh: '南沙第二生产基地建立，内蒙古、云南、四川等地项目落地。',
-  },
-  {
-    year: '2022',
-    en: 'S5 launched. R&D Center opens in Shishan, Foshan. Awarded High-Tech Enterprise status. Projects now cover all provinces.',
-    zh: 'S5 发布，佛山狮山研发中心成立，获高新技术企业认定，落地项目覆盖全国全省份。',
-  },
-  {
-    year: '2023',
-    en: 'E7 certified for Japan (Kyushu). Delivered to Iran and Saudi Arabia (+55°C). Strategic partnership with Lotus Cars. North America expansion with Massimo Corp.',
-    zh: 'E7 获日本（九州）认证，成功交付伊朗、沙特（+55°C）。与 Lotus Cars 太阳能建筑战略合作，与 Massimo Corp. 拓展北美市场。',
-  },
-  {
-    year: '2024',
-    en: 'E3 Gen6 and E6 Gen6 launch. Huawei Smart Home partnership. Projects at Qatar Lake. Qinghai Lake winter test completed (−32°C).',
-    zh: 'E3 Gen6、E6 Gen6 发布，华为智能家居合作，青海湖极寒测试（−32°C）完成。',
-  },
-  {
-    year: '2025',
-    en: 'E7 Gen6 launches. Multiple international certifications passed. Debut at St. Petersburg International Economic Forum. Canton Fair participation.',
-    zh: 'E7 Gen6 发布，通过多项国际权威认证，亮相圣彼得堡国际经济论坛，参展广交会。',
-  },
-];
-
-const AWARDS: AwardItem[] = [
-  {
-    id: 'about-award-01',
-    src: '/images/about/about_award-01.jpg',
-    en: '2020 Jingzhu Award · Homestay Hotel Application Demonstration Project',
-    zh: '2020景筑奖 · 民宿酒店应用示范项目',
-    isVisible: true,
-  },
-  {
-    id: 'about-award-02',
-    src: '/images/about/about_award-02.jpg',
-    en: '2021 Greater Bay Area Digital Fashion Award',
-    zh: '2021粤港澳大湾区数字时尚大奖',
-    isVisible: true,
-  },
-  {
-    id: 'about-award-03',
-    src: '/images/about/about_award-03.jpg',
-    en: '2019 China Innovation & Entrepreneurship Fair · Technology Innovation Growth Enterprise',
-    zh: '2019中国创新创业成果交易会 · 技术创新成长企业',
-    isVisible: true,
-  },
-  {
-    id: 'about-award-04',
-    src: '/images/about/about_award-04.jpg',
-    en: '2023 Haibei Eco Camping Season · Silver Award',
-    zh: '2023海北州生态露营季 · 银奖',
-    isVisible: true,
-  },
-  {
-    id: 'about-award-05',
-    src: '/images/about/about_award-05.jpg',
-    en: 'China Tourism Vehicle & Cruise Association · Innovative Travel Service Recognition',
-    zh: '中国旅游车船协会 · 旅游出行行业创新发展服务',
-    isVisible: true,
-  },
-  {
-    id: 'about-award-06',
-    src: '/images/about/about_award-06.jpg',
-    en: '2018 Global Mobile Internet Creative Development Competition · First Place',
-    zh: '2018全球移动互联网开发创意大赛 · 体育文旅创新创业赛第一名',
-    isVisible: true,
-  },
-  {
-    id: 'about-award-07',
-    src: '/images/about/about_award-07.jpg',
-    en: '2023 Haibei Eco Camping Season · Silver Award',
-    zh: '2023海北州生态露营季 · 银奖',
-    isVisible: true,
-  },
-  {
-    id: 'about-award-08',
-    src: '/images/about/about_award-08.jpg',
-    en: 'Partner Creative Group Cultural & Tourism Equipment Production and Research Base',
-    zh: '同路创意集团文旅装备产研基地',
-    isVisible: true,
-  },
-  {
-    id: 'about-award-09',
-    src: '/images/about/about_award-09.jpg',
-    en: '2023 Haibei Eco Camping Season · Silver Award Certificate',
-    zh: '2023海北州生态露营季 · 银奖证书',
-    isVisible: true,
-  },
-  {
-    id: 'about-award-10',
-    src: '/images/about/about_award-10.jpg',
-    en: 'Member of the Enterprise Credit Construction Committee',
-    zh: '中企信办信用建设工作委员会会员单位',
-    isVisible: true,
-  },
-  {
-    id: 'about-award-11',
-    src: '/images/about/about_award-11.jpg',
-    en: '2023 Beijing International Cultural Tourism Consumption Expo · Product Sales Award',
-    zh: '2023北京国际文旅消费博览会 · 文旅消费产品销售奖',
-    isVisible: true,
-  },
-  {
-    id: 'about-award-12',
-    src: '/images/about/about_award-12.jpg',
-    en: 'International Mountain Tourism Alliance Membership Certificate',
-    zh: '国际山地旅游联盟会员证',
-    isVisible: true,
-  },
-  {
-    id: 'about-award-13',
-    src: '/images/about/about_award-13.jpg',
-    en: '2025 High-Tech Enterprise Certificate',
-    zh: '2025高新技术企业证书',
-    isVisible: true,
-  },
-];
-
-const PARTNERS = Array.from({ length: 33 }, (_, i) => `/images/about/about_partner-${String(i + 1).padStart(2, '0')}.png`);
-
-// factory-02 used in brand story; remaining: 01(hero) + 03/04/05/06 (grid)
-const FACTORY_HERO = '/images/about/about_factory-01.jpg';
-const FACTORY_GRID = [
-  '/images/about/about_factory-03.jpg',
-  '/images/about/about_factory-04.jpg',
-  '/images/about/about_factory-05.jpg',
-  '/images/about/about_factory-06.png',
-];
-
-const SERVICES = [
-  {
-    n: '01',
-    en: 'Strategic Planning & Consulting',
-    zh: '规划策划服务',
-    desc_en: 'We engage from day one — positioning, master planning, product selection, cabin layout, investment modelling and operating strategy — so the resort doesn\'t just open, it performs.',
-    desc_zh: '从项目立项起介入：项目定位、整体规划、产品选型、舱体布置、投资测算、运营策略——让营地从"能开业"变成"能挣钱"。',
-  },
-  {
-    n: '02',
-    en: 'Bespoke Product Development',
-    zh: '产品定制开发',
-    desc_en: 'End-to-end customisation — interior layout, exterior form, multi-cabin configurations, deep MEP and smart integration, and assembly of locally sourced components for overseas projects.',
-    desc_zh: '全方位定制：室内布局、外观结构、多舱组合、水电智能深度集成，支持海外本地零部件组装，适配不同场景与各国法规。',
-  },
-  {
-    n: '03',
-    en: 'Operations Support & Acceleration',
-    zh: '运营陪跑服务',
-    desc_en: 'We build the full online stack from scratch — social media, OTA distribution, creator partnerships — backed by VESSEL\'s own brand resources for tens-of-millions-reach traffic support.',
-    desc_zh: '从 0 到 1 搭建社媒账号矩阵与 OTA 分销渠道，借助微宿品牌官方资源做千万级流量引流，让营地运营省心高效。',
-  },
-];
-
-// ─── anchor nav ──────────────────────────────────────────────────────────────
-
-const ANCHOR_LINKS = [
-  { id: 'brand-story', en: 'Brand Story',   zh: '品牌故事' },
-  { id: 'technologies', en: 'Technologies', zh: '三大技术' },
-  { id: 'certifications', en: 'Certifications', zh: '认证荣誉' },
-  { id: 'founder',     en: 'Founder',       zh: '创始人' },
-];
-
-function AnchorNav({ activeSection, zh }: { activeSection: string; zh: boolean }) {
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
-    e.preventDefault();
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-  return (
-    <div className="sticky top-16 lg:top-[72px] z-40 bg-[#241F1B] border-b border-[#3A302A]">
-      <div className="max-w-6xl mx-auto px-6 flex items-center justify-center gap-8 py-3 overflow-x-auto">
-        {ANCHOR_LINKS.map((link) => (
-          <a
-            key={link.id}
-            href={`#${link.id}`}
-            onClick={(e) => handleClick(e, link.id)}
-            className={`text-sm tracking-wider whitespace-nowrap transition-colors duration-150 pb-0.5 ${
-              activeSection === link.id
-                ? 'text-[#E36F2C] border-b border-[#E36F2C]'
-                : 'text-[#8A8580] hover:text-[#E36F2C]'
-            }`}
-          >
-            {zh ? link.zh : link.en}
-          </a>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── page ─────────────────────────────────────────────────────────────────────
-
-function AboutDecisionSection({ zh }: { zh: boolean }) {
-  const cards = [
-    {
-      label: zh ? '品牌定位' : 'Brand Position',
-      title: zh ? '面向运营方的高端太空舱解决方案' : 'Premium space-cabin systems for operators',
-      body: zh
-        ? 'About 页面先讲清楚企业是谁、为什么可信、能交付什么，而不是只堆叠公司介绍。'
-        : 'The About page now explains who VESSEL is, why it is credible, and what it can deliver instead of only listing company facts.',
-    },
-    {
-      label: zh ? '项目能力' : 'Project Capability',
-      title: zh ? '研发、工厂、安装和售后在一条链路里' : 'R&D, factory, installation, and service in one chain',
-      body: zh
-        ? '采购方能快速看到自研技术、生产能力、全球交付和运营支持之间的关系。'
-        : 'Buyers can understand how proprietary technology, production capacity, global delivery, and operating support connect.',
-    },
-    {
-      label: zh ? '下一步动作' : 'Next Action',
-      title: zh ? '从品牌信任进入产品或咨询' : 'Move from trust to product or inquiry',
-      body: zh
-        ? '页面底部继续保留产品、案例和联系入口，让品牌叙事自然进入转化路径。'
-        : 'Product, case, and contact entries remain available so brand storytelling can continue into conversion paths.',
-    },
-  ];
-
-  return (
-    <section className="bg-white px-6 py-16" style={{ order: ABOUT_ORDER_GROUPS.preCertifications + 25 }}>
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-8 max-w-3xl">
-          <p className="mb-4 text-xs font-medium uppercase tracking-[0.35em] text-[#E36F2C]">
-            {zh ? '品牌判断路径' : 'Brand Decision Path'}
-          </p>
-          <h2 className="text-3xl font-light leading-tight text-[#241F1B] lg:text-4xl" style={{ fontFamily: 'var(--font-heading)' }}>
-            {zh ? '让客户在三屏内理解 VESSEL 的可信度。' : 'Help buyers understand VESSEL credibility within the first few screens.'}
-          </h2>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-3">
-          {cards.map((card) => (
-            <div key={card.label} className="rounded-md border border-[#E5E0DA] bg-[#F5F2ED] p-6">
-              <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.25em] text-[#E36F2C]">{card.label}</p>
-              <h3 className="text-lg font-semibold text-[#241F1B]" style={{ fontFamily: 'var(--font-heading)' }}>{card.title}</h3>
-              <p className="mt-3 text-sm leading-6 text-[#6B625B]">{card.body}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-8 flex flex-col gap-3 border border-[#E5E0DA] bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="max-w-2xl text-sm leading-6 text-[#6B625B]">
-            {zh
-              ? '如果客户已经理解品牌可信度，下一步应直接进入产品、项目案例或带来源的咨询路径。'
-              : 'Once buyers understand credibility, the next step should be product review, project proof, or a source-aware inquiry path.'}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/products"
-              className="inline-flex min-h-10 items-center justify-center bg-[#241F1B] px-4 text-xs font-bold uppercase tracking-[0.12em] text-white hover:bg-[#3A302A]"
-            >
-              {zh ? '产品中心' : 'Products'}
-            </Link>
-            <Link
-              href={buildContactHref('about:decision_path_cta')}
-              className="inline-flex min-h-10 items-center justify-center border border-[#E36F2C]/40 px-4 text-xs font-bold uppercase tracking-[0.12em] text-[#C65F22] hover:bg-[#FFF4EC]"
-            >
-              {zh ? '联系咨询' : 'Contact'}
-            </Link>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
 }
 
 export default function AboutPage() {
   const { lang } = useLanguage();
   const zh = lang === 'zh';
-  const [activeSection, setActiveSection] = useState('brand-story');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeTech, setActiveTech] = useState<Tech | null>(null);
   const pageModules = useAboutPageModules();
@@ -543,8 +246,8 @@ export default function AboutPage() {
   const serviceModuleItems = moduleItems(servicesModule);
   const partnerItems = moduleItems(partnersModule);
   const showHero = visibleResolvedModule(dynamicModules, 'hero');
-  const heroImage = optimizedAboutImage(itemById(heroItems, 'about-hero-image')?.image_url || '/images/about/about_scene-01.jpg');
-  const storyImage = optimizedAboutImage(itemById(storyItems, 'story-image')?.image_url || '/images/about/about_factory-02.jpg');
+  const heroImage = optimizedAboutImage(itemById(heroItems, 'about-hero-image')?.image_url || '');
+  const storyImage = optimizedAboutImage(itemById(storyItems, 'story-image')?.image_url || '');
   const storyBadge = itemById(storyItems, 'story-badge');
   const showStats = visibleResolvedModule(dynamicModules, 'stats');
   const aboutStats = !showStats
@@ -552,46 +255,24 @@ export default function AboutPage() {
     : hasModuleItemArray(statsModule)
     ? statsItems.map((item, index) => ({
         id: item.id ?? `about-stat-${String(index + 1).padStart(2, '0')}`,
-        value: localValue(item, zh, STATS[index]?.value ?? ''),
-        en: item.label_en || STATS[index]?.en || '',
-        zh: item.label_zh || STATS[index]?.zh || '',
+        value: localValue(item, zh, ''),
+        en: item.label_en || '',
+        zh: item.label_zh || '',
       })).filter((item) => item.value || item.en || item.zh)
-    : STATS.map((item, index) => ({
-        id: `about-stat-${String(index + 1).padStart(2, '0')}`,
-        value: zh && item.valueZh ? item.valueZh : item.value,
-        en: item.en,
-        zh: item.zh,
-      }));
+    : [];
   const showBrandStory = visibleResolvedModule(dynamicModules, 'brand-story');
-  const storyParagraphFallbacks = [
-    {
-      id: 'story-paragraph-01',
-      zh: 'VESSEL 微宿® 专注于高端度假营地解决方案。我们以科幻感强烈的装配式舱体产品为特色，为全球文旅运营方提供一站式营地解决方案。自 2018 年创立，已在全国落地 300+ 项目，出口远销 30+ 国家，推动中国文旅创新品类"太空主题营地"进入国际市场。',
-      en: 'VESSEL® focuses on space-themed luxury camp resort solutions. We design, manufacture and deliver sci-fi-inspired prefabricated cabins, offering a turnkey solution for resort operators worldwide. Since 2018 we have delivered 300+ projects across China and exported to 30+ countries, supporting the space-themed resort category in international markets.',
-    },
-    {
-      id: 'story-paragraph-02',
-      zh: 'VESSEL 品牌由广东微宿文旅发展有限公司运营，总部位于广东佛山。我们坚持原创研发与自建工厂双核心：研发团队累计获得国家专利 150+ 件，自有生产线占地 28,800 ㎡，月产能 150 台。',
-      en: 'The VESSEL® brand is operated by Guangdong Vessel Cultural Tourism Development Co., Ltd., headquartered in Foshan, China. In-house R&D and owned manufacturing are our two strategic pillars: our design team holds 150+ national patents, and our 28,800 m² production line delivers a monthly capacity of 150 units.',
-    },
-    {
-      id: 'story-paragraph-03',
-      zh: 'VESSEL 在文旅场景之外，也与知名企业共创，产品广泛应用于养老度假地产、城市移动商业、便民服务设施等多元场景。我们构建了 VIPC 整装预制、VIIE 智能交互、VOLS 离网系统三大核心技术体系，让每一台微宿都能独立面对全球的气候、运输、运营挑战。',
-      en: 'Beyond tourism, VESSEL® partners with established enterprises on mixed-use deployments — senior resort real estate, urban mobile retail, and public amenity installations. Our three proprietary technology systems — VIPC, VIIE and VOLS — allow every unit to operate autonomously under diverse climates, logistics routes and operating models worldwide.',
-    },
-  ];
-  const storyParagraphs = storyParagraphFallbacks
-    .map((item) => ({
-      id: item.id,
-      text: localContent(itemById(storyItems, item.id), zh, zh ? item.zh : item.en),
+  const storyParagraphs = ['story-paragraph-01', 'story-paragraph-02', 'story-paragraph-03']
+    .map((id) => ({
+      id,
+      text: localContent(itemById(storyItems, id), zh, ''),
     }))
     .filter((item) => Boolean(item.text));
   const showFactory = visibleResolvedModule(dynamicModules, 'factory');
-  const factoryHeroImage = optimizedAboutImage(itemById(factoryItems, 'factory-image-hero')?.image_url || FACTORY_HERO);
+  const factoryHeroImage = optimizedAboutImage(itemById(factoryItems, 'factory-image-hero')?.image_url || '');
   const factoryGridImages = ['factory-image-01', 'factory-image-02', 'factory-image-03', 'factory-image-04']
-    .map((id, index) => ({
+    .map((id) => ({
       id,
-      src: optimizedAboutImage(itemById(factoryItems, id)?.image_url || FACTORY_GRID[index]),
+      src: optimizedAboutImage(itemById(factoryItems, id)?.image_url || ''),
     }))
     .filter((item): item is { id: string; src: string } => Boolean(item.src));
   const showTimeline = visibleResolvedModule(dynamicModules, 'timeline');
@@ -599,83 +280,52 @@ export default function AboutPage() {
     ? timelineItems
         .filter((item) => typeof item.id === 'string' && item.id.startsWith('timeline-') && item.id !== 'timeline-kicker' && item.id !== 'timeline-heading')
         .map((item, index) => ({
-          id: item.id ?? `timeline-${TIMELINE[index]?.year ?? index + 1}`,
-          year: localValue(item, zh, TIMELINE[index]?.year ?? item.label_zh ?? ''),
-          text: localContent(item, zh, zh ? TIMELINE[index]?.zh ?? '' : TIMELINE[index]?.en ?? ''),
+          id: item.id ?? `timeline-${index + 1}`,
+          year: localValue(item, zh, ''),
+          text: localContent(item, zh, ''),
         }))
         .filter((item) => item.year || item.text)
-    : TIMELINE.map((item) => ({
-        id: `timeline-${item.year}`,
-        year: item.year,
-        text: zh ? item.zh : item.en,
-      }));
+    : [];
   const showTechnologies = visibleResolvedModule(dynamicModules, 'technologies');
-  const technologyFallbacks = [
-    {
-      id: 'tech-viie',
-      tech: 'viie' as const,
-      nameEn: 'VesselOS · VIIE',
-      nameZh: 'VesselOS · 智能交互',
-      descEn: 'Proprietary platform. 1,400+ units globally connected. Full remote control of lighting, climate, access and monitoring.',
-      descZh: '完全自研平台，全球1,400余台舱体联网，远程掌控灯光、空调、门锁与实时监控。',
-    },
-    {
-      id: 'tech-vols',
-      tech: 'vols' as const,
-      nameEn: 'VOLS · Off-grid System',
-      nameZh: 'VOLS · 离网系统',
-      descEn: 'Solar generation + 100kWh+ storage + VSRB zero-discharge treatment. No municipal infrastructure needed.',
-      descZh: '光伏发电 + 100kWh+储能 + VSRB生物污水零排放，完全脱离市政水电基础设施。',
-    },
-    {
-      id: 'tech-vipc',
-      tech: 'vipc' as const,
-      nameEn: 'VIPC · Pre-fab System',
-      nameZh: 'VIPC · 整装预制',
-      descEn: '100% finished at factory. 2-hour site installation. 40ft Flat Rack compliant. 30+ countries delivered.',
-      descZh: '工厂100%成品出厂，现场2小时完成安装，符合40尺平架集装箱规格，已合规交付30余国。',
-    },
-  ];
+  const techKeyById: Record<string, Tech> = {
+    'tech-viie': 'viie',
+    'tech-vols': 'vols',
+    'tech-vipc': 'vipc',
+  };
   const technologyCards = hasModuleItemArray(technologiesModule)
-    ? technologyFallbacks
-        .map((fallback) => {
-          const item = itemById(techModuleItems, fallback.id);
-          if (!item) return null;
+    ? techModuleItems
+        .filter((item) => item.id && techKeyById[item.id])
+        .map((item) => {
+          const tech = item.id ? techKeyById[item.id] : 'viie';
           return {
-            ...fallback,
-            nameEn: item.label_en || fallback.nameEn,
-            nameZh: item.label_zh || fallback.nameZh,
-            descEn: item.content_en || fallback.descEn,
-            descZh: item.content_zh || fallback.descZh,
+            id: item.id ?? tech,
+            tech,
+            nameEn: item.label_en || '',
+            nameZh: item.label_zh || '',
+            descEn: item.content_en || '',
+            descZh: item.content_zh || '',
           };
         })
-        .filter((item): item is (typeof technologyFallbacks)[number] => Boolean(item))
-    : technologyFallbacks;
+    : [];
   const showFounder = visibleResolvedModule(dynamicModules, 'founder');
-  const founderPhoto = optimizedAboutImage(itemById(founderItems, 'founder-photo')?.image_url || '/images/about/about_team-05.jpg');
+  const founderPhoto = optimizedAboutImage(itemById(founderItems, 'founder-photo')?.image_url || '');
   const founderTags = ['founder-tag-01', 'founder-tag-02', 'founder-tag-03']
     .map((id) => {
-      const fallback = zh
-        ? ['邓迪大学 — RIBA Part II', '华盛顿大学圣路易斯 — 建筑学硕士', 'SOM建筑事务所 — 纽约']
-        : ['Univ. of Dundee — RIBA Part II', 'Washington Univ. in St. Louis — M.Arch', 'SOM Architects — NYC'];
-      const index = Number(id.slice(-2)) - 1;
-      return localText(itemById(founderItems, id), zh, fallback[index] ?? '');
+      return localText(itemById(founderItems, id), zh, '');
     })
     .filter(Boolean);
   const showServices = visibleResolvedModule(dynamicModules, 'services');
   const serviceCards = hasModuleItemArray(servicesModule)
-    ? SERVICES.map((fallback, index) => {
-        const item = itemById(serviceModuleItems, `service-${String(index + 1).padStart(2, '0')}`);
-        if (!item) return null;
+    ? serviceModuleItems.map((item) => {
         return {
-          n: localValue(item, zh, fallback.n),
-          en: item.label_en || fallback.en,
-          zh: item.label_zh || fallback.zh,
-          desc_en: item.content_en || fallback.desc_en,
-          desc_zh: item.content_zh || fallback.desc_zh,
+          n: localValue(item, zh, ''),
+          en: item.label_en || '',
+          zh: item.label_zh || '',
+          desc_en: item.content_en || '',
+          desc_zh: item.content_zh || '',
         };
-      }).filter((item): item is (typeof SERVICES)[number] => Boolean(item))
-    : SERVICES;
+      }).filter((item) => item.n || item.en || item.zh || item.desc_en || item.desc_zh)
+    : [];
   const showPartners = visibleResolvedModule(dynamicModules, 'partners');
   const partnerImages = hasModuleItemArray(partnersModule)
     ? partnerItems
@@ -683,48 +333,27 @@ export default function AboutPage() {
         .map((item, index) => ({
           id: item.id ?? `partner-${String(index + 1).padStart(2, '0')}`,
           src: optimizedAboutImage(item.image_url as string),
-          alt: localText(item, zh, `Partner ${index + 1}`),
+          alt: localText(item, zh, ''),
         }))
-    : PARTNERS.map((src, index) => ({
-        id: `partner-${String(index + 1).padStart(2, '0')}`,
-        src: optimizedAboutImage(src),
-        alt: `Partner ${index + 1}`,
-      }));
+    : [];
   const showRecognitionAwards = visibleResolvedModule(dynamicModules, 'recognition-awards');
   const awards = showRecognitionAwards && hasModuleItemArray(recognitionAwardsModule)
-    ? AWARDS.map((award) => {
-        const value = recognitionAwardItems.find((item) => item.image_url === award.src || item.id === award.id);
-        if (!value) return award;
-        return {
-          ...award,
-          zh: value.label_zh || award.zh,
-          en: value.label_en || award.en,
-          isVisible: value.is_visible !== false,
-        };
-      }).filter((award) => award.isVisible)
-    : showRecognitionAwards
-    ? AWARDS
+    ? recognitionAwardItems
+        .filter((item) => item.image_url)
+        .map((item, index) => ({
+          id: item.id ?? `recognition-award-${index + 1}`,
+          src: optimizedAboutImage(item.image_url as string),
+          zh: item.label_zh || '',
+          en: item.label_en || '',
+          isVisible: item.is_visible !== false,
+        }))
+        .filter((award) => award.isVisible)
     : [];
 
   const openTech = (tech: Tech) => {
     setActiveTech(tech);
     setDrawerOpen(true);
   };
-
-  useEffect(() => {
-    const ids = ['brand-story', 'technologies', 'certifications', 'founder'];
-    const observers = ids.map((id) => {
-      const el = document.getElementById(id);
-      if (!el) return null;
-      const obs = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActiveSection(id); },
-        { threshold: 0.25 }
-      );
-      obs.observe(el);
-      return obs;
-    });
-    return () => observers.forEach((obs) => obs?.disconnect());
-  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#241F1B]">
@@ -739,18 +368,20 @@ export default function AboutPage() {
         data-page-key="about"
         data-module-key="hero"
       >
-        <Image
-          src={heroImage}
-          alt="VESSEL® brand"
-          fill
-          priority
-          sizes="100vw"
-          quality={78}
-          className="object-cover"
-          unoptimized={!canUseNextImageOptimization(heroImage)}
-          data-page-module-item="about-hero-image"
-          data-page-module-field="image_url"
-        />
+        {heroImage ? (
+          <Image
+            src={heroImage}
+            alt={localText(itemById(heroItems, 'about-hero-image'), zh, '')}
+            fill
+            priority
+            sizes="100vw"
+            quality={78}
+            className="object-cover"
+            unoptimized={!canUseNextImageOptimization(heroImage)}
+            data-page-module-item="about-hero-image"
+            data-page-module-field="image_url"
+          />
+        ) : null}
         <div className="absolute inset-0 bg-gradient-to-t from-[#241F1B] via-[#241F1B]/50 to-[#241F1B]/10" />
         <div className="relative z-10 max-w-6xl mx-auto px-6 pb-16 w-full">
           <p
@@ -758,7 +389,7 @@ export default function AboutPage() {
             data-page-module-item="about-hero-eyebrow"
             data-page-module-field={zh ? 'label_zh' : 'label_en'}
           >
-            {localText(itemById(heroItems, 'about-hero-eyebrow'), zh, `VESSEL® · ${zh ? '关于微宿' : 'About'}`)}
+            {localText(itemById(heroItems, 'about-hero-eyebrow'), zh, '')}
           </p>
           <h1
             className="text-4xl sm:text-7xl lg:text-8xl font-bold text-white leading-[1.05] tracking-tight mb-5 break-words"
@@ -766,7 +397,7 @@ export default function AboutPage() {
             data-page-module-item="about-hero-headline"
             data-page-module-field={zh ? 'label_zh' : 'label_en'}
           >
-            {localText(itemById(heroItems, 'about-hero-headline'), zh, zh ? '重构\n自然的栖居' : 'Reimagining\nNatural Dwelling')}
+            {localText(itemById(heroItems, 'about-hero-headline'), zh, '')}
           </h1>
           <p
             className="text-white/60 text-lg sm:text-xl max-w-xl leading-relaxed"
@@ -776,33 +407,14 @@ export default function AboutPage() {
             {localText(
               itemById(heroItems, 'about-hero-subtitle'),
               zh,
-              zh
-                ? '自 2018 年创立，已在全国落地 300+ 项目，出口远销 30+ 国家，推动中国文旅创新品类进入国际市场。'
-                : 'Since 2018 we have delivered 300+ projects across China and exported to 30+ countries, taking a new Chinese category of experiential tourism to the global market.',
+              '',
             )}
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/products"
-              className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#C85A1F]"
-            >
-              {zh ? '查看产品中心' : 'View Products'}
-            </Link>
-            <Link
-              href={buildContactHref('about:hero_contact_cta')}
-              className="inline-flex min-h-11 items-center justify-center border border-white/25 px-5 text-sm font-bold uppercase tracking-[0.12em] text-white/80 transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
-            >
-              {zh ? '联系咨询' : 'Contact VESSEL'}
-            </Link>
-          </div>
         </div>
       </section>
       ) : null}
 
       {/* ── Anchor Nav ───────────────────────────────────────── */}
-      <div style={{ order: 20_000 }}>
-        <AnchorNav activeSection={activeSection} zh={zh} />
-      </div>
 
       {/* ── S2 Stats bar ─────────────────────────────────────── */}
       {aboutStats.length > 0 ? (
@@ -839,8 +451,6 @@ export default function AboutPage() {
         </section>
       ) : null}
 
-      <AboutDecisionSection zh={zh} />
-
       {/* ── S3 Brand story ───────────────────────────────────── */}
       {showBrandStory ? (
       <section
@@ -859,7 +469,7 @@ export default function AboutPage() {
                 data-page-module-item="story-kicker"
                 data-page-module-field={zh ? 'label_zh' : 'label_en'}
               >
-                {localText(itemById(storyItems, 'story-kicker'), zh, zh ? '品牌介绍' : 'About VESSEL®')}
+                {localText(itemById(storyItems, 'story-kicker'), zh, '')}
               </p>
               <h2
                 className="text-4xl sm:text-5xl font-bold text-[#241F1B] mb-8 leading-tight"
@@ -870,7 +480,7 @@ export default function AboutPage() {
                 {localText(
                   itemById(storyItems, 'story-heading'),
                   zh,
-                  zh ? '高端度假营地\n解决方案' : 'Space-Themed\nLuxury Camp\nResort Solutions',
+                  '',
                 )}
               </h2>
             </Reveal>
@@ -900,7 +510,7 @@ export default function AboutPage() {
             >
               <Image
                 src={storyImage}
-                alt="VESSEL factory aerial"
+                alt={localText(itemById(storyItems, 'story-image'), zh, '')}
                 fill
                 sizes="(min-width: 1024px) 40vw, 100vw"
                 quality={78}
@@ -916,14 +526,14 @@ export default function AboutPage() {
                 data-page-module-item="story-badge"
                 data-page-module-field={zh ? 'value_zh' : 'value_en'}
               >
-                {localValue(storyBadge, zh, '2018')}
+                {localValue(storyBadge, zh, '')}
               </div>
               <div
                 className="text-xs tracking-widest opacity-80 mt-1"
                 data-page-module-item="story-badge"
                 data-page-module-field={zh ? 'label_zh' : 'label_en'}
               >
-                {localText(storyBadge, zh, zh ? '品牌创立' : 'FOUNDED')}
+                {localText(storyBadge, zh, '')}
               </div>
             </div>
           </Reveal>
@@ -947,7 +557,7 @@ export default function AboutPage() {
               data-page-module-item="factory-kicker"
               data-page-module-field={zh ? 'label_zh' : 'label_en'}
             >
-              {localText(itemById(factoryItems, 'factory-kicker'), zh, zh ? '智造实力' : 'Manufacturing')}
+              {localText(itemById(factoryItems, 'factory-kicker'), zh, '')}
             </p>
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <h2
@@ -956,7 +566,7 @@ export default function AboutPage() {
                 data-page-module-item="factory-heading"
                 data-page-module-field={zh ? 'label_zh' : 'label_en'}
               >
-                {localText(itemById(factoryItems, 'factory-heading'), zh, zh ? '28,800㎡\n精密智造基地' : '28,800 m²\nPrecision Factory')}
+                {localText(itemById(factoryItems, 'factory-heading'), zh, '')}
               </h2>
               <p
                 className="text-[#8A8580] text-sm max-w-xs leading-relaxed"
@@ -966,9 +576,7 @@ export default function AboutPage() {
                 {localText(
                   itemById(factoryItems, 'factory-summary'),
                   zh,
-                  zh
-                    ? '佛山狮山自有工厂，月产能 150 台，出厂即成品。'
-                    : 'Self-owned facility in Shishan, Foshan. 150 units monthly. Every unit leaves as a finished product.',
+                  '',
                 )}
               </p>
             </div>
@@ -983,7 +591,7 @@ export default function AboutPage() {
                 data-page-module-item="factory-image-hero"
                 data-page-module-field="image_url"
               >
-                <ProtectedImage src={factoryHeroImage} alt="VESSEL factory" fill sizes="(min-width: 1024px) 1152px, 100vw" className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" />
+                <ProtectedImage src={factoryHeroImage} alt={localText(itemById(factoryItems, 'factory-image-hero'), zh, '')} fill sizes="(min-width: 1024px) 1152px, 100vw" className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" />
               </div>
             </Reveal>
             <div className="grid grid-cols-2 gap-2">
@@ -995,7 +603,7 @@ export default function AboutPage() {
                     data-page-module-item={item.id}
                     data-page-module-field="image_url"
                   >
-                    <ProtectedImage src={item.src} alt={`VESSEL factory ${i + 2}`} fill sizes="(min-width: 1024px) 576px, 50vw" className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" />
+                    <ProtectedImage src={item.src} alt={localText(itemById(factoryItems, item.id), zh, '')} fill sizes="(min-width: 1024px) 576px, 50vw" className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" />
                   </div>
                 </Reveal>
               ))}
@@ -1021,7 +629,7 @@ export default function AboutPage() {
               data-page-module-item="timeline-kicker"
               data-page-module-field={zh ? 'label_zh' : 'label_en'}
             >
-              {localText(itemById(timelineItems, 'timeline-kicker'), zh, zh ? '品牌历程' : 'Timeline')}
+              {localText(itemById(timelineItems, 'timeline-kicker'), zh, '')}
             </p>
             <h2
               className="text-4xl sm:text-5xl font-bold text-[#241F1B]"
@@ -1029,7 +637,7 @@ export default function AboutPage() {
               data-page-module-item="timeline-heading"
               data-page-module-field={zh ? 'label_zh' : 'label_en'}
             >
-              {localText(itemById(timelineItems, 'timeline-heading'), zh, zh ? '每一步，皆有印记' : 'Every milestone,\na mark made')}
+              {localText(itemById(timelineItems, 'timeline-heading'), zh, '')}
             </h2>
           </Reveal>
 
@@ -1081,7 +689,7 @@ export default function AboutPage() {
               data-page-module-item="tech-kicker"
               data-page-module-field={zh ? 'label_zh' : 'label_en'}
             >
-              {localText(itemById(techModuleItems, 'tech-kicker'), zh, zh ? '核心技术体系' : 'CORE TECHNOLOGIES')}
+              {localText(itemById(techModuleItems, 'tech-kicker'), zh, '')}
             </p>
             <h2
               className="text-4xl sm:text-5xl font-bold text-[#241F1B] mb-4"
@@ -1089,7 +697,7 @@ export default function AboutPage() {
               data-page-module-item="tech-heading"
               data-page-module-field={zh ? 'label_zh' : 'label_en'}
             >
-              {localText(itemById(techModuleItems, 'tech-heading'), zh, zh ? '三大自研技术体系' : 'Three Proprietary Systems')}
+              {localText(itemById(techModuleItems, 'tech-heading'), zh, '')}
             </h2>
             <p
               className="text-[#8A8580] text-sm max-w-2xl leading-relaxed"
@@ -1099,9 +707,7 @@ export default function AboutPage() {
               {localText(
                 itemById(techModuleItems, 'tech-summary'),
                 zh,
-                zh
-                  ? '每一台微宿背后的工程基础——面向全球部署而生。'
-                  : 'The engineering foundation behind every VESSEL unit — built for global deployment.',
+                '',
               )}
             </p>
           </Reveal>
@@ -1125,9 +731,6 @@ export default function AboutPage() {
                       >
                         {zh ? item.nameZh : item.nameEn}
                       </h3>
-                      <span className="shrink-0 text-[#E36F2C] text-sm tracking-wider group-hover:translate-x-1 transition-transform duration-200">
-                        {zh ? '了解详情 →' : 'View Details →'}
-                      </span>
                     </div>
                     <p
                       className="text-[#241F1B]/60 text-sm sm:text-base leading-relaxed"
@@ -1146,81 +749,23 @@ export default function AboutPage() {
       ) : null}
 
       {/* ── S8 Certifications ────────────────────────────────── */}
+      {showRecognitionAwards && awards.length > 0 ? (
       <section id="certifications" className="bg-[#241F1B] py-24 px-6" style={{ order: 40_000 }}>
         <div className="max-w-6xl mx-auto">
           <Reveal className="mb-12">
-            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
-              {zh ? '荣誉与认证' : 'Recognition & Certifications'}
-            </p>
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <h2
                 className="text-4xl sm:text-5xl font-bold text-[#F5F2ED]"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
               >
-                {zh ? '国际认可\n品质背书' : 'Globally Recognised,\nQuality Assured'}
+                {zh ? recognitionAwardsModule?.title_zh : recognitionAwardsModule?.title_en}
               </h2>
               <p className="text-[#8A8580] text-sm max-w-xs leading-relaxed">
-                {zh
-                  ? '欧盟建筑安全许可 · 美国建筑准入认证 · 广东省高新技术企业'
-                  : 'EU Building Safety · US Building Access · Guangdong High-Tech Enterprise'}
+                {zh ? recognitionAwardsModule?.description_zh : recognitionAwardsModule?.description_en}
               </p>
             </div>
           </Reveal>
 
-          {/* International cert photos */}
-          <Reveal className="mb-10">
-            <p className="text-[#F5F2ED] text-sm font-semibold mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-              {zh ? '国际认证证书' : 'International Certifications'}
-            </p>
-            <p className="text-[#8A8580] text-xs mb-6">
-              {zh ? '欧盟及国际权威机构颁发' : 'Issued by European and international accredited bodies'}
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                {
-                  src: '/images/about/certs/cert-cpr.png',
-                  en: 'CE Factory Production Control · EN 1090-1',
-                  zh: 'CE欧盟工厂生产合规认证 · EN 1090-1',
-                },
-                {
-                  src: '/images/about/certs/cert-ce-gpsd.png',
-                  en: 'CE General Product Safety · ECM Italy',
-                  zh: 'CE通用产品安全认证 · ECM意大利',
-                },
-                {
-                  src: '/images/about/certs/cert-iso9001.png',
-                  en: 'ISO 9001:2015 Quality Management System',
-                  zh: 'ISO 9001质量管理体系',
-                },
-                {
-                  src: '/images/about/certs/cert-voc.png',
-                  en: 'EU CPR Verification of Conformity · 40+ Models Covered',
-                  zh: '欧盟CPR合规验证 · 覆盖40+型号',
-                },
-              ].map((cert, i) => (
-                <Reveal key={cert.src} delay={i * 60}>
-                  <div className="bg-white rounded-lg p-4 flex flex-col gap-3">
-                    <div className="relative w-full" style={{ maxHeight: '200px', height: '200px' }}>
-                      <Image
-                        src={optimizedAboutImage(cert.src)}
-                        alt={cert.en}
-                        fill
-                        sizes="(min-width: 640px) 50vw, 100vw"
-                        quality={78}
-                        className="object-contain"
-                        unoptimized={!canUseNextImageOptimization(optimizedAboutImage(cert.src))}
-                      />
-                    </div>
-                    <p className="text-[#8A8580] text-xs leading-snug text-center">
-                      {zh ? cert.zh : cert.en}
-                    </p>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </Reveal>
-
-          {awards.length > 0 ? (
           <div
             className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
             data-page-module="about:recognition-awards"
@@ -1255,9 +800,9 @@ export default function AboutPage() {
               </Reveal>
             ))}
           </div>
-          ) : null}
         </div>
       </section>
+      ) : null}
 
       {/* ── S9 Partners ──────────────────────────────────────── */}
       {showPartners && partnerImages.length > 0 ? (
@@ -1275,7 +820,7 @@ export default function AboutPage() {
               data-page-module-item="partners-kicker"
               data-page-module-field={zh ? 'label_zh' : 'label_en'}
             >
-              {localText(itemById(partnerItems, 'partners-kicker'), zh, zh ? '战略合作伙伴' : 'Strategic Partners')}
+              {localText(itemById(partnerItems, 'partners-kicker'), zh, '')}
             </p>
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <h2
@@ -1284,7 +829,7 @@ export default function AboutPage() {
                 data-page-module-item="partners-heading"
                 data-page-module-field={zh ? 'label_zh' : 'label_en'}
               >
-                {localText(itemById(partnerItems, 'partners-heading'), zh, zh ? '与世界同行' : 'Building with\nPartners')}
+                {localText(itemById(partnerItems, 'partners-heading'), zh, '')}
               </h2>
               <p
                 className="text-[#8A8580] text-sm max-w-xs leading-relaxed"
@@ -1294,9 +839,7 @@ export default function AboutPage() {
                 {localText(
                   itemById(partnerItems, 'partners-summary'),
                   zh,
-                  zh
-                    ? '与全球知名品牌联合开发，共同参与智能居住实践。'
-                    : 'Collaborating with established global brands on smart living solutions.',
+                  '',
                 )}
               </p>
             </div>
@@ -1344,7 +887,7 @@ export default function AboutPage() {
               data-page-module-item="founder-section-kicker"
               data-page-module-field={zh ? 'label_zh' : 'label_en'}
             >
-              {localText(itemById(founderItems, 'founder-section-kicker'), zh, zh ? '团队' : 'Team')}
+              {localText(itemById(founderItems, 'founder-section-kicker'), zh, '')}
             </p>
             <h2
               className="text-4xl sm:text-5xl font-bold text-[#F5F2ED]"
@@ -1352,7 +895,7 @@ export default function AboutPage() {
               data-page-module-item="founder-section-heading"
               data-page-module-field={zh ? 'label_zh' : 'label_en'}
             >
-              {localText(itemById(founderItems, 'founder-section-heading'), zh, zh ? '100+ 人精英团队' : '100+ Expert Team')}
+              {localText(itemById(founderItems, 'founder-section-heading'), zh, '')}
             </h2>
           </Reveal>
 
@@ -1365,7 +908,7 @@ export default function AboutPage() {
             >
               <Image
                 src={founderPhoto}
-                alt={localText(itemById(founderItems, 'founder-name'), zh, zh ? '王帅斌' : 'Wang Shuaibin')}
+                alt={localText(itemById(founderItems, 'founder-name'), zh, '')}
                 fill
                 sizes="256px"
                 quality={78}
@@ -1379,7 +922,7 @@ export default function AboutPage() {
                 data-page-module-item="founder-role"
                 data-page-module-field={zh ? 'label_zh' : 'label_en'}
               >
-                {localText(itemById(founderItems, 'founder-role'), zh, zh ? '创始人 & 首席设计师' : 'Founder & Chief Designer')}
+                {localText(itemById(founderItems, 'founder-role'), zh, '')}
               </p>
               <p
                 className="text-[#F5F2ED] text-3xl font-bold mb-2"
@@ -1387,14 +930,14 @@ export default function AboutPage() {
                 data-page-module-item="founder-name"
                 data-page-module-field={zh ? 'label_zh' : 'label_en'}
               >
-                {localText(itemById(founderItems, 'founder-name'), zh, zh ? '王帅斌' : 'Wang Shuaibin')}
+                {localText(itemById(founderItems, 'founder-name'), zh, '')}
               </p>
               <p
                 className="text-[#8A8580] text-sm tracking-wider mb-6"
                 data-page-module-item="founder-subtitle"
                 data-page-module-field={zh ? 'label_zh' : 'label_en'}
               >
-                {localText(itemById(founderItems, 'founder-subtitle'), zh, zh ? '建筑师 · 企业家 · 先行者' : 'Architect · Entrepreneur · Visionary')}
+                {localText(itemById(founderItems, 'founder-subtitle'), zh, '')}
               </p>
               <p
                 className="text-[#F5F2ED]/65 text-base leading-relaxed max-w-2xl mb-6"
@@ -1405,9 +948,7 @@ export default function AboutPage() {
                 {localContent(
                   itemById(founderItems, 'founder-bio'),
                   zh,
-                  zh
-                    ? '王帅斌于 2018 年创立 VESSEL 微宿，以国际建筑师视野参与中国文旅行业创新。他持有英国邓迪大学建筑学硕士（RIBA Part II 认证）及美国圣路易斯华盛顿大学建筑学硕士学位，曾任职于纽约华尔街 SOM 建筑设计事务所。在团队持续研发与全球项目交付中，微宿形成了"太空主题高端度假营地"解决方案，产品出口 30 余国。'
-                    : 'Wang Shuaibin founded VESSEL in 2018, bringing an international architectural perspective to the cultural tourism industry. He holds Master of Architecture degrees from the University of Dundee (RIBA Part II) and Washington University in St. Louis, and previously worked at SOM Architects on Wall Street, New York City. Through ongoing team R&D and global project delivery, VESSEL has developed space-themed luxury camp resort solutions with exports across 30+ countries.',
+                  '',
                 )}
               </p>
               <div className="flex flex-wrap gap-2">
@@ -1444,7 +985,7 @@ export default function AboutPage() {
               data-page-module-item="services-kicker"
               data-page-module-field={zh ? 'label_zh' : 'label_en'}
             >
-              {localText(itemById(serviceModuleItems, 'services-kicker'), zh, zh ? '三大服务体系' : 'Three Service Systems')}
+              {localText(itemById(serviceModuleItems, 'services-kicker'), zh, '')}
             </p>
             <h2
               className="text-4xl sm:text-5xl font-bold text-[#241F1B]"
@@ -1452,7 +993,7 @@ export default function AboutPage() {
               data-page-module-item="services-heading"
               data-page-module-field={zh ? 'label_zh' : 'label_en'}
             >
-              {localText(itemById(serviceModuleItems, 'services-heading'), zh, zh ? '从选址到运营\n全程陪跑' : 'From Site Selection\nto Full Operations')}
+              {localText(itemById(serviceModuleItems, 'services-heading'), zh, '')}
             </h2>
           </Reveal>
 
@@ -1490,96 +1031,6 @@ export default function AboutPage() {
         </div>
       </section>
       ) : null}
-
-      {/* ── S10 Global reach ─────────────────────────────────── */}
-      <section className="bg-[#241F1B] py-16 px-6" style={{ order: 60_000 }}>
-        <div className="max-w-6xl mx-auto">
-          <Reveal className="mb-8">
-            <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3">
-              {zh ? '全球版图' : 'Global Footprint'}
-            </p>
-            <h2
-              className="text-4xl sm:text-5xl font-bold text-[#F5F2ED]"
-              style={{ fontFamily: 'DM Sans, sans-serif' }}
-            >
-              {zh ? '微宿全球营地部署' : 'VESSEL Global Camp Deployment'}
-            </h2>
-          </Reveal>
-
-          <Reveal delay={80}>
-            <div
-              className="relative rounded-lg overflow-hidden border border-[#3A302A] shadow-[0_24px_80px_rgba(0,0,0,0.22)]"
-              style={{ height: '520px' }}
-              aria-label={zh ? '微宿全球营地部署预览地图' : 'VESSEL global camp deployment preview map'}
-            >
-              <Image
-                src={optimizedAboutImage('/images/about/about_globalmap-01.jpg')}
-                alt={zh ? '微宿全球营地部署静态预览' : 'VESSEL global deployment static preview'}
-                fill
-                sizes="(min-width: 1024px) 1152px, 100vw"
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#241F1B]/75 via-transparent to-transparent" />
-              <div className="absolute bottom-5 left-5 right-5">
-                <p className="text-xs uppercase tracking-[0.3em] text-[#E36F2C]">
-                  {zh ? '静态预览' : 'Static Preview'}
-                </p>
-                <p className="mt-1 max-w-md text-sm leading-relaxed text-white/75">
-                  {zh
-                    ? '完整点位、缩放和项目详情请进入 Global 地图。'
-                    : 'Open the full Global map for live pins, zoom and project details.'}
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 flex flex-col gap-2 text-right sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs leading-relaxed text-[#8A8580]">
-                {zh
-                  ? '预览地图仅展示全球点位，不支持缩放和拖拽。'
-                  : 'Preview only. Zoom, drag and project details are available on the full map.'}
-              </p>
-              <Link
-                href="/global"
-                className="text-[#E36F2C] hover:text-[#C85A1F] text-sm font-medium tracking-wider transition-colors"
-              >
-                {zh ? '查看完整全球地图 →' : 'View Full Global Map →'}
-              </Link>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── CTA ──────────────────────────────────────────────── */}
-      <section className="bg-[#E36F2C] py-20 px-6" style={{ order: 70_000 }}>
-        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-8">
-          <div>
-            <h2
-              className="text-4xl sm:text-5xl font-bold text-white mb-3"
-              style={{ fontFamily: 'DM Sans, sans-serif' }}
-            >
-              {zh ? '准备将微宿引入\n您的项目？' : 'Ready to bring VESSEL\nto your project?'}
-            </h2>
-            <p className="text-white/70 text-base max-w-md">
-              {zh
-                ? '专业顾问团队为您提供一对一方案咨询，24 小时内响应。'
-                : 'Our specialist team offers 1-on-1 project consulting. Response within 24 hours.'}
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-            <Link
-              href={buildContactHref('about:final_cta')}
-              className="px-9 py-4 bg-white text-[#E36F2C] text-sm font-bold tracking-wider hover:bg-[#F5F2ED] transition-colors whitespace-nowrap"
-            >
-              {zh ? '联系我们' : 'Contact VESSEL'}
-            </Link>
-            <Link
-              href="/global"
-              className="px-9 py-4 border-2 border-white/40 text-white text-sm font-medium tracking-wider hover:border-white hover:bg-white/10 transition-colors whitespace-nowrap"
-            >
-              {zh ? '查看全球项目' : 'View Global Projects'}
-            </Link>
-          </div>
-        </div>
-      </section>
 
       <div style={{ order: 80_000 }}>
         <Footer />

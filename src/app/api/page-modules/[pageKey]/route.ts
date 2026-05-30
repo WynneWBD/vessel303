@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getOptionalAdmin } from '@/lib/auth-check'
 import {
-  getDefaultPageModule,
+  getPublishedPageModule,
   isPageModulePageKey,
-  listDefaultPageModules,
+  listPublishedPageModules,
   getPageModuleForPreview,
   listPageModulesForPreview,
 } from '@/lib/page-modules-db'
@@ -20,30 +20,37 @@ export async function GET(req: NextRequest, ctx: Ctx) {
 
   const moduleKey = req.nextUrl.searchParams.get('module')
   const wantsDraft = req.nextUrl.searchParams.get('draft') === '1'
+  let includeDraft = false
 
   try {
     const admin = wantsDraft ? await getOptionalAdmin() : null
-    const includeDraft = Boolean(admin)
+    includeDraft = Boolean(admin)
 
     if (moduleKey) {
-      const pageModule = await getPageModuleForPreview(pageKey, moduleKey, includeDraft)
+      const pageModule = includeDraft
+        ? await getPageModuleForPreview(pageKey, moduleKey, includeDraft)
+        : await getPublishedPageModule(pageKey, moduleKey)
       return NextResponse.json({
-        data: pageModule ?? getDefaultPageModule(pageKey, moduleKey),
+        data: pageModule,
         previewDraft: includeDraft,
       })
     }
 
+    const modules = includeDraft
+      ? await listPageModulesForPreview(pageKey, includeDraft)
+      : await listPublishedPageModules(pageKey)
+
     return NextResponse.json({
-      data: await listPageModulesForPreview(pageKey, includeDraft),
+      data: modules,
       previewDraft: includeDraft,
     })
   } catch (err) {
-    console.error('[page-modules] fallback to defaults', err)
+    console.error(includeDraft ? '[page-modules] preview modules unavailable' : '[page-modules] public modules unavailable', err)
 
     if (moduleKey) {
-      return NextResponse.json({ data: getDefaultPageModule(pageKey, moduleKey) })
+      return NextResponse.json({ data: null, previewDraft: includeDraft })
     }
 
-    return NextResponse.json({ data: listDefaultPageModules(pageKey) })
+    return NextResponse.json({ data: [], previewDraft: includeDraft })
   }
 }

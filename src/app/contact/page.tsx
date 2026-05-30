@@ -1,19 +1,14 @@
 import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
-import { defaultSiteSettings, getSiteSettings } from '@/lib/admin-settings-db'
+import { notFound, redirect } from 'next/navigation'
+import type { SiteSettings } from '@/lib/admin-settings-db'
+import { getStoredSiteSettings } from '@/lib/admin-settings-db'
 import { recordSiteEventSafe } from '@/lib/site-analytics'
-import { buildPageMetadata } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata: Metadata = buildPageMetadata({
-  title: 'Contact VESSEL® | Project Inquiry',
-  description:
-    'Contact the VESSEL® team for smart prefab resort architecture, product inquiries, procurement consultation and international project support.',
-  path: '/contact',
-})
+export const metadata: Metadata = {}
 
-const CONTACT_SETTINGS_TIMEOUT_MS = 250
+const CONTACT_SETTINGS_TIMEOUT_MS = 5000
 
 function timeoutFallback<T>(ms: number, value: T): Promise<T> {
   return new Promise((resolve) => {
@@ -37,17 +32,15 @@ export default async function ContactPage({
 }: {
   searchParams?: Promise<Record<string, string | string[] | undefined>>
 }) {
-  let contactUrl = defaultSiteSettings.contactUrl
-
-  try {
-    const settings = await Promise.race([
-      getSiteSettings(),
-      timeoutFallback(CONTACT_SETTINGS_TIMEOUT_MS, defaultSiteSettings),
-    ])
-    contactUrl = settings.contactUrl || contactUrl
-  } catch (err) {
+  const settings = await Promise.race<Partial<SiteSettings>>([
+    getStoredSiteSettings(),
+    timeoutFallback<Partial<SiteSettings>>(CONTACT_SETTINGS_TIMEOUT_MS, {}),
+  ]).catch((err) => {
     console.error('Failed to load contact URL from site_settings:', err)
-  }
+    return {} as Partial<SiteSettings>
+  })
+  const contactUrl = typeof settings.contactUrl === 'string' ? settings.contactUrl.trim() : ''
+  if (!contactUrl) notFound()
 
   const sp = searchParams ? await searchParams : {}
   const sourceParam = sp.source

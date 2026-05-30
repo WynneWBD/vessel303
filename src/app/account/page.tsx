@@ -19,18 +19,6 @@ export default async function AccountPage() {
 
       <main className="flex-1 pt-28 pb-16 px-6">
         <div className="max-w-5xl mx-auto">
-          <div className="mb-8">
-            <p className="text-[#E36F2C] text-xs tracking-[0.35em] uppercase font-medium mb-3">
-              Member Account
-            </p>
-            <h1
-              className="text-[#2C2A28] text-3xl sm:text-4xl font-black tracking-wider"
-              style={{ fontFamily: 'DM Sans, sans-serif' }}
-            >
-              个人中心 / Account Center
-            </h1>
-          </div>
-
           <AccountForms />
         </div>
       </main>

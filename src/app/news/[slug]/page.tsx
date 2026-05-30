@@ -54,21 +54,15 @@ export async function generateMetadata({
   const news = await getNewsBySlug(slug).catch(() => null)
 
   if (!news) {
-    return buildPageMetadata({
-      title: 'News | VESSEL®',
-      description: 'VESSEL® brand news, product updates and smart prefab architecture project highlights.',
-      path: `/news/${slug}`,
-    })
+    return {}
   }
 
-  const fallbackTitle = textFallback(news.title_en, news.title_zh, 'VESSEL® News')
-  const title = textFallback(news.seo_title_en, news.seo_title_zh) || `${fallbackTitle} | VESSEL® News`
+  const title = textFallback(news.seo_title_en, news.seo_title_zh, news.title_en, news.title_zh)
   const description = textFallback(
     news.seo_description_en,
     news.seo_description_zh,
     news.excerpt_en,
     news.excerpt_zh,
-    'VESSEL® brand news, product updates and smart prefab architecture project highlights.',
   )
 
   return buildPageMetadata({

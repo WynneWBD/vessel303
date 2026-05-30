@@ -4,16 +4,13 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { getProductBySlug } from '@/lib/db-products';
-import { catalogProducts, type CatalogProduct } from '@/lib/products';
+import type { CatalogProduct } from '@/lib/products';
 import {
   getPublicCatalogProductBySlug,
-  isReservedProductId,
   listProductAttributeLabelsForProduct,
+  listPublishedCatalogProductsUncached,
   listPublicRelatedCatalogProducts,
 } from '@/lib/product-catalog-db';
-import { auth } from '@/auth';
-import ProductDetailContent from '@/components/pages/ProductDetailContent';
 import CatalogProductDetailContent from '@/components/pages/CatalogProductDetailContent';
 import {
   collectImageUrls,
@@ -22,12 +19,7 @@ import {
   type UploadVariantMap,
 } from '@/lib/upload-image-variants';
 import { buildPageMetadata } from '@/lib/seo';
-
-function findStaticCatalogProduct(slug: string) {
-  return catalogProducts.find((p) => (
-    p.id === slug || (!isReservedProductId(slug) && p.detailSlug === slug)
-  )) ?? null;
-}
+import { listPublishedPageModules } from '@/lib/page-modules-db';
 
 function catalogProductImageUrls(product: CatalogProduct) {
   return collectImageUrls([
@@ -53,11 +45,15 @@ function applyCatalogProductImageVariants(product: CatalogProduct, variantsByUrl
   };
 }
 
-// All catalog product ids + legacy DB slugs
-export function generateStaticParams() {
-  const legacySlugs = ['e7', 'e6', 'e3', 'v9', 'v5', 's5'];
-  const catalogIds = catalogProducts.map((p) => p.id);
-  return [...new Set([...legacySlugs, ...catalogIds])].map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  const catalogRows = await listPublishedCatalogProductsUncached().catch((err) => {
+    console.error('[products/static-params] catalog db unavailable', err);
+    return [];
+  });
+  return Array.from(new Set(catalogRows.flatMap((product) => [
+    product.id,
+    product.detailSlug,
+  ].filter((slug): slug is string => Boolean(slug))))).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
@@ -68,17 +64,17 @@ export async function generateMetadata({
   const { slug } = await params;
 
   // Catalog product path.
-  let catalogProduct = await getPublicCatalogProductBySlug(slug).catch(() => undefined);
-  if (!catalogProduct) {
-    catalogProduct = findStaticCatalogProduct(slug);
-  }
+  const catalogProduct = await getPublicCatalogProductBySlug(slug).catch(() => undefined);
   if (catalogProduct) {
     const title = catalogProduct.seo_title_en
       || catalogProduct.seo_title_zh
-      || `${catalogProduct.name_en} | VESSEL 微宿®`;
+      || catalogProduct.name_en
+      || catalogProduct.name_cn;
     const description = catalogProduct.seo_description_en
       || catalogProduct.seo_description_zh
-      || `${catalogProduct.name_cn} · ${catalogProduct.size} · ${catalogProduct.features_cn.join('，')}`;
+      || catalogProduct.description_en
+      || catalogProduct.description_cn;
+    if (!title || !description) return {};
     return buildPageMetadata({
       title,
       description,
@@ -87,18 +83,7 @@ export async function generateMetadata({
     });
   }
 
-  // Legacy DB product
-  const product = await getProductBySlug(slug).catch((err) => {
-    console.error('[products/metadata] legacy product db unavailable', err);
-    return null;
-  });
-  if (!product) return {};
-  return buildPageMetadata({
-    title: `${product.model} ${product.gen} | VESSEL 微宿®`,
-    description: `${product.tagline} — ${product.tagline2}。${product.floorArea}，${product.power}，${product.capacity}。`,
-    path: `/products/${slug}`,
-    image: product.image,
-  });
+  return {};
 }
 
 export default async function ProductDetailPage({
@@ -109,21 +94,22 @@ export default async function ProductDetailPage({
   const { slug } = await params;
 
   // ── 1. Catalog product path. ─────
-  let catalogProduct = await getPublicCatalogProductBySlug(slug).catch((err) => {
+  const catalogProduct = await getPublicCatalogProductBySlug(slug).catch((err) => {
       console.error('[products/detail] catalog db unavailable', err);
       return undefined;
     });
-  if (!catalogProduct) {
-    catalogProduct = findStaticCatalogProduct(slug);
-  }
   if (catalogProduct) {
-    const [relatedProducts, attributeLabels] = await Promise.all([
+    const [relatedProducts, attributeLabels, pageModules] = await Promise.all([
       listPublicRelatedCatalogProducts(catalogProduct.related_product_ids, catalogProduct.id).catch((err) => {
         console.error('[products/detail] load related products failed', err);
         return [];
       }),
       listProductAttributeLabelsForProduct(catalogProduct.id).catch((err) => {
         console.error('[products/detail] load attribute labels failed', err);
+        return [];
+      }),
+      listPublishedPageModules('products').catch((err) => {
+        console.error('[products/detail] load product page modules failed', err);
         return [];
       }),
     ]);
@@ -147,6 +133,7 @@ export default async function ProductDetailPage({
           product={displayProduct}
           relatedProducts={displayRelatedProducts}
           attributeLabels={attributeLabels}
+          pageModules={pageModules}
         />
         <Footer />
       </>
@@ -154,29 +141,5 @@ export default async function ProductDetailPage({
   }
 
   // ── 2. Legacy rich DB product ────────────────────────────
-  const product = await getProductBySlug(slug).catch((err) => {
-    console.error('[products/detail] legacy product db unavailable', err);
-    return null;
-  });
-  if (!product) notFound();
-
-  const [session, prevProduct, nextProduct] = await Promise.all([
-    auth(),
-    product.prev ? getProductBySlug(product.prev) : Promise.resolve(null),
-    product.next ? getProductBySlug(product.next) : Promise.resolve(null),
-  ]);
-  const isLoggedIn = !!session?.user;
-
-  return (
-    <>
-      <Navbar />
-      <ProductDetailContent
-        product={product}
-        isLoggedIn={isLoggedIn}
-        prevProduct={prevProduct ?? null}
-        nextProduct={nextProduct ?? null}
-      />
-      <Footer />
-    </>
-  );
+  notFound();
 }

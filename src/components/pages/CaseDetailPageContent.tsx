@@ -1,46 +1,26 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-import PageHero from '@/components/PageHero'
-import CaseInquiryForm from '@/components/pages/CaseInquiryForm'
 import ProtectedImage from '@/components/ProtectedImage'
 import { useLanguage } from '@/contexts/LanguageContext'
+import {
+  itemById,
+  itemLabel,
+  moduleMap,
+  moduleTitle,
+  type PublicPageModule,
+} from '@/lib/page-module-client'
 import type { ProjectCaseRow } from '@/lib/project-cases-static'
+import ConversionInquiryForm, { type FormLabels } from './ConversionInquiryForm'
 
 function text(value: string | null | undefined) {
   return value?.trim() ?? ''
 }
 
-function formatDate(value: string | null | undefined, zh: boolean) {
-  const raw = text(value)
-  if (!raw) return ''
-
-  const date = new Date(raw)
-  if (Number.isNaN(date.getTime())) return ''
-
-  return new Intl.DateTimeFormat(zh ? 'zh-CN' : 'en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  }).format(date)
-}
-
-function hasCoordinates(project: ProjectCaseRow) {
-  return project.latitude != null && project.longitude != null
-}
-
 function ProjectImage({ src, alt, className }: { src: string | null | undefined; alt: string; className: string }) {
-  if (!src) {
-    return (
-      <div className={`flex items-center justify-center bg-[#E5DED4] ${className}`}>
-        <span className="px-4 text-center text-xs tracking-wider text-[#8A8580]">{alt} · site image</span>
-      </div>
-    )
-  }
-
+  if (!src) return null
   return (
     <div className={`relative overflow-hidden bg-[#E5DED4] ${className}`}>
       <ProtectedImage
@@ -54,307 +34,161 @@ function ProjectImage({ src, alt, className }: { src: string | null | undefined;
   )
 }
 
-function CaseMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md border border-[#E5DED4] bg-white px-4 py-3 shadow-sm">
-      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8A8580]">{label}</div>
-      <div className="mt-1 text-sm font-bold leading-6 text-[#2C2A28]">{value}</div>
-    </div>
-  )
-}
-
 export default function CaseDetailPageContent({
   project,
   relatedCases = [],
+  pageModules = [],
 }: {
   project: ProjectCaseRow
   relatedCases?: ProjectCaseRow[]
+  pageModules?: PublicPageModule[]
 }) {
   const { lang } = useLanguage()
   const zh = lang === 'zh'
-  const name = zh ? project.name_zh : project.name_en
-  const location = zh ? project.location_zh : project.location_en
-  const type = zh ? project.project_type_zh : project.project_type_en
-  const description = zh ? project.description_zh : project.description_en
+  const name = zh ? project.name_zh || project.name_en : project.name_en || project.name_zh
+  const location = zh ? project.location_zh || project.location_en : project.location_en || project.location_zh
+  const type = zh ? project.project_type_zh || project.project_type_en : project.project_type_en || project.project_type_zh
+  const description = zh ? project.description_zh || project.description_en : project.description_en || project.description_zh
   const tags = zh ? project.tags_zh : project.tags_en
   const heroImage = project.cover_image_url || project.images[0] || null
-  const productsDisplay = text(project.products)
   const gallery = [
     project.cover_image_url,
     ...project.images,
   ].filter((image, index, images): image is string => Boolean(image) && images.indexOf(image) === index)
+  const facts = [
+    location,
+    type,
+    project.area_display,
+    project.investment_display,
+    project.units_display,
+    project.products,
+  ].map(text).filter(Boolean)
+  const modules = moduleMap(pageModules)
+  const inquiryModule = modules.get('inquiry-form') ?? null
+  const inquiryTitle = moduleTitle(inquiryModule, lang)
+  const inquiryType = itemLabel(itemById(inquiryModule, 'inquiry-type'), lang)
+  const inquiryLabels: FormLabels = {
+    eyebrow: itemLabel(itemById(inquiryModule, 'form-eyebrow'), lang),
+    name: itemLabel(itemById(inquiryModule, 'form-name'), lang),
+    email: itemLabel(itemById(inquiryModule, 'form-email'), lang),
+    phone: itemLabel(itemById(inquiryModule, 'form-phone'), lang),
+    country: itemLabel(itemById(inquiryModule, 'form-country'), lang),
+    company: itemLabel(itemById(inquiryModule, 'form-company'), lang),
+    quantity: itemLabel(itemById(inquiryModule, 'form-quantity'), lang),
+    message: itemLabel(itemById(inquiryModule, 'form-message'), lang),
+    submit: itemLabel(itemById(inquiryModule, 'form-submit'), lang),
+    submitting: itemLabel(itemById(inquiryModule, 'form-submitting'), lang),
+    success: itemLabel(itemById(inquiryModule, 'form-success'), lang),
+    error: itemLabel(itemById(inquiryModule, 'form-error'), lang),
+    sourcePrefix: itemLabel(itemById(inquiryModule, 'form-source-prefix'), lang),
+    companyPrefix: itemLabel(itemById(inquiryModule, 'form-company-prefix'), lang),
+  }
 
-  const specs = [
-    { label: zh ? '项目地点' : 'Location', value: location },
-    { label: zh ? '项目类型' : 'Project Type', value: type },
-    { label: zh ? '占地面积' : 'Site Area', value: text(project.area_display) },
-    { label: zh ? '投资规模' : 'Investment', value: text(project.investment_display) },
-    { label: zh ? '采购数量' : 'Units Purchased', value: text(project.units_display) },
-    { label: zh ? '采购产品' : 'Products', value: text(project.products) },
-  ].filter((item) => item.value.length > 0)
-
-  const contentDate = formatDate(project.created_at || project.updated_at, zh)
-  const contentStatus = [
-    { label: zh ? '内容分类' : 'Category', value: zh ? '项目案例' : 'Project Case' },
-    { label: zh ? '发布状态' : 'Status', value: zh ? '已发布' : 'Published' },
-    { label: zh ? '内容时间' : 'Content Date', value: contentDate },
-  ].filter((item) => item.value.length > 0)
-  const dataRows = [
-    { label: zh ? '项目名称' : 'Project Name', value: name },
-    { label: zh ? '案例分类' : 'Case Category', value: zh ? '项目案例' : 'Project Case' },
-    { label: zh ? '项目类型' : 'Project Type', value: type },
-    { label: zh ? '项目地点' : 'Location', value: location },
-    { label: zh ? '占地面积' : 'Site Area', value: text(project.area_display) },
-    { label: zh ? '投资规模' : 'Investment', value: text(project.investment_display) },
-    { label: zh ? '采购数量' : 'Units Purchased', value: text(project.units_display) },
-    { label: zh ? '采购产品' : 'Products', value: text(project.products) },
-  ].filter((item) => item.value.length > 0)
-  const showGlobalLink = hasCoordinates(project)
-  const inquiryAnchor = '#case-inquiry'
+  if (!name) return null
 
   return (
     <main className="bg-[#FAF7F2] text-[#2C2A28]">
       <Navbar />
 
-      <PageHero
-        label={zh ? '项目案例' : 'Project Case'}
-        title={name}
-        titleGold={type}
-        subtitle={location}
-        breadcrumb={[
-          { label: zh ? '首页' : 'Home', href: '/' },
-          { label: zh ? '项目案例' : 'Cases', href: '/cases' },
-          { label: name },
-        ]}
-      />
-
-      <section className="border-b border-[#E5DED4] bg-[linear-gradient(180deg,#FAF7F2_0%,#F4EFE7_100%)]">
+      <section className="border-b border-[#E5DED4] bg-[linear-gradient(180deg,#FAF7F2_0%,#F4EFE7_100%)] pt-28">
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-0 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)] lg:px-8 lg:py-16">
-          <div className="overflow-hidden rounded-t-md border border-[#E5DED4] bg-[#E5DED4] shadow-sm lg:rounded-l-md lg:rounded-tr-none">
-            <ProjectImage src={heroImage} alt={name} className="aspect-[16/10] h-full w-full" />
-          </div>
+          <ProjectImage src={heroImage} alt={name} className="aspect-[16/10] h-full w-full rounded-t-md border border-[#E5DED4] shadow-sm lg:rounded-l-md lg:rounded-tr-none" />
 
           <aside className="rounded-b-md border-x border-b border-[#E5DED4] bg-white p-6 shadow-sm lg:rounded-r-md lg:rounded-bl-none lg:border-l-0 lg:border-t lg:p-8">
-            <div className="mb-5 flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <span key={tag} className="rounded-full border border-[#E36F2C]/20 bg-[#E36F2C]/10 px-2 py-1 text-[10px] tracking-wider text-[#E36F2C]">
-                  {tag}
-                </span>
-              ))}
-            </div>
+            {tags.length > 0 ? (
+              <div className="mb-5 flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <span key={tag} className="rounded-full border border-[#E36F2C]/20 bg-[#E36F2C]/10 px-2 py-1 text-[10px] tracking-wider text-[#E36F2C]">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            ) : null}
 
             <h1 className="text-2xl font-black tracking-wide text-[#2C2A28]">{name}</h1>
-            <p className="mt-3 text-sm leading-7 text-[#6B6560]">{description}</p>
+            {description ? <p className="mt-3 text-sm leading-7 text-[#6B6560]">{description}</p> : null}
 
-            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              {contentStatus.map((item) => (
-                <CaseMetric key={item.label} label={item.label} value={item.value} />
-              ))}
-            </div>
-
-            <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
-              {specs.map((spec) => (
-                <CaseMetric key={spec.label} label={spec.label} value={spec.value} />
-              ))}
-            </div>
-
-            <div className="mt-8 flex flex-col gap-3">
-              <a
-                href={inquiryAnchor}
-                className="rounded-md bg-[#E36F2C] px-6 py-3 text-center text-sm font-bold tracking-wider text-white transition-colors hover:bg-[#C85A1F]"
-              >
-                {zh ? '咨询类似项目方案' : 'Inquire About a Similar Project'}
-              </a>
-              <Link
-                href="/contact"
-                className="rounded-md border border-[#E36F2C]/40 px-6 py-3 text-center text-sm tracking-wider text-[#E36F2C] transition-colors hover:bg-[#E36F2C]/5"
-              >
-                {zh ? '进入联系页面' : 'Open Contact Page'}
-              </Link>
-              {showGlobalLink && (
-                <Link
-                  href={`/global?camp=${project.id}`}
-                  className="rounded-md border border-[#E36F2C]/40 px-6 py-3 text-center text-sm tracking-wider text-[#E36F2C] transition-colors hover:bg-[#E36F2C]/5"
-                >
-                  {zh ? '在 Global 地图查看' : 'View on Global Map'}
-                </Link>
-              )}
-              <Link
-                href="/cases"
-                className="rounded-md border border-[#C4B9AB] px-6 py-3 text-center text-sm tracking-wider text-[#2C2A28] transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
-              >
-                {zh ? '返回全部案例' : 'Back to All Cases'}
-              </Link>
-            </div>
+            {facts.length > 0 ? (
+              <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                {facts.map((fact) => (
+                  <p key={fact} className="rounded-md border border-[#E5DED4] bg-white px-4 py-3 text-sm font-bold leading-6 text-[#2C2A28] shadow-sm">
+                    {fact}
+                  </p>
+                ))}
+              </div>
+            ) : null}
           </aside>
         </div>
       </section>
 
-      <section className="border-b border-[#E5DED4] bg-[#F5F2ED] py-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[0.7fr_1.3fr]">
-            <div>
-              <div className="mb-3 text-xs font-medium uppercase tracking-[0.3em] text-[#E36F2C]">
-                {zh ? '项目概览' : 'Project Overview'}
-              </div>
-              <h2 className="text-3xl font-black tracking-wide text-[#2C2A28]">
-                {zh ? '从场地到交付的案例展示' : 'A delivered project reference'}
-              </h2>
-            </div>
-            <div className="space-y-5 text-sm leading-8 text-[#5F5750]">
-              <p>{description}</p>
-              {project.products && (
-                <p>
-                  <span className="font-semibold text-[#2C2A28]">{zh ? '应用产品：' : 'Applied products: '}</span>
-                  {project.products}
-                </p>
-              )}
-              <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2">
-                {dataRows.map((row) => (
-                  <div key={row.label} className="rounded-md border border-[#E5DED4] bg-white px-4 py-3 shadow-sm">
-                    <div className="text-[10px] tracking-wider text-[#8A8580]">{row.label}</div>
-                    <div className="mt-1 text-sm font-semibold leading-6 text-[#2C2A28]">{row.value}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+      {description ? (
+        <section className="border-b border-[#E5DED4] bg-[#F5F2ED] py-16">
+          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+            <p className="text-sm leading-8 text-[#5F5750]">{description}</p>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
-      <section id="case-inquiry" className="scroll-mt-24 border-b border-[#E5DED4] bg-[#241F1B] py-16 text-white">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:px-8">
-          <div className="space-y-6">
-            <div>
-              <div className="mb-3 text-xs font-medium uppercase tracking-[0.3em] text-[#E36F2C]">
-                {zh ? '项目询盘' : 'Project Inquiry'}
-              </div>
-              <h2 className="text-3xl font-black tracking-wide text-white">
-                {zh ? '基于这个案例沟通你的项目' : 'Plan your project from this reference'}
-              </h2>
-              <p className="mt-4 max-w-xl text-sm leading-8 text-white/72">
-                {zh
-                  ? '填写场地、预算阶段和产品需求，项目顾问会结合本案例的配置与落地条件继续跟进。'
-                  : 'Share your site, budget stage and product needs. Our project team will follow up with this case as the reference.'}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
-              <div className="border border-white/12 bg-white/[0.04] px-4 py-3">
-                <div className="text-[10px] uppercase tracking-wider text-white/45">
-                  {zh ? '参考案例' : 'Reference Case'}
-                </div>
-                <div className="mt-1 text-sm font-semibold leading-6 text-white">{name}</div>
-              </div>
-              {productsDisplay && (
-                <div className="border border-white/12 bg-white/[0.04] px-4 py-3">
-                  <div className="text-[10px] uppercase tracking-wider text-white/45">
-                    {zh ? '相关产品' : 'Related Products'}
-                  </div>
-                  <div className="mt-1 text-sm font-semibold leading-6 text-white">{productsDisplay}</div>
-                </div>
-              )}
-              {location && (
-                <div className="border border-white/12 bg-white/[0.04] px-4 py-3">
-                  <div className="text-[10px] uppercase tracking-wider text-white/45">
-                    {zh ? '参考地点' : 'Reference Location'}
-                  </div>
-                  <div className="mt-1 text-sm font-semibold leading-6 text-white">{location}</div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <CaseInquiryForm
-            projectId={project.id}
-            projectName={name}
-            projectType={type}
-            projectLocation={location}
-            products={productsDisplay}
-            zh={zh}
-          />
-        </div>
-      </section>
-
-      {gallery.length > 1 && (
+      {gallery.length > 1 ? (
         <section className="py-16">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mb-8 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-              <div>
-                <div className="mb-2 text-xs font-medium uppercase tracking-[0.3em] text-[#E36F2C]">
-                  {zh ? '项目图集' : 'Project Gallery'}
-                </div>
-                <h2 className="text-2xl font-black tracking-wide text-[#2C2A28]">
-                  {zh ? '现场图片' : 'Site Images'}
-                </h2>
-              </div>
-              <Link href="/cases" className="text-sm tracking-wider text-[#E36F2C] hover:underline">
-                {zh ? '查看全部案例' : 'View all cases'}
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {gallery.slice(0, 6).map((image, index) => (
-                <ProjectImage
-                  key={image}
-                  src={image}
-                  alt={`${name} ${index + 1}`}
-                  className="aspect-[4/3] w-full border border-[#E5DED4]"
-                />
-              ))}
-            </div>
+          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 lg:px-8">
+            {gallery.slice(0, 6).map((image, index) => (
+              <ProjectImage
+                key={image}
+                src={image}
+                alt={`${name} ${index + 1}`}
+                className="aspect-[4/3] w-full border border-[#E5DED4]"
+              />
+            ))}
           </div>
         </section>
-      )}
+      ) : null}
 
-      {relatedCases.length > 0 && (
+      {inquiryTitle ? (
+        <section className="border-t border-[#E5DED4] bg-[#F5F2ED] py-14">
+          <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+            <ConversionInquiryForm
+              source={`case_detail:${project.id}:inquiry_form`}
+              inquiryType={inquiryType}
+              model={project.products || name}
+              titleEn={inquiryModule?.title_en ?? ''}
+              titleZh={inquiryModule?.title_zh ?? ''}
+              descriptionEn={inquiryModule?.description_en ?? ''}
+              descriptionZh={inquiryModule?.description_zh ?? ''}
+              labels={inquiryLabels}
+            />
+          </div>
+        </section>
+      ) : null}
+
+      {relatedCases.length > 0 ? (
         <section className="border-t border-[#E5DED4] bg-[#F5F2ED] py-16">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mb-8 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-              <div>
-                <div className="mb-2 text-xs font-medium uppercase tracking-[0.3em] text-[#E36F2C]">
-                  {zh ? '相关案例' : 'Related Cases'}
-                </div>
-                <h2 className="text-2xl font-black tracking-wide text-[#2C2A28]">
-                  {zh ? '继续查看项目案例' : 'Explore More Project Cases'}
-                </h2>
-              </div>
-              <Link href="/cases" className="inline-flex items-center gap-2 text-sm tracking-wider text-[#E36F2C] hover:underline">
-                {zh ? '查看全部案例' : 'View all cases'}
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-            </div>
+          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 sm:px-6 md:grid-cols-3 lg:px-8">
+            {relatedCases.map((item) => {
+              const relatedName = zh ? item.name_zh || item.name_en : item.name_en || item.name_zh
+              const relatedType = zh ? item.project_type_zh || item.project_type_en : item.project_type_en || item.project_type_zh
+              const relatedLocation = zh ? item.location_zh || item.location_en : item.location_en || item.location_zh
+              const relatedImage = item.cover_image_url || item.images[0] || null
+              if (!relatedName) return null
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              {relatedCases.map((item) => {
-                const relatedName = zh ? item.name_zh : item.name_en
-                const relatedType = zh ? item.project_type_zh : item.project_type_en
-                const relatedLocation = zh ? item.location_zh : item.location_en
-                const relatedImage = item.cover_image_url || item.images[0] || null
-
-                return (
-                  <Link
-                    key={item.id}
-                    href={`/cases/${item.id}`}
-                    className="group border border-[#E5DED4] bg-white transition-colors hover:border-[#E36F2C]/35"
-                  >
-                    <ProjectImage src={relatedImage} alt={relatedName} className="aspect-[4/3] w-full border-b border-[#E5DED4]" />
-                    <div className="p-5">
-                      <div className="mb-2 text-[10px] tracking-wider text-[#8A8580]">{relatedLocation}</div>
-                      <h3 className="text-base font-black leading-6 tracking-wide text-[#2C2A28]">{relatedName}</h3>
-                      {relatedType && <div className="mt-2 text-xs leading-5 tracking-wider text-[#6B6560]">{relatedType}</div>}
-                      <div className="mt-4 inline-flex items-center gap-2 text-xs tracking-wider text-[#E36F2C] group-hover:underline">
-                        {zh ? '查看详情' : 'View Details'}
-                        <ArrowRight className="h-3 w-3" aria-hidden="true" />
-                      </div>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
+              return (
+                <Link
+                  key={item.id}
+                  href={`/cases/${item.id}`}
+                  className="group border border-[#E5DED4] bg-white transition-colors hover:border-[#E36F2C]/35"
+                >
+                  <ProjectImage src={relatedImage} alt={relatedName} className="aspect-[4/3] w-full border-b border-[#E5DED4]" />
+                  <div className="p-5">
+                    {relatedLocation ? <div className="mb-2 text-[10px] tracking-wider text-[#8A8580]">{relatedLocation}</div> : null}
+                    <h2 className="text-base font-black leading-6 tracking-wide text-[#2C2A28]">{relatedName}</h2>
+                    {relatedType ? <div className="mt-2 text-xs leading-5 tracking-wider text-[#6B6560]">{relatedType}</div> : null}
+                  </div>
+                </Link>
+              )
+            })}
           </div>
         </section>
-      )}
+      ) : null}
 
       <Footer />
     </main>

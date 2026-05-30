@@ -10,6 +10,17 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
+import { useLanguage } from '@/contexts/LanguageContext'
+import {
+  fetchPublicPageModules,
+  itemById,
+  itemLabel,
+  itemValue,
+  moduleDescription,
+  moduleMap,
+  moduleTitle,
+  type PublicPageModule,
+} from '@/lib/page-module-client'
 
 type AccountProfile = {
   id: string
@@ -85,6 +96,7 @@ function FieldLabel({
   htmlFor: string
   children: ReactNode
 }) {
+  if (!children) return null
   return (
     <label
       htmlFor={htmlFor}
@@ -102,6 +114,7 @@ function StatusMessage({
   tone: 'success' | 'error'
   children: ReactNode
 }) {
+  if (!children) return null
   const cls =
     tone === 'success'
       ? 'border-green-600/25 bg-green-600/10 text-green-700'
@@ -117,6 +130,8 @@ function StatusMessage({
 }
 
 export default function AccountForms() {
+  const { lang } = useLanguage()
+  const [pageModules, setPageModules] = useState<PublicPageModule[] | null>(null)
   const [profile, setProfile] = useState<AccountProfile | null>(null)
   const [profileForm, setProfileForm] = useState<ProfileForm>(emptyProfile)
   const [passwordForm, setPasswordForm] = useState<PasswordForm>({
@@ -132,6 +147,72 @@ export default function AccountForms() {
   const [passwordSuccess, setPasswordSuccess] = useState('')
 
   useEffect(() => {
+    const controller = new AbortController()
+    fetchPublicPageModules('account', controller.signal)
+      .then((modules) => setPageModules(modules))
+      .catch((err) => {
+        if ((err as Error).name !== 'AbortError') setPageModules(null)
+      })
+    return () => controller.abort()
+  }, [])
+
+  const modules = moduleMap(pageModules)
+  const headerModule = modules.get('header') ?? null
+  const profileModule = modules.get('profile') ?? null
+  const passwordModule = modules.get('password') ?? null
+  const profileTitle = moduleTitle(profileModule, lang)
+  const profileDescription = moduleDescription(profileModule, lang)
+  const passwordMode = profile?.has_password ? 'change' : 'set'
+  const passwordTitle = passwordMode === 'change'
+    ? itemLabel(itemById(passwordModule, 'title-change'), lang)
+    : itemLabel(itemById(passwordModule, 'title-set'), lang)
+  const passwordHelp = passwordMode === 'change'
+    ? itemLabel(itemById(passwordModule, 'help-change'), lang)
+    : itemLabel(itemById(passwordModule, 'help-set'), lang)
+  const labels = {
+    eyebrow: itemLabel(itemById(headerModule, 'eyebrow'), lang),
+    title: moduleTitle(headerModule, lang),
+    name: itemLabel(itemById(profileModule, 'name-label'), lang),
+    namePlaceholder: itemValue(itemById(profileModule, 'name-placeholder'), lang),
+    company: itemLabel(itemById(profileModule, 'company-label'), lang),
+    companyPlaceholder: itemValue(itemById(profileModule, 'company-placeholder'), lang),
+    country: itemLabel(itemById(profileModule, 'country-label'), lang),
+    countryPlaceholder: itemValue(itemById(profileModule, 'country-placeholder'), lang),
+    phone: itemLabel(itemById(profileModule, 'phone-label'), lang),
+    phonePlaceholder: itemValue(itemById(profileModule, 'phone-placeholder'), lang),
+    whatsapp: itemLabel(itemById(profileModule, 'whatsapp-label'), lang),
+    whatsappPlaceholder: itemValue(itemById(profileModule, 'whatsapp-placeholder'), lang),
+    language: itemLabel(itemById(profileModule, 'language-label'), lang),
+    languageEmpty: itemLabel(itemById(profileModule, 'language-empty'), lang),
+    languageZh: itemLabel(itemById(profileModule, 'language-zh'), lang),
+    languageEn: itemLabel(itemById(profileModule, 'language-en'), lang),
+    profileSave: itemLabel(itemById(profileModule, 'save'), lang),
+    profileSaving: itemLabel(itemById(profileModule, 'saving'), lang),
+    profileSuccess: itemLabel(itemById(profileModule, 'success'), lang),
+    profileLoadError: itemLabel(itemById(profileModule, 'load-error'), lang),
+    profileSaveError: itemLabel(itemById(profileModule, 'save-error'), lang),
+    currentPassword: itemLabel(itemById(passwordModule, 'current-label'), lang),
+    newPassword: itemLabel(itemById(passwordModule, 'new-label'), lang),
+    newPasswordPlaceholder: itemValue(itemById(passwordModule, 'new-placeholder'), lang),
+    passwordSave: itemLabel(itemById(passwordModule, 'save'), lang),
+    passwordSaving: itemLabel(itemById(passwordModule, 'saving'), lang),
+    passwordSetSuccess: itemLabel(itemById(passwordModule, 'set-success'), lang),
+    passwordChangeSuccess: itemLabel(itemById(passwordModule, 'change-success'), lang),
+    passwordSaveError: itemLabel(itemById(passwordModule, 'save-error'), lang),
+  }
+  const canRenderProfile = Boolean(
+    profileTitle &&
+    labels.name &&
+    labels.company &&
+    labels.country &&
+    labels.phone &&
+    labels.whatsapp &&
+    labels.language &&
+    labels.profileSave,
+  )
+  const canRenderPassword = Boolean(passwordTitle && labels.newPassword && labels.passwordSave)
+
+  useEffect(() => {
     let cancelled = false
 
     async function loadProfile() {
@@ -141,7 +222,7 @@ export default function AccountForms() {
         const res = await fetch('/api/account/profile', { cache: 'no-store' })
         const data = await readJson(res)
         if (!res.ok || !data.profile) {
-          throw new Error(getApiError(data, '账户资料加载失败'))
+          throw new Error(getApiError(data, ''))
         }
         if (!cancelled) {
           setProfile(data.profile)
@@ -149,7 +230,7 @@ export default function AccountForms() {
         }
       } catch (err) {
         if (!cancelled) {
-          setProfileError(err instanceof Error ? err.message : '账户资料加载失败')
+          setProfileError(err instanceof Error ? err.message : '')
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -163,12 +244,25 @@ export default function AccountForms() {
     }
   }, [])
 
-  const passwordMode = profile?.has_password ? 'change' : 'set'
-  const passwordTitle = passwordMode === 'change' ? '修改密码' : '设置密码'
-  const passwordHelp = useMemo(() => {
-    if (passwordMode === 'change') return '请输入当前密码后设置新密码。'
-    return '当前账户尚未设置邮箱密码，可直接设置新密码。'
-  }, [passwordMode])
+  const accountHeader = useMemo(() => (
+    labels.eyebrow || labels.title ? (
+      <div className="mb-8">
+        {labels.eyebrow ? (
+          <p className="text-[#E36F2C] text-xs tracking-[0.35em] uppercase font-medium mb-3">
+            {labels.eyebrow}
+          </p>
+        ) : null}
+        {labels.title ? (
+          <h1
+            className="text-[#2C2A28] text-3xl sm:text-4xl font-black tracking-wider"
+            style={{ fontFamily: 'DM Sans, sans-serif' }}
+          >
+            {labels.title}
+          </h1>
+        ) : null}
+      </div>
+    ) : null
+  ), [labels.eyebrow, labels.title])
 
   function setProfileField(field: keyof ProfileForm, value: string) {
     setProfileForm((prev) => ({ ...prev, [field]: value }))
@@ -195,13 +289,13 @@ export default function AccountForms() {
       })
       const data = await readJson(res)
       if (!res.ok || !data.profile) {
-        throw new Error(getApiError(data, '资料保存失败'))
+        throw new Error(getApiError(data, labels.profileSaveError))
       }
       setProfile(data.profile)
       setProfileForm(asForm(data.profile))
-      setProfileSuccess('资料已保存')
+      setProfileSuccess(labels.profileSuccess)
     } catch (err) {
-      setProfileError(err instanceof Error ? err.message : '资料保存失败')
+      setProfileError(err instanceof Error ? err.message : labels.profileSaveError)
     } finally {
       setSavingProfile(false)
     }
@@ -224,15 +318,15 @@ export default function AccountForms() {
       })
       const data = await readJson(res)
       if (!res.ok) {
-        throw new Error(getApiError(data, '密码保存失败'))
+        throw new Error(getApiError(data, labels.passwordSaveError))
       }
       setPasswordForm({ currentPassword: '', newPassword: '' })
-      setPasswordSuccess(data.mode === 'set' ? '密码已设置' : '密码已修改')
+      setPasswordSuccess(data.mode === 'set' ? labels.passwordSetSuccess : labels.passwordChangeSuccess)
       setProfile((current) =>
         current ? { ...current, has_password: true } : current,
       )
     } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : '密码保存失败')
+      setPasswordError(err instanceof Error ? err.message : labels.passwordSaveError)
     } finally {
       setSavingPassword(false)
     }
@@ -240,201 +334,222 @@ export default function AccountForms() {
 
   if (loading) {
     return (
-      <section className="bg-white border border-[#E5DED4] p-6 sm:p-8">
-        <div className="h-5 w-40 bg-[#E5DED4] animate-pulse mb-6" />
-        <div className="grid md:grid-cols-2 gap-4">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index}>
-              <div className="h-3 w-24 bg-[#E5DED4] animate-pulse mb-2" />
-              <div className="h-10 bg-[#F5F2ED] animate-pulse" />
-            </div>
-          ))}
-        </div>
-      </section>
+      <>
+        {accountHeader}
+        <section className="bg-white border border-[#E5DED4] p-6 sm:p-8">
+          <div className="h-5 w-40 bg-[#E5DED4] animate-pulse mb-6" />
+          <div className="grid md:grid-cols-2 gap-4">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index}>
+                <div className="h-3 w-24 bg-[#E5DED4] animate-pulse mb-2" />
+                <div className="h-10 bg-[#F5F2ED] animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </section>
+      </>
     )
   }
 
   if (!profile) {
     return (
-      <section className="bg-white border border-[#E5DED4] p-6 sm:p-8">
-        <h2 className="text-[#2C2A28] text-lg font-bold tracking-wider mb-4">
-          账户资料
-        </h2>
-        <StatusMessage tone="error">
-          {profileError || '账户资料加载失败'}
-        </StatusMessage>
-      </section>
+      <>
+        {accountHeader}
+        {profileError || labels.profileLoadError ? (
+          <section className="bg-white border border-[#E5DED4] p-6 sm:p-8">
+            <StatusMessage tone="error">
+              {profileError || labels.profileLoadError}
+            </StatusMessage>
+          </section>
+        ) : null}
+      </>
     )
   }
 
+  if (!canRenderProfile && !canRenderPassword) {
+    return <>{accountHeader}</>
+  }
+
   return (
-    <div className="grid lg:grid-cols-[1fr_320px] gap-6">
-      <section className="bg-white border border-[#E5DED4] p-6 sm:p-8">
-        <div className="flex flex-col gap-1 mb-6">
-          <h2 className="text-[#2C2A28] text-lg font-bold tracking-wider">
-            资料维护
-          </h2>
-          {profile.email ? (
-            <p className="text-[#8A8580] text-sm break-all">{profile.email}</p>
-          ) : null}
-        </div>
-
-        <form onSubmit={handleProfileSubmit} className="space-y-5">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <FieldLabel htmlFor="account-name">姓名 / Name</FieldLabel>
-              <Input
-                id="account-name"
-                value={profileForm.name}
-                onChange={(e) => setProfileField('name', e.target.value)}
-                placeholder="Your name"
-                maxLength={50}
-                autoComplete="name"
-                disabled={savingProfile}
-              />
+    <>
+      {accountHeader}
+      <div className="grid lg:grid-cols-[1fr_320px] gap-6">
+        {canRenderProfile ? (
+          <section className="bg-white border border-[#E5DED4] p-6 sm:p-8">
+            <div className="flex flex-col gap-1 mb-6">
+              {profileTitle ? (
+                <h2 className="text-[#2C2A28] text-lg font-bold tracking-wider">
+                  {profileTitle}
+                </h2>
+              ) : null}
+              {profileDescription ? (
+                <p className="text-[#8A8580] text-sm">{profileDescription}</p>
+              ) : null}
+              {profile.email ? (
+                <p className="text-[#8A8580] text-sm break-all">{profile.email}</p>
+              ) : null}
             </div>
-            <div>
-              <FieldLabel htmlFor="account-company">公司 / Company</FieldLabel>
-              <Input
-                id="account-company"
-                value={profileForm.company}
-                onChange={(e) => setProfileField('company', e.target.value)}
-                placeholder="Company"
-                maxLength={200}
-                autoComplete="organization"
-                disabled={savingProfile}
-              />
-            </div>
-            <div>
-              <FieldLabel htmlFor="account-country">国家 / Country</FieldLabel>
-              <Input
-                id="account-country"
-                value={profileForm.country}
-                onChange={(e) => setProfileField('country', e.target.value)}
-                placeholder="Country"
-                maxLength={100}
-                autoComplete="country-name"
-                disabled={savingProfile}
-              />
-            </div>
-            <div>
-              <FieldLabel htmlFor="account-phone">电话 / Phone</FieldLabel>
-              <Input
-                id="account-phone"
-                value={profileForm.phone}
-                onChange={(e) => setProfileField('phone', e.target.value)}
-                placeholder="+86 ..."
-                maxLength={50}
-                autoComplete="tel"
-                disabled={savingProfile}
-              />
-            </div>
-            <div>
-              <FieldLabel htmlFor="account-whatsapp">WhatsApp</FieldLabel>
-              <Input
-                id="account-whatsapp"
-                value={profileForm.whatsapp}
-                onChange={(e) => setProfileField('whatsapp', e.target.value)}
-                placeholder="+86 ..."
-                maxLength={80}
-                autoComplete="tel"
-                disabled={savingProfile}
-              />
-            </div>
-            <div>
-              <FieldLabel htmlFor="account-language">
-                偏好语言 / Language
-              </FieldLabel>
-              <Select
-                id="account-language"
-                value={profileForm.preferred_language}
-                onChange={(e) =>
-                  setProfileField('preferred_language', e.target.value)
-                }
-                disabled={savingProfile}
-              >
-                <option value="">未设置 / Not set</option>
-                <option value="zh">中文</option>
-                <option value="en">English</option>
-              </Select>
-            </div>
-          </div>
 
-          {profileError ? (
-            <StatusMessage tone="error">{profileError}</StatusMessage>
-          ) : null}
-          {profileSuccess ? (
-            <StatusMessage tone="success">{profileSuccess}</StatusMessage>
-          ) : null}
+            <form onSubmit={handleProfileSubmit} className="space-y-5">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <FieldLabel htmlFor="account-name">{labels.name}</FieldLabel>
+                  <Input
+                    id="account-name"
+                    value={profileForm.name}
+                    onChange={(e) => setProfileField('name', e.target.value)}
+                    placeholder={labels.namePlaceholder}
+                    maxLength={50}
+                    autoComplete="name"
+                    disabled={savingProfile}
+                  />
+                </div>
+                <div>
+                  <FieldLabel htmlFor="account-company">{labels.company}</FieldLabel>
+                  <Input
+                    id="account-company"
+                    value={profileForm.company}
+                    onChange={(e) => setProfileField('company', e.target.value)}
+                    placeholder={labels.companyPlaceholder}
+                    maxLength={200}
+                    autoComplete="organization"
+                    disabled={savingProfile}
+                  />
+                </div>
+                <div>
+                  <FieldLabel htmlFor="account-country">{labels.country}</FieldLabel>
+                  <Input
+                    id="account-country"
+                    value={profileForm.country}
+                    onChange={(e) => setProfileField('country', e.target.value)}
+                    placeholder={labels.countryPlaceholder}
+                    maxLength={100}
+                    autoComplete="country-name"
+                    disabled={savingProfile}
+                  />
+                </div>
+                <div>
+                  <FieldLabel htmlFor="account-phone">{labels.phone}</FieldLabel>
+                  <Input
+                    id="account-phone"
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileField('phone', e.target.value)}
+                    placeholder={labels.phonePlaceholder}
+                    maxLength={50}
+                    autoComplete="tel"
+                    disabled={savingProfile}
+                  />
+                </div>
+                <div>
+                  <FieldLabel htmlFor="account-whatsapp">{labels.whatsapp}</FieldLabel>
+                  <Input
+                    id="account-whatsapp"
+                    value={profileForm.whatsapp}
+                    onChange={(e) => setProfileField('whatsapp', e.target.value)}
+                    placeholder={labels.whatsappPlaceholder}
+                    maxLength={80}
+                    autoComplete="tel"
+                    disabled={savingProfile}
+                  />
+                </div>
+                <div>
+                  <FieldLabel htmlFor="account-language">{labels.language}</FieldLabel>
+                  <Select
+                    id="account-language"
+                    value={profileForm.preferred_language}
+                    onChange={(e) =>
+                      setProfileField('preferred_language', e.target.value)
+                    }
+                    disabled={savingProfile}
+                  >
+                    {labels.languageEmpty ? <option value="">{labels.languageEmpty}</option> : null}
+                    {labels.languageZh ? <option value="zh">{labels.languageZh}</option> : null}
+                    {labels.languageEn ? <option value="en">{labels.languageEn}</option> : null}
+                  </Select>
+                </div>
+              </div>
 
-          <div className="flex justify-end">
-            <Button type="submit" disabled={savingProfile}>
-              {savingProfile ? '保存中...' : '保存资料'}
-            </Button>
-          </div>
-        </form>
-      </section>
+              {profileError ? (
+                <StatusMessage tone="error">{profileError}</StatusMessage>
+              ) : null}
+              {profileSuccess ? (
+                <StatusMessage tone="success">{profileSuccess}</StatusMessage>
+              ) : null}
 
-      <aside className="bg-[#241F1B] border border-[#3A302A] p-6 text-[#F5F2ED]">
-        <h2 className="text-base font-bold tracking-wider mb-2">
-          {passwordTitle}
-        </h2>
-        <p className="text-white/45 text-xs leading-5 mb-5">{passwordHelp}</p>
+              <div className="flex justify-end">
+                <Button type="submit" disabled={savingProfile}>
+                  {savingProfile && labels.profileSaving ? labels.profileSaving : labels.profileSave}
+                </Button>
+              </div>
+            </form>
+          </section>
+        ) : null}
 
-        <form onSubmit={handlePasswordSubmit} className="space-y-4">
-          {passwordMode === 'change' ? (
-            <div>
-              <label
-                htmlFor="account-current-password"
-                className="block text-white/45 text-xs tracking-[0.16em] uppercase mb-1.5"
-              >
-                当前密码
-              </label>
-              <Input
-                id="account-current-password"
-                type="password"
-                value={passwordForm.currentPassword}
-                onChange={(e) =>
-                  setPasswordField('currentPassword', e.target.value)
-                }
-                autoComplete="current-password"
-                disabled={savingPassword}
-                className="border-white/10 bg-white/5 text-white placeholder:text-white/25 focus:border-[#E36F2C]"
-              />
-            </div>
-          ) : null}
+        {canRenderPassword ? (
+          <aside className="bg-[#241F1B] border border-[#3A302A] p-6 text-[#F5F2ED]">
+            {passwordTitle ? (
+              <h2 className="text-base font-bold tracking-wider mb-2">
+                {passwordTitle}
+              </h2>
+            ) : null}
+            {passwordHelp ? <p className="text-white/45 text-xs leading-5 mb-5">{passwordHelp}</p> : null}
 
-          <div>
-            <label
-              htmlFor="account-new-password"
-              className="block text-white/45 text-xs tracking-[0.16em] uppercase mb-1.5"
-            >
-              新密码
-            </label>
-            <Input
-              id="account-new-password"
-              type="password"
-              value={passwordForm.newPassword}
-              onChange={(e) => setPasswordField('newPassword', e.target.value)}
-              autoComplete="new-password"
-              placeholder="至少8位，包含字母和数字"
-              disabled={savingPassword}
-              className="border-white/10 bg-white/5 text-white placeholder:text-white/25 focus:border-[#E36F2C]"
-            />
-          </div>
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              {passwordMode === 'change' && labels.currentPassword ? (
+                <div>
+                  <label
+                    htmlFor="account-current-password"
+                    className="block text-white/45 text-xs tracking-[0.16em] uppercase mb-1.5"
+                  >
+                    {labels.currentPassword}
+                  </label>
+                  <Input
+                    id="account-current-password"
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) =>
+                      setPasswordField('currentPassword', e.target.value)
+                    }
+                    autoComplete="current-password"
+                    disabled={savingPassword}
+                    className="border-white/10 bg-white/5 text-white placeholder:text-white/25 focus:border-[#E36F2C]"
+                  />
+                </div>
+              ) : null}
 
-          {passwordError ? (
-            <StatusMessage tone="error">{passwordError}</StatusMessage>
-          ) : null}
-          {passwordSuccess ? (
-            <StatusMessage tone="success">{passwordSuccess}</StatusMessage>
-          ) : null}
+              <div>
+                <label
+                  htmlFor="account-new-password"
+                  className="block text-white/45 text-xs tracking-[0.16em] uppercase mb-1.5"
+                >
+                  {labels.newPassword}
+                </label>
+                <Input
+                  id="account-new-password"
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordField('newPassword', e.target.value)}
+                  autoComplete="new-password"
+                  placeholder={labels.newPasswordPlaceholder}
+                  disabled={savingPassword}
+                  className="border-white/10 bg-white/5 text-white placeholder:text-white/25 focus:border-[#E36F2C]"
+                />
+              </div>
 
-          <Button type="submit" className="w-full" disabled={savingPassword}>
-            {savingPassword ? '提交中...' : passwordTitle}
-          </Button>
-        </form>
-      </aside>
-    </div>
+              {passwordError ? (
+                <StatusMessage tone="error">{passwordError}</StatusMessage>
+              ) : null}
+              {passwordSuccess ? (
+                <StatusMessage tone="success">{passwordSuccess}</StatusMessage>
+              ) : null}
+
+              <Button type="submit" className="w-full" disabled={savingPassword}>
+                {savingPassword && labels.passwordSaving ? labels.passwordSaving : labels.passwordSave}
+              </Button>
+            </form>
+          </aside>
+        ) : null}
+      </div>
+    </>
   )
 }

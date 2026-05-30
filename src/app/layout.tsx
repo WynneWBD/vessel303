@@ -7,7 +7,8 @@ import ImageProtection from "@/components/ImageProtection";
 import SiteAnalyticsTracker from "@/components/SiteAnalyticsTracker";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { getGoogleSiteVerificationToken } from "@/lib/google-site-verification";
-import { DEFAULT_OG_IMAGE, DEFAULT_SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { getStoredSiteSettings, type SiteSettings } from "@/lib/admin-settings-db";
+import { SITE_URL } from "@/lib/seo";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -25,40 +26,51 @@ const inter = Inter({
 
 const googleSiteVerification = getGoogleSiteVerificationToken();
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: "VESSEL® | Smart Prefab Architecture for Tourism Resorts",
-  description: DEFAULT_SITE_DESCRIPTION,
-  keywords: "prefab architecture,modular building,tourism resort,VESSEL,camp resort,smart building",
-  openGraph: {
-    title: "VESSEL® | Smart Prefab Architecture",
-    description: DEFAULT_SITE_DESCRIPTION,
-    url: '/',
-    siteName: SITE_NAME,
-    images: [{ url: DEFAULT_OG_IMAGE }],
-    type: "website",
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'VESSEL® | Smart Prefab Architecture',
-    description: DEFAULT_SITE_DESCRIPTION,
-    images: [DEFAULT_OG_IMAGE],
-  },
-  icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: '32x32' },
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-    ],
-    apple: '/apple-touch-icon.png',
-  },
-  ...(googleSiteVerification
-    ? {
-        verification: {
-          google: googleSiteVerification,
-        },
-      }
-    : {}),
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings: Partial<SiteSettings> = await getStoredSiteSettings().catch((err) => {
+    console.error('[layout/metadata] site settings unavailable', err);
+    return {};
+  });
+  const title = settings.seoTitleEn || settings.seoTitleZh || settings.siteNameEn || settings.siteNameZh || '';
+  const description = settings.seoDescriptionEn || settings.seoDescriptionZh || '';
+  const siteName = settings.siteNameEn || settings.siteNameZh || undefined;
+
+  return {
+    metadataBase: new URL(SITE_URL),
+    ...(title ? { title } : {}),
+    ...(description ? { description } : {}),
+    ...(title || description || siteName
+      ? {
+          openGraph: {
+            ...(title ? { title } : {}),
+            ...(description ? { description } : {}),
+            url: '/',
+            ...(siteName ? { siteName } : {}),
+            type: "website",
+          },
+          twitter: {
+            card: 'summary_large_image',
+            ...(title ? { title } : {}),
+            ...(description ? { description } : {}),
+          },
+        }
+      : {}),
+    icons: {
+      icon: [
+        { url: '/favicon.ico', sizes: '32x32' },
+        { url: '/favicon.svg', type: 'image/svg+xml' },
+      ],
+      apple: '/apple-touch-icon.png',
+    },
+    ...(googleSiteVerification
+      ? {
+          verification: {
+            google: googleSiteVerification,
+          },
+        }
+      : {}),
+  };
+}
 
 export default function RootLayout({
   children,

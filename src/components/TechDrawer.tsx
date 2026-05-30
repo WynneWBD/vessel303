@@ -1,9 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import ViieContent from './tech/ViieContent';
-import VolsContent from './tech/VolsContent';
-import VipcContent from './tech/VipcContent';
+import InnovationCmsBlock from './tech/InnovationCmsBlock';
 
 type Tech = 'viie' | 'vols' | 'vipc' | null;
 
@@ -12,15 +10,11 @@ interface Props {
   onClose: () => void;
   tech: Tech;
   lang: 'en' | 'zh';
+  closeLabel?: string;
 }
 
-const TECH_LABELS: Record<Exclude<Tech, null>, { en: string; zh: string }> = {
-  viie: { en: 'VesselOS · VIIE', zh: 'VesselOS · 智能交互' },
-  vols: { en: 'VOLS · Off-grid Living System', zh: 'VOLS · 离网系统' },
-  vipc: { en: 'VIPC · Pre-fab Construction', zh: 'VIPC · 整装预制' },
-};
-
-export default function TechDrawer({ isOpen, onClose, tech, lang }: Props) {
+export default function TechDrawer({ isOpen, onClose, tech, lang: _lang, closeLabel }: Props) {
+  void _lang
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,10 +37,6 @@ export default function TechDrawer({ isOpen, onClose, tech, lang }: Props) {
     }
   }, [isOpen, tech]);
 
-  const zh = lang === 'zh';
-  const label = tech ? TECH_LABELS[tech] : null;
-  const title = label ? (zh ? label.zh : label.en) : '';
-
   return (
     <>
       {/* Backdrop */}
@@ -67,22 +57,11 @@ export default function TechDrawer({ isOpen, onClose, tech, lang }: Props) {
         aria-hidden={!isOpen}
       >
         {/* Top bar */}
-        <div className="shrink-0 bg-[#241F1B] border-b border-[#3A302A] px-6 lg:px-10 py-5 flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-[#E36F2C] text-[10px] tracking-[0.35em] uppercase font-medium mb-1">
-              {zh ? '核心技术' : 'Core Technology'}
-            </p>
-            <h2
-              className="text-[#F5F2ED] text-lg lg:text-xl font-bold truncate"
-              style={{ fontFamily: 'DM Sans, sans-serif' }}
-            >
-              {title}
-            </h2>
-          </div>
+        <div className="shrink-0 bg-[#241F1B] border-b border-[#3A302A] px-6 lg:px-10 py-5 flex items-center justify-end gap-4">
           <button
             onClick={onClose}
             className="shrink-0 text-[#8A8580] hover:text-[#E36F2C] transition-colors p-2"
-            aria-label={zh ? '关闭' : 'Close'}
+            aria-label={closeLabel || undefined}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
               <path d="M6 6l12 12M18 6l-12 12" />
@@ -92,9 +71,7 @@ export default function TechDrawer({ isOpen, onClose, tech, lang }: Props) {
 
         {/* Scrollable body */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto">
-          {tech === 'viie' && <ViieContent lang={lang} />}
-          {tech === 'vols' && <VolsContent lang={lang} />}
-          {tech === 'vipc' && <VipcContent lang={lang} />}
+          {tech ? <InnovationCmsBlock slug={tech} /> : null}
         </div>
       </div>
     </>

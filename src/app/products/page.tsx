@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { catalogProducts } from '@/lib/products';
 import {
   listPublishedCatalogProducts,
   listPublicProductAttributeTemplatesWithOptions,
@@ -11,23 +10,27 @@ import {
 import ProductsPageContent from '@/components/pages/ProductsPageContent';
 import { getUploadVariantsByUrls, mapUploadImageUrl } from '@/lib/upload-image-variants';
 import { buildPageMetadata } from '@/lib/seo';
-import { listPageModules } from '@/lib/page-modules-db';
+import { getPublishedPageModule, listPublishedPageModules } from '@/lib/page-modules-db';
 
 export const revalidate = 300;
 
-export const metadata: Metadata = buildPageMetadata({
-  title: 'Products | VESSEL® Smart Prefab Architecture',
-  description:
-    'Browse VESSEL® Gen6 and Gen5 smart prefab architecture for resorts, commercial spaces, public facilities, and custom overseas projects.',
-  path: '/products',
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const heroModule = await getPublishedPageModule('products', 'hero').catch((err) => {
+    console.error('[products/metadata] load page module failed', err);
+    return null;
+  });
+  const title = heroModule?.title_en || heroModule?.title_zh || '';
+  const description = heroModule?.description_en || heroModule?.description_zh || '';
+  if (!title || !description) return {};
+  return buildPageMetadata({ title, description, path: '/products' });
+}
 
 const PAGE_SIZE = 12;
 
 export default async function ProductsPage() {
   const catalogRows = await listPublishedCatalogProducts().catch((err) => {
-    console.error('[products] catalog db unavailable, falling back to static catalog', err);
-    return catalogProducts;
+    console.error('[products] catalog db unavailable', err);
+    return [];
   });
   const [categories, attributeTemplates] = await Promise.all([
     listPublicProductCategories().catch((err) => {
@@ -39,7 +42,7 @@ export default async function ProductsPage() {
       return [];
     }),
   ]);
-  const pageModules = await listPageModules('products').catch((err) => {
+  const pageModules = await listPublishedPageModules('products').catch((err) => {
     console.error('[products] load page modules failed', err);
     return [];
   });

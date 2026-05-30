@@ -1,584 +1,403 @@
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import type { Metadata } from 'next';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import PageHero from '@/components/PageHero';
-import ConversionInquiryForm from '@/components/pages/ConversionInquiryForm';
-import { getPublicB9ContentItem, type B9ContentItem } from '@/lib/b9-content-db';
-import { buildContactHref } from '@/lib/site-links';
-import { buildPageMetadata } from '@/lib/seo';
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+import PageHero from '@/components/PageHero'
+import ConversionInquiryForm from '@/components/pages/ConversionInquiryForm'
+import ProtectedImage from '@/components/ProtectedImage'
+import {
+  getPublicB9ContentItem,
+  listPublicB9ContentItems,
+  type B9ContentItem,
+} from '@/lib/b9-content-db'
+import { listPublishedPageModules, type PageModuleItem, type PageModuleRow } from '@/lib/page-modules-db'
+import { buildPageMetadata } from '@/lib/seo'
 
-export const revalidate = 300;
+export const revalidate = 300
 
-type ScenarioSlug = 'tourism' | 'commercial' | 'public';
+const SCENARIO_SLUGS = ['tourism', 'commercial', 'public'] as const
+type ScenarioSlug = (typeof SCENARIO_SLUGS)[number]
 
-interface ScenarioData {
-  slug: ScenarioSlug;
-  label: string;
-  title: string;
-  titleGold: string;
-  subtitle: string;
-  intro: string;
-  heroTagline: string;
-  specs: Array<{ label: string; value: string }>;
-  features: Array<{ title: string; desc: string }>;
-  process: Array<{ step: string; title: string; desc: string }>;
-  recommendedProducts: string[];
-  cases: Array<{ name: string; location: string; desc: string }>;
-  accentColor: string;
+type LabelValue = { label: string; value: string }
+type TitleBody = { title: string; body: string; step?: string }
+type RelatedCase = { name: string; location?: string; body?: string; href?: string }
+type ProductLink = { label: string; href?: string }
+
+function isScenarioSlug(value: string): value is ScenarioSlug {
+  return SCENARIO_SLUGS.includes(value as ScenarioSlug)
 }
 
-const scenarios: ScenarioData[] = [
-  {
-    slug: 'tourism',
-    label: '文旅度假',
-    title: '文旅度假营地',
-    titleGold: '整体解决方案',
-    subtitle: 'VESSEL 微宿度假营地解决方案',
-    intro:
-      '以自然景观为依托，VESSEL 装配建筑快速建设高品质度假营地，充分实现土地价值。建设周期比传统建筑缩短 80%，45 天即可完成交付，助力文旅投资者快速实现盈利。',
-    heroTagline: '45天交付 · 高ROI文旅度假营地解决方案',
-    specs: [
-      { label: '推荐产品', value: 'E7 Gen6 / V9 Gen6 / E6 Gen6' },
-      { label: '适用面积', value: '5,000㎡ 以上' },
-      { label: '交付周期', value: '45天' },
-      { label: '起订量', value: '5台起' },
-      { label: '自重', value: '7–9吨/台' },
-      { label: '适用气候', value: '-32℃ 至 55℃' },
-    ],
-    features: [
-      {
-        title: '快速盈利模型',
-        desc: '相较传统建筑，建设成本降低 40%，运营后 18–24 个月内可回收成本，ROI 显著优于传统酒店。',
-      },
-      {
-        title: '多场景适配',
-        desc: '适用于山地、湖滨、海边、草原、沙漠等各类自然环境，轻量化结构减少对生态的干扰。',
-      },
-      {
-        title: '可移动资产',
-        desc: '装配式结构支持整体拆卸迁移，场地租约到期或政策变化时，资产可原地保值或异地再用。',
-      },
-      {
-        title: '品牌差异化',
-        desc: '标志性外观设计自带网红属性，社交媒体传播力极强，有效降低营销获客成本。',
-      },
-    ],
-    process: [
-      { step: '01', title: '确认规格', desc: '根据项目地块、预算、目标客群确认产品型号与数量' },
-      { step: '02', title: '设计咨询', desc: '1v1 专业设计顾问，提供营地整体规划与效果图' },
-      { step: '03', title: '配置方案', desc: '根据气候条件、当地法规定制产品配置方案' },
-      { step: '04', title: '软装服务', desc: '提供标准软装套餐或定制软装设计服务' },
-      { step: '05', title: '送货安装', desc: '工厂直发，到场 2 小时完成安装，接通水电即可使用' },
-    ],
-    recommendedProducts: ['E7 Gen6', 'V9 Gen6', 'E6 Gen6', 'E3 Gen6'],
-    cases: [
-      { name: '巽寮湾·假日星球营地', location: '广东·惠州', desc: '35,000㎡ 滨海野奢营地，20台产品组合' },
-      { name: '麋鹿高山生活营地', location: '四川·轿顶山', desc: '15,000㎡ 高原营地，26台产品' },
-      { name: '托茂部落生态营地', location: '青海·祁连', desc: '草原民族文化主题营地' },
-    ],
-    accentColor: '#E36F2C',
-  },
-  {
-    slug: 'commercial',
-    label: '商业空间',
-    title: '商业空间',
-    titleGold: '模块化组合方案',
-    subtitle: 'VESSEL 微宿空间组合拓展方案',
-    intro:
-      '灵活的模块化装配设计为商业空间提供无限可能。垂直叠拼、平行叠拼、组合排列，快速部署，随时迁移，适应瞬息万变的商业环境，将空间部署变成竞争优势。',
-    heroTagline: '模块化组合 · 快速部署 · 可移动商业空间',
-    specs: [
-      { label: '垂直叠拼面积', value: '74㎡' },
-      { label: '平行叠拼面积', value: '76㎡' },
-      { label: '额定功率', value: '36/42kW' },
-      { label: '叠拼净重', value: '18–20吨' },
-      { label: '交付周期', value: '45天' },
-      { label: '定制类型', value: '不限' },
-    ],
-    features: [
-      {
-        title: '垂直叠拼设计',
-        desc: '两台产品上下叠拼，建筑面积达 74㎡，形成双层空间体验，打造更震撼的商业场景。',
-      },
-      {
-        title: '平行叠拼设计',
-        desc: '两台产品左右拼合，建筑面积达 76㎡，形成宽敞横向空间，适用于餐饮、展厅、会客中心。',
-      },
-      {
-        title: '灵活迁移',
-        desc: '整体结构可拆卸转移，适合租赁场地的快闪品牌和阶段性商业项目，有效控制固定资产风险。',
-      },
-      {
-        title: '无限定制',
-        desc: '支持按品牌调性定制外观涂装、内装、功能布局，可打造咖啡馆、展厅、酒吧、办公室等各类业态。',
-      },
-    ],
-    process: [
-      { step: '01', title: '确认规格', desc: '明确空间用途、所需面积与楼层需求' },
-      { step: '02', title: '设计咨询', desc: '品牌调性解读，输出专属空间设计方案' },
-      { step: '03', title: '配置方案', desc: '结合场地情况规划叠拼方式与水电布局' },
-      { step: '04', title: '软装服务', desc: '品牌化软装配套，家具、灯光、陈设一站搞定' },
-      { step: '05', title: '送货安装', desc: '专业吊装团队现场就位，快速开业' },
-    ],
-    recommendedProducts: ['V9 Gen6', 'E7 Gen6', 'E6 Gen6'],
-    cases: [
-      { name: '华为全屋智能体验馆', location: '广东·深圳', desc: '品牌体验空间，E7+V9 双产品组合' },
-      { name: '南海狮山文旅商业街', location: '广东·佛山', desc: '城郊商业文旅综合体' },
-      { name: '广交会品牌展示', location: '广东·广州', desc: '137届广交会展位部署' },
-    ],
-    accentColor: '#E36F2C',
-  },
-  {
-    slug: 'public',
-    label: '公共设施',
-    title: '公共设施',
-    titleGold: '快速部署方案',
-    subtitle: 'VESSEL 微宿公共设施解决方案',
-    intro:
-      '满足公共应急与民生服务需求，VESSEL 产品可快速部署于灾区、边远地区或临时活动场所。出厂即成品，现场接通水电即可投入使用，高效可靠，服务于各类公共事业场景。',
-    heroTagline: '快速响应 · 公共服务 · 可持续部署',
-    specs: [
-      { label: '推荐产品', value: 'E7 Gen6 / V9 Gen6' },
-      { label: '建筑面积', value: '19–38.8㎡' },
-      { label: '额定功率', value: '9kW / 24kW' },
-      { label: '外形长度', value: '5,600–11,400mm' },
-      { label: '总净重', value: '5–10吨' },
-      { label: '功能区', value: '玄关+卫生间+阅读区+书架' },
-    ],
-    features: [
-      {
-        title: '应急快速响应',
-        desc: '工厂直发，到场 2 小时完成安装，可快速为灾区居民或边远地区提供临时居所与公共服务设施。',
-      },
-      {
-        title: '可持续使用',
-        desc: '高强度结构 + 极端气候适应性，建筑寿命超 20 年，可长期稳定服务于公共设施需求。',
-      },
-      {
-        title: '多功能适配',
-        desc: '可定制为图书馆、诊疗站、便民服务中心、展览馆、临时办公室等多种公共服务场景。',
-      },
-      {
-        title: '低运维成本',
-        desc: '出厂即成品，无需砌墙施工，维护简单，配合太阳能储能系统可实现离网运行。',
-      },
-    ],
-    process: [
-      { step: '01', title: '需求评估', desc: '明确使用场景、服务对象和功能需求' },
-      { step: '02', title: '方案设计', desc: '针对公共服务需求进行专项功能布局设计' },
-      { step: '03', title: '配置规划', desc: '根据当地基础设施条件规划水电配套方案' },
-      { step: '04', title: '政府对接', desc: '协助对接建设许可、消防验收等合规流程' },
-      { step: '05', title: '快速交付', desc: '优先排期，确保快速到位，投入使用' },
-    ],
-    recommendedProducts: ['E7 Gen6', 'V9 Gen6', 'E6 Gen6', 'E3 Gen6'],
-    cases: [
-      { name: 'NESSEL 社会住房项目', location: '国际', desc: '为弱势群体构筑有尊严的临时家园' },
-      { name: '边境服务设施', location: '多地', desc: '多地边境及偏远地区公共服务配套' },
-      { name: '展会临时场馆', location: '全国', desc: '广交会等大型展会临时展览空间' },
-    ],
-    accentColor: '#E36F2C',
-  },
-];
-
-function asString(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() ? value.trim() : null;
+function asString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
 }
 
-function asStringArray(value: unknown): string[] | null {
-  if (!Array.isArray(value)) return null;
-  const items = value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0).map((item) => item.trim());
-  return items.length > 0 ? items : null;
-}
-
-function asSpecs(value: unknown): ScenarioData['specs'] | null {
-  if (!Array.isArray(value)) return null;
-  const items = value
+function asLabelValues(value: unknown): LabelValue[] {
+  if (!Array.isArray(value)) return []
+  return value
     .map((item) => {
-      if (!item || typeof item !== 'object') return null;
-      const record = item as Record<string, unknown>;
-      const label = asString(record.label);
-      const itemValue = asString(record.value);
-      return label && itemValue ? { label, value: itemValue } : null;
+      if (!item || typeof item !== 'object') return null
+      const record = item as Record<string, unknown>
+      const label = asString(record.label)
+      const itemValue = asString(record.value)
+      return label && itemValue ? { label, value: itemValue } : null
     })
-    .filter((item): item is { label: string; value: string } => Boolean(item));
-  return items.length > 0 ? items : null;
+    .filter((item): item is LabelValue => Boolean(item))
 }
 
-function asFeatures(value: unknown): ScenarioData['features'] | null {
-  if (!Array.isArray(value)) return null;
-  const items = value
-    .map((item) => {
-      if (!item || typeof item !== 'object') return null;
-      const record = item as Record<string, unknown>;
-      const title = asString(record.title);
-      const desc = asString(record.desc);
-      return title && desc ? { title, desc } : null;
-    })
-    .filter((item): item is { title: string; desc: string } => Boolean(item));
-  return items.length > 0 ? items : null;
-}
-
-function asProcess(value: unknown): ScenarioData['process'] | null {
-  if (!Array.isArray(value)) return null;
-  const items = value
-    .map((item, index) => {
-      if (!item || typeof item !== 'object') return null;
-      const record = item as Record<string, unknown>;
-      const title = asString(record.title);
-      const desc = asString(record.desc);
-      const step = asString(record.step) ?? String(index + 1).padStart(2, '0');
-      return title && desc ? { step, title, desc } : null;
-    })
-    .filter((item): item is { step: string; title: string; desc: string } => Boolean(item));
-  return items.length > 0 ? items : null;
-}
-
-function asCases(value: unknown): ScenarioData['cases'] | null {
-  if (!Array.isArray(value)) return null;
-  const items = value
-    .map((item) => {
-      if (!item || typeof item !== 'object') return null;
-      const record = item as Record<string, unknown>;
-      const name = asString(record.name);
-      const location = asString(record.location) ?? '';
-      const desc = asString(record.desc) ?? '';
-      return name ? { name, location, desc } : null;
-    })
-    .filter((item): item is { name: string; location: string; desc: string } => Boolean(item));
-  return items.length > 0 ? items : null;
-}
-
-function applyScenarioCms(scenario: ScenarioData, cms: B9ContentItem | null): ScenarioData {
-  if (!cms) return scenario;
-  const payload = cms.payload ?? {};
-  return {
-    ...scenario,
-    label: asString(payload.label) ?? scenario.label,
-    title: cms.title_zh || scenario.title,
-    titleGold: asString(payload.titleGold) ?? scenario.titleGold,
-    subtitle: cms.summary_zh || scenario.subtitle,
-    intro: cms.body_zh || cms.summary_zh || scenario.intro,
-    heroTagline: asString(payload.heroTagline) ?? cms.summary_zh ?? scenario.heroTagline,
-    specs: asSpecs(payload.specs) ?? scenario.specs,
-    features: asFeatures(payload.features) ?? scenario.features,
-    process: asProcess(payload.process) ?? scenario.process,
-    recommendedProducts: asStringArray(payload.recommendedProducts) ?? scenario.recommendedProducts,
-    cases: asCases(payload.cases) ?? scenario.cases,
-    accentColor: asString(payload.accentColor) ?? scenario.accentColor,
-  };
-}
-
-async function loadScenarioCms(slug: ScenarioSlug) {
-  try {
-    return await getPublicB9ContentItem('scenario', slug);
-  } catch (err) {
-    console.error(`[scenarios/${slug}] CMS load failed`, err);
-    return null;
+function asTitleBodies(value: unknown): TitleBody[] {
+  if (!Array.isArray(value)) return []
+  const rows: TitleBody[] = []
+  for (const item of value) {
+    if (!item || typeof item !== 'object') continue
+    const record = item as Record<string, unknown>
+    const title = asString(record.title)
+    const body = asString(record.body) || asString(record.desc)
+    const step = asString(record.step)
+    if (title || body) rows.push({ title, body, ...(step ? { step } : {}) })
   }
+  return rows
 }
 
-export async function generateStaticParams() {
-  return scenarios.map((s) => ({ slug: s.slug }));
+function asProductLinks(value: unknown): ProductLink[] {
+  if (!Array.isArray(value)) return []
+  return value
+    .map((item) => {
+      if (typeof item === 'string') {
+        const label = item.trim()
+        return label ? { label } : null
+      }
+      if (!item || typeof item !== 'object') return null
+      const record = item as Record<string, unknown>
+      const label = asString(record.label) || asString(record.name)
+      const href = asString(record.href)
+      return label ? { label, href: href || undefined } : null
+    })
+    .filter((item): item is ProductLink => Boolean(item))
+}
+
+function asRelatedCases(value: unknown): RelatedCase[] {
+  if (!Array.isArray(value)) return []
+  const rows: RelatedCase[] = []
+  for (const item of value) {
+    if (!item || typeof item !== 'object') continue
+    const record = item as Record<string, unknown>
+    const name = asString(record.name)
+    const location = asString(record.location)
+    const body = asString(record.body) || asString(record.desc)
+    const href = asString(record.href)
+    if (name) rows.push({ name, ...(location ? { location } : {}), ...(body ? { body } : {}), ...(href ? { href } : {}) })
+  }
+  return rows
+}
+
+function payloadText(row: B9ContentItem, key: string) {
+  return asString(row.payload?.[key])
+}
+
+function moduleByKey(modules: PageModuleRow[], key: string) {
+  return modules.find((module) => module.module_key === key && module.is_visible !== false) ?? null
+}
+
+function visibleModuleItems(module: PageModuleRow | null) {
+  if (!module) return []
+  return [...(module.items ?? [])]
+    .filter((item) => item.is_visible !== false)
+    .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0))
+}
+
+function moduleItemById(module: PageModuleRow | null, id: string) {
+  return visibleModuleItems(module).find((item) => item.id === id) ?? null
+}
+
+function itemText(item: PageModuleItem | null, field: 'label' | 'content', lang: 'zh' | 'en') {
+  if (!item) return ''
+  if (field === 'content') return lang === 'zh' ? item.content_zh || item.content_en || '' : item.content_en || item.content_zh || ''
+  return lang === 'zh' ? item.label_zh || item.label_en || '' : item.label_en || item.label_zh || ''
+}
+
+async function loadScenario(slug: ScenarioSlug) {
+  return getPublicB9ContentItem('scenario', slug).catch((err) => {
+    console.error(`[scenarios/${slug}] CMS load failed`, err)
+    return null
+  })
+}
+
+export function generateStaticParams() {
+  return SCENARIO_SLUGS.map((slug) => ({ slug }))
 }
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string }>
 }): Promise<Metadata> {
-  const { slug } = await params;
-  const baseScenario = scenarios.find((s) => s.slug === slug);
-  const scenario = baseScenario
-    ? applyScenarioCms(baseScenario, await loadScenarioCms(baseScenario.slug))
-    : null;
-  if (!scenario) return {};
+  const { slug } = await params
+  if (!isScenarioSlug(slug)) return {}
+  const scenario = await loadScenario(slug)
+  if (!scenario) return {}
+  const title = scenario.title_en || scenario.title_zh
+  const description = scenario.summary_en || scenario.summary_zh || scenario.body_en || scenario.body_zh || ''
+  if (!title || !description) return {}
   return buildPageMetadata({
-    title: `${scenario.label} | VESSEL 微宿®`,
-    description: scenario.intro,
+    title,
+    description,
     path: `/scenarios/${scenario.slug}`,
-  });
-}
-
-function Placeholder({ label, className }: { label: string; className?: string }) {
-  return (
-    <div className={`bg-[#E5DED4] flex items-center justify-center ${className}`}>
-      <span className="text-[#C4B9AB] text-xs tracking-wider">{label}</span>
-    </div>
-  );
+    image: scenario.cover_image_url,
+  })
 }
 
 export default async function ScenarioPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string }>
 }) {
-  const { slug } = await params;
-  const baseScenario = scenarios.find((s) => s.slug === slug);
-  if (!baseScenario) notFound();
-  const scenario = applyScenarioCms(baseScenario, await loadScenarioCms(baseScenario.slug));
+  const { slug } = await params
+  if (!isScenarioSlug(slug)) notFound()
 
-  const otherScenarios = scenarios.filter((s) => s.slug !== scenario.slug);
+  const [scenario, scenarios, pageModules] = await Promise.all([
+    loadScenario(slug),
+    listPublicB9ContentItems('scenario').catch((err) => {
+      console.error('[scenarios] related CMS load failed', err)
+      return []
+    }),
+    listPublishedPageModules('scenarios').catch((err) => {
+      console.error('[scenarios] page modules load failed', err)
+      return []
+    }),
+  ])
+  if (!scenario) notFound()
+
+  const payload = scenario.payload ?? {}
+  const label = payloadText(scenario, 'label') || scenario.title_zh || scenario.title_en
+  const title = scenario.title_zh || scenario.title_en
+  const titleGold = payloadText(scenario, 'titleGold')
+  const subtitle = payloadText(scenario, 'heroTagline') || scenario.summary_zh || scenario.summary_en || ''
+  const intro = scenario.body_zh || scenario.body_en || scenario.summary_zh || scenario.summary_en || ''
+  const accentColor = payloadText(scenario, 'accentColor') || '#E36F2C'
+  const specs = asLabelValues(payload.specs)
+  const features = asTitleBodies(payload.features)
+  const process = asTitleBodies(payload.process)
+  const products = asProductLinks(payload.recommendedProducts)
+  const cases = asRelatedCases(payload.cases)
+  const sections = [
+    { key: 'features', label: payloadText(scenario, 'featuresLabel'), title: payloadText(scenario, 'featuresTitle'), rows: features },
+    { key: 'process', label: payloadText(scenario, 'processLabel'), title: payloadText(scenario, 'processTitle'), rows: process },
+  ].filter((section) => section.rows.length > 0)
+  const relatedScenarios = scenarios.filter((item) => item.slug !== scenario.slug)
+  const inquiryTitleZh = payloadText(scenario, 'inquiryTitleZh')
+  const inquiryTitleEn = payloadText(scenario, 'inquiryTitleEn')
+  const inquiryDescriptionZh = payloadText(scenario, 'inquiryDescriptionZh')
+  const inquiryDescriptionEn = payloadText(scenario, 'inquiryDescriptionEn')
+  const contactLabel = scenario.cta_label_zh || scenario.cta_label_en || ''
+  const inquiryModule = moduleByKey(pageModules, 'inquiry-form')
+  const formTitleZh = inquiryTitleZh || inquiryModule?.title_zh || ''
+  const formTitleEn = inquiryTitleEn || inquiryModule?.title_en || ''
+  const formDescriptionZh = inquiryDescriptionZh || inquiryModule?.description_zh || ''
+  const formDescriptionEn = inquiryDescriptionEn || inquiryModule?.description_en || ''
+  const inquiryLabelsZh = {
+    eyebrow: itemText(moduleItemById(inquiryModule, 'form-eyebrow'), 'label', 'zh'),
+    name: itemText(moduleItemById(inquiryModule, 'form-name'), 'label', 'zh'),
+    email: itemText(moduleItemById(inquiryModule, 'form-email'), 'label', 'zh'),
+    phone: itemText(moduleItemById(inquiryModule, 'form-phone'), 'label', 'zh'),
+    country: itemText(moduleItemById(inquiryModule, 'form-country'), 'label', 'zh'),
+    company: itemText(moduleItemById(inquiryModule, 'form-company'), 'label', 'zh'),
+    quantity: itemText(moduleItemById(inquiryModule, 'form-quantity'), 'label', 'zh'),
+    message: itemText(moduleItemById(inquiryModule, 'form-message'), 'label', 'zh'),
+    submit: itemText(moduleItemById(inquiryModule, 'form-submit'), 'label', 'zh'),
+    submitting: itemText(moduleItemById(inquiryModule, 'form-submitting'), 'label', 'zh'),
+    success: itemText(moduleItemById(inquiryModule, 'form-success'), 'label', 'zh'),
+    error: itemText(moduleItemById(inquiryModule, 'form-error'), 'label', 'zh'),
+    sourcePrefix: itemText(moduleItemById(inquiryModule, 'form-source-prefix'), 'label', 'zh'),
+    companyPrefix: itemText(moduleItemById(inquiryModule, 'form-company-prefix'), 'label', 'zh'),
+  }
+  const inquiryLabelsEn = {
+    eyebrow: itemText(moduleItemById(inquiryModule, 'form-eyebrow'), 'label', 'en'),
+    name: itemText(moduleItemById(inquiryModule, 'form-name'), 'label', 'en'),
+    email: itemText(moduleItemById(inquiryModule, 'form-email'), 'label', 'en'),
+    phone: itemText(moduleItemById(inquiryModule, 'form-phone'), 'label', 'en'),
+    country: itemText(moduleItemById(inquiryModule, 'form-country'), 'label', 'en'),
+    company: itemText(moduleItemById(inquiryModule, 'form-company'), 'label', 'en'),
+    quantity: itemText(moduleItemById(inquiryModule, 'form-quantity'), 'label', 'en'),
+    message: itemText(moduleItemById(inquiryModule, 'form-message'), 'label', 'en'),
+    submit: itemText(moduleItemById(inquiryModule, 'form-submit'), 'label', 'en'),
+    submitting: itemText(moduleItemById(inquiryModule, 'form-submitting'), 'label', 'en'),
+    success: itemText(moduleItemById(inquiryModule, 'form-success'), 'label', 'en'),
+    error: itemText(moduleItemById(inquiryModule, 'form-error'), 'label', 'en'),
+    sourcePrefix: itemText(moduleItemById(inquiryModule, 'form-source-prefix'), 'label', 'en'),
+    companyPrefix: itemText(moduleItemById(inquiryModule, 'form-company-prefix'), 'label', 'en'),
+  }
 
   return (
     <main className="bg-[#FAF7F2] text-[#2C2A28]">
       <Navbar />
 
       <PageHero
-        label={scenario.label}
-        title={scenario.title}
-        titleGold={scenario.titleGold}
-        subtitle={scenario.heroTagline}
-        breadcrumb={[
-          { label: '首页', href: '/' },
-          { label: '应用场景', href: '/cases' },
-          { label: scenario.label },
-        ]}
+        label={label}
+        title={title}
+        titleGold={titleGold}
+        subtitle={subtitle}
       />
 
-      {/* ── Intro ── */}
-      <section className="border-b border-[#E5DED4] py-12 sm:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12">
+      {(intro || specs.length > 0 || scenario.cover_image_url) ? (
+        <section className="border-b border-[#E5DED4] py-12 sm:py-16">
+          <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-4 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:px-8">
             <div>
-              <p className="text-[#6B625B] text-base leading-loose mb-8">{scenario.intro}</p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                {scenario.specs.map((spec) => (
-                  <div key={spec.label} className="bg-white border border-[#E5DED4] p-3">
-                    <div className="text-[#8A7D74] text-[10px] tracking-wider mb-0.5">{spec.label}</div>
-                    <div
-                      className="text-sm font-bold tracking-wider"
-                      style={{ color: scenario.accentColor }}
-                    >
-                      {spec.value}
+              {intro ? <p className="mb-8 text-base leading-loose text-[#6B625B]">{intro}</p> : null}
+              {specs.length > 0 ? (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  {specs.map((spec) => (
+                    <div key={spec.label} className="border border-[#E5DED4] bg-white p-3">
+                      <div className="mb-0.5 text-[10px] tracking-wider text-[#8A7D74]">{spec.label}</div>
+                      <div className="text-sm font-bold tracking-wider" style={{ color: accentColor }}>
+                        {spec.value}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <Placeholder label={`${scenario.label} 应用场景图`} className="aspect-[4/3]" />
-          </div>
-        </div>
-      </section>
-
-      {/* ── Features ── */}
-      <section className="py-20 bg-[#F5F2ED] border-b border-[#E5DED4]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div
-              className="text-xs tracking-[0.3em] uppercase mb-3 font-medium"
-              style={{ color: scenario.accentColor }}
-            >
-              方案优势
-            </div>
-            <h2 className="text-3xl font-black text-[#2C2A28]">为什么选择 VESSEL？</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {scenario.features.map((f, i) => (
-              <div
-                key={i}
-                className="bg-white border border-[#E5DED4] hover:border-[#E36F2C]/20 transition-all p-7 group"
-              >
-                <div
-                  className="w-10 h-10 flex items-center justify-center font-black text-sm mb-4"
-                  style={{ background: `${scenario.accentColor}15`, color: scenario.accentColor }}
-                >
-                  {String(i + 1).padStart(2, '0')}
+                  ))}
                 </div>
-                <h3 className="text-[#2C2A28] font-bold mb-2 tracking-wider">{f.title}</h3>
-                <p className="text-[#6B625B] text-sm leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 5-Step Process ── */}
-      <section className="py-20 border-b border-[#E5DED4]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div
-              className="text-xs tracking-[0.3em] uppercase mb-3 font-medium"
-              style={{ color: scenario.accentColor }}
-            >
-              合作流程
+              ) : null}
             </div>
-            <h2 className="text-3xl font-black text-[#2C2A28]">五步实现您的项目</h2>
+            {scenario.cover_image_url ? (
+              <div className="relative aspect-[4/3] overflow-hidden bg-[#E5DED4]">
+                <ProtectedImage
+                  src={scenario.cover_image_url}
+                  alt={title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                />
+              </div>
+            ) : null}
           </div>
-          <div className="relative">
-            {/* Connecting line */}
-            <div
-              className="absolute top-8 left-8 right-8 h-px hidden lg:block"
-              style={{ background: `linear-gradient(90deg, ${scenario.accentColor}40, transparent)` }}
-            />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              {scenario.process.map((step) => (
-                <div key={step.step} className="relative bg-white border border-[#E5DED4] p-5 text-center group">
-                  <div
-                    className="w-14 h-14 rounded-full flex items-center justify-center font-black text-lg mx-auto mb-4 border-2 bg-[#FAF7F2]"
-                    style={{ borderColor: scenario.accentColor, color: scenario.accentColor }}
-                  >
-                    {step.step}
+        </section>
+      ) : null}
+
+      {sections.map((section) => (
+        <section key={section.key} className="border-b border-[#E5DED4] bg-[#F5F2ED] py-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            {(section.label || section.title) ? (
+              <div className="mb-10 text-center">
+                {section.label ? (
+                  <div className="mb-3 text-xs font-medium uppercase tracking-[0.3em]" style={{ color: accentColor }}>
+                    {section.label}
                   </div>
-                  <h3 className="text-[#2C2A28] font-bold text-sm mb-2 tracking-wider">{step.title}</h3>
-                  <p className="text-[#6B625B] text-xs leading-relaxed">{step.desc}</p>
+                ) : null}
+                {section.title ? <h2 className="text-3xl font-black text-[#2C2A28]">{section.title}</h2> : null}
+              </div>
+            ) : null}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {section.rows.map((item, index) => (
+                <div key={`${section.key}-${item.title}-${index}`} className="border border-[#E5DED4] bg-white p-6">
+                  <div
+                    className="mb-4 flex h-10 w-10 items-center justify-center text-sm font-black"
+                    style={{ background: `${accentColor}15`, color: accentColor }}
+                  >
+                    {item.step || String(index + 1).padStart(2, '0')}
+                  </div>
+                  {item.title ? <h3 className="mb-2 font-bold tracking-wider text-[#2C2A28]">{item.title}</h3> : null}
+                  {item.body ? <p className="text-sm leading-relaxed text-[#6B625B]">{item.body}</p> : null}
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ))}
 
-      {/* ── Recommended Products ── */}
-      <section className="py-16 bg-[#F5F2ED] border-b border-[#E5DED4]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <div
-              className="text-xs tracking-[0.3em] uppercase mb-3 font-medium"
-              style={{ color: scenario.accentColor }}
-            >
-              推荐产品
-            </div>
-            <h2 className="text-2xl font-black text-[#2C2A28]">适合{scenario.label}的产品</h2>
-          </div>
-          <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
-            {scenario.recommendedProducts.map((p) => (
+      {products.length > 0 ? (
+        <section className="border-b border-[#E5DED4] bg-[#F5F2ED] py-14">
+          <div className="mx-auto flex max-w-7xl flex-wrap justify-center gap-3 px-4 sm:gap-4 sm:px-6 lg:px-8">
+            {products.map((product) => product.href ? (
               <Link
-                key={p}
-                href={`/products/${p.split(' ')[0].toLowerCase()}`}
-                className="group flex min-h-11 w-full items-center justify-between gap-3 border border-[#E5DED4] px-5 py-3 text-sm tracking-wider text-[#6B625B] transition-all hover:border-[#E36F2C]/50 hover:text-[#E36F2C] sm:w-auto sm:justify-center sm:px-6"
+                key={product.label}
+                href={product.href}
+                className="inline-flex min-h-11 items-center justify-center border border-[#E5DED4] px-6 py-3 text-sm tracking-wider text-[#6B625B] transition-all hover:border-[#E36F2C]/50 hover:text-[#E36F2C]"
               >
-                <span>{p}</span>
-                <svg className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
+                {product.label}
               </Link>
-            ))}
-            <Link
-              href="/products"
-              className="flex min-h-11 w-full items-center justify-center gap-2 border border-[#E36F2C]/30 px-6 py-3 text-sm tracking-wider text-[#E36F2C] transition-all hover:bg-[#E36F2C]/5 sm:w-auto"
-            >
-              查看全部产品 →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Related Cases ── */}
-      <section className="py-20 border-b border-[#E5DED4]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <div
-              className="text-xs tracking-[0.3em] uppercase mb-3 font-medium"
-              style={{ color: scenario.accentColor }}
-            >
-              典型案例
-            </div>
-            <h2 className="text-2xl font-black text-[#2C2A28]">相关项目案例</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {scenario.cases.map((c) => (
-              <div key={c.name} className="bg-white border border-[#E5DED4] hover:border-[#E36F2C]/25 transition-all overflow-hidden group">
-                <Placeholder label={c.name} className="h-44" />
-                <div className="p-5">
-                  <div className="text-[#8A7D74] text-xs mb-1 tracking-wider">📍 {c.location}</div>
-                  <div className="text-[#2C2A28] font-bold text-sm mb-2 tracking-wider">{c.name}</div>
-                  <div className="text-[#6B625B] text-xs leading-relaxed">{c.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-8 text-center">
-            <Link
-              href="/cases"
-              className="inline-flex items-center gap-2 border border-[#E5DED4] text-[#6B625B] text-sm px-6 py-3 hover:border-[#E36F2C]/40 hover:text-[#E36F2C] transition-colors tracking-wider"
-            >
-              查看全部案例 →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Other Scenarios ── */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-xl font-black text-[#6B625B]">更多应用场景</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {otherScenarios.map((s) => (
-              <Link
-                key={s.slug}
-                href={`/scenarios/${s.slug}`}
-                className="group flex items-center gap-4 p-6 bg-white border border-[#E5DED4] hover:border-[#E36F2C]/30 transition-all"
+            ) : (
+              <span
+                key={product.label}
+                className="inline-flex min-h-11 items-center justify-center border border-[#E5DED4] px-6 py-3 text-sm tracking-wider text-[#6B625B]"
               >
-                <div
-                  className="w-12 h-12 flex items-center justify-center shrink-0 text-lg font-black"
-                  style={{ background: `${s.accentColor}15`, color: s.accentColor }}
-                >
-                  {s.label[0]}
-                </div>
-                <div>
-                  <div className="text-[#2C2A28] font-bold tracking-wider group-hover:text-[#E36F2C] transition-colors">
-                    {s.title} {s.titleGold}
-                  </div>
-                  <div className="text-[#8A7D74] text-xs mt-0.5 tracking-wider">{s.heroTagline}</div>
-                </div>
-                <svg className="w-5 h-5 text-[#C4B9AB] group-hover:text-[#E36F2C] transition-colors ml-auto shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-                </svg>
+                {product.label}
+              </span>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {cases.length > 0 ? (
+        <section className="border-b border-[#E5DED4] py-16">
+          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-5 px-4 sm:px-6 md:grid-cols-3 lg:px-8">
+            {cases.map((item) => (
+              <article key={item.name} className="border border-[#E5DED4] bg-white p-5">
+                {item.href ? (
+                  <Link href={item.href} className="font-bold tracking-wider text-[#2C2A28] hover:text-[#E36F2C]">
+                    {item.name}
+                  </Link>
+                ) : (
+                  <h2 className="font-bold tracking-wider text-[#2C2A28]">{item.name}</h2>
+                )}
+                {item.location ? <p className="mt-1 text-xs tracking-wider text-[#8A7D74]">{item.location}</p> : null}
+                {item.body ? <p className="mt-3 text-xs leading-relaxed text-[#6B625B]">{item.body}</p> : null}
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {relatedScenarios.length > 0 ? (
+        <section className="py-14">
+          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-5 px-4 sm:px-6 md:grid-cols-2 lg:px-8">
+            {relatedScenarios.map((item) => (
+              <Link
+                key={item.slug}
+                href={`/scenarios/${item.slug}`}
+                className="group border border-[#E5DED4] bg-white p-6 transition-all hover:border-[#E36F2C]/30"
+              >
+                <h2 className="font-bold tracking-wider text-[#2C2A28] transition-colors group-hover:text-[#E36F2C]">
+                  {item.title_zh || item.title_en}
+                </h2>
+                {(item.summary_zh || item.summary_en) ? (
+                  <p className="mt-2 text-xs leading-relaxed text-[#8A7D74]">{item.summary_zh || item.summary_en}</p>
+                ) : null}
               </Link>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
-      {/* ── CTA ── */}
-      <div className="border-t border-[#E5DED4] bg-[#F5F2ED] py-16">
-        <div className="max-w-3xl mx-auto px-4">
-          <ConversionInquiryForm
-            source={`scenario:${scenario.slug}:inquiry_form`}
-            inquiryType="Scenario Inquiry"
-            model={scenario.label}
-            titleEn="Plan this scenario"
-            titleZh="提交场景方案咨询"
-            descriptionEn="Share your destination, scenario, quantity, and timeline so the team can recommend a suitable solution."
-            descriptionZh="请填写项目地点、场景、数量和时间计划，团队会为您推荐适配方案。"
-          />
-        </div>
-        <div className="max-w-3xl mx-auto px-4 pt-10 text-center">
-          <div
-            className="text-xs tracking-[0.3em] uppercase mb-4 font-medium"
-            style={{ color: scenario.accentColor }}
+      {(formTitleZh && formTitleEn) ? (
+        <section className="border-t border-[#E5DED4] bg-[#F5F2ED] py-14">
+          <div className="mx-auto max-w-3xl px-4">
+            <ConversionInquiryForm
+              source={`scenario:${scenario.slug}:inquiry_form`}
+              inquiryType="Scenario Inquiry"
+              model={title}
+              titleEn={formTitleEn}
+              titleZh={formTitleZh}
+              descriptionEn={formDescriptionEn}
+              descriptionZh={formDescriptionZh}
+              labelsZh={inquiryLabelsZh}
+              labelsEn={inquiryLabelsEn}
+            />
+          </div>
+        </section>
+      ) : null}
+
+      {(contactLabel && scenario.cta_href) ? (
+        <section className="border-t border-[#E5DED4] bg-[#F5F2ED] px-4 py-10 text-center">
+          <Link
+            href={scenario.cta_href}
+            className="inline-flex min-h-11 items-center justify-center px-8 py-3 text-sm font-bold tracking-wider text-white transition-colors"
+            style={{ background: accentColor }}
           >
-            开始合作
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-[#2C2A28] mb-4">
-            有{scenario.label}项目需求？
-          </h2>
-          <p className="text-[#6B625B] text-sm mb-8 tracking-wider">
-            专业顾问团队提供从选址规划到交付运营的全程服务，45天即可实现项目落地
-          </p>
-          <div className="flex flex-col justify-center gap-4 sm:flex-row sm:flex-wrap">
-            <Link
-              href={buildContactHref(`scenario:${scenario.slug}:contact_cta`)}
-              className="inline-flex min-h-11 items-center justify-center px-8 py-3 text-sm font-bold tracking-wider transition-colors"
-              style={{ background: scenario.accentColor, color: '#FFFFFF' }}
-            >
-              立即咨询方案
-            </Link>
-            <a
-              href="tel:4008090303"
-              className="inline-flex min-h-11 items-center justify-center border border-[#C4B9AB] px-8 py-3 text-sm tracking-wider text-[#2C2A28] transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
-            >
-              400-8090-303
-            </a>
-          </div>
-        </div>
-      </div>
+            {contactLabel}
+          </Link>
+        </section>
+      ) : null}
 
       <Footer />
     </main>
-  );
+  )
 }

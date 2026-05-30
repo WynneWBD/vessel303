@@ -1,12 +1,11 @@
 import { unstable_cache } from 'next/cache'
 import { pool } from '@/lib/db'
-import {
-  catalogProducts,
-  type CatalogProduct,
-  type CatalogCommercialTerms,
-  type CatalogDetailModule,
-  type CatalogSpecItem,
-  type ProductSeriesCode,
+import type {
+  CatalogProduct,
+  CatalogCommercialTerms,
+  CatalogDetailModule,
+  CatalogSpecItem,
+  ProductSeriesCode,
 } from '@/lib/products'
 
 export type CatalogProductStatus = 'draft' | 'published'
@@ -477,6 +476,7 @@ async function seedCatalogProductsIfEmpty() {
   )
   if (parseInt(countRes.rows[0]?.count ?? '0', 10) > 0) return
 
+  const { catalogProducts } = await import('@/lib/products')
   for (const [index, product] of catalogProducts.entries()) {
     await pool.query(
       `INSERT INTO product_catalog (
@@ -770,9 +770,11 @@ export async function ensureProductCatalogSchema() {
         END IF;
       END $$;
     `)
-    await seedProductCategoriesIfEmpty()
-    await seedProductAttributeTemplatesIfEmpty()
-    await seedCatalogProductsIfEmpty()
+    if (process.env.VESSEL_ENABLE_LEGACY_CONTENT_SEED === '1') {
+      await seedProductCategoriesIfEmpty()
+      await seedProductAttributeTemplatesIfEmpty()
+      await seedCatalogProductsIfEmpty()
+    }
   })()
 
   return schemaReady
@@ -974,6 +976,29 @@ const getPublicCatalogProductBySlugCached = unstable_cache(
 
 export async function getPublicCatalogProductBySlug(slug: string): Promise<CatalogProduct | null> {
   return getPublicCatalogProductBySlugCached(slug.trim())
+}
+
+async function getPublicCatalogProductByDetailSlugUncached(detailSlug: string): Promise<CatalogProduct | null> {
+  const { rows } = await pool.query(
+    `SELECT ${COLUMNS} FROM product_catalog
+     WHERE status = 'published'
+       AND deleted_at IS NULL
+       AND detail_slug = $1
+     ORDER BY sort_order ASC, updated_at DESC
+     LIMIT 1`,
+    [detailSlug],
+  )
+  return rows[0] ? rowToCatalogProduct(rows[0]) : null
+}
+
+const getPublicCatalogProductByDetailSlugCached = unstable_cache(
+  getPublicCatalogProductByDetailSlugUncached,
+  ['product-public-detail-slug'],
+  { revalidate: PRODUCT_PUBLIC_CACHE_REVALIDATE_SECONDS, tags: [PRODUCT_PUBLIC_CACHE_TAG] },
+)
+
+export async function getPublicCatalogProductByDetailSlug(detailSlug: string): Promise<CatalogProduct | null> {
+  return getPublicCatalogProductByDetailSlugCached(detailSlug.trim())
 }
 
 async function listPublicRelatedCatalogProductsUncached(

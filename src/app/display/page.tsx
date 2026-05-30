@@ -1,11 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState, type TouchEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useT } from '@/contexts/LanguageContext';
-import { i18n } from '@/lib/i18n';
-import { SITE_CONTACT_HREF } from '@/lib/site-links';
 
 type DisplaySlide = {
   model: string;
@@ -17,180 +14,93 @@ type DisplaySlide = {
   features: string[];
   price: string;
   image: string;
-  href?: string;
+  detailHref?: string;
+  detailLabel?: string;
+  consultHref?: string;
+  consultLabel?: string;
 };
 
-type DisplayContentRow = {
-  id: number;
-  model?: string;
-  gen?: string;
-  tag?: string;
-  size?: string;
-  capacity?: string;
-  tagline?: string;
-  features?: string[];
-  price?: string;
-  image?: string;
-  title_zh: string;
-  title_en: string;
-  summary_zh: string | null;
-  summary_en: string | null;
-  body_zh: string | null;
-  body_en: string | null;
-  cover_image_url: string | null;
-  payload: Record<string, unknown>;
+type DisplayContentRow = DisplaySlide & {
+  title_zh?: string;
+  title_en?: string;
+  summary_zh?: string | null;
+  summary_en?: string | null;
+  body_zh?: string | null;
+  body_en?: string | null;
+  cover_image_url?: string | null;
+  payload?: Record<string, unknown>;
 };
-
-const STATIC_SLIDES: DisplaySlide[] = [
-  {
-    model: 'E7',
-    gen: 'Gen6',
-    tag: '旗舰款',
-    size: '38.8㎡',
-    capacity: '2–4 人',
-    tagline: '全能型旅居新旗舰，经典范式的自我超越',
-    features: ['流线型轮廓 · 飞翼式门檐', '日式三分离卫浴', 'VIIE Gen6 全屋智控'],
-    price: '¥ 488,000 起',
-    image: '/images/e7-gen6-optimized.webp',
-    href: '/products/e7-gen6-flagship',
-  },
-  {
-    model: 'E6',
-    gen: 'Gen6',
-    tag: '明星款',
-    size: '29.6㎡',
-    capacity: '2–4 人',
-    tagline: '传承经典，焕新演绎',
-    features: ['180° 全景环绕窗', '第六代锁扣防水屋顶', '一车双运 · 降低物流成本'],
-    price: '¥ 388,000 起',
-    image: '/images/e6-gen6.jpg',
-    href: '/products/e6-gen6-standard',
-  },
-  {
-    model: 'E3',
-    gen: 'Gen6',
-    tag: 'mini 款',
-    size: '19㎡',
-    capacity: '1–2 人',
-    tagline: '够宽敞，也够满足',
-    features: ['游艇式流线立面', '180° 弧形景观窗', '智能电动遮帘'],
-    price: '¥ 228,000 起',
-    image: '/images/e6-gen6.jpg',
-    href: '/products/e3-gen6-standard',
-  },
-  {
-    model: 'V9',
-    gen: 'Gen6',
-    tag: '家居款',
-    size: '38㎡',
-    capacity: '2–4 人',
-    tagline: '遵循「钻石切割」的设计理念',
-    features: ['17.0㎡ 超大采光面积', '岛台一体厨餐空间', 'AI 语音智能控制'],
-    price: '¥ 458,000 起',
-    image: '/images/v9-gen6.jpg',
-    href: '/products/v9-gen6-standard',
-  },
-  {
-    model: 'V5',
-    gen: 'Gen5',
-    tag: '全景款',
-    size: '24.8㎡',
-    capacity: '1–2 人',
-    tagline: '以全景视野连接自然，让旅居更纯粹',
-    features: ['超广角全景玻璃', '精品内嵌吧台', '6 吨轻量化设计'],
-    price: '¥ 288,000 起',
-    image: '/images/v9-gen6.jpg',
-    href: '/products/v5',
-  },
-  {
-    model: 'S5',
-    gen: 'Gen5',
-    tag: '天光款',
-    size: '29.6㎡',
-    capacity: '2–4 人',
-    tagline: '天光倾泻，云景入怀',
-    features: ['顶部天窗采光系统', '多面大窗全方位视野', '可定制室内布局'],
-    price: '¥ 328,000 起',
-    image: '/images/e6-gen6.jpg',
-    href: '/products/s5',
-  },
-];
 
 const INTERVAL = 5000;
 
-function asText(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() ? value.trim() : null;
+function asText(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
 }
 
-function asTextArray(value: unknown): string[] | null {
-  if (!Array.isArray(value)) return null;
-  const items = value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0).map((item) => item.trim());
-  return items.length > 0 ? items : null;
+function asTextArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    .map((item) => item.trim());
 }
 
-function inferDisplayHref(model: string | null | undefined): string | undefined {
-  const normalized = model?.toLowerCase().replace(/\s+/g, '') ?? '';
-  if (normalized.startsWith('e7')) return '/products/e7-gen6-flagship';
-  if (normalized.startsWith('e6')) return '/products/e6-gen6-standard';
-  if (normalized.startsWith('e3')) return '/products/e3-gen6-standard';
-  if (normalized.startsWith('v9')) return '/products/v9-gen6-standard';
-  if (normalized.startsWith('v5')) return '/products/v5';
-  if (normalized.startsWith('s5')) return '/products/s5';
-  return undefined;
+function textLines(value: string | null | undefined) {
+  return (value ?? '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
-function mapDisplayRow(row: DisplayContentRow): DisplaySlide {
+function mapDisplayRow(row: DisplayContentRow): DisplaySlide | null {
   const payload = row.payload ?? {};
-  const features = row.features
-    ?? asTextArray(payload.features)
-    ?? row.body_zh?.split('\n').map((line) => line.trim()).filter(Boolean)
-    ?? row.body_en?.split('\n').map((line) => line.trim()).filter(Boolean)
-    ?? [];
+  const model = row.model || asText(payload.model) || row.title_en || row.title_zh || '';
+  const image = row.image || row.cover_image_url || '';
+  if (!model || !image) return null;
 
   return {
-    model: row.model ?? asText(payload.model) ?? row.title_en ?? row.title_zh,
-    gen: row.gen ?? asText(payload.gen) ?? row.summary_en ?? 'CMS',
-    tag: row.tag ?? row.summary_zh ?? asText(payload.tag) ?? '精选展示',
-    size: row.size ?? asText(payload.size) ?? '规格待补',
-    capacity: row.capacity ?? asText(payload.capacity) ?? 'Capacity on request',
-    tagline: row.tagline ?? row.body_en ?? row.body_zh ?? row.title_en ?? row.title_zh,
-    features: features.length > 0 ? features.slice(0, 3) : ['CMS managed showcase', 'Product details on request'],
-    price: row.price ?? asText(payload.price) ?? 'Inquire for pricing',
-    image: row.image || row.cover_image_url || '/images/e7-gen6-optimized.webp',
-    href: asText(payload.href)
-      ?? asText(payload.product_href)
-      ?? asText(payload.detail_href)
-      ?? inferDisplayHref(row.model ?? asText(payload.model) ?? row.title_en ?? row.title_zh),
+    model,
+    gen: row.gen || asText(payload.gen) || row.summary_en || '',
+    tag: row.tag || asText(payload.tag) || row.summary_zh || '',
+    size: row.size || asText(payload.size),
+    capacity: row.capacity || asText(payload.capacity),
+    tagline: row.tagline || row.body_en || row.body_zh || '',
+    features: row.features?.length
+      ? row.features
+      : asTextArray(payload.features).concat(textLines(row.body_zh || row.body_en)).slice(0, 3),
+    price: row.price || asText(payload.price),
+    image,
+    detailHref: row.detailHref || asText(payload.href) || asText(payload.product_href) || asText(payload.detail_href) || undefined,
+    detailLabel: row.detailLabel || asText(payload.detail_label),
+    consultHref: row.consultHref || asText(payload.consult_href) || undefined,
+    consultLabel: row.consultLabel || asText(payload.consult_label),
   };
 }
 
 export default function DisplayPage() {
-  const t = useT();
   const [current, setCurrent] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [managedSlides, setManagedSlides] = useState<DisplaySlide[]>([]);
-  const slides = managedSlides.length > 0 ? managedSlides : STATIC_SLIDES;
-  const slideCount = slides.length;
-
-  // Touch tracking
+  const [slides, setSlides] = useState<DisplaySlide[]>([]);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
+  const slideCount = slides.length;
 
   const goTo = useCallback((index: number) => {
-    if (transitioning) return;
+    if (transitioning || slideCount === 0) return;
     setTransitioning(true);
     setTimeout(() => {
       setCurrent(index);
       setTransitioning(false);
     }, 400);
-  }, [transitioning]);
+  }, [slideCount, transitioning]);
 
   const prev = useCallback(() => {
+    if (slideCount === 0) return;
     goTo((current - 1 + slideCount) % slideCount);
   }, [current, goTo, slideCount]);
 
   const next = useCallback(() => {
+    if (slideCount === 0) return;
     goTo((current + 1) % slideCount);
   }, [current, goTo, slideCount]);
 
@@ -198,80 +108,77 @@ export default function DisplayPage() {
     let cancelled = false;
     fetch('/api/site-content/display-slides')
       .then((res) => (res.ok ? res.json() : { data: [] }))
-      .then((data) => {
-        if (!cancelled && Array.isArray(data.data)) {
-          const mapped = data.data.map(mapDisplayRow).filter(Boolean);
-          setManagedSlides(mapped);
-          setCurrent((currentIndex) => currentIndex % Math.max(mapped.length || STATIC_SLIDES.length, 1));
-        }
+      .then((data: { data?: DisplayContentRow[] }) => {
+        if (cancelled) return;
+        const mapped = Array.isArray(data.data)
+          ? data.data.map(mapDisplayRow).filter((item): item is DisplaySlide => Boolean(item))
+          : [];
+        setSlides(mapped);
+        setCurrent((currentIndex) => currentIndex % Math.max(mapped.length, 1));
       })
       .catch(() => {
-        if (!cancelled) setManagedSlides([]);
+        if (!cancelled) setSlides([]);
       });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  // Auto-advance
   useEffect(() => {
-    if (paused) return;
+    if (paused || slideCount <= 1) return;
     const id = setInterval(() => {
-      setCurrent((c) => (c + 1) % slideCount);
+      setCurrent((index) => (index + 1) % slideCount);
     }, INTERVAL);
     return () => clearInterval(id);
   }, [paused, slideCount]);
 
-  // Keyboard navigation
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft')  { setPaused(true); prev(); }
-      if (e.key === 'ArrowRight') { setPaused(true); next(); }
-      if (e.key === ' ')           setPaused((p) => !p);
+    const handler = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft') {
+        setPaused(true);
+        prev();
+      }
+      if (event.key === 'ArrowRight') {
+        setPaused(true);
+        next();
+      }
+      if (event.key === ' ') setPaused((value) => !value);
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [prev, next]);
+  }, [next, prev]);
 
-  // Touch handlers
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
+  const onTouchStart = (event: TouchEvent) => {
+    touchStartX.current = event.touches[0].clientX;
+    touchStartY.current = event.touches[0].clientY;
   };
 
-  const onTouchEnd = (e: React.TouchEvent) => {
+  const onTouchEnd = (event: TouchEvent) => {
     if (touchStartX.current === null || touchStartY.current === null) return;
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    const dy = e.changedTouches[0].clientY - touchStartY.current;
-    // Only handle horizontal swipes (horizontal movement > vertical, and at least 40px)
+    const dx = event.changedTouches[0].clientX - touchStartX.current;
+    const dy = event.changedTouches[0].clientY - touchStartY.current;
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
       setPaused(true);
-      if (dx < 0) {
-        next();
-      } else {
-        prev();
-      }
+      if (dx < 0) next();
+      else prev();
     }
     touchStartX.current = null;
     touchStartY.current = null;
   };
 
   const slide = slides[current];
-  const idx   = String(current + 1).padStart(2, '0');
+  if (!slide) return <div className="min-h-screen bg-[#241F1B]" />;
+
+  const idx = String(current + 1).padStart(2, '0');
   const total = String(slideCount).padStart(2, '0');
 
   return (
     <div
-      className="relative overflow-hidden bg-[#241F1B] select-none"
-      style={{ width: '100vw', height: '100vh' }}
+      className="relative h-screen w-screen select-none overflow-hidden bg-[#241F1B]"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      {/* Background image */}
-      <div
-        className="absolute inset-0 transition-opacity duration-700"
-        style={{ opacity: transitioning ? 0 : 1 }}
-      >
+      <div className="absolute inset-0 transition-opacity duration-700" style={{ opacity: transitioning ? 0 : 1 }}>
         <Image
           key={slide.image + slide.model}
           src={slide.image}
@@ -281,259 +188,104 @@ export default function DisplayPage() {
           priority
           sizes="100vw"
         />
-        {/* Overlay gradients */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#241F1B]/88 via-[#241F1B]/55 to-[#241F1B]/20" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#241F1B]/75 via-transparent to-[#241F1B]/35" />
       </div>
 
-      {/* Top gold line */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-[#E36F2C] via-[#E36F2C]/40 to-transparent z-10" />
+      <div className="absolute inset-0 z-10 flex flex-col justify-center px-6 pb-24 transition-opacity duration-500 sm:px-12 lg:px-24" style={{ opacity: transitioning ? 0 : 1 }}>
+        {(slide.gen || slide.tag) ? (
+          <div className="mb-5 flex items-center gap-3">
+            {slide.gen ? (
+              <span className="border border-[#E36F2C]/50 px-3 py-1 text-xs font-bold uppercase tracking-[0.32em] text-[#E36F2C]">
+                {slide.gen}
+              </span>
+            ) : null}
+            {slide.tag ? (
+              <span className="text-xs uppercase tracking-[0.24em] text-white/45">
+                {slide.tag}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
 
-      {/* ── Main content ── */}
-      <div
-        className="absolute inset-0 z-10 flex flex-col justify-center transition-opacity duration-500"
-        style={{
-          opacity: transitioning ? 0 : 1,
-          padding: 'clamp(1.5rem, 5vw, 6rem)',
-          paddingBottom: 'clamp(5rem, 12vh, 10rem)',
-        }}
-      >
-        {/* Series badge */}
-        <div className="flex items-center gap-3 mb-[clamp(0.5rem,1.5vh,1.5rem)]">
-          <span
-            className="text-[#E36F2C] font-bold uppercase border border-[#E36F2C]/50 tracking-[0.4em]"
-            style={{ fontSize: 'clamp(0.55rem, 1vw, 0.8rem)', padding: 'clamp(2px,0.4vh,5px) clamp(6px,0.8vw,12px)' }}
-          >
-            {slide.gen}
-          </span>
-          <span
-            className="text-white/40 uppercase tracking-[0.3em]"
-            style={{ fontSize: 'clamp(0.55rem, 1vw, 0.8rem)' }}
-          >
-            {slide.tag}
-          </span>
-        </div>
-
-        {/* Model + size */}
-        <div className="flex items-end gap-[clamp(0.75rem,2vw,2rem)] mb-[clamp(0.5rem,1.5vh,1.5rem)]">
-          <h1
-            className="font-black leading-none tracking-tight text-white"
-            style={{
-              fontSize: 'clamp(3.5rem, 14vw, 12rem)',
-              textShadow: '0 0 80px rgba(201,168,76,0.25)',
-            }}
-          >
+        <div className="mb-5 flex flex-wrap items-end gap-4">
+          <h1 className="text-6xl font-black leading-none tracking-tight text-white sm:text-8xl lg:text-[12rem]">
             {slide.model}
           </h1>
-          <div style={{ marginBottom: 'clamp(0.5rem, 1.5vw, 1.5rem)' }}>
-            <div
-              className="text-[#E36F2C] font-black tracking-wider"
-              style={{ fontSize: 'clamp(1.2rem, 3.5vw, 3rem)' }}
-            >
-              {slide.size}
+          {(slide.size || slide.capacity) ? (
+            <div className="mb-2">
+              {slide.size ? <div className="text-2xl font-black tracking-wider text-[#E36F2C] sm:text-4xl">{slide.size}</div> : null}
+              {slide.capacity ? <div className="mt-1 text-xs tracking-[0.24em] text-white/45 sm:text-sm">{slide.capacity}</div> : null}
             </div>
-            <div
-              className="text-white/40 tracking-[0.3em] mt-1"
-              style={{ fontSize: 'clamp(0.6rem, 1.2vw, 0.875rem)' }}
-            >
-              {slide.capacity}
-            </div>
+          ) : null}
+        </div>
+
+        {slide.tagline ? (
+          <p className="mb-8 max-w-2xl text-base font-light leading-8 tracking-[0.08em] text-white/72 sm:text-xl">
+            {slide.tagline}
+          </p>
+        ) : null}
+
+        {slide.features.length > 0 ? (
+          <div className="flex max-w-5xl flex-wrap gap-3">
+            {slide.features.map((feature) => (
+              <span key={feature} className="border-l-4 border-[#E36F2C] pl-3 text-xs font-medium tracking-wider text-white sm:text-sm">
+                {feature}
+              </span>
+            ))}
           </div>
-        </div>
-
-        {/* Tagline */}
-        <p
-          className="text-white/70 font-light tracking-[0.12em] max-w-[min(42rem,70vw)]"
-          style={{
-            fontSize: 'clamp(0.85rem, 2.2vw, 1.75rem)',
-            marginBottom: 'clamp(1rem, 3vh, 2.5rem)',
-          }}
-        >
-          {slide.tagline}
-        </p>
-
-        {/* Features */}
-        <div className="flex flex-wrap gap-y-3" style={{ gap: 'clamp(0.5rem, 1.5vw, 0px)' }}>
-          {slide.features.map((f, i) => (
-            <div key={i} className="flex items-center">
-              <div className="flex items-center" style={{ gap: 'clamp(0.4rem, 0.8vw, 0.75rem)', paddingRight: 'clamp(0.75rem, 2vw, 2rem)' }}>
-                <div
-                  className="bg-[#E36F2C] shrink-0"
-                  style={{ width: 'clamp(2px, 0.25vw, 4px)', height: 'clamp(1.2rem, 2.5vh, 2rem)' }}
-                />
-                <span
-                  className="text-white font-medium tracking-wider whitespace-nowrap"
-                  style={{ fontSize: 'clamp(0.7rem, 1.6vw, 1.2rem)' }}
-                >
-                  {f}
-                </span>
-              </div>
-              {i < slide.features.length - 1 && (
-                <div
-                  className="bg-white/15 shrink-0"
-                  style={{ width: '1px', height: 'clamp(1rem, 2vh, 1.5rem)', marginRight: 'clamp(0.75rem, 2vw, 2rem)' }}
-                />
-              )}
-            </div>
-          ))}
-        </div>
+        ) : null}
       </div>
 
-      {/* ── Bottom bar ── */}
-      <div
-        className="absolute bottom-0 left-0 right-0 z-20 flex items-end justify-between"
-        style={{
-          padding: `0 clamp(1.5rem, 5vw, 6rem) clamp(1.2rem, 3.5vh, 3rem)`,
-        }}
-      >
-        {/* Left: dots + counter */}
-        <div className="flex flex-col" style={{ gap: 'clamp(0.4rem, 1vh, 1rem)' }}>
-          <div className="flex items-center" style={{ gap: 'clamp(0.4rem, 0.8vw, 0.75rem)' }}>
-            {slides.map((_, i) => (
+      <div className="absolute bottom-0 left-0 right-0 z-20 flex items-end justify-between px-6 pb-7 sm:px-12 lg:px-24">
+        <div>
+          <div className="flex items-center gap-3">
+            {slides.map((item, index) => (
               <button
-                key={i}
-                onClick={() => { setPaused(true); goTo(i); }}
-                className={`transition-all duration-300 ${
-                  i === current
-                    ? 'bg-[#E36F2C]'
-                    : 'bg-white/30 hover:bg-white/50'
-                }`}
-                style={{
-                  width:  i === current ? 'clamp(1.2rem, 2.5vw, 2rem)' : 'clamp(0.6rem, 1.2vw, 1rem)',
-                  height: i === current ? 'clamp(2px, 0.3vh, 4px)' : '1px',
+                key={`${item.model}-${index}`}
+                type="button"
+                onClick={() => {
+                  setPaused(true);
+                  goTo(index);
                 }}
+                className={index === current ? 'h-1 w-8 bg-[#E36F2C]' : 'h-px w-4 bg-white/35'}
               />
             ))}
           </div>
-          <div className="flex items-baseline" style={{ gap: 'clamp(0.25rem, 0.5vw, 0.5rem)' }}>
-            <span
-              className="text-[#E36F2C] font-black tracking-wider tabular-nums"
-              style={{ fontSize: 'clamp(1.4rem, 4vw, 3rem)' }}
-            >
-              {idx}
-            </span>
-            <span
-              className="text-white/25"
-              style={{ fontSize: 'clamp(0.7rem, 1.5vw, 1.25rem)' }}
-            >
-              /
-            </span>
-            <span
-              className="text-white/25 tracking-wider tabular-nums"
-              style={{ fontSize: 'clamp(0.7rem, 1.5vw, 1.25rem)' }}
-            >
-              {total}
-            </span>
-            {paused && (
-              <span
-                className="text-white/25 uppercase tracking-[0.2em]"
-                style={{ fontSize: 'clamp(0.5rem, 0.9vw, 0.7rem)', marginLeft: 'clamp(0.5rem, 1vw, 1rem)' }}
-              >
-                {t(i18n.display.paused)}
-              </span>
-            )}
+          <div className="mt-4 flex items-baseline gap-2">
+            <span className="text-4xl font-black tracking-wider text-[#E36F2C]">{idx}</span>
+            <span className="text-white/25">/</span>
+            <span className="text-white/25">{total}</span>
           </div>
         </div>
 
-        {/* Right: price + logo */}
-        <div
-          className="flex flex-col items-end transition-opacity duration-500"
-          style={{
-            opacity: transitioning ? 0 : 1,
-            gap: 'clamp(0.4rem, 1vh, 0.75rem)',
-          }}
-        >
-          <div className="text-right">
-            <div
-              className="text-white/30 uppercase tracking-[0.3em]"
-              style={{ fontSize: 'clamp(0.5rem, 0.9vw, 0.7rem)', marginBottom: '0.15rem' }}
-            >
-              {t(i18n.display.refPrice)}
-            </div>
-            <div
-              className="text-[#E36F2C] font-black tracking-wider"
-              style={{ fontSize: 'clamp(1rem, 2.8vw, 2rem)' }}
-            >
-              {slide.price}
-            </div>
-          </div>
+        <div className="flex flex-col items-end gap-3">
+          {slide.price ? <div className="text-2xl font-black tracking-wider text-[#E36F2C]">{slide.price}</div> : null}
           <div className="flex flex-wrap justify-end gap-2">
-            {slide.href && (
-              <Link
-                href={slide.href}
-                className="inline-flex min-h-10 items-center border border-white/30 bg-white/12 px-4 text-xs font-bold uppercase tracking-[0.18em] text-white backdrop-blur transition hover:border-[#E36F2C] hover:bg-[#E36F2C]"
-              >
-                Details
+            {slide.detailHref && slide.detailLabel ? (
+              <Link href={slide.detailHref} className="inline-flex min-h-10 items-center border border-white/30 bg-white/12 px-4 text-xs font-bold uppercase tracking-[0.18em] text-white backdrop-blur transition hover:border-[#E36F2C] hover:bg-[#E36F2C]">
+                {slide.detailLabel}
               </Link>
-            )}
-            <Link
-              href={SITE_CONTACT_HREF}
-              className="inline-flex min-h-10 items-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.18em] text-white transition hover:bg-[#C95E22]"
-            >
-              Consult
-            </Link>
-          </div>
-          <div
-            className="bg-white/10 self-center"
-            style={{ width: '1px', height: 'clamp(1rem, 2vh, 2rem)' }}
-          />
-          <div className="text-right">
-            <div
-              className="text-white font-black uppercase leading-none tracking-[0.25em]"
-              style={{ fontSize: 'clamp(0.75rem, 1.8vw, 1.4rem)' }}
-            >
-              VESSEL
-            </div>
-            <div
-              className="text-white/40 tracking-[0.3em] mt-0.5"
-              style={{ fontSize: 'clamp(0.5rem, 0.9vw, 0.7rem)' }}
-            >
-              微宿®
-            </div>
+            ) : null}
+            {slide.consultHref && slide.consultLabel ? (
+              <Link href={slide.consultHref} className="inline-flex min-h-10 items-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.18em] text-white transition hover:bg-[#C95E22]">
+                {slide.consultLabel}
+              </Link>
+            ) : null}
           </div>
         </div>
       </div>
 
-      {/* Side nav arrows */}
-      <button
-        onClick={() => { setPaused(true); prev(); }}
-        className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center text-white/20 hover:text-[#E36F2C] hover:bg-white/5 transition-all duration-200"
-        style={{ width: 'clamp(2.5rem, 5vw, 4rem)', height: 'clamp(2.5rem, 5vw, 4rem)' }}
-        aria-label="prev"
-      >
-        <svg style={{ width: 'clamp(1rem, 2vw, 1.5rem)', height: 'clamp(1rem, 2vw, 1.5rem)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-      <button
-        onClick={() => { setPaused(true); next(); }}
-        className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center text-white/20 hover:text-[#E36F2C] hover:bg-white/5 transition-all duration-200"
-        style={{ width: 'clamp(2.5rem, 5vw, 4rem)', height: 'clamp(2.5rem, 5vw, 4rem)' }}
-        aria-label="next"
-      >
-        <svg style={{ width: 'clamp(1rem, 2vw, 1.5rem)', height: 'clamp(1rem, 2vw, 1.5rem)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-
-      {/* Progress bar */}
-      {!paused && (
-        <div className="absolute bottom-0 left-0 right-0 z-30" style={{ height: '2px', background: 'rgba(255,255,255,0.05)' }}>
-          <div
-            key={current}
-            style={{
-              height: '100%',
-              background: 'rgba(201,168,76,0.6)',
-              animation: `dp-progress ${INTERVAL}ms linear`,
-            }}
-          />
+      {!paused && slideCount > 1 ? (
+        <div className="absolute bottom-0 left-0 right-0 z-30 h-0.5 bg-white/5">
+          <div key={current} className="h-full bg-[#C9A84C]/70" style={{ animation: `dp-progress ${INTERVAL}ms linear` }} />
         </div>
-      )}
+      ) : null}
 
       <style>{`
         @keyframes dp-progress {
           from { width: 0% }
-          to   { width: 100% }
+          to { width: 100% }
         }
       `}</style>
     </div>

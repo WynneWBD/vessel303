@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import AuthButton from './AuthButton';
 import LanguageToggle from './LanguageToggle';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   fetchPublicPageModules,
+  itemById,
   itemLabel,
   itemValue,
   moduleMap,
@@ -22,22 +22,27 @@ interface NavLink {
 }
 
 export default function Navbar() {
-  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [siteModules, setSiteModules] = useState<PublicPageModule[] | null>(null);
   const { lang } = useLanguage();
 
   const navbarModule = moduleMap(siteModules).get('navbar') ?? null;
+  const uiLabelsModule = moduleMap(siteModules).get('ui-labels') ?? null;
   const navbarItems = visibleItems(navbarModule);
+  const logoItem = itemById(navbarModule, 'logo');
+  const logoSrc = logoItem?.image_url || '';
+  const logoHref = logoItem?.href || '';
+  const logoAlt = itemLabel(logoItem, lang);
   const navLinks: NavLink[] = navbarItems
     .filter((item) => itemValue(item, lang) === 'primary')
-    .map((item) => ({ label: itemLabel(item, lang), href: item.href || '/' }))
+    .map((item) => ({ label: itemLabel(item, lang), href: item.href || '' }))
     .filter((item) => item.label && item.href);
   const actionLinks = navbarItems
     .filter((item) => itemValue(item, lang) === 'action')
-    .map((item) => ({ label: itemLabel(item, lang), href: item.href || '/contact' }))
+    .map((item) => ({ label: itemLabel(item, lang), href: item.href || '' }))
     .filter((item) => item.label && item.href);
+  const menuToggleLabel = itemLabel(itemById(uiLabelsModule, 'menu-toggle'), lang);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -55,17 +60,6 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
-  useEffect(() => {
-    const idle = window.requestIdleCallback ?? ((callback) => window.setTimeout(callback, 800));
-    const cancelIdle = window.cancelIdleCallback ?? window.clearTimeout;
-    const handle = idle(() => {
-      ['/', '/products', '/cases', '/about', '/news'].forEach((href) => {
-        router.prefetch(href);
-      });
-    });
-    return () => cancelIdle(handle);
-  }, [router]);
-
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -77,19 +71,20 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 xl:h-[72px]">
 
-          {/* Logo */}
-          <Link href="/" className="flex items-center shrink-0">
-            <Image
-              src="/images/vessel-logo.png"
-              alt="VESSEL 微宿"
-              height={40}
-              width={160}
-              style={{ height: '40px', width: 'auto', objectFit: 'contain' }}
-              className="h-7 xl:h-[40px]"
-              priority
-              unoptimized
-            />
-          </Link>
+          {logoSrc && logoHref ? (
+            <Link href={logoHref} className="flex shrink-0 items-center">
+              <Image
+                src={logoSrc}
+                alt={logoAlt}
+                height={40}
+                width={160}
+                style={{ height: '40px', width: 'auto', objectFit: 'contain' }}
+                className="h-7 xl:h-[40px]"
+                priority
+                unoptimized
+              />
+            </Link>
+          ) : null}
 
           {/* Desktop Nav */}
           <div className="hidden xl:flex items-center gap-0.5 mx-4">
@@ -127,7 +122,7 @@ export default function Navbar() {
           <button
             className="xl:hidden inline-flex min-h-11 min-w-11 items-center justify-center text-white/80 hover:text-white"
             onClick={() => setIsOpen(!isOpen)}
-            aria-label="Toggle menu"
+            aria-label={menuToggleLabel || undefined}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isOpen ? (

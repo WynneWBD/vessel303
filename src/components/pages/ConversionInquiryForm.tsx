@@ -14,6 +14,23 @@ type FormState = {
   message: string
 }
 
+export type FormLabels = {
+  eyebrow: string
+  name: string
+  email: string
+  phone: string
+  country: string
+  company: string
+  quantity: string
+  message: string
+  submit: string
+  submitting: string
+  success: string
+  error: string
+  sourcePrefix: string
+  companyPrefix: string
+}
+
 type Props = {
   source: string
   inquiryType: string
@@ -23,6 +40,9 @@ type Props = {
   descriptionEn?: string
   descriptionZh?: string
   compact?: boolean
+  labels?: FormLabels
+  labelsZh?: FormLabels
+  labelsEn?: FormLabels
 }
 
 const EMPTY_FORM: FormState = {
@@ -35,11 +55,31 @@ const EMPTY_FORM: FormState = {
   message: '',
 }
 
-function buildMessage(form: FormState, source: string) {
+function hasFormLabels(labels: FormLabels | undefined): labels is FormLabels {
+  if (!labels) return false
+  return [
+    labels.eyebrow,
+    labels.name,
+    labels.email,
+    labels.phone,
+    labels.country,
+    labels.company,
+    labels.quantity,
+    labels.message,
+    labels.submit,
+    labels.submitting,
+    labels.success,
+    labels.error,
+    labels.sourcePrefix,
+    labels.companyPrefix,
+  ].every((value) => value.trim())
+}
+
+function buildMessage(form: FormState, source: string, labels: FormLabels) {
   return [
     form.message.trim(),
-    `Source: ${source}`,
-    form.company.trim() ? `Company: ${form.company.trim()}` : '',
+    `${labels.sourcePrefix}: ${source}`,
+    form.company.trim() ? `${labels.companyPrefix}: ${form.company.trim()}` : '',
   ]
     .filter(Boolean)
     .join('\n')
@@ -54,6 +94,9 @@ export default function ConversionInquiryForm({
   descriptionEn,
   descriptionZh,
   compact = false,
+  labels,
+  labelsZh,
+  labelsEn,
 }: Props) {
   const { lang } = useLanguage()
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
@@ -63,6 +106,8 @@ export default function ConversionInquiryForm({
 
   const title = lang === 'zh' ? titleZh : titleEn
   const description = lang === 'zh' ? descriptionZh : descriptionEn
+  const activeLabels = lang === 'zh' ? labelsZh ?? labels : labelsEn ?? labels
+  if (!hasFormLabels(activeLabels) || !title || !inquiryType.trim()) return null
 
   const update = (key: keyof FormState, value: string) => {
     setForm((current) => ({ ...current, [key]: value }))
@@ -92,20 +137,19 @@ export default function ConversionInquiryForm({
           quantity: form.quantity.trim(),
           model,
           projectType: inquiryType,
-          remarks: buildMessage(form, source),
+          remarks: buildMessage(form, source, activeLabels),
           source,
         }),
       })
       if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string }
-        throw new Error(data.error || 'Submit failed')
+        throw new Error(activeLabels.error)
       }
       trackFormSubmitSuccess(source, inquiryType)
       setForm(EMPTY_FORM)
       setStatus('success')
     } catch (err) {
       setStatus('error')
-      setError(err instanceof Error ? err.message : 'Submit failed')
+      setError(err instanceof Error ? err.message : activeLabels.error)
     } finally {
       setSubmitting(false)
     }
@@ -117,70 +161,22 @@ export default function ConversionInquiryForm({
       className={`border border-[#DADDE1] bg-white ${compact ? 'p-5' : 'p-6 sm:p-7'}`}
     >
       <div className="mb-5">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#147C94]">
-          {lang === 'zh' ? '项目咨询' : 'Inquiry'}
-        </p>
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#147C94]">{activeLabels.eyebrow}</p>
         <h2 className="mt-2 text-2xl font-black tracking-normal text-[#1F2A31]">{title}</h2>
         {description ? <p className="mt-2 text-sm leading-6 text-[#5C6670]">{description}</p> : null}
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label className="text-sm font-semibold text-[#1F2A31]">
-          {lang === 'zh' ? '姓名' : 'Name'} *
-          <input
-            required
-            value={form.name}
-            onChange={(event) => update('name', event.target.value)}
-            className="mt-1 w-full border border-[#DADDE1] px-3 py-2 text-sm font-normal outline-none focus:border-[#147C94]"
-          />
-        </label>
-        <label className="text-sm font-semibold text-[#1F2A31]">
-          Email *
-          <input
-            required
-            type="email"
-            value={form.email}
-            onChange={(event) => update('email', event.target.value)}
-            className="mt-1 w-full border border-[#DADDE1] px-3 py-2 text-sm font-normal outline-none focus:border-[#147C94]"
-          />
-        </label>
-        <label className="text-sm font-semibold text-[#1F2A31]">
-          Phone / WhatsApp *
-          <input
-            required
-            value={form.phone}
-            onChange={(event) => update('phone', event.target.value)}
-            className="mt-1 w-full border border-[#DADDE1] px-3 py-2 text-sm font-normal outline-none focus:border-[#147C94]"
-          />
-        </label>
-        <label className="text-sm font-semibold text-[#1F2A31]">
-          {lang === 'zh' ? '国家/地区' : 'Country / Region'}
-          <input
-            value={form.country}
-            onChange={(event) => update('country', event.target.value)}
-            className="mt-1 w-full border border-[#DADDE1] px-3 py-2 text-sm font-normal outline-none focus:border-[#147C94]"
-          />
-        </label>
-        <label className="text-sm font-semibold text-[#1F2A31]">
-          {lang === 'zh' ? '公司' : 'Company'}
-          <input
-            value={form.company}
-            onChange={(event) => update('company', event.target.value)}
-            className="mt-1 w-full border border-[#DADDE1] px-3 py-2 text-sm font-normal outline-none focus:border-[#147C94]"
-          />
-        </label>
-        <label className="text-sm font-semibold text-[#1F2A31]">
-          {lang === 'zh' ? '数量' : 'Quantity'}
-          <input
-            value={form.quantity}
-            onChange={(event) => update('quantity', event.target.value)}
-            className="mt-1 w-full border border-[#DADDE1] px-3 py-2 text-sm font-normal outline-none focus:border-[#147C94]"
-          />
-        </label>
+        <Field required label={activeLabels.name} value={form.name} onChange={(value) => update('name', value)} />
+        <Field required label={activeLabels.email} type="email" value={form.email} onChange={(value) => update('email', value)} />
+        <Field required label={activeLabels.phone} value={form.phone} onChange={(value) => update('phone', value)} />
+        <Field label={activeLabels.country} value={form.country} onChange={(value) => update('country', value)} />
+        <Field label={activeLabels.company} value={form.company} onChange={(value) => update('company', value)} />
+        <Field label={activeLabels.quantity} value={form.quantity} onChange={(value) => update('quantity', value)} />
       </div>
 
       <label className="mt-3 block text-sm font-semibold text-[#1F2A31]">
-        {lang === 'zh' ? '需求说明' : 'Message'}
+        {activeLabels.message}
         <textarea
           rows={4}
           value={form.message}
@@ -194,14 +190,39 @@ export default function ConversionInquiryForm({
         disabled={submitting}
         className="mt-4 inline-flex bg-[#E36F2C] px-5 py-3 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#C65F22] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {submitting ? (lang === 'zh' ? '提交中...' : 'Submitting...') : lang === 'zh' ? '提交咨询' : 'Submit Inquiry'}
+        {submitting ? activeLabels.submitting : activeLabels.submit}
       </button>
-      {status === 'success' ? (
-        <p className="mt-3 text-sm font-semibold text-emerald-700">
-          {lang === 'zh' ? '已提交，我们会尽快联系您。' : 'Submitted. Our team will contact you soon.'}
-        </p>
-      ) : null}
+      {status === 'success' ? <p className="mt-3 text-sm font-semibold text-emerald-700">{activeLabels.success}</p> : null}
       {status === 'error' ? <p className="mt-3 text-sm font-semibold text-red-700">{error}</p> : null}
     </form>
+  )
+}
+
+function Field({
+  label,
+  type = 'text',
+  required = false,
+  value,
+  onChange,
+}: {
+  label: string
+  type?: string
+  required?: boolean
+  value: string
+  onChange: (value: string) => void
+}) {
+  if (!label) return null
+
+  return (
+    <label className="text-sm font-semibold text-[#1F2A31]">
+      {label} {required ? '*' : null}
+      <input
+        required={required}
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 w-full border border-[#DADDE1] px-3 py-2 text-sm font-normal outline-none focus:border-[#147C94]"
+      />
+    </label>
   )
 }

@@ -1,17 +1,12 @@
 import type { Metadata } from 'next'
 import { listPublishedNews } from '@/lib/news-db'
 import NewsListView from '@/components/NewsListView'
-import { buildPageMetadata } from '@/lib/seo'
 import { getUploadVariantsByUrls, mapUploadImageUrl } from '@/lib/upload-image-variants'
+import { listPublishedPageModules } from '@/lib/page-modules-db'
 
 export const revalidate = 300
 
-export const metadata: Metadata = buildPageMetadata({
-  title: 'News & Events | VESSEL®',
-  description:
-    'Read VESSEL® brand news, product updates, project highlights, exhibition notes and smart prefab architecture industry insights.',
-  path: '/news',
-})
+export const metadata: Metadata = {}
 
 export default async function NewsPage() {
   const { rows } = await listPublishedNews({ limit: 20, offset: 0 }).catch(() => ({
@@ -26,6 +21,10 @@ export default async function NewsPage() {
     ...item,
     cover_image_url: mapUploadImageUrl(item.cover_image_url, imageVariants, 'card') || item.cover_image_url,
   }))
+  const pageModules = await listPublishedPageModules('news').catch((err) => {
+    console.error('[news] page modules unavailable', err)
+    return []
+  })
 
-  return <NewsListView rows={displayRows} />
+  return <NewsListView rows={displayRows} pageModules={pageModules} />
 }

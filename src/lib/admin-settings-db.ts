@@ -116,6 +116,20 @@ async function getSiteSettingsUncached(): Promise<SiteSettings> {
   return normalizeSettings(stored)
 }
 
+export async function getStoredSiteSettings(): Promise<Partial<SiteSettings>> {
+  await ensureAdminSettingsSchema()
+  const res = await pool.query<{ key: SiteSettingKey; value: unknown }>(
+    `SELECT key, value FROM site_settings`,
+  )
+  const stored: Partial<SiteSettings> = {}
+  for (const row of res.rows) {
+    if (SETTING_KEYS.includes(row.key)) {
+      stored[row.key] = coerceSettingValue(row.key, row.value) as never
+    }
+  }
+  return stored
+}
+
 const getSiteSettingsCached = unstable_cache(
   getSiteSettingsUncached,
   ['site-settings-public'],

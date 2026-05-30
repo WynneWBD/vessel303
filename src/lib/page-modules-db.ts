@@ -14,11 +14,16 @@ export const PAGE_MODULE_PAGE_KEYS = [
   'home',
   'about',
   'products',
+  'cases',
   'faq',
   'media-kit',
   'scenarios',
   'innovation',
   'display',
+  'news',
+  'contact',
+  'auth',
+  'account',
   'site',
 ] as const
 
@@ -32,11 +37,16 @@ export function pageModulePublicPaths(pageKey: string): string[] {
   if (pageKey === 'home') return ['/']
   if (pageKey === 'about') return ['/about']
   if (pageKey === 'products') return ['/products']
+  if (pageKey === 'cases') return ['/cases']
   if (pageKey === 'faq') return ['/faq']
   if (pageKey === 'media-kit') return ['/media-kit']
   if (pageKey === 'scenarios') return ['/scenarios/tourism', '/scenarios/commercial', '/scenarios/public']
   if (pageKey === 'innovation') return ['/innovation/viie', '/innovation/vipc', '/innovation/vols']
   if (pageKey === 'display') return ['/display']
+  if (pageKey === 'news') return ['/news']
+  if (pageKey === 'contact') return ['/contact']
+  if (pageKey === 'auth') return ['/login', '/signup']
+  if (pageKey === 'account') return ['/account']
   if (pageKey === 'site') return ['/', '/products', '/cases', '/about', '/faq', '/news', '/media-kit']
   return []
 }
@@ -696,6 +706,20 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
         is_visible: true,
         sort_order: 90,
       },
+      { id: 'form-eyebrow', label_zh: '项目咨询', label_en: 'Project Inquiry', is_visible: true, sort_order: 100 },
+      { id: 'form-name', label_zh: '姓名', label_en: 'Name', is_visible: true, sort_order: 110 },
+      { id: 'form-email', label_zh: '邮箱', label_en: 'Email', is_visible: true, sort_order: 120 },
+      { id: 'form-phone', label_zh: '电话 / WhatsApp', label_en: 'Phone / WhatsApp', is_visible: true, sort_order: 130 },
+      { id: 'form-country', label_zh: '国家 / 城市', label_en: 'Country / City', is_visible: true, sort_order: 140 },
+      { id: 'form-company', label_zh: '公司 / 机构', label_en: 'Company / Organization', is_visible: true, sort_order: 150 },
+      { id: 'form-quantity', label_zh: '预计数量', label_en: 'Expected Quantity', is_visible: true, sort_order: 160 },
+      { id: 'form-message', label_zh: '问题或项目需求', label_en: 'Question or Project Requirements', is_visible: true, sort_order: 170 },
+      { id: 'form-submit', label_zh: '提交咨询', label_en: 'Submit Inquiry', is_visible: true, sort_order: 180 },
+      { id: 'form-submitting', label_zh: '提交中', label_en: 'Submitting', is_visible: true, sort_order: 190 },
+      { id: 'form-success', label_zh: '已收到，我们会按该页面来源跟进。', label_en: 'Received. The team will follow up from this page source.', is_visible: true, sort_order: 200 },
+      { id: 'form-error', label_zh: '提交失败，请稍后再试。', label_en: 'Submission failed. Please try again.', is_visible: true, sort_order: 210 },
+      { id: 'form-source-prefix', label_zh: '来源', label_en: 'Source', is_visible: true, sort_order: 220 },
+      { id: 'form-company-prefix', label_zh: '公司', label_en: 'Company', is_visible: true, sort_order: 230 },
     ],
     is_visible: true,
     sort_order: 10,
@@ -725,9 +749,133 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
       { id: 'details-cta', label_zh: '查看详情', label_en: 'Details', is_visible: true, sort_order: 110 },
       { id: 'inquiry-cta', label_zh: '询盘', label_en: 'Inquiry', is_visible: true, sort_order: 120 },
       { id: 'price-empty', label_zh: '询价', label_en: 'Inquire for pricing', is_visible: true, sort_order: 130 },
+      { id: 'image-label-prefix', label_zh: '产品图片', label_en: 'Product image', is_visible: true, sort_order: 140 },
     ],
     is_visible: true,
     sort_order: 40,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'products:inquiry-form',
+    page_key: 'products',
+    module_key: 'inquiry-form',
+    module_type: 'fixed-content',
+    title_zh: '产品询盘',
+    title_en: 'Product Inquiry',
+    description_zh: '填写项目需求，后台会按产品详情页来源生成线索。',
+    description_en: 'Share project requirements and the backend will track this lead from the product detail page.',
+    items: [
+      { id: 'inquiry-type', label_zh: '产品询盘', label_en: 'Product Inquiry', is_visible: true, sort_order: 10 },
+      { id: 'form-eyebrow', label_zh: '产品咨询', label_en: 'Product Consultation', is_visible: true, sort_order: 20 },
+      { id: 'form-name', label_zh: '姓名', label_en: 'Name', is_visible: true, sort_order: 30 },
+      { id: 'form-email', label_zh: '邮箱', label_en: 'Email', is_visible: true, sort_order: 40 },
+      { id: 'form-phone', label_zh: '电话 / WhatsApp', label_en: 'Phone / WhatsApp', is_visible: true, sort_order: 50 },
+      { id: 'form-country', label_zh: '国家 / 城市', label_en: 'Country / City', is_visible: true, sort_order: 60 },
+      { id: 'form-company', label_zh: '公司 / 机构', label_en: 'Company / Organization', is_visible: true, sort_order: 70 },
+      { id: 'form-quantity', label_zh: '预计数量', label_en: 'Expected Quantity', is_visible: true, sort_order: 80 },
+      { id: 'form-message', label_zh: '产品需求', label_en: 'Product Requirements', is_visible: true, sort_order: 90 },
+      { id: 'form-submit', label_zh: '提交产品询盘', label_en: 'Submit Product Inquiry', is_visible: true, sort_order: 100 },
+      { id: 'form-submitting', label_zh: '提交中', label_en: 'Submitting', is_visible: true, sort_order: 110 },
+      { id: 'form-success', label_zh: '已收到产品需求，我们会按该产品来源跟进。', label_en: 'Received. The team will follow up from this product source.', is_visible: true, sort_order: 120 },
+      { id: 'form-error', label_zh: '提交失败，请稍后再试。', label_en: 'Submission failed. Please try again.', is_visible: true, sort_order: 130 },
+      { id: 'form-source-prefix', label_zh: '来源', label_en: 'Source', is_visible: true, sort_order: 140 },
+      { id: 'form-company-prefix', label_zh: '公司', label_en: 'Company', is_visible: true, sort_order: 150 },
+    ],
+    is_visible: true,
+    sort_order: 45,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'cases:inquiry-form',
+    page_key: 'cases',
+    module_key: 'inquiry-form',
+    module_type: 'fixed-content',
+    title_zh: '案例咨询',
+    title_en: 'Case Inquiry',
+    description_zh: '填写项目背景，后台会按案例详情页来源生成线索。',
+    description_en: 'Share project context and the backend will track this lead from the case detail page.',
+    items: [
+      { id: 'inquiry-type', label_zh: '案例咨询', label_en: 'Project Case Inquiry', is_visible: true, sort_order: 10 },
+      { id: 'form-eyebrow', label_zh: '案例咨询', label_en: 'Case Consultation', is_visible: true, sort_order: 20 },
+      { id: 'form-name', label_zh: '姓名', label_en: 'Name', is_visible: true, sort_order: 30 },
+      { id: 'form-email', label_zh: '邮箱', label_en: 'Email', is_visible: true, sort_order: 40 },
+      { id: 'form-phone', label_zh: '电话 / WhatsApp', label_en: 'Phone / WhatsApp', is_visible: true, sort_order: 50 },
+      { id: 'form-country', label_zh: '项目国家 / 城市', label_en: 'Project Country / City', is_visible: true, sort_order: 60 },
+      { id: 'form-company', label_zh: '公司 / 机构', label_en: 'Company / Organization', is_visible: true, sort_order: 70 },
+      { id: 'form-quantity', label_zh: '预计舱体数量', label_en: 'Expected Units', is_visible: true, sort_order: 80 },
+      { id: 'form-message', label_zh: '项目需求', label_en: 'Project Requirements', is_visible: true, sort_order: 90 },
+      { id: 'form-submit', label_zh: '提交案例咨询', label_en: 'Submit Case Inquiry', is_visible: true, sort_order: 100 },
+      { id: 'form-submitting', label_zh: '提交中', label_en: 'Submitting', is_visible: true, sort_order: 110 },
+      { id: 'form-success', label_zh: '已收到案例咨询，我们会按该案例来源跟进。', label_en: 'Received. The team will follow up from this case source.', is_visible: true, sort_order: 120 },
+      { id: 'form-error', label_zh: '提交失败，请稍后再试。', label_en: 'Submission failed. Please try again.', is_visible: true, sort_order: 130 },
+      { id: 'form-source-prefix', label_zh: '来源', label_en: 'Source', is_visible: true, sort_order: 140 },
+      { id: 'form-company-prefix', label_zh: '公司', label_en: 'Company', is_visible: true, sort_order: 150 },
+    ],
+    is_visible: true,
+    sort_order: 20,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'scenarios:inquiry-form',
+    page_key: 'scenarios',
+    module_key: 'inquiry-form',
+    module_type: 'fixed-content',
+    title_zh: '场景方案咨询',
+    title_en: 'Scenario Inquiry',
+    description_zh: '填写场景需求，后台会按场景页来源生成线索。',
+    description_en: 'Share scenario requirements and the backend will track this lead from the scenario page.',
+    items: [
+      { id: 'form-eyebrow', label_zh: '场景咨询', label_en: 'Scenario Consultation', is_visible: true, sort_order: 10 },
+      { id: 'form-name', label_zh: '姓名', label_en: 'Name', is_visible: true, sort_order: 20 },
+      { id: 'form-email', label_zh: '邮箱', label_en: 'Email', is_visible: true, sort_order: 30 },
+      { id: 'form-phone', label_zh: '电话 / WhatsApp', label_en: 'Phone / WhatsApp', is_visible: true, sort_order: 40 },
+      { id: 'form-country', label_zh: '项目国家 / 城市', label_en: 'Project Country / City', is_visible: true, sort_order: 50 },
+      { id: 'form-company', label_zh: '公司 / 机构', label_en: 'Company / Organization', is_visible: true, sort_order: 60 },
+      { id: 'form-quantity', label_zh: '预计数量', label_en: 'Expected Quantity', is_visible: true, sort_order: 70 },
+      { id: 'form-message', label_zh: '场景需求', label_en: 'Scenario Requirements', is_visible: true, sort_order: 80 },
+      { id: 'form-submit', label_zh: '提交场景咨询', label_en: 'Submit Scenario Inquiry', is_visible: true, sort_order: 90 },
+      { id: 'form-submitting', label_zh: '提交中', label_en: 'Submitting', is_visible: true, sort_order: 100 },
+      { id: 'form-success', label_zh: '已收到场景需求，我们会按该场景来源跟进。', label_en: 'Received. The team will follow up from this scenario source.', is_visible: true, sort_order: 110 },
+      { id: 'form-error', label_zh: '提交失败，请稍后再试。', label_en: 'Submission failed. Please try again.', is_visible: true, sort_order: 120 },
+      { id: 'form-source-prefix', label_zh: '来源', label_en: 'Source', is_visible: true, sort_order: 130 },
+      { id: 'form-company-prefix', label_zh: '公司', label_en: 'Company', is_visible: true, sort_order: 140 },
+    ],
+    is_visible: true,
+    sort_order: 20,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'innovation:inquiry-form',
+    page_key: 'innovation',
+    module_key: 'inquiry-form',
+    module_type: 'fixed-content',
+    title_zh: '技术专题咨询',
+    title_en: 'Innovation Inquiry',
+    description_zh: '填写技术或项目需求，后台会按技术专题来源生成线索。',
+    description_en: 'Share technical or project requirements and the backend will track this lead from the innovation page.',
+    items: [
+      { id: 'inquiry-type', label_zh: '技术专题咨询', label_en: 'Innovation Inquiry', is_visible: true, sort_order: 10 },
+      { id: 'form-eyebrow', label_zh: '技术咨询', label_en: 'Technology Consultation', is_visible: true, sort_order: 20 },
+      { id: 'form-name', label_zh: '姓名', label_en: 'Name', is_visible: true, sort_order: 30 },
+      { id: 'form-email', label_zh: '邮箱', label_en: 'Email', is_visible: true, sort_order: 40 },
+      { id: 'form-phone', label_zh: '电话 / WhatsApp', label_en: 'Phone / WhatsApp', is_visible: true, sort_order: 50 },
+      { id: 'form-country', label_zh: '国家 / 城市', label_en: 'Country / City', is_visible: true, sort_order: 60 },
+      { id: 'form-company', label_zh: '公司 / 机构', label_en: 'Company / Organization', is_visible: true, sort_order: 70 },
+      { id: 'form-quantity', label_zh: '预计数量', label_en: 'Expected Quantity', is_visible: true, sort_order: 80 },
+      { id: 'form-message', label_zh: '技术或项目需求', label_en: 'Technology or Project Requirements', is_visible: true, sort_order: 90 },
+      { id: 'form-submit', label_zh: '提交技术咨询', label_en: 'Submit Innovation Inquiry', is_visible: true, sort_order: 100 },
+      { id: 'form-submitting', label_zh: '提交中', label_en: 'Submitting', is_visible: true, sort_order: 110 },
+      { id: 'form-success', label_zh: '已收到咨询，我们会按该专题来源跟进。', label_en: 'Received. The team will follow up from this innovation source.', is_visible: true, sort_order: 120 },
+      { id: 'form-error', label_zh: '提交失败，请稍后再试。', label_en: 'Submission failed. Please try again.', is_visible: true, sort_order: 130 },
+      { id: 'form-source-prefix', label_zh: '来源', label_en: 'Source', is_visible: true, sort_order: 140 },
+      { id: 'form-company-prefix', label_zh: '公司', label_en: 'Company', is_visible: true, sort_order: 150 },
+    ],
+    is_visible: true,
+    sort_order: 20,
     updated_at: '',
     updated_by_email: null,
   },
@@ -776,6 +924,22 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
         is_visible: true,
         sort_order: 50,
       },
+      { id: 'label-name', label_zh: '姓名', label_en: 'Name', is_visible: true, sort_order: 60 },
+      { id: 'label-email', label_zh: '邮箱', label_en: 'Email', is_visible: true, sort_order: 70 },
+      { id: 'label-phone', label_zh: '电话 / WhatsApp', label_en: 'Phone / WhatsApp', is_visible: true, sort_order: 80 },
+      { id: 'label-company', label_zh: '公司 / 机构', label_en: 'Company / Organization', is_visible: true, sort_order: 90 },
+      { id: 'label-country', label_zh: '国家 / 城市', label_en: 'Country / City', is_visible: true, sort_order: 100 },
+      { id: 'label-use-case', label_zh: '资料用途', label_en: 'Asset Use Case', is_visible: true, sort_order: 110 },
+      { id: 'label-message', label_zh: '补充说明', label_en: 'Additional Notes', is_visible: true, sort_order: 120 },
+      { id: 'submit', label_zh: '提交资料申请', label_en: 'Submit Media Request', is_visible: true, sort_order: 130 },
+      { id: 'submitting', label_zh: '提交中', label_en: 'Submitting', is_visible: true, sort_order: 140 },
+      { id: 'success-title', label_zh: '已收到资料申请', label_en: 'Media Request Received', is_visible: true, sort_order: 150 },
+      { id: 'success-body', label_zh: '团队会按您的用途回复可用资料。', label_en: 'The team will respond with suitable assets for your use case.', is_visible: true, sort_order: 160 },
+      { id: 'error-body', label_zh: '提交失败，请稍后再试。', label_en: 'Submission failed. Please try again.', is_visible: true, sort_order: 170 },
+      { id: 'use-case-press', value_en: 'press', value_zh: 'press', label_zh: '媒体报道', label_en: 'Press Coverage', is_visible: true, sort_order: 180 },
+      { id: 'use-case-proposal', value_en: 'proposal', value_zh: 'proposal', label_zh: '项目提案', label_en: 'Project Proposal', is_visible: true, sort_order: 190 },
+      { id: 'use-case-channel', value_en: 'channel', value_zh: 'channel', label_zh: '渠道介绍', label_en: 'Channel Introduction', is_visible: true, sort_order: 200 },
+      { id: 'use-case-research', value_en: 'research', value_zh: 'research', label_zh: '研究参考', label_en: 'Research Reference', is_visible: true, sort_order: 210 },
     ],
     is_visible: true,
     sort_order: 10,
@@ -792,6 +956,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     description_zh: '全站顶部导航和行动按钮。前台只渲染已发布且可见的项目。',
     description_en: 'Global navbar links and action buttons. The frontend renders only published visible items.',
     items: [
+      { id: 'logo', href: '/', image_url: '/images/vessel-logo.png', value_zh: 'brand', value_en: 'brand', label_zh: 'VESSEL 微宿', label_en: 'VESSEL', is_visible: true, sort_order: 5 },
       { id: 'nav-products', href: '/products', value_zh: 'primary', value_en: 'primary', label_zh: '产品系列', label_en: 'Products', is_visible: true, sort_order: 10 },
       { id: 'nav-cases', href: '/cases', value_zh: 'primary', value_en: 'primary', label_zh: '项目案例', label_en: 'Cases', is_visible: true, sort_order: 20 },
       { id: 'nav-about', href: '/about', value_zh: 'primary', value_en: 'primary', label_zh: '关于我们', label_en: 'About', is_visible: true, sort_order: 30 },
@@ -803,6 +968,24 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     ],
     is_visible: true,
     sort_order: 10,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'site:ui-labels',
+    page_key: 'site',
+    module_key: 'ui-labels',
+    module_type: 'fixed-content',
+    title_zh: '全站界面标签',
+    title_en: 'Global interface labels',
+    description_zh: '导航、抽屉、图片和轮播等客户可见交互标签。',
+    description_en: 'Customer-facing interaction labels for navigation, drawers, images, and carousel controls.',
+    items: [
+      { id: 'menu-toggle', label_zh: '打开或关闭菜单', label_en: 'Toggle menu', is_visible: true, sort_order: 10 },
+      { id: 'drawer-close', label_zh: '关闭', label_en: 'Close', is_visible: true, sort_order: 20 },
+    ],
+    is_visible: true,
+    sort_order: 15,
     updated_at: '',
     updated_by_email: null,
   },
@@ -834,6 +1017,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     description_zh: '面向文旅度假、商业空间和公共服务场景的智能装配式建筑系统。',
     description_en: 'Smart prefab architecture for resorts, commercial spaces, and public facilities.',
     items: [
+      { id: 'logo', href: '/', image_url: '/images/vessel-logo.png', label_zh: 'VESSEL 微宿', label_en: 'VESSEL', is_visible: true, sort_order: 5 },
       { id: 'tagline', label_zh: '智能装配式建筑', label_en: 'Smart Prefab Architecture', is_visible: true, sort_order: 10 },
       { id: 'whatsapp', label_zh: 'WhatsApp: +86 180-2417-6679', label_en: 'WhatsApp: +86 180-2417-6679', is_visible: true, sort_order: 20 },
       { id: 'email', href: 'mailto:303vessel@303industries.cn', label_zh: 'Email: 303vessel@303industries.cn', label_en: 'Email: 303vessel@303industries.cn', is_visible: true, sort_order: 30 },
@@ -904,6 +1088,159 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     ],
     is_visible: true,
     sort_order: 60,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'auth:shared',
+    page_key: 'auth',
+    module_key: 'shared',
+    module_type: 'fixed-content',
+    title_zh: '登录注册共享文案',
+    title_en: 'Auth shared copy',
+    description_zh: '登录和注册页面共享品牌入口。',
+    description_en: 'Shared brand entry for login and registration pages.',
+    items: [
+      { id: 'brand', href: '/', label_zh: 'VESSEL 微宿', label_en: 'VESSEL', is_visible: true, sort_order: 10 },
+    ],
+    is_visible: true,
+    sort_order: 10,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'auth:login',
+    page_key: 'auth',
+    module_key: 'login',
+    module_type: 'fixed-content',
+    title_zh: '登录',
+    title_en: 'Sign in',
+    description_zh: '进入您的 VESSEL 账户。',
+    description_en: 'Access your VESSEL account.',
+    items: [
+      { id: 'email-label', label_zh: '邮箱', label_en: 'Email', is_visible: true, sort_order: 10 },
+      { id: 'email-placeholder', label_zh: '邮箱占位', label_en: 'Email placeholder', value_zh: 'name@example.com', value_en: 'name@example.com', is_visible: true, sort_order: 20 },
+      { id: 'password-label', label_zh: '密码', label_en: 'Password', is_visible: true, sort_order: 30 },
+      { id: 'password-placeholder', label_zh: '密码占位', label_en: 'Password placeholder', value_zh: '请输入密码', value_en: 'Enter password', is_visible: true, sort_order: 40 },
+      { id: 'google-button', label_zh: '使用 Google 登录', label_en: 'Continue with Google', is_visible: true, sort_order: 50 },
+      { id: 'divider', label_zh: '或', label_en: 'or', is_visible: true, sort_order: 60 },
+      { id: 'submit', label_zh: '登录', label_en: 'Sign in', is_visible: true, sort_order: 70 },
+      { id: 'submitting', label_zh: '登录中', label_en: 'Signing in', is_visible: true, sort_order: 80 },
+      { id: 'error', label_zh: '登录失败，请检查邮箱或密码。', label_en: 'Sign in failed. Check your email or password.', is_visible: true, sort_order: 90 },
+      { id: 'no-account', label_zh: '还没有账户？', label_en: 'No account yet?', is_visible: true, sort_order: 100 },
+      { id: 'register-link', href: '/register', label_zh: '注册', label_en: 'Create account', is_visible: true, sort_order: 110 },
+    ],
+    is_visible: true,
+    sort_order: 20,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'auth:register',
+    page_key: 'auth',
+    module_key: 'register',
+    module_type: 'fixed-content',
+    title_zh: '注册',
+    title_en: 'Create account',
+    description_zh: '创建您的 VESSEL 账户。',
+    description_en: 'Create your VESSEL account.',
+    items: [
+      { id: 'name-label', label_zh: '姓名', label_en: 'Name', is_visible: true, sort_order: 10 },
+      { id: 'name-placeholder', label_zh: '姓名占位', label_en: 'Name placeholder', value_zh: '您的姓名', value_en: 'Your name', is_visible: true, sort_order: 20 },
+      { id: 'email-label', label_zh: '邮箱', label_en: 'Email', is_visible: true, sort_order: 30 },
+      { id: 'email-placeholder', label_zh: '邮箱占位', label_en: 'Email placeholder', value_zh: 'name@example.com', value_en: 'name@example.com', is_visible: true, sort_order: 40 },
+      { id: 'password-label', label_zh: '密码', label_en: 'Password', is_visible: true, sort_order: 50 },
+      { id: 'password-placeholder', label_zh: '密码占位', label_en: 'Password placeholder', value_zh: '设置密码', value_en: 'Set password', is_visible: true, sort_order: 60 },
+      { id: 'google-button', label_zh: '使用 Google 注册', label_en: 'Continue with Google', is_visible: true, sort_order: 70 },
+      { id: 'divider', label_zh: '或', label_en: 'or', is_visible: true, sort_order: 80 },
+      { id: 'submit', label_zh: '注册', label_en: 'Create account', is_visible: true, sort_order: 90 },
+      { id: 'submitting', label_zh: '注册中', label_en: 'Creating account', is_visible: true, sort_order: 100 },
+      { id: 'error', label_zh: '注册失败，请稍后再试。', label_en: 'Registration failed. Please try again.', is_visible: true, sort_order: 110 },
+      { id: 'has-account', label_zh: '已有账户？', label_en: 'Already have an account?', is_visible: true, sort_order: 120 },
+      { id: 'login-link', href: '/login', label_zh: '登录', label_en: 'Sign in', is_visible: true, sort_order: 130 },
+    ],
+    is_visible: true,
+    sort_order: 30,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'account:header',
+    page_key: 'account',
+    module_key: 'header',
+    module_type: 'fixed-content',
+    title_zh: '账户中心',
+    title_en: 'Account Center',
+    description_zh: '',
+    description_en: '',
+    items: [
+      { id: 'eyebrow', label_zh: '账户', label_en: 'Account', is_visible: true, sort_order: 10 },
+    ],
+    is_visible: true,
+    sort_order: 10,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'account:profile',
+    page_key: 'account',
+    module_key: 'profile',
+    module_type: 'fixed-content',
+    title_zh: '资料',
+    title_en: 'Profile',
+    description_zh: '更新联系信息，方便项目沟通。',
+    description_en: 'Update contact information for project communication.',
+    items: [
+      { id: 'name-label', label_zh: '姓名', label_en: 'Name', is_visible: true, sort_order: 10 },
+      { id: 'name-placeholder', label_zh: '姓名占位', label_en: 'Name placeholder', value_zh: '您的姓名', value_en: 'Your name', is_visible: true, sort_order: 20 },
+      { id: 'company-label', label_zh: '公司 / 机构', label_en: 'Company / Organization', is_visible: true, sort_order: 30 },
+      { id: 'company-placeholder', label_zh: '公司占位', label_en: 'Company placeholder', value_zh: '公司名称', value_en: 'Company name', is_visible: true, sort_order: 40 },
+      { id: 'country-label', label_zh: '国家 / 城市', label_en: 'Country / City', is_visible: true, sort_order: 50 },
+      { id: 'country-placeholder', label_zh: '国家占位', label_en: 'Country placeholder', value_zh: '项目所在国家或城市', value_en: 'Project country or city', is_visible: true, sort_order: 60 },
+      { id: 'phone-label', label_zh: '电话', label_en: 'Phone', is_visible: true, sort_order: 70 },
+      { id: 'phone-placeholder', label_zh: '电话占位', label_en: 'Phone placeholder', value_zh: '电话', value_en: 'Phone number', is_visible: true, sort_order: 80 },
+      { id: 'whatsapp-label', label_zh: 'WhatsApp', label_en: 'WhatsApp', is_visible: true, sort_order: 90 },
+      { id: 'whatsapp-placeholder', label_zh: 'WhatsApp 占位', label_en: 'WhatsApp placeholder', value_zh: 'WhatsApp', value_en: 'WhatsApp', is_visible: true, sort_order: 100 },
+      { id: 'language-label', label_zh: '首选语言', label_en: 'Preferred Language', is_visible: true, sort_order: 110 },
+      { id: 'language-empty', label_zh: '不指定', label_en: 'Not specified', is_visible: true, sort_order: 120 },
+      { id: 'language-zh', label_zh: '中文', label_en: 'Chinese', is_visible: true, sort_order: 130 },
+      { id: 'language-en', label_zh: '英文', label_en: 'English', is_visible: true, sort_order: 140 },
+      { id: 'save', label_zh: '保存资料', label_en: 'Save Profile', is_visible: true, sort_order: 150 },
+      { id: 'saving', label_zh: '保存中', label_en: 'Saving', is_visible: true, sort_order: 160 },
+      { id: 'success', label_zh: '资料已保存。', label_en: 'Profile saved.', is_visible: true, sort_order: 170 },
+      { id: 'load-error', label_zh: '资料加载失败，请稍后再试。', label_en: 'Profile failed to load. Please try again.', is_visible: true, sort_order: 180 },
+      { id: 'save-error', label_zh: '资料保存失败，请稍后再试。', label_en: 'Profile save failed. Please try again.', is_visible: true, sort_order: 190 },
+    ],
+    is_visible: true,
+    sort_order: 20,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'account:password',
+    page_key: 'account',
+    module_key: 'password',
+    module_type: 'fixed-content',
+    title_zh: '密码',
+    title_en: 'Password',
+    description_zh: '',
+    description_en: '',
+    items: [
+      { id: 'title-change', label_zh: '修改密码', label_en: 'Change password', is_visible: true, sort_order: 10 },
+      { id: 'title-set', label_zh: '设置密码', label_en: 'Set password', is_visible: true, sort_order: 20 },
+      { id: 'help-change', label_zh: '输入当前密码并设置新密码。', label_en: 'Enter current password and set a new one.', is_visible: true, sort_order: 30 },
+      { id: 'help-set', label_zh: '为您的账户设置密码。', label_en: 'Set a password for your account.', is_visible: true, sort_order: 40 },
+      { id: 'current-label', label_zh: '当前密码', label_en: 'Current Password', is_visible: true, sort_order: 50 },
+      { id: 'new-label', label_zh: '新密码', label_en: 'New Password', is_visible: true, sort_order: 60 },
+      { id: 'new-placeholder', label_zh: '新密码占位', label_en: 'New password placeholder', value_zh: '输入新密码', value_en: 'Enter new password', is_visible: true, sort_order: 70 },
+      { id: 'save', label_zh: '保存密码', label_en: 'Save Password', is_visible: true, sort_order: 80 },
+      { id: 'saving', label_zh: '保存中', label_en: 'Saving', is_visible: true, sort_order: 90 },
+      { id: 'set-success', label_zh: '密码已设置。', label_en: 'Password set.', is_visible: true, sort_order: 100 },
+      { id: 'change-success', label_zh: '密码已修改。', label_en: 'Password changed.', is_visible: true, sort_order: 110 },
+      { id: 'save-error', label_zh: '密码保存失败，请稍后再试。', label_en: 'Password save failed. Please try again.', is_visible: true, sort_order: 120 },
+    ],
+    is_visible: true,
+    sort_order: 30,
     updated_at: '',
     updated_by_email: null,
   },
@@ -2201,7 +2538,7 @@ export async function ensurePageStructureSnapshotsSchema() {
   return structureSnapshotSchemaReady
 }
 
-async function seedDefaultPageModules() {
+export async function seedDefaultPageModules() {
   seededReady ??= (async () => {
     await ensurePageModulesSchema()
     for (const pageModule of DEFAULT_PAGE_MODULES) {
@@ -2243,7 +2580,7 @@ async function seedDefaultPageModules() {
 }
 
 export async function listPageModules(pageKey?: string): Promise<PageModuleRow[]> {
-  await seedDefaultPageModules()
+  await ensurePageModulesSchema()
   const params: string[] = []
   const where = pageKey ? 'WHERE pm.page_key = $1' : ''
   if (pageKey) params.push(pageKey)
@@ -2274,7 +2611,7 @@ export async function listPageModules(pageKey?: string): Promise<PageModuleRow[]
 }
 
 export async function getPageModule(pageKey: string, moduleKey: string): Promise<PageModuleRow | null> {
-  await seedDefaultPageModules()
+  await ensurePageModulesSchema()
   const res = await pool.query<DbPageModuleRow>(
     `SELECT
        pm.id,
@@ -2293,6 +2630,69 @@ export async function getPageModule(pageKey: string, moduleKey: string): Promise
      FROM page_modules pm
      LEFT JOIN users u ON u.id = pm.updated_by
      WHERE pm.page_key = $1 AND pm.module_key = $2
+     LIMIT 1`,
+    [pageKey, moduleKey],
+  )
+
+  return res.rows[0] ? normalizeRow(res.rows[0]) : null
+}
+
+export async function listPublishedPageModules(pageKey?: string): Promise<PageModuleRow[]> {
+  await ensurePageModulesSchema()
+  const params: string[] = []
+  const where = ['pm.is_visible = TRUE']
+  if (pageKey) {
+    params.push(pageKey)
+    where.push(`pm.page_key = $${params.length}`)
+  }
+
+  const res = await pool.query<DbPageModuleRow>(
+    `SELECT
+       pm.id,
+       pm.page_key,
+       pm.module_key,
+       pm.module_type,
+       pm.title_zh,
+       pm.title_en,
+       pm.description_zh,
+       pm.description_en,
+       pm.items,
+       pm.is_visible,
+       pm.sort_order,
+       pm.updated_at::text AS updated_at,
+       u.email AS updated_by_email
+     FROM page_modules pm
+     LEFT JOIN users u ON u.id = pm.updated_by
+     WHERE ${where.join(' AND ')}
+     ORDER BY pm.page_key ASC, pm.sort_order ASC`,
+    params,
+  )
+
+  return res.rows.map(normalizeRow)
+}
+
+export async function getPublishedPageModule(pageKey: string, moduleKey: string): Promise<PageModuleRow | null> {
+  await ensurePageModulesSchema()
+  const res = await pool.query<DbPageModuleRow>(
+    `SELECT
+       pm.id,
+       pm.page_key,
+       pm.module_key,
+       pm.module_type,
+       pm.title_zh,
+       pm.title_en,
+       pm.description_zh,
+       pm.description_en,
+       pm.items,
+       pm.is_visible,
+       pm.sort_order,
+       pm.updated_at::text AS updated_at,
+       u.email AS updated_by_email
+     FROM page_modules pm
+     LEFT JOIN users u ON u.id = pm.updated_by
+     WHERE pm.page_key = $1
+       AND pm.module_key = $2
+       AND pm.is_visible = TRUE
      LIMIT 1`,
     [pageKey, moduleKey],
   )

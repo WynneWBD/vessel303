@@ -1,8 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-
-type Language = 'en' | 'zh'
+import ConversionInquiryForm, { type FormLabels } from '@/components/pages/ConversionInquiryForm'
+import { useLanguage } from '@/contexts/LanguageContext'
+import {
+  fetchPublicPageModules,
+  itemById,
+  itemLabel,
+  moduleMap,
+  moduleTitle,
+  type PublicPageModule,
+} from '@/lib/page-module-client'
 
 type InnovationRow = {
   id: number
@@ -33,14 +41,19 @@ function getSections(payload: Record<string, unknown>): Section[] {
 
 export default function InnovationCmsBlock({
   slug,
-  lang,
+  initialRow = null,
+  initialPageModules = null,
 }: {
   slug: 'viie' | 'vipc' | 'vols'
-  lang: Language
+  initialRow?: InnovationRow | null
+  initialPageModules?: PublicPageModule[] | null
 }) {
-  const [row, setRow] = useState<InnovationRow | null>(null)
+  const { lang } = useLanguage()
+  const [row, setRow] = useState<InnovationRow | null>(initialRow)
+  const [pageModules, setPageModules] = useState<PublicPageModule[] | null>(initialPageModules)
 
   useEffect(() => {
+    if (initialRow) return
     let cancelled = false
     fetch(`/api/site-content/innovation?slug=${encodeURIComponent(slug)}`)
       .then((res) => (res.ok ? res.json() : { data: null }))
@@ -53,7 +66,18 @@ export default function InnovationCmsBlock({
     return () => {
       cancelled = true
     }
-  }, [slug])
+  }, [initialRow, slug])
+
+  useEffect(() => {
+    if (Array.isArray(initialPageModules)) return
+    const controller = new AbortController()
+    fetchPublicPageModules('innovation', controller.signal)
+      .then((modules) => setPageModules(modules))
+      .catch((err) => {
+        if ((err as Error).name !== 'AbortError') setPageModules(null)
+      })
+    return () => controller.abort()
+  }, [initialPageModules])
 
   if (!row) return null
 
@@ -63,6 +87,26 @@ export default function InnovationCmsBlock({
   const body = zh ? row.body_zh : row.body_en
   const ctaLabel = zh ? row.cta_label_zh : row.cta_label_en
   const sections = getSections(row.payload)
+  const modules = moduleMap(pageModules)
+  const inquiryModule = modules.get('inquiry-form') ?? null
+  const inquiryTitle = moduleTitle(inquiryModule, lang)
+  const inquiryType = itemLabel(itemById(inquiryModule, 'inquiry-type'), lang)
+  const formLabels: FormLabels = {
+    eyebrow: itemLabel(itemById(inquiryModule, 'form-eyebrow'), lang),
+    name: itemLabel(itemById(inquiryModule, 'form-name'), lang),
+    email: itemLabel(itemById(inquiryModule, 'form-email'), lang),
+    phone: itemLabel(itemById(inquiryModule, 'form-phone'), lang),
+    country: itemLabel(itemById(inquiryModule, 'form-country'), lang),
+    company: itemLabel(itemById(inquiryModule, 'form-company'), lang),
+    quantity: itemLabel(itemById(inquiryModule, 'form-quantity'), lang),
+    message: itemLabel(itemById(inquiryModule, 'form-message'), lang),
+    submit: itemLabel(itemById(inquiryModule, 'form-submit'), lang),
+    submitting: itemLabel(itemById(inquiryModule, 'form-submitting'), lang),
+    success: itemLabel(itemById(inquiryModule, 'form-success'), lang),
+    error: itemLabel(itemById(inquiryModule, 'form-error'), lang),
+    sourcePrefix: itemLabel(itemById(inquiryModule, 'form-source-prefix'), lang),
+    companyPrefix: itemLabel(itemById(inquiryModule, 'form-company-prefix'), lang),
+  }
 
   return (
     <section className="border-y border-[#E5DED4] bg-white">
@@ -95,6 +139,22 @@ export default function InnovationCmsBlock({
             {ctaLabel}
           </a>
         )}
+
+        {inquiryTitle ? (
+          <div className="mt-10">
+            <ConversionInquiryForm
+              source={`innovation:${slug}:inquiry_form`}
+              inquiryType={inquiryType}
+              model={title}
+              titleEn={inquiryModule?.title_en ?? ''}
+              titleZh={inquiryModule?.title_zh ?? ''}
+              descriptionEn={inquiryModule?.description_en ?? ''}
+              descriptionZh={inquiryModule?.description_zh ?? ''}
+              labels={formLabels}
+              compact
+            />
+          </div>
+        ) : null}
       </div>
     </section>
   )

@@ -6,7 +6,6 @@ import { useSearchParams } from 'next/navigation';
 import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
-import { buildContactHref } from '@/lib/site-links';
 import {
   itemById,
   itemContent,
@@ -53,13 +52,9 @@ function productHref(product: CatalogProduct) {
   return getCatalogProductPublicHref(product);
 }
 
-function productInquiryHref(product: CatalogProduct) {
-  return buildContactHref(`product_list:${product.id}:inquiry_cta`);
-}
-
-function productPrice(product: CatalogProduct, lang: 'en' | 'zh', emptyLabel: string) {
+function productPrice(product: CatalogProduct, lang: 'en' | 'zh') {
   const price = lang === 'en' ? product.price_display_en : product.price_display_zh;
-  return price || product.price_display_en || product.price_display_zh || emptyLabel;
+  return price || product.price_display_en || product.price_display_zh || '';
 }
 
 function normalizePage(value: string | null) {
@@ -127,7 +122,7 @@ function Sidebar({
   const body = itemContent(itemById(contactModule, 'body'), lang);
   const cta = itemById(contactModule, 'primary-cta');
   const ctaLabel = itemLabel(cta, lang);
-  const ctaHref = cta?.href || buildContactHref('products:sidebar_contact_card');
+  const ctaHref = cta?.href || '';
 
   return (
     <aside className="space-y-5">
@@ -192,7 +187,7 @@ function Sidebar({
           ) : null}
           {headline ? <h2 className="mt-3 text-lg font-black leading-snug">{headline}</h2> : null}
           {body ? <p className="mt-3 text-sm leading-6 text-white/65">{body}</p> : null}
-          {ctaLabel ? (
+          {ctaLabel && ctaHref ? (
             <Link
               href={ctaHref}
               className="mt-5 inline-flex min-h-10 w-full items-center justify-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#C85A1F]"
@@ -209,9 +204,11 @@ function Sidebar({
 function ProductCard({
   product,
   uiLabels,
+  inquiryHref,
 }: {
   product: CatalogProduct;
   uiLabels: Record<string, string>;
+  inquiryHref: string;
 }) {
   const { lang } = useLanguage();
   const name = lang === 'en' ? product.name_en : product.name_cn;
@@ -254,20 +251,26 @@ function ProductCard({
           ))}
         </div>
         <div className="mt-4 border-t border-[#ECEFF1] pt-3">
-          <span className="min-w-0 truncate text-sm font-semibold text-[#C65F22]">{productPrice(product, lang, uiLabels.priceEmpty)}</span>
+          {productPrice(product, lang) ? (
+            <span className="min-w-0 truncate text-sm font-semibold text-[#C65F22]">{productPrice(product, lang)}</span>
+          ) : null}
           <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Link
-              href={productHref(product)}
-              className="inline-flex min-h-10 items-center justify-center bg-[#147C94] px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#0E6479]"
-            >
-              {uiLabels.detailsCta}
-            </Link>
-            <Link
-              href={productInquiryHref(product)}
-              className="inline-flex min-h-10 items-center justify-center border border-[#E36F2C]/35 px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-[#C65F22] transition hover:border-[#E36F2C] hover:bg-[#FFF4EC]"
-            >
-              {uiLabels.inquiryCta}
-            </Link>
+            {uiLabels.detailsCta ? (
+              <Link
+                href={productHref(product)}
+                className="inline-flex min-h-10 items-center justify-center bg-[#147C94] px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#0E6479]"
+              >
+                {uiLabels.detailsCta}
+              </Link>
+            ) : null}
+            {uiLabels.inquiryCta && inquiryHref ? (
+              <Link
+                href={inquiryHref}
+                className="inline-flex min-h-10 items-center justify-center border border-[#E36F2C]/35 px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-[#C65F22] transition hover:border-[#E36F2C] hover:bg-[#FFF4EC]"
+              >
+                {uiLabels.inquiryCta}
+              </Link>
+            ) : null}
           </div>
         </div>
       </div>
@@ -332,6 +335,7 @@ export default function ProductsPageContent({
   const contactModule = modules.get('contact-card') ?? null;
   const uiModule = modules.get('ui-labels') ?? null;
   const label = (id: string) => itemLabel(itemById(uiModule, id), lang);
+  const uiItem = (id: string) => itemById(uiModule, id);
   const uiLabels = {
     categoryHeading: label('category-heading'),
     allProducts: label('all-products-label'),
@@ -345,8 +349,8 @@ export default function ProductsPageContent({
     emptyState: label('empty-state'),
     detailsCta: label('details-cta'),
     inquiryCta: label('inquiry-cta'),
-    priceEmpty: label('price-empty'),
   };
+  const inquiryHref = uiItem('inquiry-cta')?.href || '';
   const rawFilters = useDirectoryFilters();
   const filteredProducts = useMemo(
     () => products.filter((product) => productMatchesFilters(product, rawFilters)),
@@ -366,6 +370,8 @@ export default function ProductsPageContent({
   const secondaryCta = itemById(heroModule, 'secondary-cta');
   const primaryCtaLabel = itemLabel(primaryCta, lang);
   const secondaryCtaLabel = itemLabel(secondaryCta, lang);
+  const primaryCtaHref = primaryCta?.href || '';
+  const secondaryCtaHref = secondaryCta?.href || '';
   const featuredLabel = itemLabel(itemById(heroModule, 'featured-label'), lang);
   const breadcrumbHome = itemById(heroModule, 'breadcrumb-home');
   const breadcrumbCurrent = itemById(heroModule, 'breadcrumb-current');
@@ -405,15 +411,15 @@ export default function ProductsPageContent({
             {heroDescription ? (
               <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5C6670]">{heroDescription}</p>
             ) : null}
-            {(primaryCtaLabel || secondaryCtaLabel) ? (
+            {((primaryCtaLabel && primaryCtaHref) || (secondaryCtaLabel && secondaryCtaHref)) ? (
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                {primaryCtaLabel ? (
-                  <Link href={primaryCta?.href || buildContactHref('products:catalog_inquiry_cta')} className="inline-flex min-h-11 w-full items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#C85A1F] sm:w-auto">
+                {primaryCtaLabel && primaryCtaHref ? (
+                  <Link href={primaryCtaHref} className="inline-flex min-h-11 w-full items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#C85A1F] sm:w-auto">
                     {primaryCtaLabel}
                   </Link>
                 ) : null}
-                {secondaryCtaLabel ? (
-                  <Link href={secondaryCta?.href || '/cases'} className="inline-flex min-h-11 w-full items-center justify-center border border-[#C7CDD2] bg-white px-5 text-sm font-semibold text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94] sm:w-auto">
+                {secondaryCtaLabel && secondaryCtaHref ? (
+                  <Link href={secondaryCtaHref} className="inline-flex min-h-11 w-full items-center justify-center border border-[#C7CDD2] bg-white px-5 text-sm font-semibold text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94] sm:w-auto">
                     {secondaryCtaLabel}
                   </Link>
                 ) : null}
@@ -542,7 +548,7 @@ export default function ProductsPageContent({
             ) : (
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 {pageProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} uiLabels={uiLabels} />
+                  <ProductCard key={product.id} product={product} uiLabels={uiLabels} inquiryHref={inquiryHref} />
                 ))}
               </div>
             )}

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   fetchPublicPageModules,
+  itemById,
   itemContent,
   itemLabel,
   itemValue,
@@ -71,9 +72,12 @@ export default function Footer() {
   const ctaTitle = moduleTitle(cta, lang);
   const ctaDescription = moduleDescription(cta, lang);
   const ctaItems = visibleItems(cta).filter((item) => item.href && itemLabel(item, lang));
-  const brandTitle = moduleTitle(brand, lang);
   const brandDescription = moduleDescription(brand, lang);
   const brandItems = visibleItems(brand);
+  const brandLogo = itemById(brand, 'logo');
+  const brandLogoSrc = brandLogo?.image_url || '';
+  const brandLogoHref = brandLogo?.href || '';
+  const brandLogoAlt = itemLabel(brandLogo, lang);
   const contactItems = visibleItems(contact);
 
   return (
@@ -111,14 +115,29 @@ export default function Footer() {
           {brand?.is_visible !== false ? (
             <div className="lg:col-span-2">
               <div className="mb-4">
-                <Image
-                  src="/images/vessel-logo.png"
-                  alt={brandTitle || 'VESSEL'}
-                  height={32}
-                  width={128}
-                  style={{ height: '32px', width: 'auto', objectFit: 'contain', marginBottom: 4 }}
-                  unoptimized
-                />
+                {brandLogoSrc ? (
+                  brandLogoHref ? (
+                    <Link href={brandLogoHref}>
+                      <Image
+                        src={brandLogoSrc}
+                        alt={brandLogoAlt}
+                        height={32}
+                        width={128}
+                        style={{ height: '32px', width: 'auto', objectFit: 'contain', marginBottom: 4 }}
+                        unoptimized
+                      />
+                    </Link>
+                  ) : (
+                    <Image
+                      src={brandLogoSrc}
+                      alt={brandLogoAlt}
+                      height={32}
+                      width={128}
+                      style={{ height: '32px', width: 'auto', objectFit: 'contain', marginBottom: 4 }}
+                      unoptimized
+                    />
+                  )
+                ) : null}
                 {brandItems[0] ? (
                   <div className="text-xs tracking-[0.3em] text-white/30">{itemLabel(brandItems[0], lang)}</div>
                 ) : null}

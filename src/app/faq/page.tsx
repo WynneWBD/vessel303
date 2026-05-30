@@ -1,15 +1,20 @@
 import FaqView, { type FaqCategoryView, type FaqItemView } from '@/components/FaqView'
 import { listPublicB9ContentCategories, listPublicB9ContentItems } from '@/lib/b9-content-db'
 import { buildPageMetadata } from '@/lib/seo'
+import { getPublishedPageModule, listPublishedPageModules } from '@/lib/page-modules-db'
 
 export const revalidate = 300
 
-export const metadata = buildPageMetadata({
-  title: 'FAQ | VESSEL® Smart Prefab Architecture',
-  description:
-    'Answers to common questions about VESSEL® smart prefab architecture, customization, delivery, installation, after-sales support, and project planning.',
-  path: '/faq',
-})
+export async function generateMetadata() {
+  const heroModule = await getPublishedPageModule('faq', 'hero').catch((err) => {
+    console.error('[faq/metadata] load page module failed', err)
+    return null
+  })
+  const title = heroModule?.title_en || heroModule?.title_zh || ''
+  const description = heroModule?.description_en || heroModule?.description_zh || ''
+  if (!title || !description) return {}
+  return buildPageMetadata({ title, description, path: '/faq' })
+}
 
 const FAQ_CMS_TIMEOUT_MS = 5000
 
@@ -34,15 +39,12 @@ async function loadFaqContent(): Promise<{ categories: FaqCategoryView[]; items:
 
     if (rows.length === 0) return { categories: [], items: [] }
 
-    const mappedCategories = categories.length > 0
-      ? categories.map((cat) => ({ key: cat.slug, zh: cat.title_zh, en: cat.title_en }))
-      : [{ key: 'general', zh: '常见问题', en: 'General' }]
+    const mappedCategories = categories.map((cat) => ({ key: cat.slug, zh: cat.title_zh, en: cat.title_en }))
 
     const categoryKeys = new Set(mappedCategories.map((cat) => cat.key))
-    const defaultCategory = mappedCategories[0]?.key ?? 'general'
     const items = rows.map((item) => ({
       id: `cms-${item.id}`,
-      category: item.category_slug && categoryKeys.has(item.category_slug) ? item.category_slug : defaultCategory,
+      category: item.category_slug && categoryKeys.has(item.category_slug) ? item.category_slug : '',
       question_zh: item.title_zh,
       question_en: item.title_en,
       answer_zh: item.body_zh || item.summary_zh || item.title_zh,
@@ -57,6 +59,12 @@ async function loadFaqContent(): Promise<{ categories: FaqCategoryView[]; items:
 }
 
 export default async function FaqPage() {
-  const { categories, items } = await loadFaqContent()
-  return <FaqView categories={categories} items={items} />
+  const [{ categories, items }, pageModules] = await Promise.all([
+    loadFaqContent(),
+    listPublishedPageModules('faq').catch((err) => {
+      console.error('[faq] page modules load failed', err)
+      return []
+    }),
+  ])
+  return <FaqView categories={categories} items={items} initialPageModules={pageModules} />
 }

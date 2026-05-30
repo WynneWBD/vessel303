@@ -1,12 +1,9 @@
 'use client'
 
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ProtectedImage from '@/components/ProtectedImage'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { SITE_CONTACT_HREF } from '@/lib/site-links'
 import { format, parseISO } from 'date-fns'
 
 type NewsData = {
@@ -37,19 +34,18 @@ function formatNewsDate(value: string | Date | null, lang: 'zh' | 'en'): string 
 
 export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
   const { lang } = useLanguage()
-
-  const title = lang === 'zh' ? news.title_zh : news.title_en
-  const excerpt = lang === 'zh' ? news.excerpt_zh : news.excerpt_en
+  const title = lang === 'zh' ? news.title_zh || news.title_en : news.title_en || news.title_zh
+  const excerpt = lang === 'zh' ? news.excerpt_zh || news.excerpt_en : news.excerpt_en || news.excerpt_zh
   const html = lang === 'zh' ? htmlZh : htmlEn
   const dateStr = formatNewsDate(news.published_at, lang)
-  const contactHref = `${SITE_CONTACT_HREF}?source=${encodeURIComponent(`news:${news.slug}:contact_cta`)}`
+
+  if (!title) return null
 
   return (
     <main className="min-h-screen bg-[#FAF7F2] text-[#2C2A28]">
       <Navbar />
 
-      {/* Hero */}
-      <section className="relative pt-28 bg-[#241F1B]">
+      <section className="relative bg-[#241F1B] pt-28">
         {news.cover_image_url ? (
           <div className="relative h-[420px] overflow-hidden">
             <ProtectedImage
@@ -61,115 +57,33 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
               sizes="100vw"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#241F1B] via-[#241F1B]/45 to-transparent" />
-            {/* Title overlay */}
-            <div className="absolute bottom-0 left-0 right-0 px-6 pb-10 max-w-3xl mx-auto">
-              <HeroMeta dateStr={dateStr} />
-              <h1
-                className="text-white mt-3"
-                style={{
-                  fontFamily: 'DM Sans, sans-serif',
-                  fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
-                  fontWeight: 700,
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.2,
-                }}
-              >
-                {title}
-              </h1>
-              {excerpt && (
-              <p className="mt-3 text-[#C9BEB4] text-sm leading-relaxed max-w-2xl">
-                  {excerpt}
-                </p>
-              )}
+            <div className="absolute bottom-0 left-0 right-0 mx-auto max-w-3xl px-6 pb-10">
+              {dateStr ? <p className="text-xs text-[#C9BEB4]">{dateStr}</p> : null}
+              <h1 className="mt-3 text-3xl font-bold leading-tight text-white sm:text-4xl">{title}</h1>
+              {excerpt ? <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#C9BEB4]">{excerpt}</p> : null}
             </div>
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 pb-10">
-            <HeroMeta dateStr={dateStr} />
-            <h1
-              className="text-[#F5F2ED] mt-3"
-              style={{
-                fontFamily: 'DM Sans, sans-serif',
-                fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
-                fontWeight: 700,
-                letterSpacing: '-0.02em',
-                lineHeight: 1.2,
-              }}
-            >
-              {title}
-            </h1>
-            {excerpt && (
-              <p className="mt-4 text-[#C9BEB4] text-base leading-relaxed">{excerpt}</p>
-            )}
+          <div className="mx-auto max-w-3xl px-4 pb-10 pt-8 sm:px-6">
+            {dateStr ? <p className="text-xs text-[#C9BEB4]">{dateStr}</p> : null}
+            <h1 className="mt-3 text-3xl font-bold leading-tight text-[#F5F2ED] sm:text-4xl">{title}</h1>
+            {excerpt ? <p className="mt-4 text-base leading-relaxed text-[#C9BEB4]">{excerpt}</p> : null}
           </div>
         )}
       </section>
 
-      {/* Prose content */}
-      <section className="py-14">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
-          {html ? (
+      {html ? (
+        <section className="py-14">
+          <div className="mx-auto max-w-3xl px-4 sm:px-6">
             <div
               className="prose prose-stone prose-orange max-w-none"
               dangerouslySetInnerHTML={{ __html: html }}
             />
-          ) : (
-            <p className="text-[#6B6560] italic text-sm">
-              {lang === 'zh' ? '(暂无正文内容)' : '(No content yet)'}
-            </p>
-          )}
-        </div>
-      </section>
-
-      {/* Back link */}
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-16">
-        <div className="mb-8 border border-[#E5DED4] bg-white p-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#E36F2C]">
-            {lang === 'zh' ? '项目咨询' : 'Inquiry'}
-          </p>
-          <h2 className="mt-2 text-xl font-bold text-[#2C2A28]">
-            {lang === 'zh' ? '想了解新闻中的产品或项目？' : 'Need details about this product or project?'}
-          </h2>
-          <Link
-            href={contactHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-flex bg-[#E36F2C] px-5 py-3 text-sm font-semibold tracking-wider text-white transition-colors hover:bg-[#C85A1F]"
-          >
-            {lang === 'zh' ? '联系 VESSEL' : 'Contact VESSEL'}
-          </Link>
-        </div>
-        <Link
-          href="/news"
-          className="inline-flex items-center gap-2 text-sm text-[#8A8580] hover:text-[#E36F2C] transition-colors"
-        >
-          <ArrowLeft size={16} />
-          {lang === 'zh' ? '返回新闻列表' : 'Back to News'}
-        </Link>
-      </div>
+          </div>
+        </section>
+      ) : null}
 
       <Footer />
     </main>
-  )
-}
-
-function HeroMeta({ dateStr }: { dateStr: string }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span
-        className="text-xs px-2 py-0.5 rounded"
-        style={{
-          background: 'rgba(227,111,44,0.15)',
-          color: '#E36F2C',
-          letterSpacing: '0.1em',
-          fontWeight: 600,
-        }}
-      >
-        VESSEL®
-      </span>
-      {dateStr && (
-        <span className="text-xs text-[#8A8580]">{dateStr}</span>
-      )}
-    </div>
   )
 }

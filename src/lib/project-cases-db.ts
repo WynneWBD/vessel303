@@ -1,11 +1,6 @@
 import { unstable_cache } from 'next/cache'
 import { pool } from '@/lib/db'
-import {
-  staticProjectCases,
-  type ProjectCaseInput,
-  type ProjectCaseRow,
-  type ProjectCaseStatus,
-} from '@/lib/project-cases-static'
+import type { ProjectCaseInput, ProjectCaseRow, ProjectCaseStatus } from '@/lib/project-cases-static'
 
 export type { ProjectCaseInput, ProjectCaseRow, ProjectCaseStatus }
 
@@ -120,6 +115,7 @@ async function seedProjectCasesIfEmpty() {
   )
   if (parseInt(countRes.rows[0]?.count ?? '0', 10) > 0) return
 
+  const { staticProjectCases } = await import('@/lib/project-cases-static')
   for (const item of staticProjectCases) {
     await pool.query(
       `INSERT INTO project_cases (
@@ -223,7 +219,9 @@ export async function ensureProjectCasesSchema() {
        ON project_cases (status, sort_order)
        WHERE deleted_at IS NULL`,
     )
-    await seedProjectCasesIfEmpty()
+    if (process.env.VESSEL_ENABLE_LEGACY_CONTENT_SEED === '1') {
+      await seedProjectCasesIfEmpty()
+    }
   })()
 
   return schemaReady

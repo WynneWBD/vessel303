@@ -97,16 +97,19 @@ function AccordionItem({
 export default function FaqView({
   categories,
   items,
+  initialPageModules = null,
 }: {
   categories: FaqCategoryView[]
   items: FaqItemView[]
+  initialPageModules?: PublicPageModule[] | null
 }) {
   const { lang } = useLanguage()
   const [openId, setOpenId] = useState<string | null>(null)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
-  const [pageModules, setPageModules] = useState<PublicPageModule[] | null>(null)
+  const [pageModules, setPageModules] = useState<PublicPageModule[] | null>(initialPageModules)
 
   useEffect(() => {
+    if (Array.isArray(initialPageModules)) return
     const controller = new AbortController()
     fetchPublicPageModules('faq', controller.signal)
       .then((modules) => setPageModules(modules))
@@ -114,7 +117,7 @@ export default function FaqView({
         if ((err as Error).name !== 'AbortError') setPageModules(null)
       })
     return () => controller.abort()
-  }, [])
+  }, [initialPageModules])
 
   const modules = moduleMap(pageModules)
   const heroModule = modules.get('hero') ?? null
@@ -131,17 +134,34 @@ export default function FaqView({
   const formDescriptionItem = itemById(heroModule, 'inquiry-description')
   const formTitle = itemLabel(formTitleItem, lang)
   const formDescription = itemContent(formDescriptionItem, lang)
+  const formLabels = {
+    eyebrow: itemLabel(itemById(heroModule, 'form-eyebrow'), lang),
+    name: itemLabel(itemById(heroModule, 'form-name'), lang),
+    email: itemLabel(itemById(heroModule, 'form-email'), lang),
+    phone: itemLabel(itemById(heroModule, 'form-phone'), lang),
+    country: itemLabel(itemById(heroModule, 'form-country'), lang),
+    company: itemLabel(itemById(heroModule, 'form-company'), lang),
+    quantity: itemLabel(itemById(heroModule, 'form-quantity'), lang),
+    message: itemLabel(itemById(heroModule, 'form-message'), lang),
+    submit: itemLabel(itemById(heroModule, 'form-submit'), lang),
+    submitting: itemLabel(itemById(heroModule, 'form-submitting'), lang),
+    success: itemLabel(itemById(heroModule, 'form-success'), lang),
+    error: itemLabel(itemById(heroModule, 'form-error'), lang),
+    sourcePrefix: itemLabel(itemById(heroModule, 'form-source-prefix'), lang),
+    companyPrefix: itemLabel(itemById(heroModule, 'form-company-prefix'), lang),
+  }
 
   const filteredCategories = activeCategory
     ? categories.filter((category) => category.key === activeCategory)
     : categories
+  const flatItems = categories.length === 0 ? items : []
 
   const visibleItemCount = useMemo(
-    () => filteredCategories.reduce(
-      (count, category) => count + items.filter((item) => item.category === category.key).length,
-      0,
-    ),
-    [filteredCategories, items],
+    () => flatItems.length + filteredCategories.reduce(
+        (count, category) => count + items.filter((item) => item.category === category.key).length,
+        0,
+      ),
+    [filteredCategories, flatItems.length, items],
   )
 
   const toggle = (id: string) => setOpenId(openId === id ? null : id)
@@ -252,6 +272,21 @@ export default function FaqView({
               </section>
             )
           })}
+          {flatItems.length > 0 ? (
+            <section>
+              <div className="overflow-hidden rounded-sm border border-[#E5E0DA]">
+                {flatItems.map((item) => (
+                  <AccordionItem
+                    key={item.id}
+                    question={lang === 'zh' ? item.question_zh : item.question_en}
+                    answer={lang === 'zh' ? item.answer_zh : item.answer_en}
+                    isOpen={openId === item.id}
+                    onToggle={() => toggle(item.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
           {visibleItemCount === 0 && emptyLabel ? (
             <div className="border border-dashed border-[#C4B9AB] bg-white px-6 py-10 text-center text-sm text-[#6B625B]">
               {emptyLabel}
@@ -293,6 +328,7 @@ export default function FaqView({
                 descriptionEn={formDescriptionItem?.content_en ?? ''}
                 descriptionZh={formDescriptionItem?.content_zh ?? ''}
                 compact
+                labels={formLabels}
               />
             ) : null}
           </div>
