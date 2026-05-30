@@ -642,3 +642,15 @@ curl -I https://www.vessel303.com/news/<slug>
 - Resend：正式发件身份仍未配置。
 - Vercel edge runtime warning：归入 `/global` 地图专项，暂不处理。
 - 文档：业务结论变化先更新 V9，再判断是否同步 `CODEX.md`。
+
+## B23 移动端体感 / 图片比例 / 前台设计级复核（2026-05-30）
+
+- Code commit: `7549b27` / `7549b2769a1e3657aef005253104bb2efcf32b70`
+- Vercel deployment: `dpl_DqkRBb2c5wwXt7RjDPr81AxstdYy`，状态 `READY`，production alias 包含 `https://www.vessel303.com`
+- 本轮定位：B23 是前台设计级移动端与图片比例复核，不新增后台大模块，不批量补内容，不做自由建站器。
+- 已完成范围：移动端 Navbar 触达面积和菜单滚动、产品列表 hero / 卡片图片比例 / Details + Inquiry 触达、产品通用详情标题换行 / 锚点 / Related Products、案例列表图片比例和 CTA、FAQ 首屏和 CTA、Scenarios / Innovation / Media Kit 的移动端间距、表单按钮和 CTA 触达。
+- 后台同步范围：`/admin/site/pages`、`/admin/site/navigation`、`/admin/site/conversion` 已从 B22 说明更新为 B23 移动端 / 图片比例 / CTA 复核边界，继续只做运营提示，不开放导航保存或自由编辑。
+- 验收摘要：`git diff --check`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 通过；线上 `/`、`/about`、`/products`、`/products/v9-gen6-standard`、`/products/v9-gen6`、`/cases`、`/cases/xunliao-bay-holiday-planet`、`/faq`、`/scenarios/tourism`、`/innovation/viie`、`/media-kit` 均 200；`/contact` 在 `www` 域名上 307 到 300 联系页；未登录 `/admin/site/pages` 302 到 `/admin/login`。
+- Chrome 线上抽查：`/products`、`/faq`、`/scenarios/tourism`、`/media-kit` 无 console error、无横向溢出。
+- 未改范围：未改数据库、未写生产业务数据、未改权限 / 认证 / 支付 / 订单 / 会员、未改 `/global`、MapLibre、MapTiler 或 `/api/map`。
+- 后续建议：B24 可进入“内容素材与精品页补齐”或“移动端视觉深测 / 旧素材继续回填”，不要把权限矩阵提前插入前台体验链路。
