@@ -10,6 +10,7 @@ import {
   B9_CONTENT_KINDS,
   listB9ContentItems,
   type B9ContentKind,
+  type B9ContentItem,
 } from '@/lib/b9-content-db'
 
 export type GovernanceSourceType =
@@ -57,6 +58,7 @@ export type SourceMetrics = {
   hasCta: boolean
   hasImage: boolean
   latestUpdatedAt: string | null
+  contentWarnings: string[]
 }
 
 export type GovernanceContractStatus = ContentContract & {
@@ -77,6 +79,7 @@ const EMPTY_METRICS: SourceMetrics = {
   hasCta: false,
   hasImage: false,
   latestUpdatedAt: null,
+  contentWarnings: [],
 }
 
 export const CONTENT_CONTRACTS: ContentContract[] = [
@@ -329,7 +332,64 @@ export const CONTENT_CONTRACTS: ContentContract[] = [
 ]
 
 function emptyMetrics(): SourceMetrics {
-  return { ...EMPTY_METRICS, requiredMissing: [] }
+  return { ...EMPTY_METRICS, requiredMissing: [], contentWarnings: [] }
+}
+
+const PUBLIC_CONTENT_WARNING_RULES = [
+  { pattern: /\u8fd0\u8425\u5bfc\u89c8/g, label: '\u6d4b\u8bd5\u5e2e\u52a9' },
+  { pattern: /\u5bf9\u7167\s*300/g, label: '\u5bf9\u7167 300' },
+  { pattern: /\b300\b/g, label: '300' },
+  { pattern: /Codex/g, label: 'Codex' },
+  { pattern: /\bB\d{1,2}(?:-\d+)?\b/g, label: '\u9636\u6bb5\u53f7' },
+  { pattern: /admin\s+owner/gi, label: 'admin owner' },
+  { pattern: /CMS\s*resources/gi, label: 'CMS resources' },
+  { pattern: /\u5f00\u53d1\u4efb\u52a1/gi, label: '\u5f00\u53d1\u4efb\u52a1' },
+  { pattern: /\u9a8c\u6536\u4efb\u52a1|acceptance/gi, label: '\u9a8c\u6536\u4efb\u52a1' },
+  { pattern: /\u8c03\u8bd5|debug/gi, label: '\u8c03\u8bd5' },
+]
+
+function collectContentWarnings(scope: string, values: Array<string | null | undefined>): string[] {
+  const warnings = new Set<string>()
+  for (const value of values) {
+    const text = value?.trim()
+    if (!text) continue
+    for (const rule of PUBLIC_CONTENT_WARNING_RULES) {
+      rule.pattern.lastIndex = 0
+      if (rule.pattern.test(text)) warnings.add(`${scope}: ${rule.label}`)
+    }
+  }
+  return Array.from(warnings)
+}
+
+function contentWarningsFromPageModules(modules: PageModuleRow[]): string[] {
+  const warnings: string[] = []
+  for (const pageModule of modules) {
+    if (!pageModule.is_visible) continue
+    warnings.push(
+      ...collectContentWarnings(`${pageModule.page_key}:${pageModule.module_key}`, [
+        pageModule.title_zh,
+        pageModule.title_en,
+        pageModule.description_zh,
+        pageModule.description_en,
+      ]),
+    )
+    for (const item of pageModule.items) {
+      if (!item.is_visible) continue
+      warnings.push(
+        ...collectContentWarnings(`${pageModule.page_key}:${pageModule.module_key}:${item.id}`, [
+          item.label_zh,
+          item.label_en,
+          item.content_zh,
+          item.content_en,
+          item.value_zh,
+          item.value_en,
+          item.href,
+          item.image_url,
+        ]),
+      )
+    }
+  }
+  return Array.from(new Set(warnings)).slice(0, 12)
 }
 
 function parseCount(value: string | number | null | undefined): number {
@@ -375,6 +435,29 @@ function moduleHasImage(modules: PageModuleRow[]) {
   )
 }
 
+function contentWarningsFromB9Rows(kind: B9ContentKind, rows: B9ContentItem[]): string[] {
+  const warnings: string[] = []
+  for (const row of rows) {
+    if (row.status !== 'published') continue
+    warnings.push(
+      ...collectContentWarnings(`${kind}:${row.slug}`, [
+        row.title_zh,
+        row.title_en,
+        row.summary_zh,
+        row.summary_en,
+        row.body_zh,
+        row.body_en,
+        row.cover_image_url,
+        row.file_url,
+        row.cta_label_zh,
+        row.cta_label_en,
+        row.cta_href,
+      ]),
+    )
+  }
+  return Array.from(new Set(warnings)).slice(0, 12)
+}
+
 async function loadPageModuleMetrics() {
   const modules = await listPageModulesForVisualEditor().catch(() => [])
   const drafts = await listPageStructureDrafts().catch(() => [])
@@ -393,6 +476,7 @@ async function loadPageModuleMetrics() {
         drafts.filter((draft) => draft.page_key === pageKey && draft.draft_status !== 'discarded').length,
       hasCta: moduleHasCta(pageModules),
       hasImage: moduleHasImage(pageModules),
+      contentWarnings: contentWarningsFromPageModules(pageModules),
       latestUpdatedAt: latestDate(pageModules.map((pageModule) => pageModule.draft_updated_at ?? pageModule.updated_at)),
     })
   }
@@ -414,6 +498,7 @@ async function loadB9Metrics() {
         hidden: rows.filter((row) => row.status === 'hidden').length,
         hasCta: rows.some((row) => row.status === 'published' && Boolean(row.cta_href?.trim()) && Boolean((row.cta_label_en || row.cta_label_zh)?.trim())),
         hasImage: rows.some((row) => row.status === 'published' && Boolean(row.cover_image_url?.trim())),
+        contentWarnings: contentWarningsFromB9Rows(kind, rows),
         latestUpdatedAt: latestDate(rows.map((row) => row.updated_at)),
       })
     }),
@@ -508,6 +593,7 @@ function mergeMetrics(primary: SourceMetrics, secondary: SourceMetrics): SourceM
     draftModules: primary.draftModules + secondary.draftModules,
     hasCta: primary.hasCta || secondary.hasCta,
     hasImage: primary.hasImage || secondary.hasImage,
+    contentWarnings: Array.from(new Set([...primary.contentWarnings, ...secondary.contentWarnings])).slice(0, 12),
     latestUpdatedAt: latestDate([primary.latestUpdatedAt, secondary.latestUpdatedAt]),
   }
 }
@@ -525,13 +611,23 @@ function buildIssues(contract: ContentContract, metrics: SourceMetrics): string[
   if (contract.signals.includes('cta') && !metrics.hasCta) issues.push('缺少可见 CTA 链接')
   if (contract.signals.includes('form') && !contract.adminHref) issues.push('表单维护入口未明确')
   if (contract.signals.includes('navigation') && !contract.adminHref) issues.push('导航维护入口未明确')
+  if (metrics.contentWarnings.length > 0) {
+    issues.push(`公开内容疑似包含内部词：${metrics.contentWarnings.slice(0, 4).join(' / ')}`)
+  }
   return issues
 }
 
 function issueLevel(contract: ContentContract, issues: string[]): GovernanceContractStatus['issueLevel'] {
   if (contract.sourceType === 'protected') return 'protected'
   if (issues.length === 0) return 'ok'
-  if (issues.some((issue) => issue.includes('没有 published') || issue.includes('缺少已发布模块'))) return 'warning'
+  if (
+    issues.some(
+      (issue) =>
+        issue.includes('没有 published') ||
+        issue.includes('缺少已发布模块') ||
+        issue.includes('公开内容疑似')
+    )
+  ) return 'warning'
   return 'notice'
 }
 

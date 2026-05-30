@@ -303,7 +303,7 @@ export default async function AdminSiteNavigationPage() {
       <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#F3FBFC_0%,#FFFFFF_58%,#FFF4E9_100%)] p-5 shadow-sm md:p-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-sm font-semibold text-[#1889B6]">B26 导航页脚治理</p>
+            <p className="text-sm font-semibold text-[#1889B6]">导航页脚公开质检</p>
             <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">导航 / 页脚 / 通用文案</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
               顶部导航、页脚栏目、通用 CTA 和客户可见系统文案都归入后台 site/auth/account 模块。运营在后台改稿和发布，前台不再用代码预设业务入口。

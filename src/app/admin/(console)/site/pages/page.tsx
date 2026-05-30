@@ -329,6 +329,7 @@ function GuardrailPanel() {
   const guardrails = [
     '前台不得新增客户可见业务文案、图片、CTA 或表单说明。',
     '后台无 published 内容时，前台隐藏对应模块，不显示代码 fallback。',
+    '公开页不得出现运营导览、对照 300、Codex、B 阶段号等内部词。',
     'Global 只登记边界，不进入本轮页面内容治理。',
   ]
 
@@ -339,8 +340,8 @@ function GuardrailPanel() {
           <LockKeyhole size={18} />
         </span>
         <div>
-          <h2 className="text-base font-bold text-[#1E2C31]">B26 内容治理硬规则</h2>
-          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">
+          <h2 className="text-base font-bold text-[#1E2C31]">公开内容质检硬规则</h2>
+          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-4">
             {guardrails.map((item) => (
               <p key={item} className="rounded-md bg-white px-3 py-2 text-xs leading-5 text-[#61767D]">
                 {item}
@@ -379,6 +380,7 @@ export default async function AdminSitePagesPage() {
       hasCta: false,
       hasImage: false,
       latestUpdatedAt: null,
+      contentWarnings: [],
     },
     issues: ['数据源暂不可用'],
     issueLevel: contract.sourceType === 'protected' ? 'protected' : 'notice',
@@ -389,6 +391,7 @@ export default async function AdminSitePagesPage() {
   const protectedCount = contracts.filter((contract) => contract.issueLevel === 'protected').length
   const publishedCount = contracts.reduce((sum, contract) => sum + contract.metrics.published, 0)
   const draftCount = contracts.reduce((sum, contract) => sum + contract.metrics.draft + contract.metrics.draftModules, 0)
+  const contentWarningCount = contracts.reduce((sum, contract) => sum + contract.metrics.contentWarnings.length, 0)
   const sideNavGroups = getSitePagesSideNav({
     issueCount,
     isAdmin: adminRole === 'admin',
@@ -407,7 +410,7 @@ export default async function AdminSitePagesPage() {
       <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#F3FBFC_0%,#FFFFFF_58%,#FFF4E9_100%)] p-5 shadow-sm md:p-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-sm font-semibold text-[#1889B6]">B26 内容治理</p>
+            <p className="text-sm font-semibold text-[#1889B6]">公开内容质检</p>
             <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">前台内容来源中心</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
               这里把每个公开页面、导航页脚、表单文案和内容 CMS 归到后台 owner。运营改稿、隐藏、发布和前台同步验证都从这里进入，不再把前台当编辑场景。
@@ -431,10 +434,11 @@ export default async function AdminSitePagesPage() {
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-5">
+        <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-6">
           <SummaryTile title="内容合同" value={contracts.length} detail="公开页面和全站壳" Icon={Database} />
           <SummaryTile title="已闭合" value={okCount} detail="当前无质检提示" Icon={CheckCircle2} />
           <SummaryTile title="需关注" value={issueCount} detail="内容或 CTA 缺口" Icon={AlertTriangle} />
+          <SummaryTile title="内部词提示" value={contentWarningCount} detail="published 内容风险" Icon={AlertTriangle} />
           <SummaryTile title="受保护" value={protectedCount} detail="Global 等专项边界" Icon={LockKeyhole} />
           <SummaryTile title="published" value={publishedCount} detail={`草稿 ${draftCount}`} Icon={CircleDashed} />
         </div>

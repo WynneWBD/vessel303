@@ -82,7 +82,7 @@ export default async function AdminSiteConversionPage() {
       role={role as AdminRole}
       email={session.user.email}
       title="入口与线索路径盘点"
-      description="集中查看前台入口、后台维护位置、CTA 去向、B23 移动端与图片比例复核状态和线索 source 规则。"
+      description="集中查看前台入口、后台维护位置、CTA 去向、移动端与图片比例复核状态和线索 source 规则。"
       sideNavGroups={getSideNav()}
       activeItem="conversion"
     >
@@ -98,7 +98,7 @@ export default async function AdminSiteConversionPage() {
           <div className="border-b border-[#E6EEEE] px-5 py-4">
             <h2 className="text-lg font-bold text-[#1E2C31]">关键转化入口</h2>
             <p className="mt-1 text-sm text-[#61767D]">
-              这里不是自由导航编辑器，只做运营路径核对、B23 移动端与图片比例复核状态和缺口提示。
+              这里不是自由导航编辑器，只做运营路径核对、移动端与图片比例复核状态和缺口提示。
             </p>
           </div>
           <div className="overflow-x-auto">

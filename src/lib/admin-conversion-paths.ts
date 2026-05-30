@@ -35,7 +35,7 @@ export const CONVERSION_PATHS: ConversionPathItem[] = [
     leadCapture: 'Writes to leads',
     sourceRule: 'product_detail:{productId}:inquiry_form',
     status: 'lead',
-    risk: 'B23 verifies mobile spacing, product image ratios, filter touch targets, detail anchors, and source-aware inquiry paths; fixed boutique product pages keep their existing custom forms/CTA.',
+    risk: 'Mobile spacing, product image ratios, filter touch targets, detail anchors, and source-aware inquiry paths need periodic review; fixed boutique product pages keep their existing custom forms/CTA.',
   },
   {
     key: 'cases',
@@ -46,7 +46,7 @@ export const CONVERSION_PATHS: ConversionPathItem[] = [
     leadCapture: 'Writes to leads',
     sourceRule: 'case_detail:{caseId}:inquiry_form',
     status: 'lead',
-    risk: 'B23 verifies mobile case card density, project image ratios, and scenario filtering cues; Global remains a map display channel and is not managed here.',
+    risk: 'Mobile case card density, project image ratios, and scenario filtering cues need periodic review; Global remains a map display channel and is not managed here.',
   },
   {
     key: 'faq',
@@ -57,7 +57,7 @@ export const CONVERSION_PATHS: ConversionPathItem[] = [
     leadCapture: 'Writes to leads',
     sourceRule: 'faq:general:inquiry_form',
     status: 'lead',
-    risk: 'B23 verifies FAQ mobile reading rhythm and CTA touch targets; FAQ content is CMS-managed and navigation order remains code-controlled.',
+    risk: 'FAQ mobile reading rhythm and CTA touch targets need periodic review; FAQ content is CMS-managed and navigation order remains code-controlled.',
   },
   {
     key: 'media-kit',
@@ -68,7 +68,7 @@ export const CONVERSION_PATHS: ConversionPathItem[] = [
     leadCapture: 'Writes to leads',
     sourceRule: 'media_kit:{useCase}:request_form',
     status: 'lead',
-    risk: 'B23 verifies Media Kit mobile form spacing and resource card density; no private download or member permission layer in this phase.',
+    risk: 'Media Kit mobile form spacing and resource card density need periodic review; no private download or member permission layer in this phase.',
   },
   {
     key: 'scenarios',
@@ -79,7 +79,7 @@ export const CONVERSION_PATHS: ConversionPathItem[] = [
     leadCapture: 'Writes to leads',
     sourceRule: 'scenario:{slug}:inquiry_form',
     status: 'lead',
-    risk: 'B23 verifies scenario mobile CTA stacking and product/case card density; only fixed scenario slugs are supported.',
+    risk: 'Scenario mobile CTA stacking and product/case card density need periodic review; only fixed scenario slugs are supported.',
   },
   {
     key: 'innovation',
@@ -90,7 +90,7 @@ export const CONVERSION_PATHS: ConversionPathItem[] = [
     leadCapture: 'Writes to leads',
     sourceRule: 'innovation:{slug}:inquiry_form',
     status: 'lead',
-    risk: 'B23 verifies topic mobile spacing and inquiry handoff; no free HTML/CSS editor is exposed.',
+    risk: 'Topic mobile spacing and inquiry handoff need periodic review; no free HTML/CSS editor is exposed.',
   },
   {
     key: 'news',
