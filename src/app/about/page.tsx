@@ -440,6 +440,56 @@ function AnchorNav({ activeSection, zh }: { activeSection: string; zh: boolean }
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 
+function AboutDecisionSection({ zh }: { zh: boolean }) {
+  const cards = [
+    {
+      label: zh ? '品牌定位' : 'Brand Position',
+      title: zh ? '面向运营方的高端太空舱解决方案' : 'Premium space-cabin systems for operators',
+      body: zh
+        ? 'About 页面先讲清楚企业是谁、为什么可信、能交付什么，而不是只堆叠公司介绍。'
+        : 'The About page now explains who VESSEL is, why it is credible, and what it can deliver instead of only listing company facts.',
+    },
+    {
+      label: zh ? '项目能力' : 'Project Capability',
+      title: zh ? '研发、工厂、安装和售后在一条链路里' : 'R&D, factory, installation, and service in one chain',
+      body: zh
+        ? '采购方能快速看到自研技术、生产能力、全球交付和运营支持之间的关系。'
+        : 'Buyers can understand how proprietary technology, production capacity, global delivery, and operating support connect.',
+    },
+    {
+      label: zh ? '下一步动作' : 'Next Action',
+      title: zh ? '从品牌信任进入产品或咨询' : 'Move from trust to product or inquiry',
+      body: zh
+        ? '页面底部继续保留产品、案例和联系入口，让品牌叙事自然进入转化路径。'
+        : 'Product, case, and contact entries remain available so brand storytelling can continue into conversion paths.',
+    },
+  ];
+
+  return (
+    <section className="bg-white px-6 py-16" style={{ order: ABOUT_ORDER_GROUPS.preCertifications + 25 }}>
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-8 max-w-3xl">
+          <p className="mb-4 text-xs font-medium uppercase tracking-[0.35em] text-[#E36F2C]">
+            {zh ? '品牌判断路径' : 'Brand Decision Path'}
+          </p>
+          <h2 className="text-3xl font-light leading-tight text-[#241F1B] lg:text-4xl" style={{ fontFamily: 'var(--font-heading)' }}>
+            {zh ? '让客户在三屏内理解 VESSEL 的可信度。' : 'Help buyers understand VESSEL credibility within the first few screens.'}
+          </h2>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-3">
+          {cards.map((card) => (
+            <div key={card.label} className="rounded-md border border-[#E5E0DA] bg-[#F5F2ED] p-6">
+              <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.25em] text-[#E36F2C]">{card.label}</p>
+              <h3 className="text-lg font-semibold text-[#241F1B]" style={{ fontFamily: 'var(--font-heading)' }}>{card.title}</h3>
+              <p className="mt-3 text-sm leading-6 text-[#6B625B]">{card.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function AboutPage() {
   const { lang } = useLanguage();
   const zh = lang === 'zh';
@@ -753,6 +803,8 @@ export default function AboutPage() {
           </div>
         </section>
       ) : null}
+
+      <AboutDecisionSection zh={zh} />
 
       {/* ── S3 Brand story ───────────────────────────────────── */}
       {showBrandStory ? (

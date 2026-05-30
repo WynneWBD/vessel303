@@ -72,7 +72,7 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     source: 'Navbar.tsx',
     owner: '页面可视化编辑',
     status: 'live',
-    note: 'About 模块内容可编辑，导航文字和位置仍由代码控制。',
+    note: 'About 模块内容可编辑；B20 已补品牌判断路径，导航文字和位置仍由代码控制。',
     Icon: FileText,
   },
   {
@@ -82,7 +82,7 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     source: 'Navbar.tsx',
     owner: 'FAQ CMS',
     status: 'cms',
-    note: '常见问题内容由固定 FAQ CMS 维护，导航文字和位置仍由代码控制。',
+    note: '常见问题内容由固定 FAQ CMS 维护；B20 已补 FAQ 决策提示，导航文字和位置仍由代码控制。',
     Icon: ListChecks,
   },
   {
@@ -132,7 +132,7 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     source: 'Footer.tsx',
     owner: '页面可视化编辑',
     status: 'live',
-    note: '页脚入口与顶部 About 保持一致。',
+    note: '页脚入口与顶部 About 保持一致；B20 页脚补充产品、案例、FAQ 到咨询的运营说明。',
     Icon: FileText,
   },
   {
@@ -419,7 +419,7 @@ export default async function AdminSiteNavigationPage() {
             <p className="text-sm font-semibold text-[#1889B6]">B5-3 导航管理</p>
             <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">网站导航只读盘点</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-              当前阶段把前台导航、行动按钮和页脚入口集中给运营人员查看，避免在代码、CMS 和站点设置之间来回查找。
+              当前阶段把前台导航、行动按钮和页脚入口集中给运营人员查看；B20 补充首页、About、FAQ 和页脚的前台精修边界，避免在代码、CMS 和站点设置之间来回查找。
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

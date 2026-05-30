@@ -545,6 +545,66 @@ function renderHomeDynamicModule(resolved: ResolvedPageModule<HomePageModule>) {
   }
 }
 
+function OperatingProofSection() {
+  const { lang } = useLanguage();
+  const zh = lang === 'zh';
+  const items = [
+    {
+      label: zh ? '运营场景' : 'Operating Scenarios',
+      title: zh ? '从度假营地到城市商业' : 'From resort camps to city retail',
+      body: zh
+        ? '把产品、场景、项目案例和咨询入口连成一条可执行路径，方便采购方快速判断适用场景。'
+        : 'Products, scenarios, cases, and inquiry paths are organized as one operating journey for faster buyer evaluation.',
+    },
+    {
+      label: zh ? '交付能力' : 'Delivery Readiness',
+      title: zh ? '工厂预制，项目化交付' : 'Factory-built, project delivered',
+      body: zh
+        ? '首页先展示核心技术、资质、旗舰产品和项目覆盖，再引导进入产品或案例深看。'
+        : 'The homepage introduces core technology, certifications, flagship products, and project coverage before sending visitors deeper.',
+    },
+    {
+      label: zh ? '转化闭环' : 'Conversion Loop',
+      title: zh ? '咨询入口统一可追踪' : 'Trackable inquiry entry points',
+      body: zh
+        ? 'Contact、FAQ、产品详情和内容页的咨询动作都按统一规则进入运营线索。'
+        : 'Contact, FAQ, product detail, and content-page inquiries follow one source-aware conversion rule.',
+    },
+  ];
+
+  return (
+    <section className="border-b border-[#E5DED4] bg-white py-16">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.4fr] lg:items-end">
+          <div>
+            <p className="mb-4 text-xs font-medium uppercase tracking-[0.3em] text-[#E36F2C]">
+              {zh ? '运营导览' : 'Operating Map'}
+            </p>
+            <h2 className="font-[family-name:var(--font-heading)] text-3xl font-light leading-tight text-[#241F1B] lg:text-4xl">
+              {zh ? '让首次访问者先看懂，再进入产品、案例和咨询。' : 'Let first-time buyers understand the path before products, cases, and inquiry.'}
+            </h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-7 text-[#6B625B] lg:ml-auto">
+            {zh
+              ? '对照 300 的建站心智，首页不只是视觉展示，而是把品牌可信度、产品目录、项目案例和联系动作放在同一条运营链路里。'
+              : 'Following the 300 operating mindset, the homepage is not only a visual entry. It connects credibility, product catalog, project proof, and contact actions in one path.'}
+          </p>
+        </div>
+
+        <div className="mt-10 grid gap-4 md:grid-cols-3">
+          {items.map((item) => (
+            <div key={item.label} className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-6">
+              <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.25em] text-[#E36F2C]">{item.label}</p>
+              <h3 className="font-[family-name:var(--font-heading)] text-xl font-medium text-[#241F1B]">{item.title}</h3>
+              <p className="mt-3 text-sm leading-6 text-[#6B625B]">{item.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Core Tech Systems ───────────────────────────────────
 
 function CoreTechSection({ onOpenTech }: { onOpenTech: (tech: Tech) => void }) {
@@ -1039,6 +1099,7 @@ export default function HomePage() {
     <main>
       <Navbar />
       {dynamicModules.map(renderHomeDynamicModule)}
+      <OperatingProofSection />
       <CoreTechSection onOpenTech={openTech} />
       <CertificationsSection />
       <PhilosophySection />

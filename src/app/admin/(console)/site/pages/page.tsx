@@ -90,7 +90,7 @@ const SITE_PAGES: SitePage[] = [
     path: '/',
     group: '页面编辑',
     source: '页面可视化编辑器',
-    detail: '首页 Hero、核心数据和安全插入区由受控模块维护，草稿不会直接影响前台。',
+    detail: '首页 Hero、核心数据和安全插入区由受控模块维护；B20 新增运营导览，草稿不会直接影响前台。',
     status: 'editable',
     editorHref: '/admin/site/visual',
     viewHref: '/',
@@ -103,7 +103,7 @@ const SITE_PAGES: SitePage[] = [
     path: '/about',
     group: '页面编辑',
     source: '页面可视化编辑器',
-    detail: '关于页品牌、工厂、历程和荣誉等模块可编辑，但不开放新增结构。',
+    detail: '关于页品牌、工厂、历程和荣誉等模块可编辑；B20 新增品牌判断路径，但不开放新增结构。',
     status: 'editable',
     editorHref: '/admin/site/visual',
     viewHref: '/about',
@@ -152,7 +152,7 @@ const SITE_PAGES: SitePage[] = [
     path: '/faq',
     group: '固定内容 CMS',
     source: 'FAQ CMS',
-    detail: '常见问题分类、排序和发布状态由固定内容 CMS 维护，前台保留静态兜底。',
+    detail: '常见问题分类、排序和发布状态由固定内容 CMS 维护；B20 补采购前/项目中/下一步说明，前台保留静态兜底。',
     status: 'managed',
     editorHref: '/admin/content/faq',
     viewHref: '/faq',
@@ -636,7 +636,7 @@ export default async function AdminSitePagesPage() {
       role={adminRole}
       email={session.user.email}
       title="网站管理"
-      description="按页面查看可编辑范围、内容来源、草稿状态和前台入口。"
+      description="按页面查看可编辑范围、内容来源、草稿状态、前台入口和 B20 精修边界。"
       sideNavGroups={sideNavGroups}
       activeItem="pages"
     >

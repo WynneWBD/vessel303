@@ -178,7 +178,7 @@ const SITE_PUBLISH_APPS: SitePublishApp[] = [
   },
   {
     title: '编辑页面草稿',
-    detail: 'Home / About 的受控模块先保存为草稿，发布前必须预览校对。',
+    detail: 'Home / About 的受控模块先保存为草稿；B20 已补品牌叙事和转化说明，发布前必须预览校对。',
     href: '/admin/site/visual',
     Icon: LayoutTemplate,
     action: '进入编辑',
@@ -745,7 +745,7 @@ export default async function AdminSitePage() {
       role={adminRole}
       email={session.user.email}
       title="网站管理"
-      description="编辑页面、管理图片素材，并查看主站和 Global 展示。"
+      description="编辑页面、管理图片素材，并查看首页、About、FAQ、页脚和 Global 展示边界。"
       sideNavGroups={sideNavGroups}
       activeItem="overview"
     >

@@ -105,6 +105,29 @@ export default function FaqView({
     (count, cat) => count + items.filter((item) => item.category === cat.key).length,
     0,
   )
+  const supportCards = [
+    {
+      label: lang === 'zh' ? '采购前' : 'Before Purchase',
+      title: lang === 'zh' ? '确认场景和产品适配' : 'Match scenario and product',
+      body: lang === 'zh'
+        ? '先看安装、运输、交付和认证，再进入产品详情或提交咨询。'
+        : 'Review installation, transport, delivery, and certification before moving into product detail or inquiry.',
+    },
+    {
+      label: lang === 'zh' ? '项目中' : 'During Project',
+      title: lang === 'zh' ? '明确交付边界' : 'Clarify delivery scope',
+      body: lang === 'zh'
+        ? 'FAQ 用来解释常见商务和技术问题，具体配置仍回到产品后台资料。'
+        : 'FAQ explains common commercial and technical questions while detailed configuration stays with product records.',
+    },
+    {
+      label: lang === 'zh' ? '下一步' : 'Next Step',
+      title: lang === 'zh' ? '带着问题提交线索' : 'Submit with project context',
+      body: lang === 'zh'
+        ? '没有答案的问题可直接提交表单，后台会按 FAQ 来源进入线索。'
+        : 'Unanswered questions can be submitted directly and enter the leads console with FAQ source context.',
+    },
+  ]
 
   return (
     <div className="flex min-h-screen flex-col" style={{ backgroundColor: '#F5F2ED' }}>
@@ -137,6 +160,20 @@ export default function FaqView({
               {lang === 'zh' ? '可提交线索' : 'Lead tracking ready'}
             </span>
           </div>
+        </div>
+      </section>
+
+      <section className="border-b border-[#E5E0DA] bg-white px-4 py-8">
+        <div className="mx-auto grid max-w-4xl gap-3 md:grid-cols-3">
+          {supportCards.map((card) => (
+            <div key={card.label} className="rounded-md border border-[#E5E0DA] bg-[#F5F2ED] p-5">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#E36F2C]">
+                {card.label}
+              </p>
+              <h2 className="text-base font-semibold text-[#2C2A28]">{card.title}</h2>
+              <p className="mt-2 text-xs leading-5 text-[#6B625B]">{card.body}</p>
+            </div>
+          ))}
         </div>
       </section>
 

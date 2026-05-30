@@ -29,6 +29,10 @@ export default function Footer() {
     { label: t(i18n.nav.scenarioCommercial), href: '/scenarios/commercial' },
     { label: t(i18n.nav.scenarioPublic), href: '/scenarios/public' },
   ];
+  const footerProof = [
+    lang === 'zh' ? '产品目录 / 案例 / FAQ 统一承接咨询' : 'Product, cases, and FAQ all connect to inquiry paths',
+    lang === 'zh' ? '工厂交付、全球项目和技术专题可快速追溯' : 'Factory delivery, global proof, and technology topics stay traceable',
+  ];
 
   return (
     <footer id="contact" className="bg-[#241F1B] border-t border-[#E36F2C]/15">
@@ -79,6 +83,13 @@ export default function Footer() {
             <p className="text-white/35 text-xs leading-relaxed mb-5 max-w-xs">
               {t(i18n.footer.brandDesc)}
             </p>
+            <div className="mb-5 grid max-w-sm gap-2">
+              {footerProof.map((item) => (
+                <div key={item} className="rounded-md border border-white/10 bg-white/[0.03] px-3 py-2 text-xs leading-5 text-white/40">
+                  {item}
+                </div>
+              ))}
+            </div>
             <div className="text-white/20 text-xs space-y-1">
               <div>WhatsApp: +86 180-2417-6679</div>
               <div>Email: 303vessel@303industries.cn</div>
