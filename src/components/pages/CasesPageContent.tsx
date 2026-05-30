@@ -192,15 +192,15 @@ export default function CasesPageContent({ cases }: { cases: ProjectCaseRow[] })
             </Link>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
               {featuredCases.slice(1, 3).map((item) => (
-                <Link key={item.id} href={`/cases/${item.id}`} className="group grid grid-cols-[140px_minmax(0,1fr)] overflow-hidden border border-[#E5DED4] bg-[#FAF7F2]">
-                  <span className="relative min-h-[150px] overflow-hidden bg-[#E5DED4]">
+                <Link key={item.id} href={`/cases/${item.id}`} className="group grid grid-cols-1 overflow-hidden border border-[#E5DED4] bg-[#FAF7F2] sm:grid-cols-[140px_minmax(0,1fr)]">
+                  <span className="relative min-h-[180px] overflow-hidden bg-[#E5DED4] sm:min-h-[150px]">
                     <ProtectedImage
                       src={item.cover_image_url || ''}
                       alt={zh ? item.name_zh : item.name_en}
                       fill
                       loading="lazy"
                       className="object-cover transition duration-500 group-hover:scale-105"
-                      sizes="140px"
+                      sizes="(max-width: 640px) 100vw, 140px"
                     />
                   </span>
                   <span className="flex min-w-0 flex-col justify-center p-4">
@@ -357,20 +357,20 @@ export default function CasesPageContent({ cases }: { cases: ProjectCaseRow[] })
           )}
         </div>
 
-        <div className="mt-16 text-center p-12 border border-[#E36F2C]/15 bg-[#E36F2C]/3">
+        <div className="mt-16 border border-[#E36F2C]/15 bg-[#E36F2C]/3 p-6 text-center sm:p-12">
           <div className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase mb-3">{t(i18n.cases.ctaBadge)}</div>
           <h2 className="text-2xl font-black text-[#2C2A28] mb-3">{t(i18n.cases.ctaTitle)}</h2>
           <p className="text-[#6B6560] text-sm mb-8 tracking-wider">{t(i18n.cases.ctaSubtitle)}</p>
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-col justify-center gap-4 sm:flex-row sm:flex-wrap">
             <Link
               href={buildContactHref('cases:list_cta')}
-              className="bg-[#E36F2C] text-white font-bold text-sm px-8 py-3 hover:bg-[#C85A1F] transition-colors tracking-wider"
+              className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-8 py-3 text-sm font-bold tracking-wider text-white transition-colors hover:bg-[#C85A1F]"
             >
               {t(i18n.cases.ctaBtn1)}
             </Link>
             <a
               href="tel:4008090303"
-              className="border border-[#999999] text-[#2C2A28] text-sm px-8 py-3 hover:border-[#E36F2C] hover:text-[#E36F2C] transition-colors tracking-wider"
+              className="inline-flex min-h-11 items-center justify-center border border-[#999999] px-8 py-3 text-sm tracking-wider text-[#2C2A28] transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
             >
               400-8090-303
             </a>

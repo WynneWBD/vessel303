@@ -192,7 +192,7 @@ function ProductCard({ product }: { product: CatalogProduct }) {
 
   return (
     <article className="group flex min-h-full flex-col border border-[#DADDE1] bg-white transition hover:-translate-y-0.5 hover:border-[#147C94]/60 hover:shadow-[0_18px_46px_rgba(24,44,54,0.13)]">
-      <Link href={productHref(product)} className="relative block aspect-square overflow-hidden bg-[#EEF1F3]">
+      <Link href={productHref(product)} className="relative block aspect-[4/3] overflow-hidden bg-[#EEF1F3] sm:aspect-square">
         <ProtectedImage
           src={product.image}
           alt={name}
@@ -215,7 +215,7 @@ function ProductCard({ product }: { product: CatalogProduct }) {
           <span>{product.productSeries}</span>
           <span>{product.size}</span>
         </div>
-        <Link href={productHref(product)} className="text-base font-bold leading-snug text-[#1F2A31] hover:text-[#147C94]">
+        <Link href={productHref(product)} className="text-base font-bold leading-snug text-[#1F2A31] break-words hover:text-[#147C94]">
           {name}
         </Link>
         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -227,7 +227,7 @@ function ProductCard({ product }: { product: CatalogProduct }) {
         </div>
         <div className="mt-4 border-t border-[#ECEFF1] pt-3">
           <span className="min-w-0 truncate text-sm font-semibold text-[#C65F22]">{productPrice(product, lang)}</span>
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <Link
               href={productHref(product)}
               className="inline-flex min-h-10 items-center justify-center bg-[#147C94] px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#0E6479]"
@@ -346,32 +346,32 @@ export default function ProductsPageContent({
                 ? 'Browse VESSEL product models by category, configuration, area and country.'
                 : '按分类、配置、面积和国家浏览 VESSEL 产品目录。'}
             </p>
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link
                 href={buildContactHref('products:catalog_inquiry_cta')}
-                className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#C85A1F]"
+                className="inline-flex min-h-11 w-full items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#C85A1F] sm:w-auto"
               >
                 {lang === 'zh' ? '提交产品需求' : 'Send product brief'}
               </Link>
               <Link
                 href="/cases"
-                className="inline-flex min-h-11 items-center justify-center border border-[#C7CDD2] bg-white px-5 text-sm font-semibold text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94]"
+                className="inline-flex min-h-11 w-full items-center justify-center border border-[#C7CDD2] bg-white px-5 text-sm font-semibold text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94] sm:w-auto"
               >
                 {lang === 'zh' ? '查看项目案例' : 'View project cases'}
               </Link>
             </div>
           </div>
 
-          <div className="grid grid-cols-[1.15fr_0.85fr] gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.15fr_0.85fr]">
             {heroPreviewProducts[0] ? (
-              <Link href={productHref(heroPreviewProducts[0])} className="group relative min-h-[260px] overflow-hidden border border-white bg-[#DDE7EA] shadow-sm">
+              <Link href={productHref(heroPreviewProducts[0])} className="group relative min-h-[220px] overflow-hidden border border-white bg-[#DDE7EA] shadow-sm sm:min-h-[260px]">
                 <ProtectedImage
                   src={heroPreviewProducts[0].image}
                   alt={lang === 'en' ? heroPreviewProducts[0].name_en : heroPreviewProducts[0].name_cn}
                   fill
                   priority
                   className="object-cover transition duration-500 group-hover:scale-105"
-                  sizes="(max-width: 1024px) 62vw, 460px"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 62vw, 460px"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#1F2A31]/86 to-transparent p-4">
                   <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#F2A36F]">Featured Product</p>
@@ -381,7 +381,7 @@ export default function ProductsPageContent({
             ) : null}
             <div className="grid gap-3">
               {heroPreviewProducts.slice(1, 3).map((product) => (
-                <Link key={product.id} href={productHref(product)} className="group relative min-h-[124px] overflow-hidden border border-white bg-[#DDE7EA] shadow-sm">
+                <Link key={product.id} href={productHref(product)} className="group relative min-h-[132px] overflow-hidden border border-white bg-[#DDE7EA] shadow-sm sm:min-h-[124px]">
                   <ProtectedImage
                     src={product.image}
                     alt={lang === 'en' ? product.name_en : product.name_cn}
@@ -389,7 +389,7 @@ export default function ProductsPageContent({
                     priority={false}
                     loading="lazy"
                     className="object-cover transition duration-500 group-hover:scale-105"
-                    sizes="(max-width: 1024px) 34vw, 260px"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 34vw, 260px"
                   />
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#1F2A31]/78 to-transparent p-3">
                     <p className="text-xs font-bold text-white">{lang === 'en' ? product.name_en : product.name_cn}</p>
@@ -427,7 +427,7 @@ export default function ProductsPageContent({
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 sm:px-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-8">
           <div className="lg:hidden">
             <details className="border border-[#DADDE1] bg-white">
-              <summary className="cursor-pointer px-4 py-3 text-sm font-bold text-[#1F2A31]">Filters</summary>
+              <summary className="flex min-h-12 cursor-pointer items-center px-4 text-sm font-bold text-[#1F2A31]">Filters</summary>
               <div className="border-t border-[#DADDE1] p-4">
                 <Sidebar categories={categories} attributeTemplates={attributeTemplates} filters={filters} />
               </div>

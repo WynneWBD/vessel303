@@ -110,7 +110,7 @@ function RelatedCard({ product }: { product: CatalogProduct }) {
           sizes="(max-width: 768px) 50vw, 220px"
         />
       </span>
-      <span className="block p-3 text-sm font-semibold leading-snug text-[#1F2A31] group-hover:text-[#147C94]">
+      <span className="block p-3 text-sm font-semibold leading-snug text-[#1F2A31] break-words group-hover:text-[#147C94]">
         {name}
       </span>
     </Link>
@@ -225,7 +225,7 @@ export default function CatalogProductDetailContent({
 
             <aside className="rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm lg:self-start">
               {badge ? <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-[#C65F22]">{badge}</p> : null}
-              <h1 className="text-3xl font-black leading-tight tracking-normal text-[#1F2A31]">{name}</h1>
+              <h1 className="text-2xl font-black leading-tight tracking-normal text-[#1F2A31] break-words sm:text-3xl">{name}</h1>
               {description ? <p className="mt-4 whitespace-pre-line text-sm leading-7 text-[#5C6670]">{description}</p> : null}
               {quickFacts.length > 0 ? (
                 <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1">
@@ -285,7 +285,7 @@ export default function CatalogProductDetailContent({
             <a
               key={item.href}
               href={item.href}
-              className="inline-flex min-h-9 shrink-0 items-center border border-[#DADDE1] px-3 text-xs font-bold uppercase tracking-[0.12em] text-[#65707A] transition hover:border-[#147C94] hover:text-[#147C94]"
+              className="inline-flex min-h-10 shrink-0 items-center border border-[#DADDE1] px-3 text-xs font-bold uppercase tracking-[0.1em] text-[#65707A] transition hover:border-[#147C94] hover:text-[#147C94]"
             >
               {item.label}
             </a>
@@ -376,7 +376,7 @@ export default function CatalogProductDetailContent({
         <section id="related-products" className="scroll-mt-28 border-t border-[#DADDE1] bg-white py-10">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionTitle label="Related Products" title="Related Products" />
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
               {relatedProducts.map((item) => (
                 <RelatedCard key={item.id} product={item} />
               ))}

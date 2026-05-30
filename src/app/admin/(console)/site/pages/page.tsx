@@ -90,7 +90,7 @@ const SITE_PAGES: SitePage[] = [
     path: '/',
     group: '页面编辑',
     source: '页面可视化编辑器',
-    detail: '首页 Hero、核心数据和安全插入区由受控模块维护；B22 强化高清产品/场景视觉、产品目录、项目案例和咨询路径的 300 对齐入口，草稿不会直接影响前台。',
+    detail: '首页 Hero、核心数据和安全插入区由受控模块维护；B23 继续核查移动端首屏、图片比例、产品/场景视觉和咨询入口，草稿不会直接影响前台。',
     status: 'editable',
     editorHref: '/admin/site/visual',
     viewHref: '/',
@@ -103,7 +103,7 @@ const SITE_PAGES: SitePage[] = [
     path: '/about',
     group: '页面编辑',
     source: '页面可视化编辑器',
-    detail: '关于页品牌、工厂、历程和荣誉等模块可编辑；B22 已在首屏和品牌判断路径强化产品中心与咨询入口，但不开放新增结构。',
+    detail: '关于页品牌、工厂、历程和荣誉等模块可编辑；B23 继续核查移动端首屏、CTA 层级和品牌判断路径，但不开放新增结构。',
     status: 'editable',
     editorHref: '/admin/site/visual',
     viewHref: '/about',
@@ -116,7 +116,7 @@ const SITE_PAGES: SitePage[] = [
     path: '/products',
     group: '内容 CMS',
     source: '产品管理 2.0',
-    detail: '产品列表和详情内容由产品管理维护；B22 前台强化 300 式目录感、产品图占比、详情锚点和移动端筛选，不进入页面自由搭建器。',
+    detail: '产品列表和详情内容由产品管理维护；B23 复核移动端筛选、产品图比例、详情锚点、Related Products 和询盘触达，不进入页面自由搭建器。',
     status: 'managed',
     editorHref: '/admin/content/products',
     viewHref: '/products',
@@ -128,7 +128,7 @@ const SITE_PAGES: SitePage[] = [
     path: '/cases',
     group: '内容 CMS',
     source: '项目案例 2.0',
-    detail: '项目案例列表和详情由项目后台维护；B22 增强精选案例图、项目证据和场景筛选说明，Global 只作为地图展示渠道。',
+    detail: '项目案例列表和详情由项目后台维护；B23 复核案例图片比例、卡片密度、地点/场景标签和 CTA 排版，Global 只作为地图展示渠道。',
     status: 'managed',
     editorHref: '/admin/content/projects',
     viewHref: '/cases',
@@ -152,7 +152,7 @@ const SITE_PAGES: SitePage[] = [
     path: '/faq',
     group: '固定内容 CMS',
     source: 'FAQ CMS',
-    detail: '常见问题分类、排序和发布状态由固定内容 CMS 维护；B22 补充 FAQ 使用路径、后台 owner 和线索承接提示，前台保留静态兜底。',
+    detail: '常见问题分类、排序和发布状态由固定内容 CMS 维护；B23 复核移动端阅读节奏、CTA 触达和线索承接提示，前台保留静态兜底。',
     status: 'managed',
     editorHref: '/admin/content/faq',
     viewHref: '/faq',
@@ -636,17 +636,17 @@ export default async function AdminSitePagesPage() {
       role={adminRole}
       email={session.user.email}
       title="网站管理"
-      description="按页面查看可编辑范围、内容来源、草稿状态、前台入口和 B22 精修边界。"
+      description="按页面查看可编辑范围、内容来源、草稿状态、前台入口和 B23 移动端/图片比例复核边界。"
       sideNavGroups={sideNavGroups}
       activeItem="pages"
     >
       <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#F3FBFC_0%,#FFFFFF_58%,#FFF4E9_100%)] p-5 shadow-sm md:p-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-sm font-semibold text-[#1889B6]">B22 页面清单</p>
+            <p className="text-sm font-semibold text-[#1889B6]">B23 页面清单</p>
             <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">网站页面与编辑范围</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-              运营先确认页面归属，再进入对应后台；B22 已把前台精致度、移动端体验和 CTA 去向继续标到页面 owner 上。
+              运营先确认页面归属，再进入对应后台；B23 已把移动端体感、图片比例、CTA 去向和素材缺口继续标到页面 owner 上。
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

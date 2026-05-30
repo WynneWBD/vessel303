@@ -133,14 +133,14 @@ export default function FaqView({
     <div className="flex min-h-screen flex-col" style={{ backgroundColor: '#F5F2ED' }}>
       <Navbar />
 
-      <section className="px-4 pb-16 pt-28" style={{ backgroundColor: '#241F1B' }}>
+      <section className="px-4 pb-12 pt-28 sm:pb-16" style={{ backgroundColor: '#241F1B' }}>
         <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
           <div>
             <p className="mb-4 text-xs font-medium uppercase tracking-[0.35em] text-[#E36F2C]">
               {lang === 'zh' ? '常见问题' : 'Frequently Asked Questions'}
             </p>
             <h1
-              className="mb-5 text-5xl font-bold leading-none tracking-tight text-[#F5F2ED] sm:text-6xl"
+              className="mb-5 text-4xl font-bold leading-none tracking-tight text-[#F5F2ED] sm:text-6xl"
               style={{ fontFamily: 'var(--font-dm-sans, DM Sans, sans-serif)' }}
             >
               FAQ
@@ -162,7 +162,7 @@ export default function FaqView({
               </span>
             </div>
           </div>
-          <div className="border border-white/10 bg-white/[0.06] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
+          <div className="border border-white/10 bg-white/[0.06] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.18)] sm:p-5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#E36F2C]">
               {lang === 'zh' ? '使用路径' : 'Buyer Path'}
             </p>
@@ -300,13 +300,13 @@ export default function FaqView({
           <div className="flex flex-col justify-center gap-3 sm:flex-row">
             <Link
               href={buildContactHref('faq:general:contact_cta')}
-              className="inline-block bg-[#E36F2C] px-8 py-3.5 text-sm font-semibold tracking-wider text-white transition-colors hover:bg-[#C85A1F]"
+              className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-8 py-3.5 text-sm font-semibold tracking-wider text-white transition-colors hover:bg-[#C85A1F]"
             >
               {lang === 'zh' ? '联系我们' : 'Contact VESSEL'}
             </Link>
             <Link
               href="/global"
-              className="inline-block border border-white/20 px-8 py-3.5 text-sm font-medium tracking-wider text-white/70 transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
+              className="inline-flex min-h-11 items-center justify-center border border-white/20 px-8 py-3.5 text-sm font-medium tracking-wider text-white/70 transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
             >
               {lang === 'zh' ? '查看全球项目' : 'View Global Projects'}
             </Link>

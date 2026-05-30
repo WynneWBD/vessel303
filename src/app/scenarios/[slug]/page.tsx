@@ -338,12 +338,12 @@ export default async function ScenarioPage({
       />
 
       {/* ── Intro ── */}
-      <section className="py-16 border-b border-[#E5DED4]">
+      <section className="border-b border-[#E5DED4] py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12">
             <div>
               <p className="text-[#6B625B] text-base leading-loose mb-8">{scenario.intro}</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {scenario.specs.map((spec) => (
                   <div key={spec.label} className="bg-white border border-[#E5DED4] p-3">
                     <div className="text-[#8A7D74] text-[10px] tracking-wider mb-0.5">{spec.label}</div>
@@ -442,12 +442,12 @@ export default async function ScenarioPage({
             </div>
             <h2 className="text-2xl font-black text-[#2C2A28]">适合{scenario.label}的产品</h2>
           </div>
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
             {scenario.recommendedProducts.map((p) => (
               <Link
                 key={p}
                 href={`/products/${p.split(' ')[0].toLowerCase()}`}
-                className="flex items-center gap-3 px-6 py-3 border border-[#E5DED4] hover:border-[#E36F2C]/50 hover:text-[#E36F2C] text-[#6B625B] text-sm transition-all tracking-wider group"
+                className="group flex min-h-11 w-full items-center justify-between gap-3 border border-[#E5DED4] px-5 py-3 text-sm tracking-wider text-[#6B625B] transition-all hover:border-[#E36F2C]/50 hover:text-[#E36F2C] sm:w-auto sm:justify-center sm:px-6"
               >
                 <span>{p}</span>
                 <svg className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -457,7 +457,7 @@ export default async function ScenarioPage({
             ))}
             <Link
               href="/products"
-              className="flex items-center gap-2 px-6 py-3 border border-[#E36F2C]/30 text-[#E36F2C] text-sm hover:bg-[#E36F2C]/5 transition-all tracking-wider"
+              className="flex min-h-11 w-full items-center justify-center gap-2 border border-[#E36F2C]/30 px-6 py-3 text-sm tracking-wider text-[#E36F2C] transition-all hover:bg-[#E36F2C]/5 sm:w-auto"
             >
               查看全部产品 →
             </Link>
@@ -560,17 +560,17 @@ export default async function ScenarioPage({
           <p className="text-[#6B625B] text-sm mb-8 tracking-wider">
             专业顾问团队提供从选址规划到交付运营的全程服务，45天即可实现项目落地
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-col justify-center gap-4 sm:flex-row sm:flex-wrap">
             <Link
               href={buildContactHref(`scenario:${scenario.slug}:contact_cta`)}
-              className="text-sm font-bold px-8 py-3 tracking-wider transition-colors"
+              className="inline-flex min-h-11 items-center justify-center px-8 py-3 text-sm font-bold tracking-wider transition-colors"
               style={{ background: scenario.accentColor, color: '#FFFFFF' }}
             >
               立即咨询方案
             </Link>
             <a
               href="tel:4008090303"
-              className="text-sm px-8 py-3 border border-[#C4B9AB] text-[#2C2A28] hover:border-[#E36F2C] hover:text-[#E36F2C] transition-colors tracking-wider"
+              className="inline-flex min-h-11 items-center justify-center border border-[#C4B9AB] px-8 py-3 text-sm tracking-wider text-[#2C2A28] transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
             >
               400-8090-303
             </a>

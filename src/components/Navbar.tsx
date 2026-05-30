@@ -235,7 +235,7 @@ export default function Navbar() {
 
           {/* Mobile Toggle */}
           <button
-            className="xl:hidden text-white/80 hover:text-white p-2"
+            className="xl:hidden inline-flex min-h-11 min-w-11 items-center justify-center text-white/80 hover:text-white"
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle menu"
           >
@@ -252,7 +252,7 @@ export default function Navbar() {
         {/* Mobile Menu */}
         <div
           className={`xl:hidden overflow-hidden transition-all duration-300 ${
-            isOpen ? 'max-h-[700px] opacity-100' : 'max-h-0 opacity-0'
+            isOpen ? 'max-h-[calc(100vh-4rem)] overflow-y-auto opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
           <div className="py-4 border-t border-white/10 space-y-0.5">
@@ -302,17 +302,17 @@ export default function Navbar() {
               </div>
             ))}
 
-            <div className="flex gap-3 pt-4">
+            <div className="grid grid-cols-1 gap-3 pt-4 sm:grid-cols-2">
               <Link
                 href={buildContactHref('navbar:mobile_purchase_cta')}
-                className="flex-1 text-center bg-[#241F1B] text-white text-sm font-semibold py-3 border border-white/60 tracking-wider"
+                className="inline-flex min-h-11 items-center justify-center bg-[#241F1B] px-4 text-center text-sm font-semibold tracking-wider text-white border border-white/60"
                 onClick={() => setIsOpen(false)}
               >
                 {t(i18n.nav.purchaseBtn)}
               </Link>
               <Link
                 href={buildContactHref('navbar:mobile_booking_cta')}
-                className="flex-1 text-center bg-transparent text-white/80 text-sm py-3 border border-white/25 tracking-wider"
+                className="inline-flex min-h-11 items-center justify-center bg-transparent px-4 text-center text-sm tracking-wider text-white/80 border border-white/25"
                 onClick={() => setIsOpen(false)}
               >
                 {t(i18n.nav.bookingBtn)}

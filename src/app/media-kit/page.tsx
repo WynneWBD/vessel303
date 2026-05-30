@@ -89,7 +89,7 @@ export default function MediaKitPage() {
       <Navbar />
 
       {/* Hero */}
-      <section className="bg-[#241F1B] pt-28 pb-16 px-6">
+      <section className="bg-[#241F1B] px-4 pb-12 pt-28 sm:px-6 sm:pb-16">
         <div className="max-w-5xl mx-auto">
           <p className="text-[#E36F2C] text-xs tracking-[0.35em] uppercase font-medium mb-4">
             {t(i18n.mediaKit.heroLabel)}
@@ -105,7 +105,7 @@ export default function MediaKitPage() {
           </p>
           <div className="mt-8 flex flex-wrap gap-2">
             {['CMS resources', 'Lead request form', 'Source tracking'].map((item) => (
-              <span key={item} className="border border-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-white/55">
+              <span key={item} className="border border-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-white/55">
                 {item}
               </span>
             ))}
@@ -114,8 +114,8 @@ export default function MediaKitPage() {
       </section>
 
       {/* Form + Usage notes */}
-      <section className="flex-1 py-16 px-6">
-        <div className="max-w-5xl mx-auto grid lg:grid-cols-[1fr_320px] gap-12">
+      <section className="flex-1 px-4 py-12 sm:px-6 sm:py-16">
+        <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[1fr_320px] lg:gap-12">
           {/* Form */}
           <div>
             <h2
@@ -184,7 +184,7 @@ export default function MediaKitPage() {
                 <button
                   type="submit"
                   disabled={status === 'submitting'}
-                  className="inline-block bg-[#E36F2C] text-white px-10 py-4 text-sm font-semibold tracking-wider hover:bg-[#C85A1F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex min-h-12 w-full items-center justify-center bg-[#E36F2C] px-10 py-4 text-sm font-semibold tracking-wider text-white transition-colors hover:bg-[#C85A1F] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                   {status === 'submitting' ? t(i18n.mediaKit.submitting) : t(i18n.mediaKit.submit)}
                 </button>
