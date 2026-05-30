@@ -680,3 +680,19 @@ curl -I https://www.vessel303.com/news/<slug>
 - 验收摘要：`node scripts/audit-public-content.mjs`、`git diff --check`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；本地和线上 `/`、`/about`、`/products`、`/products/e7-gen6-flagship`、`/products/v9-gen6`、`/products/v9-gen6-standard`、`/cases`、`/cases/xunliao-bay-holiday-planet`、`/faq`、`/media-kit`、`/scenarios/tourism`、`/innovation/viie`、`/news` 均 200；`/contact` 307 到 300 联系页；未登录 `/admin/site/pages` 302 到 `/admin/login`。线上核心公开页为 `PRERENDER`，未引入长期 `no-store`。
 - 未改范围：未删除业务内容、未改权限 / 认证 / 支付 / 订单 / 会员，未改 `/global`、MapLibre、MapTiler 或 `/api/map`。B25 写入的后台初始内容仅用于承接现有展示，原则是只补缺失、不覆盖运营内容。
 - 后续建议：下一步不要再做“前台补文案式精修”。应先让运营在后台补齐真实内容和图片，再由 01 只调整展示模板；若继续深化，优先做 B26 后台可编辑字段体验、内容完整度检查和运营真实改稿验收。
+
+## B26 后台内容治理与运营改稿闭环（2026-05-30）
+
+- Code commit: `6e6ccdb` / `6e6ccdbb8937e1c6d2b34b289270b854a93d2078`
+- Vercel deployment: `dpl_DRhkJQWbWixFGWxCc3fzdanh52sY`，状态 `READY`，production alias 包含 `https://www.vessel303.com`
+- 本轮定位：B26 把 B25 的“后台决定前台”硬规则变成运营可用的后台工作台。前台仍只展示后台 published 内容；后台负责内容来源、状态、排序、SEO、导航、页脚、资源、表单、质检和发布后的前台同步确认。
+- 300 对照结论：300 的精髓不是前台可编辑，而是后台集中管理产品、内容、表单、SEO、资源、数据、质检和发布状态；本轮按这个心智把 vessel 新后台补成“前台内容来源中心 + 质检提示 + 固定字段编辑”的运营闭环。
+- 已完成范围：新增 `src/lib/admin-site-governance.ts`，集中维护页面内容合同、后台 owner、内容来源、必需模块、展示 / 隐藏规则、published / draft / hidden 统计、CTA / 图片 / 表单 / SEO 状态和缺口等级。
+- `/admin/site/pages` 已升级为“前台内容来源中心”，每个公开页面可查看后台 owner、内容来源、前台预览、后台编辑入口、状态数量、模块数量、SEO / CTA / 表单状态和质检提示；后台只显示管理状态，不向前台注入说明文案。
+- `/admin/site/navigation` 已改为读取 `page_modules:site` 的 Navbar / Footer / logo / action 配置状态，展示链接质检、无效链接提示、前台预览和编辑入口；不再把静态 `Navbar.tsx` / `Footer.tsx` 当作运营说明来源。
+- `/admin/pages/visual`、`PageModulesClient` 与 `PageVisualEditorClient` 已强化“显示到前台”字段标注；页面模块项目操作从“删除”改为“隐藏”，避免运营误以为可以物理删除内容。
+- B9 固定内容 CMS 管理器已补搜索、状态筛选、前台预览、状态标签和“显示到前台”字段提示，覆盖 FAQ、Media Kit、Display、Scenarios、Innovation 等固定内容类型。
+- 验收摘要：`node scripts/audit-public-content.mjs`、`git diff --check`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；本地路由检查确认 `/admin/site/pages`、`/admin/site/navigation` 未登录跳 `/admin/login`，公开 `/`、`/products`、`/faq`、`/media-kit`、`/scenarios/tourism`、`/innovation/viie` 可访问且公开页保持缓存状态。
+- 线上验收：`https://www.vessel303.com/` 和 `/products` 为 200 / `PRERENDER`；未登录 `/admin/site/pages`、`/admin/site/navigation` 跳登录；登录态 Chrome 抽查 `/admin/site/pages`、`/admin/site/navigation`、`/admin/site/visual` 页面可读且无 console error。
+- 已知边界：本轮没有做物理删除，没有改权限 / 认证 / 支付 / 订单 / 会员，没有改 `/global`、MapLibre、MapTiler 或 `/api/map`；真实生产改稿写入仍应由运营在新后台入口按 B26 内容合同执行，05 可按需要做低风险改稿验收。
+- 后续建议：下一步不建议再做前台硬编码修补。若继续运营化，优先做 B27“真实内容补齐与运营样板发布”：由运营或 03 提供真实图片 / 文案，02 只补后台字段和质检口径，01 只调整展示模板，05 验证后台改什么前台显示什么。
