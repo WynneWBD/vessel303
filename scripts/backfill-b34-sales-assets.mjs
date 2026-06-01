@@ -109,18 +109,18 @@ function mergeSpecRows(existing, defaults) {
 function mergeDetailModules(existing, defaults) {
   let modules = normalizeArray(existing)
   const changes = []
-  for (const module of defaults) {
-    if (!module?.id) continue
-    const index = modules.findIndex((row) => row?.id === module.id)
+  for (const detailModule of defaults) {
+    if (!detailModule?.id) continue
+    const index = modules.findIndex((row) => row?.id === detailModule.id)
     if (index >= 0) {
-      const next = { ...modules[index], ...module }
+      const next = { ...modules[index], ...detailModule }
       if (stableJson(modules[index]) !== stableJson(next)) {
         modules[index] = next
-        changes.push(`${module.id}:refresh`)
+        changes.push(`${detailModule.id}:refresh`)
       }
     } else {
-      modules.push(module)
-      changes.push(`${module.id}:add`)
+      modules.push(detailModule)
+      changes.push(`${detailModule.id}:add`)
     }
   }
   modules = modules.sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0))
@@ -132,17 +132,17 @@ async function tableExists(client, tableName) {
   return Boolean(res.rows[0]?.table_name)
 }
 
-async function upsertPageModule(client, module, changes) {
+async function upsertPageModule(client, pageModule, changes) {
   const res = await client.query(
     `SELECT id, title_zh, title_en, description_zh, description_en, items, is_visible, sort_order, module_type
      FROM page_modules
      WHERE page_key = $1 AND module_key = $2
      LIMIT 1`,
-    [module.page_key, module.module_key],
+    [pageModule.page_key, pageModule.module_key],
   )
 
   if (res.rowCount === 0) {
-    changes.push(`${module.page_key}:${module.module_key} insert`)
+    changes.push(`${pageModule.page_key}:${pageModule.module_key} insert`)
     if (apply) {
       await client.query(
         `INSERT INTO page_modules (
@@ -150,17 +150,17 @@ async function upsertPageModule(client, module, changes) {
            description_zh, description_en, items, is_visible, sort_order
          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11)`,
         [
-          module.id,
-          module.page_key,
-          module.module_key,
-          module.module_type,
-          module.title_zh,
-          module.title_en,
-          module.description_zh,
-          module.description_en,
-          JSON.stringify(module.items),
-          module.is_visible,
-          module.sort_order,
+          pageModule.id,
+          pageModule.page_key,
+          pageModule.module_key,
+          pageModule.module_type,
+          pageModule.title_zh,
+          pageModule.title_en,
+          pageModule.description_zh,
+          pageModule.description_en,
+          JSON.stringify(pageModule.items),
+          pageModule.is_visible,
+          pageModule.sort_order,
         ],
       )
     }
@@ -168,20 +168,20 @@ async function upsertPageModule(client, module, changes) {
   }
 
   const row = res.rows[0]
-  const nextItems = mergeItems(row.items, module.items)
+  const nextItems = mergeItems(row.items, pageModule.items)
   const changed = (
-    String(row.module_type ?? '') !== String(module.module_type ?? '') ||
-    String(row.title_zh ?? '') !== String(module.title_zh ?? '') ||
-    String(row.title_en ?? '') !== String(module.title_en ?? '') ||
-    String(row.description_zh ?? '') !== String(module.description_zh ?? '') ||
-    String(row.description_en ?? '') !== String(module.description_en ?? '') ||
+    String(row.module_type ?? '') !== String(pageModule.module_type ?? '') ||
+    String(row.title_zh ?? '') !== String(pageModule.title_zh ?? '') ||
+    String(row.title_en ?? '') !== String(pageModule.title_en ?? '') ||
+    String(row.description_zh ?? '') !== String(pageModule.description_zh ?? '') ||
+    String(row.description_en ?? '') !== String(pageModule.description_en ?? '') ||
     stableJson(normalizeArray(row.items)) !== stableJson(nextItems) ||
-    Boolean(row.is_visible) !== Boolean(module.is_visible) ||
-    Number(row.sort_order ?? 0) !== Number(module.sort_order ?? 0)
+    Boolean(row.is_visible) !== Boolean(pageModule.is_visible) ||
+    Number(row.sort_order ?? 0) !== Number(pageModule.sort_order ?? 0)
   )
 
   if (!changed) return
-  changes.push(`${module.page_key}:${module.module_key} refresh`)
+  changes.push(`${pageModule.page_key}:${pageModule.module_key} refresh`)
   if (apply) {
     await client.query(
       `UPDATE page_modules
@@ -196,16 +196,16 @@ async function upsertPageModule(client, module, changes) {
            updated_at = NOW()
        WHERE page_key = $1 AND module_key = $2`,
       [
-        module.page_key,
-        module.module_key,
-        module.module_type,
-        module.title_zh,
-        module.title_en,
-        module.description_zh,
-        module.description_en,
+        pageModule.page_key,
+        pageModule.module_key,
+        pageModule.module_type,
+        pageModule.title_zh,
+        pageModule.title_en,
+        pageModule.description_zh,
+        pageModule.description_en,
         JSON.stringify(nextItems),
-        module.is_visible,
-        module.sort_order,
+        pageModule.is_visible,
+        pageModule.sort_order,
       ],
     )
   }
@@ -280,21 +280,21 @@ const homeModules = [
         href: '/cases/astrobase-mamison',
         image_url: '/images/projects/astrobase-mamison/exterior-02.jpg',
       }),
-      item('card-israel', 'Dream Island Spa & Health Resort', 'Dream Island Spa & Health Resort', 30, {
-        value_zh: 'Israel / resort project',
-        value_en: 'Israel / resort project',
-        content_zh: 'Resort deployment reference for buyers comparing guest experience and site integration.',
-        content_en: 'Resort deployment reference for buyers comparing guest experience and site integration.',
-        href: '/cases/israel-dream-island',
-        image_url: '/images/projects/israel-dream-island/exterior-03-web.jpg',
+      item('card-israel', 'Xunliao Bay Holiday Planet', 'Xunliao Bay Holiday Planet', 30, {
+        value_zh: 'China / seaside glamping camp',
+        value_en: 'China / seaside glamping camp',
+        content_zh: 'Seaside glamping reference with multiple VESSEL product types and published project photos.',
+        content_en: 'Seaside glamping reference with multiple VESSEL product types and published project photos.',
+        href: '/cases/xunliao-bay-holiday-planet',
+        image_url: '/images/projects/guangdong-huizhou/image-03.jpg',
       }),
-      item('card-argentina', 'Centro Comercial Nordelta', 'Centro Comercial Nordelta', 40, {
-        value_zh: 'Argentina / commercial project',
-        value_en: 'Argentina / commercial project',
-        content_zh: 'Commercial deployment reference with published exterior and interior photos.',
-        content_en: 'Commercial deployment reference with published exterior and interior photos.',
-        href: '/cases/argentina-nordelta',
-        image_url: '/images/projects/argentina-nordelta/exterior-01.jpg',
+      item('card-argentina', 'Wanlv Lake Leqing Valley Camp', 'Wanlv Lake Leqing Valley Camp', 40, {
+        value_zh: 'China / lake-view eco camp',
+        value_en: 'China / lake-view eco camp',
+        content_zh: 'Lake-view ecological camp reference for light-touch deployment and nature-based hospitality.',
+        content_en: 'Lake-view ecological camp reference for light-touch deployment and nature-based hospitality.',
+        href: '/cases/wanlv-lake-leqing-valley',
+        image_url: '/images/projects/guangdong-heyuan/image-05.jpg',
       }),
       item('primary-cta', 'View cases', 'View cases', 100, { href: '/cases' }),
       item('secondary-cta', 'Discuss a similar project', 'Discuss a similar project', 110, { href: '/contact?source=home:case_proof_cta' }),
@@ -455,7 +455,7 @@ function buyerMaterialsModule(product) {
   }
 }
 
-function planningModule(product) {
+function planningModule() {
   return {
     id: 'b34-project-planning',
     type: 'content',
@@ -496,7 +496,7 @@ async function patchProducts(client, changes) {
     const gallery = unique([...normalizeArray(row.gallery), ...product.gallery])
     const specsEn = mergeSpecRows(row.specs_en, product.specs)
     const specsCn = mergeSpecRows(row.specs_cn, product.specs)
-    const detailModules = mergeDetailModules(row.detail_modules, [buyerMaterialsModule(product), planningModule(product)])
+    const detailModules = mergeDetailModules(row.detail_modules, [buyerMaterialsModule(product), planningModule()])
     const keywordsEn = unique([...(row.keywords_en ?? []), ...product.keywords])
     const keywordsZh = unique([...(row.keywords_zh ?? []), ...product.keywords])
     const related = unique([...(row.related_product_ids ?? []), ...product.related])
@@ -815,7 +815,7 @@ async function main() {
   try {
     await client.query('BEGIN')
     await patchHomeHero(client, changes)
-    for (const module of homeModules) await upsertPageModule(client, module, changes)
+    for (const pageModule of homeModules) await upsertPageModule(client, pageModule, changes)
     await patchProducts(client, changes)
     await patchCases(client, changes)
     await upsertMediaResources(client, changes)
