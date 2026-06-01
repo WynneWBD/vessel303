@@ -737,3 +737,16 @@ curl -I https://www.vessel303.com/news/<slug>
 - 旧短链和 News：`/products/e6` 301 到 `/products/e6-gen6-standard`，`/products/e3` 301 到 `/products/e3-gen6-standard`；News 真实英文内容不足时不进入主导航 / Footer / sitemap 主收录，`/news` 和测试详情如 `/news/2026` 返回 404，避免展示 `weisu` 等测试内容。
 - `/global` 边界：本轮代码 diff 为零；Global 仍引用 `DEFAULT_CONTACT_URL=https://en.303vessel.cn/contact.html` 和 `LEGACY_PRODUCTS_URL=https://en.303vessel.cn/products_list.html`，Contact / Products 旧站例外继续保留，未改 MapLibre、MapTiler、`/api/map`。
 - 验收摘要：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；线上 `/`、`/products`、`/products/e7-gen6-flagship`、`/contact`、`/media-kit`、`/cases/astrobase-mamison`、`/global` 均 200；`/products/e6`、`/products/e3` 线上 301 到 canonical；`/news`、`/news/2026` 线上 404；未登录 `/admin` 302 到 `/admin/login`。
+
+## B34 303 英文站内容与素材复刻补齐（2026-06-01）
+
+- Code commits: `7f269ac feat(site): deepen 303 sales content` / `7f269ac174660a6a942140ca76b693da47f5d47f`，以及 `10174e2 fix(site): use published case links in B34 content` / `10174e2e82b2a4f34be03abc0a337b8a420927ac`。
+- Vercel deployments: `dpl_3M6DZkbDeeRYJ3mpnWMW1pbxtWP6` READY，最终修复部署 `dpl_HLLPN3cuisFJirkkyzAN32wQhdqQ` READY，deployment URL `https://vessel303-jt5ol5tjb-vessel303.vercel.app`。
+- 本轮定位：B34 继续补齐 B33 与 `en.303vessel.cn` 的销售力差距，重点是首页销售模块、产品资料深度、案例商业证明、Media Kit 真实资料入口和海外联系方式统一。后台仍是控制器，前台只做显示器；前台不写死业务文案、图片、CTA、资料下载或 SEO。
+- 300 / 303 素材：B34 选定可用资料并落到 repo 静态下载目录 `public/downloads/b34/`，包括 E3 / E5 / E7 / V9 的 floor plan、E3 / E7 / V9 spec sheet 等资料文件；外部素材清单位于 `C:\Users\Wynne\Desktop\vessel303\vessel-assets\300-export\2026-06-01\b34-selected\manifest.csv` 和 `manifest.json`，不进入 Git。疑似第三方或来源不可判断素材不得发布。
+- 后台内容写入：新增 `scripts/backfill-b34-sales-assets.mjs`，支持 dry-run / apply；已写入低风险 published 内容和 CMS 字段，复跑 dry-run 显示 `No B34 changes needed.`。内容包括 Home hero / featured products / case proof 模块，E7 / V9 / E6 / E3 / E5 产品图库、specs、detail_modules、下载资料、关键词、SEO、相关产品和商务条款，案例 proof 字段，Media Kit 资料资源，以及统一 Contact 渠道。
+- 前台显示器补强：新增 Home `product-showcase` page module template 与 renderer，让首页可通过后台模块展示更接近 303 英文站的产品直给、高清图和强 CTA；前台只渲染后台 published 模块，缺内容时隐藏，不补默认销售文案。
+- 链接修复：B34 首次上线后，`audit:production-links` 发现首页 case proof 中两个后台 published 案例链接 404；已把 `/cases/israel-dream-island`、`/cases/argentina-nordelta` 改为已发布案例 `/cases/xunliao-bay-holiday-planet`、`/cases/wanlv-lake-leqing-valley`，并用第二个 commit 修复脚本默认值。
+- 验收摘要：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；线上 `/`、`/products`、`/products/v9-gen6-standard`、`/contact`、`/media-kit`、`/cases/xunliao-bay-holiday-planet`、`/cases/wanlv-lake-leqing-valley`、`/global` 均 200；`/downloads/b34/v9-gen6-spec-sheet.pdf` 200；未登录 `/admin` 302 到 `/admin/login`。
+- `/global` 边界：本轮未修改 Global 代码、MapLibre、MapTiler 或 `/api/map`；Global Contact / Products 继续保持老 303 跳转例外。
+- 后续建议：B35 若继续复刻销售力，应继续由 03 / 运营补更多可确认的 303 原始素材、产品资料和案例商业数据，再由 02 写入后台 published 内容或 CMS 字段；01 只调整展示模板，不在前台补业务内容。
