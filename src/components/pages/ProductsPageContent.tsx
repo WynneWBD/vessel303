@@ -66,6 +66,28 @@ function localizedText(en: string | null | undefined, zh: string | null | undefi
   return (lang === 'en' ? en : zh)?.trim() ?? '';
 }
 
+function categoryTitle(category: DirectoryCategory | undefined, lang: 'en' | 'zh') {
+  if (!category) return '';
+  return localizedText(category.title_en, category.title_zh, lang);
+}
+
+function attributeOptionTitle(
+  attributeTemplates: ProductAttributeTemplateWithOptions[],
+  optionId: string,
+  lang: 'en' | 'zh',
+) {
+  const id = Number(optionId);
+  if (!Number.isInteger(id)) return '';
+  for (const template of attributeTemplates) {
+    const option = template.options.find((item) => item.id === id);
+    if (!option) continue;
+    const templateLabel = localizedText(template.title_en, template.title_zh, lang);
+    const optionLabel = localizedText(option.label_en, option.label_zh, lang);
+    return [templateLabel, optionLabel].filter(Boolean).join(': ');
+  }
+  return '';
+}
+
 function productMatchesSearch(product: CatalogProduct, query: string) {
   if (!query) return true;
   const q = query.toLowerCase();
@@ -365,7 +387,14 @@ export default function ProductsPageContent({
     rangePrefix: label('range-prefix'),
     rangeOf: label('range-of'),
     catalogTotal: label('catalog-total-label'),
+    matchingProducts: label('matching-products-label'),
+    activeFilters: label('active-filters-label'),
+    queryFilter: label('query-filter-label'),
+    categoryFilter: label('category-filter-label'),
+    attributeFilter: label('attribute-filter-label'),
+    clearFilter: label('clear-filter-label'),
     emptyState: label('empty-state'),
+    emptyStateBody: label('empty-state-body'),
     detailsCta: label('details-cta'),
     inquiryCta: label('inquiry-cta'),
   };
@@ -382,6 +411,13 @@ export default function ProductsPageContent({
   const pageProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const rangeStart = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const rangeEnd = Math.min(total, currentPage * pageSize);
+  const selectedCategory = categoryTitle(categories.find((category) => String(category.id) === filters.category), lang);
+  const selectedAttribute = attributeOptionTitle(attributeTemplates, filters.attribute, lang);
+  const activeFilters = [
+    filters.q && uiLabels.queryFilter ? { key: 'q', label: uiLabels.queryFilter, value: filters.q } : null,
+    selectedCategory && uiLabels.categoryFilter ? { key: 'category', label: uiLabels.categoryFilter, value: selectedCategory } : null,
+    selectedAttribute && uiLabels.attributeFilter ? { key: 'attribute', label: uiLabels.attributeFilter, value: selectedAttribute } : null,
+  ].filter((item): item is { key: string; label: string; value: string } => Boolean(item));
   const heroPreviewProducts = products.slice(0, 3);
   const heroTitle = moduleTitle(heroModule, lang);
   const heroDescription = moduleDescription(heroModule, lang);
@@ -551,18 +587,39 @@ export default function ProductsPageContent({
               ) : null}
             </form>
 
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-[#65707A]">
-              <span>
-                {uiLabels.rangePrefix} {rangeStart}-{rangeEnd} {uiLabels.rangeOf} {total}
-              </span>
-              <span>
-                {uiLabels.catalogTotal}: {products.length}
-              </span>
+            <div className="mb-4 border border-[#DADDE1] bg-white p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[#65707A]">
+                <span>
+                  {uiLabels.matchingProducts || uiLabels.rangePrefix} {rangeStart}-{rangeEnd} {uiLabels.rangeOf} {total}
+                </span>
+                <span>
+                  {uiLabels.catalogTotal}: {products.length}
+                </span>
+              </div>
+              {activeFilters.length > 0 ? (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {uiLabels.activeFilters ? (
+                    <span className="text-xs font-bold uppercase tracking-[0.16em] text-[#65707A]">{uiLabels.activeFilters}</span>
+                  ) : null}
+                  {activeFilters.map((item) => (
+                    <span key={item.key} className="inline-flex items-center gap-1 border border-[#DADDE1] bg-[#F7F8F8] px-3 py-1 text-xs font-semibold text-[#1F2A31]">
+                      <span className="text-[#65707A]">{item.label}</span>
+                      <span>{item.value}</span>
+                    </span>
+                  ))}
+                  {uiLabels.clearFilter ? (
+                    <Link href="/products" className="inline-flex items-center border border-[#147C94] px-3 py-1 text-xs font-bold text-[#147C94] hover:bg-[#147C94] hover:text-white">
+                      {uiLabels.clearFilter}
+                    </Link>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
 
             {pageProducts.length === 0 ? (
-              <div className="border border-dashed border-[#C7CDD2] bg-white py-20 text-center text-sm text-[#65707A]">
-                {uiLabels.emptyState}
+              <div className="border border-dashed border-[#C7CDD2] bg-white px-6 py-20 text-center text-sm text-[#65707A]">
+                {uiLabels.emptyState ? <p className="font-semibold text-[#1F2A31]">{uiLabels.emptyState}</p> : null}
+                {uiLabels.emptyStateBody ? <p className="mt-2">{uiLabels.emptyStateBody}</p> : null}
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">

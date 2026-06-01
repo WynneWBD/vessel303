@@ -63,6 +63,14 @@ for (let index = 0; index < args.length; index += 1) {
 const targetRoutes = routes.length > 0 ? routes : DEFAULT_ROUTES
 const curlBin = process.platform === 'win32' ? 'curl.exe' : 'curl'
 const MARKER = '__CURL_HTTP_STATUS__'
+const ENGLISH_ONLY_ROUTES = new Set([
+  '/products',
+  '/scenarios/tourism',
+  '/scenarios/commercial',
+  '/scenarios/public',
+  '/media-kit',
+  '/contact',
+])
 
 function buildUrl(route) {
   if (/^https?:\/\//i.test(route)) return route
@@ -86,7 +94,7 @@ function fetchHtml(url) {
     if (!Number.isFinite(status)) {
       return { ok: false, status: null, body, error: 'Unable to parse curl http status' }
     }
-    if (status >= 400) {
+    if (status < 100 || status >= 400) {
       return { ok: false, status, body, error: `HTTP ${status}` }
     }
     return { ok: true, status, body, error: '' }
@@ -133,6 +141,20 @@ function snippetFor(text, index, length) {
   return text.slice(start, end).replace(/\s+/g, ' ').trim()
 }
 
+function textWithoutLanguageToggle(text) {
+  return text
+    .replace(/\bEN\s+中/g, ' ')
+    .replace(/中\s+EN\b/g, ' ')
+}
+
+function routePath(route) {
+  try {
+    return new URL(route, baseUrl).pathname
+  } catch {
+    return route.startsWith('/') ? route.split('?')[0] : `/${route.split('?')[0]}`
+  }
+}
+
 const violations = []
 const fetchErrors = []
 const scanned = []
@@ -158,6 +180,20 @@ for (const route of targetRoutes) {
         reason: rule.reason,
         match: match[0],
         snippet: snippetFor(text, match.index, match[0].length),
+      })
+    }
+  }
+
+  if (ENGLISH_ONLY_ROUTES.has(routePath(route))) {
+    const englishText = textWithoutLanguageToggle(text)
+    const cjkMatch = /[\u3400-\u9FFF]/.exec(englishText)
+    if (cjkMatch) {
+      violations.push({
+        route,
+        url,
+        reason: 'Chinese text visible on English public route',
+        match: cjkMatch[0],
+        snippet: snippetFor(englishText, cjkMatch.index, cjkMatch[0].length),
       })
     }
   }

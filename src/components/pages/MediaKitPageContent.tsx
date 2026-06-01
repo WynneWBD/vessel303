@@ -172,7 +172,7 @@ export default function MediaKitPageContent({
       </section>
 
       {/* Form + Usage notes */}
-      <section className="flex-1 px-4 py-12 sm:px-6 sm:py-16">
+      <section id="request-form" className="flex-1 px-4 py-12 sm:px-6 sm:py-16">
         <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[1fr_320px] lg:gap-12">
           {canRenderForm ? (
             <div>
@@ -278,8 +278,8 @@ export default function MediaKitPageContent({
                       {(resource.cta_href || resource.file_url) && (
                         <a
                           href={resource.cta_href || resource.file_url || '#'}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          target={isExternalHref(resource.cta_href || resource.file_url || '') ? '_blank' : undefined}
+                          rel={isExternalHref(resource.cta_href || resource.file_url || '') ? 'noopener noreferrer' : undefined}
                           className="mt-3 inline-flex text-xs font-semibold text-[#E36F2C] hover:text-[#C85A1F]"
                         >
                           {resource.cta_label_en || resourceCta || resource.title_en || resource.title_zh}
@@ -298,6 +298,10 @@ export default function MediaKitPageContent({
       <Footer />
     </div>
   );
+}
+
+function isExternalHref(href: string) {
+  return /^https?:\/\//i.test(href)
 }
 
 function Field({

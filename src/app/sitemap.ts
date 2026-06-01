@@ -20,6 +20,12 @@ type ProductSitemapRow = {
 
 type NewsSitemapRow = {
   slug: string
+  title_zh: string
+  title_en: string
+  excerpt_zh: string | null
+  excerpt_en: string | null
+  content_zh: unknown
+  content_en: unknown
   updated_at: string | null
   published_at: string | null
 }
@@ -57,6 +63,29 @@ function asDate(value: string | null | undefined): Date | undefined {
   if (!value) return undefined
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? undefined : date
+}
+
+function textFromUnknown(value: unknown): string {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return ''
+  }
+}
+
+function isLikelyTestNews(item: NewsSitemapRow) {
+  const text = [
+    item.slug,
+    item.title_zh,
+    item.title_en,
+    item.excerpt_zh,
+    item.excerpt_en,
+    textFromUnknown(item.content_zh),
+    textFromUnknown(item.content_en),
+  ].join(' ')
+  return /\b(?:weisu|weisuweisu|codex|test|b\d{2}(?:-\d+)?)\b/i.test(text)
 }
 
 function entry(
@@ -113,23 +142,28 @@ async function listProductEntries(): Promise<SitemapEntry[]> {
   )
 }
 
-async function listNewsEntries(): Promise<SitemapEntry[]> {
-  if (!(await tableExists('public.news'))) return []
+async function listNewsEntries(): Promise<{ entries: SitemapEntry[]; includeIndex: boolean }> {
+  if (!(await tableExists('public.news'))) return { entries: [], includeIndex: false }
 
   const res = await pool.query<NewsSitemapRow>(
-    `SELECT slug, updated_at::text AS updated_at, published_at::text AS published_at
+    `SELECT slug, title_zh, title_en, excerpt_zh, excerpt_en, content_zh, content_en,
+            updated_at::text AS updated_at, published_at::text AS published_at
      FROM news
      WHERE status = 'published' AND deleted_at IS NULL
      ORDER BY published_at DESC NULLS LAST, updated_at DESC`,
   )
 
-  return res.rows.map((item) =>
+  const credibleRows = res.rows.filter((item) => !isLikelyTestNews(item))
+  return {
+    entries: credibleRows.map((item) =>
     entry(`/news/${item.slug}`, {
       lastModified: item.updated_at || item.published_at,
       changeFrequency: 'monthly',
       priority: 0.65,
     }),
-  )
+    ),
+    includeIndex: credibleRows.length >= 2,
+  }
 }
 
 async function listProjectEntries(): Promise<SitemapEntry[]> {
@@ -161,17 +195,19 @@ function dedupe(entries: SitemapEntry[]): MetadataRoute.Sitemap {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const staticEntries = STATIC_ROUTES.map((route) =>
-    entry(route.path, {
-      changeFrequency: route.changeFrequency,
-      priority: route.priority,
-    }),
-  )
   const [products, news, projects] = await Promise.all([
     safeLoad('products', listProductEntries, []),
-    safeLoad('news', listNewsEntries, []),
+    safeLoad('news', listNewsEntries, { entries: [], includeIndex: false }),
     safeLoad('projects', listProjectEntries, []),
   ])
+  const staticEntries = STATIC_ROUTES
+    .filter((route) => route.path !== '/news' || news.includeIndex)
+    .map((route) =>
+      entry(route.path, {
+        changeFrequency: route.changeFrequency,
+        priority: route.priority,
+      }),
+    )
 
-  return dedupe([...staticEntries, ...products, ...news, ...projects])
+  return dedupe([...staticEntries, ...products, ...news.entries, ...projects])
 }

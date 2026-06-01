@@ -106,6 +106,24 @@ function publicPathFromRoute(route) {
 const scanned = []
 const fetchErrors = []
 const violations = []
+const internalLinks = new Map()
+
+function normalizeInternalHref(href, sourceRoute) {
+  if (!href || href.startsWith('#')) return null
+  if (/^(mailto:|tel:|sms:|whatsapp:|javascript:)/i.test(href)) return null
+  try {
+    const base = new URL(baseUrl)
+    const url = new URL(href, base)
+    if (url.hostname !== base.hostname) return null
+    if (url.pathname.startsWith('/_next/') || url.pathname.startsWith('/api/') || url.pathname.startsWith('/admin')) return null
+    return {
+      route: `${url.pathname}${url.search}`,
+      sourceRoute,
+    }
+  } catch {
+    return null
+  }
+}
 
 for (const route of targetRoutes) {
   const url = buildUrl(route)
@@ -121,6 +139,13 @@ for (const route of targetRoutes) {
   const legacyProducts = hrefs.filter(isLegacyProducts)
   scanned.push({ route, url, status: fetched.status, hrefs: hrefs.length, legacyContact, legacyProducts })
 
+  for (const href of hrefs) {
+    const internal = normalizeInternalHref(href, route)
+    if (!internal) continue
+    if (!internalLinks.has(internal.route)) internalLinks.set(internal.route, new Set())
+    internalLinks.get(internal.route).add(internal.sourceRoute)
+  }
+
   if (path === '/global') {
     // /global renders part of the map UI on the client. HTTP audit only allows
     // legacy links here; browser QA verifies the rendered Contact/Product links.
@@ -132,14 +157,27 @@ for (const route of targetRoutes) {
   }
 }
 
+for (const [route, sources] of internalLinks.entries()) {
+  const fetched = fetchHtml(buildUrl(route))
+  if (!fetched.ok) {
+    violations.push({
+      route: Array.from(sources).join(', '),
+      reason: 'broken-internal-link',
+      href: route,
+      status: fetched.status,
+      error: fetched.error,
+    })
+  }
+}
+
 if (json) {
-  console.log(JSON.stringify({ scanned, fetchErrors, violations }, null, 2))
+  console.log(JSON.stringify({ scanned, checkedInternalLinks: Array.from(internalLinks.keys()).sort(), fetchErrors, violations }, null, 2))
 } else {
   for (const error of fetchErrors) {
     console.error(`Fetch failed: ${error.route} (${error.url}) - ${error.error}`)
   }
   for (const violation of violations) {
-    console.error(`Production link violation: ${violation.route} ${violation.reason}: ${violation.href}`)
+    console.error(`Production link violation: ${violation.route} ${violation.reason}: ${violation.href}${violation.error ? ` (${violation.error})` : ''}`)
   }
 }
 

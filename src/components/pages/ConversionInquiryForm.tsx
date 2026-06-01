@@ -175,17 +175,19 @@ export default function ConversionInquiryForm({
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field required label={activeLabels.name} value={form.name} onChange={(value) => update('name', value)} />
-        <Field required label={activeLabels.email} type="email" value={form.email} onChange={(value) => update('email', value)} />
-        <Field required label={activeLabels.phone} value={form.phone} onChange={(value) => update('phone', value)} />
-        <Field label={activeLabels.country} value={form.country} onChange={(value) => update('country', value)} />
-        <Field label={activeLabels.company} value={form.company} onChange={(value) => update('company', value)} />
-        <Field label={activeLabels.quantity} value={form.quantity} onChange={(value) => update('quantity', value)} />
+        <Field required name="name" autoComplete="name" label={activeLabels.name} value={form.name} onChange={(value) => update('name', value)} />
+        <Field required name="email" autoComplete="email" label={activeLabels.email} type="email" value={form.email} onChange={(value) => update('email', value)} />
+        <Field required name="phone" autoComplete="tel" label={activeLabels.phone} value={form.phone} onChange={(value) => update('phone', value)} />
+        <Field name="country" autoComplete="country-name" label={activeLabels.country} value={form.country} onChange={(value) => update('country', value)} />
+        <Field name="company" autoComplete="organization" label={activeLabels.company} value={form.company} onChange={(value) => update('company', value)} />
+        <Field name="quantity" autoComplete="off" label={activeLabels.quantity} value={form.quantity} onChange={(value) => update('quantity', value)} />
       </div>
 
       <label className="mt-3 block text-sm font-semibold text-[#1F2A31]">
         {activeLabels.message}
         <textarea
+          name="message"
+          aria-label={activeLabels.message}
           rows={4}
           value={form.message}
           onChange={(event) => update('message', event.target.value)}
@@ -207,14 +209,18 @@ export default function ConversionInquiryForm({
 }
 
 function Field({
+  name,
   label,
   type = 'text',
+  autoComplete,
   required = false,
   value,
   onChange,
 }: {
+  name: keyof FormState
   label: string
   type?: string
+  autoComplete?: string
   required?: boolean
   value: string
   onChange: (value: string) => void
@@ -225,6 +231,9 @@ function Field({
     <label className="text-sm font-semibold text-[#1F2A31]">
       {label} {required ? '*' : null}
       <input
+        name={name}
+        autoComplete={autoComplete}
+        aria-label={label}
         required={required}
         type={type}
         value={value}
