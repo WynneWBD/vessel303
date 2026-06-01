@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "audit:public-content": "node scripts/audit-public-content.mjs",
-    "audit:published-content": "node scripts/audit-published-content.mjs"
+    "audit:published-content": "node scripts/audit-published-content.mjs",
+    "audit:production-links": "node scripts/audit-production-links.mjs"
   },
   "dependencies": {
     "@fontsource/dm-sans": "^5.2.8",

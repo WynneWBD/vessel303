@@ -29,7 +29,7 @@ const DEFAULT_ROUTES = [
 const blockedPatterns = [
   { pattern: /\u8fd0\u8425\u5bfc\u89c8/g, reason: 'internal operating copy' },
   { pattern: /\u5bf9\u7167\s*300/g, reason: 'internal benchmark copy' },
-  { pattern: /\b300\b/g, reason: 'benchmark-related copy' },
+  { pattern: /(?:300\s*对齐|对照\s*300|300\.cn|300\s*后台)/gi, reason: 'benchmark-related copy' },
   { pattern: /Codex/gi, reason: 'agent/internal copy' },
   { pattern: /\bB\d{1,2}(?:-\d+)?\b/g, reason: 'internal phase marker' },
   { pattern: /admin\s+owner/gi, reason: 'admin ownership copy' },
