@@ -764,3 +764,17 @@ curl -I https://www.vessel303.com/news/<slug>
 - 验收摘要：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；本地 production `/` 渲染 B35 首页模块，`/global` 200；线上首页 200 且命中 `dpl_3tEt3399oA5zYnY7uB51vdx1NAym`，线上 `/products` 200，`/contact` 200，未登录 `/admin/site/visual` 302 到 `/admin/login`。
 - `/global` 边界：本轮未修改 Global 代码、MapLibre、MapTiler 或 `/api/map`；Global Contact / Products 旧站例外继续保持，不套用首页 / 主站新站闭环规则。
 - 后续建议：B36 若继续缩小首页差距，应优先由 03 / 运营提供更多可确认的 303 原始图片和产品实拍，再由 02 写入后台 published 内容；01 只继续优化首页显示模板和响应式，不在前台补业务文案。
+
+## B36 首页 303 视觉销售力二次复刻（2026-06-01）
+
+- Code commit: `c84cc73 feat(home): add B36 visual sales modules` / `c84cc73e60b9a648c8a33e413f3d855d3e7b5b0b`。
+- Vercel deployment: `dpl_B4TxuEkf6yteo6XFm4emMiysnx5g`，状态 `READY`，deployment URL `https://vessel303-buraaru0g-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com`。
+- 本轮定位：B36 只继续优化首页，让 `vessel303.com` 首页在首屏视觉冲击、产品直给、型号露出、项目证明和即时联系入口上更接近 `en.303vessel.cn`；不扩展到全站，不改 `/global`。
+- 300 / 303 对照：已确认 Chrome 插件可连接且 300 后台处于登录态，只读对照 300 首页 / 栏目 / 素材 / 导航 / SEO / 联系方式配置，以及 303 英文首页的 hero carousel、大产品卡、型号区、Innovation、Scenarios、Future Explorer、浮动联系和 Footer；未在 300 执行保存、发布、上传、删除或付款。
+- 首页内容合同：Home 在 B35 基础上新增 / 强化 `large-product-cards`、`model-strip`、`innovation-story`、`scenario-tiles`、`future-explorer` 等受控模块；`hero` 与 `contact-band` 继续由后台 published 内容控制。每个模块只开放固定字段，后台无 published 内容时前台隐藏，不显示代码备用业务文案。
+- 后台内容写入：新增 `scripts/backfill-b36-homepage-303-visual.mjs`，支持 dry-run / apply；已写入 / 刷新 B36 首页 published 内容和首页 SEO，只处理 B36 首页模块，不删除业务内容，不覆盖无关运营内容。旧 B35 的 `product-series`、`model-grid`、`application-scenes`、`project-proof` 已转为隐藏，避免首页重复。
+- 素材库：B36 只使用可确认的项目现有素材和已发布媒体，不把原始素材直接放进 repo。外部素材 manifest 位于 `C:\Users\Wynne\Desktop\vessel303\vessel-assets\300-export\2026-06-01\b36-homepage\manifest.csv` 和 `manifest.json`，不进入 Git。
+- 前台显示器补强：`HomePageContent` 新增 `home.visualSales` 渲染，首页按后台模块展示更接近 303 的“大图首屏 + 大产品卡 + 型号带 + 技术入口 + 场景入口 + Future Explorer + 联系横幅”节奏；所有客户可见文案、图片、按钮和链接仍来自后台模块或站点配置，前台不硬写销售内容。
+- 验收摘要：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过。本地 production 首页渲染 B36 模块且无内部词、无旧站主 CTA、无横向溢出；线上首页 200 且 B36 模块可见，`/products` 200，`/contact` 200，`/global` 200，未登录 `/admin` 302 到 `/admin/login`。
+- `/global` 边界：本轮未修改 Global 代码、MapLibre、MapTiler 或 `/api/map`；Global Contact / Products 旧站例外继续保持，不套用首页 / 主站新站闭环规则。
+- 后续建议：不要继续只靠前台视觉微调追差距。下一步若继续接近 303 英文站，应优先补产品详情和案例详情的真实素材、长图文、资料下载和商业证明，由 03 / 运营整理可确认素材，02 写入后台 CMS，01 只优化显示模板。
