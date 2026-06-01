@@ -723,3 +723,17 @@ curl -I https://www.vessel303.com/news/<slug>
 - 浏览器验收：线上 `/products?q=E7`、`/products/v9-gen6-standard`、`/news`、`/scenarios/tourism|commercial|public`、`/media-kit`、`/contact` 无可见中文残留、无空 `name` 表单控件、无横向溢出、无 console error。
 - 真实测试线索：B32 写入 4 条低风险生产测试线索并保留不删除：Contact `a8ab7cf0-f7fa-43ce-ab35-d18655671825`、Product `f448c146-6d23-412c-8e30-8de48e259528`、Case `0535e9ce-a878-4de9-8a0c-59276dcc1a32`、Scenario `c70eecb3-9305-48d6-9bb5-d782d133ea7f`。
 - `/global` 边界：本轮零改动。渲染后 `View Products` 仍指向 `https://en.303vessel.cn/products_list.html`，`Contact Team` 仍指向 `https://en.303vessel.cn/contact.html`；MapLibre、MapTiler、`/api/map` 和 Global 旧站例外继续归 04 / Global 专项。
+
+## B33 303 / 300 复刻式后台控制前台（2026-06-01）
+
+- Code commit: `7fb4a30 feat(site): align 303-style content control`
+- Full SHA: `7fb4a30ea82455562bf08de8fd710f6439e35630`
+- Vercel deployment: `dpl_GyAV6djtMtyPLDPysGYdaupYBtGi`，状态 `READY`，deployment URL `https://vessel303-pf1risz9b-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com` 和 `https://vessel303.com`
+- 本轮定位：按 303 英文站和 300 后台心智做“运营方式 / 内容结构 / 展示心智”复刻，不复制 300 SaaS 底层，也不复制旧站缺陷。后台继续作为控制器，前台只做显示器；文字、素材、资料入口、产品详情资料区和案例商业证明标签均来自后台 published 内容或 CMS 字段。
+- 300 / 303 素材：已只读抓取 303 首页、产品列表、产品详情和联系页 HTML 到 `C:\Users\Wynne\Desktop\vessel303\vessel-assets\300-export\2026-06-01\raw\`；图片 CDN 直连下载被 303 CDN 返回 HTTP 567 拦截，候选素材已记录到 `manifest.csv/json` 并标记 `blocked-by-303-cdn-567-not-published`，未直接发布这些受阻图片。本轮发布样板使用项目内已有公开图片和媒体入口。
+- 后台内容样板：新增 `scripts/backfill-b33-303-replica.mjs` 支持 dry-run / apply，已写入低风险 published 配置并复跑 dry-run 显示 `No B33 changes needed.`。内容包括：首页 hero 更直接的海外产品表达、案例详情字段标签、E7 / V9 / E6 / E3 产品采购资料模块、产品图库 / 规格说明补强、Media Kit 真实可打开资源入口。
+- 产品详情：产品后台详情模块支持 `Title | URL | Description` 资料链接写法；前台通用产品详情只渲染后台字段，能显示内部链接、外链、`mailto` / `tel`，缺字段则隐藏，不在前台补业务文案。
+- 案例详情：商业证明标签改由 `page_modules:cases:detail-labels` 控制，前台只展示 CMS 值和后台 published label；无 label 时不硬写默认业务文案。
+- 旧短链和 News：`/products/e6` 301 到 `/products/e6-gen6-standard`，`/products/e3` 301 到 `/products/e3-gen6-standard`；News 真实英文内容不足时不进入主导航 / Footer / sitemap 主收录，`/news` 和测试详情如 `/news/2026` 返回 404，避免展示 `weisu` 等测试内容。
+- `/global` 边界：本轮代码 diff 为零；Global 仍引用 `DEFAULT_CONTACT_URL=https://en.303vessel.cn/contact.html` 和 `LEGACY_PRODUCTS_URL=https://en.303vessel.cn/products_list.html`，Contact / Products 旧站例外继续保留，未改 MapLibre、MapTiler、`/api/map`。
+- 验收摘要：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；线上 `/`、`/products`、`/products/e7-gen6-flagship`、`/contact`、`/media-kit`、`/cases/astrobase-mamison`、`/global` 均 200；`/products/e6`、`/products/e3` 线上 301 到 canonical；`/news`、`/news/2026` 线上 404；未登录 `/admin` 302 到 `/admin/login`。
