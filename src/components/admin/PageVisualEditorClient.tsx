@@ -127,7 +127,7 @@ const OPERATING_WORKFLOW = [
 ]
 
 const OPERATING_GUARDRAILS = [
-  '仅支持 Home 安全插入区内 simple-text / cta-section 的有限新增、排序、隐藏；仍不支持整页自由拖拽、跨区排序、About 新增、核心模块删除。',
+  '仅支持 Home 安全插入区内受控模板模块的有限新增、排序、隐藏；仍不支持整页自由拖拽、跨区排序、About 新增、核心模块删除。',
   '不能自由改字体、颜色、间距、布局、SEO、导航和页脚；这些仍由代码和品牌规则控制。',
   '恢复快照只会恢复到草稿，不会直接影响前台；恢复后仍需要预览、检查并手动发布。',
   '发现图片、链接、空内容、隐藏模块等检查提醒时，先确认业务意图，再保存或发布。',
@@ -239,7 +239,7 @@ function ModuleCatalogPanel({
             <span>模块库</span>
           </div>
           <p className="mt-1 max-w-4xl text-xs leading-5 text-[#8A8580]">
-            C4-2c 只允许 Home 在 credentials 后、CoreTech 前添加 simple-text 和 cta-section。About 暂不开放添加入口。
+            Home 只允许在受控安全插入区添加固定模板模块。About 暂不开放添加入口。
           </p>
         </div>
         <span className="inline-flex w-fit rounded-full bg-[#F5F2ED] px-3 py-1 text-xs font-medium text-[#6B625B]">
@@ -250,7 +250,7 @@ function ModuleCatalogPanel({
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_320px]">
         <div>
           <p className="text-xs font-semibold text-[#2C2A28]">可新增模块候选</p>
-          <p className="mt-1 text-xs leading-5 text-[#8A8580]">本轮只开放 simple-text 和 cta-section 到 Home 结构草稿；新增后不会立即影响普通前台。</p>
+          <p className="mt-1 text-xs leading-5 text-[#8A8580]">本轮只开放固定模板到 Home 结构草稿；新增后不会立即影响普通前台。</p>
           <div className="mt-3 space-y-2">
             {PLANNED_PAGE_MODULE_CATALOG.map((item) => {
               const template = HOME_ADDABLE_PAGE_MODULE_TEMPLATES.find((entry) => entry.templateId === item.id)
@@ -1700,7 +1700,7 @@ export default function PageVisualEditorClient({
           </h1>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-[#8A8580]">
             受控可视化编辑，只能修改已接入 page_modules 的文字、链接、图片和模块显示状态。
-            支持重复型模块内的项目新增、隐藏、恢复和排序；Home 安全插入区支持 simple-text / cta-section 的有限新增、排序和结构隐藏。
+            支持重复型模块内的项目新增、隐藏、恢复和排序；Home 安全插入区支持受控模板的有限新增、排序和结构隐藏。
             核心模块、About 结构、自由样式和自由布局仍保持锁定。
             当前编辑的是草稿预览：保存草稿不会影响前台，点击发布后才会上线；发布前会自动保留当前线上版本快照。
           </p>
@@ -1947,7 +1947,7 @@ export default function PageVisualEditorClient({
                   <div>
                     <p className="text-xs font-semibold text-[#2C2A28]">Home 安全插入区</p>
                     <p className="mt-1 text-xs leading-5 text-[#8A8580]">
-                      只允许调整 simple-text / cta-section，位置固定在 credentials 后、CoreTech 前。
+                      只允许调整受控首页模板模块，位置固定在 credentials 后、CoreTech 前。
                     </p>
                   </div>
                   <span className="inline-flex w-fit rounded-full bg-[#F5F2ED] px-2 py-1 text-[11px] text-[#6B625B]">
@@ -2041,7 +2041,7 @@ export default function PageVisualEditorClient({
                     })
                   ) : (
                     <p className="text-xs leading-5 text-[#8A8580]">
-                      当前结构草稿里还没有 C4-2c 新增模板模块。先从模块库添加 simple-text 或 cta-section。
+                      当前结构草稿里还没有新增模板模块。先从模块库添加一个受控首页模板。
                     </p>
                   )}
                 </div>

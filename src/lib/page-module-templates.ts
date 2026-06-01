@@ -2,7 +2,15 @@ import { SITE_CONTACT_HREF, SITE_PRODUCTS_HREF } from '@/lib/site-links'
 
 export type PageModuleTemplatePage = 'home' | 'about'
 
-export type PageModuleTemplateId = 'simple-text' | 'cta-section' | 'product-showcase'
+export type PageModuleTemplateId =
+  | 'simple-text'
+  | 'cta-section'
+  | 'product-showcase'
+  | 'product-series'
+  | 'model-grid'
+  | 'application-scenes'
+  | 'project-proof'
+  | 'contact-band'
 
 export type PageModuleTemplateFieldType = 'text' | 'textarea' | 'url'
 
@@ -204,6 +212,178 @@ export const PAGE_MODULE_TEMPLATES: PageModuleTemplate[] = [
       { id: 'primary-cta.label_zh', label: '主按钮中文', type: 'text', required: false, maxLength: 500 },
       { id: 'primary-cta.label_en', label: 'Primary button', type: 'text', required: false, maxLength: 700 },
       { id: 'primary-cta.href', label: '主按钮链接', type: 'url', required: false, maxLength: 500 },
+    ],
+  },
+  {
+    templateId: 'product-series',
+    displayName: 'Home product series',
+    moduleType: 'product-series',
+    rendererKey: 'home.salesGrid',
+    allowedPages: ['home'],
+    maxInstances: 1,
+    insertArea: 'home-after-credentials',
+    defaultContent: {
+      title_zh: 'Product series',
+      title_en: 'Product series',
+      description_zh: '',
+      description_en: '',
+      is_visible: true,
+      sort_order: 0,
+      items: [
+        { id: 'eyebrow', label_zh: 'Product series', label_en: 'Product series', is_visible: true, sort_order: 10 },
+        { id: 'card-01', label_zh: 'Series title', label_en: 'Series title', content_zh: '', content_en: '', href: SITE_PRODUCTS_HREF, is_visible: true, sort_order: 20 },
+        { id: 'card-02', label_zh: 'Series title', label_en: 'Series title', content_zh: '', content_en: '', href: SITE_PRODUCTS_HREF, is_visible: true, sort_order: 30 },
+        { id: 'card-03', label_zh: 'Series title', label_en: 'Series title', content_zh: '', content_en: '', href: SITE_PRODUCTS_HREF, is_visible: true, sort_order: 40 },
+        { id: 'primary-cta', label_zh: 'View products', label_en: 'View products', href: SITE_PRODUCTS_HREF, is_visible: true, sort_order: 100 },
+      ],
+    },
+    fields: [
+      { id: 'title_zh', label: 'Chinese title', type: 'text', required: true, maxLength: 160 },
+      { id: 'title_en', label: 'English title', type: 'text', required: true, maxLength: 180 },
+      { id: 'description_zh', label: 'Chinese description', type: 'textarea', required: false, maxLength: 800 },
+      { id: 'description_en', label: 'English description', type: 'textarea', required: false, maxLength: 1000 },
+      { id: 'card-01.label_en', label: 'Card title', type: 'text', required: false, maxLength: 180 },
+      { id: 'card-01.content_en', label: 'Card description', type: 'textarea', required: false, maxLength: 1000 },
+      { id: 'card-01.href', label: 'Card link', type: 'url', required: false, maxLength: 500 },
+      { id: 'primary-cta.label_en', label: 'Primary button', type: 'text', required: false, maxLength: 700 },
+      { id: 'primary-cta.href', label: 'Primary link', type: 'url', required: false, maxLength: 500 },
+    ],
+  },
+  {
+    templateId: 'model-grid',
+    displayName: 'Home model grid',
+    moduleType: 'model-grid',
+    rendererKey: 'home.salesGrid',
+    allowedPages: ['home'],
+    maxInstances: 1,
+    insertArea: 'home-after-credentials',
+    defaultContent: {
+      title_zh: 'Model grid',
+      title_en: 'Model grid',
+      description_zh: '',
+      description_en: '',
+      is_visible: true,
+      sort_order: 0,
+      items: [
+        { id: 'eyebrow', label_zh: 'Models', label_en: 'Models', is_visible: true, sort_order: 10 },
+        { id: 'card-01', label_zh: 'Model title', label_en: 'Model title', content_zh: '', content_en: '', href: SITE_PRODUCTS_HREF, is_visible: true, sort_order: 20 },
+        { id: 'card-02', label_zh: 'Model title', label_en: 'Model title', content_zh: '', content_en: '', href: SITE_PRODUCTS_HREF, is_visible: true, sort_order: 30 },
+        { id: 'card-03', label_zh: 'Model title', label_en: 'Model title', content_zh: '', content_en: '', href: SITE_PRODUCTS_HREF, is_visible: true, sort_order: 40 },
+        { id: 'primary-cta', label_zh: 'Compare models', label_en: 'Compare models', href: SITE_PRODUCTS_HREF, is_visible: true, sort_order: 100 },
+      ],
+    },
+    fields: [
+      { id: 'title_zh', label: 'Chinese title', type: 'text', required: true, maxLength: 160 },
+      { id: 'title_en', label: 'English title', type: 'text', required: true, maxLength: 180 },
+      { id: 'description_zh', label: 'Chinese description', type: 'textarea', required: false, maxLength: 800 },
+      { id: 'description_en', label: 'English description', type: 'textarea', required: false, maxLength: 1000 },
+      { id: 'card-01.label_en', label: 'Card title', type: 'text', required: false, maxLength: 180 },
+      { id: 'card-01.content_en', label: 'Card description', type: 'textarea', required: false, maxLength: 1000 },
+      { id: 'card-01.href', label: 'Card link', type: 'url', required: false, maxLength: 500 },
+      { id: 'primary-cta.label_en', label: 'Primary button', type: 'text', required: false, maxLength: 700 },
+      { id: 'primary-cta.href', label: 'Primary link', type: 'url', required: false, maxLength: 500 },
+    ],
+  },
+  {
+    templateId: 'application-scenes',
+    displayName: 'Home application scenes',
+    moduleType: 'application-scenes',
+    rendererKey: 'home.salesGrid',
+    allowedPages: ['home'],
+    maxInstances: 1,
+    insertArea: 'home-after-credentials',
+    defaultContent: {
+      title_zh: 'Application scenes',
+      title_en: 'Application scenes',
+      description_zh: '',
+      description_en: '',
+      is_visible: true,
+      sort_order: 0,
+      items: [
+        { id: 'eyebrow', label_zh: 'Applications', label_en: 'Applications', is_visible: true, sort_order: 10 },
+        { id: 'card-01', label_zh: 'Scene title', label_en: 'Scene title', content_zh: '', content_en: '', href: '/scenarios/tourism', is_visible: true, sort_order: 20 },
+        { id: 'card-02', label_zh: 'Scene title', label_en: 'Scene title', content_zh: '', content_en: '', href: '/scenarios/commercial', is_visible: true, sort_order: 30 },
+        { id: 'card-03', label_zh: 'Scene title', label_en: 'Scene title', content_zh: '', content_en: '', href: '/scenarios/public', is_visible: true, sort_order: 40 },
+        { id: 'primary-cta', label_zh: 'View scenarios', label_en: 'View scenarios', href: '/scenarios/tourism', is_visible: true, sort_order: 100 },
+      ],
+    },
+    fields: [
+      { id: 'title_zh', label: 'Chinese title', type: 'text', required: true, maxLength: 160 },
+      { id: 'title_en', label: 'English title', type: 'text', required: true, maxLength: 180 },
+      { id: 'description_zh', label: 'Chinese description', type: 'textarea', required: false, maxLength: 800 },
+      { id: 'description_en', label: 'English description', type: 'textarea', required: false, maxLength: 1000 },
+      { id: 'card-01.label_en', label: 'Card title', type: 'text', required: false, maxLength: 180 },
+      { id: 'card-01.content_en', label: 'Card description', type: 'textarea', required: false, maxLength: 1000 },
+      { id: 'card-01.href', label: 'Card link', type: 'url', required: false, maxLength: 500 },
+      { id: 'primary-cta.label_en', label: 'Primary button', type: 'text', required: false, maxLength: 700 },
+      { id: 'primary-cta.href', label: 'Primary link', type: 'url', required: false, maxLength: 500 },
+    ],
+  },
+  {
+    templateId: 'project-proof',
+    displayName: 'Home project proof',
+    moduleType: 'project-proof',
+    rendererKey: 'home.salesGrid',
+    allowedPages: ['home'],
+    maxInstances: 1,
+    insertArea: 'home-after-credentials',
+    defaultContent: {
+      title_zh: 'Project proof',
+      title_en: 'Project proof',
+      description_zh: '',
+      description_en: '',
+      is_visible: true,
+      sort_order: 0,
+      items: [
+        { id: 'eyebrow', label_zh: 'Projects', label_en: 'Projects', is_visible: true, sort_order: 10 },
+        { id: 'card-01', label_zh: 'Project title', label_en: 'Project title', content_zh: '', content_en: '', href: '/cases', is_visible: true, sort_order: 20 },
+        { id: 'card-02', label_zh: 'Project title', label_en: 'Project title', content_zh: '', content_en: '', href: '/cases', is_visible: true, sort_order: 30 },
+        { id: 'card-03', label_zh: 'Project title', label_en: 'Project title', content_zh: '', content_en: '', href: '/cases', is_visible: true, sort_order: 40 },
+        { id: 'primary-cta', label_zh: 'View cases', label_en: 'View cases', href: '/cases', is_visible: true, sort_order: 100 },
+      ],
+    },
+    fields: [
+      { id: 'title_zh', label: 'Chinese title', type: 'text', required: true, maxLength: 160 },
+      { id: 'title_en', label: 'English title', type: 'text', required: true, maxLength: 180 },
+      { id: 'description_zh', label: 'Chinese description', type: 'textarea', required: false, maxLength: 800 },
+      { id: 'description_en', label: 'English description', type: 'textarea', required: false, maxLength: 1000 },
+      { id: 'card-01.label_en', label: 'Card title', type: 'text', required: false, maxLength: 180 },
+      { id: 'card-01.content_en', label: 'Card description', type: 'textarea', required: false, maxLength: 1000 },
+      { id: 'card-01.href', label: 'Card link', type: 'url', required: false, maxLength: 500 },
+      { id: 'primary-cta.label_en', label: 'Primary button', type: 'text', required: false, maxLength: 700 },
+      { id: 'primary-cta.href', label: 'Primary link', type: 'url', required: false, maxLength: 500 },
+    ],
+  },
+  {
+    templateId: 'contact-band',
+    displayName: 'Home contact band',
+    moduleType: 'contact-band',
+    rendererKey: 'home.contactBand',
+    allowedPages: ['home'],
+    maxInstances: 1,
+    insertArea: 'home-after-credentials',
+    defaultContent: {
+      title_zh: 'Contact band',
+      title_en: 'Contact band',
+      description_zh: '',
+      description_en: '',
+      is_visible: true,
+      sort_order: 0,
+      items: [
+        { id: 'eyebrow', label_zh: 'Contact', label_en: 'Contact', is_visible: true, sort_order: 10 },
+        { id: 'primary-cta', label_zh: 'Send inquiry', label_en: 'Send inquiry', href: SITE_CONTACT_HREF, is_visible: true, sort_order: 20 },
+        { id: 'secondary-cta', label_zh: 'View products', label_en: 'View products', href: SITE_PRODUCTS_HREF, is_visible: true, sort_order: 30 },
+      ],
+    },
+    fields: [
+      { id: 'title_zh', label: 'Chinese title', type: 'text', required: true, maxLength: 160 },
+      { id: 'title_en', label: 'English title', type: 'text', required: true, maxLength: 180 },
+      { id: 'description_zh', label: 'Chinese description', type: 'textarea', required: false, maxLength: 800 },
+      { id: 'description_en', label: 'English description', type: 'textarea', required: false, maxLength: 1000 },
+      { id: 'primary-cta.label_en', label: 'Primary button', type: 'text', required: false, maxLength: 700 },
+      { id: 'primary-cta.href', label: 'Primary link', type: 'url', required: false, maxLength: 500 },
+      { id: 'secondary-cta.label_en', label: 'Secondary button', type: 'text', required: false, maxLength: 700 },
+      { id: 'secondary-cta.href', label: 'Secondary link', type: 'url', required: false, maxLength: 500 },
     ],
   },
 ]

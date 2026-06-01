@@ -197,6 +197,15 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const secondaryLabel = localizedLabel(secondaryCta, lang, '');
   const primaryHref = primaryCta?.href || '';
   const secondaryHref = secondaryCta?.href || '';
+  const proofItems = items
+    .filter((item) => item.id.startsWith('hero-proof-'))
+    .map((item) => ({
+      id: item.id,
+      value: localizedValue(item, lang, ''),
+      label: localizedLabel(item, lang, ''),
+      body: localizedContent(item, lang, ''),
+    }))
+    .filter((item) => item.value || item.label || item.body);
   const activeImage = heroImages.length > 0 ? current % heroImages.length : 0;
   const visibleHeroImages = useMemo(() => {
     if (heroImages.length === 0) return [];
@@ -220,7 +229,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
   return (
     <section
-      className="relative h-screen min-h-[700px] flex items-center justify-center overflow-hidden bg-[#241F1B]"
+      className="relative flex min-h-[720px] items-center overflow-hidden bg-[#241F1B] lg:min-h-[760px]"
       data-page-module="home:hero"
       data-page-key="home"
       data-module-key="hero"
@@ -240,24 +249,25 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
           data-page-module-field="image_url"
         />
       ))}
-      <div className="absolute inset-0 bg-[#241F1B]/48" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#241F1B]/82 via-[#241F1B]/52 to-[#241F1B]/22" />
 
-      <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
+      <div className="relative z-10 mx-auto grid w-full max-w-7xl gap-8 px-5 py-28 sm:px-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.5fr)] lg:items-end lg:px-8">
+        <div className="max-w-3xl text-left">
         {tagline ? (
-          <div className="mb-10">
+          <div className="mb-8">
             <p
-              className="text-base sm:text-lg tracking-[0.15em] text-white/70 font-light font-[family-name:var(--font-heading)]"
+              className="text-xs font-semibold uppercase tracking-[0.24em] text-white/70"
               data-page-module-item="hero-tagline"
               data-page-module-field={`label_${lang}`}
             >
               {tagline}
             </p>
-            <div className="w-12 h-px bg-[#E36F2C] mx-auto mt-4" />
+            <div className="mt-4 h-px w-16 bg-[#E36F2C]" />
           </div>
         ) : null}
 
         <h1
-          className="text-4xl sm:text-6xl lg:text-8xl font-normal text-white mb-10 leading-[1.12] tracking-[0.08em] sm:tracking-[0.15em] break-words font-[family-name:var(--font-heading)]"
+          className="mb-8 break-words font-[family-name:var(--font-heading)] text-4xl font-normal leading-[1.04] text-white sm:text-6xl lg:text-7xl"
           data-page-module-item="hero-headline"
           data-page-module-field={`label_${lang}`}
         >
@@ -266,7 +276,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
         {subtitle ? (
           <p
-            className="text-white/55 text-base sm:text-lg leading-relaxed mb-12 max-w-2xl mx-auto"
+            className="mb-10 max-w-2xl text-base leading-8 text-white/70 sm:text-lg"
             data-page-module-item="hero-subtitle"
             data-page-module-field={`label_${lang}`}
           >
@@ -275,12 +285,12 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
         ) : null}
 
         {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             {primaryLabel && primaryHref ? (
               <Link
                 href={primaryHref}
                 {...externalLinkProps(primaryHref)}
-                className="bg-[#E36F2C] text-white px-10 py-4 text-sm tracking-wider hover:bg-[#C85A1F] transition-colors"
+                className="inline-flex min-h-12 items-center justify-center bg-[#E36F2C] px-8 text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#C85A1F]"
                 data-page-module-item="hero-primary-cta"
                 data-page-module-field={`label_${lang}`}
               >
@@ -291,13 +301,51 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
               <Link
                 href={secondaryHref}
                 {...externalLinkProps(secondaryHref)}
-                className="border border-white/30 text-white/80 px-10 py-4 text-sm tracking-wider hover:border-white/60 transition-colors"
+                className="inline-flex min-h-12 items-center justify-center border border-white/35 px-8 text-sm font-bold uppercase tracking-[0.12em] text-white/85 transition-colors hover:border-white/70"
                 data-page-module-item="hero-secondary-cta"
                 data-page-module-field={`label_${lang}`}
               >
                 {secondaryLabel}
               </Link>
             ) : null}
+          </div>
+        ) : null}
+      </div>
+
+        {proofItems.length > 0 ? (
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            {proofItems.slice(0, 4).map((item) => (
+              <div
+                key={item.id}
+                className="border border-white/18 bg-white/[0.08] p-4 backdrop-blur-sm"
+                data-page-module-item={item.id}
+              >
+                {item.value ? (
+                  <p
+                    className="font-[family-name:var(--font-heading)] text-3xl font-light leading-none text-white"
+                    data-page-module-field={`value_${lang}`}
+                  >
+                    {item.value}
+                  </p>
+                ) : null}
+                {item.label ? (
+                  <p
+                    className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#F2A36E]"
+                    data-page-module-field={`label_${lang}`}
+                  >
+                    {item.label}
+                  </p>
+                ) : null}
+                {item.body ? (
+                  <p
+                    className="mt-2 text-xs leading-5 text-white/68"
+                    data-page-module-field={`content_${lang}`}
+                  >
+                    {item.body}
+                  </p>
+                ) : null}
+              </div>
+            ))}
           </div>
         ) : null}
       </div>
@@ -649,6 +697,248 @@ function ProductShowcaseSection({ pageModule }: { pageModule: HomePageModule | n
   );
 }
 
+function SalesGridSection({ pageModule }: { pageModule: HomePageModule | null }) {
+  const { lang } = useLanguage();
+  if (!pageModule || !pageModule.is_visible) return null;
+
+  const eyebrow = localizedLabel(findModuleItem(pageModule, 'eyebrow'), lang, '');
+  const title = localizedModuleTitle(pageModule, lang, '');
+  const description = localizedModuleDescription(pageModule, lang, '');
+  const cards = sortModuleItems(pageModule)
+    .filter((item) => item.id.startsWith('card-'))
+    .map((item) => ({
+      id: item.id,
+      title: localizedLabel(item, lang, ''),
+      meta: localizedValue(item, lang, ''),
+      body: localizedContent(item, lang, ''),
+      image: item.image_url || '',
+      href: item.href || '',
+    }))
+    .filter((item) => item.title || item.meta || item.body || item.image);
+  const primary = findModuleItem(pageModule, 'primary-cta');
+  const secondary = findModuleItem(pageModule, 'secondary-cta');
+  const primaryLabel = localizedLabel(primary, lang, '');
+  const secondaryLabel = localizedLabel(secondary, lang, '');
+  const primaryHref = primary?.href || '';
+  const secondaryHref = secondary?.href || '';
+  const isProductSeries = pageModule.module_type === 'product-series';
+  const isModelGrid = pageModule.module_type === 'model-grid';
+  const isProjectProof = pageModule.module_type === 'project-proof';
+
+  if (!title && !description && cards.length === 0) return null;
+
+  return (
+    <section
+      className={`${isProjectProof ? 'bg-[#241F1B] text-white' : 'bg-[#FAF7F2] text-[#241F1B]'} border-b border-[#E5DED4] py-16 lg:py-20`}
+      data-page-module={`home:${pageModule.module_key}`}
+      data-page-key="home"
+      data-module-key={pageModule.module_key}
+    >
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid gap-6 lg:grid-cols-[0.7fr_1.1fr] lg:items-end">
+          <div>
+            {eyebrow ? (
+              <p
+                className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-[#E36F2C]"
+                data-page-module-item="eyebrow"
+                data-page-module-field={`label_${lang}`}
+              >
+                {eyebrow}
+              </p>
+            ) : null}
+            {title ? (
+              <h2
+                className={`${isProductSeries ? 'lg:text-6xl' : 'lg:text-5xl'} font-[family-name:var(--font-heading)] text-3xl font-light leading-tight`}
+                data-page-module-field={`title_${lang}`}
+              >
+                {title}
+              </h2>
+            ) : null}
+          </div>
+          {description ? (
+            <p
+              className={`${isProjectProof ? 'text-white/68' : 'text-[#6B625B]'} max-w-2xl text-sm leading-7 lg:ml-auto`}
+              data-page-module-field={`description_${lang}`}
+            >
+              {description}
+            </p>
+          ) : null}
+        </div>
+
+        {cards.length > 0 ? (
+          <div className={`${isModelGrid ? 'xl:grid-cols-4' : 'xl:grid-cols-3'} mt-10 grid gap-4 md:grid-cols-2`}>
+            {cards.map((card) => {
+              const cardContent = (
+                <article
+                  className={`${isProjectProof ? 'border-white/12 bg-white/[0.06]' : 'border-[#E5DED4] bg-white'} group flex h-full flex-col overflow-hidden border`}
+                  data-page-module-item={card.id}
+                >
+                  {card.image ? (
+                    <div className={`${isProductSeries ? 'aspect-[16/9]' : 'aspect-[4/3]'} relative overflow-hidden bg-[#E5DED4]`}>
+                      <Image
+                        src={card.image}
+                        alt={card.title}
+                        fill
+                        loading="lazy"
+                        className="object-cover transition duration-500 group-hover:scale-[1.03]"
+                        sizes={isModelGrid ? '(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw' : '(max-width: 768px) 100vw, 33vw'}
+                        data-page-module-field="image_url"
+                      />
+                    </div>
+                  ) : null}
+                  <div className="flex flex-1 flex-col p-5 lg:p-6">
+                    {card.meta ? (
+                      <p
+                        className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#E36F2C]"
+                        data-page-module-field={`value_${lang}`}
+                      >
+                        {card.meta}
+                      </p>
+                    ) : null}
+                    {card.title ? (
+                      <h3
+                        className="font-[family-name:var(--font-heading)] text-xl font-medium leading-snug"
+                        data-page-module-field={`label_${lang}`}
+                      >
+                        {card.title}
+                      </h3>
+                    ) : null}
+                    {card.body ? (
+                      <p
+                        className={`${isProjectProof ? 'text-white/62' : 'text-[#6B625B]'} mt-3 text-sm leading-6`}
+                        data-page-module-field={`content_${lang}`}
+                      >
+                        {card.body}
+                      </p>
+                    ) : null}
+                  </div>
+                </article>
+              );
+
+              return card.href ? (
+                <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                  {cardContent}
+                </Link>
+              ) : (
+                <div key={card.id} className="h-full">{cardContent}</div>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
+          <div className="mt-9 flex flex-wrap gap-3">
+            {primaryLabel && primaryHref ? (
+              <Link
+                href={primaryHref}
+                {...externalLinkProps(primaryHref)}
+                className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C85A1F]"
+                data-page-module-item="primary-cta"
+                data-page-module-field={`label_${lang}`}
+              >
+                {primaryLabel}
+              </Link>
+            ) : null}
+            {secondaryLabel && secondaryHref ? (
+              <Link
+                href={secondaryHref}
+                {...externalLinkProps(secondaryHref)}
+                className={`${isProjectProof ? 'border-white/24 text-white/78 hover:border-white/60' : 'border-[#241F1B]/20 text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]'} inline-flex min-h-11 items-center justify-center border px-5 text-sm font-bold uppercase tracking-[0.12em]`}
+                data-page-module-item="secondary-cta"
+                data-page-module-field={`label_${lang}`}
+              >
+                {secondaryLabel}
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function ContactBandSection({ pageModule }: { pageModule: HomePageModule | null }) {
+  const { lang } = useLanguage();
+  if (!pageModule || !pageModule.is_visible) return null;
+
+  const eyebrow = localizedLabel(findModuleItem(pageModule, 'eyebrow'), lang, '');
+  const title = localizedModuleTitle(pageModule, lang, '');
+  const description = localizedModuleDescription(pageModule, lang, '');
+  const primary = findModuleItem(pageModule, 'primary-cta');
+  const secondary = findModuleItem(pageModule, 'secondary-cta');
+  const primaryLabel = localizedLabel(primary, lang, '');
+  const secondaryLabel = localizedLabel(secondary, lang, '');
+  const primaryHref = primary?.href || '';
+  const secondaryHref = secondary?.href || '';
+
+  if (!title && !description && !(primaryLabel && primaryHref) && !(secondaryLabel && secondaryHref)) return null;
+
+  return (
+    <section
+      className="border-b border-[#E5DED4] bg-[#E36F2C] py-14 text-white lg:py-16"
+      data-page-module={`home:${pageModule.module_key}`}
+      data-page-key="home"
+      data-module-key={pageModule.module_key}
+    >
+      <div className="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-center lg:px-8">
+        <div>
+          {eyebrow ? (
+            <p
+              className="mb-3 text-xs font-bold uppercase tracking-[0.24em] text-white/72"
+              data-page-module-item="eyebrow"
+              data-page-module-field={`label_${lang}`}
+            >
+              {eyebrow}
+            </p>
+          ) : null}
+          {title ? (
+            <h2
+              className="font-[family-name:var(--font-heading)] text-3xl font-light leading-tight lg:text-5xl"
+              data-page-module-field={`title_${lang}`}
+            >
+              {title}
+            </h2>
+          ) : null}
+          {description ? (
+            <p
+              className="mt-4 max-w-3xl text-sm leading-7 text-white/78"
+              data-page-module-field={`description_${lang}`}
+            >
+              {description}
+            </p>
+          ) : null}
+        </div>
+        {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
+          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
+            {primaryLabel && primaryHref ? (
+              <Link
+                href={primaryHref}
+                {...externalLinkProps(primaryHref)}
+                className="inline-flex min-h-12 items-center justify-center bg-white px-6 text-sm font-bold uppercase tracking-[0.12em] text-[#241F1B] hover:bg-[#F5F2ED]"
+                data-page-module-item="primary-cta"
+                data-page-module-field={`label_${lang}`}
+              >
+                {primaryLabel}
+              </Link>
+            ) : null}
+            {secondaryLabel && secondaryHref ? (
+              <Link
+                href={secondaryHref}
+                {...externalLinkProps(secondaryHref)}
+                className="inline-flex min-h-12 items-center justify-center border border-white/45 px-6 text-sm font-bold uppercase tracking-[0.12em] text-white hover:border-white"
+                data-page-module-item="secondary-cta"
+                data-page-module-field={`label_${lang}`}
+              >
+                {secondaryLabel}
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 function resolveHomeDynamicModules(pageModules: HomePageModule[] | null) {
   const fixed = resolveDynamicPageModules(pageModules, HOME_MODULE_REGISTRY);
   const fixedModuleKeys = new Set(HOME_MODULE_REGISTRY.map((entry) => entry.moduleKey));
@@ -697,6 +987,10 @@ function renderHomeDynamicModule(resolved: ResolvedPageModule<HomePageModule>) {
       return <CtaModuleSection key={resolved.pageModule?.module_key ?? resolved.registry.moduleKey} pageModule={resolved.pageModule} />;
     case 'home.productShowcase':
       return <ProductShowcaseSection key={resolved.pageModule?.module_key ?? resolved.registry.moduleKey} pageModule={resolved.pageModule} />;
+    case 'home.salesGrid':
+      return <SalesGridSection key={resolved.pageModule?.module_key ?? resolved.registry.moduleKey} pageModule={resolved.pageModule} />;
+    case 'home.contactBand':
+      return <ContactBandSection key={resolved.pageModule?.module_key ?? resolved.registry.moduleKey} pageModule={resolved.pageModule} />;
     default:
       return null;
   }
