@@ -14,6 +14,7 @@ import {
   replaceImageSrcsInHtml,
 } from '@/lib/upload-image-variants'
 
+export const dynamic = 'force-dynamic'
 export const revalidate = 300
 
 const EXTS = [StarterKit, Link]
@@ -45,6 +46,37 @@ function textFallback(...values: Array<string | null | undefined>) {
   return values.find((value) => value && value.trim())?.trim() ?? ''
 }
 
+function textFromUnknown(value: unknown): string {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return ''
+  }
+}
+
+function isLikelyTestNews(item: {
+  slug?: string | null
+  title_zh?: string | null
+  title_en?: string | null
+  excerpt_zh?: string | null
+  excerpt_en?: string | null
+  content_zh?: unknown
+  content_en?: unknown
+}) {
+  const text = [
+    item.slug,
+    item.title_zh,
+    item.title_en,
+    item.excerpt_zh,
+    item.excerpt_en,
+    textFromUnknown(item.content_zh),
+    textFromUnknown(item.content_en),
+  ].join(' ')
+  return /\b(?:weisu|weisuweisu|codex|test|b\d{2}(?:-\d+)?)\b/i.test(text)
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -53,7 +85,7 @@ export async function generateMetadata({
   const { slug } = await params
   const news = await getNewsBySlug(slug).catch(() => null)
 
-  if (!news) {
+  if (!news || isLikelyTestNews(news)) {
     return {}
   }
 
@@ -81,7 +113,7 @@ export default async function NewsSlugPage({
 }) {
   const { slug } = await params
   const news = await getNewsBySlug(slug).catch(() => null)
-  if (!news) notFound()
+  if (!news || isLikelyTestNews(news)) notFound()
 
   const htmlZh = toHTML(news.content_zh)
   const htmlEn = toHTML(news.content_en)

@@ -521,6 +521,7 @@ export type CatalogDetailModuleType = 'highlights' | 'scenarios' | 'faq' | 'cont
 
 export interface CatalogDetailModuleItem {
   title: string;
+  href?: string;
   body?: string;
 }
 

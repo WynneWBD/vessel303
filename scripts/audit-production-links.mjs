@@ -10,7 +10,6 @@ const DEFAULT_ROUTES = [
   '/products/v9-gen6-standard',
   '/cases',
   '/cases/xunliao-bay-holiday-planet',
-  '/news',
   '/faq',
   '/media-kit',
   '/display',

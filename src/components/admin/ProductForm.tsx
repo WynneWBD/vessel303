@@ -349,7 +349,12 @@ function parseSpecItems(value: string) {
 
 function formatModuleItems(items: CatalogDetailModuleItem[] = []) {
   return items
-    .map((item) => item.body ? `${item.title}: ${item.body}` : item.title)
+    .map((item) => {
+      if (item.href) {
+        return [item.title, item.href, item.body].filter(Boolean).join(' | ')
+      }
+      return item.body ? `${item.title}: ${item.body}` : item.title
+    })
     .join('\n')
 }
 
@@ -359,6 +364,15 @@ function parseModuleItems(value: string) {
     .map((line) => {
       const trimmed = line.trim()
       if (!trimmed) return null
+      if (trimmed.includes('|')) {
+        const [titlePart, hrefPart, ...bodyParts] = trimmed.split('|').map((part) => part.trim())
+        if (!titlePart) return null
+        return {
+          title: titlePart,
+          href: hrefPart || undefined,
+          body: bodyParts.join(' | ').trim() || undefined,
+        }
+      }
       const separator = trimmed.includes('：')
         ? '：'
         : trimmed.includes('|')
@@ -1687,14 +1701,14 @@ export default function ProductForm({
                             </p>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Field label="中文列表项" hint="一行一个，格式：标题: 说明。FAQ 可写 问题: 答案。">
+                            <Field label="中文列表项" hint="一行一个，格式：标题: 说明。资料链接可写：标题 | 链接 | 说明。">
                               <Textarea
                                 className="min-h-28"
                                 value={formatModuleItems(module.items_cn)}
                                 onChange={(e) => patchDetailModule(module.id, { items_cn: parseModuleItems(e.target.value) })}
                               />
                             </Field>
-                            <Field label="英文列表项" hint="One per line: Title: Description.">
+                            <Field label="英文列表项" hint="One per line: Title: Description. Resource links: Title | URL | Description.">
                               <Textarea
                                 className="min-h-28"
                                 value={formatModuleItems(module.items_en)}

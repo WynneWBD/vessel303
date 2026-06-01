@@ -30,6 +30,16 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: '/products/e6',
+        destination: '/products/e6-gen6-standard',
+        statusCode: 301,
+      },
+      {
+        source: '/products/e3',
+        destination: '/products/e3-gen6-standard',
+        statusCode: 301,
+      },
+      {
         source: '/innovation',
         destination: '/about#technologies',
         permanent: true,

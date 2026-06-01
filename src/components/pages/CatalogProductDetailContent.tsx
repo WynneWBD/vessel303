@@ -51,6 +51,10 @@ function text(value: string | null | undefined) {
   return value?.trim() ?? '';
 }
 
+function isInternalHref(href: string) {
+  return href.startsWith('/') && !href.startsWith('//');
+}
+
 function localizedProductName(product: CatalogProduct, lang: 'en' | 'zh') {
   return lang === 'en' ? product.name_en || product.name_cn : product.name_cn || product.name_en;
 }
@@ -68,12 +72,30 @@ function DetailModuleBlock({ module, lang, name }: { module: DetailModule; lang:
       {body ? <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#5C6670]">{body}</p> : null}
       {items.length > 0 ? (
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {items.map((item: DetailModuleItem, index: number) => (
-            <div key={`${item.title}-${index}`} className="rounded-md border border-[#ECEFF1] bg-[#F7F8F8] p-4">
-              {item.title ? <p className="text-sm font-semibold text-[#1F2A31]">{item.title}</p> : null}
-              {item.body ? <p className="mt-2 text-sm leading-6 text-[#65707A]">{item.body}</p> : null}
-            </div>
-          ))}
+          {items.map((item: DetailModuleItem, index: number) => {
+            const href = text(item.href);
+            return (
+              <div key={`${item.title}-${index}`} className="rounded-md border border-[#ECEFF1] bg-[#F7F8F8] p-4">
+                {item.title && href && isInternalHref(href) ? (
+                  <Link href={href} className="text-sm font-semibold text-[#147C94] underline-offset-4 hover:underline">
+                    {item.title}
+                  </Link>
+                ) : null}
+                {item.title && href && !isInternalHref(href) ? (
+                  <a
+                    href={href}
+                    target={/^https?:\/\//i.test(href) ? '_blank' : undefined}
+                    rel={/^https?:\/\//i.test(href) ? 'noopener noreferrer' : undefined}
+                    className="text-sm font-semibold text-[#147C94] underline-offset-4 hover:underline"
+                  >
+                    {item.title}
+                  </a>
+                ) : null}
+                {item.title && !href ? <p className="text-sm font-semibold text-[#1F2A31]">{item.title}</p> : null}
+                {item.body ? <p className="mt-2 text-sm leading-6 text-[#65707A]">{item.body}</p> : null}
+              </div>
+            );
+          })}
         </div>
       ) : null}
       {images.length > 0 ? (

@@ -55,15 +55,16 @@ export default function CaseDetailPageContent({
     project.cover_image_url,
     ...project.images,
   ].filter((image, index, images): image is string => Boolean(image) && images.indexOf(image) === index)
-  const facts = [
-    location,
-    type,
-    project.area_display,
-    project.investment_display,
-    project.units_display,
-    project.products,
-  ].map(text).filter(Boolean)
   const modules = moduleMap(pageModules)
+  const detailLabels = modules.get('detail-labels') ?? null
+  const facts = [
+    { label: itemLabel(itemById(detailLabels, 'fact-location'), lang), value: location },
+    { label: itemLabel(itemById(detailLabels, 'fact-type'), lang), value: type },
+    { label: itemLabel(itemById(detailLabels, 'fact-area'), lang), value: project.area_display },
+    { label: itemLabel(itemById(detailLabels, 'fact-investment'), lang), value: project.investment_display },
+    { label: itemLabel(itemById(detailLabels, 'fact-units'), lang), value: project.units_display },
+    { label: itemLabel(itemById(detailLabels, 'fact-products'), lang), value: project.products },
+  ].map((fact) => ({ ...fact, value: text(fact.value) })).filter((fact) => Boolean(fact.value))
   const inquiryModule = modules.get('inquiry-form') ?? null
   const inquiryTitle = moduleTitle(inquiryModule, lang)
   const inquiryType = itemLabel(itemById(inquiryModule, 'inquiry-type'), lang)
@@ -111,8 +112,9 @@ export default function CaseDetailPageContent({
             {facts.length > 0 ? (
               <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
                 {facts.map((fact) => (
-                  <p key={fact} className="rounded-md border border-[#E5DED4] bg-white px-4 py-3 text-sm font-bold leading-6 text-[#2C2A28] shadow-sm">
-                    {fact}
+                  <p key={`${fact.label}-${fact.value}`} className="rounded-md border border-[#E5DED4] bg-white px-4 py-3 text-sm leading-6 text-[#2C2A28] shadow-sm">
+                    {fact.label ? <span className="mb-1 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#8A8580]">{fact.label}</span> : null}
+                    <span className="font-bold">{fact.value}</span>
                   </p>
                 ))}
               </div>
