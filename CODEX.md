@@ -706,3 +706,20 @@ curl -I https://www.vessel303.com/news/<slug>
 - 线上验收：`https://www.vessel303.com/` 和 `/products` 为 200 / `PRERENDER`；未登录 `/admin/site/pages`、`/admin/site/navigation` 跳登录；登录态 Chrome 抽查 `/admin/site/pages`、`/admin/site/navigation`、`/admin/site/visual` 页面可读且无 console error。
 - 已知边界：本轮没有做物理删除，没有改权限 / 认证 / 支付 / 订单 / 会员，没有改 `/global`、MapLibre、MapTiler 或 `/api/map`；真实生产改稿写入仍应由运营在新后台入口按 B26 内容合同执行，05 可按需要做低风险改稿验收。
 - 后续建议：下一步不建议再做前台硬编码修补。若继续运营化，优先做 B27“真实内容补齐与运营样板发布”：由运营或 03 提供真实图片 / 文案，02 只补后台字段和质检口径，01 只调整展示模板，05 验证后台改什么前台显示什么。
+
+## B32 海外官网可信度缺口修复与 303 交互对齐（2026-06-01）
+
+- Code commit: `d1bfaa5` / `d1bfaa505a61c9a293c7e001dcdbd1bea8c34734`
+- Vercel deployment: `dpl_9EqqGBPynLTGmpP4VKjPecbrsMeo`，状态 `READY`，deployment URL `https://vessel303-44kb9d8ec-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com`
+- 本轮定位：排除 `/global` 后，修复海外客户体验官指出的高信任风险：Footer 产品 404、测试感 News、中英混排、表单字段可靠性、产品筛选反馈和 Media Kit 假下载风险。后台仍是控制器，前台只修展示逻辑、字段属性和模板渲染，不写死业务文案或销售承诺。
+- Footer 产品链接：后台 `site:footer-products` 配置和默认初始化均已修正，E6 从 `/products/e6` 改为 `/products/e6-gen6-standard`，E3 从 `/products/e3` 改为 `/products/e3-gen6-standard`；production link audit 已覆盖后台 published 导航 / 页脚链接。
+- News 规则：测试感 published 新闻（如 `weisu / weisuweisu / test / Codex / Bxx`）已降为 draft；可信英文 published 新闻少于 2 篇时，Navbar / Footer 的 News 入口隐藏，sitemap 不主动收录测试新闻；`/news` 保留 200 安全空状态。
+- Scenarios 英文页：`tourism / commercial / public` 已补齐英文 published 内容；英文模式不再回退中文字段，英文内容缺失时隐藏对应模块或显示系统级空状态，避免 `/scenarios/*?lang=en` 出现中文标题、正文或 CTA。
+- 表单可靠性：`ConversionInquiryForm` 已补稳定 `name`、`autoComplete`、`aria-label` 技术属性；这是表单识别和可访问性修复，不属于前台业务文案。生产低风险测试已确认 Contact、Product Inquiry、Case Inquiry、Scenario 表单会把姓名、邮箱、电话 / WhatsApp、国家、数量、需求、model、source 写入 `/admin/customers/leads`。
+- 产品筛选反馈：`/products` 结果区已增加当前筛选条件、匹配产品数量、清除筛选和无结果状态；所有可见 label 均来自 `page_modules:products/ui-labels`，缺 label 时隐藏，不在前台写默认业务文案。
+- Media Kit：资源卡只在存在真实 `file_url` 或可信链接时显示下载 / 打开资源；没有真实文件时保留申请表单和后台内容缺口，不显示假下载按钮。
+- 新增 / 强化脚本：`scripts/backfill-b32-trust-cleanup.mjs` 用于 dry-run / apply 低风险后台内容修复；`scripts/audit-production-links.mjs` 已能区分主站禁止旧链与 `/global` 旧站例外；`scripts/audit-published-content.mjs` 已强化 HTTP 失败和英文页中文残留检测。
+- 验收摘要：targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links` 均通过；线上 `/`、`/products`、`/products/e6-gen6-standard`、`/products/e3-gen6-standard`、`/news`、`/scenarios/tourism|commercial|public`、`/media-kit`、`/contact`、`/global` 均 200。
+- 浏览器验收：线上 `/products?q=E7`、`/products/v9-gen6-standard`、`/news`、`/scenarios/tourism|commercial|public`、`/media-kit`、`/contact` 无可见中文残留、无空 `name` 表单控件、无横向溢出、无 console error。
+- 真实测试线索：B32 写入 4 条低风险生产测试线索并保留不删除：Contact `a8ab7cf0-f7fa-43ce-ab35-d18655671825`、Product `f448c146-6d23-412c-8e30-8de48e259528`、Case `0535e9ce-a878-4de9-8a0c-59276dcc1a32`、Scenario `c70eecb3-9305-48d6-9bb5-d782d133ea7f`。
+- `/global` 边界：本轮零改动。渲染后 `View Products` 仍指向 `https://en.303vessel.cn/products_list.html`，`Contact Team` 仍指向 `https://en.303vessel.cn/contact.html`；MapLibre、MapTiler、`/api/map` 和 Global 旧站例外继续归 04 / Global 专项。
