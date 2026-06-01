@@ -105,7 +105,7 @@ Codex 默认工作方式：
 
 数据分析 / 运营统计：B6 已重新定义为内部运营数据中心，不再沿用早期旧 B 包“设置项接管 B6”编号。`/admin/status` 已升级为“运营数据中心”，并新增 `/admin/status/content`、`/admin/status/leads`、`/admin/status/site`、`/admin/status/activity`、`/admin/status/traffic` 子页；统计集中读取现有 `product_catalog`、`project_cases`、`news`、`leads`、`uploads`、页面草稿表和 `site_settings`，表不存在或查询失败时降级显示，不应 500。B15 已把 `/admin/status/traffic` 从“访问分析准备”升级为第一方网站数据分析：新增 `site_events` 事件表、`/api/analytics/event` 非阻塞事件接口、全站公开页 `page_view` / `cta_click` / `contact_redirect` 埋点、表单成功 `form_submit_success` 记录，以及 `/admin/site/conversion` 转化路径看板 30 天访问 / 动作 / 表单 / 线索 / 转化率联动。B15-9 已完成数据口径校准：主运营指标默认排除 `admin-test` analytics 事件、`admin_test%` source 和 `Codex B* test` 测试线索，测试数据仍保留在生产库但单独显示排除数量，避免 B14 / B15 验收数据抬高转化率。B15-10 已完成真实运营观察与数据口径固化：只读复核生产近 30 天 `site_events` / `leads` 后，确认真实访问、测试事件、真实线索和测试线索能分开解释；本轮只写入 1 条 `admin_test:b15-10:cta_click` analytics 测试事件用于验证排除口径，不创建测试线索、不删除数据。B15 只记录页面路径、事件类型、来源类型、referrer、UTM、设备类型、匿名 visitor/session hash 和时间；不存姓名、邮箱、电话、留言、原始 IP 或完整 User-Agent。不接 GA / Search Console / Vercel Analytics API，不注入第三方统计脚本，不做复杂 BI、会员 / 订单 / 支付，不碰 `/global` 底层。
 
-客户与线索管理：B11 已完成客户与线索后台 2.0 收口。正式线索管理入口为 `/admin/customers/leads`，使用新后台 `AdminSectionShell`，承载线索列表、状态筛选、搜索、详情查看、状态更新、跟进备注、负责人分配和 CSV 导出；旧 `/admin/leads` 仅作为兼容入口保留，带 query 跳转到 `/admin/customers/leads`，不再展示旧 `AdminShell` 侧栏。`/admin` 待处理线索、`/admin/customers` 状态卡、`/admin/status/leads`、`/admin/status/activity`、旧 Legacy / 设置 / 用户关联入口均已收口到新路径。B12 已把前台 Navbar / Footer / 首页 / About / FAQ / Cases / Scenarios / 产品通用详情 / 固定精品详情的咨询入口统一到 `/contact`，再由后台 `site_settings.contactUrl` 决定最终跳转。B14 已完成运营目标全链路对齐与转化闭环：新增 `/admin/site/conversion` 转化路径看板，通用产品详情、FAQ、Scenarios、Innovation 页面新增轻量询盘表单，新闻详情增加带来源参数的联系 CTA；案例和 Media Kit 保持既有表单并复核来源追踪。线索 2.0 已把 `source` 技术字符串翻译为运营可读标签，支持来源类型筛选，并在详情中显示来源页面 / 入口类型 / 关联产品或页面和来源跳转。数据和 API 继续使用现有 `leads`、`/api/contact`、`/api/admin/leads`、`/api/admin/leads/[id]`、`/api/admin/leads/export`；生产环境不显示“新建测试线索”，新 2.0 页面不开放删除按钮。B14 真实链路验收创建 6 条低风险生产测试线索，均标记 `Codex B14 test`，不删除。本轮不做客户档案、会员体系、订单、支付、权限矩阵、删除数据或 `/global`。
+客户与线索管理：B11 已完成客户与线索后台 2.0 收口。正式线索管理入口为 `/admin/customers/leads`，使用新后台 `AdminSectionShell`，承载线索列表、状态筛选、搜索、详情查看、状态更新、跟进备注、负责人分配和 CSV 导出；旧 `/admin/leads` 仅作为兼容入口保留，带 query 跳转到 `/admin/customers/leads`，不再展示旧 `AdminShell` 侧栏。`/admin` 待处理线索、`/admin/customers` 状态卡、`/admin/status/leads`、`/admin/status/activity`、旧 Legacy / 设置 / 用户关联入口均已收口到新路径。B12 已把前台 Navbar / Footer / 首页 / About / FAQ / Cases / Scenarios / 产品通用详情 / 固定精品详情的咨询入口统一到 `/contact`；B28 后 `/contact` 已切换为新站自有联系页，不再默认跳 300 旧联系页。B14 已完成运营目标全链路对齐与转化闭环：新增 `/admin/site/conversion` 转化路径看板，通用产品详情、FAQ、Scenarios、Innovation 页面新增轻量询盘表单，新闻详情增加带来源参数的联系 CTA；案例和 Media Kit 保持既有表单并复核来源追踪。B28 已把 Contact 从 external 路径调整为 lead 路径：`/contact` 表单复用 `/api/contact` 写入 `leads`，`source` 使用 `contact:main:inquiry_form` 并保留 URL source 参数；`site_settings.contactUrl` 降级为后台备用旧站联系入口，不再作为主跳转。线索 2.0 已把 `source` 技术字符串翻译为运营可读标签，支持来源类型筛选，并在详情中显示来源页面 / 入口类型 / 关联产品或页面和来源跳转。数据和 API 继续使用现有 `leads`、`/api/contact`、`/api/admin/leads`、`/api/admin/leads/[id]`、`/api/admin/leads/export`；生产环境不显示“新建测试线索”，新 2.0 页面不开放删除按钮。B14 真实链路验收创建 6 条低风险生产测试线索，均标记 `Codex B14 test`，不删除。本轮不做客户档案、会员体系、订单、支付、权限矩阵、删除数据或 `/global` 底层。
 
 性能 / 图片 / 前台速度：07 负责全站性能专项，包括首页首屏速度、产品列表打开速度、图片体积、前台缓存、Lighthouse / Chrome Network 基线和线上轻量测速。B8 已完成第一轮性能与图片治理：修复 `/admin/media` 嵌套 button 导致的 hydration 风险，公开产品列表 / 筛选 / 详情改为轻量缓存读取并避免公开路径触发 schema 初始化，首页 hero 改为只渲染当前图和下一张图并新增优化图片资产，后台媒体上传增加大图提示，产品写入后会刷新公开产品缓存。B13 已完成真实性能瓶颈定位、第一修复包、第二阶段图片管线治理和 B13-3 公开页面缓存 / 旧素材小批量回填：第一修复包确认生产 `/about` 慢点主因是首屏原始 Blob 大图，并让 Vercel Blob 图进入 `next/image` 优化；第二阶段新增 `uploads.variants`，上传图片后生成 `thumb/card/detail/original` 派生图，媒体库和后台图片选择器优先用 `thumb`，产品 / 案例 / 新闻 / Display 等前台按场景优先用 `card` 或 `detail`；B13-3 已让 `/products`、`/cases`、`/news`、`/faq`、`/contact` 等公开页面进入可缓存 / 预渲染状态，旧媒体已先回填 5 张缺派生图生产图片，并新增关键静态大图优化副本。真实生产上传验收已创建测试媒体 `b13-variant-pipeline-test.jpg`，验证 `thumb/card/detail/original` 均写入且派生图可访问；测试图不删除，删除仍需单独确认。产品中心体验问题由 01 配合，后台 API、CMS 查询或后台实现瓶颈由 02 处理，05 负责验收性能改动是否真实改善；后续旧素材继续分批回填、后台产品页首屏速度、全站点击体感和 Lighthouse 深测继续由 07 拆小步推进。
 
@@ -113,13 +113,15 @@ Codex 默认工作方式：
 
 新闻资讯：B3-0/1/2 已完成新闻后台 2.0 主路径，正式路径为 `/admin/content/news -> /admin/content/news/list -> /admin/content/news/new 或 /admin/content/news/{id}/edit`；旧 `/admin/news`、旧 new / edit 路径继续作为维护备用。新闻 2.0 已参照 300.cn 新闻资讯模块收口状态筛选、搜索、添加、编辑、预览、发布前检查和删除入口；B3-3 已补 300 对照运营能力规划，在 `/admin/content/news` 展示分类管理、回收站、批量操作、定时发布的安全边界，在 `/admin/content/news/list` 补批量选择和禁用批量操作预演；B3-4 已新增 `/admin/content/news/categories` 新闻分类字段方案页；B3-5 已完成新闻分类真实建表与保存接入，新增 `news_categories` 表、`news.category_id` nullable 字段、后台分类 API、表单保存 / 发布前保存同步分类、后台列表分类列与分类筛选，默认分类为 `公司资讯`、`产品与展会`、`项目案例`、`行业观察`；B3-6 已完成新闻全链路只读回归；B3-7 已开放新闻分类新增、编辑、排序、显示 / 隐藏和稳定测试定位，不做分类物理删除；B3-8 已开放新闻回收站列表和恢复为草稿，不做永久删除；B3-9 已开放低风险批量转分类，不开放批量发布、批量删除、永久删除或翻译；B3-10 已开放单篇新闻定时发布第一阶段，新增 nullable `news.scheduled_at`、定时筛选、表单保存 / 清除计划发布时间和概览定时入口，但不做自动执行器、失败重试或批量定时；B3-11 已开放新闻 SEO 字段治理第一阶段，新增 nullable `news.seo_title_zh`、`news.seo_title_en`、`news.seo_description_zh`、`news.seo_description_en`，编辑页可保存搜索标题 / 描述，前台 `/news/[slug]` metadata 优先读取 SEO 字段；B3-12 已完成生产环境真实全链路回归，作为运营人员从新建草稿、封面、分类、定时、SEO、发布、前台验证、取消发布、批量转分类、软删除、回收站恢复到最终清理均跑通，未发现需要 02 修复的问题。旧 `/admin/news`、旧 new / edit 路径也已接入服务端预加载分类，避免浏览器插件拦截客户端分类 API 时下拉不可用。定时自动执行器、关键词、批量 SEO、SEO 自动生成、权限分级仍作为后续任务，不在普通主路径小修中混入。真实测试新闻 `vessel-news-console-2-test-20260525` 已完成发布、前台验证、删除验证、B3-8 恢复验收、B3-9 批量转分类验收、B3-10 定时保存 / 清除验收和 B3-11 SEO 字段保存验收；B3-12 真实回归测试新闻 `b3-12-news-full-chain-qa-20260526` 已完成发布 / 取消发布 / 回收站恢复全链路，最终 soft-deleted 留在回收站，未永久删除，前台列表不展示，详情页返回 404。
 
-Global：`/global` 未来要 CMS 化，但短期不贸然改地图链路。稳定性优先于功能扩展。
+Global：`/global` 未来要 CMS 化，但短期不贸然改地图底层链路。B28 仅做客户可见兜底和旧站链接收口：地图长时间 loading 或失败时展示项目 / 国家列表和新站 `/contact`、`/products` 入口，内容来自 `project_cases` 与后台 published 配置；MapLibre、MapTiler 和 `/api/map` 仍归 04 地图专项。
 
 价格与会员：价格体系、会员体系、代理后台、中文站、支付系统是中长期专项。价格规则未确认前，不把游客价、注册会员价、代理价、国家价写死。
 
-`site_settings`：已初始化；`/contact` 已由后台设置 `contactUrl` 接管，异常时回退默认联系链接。后续扩展产品外链、SEO 默认值等必须单独任务、单独验收。
+`site_settings`：已初始化；B28 后 `contactUrl` 不再接管 `/contact` 主跳转，仅作为后台可选备用旧站联系入口。`/contact` 主页面由 `page_modules:contact` 和站点文案字典承接，联系表单写入 `leads`。后续扩展产品外链、SEO 默认值等必须单独任务、单独验收。
 
 B9 真实样板补齐：生产后台已发布 6 条样板内容，用于验证固定内容 CMS 的真实运营链路：FAQ `project-lead-time`、FAQ `multi-unit-resort-support`、Media Kit `vessel-product-assets-pack`、Scenario `tourism`、Display `e7-gen6-sample-display`、Innovation `viie`。本轮同时修复 B9 后台保存链路：`B9ContentManager` 增加可达保存入口和可见表单字段兜底读取，`src/lib/b9-content-db.ts` 修复 `status` 参数类型推断，避免生产插入时报 `inconsistent types deduced for parameter $16`。线上只读验收确认 `/faq`、`/media-kit`、`/scenarios/tourism`、`/display`、`/innovation/viie` 均 200，公开 API 可读到样板内容且中文字段正常；直接用浏览器打开 `/api/admin/site-content*` 可能被本机扩展拦截为 `ERR_BLOCKED_BY_CLIENT`，05 验收应以已登录后台页面、认证 API 请求和前台公开页面组合判断。
+
+B28 主站转化闭环与旧站依赖切断已完成并上线。目标是让 `vessel303.com` 成为海外客户主站，关键路径不再跳回旧 300 英文站。代码提交 `e5df597 feat(site): close main conversion paths`（full SHA `e5df5976c2b8707e3ed71e481dba1866c2ec4a1c`）完成主功能，构建修复提交 `14bcded fix(build): use webpack build on Vercel`（full SHA `14bcded857acebd37205e8b16ad2fdb427fa3e84`）让 Vercel 使用 `next build --webpack`；最终 production deployment `dpl_FJxwfUpBMLaBDxKRFVLXadd2F3pT` READY，production alias 包含 `https://www.vessel303.com`。本轮把 `/contact` 从旧站 redirect 改为新站自有联系页，内容由 `page_modules:contact` 承接，表单写入 `leads`，source 为 `contact:main:inquiry_form` 并保留 URL source；`site_settings.contactUrl` 降级为备用旧站联系入口。Navbar 不再在公开营销导航显示登录姓名、邮箱、`Codex Test Operator` 或角色信息；首页 / Navbar / Footer / 产品 / Global 相关 CTA 统一归一到新站 `/products`、`/contact`、产品详情和案例详情。`/global` 只新增客户可见兜底和旧链收口：地图长时间 loading 或失败时展示项目 / 国家列表、代表案例和新站联系入口，未改 MapLibre、MapTiler 或 `/api/map` 底层。`/admin/site/conversion` 中 Contact 已从 external 路径改为 lead 路径，旧站产品 / 联系 URL 由 `normalizeSiteHref` 归一并由后台质检标记为风险旧链。验收记录：`git diff --check`、`node scripts/audit-public-content.mjs`、`node scripts/audit-published-content.mjs`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack`、`npm.cmd run build` 均通过；线上 `/contact` 200 且 `X-Vercel-Cache: HIT`，`/products` 200，`/global` 200，未登录 `/admin/site/conversion` 302 到 `/admin/login`。未删除业务内容，未改权限、认证、支付、订单、会员，未改 `/global` 地图底层。后续如果要重新启用客户确认邮件，应先把邮件正文完整接到后台 `contact:email` 或文案字典后再开放发送。
 
 ## 多对话分工与协作边界
 
@@ -213,16 +215,17 @@ B9 真实样板补齐：生产后台已发布 6 条样板内容，用于验证�
 
 外部跳转规则：
 
-- 联系、留资、采购咨询入口：前台 CTA 默认指向 `/contact`；`/contact` 由后台 `site_settings.contactUrl` 接管，当前默认回退到 `https://en.303vessel.cn/contact.html`。
+- 联系、留资、采购咨询入口：前台 CTA 默认指向新站 `/contact`；`/contact` 是自有联系页，表单写入 `leads`，不再默认跳 `https://en.303vessel.cn/contact.html`。
+- `site_settings.contactUrl` 仅作为后台配置的备用旧站联系入口；如运营明确发布该备用入口，前台可以按后台配置显示，但不能替代主联系闭环。
 - 查看产品入口：前台统一指向 `/products`；旧 `https://en.303vessel.cn/products_list.html` 仅作为后台设置和兼容口径保留，不再作为新前台 CTA 默认值。
-- 外部 300 链接只在 `/contact` 最终跳转或明确外链设置中出现；普通站内 CTA 不继续硬编码 300 URL。
+- `normalizeSiteHref` 会把旧 300 产品 / 联系 URL 归一到新站 `/products` 或 `/contact`；后台质检应把旧站 URL 标记为风险旧链。
 
 ## 当前应用状态
 
 官网前台：
 
 - 首页、产品列表、V9 Gen6 详情、About、FAQ、`/cases` 列表、`/cases/[id]` 项目案例详情、News、Contact、`/global`、Display 等页面已存在。
-- `/contact` 保留为跳转/承接页，已读取后台设置 `contactUrl`，异常时回退统一外部联系页。
+- `/contact` 已切换为新站自有联系页，读取 `page_modules:contact` 渲染 hero、联系渠道、表单文案和备用入口；表单复用 `/api/contact` 写入 `leads`，不再默认 redirect 到 300 旧联系页。
 - `/global` 使用 MapLibre/MapTiler，是高风险稳定模块；当前 CMS 接管同 ID static 点位的样板项目为 `astrobase-mamison`、`japan-space-vessel`、`guangdong-foshan`。
 
 账号中心：
