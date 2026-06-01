@@ -8,7 +8,6 @@ import { SHOWCASE_MARKERS, type ShowcaseMarker } from '@/data/showcaseMarkers'
 import type { ShowcaseProject } from '@/data/showcaseProjects'
 import MapSkeleton from './MapSkeleton'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { buildContactHref, SITE_PRODUCTS_HREF } from '@/lib/site-links'
 
 const GlobalMapDynamic = dynamic(() => import('./GlobalMapML'), {
   ssr: false,
@@ -52,6 +51,9 @@ function scheduleIdlePreload(work: () => void) {
 const ProjectDetailDynamic = dynamic(loadProjectDetailModule, {
   ssr: false,
 })
+
+const GLOBAL_LEGACY_CONTACT_HREF = 'https://www.303vessel.cn/contact.html'
+const GLOBAL_LEGACY_PRODUCTS_HREF = 'https://en.303vessel.cn/products_list.html'
 
 // Sync URL without triggering a Next router re-render — the map state owns
 // what's visible, the URL is just a shareable mirror.
@@ -212,10 +214,10 @@ function MapFallbackAccess({
         })}
       </div>
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        <Link href={SITE_PRODUCTS_HREF} style={{ background: '#E36F2C', color: '#fff', padding: '9px 13px', fontSize: 12, fontWeight: 800, textDecoration: 'none' }}>
+        <Link href={GLOBAL_LEGACY_PRODUCTS_HREF} style={{ background: '#E36F2C', color: '#fff', padding: '9px 13px', fontSize: 12, fontWeight: 800, textDecoration: 'none' }}>
           {labels.products}
         </Link>
-        <Link href={buildContactHref('global:fallback_contact')} style={{ border: '1px solid rgba(245,242,237,0.35)', color: '#F5F2ED', padding: '9px 13px', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
+        <Link href={GLOBAL_LEGACY_CONTACT_HREF} style={{ border: '1px solid rgba(245,242,237,0.35)', color: '#F5F2ED', padding: '9px 13px', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
           {labels.contact}
         </Link>
       </div>
