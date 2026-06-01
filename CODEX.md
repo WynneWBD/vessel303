@@ -750,3 +750,17 @@ curl -I https://www.vessel303.com/news/<slug>
 - 验收摘要：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；线上 `/`、`/products`、`/products/v9-gen6-standard`、`/contact`、`/media-kit`、`/cases/xunliao-bay-holiday-planet`、`/cases/wanlv-lake-leqing-valley`、`/global` 均 200；`/downloads/b34/v9-gen6-spec-sheet.pdf` 200；未登录 `/admin` 302 到 `/admin/login`。
 - `/global` 边界：本轮未修改 Global 代码、MapLibre、MapTiler 或 `/api/map`；Global Contact / Products 继续保持老 303 跳转例外。
 - 后续建议：B35 若继续复刻销售力，应继续由 03 / 运营补更多可确认的 303 原始素材、产品资料和案例商业数据，再由 02 写入后台 published 内容或 CMS 字段；01 只调整展示模板，不在前台补业务内容。
+
+## B35 首页 303 销售力后台化复刻（2026-06-01）
+
+- Code commit: `f948ad3 feat(home): align homepage sales modules` / `f948ad322d8fee4b04b99ee8099f3c5f8e8bdf19`。
+- Vercel deployment: `dpl_3tEt3399oA5zYnY7uB51vdx1NAym`，状态 `READY`，deployment URL `https://vessel303-qixk87pqb-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com`。
+- 本轮定位：B35 只解决首页与 `en.303vessel.cn` 销售力差距，不扩展到全站。继续锁定“后台是控制器，前台是显示器”：首页客户可见文字、图片、CTA、联系方式、SEO、排序和显示 / 隐藏均来自后台 published 内容；前台只改模板布局、图片比例、响应式、模块渲染、链接规范化、缓存和性能。
+- 300 / 303 对照：已只读学习 300 首页模块、栏目、导航、素材、SEO、联系方式和发布状态，以及 303 英文首页的 hero、产品直给、产品系列、项目证明、联系入口、浮动 WhatsApp / Email 和 Footer；未在 300 执行保存、发布、上传、删除或付款。
+- 首页内容合同：Home 固定模块升级为 `hero`、`product-series`、`model-grid`、`application-scenes`、`project-proof`、`contact-band`。每个模块只开放标题、正文、图片、按钮文案、按钮链接、卡片、排序、显示状态和发布状态；后台无 published 内容时前台隐藏模块，不显示代码备用业务文案。
+- 后台模板与质检：`page_modules` 新增 `home.salesGrid` 和 `home.contactBand` 受控模板；`/admin/pages/visual` 与 `/admin/site/pages` 已能识别 B35 首页模块、首页完整度、产品入口、CTA、SEO、旧链和英文页中文混入等质检项。
+- 后台内容写入：新增 `scripts/backfill-b35-homepage-303-sales.mjs`，支持 dry-run / apply；已写入低风险 published 内容并只补缺失 / 刷新 B35 首页模块，不删除业务内容。内容包括更直给的首页 hero、产品系列、型号卡片、应用场景、项目证明、联系横幅和首页 SEO。
+- 前台显示器补强：`HomePageContent` 新增 B35 首页 sales grid 与 contact band 渲染；首页首屏改为更接近 303 英文站的“高清大图 + 产品直给 + 项目证明 + 强联系入口”展示方式。所有可见文案、图片和按钮仍来自后台模块；前台不硬写销售文案。
+- 验收摘要：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；本地 production `/` 渲染 B35 首页模块，`/global` 200；线上首页 200 且命中 `dpl_3tEt3399oA5zYnY7uB51vdx1NAym`，线上 `/products` 200，`/contact` 200，未登录 `/admin/site/visual` 302 到 `/admin/login`。
+- `/global` 边界：本轮未修改 Global 代码、MapLibre、MapTiler 或 `/api/map`；Global Contact / Products 旧站例外继续保持，不套用首页 / 主站新站闭环规则。
+- 后续建议：B36 若继续缩小首页差距，应优先由 03 / 运营提供更多可确认的 303 原始图片和产品实拍，再由 02 写入后台 published 内容；01 只继续优化首页显示模板和响应式，不在前台补业务文案。
