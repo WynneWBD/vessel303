@@ -1,12 +1,14 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import Link from 'next/link'
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SHOWCASE_MARKERS, type ShowcaseMarker } from '@/data/showcaseMarkers'
 import type { ShowcaseProject } from '@/data/showcaseProjects'
 import MapSkeleton from './MapSkeleton'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { buildContactHref, SITE_PRODUCTS_HREF } from '@/lib/site-links'
 
 const GlobalMapDynamic = dynamic(() => import('./GlobalMapML'), {
   ssr: false,
@@ -146,11 +148,87 @@ function PanelLoadingPreview({
   )
 }
 
+function MapFallbackAccess({
+  markers,
+  lang,
+  onSelect,
+}: {
+  markers: ShowcaseMarker[]
+  lang: string
+  onSelect: (marker: ShowcaseMarker) => void
+}) {
+  const zh = lang === 'zh'
+  const labels = {
+    eyebrow: zh ? '项目列表' : 'Project Access',
+    title: zh ? '如果地图仍在加载，可以先查看代表项目' : 'If the map is still loading, start with representative projects',
+    products: zh ? '查看产品' : 'View Products',
+    contact: zh ? '联系团队' : 'Contact Team',
+  }
+
+  return (
+    <aside
+      style={{
+        position: 'absolute',
+        left: 20,
+        bottom: 20,
+        zIndex: 80,
+        width: 'min(420px, calc(100% - 40px))',
+        background: 'rgba(36,31,27,0.92)',
+        border: '1px solid rgba(227,111,44,0.25)',
+        color: '#F5F2ED',
+        padding: 18,
+        boxShadow: '0 18px 50px rgba(0,0,0,0.28)',
+      }}
+    >
+      <p style={{ margin: 0, color: '#E36F2C', fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', fontWeight: 700 }}>
+        {labels.eyebrow}
+      </p>
+      <h2 style={{ margin: '8px 0 14px', fontSize: 18, lineHeight: 1.35, fontWeight: 800 }}>
+        {labels.title}
+      </h2>
+      <div style={{ display: 'grid', gap: 8, marginBottom: 14 }}>
+        {markers.map((marker) => {
+          const name = marker.name[zh ? 'zh' : 'en'] ?? marker.name.en
+          return (
+            <button
+              type="button"
+              key={marker.id}
+              onClick={() => onSelect(marker)}
+              style={{
+                width: '100%',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                color: '#F5F2ED',
+                textAlign: 'left',
+                padding: '9px 10px',
+                cursor: 'pointer',
+                fontSize: 13,
+                lineHeight: 1.35,
+              }}
+            >
+              {name}
+            </button>
+          )
+        })}
+      </div>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <Link href={SITE_PRODUCTS_HREF} style={{ background: '#E36F2C', color: '#fff', padding: '9px 13px', fontSize: 12, fontWeight: 800, textDecoration: 'none' }}>
+          {labels.products}
+        </Link>
+        <Link href={buildContactHref('global:fallback_contact')} style={{ border: '1px solid rgba(245,242,237,0.35)', color: '#F5F2ED', padding: '9px 13px', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
+          {labels.contact}
+        </Link>
+      </div>
+    </aside>
+  )
+}
+
 export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: ShowcaseProject[] }) {
   // selectedMarker drives panel-open + flyTo (slim, always-loaded);
   // selectedProject drives ProjectDetail content (lazy-loaded on first click).
   const [selectedMarker, setSelectedMarker] = useState<ShowcaseMarker | null>(null)
   const [selectedProject, setSelectedProject] = useState<ShowcaseProject | null>(null)
+  const [showFallbackAccess, setShowFallbackAccess] = useState(false)
   const [resetViewKey, setResetViewKey] = useState(0)
   const { lang } = useLanguage()
   const panelOpen = selectedMarker !== null
@@ -175,6 +253,11 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
       void loadProjectDetailModule()
       void loadShowcaseProjectsModule()
     })
+  }, [])
+
+  useEffect(() => {
+    const handle = window.setTimeout(() => setShowFallbackAccess(true), 4500)
+    return () => window.clearTimeout(handle)
   }, [])
 
   // Async-load the full ShowcaseProject for a given marker id. The idle
@@ -269,6 +352,14 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
           showcaseMarkers={showcaseMarkers}
         />
       </div>
+
+      {!panelOpen && showFallbackAccess ? (
+        <MapFallbackAccess
+          markers={showcaseMarkers.slice(0, 5)}
+          lang={lang}
+          onSelect={handleShowcaseSelect}
+        />
+      ) : null}
 
       {/* ── Project Detail Panel — slides in from right, 70% width ── */}
       <div style={{

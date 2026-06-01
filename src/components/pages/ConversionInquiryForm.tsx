@@ -85,6 +85,13 @@ function buildMessage(form: FormState, source: string, labels: FormLabels) {
     .join('\n')
 }
 
+function resolveSubmitSource(source: string) {
+  if (typeof window === 'undefined') return source
+  const urlSource = new URLSearchParams(window.location.search).get('source')
+  if (!urlSource || source.includes(urlSource)) return source
+  return `${source}:${urlSource.replace(/[^a-zA-Z0-9:_-]/g, '_')}`
+}
+
 export default function ConversionInquiryForm({
   source,
   inquiryType,
@@ -124,6 +131,7 @@ export default function ConversionInquiryForm({
     setError('')
 
     try {
+      const submitSource = resolveSubmitSource(source)
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -137,14 +145,14 @@ export default function ConversionInquiryForm({
           quantity: form.quantity.trim(),
           model,
           projectType: inquiryType,
-          remarks: buildMessage(form, source, activeLabels),
-          source,
+          remarks: buildMessage(form, submitSource, activeLabels),
+          source: submitSource,
         }),
       })
       if (!res.ok) {
         throw new Error(activeLabels.error)
       }
-      trackFormSubmitSuccess(source, inquiryType)
+      trackFormSubmitSuccess(submitSource, inquiryType)
       setForm(EMPTY_FORM)
       setStatus('success')
     } catch (err) {

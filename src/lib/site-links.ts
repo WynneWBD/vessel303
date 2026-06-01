@@ -18,6 +18,19 @@ export function normalizeSiteHref(href: string | null | undefined, fallback = SI
   const value = String(href ?? '').trim()
   if (!value) return fallback
 
+  try {
+    const url = new URL(value)
+    if (url.hostname.endsWith('303vessel.cn') && url.pathname.endsWith('/contact.html')) {
+      const source = url.searchParams.get('source')
+      return source ? buildContactHref(source) : SITE_CONTACT_HREF
+    }
+    if (url.hostname.endsWith('303vessel.cn') && url.pathname.endsWith('/products_list.html')) {
+      return SITE_PRODUCTS_HREF
+    }
+  } catch {
+    // Relative links are handled below.
+  }
+
   if (value === DEFAULT_CONTACT_URL || value.endsWith('/contact.html')) {
     return SITE_CONTACT_HREF
   }

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import AuthButton from './AuthButton';
 import LanguageToggle from './LanguageToggle';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
@@ -115,7 +114,6 @@ export default function Navbar() {
               </Link>
             ))}
             <LanguageToggle />
-            <AuthButton />
           </div>
 
           {/* Mobile Toggle */}
@@ -171,7 +169,6 @@ export default function Navbar() {
             ) : null}
             <div className="pt-3 flex items-center justify-between px-1">
               <LanguageToggle />
-              <AuthButton />
             </div>
           </div>
         </div>

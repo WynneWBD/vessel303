@@ -236,7 +236,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Send confirmation to user (best-effort — don't fail the request if this fails)
-  if (!notifyError && data.email) {
+  // Customer-facing confirmation copy is controlled by published contact modules.
+  if (false && !notifyError && data.email) {
     try {
       const { error: confirmError } = await resend.emails.send({
         from,

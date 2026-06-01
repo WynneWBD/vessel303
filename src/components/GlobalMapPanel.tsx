@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import type { Camp } from '@/data/camps'
+import { buildContactHref, SITE_PRODUCTS_HREF } from '@/lib/site-links'
 
 const DEALER_COUNTRIES = ['俄罗斯', '台湾', '沙特阿拉伯', '阿联酋', '韩国', '美国']
 
@@ -164,7 +165,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
                     {en ? 'Local partner information coming soon' : '当地合作伙伴信息即将更新'}
                   </p>
                   <Link
-                    href="https://en.303vessel.cn/contact.html" target="_blank" rel="noopener noreferrer"
+                    href={buildContactHref('global:local_partner')}
                     style={{
                       display: 'inline-block', border: '1px solid #E36F2C',
                       color: '#E36F2C', fontSize: 12, padding: '6px 14px',
@@ -182,9 +183,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
             {/* Bottom actions */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <a
-                href="https://en.303vessel.cn/products_list.html"
-                target="_blank"
-                rel="noopener noreferrer"
+                href={SITE_PRODUCTS_HREF}
                 style={{
                   display: 'block', textAlign: 'center',
                   background: '#E36F2C', color: '#F5F2ED',
@@ -195,9 +194,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
                 {en ? 'Explore Products' : '查看产品系列'}
               </a>
               <a
-                href="https://en.303vessel.cn/contact.html"
-                target="_blank"
-                rel="noopener noreferrer"
+                href={buildContactHref('global:panel_contact')}
                 style={{
                   display: 'block', textAlign: 'center',
                   border: '1px solid #3A302A', color: '#8A8580',

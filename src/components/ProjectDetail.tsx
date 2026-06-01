@@ -451,9 +451,7 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
               </a>
             )}
             <a
-              href="https://en.303vessel.cn/contact.html"
-              target="_blank"
-              rel="noopener noreferrer"
+              href={`/contact?source=global:project_detail:${encodeURIComponent(project.id)}`}
               style={{
                 display: 'block', textAlign: 'center',
                 border: '1px solid #E36F2C', color: '#E36F2C',

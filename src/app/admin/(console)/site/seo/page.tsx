@@ -136,7 +136,7 @@ const STATIC_SEO_PAGES: StaticSeoPage[] = [
   {
     title: 'Contact',
     path: '/contact',
-    source: 'buildPageMetadata / redirect',
+    source: 'buildPageMetadata / page_modules:contact',
     status: 'ready',
     detail: '联系入口已有 metadata，但页面会读取 site_settings 后跳转到询盘入口。',
     actionHref: '/contact',
