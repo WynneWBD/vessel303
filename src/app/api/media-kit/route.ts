@@ -7,7 +7,7 @@ import { buildLeadSource, compactLeadMessage } from '@/lib/site-links';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const DEFAULT_FROM = 'onboarding@resend.dev';
-const DEFAULT_NOTIFY_TO = 'vessel.sale@303industries.cn';
+const DEFAULT_NOTIFY_TO = '303vessel@303industries.cn';
 
 function getMailConfig() {
   return {
@@ -118,7 +118,7 @@ function confirmationHtml(d: z.infer<typeof schema>) {
       </p>
     </div>
     <div style="padding:16px 28px;border-top:1px solid #1a1a1a;text-align:center;">
-      <p style="color:#444;font-size:11px;margin:0;">vessel303.com · vessel.sale@303industries.cn</p>
+      <p style="color:#444;font-size:11px;margin:0;">vessel303.com · 303vessel@303industries.cn</p>
     </div>
   </div>
 </body></html>`;
@@ -140,7 +140,7 @@ function confirmationHtml(d: z.infer<typeof schema>) {
       </p>
     </div>
     <div style="padding:16px 28px;border-top:1px solid #1a1a1a;text-align:center;">
-      <p style="color:#444;font-size:11px;margin:0;">vessel303.com · vessel.sale@303industries.cn</p>
+      <p style="color:#444;font-size:11px;margin:0;">vessel303.com · 303vessel@303industries.cn</p>
     </div>
   </div>
 </body></html>`;

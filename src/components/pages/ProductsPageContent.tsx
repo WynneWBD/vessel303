@@ -62,6 +62,10 @@ function normalizePage(value: string | null) {
   return Number.isInteger(page) && page > 0 ? page : 1;
 }
 
+function localizedText(en: string | null | undefined, zh: string | null | undefined, lang: 'en' | 'zh') {
+  return (lang === 'en' ? en : zh)?.trim() ?? '';
+}
+
 function productMatchesSearch(product: CatalogProduct, query: string) {
   if (!query) return true;
   const q = query.toLowerCase();
@@ -139,46 +143,61 @@ function Sidebar({
           >
             {uiLabels.allProducts}
           </Link>
-          {categories.map((category) => (
-            <Link
-              key={category.id}
-              href={buildHref(filters, { category: String(category.id), page: 1 })}
-              className={`block px-4 py-3 text-sm transition ${
-                filters.category === String(category.id)
-                  ? 'bg-[#EAF4F6] font-semibold text-[#147C94]'
-                  : 'text-[#5C6670] hover:bg-[#F7FAFA]'
-              }`}
-            >
-              {lang === 'en' ? category.title_en : category.title_zh}
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {attributeTemplates.map((template) => (
-        <div key={template.id} className="border border-[#DADDE1] bg-white">
-          <div className="border-b border-[#DADDE1] bg-[#F5F7F8] px-4 py-3">
-            <p className="text-sm font-bold text-[#1F2A31]">
-              {template.title_en} <span className="font-medium text-[#7A838B]">{template.title_zh}</span>
-            </p>
-          </div>
-          <div className="divide-y divide-[#ECEFF1]">
-            {template.options.map((option) => (
+          {categories.map((category) => {
+            const categoryLabel = localizedText(category.title_en, category.title_zh, lang);
+            if (!categoryLabel) return null;
+            return (
               <Link
-                key={option.id}
-                href={buildHref(filters, { attribute: String(option.id), page: 1 })}
-                className={`block px-4 py-2.5 text-sm transition ${
-                  filters.attribute === String(option.id)
-                    ? 'bg-[#FFF4EC] font-semibold text-[#C65F22]'
+                key={category.id}
+                href={buildHref(filters, { category: String(category.id), page: 1 })}
+                className={`block px-4 py-3 text-sm transition ${
+                  filters.category === String(category.id)
+                    ? 'bg-[#EAF4F6] font-semibold text-[#147C94]'
                     : 'text-[#5C6670] hover:bg-[#F7FAFA]'
                 }`}
               >
-                {option.label_en} <span className="text-[#8A9299]">{option.label_zh}</span>
+                {categoryLabel}
               </Link>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      ))}
+      </div>
+
+      {attributeTemplates.map((template) => {
+        const templateTitle = localizedText(template.title_en, template.title_zh, lang);
+        const visibleOptions = template.options
+          .map((option) => ({
+            ...option,
+            displayLabel: localizedText(option.label_en, option.label_zh, lang),
+          }))
+          .filter((option) => option.displayLabel);
+        if (!templateTitle && visibleOptions.length === 0) return null;
+
+        return (
+          <div key={template.id} className="border border-[#DADDE1] bg-white">
+            {templateTitle ? (
+              <div className="border-b border-[#DADDE1] bg-[#F5F7F8] px-4 py-3">
+                <p className="text-sm font-bold text-[#1F2A31]">{templateTitle}</p>
+              </div>
+            ) : null}
+            <div className="divide-y divide-[#ECEFF1]">
+              {visibleOptions.map((option) => (
+                <Link
+                  key={option.id}
+                  href={buildHref(filters, { attribute: String(option.id), page: 1 })}
+                  className={`block px-4 py-2.5 text-sm transition ${
+                    filters.attribute === String(option.id)
+                      ? 'bg-[#FFF4EC] font-semibold text-[#C65F22]'
+                      : 'text-[#5C6670] hover:bg-[#F7FAFA]'
+                  }`}
+                >
+                  {option.displayLabel}
+                </Link>
+              ))}
+            </div>
+          </div>
+        );
+      })}
 
       {contactModule?.is_visible !== false && (eyebrow || headline || body || ctaLabel) ? (
         <div className="border border-[#DADDE1] bg-[#1F2A31] p-5 text-white">

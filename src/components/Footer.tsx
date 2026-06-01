@@ -17,6 +17,10 @@ import {
   type PublicPageModule,
 } from '@/lib/page-module-client';
 
+function isExternalActionHref(href: string) {
+  return href.startsWith('tel:') || href.startsWith('mailto:') || href.startsWith('http://') || href.startsWith('https://');
+}
+
 function FooterLinkList({ module }: { module: PublicPageModule | null }) {
   const { lang } = useLanguage();
   const title = moduleTitle(module, lang);
@@ -31,16 +35,31 @@ function FooterLinkList({ module }: { module: PublicPageModule | null }) {
       <ul className="space-y-2.5">
         {items.map((item) => (
           <li key={item.id}>
-            <Link
-              href={item.href as string}
-              className="group flex items-center gap-2 text-sm text-white/40 transition-colors hover:text-[#E36F2C]"
-            >
+            {isExternalActionHref(item.href as string) ? (
+              <a
+                href={item.href as string}
+                target={(item.href as string).startsWith('http') ? '_blank' : undefined}
+                rel={(item.href as string).startsWith('http') ? 'noopener noreferrer' : undefined}
+                className="group flex items-center gap-2 text-sm text-white/40 transition-colors hover:text-[#E36F2C]"
+              >
+                <span className="text-[#E36F2C]/30 transition-colors group-hover:text-[#E36F2C]">-</span>
+                <span className="tracking-wider">{itemLabel(item, lang)}</span>
+                {itemValue(item, lang) ? (
+                  <span className="text-xs text-white/20">{itemValue(item, lang)}</span>
+                ) : null}
+              </a>
+            ) : (
+              <Link
+                href={item.href as string}
+                className="group flex items-center gap-2 text-sm text-white/40 transition-colors hover:text-[#E36F2C]"
+              >
               <span className="text-[#E36F2C]/30 transition-colors group-hover:text-[#E36F2C]">-</span>
               <span className="tracking-wider">{itemLabel(item, lang)}</span>
               {itemValue(item, lang) ? (
                 <span className="text-xs text-white/20">{itemValue(item, lang)}</span>
               ) : null}
-            </Link>
+              </Link>
+            )}
           </li>
         ))}
       </ul>
@@ -94,12 +113,20 @@ export default function Footer() {
                 {ctaItems.map((item, index) => {
                   const label = itemLabel(item, lang);
                   const href = item.href as string;
-                  const isExternalAction = href.startsWith('tel:') || href.startsWith('mailto:');
+                  const isExternalAction = isExternalActionHref(href);
                   const className = index === 0
                     ? 'bg-[#E36F2C] px-6 py-3 text-sm font-bold tracking-wider text-white transition-colors hover:bg-[#C85A1F]'
                     : 'border border-[#E36F2C]/40 px-6 py-3 text-sm tracking-wider text-[#E36F2C] transition-colors hover:bg-[#E36F2C]/10';
                   return isExternalAction ? (
-                    <a key={item.id} href={href} className={className}>{label}</a>
+                    <a
+                      key={item.id}
+                      href={href}
+                      target={href.startsWith('http') ? '_blank' : undefined}
+                      rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                      className={className}
+                    >
+                      {label}
+                    </a>
                   ) : (
                     <Link key={item.id} href={href} className={className}>{label}</Link>
                   );
@@ -149,8 +176,18 @@ export default function Footer() {
                 {brandItems.slice(1).map((item) => {
                   const label = itemLabel(item, lang);
                   if (!label) return null;
-                  if (item.href?.startsWith('mailto:')) {
-                    return <a key={item.id} href={item.href} className="block hover:text-[#E36F2C]">{label}</a>;
+                  if (item.href && isExternalActionHref(item.href)) {
+                    return (
+                      <a
+                        key={item.id}
+                        href={item.href}
+                        target={item.href.startsWith('http') ? '_blank' : undefined}
+                        rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                        className="block hover:text-[#E36F2C]"
+                      >
+                        {label}
+                      </a>
+                    );
                   }
                   return <div key={item.id}>{label}</div>;
                 })}
@@ -182,8 +219,15 @@ export default function Footer() {
 
                   return (
                     <li key={item.id} className="text-xs leading-relaxed text-white/40">
-                      {item.href?.startsWith('tel:') || item.href?.startsWith('mailto:') ? (
-                        <a href={item.href} className="transition-colors hover:text-[#E36F2C]">{body}</a>
+                      {item.href && isExternalActionHref(item.href) ? (
+                        <a
+                          href={item.href}
+                          target={item.href.startsWith('http') ? '_blank' : undefined}
+                          rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                          className="transition-colors hover:text-[#E36F2C]"
+                        >
+                          {body}
+                        </a>
                       ) : (
                         body
                       )}

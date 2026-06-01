@@ -68,7 +68,7 @@ export default function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 xl:h-[72px]">
+        <div className="flex items-center justify-between h-16 lg:h-[72px]">
 
           {logoSrc && logoHref ? (
             <Link href={logoHref} className="flex shrink-0 items-center">
@@ -78,7 +78,7 @@ export default function Navbar() {
                 height={40}
                 width={160}
                 style={{ height: '40px', width: 'auto', objectFit: 'contain' }}
-                className="h-7 xl:h-[40px]"
+                className="h-7 lg:h-[40px]"
                 priority
                 unoptimized
               />
@@ -86,29 +86,29 @@ export default function Navbar() {
           ) : null}
 
           {/* Desktop Nav */}
-          <div className="hidden xl:flex items-center gap-0.5 mx-4">
+          <div className="hidden lg:flex items-center gap-0.5 mx-3">
             {navLinks.map((link) => (
               <div key={link.label} className="relative">
                 <Link
                   href={link.href}
-                  className="text-white/65 hover:text-[#E36F2C] text-sm font-medium tracking-wide px-2.5 py-2 transition-colors duration-200 whitespace-nowrap relative group block"
+                  className="text-white/65 hover:text-[#E36F2C] text-sm font-medium tracking-wide px-2 py-2 transition-colors duration-200 whitespace-nowrap relative group block"
                 >
                   {link.label}
-                  <span className="absolute bottom-0 left-2.5 w-0 h-px bg-[#E36F2C] transition-all duration-200 group-hover:w-[calc(100%-20px)]" />
+                  <span className="absolute bottom-0 left-2 w-0 h-px bg-[#E36F2C] transition-all duration-200 group-hover:w-[calc(100%-16px)]" />
                 </Link>
               </div>
             ))}
           </div>
 
           {/* CTA + Toggle */}
-          <div className="hidden xl:flex items-center gap-2 shrink-0">
+          <div className="hidden lg:flex items-center gap-1.5 shrink-0">
             {actionLinks.map((link, index) => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={index === 0
-                  ? 'text-white text-sm font-semibold px-3.5 py-2 border border-white/50 hover:bg-[#F5F2ED] hover:text-[#241F1B] transition-all duration-200 tracking-wider whitespace-nowrap'
-                  : 'text-white/75 text-sm font-medium px-3.5 py-2 border border-white/20 hover:border-[#E36F2C] hover:text-[#E36F2C] transition-all duration-200 tracking-wider whitespace-nowrap'}
+                  ? 'text-white text-sm font-semibold px-3 py-2 border border-white/50 hover:bg-[#F5F2ED] hover:text-[#241F1B] transition-all duration-200 tracking-wider whitespace-nowrap'
+                  : 'text-white/75 text-sm font-medium px-3 py-2 border border-white/20 hover:border-[#E36F2C] hover:text-[#E36F2C] transition-all duration-200 tracking-wider whitespace-nowrap'}
               >
                 {link.label}
               </Link>
@@ -118,7 +118,7 @@ export default function Navbar() {
 
           {/* Mobile Toggle */}
           <button
-            className="xl:hidden inline-flex min-h-11 min-w-11 items-center justify-center text-white/80 hover:text-white"
+            className="lg:hidden inline-flex min-h-11 min-w-11 items-center justify-center text-white/80 hover:text-white"
             onClick={() => setIsOpen(!isOpen)}
             aria-label={menuToggleLabel || undefined}
           >
@@ -134,7 +134,7 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         <div
-          className={`xl:hidden overflow-hidden transition-all duration-300 ${
+          className={`lg:hidden overflow-hidden transition-all duration-300 ${
             isOpen ? 'max-h-[calc(100vh-4rem)] overflow-y-auto opacity-100' : 'max-h-0 opacity-0'
           }`}
         >

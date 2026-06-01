@@ -112,6 +112,10 @@ const SIGNAL_LABEL: Record<ContentContractSignal, string> = {
   navigation: '导航',
   footer: '页脚',
   source: '来源',
+  english: 'English',
+  contact: 'Contact',
+  downloads: 'Downloads',
+  'commercial-proof': 'Commercial proof',
 }
 
 const SOURCE_LABEL: Record<GovernanceSourceType, string> = {

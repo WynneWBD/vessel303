@@ -22,7 +22,18 @@ export type GovernanceSourceType =
   | 'site_settings'
   | 'protected'
 
-export type ContentContractSignal = 'image' | 'cta' | 'form' | 'seo' | 'navigation' | 'footer' | 'source'
+export type ContentContractSignal =
+  | 'image'
+  | 'cta'
+  | 'form'
+  | 'seo'
+  | 'navigation'
+  | 'footer'
+  | 'source'
+  | 'english'
+  | 'contact'
+  | 'downloads'
+  | 'commercial-proof'
 
 export type ContentContract = {
   key: string
@@ -130,7 +141,7 @@ export const CONTENT_CONTRACTS: ContentContract[] = [
     modulePageKey: 'products',
     requiredModules: ['hero', 'highlights', 'contact-card'],
     cmsTable: 'product_catalog',
-    signals: ['image', 'cta', 'seo', 'source'],
+    signals: ['image', 'cta', 'seo', 'source', 'english', 'downloads'],
     displayRule: '列表和详情内容来自 published 产品；页面级 hero、提示和 CTA 来自 products 模块。',
     hiddenRule: '产品未发布不进入前台目录；页面模块隐藏后只隐藏对应说明区。',
     note: '产品详情模板只负责展示图库、商务条款、关键词、相关产品和询盘，不改写产品内容。',
@@ -148,7 +159,7 @@ export const CONTENT_CONTRACTS: ContentContract[] = [
     modulePageKey: 'cases',
     requiredModules: ['hero'],
     cmsTable: 'project_cases',
-    signals: ['image', 'cta', 'seo', 'source'],
+    signals: ['image', 'cta', 'seo', 'source', 'english', 'commercial-proof'],
     displayRule: '列表和详情内容来自 published 项目案例。',
     hiddenRule: '案例未发布不进入前台；Global 不承担案例详情。',
     note: '案例图片、地点、场景标签和询盘入口均应由案例 CMS 或页面模块决定。',
@@ -291,7 +302,7 @@ export const CONTENT_CONTRACTS: ContentContract[] = [
     modulePageKey: 'site',
     modulePageKeys: ['site', 'auth', 'account'],
     requiredModules: ['navbar', 'ui-labels', 'footer-cta', 'footer-brand', 'footer-products', 'footer-company', 'footer-contact'],
-    signals: ['navigation', 'footer', 'cta', 'source'],
+    signals: ['navigation', 'footer', 'cta', 'source', 'contact', 'english'],
     displayRule: '全站导航、页脚、共用按钮和客户可见系统文案来自后台模块。',
     hiddenRule: '后台无配置时只显示最小系统壳，不显示业务宣传文案。',
     note: '这是 B25 之后最重要的全站内容归源入口。',
@@ -348,6 +359,14 @@ const PUBLIC_CONTENT_WARNING_RULES = [
   { pattern: /\u8c03\u8bd5|debug/gi, label: '\u8c03\u8bd5' },
 ]
 
+const CONTACT_QUALITY_WARNING_RULES = [
+  { pattern: /400-?8090-?303|tel:4008090303/gi, label: 'domestic 400 phone' },
+  { pattern: /vessel\.sale@303industries\.cn/gi, label: 'legacy sales email' },
+  { pattern: /products_list\.html|contact\.html/gi, label: 'legacy 303 link' },
+]
+
+const CJK_PATTERN = /[\u3400-\u9fff]/
+
 function collectContentWarnings(scope: string, values: Array<string | null | undefined>): string[] {
   const warnings = new Set<string>()
   for (const value of values) {
@@ -361,10 +380,42 @@ function collectContentWarnings(scope: string, values: Array<string | null | und
   return Array.from(warnings)
 }
 
+function collectContactQualityWarnings(scope: string, values: Array<string | null | undefined>): string[] {
+  const warnings = new Set<string>()
+  for (const value of values) {
+    const text = value?.trim()
+    if (!text) continue
+    for (const rule of CONTACT_QUALITY_WARNING_RULES) {
+      rule.pattern.lastIndex = 0
+      if (rule.pattern.test(text)) warnings.add(`${scope}: ${rule.label}`)
+    }
+  }
+  return Array.from(warnings)
+}
+
+function collectEnglishFieldWarnings(scope: string, values: Array<string | null | undefined>): string[] {
+  const warnings = new Set<string>()
+  for (const value of values) {
+    const text = value?.trim()
+    if (text && CJK_PATTERN.test(text)) warnings.add(`${scope}: English field contains Chinese`)
+  }
+  return Array.from(warnings)
+}
+
 function contentWarningsFromPageModules(modules: PageModuleRow[]): string[] {
   const warnings: string[] = []
   for (const pageModule of modules) {
     if (!pageModule.is_visible) continue
+    warnings.push(
+      ...collectEnglishFieldWarnings(`${pageModule.page_key}:${pageModule.module_key}`, [
+        pageModule.title_en,
+        pageModule.description_en,
+      ]),
+      ...collectContactQualityWarnings(`${pageModule.page_key}:${pageModule.module_key}`, [
+        pageModule.title_en,
+        pageModule.description_en,
+      ]),
+    )
     warnings.push(
       ...collectContentWarnings(`${pageModule.page_key}:${pageModule.module_key}`, [
         pageModule.title_zh,
@@ -376,6 +427,17 @@ function contentWarningsFromPageModules(modules: PageModuleRow[]): string[] {
     for (const item of pageModule.items) {
       if (!item.is_visible) continue
       warnings.push(
+        ...collectEnglishFieldWarnings(`${pageModule.page_key}:${pageModule.module_key}:${item.id}`, [
+          item.label_en,
+          item.content_en,
+          item.value_en,
+        ]),
+        ...collectContactQualityWarnings(`${pageModule.page_key}:${pageModule.module_key}:${item.id}`, [
+          item.label_en,
+          item.content_en,
+          item.value_en,
+          item.href,
+        ]),
         ...collectContentWarnings(`${pageModule.page_key}:${pageModule.module_key}:${item.id}`, [
           item.label_zh,
           item.label_en,
@@ -440,6 +502,20 @@ function contentWarningsFromB9Rows(kind: B9ContentKind, rows: B9ContentItem[]): 
   for (const row of rows) {
     if (row.status !== 'published') continue
     warnings.push(
+      ...collectEnglishFieldWarnings(`${kind}:${row.slug}`, [
+        row.title_en,
+        row.summary_en,
+        row.body_en,
+        row.cta_label_en,
+      ]),
+      ...collectContactQualityWarnings(`${kind}:${row.slug}`, [
+        row.title_en,
+        row.summary_en,
+        row.body_en,
+        row.file_url,
+        row.cta_label_en,
+        row.cta_href,
+      ]),
       ...collectContentWarnings(`${kind}:${row.slug}`, [
         row.title_zh,
         row.title_en,
@@ -506,6 +582,144 @@ async function loadB9Metrics() {
   return byKind
 }
 
+function arrayLength(value: unknown): number {
+  return Array.isArray(value) ? value.length : 0
+}
+
+function objectHasValue(value: unknown): boolean {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  return Object.values(value).some((entry) => typeof entry === 'string' ? entry.trim() : Boolean(entry))
+}
+
+async function loadProductCatalogWarnings(): Promise<string[]> {
+  const warnings = new Set<string>()
+  const res = await pool.query<{
+    id: string
+    name_en: string
+    description_en: string
+    image: string | null
+    gallery: unknown
+    specs_en: unknown
+    detail_modules: unknown
+    commercial_terms: unknown
+    keywords_en: string[] | null
+    related_product_ids: string[] | null
+    seo_title_en: string | null
+    seo_description_en: string | null
+    price_display_en: string | null
+  }>(
+    `SELECT
+       id, name_en, description_en, image, gallery, specs_en, detail_modules,
+       commercial_terms, keywords_en, related_product_ids, seo_title_en,
+       seo_description_en, price_display_en
+     FROM product_catalog
+     WHERE deleted_at IS NULL AND status = 'published'
+     ORDER BY updated_at DESC
+     LIMIT 80`,
+  ).catch(() => ({ rows: [] }))
+
+  for (const row of res.rows) {
+    for (const warning of collectEnglishFieldWarnings(`product:${row.id}`, [
+      row.name_en,
+      row.description_en,
+      row.seo_title_en,
+      row.seo_description_en,
+      row.price_display_en,
+    ])) warnings.add(warning)
+    if (!row.name_en?.trim() || !row.description_en?.trim()) warnings.add(`product:${row.id}: missing English copy`)
+    if (!row.image?.trim() || arrayLength(row.gallery) === 0) warnings.add(`product:${row.id}: missing product images`)
+    if (arrayLength(row.specs_en) === 0 && arrayLength(row.detail_modules) === 0) warnings.add(`product:${row.id}: missing spec/detail materials`)
+    if (!objectHasValue(row.commercial_terms)) warnings.add(`product:${row.id}: missing commercial terms`)
+    if (arrayLength(row.keywords_en) === 0) warnings.add(`product:${row.id}: missing English keywords`)
+    if (arrayLength(row.related_product_ids) === 0) warnings.add(`product:${row.id}: missing related products`)
+    if (!row.seo_title_en?.trim() || !row.seo_description_en?.trim()) warnings.add(`product:${row.id}: missing English SEO`)
+  }
+
+  return Array.from(warnings).slice(0, 12)
+}
+
+async function loadProjectCaseWarnings(): Promise<string[]> {
+  const warnings = new Set<string>()
+  const res = await pool.query<{
+    id: string
+    title_en: string
+    summary_en: string | null
+    description_en: string
+    project_type_en: string
+    area_display: string
+    investment_display: string
+    units_display: string
+    products: string
+    cover_image_url: string
+    images: unknown
+  }>(
+    `SELECT
+       id, title_en, summary_en, description_en, project_type_en, area_display,
+       investment_display, units_display, products, cover_image_url, images
+     FROM project_cases
+     WHERE deleted_at IS NULL AND status = 'published'
+     ORDER BY updated_at DESC
+     LIMIT 80`,
+  ).catch(() => ({ rows: [] }))
+
+  for (const row of res.rows) {
+    for (const warning of collectEnglishFieldWarnings(`case:${row.id}`, [
+      row.title_en,
+      row.summary_en,
+      row.description_en,
+      row.project_type_en,
+      row.area_display,
+      row.investment_display,
+      row.units_display,
+      row.products,
+    ])) warnings.add(warning)
+    if (!row.title_en?.trim() || !row.description_en?.trim()) warnings.add(`case:${row.id}: missing English copy`)
+    if (!row.cover_image_url?.trim() || arrayLength(row.images) === 0) warnings.add(`case:${row.id}: missing case images`)
+    if (!row.project_type_en?.trim()) warnings.add(`case:${row.id}: missing project type`)
+    if (!row.area_display?.trim()) warnings.add(`case:${row.id}: missing project area`)
+    if (!row.units_display?.trim()) warnings.add(`case:${row.id}: missing purchase quantity`)
+    if (!row.products?.trim()) warnings.add(`case:${row.id}: missing purchased model`)
+  }
+
+  return Array.from(warnings).slice(0, 12)
+}
+
+async function loadNewsWarnings(): Promise<string[]> {
+  const warnings = new Set<string>()
+  const res = await pool.query<{
+    id: string
+    title_en: string
+    excerpt_en: string | null
+    seo_title_en: string | null
+    seo_description_en: string | null
+  }>(
+    `SELECT id, title_en, excerpt_en, seo_title_en, seo_description_en
+     FROM news
+     WHERE deleted_at IS NULL AND status = 'published'
+     ORDER BY updated_at DESC
+     LIMIT 80`,
+  ).catch(() => ({ rows: [] }))
+
+  for (const row of res.rows) {
+    for (const warning of collectEnglishFieldWarnings(`news:${row.id}`, [
+      row.title_en,
+      row.excerpt_en,
+      row.seo_title_en,
+      row.seo_description_en,
+    ])) warnings.add(warning)
+    if (!row.title_en?.trim()) warnings.add(`news:${row.id}: missing English title`)
+    if (!row.seo_title_en?.trim() || !row.seo_description_en?.trim()) warnings.add(`news:${row.id}: missing English SEO`)
+  }
+
+  return Array.from(warnings).slice(0, 12)
+}
+
+async function loadCmsContentWarnings(tableName: 'product_catalog' | 'project_cases' | 'news'): Promise<string[]> {
+  if (tableName === 'product_catalog') return loadProductCatalogWarnings()
+  if (tableName === 'project_cases') return loadProjectCaseWarnings()
+  return loadNewsWarnings()
+}
+
 async function loadCmsMetrics(tableName: 'product_catalog' | 'project_cases' | 'news') {
   if (!(await tableExists(`public.${tableName}`))) return emptyMetrics()
 
@@ -569,6 +783,7 @@ async function loadCmsMetrics(tableName: 'product_catalog' | 'project_cases' | '
   })
 
   const row = res.rows[0]
+  const contentWarnings = await loadCmsContentWarnings(tableName)
   return {
     ...emptyMetrics(),
     total: parseCount(row?.total),
@@ -577,6 +792,7 @@ async function loadCmsMetrics(tableName: 'product_catalog' | 'project_cases' | '
     hidden: parseCount(row?.hidden),
     hasImage: parseCount(row?.image_count) > 0,
     hasCta: parseCount(row?.cta_count) > 0,
+    contentWarnings,
     latestUpdatedAt: normalizeDate(row?.latest_updated_at),
   }
 }
@@ -612,7 +828,7 @@ function buildIssues(contract: ContentContract, metrics: SourceMetrics): string[
   if (contract.signals.includes('form') && !contract.adminHref) issues.push('表单维护入口未明确')
   if (contract.signals.includes('navigation') && !contract.adminHref) issues.push('导航维护入口未明确')
   if (metrics.contentWarnings.length > 0) {
-    issues.push(`公开内容疑似包含内部词：${metrics.contentWarnings.slice(0, 4).join(' / ')}`)
+    issues.push(`Content quality warnings: ${metrics.contentWarnings.slice(0, 4).join(' / ')}`)
   }
   return issues
 }

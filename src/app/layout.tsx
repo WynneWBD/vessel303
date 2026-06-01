@@ -5,6 +5,7 @@ import "./globals.css";
 import SessionProviderWrapper from "@/components/SessionProviderWrapper";
 import ImageProtection from "@/components/ImageProtection";
 import SiteAnalyticsTracker from "@/components/SiteAnalyticsTracker";
+import FloatingContact from "@/components/FloatingContact";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { getGoogleSiteVerificationToken } from "@/lib/google-site-verification";
 import { getStoredSiteSettings, type SiteSettings } from "@/lib/admin-settings-db";
@@ -82,6 +83,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-[#F5F2ED]">
         <LanguageProvider>
           <SessionProviderWrapper>{children}</SessionProviderWrapper>
+          <FloatingContact />
         </LanguageProvider>
         <Suspense fallback={null}>
           <SiteAnalyticsTracker />
