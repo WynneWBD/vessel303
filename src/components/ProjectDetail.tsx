@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import ProtectedImage from '@/components/ProtectedImage'
 import type { ShowcaseProject } from '@/data/showcaseProjects'
+import { DEFAULT_CONTACT_URL } from '@/lib/site-links'
 
 // ── Fade-in section wrapper ──────────────────────────────────────────────────
 function FadeSection({
@@ -451,7 +452,9 @@ export default function ProjectDetail({ project, lang, onClose }: Props) {
               </a>
             )}
             <a
-              href={`/contact?source=global:project_detail:${encodeURIComponent(project.id)}`}
+              href={DEFAULT_CONTACT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 display: 'block', textAlign: 'center',
                 border: '1px solid #E36F2C', color: '#E36F2C',

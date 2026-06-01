@@ -1,6 +1,6 @@
 export const DEFAULT_CONTACT_URL = 'https://en.303vessel.cn/contact.html'
 
-const LEGACY_PRODUCTS_URL = 'https://en.303vessel.cn/products_list.html'
+export const LEGACY_PRODUCTS_URL = 'https://en.303vessel.cn/products_list.html'
 
 export const SITE_CONTACT_HREF = '/contact'
 

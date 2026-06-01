@@ -1,9 +1,8 @@
 'use client'
 
 import Image from 'next/image'
-import Link from 'next/link'
 import type { Camp } from '@/data/camps'
-import { buildContactHref, SITE_PRODUCTS_HREF } from '@/lib/site-links'
+import { DEFAULT_CONTACT_URL, LEGACY_PRODUCTS_URL } from '@/lib/site-links'
 
 const DEALER_COUNTRIES = ['俄罗斯', '台湾', '沙特阿拉伯', '阿联酋', '韩国', '美国']
 
@@ -164,8 +163,10 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
                   <p style={{ color: '#6A6560', fontSize: 12, marginBottom: 12 }}>
                     {en ? 'Local partner information coming soon' : '当地合作伙伴信息即将更新'}
                   </p>
-                  <Link
-                    href={buildContactHref('global:local_partner')}
+                  <a
+                    href={DEFAULT_CONTACT_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     style={{
                       display: 'inline-block', border: '1px solid #E36F2C',
                       color: '#E36F2C', fontSize: 12, padding: '6px 14px',
@@ -173,7 +174,7 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
                     }}
                   >
                     {en ? 'Contact Local Partner' : '联系当地合作伙伴'}
-                  </Link>
+                  </a>
                 </div>
               </>
             )}
@@ -183,7 +184,9 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
             {/* Bottom actions */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <a
-                href={SITE_PRODUCTS_HREF}
+                href={LEGACY_PRODUCTS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{
                   display: 'block', textAlign: 'center',
                   background: '#E36F2C', color: '#F5F2ED',
@@ -194,7 +197,9 @@ export default function GlobalMapPanel({ camp, lang, onClose }: Props) {
                 {en ? 'Explore Products' : '查看产品系列'}
               </a>
               <a
-                href={buildContactHref('global:panel_contact')}
+                href={DEFAULT_CONTACT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{
                   display: 'block', textAlign: 'center',
                   border: '1px solid #3A302A', color: '#8A8580',
