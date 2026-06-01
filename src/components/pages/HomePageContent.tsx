@@ -86,7 +86,7 @@ function useHomePageModules(initialModules: HomePageModule[] | null | undefined)
     const hasDraftPreview = currentParams.get('visualDraft') === '1';
     if (hasDraftPreview) sp.set('draft', '1');
     if (previewVersion) sp.set('visualPreview', previewVersion);
-    if (!hasDraftPreview && !previewVersion && Array.isArray(initialModules)) return;
+    if (!hasDraftPreview && !previewVersion && Array.isArray(initialModules) && initialModules.length > 0) return;
     const queryString = sp.toString();
     const url = queryString ? `/api/page-modules/home?${queryString}` : '/api/page-modules/home';
 
@@ -857,6 +857,179 @@ function SalesGridSection({ pageModule }: { pageModule: HomePageModule | null })
   );
 }
 
+function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | null }) {
+  const { lang } = useLanguage();
+  if (!pageModule || !pageModule.is_visible) return null;
+
+  const eyebrow = localizedLabel(findModuleItem(pageModule, 'eyebrow'), lang, '');
+  const title = localizedModuleTitle(pageModule, lang, '');
+  const description = localizedModuleDescription(pageModule, lang, '');
+  const cards = sortModuleItems(pageModule)
+    .filter((item) => item.id.startsWith('card-'))
+    .map((item) => ({
+      id: item.id,
+      title: localizedLabel(item, lang, ''),
+      meta: localizedValue(item, lang, ''),
+      body: localizedContent(item, lang, ''),
+      image: item.image_url || '',
+      href: item.href || '',
+    }))
+    .filter((item) => item.title || item.meta || item.body || item.image);
+  const primary = findModuleItem(pageModule, 'primary-cta');
+  const secondary = findModuleItem(pageModule, 'secondary-cta');
+  const primaryLabel = localizedLabel(primary, lang, '');
+  const secondaryLabel = localizedLabel(secondary, lang, '');
+  const primaryHref = primary?.href || '';
+  const secondaryHref = secondary?.href || '';
+  const moduleType = pageModule.module_type ?? '';
+  const isLargeProducts = moduleType === 'large-product-cards';
+  const isModelStrip = moduleType === 'model-strip';
+  const isInnovation = moduleType === 'innovation-story';
+  const isFuture = moduleType === 'future-explorer';
+  const isDark = isInnovation || isFuture;
+
+  if (!title && !description && cards.length === 0) return null;
+
+  return (
+    <section
+      className={`${isDark ? 'bg-[#1F1C19] text-white' : 'bg-[#F7F1E9] text-[#241F1B]'} border-b border-[#E5DED4] py-16 lg:py-24`}
+      data-page-module={`home:${pageModule.module_key}`}
+      data-page-key="home"
+      data-module-key={pageModule.module_key}
+    >
+      <div className="mx-auto max-w-[1480px] px-4 sm:px-6 lg:px-10">
+        <div className={`${isLargeProducts ? 'lg:grid-cols-[0.58fr_0.42fr]' : 'lg:grid-cols-[0.74fr_0.82fr]'} grid gap-6 lg:items-end`}>
+          <div>
+            {eyebrow ? (
+              <p
+                className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-[#E36F2C]"
+                data-page-module-item="eyebrow"
+                data-page-module-field={`label_${lang}`}
+              >
+                {eyebrow}
+              </p>
+            ) : null}
+            {title ? (
+              <h2
+                className={`${isLargeProducts ? 'lg:text-6xl' : 'lg:text-5xl'} max-w-4xl font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.03] sm:text-4xl`}
+                data-page-module-field={`title_${lang}`}
+              >
+                {title}
+              </h2>
+            ) : null}
+          </div>
+          {description ? (
+            <p
+              className={`${isDark ? 'text-white/68' : 'text-[#6B625B]'} max-w-3xl text-sm leading-7 sm:text-base lg:ml-auto`}
+              data-page-module-field={`description_${lang}`}
+            >
+              {description}
+            </p>
+          ) : null}
+        </div>
+
+        {cards.length > 0 ? (
+          <div
+            className={`${isLargeProducts ? 'lg:grid-cols-2' : isModelStrip ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} mt-10 grid gap-4 md:grid-cols-2`}
+          >
+            {cards.map((card, index) => {
+              const article = (
+                <article
+                  className={`${isDark ? 'border-white/12 bg-white/[0.06]' : 'border-[#E5DED4] bg-white'} group flex h-full flex-col overflow-hidden border`}
+                  data-page-module-item={card.id}
+                >
+                  {card.image ? (
+                    <div
+                      className={`${isLargeProducts ? 'aspect-[16/10] min-h-[280px] lg:min-h-[410px]' : isModelStrip ? 'aspect-[4/3]' : 'aspect-[16/11]'} relative overflow-hidden bg-[#DCD5CC]`}
+                    >
+                      <Image
+                        src={card.image}
+                        alt={card.title}
+                        fill
+                        loading={index === 0 && isLargeProducts ? 'eager' : 'lazy'}
+                        className="object-cover transition duration-700 group-hover:scale-[1.035]"
+                        sizes={
+                          isLargeProducts
+                            ? '(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 720px'
+                            : isModelStrip
+                              ? '(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw'
+                              : '(max-width: 768px) 100vw, 33vw'
+                        }
+                        data-page-module-field="image_url"
+                      />
+                    </div>
+                  ) : null}
+                  <div className={`${isLargeProducts ? 'p-6 lg:p-8' : 'p-5 lg:p-6'} flex flex-1 flex-col`}>
+                    {card.meta ? (
+                      <p
+                        className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#E36F2C]"
+                        data-page-module-field={`value_${lang}`}
+                      >
+                        {card.meta}
+                      </p>
+                    ) : null}
+                    {card.title ? (
+                      <h3
+                        className={`${isLargeProducts ? 'text-2xl lg:text-3xl' : 'text-xl'} font-[family-name:var(--font-heading)] font-medium leading-tight`}
+                        data-page-module-field={`label_${lang}`}
+                      >
+                        {card.title}
+                      </h3>
+                    ) : null}
+                    {card.body ? (
+                      <p
+                        className={`${isDark ? 'text-white/62' : 'text-[#6B625B]'} mt-4 text-sm leading-6`}
+                        data-page-module-field={`content_${lang}`}
+                      >
+                        {card.body}
+                      </p>
+                    ) : null}
+                  </div>
+                </article>
+              );
+
+              return card.href ? (
+                <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                  {article}
+                </Link>
+              ) : (
+                <div key={card.id} className="h-full">{article}</div>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            {primaryLabel && primaryHref ? (
+              <Link
+                href={primaryHref}
+                {...externalLinkProps(primaryHref)}
+                className="inline-flex min-h-12 items-center justify-center bg-[#E36F2C] px-7 text-sm font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C85A1F]"
+                data-page-module-item="primary-cta"
+                data-page-module-field={`label_${lang}`}
+              >
+                {primaryLabel}
+              </Link>
+            ) : null}
+            {secondaryLabel && secondaryHref ? (
+              <Link
+                href={secondaryHref}
+                {...externalLinkProps(secondaryHref)}
+                className={`${isDark ? 'border-white/24 text-white/78 hover:border-white/60' : 'border-[#241F1B]/20 text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]'} inline-flex min-h-12 items-center justify-center border px-7 text-sm font-bold uppercase tracking-[0.12em]`}
+                data-page-module-item="secondary-cta"
+                data-page-module-field={`label_${lang}`}
+              >
+                {secondaryLabel}
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 function ContactBandSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const { lang } = useLanguage();
   if (!pageModule || !pageModule.is_visible) return null;
@@ -989,6 +1162,8 @@ function renderHomeDynamicModule(resolved: ResolvedPageModule<HomePageModule>) {
       return <ProductShowcaseSection key={resolved.pageModule?.module_key ?? resolved.registry.moduleKey} pageModule={resolved.pageModule} />;
     case 'home.salesGrid':
       return <SalesGridSection key={resolved.pageModule?.module_key ?? resolved.registry.moduleKey} pageModule={resolved.pageModule} />;
+    case 'home.visualSales':
+      return <HomepageVisualSection key={resolved.pageModule?.module_key ?? resolved.registry.moduleKey} pageModule={resolved.pageModule} />;
     case 'home.contactBand':
       return <ContactBandSection key={resolved.pageModule?.module_key ?? resolved.registry.moduleKey} pageModule={resolved.pageModule} />;
     default:
