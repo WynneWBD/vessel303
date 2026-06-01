@@ -492,6 +492,163 @@ function CtaModuleSection({ pageModule }: { pageModule: HomePageModule | null })
   );
 }
 
+function ProductShowcaseSection({ pageModule }: { pageModule: HomePageModule | null }) {
+  const { lang } = useLanguage();
+  if (!pageModule || !pageModule.is_visible) return null;
+
+  const eyebrow = localizedLabel(findModuleItem(pageModule, 'eyebrow'), lang, '');
+  const title = localizedModuleTitle(pageModule, lang, '');
+  const description = localizedModuleDescription(pageModule, lang, '');
+  const cards = sortModuleItems(pageModule)
+    .filter((item) => item.id.startsWith('card-'))
+    .map((item) => ({
+      id: item.id,
+      title: localizedLabel(item, lang, ''),
+      meta: localizedValue(item, lang, ''),
+      body: localizedContent(item, lang, ''),
+      image: item.image_url || '',
+      href: item.href || '',
+    }))
+    .filter((item) => item.title || item.body || item.image);
+  const primary = findModuleItem(pageModule, 'primary-cta');
+  const secondary = findModuleItem(pageModule, 'secondary-cta');
+  const primaryLabel = localizedLabel(primary, lang, '');
+  const secondaryLabel = localizedLabel(secondary, lang, '');
+  const primaryHref = primary?.href || '';
+  const secondaryHref = secondary?.href || '';
+
+  if (!title && !description && cards.length === 0) return null;
+
+  return (
+    <section
+      className="border-b border-[#E5DED4] bg-[#F5F2ED] py-16"
+      data-page-module={`home:${pageModule.module_key}`}
+      data-page-key="home"
+      data-module-key={pageModule.module_key}
+    >
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+          <div>
+            {eyebrow ? (
+              <p
+                className="mb-4 text-xs font-medium uppercase tracking-[0.3em] text-[#E36F2C]"
+                data-page-module-item="eyebrow"
+                data-page-module-field={`label_${lang}`}
+              >
+                {eyebrow}
+              </p>
+            ) : null}
+            {title ? (
+              <h2
+                className="font-[family-name:var(--font-heading)] text-3xl font-light leading-tight text-[#241F1B] lg:text-5xl"
+                data-page-module-field={`title_${lang}`}
+              >
+                {title}
+              </h2>
+            ) : null}
+          </div>
+          {description ? (
+            <p
+              className="max-w-2xl text-sm leading-7 text-[#6B625B] lg:ml-auto"
+              data-page-module-field={`description_${lang}`}
+            >
+              {description}
+            </p>
+          ) : null}
+        </div>
+
+        {cards.length > 0 ? (
+          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {cards.map((card) => {
+              const content = (
+                <article
+                  className="group flex h-full flex-col overflow-hidden border border-[#E5DED4] bg-white shadow-[0_18px_60px_rgba(44,42,40,0.08)]"
+                  data-page-module-item={card.id}
+                >
+                  {card.image ? (
+                    <div className="relative aspect-[4/3] overflow-hidden bg-[#E5DED4]">
+                      <Image
+                        src={card.image}
+                        alt={card.title}
+                        fill
+                        loading="lazy"
+                        className="object-cover transition duration-500 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
+                        data-page-module-field="image_url"
+                      />
+                    </div>
+                  ) : null}
+                  <div className="flex flex-1 flex-col p-5">
+                    {card.meta ? (
+                      <p
+                        className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#E36F2C]"
+                        data-page-module-field={`value_${lang}`}
+                      >
+                        {card.meta}
+                      </p>
+                    ) : null}
+                    {card.title ? (
+                      <h3
+                        className="font-[family-name:var(--font-heading)] text-xl font-medium leading-snug text-[#241F1B]"
+                        data-page-module-field={`label_${lang}`}
+                      >
+                        {card.title}
+                      </h3>
+                    ) : null}
+                    {card.body ? (
+                      <p
+                        className="mt-3 text-sm leading-6 text-[#6B625B]"
+                        data-page-module-field={`content_${lang}`}
+                      >
+                        {card.body}
+                      </p>
+                    ) : null}
+                  </div>
+                </article>
+              );
+
+              return card.href ? (
+                <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                  {content}
+                </Link>
+              ) : (
+                <div key={card.id} className="h-full">{content}</div>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
+          <div className="mt-8 flex flex-wrap gap-3">
+            {primaryLabel && primaryHref ? (
+              <Link
+                href={primaryHref}
+                {...externalLinkProps(primaryHref)}
+                className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C85A1F]"
+                data-page-module-item="primary-cta"
+                data-page-module-field={`label_${lang}`}
+              >
+                {primaryLabel}
+              </Link>
+            ) : null}
+            {secondaryLabel && secondaryHref ? (
+              <Link
+                href={secondaryHref}
+                {...externalLinkProps(secondaryHref)}
+                className="inline-flex min-h-11 items-center justify-center border border-[#241F1B]/20 px-5 text-sm font-bold uppercase tracking-[0.12em] text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]"
+                data-page-module-item="secondary-cta"
+                data-page-module-field={`label_${lang}`}
+              >
+                {secondaryLabel}
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 function resolveHomeDynamicModules(pageModules: HomePageModule[] | null) {
   const fixed = resolveDynamicPageModules(pageModules, HOME_MODULE_REGISTRY);
   const fixedModuleKeys = new Set(HOME_MODULE_REGISTRY.map((entry) => entry.moduleKey));
@@ -538,6 +695,8 @@ function renderHomeDynamicModule(resolved: ResolvedPageModule<HomePageModule>) {
       return <SimpleTextSection key={resolved.pageModule?.module_key ?? resolved.registry.moduleKey} pageModule={resolved.pageModule} />;
     case 'home.ctaSection':
       return <CtaModuleSection key={resolved.pageModule?.module_key ?? resolved.registry.moduleKey} pageModule={resolved.pageModule} />;
+    case 'home.productShowcase':
+      return <ProductShowcaseSection key={resolved.pageModule?.module_key ?? resolved.registry.moduleKey} pageModule={resolved.pageModule} />;
     default:
       return null;
   }

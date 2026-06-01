@@ -2,7 +2,7 @@ import { SITE_CONTACT_HREF, SITE_PRODUCTS_HREF } from '@/lib/site-links'
 
 export type PageModuleTemplatePage = 'home' | 'about'
 
-export type PageModuleTemplateId = 'simple-text' | 'cta-section'
+export type PageModuleTemplateId = 'simple-text' | 'cta-section' | 'product-showcase'
 
 export type PageModuleTemplateFieldType = 'text' | 'textarea' | 'url'
 
@@ -146,6 +146,64 @@ export const PAGE_MODULE_TEMPLATES: PageModuleTemplate[] = [
       { id: 'secondary-cta.label_zh', label: '次按钮中文', type: 'text', required: false, maxLength: 500 },
       { id: 'secondary-cta.label_en', label: 'Secondary button', type: 'text', required: false, maxLength: 700 },
       { id: 'secondary-cta.href', label: '次按钮链接', type: 'url', required: false, maxLength: 500 },
+    ],
+  },
+  {
+    templateId: 'product-showcase',
+    displayName: '产品展示区',
+    moduleType: 'product-showcase',
+    rendererKey: 'home.productShowcase',
+    allowedPages: ['home'],
+    maxInstances: 3,
+    insertArea: 'home-after-credentials',
+    defaultContent: {
+      title_zh: '产品展示',
+      title_en: 'Product Showcase',
+      description_zh: '',
+      description_en: '',
+      is_visible: true,
+      sort_order: 0,
+      items: [
+        {
+          id: 'eyebrow',
+          label_zh: '产品',
+          label_en: 'Products',
+          is_visible: true,
+          sort_order: 10,
+        },
+        {
+          id: 'card-01',
+          label_zh: '产品标题',
+          label_en: 'Product title',
+          content_zh: '',
+          content_en: '',
+          href: '/products',
+          is_visible: true,
+          sort_order: 20,
+        },
+        {
+          id: 'primary-cta',
+          label_zh: '查看产品',
+          label_en: 'View Products',
+          href: SITE_PRODUCTS_HREF,
+          is_visible: true,
+          sort_order: 100,
+        },
+      ],
+    },
+    fields: [
+      { id: 'title_zh', label: '中文标题', type: 'text', required: true, maxLength: 160 },
+      { id: 'title_en', label: 'English title', type: 'text', required: true, maxLength: 180 },
+      { id: 'description_zh', label: '中文说明', type: 'textarea', required: false, maxLength: 800 },
+      { id: 'description_en', label: 'English description', type: 'textarea', required: false, maxLength: 1000 },
+      { id: 'card-01.label_zh', label: '卡片中文标题', type: 'text', required: false, maxLength: 160 },
+      { id: 'card-01.label_en', label: 'Card title', type: 'text', required: false, maxLength: 180 },
+      { id: 'card-01.content_zh', label: '卡片中文说明', type: 'textarea', required: false, maxLength: 800 },
+      { id: 'card-01.content_en', label: 'Card description', type: 'textarea', required: false, maxLength: 1000 },
+      { id: 'card-01.href', label: '卡片链接', type: 'url', required: false, maxLength: 500 },
+      { id: 'primary-cta.label_zh', label: '主按钮中文', type: 'text', required: false, maxLength: 500 },
+      { id: 'primary-cta.label_en', label: 'Primary button', type: 'text', required: false, maxLength: 700 },
+      { id: 'primary-cta.href', label: '主按钮链接', type: 'url', required: false, maxLength: 500 },
     ],
   },
 ]
