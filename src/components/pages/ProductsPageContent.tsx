@@ -319,6 +319,66 @@ function ProductCard({
   );
 }
 
+function SeriesSummary({
+  products,
+  uiLabels,
+}: {
+  products: CatalogProduct[];
+  uiLabels: Record<string, string>;
+}) {
+  const series = Array.from(
+    products.reduce((map, product) => {
+      const current = map.get(product.productSeries) ?? { count: 0, image: '', href: '' };
+      map.set(product.productSeries, {
+        count: current.count + 1,
+        image: current.image || product.image,
+        href: current.href || buildHref({ q: product.productSeries, category: '', attribute: '', page: 1 }, {}),
+      });
+      return map;
+    }, new Map<string, { count: number; image: string; href: string }>()),
+  ).sort(([a], [b]) => a.localeCompare(b));
+
+  if (series.length === 0 || !uiLabels.seriesHeading) return null;
+
+  return (
+    <section className="border-b border-[#DADDE1] bg-white">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <h2 className="text-sm font-black uppercase tracking-[0.18em] text-[#1F2A31]">{uiLabels.seriesHeading}</h2>
+          {uiLabels.seriesBody ? <p className="max-w-2xl text-xs leading-5 text-[#65707A]">{uiLabels.seriesBody}</p> : null}
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {series.map(([code, item]) => (
+            <Link key={code} href={item.href} className="group border border-[#E5E9EC] bg-[#FAFBFB] p-3 transition hover:border-[#147C94]/55 hover:bg-white">
+              {item.image ? (
+                <div className="relative mb-3 aspect-[4/3] overflow-hidden bg-[#EEF1F3]">
+                  <ProtectedImage
+                    src={item.image}
+                    alt={code}
+                    fill
+                    loading="lazy"
+                    className="object-cover transition duration-500 group-hover:scale-105"
+                    sizes="(max-width: 640px) 50vw, 180px"
+                  />
+                </div>
+              ) : null}
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-lg font-black text-[#1F2A31]">{code}</span>
+                {uiLabels.seriesCountSuffix ? (
+                  <span className="text-[11px] font-semibold text-[#65707A]">
+                    {item.count} {uiLabels.seriesCountSuffix}
+                  </span>
+                ) : null}
+              </div>
+              {uiLabels.seriesCta ? <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[#147C94]">{uiLabels.seriesCta}</p> : null}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Pagination({
   filters,
   currentPage,
@@ -397,6 +457,10 @@ export default function ProductsPageContent({
     emptyStateBody: label('empty-state-body'),
     detailsCta: label('details-cta'),
     inquiryCta: label('inquiry-cta'),
+    seriesHeading: label('series-heading'),
+    seriesBody: label('series-body'),
+    seriesCountSuffix: label('series-count-suffix'),
+    seriesCta: label('series-cta'),
   };
   const inquiryHref = uiItem('inquiry-cta')?.href || '';
   const rawFilters = useDirectoryFilters();
@@ -548,6 +612,8 @@ export default function ProductsPageContent({
           </div>
         </section>
       ) : null}
+
+      <SeriesSummary products={products} uiLabels={uiLabels} />
 
       <section className="bg-[#F7F8F8] py-8">
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 sm:px-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-8">

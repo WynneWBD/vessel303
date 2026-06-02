@@ -19,6 +19,13 @@ import { buildLeadSource, normalizeSiteHref } from '@/lib/site-links'
 
 type Props = {
   pageModules: PublicPageModule[]
+  purchaseFaqItems: Array<{
+    id: string
+    question_zh: string
+    question_en: string
+    answer_zh: string
+    answer_en: string
+  }>
 }
 
 function formLabelsFromModule(pageModule: PublicPageModule | null, lang: 'en' | 'zh'): FormLabels {
@@ -44,13 +51,14 @@ function sourceFromUrl(value: string | null) {
   return buildLeadSource('contact', 'main', 'inquiry_form', value)
 }
 
-export default function ContactPageContent({ pageModules }: Props) {
+export default function ContactPageContent({ pageModules, purchaseFaqItems }: Props) {
   const { lang } = useLanguage()
   const modules = moduleMap(pageModules)
   const heroModule = modules.get('hero') ?? null
   const channelsModule = modules.get('channels') ?? null
   const formModule = modules.get('form') ?? null
   const backupModule = modules.get('backup') ?? null
+  const faqPanelModule = modules.get('faq-panel') ?? null
   const source = sourceFromUrl(null)
 
   const heroTitle = moduleTitle(heroModule, lang)
@@ -64,6 +72,8 @@ export default function ContactPageContent({ pageModules }: Props) {
   const backupTitle = moduleTitle(backupModule, lang)
   const backupDescription = moduleDescription(backupModule, lang)
   const backupLink = itemById(backupModule, 'legacy-contact')
+  const faqPanelTitle = moduleTitle(faqPanelModule, lang)
+  const faqPanelDescription = moduleDescription(faqPanelModule, lang)
   const hasAnyContent = pageModules.some((module) => module.is_visible !== false)
 
   return (
@@ -178,6 +188,32 @@ export default function ContactPageContent({ pageModules }: Props) {
                 descriptionZh={formModule.description_zh ?? ''}
                 labels={formLabels}
               />
+            </div>
+          </section>
+        ) : null}
+
+        {faqPanelModule?.is_visible !== false && purchaseFaqItems.length > 0 && (faqPanelTitle || faqPanelDescription) ? (
+          <section className="border-y border-[#DADDE1] bg-white px-4 py-14 sm:py-16">
+            <div className="mx-auto max-w-6xl">
+              <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  {faqPanelTitle ? <h2 className="text-3xl font-black tracking-normal text-[#1F2A31]">{faqPanelTitle}</h2> : null}
+                  {faqPanelDescription ? <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5C6670]">{faqPanelDescription}</p> : null}
+                </div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                {purchaseFaqItems.slice(0, 8).map((item) => {
+                  const question = lang === 'zh' ? item.question_zh : item.question_en
+                  const answer = lang === 'zh' ? item.answer_zh : item.answer_en
+                  if (!question || !answer) return null
+                  return (
+                    <article key={item.id} className="border border-[#DADDE1] bg-[#FAFBFB] p-5">
+                      <h3 className="text-base font-black leading-snug text-[#1F2A31]">{question}</h3>
+                      <p className="mt-3 text-sm leading-7 text-[#5C6670]">{answer}</p>
+                    </article>
+                  )
+                })}
+              </div>
             </div>
           </section>
         ) : null}
