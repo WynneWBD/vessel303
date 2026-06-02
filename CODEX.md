@@ -1035,3 +1035,19 @@ curl -I https://www.vessel303.com/news/<slug>
 - Online checks: `/`, `/products`, `/contact`, `/global` returned 200 after Vercel READY. Browser measurement on `https://www.vessel303.com/` confirmed the desktop floating rail width is 44px; actual hero proof cards end at x=1162 while the floating rail starts at x=1214, leaving about 52px of visual clearance. `/global` had no floating-contact component injected.
 - Note: an in-app browser mobile viewport probe reported a likely tool-min-width artifact (`innerWidth=390` with layout width around 466). No code change was made for that measurement because the visible overflow source matched the tool viewport minimum rather than the B56 floating-contact change.
 - Next step: 09 should continue comparing display effect, interaction style and page rhythm against `en.303vessel.cn`, prioritizing visible display gaps over content-detail accumulation. If a gap is a display-template issue, assign 01; if it is backend content, material or field completeness, assign 02 / 03.
+
+## B58 Product detail gallery display alignment (2026-06-02)
+
+- Code commit: `f7d0560 fix(products): add gallery section to detail pages`
+- Full SHA: `f7d056038bf758dbc23425d99841d9d22cf8d627`
+- Vercel deployment: `dpl_8PyZJrZ7gNy8LJGkeM7iRYvXUNR2`
+- Deployment URL: `https://vessel303-ef14gqwea-vessel303.vercel.app`
+- Status: `READY`
+- Scope: B58 was a display-template fix for CMS product detail pages after 09 comparison found that `en.303vessel.cn` product details carry a stronger product-brochure gallery rhythm. No product copy, image URL, product parameter, contact value, sales promise, or `/global` behavior was hardcoded in the frontend.
+- Frontend display change: `CatalogProductDetailContent` now renders a `product-gallery` section from the product CMS image/gallery array, using one larger image plus compact supporting thumbnails before specifications and description. The section title comes from backend `products:ui-labels` as `gallery-title`.
+- Backend support: `scripts/backfill-b58-product-gallery-label.mjs` added the missing published `Product Gallery` label to `products:ui-labels`; `scripts/backfill-b37-sales-depth.mjs` was updated so future B37 backfills keep that label.
+- Backend-control boundary: product images still come from product CMS `image` / `gallery`; visible section text still comes from published labels. The frontend only controls layout, image ratio, responsive grid behavior, and anchor placement.
+- Validation: `git diff --check`, targeted eslint, `audit:public-content`, `audit:published-content`, `audit:production-links`, `tsc --noEmit`, and `next build --webpack` passed. Build logs only showed existing PostgreSQL SSL warnings, local Neon sandbox `EACCES` fallback logs, and the known `/global` edge-runtime warning.
+- Online checks: `/products/e7-gen6-flagship?lang=en`, `/products?lang=en`, and `/global` returned 200 after Vercel READY. The product detail HTML contains `id="product-gallery"` and `Product Gallery`; main product pages did not expose old 303 product/contact links.
+- `/global` boundary: no `/global`, MapLibre, MapTiler, or `/api/map` diff. The Global old 303 Contact / Products exception remains out of scope for B58.
+- Next step: 09 should continue comparing display effect, interaction style and page rhythm against `en.303vessel.cn`, prioritizing product detail visual rhythm, case-detail browsing rhythm, and Media Kit resource-center behavior over adding more raw content.
