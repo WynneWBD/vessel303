@@ -504,9 +504,9 @@ export default function ProductsPageContent({
 
   return (
     <>
-      <section className="border-b border-[#DADDE1] bg-[#EEF3F5] pt-20 sm:pt-24">
-        <div className="mx-auto max-w-7xl px-4 pb-4 sm:px-6 lg:px-8">
-          <div className={`grid gap-4 lg:items-end ${hasRouteNote ? 'lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.42fr)]' : ''}`}>
+      <section className="border-b border-[#DADDE1] bg-[#EEF3F5] pt-16 sm:pt-20">
+        <div className="mx-auto max-w-[1500px] px-4 pb-3 sm:px-6 lg:px-8">
+          <div className={`grid gap-3 lg:items-center ${hasRouteNote ? 'lg:grid-cols-[minmax(0,1fr)_minmax(240px,0.34fr)]' : ''}`}>
             <div>
               {(breadcrumbHomeLabel || breadcrumbCurrentLabel) ? (
                 <div className="text-xs text-[#65707A]">
@@ -518,22 +518,22 @@ export default function ProductsPageContent({
                 </div>
               ) : null}
               {heroTitle ? (
-                <h1 className="mt-4 text-4xl font-black tracking-normal text-[#1F2A31] sm:text-5xl">
+                <h1 className="mt-2 text-3xl font-black tracking-normal text-[#1F2A31] sm:text-4xl">
                   {heroTitle}
                 </h1>
               ) : null}
               {heroDescription ? (
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-[#5C6670]">{heroDescription}</p>
+                <p className="mt-1 max-w-2xl text-xs leading-5 text-[#5C6670] sm:text-sm">{heroDescription}</p>
               ) : null}
               {((primaryCtaLabel && primaryCtaHref) || (secondaryCtaLabel && secondaryCtaHref)) ? (
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                   {primaryCtaLabel && primaryCtaHref ? (
-                    <Link href={primaryCtaHref} className="inline-flex min-h-11 w-full items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#C85A1F] sm:w-auto">
+                    <Link href={primaryCtaHref} className="inline-flex min-h-10 w-full items-center justify-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#C85A1F] sm:w-auto">
                       {primaryCtaLabel}
                     </Link>
                   ) : null}
                   {secondaryCtaLabel && secondaryCtaHref ? (
-                    <Link href={secondaryCtaHref} className="inline-flex min-h-11 w-full items-center justify-center border border-[#C7CDD2] bg-white px-5 text-sm font-semibold text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94] sm:w-auto">
+                    <Link href={secondaryCtaHref} className="inline-flex min-h-10 w-full items-center justify-center border border-[#C7CDD2] bg-white px-4 text-xs font-semibold text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94] sm:w-auto">
                       {secondaryCtaLabel}
                     </Link>
                   ) : null}
@@ -542,12 +542,12 @@ export default function ProductsPageContent({
             </div>
             {hasRouteNote ? (
               <div>
-                <div className="border border-[#DADDE1] bg-white/90 p-4">
+                <div className="border border-[#DADDE1] bg-white/90 p-3">
                   {routeNoteLabel ? (
-                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#147C94]">{routeNoteLabel}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#147C94]">{routeNoteLabel}</p>
                   ) : null}
                   {routeNoteBody ? (
-                    <p className="mt-2 text-xs leading-5 text-[#65707A]">{routeNoteBody}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-[#65707A]">{routeNoteBody}</p>
                   ) : null}
                 </div>
               </div>
@@ -556,8 +556,8 @@ export default function ProductsPageContent({
         </div>
       </section>
 
-      <section className="bg-[#F7F8F8] py-3">
-        <div className="mx-auto grid max-w-[1500px] grid-cols-1 gap-5 px-4 sm:px-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:px-8">
+      <section className="bg-[#F7F8F8] py-2">
+        <div className="mx-auto grid max-w-[1500px] grid-cols-1 gap-4 px-4 sm:px-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:px-8">
           <div className="lg:hidden">
             <details className="border border-[#DADDE1] bg-white">
               <summary className="flex min-h-12 cursor-pointer items-center px-4 text-sm font-bold text-[#1F2A31]">{uiLabels.filters}</summary>
@@ -567,34 +567,34 @@ export default function ProductsPageContent({
             </details>
           </div>
 
-          <div className="hidden lg:block lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1">
+          <div className="hidden lg:block lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1">
             <Sidebar categories={categories} attributeTemplates={attributeTemplates} filters={filters} contactModule={contactModule} uiLabels={uiLabels} />
           </div>
 
           <div className="min-w-0">
-            <div className="mb-3 border border-[#DADDE1] bg-white p-3">
-              <form action="/products" className="flex flex-col gap-3 sm:flex-row">
+            <div className="mb-2 border border-[#DADDE1] bg-white p-2.5">
+              <form action="/products" className="flex flex-col gap-2 sm:flex-row">
                 <input type="hidden" name="category" value={filters.category} />
                 <input type="hidden" name="attribute" value={filters.attribute} />
                 <input
                   name="q"
                   defaultValue={filters.q}
                   placeholder={uiLabels.searchPlaceholder}
-                  className="min-h-10 flex-1 border border-[#DADDE1] px-3 text-sm outline-none focus:border-[#147C94]"
+                  className="min-h-9 flex-1 border border-[#DADDE1] px-3 text-sm outline-none focus:border-[#147C94]"
                 />
-                <button className="min-h-10 bg-[#147C94] px-5 text-sm font-bold uppercase tracking-[0.08em] text-white hover:bg-[#0E6479]">
+                <button className="min-h-9 bg-[#147C94] px-4 text-sm font-bold uppercase tracking-[0.08em] text-white hover:bg-[#0E6479]">
                   {uiLabels.searchButton}
                 </button>
                 {(filters.q || filters.category || filters.attribute) ? (
                   <Link
                     href="/products"
-                    className="inline-flex min-h-10 items-center justify-center border border-[#DADDE1] px-4 text-sm font-semibold text-[#5C6670] hover:border-[#147C94]"
+                    className="inline-flex min-h-9 items-center justify-center border border-[#DADDE1] px-4 text-sm font-semibold text-[#5C6670] hover:border-[#147C94]"
                   >
                     {uiLabels.resetButton}
                   </Link>
                 ) : null}
               </form>
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[#ECEFF1] pt-2 text-sm text-[#65707A]">
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-[#ECEFF1] pt-2 text-xs text-[#65707A] sm:text-sm">
                 <span>
                   {uiLabels.matchingProducts || uiLabels.rangePrefix} {rangeStart}-{rangeEnd} {uiLabels.rangeOf} {total}
                 </span>
