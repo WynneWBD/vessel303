@@ -34,6 +34,16 @@ type MediaKitResource = {
   cta_href: string | null;
 };
 
+type ResourceEntry = {
+  id: number;
+  title: string;
+  summary: string | null;
+  ctaLabel: string | null;
+  href: string;
+  previewUrl: string | null;
+  fileKind: string;
+};
+
 export default function MediaKitPageContent({
   initialResources = [],
   initialPageModules = null,
@@ -84,6 +94,30 @@ export default function MediaKitPageContent({
     labels.submit &&
     useCaseOptions.length > 0,
   );
+  const resourceEntries = resources
+    .map((resource): ResourceEntry => {
+      const href = resource.cta_href || resource.file_url || '';
+      const previewUrl = getResourcePreviewUrl(resource);
+      const title = lang === 'zh' ? resource.title_zh || resource.title_en : resource.title_en || resource.title_zh;
+      const summary = lang === 'zh'
+        ? resource.summary_zh || resource.summary_en
+        : resource.summary_en || resource.summary_zh;
+      const ctaLabel = lang === 'zh'
+        ? resource.cta_label_zh || resource.cta_label_en
+        : resource.cta_label_en || resource.cta_label_zh;
+      return {
+        id: resource.id,
+        title,
+        summary,
+        ctaLabel,
+        href,
+        previewUrl,
+        fileKind: getResourceKind(href || resource.file_url || previewUrl || ''),
+      };
+    })
+    .filter((resource) => resource.title || resource.summary || resource.href || resource.previewUrl);
+  const featuredResource = resourceEntries[0] ?? null;
+  const secondaryResources = resourceEntries.slice(1);
 
   useEffect(() => {
     if (Array.isArray(initialPageModules) && Array.isArray(initialResources)) return;
@@ -176,56 +210,28 @@ export default function MediaKitPageContent({
 
       {/* Resource center + request form */}
       <section id="request-form" className="flex-1 px-4 py-12 sm:px-6 sm:py-16">
-        <div className={`mx-auto grid max-w-7xl gap-8 ${resources.length > 0 && canRenderForm ? 'lg:grid-cols-[minmax(0,1fr)_390px]' : ''}`}>
-          {resources.length > 0 && resourceHeading ? (
-            <section>
+        <div className={`mx-auto grid max-w-7xl gap-8 ${resourceEntries.length > 0 && canRenderForm ? 'lg:grid-cols-[minmax(0,1fr)_390px]' : ''}`}>
+          {resourceEntries.length > 0 && resourceHeading ? (
+            <section className="min-w-0">
               <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-5">
                 {resourceHeading}
               </p>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {resources.map((resource) => {
-                  const href = resource.cta_href || resource.file_url || '';
-                  const previewUrl = getResourcePreviewUrl(resource);
-                  const title = lang === 'zh' ? resource.title_zh || resource.title_en : resource.title_en || resource.title_zh;
-                  const summary = lang === 'zh'
-                    ? resource.summary_zh || resource.summary_en
-                    : resource.summary_en || resource.summary_zh;
-                  const ctaLabel = lang === 'zh'
-                    ? resource.cta_label_zh || resource.cta_label_en
-                    : resource.cta_label_en || resource.cta_label_zh;
-                  const fileKind = getResourceKind(href || resource.file_url || previewUrl || '');
-                  return (
-                    <article key={resource.id} className="flex min-h-[22rem] flex-col overflow-hidden border border-[#E5DED4] bg-white shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
-                      <ResourcePreview title={title} previewUrl={previewUrl} fileKind={fileKind} />
-                      <div className="flex flex-1 flex-col justify-between p-5">
-                        <div>
-                          <h3 className="text-base font-bold leading-snug text-[#2C2A28]">{title}</h3>
-                          {summary ? (
-                            <p className="mt-3 text-xs leading-6 text-[#6B625B]">
-                              {summary}
-                            </p>
-                          ) : null}
-                        </div>
-                        {href ? (
-                          <a
-                            href={href}
-                            target={isExternalHref(href) ? '_blank' : undefined}
-                            rel={isExternalHref(href) ? 'noopener noreferrer' : undefined}
-                            className="mt-5 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#E36F2C] hover:text-[#C85A1F]"
-                          >
-                            {ctaLabel || resourceCta || title}
-                            <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
-                          </a>
-                        ) : null}
-                      </div>
-                    </article>
-                  );
-                })}
+              <div className="space-y-5">
+                {featuredResource ? (
+                  <FeaturedResourceCard resource={featuredResource} resourceCta={resourceCta} />
+                ) : null}
+                {secondaryResources.length > 0 ? (
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {secondaryResources.map((resource) => (
+                      <ResourceCard key={resource.id} resource={resource} resourceCta={resourceCta} />
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </section>
           ) : null}
 
-          <aside className={resources.length > 0 ? 'lg:sticky lg:top-24 lg:self-start' : 'max-w-3xl'}>
+          <aside className={resourceEntries.length > 0 ? 'lg:sticky lg:top-24 lg:self-start' : 'max-w-3xl'}>
           {canRenderForm ? (
             <div>
               {formTitle ? (
@@ -341,23 +347,104 @@ function getResourceKind(href: string) {
   return match?.[1]?.slice(0, 6).toUpperCase() || 'LINK';
 }
 
+function ResourceCard({
+  resource,
+  resourceCta,
+}: {
+  resource: ResourceEntry;
+  resourceCta: string;
+}) {
+  return (
+    <article className="flex min-h-[21rem] flex-col overflow-hidden border border-[#E5DED4] bg-white shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
+      <ResourcePreview title={resource.title} previewUrl={resource.previewUrl} fileKind={resource.fileKind} />
+      <div className="flex flex-1 flex-col justify-between p-5">
+        <div>
+          {resource.title ? <h3 className="text-base font-bold leading-snug text-[#2C2A28]">{resource.title}</h3> : null}
+          {resource.summary ? (
+            <p className="mt-3 text-xs leading-6 text-[#6B625B]">
+              {resource.summary}
+            </p>
+          ) : null}
+        </div>
+        {resource.href ? (
+          <ResourceLink href={resource.href} label={resource.ctaLabel || resourceCta || resource.title} />
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
+function FeaturedResourceCard({
+  resource,
+  resourceCta,
+}: {
+  resource: ResourceEntry;
+  resourceCta: string;
+}) {
+  return (
+    <article className="overflow-hidden border border-[#D8CEC0] bg-white shadow-[0_24px_80px_rgba(44,42,40,0.12)]">
+      <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
+        <ResourcePreview title={resource.title} previewUrl={resource.previewUrl} fileKind={resource.fileKind} variant="featured" />
+        <div className="flex min-h-[18rem] flex-col justify-between p-6 sm:p-7">
+          <div>
+            {resource.title ? (
+              <h3 className="text-2xl font-black leading-tight text-[#2C2A28] sm:text-3xl">
+                {resource.title}
+              </h3>
+            ) : null}
+            {resource.summary ? (
+              <p className="mt-4 text-sm leading-7 text-[#6B625B]">
+                {resource.summary}
+              </p>
+            ) : null}
+          </div>
+          {resource.href ? (
+            <ResourceLink href={resource.href} label={resource.ctaLabel || resourceCta || resource.title} />
+          ) : null}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function ResourceLink({ href, label }: { href: string; label: string }) {
+  if (!href || !label) return null;
+  return (
+    <a
+      href={href}
+      target={isExternalHref(href) ? '_blank' : undefined}
+      rel={isExternalHref(href) ? 'noopener noreferrer' : undefined}
+      className="mt-5 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#E36F2C] hover:text-[#C85A1F]"
+    >
+      {label}
+      <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+    </a>
+  );
+}
+
 function ResourcePreview({
   title,
   previewUrl,
   fileKind,
+  variant = 'card',
 }: {
   title: string;
   previewUrl: string | null;
   fileKind: string;
+  variant?: 'card' | 'featured';
 }) {
+  const previewClassName = variant === 'featured'
+    ? 'group relative min-h-[18rem] overflow-hidden bg-[#211D19] lg:min-h-full'
+    : 'group relative aspect-[4/3] overflow-hidden bg-[#211D19]';
+
   if (previewUrl) {
     return (
-      <div className="group relative aspect-[4/3] overflow-hidden bg-[#211D19]">
+      <div className={previewClassName}>
         <ProtectedImage
           src={previewUrl}
           alt={title}
           fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 360px"
+          sizes={variant === 'featured' ? '(max-width: 1024px) 100vw, 48vw' : '(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 360px'}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
         />
         <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2C2A28]">
@@ -369,7 +456,7 @@ function ResourcePreview({
   }
 
   return (
-    <div className="flex aspect-[4/3] items-center justify-center bg-[#2C2A28] text-[#F5F2ED]">
+    <div className={`${variant === 'featured' ? 'min-h-[18rem] lg:min-h-full' : 'aspect-[4/3]'} flex items-center justify-center bg-[#2C2A28] text-[#F5F2ED]`}>
       <div className="flex flex-col items-center gap-3">
         <FileText aria-hidden="true" className="h-9 w-9 text-[#E36F2C]" />
         <span className="text-xs font-semibold uppercase tracking-[0.22em]">{fileKind}</span>
