@@ -625,6 +625,7 @@ async function main() {
     await client.query('BEGIN')
     await patchPageModuleItems(client, 'products', 'ui-labels', [
       item('specs-title', 'Product Specifications', 'Product Specifications', 150),
+      item('gallery-title', 'Product Gallery', 'Product Gallery', 155),
       item('downloads-title', 'Buyer Downloads', 'Buyer Downloads', 160),
       item('keywords-title', 'Keywords', 'Keywords', 170),
       item('related-title', 'Related Products', 'Related Products', 180),

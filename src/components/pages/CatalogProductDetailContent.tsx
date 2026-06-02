@@ -174,6 +174,53 @@ function RelatedCard({ product }: { product: CatalogProduct }) {
   );
 }
 
+function ProductVisualGallery({
+  images,
+  title,
+  name,
+}: {
+  images: string[];
+  title: string;
+  name: string;
+}) {
+  if (images.length === 0) return null;
+  const [primaryImage, ...secondaryImages] = images;
+
+  return (
+    <section id="product-gallery" className="scroll-mt-28 rounded-md border border-[#DADDE1] bg-white p-4 shadow-sm sm:p-5">
+      {title ? <h2 className="mb-4 text-2xl font-black tracking-normal text-[#1F2A31]">{title}</h2> : null}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
+        <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-[#EEF1F3] lg:aspect-[16/11]">
+          <ProtectedImage
+            src={primaryImage}
+            alt={name}
+            fill
+            loading="lazy"
+            className="object-cover"
+            sizes="(max-width: 1024px) 100vw, 58vw"
+          />
+        </div>
+        {secondaryImages.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3">
+            {secondaryImages.slice(0, 4).map((src, index) => (
+              <div key={`${src}-${index}`} className="relative aspect-[4/3] overflow-hidden rounded-md bg-[#EEF1F3]">
+                <ProtectedImage
+                  src={src}
+                  alt={`${name} ${index + 2}`}
+                  fill
+                  loading="lazy"
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 50vw, 280px"
+                />
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 export default function CatalogProductDetailContent({
   product,
   relatedProducts = [],
@@ -216,6 +263,7 @@ export default function CatalogProductDetailContent({
   const downloadsTitle = itemLabel(itemById(uiLabels, 'downloads-title'), lang);
   const keywordsTitle = itemLabel(itemById(uiLabels, 'keywords-title'), lang);
   const relatedTitle = itemLabel(itemById(uiLabels, 'related-title'), lang);
+  const galleryTitle = itemLabel(itemById(uiLabels, 'gallery-title'), lang);
   const heroInquiryCta = itemLabel(itemById(uiLabels, 'hero-inquiry-cta'), lang);
   const allProductsLabel = itemLabel(itemById(uiLabels, 'all-products-label'), lang);
   const inquiryLabels: FormLabels = {
@@ -242,6 +290,7 @@ export default function CatalogProductDetailContent({
     })
     .filter((item): item is { href: string; label: string } => Boolean(item));
   const detailAnchors = [
+    media.length > 1 && galleryTitle ? { href: '#product-gallery', label: galleryTitle } : null,
     (description || features.length > 0) && descriptionTitle ? { href: '#product-description', label: descriptionTitle } : null,
     specs.length > 0 && specsTitle ? { href: '#product-specifications', label: specsTitle } : null,
     ...moduleAnchors,
@@ -396,9 +445,13 @@ export default function CatalogProductDetailContent({
         </nav>
       ) : null}
 
-      {(description || features.length > 0 || visibleModules.length > 0 || keywords.length > 0) ? (
+      {(media.length > 1 || specs.length > 0 || description || features.length > 0 || visibleModules.length > 0 || keywords.length > 0) ? (
         <section className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
           <div className="min-w-0 space-y-8">
+            {media.length > 1 ? (
+              <ProductVisualGallery images={media.slice(1, 7)} title={galleryTitle} name={name} />
+            ) : null}
+
             {specs.length > 0 && specsTitle ? (
               <section id="product-specifications" className="scroll-mt-28 rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm sm:p-6">
                 <h2 className="mb-5 text-2xl font-black tracking-normal text-[#1F2A31]">{specsTitle}</h2>
