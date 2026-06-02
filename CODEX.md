@@ -848,3 +848,15 @@ curl -I https://www.vessel303.com/news/<slug>
 - 验收摘要：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；构建仅出现本机沙箱 Neon `EACCES` 降级日志和既有 `/global` edge runtime warning，最终退出 0。Vercel READY 后 `npm.cmd run audit:production-links` 通过；线上 `/products/v5`、`/products/s5`、`/products/e7-gen6-flagship`、`/contact`、`/media-kit`、`/global` 均 200，未登录 `/admin` 302 到 `/admin/login`。
 - `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` 代码 diff；Global Contact / Products 旧 303 跳转例外继续保留。
 - 残留风险：线上正文轻量 grep 受响应体读取限制未形成有效证据，但 HTTP、production link audit、本地生产路由和构建均已通过；下一轮 09 应继续用 Chrome 实页对比详情页滚动体验、Media Kit 资料中心视觉节奏和产品目录交互密度。
+
+## B42 产品详情互动显示器二次对齐（2026-06-02）
+
+- Code commit: `edca0d5 fix(products): align detail interaction display`
+- Full SHA: `edca0d5a90d255ebbde4e6dbf107c5e6065ae8a4`
+- Vercel deployment: `dpl_CU2dPhh6pgfEmUj9SUuN2ZVy27pK`，状态 `READY`，deployment URL `https://vessel303-11fme40nw-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com`。
+- 本轮定位：B42 接 B41，继续按 09 对比结论修产品详情“显示器”问题，让 `/products/[slug]` 的浏览节奏更接近 303 产品详情页的 Product Description / Related Products / Consult / Products 互动心智；不新增前台业务文案、不改产品内容模型、不补产品销售承诺。
+- 后台内容写入：新增 `scripts/backfill-b42-product-detail-display.mjs`，支持 dry-run / apply；已只补缺失的 `products:ui-labels`，包括 `description-title`、`all-products-label`、`hero-inquiry-cta`，不覆盖运营已编辑 label。
+- 前台显示器调整：`CatalogProductDetailContent` 增加后台 label 驱动的 `Product Description` 锚点、sticky 行动区、询盘锚点和 All Products 入口；Related Products 改为横向产品条，更接近 303 产品详情的连续浏览方式。所有可见 label 仍来自后台 published 内容或 CMS 字段，前台只负责布局、锚点、响应式和路由。
+- 验收摘要：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；本地构建仅出现沙箱 Neon `EACCES` 降级日志和既有 `/global` edge runtime warning，最终退出 0。Vercel READY 后 `npm.cmd run audit:production-links` 通过；线上 `/products/e7-gen6-flagship`、`/products/v9-gen6-standard`、`/products`、`/global` 均 200，未登录 `/admin` 302 到 `/admin/login`。
+- `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` 代码 diff；Global Contact / Products 旧 303 跳转例外继续保留。
+- 后续建议：下一轮继续由 09 用 Chrome 实页对比 `en.303vessel.cn` 的产品详情滚动体验、产品目录交互密度、案例详情呈现方式和 Media Kit 资料中心节奏；若是显示器问题交 01，若是后台内容缺失交 02 / 03，继续避免在前台写死业务内容。
