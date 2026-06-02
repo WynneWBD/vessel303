@@ -974,3 +974,16 @@ curl -I https://www.vessel303.com/news/<slug>
 - 线上检查：`/cases/astrobase-mamison` 200，`/cases` 200，`/global` 200，未登录 `/admin` 302 到 `/admin/login`。Chrome 线上复核确认 `/cases/astrobase-mamison` 的 H1 约 198px、首个商业事实约 352px，`Yamanashi` / `PROJECT AREA Japan` 不再出现，页面无内部词、无横向溢出，`lang=en`。
 - `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保留。
 - 后续建议：继续由 09 对比 `en.303vessel.cn` 与 vessel 的展示方式、互动体感和页面效果。下一轮优先看 Media Kit 资料中心节奏、案例详情图库 / 询盘位置，或产品筛选交互细节；若属于显示器问题交 01，若属于后台内容或素材缺口交 02 / 03。
+
+## B52 Media Kit 资料中心资源预览卡对齐（2026-06-02）
+
+- Code commit: `ef4251b fix(media-kit): add resource preview cards`
+- Full SHA: `ef4251b55ee092ed763209dee5e206e8bce50a7a`
+- Vercel deployment: `dpl_8nPpUXvn5LNXSAHHtrFzsAxsLLJK`，状态 `READY`，deployment URL `https://vessel303-gv69222ls-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com` 和 `https://vessel303.com`。
+- 本轮定位：09 对比 300 / 303 / vessel 后确认，`/media-kit` 已有后台 published 资源，但线上展示仍偏文字列表，缺少 303 式可扫读的资料卡节奏。B52 只修 Media Kit 显示器，不写入新资源内容，不改后台数据，不改 `/global`。
+- 前台显示器调整：`src/components/pages/MediaKitPageContent.tsx` 让每个后台资源卡优先渲染 `cover_image_url` 或图片型 `file_url`，无图片时渲染 PDF / IMAGE / LINK 类型预览卡；标题、摘要、按钮文案和资源链接继续来自后台 published 资源字段或页面模块 label。
+- 后台控制边界：资料标题、摘要、文件 URL、封面图、CTA 文案、表单 labels 均继续由 B9 Media Kit CMS / page modules 控制；前台只负责卡片布局、图片预览、文件类型视觉提示、响应式和可访问结构。后台无资源时，前台不补业务文案。
+- 验收摘要：`git diff --check`、targeted eslint、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；构建仅出现既有 PostgreSQL SSL warning、本地 Neon `EACCES` 降级日志和 `/global` edge runtime warning。
+- 线上检查：`/media-kit` 200 / PRERENDER，`/global` 200，未登录 `/admin` 302。Chrome 线上复核确认 `/media-kit` 有 16 个资源 article、8 个资源图片预览、16 个文件类型预览，表单字段为 `name/email/phone/company/country/useCase/message`，无内部词、无横向溢出，`lang=en`。
+- `/global` 边界：本轮代码 diff 仅涉及 `src/components/pages/MediaKitPageContent.tsx`，无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保留。
+- 后续建议：继续由 09 对比 `en.303vessel.cn` 与 vessel 的展示方式、互动体感和页面效果。下一轮优先看 Media Kit 资源内容深度、案例详情图库 / 询盘位置，或产品筛选交互细节；若是显示器问题交 01，若是后台内容或素材缺口交 02 / 03。
