@@ -212,10 +212,12 @@ export default function CatalogProductDetailContent({
   const inquiryModule = modules.get('inquiry-form') ?? null;
   const imageLabelPrefix = itemLabel(itemById(uiLabels, 'image-label-prefix'), lang);
   const specsTitle = itemLabel(itemById(uiLabels, 'specs-title'), lang);
+  const descriptionTitle = itemLabel(itemById(uiLabels, 'description-title'), lang);
   const downloadsTitle = itemLabel(itemById(uiLabels, 'downloads-title'), lang);
   const keywordsTitle = itemLabel(itemById(uiLabels, 'keywords-title'), lang);
   const relatedTitle = itemLabel(itemById(uiLabels, 'related-title'), lang);
   const heroInquiryCta = itemLabel(itemById(uiLabels, 'hero-inquiry-cta'), lang);
+  const allProductsLabel = itemLabel(itemById(uiLabels, 'all-products-label'), lang);
   const inquiryLabels: FormLabels = {
     eyebrow: itemLabel(itemById(inquiryModule, 'form-eyebrow'), lang),
     name: itemLabel(itemById(inquiryModule, 'form-name'), lang),
@@ -240,11 +242,16 @@ export default function CatalogProductDetailContent({
     })
     .filter((item): item is { href: string; label: string } => Boolean(item));
   const detailAnchors = [
+    (description || features.length > 0) && descriptionTitle ? { href: '#product-description', label: descriptionTitle } : null,
     specs.length > 0 && specsTitle ? { href: '#product-specifications', label: specsTitle } : null,
     ...moduleAnchors,
     relatedProducts.length > 0 && relatedTitle ? { href: '#related-products', label: relatedTitle } : null,
     inquiryTitle ? { href: '#product-inquiry', label: inquiryTitle } : null,
   ].filter((item): item is { href: string; label: string } => Boolean(item));
+  const actionLinks = [
+    heroInquiryCta && inquiryTitle ? { href: '#product-inquiry', label: heroInquiryCta, tone: 'primary' } : null,
+    allProductsLabel ? { href: '/products', label: allProductsLabel, tone: 'secondary' } : null,
+  ].filter((item): item is { href: string; label: string; tone: 'primary' | 'secondary' } => Boolean(item));
 
   if (!name) return null;
 
@@ -334,16 +341,36 @@ export default function CatalogProductDetailContent({
 
       {detailAnchors.length > 0 ? (
         <nav className="sticky top-16 z-20 border-b border-[#DADDE1] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-          <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 py-3 sm:px-6 lg:px-8">
-            {detailAnchors.map((anchor) => (
-              <a
-                key={anchor.href}
-                href={anchor.href}
-                className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-sm border border-[#DADDE1] bg-white px-4 text-xs font-black uppercase tracking-[0.12em] text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94]"
-              >
-                {anchor.label}
-              </a>
-            ))}
+          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+            <div className="flex min-w-0 gap-2 overflow-x-auto">
+              {detailAnchors.map((anchor) => (
+                <a
+                  key={anchor.href}
+                  href={anchor.href}
+                  className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-sm border border-[#DADDE1] bg-white px-4 text-xs font-black uppercase tracking-[0.12em] text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94]"
+                >
+                  {anchor.label}
+                </a>
+              ))}
+            </div>
+            {actionLinks.length > 0 ? (
+              <div className="flex shrink-0 gap-2 overflow-x-auto lg:justify-end">
+                {actionLinks.map((action) => {
+                  const className = action.tone === 'primary'
+                    ? 'inline-flex min-h-10 shrink-0 items-center justify-center rounded-sm bg-[#E36F2C] px-4 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[#C85A1F]'
+                    : 'inline-flex min-h-10 shrink-0 items-center justify-center rounded-sm border border-[#147C94]/35 bg-[#EAF6F8] px-4 text-xs font-black uppercase tracking-[0.12em] text-[#147C94] transition hover:border-[#147C94] hover:bg-white';
+                  return isInternalHref(action.href) ? (
+                    <Link key={action.href} href={action.href} className={className}>
+                      {action.label}
+                    </Link>
+                  ) : (
+                    <a key={action.href} href={action.href} className={className}>
+                      {action.label}
+                    </a>
+                  );
+                })}
+              </div>
+            ) : null}
           </div>
         </nav>
       ) : null}
@@ -365,8 +392,8 @@ export default function CatalogProductDetailContent({
               </section>
             ) : null}
             {(description || features.length > 0) ? (
-              <section className="rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm">
-                <h2 className="mb-5 text-2xl font-black tracking-normal text-[#1F2A31]">{name}</h2>
+              <section id="product-description" className="scroll-mt-28 rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm">
+                <h2 className="mb-5 text-2xl font-black tracking-normal text-[#1F2A31]">{descriptionTitle || name}</h2>
                 {description ? <p className="whitespace-pre-line text-sm leading-8 text-[#5C6670]">{description}</p> : null}
                 {features.length > 0 ? (
                   <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -414,9 +441,11 @@ export default function CatalogProductDetailContent({
         <section id="related-products" className="scroll-mt-28 border-t border-[#DADDE1] bg-white py-10">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {relatedTitle ? <h2 className="mb-5 text-2xl font-black text-[#1F2A31]">{relatedTitle}</h2> : null}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
+            <div className="flex gap-4 overflow-x-auto pb-2">
               {relatedProducts.map((item) => (
-                <RelatedCard key={item.id} product={item} />
+                <div key={item.id} className="min-w-[220px] max-w-[260px] flex-1 sm:min-w-[240px] lg:min-w-[260px]">
+                  <RelatedCard product={item} />
+                </div>
               ))}
             </div>
           </div>
