@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
@@ -35,6 +34,7 @@ interface Props {
   categories: DirectoryCategory[];
   attributeTemplates: ProductAttributeTemplateWithOptions[];
   pageModules: PublicPageModule[];
+  initialFilters: DirectoryFilters;
 }
 
 function buildHref(filters: DirectoryFilters, patch: Partial<DirectoryFilters>) {
@@ -55,11 +55,6 @@ function productHref(product: CatalogProduct) {
 function productPrice(product: CatalogProduct, lang: 'en' | 'zh') {
   const price = lang === 'en' ? product.price_display_en : product.price_display_zh;
   return price || product.price_display_en || product.price_display_zh || '';
-}
-
-function normalizePage(value: string | null) {
-  const page = Number(value);
-  return Number.isInteger(page) && page > 0 ? page : 1;
 }
 
 function localizedText(en: string | null | undefined, zh: string | null | undefined, lang: 'en' | 'zh') {
@@ -116,17 +111,6 @@ function productMatchesFilters(product: CatalogProduct, filters: DirectoryFilter
     if (!Number.isInteger(attributeId) || !(product.attribute_option_ids ?? []).includes(attributeId)) return false;
   }
   return true;
-}
-
-function useDirectoryFilters(): DirectoryFilters {
-  const searchParams = useSearchParams();
-
-  return useMemo(() => ({
-    q: searchParams.get('q')?.trim() ?? '',
-    category: searchParams.get('category')?.trim() ?? '',
-    attribute: searchParams.get('attribute')?.trim() ?? '',
-    page: normalizePage(searchParams.get('page')),
-  }), [searchParams]);
 }
 
 function Sidebar({
@@ -428,6 +412,7 @@ export default function ProductsPageContent({
   categories,
   attributeTemplates,
   pageModules,
+  initialFilters,
 }: Props) {
   const { lang } = useLanguage();
   const modules = moduleMap(pageModules);
@@ -463,7 +448,7 @@ export default function ProductsPageContent({
     seriesCta: label('series-cta'),
   };
   const inquiryHref = uiItem('inquiry-cta')?.href || '';
-  const rawFilters = useDirectoryFilters();
+  const rawFilters = initialFilters;
   const filteredProducts = useMemo(
     () => products.filter((product) => productMatchesFilters(product, rawFilters)),
     [products, rawFilters],

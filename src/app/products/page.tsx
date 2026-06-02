@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { Suspense } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import {
@@ -27,7 +26,32 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const PAGE_SIZE = 12;
 
-export default async function ProductsPage() {
+type ProductsSearchParams = Record<string, string | string[] | undefined>;
+
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function normalizePage(value: string | string[] | undefined) {
+  const page = Number(firstParam(value));
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
+function normalizeFilters(searchParams: ProductsSearchParams | undefined) {
+  return {
+    q: firstParam(searchParams?.q)?.trim() ?? '',
+    category: firstParam(searchParams?.category)?.trim() ?? '',
+    attribute: firstParam(searchParams?.attribute)?.trim() ?? '',
+    page: normalizePage(searchParams?.page),
+  };
+}
+
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<ProductsSearchParams>;
+}) {
+  const filters = normalizeFilters(searchParams ? await searchParams : undefined);
   const catalogRows = await listPublishedCatalogProducts().catch((err) => {
     console.error('[products] catalog db unavailable', err);
     return [];
@@ -59,15 +83,14 @@ export default async function ProductsPage() {
   return (
     <main className="bg-[#F5F2ED] text-[#2C2A28]">
       <Navbar />
-      <Suspense fallback={<div className="min-h-screen bg-[#F5F2ED]" />}>
-        <ProductsPageContent
-          products={displayProducts}
-          pageSize={PAGE_SIZE}
-          categories={categories}
-          attributeTemplates={attributeTemplates}
-          pageModules={pageModules}
-        />
-      </Suspense>
+      <ProductsPageContent
+        products={displayProducts}
+        pageSize={PAGE_SIZE}
+        categories={categories}
+        attributeTemplates={attributeTemplates}
+        pageModules={pageModules}
+        initialFilters={filters}
+      />
       <Footer />
     </main>
   );
