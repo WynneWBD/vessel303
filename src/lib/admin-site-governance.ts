@@ -600,6 +600,18 @@ function objectHasValue(value: unknown): boolean {
   return Object.values(value).some((entry) => typeof entry === 'string' ? entry.trim() : Boolean(entry))
 }
 
+function detailModulesHaveLinks(value: unknown): boolean {
+  if (!Array.isArray(value)) return false
+  return value.some((module) => {
+    if (!module || typeof module !== 'object') return false
+    const items = [
+      ...((module as { items_en?: unknown[] }).items_en ?? []),
+      ...((module as { items_cn?: unknown[] }).items_cn ?? []),
+    ]
+    return items.some((item) => Boolean((item as { href?: string } | null)?.href?.trim()))
+  })
+}
+
 async function loadProductCatalogWarnings(): Promise<string[]> {
   const warnings = new Set<string>()
   const res = await pool.query<{
@@ -638,6 +650,7 @@ async function loadProductCatalogWarnings(): Promise<string[]> {
     if (!row.name_en?.trim() || !row.description_en?.trim()) warnings.add(`product:${row.id}: missing English copy`)
     if (!row.image?.trim() || arrayLength(row.gallery) === 0) warnings.add(`product:${row.id}: missing product images`)
     if (arrayLength(row.specs_en) === 0 && arrayLength(row.detail_modules) === 0) warnings.add(`product:${row.id}: missing spec/detail materials`)
+    if (!detailModulesHaveLinks(row.detail_modules)) warnings.add(`product:${row.id}: missing buyer downloads`)
     if (!objectHasValue(row.commercial_terms)) warnings.add(`product:${row.id}: missing commercial terms`)
     if (arrayLength(row.keywords_en) === 0) warnings.add(`product:${row.id}: missing English keywords`)
     if (arrayLength(row.related_product_ids) === 0) warnings.add(`product:${row.id}: missing related products`)

@@ -65,6 +65,9 @@ export default function CaseDetailPageContent({
     { label: itemLabel(itemById(detailLabels, 'fact-units'), lang), value: project.units_display },
     { label: itemLabel(itemById(detailLabels, 'fact-products'), lang), value: project.products },
   ].map((fact) => ({ ...fact, value: text(fact.value) })).filter((fact) => Boolean(fact.value))
+  const proofTitle = itemLabel(itemById(detailLabels, 'proof-title'), lang)
+  const galleryTitle = itemLabel(itemById(detailLabels, 'gallery-title'), lang)
+  const relatedTitle = itemLabel(itemById(detailLabels, 'related-title'), lang)
   const inquiryModule = modules.get('inquiry-form') ?? null
   const inquiryTitle = moduleTitle(inquiryModule, lang)
   const inquiryType = itemLabel(itemById(inquiryModule, 'inquiry-type'), lang)
@@ -131,17 +134,36 @@ export default function CaseDetailPageContent({
         </section>
       ) : null}
 
+      {facts.length > 0 && proofTitle ? (
+        <section className="border-b border-[#E5DED4] bg-white py-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <h2 className="mb-6 text-2xl font-black tracking-wide text-[#2C2A28]">{proofTitle}</h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {facts.map((fact) => (
+                <article key={`${fact.label}-${fact.value}`} className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-5">
+                  {fact.label ? <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#8A8580]">{fact.label}</p> : null}
+                  <p className="text-base font-black leading-7 text-[#2C2A28]">{fact.value}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       {gallery.length > 1 ? (
         <section className="py-16">
-          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 lg:px-8">
-            {gallery.slice(0, 6).map((image, index) => (
-              <ProjectImage
-                key={image}
-                src={image}
-                alt={`${name} ${index + 1}`}
-                className="aspect-[4/3] w-full border border-[#E5DED4]"
-              />
-            ))}
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            {galleryTitle ? <h2 className="mb-6 text-2xl font-black tracking-wide text-[#2C2A28]">{galleryTitle}</h2> : null}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {gallery.slice(0, 6).map((image, index) => (
+                <ProjectImage
+                  key={image}
+                  src={image}
+                  alt={`${name} ${index + 1}`}
+                  className="aspect-[4/3] w-full border border-[#E5DED4]"
+                />
+              ))}
+            </div>
           </div>
         </section>
       ) : null}
@@ -165,29 +187,32 @@ export default function CaseDetailPageContent({
 
       {relatedCases.length > 0 ? (
         <section className="border-t border-[#E5DED4] bg-[#F5F2ED] py-16">
-          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 sm:px-6 md:grid-cols-3 lg:px-8">
-            {relatedCases.map((item) => {
-              const relatedName = zh ? item.name_zh || item.name_en : item.name_en || item.name_zh
-              const relatedType = zh ? item.project_type_zh || item.project_type_en : item.project_type_en || item.project_type_zh
-              const relatedLocation = zh ? item.location_zh || item.location_en : item.location_en || item.location_zh
-              const relatedImage = item.cover_image_url || item.images[0] || null
-              if (!relatedName) return null
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            {relatedTitle ? <h2 className="mb-6 text-2xl font-black tracking-wide text-[#2C2A28]">{relatedTitle}</h2> : null}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+              {relatedCases.map((item) => {
+                const relatedName = zh ? item.name_zh || item.name_en : item.name_en || item.name_zh
+                const relatedType = zh ? item.project_type_zh || item.project_type_en : item.project_type_en || item.project_type_zh
+                const relatedLocation = zh ? item.location_zh || item.location_en : item.location_en || item.location_zh
+                const relatedImage = item.cover_image_url || item.images[0] || null
+                if (!relatedName) return null
 
-              return (
-                <Link
-                  key={item.id}
-                  href={`/cases/${item.id}`}
-                  className="group border border-[#E5DED4] bg-white transition-colors hover:border-[#E36F2C]/35"
-                >
-                  <ProjectImage src={relatedImage} alt={relatedName} className="aspect-[4/3] w-full border-b border-[#E5DED4]" />
-                  <div className="p-5">
-                    {relatedLocation ? <div className="mb-2 text-[10px] tracking-wider text-[#8A8580]">{relatedLocation}</div> : null}
-                    <h2 className="text-base font-black leading-6 tracking-wide text-[#2C2A28]">{relatedName}</h2>
-                    {relatedType ? <div className="mt-2 text-xs leading-5 tracking-wider text-[#6B6560]">{relatedType}</div> : null}
-                  </div>
-                </Link>
-              )
-            })}
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/cases/${item.id}`}
+                    className="group border border-[#E5DED4] bg-white transition-colors hover:border-[#E36F2C]/35"
+                  >
+                    <ProjectImage src={relatedImage} alt={relatedName} className="aspect-[4/3] w-full border-b border-[#E5DED4]" />
+                    <div className="p-5">
+                      {relatedLocation ? <div className="mb-2 text-[10px] tracking-wider text-[#8A8580]">{relatedLocation}</div> : null}
+                      <h2 className="text-base font-black leading-6 tracking-wide text-[#2C2A28]">{relatedName}</h2>
+                      {relatedType ? <div className="mt-2 text-xs leading-5 tracking-wider text-[#6B6560]">{relatedType}</div> : null}
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
           </div>
         </section>
       ) : null}

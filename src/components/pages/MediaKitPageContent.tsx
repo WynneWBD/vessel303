@@ -173,7 +173,43 @@ export default function MediaKitPageContent({
 
       {/* Form + Usage notes */}
       <section id="request-form" className="flex-1 px-4 py-12 sm:px-6 sm:py-16">
-        <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[1fr_320px] lg:gap-12">
+        <div className="mx-auto max-w-6xl">
+          {resources.length > 0 && resourceHeading ? (
+            <section className="mb-12">
+              <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-5">
+                {resourceHeading}
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {resources.map((resource) => {
+                  const href = resource.cta_href || resource.file_url || '';
+                  return (
+                    <article key={resource.id} className="flex min-h-44 flex-col justify-between border border-[#E5DED4] bg-white p-6 shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
+                      <div>
+                        <h3 className="text-base font-bold text-[#2C2A28]">{resource.title_en || resource.title_zh}</h3>
+                        {(resource.summary_en || resource.summary_zh) && (
+                          <p className="mt-3 text-xs leading-6 text-[#6B625B]">
+                            {resource.summary_en || resource.summary_zh}
+                          </p>
+                        )}
+                      </div>
+                      {href ? (
+                        <a
+                          href={href}
+                          target={isExternalHref(href) ? '_blank' : undefined}
+                          rel={isExternalHref(href) ? 'noopener noreferrer' : undefined}
+                          className="mt-5 inline-flex text-xs font-semibold uppercase tracking-[0.14em] text-[#E36F2C] hover:text-[#C85A1F]"
+                        >
+                          {resource.cta_label_en || resourceCta || resource.title_en || resource.title_zh}
+                        </a>
+                      ) : null}
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
+
+          <div className="max-w-3xl">
           {canRenderForm ? (
             <div>
               {formTitle ? (
@@ -259,39 +295,7 @@ export default function MediaKitPageContent({
             </div>
           ) : null}
 
-          {/* Usage notes */}
-          <aside className="space-y-5">
-            {resources.length > 0 && (
-              <section className="bg-white border border-[#E5DED4] p-8 h-fit shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
-                <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-4">
-                  {resourceHeading}
-                </p>
-                <div className="space-y-4">
-                  {resources.map((resource) => (
-                    <article key={resource.id} className="border-b border-[#E5E0DA] pb-4 last:border-0 last:pb-0">
-                      <h3 className="text-sm font-bold text-[#2C2A28]">{resource.title_en || resource.title_zh}</h3>
-                      {(resource.summary_en || resource.summary_zh) && (
-                        <p className="mt-2 text-xs leading-5 text-[#6B625B]">
-                          {resource.summary_en || resource.summary_zh}
-                        </p>
-                      )}
-                      {(resource.cta_href || resource.file_url) && (
-                        <a
-                          href={resource.cta_href || resource.file_url || '#'}
-                          target={isExternalHref(resource.cta_href || resource.file_url || '') ? '_blank' : undefined}
-                          rel={isExternalHref(resource.cta_href || resource.file_url || '') ? 'noopener noreferrer' : undefined}
-                          className="mt-3 inline-flex text-xs font-semibold text-[#E36F2C] hover:text-[#C85A1F]"
-                        >
-                          {resource.cta_label_en || resourceCta || resource.title_en || resource.title_zh}
-                        </a>
-                      )}
-                    </article>
-                  ))}
-                </div>
-              </section>
-            )}
-
-          </aside>
+          </div>
         </div>
       </section>
 

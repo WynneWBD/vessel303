@@ -25,6 +25,7 @@ interface Props {
 
 type DetailModule = NonNullable<CatalogProduct['detail_modules']>[number];
 type DetailModuleItem = NonNullable<DetailModule['items_cn']>[number];
+type SpecItem = NonNullable<CatalogProduct['specs_en']>[number];
 
 const TERM_FIELDS: Array<{
   zh: keyof CatalogCommercialTerms;
@@ -59,39 +60,61 @@ function localizedProductName(product: CatalogProduct, lang: 'en' | 'zh') {
   return lang === 'en' ? product.name_en || product.name_cn : product.name_cn || product.name_en;
 }
 
+function localizedSpecRows(product: CatalogProduct, lang: 'en' | 'zh') {
+  return (lang === 'en' ? product.specs_en : product.specs_cn) ?? [];
+}
+
 function DetailModuleBlock({ module, lang, name }: { module: DetailModule; lang: 'en' | 'zh'; name: string }) {
   const title = lang === 'en' ? module.title_en : module.title_cn;
   const body = lang === 'en' ? module.body_en : module.body_cn;
   const items = lang === 'en' ? module.items_en ?? [] : module.items_cn ?? [];
   const images = uniqueImages([module.image_url, ...(module.images ?? [])]);
+  const linkItems = items.filter((item) => text(item.href));
+  const textItems = items.filter((item) => !text(item.href));
   if (!text(title) && !text(body) && items.length === 0 && images.length === 0) return null;
 
   return (
-    <section className="rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm">
-      {title ? <h2 className="text-xl font-bold text-[#1F2A31]">{title}</h2> : null}
-      {body ? <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#5C6670]">{body}</p> : null}
-      {items.length > 0 ? (
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {items.map((item: DetailModuleItem, index: number) => {
+    <section className="rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm sm:p-6">
+      {title ? <h2 className="text-2xl font-black leading-tight text-[#1F2A31]">{title}</h2> : null}
+      {body ? <p className="mt-3 whitespace-pre-line text-sm leading-8 text-[#5C6670]">{body}</p> : null}
+      {linkItems.length > 0 ? (
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {linkItems.map((item: DetailModuleItem, index: number) => {
             const href = text(item.href);
+            const card = (
+              <>
+                {item.title ? <span className="block text-sm font-black text-[#1F2A31]">{item.title}</span> : null}
+                {item.body ? <span className="mt-2 block text-sm leading-6 text-[#65707A]">{item.body}</span> : null}
+              </>
+            );
+            return isInternalHref(href) ? (
+              <Link
+                key={`${item.title}-${index}`}
+                href={href}
+                className="group rounded-md border border-[#147C94]/20 bg-[#F2F8F8] p-4 transition hover:border-[#147C94]/60 hover:bg-white"
+              >
+                {card}
+              </Link>
+            ) : (
+              <a
+                key={`${item.title}-${index}`}
+                href={href}
+                target={/^https?:\/\//i.test(href) ? '_blank' : undefined}
+                rel={/^https?:\/\//i.test(href) ? 'noopener noreferrer' : undefined}
+                className="group rounded-md border border-[#147C94]/20 bg-[#F2F8F8] p-4 transition hover:border-[#147C94]/60 hover:bg-white"
+              >
+                {card}
+              </a>
+            );
+          })}
+        </div>
+      ) : null}
+      {textItems.length > 0 ? (
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {textItems.map((item: DetailModuleItem, index: number) => {
             return (
               <div key={`${item.title}-${index}`} className="rounded-md border border-[#ECEFF1] bg-[#F7F8F8] p-4">
-                {item.title && href && isInternalHref(href) ? (
-                  <Link href={href} className="text-sm font-semibold text-[#147C94] underline-offset-4 hover:underline">
-                    {item.title}
-                  </Link>
-                ) : null}
-                {item.title && href && !isInternalHref(href) ? (
-                  <a
-                    href={href}
-                    target={/^https?:\/\//i.test(href) ? '_blank' : undefined}
-                    rel={/^https?:\/\//i.test(href) ? 'noopener noreferrer' : undefined}
-                    className="text-sm font-semibold text-[#147C94] underline-offset-4 hover:underline"
-                  >
-                    {item.title}
-                  </a>
-                ) : null}
-                {item.title && !href ? <p className="text-sm font-semibold text-[#1F2A31]">{item.title}</p> : null}
+                {item.title ? <p className="text-sm font-semibold text-[#1F2A31]">{item.title}</p> : null}
                 {item.body ? <p className="mt-2 text-sm leading-6 text-[#65707A]">{item.body}</p> : null}
               </div>
             );
@@ -154,6 +177,7 @@ export default function CatalogProductDetailContent({
   const badge = lang === 'en' ? product.badge_en || product.badge_cn : product.badge_cn || product.badge_en;
   const features = lang === 'en' ? product.features_en : product.features_cn;
   const keywords = (lang === 'en' ? product.keywords_en : product.keywords_zh) ?? [];
+  const specs = localizedSpecRows(product, lang);
   const price = (lang === 'en' ? product.price_display_en : product.price_display_zh)
     || product.price_display_en
     || product.price_display_zh
@@ -177,6 +201,11 @@ export default function CatalogProductDetailContent({
   const uiLabels = modules.get('ui-labels') ?? null;
   const inquiryModule = modules.get('inquiry-form') ?? null;
   const imageLabelPrefix = itemLabel(itemById(uiLabels, 'image-label-prefix'), lang);
+  const specsTitle = itemLabel(itemById(uiLabels, 'specs-title'), lang);
+  const downloadsTitle = itemLabel(itemById(uiLabels, 'downloads-title'), lang);
+  const keywordsTitle = itemLabel(itemById(uiLabels, 'keywords-title'), lang);
+  const relatedTitle = itemLabel(itemById(uiLabels, 'related-title'), lang);
+  const heroInquiryCta = itemLabel(itemById(uiLabels, 'hero-inquiry-cta'), lang);
   const inquiryLabels: FormLabels = {
     eyebrow: itemLabel(itemById(inquiryModule, 'form-eyebrow'), lang),
     name: itemLabel(itemById(inquiryModule, 'form-name'), lang),
@@ -257,6 +286,14 @@ export default function CatalogProductDetailContent({
                 </div>
               ) : null}
               {price ? <p className="mt-5 border-t border-[#DADDE1] pt-5 text-xl font-black text-[#C65F22]">{price}</p> : null}
+              {heroInquiryCta && inquiryTitle ? (
+                <a
+                  href="#product-inquiry"
+                  className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-sm bg-[#147C94] px-5 py-3 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:bg-[#0F6477]"
+                >
+                  {heroInquiryCta}
+                </a>
+              ) : null}
               {termRows.length > 0 ? (
                 <div className="mt-5 border-t border-[#DADDE1] pt-5">
                   <div className="space-y-2">
@@ -276,6 +313,19 @@ export default function CatalogProductDetailContent({
       {(description || features.length > 0 || visibleModules.length > 0 || keywords.length > 0) ? (
         <section className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
           <div className="min-w-0 space-y-8">
+            {specs.length > 0 && specsTitle ? (
+              <section className="rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm sm:p-6">
+                <h2 className="mb-5 text-2xl font-black tracking-normal text-[#1F2A31]">{specsTitle}</h2>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {specs.map((item: SpecItem) => (
+                    <p key={`${item.label}-${item.value}`} className="rounded-md border border-[#ECEFF1] bg-[#F7F8F8] p-4 text-sm leading-6 text-[#1F2A31]">
+                      {item.label ? <span className="mb-1 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#65707A]">{item.label}</span> : null}
+                      <span className="font-bold">{item.value}</span>
+                    </p>
+                  ))}
+                </div>
+              </section>
+            ) : null}
             {(description || features.length > 0) ? (
               <section className="rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm">
                 <h2 className="mb-5 text-2xl font-black tracking-normal text-[#1F2A31]">{name}</h2>
@@ -292,14 +342,23 @@ export default function CatalogProductDetailContent({
               </section>
             ) : null}
 
-            {visibleModules.map((module) => (
-              <DetailModuleBlock key={module.id} module={module} lang={lang} name={name} />
-            ))}
+            {visibleModules.map((module) => {
+              const moduleHasLinks = ((lang === 'en' ? module.items_en : module.items_cn) ?? []).some((item) => text(item.href));
+              return (
+                <div key={module.id}>
+                  {moduleHasLinks && downloadsTitle ? (
+                    <p className="mb-3 text-xs font-black uppercase tracking-[0.18em] text-[#147C94]">{downloadsTitle}</p>
+                  ) : null}
+                  <DetailModuleBlock module={module} lang={lang} name={name} />
+                </div>
+              );
+            })}
           </div>
 
           {keywords.length > 0 ? (
             <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
               <div className="rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm">
+                {keywordsTitle ? <p className="mb-3 text-xs font-black uppercase tracking-[0.16em] text-[#65707A]">{keywordsTitle}</p> : null}
                 <div className="flex flex-wrap gap-2">
                   {keywords.map((keyword) => (
                     <span key={keyword} className="rounded-full border border-[#DADDE1] px-2.5 py-1 text-xs text-[#5C6670]">
@@ -315,16 +374,19 @@ export default function CatalogProductDetailContent({
 
       {relatedProducts.length > 0 ? (
         <section className="border-t border-[#DADDE1] bg-white py-10">
-          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 sm:grid-cols-2 sm:px-6 md:grid-cols-4 lg:grid-cols-6 lg:px-8">
-            {relatedProducts.map((item) => (
-              <RelatedCard key={item.id} product={item} />
-            ))}
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            {relatedTitle ? <h2 className="mb-5 text-2xl font-black text-[#1F2A31]">{relatedTitle}</h2> : null}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
+              {relatedProducts.map((item) => (
+                <RelatedCard key={item.id} product={item} />
+              ))}
+            </div>
           </div>
         </section>
       ) : null}
 
       {inquiryTitle ? (
-        <section className="border-t border-[#DADDE1] bg-[#F3F7F7] py-10">
+        <section id="product-inquiry" className="border-t border-[#DADDE1] bg-[#F3F7F7] py-10">
           <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
             <ConversionInquiryForm
               source={`product_detail:${product.id}:inquiry_form`}
