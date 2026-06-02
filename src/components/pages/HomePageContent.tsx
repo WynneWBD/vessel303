@@ -227,6 +227,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const activeTaglineField = activeSlide?.eyebrow ? `value_${lang}` : `label_${lang}`;
   const activeHeadlineItem = activeSlide?.headline ? activeSlide.id : 'hero-headline';
   const activeSubtitleItem = activeSlide?.subtitle ? activeSlide.id : 'hero-subtitle';
+  const nextSlide = heroSlides.length > 1 ? heroSlides[(activeImage + 1) % heroSlides.length] : null;
   const visibleHeroImages = useMemo(() => {
     if (heroSlides.length === 0) return [];
     const nextImage = (activeImage + 1) % heroSlides.length;
@@ -372,16 +373,38 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
           ) : null}
 
           {heroSlides.length > 1 ? (
-            <div className="flex items-center gap-2 sm:justify-end" aria-hidden="true">
-              {heroSlides.map((slide, index) => (
+            <div className="flex flex-col gap-3 sm:items-end">
+              {nextSlide ? (
                 <button
-                  key={slide.src}
                   type="button"
-                  onClick={() => setCurrent(index)}
-                  className={`h-1.5 w-8 transition-colors ${index === activeImage ? 'bg-[#E36F2C]' : 'bg-white/32 hover:bg-white/58'}`}
-                  tabIndex={-1}
-                />
-              ))}
+                  onClick={() => setCurrent((prev) => (prev + 1) % heroSlides.length)}
+                  className="group min-w-0 border border-white/18 bg-[#191512]/52 p-3 text-left text-white/80 backdrop-blur-sm transition hover:border-white/40 hover:bg-[#191512]/72 sm:w-64"
+                >
+                  {nextSlide.eyebrow ? (
+                    <span className="block truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-[#F2A36E]">
+                      {nextSlide.eyebrow}
+                    </span>
+                  ) : null}
+                  {nextSlide.headline ? (
+                    <span className="mt-1 line-clamp-2 block text-xs font-semibold leading-5 text-white/76 transition group-hover:text-white">
+                      {nextSlide.headline}
+                    </span>
+                  ) : null}
+                </button>
+              ) : null}
+              <div className="flex items-center gap-2 sm:justify-end">
+                {heroSlides.map((slide, index) => (
+                  <button
+                    key={slide.src}
+                    type="button"
+                    onClick={() => setCurrent(index)}
+                    aria-current={index === activeImage ? 'true' : undefined}
+                    className={`h-1.5 w-8 transition-colors focus:outline-none focus:ring-2 focus:ring-[#E36F2C]/70 focus:ring-offset-2 focus:ring-offset-[#191512] ${index === activeImage ? 'bg-[#E36F2C]' : 'bg-white/32 hover:bg-white/58'}`}
+                  >
+                    <span className="sr-only">{slide.headline || slide.eyebrow || String(index + 1)}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           ) : null}
         </div>
