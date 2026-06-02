@@ -1113,3 +1113,18 @@ curl -I https://www.vessel303.com/news/<slug>
 - Online checks: Vercel reached `READY`; `https://www.vessel303.com/media-kit?lang=en` returned 200 and the page HTML was served from deployment `dpl_5Zb16zCkHdzkHeZKZizRWqUHSoTx`. Unauthenticated `/admin` redirected to `/admin/login`. Online HTML confirmed published Media Kit resources and no `Codex`, `B64`, internal owner text or 300-alignment notes.
 - `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. Global Contact / Products old 303 exception remains unchanged.
 - Next step: 09 should compare the updated Media Kit resource-center rhythm against `en.303vessel.cn` and then choose the next visible display gap. Likely candidates are product catalog interaction density, product detail scroll rhythm, or Contact / FAQ purchase-flow rhythm. Display-template gaps go to 01; backend content/material/file gaps go to 02 / 03; performance/image regressions go to 07.
+
+## B65 Contact purchase-flow display alignment (2026-06-02)
+
+- Code commit: `9ff4f3f fix(contact): pair inquiry form with purchase faq`
+- Full SHA: `9ff4f3fdabeae6bfa84cb180b833df6c2d42fbe0`
+- Vercel deployment: `dpl_wuyG74J31DiAULHNXt4dduY6uPEe`
+- Deployment URL: `https://vessel303-k1o356b4i-vessel303.vercel.app`
+- Status: `READY`
+- Scope: B65 was a Contact display-template fix after 09 comparison found that `/contact` still behaved too much like a single form page, while the 303 contact flow keeps procurement support and inquiry action visible together. No contact copy, FAQ text, form label, phone, email, WhatsApp value, image URL, CTA copy, sales promise, backend content or `/global` behavior was hardcoded in the frontend.
+- Frontend display change: `ContactPageContent` now pairs the backend-published procurement FAQ panel with the contact inquiry form in the main form section, keeps the form sticky on desktop, and moves only overflow FAQ items into a lower secondary grid.
+- Backend-control boundary: the FAQ panel title and description still come from `page_modules:contact/faq-panel`; form text and labels still come from `page_modules:contact/form`; question and answer content still comes from published FAQ CMS items. The frontend only controls placement, card rhythm, responsive grid behavior and sticky form timing.
+- Validation: `git diff --check`, targeted eslint for `src/components/pages/ContactPageContent.tsx`, `npm.cmd run audit:public-content`, `npm.cmd run audit:published-content`, `npm.cmd run audit:production-links`, serial `npx.cmd tsc --noEmit`, and `npx.cmd next build --webpack` passed. The first parallel `tsc` run failed because `next build` was rebuilding `.next/types` at the same time; the serial rerun passed.
+- Online checks: Vercel reached `READY`; `https://www.vessel303.com/contact?lang=en&b65=9ff4f3f` returned 200 and was served from deployment `dpl_wuyG74J31DiAULHNXt4dduY6uPEe`; `/faq?lang=en` returned 200; `/global` returned 200; unauthenticated `/admin` redirected to `/admin/login`. Online Contact HTML contains `Procurement FAQ` and published FAQ CMS data.
+- `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. Global Contact / Products old 303 exception remains unchanged.
+- Next step: 09 should compare the updated Contact purchase-flow rhythm against `en.303vessel.cn/contact.html`. Likely next visible display candidates are product catalog interaction density, product detail scroll rhythm, and homepage/product-entry sales rhythm. Display-template gaps go to 01; backend content/material/file gaps go to 02 / 03; performance/image regressions go to 07.
