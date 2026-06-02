@@ -935,3 +935,16 @@ curl -I https://www.vessel303.com/news/<slug>
 - Chrome 线上复核：`/products` 首个真实产品图和产品卡约在 450px 出现，搜索表单约在 301px；页面无内部词、无横向溢出，线上资源命中新部署 `dpl_6hJkSYXZa7J8UvzuiZBKbLRpdhc2`。
 - `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保留。
 - 后续建议：继续由 09 对比 `en.303vessel.cn` 与 vessel 的展示方式、互动体感和页面效果。下一轮优先看产品目录侧栏 / 卡片密度、Media Kit 资料中心展示节奏或案例详情商业证明节奏；若是显示器问题交 01，若是后台内容或素材缺口交 02 / 03。
+
+## B49 产品目录工作区密度对齐（2026-06-02）
+
+- Code commit: `2fc1a4e fix(products): tighten catalog workspace`
+- Full SHA: `2fc1a4e3f2f39b94f1803a22a6678d61b5e7019f`
+- Vercel deployment: `dpl_59QM9bxGmCsuUitCvicPa8za6VAE`，状态 `READY`，deployment URL `https://vessel303-axuiakfib-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com` 和 `https://vessel303.com`。
+- 本轮定位：09 对照 `en.303vessel.cn/products_list.html` 与 vessel 线上 `/products` 后确认，B48 已把真实产品卡推进首屏，但目录工作区仍可继续向 303 的“左侧分类 + 紧凑搜索 + 连续产品网格”靠近。B49 只修产品目录显示器，不新增前台业务文案、不改产品 CMS 字段、不写死图片 URL 或销售承诺。
+- 完成范围：`src/components/pages/ProductsPageContent.tsx` 收紧左侧分类和属性筛选间距，把桌面侧栏改为 sticky 工作区；搜索、结果数量和当前筛选合并为一个更紧凑的工具栏；产品卡内容 padding、价格区和按钮间距压缩，产品网格 gap 收紧，整体容器加宽到 `max-w-[1500px]`。
+- 后台控制边界：产品标题、图片、系列、筛选、结果文案、CTA 与页面模块内容继续来自产品 CMS、属性模板和后台 published labels；前台只负责布局密度、sticky 行为、响应式和渲染节奏。后台无内容时前台不补业务文案。
+- 验收摘要：`git diff --check`、targeted eslint、`npx.cmd tsc --noEmit`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、`npx.cmd next build --webpack` 均通过。Vercel READY 后线上 `/products` 200，`/products?category=3` 200，`/products/e7-gen6-flagship` 200，`/global` 200，未登录 `/admin` 302 到 `/admin/login`。
+- Chrome 线上复核：`/products` 命中新部署 `dpl_59QM9bxGmCsuUitCvicPa8za6VAE`；搜索表单约在 310px，首个真实产品图和产品卡约在 417px，较 B48 的约 450px 进一步提前；页面无内部词、无横向溢出，`lang=en`。
+- `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保留。
+- 后续建议：继续由 09 对比 `en.303vessel.cn` 与 vessel 的展示方式、互动体感和页面效果。下一轮优先看 Media Kit 资料中心展示节奏、案例详情商业证明节奏或产品目录筛选互动细节；若是显示器问题交 01，若是后台内容或素材缺口交 02 / 03。
