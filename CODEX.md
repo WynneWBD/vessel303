@@ -811,3 +811,16 @@ curl -I https://www.vessel303.com/news/<slug>
 - `/global` 边界：本轮无 `/global`、MapLibre、MapTiler、`/api/map` diff；Global Contact / Products 旧站跳转例外继续保持。
 - 残留风险：Media Kit 测试线索的 `sku_interest` 仍带既有中英混合资源标签，这是旧 API / 资源 label 口径残留，不影响入库，但建议后续单独做 B39 小修。
 - 后续建议：B39 优先做 Media Kit label 口径清理、第二批产品目录候选补全和案例商业字段继续补齐；仍由后台 published 内容承接，01 只优化显示模板。
+## B39 第二批产品目录与案例商业证明补齐（2026-06-02）
+
+- Code commit: `003fc6d chore(content): add B39 catalog proof backfill`
+- Full SHA: `003fc6dc7c4818762f131cd1e6ae5363f968e2ad`
+- Vercel deployment: `dpl_Ct1xuSKJ7qjqLeSfLkBNVV4g3ERU`，状态 `READY`，deployment URL `https://vessel303-hsgj1wslc-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com` 和 `https://vessel303.com`。
+- 本轮定位：新增 `09 差距对比 / 体验官线程` 后的第一轮执行包。09 负责只读对比 `en.303vessel.cn`、300 后台和 vessel 线上差距；00 负责定计划和分发；02/03 写入后台 published 内容；01 仅在显示器需要时修模板；05 验收、commit、push、Vercel READY 和线上检查；06 文档收口；07 复测性能。除 300 后台无法登录、Chrome 插件不可用、未知 git 改动、检查失败、Vercel / 线上失败、删除 / 权限 / 支付 / 订单 / 会员 / `/global` 底层风险或重大产品判断外，不再打断 Wynne。
+- 300 / 303 对照：实施前已确认 Chrome 插件可连接 300 后台，状态 `ok=true`、`tabCount=12`；本轮仅做只读学习，不在 300 保存、发布、上传、删除或付款。
+- 后台内容写入：新增 `scripts/backfill-b39-catalog-case-proof.mjs`，支持 dry-run / apply。脚本已恢复并发布高把握第二批产品 `v3-gen5-standard`、`v5-custom-taiwan`、`v7-custom-reception`、`s5-gen5-standard`，补英文名称、主图、图库、规格、关键词、相关产品、商务条款、详情模块和 SEO；E7 / V9 / E6 / E3 的面积单位从 `㎡` 规范为 `sqm`。复跑 dry-run 显示 `B39 catalog/case proof dry-run. No B39 changes needed.`。
+- 案例商业证明：已规范巽寮湾假日星球、夹金山麋鹿星球、祁连托茂部落、万绿湖乐晴谷和华为智慧家居展厅等案例的面积、投资额、采购数量 / 型号、封面和图库；不确定采购数量继续留空，不在前台硬填。
+- 素材库：B39 外部素材 / 产品案例映射 manifest 位于 `C:\Users\Wynne\Desktop\vessel303\vessel-assets\300-export\2026-06-01\b39-catalog-case-proof\manifest.csv` 和 `manifest.json`，不进入 repo commit。
+- 验收摘要：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；线上 `/products`、`/products/v3-gen5-standard`、`/products/v5-custom-taiwan`、`/products/s5-gen5-standard`、`/cases/qilian-tuomao-tribe`、`/global` 均 200。
+- `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` 代码 diff；Global Contact / Products 旧 303 跳转例外继续保留。
+- 后续建议：09 下一轮继续对比 `en.303vessel.cn` 产品库和案例页。若差距仍明显，B40 优先补 SV918 / RC902 / SC610 等剩余产品候选的可确认资料，或做 Media Kit label 口径清理与真实资料下载增强；仍必须由后台 published 内容承接，前台只负责显示。
