@@ -325,41 +325,51 @@ function SeriesSummary({
   if (series.length === 0 || !uiLabels.seriesHeading) return null;
 
   return (
-    <section className="border-b border-[#DADDE1] bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <h2 className="text-sm font-black uppercase tracking-[0.18em] text-[#1F2A31]">{uiLabels.seriesHeading}</h2>
-          {uiLabels.seriesBody ? <p className="max-w-2xl text-xs leading-5 text-[#65707A]">{uiLabels.seriesBody}</p> : null}
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          {series.map(([code, item]) => (
-            <Link key={code} href={item.href} className="group border border-[#E5E9EC] bg-[#FAFBFB] p-3 transition hover:border-[#147C94]/55 hover:bg-white">
-              {item.image ? (
-                <div className="relative mb-3 aspect-[4/3] overflow-hidden bg-[#EEF1F3]">
-                  <ProtectedImage
-                    src={item.image}
-                    alt={code}
-                    fill
-                    loading="lazy"
-                    className="object-cover transition duration-500 group-hover:scale-105"
-                    sizes="(max-width: 640px) 50vw, 180px"
-                  />
-                </div>
-              ) : null}
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-lg font-black text-[#1F2A31]">{code}</span>
-                {uiLabels.seriesCountSuffix ? (
-                  <span className="text-[11px] font-semibold text-[#65707A]">
-                    {item.count} {uiLabels.seriesCountSuffix}
-                  </span>
-                ) : null}
-              </div>
-              {uiLabels.seriesCta ? <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[#147C94]">{uiLabels.seriesCta}</p> : null}
-            </Link>
-          ))}
-        </div>
+    <div className="mb-5 border border-[#DADDE1] bg-white p-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h2 className="text-sm font-black uppercase tracking-[0.18em] text-[#1F2A31]">{uiLabels.seriesHeading}</h2>
+        {uiLabels.seriesBody ? <p className="max-w-2xl text-xs leading-5 text-[#65707A]">{uiLabels.seriesBody}</p> : null}
       </div>
-    </section>
+      <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+        {series.map(([code, item]) => (
+          <Link
+            key={code}
+            href={item.href}
+            className="group flex min-w-[120px] items-center justify-between gap-3 border border-[#E5E9EC] bg-[#FAFBFB] px-3 py-2 transition hover:border-[#147C94]/55 hover:bg-white"
+          >
+            <span className="text-sm font-black text-[#1F2A31]">{code}</span>
+            {uiLabels.seriesCountSuffix ? (
+              <span className="text-[11px] font-semibold text-[#65707A]">
+                {item.count} {uiLabels.seriesCountSuffix}
+              </span>
+            ) : null}
+            {uiLabels.seriesCta ? (
+              <span className="sr-only">{uiLabels.seriesCta}</span>
+            ) : null}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CatalogHighlights({ items }: { items: Array<{ id: string; label: string; value: string; body: string }> }) {
+  if (items.length === 0) return null;
+
+  return (
+    <div className="mt-6 grid gap-2 sm:grid-cols-3">
+      {items.map((item) => (
+        <div key={item.id} className="border border-[#DADDE1] bg-white/86 p-3 backdrop-blur">
+          <div className="flex items-baseline justify-between gap-3">
+            {item.label ? (
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#65707A]">{item.label}</p>
+            ) : null}
+            {item.value ? <p className="text-lg font-black text-[#147C94]">{item.value}</p> : null}
+          </div>
+          {item.body ? <p className="mt-1 text-[11px] leading-5 text-[#65707A]">{item.body}</p> : null}
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -495,8 +505,8 @@ export default function ProductsPageContent({
 
   return (
     <>
-      <section className="border-b border-[#DADDE1] bg-[#EEF3F5] pt-28 sm:pt-32">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 pb-8 sm:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(420px,1.1fr)] lg:items-end lg:px-8">
+      <section className="border-b border-[#DADDE1] bg-[#EEF3F5] pt-24 sm:pt-28">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 pb-6 sm:px-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(360px,0.78fr)] lg:items-end lg:px-8">
           <div>
             {(breadcrumbHomeLabel || breadcrumbCurrentLabel) ? (
               <div className="text-xs text-[#65707A]">
@@ -508,7 +518,7 @@ export default function ProductsPageContent({
               </div>
             ) : null}
             {heroTitle ? (
-              <h1 className="mt-6 text-4xl font-black tracking-normal text-[#1F2A31] sm:text-5xl">
+              <h1 className="mt-5 text-4xl font-black tracking-normal text-[#1F2A31] sm:text-5xl">
                 {heroTitle}
               </h1>
             ) : null}
@@ -529,11 +539,12 @@ export default function ProductsPageContent({
                 ) : null}
               </div>
             ) : null}
+            <CatalogHighlights items={catalogHighlights} />
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.15fr_0.85fr]">
             {heroPreviewProducts[0] ? (
-              <Link href={productHref(heroPreviewProducts[0])} className="group relative min-h-[220px] overflow-hidden border border-white bg-[#DDE7EA] shadow-sm sm:min-h-[260px]">
+              <Link href={productHref(heroPreviewProducts[0])} className="group relative min-h-[180px] overflow-hidden border border-white bg-[#DDE7EA] shadow-sm sm:min-h-[210px]">
                 <ProtectedImage
                   src={heroPreviewProducts[0].image}
                   alt={lang === 'en' ? heroPreviewProducts[0].name_en : heroPreviewProducts[0].name_cn}
@@ -552,7 +563,7 @@ export default function ProductsPageContent({
             ) : null}
             <div className="grid gap-3">
               {heroPreviewProducts.slice(1, 3).map((product) => (
-                <Link key={product.id} href={productHref(product)} className="group relative min-h-[132px] overflow-hidden border border-white bg-[#DDE7EA] shadow-sm sm:min-h-[124px]">
+                <Link key={product.id} href={productHref(product)} className="group relative min-h-[102px] overflow-hidden border border-white bg-[#DDE7EA] shadow-sm sm:min-h-[98px]">
                   <ProtectedImage
                     src={product.image}
                     alt={lang === 'en' ? product.name_en : product.name_cn}
@@ -582,26 +593,8 @@ export default function ProductsPageContent({
         </div>
       </section>
 
-      {catalogHighlights.length > 0 ? (
-        <section className="border-b border-[#DADDE1] bg-white">
-          <div className="mx-auto grid max-w-7xl gap-3 px-4 py-5 sm:px-6 md:grid-cols-3 lg:px-8">
-            {catalogHighlights.map((item) => (
-              <div key={item.id} className="border border-[#E5E9EC] bg-[#FAFBFB] p-4">
-              <div className="flex items-baseline justify-between gap-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#65707A]">{item.label}</p>
-                <p className="text-xl font-black text-[#147C94]">{item.value}</p>
-              </div>
-              <p className="mt-2 text-xs leading-5 text-[#65707A]">{item.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      <SeriesSummary products={products} uiLabels={uiLabels} />
-
-      <section className="bg-[#F7F8F8] py-8">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 sm:px-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-8">
+      <section className="bg-[#F7F8F8] py-6">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 sm:px-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:px-8">
           <div className="lg:hidden">
             <details className="border border-[#DADDE1] bg-white">
               <summary className="flex min-h-12 cursor-pointer items-center px-4 text-sm font-bold text-[#1F2A31]">{uiLabels.filters}</summary>
@@ -616,6 +609,7 @@ export default function ProductsPageContent({
           </div>
 
           <div className="min-w-0">
+            <SeriesSummary products={products} uiLabels={uiLabels} />
             <form action="/products" className="mb-5 flex flex-col gap-3 border border-[#DADDE1] bg-white p-4 sm:flex-row">
               <input type="hidden" name="category" value={filters.category} />
               <input type="hidden" name="attribute" value={filters.attribute} />
