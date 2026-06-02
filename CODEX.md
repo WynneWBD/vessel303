@@ -1082,3 +1082,19 @@ curl -I https://www.vessel303.com/news/<slug>
 - Online checks: Vercel reached `READY`; `https://www.vessel303.com/cases?lang=en&b61=0c70a28`, `https://www.vessel303.com/cases/astrobase-mamison?lang=en&b61=0c70a28`, and `https://www.vessel303.com/global?b61=0c70a28` returned 200. Unauthenticated `/admin` redirected to `/admin/login`. Online HTML scan found no `Codex`, `B61`, internal owner text, bad arrow, `Japan`, or `Yamanashi` in the checked case paths.
 - `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. Global Contact / Products old 303 exception remains out of scope for B61.
 - Next step: 09 should compare the updated `/cases` gallery against `en.303vessel.cn/case.html` and then choose the next visible display gap. Likely candidates are case detail gallery/inquiry rhythm, product detail scroll rhythm, or product catalog interaction density. Backend content and material gaps should still go to 02 / 03; performance/image regressions go to 07.
+
+## B63 Case detail immersive display alignment (2026-06-02)
+
+- Code commit: `140ec42 fix(cases): make case detail more immersive`
+- Full SHA: `140ec42de44d7ab54c98a33d851d4ed40e076221`
+- Vercel deployment: `dpl_9fDk2z6mM1ZJodGavpPnTAmgPauz`
+- Deployment URL: `https://vessel303-6e0gw06mb-vessel303.vercel.app`
+- Status: `READY`
+- Scope: B63 was a display-template fix for case detail pages after 09 comparison found that `/cases/astrobase-mamison` still felt like an information panel, while the 303 project flow uses stronger hero imagery, gallery rhythm and project proof. No case title, case copy, proof value, image URL, CTA copy, sales promise, backend content or `/global` behavior was hardcoded in the frontend.
+- Frontend display change: `CaseDetailPageContent` now renders a full-bleed image hero, overlays existing CMS tags/name/description, surfaces existing commercial facts in the hero, moves the gallery into an image-first dark section, then presents proof facts in a clearer numbered grid before the inquiry section.
+- Backend-control boundary: all visible case content still comes from `project_cases` and published `cases` page modules. The frontend only controls layout, image ratio, responsive behavior, dark/light presentation, gallery placement and anchor placement.
+- Validation: `git diff --check`, targeted eslint for `src/components/pages/CaseDetailPageContent.tsx`, `npm.cmd run audit:public-content`, `npm.cmd run audit:published-content`, `npm.cmd run audit:production-links`, `npx.cmd tsc --noEmit`, and `npx.cmd next build --webpack` passed. Build logs only showed existing PostgreSQL SSL warnings, local Neon sandbox `EACCES` fallback logs, and the known `/global` edge-runtime warning.
+- Online checks: Vercel reached `READY`; `https://www.vessel303.com/cases/astrobase-mamison`, `https://www.vessel303.com/cases`, and `https://www.vessel303.com/global` returned 200. Unauthenticated `/admin` redirected to `/admin/login`. Online HTML scan confirmed `case-gallery` and `case-inquiry` are present, while `Japan`, `Yamanashi`, `Codex`, `B63`, internal owner text and the bad arrow glyph were absent.
+- Performance smoke: online curl timing was about `0.17s` total for the case detail page and `0.16s` total for the case list. `/global` remained 200 and was not modified.
+- `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. Global Contact / Products old 303 exception remains unchanged.
+- Next step: 09 should compare the updated case detail page against `en.303vessel.cn` project browsing rhythm and then choose the next visible display gap. Likely candidates are product catalog interaction density, product detail scroll rhythm, or Media Kit resource-center depth. Display-template gaps go to 01; backend content/material/field gaps go to 02 / 03; performance/image regressions go to 07.
