@@ -235,7 +235,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
   return (
     <section
-      className="relative flex min-h-[650px] items-center overflow-hidden bg-[#241F1B] lg:min-h-[690px]"
+      className="relative flex min-h-[720px] items-center overflow-hidden bg-[#241F1B] sm:min-h-[760px] lg:min-h-[calc(100svh-24px)]"
       data-page-module="home:hero"
       data-page-key="home"
       data-module-key="hero"
@@ -255,105 +255,122 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
           data-page-module-field="image_url"
         />
       ))}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#241F1B]/82 via-[#241F1B]/52 to-[#241F1B]/22" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#191512]/88 via-[#191512]/48 to-[#191512]/12" />
+      <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-[#191512]/92 to-transparent" />
 
-      <div className="relative z-10 mx-auto grid w-full max-w-7xl gap-6 px-5 py-24 sm:px-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.5fr)] lg:items-end lg:px-8">
-        <div className="max-w-3xl text-left">
-        {tagline ? (
-          <div className="mb-6">
-            <p
-              className="text-xs font-semibold uppercase tracking-[0.24em] text-white/70"
-              data-page-module-item="hero-tagline"
-              data-page-module-field={`label_${lang}`}
-            >
-              {tagline}
-            </p>
-            <div className="mt-4 h-px w-16 bg-[#E36F2C]" />
-          </div>
-        ) : null}
+      <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col gap-12 px-5 py-28 sm:px-6 lg:px-10">
+        <div className="max-w-5xl text-left">
+          {tagline ? (
+            <div className="mb-6">
+              <p
+                className="text-xs font-semibold uppercase tracking-[0.24em] text-white/70"
+                data-page-module-item="hero-tagline"
+                data-page-module-field={`label_${lang}`}
+              >
+                {tagline}
+              </p>
+              <div className="mt-4 h-px w-16 bg-[#E36F2C]" />
+            </div>
+          ) : null}
 
-        <h1
-          className="mb-6 break-words font-[family-name:var(--font-heading)] text-4xl font-normal leading-[1.04] text-white sm:text-6xl lg:text-6xl"
-          data-page-module-item="hero-headline"
-          data-page-module-field={`label_${lang}`}
-        >
-          {headline}
-        </h1>
-
-        {subtitle ? (
-          <p
-            className="mb-8 max-w-2xl text-base leading-8 text-white/70 sm:text-lg"
-            data-page-module-item="hero-subtitle"
+          <h1
+            className="mb-6 max-w-5xl break-words font-[family-name:var(--font-heading)] text-4xl font-normal leading-[0.98] text-white sm:text-6xl lg:text-7xl xl:text-8xl"
+            data-page-module-item="hero-headline"
             data-page-module-field={`label_${lang}`}
           >
-            {subtitle}
-          </p>
-        ) : null}
+            {headline}
+          </h1>
 
-        {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            {primaryLabel && primaryHref ? (
-              <Link
-                href={primaryHref}
-                {...externalLinkProps(primaryHref)}
-                className="inline-flex min-h-12 items-center justify-center bg-[#E36F2C] px-8 text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#C85A1F]"
-                data-page-module-item="hero-primary-cta"
-                data-page-module-field={`label_${lang}`}
-              >
-                {primaryLabel}
-              </Link>
-            ) : null}
-            {secondaryLabel && secondaryHref ? (
-              <Link
-                href={secondaryHref}
-                {...externalLinkProps(secondaryHref)}
-                className="inline-flex min-h-12 items-center justify-center border border-white/35 px-8 text-sm font-bold uppercase tracking-[0.12em] text-white/85 transition-colors hover:border-white/70"
-                data-page-module-item="hero-secondary-cta"
-                data-page-module-field={`label_${lang}`}
-              >
-                {secondaryLabel}
-              </Link>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
+          {subtitle ? (
+            <p
+              className="mb-8 max-w-2xl text-base leading-8 text-white/72 sm:text-lg"
+              data-page-module-item="hero-subtitle"
+              data-page-module-field={`label_${lang}`}
+            >
+              {subtitle}
+            </p>
+          ) : null}
 
-        {proofItems.length > 0 ? (
-          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 lg:pr-20">
-            {proofItems.slice(0, 4).map((item) => (
-              <div
-                key={item.id}
-                className="border border-white/18 bg-white/[0.08] p-3 backdrop-blur-sm"
-                data-page-module-item={item.id}
-              >
-                {item.value ? (
-                  <p
-                    className="font-[family-name:var(--font-heading)] text-2xl font-light leading-none text-white"
-                    data-page-module-field={`value_${lang}`}
-                  >
-                    {item.value}
-                  </p>
-                ) : null}
-                {item.label ? (
-                  <p
-                    className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#F2A36E]"
-                    data-page-module-field={`label_${lang}`}
-                  >
-                    {item.label}
-                  </p>
-                ) : null}
-                {item.body ? (
-                  <p
-                    className="mt-2 text-xs leading-5 text-white/68"
-                    data-page-module-field={`content_${lang}`}
-                  >
-                    {item.body}
-                  </p>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        ) : null}
+          {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              {primaryLabel && primaryHref ? (
+                <Link
+                  href={primaryHref}
+                  {...externalLinkProps(primaryHref)}
+                  className="inline-flex min-h-12 items-center justify-center bg-[#E36F2C] px-8 text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#C85A1F]"
+                  data-page-module-item="hero-primary-cta"
+                  data-page-module-field={`label_${lang}`}
+                >
+                  {primaryLabel}
+                </Link>
+              ) : null}
+              {secondaryLabel && secondaryHref ? (
+                <Link
+                  href={secondaryHref}
+                  {...externalLinkProps(secondaryHref)}
+                  className="inline-flex min-h-12 items-center justify-center border border-white/35 px-8 text-sm font-bold uppercase tracking-[0.12em] text-white/85 transition-colors hover:border-white/70"
+                  data-page-module-item="hero-secondary-cta"
+                  data-page-module-field={`label_${lang}`}
+                >
+                  {secondaryLabel}
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="mt-auto grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+          {proofItems.length > 0 ? (
+            <div className="grid gap-px overflow-hidden border border-white/14 bg-white/14 backdrop-blur-sm sm:grid-cols-2 lg:grid-cols-4">
+              {proofItems.slice(0, 4).map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-[#191512]/58 p-4 sm:p-5"
+                  data-page-module-item={item.id}
+                >
+                  {item.value ? (
+                    <p
+                      className="font-[family-name:var(--font-heading)] text-3xl font-light leading-none text-white lg:text-4xl"
+                      data-page-module-field={`value_${lang}`}
+                    >
+                      {item.value}
+                    </p>
+                  ) : null}
+                  {item.label ? (
+                    <p
+                      className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#F2A36E]"
+                      data-page-module-field={`label_${lang}`}
+                    >
+                      {item.label}
+                    </p>
+                  ) : null}
+                  {item.body ? (
+                    <p
+                      className="mt-2 text-xs leading-5 text-white/68"
+                      data-page-module-field={`content_${lang}`}
+                    >
+                      {item.body}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {heroImages.length > 1 ? (
+            <div className="flex items-center gap-2 sm:justify-end" aria-hidden="true">
+              {heroImages.map((src, index) => (
+                <button
+                  key={src}
+                  type="button"
+                  onClick={() => setCurrent(index)}
+                  className={`h-1.5 w-8 transition-colors ${index === activeImage ? 'bg-[#E36F2C]' : 'bg-white/32 hover:bg-white/58'}`}
+                  tabIndex={-1}
+                />
+              ))}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/20 animate-bounce">
@@ -895,6 +912,144 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
   const isDark = isInnovation || isFuture;
 
   if (!title && !description && cards.length === 0) return null;
+
+  if (isLargeProducts || isModelStrip) {
+    const sectionIsDark = isLargeProducts;
+
+    return (
+      <section
+        className={`${sectionIsDark ? 'bg-[#15120F] text-white' : 'bg-[#F5F2ED] text-[#241F1B]'} border-b border-[#E5DED4] py-14 lg:py-20`}
+        data-page-module={`home:${pageModule.module_key}`}
+        data-page-key="home"
+        data-module-key={pageModule.module_key}
+      >
+        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
+          <div className="grid gap-6 lg:grid-cols-[0.64fr_0.82fr] lg:items-end">
+            <div>
+              {eyebrow ? (
+                <p
+                  className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-[#E36F2C]"
+                  data-page-module-item="eyebrow"
+                  data-page-module-field={`label_${lang}`}
+                >
+                  {eyebrow}
+                </p>
+              ) : null}
+              {title ? (
+                <h2
+                  className={`${isLargeProducts ? 'lg:text-6xl xl:text-7xl' : 'lg:text-5xl'} max-w-5xl font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.02] sm:text-4xl`}
+                  data-page-module-field={`title_${lang}`}
+                >
+                  {title}
+                </h2>
+              ) : null}
+            </div>
+            {description ? (
+              <p
+                className={`${sectionIsDark ? 'text-white/68' : 'text-[#6B625B]'} max-w-3xl text-sm leading-7 sm:text-base lg:ml-auto`}
+                data-page-module-field={`description_${lang}`}
+              >
+                {description}
+              </p>
+            ) : null}
+          </div>
+
+          {cards.length > 0 ? (
+            <div
+              className={`${isLargeProducts ? 'lg:grid-cols-2' : 'lg:grid-cols-4'} mt-10 grid gap-3 md:grid-cols-2`}
+            >
+              {cards.map((card, index) => {
+                const tile = (
+                  <article
+                    className={`${isLargeProducts ? 'min-h-[440px] lg:min-h-[620px]' : 'min-h-[360px] lg:min-h-[430px]'} group relative flex h-full overflow-hidden bg-[#241F1B]`}
+                    data-page-module-item={card.id}
+                  >
+                    {card.image ? (
+                      <Image
+                        src={card.image}
+                        alt={card.title}
+                        fill
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                        className="object-cover transition duration-700 group-hover:scale-[1.035]"
+                        sizes={
+                          isLargeProducts
+                            ? '(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 780px'
+                            : '(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw'
+                        }
+                        data-page-module-field="image_url"
+                      />
+                    ) : null}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#11100E]/92 via-[#11100E]/32 to-transparent" />
+                    <div className={`${isLargeProducts ? 'p-6 lg:p-9' : 'p-5 lg:p-6'} relative mt-auto w-full text-white`}>
+                      {card.meta ? (
+                        <p
+                          className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#F2A36E]"
+                          data-page-module-field={`value_${lang}`}
+                        >
+                          {card.meta}
+                        </p>
+                      ) : null}
+                      {card.title ? (
+                        <h3
+                          className={`${isLargeProducts ? 'text-3xl lg:text-5xl' : 'text-2xl lg:text-3xl'} max-w-xl font-[family-name:var(--font-heading)] font-light leading-tight`}
+                          data-page-module-field={`label_${lang}`}
+                        >
+                          {card.title}
+                        </h3>
+                      ) : null}
+                      {card.body ? (
+                        <p
+                          className={`${isLargeProducts ? 'max-w-xl' : 'max-w-sm'} mt-4 text-sm leading-6 text-white/70`}
+                          data-page-module-field={`content_${lang}`}
+                        >
+                          {card.body}
+                        </p>
+                      ) : null}
+                    </div>
+                  </article>
+                );
+
+                return card.href ? (
+                  <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                    {tile}
+                  </Link>
+                ) : (
+                  <div key={card.id} className="h-full">{tile}</div>
+                );
+              })}
+            </div>
+          ) : null}
+
+          {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              {primaryLabel && primaryHref ? (
+                <Link
+                  href={primaryHref}
+                  {...externalLinkProps(primaryHref)}
+                  className="inline-flex min-h-12 items-center justify-center bg-[#E36F2C] px-7 text-sm font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C85A1F]"
+                  data-page-module-item="primary-cta"
+                  data-page-module-field={`label_${lang}`}
+                >
+                  {primaryLabel}
+                </Link>
+              ) : null}
+              {secondaryLabel && secondaryHref ? (
+                <Link
+                  href={secondaryHref}
+                  {...externalLinkProps(secondaryHref)}
+                  className={`${sectionIsDark ? 'border-white/24 text-white/78 hover:border-white/60' : 'border-[#241F1B]/20 text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]'} inline-flex min-h-12 items-center justify-center border px-7 text-sm font-bold uppercase tracking-[0.12em]`}
+                  data-page-module-item="secondary-cta"
+                  data-page-module-field={`label_${lang}`}
+                >
+                  {secondaryLabel}
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section
