@@ -341,14 +341,27 @@ function SeriesSummary({
           <Link
             key={code}
             href={item.href}
-            className="group flex min-w-[120px] items-center justify-between gap-3 border border-[#E5E9EC] bg-[#FAFBFB] px-3 py-2 transition hover:border-[#147C94]/55 hover:bg-white"
+            className="group relative flex min-h-[120px] min-w-[190px] overflow-hidden border border-[#E5E9EC] bg-[#1F2A31] transition hover:border-[#147C94]/55"
           >
-            <span className="text-sm font-black text-[#1F2A31]">{code}</span>
-            {uiLabels.seriesCountSuffix ? (
-              <span className="text-[11px] font-semibold text-[#65707A]">
-                {item.count} {uiLabels.seriesCountSuffix}
-              </span>
+            {item.image ? (
+              <ProtectedImage
+                src={item.image}
+                alt={code}
+                fill
+                loading="lazy"
+                className="object-cover opacity-82 transition duration-500 group-hover:scale-105 group-hover:opacity-95"
+                sizes="220px"
+              />
             ) : null}
+            <span className="absolute inset-0 bg-gradient-to-t from-[#111820]/82 via-[#111820]/18 to-transparent" />
+            <span className="relative mt-auto flex w-full items-end justify-between gap-3 p-3 text-white">
+              <span className="text-base font-black">{code}</span>
+              {uiLabels.seriesCountSuffix ? (
+                <span className="shrink-0 bg-white/12 px-2 py-1 text-[11px] font-semibold backdrop-blur">
+                  {item.count} {uiLabels.seriesCountSuffix}
+                </span>
+              ) : null}
+            </span>
             {uiLabels.seriesCta ? (
               <span className="sr-only">{uiLabels.seriesCta}</span>
             ) : null}
@@ -614,6 +627,8 @@ export default function ProductsPageContent({
           </div>
 
           <div className="min-w-0">
+            <SeriesSummary products={products} uiLabels={uiLabels} />
+
             <div className="mb-2 border border-[#DADDE1] bg-white p-2.5">
               <form action="/products" className="flex flex-col gap-2 sm:flex-row">
                 <input type="hidden" name="category" value={filters.category} />
@@ -678,10 +693,6 @@ export default function ProductsPageContent({
             )}
 
             <CatalogHighlights items={catalogHighlights} />
-
-            <div className="mt-6">
-              <SeriesSummary products={products} uiLabels={uiLabels} />
-            </div>
 
             <Pagination filters={filters} currentPage={currentPage} totalPages={totalPages} />
           </div>
