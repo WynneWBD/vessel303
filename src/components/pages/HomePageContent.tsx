@@ -186,13 +186,18 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const { lang } = useLanguage();
   const [current, setCurrent] = useState(0);
   const items = useMemo(() => sortModuleItems(pageModule), [pageModule]);
-  const heroImages = useMemo(() => {
-    const editableImages = items
+  const heroSlides = useMemo(() => {
+    return items
       .filter((item) => typeof item.id === 'string' && item.id.startsWith('hero-image') && item.is_visible && item.image_url)
-      .map((item) => optimizedHeroImageUrl(item.image_url as string));
-
-    return editableImages;
-  }, [items]);
+      .map((item) => ({
+        id: item.id,
+        src: optimizedHeroImageUrl(item.image_url as string),
+        eyebrow: localizedValue(item, lang, ''),
+        headline: localizedLabel(item, lang, ''),
+        subtitle: localizedContent(item, lang, ''),
+        href: displayHref(item.href),
+      }));
+  }, [items, lang]);
   const findItem = (id: string) => items.find((item) => typeof item.id === 'string' && item.id === id);
   const tagline = localizedLabel(findItem('hero-tagline'), lang, '');
   const headline = localizedLabel(findItem('hero-headline'), lang, '');
@@ -212,26 +217,35 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
       body: localizedContent(item, lang, ''),
     }))
     .filter((item) => item.value || item.label || item.body);
-  const activeImage = heroImages.length > 0 ? current % heroImages.length : 0;
+  const activeImage = heroSlides.length > 0 ? current % heroSlides.length : 0;
+  const activeSlide = heroSlides[activeImage] ?? null;
+  const activeTagline = activeSlide?.eyebrow || tagline;
+  const activeHeadline = activeSlide?.headline || headline;
+  const activeSubtitle = activeSlide?.subtitle || subtitle;
+  const activePrimaryHref = activeSlide?.href || primaryHref;
+  const activeTaglineItem = activeSlide?.eyebrow ? activeSlide.id : 'hero-tagline';
+  const activeTaglineField = activeSlide?.eyebrow ? `value_${lang}` : `label_${lang}`;
+  const activeHeadlineItem = activeSlide?.headline ? activeSlide.id : 'hero-headline';
+  const activeSubtitleItem = activeSlide?.subtitle ? activeSlide.id : 'hero-subtitle';
   const visibleHeroImages = useMemo(() => {
-    if (heroImages.length === 0) return [];
-    const nextImage = (activeImage + 1) % heroImages.length;
+    if (heroSlides.length === 0) return [];
+    const nextImage = (activeImage + 1) % heroSlides.length;
     return Array.from(new Set([activeImage, nextImage])).map((index) => ({
       index,
-      src: heroImages[index],
+      slide: heroSlides[index],
       active: index === activeImage,
     }));
-  }, [activeImage, heroImages]);
+  }, [activeImage, heroSlides]);
 
   useEffect(() => {
-    if (heroImages.length === 0) return;
+    if (heroSlides.length === 0) return;
     const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % heroImages.length);
+      setCurrent((prev) => (prev + 1) % heroSlides.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, [heroImages.length]);
+  }, [heroSlides.length]);
 
-  if (!pageModule || !pageModule.is_visible || heroImages.length === 0 || !headline) return null;
+  if (!pageModule || !pageModule.is_visible || heroSlides.length === 0 || !activeHeadline) return null;
 
   return (
     <section
@@ -241,17 +255,17 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
       data-module-key="hero"
     >
       {/* Carousel images */}
-      {visibleHeroImages.map(({ src, index, active }) => (
+      {visibleHeroImages.map(({ slide, index, active }) => (
         <Image
-          key={src}
-          src={src}
+          key={slide.src}
+          src={slide.src}
           alt=""
           fill
           priority={active && index === 0}
           sizes="100vw"
           quality={75}
           className={`object-cover transition-opacity duration-1000 ${active ? 'opacity-100' : 'opacity-0'}`}
-          data-page-module-item={`hero-image-${String(index + 1).padStart(2, '0')}`}
+          data-page-module-item={slide.id}
           data-page-module-field="image_url"
         />
       ))}
@@ -260,14 +274,14 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
       <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col gap-12 px-5 py-28 sm:px-6 lg:px-10">
         <div className="max-w-5xl text-left">
-          {tagline ? (
+          {activeTagline ? (
             <div className="mb-6">
               <p
                 className="text-xs font-semibold uppercase tracking-[0.24em] text-white/70"
-                data-page-module-item="hero-tagline"
-                data-page-module-field={`label_${lang}`}
+                data-page-module-item={activeTaglineItem}
+                data-page-module-field={activeTaglineField}
               >
-                {tagline}
+                {activeTagline}
               </p>
               <div className="mt-4 h-px w-16 bg-[#E36F2C]" />
             </div>
@@ -275,28 +289,28 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
           <h1
             className="mb-6 max-w-5xl break-words font-[family-name:var(--font-heading)] text-4xl font-normal leading-[0.98] text-white sm:text-6xl lg:text-7xl xl:text-8xl"
-            data-page-module-item="hero-headline"
+            data-page-module-item={activeHeadlineItem}
             data-page-module-field={`label_${lang}`}
           >
-            {headline}
+            {activeHeadline}
           </h1>
 
-          {subtitle ? (
+          {activeSubtitle ? (
             <p
               className="mb-8 max-w-2xl text-base leading-8 text-white/72 sm:text-lg"
-              data-page-module-item="hero-subtitle"
-              data-page-module-field={`label_${lang}`}
+              data-page-module-item={activeSubtitleItem}
+              data-page-module-field={activeSlide?.subtitle ? `content_${lang}` : `label_${lang}`}
             >
-              {subtitle}
+              {activeSubtitle}
             </p>
           ) : null}
 
-          {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
+          {((primaryLabel && activePrimaryHref) || (secondaryLabel && secondaryHref)) ? (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              {primaryLabel && primaryHref ? (
+              {primaryLabel && activePrimaryHref ? (
                 <Link
-                  href={primaryHref}
-                  {...externalLinkProps(primaryHref)}
+                  href={activePrimaryHref}
+                  {...externalLinkProps(activePrimaryHref)}
                   className="inline-flex min-h-12 items-center justify-center bg-[#E36F2C] px-8 text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#C85A1F]"
                   data-page-module-item="hero-primary-cta"
                   data-page-module-field={`label_${lang}`}
@@ -357,11 +371,11 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
             </div>
           ) : null}
 
-          {heroImages.length > 1 ? (
+          {heroSlides.length > 1 ? (
             <div className="flex items-center gap-2 sm:justify-end" aria-hidden="true">
-              {heroImages.map((src, index) => (
+              {heroSlides.map((slide, index) => (
                 <button
-                  key={src}
+                  key={slide.src}
                   type="button"
                   onClick={() => setCurrent(index)}
                   className={`h-1.5 w-8 transition-colors ${index === activeImage ? 'bg-[#E36F2C]' : 'bg-white/32 hover:bg-white/58'}`}
