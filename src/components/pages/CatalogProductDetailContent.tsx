@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useMemo, useState } from 'react';
 import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -460,13 +461,15 @@ export default function CatalogProductDetailContent({
             <div className={`min-w-0 ${hasMediaRail ? 'lg:col-start-2' : ''}`}>
               {activeImage ? (
                 <div className="relative aspect-[4/3] overflow-hidden rounded-md border border-[#DADDE1] bg-[#EEF1F3] shadow-sm lg:aspect-[5/4]">
-                  <ProtectedImage
+                  <Image
                     src={activeImage}
                     alt={name}
                     fill
                     priority
+                    draggable={false}
                     className="object-cover"
                     sizes="(max-width: 1024px) 100vw, 58vw"
+                    style={{ userSelect: 'none' }}
                   />
                 </div>
               ) : null}
