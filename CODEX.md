@@ -794,3 +794,20 @@ curl -I https://www.vessel303.com/news/<slug>
 - `/global` 边界：本轮无 `/global`、MapLibre、MapTiler、`/api/map` diff；Global Contact / Products 旧站跳转例外继续保持。
 - 验收摘要：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；线上 `/products/e7-gen6-flagship`、`/products/v9-gen6-standard`、`/cases/xunliao-bay-holiday-planet`、`/media-kit`、`/contact` 均 200 / PRERENDER，`/global` 200，未登录 `/admin` 302 到 `/admin/login`。
 - 后续建议：继续接近 303 英文站时，下一步应优先补第二批真实产品 PDF、更多产品实拍和更多案例商业字段；仍由 03 / 运营整理可确认素材，02 写入后台，01 只优化展示模板。
+
+## B38 产品目录广度与 Contact 采购问答闭环（2026-06-02）
+
+- Code commit: `78f392f feat(site): broaden catalog and procurement FAQ` / `78f392f3e9803b59a686fe8402d3d6ad1dbf3d18`。
+- Vercel deployment: `dpl_6YZy7kNZJvVARdSUHPvVFBBMBFe8`，URL `https://vessel303-nekng56ke-vessel303.vercel.app`，状态 READY，production alias 已包含 `https://www.vessel303.com` 和 `https://vessel303.com`。
+- 本轮定位：B38 接在 B37 后，重点补齐 303 英文站更强的“完整产品库、采购 FAQ、案例商业信息、即时联系入口”。后台仍是控制器，前台只做显示器；产品、FAQ、案例、联系方式、下载资料、SEO、按钮文案均来自后台 published 内容。
+- 300 / 303 对照：实施前已确认 Chrome 插件可连接 300 后台，状态 `ok=true`、`tabCount=12`；本轮仅做只读学习，不在 300 保存、发布、上传、删除或付款。
+- 后台内容写入：新增 `scripts/backfill-b38-catalog-faq.mjs`，支持 dry-run / apply；最终 dry-run 显示 `B38 catalog/FAQ dry-run. No changes needed.`。本轮补齐 `products:ui-labels` 系列展示 label、`contact:faq-panel`、采购 FAQ 分类与问答，以及部分案例商业证明字段。
+- 产品目录：`/products` 新增由后台 label 驱动的系列汇总区，产品按 CMS 中的 `productSeries` 形成更接近完整产品库的分组展示；V3 / V5 / V7 / S5 等高把握候选在缺失时可由脚本写入 published 产品，资料不足的型号继续进入 manifest / 后台缺口，不在前台硬补。
+- Contact / FAQ：`/contact` 读取 FAQ CMS 中的采购 FAQ，并结合 `contact:faq-panel` 后台模块展示；问答内容、标题和 CTA 均来自后台 published 内容，前台不写默认采购文案。
+- 案例列表：`/cases` 卡片可展示后台 CMS 中已发布的面积、采购数量、采购型号等商业事实；可见 label 来自 `cases:detail-labels`，缺字段或缺 label 时隐藏，不展示假数据。
+- 资产库：B38 外部素材 / 产品候选 manifest 位于 `C:\Users\Wynne\Desktop\vessel303\vessel-assets\300-export\2026-06-01\b38-catalog-faq\manifest.csv` 和 `manifest.json`，不进入 repo commit；SV918 / RC902 / SC610 等仍作为后续目录缺口记录，未强行发布。
+- 真实链路验收：生产环境写入 4 条低风险测试线索并保留不删除：Contact `e8379e4c-57bc-4f2e-aa68-ff13989446ca`，Product `8dcd8b66-a667-4d11-a2f6-619034ebdf78`，Case `be678767-78e5-4ef2-8fde-219c85181ae9`，Media Kit `42ebfc74-80ef-403e-ac2d-686f4ceb0b23`；只读 DB 复核确认 source、姓名、邮箱、电话 / WhatsApp、国家、数量、需求等字段已保存。
+- 验收摘要：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；线上 `/products`、`/products?q=V3`、`/contact`、`/faq`、`/cases`、`/media-kit` 均 200 / PRERENDER，`/global` 200，未登录 `/admin` 302 到 `/admin/login`。
+- `/global` 边界：本轮无 `/global`、MapLibre、MapTiler、`/api/map` diff；Global Contact / Products 旧站跳转例外继续保持。
+- 残留风险：Media Kit 测试线索的 `sku_interest` 仍带既有中英混合资源标签，这是旧 API / 资源 label 口径残留，不影响入库，但建议后续单独做 B39 小修。
+- 后续建议：B39 优先做 Media Kit label 口径清理、第二批产品目录候选补全和案例商业字段继续补齐；仍由后台 published 内容承接，01 只优化显示模板。
