@@ -885,3 +885,15 @@ curl -I https://www.vessel303.com/news/<slug>
 - `/global` 边界：`FloatingContact` 继续在 `/global` 路径返回 `null`，不向 Global 注入新站浮动联系栏。本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；线上 `/global` 可见 `View Products` 仍指向 `https://en.303vessel.cn/products_list.html`，`Contact Team` 仍指向 `https://en.303vessel.cn/contact.html`。
 - 验收摘要：`git diff --check`、targeted eslint、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；Vercel READY 后线上 `/`、`/products`、`/contact`、`/global` 均 200。Chrome 线上复核确认 `/products` 和 `/contact` 可见右侧浮动联系栏，且 `/global` 不显示该新站浮动栏。
 - 后续建议：下一轮继续由 09 对比 `en.303vessel.cn` 的展示方式、互动体验和详情页结构，重点看产品目录侧栏/筛选交互、案例列表与详情的浏览节奏、Media Kit 资料中心节奏，而不是先回到产品参数堆叠。
+
+## B45 案例列表展示器对齐（2026-06-02）
+- Code commit: `2fe5e40 fix(cases): align project list display rhythm`
+- Full SHA: `2fe5e408db10be2c9ceb9670f1b37db1de505c7e`
+- Vercel deployment: `dpl_D8UoJoSvos6jq2zXAAoWtygD2jmy`，状态 `READY`，deployment URL `https://vessel303-p9t6rwsgq-vessel303.vercel.app`，production alias 命中 `https://www.vessel303.com`。
+- 本轮定位：09 对比 `en.303vessel.cn/case.html` 后确认，差距主要在案例列表的展示节奏，而不是继续补产品参数。303 案例列表更像“项目编号 + 项目名称 / 类型 / 面积 / 投资 / 采购产品”的商业证明列表，vessel 原 `/cases` 更像普通三列文字卡片。
+- 完成范围：`/cases` 从三列卡片改为编号式横向项目行，展示序号、标签、项目图、标题、地点 / 类型、描述和最多 6 个事实块；事实块继续读取 `project_cases` 与 `cases:detail-labels`，前台不新增业务文案、不硬写案例数据。
+- 后台控制边界：案例标题、地点、类型、描述、标签、面积、投资、采购产品、数量和图片仍全部来自案例 CMS / 已发布字段；前台只负责展示模板、图片比例、响应式和交互节奏。
+- 验收摘要：`git diff --check`、targeted eslint、`npx.cmd tsc --noEmit`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、`npx.cmd next build --webpack` 均通过；构建仅出现既有 PostgreSQL SSL warning 与 `/global` edge runtime warning。
+- 线上检查：`/cases` 200，HTML 已命中新编号式布局并包含 `AstroBase`、`Holiday Planet` 等案例内容；`/cases/astrobase-mamison` 200；未登录 `/admin` 302 到 `/admin/login`。
+- `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；源码仍保留 Global `View Products` 到 `https://en.303vessel.cn/products_list.html`、`Contact Team` 到 `https://en.303vessel.cn/contact.html` 的旧站例外。
+- 后续建议：继续由 09 先对比 `en.303vessel.cn` 和 vessel 前台的展示方式、互动体验、页面节奏，再由 00 拆小包。下一轮优先看案例详情页的商业证明布局、产品目录侧栏 / 筛选交互或 Media Kit 资料中心节奏，而不是直接回到内容堆叠。
