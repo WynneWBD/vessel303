@@ -1019,3 +1019,19 @@ curl -I https://www.vessel303.com/news/<slug>
 - `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保持，不套用主站新站闭环规则。
 - 验收摘要：`git diff --check`、targeted eslint、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；构建仅出现既有 PostgreSQL SSL warning、本地 Neon `EACCES` 降级日志和 `/global` edge runtime warning。Vercel READY 后线上 `/products`、`/contact`、`/global` 均 200，未登录 `/admin` 302 到 `/admin/login`，增强后的 `audit:production-links` 通过。
 - 后续建议：继续由 09 做展示差距对比。下一轮优先看非 Global 主站的展示方式和互动体感，不再只看可点击 href；若属于显示器问题交 01，若属于后台内容、素材或字段缺口交 02 / 03。
+## B56 Homepage floating contact display alignment (2026-06-02)
+
+- Code commit: `2157b40 fix(site): compact floating contact rail`
+- Full SHA: `2157b40efab6d639549ebfea8fee4a9246e3a909`
+- Vercel deployment: `dpl_GeeGiVXqc38nRVSXVS9BvSLvU4FS`
+- Deployment URL: `https://vessel303-j6u0ewvpi-vessel303.vercel.app`
+- Status: `READY`
+- Production aliases include `https://www.vessel303.com` and `https://vessel303.com`.
+- Scope: B56 was a display-only fix for the main-site floating contact rail after 09 comparison found that the desktop floating contact block could overlap the homepage hero proof cards. No backend content, labels, contact values, CTA hrefs, images, or business copy were changed.
+- Frontend display change: `FloatingContact` now renders the desktop rail as compact 44px icon buttons with hover/focus tooltips, closer to the narrow 303 right-side contact rail. Tablet and mobile continue to use the bottom action bar. The homepage proof-card column reserves right-side space on large screens.
+- Backend-control boundary: all visible labels, WhatsApp number, email, project inquiry label and links still come from backend published `site:floating-contact` configuration. The frontend only controls layout, icon mapping, responsive behavior and hover presentation.
+- `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. `FloatingContact` still returns `null` for `/global`; Global Contact / Products old 303 exception remains out of scope.
+- Validation: `git diff --check`, targeted eslint, `npm.cmd run audit:public-content`, `npm.cmd run audit:published-content`, `npm.cmd run audit:production-links`, `npx.cmd tsc --noEmit`, and `npx.cmd next build --webpack` passed. Build logs only showed existing PostgreSQL SSL warnings, local Neon sandbox `EACCES` fallback logs, and the known `/global` edge-runtime warning.
+- Online checks: `/`, `/products`, `/contact`, `/global` returned 200 after Vercel READY. Browser measurement on `https://www.vessel303.com/` confirmed the desktop floating rail width is 44px; actual hero proof cards end at x=1162 while the floating rail starts at x=1214, leaving about 52px of visual clearance. `/global` had no floating-contact component injected.
+- Note: an in-app browser mobile viewport probe reported a likely tool-min-width artifact (`innerWidth=390` with layout width around 466). No code change was made for that measurement because the visible overflow source matched the tool viewport minimum rather than the B56 floating-contact change.
+- Next step: 09 should continue comparing display effect, interaction style and page rhythm against `en.303vessel.cn`, prioritizing visible display gaps over content-detail accumulation. If a gap is a display-template issue, assign 01; if it is backend content, material or field completeness, assign 02 / 03.
