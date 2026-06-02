@@ -824,3 +824,15 @@ curl -I https://www.vessel303.com/news/<slug>
 - 验收摘要：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；线上 `/products`、`/products/v3-gen5-standard`、`/products/v5-custom-taiwan`、`/products/s5-gen5-standard`、`/cases/qilian-tuomao-tribe`、`/global` 均 200。
 - `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` 代码 diff；Global Contact / Products 旧 303 跳转例外继续保留。
 - 后续建议：09 下一轮继续对比 `en.303vessel.cn` 产品库和案例页。若差距仍明显，B40 优先补 SV918 / RC902 / SC610 等剩余产品候选的可确认资料，或做 Media Kit label 口径清理与真实资料下载增强；仍必须由后台 published 内容承接，前台只负责显示。
+
+## B40 产品目录 SSR 显示器修复（2026-06-02）
+
+- Code commit: `bdded81 fix(products): server-render catalog filters`
+- Full SHA: `bdded81aa13db9bb5a96e41daecf2856ffad38d2`
+- Vercel deployment: `dpl_5y9TCkDH896iVbckCHJ8rDNdqgg2`，状态 `READY`，deployment URL `https://vessel303-24l3loe2m-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com`。
+- 本轮定位：09 对比 `en.303vessel.cn/products_list.html` 和 vessel 线上 `/products` 后发现，303 产品列表首屏 HTML 直接包含目录、筛选和产品内容，而 vessel `/products` 曾在生产 HTML 中出现 `BAILOUT_TO_CLIENT_SIDE_RENDERING` 和空的 `min-h-screen` shell。B40 只修显示器问题，让产品目录按后台 published 内容在服务端 HTML 中直接输出；不新增业务文案，不改产品 CMS 内容。
+- 技术处理：`src/app/products/page.tsx` 改为在 server page 读取并规范化 `searchParams`，把 `initialFilters` 传给 `ProductsPageContent`；`src/components/pages/ProductsPageContent.tsx` 移除 `useSearchParams()`，不再依赖 client-side bailout 获取筛选条件。
+- 验收摘要：`git diff --check`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack`、`audit:public-content`、`audit:published-content`、`audit:production-links` 均通过；线上 `/products` 和 `/products?q=E7` 均 200 且 HTML 中不再出现 `BAILOUT_TO_CLIENT_SIDE_RENDERING`，可直接检索到 `E7 Gen6`、`Product Categories`、`Matching products`、`Current filters` 等目录内容；`/global` 200。
+- `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` 代码 diff；Global Contact / Products 旧 303 跳转例外继续保留。
+- 残留风险：线上 `/products` 当前仍是 `private no-store / X-Vercel-Cache: MISS`，B40 先解决产品目录 HTML 空壳与 303 对齐的显示器问题，缓存可作为后续性能小包单独治理。
+- 后续建议：09 下一轮继续对比产品目录广度、Media Kit 下载深度和产品 / 案例销售资料，B41 可优先处理剩余高把握产品候选或 `/products` 缓存边界；仍必须由后台 published 内容承接，前台只负责显示。
