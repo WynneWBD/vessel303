@@ -135,15 +135,15 @@ function Sidebar({
   const ctaHref = cta?.href || '';
 
   return (
-    <aside className="space-y-5">
+    <aside className="space-y-3">
       <div className="border border-[#DADDE1] bg-white">
-        <div className="border-b border-[#DADDE1] bg-[#F5F7F8] px-4 py-3 text-sm font-bold text-[#1F2A31]">
+        <div className="border-b border-[#DADDE1] bg-[#F5F7F8] px-4 py-2.5 text-sm font-bold text-[#1F2A31]">
           {uiLabels.categoryHeading}
         </div>
         <div className="divide-y divide-[#ECEFF1]">
           <Link
             href={buildHref(filters, { category: '', page: 1 })}
-            className={`block px-4 py-3 text-sm transition ${
+            className={`block px-4 py-2.5 text-sm transition ${
               !filters.category ? 'bg-[#EAF4F6] font-semibold text-[#147C94]' : 'text-[#5C6670] hover:bg-[#F7FAFA]'
             }`}
           >
@@ -156,7 +156,7 @@ function Sidebar({
               <Link
                 key={category.id}
                 href={buildHref(filters, { category: String(category.id), page: 1 })}
-                className={`block px-4 py-3 text-sm transition ${
+                className={`block px-4 py-2.5 text-sm transition ${
                   filters.category === String(category.id)
                     ? 'bg-[#EAF4F6] font-semibold text-[#147C94]'
                     : 'text-[#5C6670] hover:bg-[#F7FAFA]'
@@ -182,7 +182,7 @@ function Sidebar({
         return (
           <div key={template.id} className="border border-[#DADDE1] bg-white">
             {templateTitle ? (
-              <div className="border-b border-[#DADDE1] bg-[#F5F7F8] px-4 py-3">
+              <div className="border-b border-[#DADDE1] bg-[#F5F7F8] px-4 py-2.5">
                 <p className="text-sm font-bold text-[#1F2A31]">{templateTitle}</p>
               </div>
             ) : null}
@@ -206,7 +206,7 @@ function Sidebar({
       })}
 
       {contactModule?.is_visible !== false && (eyebrow || headline || body || ctaLabel) ? (
-        <div className="border border-[#DADDE1] bg-[#1F2A31] p-5 text-white">
+        <div className="border border-[#DADDE1] bg-[#1F2A31] p-4 text-white">
           {eyebrow ? (
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#F2A36F]">{eyebrow}</p>
           ) : null}
@@ -260,7 +260,7 @@ function ProductCard({
           </div>
         ) : null}
       </Link>
-      <div className="flex flex-1 flex-col p-4">
+      <div className="flex flex-1 flex-col p-3">
         <div className="mb-2 flex items-center justify-between gap-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8A9299]">
           <span>{product.productSeries}</span>
           <span>{product.size}</span>
@@ -275,11 +275,11 @@ function ProductCard({
             </span>
           ))}
         </div>
-        <div className="mt-4 border-t border-[#ECEFF1] pt-3">
+        <div className="mt-3 border-t border-[#ECEFF1] pt-3">
           {productPrice(product, lang) ? (
             <span className="min-w-0 truncate text-sm font-semibold text-[#C65F22]">{productPrice(product, lang)}</span>
           ) : null}
-          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
             {uiLabels.detailsCta ? (
               <Link
                 href={productHref(product)}
@@ -556,8 +556,8 @@ export default function ProductsPageContent({
         </div>
       </section>
 
-      <section className="bg-[#F7F8F8] py-4">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 sm:px-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:px-8">
+      <section className="bg-[#F7F8F8] py-3">
+        <div className="mx-auto grid max-w-[1500px] grid-cols-1 gap-5 px-4 sm:px-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:px-8">
           <div className="lg:hidden">
             <details className="border border-[#DADDE1] bg-white">
               <summary className="flex min-h-12 cursor-pointer items-center px-4 text-sm font-bold text-[#1F2A31]">{uiLabels.filters}</summary>
@@ -567,35 +567,34 @@ export default function ProductsPageContent({
             </details>
           </div>
 
-          <div className="hidden lg:block">
+          <div className="hidden lg:block lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1">
             <Sidebar categories={categories} attributeTemplates={attributeTemplates} filters={filters} contactModule={contactModule} uiLabels={uiLabels} />
           </div>
 
           <div className="min-w-0">
-            <form action="/products" className="mb-4 flex flex-col gap-3 border border-[#DADDE1] bg-white p-3 sm:flex-row">
-              <input type="hidden" name="category" value={filters.category} />
-              <input type="hidden" name="attribute" value={filters.attribute} />
-              <input
-                name="q"
-                defaultValue={filters.q}
-                placeholder={uiLabels.searchPlaceholder}
-                className="min-h-11 flex-1 border border-[#DADDE1] px-3 text-sm outline-none focus:border-[#147C94]"
-              />
-              <button className="min-h-11 bg-[#147C94] px-5 text-sm font-bold uppercase tracking-[0.08em] text-white hover:bg-[#0E6479]">
-                {uiLabels.searchButton}
-              </button>
-              {(filters.q || filters.category || filters.attribute) ? (
-                <Link
-                  href="/products"
-                  className="inline-flex min-h-11 items-center justify-center border border-[#DADDE1] px-4 text-sm font-semibold text-[#5C6670] hover:border-[#147C94]"
-                >
-                  {uiLabels.resetButton}
-                </Link>
-              ) : null}
-            </form>
-
-            <div className="mb-4 border border-[#DADDE1] bg-white p-3">
-              <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[#65707A]">
+            <div className="mb-3 border border-[#DADDE1] bg-white p-3">
+              <form action="/products" className="flex flex-col gap-3 sm:flex-row">
+                <input type="hidden" name="category" value={filters.category} />
+                <input type="hidden" name="attribute" value={filters.attribute} />
+                <input
+                  name="q"
+                  defaultValue={filters.q}
+                  placeholder={uiLabels.searchPlaceholder}
+                  className="min-h-10 flex-1 border border-[#DADDE1] px-3 text-sm outline-none focus:border-[#147C94]"
+                />
+                <button className="min-h-10 bg-[#147C94] px-5 text-sm font-bold uppercase tracking-[0.08em] text-white hover:bg-[#0E6479]">
+                  {uiLabels.searchButton}
+                </button>
+                {(filters.q || filters.category || filters.attribute) ? (
+                  <Link
+                    href="/products"
+                    className="inline-flex min-h-10 items-center justify-center border border-[#DADDE1] px-4 text-sm font-semibold text-[#5C6670] hover:border-[#147C94]"
+                  >
+                    {uiLabels.resetButton}
+                  </Link>
+                ) : null}
+              </form>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[#ECEFF1] pt-2 text-sm text-[#65707A]">
                 <span>
                   {uiLabels.matchingProducts || uiLabels.rangePrefix} {rangeStart}-{rangeEnd} {uiLabels.rangeOf} {total}
                 </span>
@@ -604,7 +603,7 @@ export default function ProductsPageContent({
                 </span>
               </div>
               {activeFilters.length > 0 ? (
-                <div className="mt-3 flex flex-wrap items-center gap-2">
+                <div className="mt-2 flex flex-wrap items-center gap-2">
                   {uiLabels.activeFilters ? (
                     <span className="text-xs font-bold uppercase tracking-[0.16em] text-[#65707A]">{uiLabels.activeFilters}</span>
                   ) : null}
@@ -629,7 +628,7 @@ export default function ProductsPageContent({
                 {uiLabels.emptyStateBody ? <p className="mt-2">{uiLabels.emptyStateBody}</p> : null}
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {pageProducts.map((product) => (
                   <ProductCard key={product.id} product={product} uiLabels={uiLabels} inquiryHref={inquiryHref} />
                 ))}
