@@ -1051,3 +1051,18 @@ curl -I https://www.vessel303.com/news/<slug>
 - Online checks: `/products/e7-gen6-flagship?lang=en`, `/products?lang=en`, and `/global` returned 200 after Vercel READY. The product detail HTML contains `id="product-gallery"` and `Product Gallery`; main product pages did not expose old 303 product/contact links.
 - `/global` boundary: no `/global`, MapLibre, MapTiler, or `/api/map` diff. The Global old 303 Contact / Products exception remains out of scope for B58.
 - Next step: 09 should continue comparing display effect, interaction style and page rhythm against `en.303vessel.cn`, prioritizing product detail visual rhythm, case-detail browsing rhythm, and Media Kit resource-center behavior over adding more raw content.
+
+## B59 Product detail buyer resources hero alignment (2026-06-02)
+
+- Code commit: `a17acc7 fix(products): surface buyer resources in detail hero`
+- Full SHA: `a17acc7705c64a6518d45a487076f53ca76f60de`
+- Vercel deployment: `dpl_H8xyW6R2ezeRSRmc2BjcZMRJor3j`
+- Deployment URL: `https://vessel303-43pf2rak3-vessel303.vercel.app`
+- Status: `READY`
+- Scope: B59 was a product-detail display-template fix after 09 comparison confirmed that the remaining gap was buyer action timing: backend-published buyer downloads existed, but customers reached them too late in the long product detail flow. No product copy, file URL, image URL, contact value, sales promise, or `/global` behavior was hardcoded in the frontend.
+- Frontend display change: `CatalogProductDetailContent` now surfaces up to three backend-published buyer resource links in the hero decision panel, before the longer gallery/specification/detail sections. The preview is limited to detail modules whose id or title indicates buyer/download/resource/material content.
+- Backend-control boundary: the section title still comes from backend `products:ui-labels` (`downloads-title`), and every resource title, body and href comes from product CMS `detail_modules`. The frontend only controls extraction, placement, card styling, and internal/external link rendering.
+- Validation: `git diff --check`, targeted eslint, `audit:public-content`, `audit:published-content`, `audit:production-links`, `tsc --noEmit`, and `next build --webpack` passed. Build logs only showed existing PostgreSQL SSL warnings, local Neon sandbox `EACCES` fallback logs, and the known `/global` edge-runtime warning.
+- Online checks: Vercel reached `READY`; `/products/e7-gen6-flagship?lang=en`, `/products?lang=en`, and `/global` returned 200, and unauthenticated `/admin` redirected to `/admin/login`. The product detail HTML now places `Buyer Downloads` at text position 639 and `Request E7 buyer pack` at 729, before `Product Gallery`, `Specifications`, and `Product Inquiry`.
+- `/global` boundary: no `/global`, MapLibre, MapTiler, or `/api/map` diff. The Global old 303 Contact / Products exception remains out of scope for B59.
+- Next step: 09 should continue comparing visible display effect and interaction rhythm against `en.303vessel.cn`, especially product detail scroll rhythm, case-detail gallery/inquiry position, and Media Kit resource-center depth. Display-template gaps go to 01; backend content, material, file and field gaps go to 02 / 03; performance/image regressions go to 07.
