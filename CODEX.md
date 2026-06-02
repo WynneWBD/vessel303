@@ -948,3 +948,16 @@ curl -I https://www.vessel303.com/news/<slug>
 - Chrome 线上复核：`/products` 命中新部署 `dpl_59QM9bxGmCsuUitCvicPa8za6VAE`；搜索表单约在 310px，首个真实产品图和产品卡约在 417px，较 B48 的约 450px 进一步提前；页面无内部词、无横向溢出，`lang=en`。
 - `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保留。
 - 后续建议：继续由 09 对比 `en.303vessel.cn` 与 vessel 的展示方式、互动体感和页面效果。下一轮优先看 Media Kit 资料中心展示节奏、案例详情商业证明节奏或产品目录筛选互动细节；若是显示器问题交 01，若是后台内容或素材缺口交 02 / 03。
+
+## B50 产品目录 slim catalog header 对齐（2026-06-02）
+
+- Code commit: `67679eb fix(products): compress catalog header`
+- Full SHA: `67679ebbfdfbf67e9c1ba7837d7cb98dee8c7405`
+- Vercel deployment: `dpl_2qXX3spNcDeDsihrPzEBtmpyDfhX`，状态 `READY`，deployment URL `https://vessel303-ltvexk0p0-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com` 和 `https://vessel303.com`。
+- 本轮定位：Chrome 已恢复为较干净的 6 个标签页，并确认 300 / 303 候选页可访问。09 对照 `en.303vessel.cn/products_list.html` 与 vessel 线上 `/products` 后确认，303 产品列表的搜索和产品图更早进入视野；vessel B49 虽已提前到搜索约 310px、首图约 417px，但 hero 仍可继续压缩成更薄的 catalog header。
+- 完成范围：`src/components/pages/ProductsPageContent.tsx` 只调整产品目录显示器。产品页 hero 从页面说明区压缩为目录标题条，降低顶部 padding、标题字号、CTA 高度和 route note 密度；目录工作区顶部、搜索表单、结果工具栏和 sticky 侧栏位置继续收紧，让真实产品网格更早出现。
+- 后台控制边界：产品标题、图片、系列、筛选、结果文案、CTA 与页面模块内容继续来自产品 CMS、属性模板和后台 published labels；前台只负责布局密度、sticky 位置、响应式和渲染节奏。没有新增前台业务文案、图片 URL、产品参数、销售承诺或联系方式。
+- 验收摘要：`git diff --check`、targeted eslint、`npx.cmd tsc --noEmit`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、`npx.cmd next build --webpack` 均通过；build 仅出现既有 PostgreSQL SSL warning、本机 Neon `EACCES` 降级日志和 `/global` edge runtime warning，最终退出码 0。Vercel READY 后线上 `/products`、`/products?category=3`、`/products/e7-gen6-flagship`、`/global` 均 200，未登录 `/admin` 302 到 `/admin/login`。
+- Chrome 线上复核：`/products` 命中新部署 `dpl_2qXX3spNcDeDsihrPzEBtmpyDfhX`；搜索表单约在 252px，首个真实产品图和产品卡约在 345px，较 B49 的约 310px / 417px 进一步提前；页面无内部词、无横向溢出，`lang=en`。
+- `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保留。
+- 后续建议：继续由 09 对比 `en.303vessel.cn` 与 vessel 的展示方式、互动体感和页面效果。下一轮优先看 Media Kit 资料中心展示节奏、案例详情商业证明节奏或产品筛选互动细节；若是显示器问题交 01，若是后台内容或素材缺口交 02 / 03。
