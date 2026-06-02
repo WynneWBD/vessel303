@@ -909,3 +909,16 @@ curl -I https://www.vessel303.com/news/<slug>
 - 验收摘要：`git diff --check`、targeted eslint、`npx.cmd tsc --noEmit`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links` 均通过；`npx.cmd next build --webpack` 在非沙箱重跑通过，本机沙箱曾因 Neon `EACCES` / Windows build worker 异常失败一次，判定为本机环境限制。Vercel READY 后线上 `/products/e7-gen6-flagship`、`/products`、`/global` 均 200，未登录 `/admin` 302 到 `/admin/login`；Chrome 抽查确认产品详情使用 compact class、右侧面板存在、缩略图 8 个、无横向溢出。
 - `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保留。
 - 后续建议：09 下一轮继续对比产品详情、产品目录、Media Kit 和案例详情的展示方式 / 互动节奏。若差距仍在显示器，交 01；若差距属于后台内容 / 素材缺口，交 02 / 03；不要在前台硬写业务内容。
+
+## B47 产品目录展示节奏提前（2026-06-02）
+
+- Code commit: `3a0e06b fix(products): surface catalog earlier`
+- Full SHA: `3a0e06bd5f265084f06a3b5c64e629f98a671acc`
+- Vercel deployment: `dpl_9W33eHecBLZGyJ3SLSQ8zCjqhqNY`，状态 `READY`，deployment URL `https://vessel303-btsybogbe-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com` 和 `https://vessel303.com`。
+- 本轮定位：09 对照 `en.303vessel.cn/products_list.html` 和 vessel 线上 `/products` 后确认，当前主要差距不是产品字段，而是产品目录真正开始的位置太靠下。303 产品页更快进入分类、搜索和产品网格；vessel 旧展示先经过 hero、亮点和大图系列区，客户需要滚动更久才进入目录。
+- 完成范围：`src/components/pages/ProductsPageContent.tsx` 只调整产品列表显示器。hero 高度和间距压缩；catalog highlights 移入 hero；原独立大图系列区改为目录工作区内的紧凑系列筛选条；搜索和产品网格整体提前。没有新增前台业务文案、产品参数、图片 URL、销售承诺或联系方式。
+- 后台控制边界：产品标题、图片、系列、数量、筛选、CTA、结果文案和模块内容继续来自产品 CMS、属性模板和 `products:ui-labels` / page modules published 内容；前台只负责布局、密度、响应式和渲染顺序。后台无内容时前台不补业务文案。
+- 验收摘要：`git diff --check`、targeted eslint、`npx.cmd tsc --noEmit`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、`npx.cmd next build --webpack` 均通过。Vercel READY 后线上 `/products` 200，`/products/e7-gen6-flagship` 200，`/global` 200，未登录 `/admin` 302 到 `/admin/login`。
+- Chrome 线上复核：`/products` 无内部词；首个产品入口位于首屏内；搜索表单约在 643px，明显早于旧展示中约 1200px 后才进入目录的节奏；页面无横向溢出。
+- `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保留。
+- 后续建议：继续由 09 对比 `en.303vessel.cn` 与 vessel 的展示方式、互动体感和页面效果。下一轮优先看产品目录侧栏 / 产品卡密度 / Media Kit 资料中心或案例详情节奏；若是显示器问题交 01，若是后台内容或素材缺口交 02 / 03。
