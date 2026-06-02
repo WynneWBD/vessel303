@@ -836,3 +836,15 @@ curl -I https://www.vessel303.com/news/<slug>
 - `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` 代码 diff；Global Contact / Products 旧 303 跳转例外继续保留。
 - 残留风险：线上 `/products` 当前仍是 `private no-store / X-Vercel-Cache: MISS`，B40 先解决产品目录 HTML 空壳与 303 对齐的显示器问题，缓存可作为后续性能小包单独治理。
 - 后续建议：09 下一轮继续对比产品目录广度、Media Kit 下载深度和产品 / 案例销售资料，B41 可优先处理剩余高把握产品候选或 `/products` 缓存边界；仍必须由后台 published 内容承接，前台只负责显示。
+
+## B41 详情页与资料页互动展示器对齐（2026-06-02）
+
+- Code commit: `e5199a2 fix(site): improve sales interaction display`
+- Full SHA: `e5199a25c32fc77531a772181df598d346eee80b`
+- Vercel deployment: `dpl_TrpW4wLq18VZ28Bx7gn1fj5ZypdV`，状态 `READY`，deployment URL `https://vessel303-giurygfbi-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com`。
+- 本轮定位：09 重新对比 300 后台、`en.303vessel.cn` 和 vessel 当前前台后，Wynne 明确纠偏：重点不是继续补产品细节，而是追近 en 站的展示方式、互动节奏和详情页结构。B41 只修显示器问题，不新增前台业务文案、不改后台内容模型、不补产品销售承诺。
+- 完成范围：`/products/[slug]` 通用产品详情新增由后台 / CMS 标题驱动的 sticky 锚点导航，锚点覆盖规格、详情模块、Related Products 和 Product Inquiry；`/contact` 去掉表单标题在左侧和表单内重复显示的问题，无备用旧站内容时表单居中；`/media-kit` 从上下堆叠改为资料中心网格 + 右侧 sticky 申请表单；公开产品详情 slug 查询允许后台已发布 `detail_slug` 命中短链接，修复 `/products/v5`、`/products/s5` 这类后台链接线上 404。
+- 后台控制边界：所有锚点 label、Contact 表单标题、Media Kit 资源标题和按钮文案仍来自后台 published 内容或 CMS 字段；前台只负责布局、锚点、响应式和路由兼容。未在 TSX 中写入新的销售文案、产品参数、联系方式、下载资料或 CTA 文案。
+- 验收摘要：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；构建仅出现本机沙箱 Neon `EACCES` 降级日志和既有 `/global` edge runtime warning，最终退出 0。Vercel READY 后 `npm.cmd run audit:production-links` 通过；线上 `/products/v5`、`/products/s5`、`/products/e7-gen6-flagship`、`/contact`、`/media-kit`、`/global` 均 200，未登录 `/admin` 302 到 `/admin/login`。
+- `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` 代码 diff；Global Contact / Products 旧 303 跳转例外继续保留。
+- 残留风险：线上正文轻量 grep 受响应体读取限制未形成有效证据，但 HTTP、production link audit、本地生产路由和构建均已通过；下一轮 09 应继续用 Chrome 实页对比详情页滚动体验、Media Kit 资料中心视觉节奏和产品目录交互密度。
