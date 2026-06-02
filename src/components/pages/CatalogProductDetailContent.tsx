@@ -318,11 +318,11 @@ export default function CatalogProductDetailContent({
               {badge ? <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-[#C65F22]">{badge}</p> : null}
               <h1 className="text-2xl font-black leading-tight tracking-normal text-[#1F2A31] break-words sm:text-3xl">{name}</h1>
               {facts.length > 0 ? (
-                <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                <div className="mt-5 flex flex-wrap gap-2">
                   {facts.map((item) => (
-                    <p key={item} className="rounded-md border border-[#DADDE1] bg-white px-3 py-2 text-sm font-bold leading-5 text-[#1F2A31]">
+                    <span key={item} className="rounded-full border border-[#DADDE1] bg-white px-3 py-1.5 text-xs font-bold leading-5 text-[#1F2A31]">
                       {item}
-                    </p>
+                    </span>
                   ))}
                 </div>
               ) : null}
@@ -348,7 +348,7 @@ export default function CatalogProductDetailContent({
                 <div className="mt-5 border-t border-[#DADDE1] pt-5">
                   <div className="grid grid-cols-1 gap-2">
                     {termRows.map((value, index) => (
-                      <p key={`${value}-${index}`} className="rounded-md bg-[#F7F8F8] px-3 py-2 text-sm font-semibold text-[#1F2A31]">
+                      <p key={`${value}-${index}`} className="rounded-md bg-[#F7F8F8] px-3 py-2 text-xs font-semibold leading-5 text-[#1F2A31]">
                         {value}
                       </p>
                     ))}
