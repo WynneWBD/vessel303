@@ -78,10 +78,28 @@ async function patchProductsHero(client, changes) {
 
   const row = res.rows[0]
   const items = normalizeItems(row.items)
-  if (items.some((item) => item?.id === heroImageItem.id)) return
+  const heroIndex = items.findIndex((item) => item?.id === heroImageItem.id)
+  const nextItems = [...items]
+  if (heroIndex >= 0) {
+    const current = nextItems[heroIndex] ?? {}
+    nextItems[heroIndex] = {
+      ...current,
+      href: current.href || heroImageItem.href,
+      image_url: current.image_url || heroImageItem.image_url,
+      label_zh: current.label_zh || heroImageItem.label_zh,
+      label_en: current.label_en || heroImageItem.label_en,
+      is_visible: current.is_visible ?? heroImageItem.is_visible,
+      sort_order: current.sort_order ?? heroImageItem.sort_order,
+    }
+  } else {
+    nextItems.push(heroImageItem)
+  }
+  nextItems.sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0))
+  if (JSON.stringify(items) === JSON.stringify(nextItems)) return
 
-  const nextItems = [...items, heroImageItem].sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0))
-  changes.push('page-module:products:hero add backend-controlled hero image')
+  changes.push(heroIndex >= 0
+    ? 'page-module:products:hero complete backend-controlled hero image'
+    : 'page-module:products:hero add backend-controlled hero image')
   if (apply) {
     await client.query(
       `UPDATE page_modules
