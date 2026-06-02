@@ -34,6 +34,21 @@ function ProjectImage({ src, alt, className }: { src: string | null | undefined;
   )
 }
 
+function FactGrid({ facts, className = '' }: { facts: Array<{ label: string; value: string }>; className?: string }) {
+  if (facts.length === 0) return null
+
+  return (
+    <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2 ${className}`}>
+      {facts.map((fact) => (
+        <p key={`${fact.label}-${fact.value}`} className="rounded-md border border-[#E5DED4] bg-white px-4 py-3 text-sm leading-6 text-[#2C2A28] shadow-sm">
+          {fact.label ? <span className="mb-1 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#8A8580]">{fact.label}</span> : null}
+          <span className="font-bold">{fact.value}</span>
+        </p>
+      ))}
+    </div>
+  )
+}
+
 export default function CaseDetailPageContent({
   project,
   relatedCases = [],
@@ -94,13 +109,11 @@ export default function CaseDetailPageContent({
     <main className="bg-[#FAF7F2] text-[#2C2A28]">
       <Navbar />
 
-      <section className="border-b border-[#E5DED4] bg-[linear-gradient(180deg,#FAF7F2_0%,#F4EFE7_100%)] pt-28">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-0 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)] lg:px-8 lg:py-16">
-          <ProjectImage src={heroImage} alt={name} className="aspect-[16/10] h-full w-full rounded-t-md border border-[#E5DED4] shadow-sm lg:rounded-l-md lg:rounded-tr-none" />
-
-          <aside className="rounded-b-md border-x border-b border-[#E5DED4] bg-white p-6 shadow-sm lg:rounded-r-md lg:rounded-bl-none lg:border-l-0 lg:border-t lg:p-8">
+      <section className="border-b border-[#E5DED4] bg-[linear-gradient(180deg,#FAF7F2_0%,#F4EFE7_100%)] pt-20 sm:pt-24">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(360px,0.82fr)_minmax(0,1.18fr)] lg:px-8 lg:py-8">
+          <aside className="rounded-md border border-[#E5DED4] bg-white p-5 shadow-sm sm:p-6 lg:p-7">
             {tags.length > 0 ? (
-              <div className="mb-5 flex flex-wrap gap-2">
+              <div className="mb-4 flex flex-wrap gap-2">
                 {tags.map((tag) => (
                   <span key={tag} className="rounded-full border border-[#E36F2C]/20 bg-[#E36F2C]/10 px-2 py-1 text-[10px] tracking-wider text-[#E36F2C]">
                     {tag}
@@ -109,25 +122,18 @@ export default function CaseDetailPageContent({
               </div>
             ) : null}
 
-            <h1 className="text-2xl font-black tracking-wide text-[#2C2A28]">{name}</h1>
+            <h1 className="text-2xl font-black leading-tight tracking-wide text-[#2C2A28] sm:text-3xl">{name}</h1>
             {description ? <p className="mt-3 text-sm leading-7 text-[#6B6560]">{description}</p> : null}
 
-            {facts.length > 0 ? (
-              <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                {facts.map((fact) => (
-                  <p key={`${fact.label}-${fact.value}`} className="rounded-md border border-[#E5DED4] bg-white px-4 py-3 text-sm leading-6 text-[#2C2A28] shadow-sm">
-                    {fact.label ? <span className="mb-1 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#8A8580]">{fact.label}</span> : null}
-                    <span className="font-bold">{fact.value}</span>
-                  </p>
-                ))}
-              </div>
-            ) : null}
+            <FactGrid facts={facts} className="mt-5" />
           </aside>
+
+          <ProjectImage src={heroImage} alt={name} className="aspect-[16/10] min-h-[280px] w-full rounded-md border border-[#E5DED4] shadow-sm sm:min-h-[360px] lg:min-h-[520px]" />
         </div>
       </section>
 
       {description ? (
-        <section className="border-b border-[#E5DED4] bg-[#F5F2ED] py-16">
+        <section className="border-b border-[#E5DED4] bg-[#F5F2ED] py-10">
           <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
             <p className="text-sm leading-8 text-[#5F5750]">{description}</p>
           </div>
@@ -135,7 +141,7 @@ export default function CaseDetailPageContent({
       ) : null}
 
       {facts.length > 0 && proofTitle ? (
-        <section className="border-b border-[#E5DED4] bg-white py-16">
+        <section className="border-b border-[#E5DED4] bg-white py-10">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <h2 className="mb-6 text-2xl font-black tracking-wide text-[#2C2A28]">{proofTitle}</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

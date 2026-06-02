@@ -558,11 +558,11 @@ const caseSamples = [
   },
   {
     id: 'astrobase-mamison',
-    area: 'Japan / Yamanashi',
+    area: '',
     investment: 'Hospitality project reference',
     units: 'Published project reference',
     products: 'V9 Gen6 / E7 Gen6',
-    tags: ['Japan', 'Hospitality', 'V9 / E7'],
+    tags: ['Russia', 'Hospitality', 'V9 / E7'],
   },
 ]
 
