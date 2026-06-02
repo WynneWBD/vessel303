@@ -987,3 +987,15 @@ curl -I https://www.vessel303.com/news/<slug>
 - 线上检查：`/media-kit` 200 / PRERENDER，`/global` 200，未登录 `/admin` 302。Chrome 线上复核确认 `/media-kit` 有 16 个资源 article、8 个资源图片预览、16 个文件类型预览，表单字段为 `name/email/phone/company/country/useCase/message`，无内部词、无横向溢出，`lang=en`。
 - `/global` 边界：本轮代码 diff 仅涉及 `src/components/pages/MediaKitPageContent.tsx`，无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保留。
 - 后续建议：继续由 09 对比 `en.303vessel.cn` 与 vessel 的展示方式、互动体感和页面效果。下一轮优先看 Media Kit 资源内容深度、案例详情图库 / 询盘位置，或产品筛选交互细节；若是显示器问题交 01，若是后台内容或素材缺口交 02 / 03。
+
+## B53 Media Kit 资源预览图片优化（2026-06-02）
+
+- 代码提交：`3a25d69 fix(media-kit): optimize resource previews`，full SHA `3a25d69ab8c6687ace4ea026310ae7567f9a8e40`。
+- Vercel deployment：`dpl_J8ri316xU9THc86gQwiNeQCJCSAD`，状态 `READY`，deployment URL `https://vessel303-fxpmfd5me-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com` 和 `https://vessel303.com`。
+- 本轮定位：B52 已让 `/media-kit` 资源从文字列表变成资料中心卡片，但图片型资源仍用普通 `<img>` 直出。B53 只修 Media Kit 显示器的图片加载方式，不写入新资源内容，不改后台数据，不改 `/global`。
+- 前台显示器调整：`src/components/pages/MediaKitPageContent.tsx` 的资源预览图改为使用 `ProtectedImage`，设置固定 `aspect-[4/3]` 与 `sizes`，让可预览图片进入 Next image 优化链路；PDF / LINK 类型预览卡保持不变。
+- 后台控制边界：资源标题、摘要、文件 URL、封面图、CTA 文案和表单 labels 继续由 B9 Media Kit CMS / page modules 控制；前台只负责图片渲染、比例、响应式和保护层，不补业务文案、不改资源链接。
+- 验收摘要：`git diff --check`、targeted eslint、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、`npx.cmd next build --webpack` 和 build 后 `npx.cmd tsc --noEmit` 均通过；首次 `tsc --noEmit` 因 `.next/types` 尚未生成失败，build 生成类型后重跑通过。
+- 线上检查：`/media-kit` 200 / PRERENDER，`/global` 200，未登录 `/admin` 302；线上 HTML 抽查确认 Media Kit 图片资源输出 `/_next/image?...` 优化路径，`lang=en`，无内部词。
+- `/global` 边界：本轮代码 diff 仅涉及 `src/components/pages/MediaKitPageContent.tsx`，无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保留。
+- 后续建议：继续由 09 对比 `en.303vessel.cn` 与 vessel 的展示方式、互动体感和页面效果。下一轮优先看 Media Kit 资源内容深度、案例详情图库 / 询盘位置，或产品筛选交互细节；若是显示器问题交 01，若是后台内容或素材缺口交 02 / 03。
