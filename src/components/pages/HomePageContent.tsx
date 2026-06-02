@@ -235,7 +235,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
   return (
     <section
-      className="relative flex min-h-[720px] items-center overflow-hidden bg-[#241F1B] lg:min-h-[760px]"
+      className="relative flex min-h-[650px] items-center overflow-hidden bg-[#241F1B] lg:min-h-[690px]"
       data-page-module="home:hero"
       data-page-key="home"
       data-module-key="hero"
@@ -257,10 +257,10 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
       ))}
       <div className="absolute inset-0 bg-gradient-to-r from-[#241F1B]/82 via-[#241F1B]/52 to-[#241F1B]/22" />
 
-      <div className="relative z-10 mx-auto grid w-full max-w-7xl gap-8 px-5 py-28 sm:px-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.5fr)] lg:items-end lg:px-8">
+      <div className="relative z-10 mx-auto grid w-full max-w-7xl gap-6 px-5 py-24 sm:px-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.5fr)] lg:items-end lg:px-8">
         <div className="max-w-3xl text-left">
         {tagline ? (
-          <div className="mb-8">
+          <div className="mb-6">
             <p
               className="text-xs font-semibold uppercase tracking-[0.24em] text-white/70"
               data-page-module-item="hero-tagline"
@@ -273,7 +273,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
         ) : null}
 
         <h1
-          className="mb-8 break-words font-[family-name:var(--font-heading)] text-4xl font-normal leading-[1.04] text-white sm:text-6xl lg:text-7xl"
+          className="mb-6 break-words font-[family-name:var(--font-heading)] text-4xl font-normal leading-[1.04] text-white sm:text-6xl lg:text-6xl"
           data-page-module-item="hero-headline"
           data-page-module-field={`label_${lang}`}
         >
@@ -282,7 +282,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
         {subtitle ? (
           <p
-            className="mb-10 max-w-2xl text-base leading-8 text-white/70 sm:text-lg"
+            className="mb-8 max-w-2xl text-base leading-8 text-white/70 sm:text-lg"
             data-page-module-item="hero-subtitle"
             data-page-module-field={`label_${lang}`}
           >
@@ -323,12 +323,12 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
             {proofItems.slice(0, 4).map((item) => (
               <div
                 key={item.id}
-                className="border border-white/18 bg-white/[0.08] p-4 backdrop-blur-sm"
+                className="border border-white/18 bg-white/[0.08] p-3 backdrop-blur-sm"
                 data-page-module-item={item.id}
               >
                 {item.value ? (
                   <p
-                    className="font-[family-name:var(--font-heading)] text-3xl font-light leading-none text-white"
+                    className="font-[family-name:var(--font-heading)] text-2xl font-light leading-none text-white"
                     data-page-module-field={`value_${lang}`}
                   >
                     {item.value}
@@ -356,7 +356,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
         ) : null}
       </div>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/20 animate-bounce">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/20 animate-bounce">
         <svg width="20" height="28" viewBox="0 0 20 28" fill="none"><path d="M10 0v20M3 13l7 7 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
       </div>
     </section>
@@ -382,7 +382,7 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
 
   return (
     <section
-      className="bg-[#F5F2ED] py-14 border-y border-[#E5DED4]"
+      className="relative z-20 -mt-8 bg-transparent pb-6 border-b border-[#E5DED4]"
       data-page-module="home:credentials"
       data-page-key="home"
       data-module-key="credentials"
@@ -390,9 +390,9 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
       <div className="max-w-5xl mx-auto px-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-[#E5DED4] bg-white border border-[#E5DED4] shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
           {stats.map((s) => (
-            <div key={s.id} className="text-center py-6 px-4" data-page-module-item={s.id}>
+            <div key={s.id} className="text-center py-4 px-4" data-page-module-item={s.id}>
               <div
-                className="text-4xl sm:text-5xl lg:text-6xl font-light text-[#E36F2C] tracking-tight mb-2"
+                className="text-3xl sm:text-4xl lg:text-5xl font-light text-[#E36F2C] tracking-tight mb-2"
                 style={{ fontFamily: 'var(--font-heading)', fontFeatureSettings: '"tnum"' }}
                 data-page-module-field={`value_${lang}`}
               >
@@ -575,13 +575,13 @@ function ProductShowcaseSection({ pageModule }: { pageModule: HomePageModule | n
 
   return (
     <section
-      className="border-b border-[#E5DED4] bg-[#F5F2ED] py-16"
+      className="border-b border-[#E5DED4] bg-[#F5F2ED] py-10 lg:py-12"
       data-page-module={`home:${pageModule.module_key}`}
       data-page-key="home"
       data-module-key={pageModule.module_key}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+        <div className="grid gap-5 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
           <div>
             {eyebrow ? (
               <p
@@ -594,7 +594,7 @@ function ProductShowcaseSection({ pageModule }: { pageModule: HomePageModule | n
             ) : null}
             {title ? (
               <h2
-                className="font-[family-name:var(--font-heading)] text-3xl font-light leading-tight text-[#241F1B] lg:text-5xl"
+                className="font-[family-name:var(--font-heading)] text-3xl font-light leading-tight text-[#241F1B] lg:text-4xl"
                 data-page-module-field={`title_${lang}`}
               >
                 {title}
@@ -612,7 +612,7 @@ function ProductShowcaseSection({ pageModule }: { pageModule: HomePageModule | n
         </div>
 
         {cards.length > 0 ? (
-          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {cards.map((card) => {
               const content = (
                 <article
@@ -673,7 +673,7 @@ function ProductShowcaseSection({ pageModule }: { pageModule: HomePageModule | n
         ) : null}
 
         {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap gap-3">
             {primaryLabel && primaryHref ? (
               <Link
                 href={primaryHref}
