@@ -477,7 +477,6 @@ export default function ProductsPageContent({
     selectedCategory && uiLabels.categoryFilter ? { key: 'category', label: uiLabels.categoryFilter, value: selectedCategory } : null,
     selectedAttribute && uiLabels.attributeFilter ? { key: 'attribute', label: uiLabels.attributeFilter, value: selectedAttribute } : null,
   ].filter((item): item is { key: string; label: string; value: string } => Boolean(item));
-  const heroPreviewProducts = products.slice(0, 3);
   const heroTitle = moduleTitle(heroModule, lang);
   const heroDescription = moduleDescription(heroModule, lang);
   const primaryCta = itemById(heroModule, 'primary-cta');
@@ -486,7 +485,6 @@ export default function ProductsPageContent({
   const secondaryCtaLabel = itemLabel(secondaryCta, lang);
   const primaryCtaHref = primaryCta?.href || '';
   const secondaryCtaHref = secondaryCta?.href || '';
-  const featuredLabel = itemLabel(itemById(heroModule, 'featured-label'), lang);
   const breadcrumbHome = itemById(heroModule, 'breadcrumb-home');
   const breadcrumbCurrent = itemById(heroModule, 'breadcrumb-current');
   const breadcrumbHomeLabel = itemLabel(breadcrumbHome, lang);
@@ -494,6 +492,7 @@ export default function ProductsPageContent({
   const routeNote = itemById(heroModule, 'route-note');
   const routeNoteLabel = itemLabel(routeNote, lang);
   const routeNoteBody = itemContent(routeNote, lang);
+  const hasRouteNote = Boolean(routeNoteLabel || routeNoteBody);
   const catalogHighlights = visibleItems(highlightsModule)
     .map((item) => ({
       id: item.id,
@@ -505,81 +504,45 @@ export default function ProductsPageContent({
 
   return (
     <>
-      <section className="border-b border-[#DADDE1] bg-[#EEF3F5] pt-24 sm:pt-28">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 pb-6 sm:px-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(360px,0.78fr)] lg:items-end lg:px-8">
-          <div>
-            {(breadcrumbHomeLabel || breadcrumbCurrentLabel) ? (
-              <div className="text-xs text-[#65707A]">
-                {breadcrumbHomeLabel && breadcrumbHome?.href ? (
-                  <Link href={breadcrumbHome.href} className="hover:text-[#147C94]">{breadcrumbHomeLabel}</Link>
-                ) : null}
-                {breadcrumbHomeLabel && breadcrumbCurrentLabel ? <span className="mx-2">/</span> : null}
-                {breadcrumbCurrentLabel ? <span>{breadcrumbCurrentLabel}</span> : null}
-              </div>
-            ) : null}
-            {heroTitle ? (
-              <h1 className="mt-5 text-4xl font-black tracking-normal text-[#1F2A31] sm:text-5xl">
-                {heroTitle}
-              </h1>
-            ) : null}
-            {heroDescription ? (
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5C6670]">{heroDescription}</p>
-            ) : null}
-            {((primaryCtaLabel && primaryCtaHref) || (secondaryCtaLabel && secondaryCtaHref)) ? (
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                {primaryCtaLabel && primaryCtaHref ? (
-                  <Link href={primaryCtaHref} className="inline-flex min-h-11 w-full items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#C85A1F] sm:w-auto">
-                    {primaryCtaLabel}
-                  </Link>
-                ) : null}
-                {secondaryCtaLabel && secondaryCtaHref ? (
-                  <Link href={secondaryCtaHref} className="inline-flex min-h-11 w-full items-center justify-center border border-[#C7CDD2] bg-white px-5 text-sm font-semibold text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94] sm:w-auto">
-                    {secondaryCtaLabel}
-                  </Link>
-                ) : null}
-              </div>
-            ) : null}
-            <CatalogHighlights items={catalogHighlights} />
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.15fr_0.85fr]">
-            {heroPreviewProducts[0] ? (
-              <Link href={productHref(heroPreviewProducts[0])} className="group relative min-h-[180px] overflow-hidden border border-white bg-[#DDE7EA] shadow-sm sm:min-h-[210px]">
-                <ProtectedImage
-                  src={heroPreviewProducts[0].image}
-                  alt={lang === 'en' ? heroPreviewProducts[0].name_en : heroPreviewProducts[0].name_cn}
-                  fill
-                  priority
-                  className="object-cover transition duration-500 group-hover:scale-105"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 62vw, 460px"
-                />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#1F2A31]/86 to-transparent p-4">
-                  {featuredLabel ? (
-                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#F2A36F]">{featuredLabel}</p>
+      <section className="border-b border-[#DADDE1] bg-[#EEF3F5] pt-20 sm:pt-24">
+        <div className="mx-auto max-w-7xl px-4 pb-4 sm:px-6 lg:px-8">
+          <div className={`grid gap-4 lg:items-end ${hasRouteNote ? 'lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.42fr)]' : ''}`}>
+            <div>
+              {(breadcrumbHomeLabel || breadcrumbCurrentLabel) ? (
+                <div className="text-xs text-[#65707A]">
+                  {breadcrumbHomeLabel && breadcrumbHome?.href ? (
+                    <Link href={breadcrumbHome.href} className="hover:text-[#147C94]">{breadcrumbHomeLabel}</Link>
                   ) : null}
-                  <p className="mt-2 text-base font-black text-white">{lang === 'en' ? heroPreviewProducts[0].name_en : heroPreviewProducts[0].name_cn}</p>
+                  {breadcrumbHomeLabel && breadcrumbCurrentLabel ? <span className="mx-2">/</span> : null}
+                  {breadcrumbCurrentLabel ? <span>{breadcrumbCurrentLabel}</span> : null}
                 </div>
-              </Link>
-            ) : null}
-            <div className="grid gap-3">
-              {heroPreviewProducts.slice(1, 3).map((product) => (
-                <Link key={product.id} href={productHref(product)} className="group relative min-h-[102px] overflow-hidden border border-white bg-[#DDE7EA] shadow-sm sm:min-h-[98px]">
-                  <ProtectedImage
-                    src={product.image}
-                    alt={lang === 'en' ? product.name_en : product.name_cn}
-                    fill
-                    priority={false}
-                    loading="lazy"
-                    className="object-cover transition duration-500 group-hover:scale-105"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 34vw, 260px"
-                  />
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#1F2A31]/78 to-transparent p-3">
-                    <p className="text-xs font-bold text-white">{lang === 'en' ? product.name_en : product.name_cn}</p>
-                  </div>
-                </Link>
-              ))}
-              {(routeNoteLabel || routeNoteBody) ? (
-                <div className="border border-[#DADDE1] bg-white p-4">
+              ) : null}
+              {heroTitle ? (
+                <h1 className="mt-4 text-4xl font-black tracking-normal text-[#1F2A31] sm:text-5xl">
+                  {heroTitle}
+                </h1>
+              ) : null}
+              {heroDescription ? (
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-[#5C6670]">{heroDescription}</p>
+              ) : null}
+              {((primaryCtaLabel && primaryCtaHref) || (secondaryCtaLabel && secondaryCtaHref)) ? (
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  {primaryCtaLabel && primaryCtaHref ? (
+                    <Link href={primaryCtaHref} className="inline-flex min-h-11 w-full items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#C85A1F] sm:w-auto">
+                      {primaryCtaLabel}
+                    </Link>
+                  ) : null}
+                  {secondaryCtaLabel && secondaryCtaHref ? (
+                    <Link href={secondaryCtaHref} className="inline-flex min-h-11 w-full items-center justify-center border border-[#C7CDD2] bg-white px-5 text-sm font-semibold text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94] sm:w-auto">
+                      {secondaryCtaLabel}
+                    </Link>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+            {hasRouteNote ? (
+              <div>
+                <div className="border border-[#DADDE1] bg-white/90 p-4">
                   {routeNoteLabel ? (
                     <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#147C94]">{routeNoteLabel}</p>
                   ) : null}
@@ -587,13 +550,13 @@ export default function ProductsPageContent({
                     <p className="mt-2 text-xs leading-5 text-[#65707A]">{routeNoteBody}</p>
                   ) : null}
                 </div>
-              ) : null}
-            </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>
 
-      <section className="bg-[#F7F8F8] py-6">
+      <section className="bg-[#F7F8F8] py-4">
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 sm:px-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:px-8">
           <div className="lg:hidden">
             <details className="border border-[#DADDE1] bg-white">
@@ -609,8 +572,7 @@ export default function ProductsPageContent({
           </div>
 
           <div className="min-w-0">
-            <SeriesSummary products={products} uiLabels={uiLabels} />
-            <form action="/products" className="mb-5 flex flex-col gap-3 border border-[#DADDE1] bg-white p-4 sm:flex-row">
+            <form action="/products" className="mb-4 flex flex-col gap-3 border border-[#DADDE1] bg-white p-3 sm:flex-row">
               <input type="hidden" name="category" value={filters.category} />
               <input type="hidden" name="attribute" value={filters.attribute} />
               <input
@@ -632,7 +594,7 @@ export default function ProductsPageContent({
               ) : null}
             </form>
 
-            <div className="mb-4 border border-[#DADDE1] bg-white p-4">
+            <div className="mb-4 border border-[#DADDE1] bg-white p-3">
               <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[#65707A]">
                 <span>
                   {uiLabels.matchingProducts || uiLabels.rangePrefix} {rangeStart}-{rangeEnd} {uiLabels.rangeOf} {total}
@@ -673,6 +635,12 @@ export default function ProductsPageContent({
                 ))}
               </div>
             )}
+
+            <CatalogHighlights items={catalogHighlights} />
+
+            <div className="mt-6">
+              <SeriesSummary products={products} uiLabels={uiLabels} />
+            </div>
 
             <Pagination filters={filters} currentPage={currentPage} totalPages={totalPages} />
           </div>
