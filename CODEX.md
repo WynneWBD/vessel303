@@ -961,3 +961,16 @@ curl -I https://www.vessel303.com/news/<slug>
 - Chrome 线上复核：`/products` 命中新部署 `dpl_2qXX3spNcDeDsihrPzEBtmpyDfhX`；搜索表单约在 252px，首个真实产品图和产品卡约在 345px，较 B49 的约 310px / 417px 进一步提前；页面无内部词、无横向溢出，`lang=en`。
 - `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保留。
 - 后续建议：继续由 09 对比 `en.303vessel.cn` 与 vessel 的展示方式、互动体感和页面效果。下一轮优先看 Media Kit 资料中心展示节奏、案例详情商业证明节奏或产品筛选互动细节；若是显示器问题交 01，若是后台内容或素材缺口交 02 / 03。
+
+## B51 案例详情首屏商业证明对齐（2026-06-02）
+
+- Code commit: `c28cce9 fix(cases): surface case proof earlier`
+- Full SHA: `c28cce9aabe2268f2451129e7eccf14ec842b091`
+- Vercel deployment: `dpl_H7ktXxdwH1TaUfHKLT1PxZssuSfr`，状态 `READY`，deployment URL `https://vessel303-i2o6hf5p9-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com` 和 `https://vessel303.com`。
+- 本轮定位：09 对比 `en.303vessel.cn` 的案例详情页后确认，303 案例详情会在首屏直接给出项目名称、项目类型、地址、采购型号、数量等商业证明；vessel 案例详情原来被大图挤压，商业证明区在约 1292px 后才出现。B51 只修案例详情显示器，不新增前台业务文案，不改 `/global`。
+- 前台显示器调整：`CaseDetailPageContent` 将案例标题、简介和后台事实字段提前到首屏左侧，图片保留在右侧；事实卡继续读取 `project_cases` 与 `cases:detail-labels`，前台只调整布局、密度和响应式，不写死案例数据。
+- 后台内容修正：新增 `scripts/backfill-b51-case-detail-proof.mjs`，支持 dry-run / apply。经 Wynne 明确授权后，已清除 `astrobase-mamison` 生产后台中错误的 `Japan/Yamanashi` 商业证明字段，并把英文标签归回 `Russia`；复跑 dry-run 显示 `No B51 changes needed.`。同步修正 `scripts/backfill-b38-catalog-faq.mjs`，防止旧样板再次把 AstroBase 写成日本山梨。
+- 验收摘要：`git diff --check`、targeted eslint、`npx.cmd tsc --noEmit`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、`npx.cmd next build --webpack` 均通过。构建仅出现既有 PostgreSQL SSL warning、本地 Neon `EACCES` 降级日志和 `/global` edge runtime warning，最终退出码 0。
+- 线上检查：`/cases/astrobase-mamison` 200，`/cases` 200，`/global` 200，未登录 `/admin` 302 到 `/admin/login`。Chrome 线上复核确认 `/cases/astrobase-mamison` 的 H1 约 198px、首个商业事实约 352px，`Yamanashi` / `PROJECT AREA Japan` 不再出现，页面无内部词、无横向溢出，`lang=en`。
+- `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保留。
+- 后续建议：继续由 09 对比 `en.303vessel.cn` 与 vessel 的展示方式、互动体感和页面效果。下一轮优先看 Media Kit 资料中心节奏、案例详情图库 / 询盘位置，或产品筛选交互细节；若属于显示器问题交 01，若属于后台内容或素材缺口交 02 / 03。
