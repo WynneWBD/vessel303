@@ -1066,3 +1066,19 @@ curl -I https://www.vessel303.com/news/<slug>
 - Online checks: Vercel reached `READY`; `/products/e7-gen6-flagship?lang=en`, `/products?lang=en`, and `/global` returned 200, and unauthenticated `/admin` redirected to `/admin/login`. The product detail HTML now places `Buyer Downloads` at text position 639 and `Request E7 buyer pack` at 729, before `Product Gallery`, `Specifications`, and `Product Inquiry`.
 - `/global` boundary: no `/global`, MapLibre, MapTiler, or `/api/map` diff. The Global old 303 Contact / Products exception remains out of scope for B59.
 - Next step: 09 should continue comparing visible display effect and interaction rhythm against `en.303vessel.cn`, especially product detail scroll rhythm, case-detail gallery/inquiry position, and Media Kit resource-center depth. Display-template gaps go to 01; backend content, material, file and field gaps go to 02 / 03; performance/image regressions go to 07.
+
+## B61 Case list visual gallery alignment (2026-06-02)
+
+- Code commit: `0c70a28 fix(cases): make case list more visual`
+- Full SHA: `0c70a28bffba7e8ad98eb0fb9e340669e0102e26`
+- Vercel deployment: `dpl_Fw3KzFBjVer73kUv1p53bFwukwam`
+- Deployment URL: `https://vessel303-k3j9vo0tj-vessel303.vercel.app`
+- Status: `READY`
+- Scope: B61 was a display-template fix for `/cases` after 09 comparison found that the vessel case list still felt less visual than the 303 project gallery rhythm. No case title, location, proof field, tag, image URL, CTA copy, sales promise, backend content, or `/global` behavior was hardcoded in the frontend.
+- Frontend display change: `CasesPageContent` now renders the case list as an image-first responsive gallery. The first published case is featured wider on desktop, each case card uses the CMS cover image as the primary visual, overlays the existing CMS tags/type/index, and keeps CMS-sourced location, description and commercial facts in the lower content area.
+- Backend-control boundary: case names, images, locations, project types, descriptions, tags, area, investment, products, units and detail labels still come from `project_cases` and published `cases:detail-labels`. The frontend only controls layout, image ratio, responsive grid behavior, hover treatment and the icon-only affordance.
+- Validation: `git diff --check`, targeted eslint for `src/components/pages/CasesPageContent.tsx`, `npm.cmd run audit:public-content`, `npm.cmd run audit:published-content`, `npm.cmd run audit:production-links`, `npx.cmd tsc --noEmit`, and `npx.cmd next build --webpack` passed. Build logs only showed existing PostgreSQL SSL warnings, local Neon sandbox `EACCES` fallback logs, Auth.js local `UntrustedHost`, and the known `/global` edge-runtime warning.
+- Local check: production `next start` on port `3177` returned `/cases?lang=en` 200 / prerender cache hit. Chrome extension DOM check confirmed `lang=en`, 8 visible case cards, first card image present, no horizontal overflow, no bad arrow, and no internal words.
+- Online checks: Vercel reached `READY`; `https://www.vessel303.com/cases?lang=en&b61=0c70a28`, `https://www.vessel303.com/cases/astrobase-mamison?lang=en&b61=0c70a28`, and `https://www.vessel303.com/global?b61=0c70a28` returned 200. Unauthenticated `/admin` redirected to `/admin/login`. Online HTML scan found no `Codex`, `B61`, internal owner text, bad arrow, `Japan`, or `Yamanashi` in the checked case paths.
+- `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. Global Contact / Products old 303 exception remains out of scope for B61.
+- Next step: 09 should compare the updated `/cases` gallery against `en.303vessel.cn/case.html` and then choose the next visible display gap. Likely candidates are case detail gallery/inquiry rhythm, product detail scroll rhythm, or product catalog interaction density. Backend content and material gaps should still go to 02 / 03; performance/image regressions go to 07.
