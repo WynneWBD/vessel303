@@ -897,3 +897,15 @@ curl -I https://www.vessel303.com/news/<slug>
 - 线上检查：`/cases` 200，HTML 已命中新编号式布局并包含 `AstroBase`、`Holiday Planet` 等案例内容；`/cases/astrobase-mamison` 200；未登录 `/admin` 302 到 `/admin/login`。
 - `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；源码仍保留 Global `View Products` 到 `https://en.303vessel.cn/products_list.html`、`Contact Team` 到 `https://en.303vessel.cn/contact.html` 的旧站例外。
 - 后续建议：继续由 09 先对比 `en.303vessel.cn` 和 vessel 前台的展示方式、互动体验、页面节奏，再由 00 拆小包。下一轮优先看案例详情页的商业证明布局、产品目录侧栏 / 筛选交互或 Media Kit 资料中心节奏，而不是直接回到内容堆叠。
+
+
+## B46 产品详情首屏采购决策区显示器对齐（2026-06-02）
+
+- 代码提交：`6b8d32d` / `6b8d32d79670eb0561a39d1f500c3461565c2523`，`fbbe80e` / `fbbe80ebf629df71d77003f198b46f9cc4c074b7`，`ea26c6e` / `ea26c6ed13dadb86091a02a7fbc983507ae22311`。
+- Vercel deployment：`dpl_9GFjAJxckqnH1CwUXTmXk4mDZMA9`，状态 `READY`，deployment URL `https://vessel303-dr4s5e41f-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com` 和 `https://vessel303.com`。
+- 本轮定位：09 对比 300 后台、303 产品详情和 vessel 产品详情后，确认主要差距在产品详情首屏采购决策区的展示节奏。303 更像“缩略图轨道 + 大图 + 右侧 sticky 产品 / 价格 / 商务条款 / Consult 面板”，vessel 原通用详情更像长滚动详情页。B46 只修显示器，不新增前台业务文案、不改后台内容模型、不补销售承诺。
+- 前台显示器调整：`CatalogProductDetailContent` 桌面端在多图产品中渲染左侧缩略图轨道、中间大图和右侧 sticky 决策面板；移动端保留横向缩略图；单图产品不保留空缩略图列。右侧面板移除重复长描述，保留产品名、后台事实标签、features、价格展示、Request Quote 和商务条款，并把事实标签 / 商务条款改成紧凑展示。完整 Product Description 仍在下方由 CMS 字段展示。
+- 后台控制边界：所有产品名、图片、badge、事实标签、features、价格、商务条款、Request Quote label、All Products label、详情模块和表单 label 仍来自产品 CMS、属性标签和 `products:ui-labels` / `inquiry-form` published 内容；前台只负责布局、缩略图交互、sticky 行为、响应式和显示密度。
+- 验收摘要：`git diff --check`、targeted eslint、`npx.cmd tsc --noEmit`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links` 均通过；`npx.cmd next build --webpack` 在非沙箱重跑通过，本机沙箱曾因 Neon `EACCES` / Windows build worker 异常失败一次，判定为本机环境限制。Vercel READY 后线上 `/products/e7-gen6-flagship`、`/products`、`/global` 均 200，未登录 `/admin` 302 到 `/admin/login`；Chrome 抽查确认产品详情使用 compact class、右侧面板存在、缩略图 8 个、无横向溢出。
+- `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保留。
+- 后续建议：09 下一轮继续对比产品详情、产品目录、Media Kit 和案例详情的展示方式 / 互动节奏。若差距仍在显示器，交 01；若差距属于后台内容 / 素材缺口，交 02 / 03；不要在前台硬写业务内容。
