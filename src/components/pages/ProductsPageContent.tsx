@@ -487,10 +487,14 @@ export default function ProductsPageContent({
   const heroDescription = moduleDescription(heroModule, lang);
   const primaryCta = itemById(heroModule, 'primary-cta');
   const secondaryCta = itemById(heroModule, 'secondary-cta');
+  const heroImage = itemById(heroModule, 'hero-image');
   const primaryCtaLabel = itemLabel(primaryCta, lang);
   const secondaryCtaLabel = itemLabel(secondaryCta, lang);
   const primaryCtaHref = displayHref(primaryCta?.href);
   const secondaryCtaHref = displayHref(secondaryCta?.href);
+  const heroImageSrc = heroImage?.image_url || itemValue(heroImage, lang) || itemContent(heroImage, lang);
+  const heroImageHref = displayHref(heroImage?.href);
+  const heroImageAlt = itemLabel(heroImage, lang) || heroTitle;
   const breadcrumbHome = itemById(heroModule, 'breadcrumb-home');
   const breadcrumbCurrent = itemById(heroModule, 'breadcrumb-current');
   const breadcrumbHomeLabel = itemLabel(breadcrumbHome, lang);
@@ -511,8 +515,8 @@ export default function ProductsPageContent({
   return (
     <>
       <section className="border-b border-[#DADDE1] bg-[#EEF3F5] pt-16 sm:pt-20">
-        <div className="mx-auto max-w-[1500px] px-4 pb-3 sm:px-6 lg:px-8">
-          <div className={`grid gap-3 lg:items-center ${hasRouteNote ? 'lg:grid-cols-[minmax(0,1fr)_minmax(240px,0.34fr)]' : ''}`}>
+        <div className="mx-auto max-w-[1500px] px-4 pb-4 sm:px-6 lg:px-8">
+          <div className={`grid gap-4 lg:items-stretch ${heroImageSrc ? 'lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.55fr)]' : hasRouteNote ? 'lg:grid-cols-[minmax(0,1fr)_minmax(240px,0.34fr)] lg:items-center' : ''}`}>
             <div>
               {(breadcrumbHomeLabel || breadcrumbCurrentLabel) ? (
                 <div className="text-xs text-[#65707A]">
@@ -545,10 +549,8 @@ export default function ProductsPageContent({
                   ) : null}
                 </div>
               ) : null}
-            </div>
-            {hasRouteNote ? (
-              <div>
-                <div className="border border-[#DADDE1] bg-white/90 p-3">
+              {hasRouteNote ? (
+                <div className="mt-3 max-w-xl border border-[#DADDE1] bg-white/90 p-3">
                   {routeNoteLabel ? (
                     <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#147C94]">{routeNoteLabel}</p>
                   ) : null}
@@ -556,7 +558,41 @@ export default function ProductsPageContent({
                     <p className="mt-1 text-[11px] leading-4 text-[#65707A]">{routeNoteBody}</p>
                   ) : null}
                 </div>
-              </div>
+              ) : null}
+            </div>
+            {heroImageSrc ? (
+              heroImageHref ? (
+                <Link
+                  href={heroImageHref}
+                  data-products-hero-image="true"
+                  className="group relative block min-h-52 overflow-hidden border border-white/70 bg-[#DADDE1] shadow-[0_20px_60px_rgba(31,42,49,0.14)] sm:min-h-64 lg:min-h-72"
+                >
+                  <ProtectedImage
+                    src={heroImageSrc}
+                    alt={heroImageAlt}
+                    fill
+                    priority
+                    className="object-cover transition duration-700 group-hover:scale-105"
+                    sizes="(max-width: 1024px) 100vw, 42vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#111820]/35 via-transparent to-transparent" />
+                </Link>
+              ) : (
+                <div
+                  data-products-hero-image="true"
+                  className="relative min-h-52 overflow-hidden border border-white/70 bg-[#DADDE1] shadow-[0_20px_60px_rgba(31,42,49,0.14)] sm:min-h-64 lg:min-h-72"
+                >
+                  <ProtectedImage
+                    src={heroImageSrc}
+                    alt={heroImageAlt}
+                    fill
+                    priority
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 42vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#111820]/35 via-transparent to-transparent" />
+                </div>
+              )
             ) : null}
           </div>
         </div>
