@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ProtectedImage from '@/components/ProtectedImage'
@@ -59,8 +60,8 @@ export default function CasesPageContent({
       ) : null}
 
       {cases.length > 0 ? (
-        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="space-y-6">
+        <section className="mx-auto max-w-[1500px] px-4 py-8 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {cases.map((item, index) => {
               const name = zh ? item.name_zh : item.name_en
               const location = zh ? item.location_zh : item.location_en
@@ -75,69 +76,75 @@ export default function CasesPageContent({
                 { label: itemLabel(itemById(detailLabelsModule, 'fact-units'), lang), value: item.units_display },
                 { label: itemLabel(itemById(detailLabelsModule, 'fact-area'), lang), value: item.area_display },
               ].filter((fact) => fact.label && fact.value)
+              const featured = index === 0
 
               return (
                 <Link
                   key={item.id}
                   href={`/cases/${item.id}`}
-                  className="group grid overflow-hidden border border-[#E5DED4] bg-white transition-all duration-300 hover:border-[#E36F2C]/35 hover:shadow-[0_24px_60px_rgba(44,42,40,0.10)] lg:grid-cols-[96px_minmax(280px,0.9fr)_minmax(0,1.1fr)]"
+                  className={`group flex min-h-full flex-col overflow-hidden border border-[#E5DED4] bg-white transition-all duration-300 hover:-translate-y-0.5 hover:border-[#E36F2C]/35 hover:shadow-[0_24px_60px_rgba(44,42,40,0.10)] ${featured ? 'xl:col-span-2' : ''}`}
                 >
-                  <div className="flex items-start justify-between gap-4 border-b border-[#E5DED4] bg-[#F5F2ED] px-5 py-4 lg:block lg:border-b-0 lg:border-r lg:px-6 lg:py-7">
-                    <span className="block text-3xl font-black text-[#E36F2C]">
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                    {tags.length > 0 ? (
-                      <div className="flex flex-wrap gap-2 lg:mt-5">
-                        {tags.slice(0, 2).map((tag) => (
-                          <span
-                            key={tag}
-                            className="border border-[#E36F2C]/20 bg-white px-2 py-0.5 text-[10px] tracking-wider text-[#E36F2C]"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-
                   {item.cover_image_url ? (
-                    <div className="relative aspect-[16/10] overflow-hidden bg-[#E5DED4] lg:aspect-auto lg:min-h-[260px]">
+                    <div className={`relative overflow-hidden bg-[#E5DED4] ${featured ? 'aspect-[16/9] md:aspect-[21/10]' : 'aspect-[4/3]'}`}>
                       <ProtectedImage
                         src={item.cover_image_url}
                         alt={name}
                         fill
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
-                        sizes="(max-width: 1024px) 100vw, 38vw"
+                        sizes={featured ? '(max-width: 1280px) 100vw, 58vw' : '(max-width: 768px) 100vw, 32vw'}
                       />
+                      <span className="absolute inset-0 bg-gradient-to-t from-[#16110D]/80 via-[#16110D]/16 to-transparent" />
+                      <div className="absolute left-4 top-4 flex items-center gap-2">
+                        <span className="bg-white/92 px-2.5 py-1 text-[11px] font-black text-[#2C2A28]">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                        {type ? (
+                          <span className="bg-[#E36F2C] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white">
+                            {type}
+                          </span>
+                        ) : null}
+                      </div>
+                      {tags.length > 0 ? (
+                        <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-2">
+                          {tags.slice(0, featured ? 4 : 2).map((tag) => (
+                            <span
+                              key={tag}
+                              className="border border-white/25 bg-white/14 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-white backdrop-blur"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   ) : (
-                    <div className="hidden bg-[#E5DED4] lg:block" />
+                    <div className={`bg-[#E5DED4] ${featured ? 'aspect-[16/9] md:aspect-[21/10]' : 'aspect-[4/3]'}`} />
                   )}
 
-                  <div className="flex min-h-full flex-col p-5 sm:p-6 lg:p-7">
+                  <div className="flex flex-1 flex-col p-5 sm:p-6">
                     {name ? (
-                      <h2 className="text-xl font-black leading-tight text-[#2C2A28] sm:text-2xl">{name}</h2>
+                      <h2 className={`${featured ? 'text-2xl sm:text-3xl' : 'text-xl'} font-black leading-tight text-[#2C2A28]`}>{name}</h2>
                     ) : null}
-                    {(location || type) ? (
-                      <p className="mt-2 text-xs leading-5 text-[#6B6560]">
-                        {[location, type].filter(Boolean).join(' / ')}
+                    {location ? (
+                      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#8A8580]">
+                        {location}
                       </p>
                     ) : null}
                     {desc ? (
-                      <p className="mt-4 line-clamp-3 text-sm leading-6 text-[#6B6560]">{desc}</p>
+                      <p className={`mt-4 text-sm leading-6 text-[#6B6560] ${featured ? 'line-clamp-3' : 'line-clamp-2'}`}>{desc}</p>
                     ) : null}
                     {facts.length > 0 ? (
-                      <div className="mt-6 grid gap-2 border-t border-[#E5DED4] pt-5 sm:grid-cols-2">
-                        {facts.slice(0, 6).map((fact, factIndex) => (
-                          <div key={`${fact.label}-${factIndex}`} className="border border-[#E5DED4] bg-[#FAF7F2] px-3 py-2">
+                      <div className={`mt-6 grid gap-2 border-t border-[#E5DED4] pt-5 ${featured ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+                        {facts.slice(0, featured ? 6 : 4).map((fact, factIndex) => (
+                          <div key={`${fact.label}-${factIndex}`} className="min-w-0 border border-[#E5DED4] bg-[#FAF7F2] px-3 py-2">
                             <span className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9A8F86]">{fact.label}</span>
                             <span className="mt-1 block text-sm font-bold leading-5 text-[#2C2A28]">{fact.value}</span>
                           </div>
                         ))}
                       </div>
                     ) : null}
-                    <span className="mt-6 inline-flex text-sm font-bold text-[#E36F2C] transition-transform duration-300 group-hover:translate-x-1">
-                      →
+                    <span className="mt-auto inline-flex justify-end pt-6 text-[#E36F2C] transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">
+                      <ArrowRight size={20} strokeWidth={2.4} />
                     </span>
                   </div>
                 </Link>
