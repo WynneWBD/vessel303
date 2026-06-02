@@ -252,6 +252,10 @@ export default function CatalogProductDetailContent({
     heroInquiryCta && inquiryTitle ? { href: '#product-inquiry', label: heroInquiryCta, tone: 'primary' } : null,
     allProductsLabel ? { href: '/products', label: allProductsLabel, tone: 'secondary' } : null,
   ].filter((item): item is { href: string; label: string; tone: 'primary' | 'secondary' } => Boolean(item));
+  const hasMediaRail = media.length > 1;
+  const heroGridClass = hasMediaRail
+    ? 'grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,96px)_minmax(0,1fr)_400px] lg:items-start'
+    : 'grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start';
 
   if (!name) return null;
 
@@ -259,22 +263,40 @@ export default function CatalogProductDetailContent({
     <main className="bg-[#F3F7F7] text-[#1F2A31]">
       <section className="border-b border-[#DADDE1] bg-[linear-gradient(180deg,#FFFFFF_0%,#F2F8F8_100%)] pt-28 sm:pt-32">
         <div className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
-            <div className="min-w-0">
+          <div className={heroGridClass}>
+            {hasMediaRail ? (
+              <div className="hidden min-w-0 gap-2 lg:flex lg:max-h-[640px] lg:flex-col lg:overflow-y-auto lg:pr-1">
+                {media.map((src, index) => (
+                  <button
+                    key={`${src}-${index}-rail`}
+                    type="button"
+                    onClick={() => setActiveImageIndex(index)}
+                    className={`relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-md border-2 bg-[#EEF1F3] transition ${
+                      index === activeImageIndex ? 'border-[#147C94]' : 'border-[#DADDE1] opacity-75 hover:opacity-100'
+                    }`}
+                    aria-label={imageLabelPrefix ? `${imageLabelPrefix} ${index + 1}` : undefined}
+                  >
+                    <ProtectedImage src={src} alt={`${name} ${index + 1}`} fill className="object-cover" sizes="96px" />
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
+            <div className={`min-w-0 ${hasMediaRail ? 'lg:col-start-2' : ''}`}>
               {activeImage ? (
-                <div className="relative aspect-[4/3] overflow-hidden rounded-md border border-[#DADDE1] bg-[#EEF1F3] shadow-sm">
+                <div className="relative aspect-[4/3] overflow-hidden rounded-md border border-[#DADDE1] bg-[#EEF1F3] shadow-sm lg:aspect-[5/4]">
                   <ProtectedImage
                     src={activeImage}
                     alt={name}
                     fill
                     priority
                     className="object-cover"
-                    sizes="(max-width: 1024px) 100vw, 62vw"
+                    sizes="(max-width: 1024px) 100vw, 58vw"
                   />
                 </div>
               ) : null}
               {media.length > 1 ? (
-                <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:hidden">
                   {media.map((src, index) => (
                     <button
                       key={`${src}-${index}`}
@@ -292,7 +314,7 @@ export default function CatalogProductDetailContent({
               ) : null}
             </div>
 
-            <aside className="rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm lg:self-start">
+            <aside className={`rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm lg:sticky lg:top-24 lg:self-start ${hasMediaRail ? 'lg:col-start-3' : ''}`}>
               {badge ? <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-[#C65F22]">{badge}</p> : null}
               <h1 className="text-2xl font-black leading-tight tracking-normal text-[#1F2A31] break-words sm:text-3xl">{name}</h1>
               {description ? <p className="mt-4 whitespace-pre-line text-sm leading-7 text-[#5C6670]">{description}</p> : null}
@@ -325,7 +347,7 @@ export default function CatalogProductDetailContent({
               ) : null}
               {termRows.length > 0 ? (
                 <div className="mt-5 border-t border-[#DADDE1] pt-5">
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 gap-2">
                     {termRows.map((value, index) => (
                       <p key={`${value}-${index}`} className="rounded-md bg-[#F7F8F8] px-3 py-2 text-sm font-semibold text-[#1F2A31]">
                         {value}
