@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
+import { ExternalLink, FileText, Image as ImageIcon } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -25,6 +26,7 @@ type MediaKitResource = {
   title_en: string;
   summary_zh: string | null;
   summary_en: string | null;
+  cover_image_url?: string | null;
   file_url: string | null;
   cta_label_zh: string | null;
   cta_label_en: string | null;
@@ -182,26 +184,39 @@ export default function MediaKitPageContent({
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {resources.map((resource) => {
                   const href = resource.cta_href || resource.file_url || '';
+                  const previewUrl = getResourcePreviewUrl(resource);
+                  const title = lang === 'zh' ? resource.title_zh || resource.title_en : resource.title_en || resource.title_zh;
+                  const summary = lang === 'zh'
+                    ? resource.summary_zh || resource.summary_en
+                    : resource.summary_en || resource.summary_zh;
+                  const ctaLabel = lang === 'zh'
+                    ? resource.cta_label_zh || resource.cta_label_en
+                    : resource.cta_label_en || resource.cta_label_zh;
+                  const fileKind = getResourceKind(href || resource.file_url || previewUrl || '');
                   return (
-                    <article key={resource.id} className="flex min-h-44 flex-col justify-between border border-[#E5DED4] bg-white p-6 shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
-                      <div>
-                        <h3 className="text-base font-bold text-[#2C2A28]">{resource.title_en || resource.title_zh}</h3>
-                        {(resource.summary_en || resource.summary_zh) && (
-                          <p className="mt-3 text-xs leading-6 text-[#6B625B]">
-                            {resource.summary_en || resource.summary_zh}
-                          </p>
-                        )}
+                    <article key={resource.id} className="flex min-h-[22rem] flex-col overflow-hidden border border-[#E5DED4] bg-white shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
+                      <ResourcePreview title={title} previewUrl={previewUrl} fileKind={fileKind} />
+                      <div className="flex flex-1 flex-col justify-between p-5">
+                        <div>
+                          <h3 className="text-base font-bold leading-snug text-[#2C2A28]">{title}</h3>
+                          {summary ? (
+                            <p className="mt-3 text-xs leading-6 text-[#6B625B]">
+                              {summary}
+                            </p>
+                          ) : null}
+                        </div>
+                        {href ? (
+                          <a
+                            href={href}
+                            target={isExternalHref(href) ? '_blank' : undefined}
+                            rel={isExternalHref(href) ? 'noopener noreferrer' : undefined}
+                            className="mt-5 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#E36F2C] hover:text-[#C85A1F]"
+                          >
+                            {ctaLabel || resourceCta || title}
+                            <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+                          </a>
+                        ) : null}
                       </div>
-                      {href ? (
-                        <a
-                          href={href}
-                          target={isExternalHref(href) ? '_blank' : undefined}
-                          rel={isExternalHref(href) ? 'noopener noreferrer' : undefined}
-                          className="mt-5 inline-flex text-xs font-semibold uppercase tracking-[0.14em] text-[#E36F2C] hover:text-[#C85A1F]"
-                        >
-                          {resource.cta_label_en || resourceCta || resource.title_en || resource.title_zh}
-                        </a>
-                      ) : null}
                     </article>
                   );
                 })}
@@ -306,6 +321,60 @@ export default function MediaKitPageContent({
 
 function isExternalHref(href: string) {
   return /^https?:\/\//i.test(href)
+}
+
+function getResourcePreviewUrl(resource: MediaKitResource) {
+  if (resource.cover_image_url) return resource.cover_image_url;
+  if (resource.file_url && isImageHref(resource.file_url)) return resource.file_url;
+  return null;
+}
+
+function isImageHref(href: string) {
+  return /\.(avif|gif|jpe?g|png|svg|webp)(\?.*)?$/i.test(href);
+}
+
+function getResourceKind(href: string) {
+  if (!href) return 'LINK';
+  if (isImageHref(href)) return 'IMAGE';
+  const match = href.match(/\.([a-z0-9]+)(?:\?.*)?$/i);
+  return match?.[1]?.slice(0, 6).toUpperCase() || 'LINK';
+}
+
+function ResourcePreview({
+  title,
+  previewUrl,
+  fileKind,
+}: {
+  title: string;
+  previewUrl: string | null;
+  fileKind: string;
+}) {
+  if (previewUrl) {
+    return (
+      <div className="relative aspect-[4/3] overflow-hidden bg-[#211D19]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={previewUrl}
+          alt={title}
+          loading="lazy"
+          className="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.03]"
+        />
+        <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2C2A28]">
+          <ImageIcon aria-hidden="true" className="h-3 w-3" />
+          {fileKind}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex aspect-[4/3] items-center justify-center bg-[#2C2A28] text-[#F5F2ED]">
+      <div className="flex flex-col items-center gap-3">
+        <FileText aria-hidden="true" className="h-9 w-9 text-[#E36F2C]" />
+        <span className="text-xs font-semibold uppercase tracking-[0.22em]">{fileKind}</span>
+      </div>
+    </div>
+  );
 }
 
 function Field({
