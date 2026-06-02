@@ -160,6 +160,107 @@ function DetailModuleBlock({
   );
 }
 
+function BuyerResourceHub({
+  modules,
+  lang,
+  name,
+  title,
+}: {
+  modules: DetailModule[];
+  lang: 'en' | 'zh';
+  name: string;
+  title: string;
+}) {
+  if (modules.length === 0) return null;
+  const hasContent = modules.some((module) => {
+    const moduleTitleText = lang === 'en' ? module.title_en : module.title_cn;
+    const moduleBodyText = lang === 'en' ? module.body_en : module.body_cn;
+    const items = lang === 'en' ? module.items_en ?? [] : module.items_cn ?? [];
+    const images = uniqueImages([module.image_url, ...(module.images ?? [])]);
+    return text(moduleTitleText) || text(moduleBodyText) || items.length > 0 || images.length > 0;
+  });
+  if (!hasContent) return null;
+
+  return (
+    <section id="buyer-resources" className="scroll-mt-28 rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm sm:p-6">
+      {title ? <h2 className="text-2xl font-black leading-tight text-[#1F2A31]">{title}</h2> : null}
+      <div className={title ? 'mt-5 space-y-5' : 'space-y-5'}>
+        {modules.map((module) => {
+          const moduleTitleText = lang === 'en' ? module.title_en : module.title_cn;
+          const moduleBodyText = lang === 'en' ? module.body_en : module.body_cn;
+          const items = lang === 'en' ? module.items_en ?? [] : module.items_cn ?? [];
+          const images = uniqueImages([module.image_url, ...(module.images ?? [])]);
+          const linkItems = items.filter((item) => text(item.href));
+          const textItems = items.filter((item) => !text(item.href));
+          if (!text(moduleTitleText) && !text(moduleBodyText) && items.length === 0 && images.length === 0) return null;
+
+          return (
+            <div key={module.id} className="rounded-md border border-[#ECEFF1] bg-[#F7F8F8] p-4">
+              {moduleTitleText ? <h3 className="text-base font-black leading-tight text-[#1F2A31]">{moduleTitleText}</h3> : null}
+              {moduleBodyText ? <p className="mt-2 whitespace-pre-line text-sm leading-7 text-[#5C6670]">{moduleBodyText}</p> : null}
+              {linkItems.length > 0 ? (
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {linkItems.map((item: DetailModuleItem, index: number) => {
+                    const href = text(item.href);
+                    const card = (
+                      <>
+                        {item.title ? <span className="block text-sm font-black text-[#1F2A31]">{item.title}</span> : null}
+                        {item.body ? <span className="mt-2 block text-sm leading-6 text-[#65707A]">{item.body}</span> : null}
+                      </>
+                    );
+                    const className = 'block rounded-md border border-[#147C94]/20 bg-white p-4 transition hover:border-[#147C94]/60 hover:bg-[#F2F8F8]';
+                    return isInternalHref(href) ? (
+                      <Link key={`${item.title}-${index}`} href={href} className={className}>
+                        {card}
+                      </Link>
+                    ) : (
+                      <a
+                        key={`${item.title}-${index}`}
+                        href={href}
+                        target={/^https?:\/\//i.test(href) ? '_blank' : undefined}
+                        rel={/^https?:\/\//i.test(href) ? 'noopener noreferrer' : undefined}
+                        className={className}
+                      >
+                        {card}
+                      </a>
+                    );
+                  })}
+                </div>
+              ) : null}
+              {textItems.length > 0 ? (
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {textItems.map((item: DetailModuleItem, index: number) => (
+                    <div key={`${item.title}-${index}`} className="rounded-md border border-[#ECEFF1] bg-white p-4">
+                      {item.title ? <p className="text-sm font-semibold text-[#1F2A31]">{item.title}</p> : null}
+                      {item.body ? <p className="mt-2 text-sm leading-6 text-[#65707A]">{item.body}</p> : null}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {images.length > 0 ? (
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {images.slice(0, 4).map((src, index) => (
+                    <div key={`${src}-${index}`} className="relative aspect-[4/3] overflow-hidden rounded-md bg-[#EEF1F3]">
+                      <ProtectedImage
+                        src={src}
+                        alt={`${name} ${index + 1}`}
+                        fill
+                        loading="lazy"
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function RelatedCard({ product }: { product: CatalogProduct }) {
   const { lang } = useLanguage();
   const name = localizedProductName(product, lang);
@@ -254,6 +355,8 @@ export default function CatalogProductDetailContent({
   const visibleModules = (product.detail_modules ?? [])
     .filter((module) => module.is_visible !== false)
     .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0));
+  const resourceModules = visibleModules.filter(isBuyerResourceModule);
+  const contentModules = visibleModules.filter((module) => !isBuyerResourceModule(module));
   const termRows = TERM_FIELDS
     .map((field) => String((lang === 'en' ? terms[field.en] : terms[field.zh]) || terms[field.en] || terms[field.zh] || '').trim())
     .filter(Boolean);
@@ -292,7 +395,11 @@ export default function CatalogProductDetailContent({
     companyPrefix: itemLabel(itemById(inquiryModule, 'form-company-prefix'), lang),
   };
   const inquiryTitle = moduleTitle(inquiryModule, lang);
-  const moduleAnchors = visibleModules
+  const resourceAnchorLabel = downloadsTitle
+    || text(lang === 'en' ? resourceModules[0]?.title_en : resourceModules[0]?.title_cn)
+    || text(resourceModules[0]?.title_en)
+    || text(resourceModules[0]?.title_cn);
+  const moduleAnchors = contentModules
     .map((module, index) => {
       const label = text(lang === 'en' ? module.title_en : module.title_cn) || text(module.title_en) || text(module.title_cn);
       return label ? { href: `#product-module-${index}`, label } : null;
@@ -302,6 +409,7 @@ export default function CatalogProductDetailContent({
     media.length > 1 && galleryTitle ? { href: '#product-gallery', label: galleryTitle } : null,
     (description || features.length > 0) && descriptionTitle ? { href: '#product-description', label: descriptionTitle } : null,
     specs.length > 0 && specsTitle ? { href: '#product-specifications', label: specsTitle } : null,
+    resourceModules.length > 0 && resourceAnchorLabel ? { href: '#buyer-resources', label: resourceAnchorLabel } : null,
     ...moduleAnchors,
     relatedProducts.length > 0 && relatedTitle ? { href: '#related-products', label: relatedTitle } : null,
     inquiryTitle ? { href: '#product-inquiry', label: inquiryTitle } : null,
@@ -310,8 +418,7 @@ export default function CatalogProductDetailContent({
     heroInquiryCta && inquiryTitle ? { href: '#product-inquiry', label: heroInquiryCta, tone: 'primary' } : null,
     allProductsLabel ? { href: '/products', label: allProductsLabel, tone: 'secondary' } : null,
   ].filter((item): item is { href: string; label: string; tone: 'primary' | 'secondary' } => Boolean(item));
-  const buyerResourceLinks = visibleModules
-    .filter(isBuyerResourceModule)
+  const buyerResourceLinks = resourceModules
     .flatMap((module) => (lang === 'en' ? module.items_en ?? [] : module.items_cn ?? [])
       .map((item) => ({
         href: text(item.href),
@@ -531,7 +638,11 @@ export default function CatalogProductDetailContent({
               </section>
             ) : null}
 
-            {visibleModules.map((module, index) => {
+            {resourceModules.length > 0 ? (
+              <BuyerResourceHub modules={resourceModules} lang={lang} name={name} title={resourceAnchorLabel} />
+            ) : null}
+
+            {contentModules.map((module, index) => {
               const moduleHasLinks = ((lang === 'en' ? module.items_en : module.items_cn) ?? []).some((item) => text(item.href));
               return (
                 <div key={module.id}>
