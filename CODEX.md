@@ -860,3 +860,16 @@ curl -I https://www.vessel303.com/news/<slug>
 - 验收摘要：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；本地构建仅出现沙箱 Neon `EACCES` 降级日志和既有 `/global` edge runtime warning，最终退出 0。Vercel READY 后 `npm.cmd run audit:production-links` 通过；线上 `/products/e7-gen6-flagship`、`/products/v9-gen6-standard`、`/products`、`/global` 均 200，未登录 `/admin` 302 到 `/admin/login`。
 - `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` 代码 diff；Global Contact / Products 旧 303 跳转例外继续保留。
 - 后续建议：下一轮继续由 09 用 Chrome 实页对比 `en.303vessel.cn` 的产品详情滚动体验、产品目录交互密度、案例详情呈现方式和 Media Kit 资料中心节奏；若是显示器问题交 01，若是后台内容缺失交 02 / 03，继续避免在前台写死业务内容。
+
+## B43 Contact 展示器对齐与可见文案清理（2026-06-02）
+
+- Code commit: `68ae429 fix(contact): align contact hero display` / `68ae429ab5004dc6ffd180088a33a73fd03e102b`。
+- Cleanup commit: `47883f9 fix(contact): clean visible module copy` / `47883f978d1efbefc7448a31a29044d0610edf41`。
+- Final Vercel deployment: `dpl_9Bkhm7ptGkX4gEagaMMGsfPM5oQr`，deployment URL `https://vessel303-kr7lyjtjz-vessel303.vercel.app`，状态 `READY`，production alias 包含 `https://www.vessel303.com` 和 `https://vessel303.com`。
+- 本轮定位：09 对比后确认 `/contact` 相比 `en.303vessel.cn/contact.html` 缺少大图视觉冲击和清晰联系方式区域。B43 只修 Contact 显示器和后台 published 内容清理，不在前台写死业务文案，不碰 `/global`。
+- 完成范围：`src/components/pages/ContactPageContent.tsx` 读取后台 `contact:hero` image item 并用 `next/image` 渲染为 full-bleed hero 背景；hero proof、联系渠道和表单说明继续来自后台模块或站点配置。`scripts/backfill-b43-contact-display.mjs` 支持 dry-run / apply，只补缺失的 contact hero image / proof items，并清理 `contact:hero`、`contact:channels`、`contact:form` 中遗留的内部说明文案。
+- 可见文案清理：`scripts/backfill-b28-contact-closure.mjs` 和 `src/lib/page-modules-db.ts` 中的 contact 默认说明同步改为客户可见口径，避免 `new leads center`、`contact module`、`page source preserved` 等内部说明再次进入前台 published 内容。
+- 后台内容写入：B43 backfill 已完成 dry-run / apply，随后复跑 dry-run 显示 `B43 contact display dry-run. No changes needed.`；本轮不删除数据、不覆盖无关运营内容。
+- 验收摘要：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；线上 `/contact` 200 / PRERENDER，HTML 中可见 `homepage_banner-05`，且旧内部短语已清除。
+- `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保留。
+- 后续建议：下一轮继续由 09 对比 `en.303vessel.cn` 的展示方式、互动体验和详情页结构，优先判断差距属于显示器问题还是后台内容缺口；不要再把第一优先级放到产品参数细节堆叠。
