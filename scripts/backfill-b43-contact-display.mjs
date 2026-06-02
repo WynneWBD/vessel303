@@ -82,10 +82,62 @@ const CONTACT_HERO_ITEMS = [
   item('hero-proof-03', 'WhatsApp and email', 130, {
     value_zh: 'WhatsApp / Email',
     value_en: 'WhatsApp / Email',
-    content_zh: 'Published contact channels are shown from the contact module',
-    content_en: 'Published contact channels are shown from the contact module',
+    content_zh: 'Reach the project team through the published WhatsApp and email channels',
+    content_en: 'Reach the project team through the published WhatsApp and email channels',
   }),
 ]
+
+const CONTACT_COPY_FIXES = new Map([
+  [
+    'Published contact channels shown on the new site contact page.',
+    'Reach the project team through the published WhatsApp, email, and phone channels.',
+  ],
+  [
+    'The inquiry is saved to the new leads center with the page source preserved.',
+    'Share your project scope so the sales team can review the right model, quantity, and destination.',
+  ],
+  [
+    'Published contact channels are shown from the contact module',
+    'Reach the project team through the published WhatsApp and email channels',
+  ],
+])
+
+function fixCopy(value) {
+  return typeof value === 'string' && CONTACT_COPY_FIXES.has(value)
+    ? CONTACT_COPY_FIXES.get(value)
+    : value
+}
+
+function fixModuleCopy(module) {
+  let changed = false
+  const next = { ...module }
+  for (const key of ['description_zh', 'description_en']) {
+    const fixed = fixCopy(next[key])
+    if (fixed !== next[key]) {
+      next[key] = fixed
+      changed = true
+    }
+  }
+
+  const items = normalizeArray(next.items)
+  const fixedItems = items.map((entry) => {
+    if (!entry || typeof entry !== 'object') return entry
+    const fixedEntry = { ...entry }
+    let itemChanged = false
+    for (const key of ['label_zh', 'label_en', 'content_zh', 'content_en']) {
+      const fixed = fixCopy(fixedEntry[key])
+      if (fixed !== fixedEntry[key]) {
+        fixedEntry[key] = fixed
+        itemChanged = true
+      }
+    }
+    if (itemChanged) changed = true
+    return fixedEntry
+  })
+
+  next.items = fixedItems
+  return { changed, module: next }
+}
 
 async function tableExists(client, tableName) {
   const res = await client.query('SELECT to_regclass($1) AS table_name', [tableName])
@@ -121,6 +173,32 @@ async function patchContactHero(client, changes) {
   }
 }
 
+async function patchContactCopy(client, changes) {
+  const res = await client.query(
+    `SELECT id, module_key, description_zh, description_en, items
+     FROM page_modules
+     WHERE page_key = 'contact'
+       AND module_key IN ('hero', 'channels', 'form')`,
+  )
+
+  for (const row of res.rows) {
+    const { changed, module } = fixModuleCopy(row)
+    if (!changed) continue
+    changes.push(`contact:${row.module_key} clean customer-visible copy`)
+    if (apply) {
+      await client.query(
+        `UPDATE page_modules
+         SET description_zh = $2,
+             description_en = $3,
+             items = $4::jsonb,
+             updated_at = NOW()
+         WHERE id = $1`,
+        [row.id, module.description_zh, module.description_en, JSON.stringify(module.items)],
+      )
+    }
+  }
+}
+
 async function main() {
   const client = await pool.connect()
   const changes = []
@@ -131,6 +209,7 @@ async function main() {
       throw new Error('page_modules table is missing')
     }
     await patchContactHero(client, changes)
+    await patchContactCopy(client, changes)
     if (apply) {
       await client.query('COMMIT')
     } else {

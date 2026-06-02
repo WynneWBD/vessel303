@@ -979,8 +979,8 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     module_type: 'fixed-content',
     title_zh: 'Contact Channels',
     title_en: 'Contact Channels',
-    description_zh: 'Published contact channels shown on the new site contact page.',
-    description_en: 'Published contact channels shown on the new site contact page.',
+    description_zh: 'Reach the project team through the published WhatsApp, email, and phone channels.',
+    description_en: 'Reach the project team through the published WhatsApp, email, and phone channels.',
     items: [
       { id: 'whatsapp', href: 'https://wa.me/8618024176679', label_zh: 'WhatsApp', label_en: 'WhatsApp', content_zh: '+86 180 2417 6679', content_en: '+86 180 2417 6679', is_visible: true, sort_order: 10 },
       { id: 'email', href: 'mailto:303vessel@303industries.cn', label_zh: 'Email', label_en: 'Email', content_zh: '303vessel@303industries.cn', content_en: '303vessel@303industries.cn', is_visible: true, sort_order: 20 },
@@ -999,8 +999,8 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     module_type: 'form',
     title_zh: 'Send your project brief',
     title_en: 'Send your project brief',
-    description_zh: 'The inquiry is saved to the new leads center with the page source preserved.',
-    description_en: 'The inquiry is saved to the new leads center with the page source preserved.',
+    description_zh: 'Share your project scope so the sales team can review the right model, quantity, and destination.',
+    description_en: 'Share your project scope so the sales team can review the right model, quantity, and destination.',
     items: [
       { id: 'inquiry-type', label_zh: 'Contact Inquiry', label_en: 'Contact Inquiry', is_visible: true, sort_order: 10 },
       { id: 'form-eyebrow', label_zh: 'Inquiry Form', label_en: 'Inquiry Form', is_visible: true, sort_order: 20 },
