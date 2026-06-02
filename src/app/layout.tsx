@@ -7,8 +7,10 @@ import ImageProtection from "@/components/ImageProtection";
 import SiteAnalyticsTracker from "@/components/SiteAnalyticsTracker";
 import FloatingContact from "@/components/FloatingContact";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { SiteModulesProvider } from "@/contexts/SiteModulesContext";
 import { getGoogleSiteVerificationToken } from "@/lib/google-site-verification";
 import { getStoredSiteSettings, type SiteSettings } from "@/lib/admin-settings-db";
+import { listPublishedPageModules } from "@/lib/page-modules-db";
 import { SITE_URL } from "@/lib/seo";
 
 const dmSans = DM_Sans({
@@ -73,17 +75,24 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const siteModules = await listPublishedPageModules('site').catch((err) => {
+    console.error('[layout] site modules unavailable', err);
+    return [];
+  });
+
   return (
     <html lang="en" className={`h-full antialiased ${dmSans.variable} ${inter.variable}`}>
       <body className="min-h-full flex flex-col bg-[#F5F2ED]">
         <LanguageProvider>
-          <SessionProviderWrapper>{children}</SessionProviderWrapper>
-          <FloatingContact />
+          <SiteModulesProvider initialModules={siteModules}>
+            <SessionProviderWrapper>{children}</SessionProviderWrapper>
+            <FloatingContact />
+          </SiteModulesProvider>
         </LanguageProvider>
         <Suspense fallback={null}>
           <SiteAnalyticsTracker />

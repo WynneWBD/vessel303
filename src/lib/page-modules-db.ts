@@ -47,7 +47,25 @@ export function pageModulePublicPaths(pageKey: string): string[] {
   if (pageKey === 'contact') return ['/contact']
   if (pageKey === 'auth') return ['/login', '/signup']
   if (pageKey === 'account') return ['/account']
-  if (pageKey === 'site') return ['/', '/products', '/cases', '/about', '/faq', '/news', '/media-kit']
+  if (pageKey === 'site') {
+    return [
+      '/',
+      '/products',
+      '/cases',
+      '/about',
+      '/faq',
+      '/news',
+      '/media-kit',
+      '/contact',
+      '/display',
+      '/scenarios/tourism',
+      '/scenarios/commercial',
+      '/scenarios/public',
+      '/innovation/viie',
+      '/innovation/vipc',
+      '/innovation/vols',
+    ]
+  }
   return []
 }
 
