@@ -8,7 +8,7 @@ import {
   isPageModuleTemplateAllowedOnPage,
   type PageModuleTemplate,
 } from '@/lib/page-module-templates'
-import { DEFAULT_CONTACT_URL, SITE_CONTACT_HREF, SITE_PRODUCTS_HREF } from '@/lib/site-links'
+import { DEFAULT_CONTACT_URL, SITE_CONTACT_HREF, SITE_PRODUCTS_HREF, normalizeSiteHref } from '@/lib/site-links'
 
 export const PAGE_MODULE_PAGE_KEYS = [
   'home',
@@ -2212,6 +2212,24 @@ function normalizeRow(row: DbPageModuleRow): PageModuleRow {
   }
 }
 
+function shouldPreserveLegacyPublishedHref(row: PageModuleRow) {
+  return row.page_key === 'contact' && row.module_key === 'backup'
+}
+
+function normalizePublishedRow(row: DbPageModuleRow): PageModuleRow {
+  const normalized = normalizeRow(row)
+  if (shouldPreserveLegacyPublishedHref(normalized)) return normalized
+
+  return {
+    ...normalized,
+    items: normalized.items.map((item) => {
+      const href = item.href ? normalizeSiteHref(item.href, '') : ''
+      if (!href || href === item.href) return item
+      return { ...item, href }
+    }),
+  }
+}
+
 function normalizeDraftRow(row: DbPageModuleDraftRow): PageModuleRow {
   return {
     ...row,
@@ -2801,7 +2819,7 @@ export async function listPublishedPageModules(pageKey?: string): Promise<PageMo
     params,
   )
 
-  return res.rows.map(normalizeRow)
+  return res.rows.map(normalizePublishedRow)
 }
 
 export async function getPublishedPageModule(pageKey: string, moduleKey: string): Promise<PageModuleRow | null> {
@@ -2830,7 +2848,7 @@ export async function getPublishedPageModule(pageKey: string, moduleKey: string)
     [pageKey, moduleKey],
   )
 
-  return res.rows[0] ? normalizeRow(res.rows[0]) : null
+  return res.rows[0] ? normalizePublishedRow(res.rows[0]) : null
 }
 
 export async function getPageModuleDraft(pageKey: string, moduleKey: string): Promise<PageModuleRow | null> {

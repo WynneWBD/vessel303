@@ -94,6 +94,13 @@ function isLegacyProducts(href) {
   return href.includes('303vessel.cn/products_list.html')
 }
 
+function legacyReferencesFromHtml(html) {
+  const references = []
+  if (html.includes('303vessel.cn/contact.html')) references.push('303vessel.cn/contact.html')
+  if (html.includes('303vessel.cn/products_list.html')) references.push('303vessel.cn/products_list.html')
+  return references
+}
+
 function publicPathFromRoute(route) {
   try {
     return new URL(route, baseUrl).pathname
@@ -136,7 +143,8 @@ for (const route of targetRoutes) {
   const hrefs = hrefsFromHtml(fetched.body)
   const legacyContact = hrefs.filter(isLegacyContact)
   const legacyProducts = hrefs.filter(isLegacyProducts)
-  scanned.push({ route, url, status: fetched.status, hrefs: hrefs.length, legacyContact, legacyProducts })
+  const legacyReferences = legacyReferencesFromHtml(fetched.body)
+  scanned.push({ route, url, status: fetched.status, hrefs: hrefs.length, legacyContact, legacyProducts, legacyReferences })
 
   for (const href of hrefs) {
     const internal = normalizeInternalHref(href, route)
@@ -153,6 +161,10 @@ for (const route of targetRoutes) {
 
   for (const href of [...legacyContact, ...legacyProducts]) {
     violations.push({ route, reason: 'legacy-link-outside-global', href })
+  }
+
+  for (const reference of legacyReferences) {
+    violations.push({ route, reason: 'legacy-reference-outside-global', href: reference })
   }
 }
 

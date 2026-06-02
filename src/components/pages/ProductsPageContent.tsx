@@ -517,7 +517,7 @@ export default function ProductsPageContent({
               {(breadcrumbHomeLabel || breadcrumbCurrentLabel) ? (
                 <div className="text-xs text-[#65707A]">
                   {breadcrumbHomeLabel && breadcrumbHome?.href ? (
-                    <Link href={breadcrumbHome.href} className="hover:text-[#147C94]">{breadcrumbHomeLabel}</Link>
+                    <Link href={displayHref(breadcrumbHome.href)} className="hover:text-[#147C94]">{breadcrumbHomeLabel}</Link>
                   ) : null}
                   {breadcrumbHomeLabel && breadcrumbCurrentLabel ? <span className="mx-2">/</span> : null}
                   {breadcrumbCurrentLabel ? <span>{breadcrumbCurrentLabel}</span> : null}
