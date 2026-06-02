@@ -947,6 +947,8 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
   const isInnovation = moduleType === 'innovation-story';
   const isFuture = moduleType === 'future-explorer';
   const isDark = isInnovation || isFuture;
+  const featuredCard = cards[0];
+  const secondaryCards = cards.slice(1);
 
   if (!title && !description && cards.length === 0) return null;
 
@@ -1090,13 +1092,13 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
 
   return (
     <section
-      className={`${isDark ? 'bg-[#1F1C19] text-white' : 'bg-[#F7F1E9] text-[#241F1B]'} border-b border-[#E5DED4] py-16 lg:py-24`}
+      className={`${isDark ? 'bg-[#1F1C19] text-white' : 'bg-[#F7F1E9] text-[#241F1B]'} border-b border-[#E5DED4] py-14 lg:py-20`}
       data-page-module={`home:${pageModule.module_key}`}
       data-page-key="home"
       data-module-key={pageModule.module_key}
     >
-      <div className="mx-auto max-w-[1480px] px-4 sm:px-6 lg:px-10">
-        <div className={`${isLargeProducts ? 'lg:grid-cols-[0.58fr_0.42fr]' : 'lg:grid-cols-[0.74fr_0.82fr]'} grid gap-6 lg:items-end`}>
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
+        <div className="grid gap-6 lg:grid-cols-[0.78fr_0.92fr] lg:items-end">
           <div>
             {eyebrow ? (
               <p
@@ -1109,7 +1111,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
             ) : null}
             {title ? (
               <h2
-                className={`${isLargeProducts ? 'lg:text-6xl' : 'lg:text-5xl'} max-w-4xl font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.03] sm:text-4xl`}
+                className="max-w-5xl font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.03] sm:text-4xl lg:text-6xl"
                 data-page-module-field={`title_${lang}`}
               >
                 {title}
@@ -1126,74 +1128,122 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
           ) : null}
         </div>
 
-        {cards.length > 0 ? (
-          <div
-            className={`${isLargeProducts ? 'lg:grid-cols-2' : isModelStrip ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} mt-10 grid gap-4 md:grid-cols-2`}
-          >
-            {cards.map((card, index) => {
-              const article = (
+        {featuredCard ? (
+          <div className="mt-10 grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+            {(() => {
+              const featuredArticle = (
                 <article
-                  className={`${isDark ? 'border-white/12 bg-white/[0.06]' : 'border-[#E5DED4] bg-white'} group flex h-full flex-col overflow-hidden border`}
-                  data-page-module-item={card.id}
+                  className="group relative flex min-h-[460px] overflow-hidden bg-[#241F1B] lg:min-h-[660px]"
+                  data-page-module-item={featuredCard.id}
                 >
-                  {card.image ? (
-                    <div
-                      className={`${isLargeProducts ? 'aspect-[16/10] min-h-[280px] lg:min-h-[410px]' : isModelStrip ? 'aspect-[4/3]' : 'aspect-[16/11]'} relative overflow-hidden bg-[#DCD5CC]`}
-                    >
-                      <Image
-                        src={card.image}
-                        alt={card.title}
-                        fill
-                        loading={index === 0 && isLargeProducts ? 'eager' : 'lazy'}
-                        className="object-cover transition duration-700 group-hover:scale-[1.035]"
-                        sizes={
-                          isLargeProducts
-                            ? '(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 720px'
-                            : isModelStrip
-                              ? '(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw'
-                              : '(max-width: 768px) 100vw, 33vw'
-                        }
-                        data-page-module-field="image_url"
-                      />
-                    </div>
+                  {featuredCard.image ? (
+                    <Image
+                      src={featuredCard.image}
+                      alt={featuredCard.title}
+                      fill
+                      loading="lazy"
+                      className="object-cover transition duration-700 group-hover:scale-[1.035]"
+                      sizes="(max-width: 1024px) 100vw, 62vw"
+                      data-page-module-field="image_url"
+                    />
                   ) : null}
-                  <div className={`${isLargeProducts ? 'p-6 lg:p-8' : 'p-5 lg:p-6'} flex flex-1 flex-col`}>
-                    {card.meta ? (
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#11100E]/94 via-[#11100E]/34 to-transparent" />
+                  <div className="relative mt-auto max-w-3xl p-6 text-white sm:p-8 lg:p-10">
+                    {featuredCard.meta ? (
                       <p
-                        className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#E36F2C]"
+                        className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#F2A36E]"
                         data-page-module-field={`value_${lang}`}
                       >
-                        {card.meta}
+                        {featuredCard.meta}
                       </p>
                     ) : null}
-                    {card.title ? (
+                    {featuredCard.title ? (
                       <h3
-                        className={`${isLargeProducts ? 'text-2xl lg:text-3xl' : 'text-xl'} font-[family-name:var(--font-heading)] font-medium leading-tight`}
+                        className="font-[family-name:var(--font-heading)] text-3xl font-light leading-tight sm:text-4xl lg:text-6xl"
                         data-page-module-field={`label_${lang}`}
                       >
-                        {card.title}
+                        {featuredCard.title}
                       </h3>
                     ) : null}
-                    {card.body ? (
+                    {featuredCard.body ? (
                       <p
-                        className={`${isDark ? 'text-white/62' : 'text-[#6B625B]'} mt-4 text-sm leading-6`}
+                        className="mt-5 max-w-2xl text-sm leading-7 text-white/70 sm:text-base"
                         data-page-module-field={`content_${lang}`}
                       >
-                        {card.body}
+                        {featuredCard.body}
                       </p>
                     ) : null}
                   </div>
                 </article>
               );
 
-              return card.href ? (
-                <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
-                  {article}
+              return featuredCard.href ? (
+                <Link href={featuredCard.href} {...externalLinkProps(featuredCard.href)} className="block h-full">
+                  {featuredArticle}
                 </Link>
-              ) : (
-                <div key={card.id} className="h-full">{article}</div>
-              );
-            })}
+              ) : featuredArticle;
+            })()}
+
+            {secondaryCards.length > 0 ? (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                {secondaryCards.map((card, index) => {
+                  const compactArticle = (
+                    <article
+                      className={`${isDark ? 'border-white/12 bg-white/[0.06]' : 'border-[#E5DED4] bg-white'} group grid min-h-[220px] overflow-hidden border sm:grid-cols-[0.88fr_1.12fr] lg:min-h-[213px]`}
+                      data-page-module-item={card.id}
+                    >
+                      {card.image ? (
+                        <div className="relative min-h-[180px] overflow-hidden bg-[#DCD5CC] sm:min-h-full">
+                          <Image
+                            src={card.image}
+                            alt={card.title}
+                            fill
+                            loading="lazy"
+                            className="object-cover transition duration-700 group-hover:scale-[1.035]"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 42vw, 22vw"
+                            data-page-module-field="image_url"
+                          />
+                        </div>
+                      ) : null}
+                      <div className="flex flex-col justify-end p-5 lg:p-6">
+                        {card.meta ? (
+                          <p
+                            className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#E36F2C]"
+                            data-page-module-field={`value_${lang}`}
+                          >
+                            {card.meta}
+                          </p>
+                        ) : null}
+                        {card.title ? (
+                          <h3
+                            className="font-[family-name:var(--font-heading)] text-xl font-medium leading-tight lg:text-2xl"
+                            data-page-module-field={`label_${lang}`}
+                          >
+                            {card.title}
+                          </h3>
+                        ) : null}
+                        {card.body ? (
+                          <p
+                            className={`${isDark ? 'text-white/62' : 'text-[#6B625B]'} mt-3 line-clamp-3 text-sm leading-6`}
+                            data-page-module-field={`content_${lang}`}
+                          >
+                            {card.body}
+                          </p>
+                        ) : null}
+                      </div>
+                    </article>
+                  );
+
+                  return card.href ? (
+                    <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                      {compactArticle}
+                    </Link>
+                  ) : (
+                    <div key={`${card.id}-${index}`} className="h-full">{compactArticle}</div>
+                  );
+                })}
+              </div>
+            ) : null}
           </div>
         ) : null}
 
