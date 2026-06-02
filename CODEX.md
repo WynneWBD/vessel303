@@ -873,3 +873,15 @@ curl -I https://www.vessel303.com/news/<slug>
 - 验收摘要：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；线上 `/contact` 200 / PRERENDER，HTML 中可见 `homepage_banner-05`，且旧内部短语已清除。
 - `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保留。
 - 后续建议：下一轮继续由 09 对比 `en.303vessel.cn` 的展示方式、互动体验和详情页结构，优先判断差距属于显示器问题还是后台内容缺口；不要再把第一优先级放到产品参数细节堆叠。
+
+## B44 全站浮动联系显示器对齐（2026-06-02）
+
+- Code commit: `7fd2089 feat(site): strengthen floating contact rail`
+- Full SHA: `7fd208924e6925be1908ed914004f75e81e427b7`
+- Vercel deployment: `dpl_Egy5ntoYb8gsoWhL6TUD8iMHcNho`，状态 `READY`，deployment URL `https://vessel303-onrxxhhnz-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com` 和 `https://vessel303.com`。
+- 本轮定位：09 对比 `en.303vessel.cn` 后确认旧英文站在产品、详情、案例和联系路径中一直有更强的固定联系入口。B44 只修全站浮动联系“显示器”，让非 Global 页面具备更接近 303 的右侧销售联系栏；不新增前台业务文案、不改后台内容来源、不写死联系方式。
+- 前台显示器调整：`src/components/FloatingContact.tsx` 从后台 `site:floating-contact` published 模块读取 WhatsApp、Email、Project Inquiry 等配置，并在桌面端渲染为右侧固定联系栏，移动端渲染为底部紧凑操作条。图标、布局和响应式由前台负责；label、号码、邮箱、链接和显示状态继续由后台控制。
+- 后台控制边界：所有可见文字、联系方式和 CTA 链接仍来自后台 published 内容或站点配置；前台只负责展示样式、图标映射、链接规范化和响应式，不在 TSX 中写入新的销售文案或联系方式。
+- `/global` 边界：`FloatingContact` 继续在 `/global` 路径返回 `null`，不向 Global 注入新站浮动联系栏。本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；线上 `/global` 可见 `View Products` 仍指向 `https://en.303vessel.cn/products_list.html`，`Contact Team` 仍指向 `https://en.303vessel.cn/contact.html`。
+- 验收摘要：`git diff --check`、targeted eslint、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；Vercel READY 后线上 `/`、`/products`、`/contact`、`/global` 均 200。Chrome 线上复核确认 `/products` 和 `/contact` 可见右侧浮动联系栏，且 `/global` 不显示该新站浮动栏。
+- 后续建议：下一轮继续由 09 对比 `en.303vessel.cn` 的展示方式、互动体验和详情页结构，重点看产品目录侧栏/筛选交互、案例列表与详情的浏览节奏、Media Kit 资料中心节奏，而不是先回到产品参数堆叠。
