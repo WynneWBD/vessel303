@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { ExternalLink, FileText, Image as ImageIcon } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { trackFormSubmitSuccess } from '@/lib/site-analytics-client';
 import { buildLeadSource } from '@/lib/site-links';
@@ -351,13 +352,13 @@ function ResourcePreview({
 }) {
   if (previewUrl) {
     return (
-      <div className="relative aspect-[4/3] overflow-hidden bg-[#211D19]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+      <div className="group relative aspect-[4/3] overflow-hidden bg-[#211D19]">
+        <ProtectedImage
           src={previewUrl}
           alt={title}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.03]"
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 360px"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
         />
         <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2C2A28]">
           <ImageIcon aria-hidden="true" className="h-3 w-3" />
