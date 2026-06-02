@@ -93,6 +93,14 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems }: Pr
   const hasBackupContent = Boolean(backupModule?.is_visible !== false && (backupTitle || backupDescription || backupLink))
   const faqPanelTitle = moduleTitle(faqPanelModule, lang)
   const faqPanelDescription = moduleDescription(faqPanelModule, lang)
+  const hasFaqPanel = Boolean(
+    faqPanelModule?.is_visible !== false &&
+    purchaseFaqItems.length > 0 &&
+    (faqPanelTitle || faqPanelDescription),
+  )
+  const primaryFaqItems = hasFaqPanel ? purchaseFaqItems.slice(0, 4) : []
+  const secondaryFaqItems = hasFaqPanel ? purchaseFaqItems.slice(4, 8) : []
+  const hasSupportPanel = hasBackupContent || hasFaqPanel
   const hasAnyContent = pageModules.some((module) => module.is_visible !== false)
 
   return (
@@ -194,50 +202,80 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems }: Pr
 
         {formModule && formModule.is_visible !== false ? (
           <section className="px-4 py-14 sm:py-16">
-            <div className={`mx-auto grid gap-8 ${hasBackupContent ? 'max-w-6xl lg:grid-cols-[minmax(0,0.8fr)_minmax(420px,1fr)]' : 'max-w-3xl'}`}>
-              {hasBackupContent ? (
-                <div>
-                  <div className="mt-8 border border-[#DADDE1] bg-white p-5">
-                    {backupTitle ? <div className="text-sm font-bold text-[#1F2A31]">{backupTitle}</div> : null}
-                    {backupDescription ? <p className="mt-2 text-sm leading-6 text-[#5C6670]">{backupDescription}</p> : null}
-                    {backupLink?.href && itemLabel(backupLink, lang) ? (
-                      <a
-                        href={backupLink.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-4 inline-flex text-sm font-bold text-[#E36F2C] hover:text-[#C85A1F]"
-                      >
-                        {itemLabel(backupLink, lang)}
-                      </a>
-                    ) : null}
-                  </div>
+            <div className={`mx-auto grid gap-8 ${hasSupportPanel ? 'max-w-7xl lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.78fr)] lg:items-start' : 'max-w-3xl'}`}>
+              {hasSupportPanel ? (
+                <div className="space-y-5">
+                  {hasFaqPanel ? (
+                    <div className="border border-[#DADDE1] bg-white p-5 sm:p-6">
+                      <div className="border-b border-[#E5E0DA] pb-5">
+                        {faqPanelTitle ? (
+                          <h2 className="text-2xl font-black tracking-normal text-[#1F2A31] sm:text-3xl">
+                            {faqPanelTitle}
+                          </h2>
+                        ) : null}
+                        {faqPanelDescription ? (
+                          <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5C6670]">
+                            {faqPanelDescription}
+                          </p>
+                        ) : null}
+                      </div>
+                      {primaryFaqItems.length > 0 ? (
+                        <div className="divide-y divide-[#E5E0DA]">
+                          {primaryFaqItems.map((item) => {
+                            const question = lang === 'zh' ? item.question_zh : item.question_en
+                            const answer = lang === 'zh' ? item.answer_zh : item.answer_en
+                            if (!question || !answer) return null
+                            return (
+                              <article key={item.id} className="py-4">
+                                <h3 className="text-base font-black leading-snug text-[#1F2A31]">{question}</h3>
+                                <p className="mt-2 text-sm leading-7 text-[#5C6670]">{answer}</p>
+                              </article>
+                            )
+                          })}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {hasBackupContent ? (
+                    <div className="border border-[#DADDE1] bg-white p-5">
+                      {backupTitle ? <div className="text-sm font-bold text-[#1F2A31]">{backupTitle}</div> : null}
+                      {backupDescription ? <p className="mt-2 text-sm leading-6 text-[#5C6670]">{backupDescription}</p> : null}
+                      {backupLink?.href && itemLabel(backupLink, lang) ? (
+                        <a
+                          href={backupLink.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-4 inline-flex text-sm font-bold text-[#E36F2C] hover:text-[#C85A1F]"
+                        >
+                          {itemLabel(backupLink, lang)}
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
-              <ConversionInquiryForm
-                source={source}
-                inquiryType={formInquiryType}
-                model={formModel}
-                titleEn={formModule.title_en ?? ''}
-                titleZh={formModule.title_zh ?? ''}
-                descriptionEn={formModule.description_en ?? ''}
-                descriptionZh={formModule.description_zh ?? ''}
-                labels={formLabels}
-              />
+              <div className={hasSupportPanel ? 'lg:sticky lg:top-24' : undefined}>
+                <ConversionInquiryForm
+                  source={source}
+                  inquiryType={formInquiryType}
+                  model={formModel}
+                  titleEn={formModule.title_en ?? ''}
+                  titleZh={formModule.title_zh ?? ''}
+                  descriptionEn={formModule.description_en ?? ''}
+                  descriptionZh={formModule.description_zh ?? ''}
+                  labels={formLabels}
+                />
+              </div>
             </div>
           </section>
         ) : null}
 
-        {faqPanelModule?.is_visible !== false && purchaseFaqItems.length > 0 && (faqPanelTitle || faqPanelDescription) ? (
+        {secondaryFaqItems.length > 0 ? (
           <section className="border-y border-[#DADDE1] bg-white px-4 py-14 sm:py-16">
             <div className="mx-auto max-w-6xl">
-              <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
-                <div>
-                  {faqPanelTitle ? <h2 className="text-3xl font-black tracking-normal text-[#1F2A31]">{faqPanelTitle}</h2> : null}
-                  {faqPanelDescription ? <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5C6670]">{faqPanelDescription}</p> : null}
-                </div>
-              </div>
               <div className="grid gap-4 md:grid-cols-2">
-                {purchaseFaqItems.slice(0, 8).map((item) => {
+                {secondaryFaqItems.map((item) => {
                   const question = lang === 'zh' ? item.question_zh : item.question_en
                   const answer = lang === 'zh' ? item.answer_zh : item.answer_en
                   if (!question || !answer) return null
