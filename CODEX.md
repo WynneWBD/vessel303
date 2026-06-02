@@ -1098,3 +1098,18 @@ curl -I https://www.vessel303.com/news/<slug>
 - Performance smoke: online curl timing was about `0.17s` total for the case detail page and `0.16s` total for the case list. `/global` remained 200 and was not modified.
 - `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. Global Contact / Products old 303 exception remains unchanged.
 - Next step: 09 should compare the updated case detail page against `en.303vessel.cn` project browsing rhythm and then choose the next visible display gap. Likely candidates are product catalog interaction density, product detail scroll rhythm, or Media Kit resource-center depth. Display-template gaps go to 01; backend content/material/field gaps go to 02 / 03; performance/image regressions go to 07.
+
+## B64 Media Kit primary resource display alignment (2026-06-02)
+
+- Code commit: `2f8f120 fix(media-kit): feature primary resource card`
+- Full SHA: `2f8f120f34b9173c5eaa0b0255e048a7c37bf446`
+- Vercel deployment: `dpl_5Zb16zCkHdzkHeZKZizRWqUHSoTx`
+- Deployment URL: `https://vessel303-olrxzhloj-vessel303.vercel.app`
+- Status: `READY`
+- Scope: B64 was a display-template fix for `/media-kit` after 09 comparison found that the page had backend-published resources but still read like a plain request form instead of a stronger resource-center entry. No media resource title, file URL, image URL, contact value, CTA copy, sales promise, backend content or `/global` behavior was hardcoded in the frontend.
+- Frontend display change: `MediaKitPageContent` now derives resource entries from published Media Kit CMS records, features the first resource as a larger visual card, renders remaining resources as compact cards, and keeps the request form as the right-side action panel.
+- Backend-control boundary: all visible resource titles, summaries, CTA labels, file URLs, cover images and form labels still come from published Media Kit CMS records and `media-kit` page modules. The frontend only controls card hierarchy, image ratio, responsive grid behavior and link rendering.
+- Validation: `git diff --check`, targeted eslint for `src/components/pages/MediaKitPageContent.tsx`, `npm.cmd run audit:public-content`, `npm.cmd run audit:published-content`, `npm.cmd run audit:production-links`, `npx.cmd tsc --noEmit`, and `npx.cmd next build --webpack` passed. Build logs only showed existing PostgreSQL SSL warnings, local Neon sandbox `EACCES` fallback logs, and the known `/global` edge-runtime warning.
+- Online checks: Vercel reached `READY`; `https://www.vessel303.com/media-kit?lang=en` returned 200 and the page HTML was served from deployment `dpl_5Zb16zCkHdzkHeZKZizRWqUHSoTx`. Unauthenticated `/admin` redirected to `/admin/login`. Online HTML confirmed published Media Kit resources and no `Codex`, `B64`, internal owner text or 300-alignment notes.
+- `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. Global Contact / Products old 303 exception remains unchanged.
+- Next step: 09 should compare the updated Media Kit resource-center rhythm against `en.303vessel.cn` and then choose the next visible display gap. Likely candidates are product catalog interaction density, product detail scroll rhythm, or Contact / FAQ purchase-flow rhythm. Display-template gaps go to 01; backend content/material/file gaps go to 02 / 03; performance/image regressions go to 07.
