@@ -56,6 +56,15 @@ function isInternalHref(href: string) {
   return href.startsWith('/') && !href.startsWith('//');
 }
 
+function isBuyerResourceModule(module: DetailModule) {
+  const marker = [
+    module.id,
+    module.title_en,
+    module.title_cn,
+  ].map((value) => text(value).toLowerCase()).join(' ');
+  return /buyer|download|resource|material/.test(marker);
+}
+
 function localizedProductName(product: CatalogProduct, lang: 'en' | 'zh') {
   return lang === 'en' ? product.name_en || product.name_cn : product.name_cn || product.name_en;
 }
@@ -301,6 +310,16 @@ export default function CatalogProductDetailContent({
     heroInquiryCta && inquiryTitle ? { href: '#product-inquiry', label: heroInquiryCta, tone: 'primary' } : null,
     allProductsLabel ? { href: '/products', label: allProductsLabel, tone: 'secondary' } : null,
   ].filter((item): item is { href: string; label: string; tone: 'primary' | 'secondary' } => Boolean(item));
+  const buyerResourceLinks = visibleModules
+    .filter(isBuyerResourceModule)
+    .flatMap((module) => (lang === 'en' ? module.items_en ?? [] : module.items_cn ?? [])
+      .map((item) => ({
+        href: text(item.href),
+        title: text(item.title),
+        body: text(item.body),
+      })))
+    .filter((item) => item.href && (item.title || item.body))
+    .slice(0, 3);
   const hasMediaRail = media.length > 1;
   const heroGridClass = hasMediaRail
     ? 'grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,96px)_minmax(0,1fr)_400px] lg:items-start'
@@ -392,6 +411,37 @@ export default function CatalogProductDetailContent({
                 >
                   {heroInquiryCta}
                 </a>
+              ) : null}
+              {buyerResourceLinks.length > 0 ? (
+                <div className="mt-5 border-t border-[#DADDE1] pt-5">
+                  {downloadsTitle ? <p className="mb-3 text-xs font-black uppercase tracking-[0.16em] text-[#65707A]">{downloadsTitle}</p> : null}
+                  <div className="grid grid-cols-1 gap-2">
+                    {buyerResourceLinks.map((item, index) => {
+                      const body = (
+                        <>
+                          {item.title ? <span className="block text-xs font-black leading-5 text-[#1F2A31]">{item.title}</span> : null}
+                          {item.body ? <span className="mt-1 block text-xs leading-5 text-[#65707A]">{item.body}</span> : null}
+                        </>
+                      );
+                      const className = 'block rounded-md border border-[#147C94]/20 bg-[#F2F8F8] px-3 py-2 transition hover:border-[#147C94]/60 hover:bg-white';
+                      return isInternalHref(item.href) ? (
+                        <Link key={`${item.href}-${index}`} href={item.href} className={className}>
+                          {body}
+                        </Link>
+                      ) : (
+                        <a
+                          key={`${item.href}-${index}`}
+                          href={item.href}
+                          target={/^https?:\/\//i.test(item.href) ? '_blank' : undefined}
+                          rel={/^https?:\/\//i.test(item.href) ? 'noopener noreferrer' : undefined}
+                          className={className}
+                        >
+                          {body}
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
               ) : null}
               {termRows.length > 0 ? (
                 <div className="mt-5 border-t border-[#DADDE1] pt-5">
