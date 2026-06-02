@@ -999,3 +999,13 @@ curl -I https://www.vessel303.com/news/<slug>
 - 线上检查：`/media-kit` 200 / PRERENDER，`/global` 200，未登录 `/admin` 302；线上 HTML 抽查确认 Media Kit 图片资源输出 `/_next/image?...` 优化路径，`lang=en`，无内部词。
 - `/global` 边界：本轮代码 diff 仅涉及 `src/components/pages/MediaKitPageContent.tsx`，无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保留。
 - 后续建议：继续由 09 对比 `en.303vessel.cn` 与 vessel 的展示方式、互动体感和页面效果。下一轮优先看 Media Kit 资源内容深度、案例详情图库 / 询盘位置，或产品筛选交互细节；若是显示器问题交 01，若是后台内容或素材缺口交 02 / 03。
+
+## B54 非 Global 主站旧站 CTA 收口（2026-06-02）
+
+- 代码提交：`09b1f24 fix(site): keep primary ctas on new site`，full SHA `09b1f24ac9cf8c57020c52fb99f320b61f2e1fc5`。
+- Vercel deployment：`dpl_E3x79Daa4aKi2NjvvzU3DT6NtjAt`，状态 `READY`，deployment URL `https://vessel303-n60nyu4hl-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com` 和 `https://vessel303.com`。
+- 本轮定位：09 对比 `en.303vessel.cn`、300 后台和 vessel 线上后确认，非 Global 主站壳层仍有部分后台 published CTA / Footer / 首页 / 产品页链接指向旧站 `en.303vessel.cn/products_list.html` 或 `contact.html`。B54 只修显示器的链接规范化，让非 Global 主站 CTA 回到新站闭环；不新增前台业务文案，不改后台 published 内容，不改 `/global`。
+- 完成范围：`Navbar`、`Footer`、`HomePageContent`、`ProductsPageContent` 的客户可点击链接统一通过 `normalizeSiteHref` 规范化；后台仍然决定 label、排序、显示状态和原始 href，前台只把旧站产品 / 联系 URL 在非 Global 场景映射到新站 `/products` 或 `/contact`。
+- `/global` 边界：本轮没有修改 `/global`、MapLibre、MapTiler 或 `/api/map`；Global Contact / Products 继续保留旧 303 跳转例外。
+- 验收摘要：`git diff --check`、targeted eslint、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack`、`npm.cmd run audit:production-links` 均通过；线上 `/`、`/products`、`/global` 均 200。
+- 后续建议：继续由 09 做展示差距对比。下一轮优先检查非 Global 主站是否仍有旧站依赖、产品筛选交互细节、Media Kit 资料内容深度或案例详情图库 / 询盘位置；仍按“显示器问题交 01，后台内容或素材缺口交 02 / 03”的规则推进。
