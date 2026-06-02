@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import LanguageToggle from './LanguageToggle';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { normalizeSiteHref } from '@/lib/site-links';
 import {
   fetchPublicPageModules,
   itemById,
@@ -31,15 +32,15 @@ export default function Navbar() {
   const navbarItems = visibleItems(navbarModule);
   const logoItem = itemById(navbarModule, 'logo');
   const logoSrc = logoItem?.image_url || '';
-  const logoHref = logoItem?.href || '';
+  const logoHref = logoItem?.href ? normalizeSiteHref(logoItem.href, '') : '';
   const logoAlt = itemLabel(logoItem, lang);
   const navLinks: NavLink[] = navbarItems
     .filter((item) => itemValue(item, lang) === 'primary')
-    .map((item) => ({ label: itemLabel(item, lang), href: item.href || '' }))
+    .map((item) => ({ label: itemLabel(item, lang), href: item.href ? normalizeSiteHref(item.href, '') : '' }))
     .filter((item) => item.label && item.href);
   const actionLinks = navbarItems
     .filter((item) => itemValue(item, lang) === 'action')
-    .map((item) => ({ label: itemLabel(item, lang), href: item.href || '' }))
+    .map((item) => ({ label: itemLabel(item, lang), href: item.href ? normalizeSiteHref(item.href, '') : '' }))
     .filter((item) => item.label && item.href);
   const menuToggleLabel = itemLabel(itemById(uiLabelsModule, 'menu-toggle'), lang);
 

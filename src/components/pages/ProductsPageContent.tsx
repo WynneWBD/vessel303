@@ -5,6 +5,7 @@ import Link from 'next/link';
 import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
+import { normalizeSiteHref } from '@/lib/site-links';
 import {
   itemById,
   itemContent,
@@ -50,6 +51,11 @@ function buildHref(filters: DirectoryFilters, patch: Partial<DirectoryFilters>) 
 
 function productHref(product: CatalogProduct) {
   return getCatalogProductPublicHref(product);
+}
+
+function displayHref(href: string | null | undefined) {
+  const value = String(href ?? '').trim();
+  return value ? normalizeSiteHref(value, '') : '';
 }
 
 function productPrice(product: CatalogProduct, lang: 'en' | 'zh') {
@@ -132,7 +138,7 @@ function Sidebar({
   const body = itemContent(itemById(contactModule, 'body'), lang);
   const cta = itemById(contactModule, 'primary-cta');
   const ctaLabel = itemLabel(cta, lang);
-  const ctaHref = cta?.href || '';
+  const ctaHref = displayHref(cta?.href);
 
   return (
     <aside className="space-y-3">
@@ -457,7 +463,7 @@ export default function ProductsPageContent({
     seriesCountSuffix: label('series-count-suffix'),
     seriesCta: label('series-cta'),
   };
-  const inquiryHref = uiItem('inquiry-cta')?.href || '';
+  const inquiryHref = displayHref(uiItem('inquiry-cta')?.href);
   const rawFilters = initialFilters;
   const filteredProducts = useMemo(
     () => products.filter((product) => productMatchesFilters(product, rawFilters)),
@@ -483,8 +489,8 @@ export default function ProductsPageContent({
   const secondaryCta = itemById(heroModule, 'secondary-cta');
   const primaryCtaLabel = itemLabel(primaryCta, lang);
   const secondaryCtaLabel = itemLabel(secondaryCta, lang);
-  const primaryCtaHref = primaryCta?.href || '';
-  const secondaryCtaHref = secondaryCta?.href || '';
+  const primaryCtaHref = displayHref(primaryCta?.href);
+  const secondaryCtaHref = displayHref(secondaryCta?.href);
   const breadcrumbHome = itemById(heroModule, 'breadcrumb-home');
   const breadcrumbCurrent = itemById(heroModule, 'breadcrumb-current');
   const breadcrumbHomeLabel = itemLabel(breadcrumbHome, lang);

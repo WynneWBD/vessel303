@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { normalizeSiteHref } from '@/lib/site-links';
 import {
   isResolvedPageModuleVisible,
   resolveDynamicPageModules,
@@ -159,6 +160,11 @@ function externalLinkProps(href: string) {
   return {};
 }
 
+function displayHref(href: string | null | undefined) {
+  const value = String(href ?? '').trim();
+  return value ? normalizeSiteHref(value, '') : '';
+}
+
 // ─── Hero ────────────────────────────────────────────────
 
 function optimizedHeroImageUrl(imageUrl: string) {
@@ -195,8 +201,8 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const secondaryCta = findItem('hero-secondary-cta');
   const primaryLabel = localizedLabel(primaryCta, lang, '');
   const secondaryLabel = localizedLabel(secondaryCta, lang, '');
-  const primaryHref = primaryCta?.href || '';
-  const secondaryHref = secondaryCta?.href || '';
+  const primaryHref = displayHref(primaryCta?.href);
+  const secondaryHref = displayHref(secondaryCta?.href);
   const proofItems = items
     .filter((item) => item.id.startsWith('hero-proof-'))
     .map((item) => ({
@@ -471,8 +477,8 @@ function CtaModuleSection({ pageModule }: { pageModule: HomePageModule | null })
   const secondary = findModuleItem(pageModule, 'secondary-cta');
   const primaryLabel = localizedLabel(primary, lang, '');
   const secondaryLabel = localizedLabel(secondary, lang, '');
-  const primaryHref = primary?.href || '';
-  const secondaryHref = secondary?.href || '';
+  const primaryHref = displayHref(primary?.href);
+  const secondaryHref = displayHref(secondary?.href);
 
   if (!title && !description && !(primaryLabel && primaryHref) && !(secondaryLabel && secondaryHref)) return null;
 
@@ -555,15 +561,15 @@ function ProductShowcaseSection({ pageModule }: { pageModule: HomePageModule | n
       meta: localizedValue(item, lang, ''),
       body: localizedContent(item, lang, ''),
       image: item.image_url || '',
-      href: item.href || '',
+      href: displayHref(item.href),
     }))
     .filter((item) => item.title || item.body || item.image);
   const primary = findModuleItem(pageModule, 'primary-cta');
   const secondary = findModuleItem(pageModule, 'secondary-cta');
   const primaryLabel = localizedLabel(primary, lang, '');
   const secondaryLabel = localizedLabel(secondary, lang, '');
-  const primaryHref = primary?.href || '';
-  const secondaryHref = secondary?.href || '';
+  const primaryHref = displayHref(primary?.href);
+  const secondaryHref = displayHref(secondary?.href);
 
   if (!title && !description && cards.length === 0) return null;
 
@@ -712,15 +718,15 @@ function SalesGridSection({ pageModule }: { pageModule: HomePageModule | null })
       meta: localizedValue(item, lang, ''),
       body: localizedContent(item, lang, ''),
       image: item.image_url || '',
-      href: item.href || '',
+      href: displayHref(item.href),
     }))
     .filter((item) => item.title || item.meta || item.body || item.image);
   const primary = findModuleItem(pageModule, 'primary-cta');
   const secondary = findModuleItem(pageModule, 'secondary-cta');
   const primaryLabel = localizedLabel(primary, lang, '');
   const secondaryLabel = localizedLabel(secondary, lang, '');
-  const primaryHref = primary?.href || '';
-  const secondaryHref = secondary?.href || '';
+  const primaryHref = displayHref(primary?.href);
+  const secondaryHref = displayHref(secondary?.href);
   const isProductSeries = pageModule.module_type === 'product-series';
   const isModelGrid = pageModule.module_type === 'model-grid';
   const isProjectProof = pageModule.module_type === 'project-proof';
@@ -872,15 +878,15 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
       meta: localizedValue(item, lang, ''),
       body: localizedContent(item, lang, ''),
       image: item.image_url || '',
-      href: item.href || '',
+      href: displayHref(item.href),
     }))
     .filter((item) => item.title || item.meta || item.body || item.image);
   const primary = findModuleItem(pageModule, 'primary-cta');
   const secondary = findModuleItem(pageModule, 'secondary-cta');
   const primaryLabel = localizedLabel(primary, lang, '');
   const secondaryLabel = localizedLabel(secondary, lang, '');
-  const primaryHref = primary?.href || '';
-  const secondaryHref = secondary?.href || '';
+  const primaryHref = displayHref(primary?.href);
+  const secondaryHref = displayHref(secondary?.href);
   const moduleType = pageModule.module_type ?? '';
   const isLargeProducts = moduleType === 'large-product-cards';
   const isModelStrip = moduleType === 'model-strip';
@@ -1041,8 +1047,8 @@ function ContactBandSection({ pageModule }: { pageModule: HomePageModule | null 
   const secondary = findModuleItem(pageModule, 'secondary-cta');
   const primaryLabel = localizedLabel(primary, lang, '');
   const secondaryLabel = localizedLabel(secondary, lang, '');
-  const primaryHref = primary?.href || '';
-  const secondaryHref = secondary?.href || '';
+  const primaryHref = displayHref(primary?.href);
+  const secondaryHref = displayHref(secondary?.href);
 
   if (!title && !description && !(primaryLabel && primaryHref) && !(secondaryLabel && secondaryHref)) return null;
 
@@ -1194,8 +1200,8 @@ function BackendOperatingProofSection({ pageModule }: { pageModule: HomePageModu
   const secondary = findModuleItem(pageModule, 'secondary-cta');
   const primaryLabel = localizedLabel(primary, lang, '');
   const secondaryLabel = localizedLabel(secondary, lang, '');
-  const primaryHref = primary?.href || '';
-  const secondaryHref = secondary?.href || '';
+  const primaryHref = displayHref(primary?.href);
+  const secondaryHref = displayHref(secondary?.href);
 
   if (!title && !description && cards.length === 0 && images.length === 0) return null;
 

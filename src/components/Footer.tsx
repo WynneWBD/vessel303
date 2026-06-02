@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { normalizeSiteHref } from '@/lib/site-links';
 import {
   fetchPublicPageModules,
   itemById,
@@ -33,35 +34,38 @@ function FooterLinkList({ module }: { module: PublicPageModule | null }) {
         <h4 className="mb-5 text-xs font-semibold uppercase tracking-[0.25em] text-white">{title}</h4>
       ) : null}
       <ul className="space-y-2.5">
-        {items.map((item) => (
-          <li key={item.id}>
-            {isExternalActionHref(item.href as string) ? (
-              <a
-                href={item.href as string}
-                target={(item.href as string).startsWith('http') ? '_blank' : undefined}
-                rel={(item.href as string).startsWith('http') ? 'noopener noreferrer' : undefined}
-                className="group flex items-center gap-2 text-sm text-white/40 transition-colors hover:text-[#E36F2C]"
-              >
+        {items.map((item) => {
+          const href = normalizeSiteHref(item.href, '');
+          return (
+            <li key={item.id}>
+              {isExternalActionHref(href) ? (
+                <a
+                  href={href}
+                  target={href.startsWith('http') ? '_blank' : undefined}
+                  rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  className="group flex items-center gap-2 text-sm text-white/40 transition-colors hover:text-[#E36F2C]"
+                >
+                  <span className="text-[#E36F2C]/30 transition-colors group-hover:text-[#E36F2C]">-</span>
+                  <span className="tracking-wider">{itemLabel(item, lang)}</span>
+                  {itemValue(item, lang) ? (
+                    <span className="text-xs text-white/20">{itemValue(item, lang)}</span>
+                  ) : null}
+                </a>
+              ) : (
+                <Link
+                  href={href}
+                  className="group flex items-center gap-2 text-sm text-white/40 transition-colors hover:text-[#E36F2C]"
+                >
                 <span className="text-[#E36F2C]/30 transition-colors group-hover:text-[#E36F2C]">-</span>
                 <span className="tracking-wider">{itemLabel(item, lang)}</span>
                 {itemValue(item, lang) ? (
                   <span className="text-xs text-white/20">{itemValue(item, lang)}</span>
                 ) : null}
-              </a>
-            ) : (
-              <Link
-                href={item.href as string}
-                className="group flex items-center gap-2 text-sm text-white/40 transition-colors hover:text-[#E36F2C]"
-              >
-              <span className="text-[#E36F2C]/30 transition-colors group-hover:text-[#E36F2C]">-</span>
-              <span className="tracking-wider">{itemLabel(item, lang)}</span>
-              {itemValue(item, lang) ? (
-                <span className="text-xs text-white/20">{itemValue(item, lang)}</span>
-              ) : null}
-              </Link>
-            )}
-          </li>
-        ))}
+                </Link>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -95,7 +99,7 @@ export default function Footer() {
   const brandItems = visibleItems(brand);
   const brandLogo = itemById(brand, 'logo');
   const brandLogoSrc = brandLogo?.image_url || '';
-  const brandLogoHref = brandLogo?.href || '';
+  const brandLogoHref = brandLogo?.href ? normalizeSiteHref(brandLogo.href, '') : '';
   const brandLogoAlt = itemLabel(brandLogo, lang);
   const contactItems = visibleItems(contact);
 
@@ -112,7 +116,7 @@ export default function Footer() {
               <div className="flex flex-wrap gap-3">
                 {ctaItems.map((item, index) => {
                   const label = itemLabel(item, lang);
-                  const href = item.href as string;
+                  const href = normalizeSiteHref(item.href, '');
                   const isExternalAction = isExternalActionHref(href);
                   const className = index === 0
                     ? 'bg-[#E36F2C] px-6 py-3 text-sm font-bold tracking-wider text-white transition-colors hover:bg-[#C85A1F]'
@@ -176,13 +180,14 @@ export default function Footer() {
                 {brandItems.slice(1).map((item) => {
                   const label = itemLabel(item, lang);
                   if (!label) return null;
-                  if (item.href && isExternalActionHref(item.href)) {
+                  const href = item.href ? normalizeSiteHref(item.href, '') : '';
+                  if (href && isExternalActionHref(href)) {
                     return (
                       <a
                         key={item.id}
-                        href={item.href}
-                        target={item.href.startsWith('http') ? '_blank' : undefined}
-                        rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                        href={href}
+                        target={href.startsWith('http') ? '_blank' : undefined}
+                        rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
                         className="block hover:text-[#E36F2C]"
                       >
                         {label}
@@ -210,6 +215,7 @@ export default function Footer() {
                   const label = itemLabel(item, lang);
                   const content = itemContent(item, lang);
                   if (!label) return null;
+                  const href = item.href ? normalizeSiteHref(item.href, '') : '';
                   const body = (
                     <>
                       <span className="text-sm text-white/55">{label}</span>
@@ -219,15 +225,19 @@ export default function Footer() {
 
                   return (
                     <li key={item.id} className="text-xs leading-relaxed text-white/40">
-                      {item.href && isExternalActionHref(item.href) ? (
+                      {href && isExternalActionHref(href) ? (
                         <a
-                          href={item.href}
-                          target={item.href.startsWith('http') ? '_blank' : undefined}
-                          rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                          href={href}
+                          target={href.startsWith('http') ? '_blank' : undefined}
+                          rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
                           className="transition-colors hover:text-[#E36F2C]"
                         >
                           {body}
                         </a>
+                      ) : href ? (
+                        <Link href={href} className="transition-colors hover:text-[#E36F2C]">
+                          {body}
+                        </Link>
                       ) : (
                         body
                       )}
