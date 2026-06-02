@@ -1009,3 +1009,13 @@ curl -I https://www.vessel303.com/news/<slug>
 - `/global` 边界：本轮没有修改 `/global`、MapLibre、MapTiler 或 `/api/map`；Global Contact / Products 继续保留旧 303 跳转例外。
 - 验收摘要：`git diff --check`、targeted eslint、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack`、`npm.cmd run audit:production-links` 均通过；线上 `/`、`/products`、`/global` 均 200。
 - 后续建议：继续由 09 做展示差距对比。下一轮优先检查非 Global 主站是否仍有旧站依赖、产品筛选交互细节、Media Kit 资料内容深度或案例详情图库 / 询盘位置；仍按“显示器问题交 01，后台内容或素材缺口交 02 / 03”的规则推进。
+
+## B55 非 Global published CTA 服务端收口（2026-06-02）
+
+- 代码提交：`988d884 fix(site): normalize published CTA links`，full SHA `988d884c29d2650c9ff6e7ef7b686ee8fd7249fe`。
+- Vercel deployment：`dpl_GqGQDReEiGowoWArojtzf8gLWYFD`，状态 `READY`，deployment URL `https://vessel303-ipcwypa80-vessel303.vercel.app`，production alias 包含 `https://www.vessel303.com` 和 `https://vessel303.com`。
+- 本轮定位：B54 已修客户可点击链接，但 09 / 05 复核线上 `/products` HTML / RSC 时发现旧 303 产品 / 联系 URL 仍会从后台 published page modules 被服务端序列化出来。B55 继续按“后台是控制器、前台是显示器”的边界，只修公开 published 数据出站规范化，不新增前台业务文案，不改后台原始内容。
+- 完成范围：`src/lib/page-modules-db.ts` 在 `listPublishedPageModules` / `getPublishedPageModule` 公开读取边界归一化旧 303 产品 / 联系 href；admin 原始列表、草稿和后台编辑仍保留原始 href，`contact:backup` 旧站备用入口保留。`src/components/pages/ProductsPageContent.tsx` 的 breadcrumb home href 同步走展示层规范化。`scripts/audit-production-links.mjs` 增强为扫描 HTML body 中的旧站 URL，不只检查 `href=`。
+- `/global` 边界：本轮无 `/global`、MapLibre、MapTiler 或 `/api/map` diff；Global Contact / Products 旧 303 跳转例外继续保持，不套用主站新站闭环规则。
+- 验收摘要：`git diff --check`、targeted eslint、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；构建仅出现既有 PostgreSQL SSL warning、本地 Neon `EACCES` 降级日志和 `/global` edge runtime warning。Vercel READY 后线上 `/products`、`/contact`、`/global` 均 200，未登录 `/admin` 302 到 `/admin/login`，增强后的 `audit:production-links` 通过。
+- 后续建议：继续由 09 做展示差距对比。下一轮优先看非 Global 主站的展示方式和互动体感，不再只看可点击 href；若属于显示器问题交 01，若属于后台内容、素材或字段缺口交 02 / 03。
