@@ -94,24 +94,24 @@ function DetailModuleBlock({
   if (!text(title) && !text(body) && items.length === 0 && images.length === 0) return null;
 
   return (
-    <section id={anchorId} className="scroll-mt-28 rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm sm:p-6">
-      {title ? <h2 className="text-2xl font-black leading-tight text-[#1F2A31]">{title}</h2> : null}
-      {body ? <p className="mt-3 whitespace-pre-line text-sm leading-8 text-[#5C6670]">{body}</p> : null}
+    <section id={anchorId} className="scroll-mt-28 border-t border-[#DADDE1] py-8 sm:py-10">
+      {title ? <h2 className="max-w-3xl text-3xl font-black leading-tight text-[#1F2A31]">{title}</h2> : null}
+      {body ? <p className="mt-4 max-w-4xl whitespace-pre-line text-base leading-8 text-[#5C6670]">{body}</p> : null}
       {linkItems.length > 0 ? (
-        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {linkItems.map((item: DetailModuleItem, index: number) => {
             const href = text(item.href);
             const card = (
               <>
-                {item.title ? <span className="block text-sm font-black text-[#1F2A31]">{item.title}</span> : null}
-                {item.body ? <span className="mt-2 block text-sm leading-6 text-[#65707A]">{item.body}</span> : null}
+                {item.title ? <span className="block text-sm font-black uppercase tracking-[0.12em] text-[#1F2A31]">{item.title}</span> : null}
+                {item.body ? <span className="mt-3 block text-sm leading-6 text-[#65707A]">{item.body}</span> : null}
               </>
             );
             return isInternalHref(href) ? (
               <Link
                 key={`${item.title}-${index}`}
                 href={href}
-                className="group rounded-md border border-[#147C94]/20 bg-[#F2F8F8] p-4 transition hover:border-[#147C94]/60 hover:bg-white"
+                className="group border border-[#147C94]/20 bg-white p-5 transition hover:border-[#147C94]/60 hover:bg-[#F2F8F8]"
               >
                 {card}
               </Link>
@@ -121,7 +121,7 @@ function DetailModuleBlock({
                 href={href}
                 target={/^https?:\/\//i.test(href) ? '_blank' : undefined}
                 rel={/^https?:\/\//i.test(href) ? 'noopener noreferrer' : undefined}
-                className="group rounded-md border border-[#147C94]/20 bg-[#F2F8F8] p-4 transition hover:border-[#147C94]/60 hover:bg-white"
+                className="group border border-[#147C94]/20 bg-white p-5 transition hover:border-[#147C94]/60 hover:bg-[#F2F8F8]"
               >
                 {card}
               </a>
@@ -130,11 +130,11 @@ function DetailModuleBlock({
         </div>
       ) : null}
       {textItems.length > 0 ? (
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {textItems.map((item: DetailModuleItem, index: number) => {
             return (
-              <div key={`${item.title}-${index}`} className="rounded-md border border-[#ECEFF1] bg-[#F7F8F8] p-4">
-                {item.title ? <p className="text-sm font-semibold text-[#1F2A31]">{item.title}</p> : null}
+              <div key={`${item.title}-${index}`} className="border-l-2 border-[#147C94] bg-white px-5 py-4">
+                {item.title ? <p className="text-sm font-black uppercase tracking-[0.12em] text-[#1F2A31]">{item.title}</p> : null}
                 {item.body ? <p className="mt-2 text-sm leading-6 text-[#65707A]">{item.body}</p> : null}
               </div>
             );
@@ -142,9 +142,9 @@ function DetailModuleBlock({
         </div>
       ) : null}
       {images.length > 0 ? (
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {images.slice(0, 4).map((src, index) => (
-            <div key={`${src}-${index}`} className="relative aspect-[4/3] overflow-hidden rounded-md bg-[#EEF1F3]">
+            <div key={`${src}-${index}`} className="relative aspect-[4/3] overflow-hidden bg-[#EEF1F3]">
               <ProtectedImage
                 src={src}
                 alt={`${name} ${index + 1}`}
@@ -183,9 +183,9 @@ function BuyerResourceHub({
   if (!hasContent) return null;
 
   return (
-    <section id="buyer-resources" className="scroll-mt-28 rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm sm:p-6">
-      {title ? <h2 className="text-2xl font-black leading-tight text-[#1F2A31]">{title}</h2> : null}
-      <div className={title ? 'mt-5 space-y-5' : 'space-y-5'}>
+    <section id="buyer-resources" className="scroll-mt-28 border-y border-[#DADDE1] bg-white py-8 sm:py-10">
+      {title ? <h2 className="px-1 text-3xl font-black leading-tight text-[#1F2A31]">{title}</h2> : null}
+      <div className={title ? 'mt-6 grid grid-cols-1 gap-4 px-1 lg:grid-cols-2' : 'grid grid-cols-1 gap-4 px-1 lg:grid-cols-2'}>
         {modules.map((module) => {
           const moduleTitleText = lang === 'en' ? module.title_en : module.title_cn;
           const moduleBodyText = lang === 'en' ? module.body_en : module.body_cn;
@@ -196,9 +196,9 @@ function BuyerResourceHub({
           if (!text(moduleTitleText) && !text(moduleBodyText) && items.length === 0 && images.length === 0) return null;
 
           return (
-            <div key={module.id} className="rounded-md border border-[#ECEFF1] bg-[#F7F8F8] p-4">
-              {moduleTitleText ? <h3 className="text-base font-black leading-tight text-[#1F2A31]">{moduleTitleText}</h3> : null}
-              {moduleBodyText ? <p className="mt-2 whitespace-pre-line text-sm leading-7 text-[#5C6670]">{moduleBodyText}</p> : null}
+            <div key={module.id} className="border border-[#DADDE1] bg-[#F7F8F8] p-5">
+              {moduleTitleText ? <h3 className="text-base font-black uppercase leading-tight tracking-[0.12em] text-[#1F2A31]">{moduleTitleText}</h3> : null}
+              {moduleBodyText ? <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#5C6670]">{moduleBodyText}</p> : null}
               {linkItems.length > 0 ? (
                 <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {linkItems.map((item: DetailModuleItem, index: number) => {
@@ -209,7 +209,7 @@ function BuyerResourceHub({
                         {item.body ? <span className="mt-2 block text-sm leading-6 text-[#65707A]">{item.body}</span> : null}
                       </>
                     );
-                    const className = 'block rounded-md border border-[#147C94]/20 bg-white p-4 transition hover:border-[#147C94]/60 hover:bg-[#F2F8F8]';
+                    const className = 'block border border-[#147C94]/20 bg-white p-4 transition hover:border-[#147C94]/60 hover:bg-[#F2F8F8]';
                     return isInternalHref(href) ? (
                       <Link key={`${item.title}-${index}`} href={href} className={className}>
                         {card}
@@ -231,8 +231,8 @@ function BuyerResourceHub({
               {textItems.length > 0 ? (
                 <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {textItems.map((item: DetailModuleItem, index: number) => (
-                    <div key={`${item.title}-${index}`} className="rounded-md border border-[#ECEFF1] bg-white p-4">
-                      {item.title ? <p className="text-sm font-semibold text-[#1F2A31]">{item.title}</p> : null}
+                    <div key={`${item.title}-${index}`} className="border-l-2 border-[#147C94] bg-white px-4 py-3">
+                      {item.title ? <p className="text-sm font-black text-[#1F2A31]">{item.title}</p> : null}
                       {item.body ? <p className="mt-2 text-sm leading-6 text-[#65707A]">{item.body}</p> : null}
                     </div>
                   ))}
@@ -241,7 +241,7 @@ function BuyerResourceHub({
               {images.length > 0 ? (
                 <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {images.slice(0, 4).map((src, index) => (
-                    <div key={`${src}-${index}`} className="relative aspect-[4/3] overflow-hidden rounded-md bg-[#EEF1F3]">
+                    <div key={`${src}-${index}`} className="relative aspect-[4/3] overflow-hidden bg-[#EEF1F3]">
                       <ProtectedImage
                         src={src}
                         alt={`${name} ${index + 1}`}
@@ -267,7 +267,7 @@ function RelatedCard({ product }: { product: CatalogProduct }) {
   const name = localizedProductName(product, lang);
   if (!name || !product.image) return null;
   return (
-    <Link href={productHref(product)} className="group overflow-hidden rounded-md border border-[#DADDE1] bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-[#147C94]/60">
+    <Link href={productHref(product)} className="group overflow-hidden border border-[#DADDE1] bg-white transition hover:-translate-y-0.5 hover:border-[#147C94]/60">
       <span className="relative block aspect-[4/3] overflow-hidden bg-[#EEF1F3]">
         <ProtectedImage
           src={product.image}
@@ -298,10 +298,10 @@ function ProductVisualGallery({
   const [primaryImage, ...secondaryImages] = images;
 
   return (
-    <section id="product-gallery" className="scroll-mt-28 rounded-md border border-[#DADDE1] bg-white p-4 shadow-sm sm:p-5">
-      {title ? <h2 className="mb-4 text-2xl font-black tracking-normal text-[#1F2A31]">{title}</h2> : null}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-[#EEF1F3] lg:aspect-[16/11]">
+    <section id="product-gallery" className="scroll-mt-28 bg-[#1F1C19] p-4 text-white sm:p-5">
+      {title ? <h2 className="mb-5 text-3xl font-black tracking-normal text-white">{title}</h2> : null}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.55fr)]">
+        <div className="relative aspect-[4/3] overflow-hidden bg-[#2A2521] lg:aspect-[16/10]">
           <ProtectedImage
             src={primaryImage}
             alt={name}
@@ -314,7 +314,7 @@ function ProductVisualGallery({
         {secondaryImages.length > 0 ? (
           <div className="grid grid-cols-2 gap-3">
             {secondaryImages.slice(0, 4).map((src, index) => (
-              <div key={`${src}-${index}`} className="relative aspect-[4/3] overflow-hidden rounded-md bg-[#EEF1F3]">
+              <div key={`${src}-${index}`} className="relative aspect-[4/3] overflow-hidden bg-[#2A2521]">
                 <ProtectedImage
                   src={src}
                   alt={`${name} ${index + 2}`}
@@ -606,19 +606,20 @@ export default function CatalogProductDetailContent({
       ) : null}
 
       {(media.length > 1 || specs.length > 0 || description || features.length > 0 || visibleModules.length > 0 || keywords.length > 0) ? (
-        <section className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
-          <div className="min-w-0 space-y-8">
+        <section className="bg-[#F7F8F8]">
+          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-8">
+          <div className="min-w-0">
             {media.length > 1 ? (
               <ProductVisualGallery images={media.slice(1, 7)} title={galleryTitle} name={name} />
             ) : null}
 
             {specs.length > 0 && specsTitle ? (
-              <section id="product-specifications" className="scroll-mt-28 rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm sm:p-6">
-                <h2 className="mb-5 text-2xl font-black tracking-normal text-[#1F2A31]">{specsTitle}</h2>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <section id="product-specifications" className="scroll-mt-28 border-b border-[#DADDE1] bg-white px-1 py-8 sm:py-10">
+                <h2 className="mb-6 text-3xl font-black tracking-normal text-[#1F2A31]">{specsTitle}</h2>
+                <div className="grid grid-cols-1 border-t border-[#DADDE1] sm:grid-cols-2">
                   {specs.map((item: SpecItem) => (
-                    <p key={`${item.label}-${item.value}`} className="rounded-md border border-[#ECEFF1] bg-[#F7F8F8] p-4 text-sm leading-6 text-[#1F2A31]">
-                      {item.label ? <span className="mb-1 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#65707A]">{item.label}</span> : null}
+                    <p key={`${item.label}-${item.value}`} className="border-b border-[#DADDE1] bg-white px-4 py-4 text-sm leading-6 text-[#1F2A31] sm:border-r">
+                      {item.label ? <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#65707A]">{item.label}</span> : null}
                       <span className="font-bold">{item.value}</span>
                     </p>
                   ))}
@@ -626,13 +627,13 @@ export default function CatalogProductDetailContent({
               </section>
             ) : null}
             {(description || features.length > 0) ? (
-              <section id="product-description" className="scroll-mt-28 rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm">
-                <h2 className="mb-5 text-2xl font-black tracking-normal text-[#1F2A31]">{descriptionTitle || name}</h2>
-                {description ? <p className="whitespace-pre-line text-sm leading-8 text-[#5C6670]">{description}</p> : null}
+              <section id="product-description" className="scroll-mt-28 border-b border-[#DADDE1] py-8 sm:py-10">
+                <h2 className="mb-6 max-w-3xl text-3xl font-black tracking-normal text-[#1F2A31]">{descriptionTitle || name}</h2>
+                {description ? <p className="max-w-4xl whitespace-pre-line text-base leading-8 text-[#5C6670]">{description}</p> : null}
                 {features.length > 0 ? (
-                  <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {features.map((feature) => (
-                      <li key={feature} className="rounded-md border border-[#ECEFF1] bg-[#F7F8F8] p-4 text-sm leading-6 text-[#1F2A31]">
+                      <li key={feature} className="border-l-2 border-[#147C94] bg-white px-5 py-4 text-sm leading-6 text-[#1F2A31]">
                         {feature}
                       </li>
                     ))}
@@ -660,7 +661,7 @@ export default function CatalogProductDetailContent({
 
           {keywords.length > 0 ? (
             <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
-              <div className="rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm">
+              <div className="border border-[#DADDE1] bg-white p-5">
                 {keywordsTitle ? <p className="mb-3 text-xs font-black uppercase tracking-[0.16em] text-[#65707A]">{keywordsTitle}</p> : null}
                 <div className="flex flex-wrap gap-2">
                   {keywords.map((keyword) => (
@@ -672,6 +673,7 @@ export default function CatalogProductDetailContent({
               </div>
             </aside>
           ) : null}
+          </div>
         </section>
       ) : null}
 
