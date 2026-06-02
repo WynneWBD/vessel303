@@ -34,14 +34,33 @@ function ProjectImage({ src, alt, className }: { src: string | null | undefined;
   )
 }
 
-function FactGrid({ facts, className = '' }: { facts: Array<{ label: string; value: string }>; className?: string }) {
+function FactGrid({
+  facts,
+  className = '',
+  theme = 'light',
+}: {
+  facts: Array<{ label: string; value: string }>
+  className?: string
+  theme?: 'light' | 'dark'
+}) {
   if (facts.length === 0) return null
 
   return (
     <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2 ${className}`}>
       {facts.map((fact) => (
-        <p key={`${fact.label}-${fact.value}`} className="rounded-md border border-[#E5DED4] bg-white px-4 py-3 text-sm leading-6 text-[#2C2A28] shadow-sm">
-          {fact.label ? <span className="mb-1 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#8A8580]">{fact.label}</span> : null}
+        <p
+          key={`${fact.label}-${fact.value}`}
+          className={`rounded-md border px-4 py-3 text-sm leading-6 shadow-sm ${
+            theme === 'dark'
+              ? 'border-white/14 bg-white/10 text-white backdrop-blur'
+              : 'border-[#E5DED4] bg-white text-[#2C2A28]'
+          }`}
+        >
+          {fact.label ? (
+            <span className={`mb-1 block text-[10px] font-bold uppercase tracking-[0.14em] ${theme === 'dark' ? 'text-white/58' : 'text-[#8A8580]'}`}>
+              {fact.label}
+            </span>
+          ) : null}
           <span className="font-bold">{fact.value}</span>
         </p>
       ))}
@@ -102,6 +121,7 @@ export default function CaseDetailPageContent({
     sourcePrefix: itemLabel(itemById(inquiryModule, 'form-source-prefix'), lang),
     companyPrefix: itemLabel(itemById(inquiryModule, 'form-company-prefix'), lang),
   }
+  const heroGallery = gallery.filter((image) => image !== heroImage).slice(0, 3)
 
   if (!name) return null
 
@@ -109,64 +129,84 @@ export default function CaseDetailPageContent({
     <main className="bg-[#FAF7F2] text-[#2C2A28]">
       <Navbar />
 
-      <section className="border-b border-[#E5DED4] bg-[linear-gradient(180deg,#FAF7F2_0%,#F4EFE7_100%)] pt-20 sm:pt-24">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(360px,0.82fr)_minmax(0,1.18fr)] lg:px-8 lg:py-8">
-          <aside className="rounded-md border border-[#E5DED4] bg-white p-5 shadow-sm sm:p-6 lg:p-7">
+      <section className="relative min-h-[720px] overflow-hidden bg-[#201B17] pt-20 text-white sm:pt-24">
+        {heroImage ? (
+          <div className="absolute inset-0">
+            <ProtectedImage
+              src={heroImage}
+              alt={name}
+              fill
+              priority
+              className="object-cover"
+              sizes="100vw"
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(32,27,23,0.92)_0%,rgba(32,27,23,0.62)_42%,rgba(32,27,23,0.28)_100%)]" />
+            <div className="absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(180deg,rgba(32,27,23,0)_0%,#201B17_92%)]" />
+          </div>
+        ) : null}
+
+        <div className="relative z-10 mx-auto grid min-h-[640px] max-w-7xl grid-cols-1 gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.58fr)] lg:px-8 lg:py-14">
+          <div className="flex min-w-0 flex-col justify-end">
             {tags.length > 0 ? (
               <div className="mb-4 flex flex-wrap gap-2">
                 {tags.map((tag) => (
-                  <span key={tag} className="rounded-full border border-[#E36F2C]/20 bg-[#E36F2C]/10 px-2 py-1 text-[10px] tracking-wider text-[#E36F2C]">
+                  <span key={tag} className="border border-white/18 bg-white/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/78 backdrop-blur">
                     {tag}
                   </span>
                 ))}
               </div>
             ) : null}
 
-            <h1 className="text-2xl font-black leading-tight tracking-wide text-[#2C2A28] sm:text-3xl">{name}</h1>
-            {description ? <p className="mt-3 text-sm leading-7 text-[#6B6560]">{description}</p> : null}
+            <h1 className="max-w-4xl text-4xl font-black leading-[1.02] tracking-wide text-white sm:text-5xl lg:text-7xl">{name}</h1>
+            {description ? <p className="mt-5 max-w-2xl text-sm leading-7 text-white/76 sm:text-base sm:leading-8">{description}</p> : null}
 
-            <FactGrid facts={facts} className="mt-5" />
+            {(inquiryLabels.submit || galleryTitle) ? (
+              <div className="mt-7 flex flex-wrap gap-3">
+                {inquiryLabels.submit ? (
+                  <a href="#case-inquiry" className="inline-flex min-h-12 items-center justify-center border border-white bg-white px-5 text-sm font-bold uppercase tracking-[0.12em] text-[#201B17] transition hover:bg-[#E36F2C] hover:text-white">
+                    {inquiryLabels.submit}
+                  </a>
+                ) : null}
+                {galleryTitle && gallery.length > 1 ? (
+                  <a href="#case-gallery" className="inline-flex min-h-12 items-center justify-center border border-white/36 px-5 text-sm font-bold uppercase tracking-[0.12em] text-white/82 transition hover:border-white hover:text-white">
+                    {galleryTitle}
+                  </a>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+
+          <aside className="flex min-w-0 flex-col justify-end gap-3">
+            {facts.length > 0 ? (
+              <FactGrid facts={facts} theme="dark" className="rounded-md border border-white/14 bg-black/24 p-3 shadow-2xl shadow-black/25 backdrop-blur" />
+            ) : null}
+            {heroGallery.length > 0 ? (
+              <div className="grid grid-cols-3 gap-2">
+                {heroGallery.map((image, index) => (
+                  <ProjectImage
+                    key={image}
+                    src={image}
+                    alt={`${name} ${index + 2}`}
+                    className="aspect-[4/3] w-full border border-white/16 bg-white/8"
+                  />
+                ))}
+              </div>
+            ) : null}
           </aside>
-
-          <ProjectImage src={heroImage} alt={name} className="aspect-[16/10] min-h-[280px] w-full rounded-md border border-[#E5DED4] shadow-sm sm:min-h-[360px] lg:min-h-[520px]" />
         </div>
       </section>
 
-      {description ? (
-        <section className="border-b border-[#E5DED4] bg-[#F5F2ED] py-10">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-            <p className="text-sm leading-8 text-[#5F5750]">{description}</p>
-          </div>
-        </section>
-      ) : null}
-
-      {facts.length > 0 && proofTitle ? (
-        <section className="border-b border-[#E5DED4] bg-white py-10">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <h2 className="mb-6 text-2xl font-black tracking-wide text-[#2C2A28]">{proofTitle}</h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {facts.map((fact) => (
-                <article key={`${fact.label}-${fact.value}`} className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-5">
-                  {fact.label ? <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#8A8580]">{fact.label}</p> : null}
-                  <p className="text-base font-black leading-7 text-[#2C2A28]">{fact.value}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-      ) : null}
-
       {gallery.length > 1 ? (
-        <section className="py-16">
+        <section id="case-gallery" className="border-b border-[#E5DED4] bg-[#201B17] py-12 text-white lg:py-16">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            {galleryTitle ? <h2 className="mb-6 text-2xl font-black tracking-wide text-[#2C2A28]">{galleryTitle}</h2> : null}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {gallery.slice(0, 6).map((image, index) => (
+            {galleryTitle ? <h2 className="mb-6 text-2xl font-black tracking-wide text-white">{galleryTitle}</h2> : null}
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-4 md:grid-rows-2">
+              {gallery.slice(0, 5).map((image, index) => (
                 <ProjectImage
                   key={image}
                   src={image}
                   alt={`${name} ${index + 1}`}
-                  className="aspect-[4/3] w-full border border-[#E5DED4]"
+                  className={`${index === 0 ? 'md:col-span-2 md:row-span-2' : ''} aspect-[4/3] w-full border border-white/12 bg-white/8`}
                 />
               ))}
             </div>
@@ -174,8 +214,29 @@ export default function CaseDetailPageContent({
         </section>
       ) : null}
 
+      {facts.length > 0 && proofTitle ? (
+        <section className="border-b border-[#E5DED4] bg-white py-12 lg:py-16">
+          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(240px,0.35fr)_minmax(0,1fr)] lg:px-8">
+            <div>
+              <h2 className="text-2xl font-black tracking-wide text-[#2C2A28] sm:text-3xl">{proofTitle}</h2>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {facts.map((fact, index) => (
+                <article key={`${fact.label}-${fact.value}`} className="grid grid-cols-[52px_minmax(0,1fr)] gap-4 border border-[#E5DED4] bg-[#FAF7F2] p-4">
+                  <p className="text-3xl font-black leading-none text-[#E36F2C]/70">{String(index + 1).padStart(2, '0')}</p>
+                  <div className="min-w-0">
+                    {fact.label ? <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#8A8580]">{fact.label}</p> : null}
+                    <p className="text-base font-black leading-7 text-[#2C2A28]">{fact.value}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       {inquiryTitle ? (
-        <section className="border-t border-[#E5DED4] bg-[#F5F2ED] py-14">
+        <section id="case-inquiry" className="border-t border-[#E5DED4] bg-[#F5F2ED] py-14">
           <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
             <ConversionInquiryForm
               source={`case_detail:${project.id}:inquiry_form`}
