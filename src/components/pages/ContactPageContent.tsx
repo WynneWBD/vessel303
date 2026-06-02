@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -9,6 +10,7 @@ import {
   itemById,
   itemContent,
   itemLabel,
+  itemValue,
   moduleDescription,
   moduleMap,
   moduleTitle,
@@ -51,6 +53,14 @@ function sourceFromUrl(value: string | null) {
   return buildLeadSource('contact', 'main', 'inquiry_form', value)
 }
 
+function isDirectContactHref(href: string | undefined) {
+  return Boolean(
+    href?.startsWith('mailto:') ||
+    href?.startsWith('tel:') ||
+    href?.startsWith('https://wa.me/'),
+  )
+}
+
 export default function ContactPageContent({ pageModules, purchaseFaqItems }: Props) {
   const { lang } = useLanguage()
   const modules = moduleMap(pageModules)
@@ -66,6 +76,14 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems }: Pr
   const heroEyebrow = itemLabel(itemById(heroModule, 'eyebrow'), lang)
   const primaryCta = itemById(heroModule, 'primary-cta')
   const secondaryCta = itemById(heroModule, 'secondary-cta')
+  const heroItems = visibleItems(heroModule)
+  const heroImages = heroItems.filter((item) => item.image_url)
+  const heroPrimaryImage = heroImages[0] ?? null
+  const heroProofItems = heroItems.filter((item) => {
+    if (item.image_url) return false
+    if (['eyebrow', 'primary-cta', 'secondary-cta'].includes(item.id)) return false
+    return Boolean(itemValue(item, lang) || itemContent(item, lang) || itemLabel(item, lang))
+  })
   const formInquiryType = itemLabel(itemById(formModule, 'inquiry-type'), lang)
   const formModel = itemLabel(itemById(formModule, 'form-model'), lang)
   const formLabels = formLabelsFromModule(formModule, lang)
@@ -82,9 +100,20 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems }: Pr
       <Navbar />
       <main className="pt-16">
         {heroModule?.is_visible !== false && (heroTitle || heroDescription || heroEyebrow) ? (
-          <section className="bg-[#241F1B] px-4 py-20 text-white sm:py-24">
-            <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
-              <div>
+          <section className="relative overflow-hidden bg-[#241F1B] text-white">
+            {heroPrimaryImage?.image_url ? (
+              <Image
+                src={heroPrimaryImage.image_url}
+                alt={itemLabel(heroPrimaryImage, lang)}
+                fill
+                priority
+                sizes="100vw"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            ) : null}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#17120F] via-[#17120F]/85 to-[#17120F]/30" />
+            <div className="relative mx-auto grid max-w-7xl gap-8 px-4 py-20 sm:py-24 lg:min-h-[560px] lg:grid-cols-[minmax(0,1fr)_380px] lg:items-end lg:py-16">
+              <div className="max-w-4xl">
                 {heroEyebrow ? (
                   <p className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-[#E36F2C]">
                     {heroEyebrow}
@@ -118,11 +147,26 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems }: Pr
                     </Link>
                   ) : null}
                 </div>
+                {heroProofItems.length > 0 ? (
+                  <div className="mt-8 grid max-w-3xl gap-3 sm:grid-cols-3">
+                    {heroProofItems.slice(0, 3).map((item) => {
+                      const value = itemValue(item, lang) || itemLabel(item, lang)
+                      const content = itemContent(item, lang)
+                      if (!value && !content) return null
+                      return (
+                        <div key={item.id} className="border border-white/15 bg-black/20 p-4 backdrop-blur-sm">
+                          {value ? <div className="text-lg font-black text-white">{value}</div> : null}
+                          {content ? <div className="mt-1 text-xs leading-5 text-white/65">{content}</div> : null}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : null}
               </div>
 
               {channelsModule?.is_visible !== false && visibleItems(channelsModule).length > 0 ? (
-                <div className="border border-white/10 bg-white/[0.04] p-5">
-                  <div className="space-y-4">
+                <div className="border border-white/15 bg-[#14110F]/80 p-5 shadow-2xl backdrop-blur-md">
+                  <div className="space-y-3">
                     {visibleItems(channelsModule).map((item) => {
                       const label = itemLabel(item, lang)
                       const content = itemContent(item, lang)
@@ -134,9 +178,9 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems }: Pr
                         </>
                       )
                       return (
-                        <div key={item.id} className="border-b border-white/10 pb-4 last:border-0 last:pb-0">
-                          {item.href?.startsWith('mailto:') || item.href?.startsWith('tel:') || item.href?.startsWith('https://wa.me/')
-                            ? <a href={item.href} className="block transition hover:text-[#E36F2C]">{body}</a>
+                        <div key={item.id} className="border-b border-white/10 pb-3 last:border-0 last:pb-0">
+                          {isDirectContactHref(item.href)
+                            ? <a href={item.href} className="block rounded-sm px-2 py-1 transition hover:bg-white/10 hover:text-[#E36F2C]">{body}</a>
                             : body}
                         </div>
                       )
