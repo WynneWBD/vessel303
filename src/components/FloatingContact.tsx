@@ -66,10 +66,10 @@ export default function FloatingContact() {
     const content = item.content || item.value;
     const body = variant === 'desktop' ? (
       <>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center border-r border-white/10 bg-[#E36F2C] text-white">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center bg-[#E36F2C] text-white">
           <Icon aria-hidden="true" className="h-4 w-4" />
         </span>
-        <span className="min-w-0 px-3 py-2">
+        <span className="pointer-events-none absolute right-full top-1/2 mr-2 hidden min-w-44 -translate-y-1/2 border border-white/10 bg-[#241F1B]/96 px-3 py-2 text-left opacity-0 shadow-[0_16px_40px_rgba(36,31,27,0.24)] backdrop-blur-md transition group-hover:block group-hover:opacity-100 group-focus-visible:block group-focus-visible:opacity-100">
           <span className="block truncate text-xs font-black uppercase tracking-[0.14em]">{item.label}</span>
           {content ? <span className="mt-0.5 block truncate text-[11px] opacity-65">{content}</span> : null}
         </span>
@@ -82,7 +82,7 @@ export default function FloatingContact() {
     );
 
     const className = variant === 'desktop'
-      ? 'group flex min-h-10 w-52 items-stretch overflow-hidden border border-white/10 bg-[#241F1B]/92 text-white shadow-[0_16px_40px_rgba(36,31,27,0.26)] backdrop-blur-md transition hover:border-[#E36F2C] hover:bg-[#17120F]'
+      ? 'group relative flex h-11 w-11 items-center justify-center overflow-visible border border-white/10 bg-[#241F1B]/92 text-white shadow-[0_16px_40px_rgba(36,31,27,0.26)] backdrop-blur-md transition hover:border-[#E36F2C] hover:bg-[#17120F]'
       : 'inline-flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 border border-[#DADDE1] bg-white px-3 text-[#1F2A31] shadow-[0_10px_28px_rgba(36,31,27,0.18)] transition hover:border-[#E36F2C] hover:text-[#C85A1F]';
 
     return isExternalHref(item.href) ? (
@@ -110,10 +110,10 @@ export default function FloatingContact() {
 
   return (
     <>
-      <div className="fixed right-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-end gap-2 md:flex">
+      <div className="fixed right-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-end gap-2 lg:flex" data-floating-contact="desktop">
         {items.map((item) => renderAction(item, 'desktop'))}
       </div>
-      <div className="fixed bottom-4 left-4 right-4 z-40 flex gap-2 md:hidden">
+      <div className="fixed bottom-4 left-4 right-4 z-40 flex gap-2 lg:hidden" data-floating-contact="mobile">
         {items.slice(0, 3).map((item) => renderAction(item, 'mobile'))}
       </div>
     </>

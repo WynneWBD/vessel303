@@ -319,7 +319,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
       </div>
 
         {proofItems.length > 0 ? (
-          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 lg:pr-20">
             {proofItems.slice(0, 4).map((item) => (
               <div
                 key={item.id}
