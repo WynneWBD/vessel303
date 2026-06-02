@@ -171,15 +171,15 @@ export default function MediaKitPageContent({
         </div>
       </section>
 
-      {/* Form + Usage notes */}
+      {/* Resource center + request form */}
       <section id="request-form" className="flex-1 px-4 py-12 sm:px-6 sm:py-16">
-        <div className="mx-auto max-w-6xl">
+        <div className={`mx-auto grid max-w-7xl gap-8 ${resources.length > 0 && canRenderForm ? 'lg:grid-cols-[minmax(0,1fr)_390px]' : ''}`}>
           {resources.length > 0 && resourceHeading ? (
-            <section className="mb-12">
+            <section>
               <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-5">
                 {resourceHeading}
               </p>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {resources.map((resource) => {
                   const href = resource.cta_href || resource.file_url || '';
                   return (
@@ -209,7 +209,7 @@ export default function MediaKitPageContent({
             </section>
           ) : null}
 
-          <div className="max-w-3xl">
+          <aside className={resources.length > 0 ? 'lg:sticky lg:top-24 lg:self-start' : 'max-w-3xl'}>
           {canRenderForm ? (
             <div>
               {formTitle ? (
@@ -295,7 +295,7 @@ export default function MediaKitPageContent({
             </div>
           ) : null}
 
-          </div>
+          </aside>
         </div>
       </section>
 

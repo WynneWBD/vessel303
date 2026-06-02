@@ -64,7 +64,17 @@ function localizedSpecRows(product: CatalogProduct, lang: 'en' | 'zh') {
   return (lang === 'en' ? product.specs_en : product.specs_cn) ?? [];
 }
 
-function DetailModuleBlock({ module, lang, name }: { module: DetailModule; lang: 'en' | 'zh'; name: string }) {
+function DetailModuleBlock({
+  module,
+  lang,
+  name,
+  anchorId,
+}: {
+  module: DetailModule;
+  lang: 'en' | 'zh';
+  name: string;
+  anchorId?: string;
+}) {
   const title = lang === 'en' ? module.title_en : module.title_cn;
   const body = lang === 'en' ? module.body_en : module.body_cn;
   const items = lang === 'en' ? module.items_en ?? [] : module.items_cn ?? [];
@@ -74,7 +84,7 @@ function DetailModuleBlock({ module, lang, name }: { module: DetailModule; lang:
   if (!text(title) && !text(body) && items.length === 0 && images.length === 0) return null;
 
   return (
-    <section className="rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm sm:p-6">
+    <section id={anchorId} className="scroll-mt-28 rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm sm:p-6">
       {title ? <h2 className="text-2xl font-black leading-tight text-[#1F2A31]">{title}</h2> : null}
       {body ? <p className="mt-3 whitespace-pre-line text-sm leading-8 text-[#5C6670]">{body}</p> : null}
       {linkItems.length > 0 ? (
@@ -223,6 +233,18 @@ export default function CatalogProductDetailContent({
     companyPrefix: itemLabel(itemById(inquiryModule, 'form-company-prefix'), lang),
   };
   const inquiryTitle = moduleTitle(inquiryModule, lang);
+  const moduleAnchors = visibleModules
+    .map((module, index) => {
+      const label = text(lang === 'en' ? module.title_en : module.title_cn) || text(module.title_en) || text(module.title_cn);
+      return label ? { href: `#product-module-${index}`, label } : null;
+    })
+    .filter((item): item is { href: string; label: string } => Boolean(item));
+  const detailAnchors = [
+    specs.length > 0 && specsTitle ? { href: '#product-specifications', label: specsTitle } : null,
+    ...moduleAnchors,
+    relatedProducts.length > 0 && relatedTitle ? { href: '#related-products', label: relatedTitle } : null,
+    inquiryTitle ? { href: '#product-inquiry', label: inquiryTitle } : null,
+  ].filter((item): item is { href: string; label: string } => Boolean(item));
 
   if (!name) return null;
 
@@ -310,11 +332,27 @@ export default function CatalogProductDetailContent({
         </div>
       </section>
 
+      {detailAnchors.length > 0 ? (
+        <nav className="sticky top-16 z-20 border-b border-[#DADDE1] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+          <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 py-3 sm:px-6 lg:px-8">
+            {detailAnchors.map((anchor) => (
+              <a
+                key={anchor.href}
+                href={anchor.href}
+                className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-sm border border-[#DADDE1] bg-white px-4 text-xs font-black uppercase tracking-[0.12em] text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94]"
+              >
+                {anchor.label}
+              </a>
+            ))}
+          </div>
+        </nav>
+      ) : null}
+
       {(description || features.length > 0 || visibleModules.length > 0 || keywords.length > 0) ? (
         <section className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
           <div className="min-w-0 space-y-8">
             {specs.length > 0 && specsTitle ? (
-              <section className="rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm sm:p-6">
+              <section id="product-specifications" className="scroll-mt-28 rounded-md border border-[#DADDE1] bg-white p-5 shadow-sm sm:p-6">
                 <h2 className="mb-5 text-2xl font-black tracking-normal text-[#1F2A31]">{specsTitle}</h2>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {specs.map((item: SpecItem) => (
@@ -342,14 +380,14 @@ export default function CatalogProductDetailContent({
               </section>
             ) : null}
 
-            {visibleModules.map((module) => {
+            {visibleModules.map((module, index) => {
               const moduleHasLinks = ((lang === 'en' ? module.items_en : module.items_cn) ?? []).some((item) => text(item.href));
               return (
                 <div key={module.id}>
                   {moduleHasLinks && downloadsTitle ? (
                     <p className="mb-3 text-xs font-black uppercase tracking-[0.18em] text-[#147C94]">{downloadsTitle}</p>
                   ) : null}
-                  <DetailModuleBlock module={module} lang={lang} name={name} />
+                  <DetailModuleBlock module={module} lang={lang} name={name} anchorId={`product-module-${index}`} />
                 </div>
               );
             })}
@@ -373,7 +411,7 @@ export default function CatalogProductDetailContent({
       ) : null}
 
       {relatedProducts.length > 0 ? (
-        <section className="border-t border-[#DADDE1] bg-white py-10">
+        <section id="related-products" className="scroll-mt-28 border-t border-[#DADDE1] bg-white py-10">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {relatedTitle ? <h2 className="mb-5 text-2xl font-black text-[#1F2A31]">{relatedTitle}</h2> : null}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6">

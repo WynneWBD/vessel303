@@ -955,15 +955,14 @@ export async function getPublicCatalogProductById(id: string): Promise<CatalogPr
 }
 
 async function getPublicCatalogProductBySlugUncached(slug: string): Promise<CatalogProduct | null> {
-  const allowDetailSlug = !isReservedProductId(slug)
   const { rows } = await pool.query(
     `SELECT ${COLUMNS} FROM product_catalog
      WHERE status = 'published'
        AND deleted_at IS NULL
-       AND (id = $1 OR ($2::boolean AND detail_slug = $1))
+       AND (id = $1 OR detail_slug = $1)
      ORDER BY CASE WHEN id = $1 THEN 0 ELSE 1 END, sort_order ASC, updated_at DESC
      LIMIT 1`,
-    [slug, allowDetailSlug],
+    [slug],
   )
   return rows[0] ? rowToCatalogProduct(rows[0]) : null
 }

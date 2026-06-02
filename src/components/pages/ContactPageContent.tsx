@@ -72,6 +72,7 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems }: Pr
   const backupTitle = moduleTitle(backupModule, lang)
   const backupDescription = moduleDescription(backupModule, lang)
   const backupLink = itemById(backupModule, 'legacy-contact')
+  const hasBackupContent = Boolean(backupModule?.is_visible !== false && (backupTitle || backupDescription || backupLink))
   const faqPanelTitle = moduleTitle(faqPanelModule, lang)
   const faqPanelDescription = moduleDescription(faqPanelModule, lang)
   const hasAnyContent = pageModules.some((module) => module.is_visible !== false)
@@ -149,19 +150,9 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems }: Pr
 
         {formModule && formModule.is_visible !== false ? (
           <section className="px-4 py-14 sm:py-16">
-            <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(420px,1fr)]">
-              <div>
-                {moduleTitle(formModule, lang) ? (
-                  <h2 className="text-3xl font-black tracking-normal text-[#1F2A31]">
-                    {moduleTitle(formModule, lang)}
-                  </h2>
-                ) : null}
-                {moduleDescription(formModule, lang) ? (
-                  <p className="mt-4 max-w-xl text-sm leading-7 text-[#5C6670]">
-                    {moduleDescription(formModule, lang)}
-                  </p>
-                ) : null}
-                {backupModule?.is_visible !== false && (backupTitle || backupDescription || backupLink) ? (
+            <div className={`mx-auto grid gap-8 ${hasBackupContent ? 'max-w-6xl lg:grid-cols-[minmax(0,0.8fr)_minmax(420px,1fr)]' : 'max-w-3xl'}`}>
+              {hasBackupContent ? (
+                <div>
                   <div className="mt-8 border border-[#DADDE1] bg-white p-5">
                     {backupTitle ? <div className="text-sm font-bold text-[#1F2A31]">{backupTitle}</div> : null}
                     {backupDescription ? <p className="mt-2 text-sm leading-6 text-[#5C6670]">{backupDescription}</p> : null}
@@ -176,8 +167,8 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems }: Pr
                       </a>
                     ) : null}
                   </div>
-                ) : null}
-              </div>
+                </div>
+              ) : null}
               <ConversionInquiryForm
                 source={source}
                 inquiryType={formInquiryType}
