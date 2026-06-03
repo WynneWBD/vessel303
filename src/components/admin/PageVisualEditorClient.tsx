@@ -65,6 +65,18 @@ type PageMeta = {
   path: string
 }
 
+const HOME_CARD_MODULE_TYPES = new Set([
+  'large-product-cards',
+  'model-strip',
+  'innovation-story',
+  'scenario-tiles',
+  'future-explorer',
+  'product-series',
+  'model-grid',
+  'application-scenes',
+  'project-proof',
+])
+
 type HighlightRect = {
   top: number
   left: number
@@ -444,8 +456,13 @@ function supportsRepeatedItems(pageModule: PageModuleRow) {
   return (
     pageModule.module_type === 'stats' ||
     pageModule.module_type === 'list' ||
-    pageModule.module_type.includes('gallery')
+    pageModule.module_type.includes('gallery') ||
+    (pageModule.page_key === 'home' && HOME_CARD_MODULE_TYPES.has(pageModule.module_type))
   )
+}
+
+function isHomeCardItem(pageModule: PageModuleRow, item: PageModuleItem) {
+  return pageModule.page_key === 'home' && HOME_CARD_MODULE_TYPES.has(pageModule.module_type) && item.id.startsWith('card-')
 }
 
 function isImageItem(pageModule: PageModuleRow, item: PageModuleItem) {
@@ -453,7 +470,8 @@ function isImageItem(pageModule: PageModuleRow, item: PageModuleItem) {
     Boolean(item.image_url) ||
     item.id.includes('image') ||
     item.id.includes('photo') ||
-    pageModule.module_type.includes('gallery')
+    pageModule.module_type.includes('gallery') ||
+    isHomeCardItem(pageModule, item)
   )
 }
 
@@ -464,6 +482,7 @@ function isLinkItem(item: PageModuleItem) {
 function showValueFields(pageModule: PageModuleRow, item: PageModuleItem) {
   return (
     pageModule.module_type === 'stats' ||
+    isHomeCardItem(pageModule, item) ||
     Boolean(item.value_zh) ||
     Boolean(item.value_en) ||
     /^timeline-\d{4}$/.test(item.id) ||
@@ -471,10 +490,11 @@ function showValueFields(pageModule: PageModuleRow, item: PageModuleItem) {
   )
 }
 
-function showContentFields(item: PageModuleItem) {
+function showContentFields(pageModule: PageModuleRow, item: PageModuleItem) {
   return (
     Boolean(item.content_zh) ||
     Boolean(item.content_en) ||
+    isHomeCardItem(pageModule, item) ||
     item.id.includes('paragraph') ||
     item.id.includes('body') ||
     /^timeline-\d{4}$/.test(item.id) ||
@@ -1035,26 +1055,37 @@ export default function PageVisualEditorClient({
     }
 
     const maxSort = active.items.reduce((max, item) => Math.max(max, Number(item.sort_order) || 0), 0)
+    const isHomeCardModule = active.page_key === 'home' && HOME_CARD_MODULE_TYPES.has(active.module_type)
+    const nextCardNumber = isHomeCardModule
+      ? active.items.reduce((max, item) => {
+          const match = item.id.match(/^card-(\d+)$/)
+          const value = match ? Number(match[1]) : 0
+          return Number.isFinite(value) ? Math.max(max, value) : max
+        }, 0) + 1
+      : 0
     const item: PageModuleItem = {
-      id: `${active.module_key}-item-${Date.now()}`,
+      id: isHomeCardModule
+        ? `card-${String(nextCardNumber).padStart(2, '0')}`
+        : `${active.module_key}-item-${Date.now()}`,
       label_zh: '新项目',
       label_en: 'New item',
       is_visible: true,
       sort_order: maxSort + 10,
     }
 
-    if (active.module_type.includes('gallery')) {
+    if (active.module_type.includes('gallery') || isHomeCardModule) {
       item.image_url = ''
     }
-    if (active.module_type === 'stats') {
+    if (active.module_type === 'stats' || isHomeCardModule) {
       item.value_zh = ''
       item.value_en = ''
     }
-    if (active.module_type === 'list') {
-      item.value_zh = ''
-      item.value_en = ''
+    if (active.module_type === 'list' || isHomeCardModule) {
       item.content_zh = ''
       item.content_en = ''
+    }
+    if (isHomeCardModule) {
+      item.href = ''
     }
 
     patchActive({ items: [...active.items, item] })
@@ -2558,7 +2589,7 @@ export default function PageVisualEditorClient({
                   const showImage = isImageItem(active, item)
                   const showLink = isLinkItem(item)
                   const showValue = showValueFields(active, item)
-                  const showContent = showContentFields(item)
+                  const showContent = showContentFields(active, item)
                   const firstItem = itemIndex === 0
                   const lastItem = itemIndex === activeItems.length - 1
                   return (
