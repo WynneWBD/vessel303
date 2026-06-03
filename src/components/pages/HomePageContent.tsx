@@ -250,7 +250,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
   return (
     <section
-      className="relative flex min-h-[720px] items-center overflow-hidden bg-[#241F1B] sm:min-h-[760px] lg:min-h-[calc(100svh-24px)]"
+      className="relative flex min-h-[680px] items-center overflow-hidden bg-[#241F1B] sm:min-h-[720px] lg:min-h-[760px] xl:min-h-[820px]"
       data-page-module="home:hero"
       data-page-key="home"
       data-module-key="hero"
@@ -273,7 +273,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
       <div className="absolute inset-0 bg-gradient-to-r from-[#191512]/88 via-[#191512]/48 to-[#191512]/12" />
       <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-[#191512]/92 to-transparent" />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col gap-12 px-5 py-28 sm:px-6 lg:px-10">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col gap-10 px-5 py-24 sm:px-6 lg:px-10">
         <div className="max-w-5xl text-left">
           {activeTagline ? (
             <div className="mb-6">
@@ -289,7 +289,8 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
           ) : null}
 
           <h1
-            className="mb-6 max-w-5xl break-words font-[family-name:var(--font-heading)] text-4xl font-normal leading-[0.98] text-white sm:text-6xl lg:text-7xl xl:text-8xl"
+            className="mb-6 max-w-[22rem] break-words font-[family-name:var(--font-heading)] text-3xl font-normal leading-[1.05] text-white sm:max-w-5xl sm:text-6xl sm:leading-[0.98] lg:text-7xl xl:text-8xl"
+            style={{ overflowWrap: 'anywhere' }}
             data-page-module-item={activeHeadlineItem}
             data-page-module-field={`label_${lang}`}
           >
@@ -298,7 +299,8 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
           {activeSubtitle ? (
             <p
-              className="mb-8 max-w-2xl text-base leading-8 text-white/72 sm:text-lg"
+              className="mb-8 max-w-[22rem] text-base leading-8 text-white/72 sm:max-w-2xl sm:text-lg"
+              style={{ overflowWrap: 'anywhere' }}
               data-page-module-item={activeSubtitleItem}
               data-page-module-field={activeSlide?.subtitle ? `content_${lang}` : `label_${lang}`}
             >
@@ -323,7 +325,8 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
                 <Link
                   href={secondaryHref}
                   {...externalLinkProps(secondaryHref)}
-                  className="inline-flex min-h-12 items-center justify-center border border-white/35 px-8 text-sm font-bold uppercase tracking-[0.12em] text-white/85 transition-colors hover:border-white/70"
+                  className="inline-flex min-h-12 items-center justify-center border px-8 text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:border-white/70"
+                  style={{ borderColor: 'rgba(255,255,255,0.35)' }}
                   data-page-module-item="hero-secondary-cta"
                   data-page-module-field={`label_${lang}`}
                 >
@@ -341,6 +344,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
                 <div
                   key={item.id}
                   className="bg-[#191512]/58 p-4 sm:p-5"
+                  style={{ backgroundColor: 'rgba(25,21,18,0.7)' }}
                   data-page-module-item={item.id}
                 >
                   {item.value ? (
@@ -354,6 +358,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
                   {item.label ? (
                     <p
                       className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#F2A36E]"
+                      style={{ color: '#F2A36E' }}
                       data-page-module-field={`label_${lang}`}
                     >
                       {item.label}
@@ -361,7 +366,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
                   ) : null}
                   {item.body ? (
                     <p
-                      className="mt-2 text-xs leading-5 text-white/68"
+                      className="mt-2 hidden text-xs leading-5 text-white/68 sm:block"
                       data-page-module-field={`content_${lang}`}
                     >
                       {item.body}
@@ -958,6 +963,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
     return (
       <section
         className={`${sectionIsDark ? 'bg-[#15120F] text-white' : 'bg-[#F5F2ED] text-[#241F1B]'} border-b border-[#E5DED4] py-14 lg:py-20`}
+        style={{ backgroundColor: sectionIsDark ? '#15120F' : '#F5F2ED', color: sectionIsDark ? '#FFFFFF' : '#241F1B' }}
         data-page-module={`home:${pageModule.module_key}`}
         data-page-key="home"
         data-module-key={pageModule.module_key}
@@ -1093,6 +1099,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
   return (
     <section
       className={`${isDark ? 'bg-[#1F1C19] text-white' : 'bg-[#F7F1E9] text-[#241F1B]'} border-b border-[#E5DED4] py-14 lg:py-20`}
+      style={{ backgroundColor: isDark ? '#1F1C19' : '#F7F1E9', color: isDark ? '#FFFFFF' : '#241F1B' }}
       data-page-module={`home:${pageModule.module_key}`}
       data-page-key="home"
       data-module-key={pageModule.module_key}
