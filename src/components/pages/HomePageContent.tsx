@@ -1001,8 +1001,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
 
   if (!title && !description && cards.length === 0) return null;
 
-  if (isLargeProducts || isModelStrip) {
-    if (isLargeProducts) {
+  if (isLargeProducts) {
       const featuredArticle = featuredCard ? (
         <article
           className="group relative flex min-h-[620px] flex-col justify-between overflow-hidden bg-[#241F1B] p-6 text-white sm:min-h-[680px] sm:p-8 lg:min-h-[720px] lg:p-10"
@@ -1218,139 +1217,209 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
       );
     }
 
-    const sectionIsDark = isLargeProducts;
+  if (isModelStrip) {
+    const modelLeadArticle = featuredCard ? (
+      <article
+        className="group relative flex overflow-hidden bg-[#14110F] text-white"
+        style={{ minHeight: 'clamp(440px, 52vw, 660px)' }}
+        data-page-module-item={featuredCard.id}
+      >
+        {featuredCard.image ? (
+          <Image
+            src={featuredCard.image}
+            alt={featuredCard.title || title}
+            fill
+            loading="lazy"
+            className="object-cover transition duration-700 group-hover:scale-[1.025]"
+            sizes="(max-width: 1024px) 100vw, 70vw"
+            data-page-module-field="image_url"
+          />
+        ) : null}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(90deg, rgba(13, 12, 11, 0.9) 0%, rgba(13, 12, 11, 0.48) 42%, rgba(13, 12, 11, 0.08) 100%)',
+          }}
+        />
+        <div
+          className="absolute inset-x-0 bottom-0 h-2/3"
+          style={{
+            background: 'linear-gradient(0deg, rgba(13, 12, 11, 0.94) 0%, rgba(13, 12, 11, 0.62) 42%, rgba(13, 12, 11, 0) 100%)',
+          }}
+        />
+        <div className="relative mt-auto max-w-3xl p-6 sm:p-8 lg:p-10">
+          {featuredCard.meta ? (
+            <p
+              className="mb-4 text-xs font-semibold text-[#F2A36E]"
+              data-page-module-field={`value_${lang}`}
+            >
+              {featuredCard.meta}
+            </p>
+          ) : null}
+          {featuredCard.title ? (
+            <h3
+              className="font-[family-name:var(--font-heading)] text-4xl font-light leading-tight sm:text-5xl lg:text-7xl"
+              data-page-module-field={`label_${lang}`}
+            >
+              {featuredCard.title}
+            </h3>
+          ) : null}
+          {featuredCard.body ? (
+            <p
+              className="mt-5 max-w-2xl text-sm leading-7 text-white/72 sm:text-base"
+              data-page-module-field={`content_${lang}`}
+            >
+              {featuredCard.body}
+            </p>
+          ) : null}
+        </div>
+      </article>
+    ) : null;
+    const modelRailCards = featuredCard ? secondaryCards : cards;
 
     return (
       <section
-        className={`${sectionIsDark ? 'bg-[#15120F] text-white' : 'bg-[#F5F2ED] text-[#241F1B]'} border-b border-[#E5DED4] ${isLargeProducts ? 'py-10 lg:py-12' : 'py-14 lg:py-20'}`}
-        style={{ backgroundColor: sectionIsDark ? '#15120F' : '#F5F2ED', color: sectionIsDark ? '#FFFFFF' : '#241F1B' }}
+        className="border-b border-[#2D2925] bg-[#0F0E0C] py-6 text-white lg:py-8"
+        style={{ backgroundColor: '#0F0E0C', color: '#FFFFFF' }}
         data-page-module={`home:${pageModule.module_key}`}
         data-page-key="home"
         data-module-key={pageModule.module_key}
       >
-        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
-          <div className={`${isLargeProducts ? 'gap-4 lg:grid-cols-[0.58fr_0.72fr]' : 'gap-6 lg:grid-cols-[0.64fr_0.82fr]'} grid lg:items-end`}>
-            <div>
-              {eyebrow ? (
-                <p
-                  className={`${isLargeProducts ? 'mb-3' : 'mb-4'} text-xs font-semibold uppercase tracking-[0.28em] text-[#E36F2C]`}
-                  data-page-module-item="eyebrow"
-                  data-page-module-field={`label_${lang}`}
-                >
-                  {eyebrow}
-                </p>
-              ) : null}
-              {title ? (
-                <h2
-                  className={`${isLargeProducts ? 'max-w-4xl lg:text-5xl xl:text-6xl' : 'max-w-5xl lg:text-5xl'} font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.02] sm:text-4xl`}
-                  data-page-module-field={`title_${lang}`}
-                >
-                  {title}
-                </h2>
-              ) : null}
-            </div>
-            {description ? (
-              <p
-                className={`${sectionIsDark ? 'text-white/68' : 'text-[#6B625B]'} max-w-3xl text-sm leading-7 sm:text-base lg:ml-auto`}
-                data-page-module-field={`description_${lang}`}
-              >
-                {description}
-              </p>
+        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-4 lg:grid-cols-3">
+            {modelLeadArticle ? (
+              featuredCard?.href ? (
+                <Link href={featuredCard.href} {...externalLinkProps(featuredCard.href)} className="block h-full lg:col-span-2">
+                  {modelLeadArticle}
+                </Link>
+              ) : (
+                <div className="lg:col-span-2">{modelLeadArticle}</div>
+              )
             ) : null}
-          </div>
 
-          {cards.length > 0 ? (
-            <div
-              className={`${isLargeProducts ? 'mt-6 lg:mt-7 lg:grid-cols-2' : 'mt-10 lg:grid-cols-4'} grid gap-3 md:grid-cols-2`}
-            >
-              {cards.map((card, index) => {
-                const tile = (
-                  <article
-                    className={`${isLargeProducts ? 'min-h-[440px] lg:min-h-[620px]' : 'min-h-[360px] lg:min-h-[430px]'} group relative flex h-full overflow-hidden bg-[#241F1B]`}
-                    data-page-module-item={card.id}
+            <aside className={`${modelLeadArticle ? '' : 'lg:col-span-3'} flex min-h-full flex-col border border-white/12 bg-[#171410]`}>
+              <div className="border-b border-white/12 p-5 sm:p-6">
+                {eyebrow ? (
+                  <p
+                    className="mb-3 text-xs font-semibold text-[#F2A36E]"
+                    data-page-module-item="eyebrow"
+                    data-page-module-field={`label_${lang}`}
                   >
-                    {card.image ? (
-                      <Image
-                        src={card.image}
-                        alt={card.title}
-                        fill
-                        loading={index === 0 ? 'eager' : 'lazy'}
-                        className="object-cover transition duration-700 group-hover:scale-[1.035]"
-                        sizes={
-                          isLargeProducts
-                            ? '(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 780px'
-                            : '(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw'
-                        }
-                        data-page-module-field="image_url"
-                      />
-                    ) : null}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#11100E]/92 via-[#11100E]/32 to-transparent" />
-                    <div className={`${isLargeProducts ? 'p-6 lg:p-9' : 'p-5 lg:p-6'} relative mt-auto w-full text-white`}>
-                      {card.meta ? (
-                        <p
-                          className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#F2A36E]"
-                          data-page-module-field={`value_${lang}`}
-                        >
-                          {card.meta}
-                        </p>
-                      ) : null}
-                      {card.title ? (
-                        <h3
-                          className={`${isLargeProducts ? 'text-3xl lg:text-4xl' : 'text-2xl lg:text-3xl'} max-w-xl font-[family-name:var(--font-heading)] font-light leading-tight`}
-                          data-page-module-field={`label_${lang}`}
-                        >
-                          {card.title}
-                        </h3>
-                      ) : null}
-                      {card.body ? (
-                        <p
-                          className={`${isLargeProducts ? 'max-w-xl' : 'max-w-sm'} mt-4 text-sm leading-6 text-white/70`}
-                          data-page-module-field={`content_${lang}`}
-                        >
-                          {card.body}
-                        </p>
-                      ) : null}
-                    </div>
-                  </article>
-                );
+                    {eyebrow}
+                  </p>
+                ) : null}
+                {title ? (
+                  <h2
+                    className="font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.05] sm:text-4xl"
+                    data-page-module-field={`title_${lang}`}
+                  >
+                    {title}
+                  </h2>
+                ) : null}
+                {description ? (
+                  <p
+                    className="mt-4 text-sm leading-7 text-white/66"
+                    data-page-module-field={`description_${lang}`}
+                  >
+                    {description}
+                  </p>
+                ) : null}
+              </div>
 
-                return card.href ? (
-                  <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
-                    {tile}
-                  </Link>
-                ) : (
-                  <div key={card.id} className="h-full">{tile}</div>
-                );
-              })}
-            </div>
-          ) : null}
+              {modelRailCards.length > 0 ? (
+                <div className="grid gap-px bg-white/10">
+                  {modelRailCards.map((card, index) => {
+                    const modelTile = (
+                      <article
+                        className="group flex bg-[#1D1915] text-white"
+                        style={{ minHeight: 150 }}
+                        data-page-module-item={card.id}
+                      >
+                        <div className="relative w-28 shrink-0 overflow-hidden bg-[#241F1B] sm:w-36 lg:w-32" style={{ minHeight: 150 }}>
+                          {card.image ? (
+                            <Image
+                              src={card.image}
+                              alt={card.title || title}
+                              fill
+                              loading="lazy"
+                              className="object-cover transition duration-700 group-hover:scale-[1.035]"
+                              sizes="160px"
+                              data-page-module-field="image_url"
+                            />
+                          ) : null}
+                          <div className="absolute inset-0 bg-[#11100E]/18" />
+                        </div>
+                        <div className="flex min-w-0 flex-col justify-between p-4">
+                          <div>
+                            {card.meta ? (
+                              <p
+                                className="text-[11px] font-semibold text-[#F2A36E]"
+                                data-page-module-field={`value_${lang}`}
+                              >
+                                {card.meta}
+                              </p>
+                            ) : null}
+                            {card.title ? (
+                              <h3
+                                className="mt-2 break-words font-[family-name:var(--font-heading)] text-2xl font-light leading-tight"
+                                data-page-module-field={`label_${lang}`}
+                              >
+                                {card.title}
+                              </h3>
+                            ) : null}
+                            {card.body ? (
+                              <p
+                                className="mt-3 line-clamp-2 text-sm leading-6 text-white/62"
+                                data-page-module-field={`content_${lang}`}
+                              >
+                                {card.body}
+                              </p>
+                            ) : null}
+                          </div>
+                          <ChevronRight className="mt-3 h-5 w-5 text-[#F2A36E]" aria-hidden="true" />
+                        </div>
+                      </article>
+                    );
 
-          {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
-            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              {primaryLabel && primaryHref ? (
-                <Link
-                  href={primaryHref}
-                  {...externalLinkProps(primaryHref)}
-                  className="inline-flex min-h-12 items-center justify-center bg-[#E36F2C] px-7 text-sm font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C85A1F]"
-                  data-page-module-item="primary-cta"
-                  data-page-module-field={`label_${lang}`}
-                >
-                  {primaryLabel}
-                </Link>
+                    return card.href ? (
+                      <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block">
+                        {modelTile}
+                      </Link>
+                    ) : (
+                      <div key={`${card.id}-${index}`}>{modelTile}</div>
+                    );
+                  })}
+                </div>
               ) : null}
-              {secondaryLabel && secondaryHref ? (
-                <Link
-                  href={secondaryHref}
-                  {...externalLinkProps(secondaryHref)}
-                  className={`${sectionIsDark ? 'border-white/24 text-white/78 hover:border-white/60' : 'border-[#241F1B]/20 text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]'} inline-flex min-h-12 items-center justify-center border px-7 text-sm font-bold uppercase tracking-[0.12em]`}
-                  data-page-module-item="secondary-cta"
-                  data-page-module-field={`label_${lang}`}
-                >
-                  {secondaryLabel}
-                </Link>
+
+              {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
+                <div className="mt-auto flex flex-col gap-3 border-t border-white/12 p-5 sm:flex-row sm:flex-wrap sm:p-6 lg:flex-col">
+                  {primaryLabel && primaryHref ? (
+                    <Link
+                      href={primaryHref}
+                      {...externalLinkProps(primaryHref)}
+                      className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold text-white hover:bg-[#C85A1F]"
+                      data-page-module-item="primary-cta"
+                      data-page-module-field={`label_${lang}`}
+                    >
+                      {primaryLabel}
+                    </Link>
+                  ) : null}
+                  {secondaryLabel && secondaryHref ? (
+                    <Link
+                      href={secondaryHref}
+                      {...externalLinkProps(secondaryHref)}
+                      className="inline-flex min-h-11 items-center justify-center border border-white/24 px-5 text-sm font-bold text-white/78 hover:border-white/60 hover:text-white"
+                      data-page-module-item="secondary-cta"
+                      data-page-module-field={`label_${lang}`}
+                    >
+                      {secondaryLabel}
+                    </Link>
+                  ) : null}
+                </div>
               ) : null}
-            </div>
-          ) : null}
+            </aside>
+          </div>
         </div>
       </section>
     );
