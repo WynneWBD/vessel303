@@ -1223,3 +1223,21 @@ curl -I https://www.vessel303.com/news/<slug>
 - Mobile limitation: the current Browser path still has no viewport/resize capability, so B71 did not produce a real mobile screenshot. Mobile behavior remains code-reviewed and covered by build/type/audit checks, but should be visually rechecked by 09 / 07 when a viewport-capable browser path is available.
 - `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. Global Contact / Products old 303 exception remains unchanged.
 - Next step: 09 should recompare the live homepage against `en.303vessel.cn`, with emphasis on carousel control behavior, right-side contact affordance, and mobile hero readability. Display-template gaps go to 01; backend content/material gaps go to 02 / 03; mobile/image performance regressions go to 07.
+
+## B72 Homepage hero carousel control alignment (2026-06-03)
+
+- Code commit: `79443c5 fix(home): add hero carousel controls`
+- Full SHA: `79443c58636b5b0aa5b70f47c5feb99bb157c60f`
+- Vercel deployment: `dpl_6kFaNWTbiZThcaEmL4s6L5NmaCoZ`
+- Deployment URL: `https://vessel303-nfpkp7z2x-vessel303.vercel.app`
+- Status: `READY`
+- Scope: B72 was a homepage display-template fix after 09 comparison found that `en.303vessel.cn` exposes explicit hero carousel controls (`Next` and pause), while vessel303 only had the backend-image thumbnail and progress bars. No homepage copy, image URL, CTA label, contact value, product fact, backend content, module order, or `/global` behavior was hardcoded in the frontend.
+- Frontend display change: `HomePageContent` now adds a desktop `Next` command and a `Pause` / `Play` toggle below the existing next-slide thumbnail, keeps the backend-driven progress buttons, and stops the automatic 5-second slide rotation while paused.
+- Backend-control boundary: all visible homepage headlines, subtitles, CTAs, slide images, proof values, proof labels, credentials values, contact entries and product-card content still come from published Home page modules and site configuration. The frontend only controls carousel command placement, icon rendering, pause state, autoplay timing, and responsive visibility.
+- 02 backend check: Home still reads published `home` page modules through `listPublishedPageModules('home')`; `home:hero` owns hero slides, CTAs and proof items; `home:credentials` owns the credentials bar. Existing 300 backend tabs were treated read-only; no click, input, draft, publish or backend mutation was performed.
+- Validation: `git diff --check`, targeted eslint for `src/components/pages/HomePageContent.tsx`, `npx.cmd tsc --noEmit`, `npm.cmd run audit:public-content`, `npm.cmd run audit:published-content`, `npm.cmd run audit:production-links`, and `npx.cmd next build --webpack` passed. Published-content and production-link audits needed approved network runs. Build logs only showed existing PostgreSQL SSL warnings, sandbox database `EACCES` fallback logs, and the known `/global` edge-runtime warning.
+- Online checks: Vercel reached `READY`; `https://www.vessel303.com/?lang=en&b72=79443c5` returned 200, `/global?b72=79443c5` returned 200, and unauthenticated `/admin?b72=79443c5` redirected to `/admin/login`.
+- 09 visual recheck: online Browser screenshot at 1920 x 945 confirmed no horizontal overflow, the desktop `Next` and pause controls are visible in the hero, the pause button toggles to `Play`, and the right-side floating contact rail loads after the `site` module client fetch.
+- Mobile limitation: the current Browser path still has no reliable viewport/resize capability, so B72 did not produce a real mobile screenshot. Mobile behavior remains code-reviewed and covered by build/type/audit checks, but should be visually rechecked by 09 / 07 when a viewport-capable browser path is available.
+- `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. Global Contact / Products old 303 exception remains unchanged.
+- Next step: 09 should recompare the live homepage against `en.303vessel.cn`, with emphasis on mobile hero readability and whether any remaining first-screen gap is content/material selection rather than display-template interaction. Display-template gaps go to 01; backend content/material gaps go to 02 / 03; mobile/image performance regressions go to 07.
