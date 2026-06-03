@@ -1006,18 +1006,18 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
 
     return (
       <section
-        className={`${sectionIsDark ? 'bg-[#15120F] text-white' : 'bg-[#F5F2ED] text-[#241F1B]'} border-b border-[#E5DED4] py-14 lg:py-20`}
+        className={`${sectionIsDark ? 'bg-[#15120F] text-white' : 'bg-[#F5F2ED] text-[#241F1B]'} border-b border-[#E5DED4] ${isLargeProducts ? 'py-10 lg:py-12' : 'py-14 lg:py-20'}`}
         style={{ backgroundColor: sectionIsDark ? '#15120F' : '#F5F2ED', color: sectionIsDark ? '#FFFFFF' : '#241F1B' }}
         data-page-module={`home:${pageModule.module_key}`}
         data-page-key="home"
         data-module-key={pageModule.module_key}
       >
         <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
-          <div className="grid gap-6 lg:grid-cols-[0.64fr_0.82fr] lg:items-end">
+          <div className={`${isLargeProducts ? 'gap-4 lg:grid-cols-[0.58fr_0.72fr]' : 'gap-6 lg:grid-cols-[0.64fr_0.82fr]'} grid lg:items-end`}>
             <div>
               {eyebrow ? (
                 <p
-                  className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-[#E36F2C]"
+                  className={`${isLargeProducts ? 'mb-3' : 'mb-4'} text-xs font-semibold uppercase tracking-[0.28em] text-[#E36F2C]`}
                   data-page-module-item="eyebrow"
                   data-page-module-field={`label_${lang}`}
                 >
@@ -1026,7 +1026,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
               ) : null}
               {title ? (
                 <h2
-                  className={`${isLargeProducts ? 'lg:text-6xl xl:text-7xl' : 'lg:text-5xl'} max-w-5xl font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.02] sm:text-4xl`}
+                  className={`${isLargeProducts ? 'max-w-4xl lg:text-5xl xl:text-6xl' : 'max-w-5xl lg:text-5xl'} font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.02] sm:text-4xl`}
                   data-page-module-field={`title_${lang}`}
                 >
                   {title}
@@ -1045,7 +1045,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
 
           {cards.length > 0 ? (
             <div
-              className={`${isLargeProducts ? 'lg:grid-cols-2' : 'lg:grid-cols-4'} mt-10 grid gap-3 md:grid-cols-2`}
+              className={`${isLargeProducts ? 'mt-6 lg:mt-7 lg:grid-cols-2' : 'mt-10 lg:grid-cols-4'} grid gap-3 md:grid-cols-2`}
             >
               {cards.map((card, index) => {
                 const tile = (
@@ -1080,7 +1080,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                       ) : null}
                       {card.title ? (
                         <h3
-                          className={`${isLargeProducts ? 'text-3xl lg:text-5xl' : 'text-2xl lg:text-3xl'} max-w-xl font-[family-name:var(--font-heading)] font-light leading-tight`}
+                          className={`${isLargeProducts ? 'text-3xl lg:text-4xl' : 'text-2xl lg:text-3xl'} max-w-xl font-[family-name:var(--font-heading)] font-light leading-tight`}
                           data-page-module-field={`label_${lang}`}
                         >
                           {card.title}
