@@ -1156,3 +1156,19 @@ curl -I https://www.vessel303.com/news/<slug>
 - Visual check: local desktop and mobile screenshots confirmed the desktop rhythm remained stable and the mobile product systems section now appears directly after the compacted hero/proof/credentials area instead of being delayed by a taller first screen.
 - `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. Global Contact / Products old 303 exception remains unchanged.
 - Next step: 09 should run another visual comparison of the live homepage against `en.303vessel.cn`. If the next gap is still mobile/desktop display rhythm or interaction, assign 01; if it requires different homepage content, product imagery, or proof assets, assign 02 / 03; if image weight or click feel regresses, assign 07.
+
+## B68 Homepage hero visual impact alignment (2026-06-03)
+
+- Code commit: `9dd0ae5 fix(home): strengthen hero visual impact`
+- Full SHA: `9dd0ae5fc02ae97df94a34713bc5d8ae6c129be2`
+- Vercel deployment: `dpl_5s4CcKXiuFfDsrU1eiHgEdbCLXAx`
+- Deployment URL: `https://vessel303-42tfkvas5-vessel303.vercel.app`
+- Status: `READY`
+- Scope: B68 was a homepage display-template fix after 09 comparison found that `en.303vessel.cn` leads with a centered full-bleed real-scene hero, while vessel303 still read too much like a dark information panel. No homepage copy, image URL, CTA label, contact value, product fact, backend content, module order, or `/global` behavior was hardcoded in the frontend.
+- Frontend display change: `HomePageContent` now reduces the hero overlay strength, centers the backend-published hero headline/subtitle/CTA stack, adds text shadow for readability, renders the next-slide control as a backend-image thumbnail preview, and avoids an empty proof-card column when fewer than four proof items are available.
+- Backend-control boundary: all visible homepage text, images, CTA labels, links, proof values and product-card content still come from published Home page modules and site configuration. The frontend only controls visual alignment, overlay strength, carousel preview treatment, responsive proof-grid columns and text contrast.
+- Validation: `git diff --check`, targeted eslint for `src/components/pages/HomePageContent.tsx`, `npm.cmd run audit:public-content`, `npm.cmd run audit:published-content`, `npm.cmd run audit:production-links`, `npx.cmd tsc --noEmit`, and `npx.cmd next build --webpack` passed. The first build attempt failed in sandbox because Google Fonts fetch was blocked; the approved network rerun passed. Build logs only showed existing PostgreSQL SSL warnings and the known `/global` edge-runtime warning.
+- Online checks: Vercel reached `READY`; `https://www.vessel303.com/?lang=en&b68=9dd0ae5` returned 200 after naked-domain redirect, `/global?b68=9dd0ae5` returned 200, and unauthenticated `/admin` redirected to `/admin/login`. Online desktop Chrome screenshot confirmed the hero now uses the real-scene image as the dominant first-screen visual, with centered title/CTAs, one thumbnail next-slide preview, three proof boxes and no horizontal overflow.
+- Mobile limitation: this run could not capture a mobile viewport because the current Chrome extension tab remained at 1920 px after a resize attempt. Mobile behavior was not visually verified in B68 and should be rechecked by 09 / 07 when a viewport-capable browser path is available.
+- `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. Global Contact / Products old 303 exception remains unchanged.
+- Next step: 09 should recompare the live homepage against `en.303vessel.cn`, with emphasis on mobile hero readability and whether the desktop proof strip should stay in the first screen or move lower. If the next gap is display rhythm, assign 01; if it requires different homepage content or imagery, assign 02 / 03; if mobile or image performance regresses, assign 07.
