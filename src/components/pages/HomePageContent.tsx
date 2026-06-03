@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { ChevronRight, Pause, Play } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -185,6 +186,7 @@ function optimizedHeroImageUrl(imageUrl: string) {
 function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const { lang } = useLanguage();
   const [current, setCurrent] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const items = useMemo(() => sortModuleItems(pageModule), [pageModule]);
   const heroSlides = useMemo(() => {
     return items
@@ -229,6 +231,9 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const activeHeadlineItem = activeSlide?.headline ? activeSlide.id : 'hero-headline';
   const activeSubtitleItem = activeSlide?.subtitle ? activeSlide.id : 'hero-subtitle';
   const nextSlide = heroSlides.length > 1 ? heroSlides[(activeImage + 1) % heroSlides.length] : null;
+  const nextLabel = lang === 'zh' ? '下一张' : 'Next';
+  const pauseLabel = lang === 'zh' ? '暂停' : 'Pause';
+  const playLabel = lang === 'zh' ? '播放' : 'Play';
   const visibleHeroImages = useMemo(() => {
     if (heroSlides.length === 0) return [];
     const nextImage = (activeImage + 1) % heroSlides.length;
@@ -241,11 +246,12 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
   useEffect(() => {
     if (heroSlides.length === 0) return;
+    if (isPaused) return;
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % heroSlides.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, [heroSlides.length]);
+  }, [heroSlides.length, isPaused]);
 
   if (!pageModule || !pageModule.is_visible || heroSlides.length === 0 || !activeHeadline) return null;
 
@@ -406,6 +412,29 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
                   </span>
                 </button>
               ) : null}
+              <div className="hidden w-full items-center justify-end gap-2 sm:flex sm:w-72">
+                <button
+                  type="button"
+                  onClick={() => setCurrent((prev) => (prev + 1) % heroSlides.length)}
+                  className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 border border-white/18 bg-[#191512]/48 px-4 text-xs font-bold uppercase tracking-[0.14em] text-white/82 backdrop-blur-sm transition hover:border-white/42 hover:bg-[#191512]/66 hover:text-white focus:outline-none focus:ring-2 focus:ring-[#E36F2C]/70 focus:ring-offset-2 focus:ring-offset-[#191512]"
+                >
+                  <span>{nextLabel}</span>
+                  <ChevronRight aria-hidden="true" className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsPaused((value) => !value)}
+                  aria-pressed={isPaused}
+                  className="inline-flex min-h-11 w-12 items-center justify-center border border-white/18 bg-[#191512]/48 text-white/82 backdrop-blur-sm transition hover:border-white/42 hover:bg-[#191512]/66 hover:text-white focus:outline-none focus:ring-2 focus:ring-[#E36F2C]/70 focus:ring-offset-2 focus:ring-offset-[#191512]"
+                >
+                  {isPaused ? (
+                    <Play aria-hidden="true" className="h-4 w-4" />
+                  ) : (
+                    <Pause aria-hidden="true" className="h-4 w-4" />
+                  )}
+                  <span className="sr-only">{isPaused ? playLabel : pauseLabel}</span>
+                </button>
+              </div>
               <div className="flex items-center gap-2 sm:justify-end">
                 {heroSlides.map((slide, index) => (
                   <button
