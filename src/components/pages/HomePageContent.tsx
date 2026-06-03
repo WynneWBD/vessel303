@@ -218,13 +218,6 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
     }))
     .filter((item) => item.value || item.label || item.body);
   const visibleProofItems = proofItems.slice(0, 4);
-  const proofGridClass = visibleProofItems.length >= 4
-    ? 'grid-cols-3 sm:grid-cols-2 lg:grid-cols-4'
-    : visibleProofItems.length === 3
-      ? 'grid-cols-3'
-      : visibleProofItems.length === 2
-        ? 'grid-cols-2'
-        : 'grid-cols-1';
   const activeImage = heroSlides.length > 0 ? current % heroSlides.length : 0;
   const activeSlide = heroSlides[activeImage] ?? null;
   const activeTagline = activeSlide?.eyebrow || tagline;
@@ -347,17 +340,16 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
         <div className="mt-auto grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end lg:gap-6">
           {visibleProofItems.length > 0 ? (
-            <div className={`grid ${proofGridClass} gap-px overflow-hidden border border-white/14 bg-white/14 backdrop-blur-sm lg:max-w-[940px] lg:justify-self-start`}>
+            <div className="flex max-w-full flex-wrap items-center gap-x-5 gap-y-2 border-l border-white/24 bg-[#191512]/34 px-4 py-3 text-left backdrop-blur-sm sm:max-w-3xl lg:max-w-[760px] lg:justify-self-start">
               {visibleProofItems.map((item, index) => (
                 <div
                   key={item.id}
-                  className={`${index === 3 ? 'hidden lg:block' : ''} bg-[#191512]/58 p-3 sm:p-4 lg:p-4`}
-                  style={{ backgroundColor: 'rgba(25,21,18,0.7)' }}
+                  className={`${index === 3 ? 'hidden xl:flex' : 'flex'} min-w-0 items-baseline gap-2`}
                   data-page-module-item={item.id}
                 >
                   {item.value ? (
                     <p
-                      className="font-[family-name:var(--font-heading)] text-2xl font-light leading-none text-white sm:text-3xl"
+                      className="font-[family-name:var(--font-heading)] text-lg font-light leading-none text-white sm:text-xl"
                       data-page-module-field={`value_${lang}`}
                     >
                       {item.value}
@@ -365,7 +357,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
                   ) : null}
                   {item.label ? (
                     <p
-                      className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#F2A36E]"
+                      className="max-w-[10rem] truncate text-[10px] font-semibold uppercase tracking-[0.16em] text-[#F2A36E]"
                       style={{ color: '#F2A36E' }}
                       data-page-module-field={`label_${lang}`}
                     >
@@ -373,12 +365,9 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
                     </p>
                   ) : null}
                   {item.body ? (
-                    <p
-                      className="mt-2 hidden text-xs leading-5 text-white/68 sm:line-clamp-2 sm:block lg:line-clamp-1"
-                      data-page-module-field={`content_${lang}`}
-                    >
+                    <span className="sr-only" data-page-module-field={`content_${lang}`}>
                       {item.body}
-                    </p>
+                    </span>
                   ) : null}
                 </div>
               ))}
