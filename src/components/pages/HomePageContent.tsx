@@ -1002,6 +1002,222 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
   if (!title && !description && cards.length === 0) return null;
 
   if (isLargeProducts || isModelStrip) {
+    if (isLargeProducts) {
+      const featuredArticle = featuredCard ? (
+        <article
+          className="group relative flex min-h-[620px] flex-col justify-between overflow-hidden bg-[#241F1B] p-6 text-white sm:min-h-[680px] sm:p-8 lg:min-h-[720px] lg:p-10"
+          data-page-module-item={featuredCard.id}
+        >
+          {featuredCard.image ? (
+            <Image
+              src={featuredCard.image}
+              alt={featuredCard.title || title}
+              fill
+              loading="eager"
+              className="object-cover transition duration-700 group-hover:scale-[1.025]"
+              sizes="100vw"
+              data-page-module-field="image_url"
+            />
+          ) : null}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#11100E]/94 via-[#11100E]/34 to-[#11100E]/52" />
+          <div className="relative max-w-4xl">
+            {eyebrow ? (
+              <p
+                className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-[#F2A36E]"
+                data-page-module-item="eyebrow"
+                data-page-module-field={`label_${lang}`}
+              >
+                {eyebrow}
+              </p>
+            ) : null}
+            {title ? (
+              <h2
+                className="font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.02] sm:text-5xl lg:text-6xl"
+                data-page-module-field={`title_${lang}`}
+              >
+                {title}
+              </h2>
+            ) : null}
+            {description ? (
+              <p
+                className="mt-5 max-w-2xl text-sm leading-7 text-white/72 sm:text-base"
+                data-page-module-field={`description_${lang}`}
+              >
+                {description}
+              </p>
+            ) : null}
+          </div>
+          <div className="relative mt-12 max-w-3xl">
+            {featuredCard.meta ? (
+              <p
+                className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#F2A36E]"
+                data-page-module-field={`value_${lang}`}
+              >
+                {featuredCard.meta}
+              </p>
+            ) : null}
+            {featuredCard.title ? (
+              <h3
+                className="font-[family-name:var(--font-heading)] text-4xl font-light leading-tight sm:text-5xl lg:text-7xl"
+                data-page-module-field={`label_${lang}`}
+              >
+                {featuredCard.title}
+              </h3>
+            ) : null}
+            {featuredCard.body ? (
+              <p
+                className="mt-5 max-w-2xl text-sm leading-7 text-white/72 sm:text-base"
+                data-page-module-field={`content_${lang}`}
+              >
+                {featuredCard.body}
+              </p>
+            ) : null}
+          </div>
+        </article>
+      ) : null;
+
+      return (
+        <section
+          className="border-b border-[#E5DED4] bg-[#15120F] py-6 text-white lg:py-8"
+          style={{ backgroundColor: '#15120F', color: '#FFFFFF' }}
+          data-page-module={`home:${pageModule.module_key}`}
+          data-page-key="home"
+          data-module-key={pageModule.module_key}
+        >
+          <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
+            {featuredArticle ? (
+              featuredCard?.href ? (
+                <Link href={featuredCard.href} {...externalLinkProps(featuredCard.href)} className="block">
+                  {featuredArticle}
+                </Link>
+              ) : featuredArticle
+            ) : (
+              <div className="grid gap-4 lg:grid-cols-[0.58fr_0.72fr] lg:items-end">
+                <div>
+                  {eyebrow ? (
+                    <p
+                      className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-[#E36F2C]"
+                      data-page-module-item="eyebrow"
+                      data-page-module-field={`label_${lang}`}
+                    >
+                      {eyebrow}
+                    </p>
+                  ) : null}
+                  {title ? (
+                    <h2
+                      className="max-w-4xl font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.02] sm:text-4xl lg:text-5xl"
+                      data-page-module-field={`title_${lang}`}
+                    >
+                      {title}
+                    </h2>
+                  ) : null}
+                </div>
+                {description ? (
+                  <p
+                    className="max-w-3xl text-sm leading-7 text-white/68 sm:text-base lg:ml-auto"
+                    data-page-module-field={`description_${lang}`}
+                  >
+                    {description}
+                  </p>
+                ) : null}
+              </div>
+            )}
+
+            {secondaryCards.length > 0 ? (
+              <div className={`${secondaryCards.length > 1 ? 'md:grid-cols-2' : 'grid-cols-1'} mt-3 grid gap-3`}>
+                {secondaryCards.map((card, index) => {
+                  const secondaryArticle = (
+                    <article
+                      className="group relative flex min-h-[380px] overflow-hidden bg-[#241F1B] text-white sm:min-h-[460px] lg:min-h-[520px]"
+                      data-page-module-item={card.id}
+                    >
+                      {card.image ? (
+                        <Image
+                          src={card.image}
+                          alt={card.title || title}
+                          fill
+                          loading="lazy"
+                          className="object-cover transition duration-700 group-hover:scale-[1.03]"
+                          sizes={
+                            secondaryCards.length > 1
+                              ? '(max-width: 768px) 100vw, 50vw'
+                              : '100vw'
+                          }
+                          data-page-module-field="image_url"
+                        />
+                      ) : null}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#11100E]/94 via-[#11100E]/30 to-transparent" />
+                      <div className="relative mt-auto w-full p-6 sm:p-8">
+                        {card.meta ? (
+                          <p
+                            className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#F2A36E]"
+                            data-page-module-field={`value_${lang}`}
+                          >
+                            {card.meta}
+                          </p>
+                        ) : null}
+                        {card.title ? (
+                          <h3
+                            className="max-w-3xl font-[family-name:var(--font-heading)] text-3xl font-light leading-tight sm:text-4xl"
+                            data-page-module-field={`label_${lang}`}
+                          >
+                            {card.title}
+                          </h3>
+                        ) : null}
+                        {card.body ? (
+                          <p
+                            className="mt-4 max-w-2xl text-sm leading-6 text-white/70"
+                            data-page-module-field={`content_${lang}`}
+                          >
+                            {card.body}
+                          </p>
+                        ) : null}
+                      </div>
+                    </article>
+                  );
+
+                  return card.href ? (
+                    <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                      {secondaryArticle}
+                    </Link>
+                  ) : (
+                    <div key={`${card.id}-${index}`} className="h-full">{secondaryArticle}</div>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                {primaryLabel && primaryHref ? (
+                  <Link
+                    href={primaryHref}
+                    {...externalLinkProps(primaryHref)}
+                    className="inline-flex min-h-12 items-center justify-center bg-[#E36F2C] px-7 text-sm font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C85A1F]"
+                    data-page-module-item="primary-cta"
+                    data-page-module-field={`label_${lang}`}
+                  >
+                    {primaryLabel}
+                  </Link>
+                ) : null}
+                {secondaryLabel && secondaryHref ? (
+                  <Link
+                    href={secondaryHref}
+                    {...externalLinkProps(secondaryHref)}
+                    className="inline-flex min-h-12 items-center justify-center border border-white/24 px-7 text-sm font-bold uppercase tracking-[0.12em] text-white/78 hover:border-white/60"
+                    data-page-module-item="secondary-cta"
+                    data-page-module-field={`label_${lang}`}
+                  >
+                    {secondaryLabel}
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </section>
+      );
+    }
+
     const sectionIsDark = isLargeProducts;
 
     return (
