@@ -1128,3 +1128,18 @@ curl -I https://www.vessel303.com/news/<slug>
 - Online checks: Vercel reached `READY`; `https://www.vessel303.com/contact?lang=en&b65=9ff4f3f` returned 200 and was served from deployment `dpl_wuyG74J31DiAULHNXt4dduY6uPEe`; `/faq?lang=en` returned 200; `/global` returned 200; unauthenticated `/admin` redirected to `/admin/login`. Online Contact HTML contains `Procurement FAQ` and published FAQ CMS data.
 - `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. Global Contact / Products old 303 exception remains unchanged.
 - Next step: 09 should compare the updated Contact purchase-flow rhythm against `en.303vessel.cn/contact.html`. Likely next visible display candidates are product catalog interaction density, product detail scroll rhythm, and homepage/product-entry sales rhythm. Display-template gaps go to 01; backend content/material/file gaps go to 02 / 03; performance/image regressions go to 07.
+
+## B66 Homepage sales rhythm tightening (2026-06-03)
+
+- Code commit: `b373c33 fix(home): tighten homepage sales rhythm`
+- Full SHA: `b373c33aaa7e55b911dc1ec35f63e3dbc2a203d8`
+- Vercel deployment: `dpl_CeTinNDpN5sKUVDqifw9L9KtiF9z`
+- Deployment URL: `https://vessel303-mqveayvg7-vessel303.vercel.app`
+- Status: `READY`
+- Scope: B66 was a homepage display-template fix after 09/00 confirmed that the first-screen rhythm still felt too far from `en.303vessel.cn`: the hero occupied too much vertical space and delayed the product section. No homepage copy, image URL, CTA label, contact value, product fact, backend content, or `/global` behavior was added in the frontend.
+- Frontend display change: `HomePageContent` now uses a shorter capped hero height, tighter hero spacing, mobile-safe headline wrapping, stronger secondary CTA visibility, denser proof-card treatment, and reliable dark/light section backgrounds so the product families section appears earlier and remains readable.
+- Backend-control boundary: all visible homepage text, images, CTA labels, links, proof values and product-card content still come from published Home page modules and site configuration. The frontend only controls layout rhythm, color rendering, responsive spacing, button contrast and text wrapping.
+- Validation: `git diff --check`, targeted eslint for `src/components/pages/HomePageContent.tsx`, `npm.cmd run audit:public-content`, `npm.cmd run audit:published-content`, `npm.cmd run audit:production-links`, `npx.cmd tsc --noEmit`, and `npx.cmd next build --webpack` passed. Build logs only showed existing PostgreSQL SSL warnings and the known `/global` edge-runtime warning.
+- Online checks: Vercel reached `READY`; `https://www.vessel303.com/?lang=en`, `/products`, `/contact`, and `/global` returned 200. Online homepage screenshot confirmed the product section now enters the desktop first-screen capture after the hero/proof band instead of being delayed by a full-height hero.
+- `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. Global Contact / Products old 303 exception remains unchanged.
+- Next step: 09 should compare the updated homepage against `en.303vessel.cn` again. If the gap is still visual rhythm or interaction, assign 01; if the gap is missing homepage content, product material or media, assign 02 / 03; if image weight or click feel regresses, assign 07.
