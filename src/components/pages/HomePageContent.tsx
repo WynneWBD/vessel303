@@ -1562,6 +1562,179 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
     );
   }
 
+  if (isFuture) {
+    const futureLead = featuredCard;
+    const futureCards = cards;
+
+    return (
+      <section
+        className="border-b border-[#2D2925] bg-[#171410] py-6 text-white lg:py-8"
+        style={{ backgroundColor: '#171410', color: '#FFFFFF' }}
+        data-page-module={`home:${pageModule.module_key}`}
+        data-page-key="home"
+        data-module-key={pageModule.module_key}
+      >
+        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
+          <div
+            className="relative overflow-hidden bg-[#201B16]"
+            style={{ minHeight: 'clamp(540px, 52vw, 660px)' }}
+          >
+            {futureLead?.image ? (
+              <Image
+                src={futureLead.image}
+                alt={futureLead.title || title}
+                fill
+                loading="lazy"
+                className="object-cover"
+                sizes="100vw"
+                data-page-module-item={futureLead.id}
+                data-page-module-field="image_url"
+              />
+            ) : null}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: 'linear-gradient(90deg, rgba(18, 16, 14, 0.92) 0%, rgba(18, 16, 14, 0.62) 42%, rgba(18, 16, 14, 0.24) 100%)',
+              }}
+            />
+            <div
+              className="absolute inset-x-0 bottom-0 h-1/2"
+              style={{
+                background: 'linear-gradient(0deg, rgba(18, 16, 14, 0.96) 0%, rgba(18, 16, 14, 0.34) 64%, rgba(18, 16, 14, 0) 100%)',
+              }}
+            />
+
+            <div className="relative grid min-h-[inherit] gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="flex min-h-[inherit] flex-col justify-between p-6 sm:p-8 lg:p-10">
+                <div className="max-w-4xl">
+                  {eyebrow ? (
+                    <p
+                      className="mb-4 text-xs font-semibold text-[#F2A36E]"
+                      data-page-module-item="eyebrow"
+                      data-page-module-field={`label_${lang}`}
+                    >
+                      {eyebrow}
+                    </p>
+                  ) : null}
+                  {title ? (
+                    <h2
+                      className="font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.02] sm:text-5xl lg:text-6xl"
+                      data-page-module-field={`title_${lang}`}
+                    >
+                      {title}
+                    </h2>
+                  ) : null}
+                  {description ? (
+                    <p
+                      className="mt-5 max-w-2xl text-sm leading-7 text-white/72 sm:text-base"
+                      data-page-module-field={`description_${lang}`}
+                    >
+                      {description}
+                    </p>
+                  ) : null}
+                </div>
+
+                {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
+                  <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                    {primaryLabel && primaryHref ? (
+                      <Link
+                        href={primaryHref}
+                        {...externalLinkProps(primaryHref)}
+                        className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold text-white hover:bg-[#C85A1F]"
+                        data-page-module-item="primary-cta"
+                        data-page-module-field={`label_${lang}`}
+                      >
+                        {primaryLabel}
+                      </Link>
+                    ) : null}
+                    {secondaryLabel && secondaryHref ? (
+                      <Link
+                        href={secondaryHref}
+                        {...externalLinkProps(secondaryHref)}
+                        className="inline-flex min-h-11 items-center justify-center border border-white/24 px-5 text-sm font-bold text-white/78 hover:border-white/60 hover:text-white"
+                        data-page-module-item="secondary-cta"
+                        data-page-module-field={`label_${lang}`}
+                      >
+                        {secondaryLabel}
+                      </Link>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+
+              {futureCards.length > 0 ? (
+                <aside className="border-t border-white/14 bg-[#11100E]/86 p-4 backdrop-blur-sm lg:border-l lg:border-t-0 lg:p-5">
+                  <div className="grid gap-3">
+                    {futureCards.map((card, index) => {
+                      const futureTile = (
+                        <article
+                          className="group grid overflow-hidden border border-white/12 bg-white/[0.06] text-white sm:grid-cols-[132px_minmax(0,1fr)] lg:grid-cols-1"
+                          data-page-module-item={card.id}
+                        >
+                          {card.image ? (
+                            <div className="relative min-h-[120px] overflow-hidden bg-[#241F1B] lg:min-h-[150px]">
+                              <Image
+                                src={card.image}
+                                alt={card.title || title}
+                                fill
+                                loading="lazy"
+                                className="object-cover transition duration-700 group-hover:scale-[1.035]"
+                                sizes="(max-width: 1024px) 180px, 360px"
+                                data-page-module-field="image_url"
+                              />
+                              <div className="absolute inset-0 bg-[#11100E]/18" />
+                            </div>
+                          ) : null}
+                          <div className="flex min-w-0 flex-col justify-between p-4">
+                            <div>
+                              {card.meta ? (
+                                <p
+                                  className="text-[11px] font-semibold text-[#F2A36E]"
+                                  data-page-module-field={`value_${lang}`}
+                                >
+                                  {card.meta}
+                                </p>
+                              ) : null}
+                              {card.title ? (
+                                <h3
+                                  className="mt-2 font-[family-name:var(--font-heading)] text-xl font-light leading-tight"
+                                  data-page-module-field={`label_${lang}`}
+                                >
+                                  {card.title}
+                                </h3>
+                              ) : null}
+                              {card.body ? (
+                                <p
+                                  className="mt-3 line-clamp-2 text-sm leading-6 text-white/62"
+                                  data-page-module-field={`content_${lang}`}
+                                >
+                                  {card.body}
+                                </p>
+                              ) : null}
+                            </div>
+                            <ChevronRight className="mt-4 h-5 w-5 text-[#F2A36E] transition group-hover:translate-x-1" aria-hidden="true" />
+                          </div>
+                        </article>
+                      );
+
+                      return card.href ? (
+                        <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block">
+                          {futureTile}
+                        </Link>
+                      ) : (
+                        <div key={`${card.id}-${index}`}>{futureTile}</div>
+                      );
+                    })}
+                  </div>
+                </aside>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       className={`${isDark ? 'bg-[#1F1C19] text-white' : 'bg-[#F7F1E9] text-[#241F1B]'} border-b border-[#E5DED4] py-14 lg:py-20`}
