@@ -1425,6 +1425,143 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
     );
   }
 
+  if (isInnovation) {
+    return (
+      <section
+        className="border-b border-[#E5DED4] bg-white py-12 text-[#241F1B] lg:py-14"
+        style={{ backgroundColor: '#FFFFFF', color: '#241F1B' }}
+        data-page-module={`home:${pageModule.module_key}`}
+        data-page-key="home"
+        data-module-key={pageModule.module_key}
+      >
+        <div className="mx-auto max-w-[1480px] px-4 sm:px-6 lg:px-10">
+          <div className="mx-auto max-w-4xl text-center">
+            {eyebrow ? (
+              <p
+                className="mb-3 text-xs font-semibold text-[#E36F2C]"
+                data-page-module-item="eyebrow"
+                data-page-module-field={`label_${lang}`}
+              >
+                {eyebrow}
+              </p>
+            ) : null}
+            {title ? (
+              <h2
+                className="font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.05] sm:text-4xl lg:text-5xl"
+                data-page-module-field={`title_${lang}`}
+              >
+                {title}
+              </h2>
+            ) : null}
+            {description ? (
+              <p
+                className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-[#6B625B] sm:text-base"
+                data-page-module-field={`description_${lang}`}
+              >
+                {description}
+              </p>
+            ) : null}
+          </div>
+
+          {cards.length > 0 ? (
+            <div className="mt-10 grid gap-4 md:grid-cols-3">
+              {cards.map((card, index) => {
+                const innovationCard = (
+                  <article
+                    className="group relative flex overflow-hidden bg-[#DCD5CC] text-white"
+                    style={{ minHeight: 'clamp(280px, 30vw, 390px)' }}
+                    data-page-module-item={card.id}
+                  >
+                    {card.image ? (
+                      <Image
+                        src={card.image}
+                        alt={card.title || title}
+                        fill
+                        loading="lazy"
+                        className="object-cover transition duration-700 group-hover:scale-[1.03]"
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        data-page-module-field="image_url"
+                      />
+                    ) : null}
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        background: 'linear-gradient(180deg, rgba(16, 14, 12, 0.58) 0%, rgba(16, 14, 12, 0.12) 58%, rgba(16, 14, 12, 0.34) 100%)',
+                      }}
+                    />
+                    <div className="relative flex w-full flex-col items-center px-5 pt-16 text-center">
+                      {card.meta ? (
+                        <p
+                          className="mb-3 text-[11px] font-semibold text-white/78"
+                          data-page-module-field={`value_${lang}`}
+                        >
+                          {card.meta}
+                        </p>
+                      ) : null}
+                      {card.title ? (
+                        <h3
+                          className="max-w-sm font-[family-name:var(--font-heading)] text-2xl font-semibold leading-tight sm:text-3xl"
+                          data-page-module-field={`label_${lang}`}
+                        >
+                          {card.title}
+                        </h3>
+                      ) : null}
+                      {card.body ? (
+                        <p className="sr-only" data-page-module-field={`content_${lang}`}>
+                          {card.body}
+                        </p>
+                      ) : null}
+                      {card.href ? (
+                        <ChevronRight className="mt-4 h-5 w-5 text-white/82 transition group-hover:translate-x-1" aria-hidden="true" />
+                      ) : null}
+                    </div>
+                  </article>
+                );
+
+                return card.href ? (
+                  <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                    {innovationCard}
+                  </Link>
+                ) : (
+                  <div key={`${card.id}-${index}`} className="h-full">
+                    {innovationCard}
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+
+          {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
+              {primaryLabel && primaryHref ? (
+                <Link
+                  href={primaryHref}
+                  {...externalLinkProps(primaryHref)}
+                  className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold text-white hover:bg-[#C85A1F]"
+                  data-page-module-item="primary-cta"
+                  data-page-module-field={`label_${lang}`}
+                >
+                  {primaryLabel}
+                </Link>
+              ) : null}
+              {secondaryLabel && secondaryHref ? (
+                <Link
+                  href={secondaryHref}
+                  {...externalLinkProps(secondaryHref)}
+                  className="inline-flex min-h-11 items-center justify-center border border-[#241F1B]/20 px-5 text-sm font-bold text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]"
+                  data-page-module-item="secondary-cta"
+                  data-page-module-field={`label_${lang}`}
+                >
+                  {secondaryLabel}
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       className={`${isDark ? 'bg-[#1F1C19] text-white' : 'bg-[#F7F1E9] text-[#241F1B]'} border-b border-[#E5DED4] py-14 lg:py-20`}
