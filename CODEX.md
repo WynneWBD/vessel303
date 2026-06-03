@@ -1172,3 +1172,19 @@ curl -I https://www.vessel303.com/news/<slug>
 - Mobile limitation: this run could not capture a mobile viewport because the current Chrome extension tab remained at 1920 px after a resize attempt. Mobile behavior was not visually verified in B68 and should be rechecked by 09 / 07 when a viewport-capable browser path is available.
 - `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. Global Contact / Products old 303 exception remains unchanged.
 - Next step: 09 should recompare the live homepage against `en.303vessel.cn`, with emphasis on mobile hero readability and whether the desktop proof strip should stay in the first screen or move lower. If the next gap is display rhythm, assign 01; if it requires different homepage content or imagery, assign 02 / 03; if mobile or image performance regresses, assign 07.
+
+## B69 Homepage hero proof strip lightening (2026-06-03)
+
+- Code commit: `e72bce2 fix(home): lighten hero proof strip`
+- Full SHA: `e72bce27e3abd3c36b48d1ea44c5782cdef32e14`
+- Vercel deployment: `dpl_4inumfUYAqz36KdacmfxgPJV4vcu`
+- Deployment URL: `https://vessel303-hvq3byrm4-vessel303.vercel.app`
+- Status: `READY`
+- Scope: B69 was a homepage display-template fix after 09 comparison found that vessel303 was now close to the `en.303vessel.cn` full-bleed hero rhythm, but the desktop proof strip still felt too heavy in the first screen. No homepage copy, image URL, CTA label, contact value, product fact, backend content, module order, or `/global` behavior was hardcoded in the frontend.
+- Frontend display change: `HomePageContent` now caps the desktop hero proof strip width, slightly reduces proof-card padding and number size, and clamps proof body text more tightly on desktop so the first screen keeps the backend proof content while feeling less like a large information panel.
+- Backend-control boundary: all visible homepage text, images, CTA labels, links, proof values and product-card content still come from published Home page modules and site configuration. The frontend only controls proof strip width, spacing, typography scale and text wrapping.
+- Validation: `git diff --check`, targeted eslint for `src/components/pages/HomePageContent.tsx`, `npx.cmd tsc --noEmit`, `npm.cmd run audit:public-content`, `npm.cmd run audit:published-content`, `npm.cmd run audit:production-links`, and `npx.cmd next build --webpack` passed. The local build exited 0; logs only showed existing PostgreSQL SSL warnings, sandbox database `EACCES` fallback logs, and the known `/global` edge-runtime warning.
+- Online checks: Vercel reached `READY`; `https://vessel303.com/?lang=en&b69=e72bce2` redirected to `www` and returned 200, `/global?b69=e72bce2` returned 200, and unauthenticated `/admin` redirected to `/admin/login` and returned 200. Online desktop Chrome screenshot at 1920 x 889 confirmed no horizontal overflow, one next-slide thumbnail preview, and a three-card hero proof strip measuring about 938 x 119 px.
+- Mobile limitation: the current browser path still has no viewport/resize capability, so B69 did not produce a real mobile screenshot. Mobile behavior remains code-reviewed and covered by build/type/audit checks, but should be visually rechecked by 09 / 07 when a viewport-capable browser path is available.
+- `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. Global Contact / Products old 303 exception remains unchanged.
+- Next step: 09 should recompare the live homepage against `en.303vessel.cn`, with emphasis on whether the remaining first-screen gap is proof placement, carousel control behavior, mobile hero readability, or backend material/content selection. Display-template gaps go to 01; backend content/material gaps go to 02 / 03; mobile/image performance regressions go to 07.
