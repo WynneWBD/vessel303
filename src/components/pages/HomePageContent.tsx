@@ -230,7 +230,6 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const activeTaglineField = activeSlide?.eyebrow ? `value_${lang}` : `label_${lang}`;
   const activeHeadlineItem = activeSlide?.headline ? activeSlide.id : 'hero-headline';
   const activeSubtitleItem = activeSlide?.subtitle ? activeSlide.id : 'hero-subtitle';
-  const nextSlide = heroSlides.length > 1 ? heroSlides[(activeImage + 1) % heroSlides.length] : null;
   const nextLabel = lang === 'zh' ? '下一张' : 'Next';
   const pauseLabel = lang === 'zh' ? '暂停' : 'Pause';
   const playLabel = lang === 'zh' ? '播放' : 'Play';
@@ -257,7 +256,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
   return (
     <section
-      className="relative flex min-h-[600px] items-center overflow-hidden bg-[#241F1B] sm:min-h-[720px] lg:min-h-[760px] xl:min-h-[calc(100svh-24px)]"
+      className="relative flex min-h-[560px] items-center overflow-hidden bg-[#241F1B] sm:min-h-[600px] lg:min-h-[640px] xl:min-h-[650px]"
       data-page-module="home:hero"
       data-page-key="home"
       data-module-key="hero"
@@ -278,25 +277,25 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
         />
       ))}
       <div className="absolute inset-0 bg-gradient-to-r from-[#191512]/74 via-[#191512]/30 to-[#191512]/8" />
-      <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#191512]/78 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#191512]/78 to-transparent" />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col gap-8 px-5 py-16 text-center sm:gap-10 sm:px-6 sm:py-24 lg:px-10">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col gap-5 px-5 py-10 text-center sm:gap-6 sm:px-6 sm:py-12 lg:px-10 lg:py-14">
         <div className="mx-auto max-w-6xl">
           {activeTagline ? (
             <div className="mb-6">
-              <p
-                className="text-xs font-semibold uppercase tracking-[0.24em] text-white/70"
+                <p
+                  className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70"
                 data-page-module-item={activeTaglineItem}
                 data-page-module-field={activeTaglineField}
               >
                 {activeTagline}
               </p>
-              <div className="mx-auto mt-4 h-px w-16 bg-[#E36F2C]" />
+              <div className="mx-auto mt-3 h-px w-14 bg-[#E36F2C]" />
             </div>
           ) : null}
 
           <h1
-            className="mx-auto mb-6 max-w-[22rem] break-words font-[family-name:var(--font-heading)] text-3xl font-normal leading-[1.05] text-white sm:max-w-5xl sm:text-6xl sm:leading-[0.98] lg:text-7xl xl:text-8xl"
+            className="mx-auto mb-4 max-w-[22rem] break-words font-[family-name:var(--font-heading)] text-3xl font-normal leading-[1.05] text-white sm:max-w-4xl sm:text-5xl sm:leading-[1] lg:text-5xl xl:text-6xl"
             style={{ overflowWrap: 'anywhere', textShadow: '0 18px 50px rgba(0,0,0,0.46)' }}
             data-page-module-item={activeHeadlineItem}
             data-page-module-field={`label_${lang}`}
@@ -306,7 +305,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
           {activeSubtitle ? (
             <p
-              className="mx-auto mb-8 max-w-[22rem] text-base leading-8 text-white/78 sm:max-w-2xl sm:text-lg"
+              className="mx-auto mb-5 max-w-[22rem] text-base leading-7 text-white/78 sm:max-w-2xl sm:text-lg"
               style={{ overflowWrap: 'anywhere', textShadow: '0 12px 36px rgba(0,0,0,0.42)' }}
               data-page-module-item={activeSubtitleItem}
               data-page-module-field={activeSlide?.subtitle ? `content_${lang}` : `label_${lang}`}
@@ -321,7 +320,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
                 <Link
                   href={activePrimaryHref}
                   {...externalLinkProps(activePrimaryHref)}
-                  className="inline-flex min-h-12 items-center justify-center bg-[#E36F2C] px-8 text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#C85A1F]"
+                  className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-6 text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#C85A1F]"
                   data-page-module-item="hero-primary-cta"
                   data-page-module-field={`label_${lang}`}
                 >
@@ -332,7 +331,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
                 <Link
                   href={secondaryHref}
                   {...externalLinkProps(secondaryHref)}
-                  className="inline-flex min-h-12 items-center justify-center border px-8 text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:border-white/70"
+                  className="inline-flex min-h-11 items-center justify-center border px-6 text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:border-white/70"
                   style={{ borderColor: 'rgba(255,255,255,0.35)' }}
                   data-page-module-item="hero-secondary-cta"
                   data-page-module-field={`label_${lang}`}
@@ -344,9 +343,9 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
           ) : null}
         </div>
 
-        <div className="mt-auto grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end lg:gap-6">
+        <div className="mt-2 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end lg:gap-5">
           {visibleProofItems.length > 0 ? (
-            <div className="flex max-w-full flex-wrap items-center gap-x-5 gap-y-2 border-l border-white/24 bg-[#191512]/34 px-4 py-3 text-left backdrop-blur-sm sm:max-w-3xl lg:max-w-[760px] lg:justify-self-start">
+            <div className="flex max-w-full flex-wrap items-center gap-x-4 gap-y-2 border-l border-white/24 bg-[#191512]/34 px-4 py-2 text-left backdrop-blur-sm sm:max-w-3xl lg:max-w-[760px] lg:justify-self-start">
               {visibleProofItems.map((item, index) => (
                 <div
                   key={item.id}
@@ -355,7 +354,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
                 >
                   {item.value ? (
                     <p
-                      className="font-[family-name:var(--font-heading)] text-lg font-light leading-none text-white sm:text-xl"
+                      className="font-[family-name:var(--font-heading)] text-base font-light leading-none text-white sm:text-lg"
                       data-page-module-field={`value_${lang}`}
                     >
                       {item.value}
@@ -363,7 +362,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
                   ) : null}
                   {item.label ? (
                     <p
-                      className="max-w-[10rem] truncate text-[10px] font-semibold uppercase tracking-[0.16em] text-[#F2A36E]"
+                      className="max-w-[10rem] truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-[#F2A36E]"
                       style={{ color: '#F2A36E' }}
                       data-page-module-field={`label_${lang}`}
                     >
@@ -382,36 +381,6 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
           {heroSlides.length > 1 ? (
             <div className="flex flex-col gap-3 sm:items-end">
-              {nextSlide ? (
-                <button
-                  type="button"
-                  onClick={() => setCurrent((prev) => (prev + 1) % heroSlides.length)}
-                  className="group hidden min-w-0 overflow-hidden border border-white/18 bg-[#191512]/48 text-left text-white/80 backdrop-blur-sm transition hover:border-white/40 hover:bg-[#191512]/66 sm:block sm:w-72"
-                >
-                  <span className="relative block h-24 bg-white/10">
-                    <Image
-                      src={nextSlide.src}
-                      alt=""
-                      fill
-                      loading="lazy"
-                      className="object-cover opacity-90 transition duration-700 group-hover:scale-[1.04]"
-                      sizes="18rem"
-                    />
-                  </span>
-                  <span className="block p-3">
-                  {nextSlide.eyebrow ? (
-                    <span className="block truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-[#F2A36E]">
-                      {nextSlide.eyebrow}
-                    </span>
-                  ) : null}
-                  {nextSlide.headline ? (
-                    <span className="mt-1 line-clamp-2 block text-xs font-semibold leading-5 text-white/76 transition group-hover:text-white">
-                      {nextSlide.headline}
-                    </span>
-                  ) : null}
-                  </span>
-                </button>
-              ) : null}
               <div className="hidden w-full items-center justify-end gap-2 sm:flex sm:w-72">
                 <button
                   type="button"
@@ -453,7 +422,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
         </div>
       </div>
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/20 animate-bounce">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/20 animate-bounce">
         <svg width="20" height="28" viewBox="0 0 20 28" fill="none"><path d="M10 0v20M3 13l7 7 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
       </div>
     </section>
