@@ -345,19 +345,19 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
           ) : null}
         </div>
 
-        <div className="mt-auto grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+        <div className="mt-auto grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end lg:gap-6">
           {visibleProofItems.length > 0 ? (
-            <div className={`grid ${proofGridClass} gap-px overflow-hidden border border-white/14 bg-white/14 backdrop-blur-sm`}>
+            <div className={`grid ${proofGridClass} gap-px overflow-hidden border border-white/14 bg-white/14 backdrop-blur-sm lg:max-w-[940px] lg:justify-self-start`}>
               {visibleProofItems.map((item, index) => (
                 <div
                   key={item.id}
-                  className={`${index === 3 ? 'hidden lg:block' : ''} bg-[#191512]/58 p-3 sm:p-5`}
+                  className={`${index === 3 ? 'hidden lg:block' : ''} bg-[#191512]/58 p-3 sm:p-4 lg:p-4`}
                   style={{ backgroundColor: 'rgba(25,21,18,0.7)' }}
                   data-page-module-item={item.id}
                 >
                   {item.value ? (
                     <p
-                      className="font-[family-name:var(--font-heading)] text-2xl font-light leading-none text-white sm:text-3xl lg:text-4xl"
+                      className="font-[family-name:var(--font-heading)] text-2xl font-light leading-none text-white sm:text-3xl"
                       data-page-module-field={`value_${lang}`}
                     >
                       {item.value}
@@ -374,7 +374,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
                   ) : null}
                   {item.body ? (
                     <p
-                      className="mt-2 hidden text-xs leading-5 text-white/68 sm:block"
+                      className="mt-2 hidden text-xs leading-5 text-white/68 sm:line-clamp-2 sm:block lg:line-clamp-1"
                       data-page-module-field={`content_${lang}`}
                     >
                       {item.body}
