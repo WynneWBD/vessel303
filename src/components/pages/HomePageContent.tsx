@@ -1663,29 +1663,29 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
               </div>
 
               {futureCards.length > 0 ? (
-                <aside className="border-t border-white/14 bg-[#11100E]/86 p-4 backdrop-blur-sm lg:border-l lg:border-t-0 lg:p-5">
-                  <div className="grid gap-3">
+                <aside className="border-t border-white/14 bg-[#11100E]/86 p-4 backdrop-blur-sm lg:border-l lg:border-t-0">
+                  <div className="grid gap-3 lg:p-5">
                     {futureCards.map((card, index) => {
                       const futureTile = (
                         <article
-                          className="group grid overflow-hidden border border-white/12 bg-white/[0.06] text-white sm:grid-cols-[132px_minmax(0,1fr)] lg:grid-cols-1"
+                          className="group grid overflow-hidden border border-white/12 bg-white/[0.06] text-white sm:grid-cols-[132px_minmax(0,1fr)] lg:grid-cols-[116px_minmax(0,1fr)]"
                           data-page-module-item={card.id}
                         >
                           {card.image ? (
-                            <div className="relative min-h-[120px] overflow-hidden bg-[#241F1B] lg:min-h-[150px]">
+                            <div className="relative min-h-[112px] overflow-hidden bg-[#241F1B]">
                               <Image
                                 src={card.image}
                                 alt={card.title || title}
                                 fill
                                 loading="lazy"
                                 className="object-cover transition duration-700 group-hover:scale-[1.035]"
-                                sizes="(max-width: 1024px) 180px, 360px"
+                                sizes="132px"
                                 data-page-module-field="image_url"
                               />
                               <div className="absolute inset-0 bg-[#11100E]/18" />
                             </div>
                           ) : null}
-                          <div className="flex min-w-0 flex-col justify-between p-4">
+                          <div className="flex min-w-0 flex-col justify-between p-4 lg:p-3">
                             <div>
                               {card.meta ? (
                                 <p
@@ -1697,7 +1697,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                               ) : null}
                               {card.title ? (
                                 <h3
-                                  className="mt-2 font-[family-name:var(--font-heading)] text-xl font-light leading-tight"
+                                  className="mt-2 font-[family-name:var(--font-heading)] text-lg font-light leading-tight"
                                   data-page-module-field={`label_${lang}`}
                                 >
                                   {card.title}
@@ -1705,14 +1705,14 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                               ) : null}
                               {card.body ? (
                                 <p
-                                  className="mt-3 line-clamp-2 text-sm leading-6 text-white/62"
+                                  className="mt-2 line-clamp-1 text-sm leading-6 text-white/62"
                                   data-page-module-field={`content_${lang}`}
                                 >
                                   {card.body}
                                 </p>
                               ) : null}
                             </div>
-                            <ChevronRight className="mt-4 h-5 w-5 text-[#F2A36E] transition group-hover:translate-x-1" aria-hidden="true" />
+                            <ChevronRight className="mt-3 h-5 w-5 text-[#F2A36E] transition group-hover:translate-x-1" aria-hidden="true" />
                           </div>
                         </article>
                       );
