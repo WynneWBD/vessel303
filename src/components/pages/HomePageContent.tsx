@@ -250,7 +250,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
   return (
     <section
-      className="relative flex min-h-[680px] items-center overflow-hidden bg-[#241F1B] sm:min-h-[720px] lg:min-h-[760px] xl:min-h-[820px]"
+      className="relative flex min-h-[600px] items-center overflow-hidden bg-[#241F1B] sm:min-h-[720px] lg:min-h-[760px] xl:min-h-[820px]"
       data-page-module="home:hero"
       data-page-key="home"
       data-module-key="hero"
@@ -273,7 +273,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
       <div className="absolute inset-0 bg-gradient-to-r from-[#191512]/88 via-[#191512]/48 to-[#191512]/12" />
       <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-[#191512]/92 to-transparent" />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col gap-10 px-5 py-24 sm:px-6 lg:px-10">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col gap-8 px-5 py-16 sm:gap-10 sm:px-6 sm:py-24 lg:px-10">
         <div className="max-w-5xl text-left">
           {activeTagline ? (
             <div className="mb-6">
@@ -339,17 +339,17 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
         <div className="mt-auto grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
           {proofItems.length > 0 ? (
-            <div className="grid gap-px overflow-hidden border border-white/14 bg-white/14 backdrop-blur-sm sm:grid-cols-2 lg:grid-cols-4">
-              {proofItems.slice(0, 4).map((item) => (
+            <div className="grid grid-cols-3 gap-px overflow-hidden border border-white/14 bg-white/14 backdrop-blur-sm sm:grid-cols-2 lg:grid-cols-4">
+              {proofItems.slice(0, 4).map((item, index) => (
                 <div
                   key={item.id}
-                  className="bg-[#191512]/58 p-4 sm:p-5"
+                  className={`${index === 3 ? 'hidden lg:block' : ''} bg-[#191512]/58 p-3 sm:p-5`}
                   style={{ backgroundColor: 'rgba(25,21,18,0.7)' }}
                   data-page-module-item={item.id}
                 >
                   {item.value ? (
                     <p
-                      className="font-[family-name:var(--font-heading)] text-3xl font-light leading-none text-white lg:text-4xl"
+                      className="font-[family-name:var(--font-heading)] text-2xl font-light leading-none text-white sm:text-3xl lg:text-4xl"
                       data-page-module-field={`value_${lang}`}
                     >
                       {item.value}
@@ -383,7 +383,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
                 <button
                   type="button"
                   onClick={() => setCurrent((prev) => (prev + 1) % heroSlides.length)}
-                  className="group min-w-0 border border-white/18 bg-[#191512]/52 p-3 text-left text-white/80 backdrop-blur-sm transition hover:border-white/40 hover:bg-[#191512]/72 sm:w-64"
+                  className="group hidden min-w-0 border border-white/18 bg-[#191512]/52 p-3 text-left text-white/80 backdrop-blur-sm transition hover:border-white/40 hover:bg-[#191512]/72 sm:block sm:w-64"
                 >
                   {nextSlide.eyebrow ? (
                     <span className="block truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-[#F2A36E]">
@@ -441,24 +441,24 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
 
   return (
     <section
-      className="relative z-20 -mt-8 bg-transparent pb-6 border-b border-[#E5DED4]"
+      className="relative z-20 -mt-6 bg-transparent pb-4 border-b border-[#E5DED4] sm:-mt-8 sm:pb-6"
       data-page-module="home:credentials"
       data-page-key="home"
       data-module-key="credentials"
     >
       <div className="max-w-5xl mx-auto px-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-[#E5DED4] bg-white border border-[#E5DED4] shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
+        <div className="grid grid-cols-4 divide-x divide-[#E5DED4] bg-white border border-[#E5DED4] shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
           {stats.map((s) => (
-            <div key={s.id} className="text-center py-4 px-4" data-page-module-item={s.id}>
+            <div key={s.id} className="text-center py-3 px-2 sm:py-4 sm:px-4" data-page-module-item={s.id}>
               <div
-                className="text-3xl sm:text-4xl lg:text-5xl font-light text-[#E36F2C] tracking-tight mb-2"
+                className="text-2xl sm:text-4xl lg:text-5xl font-light text-[#E36F2C] tracking-tight mb-2"
                 style={{ fontFamily: 'var(--font-heading)', fontFeatureSettings: '"tnum"' }}
                 data-page-module-field={`value_${lang}`}
               >
                 {s.val}
               </div>
               <div
-                className="text-xs tracking-wider text-[#8A7D74] uppercase"
+                className="text-[10px] tracking-wider text-[#8A7D74] uppercase sm:text-xs"
                 data-page-module-field={`label_${lang}`}
               >
                 {s.label}
