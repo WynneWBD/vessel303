@@ -1005,18 +1005,18 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
   if (isLargeProducts) {
     return (
       <section
-        className="border-b border-[#E5DED4] bg-[#F7F1E9] py-10 text-[#241F1B] lg:py-12"
+        className="border-b border-[#E5DED4] bg-[#F7F1E9] py-8 text-[#241F1B] lg:py-9"
         style={{ backgroundColor: '#F7F1E9', color: '#241F1B' }}
         data-page-module={`home:${pageModule.module_key}`}
         data-page-key="home"
         data-module-key={pageModule.module_key}
       >
         <div className="mx-auto max-w-[1520px] px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:items-end">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:items-end">
             <div>
               {eyebrow ? (
                 <p
-                  className="mb-3 text-xs font-semibold text-[#E36F2C]"
+                  className="mb-2 text-xs font-semibold text-[#E36F2C]"
                   data-page-module-item="eyebrow"
                   data-page-module-field={`label_${lang}`}
                 >
@@ -1025,7 +1025,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
               ) : null}
               {title ? (
                 <h2
-                  className="max-w-4xl font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.04] sm:text-4xl lg:text-5xl"
+                  className="max-w-4xl font-[family-name:var(--font-heading)] text-2xl font-light leading-[1.04] sm:text-3xl lg:text-4xl"
                   data-page-module-field={`title_${lang}`}
                 >
                   {title}
@@ -1034,7 +1034,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
             </div>
             {description ? (
               <p
-                className="max-w-3xl text-sm leading-7 text-[#6B625B] sm:text-base lg:ml-auto"
+                className="max-w-3xl text-sm leading-6 text-[#6B625B] sm:text-base lg:ml-auto"
                 data-page-module-field={`description_${lang}`}
               >
                 {description}
@@ -1043,10 +1043,10 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
           </div>
 
           {cards.length > 0 ? (
-            <div className="mt-8 grid gap-4">
+            <div className="mt-5 grid gap-3">
               {cards.map((card, index) => {
                 const imagePanel = card.image ? (
-                  <div className={`${index % 2 === 1 ? 'lg:order-2' : ''} relative min-h-[280px] overflow-hidden bg-[#DCD5CC] sm:min-h-[340px] lg:min-h-full`}>
+                  <div className={`${index % 2 === 1 ? 'lg:order-2' : ''} relative min-h-[220px] overflow-hidden bg-[#DCD5CC] sm:min-h-[270px] lg:min-h-full`}>
                     <Image
                       src={card.image}
                       alt={card.title || title}
@@ -1061,10 +1061,10 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                 ) : null;
 
                 const contentPanel = (
-                  <div className={`${index % 2 === 1 ? 'lg:order-1' : ''} flex flex-col justify-center bg-white p-6 sm:p-8 lg:p-10`}>
+                  <div className={`${index % 2 === 1 ? 'lg:order-1' : ''} flex flex-col justify-center bg-white p-5 sm:p-6 lg:p-8`}>
                     {card.meta ? (
                       <p
-                        className="mb-4 text-[11px] font-semibold text-[#E36F2C]"
+                        className="mb-3 text-[11px] font-semibold text-[#E36F2C]"
                         data-page-module-field={`value_${lang}`}
                       >
                         {card.meta}
@@ -1072,7 +1072,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                     ) : null}
                     {card.title ? (
                       <h3
-                        className="font-[family-name:var(--font-heading)] text-3xl font-light leading-tight sm:text-4xl lg:text-5xl"
+                        className="font-[family-name:var(--font-heading)] text-2xl font-light leading-tight sm:text-3xl lg:text-4xl"
                         data-page-module-field={`label_${lang}`}
                       >
                         {card.title}
@@ -1080,22 +1080,22 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                     ) : null}
                     {card.body ? (
                       <p
-                        className="mt-5 max-w-2xl text-sm leading-7 text-[#6B625B] sm:text-base"
+                        className="mt-4 max-w-2xl text-sm leading-6 text-[#6B625B] sm:text-base"
                         data-page-module-field={`content_${lang}`}
                       >
                         {card.body}
                       </p>
                     ) : null}
                     {card.href ? (
-                      <ChevronRight className="mt-6 h-5 w-5 text-[#E36F2C] transition group-hover:translate-x-1" aria-hidden="true" />
+                      <ChevronRight className="mt-5 h-5 w-5 text-[#E36F2C] transition group-hover:translate-x-1" aria-hidden="true" />
                     ) : null}
                   </div>
                 );
 
                 const productBand = (
                   <article
-                    className="group grid overflow-hidden bg-white lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]"
-                    style={{ minHeight: 'clamp(390px, 34vw, 450px)' }}
+                    className="group grid overflow-hidden bg-white lg:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)]"
+                    style={{ minHeight: 'clamp(330px, 29vw, 390px)' }}
                     data-page-module-item={card.id}
                   >
                     {imagePanel}
@@ -1115,12 +1115,12 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
           ) : null}
 
           {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               {primaryLabel && primaryHref ? (
                 <Link
                   href={primaryHref}
                   {...externalLinkProps(primaryHref)}
-                  className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold text-white hover:bg-[#C85A1F]"
+                  className="inline-flex min-h-10 items-center justify-center bg-[#E36F2C] px-4 text-sm font-bold text-white hover:bg-[#C85A1F]"
                   data-page-module-item="primary-cta"
                   data-page-module-field={`label_${lang}`}
                 >
@@ -1131,7 +1131,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                 <Link
                   href={secondaryHref}
                   {...externalLinkProps(secondaryHref)}
-                  className="inline-flex min-h-11 items-center justify-center border border-[#241F1B]/20 px-5 text-sm font-bold text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]"
+                  className="inline-flex min-h-10 items-center justify-center border border-[#241F1B]/20 px-4 text-sm font-bold text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]"
                   data-page-module-item="secondary-cta"
                   data-page-module-field={`label_${lang}`}
                 >
