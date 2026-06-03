@@ -286,7 +286,7 @@ export const RESTRICTED_PAGE_MODULE_CATALOG: PageModuleCatalogItem[] = [
 
 export const PAGE_STRUCTURE_BOUNDARY_NOTES = [
   '当前只开放 Home 安全插入区，不等于已经支持整页自由搭建。',
-  'Home 安全插入区支持 simple-text / cta-section 新增、排序、结构隐藏和恢复；核心模块仍锁定。',
+  'Home 安全插入区支持受控模板目录中的可新增模块，以及排序、结构隐藏和恢复；核心模块仍锁定。',
   '页面级结构草稿和快照已接入；恢复快照只会回到草稿，发布后才影响前台。',
   'About 暂只支持已有模块内容编辑，不开放结构新增、排序或隐藏。',
 ]
