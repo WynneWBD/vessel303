@@ -1176,7 +1176,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
 
     return (
       <section
-        className="border-b border-[#2D2925] bg-[#0F0E0C] py-6 text-white lg:py-8"
+        className="border-b border-[#2D2925] bg-[#0F0E0C] py-5 text-white lg:py-6"
         style={{ backgroundColor: '#0F0E0C', color: '#FFFFFF' }}
         data-page-module={`home:${pageModule.module_key}`}
         data-page-key="home"
@@ -1195,10 +1195,10 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
             ) : null}
 
             <aside className={`${modelLeadArticle ? '' : 'lg:col-span-3'} flex min-h-full flex-col border border-white/12 bg-[#171410]`}>
-              <div className="border-b border-white/12 p-5 sm:p-6">
+              <div className="border-b border-white/12 p-4 sm:p-5">
                 {eyebrow ? (
                   <p
-                    className="mb-3 text-xs font-semibold text-[#F2A36E]"
+                    className="mb-2 text-xs font-semibold text-[#F2A36E]"
                     data-page-module-item="eyebrow"
                     data-page-module-field={`label_${lang}`}
                   >
@@ -1207,7 +1207,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                 ) : null}
                 {title ? (
                   <h2
-                    className="font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.05] sm:text-4xl"
+                    className="font-[family-name:var(--font-heading)] text-2xl font-light leading-[1.05] sm:text-3xl"
                     data-page-module-field={`title_${lang}`}
                   >
                     {title}
@@ -1215,7 +1215,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                 ) : null}
                 {description ? (
                   <p
-                    className="mt-4 text-sm leading-7 text-white/66"
+                    className="mt-3 text-sm leading-6 text-white/66"
                     data-page-module-field={`description_${lang}`}
                   >
                     {description}
@@ -1290,12 +1290,12 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
               ) : null}
 
               {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
-                <div className="mt-auto flex flex-col gap-3 border-t border-white/12 p-5 sm:flex-row sm:flex-wrap sm:p-6 lg:flex-col">
+                <div className="mt-auto flex flex-col gap-3 border-t border-white/12 p-4 sm:flex-row sm:flex-wrap sm:p-5 lg:flex-col">
                   {primaryLabel && primaryHref ? (
                     <Link
                       href={primaryHref}
                       {...externalLinkProps(primaryHref)}
-                      className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold text-white hover:bg-[#C85A1F]"
+                      className="inline-flex min-h-10 items-center justify-center bg-[#E36F2C] px-4 text-sm font-bold text-white hover:bg-[#C85A1F]"
                       data-page-module-item="primary-cta"
                       data-page-module-field={`label_${lang}`}
                     >
@@ -1306,7 +1306,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                     <Link
                       href={secondaryHref}
                       {...externalLinkProps(secondaryHref)}
-                      className="inline-flex min-h-11 items-center justify-center border border-white/24 px-5 text-sm font-bold text-white/78 hover:border-white/60 hover:text-white"
+                      className="inline-flex min-h-10 items-center justify-center border border-white/24 px-4 text-sm font-bold text-white/78 hover:border-white/60 hover:text-white"
                       data-page-module-item="secondary-cta"
                       data-page-module-field={`label_${lang}`}
                     >
