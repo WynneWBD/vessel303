@@ -994,6 +994,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
   const isLargeProducts = moduleType === 'large-product-cards';
   const isModelStrip = moduleType === 'model-strip';
   const isInnovation = moduleType === 'innovation-story';
+  const isScenario = moduleType === 'scenario-tiles';
   const isFuture = moduleType === 'future-explorer';
   const isDark = isInnovation || isFuture;
   const featuredCard = cards[0];
@@ -1525,6 +1526,146 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                 ) : (
                   <div key={`${card.id}-${index}`} className="h-full">
                     {innovationCard}
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+
+          {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
+              {primaryLabel && primaryHref ? (
+                <Link
+                  href={primaryHref}
+                  {...externalLinkProps(primaryHref)}
+                  className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold text-white hover:bg-[#C85A1F]"
+                  data-page-module-item="primary-cta"
+                  data-page-module-field={`label_${lang}`}
+                >
+                  {primaryLabel}
+                </Link>
+              ) : null}
+              {secondaryLabel && secondaryHref ? (
+                <Link
+                  href={secondaryHref}
+                  {...externalLinkProps(secondaryHref)}
+                  className="inline-flex min-h-11 items-center justify-center border border-[#241F1B]/20 px-5 text-sm font-bold text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]"
+                  data-page-module-item="secondary-cta"
+                  data-page-module-field={`label_${lang}`}
+                >
+                  {secondaryLabel}
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </section>
+    );
+  }
+
+  if (isScenario) {
+    return (
+      <section
+        className="border-b border-[#E5DED4] bg-[#F7F1E9] py-12 text-[#241F1B] lg:py-14"
+        style={{ backgroundColor: '#F7F1E9', color: '#241F1B' }}
+        data-page-module={`home:${pageModule.module_key}`}
+        data-page-key="home"
+        data-module-key={pageModule.module_key}
+      >
+        <div className="mx-auto max-w-[1480px] px-4 sm:px-6 lg:px-10">
+          <div className="mx-auto max-w-4xl text-center">
+            {eyebrow ? (
+              <p
+                className="mb-3 text-xs font-semibold text-[#E36F2C]"
+                data-page-module-item="eyebrow"
+                data-page-module-field={`label_${lang}`}
+              >
+                {eyebrow}
+              </p>
+            ) : null}
+            {title ? (
+              <h2
+                className="font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.05] sm:text-4xl lg:text-5xl"
+                data-page-module-field={`title_${lang}`}
+              >
+                {title}
+              </h2>
+            ) : null}
+            {description ? (
+              <p
+                className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-[#6B625B] sm:text-base"
+                data-page-module-field={`description_${lang}`}
+              >
+                {description}
+              </p>
+            ) : null}
+          </div>
+
+          {cards.length > 0 ? (
+            <div className="mt-9 grid gap-4 md:grid-cols-3">
+              {cards.map((card, index) => {
+                const scenarioTile = (
+                  <article
+                    className="group relative flex overflow-hidden bg-[#241F1B] text-white"
+                    style={{ minHeight: 'clamp(360px, 38vw, 480px)' }}
+                    data-page-module-item={card.id}
+                  >
+                    {card.image ? (
+                      <Image
+                        src={card.image}
+                        alt={card.title || title}
+                        fill
+                        loading="lazy"
+                        className="object-cover transition duration-700 group-hover:scale-[1.03]"
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        data-page-module-field="image_url"
+                      />
+                    ) : null}
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        background: 'linear-gradient(180deg, rgba(18, 16, 14, 0.18) 0%, rgba(18, 16, 14, 0.18) 42%, rgba(18, 16, 14, 0.88) 100%)',
+                      }}
+                    />
+                    <div className="relative mt-auto w-full p-5 sm:p-6">
+                      {card.meta ? (
+                        <p
+                          className="mb-3 text-[11px] font-semibold text-[#F2A36E]"
+                          data-page-module-field={`value_${lang}`}
+                        >
+                          {card.meta}
+                        </p>
+                      ) : null}
+                      {card.title ? (
+                        <h3
+                          className="font-[family-name:var(--font-heading)] text-2xl font-light leading-tight sm:text-3xl"
+                          data-page-module-field={`label_${lang}`}
+                        >
+                          {card.title}
+                        </h3>
+                      ) : null}
+                      {card.body ? (
+                        <p
+                          className="mt-3 line-clamp-2 text-sm leading-6 text-white/70"
+                          data-page-module-field={`content_${lang}`}
+                        >
+                          {card.body}
+                        </p>
+                      ) : null}
+                      {card.href ? (
+                        <ChevronRight className="mt-5 h-5 w-5 text-[#F2A36E] transition group-hover:translate-x-1" aria-hidden="true" />
+                      ) : null}
+                    </div>
+                  </article>
+                );
+
+                return card.href ? (
+                  <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                    {scenarioTile}
+                  </Link>
+                ) : (
+                  <div key={`${card.id}-${index}`} className="h-full">
+                    {scenarioTile}
                   </div>
                 );
               })}
