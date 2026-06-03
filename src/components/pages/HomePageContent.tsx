@@ -479,24 +479,30 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
 
   return (
     <section
-      className="relative z-20 bg-[#F5F2ED] pb-4 pt-4 border-b border-[#E5DED4] sm:pb-6 sm:pt-6"
+      className="relative z-20 border-y border-white/10 bg-[#14100E]"
       data-page-module="home:credentials"
       data-page-key="home"
       data-module-key="credentials"
     >
-      <div className="max-w-5xl mx-auto px-6">
-        <div className="grid grid-cols-4 divide-x divide-[#E5DED4] bg-white border border-[#E5DED4] shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
-          {stats.map((s) => (
-            <div key={s.id} className="text-center py-3 px-2 sm:py-4 sm:px-4" data-page-module-item={s.id}>
+      <div className="mx-auto max-w-[1540px] px-5 sm:px-6 lg:px-10">
+        <div className="grid grid-cols-2 border-x border-white/10 sm:grid-cols-4">
+          {stats.map((s, index) => (
+            <div
+              key={s.id}
+              className={`min-w-0 border-white/10 px-4 py-4 text-center sm:px-5 sm:py-5 ${
+                index % 2 === 0 ? 'border-r' : ''
+              } ${index < 2 ? 'border-b sm:border-b-0' : ''} sm:border-r sm:last:border-r-0`}
+              data-page-module-item={s.id}
+            >
               <div
-                className="text-2xl sm:text-4xl lg:text-5xl font-light text-[#E36F2C] tracking-tight mb-2"
+                className="mb-2 font-[family-name:var(--font-heading)] text-3xl font-light tracking-tight text-[#F2A36E] sm:text-4xl"
                 style={{ fontFamily: 'var(--font-heading)', fontFeatureSettings: '"tnum"' }}
                 data-page-module-field={`value_${lang}`}
               >
                 {s.val}
               </div>
               <div
-                className="text-[10px] tracking-wider text-[#8A7D74] uppercase sm:text-xs"
+                className="mx-auto max-w-[12rem] truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-white/52 sm:text-xs"
                 data-page-module-field={`label_${lang}`}
               >
                 {s.label}
