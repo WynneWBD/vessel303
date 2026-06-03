@@ -1607,7 +1607,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                 const scenarioTile = (
                   <article
                     className="group relative flex overflow-hidden bg-[#241F1B] text-white"
-                    style={{ minHeight: 'clamp(360px, 38vw, 480px)' }}
+                    style={{ minHeight: 'clamp(360px, 36vw, 440px)' }}
                     data-page-module-item={card.id}
                   >
                     {card.image ? (
