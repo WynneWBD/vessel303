@@ -258,7 +258,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
   return (
     <section
-      className="relative flex min-h-[600px] items-center overflow-hidden bg-[#241F1B] sm:min-h-[720px] lg:min-h-[760px] xl:min-h-[820px]"
+      className="relative flex min-h-[600px] items-center overflow-hidden bg-[#241F1B] sm:min-h-[720px] lg:min-h-[760px] xl:min-h-[calc(100svh-24px)]"
       data-page-module="home:hero"
       data-page-key="home"
       data-module-key="hero"
@@ -461,7 +461,7 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
 
   return (
     <section
-      className="relative z-20 -mt-6 bg-transparent pb-4 border-b border-[#E5DED4] sm:-mt-8 sm:pb-6"
+      className="relative z-20 bg-[#F5F2ED] pb-4 pt-4 border-b border-[#E5DED4] sm:pb-6 sm:pt-6"
       data-page-module="home:credentials"
       data-page-key="home"
       data-module-key="credentials"
