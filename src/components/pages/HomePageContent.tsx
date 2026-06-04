@@ -246,8 +246,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
   return (
     <section
-      className="relative flex min-h-screen items-center overflow-hidden bg-[#172231]"
-      style={{ minHeight: '100vh' }}
+      className="relative flex min-h-[72svh] items-center overflow-hidden bg-[#172231] sm:min-h-[78svh] lg:min-h-[82vh]"
       data-page-module="home:hero"
       data-page-key="home"
       data-module-key="hero"
@@ -271,10 +270,10 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0)_0%,rgba(0,0,0,0.08)_42%,rgba(0,0,0,0.34)_100%)]" />
       <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#071018]/46 to-transparent" />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col px-5 pb-28 pt-32 text-center sm:px-6 lg:px-10 lg:pb-40 lg:pt-40">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col px-5 pb-20 pt-28 text-center sm:px-6 sm:pb-24 sm:pt-32 lg:px-10 lg:pb-32 lg:pt-36">
         <div className="mx-auto max-w-[1600px]">
           {activeTagline ? (
-            <div className="mb-8">
+            <div className="mb-5 sm:mb-6">
                 <p
                   className="text-sm font-semibold uppercase tracking-[0.22em] text-white/86"
                 data-page-module-item={activeTaglineItem}
@@ -286,7 +285,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
           ) : null}
 
           <h1
-            className="mx-auto mb-7 max-w-[24rem] break-words font-[family-name:var(--font-heading)] text-4xl font-bold leading-[1.06] text-white sm:max-w-5xl sm:text-5xl sm:leading-[1.04] lg:max-w-[1420px] lg:text-[56px] xl:max-w-[1600px] xl:text-[62px]"
+            className="mx-auto mb-5 max-w-[24rem] break-words font-[family-name:var(--font-heading)] text-4xl font-bold leading-[1.06] text-white sm:max-w-5xl sm:text-5xl sm:leading-[1.04] lg:mb-6 lg:max-w-[1420px] lg:text-[56px] xl:max-w-[1600px] xl:text-[62px]"
             style={{ overflowWrap: 'anywhere', textShadow: '0 20px 58px rgba(0,0,0,0.36)' }}
             data-page-module-item={activeHeadlineItem}
             data-page-module-field={`label_${lang}`}
@@ -296,7 +295,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
           {activeSubtitle ? (
             <p
-              className="mx-auto mb-9 max-w-[24rem] text-xl leading-snug text-white sm:max-w-[90vw] sm:text-3xl lg:text-[32px] xl:text-[36px]"
+              className="mx-auto mb-6 max-w-[24rem] text-xl leading-snug text-white sm:max-w-[90vw] sm:text-3xl lg:mb-8 lg:text-[32px] xl:text-[36px]"
               style={{ overflowWrap: 'anywhere', textShadow: '0 14px 42px rgba(0,0,0,0.34)' }}
               data-page-module-item={activeSubtitleItem}
               data-page-module-field={activeSlide?.subtitle ? `content_${lang}` : `label_${lang}`}
@@ -429,13 +428,13 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
           {stats.map((s, index) => (
             <div
               key={s.id}
-              className={`min-w-0 border-white/10 px-4 py-4 text-center sm:px-5 sm:py-5 ${
+              className={`min-w-0 border-white/10 px-3 py-3 text-center sm:px-4 sm:py-4 ${
                 index % 2 === 0 ? 'border-r' : ''
               } ${index < 2 ? 'border-b sm:border-b-0' : ''} sm:border-r sm:last:border-r-0`}
               data-page-module-item={s.id}
             >
               <div
-                className="mb-2 font-[family-name:var(--font-heading)] text-3xl font-light tracking-tight text-[#F2A36E] sm:text-4xl"
+                className="mb-1.5 font-[family-name:var(--font-heading)] text-2xl font-light tracking-tight text-[#F2A36E] sm:text-3xl lg:text-4xl"
                 style={{ fontFamily: 'var(--font-heading)', fontFeatureSettings: '"tnum"' }}
                 data-page-module-field={`value_${lang}`}
               >
@@ -452,15 +451,15 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
         </div>
         {proofVisual?.image_url ? (
           <div
-            className="border-x border-t border-white/10 px-4 py-5 sm:px-6 lg:px-8"
+            className="border-x border-t border-white/10 px-4 py-3 sm:px-6 sm:py-4 lg:px-8"
             data-page-module-item={proofVisual.id}
           >
-            <div className="relative mx-auto aspect-[2/1] w-full max-w-[1200px] overflow-hidden bg-[#C7D6EA]">
+            <div className="relative mx-auto aspect-[2.6/1] w-full max-w-[920px] overflow-hidden bg-[#C7D6EA] sm:aspect-[3/1] lg:aspect-[3.2/1]">
               <Image
                 src={proofVisual.image_url}
                 alt={proofVisualAlt}
                 fill
-                sizes="(max-width: 768px) 100vw, 1200px"
+                sizes="(max-width: 768px) 100vw, 920px"
                 className="object-cover"
                 data-page-module-field="image_url"
               />
