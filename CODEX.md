@@ -75,6 +75,7 @@ V9 handoff 是完整历史归档，仅用于追溯，不再作为日常开发入
 300.cn 后台边界：
 
 - 300.cn 后台只用于只读对照、查看、下载和必要的页面字段读取/填写确认。
+- 涉及后台、CMS、Visual Editor 或运营后台产品心智时，不确定处可以多去只读学习和核对 300.cn 后台。
 - 如果已有登录态，可以读取页面内容、复制/下载资料、核对字段和填写临时字段用于观察。
 - 点击保存、发布、上传、发送、删除、付款、购买、提交表单或任何真实变更动作前必须停止确认。
 - 300 后台账号密码只从本机 env 使用，不能写入文档、代码、commit、PR 或聊天输出。
@@ -175,10 +176,10 @@ npx next build --webpack
 
 - 首页已由后台 published Home modules 控制。
 - Home hero、credentials、large product cards、model strip 等核心模块仍由后台内容驱动。
-- B66-B74 连续处理首页展示节奏。
-- B74 已上线：只压缩 `home:large-product-cards` 展示节奏，让产品图更早进入第二屏。
-- 当前下一步：09 重新对比线上首页和 `en.303vessel.cn`，判断差距来自显示模板、后台内容/素材、模块新增能力，还是移动端/图片性能。
-- 风险：B74 未完成可靠移动端截图；Home visual editor/catalog 模板多于 draft add-module API 白名单，API 目前只接受 `simple-text` 和 `cta-section`。
+- B66-B75 连续处理首页展示节奏。
+- B75 已上线：压缩 hero 和 credentials/proof visual 高度，让产品大图更早进入桌面和移动端视野。
+- 当前下一步：09 重新对比线上首页和 `en.303vessel.cn`，判断差距来自显示模板、后台内容/素材、模块新增能力，还是移动端/图片性能；涉及后台不懂处可只读学习 300.cn 后台。
+- 风险：B75 未完成可靠线上桌面/移动截图复核；本轮替代验证为本地桌面/移动视觉指标 + 线上 HTTP/DOM 补验。Home visual editor/catalog 模板多于 draft add-module API 白名单，API 目前只接受 `simple-text` 和 `cta-section`。
 
 Products / 产品中心：
 
@@ -236,27 +237,30 @@ SEO / Analytics / Performance：
 
 ## 9. 当前最新节点
 
-最新线上节点：B74。
+最新线上节点：B75。
 
-B74 摘要：
+B75 摘要：
 
-- 名称：Homepage product visual section tightening
-- 日期：2026-06-03
-- commit：`48c98dafd3a7fa5ebc26f6cdaa5d2b4071ad3194`
-- Vercel deployment：`dpl_FUDC5Qk2oNqzXE7phZ5LphGRpRA5`
+- 名称：Homepage hero and credentials tightening
+- 日期：2026-06-04
+- commit：`3e11aceea7a29d13b00c97dda2074ff020a5fc37`
+- Vercel deployment：`dpl_8Lm5ftCLX53VvPLymJXtWmQ3PFK9`
 - 状态：READY
-- 范围：只收紧首页 `home:large-product-cards` 的前台展示分支，降低 section padding、header gap、heading cap、card title cap，并缩短图片 grid 前间距。
-- 未改：首页文案、图片 URL、CTA、联系方式、产品事实、模块顺序、后台数据、后台 API、`/global`。
-- 验证：`git diff --check`、targeted eslint、public-content audit、published-content audit、production-link audit、`tsc --noEmit`、`next build --webpack` 通过；线上首页 200，`/global` 200，未登录 `/admin` 跳登录；桌面 Browser 确认无横向溢出。
-- 限制：未完成可靠移动端截图。
+- 范围：只调整首页显示模板。`HeroSection` 移除强制整屏 `min-h-screen` 和 inline `minHeight: '100vh'`，改为移动约 `72svh`、桌面约 `82vh` 的响应式高度；同时缩短 hero 内部 padding、文案间距、`CredentialsBar` stats padding、数字字号和 proof visual 高度/最大宽度。
+- 目标：让首页产品大图更早进入桌面和移动端视野。
+- 未改：首页图片、文案、CTA、href、published 内容来源、Home module 顺序、后台 API、数据库、认证、权限、支付、订单、`/global`、MapLibre、MapTiler、`/api/map`。
+- 验证：`git diff --check`、targeted eslint、顺序重跑后的 `npx tsc --noEmit`、`npx next build --webpack` 通过；本地 production HTTP 检查 `/`、`/global`、`/about`、`/cases` 都 200 且无 `__next_error__`；线上只读补验首页和 `/global` 200 且无 `__next_error__`，未登录 `/admin` 302 到登录页。
+- 视觉指标：本地 desktop 1440x1000 下 hero 高 820、credentials top 820、large-product-cards top 1237，无页面级横向滚动；mobile 390x844 下 hero 高 608、credentials top 608、large-product-cards top 909，无页面级横向滚动。
+- 限制：本轮没有可用真实浏览器截图工具完成线上桌面/移动截图复核；后续 09/07 有可用工具时应补视觉复核。
 
 下一步：
 
 1. 09 重新对比线上首页和 `en.303vessel.cn`。
-2. 判断剩余产品区差距来自后台内容/素材选择，还是需要更大幅 image-first 模块设计。
+2. 判断剩余产品区差距来自显示模板、后台内容/素材/模块能力，还是移动端/图片性能。
 3. 显示模板问题交 01。
 4. Home module 内容、素材、模块新增能力问题交 02 / 03。
 5. 移动端、图片、性能问题交 07。
+6. 涉及后台/CMS/Visual Editor/运营后台产品心智时，不确定处可只读学习 300.cn 后台。
 
 ## 10. 文档维护规则
 
