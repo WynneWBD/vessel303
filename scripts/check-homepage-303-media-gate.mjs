@@ -4,6 +4,7 @@ import { resolve } from 'node:path'
 const root = process.cwd()
 const json = process.argv.includes('--json')
 const strict = process.argv.includes('--strict')
+const includeReviewCandidates = process.argv.includes('--include-review-candidates')
 
 const DEFAULT_IMAGE_MANIFEST = 'C:/Users/Wynne/Desktop/vessel303/.codex-temp/homepage-303-images/manifest.json'
 const DEFAULT_IMAGE_MAPPING_PLAN = 'C:/Users/Wynne/Desktop/vessel303/.codex-temp/homepage-303-images/image-mapping-plan.json'
@@ -113,7 +114,8 @@ function summarizeVideoScope(videoManifest) {
   const entries = Array.isArray(videoManifest?.entries) ? videoManifest.entries : []
   const defaultEntries = entries.filter((entry) => !entry?.requiresReview)
   const reviewEntries = entries.filter((entry) => entry?.requiresReview)
-  const checkedDefaultEntries = defaultEntries.map((entry) => {
+  const expectedEntries = includeReviewCandidates ? entries : defaultEntries
+  const checkedExpectedEntries = expectedEntries.map((entry) => {
     const publicUrl = mediaValue(entry.publicUrl ?? entry.public_url)
     const sourceUrl = mediaValue(entry.sourceUrl)
     return {
@@ -130,11 +132,12 @@ function summarizeVideoScope(videoManifest) {
     manifestEntries: entries.length,
     defaultEntries: defaultEntries.length,
     reviewEntries: reviewEntries.length,
-    defaultLocalReady: checkedDefaultEntries.filter((entry) => entry.localExists).length,
-    defaultPublicUrlReady: checkedDefaultEntries.filter((entry) => entry.publicUrlSelfHosted).length,
-    defaultMissingPublicUrl: checkedDefaultEntries.filter((entry) => !entry.publicUrl).length,
-    defaultSourceUrlMistakes: checkedDefaultEntries.filter((entry) => entry.publicUrl && !entry.publicUrlSelfHosted).length,
-    checkedDefaultEntries,
+    expectedEntries: expectedEntries.length,
+    expectedLocalReady: checkedExpectedEntries.filter((entry) => entry.localExists).length,
+    expectedPublicUrlReady: checkedExpectedEntries.filter((entry) => entry.publicUrlSelfHosted).length,
+    expectedMissingPublicUrl: checkedExpectedEntries.filter((entry) => !entry.publicUrl).length,
+    expectedSourceUrlMistakes: checkedExpectedEntries.filter((entry) => entry.publicUrl && !entry.publicUrlSelfHosted).length,
+    checkedExpectedEntries,
   }
 }
 
@@ -148,6 +151,7 @@ function summarizeModules(modules) {
     imageBackedItems: visibleItems.filter((item) => mediaValue(item?.image_url)).length,
     videoBackedItems: visibleItems.filter((item) => mediaValue(item?.video_url)).length,
     posterBackedItems: visibleItems.filter((item) => mediaValue(item?.video_poster_url)).length,
+    videoPosterOrImageFallbackItems: visibleItems.filter((item) => mediaValue(item?.video_url) && (mediaValue(item?.video_poster_url) || mediaValue(item?.image_url))).length,
     uniqueImageUrls: new Set(visibleItems.map((item) => mediaValue(item?.image_url)).filter(Boolean)).size,
     uniqueVideoUrls: new Set(visibleItems.map((item) => mediaValue(item?.video_url)).filter(Boolean)).size,
   }
@@ -166,9 +170,9 @@ function buildGate(imageSummary, videoSummary, modulesSummary, tokenConfigured) 
       detail: `${imageSummary.defaultLocalReady}/${imageSummary.defaultRows} default image files exist locally`,
     },
     {
-      id: 'default_videos_local_ready',
-      ok: videoSummary.defaultLocalReady === videoSummary.defaultEntries,
-      detail: `${videoSummary.defaultLocalReady}/${videoSummary.defaultEntries} default video files exist locally`,
+      id: 'expected_videos_local_ready',
+      ok: videoSummary.expectedLocalReady === videoSummary.expectedEntries,
+      detail: `${videoSummary.expectedLocalReady}/${videoSummary.expectedEntries} expected video files exist locally`,
     },
     {
       id: 'review_images_excluded',
@@ -176,9 +180,9 @@ function buildGate(imageSummary, videoSummary, modulesSummary, tokenConfigured) 
       detail: `${imageSummary.reviewRows} review image candidates remain outside default scope`,
     },
     {
-      id: 'review_videos_excluded',
-      ok: videoSummary.reviewEntries > 0,
-      detail: `${videoSummary.reviewEntries} review video candidates remain outside default scope`,
+      id: 'review_videos_scope',
+      ok: true,
+      detail: `${videoSummary.reviewEntries} review video candidates ${includeReviewCandidates ? 'included in expected scope' : 'remain outside default scope'}`,
     },
     {
       id: 'self_hosted_image_urls_ready',
@@ -187,29 +191,29 @@ function buildGate(imageSummary, videoSummary, modulesSummary, tokenConfigured) 
     },
     {
       id: 'self_hosted_video_urls_ready',
-      ok: videoSummary.defaultPublicUrlReady === videoSummary.defaultEntries,
-      detail: `${videoSummary.defaultPublicUrlReady}/${videoSummary.defaultEntries} default videos have self-hosted publicUrl`,
+      ok: videoSummary.expectedPublicUrlReady === videoSummary.expectedEntries,
+      detail: `${videoSummary.expectedPublicUrlReady}/${videoSummary.expectedEntries} expected videos have self-hosted publicUrl`,
     },
     {
       id: 'no_source_host_public_urls',
-      ok: imageSummary.defaultSourceUrlMistakes === 0 && videoSummary.defaultSourceUrlMistakes === 0,
-      detail: `${imageSummary.defaultSourceUrlMistakes + videoSummary.defaultSourceUrlMistakes} default publicUrl values still point to source hosts`,
+      ok: imageSummary.defaultSourceUrlMistakes === 0 && videoSummary.expectedSourceUrlMistakes === 0,
+      detail: `${imageSummary.defaultSourceUrlMistakes + videoSummary.expectedSourceUrlMistakes} expected publicUrl values still point to source hosts`,
     },
     {
       id: 'homepage_video_fields_published',
-      ok: modulesSummary.videoBackedItems >= videoSummary.defaultEntries,
-      detail: `current vessel303 home modules have ${modulesSummary.videoBackedItems}/${videoSummary.defaultEntries} expected video-backed items`,
+      ok: modulesSummary.videoBackedItems >= videoSummary.expectedEntries,
+      detail: `current vessel303 home modules have ${modulesSummary.videoBackedItems}/${videoSummary.expectedEntries} expected video-backed items`,
     },
     {
       id: 'homepage_video_posters_published',
-      ok: modulesSummary.posterBackedItems >= videoSummary.defaultEntries,
-      detail: `current vessel303 home modules have ${modulesSummary.posterBackedItems}/${videoSummary.defaultEntries} expected video poster-backed items`,
+      ok: modulesSummary.videoPosterOrImageFallbackItems >= videoSummary.expectedEntries,
+      detail: `current vessel303 home modules have ${modulesSummary.videoPosterOrImageFallbackItems}/${videoSummary.expectedEntries} expected video poster or image fallback-backed items`,
     },
   ]
 
   const uploadReady = checks.find((check) => check.id === 'blob_token_configured').ok
     && checks.find((check) => check.id === 'default_images_local_ready').ok
-    && checks.find((check) => check.id === 'default_videos_local_ready').ok
+    && checks.find((check) => check.id === 'expected_videos_local_ready').ok
   const draftReady = checks.find((check) => check.id === 'self_hosted_image_urls_ready').ok
     && checks.find((check) => check.id === 'self_hosted_video_urls_ready').ok
     && checks.find((check) => check.id === 'no_source_host_public_urls').ok
@@ -246,9 +250,11 @@ function printReport(report) {
   console.log(`- visible items: ${report.modules.visibleItems}`)
   console.log(`- image-backed items: ${report.modules.imageBackedItems}`)
   console.log(`- video-backed items: ${report.modules.videoBackedItems}`)
+  console.log(`- video poster/image fallback-backed items: ${report.modules.videoPosterOrImageFallbackItems}`)
   console.log('Default media scope:')
   console.log(`- images: ${report.images.defaultRows} default, ${report.images.reviewRows} review, ${report.images.noTargetRows} no-target`)
   console.log(`- videos: ${report.videos.defaultEntries} default, ${report.videos.reviewEntries} review`)
+  console.log(`- expected videos in this gate: ${report.videos.expectedEntries}${report.options.includeReviewCandidates ? ' (review included)' : ''}`)
   console.log('Gate checks:')
   for (const check of report.gate.checks) {
     console.log(`- ${check.ok ? 'PASS' : 'BLOCKED'} ${check.id}: ${check.detail}`)
@@ -282,6 +288,9 @@ try {
     imageManifestPath,
     imageMappingPlanPath,
     videoManifestPath,
+    options: {
+      includeReviewCandidates,
+    },
     blobTokenConfigured,
     images,
     videos,

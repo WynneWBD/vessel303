@@ -205,14 +205,19 @@ try {
 const publicUrlsReachable = publicUrlChecks.filter((check) => check.ok).length
 const validLocalVideos = checked.rows.filter((row) => row.valid).length
 const validDefaultVideos = defaultUploadableRows.filter((row) => row.valid).length
+const reviewRows = checked.rows.filter((row) => row.requiresReview)
+const reviewPublicUrlRows = reviewRows.filter((row) => row.publicUrl)
 const nextActions = []
 if (validLocalVideos < checked.rows.length) nextActions.push('Fix local MP4 files before upload.')
 if (!process.env.BLOB_READ_WRITE_TOKEN) nextActions.push('Configure BLOB_READ_WRITE_TOKEN before upload.')
 if (validDefaultVideos === defaultUploadableRows.length && defaultPublicUrlRows.length < defaultUploadableRows.length) {
   nextActions.push('Authorized next step: npm run upload:home-videos -- --apply (uploads default high-confidence videos only).')
 }
-if (checked.rows.some((row) => row.requiresReview)) {
+if (reviewRows.length > 0 && reviewPublicUrlRows.length < reviewRows.length) {
   nextActions.push('Review-required video candidates stay skipped unless --include-review-candidates is explicitly used.')
+}
+if (reviewRows.length > 0 && reviewPublicUrlRows.length === reviewRows.length && homeModules.videoItems >= checked.rows.length) {
+  nextActions.push('Review-required video candidate is uploaded and present in homepage module data.')
 }
 if (defaultPublicUrlRows.length === defaultUploadableRows.length && defaultPublicUrlRows.length > 0 && publicUrlsReachable >= defaultPublicUrlRows.length && homeModules.videoItems === 0) {
   nextActions.push('Authorized next step: write self-hosted default video URLs into homepage module drafts.')

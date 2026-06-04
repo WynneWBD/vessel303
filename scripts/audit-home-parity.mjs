@@ -295,7 +295,7 @@ function printSummary(report) {
   if (report.plannedVideoTargets.length > 0) {
     console.log('Planned video draft targets:')
     for (const target of report.plannedVideoTargets) {
-      const status = target.requiresReview ? 'review required' : target.currentVideoUrl ? 'already has video' : target.readyForDraft ? 'ready' : 'missing target'
+      const status = target.currentVideoUrl ? 'already has video' : target.requiresReview ? 'review required' : target.readyForDraft ? 'ready' : 'missing target'
       console.log(`- ${target.target}: ${status}`)
       console.log(`  role: ${target.role}`)
       console.log(`  label: ${target.targetLabel || 'n/a'}`)
