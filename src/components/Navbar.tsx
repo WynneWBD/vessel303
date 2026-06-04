@@ -25,6 +25,29 @@ interface NavLink {
   content?: string;
 }
 
+function ModelNavLabel({ link }: { link: NavLink }) {
+  if (!link.imageUrl) return <span>{link.label}</span>;
+
+  const match = link.label.match(/^(VESSEL)\s+(.+?)\s+(Gen\d+)$/i);
+  const prefix = match?.[1] ?? '';
+  const suffix = match?.[3] ?? '';
+
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5 align-middle">
+      {prefix ? <span>{prefix}</span> : null}
+      <Image
+        src={link.imageUrl}
+        alt={link.label}
+        width={58}
+        height={34}
+        className="h-[18px] w-auto max-w-[58px] object-contain"
+        unoptimized
+      />
+      {suffix ? <span>{suffix}</span> : !prefix ? <span>{link.label}</span> : null}
+    </span>
+  );
+}
+
 export default function Navbar() {
   const initialSiteModules = useSiteModules();
   const [isOpen, setIsOpen] = useState(false);
@@ -126,7 +149,7 @@ export default function Navbar() {
                   href={link.href}
                   className="relative block whitespace-nowrap py-2 text-[14px] font-medium text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.32)] transition-colors duration-200 hover:text-white"
                 >
-                  {link.label}
+                  {link.id.startsWith('nav-model-') ? <ModelNavLabel link={link} /> : link.label}
                   <span className="absolute bottom-0 left-0 h-px w-0 bg-white transition-all duration-200 group-hover:w-full" />
                 </Link>
               </div>

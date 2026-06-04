@@ -272,7 +272,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
       <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#071018]/46 to-transparent" />
 
       <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col px-5 pb-28 pt-32 text-center sm:px-6 lg:px-10 lg:pb-40 lg:pt-40">
-        <div className="mx-auto max-w-[1680px]">
+        <div className="mx-auto max-w-[1600px]">
           {activeTagline ? (
             <div className="mb-8">
                 <p
@@ -286,7 +286,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
           ) : null}
 
           <h1
-            className="mx-auto mb-7 max-w-[24rem] break-words font-[family-name:var(--font-heading)] text-4xl font-bold leading-[1.04] text-white sm:max-w-5xl sm:text-6xl sm:leading-[1] lg:max-w-[1280px] lg:text-[70px] xl:text-[78px]"
+            className="mx-auto mb-7 max-w-[24rem] break-words font-[family-name:var(--font-heading)] text-4xl font-bold leading-[1.06] text-white sm:max-w-5xl sm:text-5xl sm:leading-[1.04] lg:max-w-[1420px] lg:text-[56px] xl:max-w-[1600px] xl:text-[62px]"
             style={{ overflowWrap: 'anywhere', textShadow: '0 20px 58px rgba(0,0,0,0.36)' }}
             data-page-module-item={activeHeadlineItem}
             data-page-module-field={`label_${lang}`}
@@ -296,7 +296,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
           {activeSubtitle ? (
             <p
-              className="mx-auto mb-9 max-w-[24rem] text-xl leading-snug text-white sm:max-w-[90vw] sm:text-3xl lg:text-[36px] xl:text-[38px]"
+              className="mx-auto mb-9 max-w-[24rem] text-xl leading-snug text-white sm:max-w-[90vw] sm:text-3xl lg:text-[32px] xl:text-[36px]"
               style={{ overflowWrap: 'anywhere', textShadow: '0 14px 42px rgba(0,0,0,0.34)' }}
               data-page-module-item={activeSubtitleItem}
               data-page-module-field={activeSlide?.subtitle ? `content_${lang}` : `label_${lang}`}
@@ -2243,7 +2243,7 @@ export default function HomePageContent({
   );
 
   return (
-    <main>
+    <main className="overflow-x-hidden">
       <Navbar />
       {dynamicModules.map(renderHomeDynamicModule)}
       <Footer />
