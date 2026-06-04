@@ -176,10 +176,10 @@ npx next build --webpack
 
 - 首页已由后台 published Home modules 控制。
 - Home hero、credentials、large product cards、model strip 等核心模块仍由后台内容驱动。
-- B66-B75 连续处理首页展示节奏。
-- B75 已上线：压缩 hero 和 credentials/proof visual 高度，让产品大图更早进入桌面和移动端视野。
+- B66-B76 连续处理首页展示节奏。
+- B76 已上线：在 B75 基础上二次收紧首页产品露出节奏，hero 进一步压缩，credentials/proof visual 改为更紧凑布局，让产品区更早进入桌面和移动端视野。
 - 当前下一步：09 重新对比线上首页和 `en.303vessel.cn`，判断差距来自显示模板、后台内容/素材、模块新增能力，还是移动端/图片性能；涉及后台不懂处可只读学习 300.cn 后台。
-- 风险：B75 未完成可靠线上桌面/移动截图复核；本轮替代验证为本地桌面/移动视觉指标 + 线上 HTTP/DOM 补验。Home visual editor/catalog 模板多于 draft add-module API 白名单，API 目前只接受 `simple-text` 和 `cta-section`。
+- 风险：B76 未完成可靠线上桌面/移动截图复核；本轮替代验证为 07 本地桌面/移动视觉指标 + 05/00 线上 HTTP/DOM 补验。Blog 导航、旧站型号 / footer 入口、CTA 节奏仍是 09 后续 P2 / 待判断项，B76 未处理。Home visual editor/catalog 模板多于 draft add-module API 白名单，API 目前只接受 `simple-text` 和 `cta-section`。
 
 Products / 产品中心：
 
@@ -237,30 +237,33 @@ SEO / Analytics / Performance：
 
 ## 9. 当前最新节点
 
-最新线上节点：B75。
+最新线上节点：B76。
 
-B75 摘要：
+B76 摘要：
 
-- 名称：Homepage hero and credentials tightening
+- 名称：homepage product exposure rhythm second tightening / 首页产品露出节奏二次小修
 - 日期：2026-06-04
-- commit：`3e11aceea7a29d13b00c97dda2074ff020a5fc37`
-- Vercel deployment：`dpl_8Lm5ftCLX53VvPLymJXtWmQ3PFK9`
+- commit：`2f54e82ceeb1a5e1b68d638d0bdf745294672c39`
+- Vercel deployment：`dpl_CZXNZ5D1z9FhngtdRn8PHBGtGVb6`
+- Deployment URL：`https://vessel303-c7gsrixz2-vessel303.vercel.app`
 - 状态：READY
-- 范围：只调整首页显示模板。`HeroSection` 移除强制整屏 `min-h-screen` 和 inline `minHeight: '100vh'`，改为移动约 `72svh`、桌面约 `82vh` 的响应式高度；同时缩短 hero 内部 padding、文案间距、`CredentialsBar` stats padding、数字字号和 proof visual 高度/最大宽度。
-- 目标：让首页产品大图更早进入桌面和移动端视野。
-- 未改：首页图片、文案、CTA、href、published 内容来源、Home module 顺序、后台 API、数据库、认证、权限、支付、订单、`/global`、MapLibre、MapTiler、`/api/map`。
-- 验证：`git diff --check`、targeted eslint、顺序重跑后的 `npx tsc --noEmit`、`npx next build --webpack` 通过；本地 production HTTP 检查 `/`、`/global`、`/about`、`/cases` 都 200 且无 `__next_error__`；线上只读补验首页和 `/global` 200 且无 `__next_error__`，未登录 `/admin` 302 到登录页。
-- 视觉指标：本地 desktop 1440x1000 下 hero 高 820、credentials top 820、large-product-cards top 1237，无页面级横向滚动；mobile 390x844 下 hero 高 608、credentials top 608、large-product-cards top 909，无页面级横向滚动。
+- 代码文件：`src/components/pages/HomePageContent.tsx`
+- 范围：只调整首页显示模板。`HeroSection` 从 B75 的 `72svh / 82vh` 进一步压缩到移动约 `56svh`、桌面约 `68-70vh`，减少 hero padding；桌面轮播控件更小、更靠近；`CredentialsBar` desktop 改为 stats 与 proof visual 并排，mobile proof visual 改为更矮的紧凑 strip。
+- 目标：进一步让首页产品大图更早进入桌面和移动端视野。
+- 未改：首页图片、文案、CTA、href、published 内容来源、Home module 顺序、后台 API、数据库、认证、权限、支付、订单、`/global`。
+- 验证：`git diff --check -- src/components/pages/HomePageContent.tsx`、`npx eslint src/components/pages/HomePageContent.tsx`、`npx tsc --noEmit`、`npx next build --webpack` 通过；本地 `/` 200 且无 `__next_error__`；线上首页 200 且无 `__next_error__`，`/global` 200 且无 `__next_error__`，未登录 `/admin` 302 到登录页。
+- 07 视觉指标：desktop 1440x1000 下 hero 高 700、credentials top 700 height 158、large-product-cards top 858 height 1633，无页面级横向滚动；mobile 390x844 下 hero 高 473、credentials top 473 height 282、large-product-cards top 755 height 1541，无页面级横向滚动，mobile 产品区已在首屏底部露出。
 - 限制：本轮没有可用真实浏览器截图工具完成线上桌面/移动截图复核；后续 09/07 有可用工具时应补视觉复核。
 
 下一步：
 
 1. 09 重新对比线上首页和 `en.303vessel.cn`。
-2. 判断剩余产品区差距来自显示模板、后台内容/素材/模块能力，还是移动端/图片性能。
+2. 判断剩余首页差距来自显示模板、后台内容/素材/模块能力，还是移动端/图片性能。
 3. 显示模板问题交 01。
 4. Home module 内容、素材、模块新增能力问题交 02 / 03。
 5. 移动端、图片、性能问题交 07。
 6. 涉及后台/CMS/Visual Editor/运营后台产品心智时，不确定处可只读学习 300.cn 后台。
+7. Blog 导航、旧站型号 / footer 入口、CTA 节奏仍由 09 后续判断，不要写成 B76 已处理。
 
 ## 10. 文档维护规则
 
