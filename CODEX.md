@@ -144,7 +144,7 @@ npx next build --webpack
 
 当前循环：
 
-`09 差距对比 -> 00 拆任务 -> 01/02/03/07 开发或修复 -> 05 验收上线 -> 06 文档收口 -> 09 继续对比`
+`09 差距对比 -> 00 拆任务 -> 01/02/03/07 开发或修复 -> 05 验收上线 -> 06 文档收口 -> 05 文档复验上线 -> 09 继续对比`
 
 归属判断：
 
@@ -176,10 +176,10 @@ npx next build --webpack
 
 - 首页已由后台 published Home modules 控制。
 - Home hero、credentials、large product cards、model strip 等核心模块仍由后台内容驱动。
-- B66-B79 连续处理首页展示节奏。
-- B79 已上线：在 B78 基础上压缩 `CredentialsBar` mobile proof/credentials 节奏，收紧 mobile stats tile/value/label、proof visual height/padding/caption；`sm:` / `lg` 尺寸基本保持。
+- B66-B80 连续处理首页展示节奏。
+- B80 已上线：在 B79 基础上移除 mobile `CredentialsBar` 下方重复 proof visual/caption 子区，保留 hero proof rail 和四个 stats，让产品区更早出现。
 - 当前下一步：09 重新对比线上首页和 `en.303vessel.cn`，判断差距来自显示模板、后台内容/素材、模块新增能力，还是移动端/图片性能；涉及后台不懂处可只读学习 300.cn 后台。
-- 风险：B79 code / HTTP / Vercel 通过，mobile 视觉无横向滚动或明显重叠，但 00 线上复测 mobile `SV918` top 约 927px，截图首屏未露出产品区，只露到 credentials/proof 区；07 本地与 00 线上指标不一致，仍需 09 下一轮继续比较。Blog 导航、旧站型号 / footer 入口、CTA 节奏仍是 09 后续 P2 / 待判断项，B79 未处理。Home visual editor/catalog 模板多于 draft add-module API 白名单，API 目前只接受 `simple-text` 和 `cta-section`。
+- 风险：B80 不等于全站完全对齐，只解决 mobile proof/credentials 重复占位过重；线上 mobile 未由 05 重新跑截图/DOM，视觉结论以 07 本地 production 指标为主，09 下一轮仍需实测 `www.vessel303.com` 与 `en.303vessel.cn`。Blog 导航、旧站型号 / footer 入口、CTA 节奏仍是 09 后续 P2 / 待判断项，B80 未处理。Home visual editor/catalog 模板多于 draft add-module API 白名单，API 目前只接受 `simple-text` 和 `cta-section`。
 
 Products / 产品中心：
 
@@ -237,39 +237,41 @@ SEO / Analytics / Performance：
 
 ## 9. 当前最新节点
 
-最新线上节点：B79。
+最新线上节点：B80。
 
-B79 摘要：
+B80 摘要：
 
-- 名称：mobile proof/credentials rhythm / 移动端 proof 与 credentials 节奏压缩
+- 名称：remove duplicate mobile proof visual / 移除移动端重复 proof visual
 - 日期：2026-06-04
-- commit：`cc7e827` / full `cc7e827609d0aa0f8cff1dd62dd3a2c7fde0ee45`
-- commit message：`style(home): compact mobile proof band`
-- Vercel deployment：`dpl_3CUd9YCW9TRzhZ4a8bYd3Apyh8AD`
-- Deployment URL：`https://vessel303-3v4vyg5pw-vessel303.vercel.app`
+- commit：`7764262` / full `77642626af073107af24c8da87572d55c0c4f663`
+- commit message：`style(home): remove duplicate mobile proof visual`
+- Vercel deployment：`dpl_AScSAdjRhhxgPURYYmutg7jtQMrn`
+- Deployment URL：`https://vessel303-afxevfkor-vessel303.vercel.app`
 - Alias：`www.vessel303.com`、`vessel303.com`
 - 状态：READY
 - 代码文件：`src/components/pages/HomePageContent.tsx`
-- 范围：只压缩 `CredentialsBar` mobile proof/credentials；mobile stats tile/value/label、proof visual height/padding/caption 收紧；`sm:` / `lg` 尺寸基本保持。
-- 目标：缓解 B78 后 mobile credentials/proof 区过高导致产品区露出延后的问题。
+- 范围：只改 `CredentialsBar` proof visual/caption 外层 class。mobile `<sm` 隐藏下方 credentials proof visual/caption 子区；`sm:` 及以上继续显示 proof visual，保持 B79 尺寸、padding、caption。
+- 目标：移除 mobile 下方重复 proof visual/caption 占位，同时保留 hero proof rail 和 `CredentialsBar` 四个 stats。
 - 未改：hero H1、hero subtitle、CTA label/href、图片、Home module 顺序、后台 API、数据库、认证、权限、支付、订单、`/global`。
 - 未新增：素材或文案；未硬编码 `Dual Certified`、`EU+US certified`、`45-day`、具体认证名/编号等未核实事实。
-- 05 验证：`git diff --check -- src/components/pages/HomePageContent.tsx`、`npx eslint src/components/pages/HomePageContent.tsx`、`npx tsc --noEmit`、`npx next build --webpack` 通过；`git diff --check` 仅 LF/CRLF warning；build 只出现既有 PostgreSQL SSL warning、本机数据库 `EACCES` fallback、`/global` edge runtime warning。
+- 05 本地检查：`git diff --check -- src/components/pages/HomePageContent.tsx` 通过，仅 LF/CRLF warning；`cmd /c npx eslint src/components/pages/HomePageContent.tsx`、`cmd /c npx tsc --noEmit`、`cmd /c npx next build --webpack` 通过；build 只出现既有 PostgreSQL SSL warning、本机数据库 `EACCES` fallback、`/global` edge runtime warning。
 - 05 线上检查：首页 200 且无 `__next_error__`，`/global` 200 且无 `__next_error__`，未登录 `/admin` 302 到 `https://vessel303.com/admin/login`。
-- 07 本地 production 验收：desktop 1440x1000 下 hero 0/700、hero proof 478/64、credentials 700/158、large-product-cards 858/1633、SV918 954/60、scrollWidth/clientWidth 1434/1434；mobile 390x844 下 hero 0/512、hero proof 394/62、credentials 512/229、large-product-cards 741/1541、SV918 821/38、scrollWidth/clientWidth 384/384。
-- 00 线上只读复测：`https://www.vessel303.com/` desktop 1440x1000 无横向滚动，`SV918` top 约 954px；mobile 390x844 无横向滚动且无 `__next_error__`，但 `SV918` top 约 927px，截图首屏未露出产品区，只露到 credentials/proof 区。
-- 风险：不要写成 B79 已完全解决移动端产品露出节奏或已完全对齐旧站；B79 code / HTTP / Vercel 通过，但线上 mobile 产品露出仍需 09 下一轮继续比较，且存在 07 本地与 00 线上复测指标不一致。
+- 05 最终 git status：`## main...origin/main`。
+- 07 本地 production 验收：本地服务 `127.0.0.1:3041` 已停止，未新增 repo 改动。desktop 1440x1000 下 hero 0/700、hero proof rail 478/64、credentials 700/158、large-product-cards 858/1633、SV918 title 954/60、scrollWidth/clientWidth 1434/1434、`__next_error__=false`；mobile 390x844 下 hero 0/512、hero proof rail 394/62、credentials 512/140、large-product-cards 652/1541、SV918 title 732/38、scrollWidth/clientWidth 384/384、`__next_error__=false`。
+- 07 视觉结论：B80 mobile 达标，product section 652px 早于目标 `<=740px`，SV918 title 732px 早于目标 `<=830px` 且早于 B79 线上参考 860px；desktop `SV918` 仍在 954px 附近，未明显后移；mobile stats 可读，无重叠/裁切；mobile proof visual/caption `display:none`，没有突兀空白；desktop proof visual 仍显示；hero proof rail 与产品卡不重叠；无页面级横向滚动。
+- 截图路径：`C:\Users\Wynne\AppData\Local\Temp\vessel303-b80-verify\edge-desktop-1440x1000.png`、`C:\Users\Wynne\AppData\Local\Temp\vessel303-b80-verify\browser-mobile-390x844.png`。
+- 风险：B80 不等于全站完全对齐；只是解决 mobile proof/credentials 重复占位过重，让产品区更早出现。线上 mobile 未由 05 重新跑截图/DOM，视觉结论以 07 本地 production 指标为主；09 下一轮需要继续实测 `www.vessel303.com` 与 `en.303vessel.cn` 首页差距。
 - proof 信息边界：只复用当前首页已发布 credentials stats；不要硬编码或新增 `Dual Certified`、`EU+US certified`、`45-day factory production`、具体 cert 名称/编号、或 broad global compliance。
 
 下一步：
 
 1. 05 验收 docs、commit、push 并等待 Vercel READY 后，交 09 重新对比 `www.vessel303.com` 与 `en.303vessel.cn`。
-2. 09 重点看 mobile 首屏 proof/credentials 重复高度、产品露出位置、nav / footer / model / blog 差异，以及 07 本地与 00 线上 mobile 指标不一致是否可复现。
+2. 09 下一轮重点看 mobile 首屏产品露出位置、hero H1/copy 是否仍有语义差异、nav / footer / model / blog / global presence 差异，以及旧站与新站 desktop/mobile product rhythm 是否还需要继续收敛。
 3. 显示模板问题交 01。
 4. Home module 内容、素材、模块新增能力问题交 02 / 03。
 5. 移动端、图片、性能问题交 07。
 6. 涉及后台/CMS/Visual Editor/运营后台产品心智时，不确定处可只读学习 300.cn 后台。
-7. Blog 导航、旧站型号 / footer 入口、CTA 节奏仍由 09 后续判断，不要写成 B79 已处理。
+7. Blog 导航、旧站型号 / footer 入口、CTA 节奏仍由 09 后续判断，不要写成 B80 已处理。
 
 ## 10. 文档维护规则
 
