@@ -249,6 +249,13 @@ function compareSourcesWithManifest(sourceSources, targetSources, sourceToPublic
   })
 }
 
+function comparableImageTargets(pageModules) {
+  return unique([
+    ...pageModules.imageSources,
+    ...pageModules.posterSources,
+  ])
+}
+
 function plannedVideoStatus(pageModules) {
   const modules = new Map(pageModules.modules.map((row) => [row.moduleKey, row]))
   return VIDEO_TRANSFER_PLAN.map((plan) => {
@@ -278,7 +285,7 @@ function buildGaps(en, vessel, pageModules, matchedImageSources, missingImageSou
     gaps.push(`en.303 public homepage has ${en.media.imageTags} image tags; vessel public homepage has ${vessel.media.imageTags}.`)
   }
   if (missingImageSources.length > 0) {
-    gaps.push(`en.303 exposes ${en.media.imageSources.length} unique image URLs; vessel home page_modules match ${matchedImageSources} through direct or manifest-mapped URLs; ${missingImageSources.length} remain unmatched.`)
+    gaps.push(`en.303 exposes ${en.media.imageSources.length} unique image URLs; vessel home page_modules image/poster fields match ${matchedImageSources} through direct or manifest-mapped URLs; ${missingImageSources.length} remain unmatched.`)
   }
   if (en.media.videoTags > 0 && pageModules.videoItems === 0) {
     gaps.push('vessel home page_modules currently have 0 video-backed visible items; video content still needs to be entered or imported through backend content.')
@@ -318,11 +325,13 @@ function printSummary(report) {
   console.log(`  Video-backed items: ${report.pageModules.summary.videoItems}`)
   console.log(`  Poster-backed items: ${report.pageModules.summary.posterItems}`)
   console.log(`  Unique module image URLs: ${report.pageModules.summary.imageSources.length}`)
+  console.log(`  Unique module poster URLs: ${report.pageModules.summary.posterSources.length}`)
+  console.log(`  Comparable module image/poster URLs: ${report.comparableImageTargets.length}`)
   console.log(`  Unique module video URLs: ${report.pageModules.summary.videoSources.length}`)
   if (report.pageModules.summary.emptyVisibleModules.length > 0) {
     console.log(`  Empty visible modules: ${report.pageModules.summary.emptyVisibleModules.join(', ')}`)
   }
-  console.log(`  en.303 image sources matched through modules/manifest: ${report.matchedImageSources}/${report.en.media.imageSources.length}`)
+  console.log(`  en.303 image sources matched through module image/poster fields: ${report.matchedImageSources}/${report.en.media.imageSources.length}`)
   if (report.missingImageSources.length > 0) {
     const visible = report.missingImageSources.slice(0, maxMediaList)
     console.log(`Unmatched image source candidates: ${report.missingImageSources.length}${report.missingImageSources.length > visible.length ? ` (showing ${visible.length})` : ''}`)
@@ -422,12 +431,13 @@ const report = {
     path: imageManifest.path,
     mappings: imageManifest.sourceToPublicUrl.size,
   },
-  missingImageSources: errors.length === 0
-    ? compareSourcesWithManifest(en.media.imageSources, pageModules.summary.imageSources, imageManifest.sourceToPublicUrl)
-    : [],
+  comparableImageTargets: errors.length === 0 ? comparableImageTargets(pageModules.summary) : [],
   plannedVideoTargets: errors.length === 0 ? plannedVideoStatus(pageModules.summary) : [],
   errors,
 }
+report.missingImageSources = errors.length === 0
+  ? compareSourcesWithManifest(en.media.imageSources, report.comparableImageTargets, imageManifest.sourceToPublicUrl)
+  : []
 report.matchedImageSources = errors.length === 0 ? en.media.imageSources.length - report.missingImageSources.length : 0
 report.gaps = errors.length === 0
   ? buildGaps(en, vessel, pageModules.summary, report.matchedImageSources, report.missingImageSources)

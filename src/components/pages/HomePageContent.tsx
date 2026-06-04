@@ -202,29 +202,17 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
         href: displayHref(item.href),
       }));
   }, [items, lang]);
-  const heroProofs = useMemo(() => {
-    return items
-      .filter((item) => typeof item.id === 'string' && item.id.startsWith('hero-proof') && item.is_visible)
-      .map((item) => ({
-        id: item.id,
-        value: localizedValue(item, lang, ''),
-        label: localizedLabel(item, lang, ''),
-        body: localizedContent(item, lang, ''),
-      }))
-      .filter((item) => item.value || item.label || item.body);
-  }, [items, lang]);
   const findItem = (id: string) => items.find((item) => typeof item.id === 'string' && item.id === id);
   const tagline = localizedLabel(findItem('hero-tagline'), lang, '');
   const headline = localizedLabel(findItem('hero-headline'), lang, '');
   const subtitle = localizedLabel(findItem('hero-subtitle'), lang, '');
   const primaryCta = findItem('hero-primary-cta');
-  const secondaryCta = findItem('hero-secondary-cta');
   const primaryLabel = localizedLabel(primaryCta, lang, '');
-  const secondaryLabel = localizedLabel(secondaryCta, lang, '');
   const primaryHref = displayHref(primaryCta?.href);
-  const secondaryHref = displayHref(secondaryCta?.href);
   const activeImage = heroSlides.length > 0 ? current % heroSlides.length : 0;
+  const nextImage = heroSlides.length > 0 ? (activeImage + 1) % heroSlides.length : 0;
   const activeSlide = heroSlides[activeImage] ?? null;
+  const previewSlide = heroSlides[nextImage] ?? activeSlide;
   const activeTagline = activeSlide?.eyebrow || tagline;
   const activeHeadline = activeSlide?.headline || headline;
   const activeSubtitle = activeSlide?.subtitle || subtitle;
@@ -238,13 +226,12 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const playLabel = lang === 'zh' ? '播放' : 'Play';
   const visibleHeroImages = useMemo(() => {
     if (heroSlides.length === 0) return [];
-    const nextImage = (activeImage + 1) % heroSlides.length;
     return Array.from(new Set([activeImage, nextImage])).map((index) => ({
       index,
       slide: heroSlides[index],
       active: index === activeImage,
     }));
-  }, [activeImage, heroSlides]);
+  }, [activeImage, heroSlides, nextImage]);
 
   useEffect(() => {
     if (heroSlides.length === 0) return;
@@ -285,7 +272,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
       <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#071018]/46 to-transparent" />
 
       <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col px-5 pb-28 pt-32 text-center sm:px-6 lg:px-10 lg:pb-40 lg:pt-40">
-        <div className="mx-auto max-w-[1320px]">
+        <div className="mx-auto max-w-[1680px]">
           {activeTagline ? (
             <div className="mb-8">
                 <p
@@ -309,7 +296,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
           {activeSubtitle ? (
             <p
-              className="mx-auto mb-9 max-w-[24rem] text-xl leading-snug text-white sm:max-w-[1180px] sm:text-3xl lg:text-[42px]"
+              className="mx-auto mb-9 max-w-[24rem] text-xl leading-snug text-white sm:max-w-[90vw] sm:text-3xl lg:whitespace-nowrap lg:text-[38px] xl:text-[40px]"
               style={{ overflowWrap: 'anywhere', textShadow: '0 14px 42px rgba(0,0,0,0.34)' }}
               data-page-module-item={activeSubtitleItem}
               data-page-module-field={activeSlide?.subtitle ? `content_${lang}` : `label_${lang}`}
@@ -318,76 +305,22 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
             </p>
           ) : null}
 
-          {((primaryLabel && activePrimaryHref) || (secondaryLabel && secondaryHref)) ? (
+          {primaryLabel && activePrimaryHref ? (
             <div className="flex flex-col justify-center gap-3 sm:flex-row sm:items-center">
-              {primaryLabel && activePrimaryHref ? (
-                <Link
-                  href={activePrimaryHref}
-                  {...externalLinkProps(activePrimaryHref)}
-                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/88 px-8 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#172231]"
-                  data-page-module-item="hero-primary-cta"
-                  data-page-module-field={`label_${lang}`}
-                >
-                  {primaryLabel}
-                </Link>
-              ) : null}
-              {secondaryLabel && secondaryHref ? (
-                <Link
-                  href={secondaryHref}
-                  {...externalLinkProps(secondaryHref)}
-                  className="inline-flex min-h-11 items-center justify-center rounded-full border px-8 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#172231]"
-                  style={{ borderColor: 'rgba(255,255,255,0.35)' }}
-                  data-page-module-item="hero-secondary-cta"
-                  data-page-module-field={`label_${lang}`}
-                >
-                  {secondaryLabel}
-                </Link>
-              ) : null}
+              <Link
+                href={activePrimaryHref}
+                {...externalLinkProps(activePrimaryHref)}
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/88 px-8 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#172231]"
+                data-page-module-item="hero-primary-cta"
+                data-page-module-field={`label_${lang}`}
+              >
+                {primaryLabel}
+              </Link>
             </div>
           ) : null}
         </div>
 
       </div>
-
-      {heroProofs.length > 0 ? (
-        <div
-          className="absolute bottom-24 left-5 z-20 hidden max-w-[720px] sm:block lg:bottom-28 lg:left-[max(2rem,calc((100vw-1540px)/2+2.5rem))]"
-          data-page-module-item="hero-proof"
-        >
-          <div className="flex flex-wrap overflow-hidden border-y border-white/12 bg-[#11100E]/58 shadow-[0_18px_56px_rgba(0,0,0,0.28)] backdrop-blur-[2px]">
-            {heroProofs.map((proof) => (
-              <div
-                key={proof.id}
-                className="min-w-[150px] border-r border-white/12 px-4 py-3 last:border-r-0"
-                data-page-module-item={proof.id}
-              >
-                {proof.value ? (
-                  <div
-                    className="font-[family-name:var(--font-heading)] text-xl font-light leading-none text-white"
-                    data-page-module-field={`value_${lang}`}
-                  >
-                    {proof.value}
-                  </div>
-                ) : null}
-                {proof.label ? (
-                  <div
-                    className="mt-1 max-w-[11rem] truncate text-[10px] font-bold uppercase text-[#F2A36E]"
-                    data-page-module-field={`label_${lang}`}
-                    title={proof.label}
-                  >
-                    {proof.label}
-                  </div>
-                ) : null}
-                {proof.body ? (
-                  <div className="sr-only" data-page-module-field={`content_${lang}`}>
-                    {proof.body}
-                  </div>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
 
       {heroSlides.length > 1 ? (
         <div
@@ -396,21 +329,20 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
         >
           <button
             type="button"
-            onClick={() => setCurrent(activeImage)}
+            onClick={() => setCurrent(nextImage)}
             className="relative overflow-hidden border border-white/72 bg-white/8 text-left shadow-[0_24px_62px_rgba(0,0,0,0.24)] transition hover:border-white"
             style={{ height: 158, width: 314 }}
-            aria-current="true"
           >
-            {activeSlide ? (
+            {previewSlide ? (
               <Image
-                src={activeSlide.src}
+                src={previewSlide.src}
                 alt=""
                 fill
                 sizes="314px"
                 className="object-cover"
               />
             ) : null}
-            <span className="sr-only">{activeSlide?.headline || activeSlide?.eyebrow || 'Current slide'}</span>
+            <span className="sr-only">{previewSlide?.headline || previewSlide?.eyebrow || 'Next slide preview'}</span>
           </button>
           <button
             type="button"

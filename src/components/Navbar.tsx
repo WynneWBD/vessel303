@@ -111,7 +111,7 @@ export default function Navbar() {
                 height={40}
                 width={160}
                 style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
-                className="h-7 w-auto max-w-[176px] sm:h-8 sm:max-w-[210px] lg:h-[42px] lg:max-w-none"
+                className="h-7 w-auto max-w-[176px] sm:h-8 sm:max-w-[210px] lg:h-[28px] lg:max-w-[220px]"
                 priority
                 unoptimized
               />
