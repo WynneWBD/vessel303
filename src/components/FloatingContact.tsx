@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ExternalLink, Mail, MessageCircle, Phone, Send } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -73,10 +74,11 @@ export default function FloatingContact() {
       label: itemLabel(item, lang),
       content: itemContent(item, lang),
       value: itemValue(item, lang),
-      href: normalizeSiteHref(item.href || ''),
+      href: normalizeSiteHref(item.href || '', ''),
+      image: item.image_url?.trim() || '',
       sort_order: item.sort_order,
     }))
-    .filter((item) => item.label && item.href);
+    .filter((item) => item.label && (item.href || item.image));
 
   if (floatingModule?.is_visible === false || items.length === 0) return null;
 
@@ -88,9 +90,21 @@ export default function FloatingContact() {
         <span className="flex h-11 w-11 shrink-0 items-center justify-center bg-[#2F3032] text-white">
           <Icon aria-hidden="true" className="h-4 w-4" />
         </span>
-        <span className="pointer-events-none absolute right-full top-1/2 mr-2 hidden min-w-44 -translate-y-1/2 border border-white/10 bg-[#2F3032]/96 px-3 py-2 text-left opacity-0 shadow-[0_16px_40px_rgba(15,23,42,0.2)] backdrop-blur-md transition group-hover:block group-hover:opacity-100 group-focus-visible:block group-focus-visible:opacity-100">
+        <span className={`pointer-events-none invisible absolute right-full top-1/2 mr-2 -translate-y-1/2 border border-white/10 bg-[#2F3032]/96 px-3 py-2 text-left opacity-0 shadow-[0_16px_40px_rgba(15,23,42,0.2)] backdrop-blur-md transition group-hover:visible group-hover:opacity-100 group-focus-visible:visible group-focus-visible:opacity-100 group-focus-within:visible group-focus-within:opacity-100 ${item.image ? 'w-48' : 'min-w-44'}`}>
           <span className="block truncate text-xs font-black uppercase tracking-[0.14em]">{item.label}</span>
           {content ? <span className="mt-0.5 block truncate text-[11px] opacity-65">{content}</span> : null}
+          {item.image ? (
+            <span className="mt-3 block bg-white p-2">
+              <Image
+                src={item.image}
+                alt={content ? `${item.label} ${content}` : item.label}
+                width={150}
+                height={150}
+                className="h-[150px] w-[150px] object-contain"
+                unoptimized
+              />
+            </span>
+          ) : null}
         </span>
       </>
     ) : (
@@ -103,6 +117,19 @@ export default function FloatingContact() {
     const className = variant === 'desktop'
       ? 'group relative flex h-11 w-11 items-center justify-center overflow-visible border border-white/10 bg-[#2F3032]/94 text-white shadow-[0_16px_40px_rgba(15,23,42,0.2)] backdrop-blur-md transition hover:border-white/40 hover:bg-[#222326]'
       : 'inline-flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 border border-[#DADDE1] bg-white px-3 text-[#1F2A31] shadow-[0_10px_28px_rgba(36,31,27,0.18)] transition hover:border-[#E36F2C] hover:text-[#C85A1F]';
+
+    if (!item.href) {
+      return (
+        <button
+          key={item.id}
+          type="button"
+          className={className}
+          aria-label={content ? `${item.label} ${content}` : item.label}
+        >
+          {body}
+        </button>
+      );
+    }
 
     return isExternalHref(item.href) ? (
       <a
