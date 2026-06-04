@@ -970,6 +970,15 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
   const eyebrow = localizedLabel(findModuleItem(pageModule, 'eyebrow'), lang, '');
   const title = localizedModuleTitle(pageModule, lang, '');
   const description = localizedModuleDescription(pageModule, lang, '');
+  const modelMarks = sortModuleItems(pageModule)
+    .filter((item) => item.is_visible && item.id.startsWith('model-mark-') && item.image_url)
+    .map((item) => ({
+      key: item.id.replace(/^model-mark-/, ''),
+      id: item.id,
+      image: item.image_url || '',
+      alt: localizedLabel(item, lang, ''),
+    }));
+  const modelMarkByKey = new Map(modelMarks.map((mark) => [mark.key, mark]));
   const cards = sortModuleItems(pageModule)
     .filter((item) => item.is_visible && item.id.startsWith('card-'))
     .map((item) => ({
@@ -981,6 +990,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
       video: item.video_url || '',
       videoPoster: item.video_poster_url || '',
       href: displayHref(item.href),
+      modelMark: modelMarkByKey.get(item.id.replace(/^card-/, '')) ?? null,
     }))
     .filter((item) => item.title || item.meta || item.body || item.image || item.video);
   const primary = findModuleItem(pageModule, 'primary-cta');
@@ -1178,6 +1188,22 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                   }}
                 />
                 <div className="relative mx-auto flex min-h-[clamp(560px,calc(100vh-96px),780px)] max-w-5xl flex-col items-center px-5 pb-16 pt-24 text-center sm:px-8 sm:pt-28 lg:pt-32">
+                  {card.modelMark?.image ? (
+                    <div
+                      className="mb-5 flex h-12 min-w-[116px] items-center justify-center bg-white/86 px-5 shadow-[0_18px_42px_rgba(0,0,0,0.18)] backdrop-blur-sm"
+                      data-page-module-item={card.modelMark.id}
+                      data-page-module-field="image_url"
+                    >
+                      <Image
+                        src={card.modelMark.image}
+                        alt={card.modelMark.alt || card.title || title}
+                        width={116}
+                        height={48}
+                        className="h-8 w-auto max-w-[116px] object-contain"
+                        unoptimized
+                      />
+                    </div>
+                  ) : null}
                   {card.meta ? (
                     <p
                       className="max-w-full break-words text-sm font-medium text-white/82 sm:text-base"
