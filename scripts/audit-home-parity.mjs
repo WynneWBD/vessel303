@@ -1,12 +1,15 @@
 import { spawnSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 
 const DEFAULT_EN_URL = 'https://en.303vessel.cn/'
 const DEFAULT_VESSEL_URL = 'https://www.vessel303.com/'
+const DEFAULT_IMAGE_MANIFEST = 'C:/Users/Wynne/Desktop/vessel303/.codex-temp/homepage-303-images/manifest.json'
 
 const args = process.argv.slice(2)
 let enUrl = process.env.EN303_HOME_URL || DEFAULT_EN_URL
 let vesselUrl = process.env.VESSEL_HOME_URL || DEFAULT_VESSEL_URL
 let modulesUrl = process.env.VESSEL_HOME_MODULES_URL || ''
+let imageManifestPath = process.env.VESSEL_HOME_IMAGE_MANIFEST || DEFAULT_IMAGE_MANIFEST
 let json = false
 let maxMediaList = Number(process.env.HOME_PARITY_MAX_MEDIA_LIST || '8') || 8
 
@@ -48,6 +51,9 @@ for (let index = 0; index < args.length; index += 1) {
     index += 1
   } else if (arg === '--modules-url') {
     modulesUrl = args[index + 1] ?? modulesUrl
+    index += 1
+  } else if (arg === '--image-manifest') {
+    imageManifestPath = args[index + 1] ?? imageManifestPath
     index += 1
   } else if (arg === '--json') {
     json = true
@@ -213,9 +219,34 @@ function summarizePageModules(body) {
   }
 }
 
-function compareSources(sourceSources, targetSources) {
+function loadImageManifest(path) {
+  if (!path) return { path, sourceToPublicUrl: new Map(), errors: [] }
+  try {
+    const parsed = JSON.parse(readFileSync(path, 'utf8'))
+    const entries = Array.isArray(parsed?.entries) ? parsed.entries : []
+    const sourceToPublicUrl = new Map()
+    for (const entry of entries) {
+      const sourceUrl = mediaString(entry?.sourceUrl)
+      const publicUrl = mediaString(entry?.publicUrl ?? entry?.public_url)
+      if (sourceUrl && publicUrl) sourceToPublicUrl.set(sourceUrl, publicUrl)
+    }
+    return { path, sourceToPublicUrl, errors: [] }
+  } catch (error) {
+    return {
+      path,
+      sourceToPublicUrl: new Map(),
+      errors: [`Unable to load image manifest (${path}) - ${error.message}`],
+    }
+  }
+}
+
+function compareSourcesWithManifest(sourceSources, targetSources, sourceToPublicUrl) {
   const targetSet = new Set(targetSources)
-  return sourceSources.filter((source) => !targetSet.has(source))
+  return sourceSources.filter((source) => {
+    if (targetSet.has(source)) return false
+    const mapped = sourceToPublicUrl.get(source)
+    return !(mapped && targetSet.has(mapped))
+  })
 }
 
 function plannedVideoStatus(pageModules) {
@@ -237,7 +268,7 @@ function plannedVideoStatus(pageModules) {
   })
 }
 
-function buildGaps(en, vessel, pageModules) {
+function buildGaps(en, vessel, pageModules, matchedImageSources, missingImageSources) {
   const gaps = []
 
   if (en.media.videoTags > vessel.media.videoTags) {
@@ -246,8 +277,8 @@ function buildGaps(en, vessel, pageModules) {
   if (en.media.imageTags > vessel.media.imageTags) {
     gaps.push(`en.303 public homepage has ${en.media.imageTags} image tags; vessel public homepage has ${vessel.media.imageTags}.`)
   }
-  if (en.media.imageSources.length > pageModules.imageSources.length) {
-    gaps.push(`en.303 exposes ${en.media.imageSources.length} unique image URLs; vessel home page_modules expose ${pageModules.imageSources.length}.`)
+  if (missingImageSources.length > 0) {
+    gaps.push(`en.303 exposes ${en.media.imageSources.length} unique image URLs; vessel home page_modules match ${matchedImageSources} through direct or manifest-mapped URLs; ${missingImageSources.length} remain unmatched.`)
   }
   if (en.media.videoTags > 0 && pageModules.videoItems === 0) {
     gaps.push('vessel home page_modules currently have 0 video-backed visible items; video content still needs to be entered or imported through backend content.')
@@ -277,6 +308,10 @@ function printSummary(report) {
   console.log(`  HTML images: ${report.vessel.media.imageTags}`)
   console.log(`  HTML videos: ${report.vessel.media.videoTags}`)
   console.log(`vessel303 modules: ${report.pageModules.url}`)
+  if (report.imageManifest.path) {
+    console.log(`Image manifest: ${report.imageManifest.path}`)
+    console.log(`  Source-to-public mappings: ${report.imageManifest.mappings}`)
+  }
   console.log(`  Visible modules: ${report.pageModules.summary.visibleModules}/${report.pageModules.summary.totalModules}`)
   console.log(`  Visible items: ${report.pageModules.summary.visibleItems}`)
   console.log(`  Image-backed items: ${report.pageModules.summary.imageItems}`)
@@ -287,9 +322,10 @@ function printSummary(report) {
   if (report.pageModules.summary.emptyVisibleModules.length > 0) {
     console.log(`  Empty visible modules: ${report.pageModules.summary.emptyVisibleModules.join(', ')}`)
   }
+  console.log(`  en.303 image sources matched through modules/manifest: ${report.matchedImageSources}/${report.en.media.imageSources.length}`)
   if (report.missingImageSources.length > 0) {
     const visible = report.missingImageSources.slice(0, maxMediaList)
-    console.log(`Missing image source candidates: ${report.missingImageSources.length}${report.missingImageSources.length > visible.length ? ` (showing ${visible.length})` : ''}`)
+    console.log(`Unmatched image source candidates: ${report.missingImageSources.length}${report.missingImageSources.length > visible.length ? ` (showing ${visible.length})` : ''}`)
     for (const source of visible) console.log(`- ${source}`)
   }
   if (report.plannedVideoTargets.length > 0) {
@@ -344,6 +380,8 @@ const pageModules = {
     modules: [],
   },
 }
+const imageManifest = loadImageManifest(imageManifestPath)
+errors.push(...imageManifest.errors)
 
 if (errors.length === 0) {
   const enFetched = fetchText(normalizedEnUrl, 'codex-home-parity-en303')
@@ -380,11 +418,20 @@ const report = {
   en,
   vessel,
   pageModules,
-  missingImageSources: errors.length === 0 ? compareSources(en.media.imageSources, pageModules.summary.imageSources) : [],
+  imageManifest: {
+    path: imageManifest.path,
+    mappings: imageManifest.sourceToPublicUrl.size,
+  },
+  missingImageSources: errors.length === 0
+    ? compareSourcesWithManifest(en.media.imageSources, pageModules.summary.imageSources, imageManifest.sourceToPublicUrl)
+    : [],
   plannedVideoTargets: errors.length === 0 ? plannedVideoStatus(pageModules.summary) : [],
-  gaps: errors.length === 0 ? buildGaps(en, vessel, pageModules.summary) : [],
   errors,
 }
+report.matchedImageSources = errors.length === 0 ? en.media.imageSources.length - report.missingImageSources.length : 0
+report.gaps = errors.length === 0
+  ? buildGaps(en, vessel, pageModules.summary, report.matchedImageSources, report.missingImageSources)
+  : []
 
 if (json) {
   console.log(JSON.stringify(report, null, 2))
