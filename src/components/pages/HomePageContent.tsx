@@ -296,7 +296,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
           {activeSubtitle ? (
             <p
-              className="mx-auto mb-9 max-w-[24rem] text-xl leading-snug text-white sm:max-w-[90vw] sm:text-3xl lg:whitespace-nowrap lg:text-[38px] xl:text-[40px]"
+              className="mx-auto mb-9 max-w-[24rem] text-xl leading-snug text-white sm:max-w-[90vw] sm:text-3xl lg:text-[36px] xl:text-[38px]"
               style={{ overflowWrap: 'anywhere', textShadow: '0 14px 42px rgba(0,0,0,0.34)' }}
               data-page-module-item={activeSubtitleItem}
               data-page-module-field={activeSlide?.subtitle ? `content_${lang}` : `label_${lang}`}
