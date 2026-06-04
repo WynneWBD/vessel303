@@ -429,20 +429,22 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
             {stats.map((s, index) => (
               <div
                 key={s.id}
-                className={`min-w-0 border-white/10 px-3 py-3 text-center sm:px-4 sm:py-4 ${
+                className={`relative min-w-0 overflow-hidden border-white/10 bg-white/[0.035] px-3 py-3 text-left sm:px-4 sm:py-4 ${
                   index % 2 === 0 ? 'border-r' : ''
                 } ${index < 2 ? 'border-b sm:border-b-0' : ''} sm:border-r sm:last:border-r-0`}
                 data-page-module-item={s.id}
+                aria-label={[s.val, s.label].filter(Boolean).join(' ')}
               >
+                <span aria-hidden="true" className="mb-2 block h-[2px] w-8 bg-[#F2A36E]/80" />
                 <div
-                  className="mb-1.5 font-[family-name:var(--font-heading)] text-2xl font-light tracking-tight text-[#F2A36E] sm:text-3xl lg:text-4xl"
+                  className="mb-1.5 font-[family-name:var(--font-heading)] text-2xl font-medium tracking-tight text-[#F2A36E] sm:text-3xl lg:text-4xl"
                   style={{ fontFamily: 'var(--font-heading)', fontFeatureSettings: '"tnum"' }}
                   data-page-module-field={`value_${lang}`}
                 >
                   {s.val}
                 </div>
                 <div
-                  className="mx-auto max-w-[12rem] truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-white/52 sm:text-xs"
+                  className="max-w-[12rem] break-words text-[10px] font-semibold uppercase leading-snug tracking-[0.14em] text-white/72 sm:text-xs"
                   data-page-module-field={`label_${lang}`}
                 >
                   {s.label}
@@ -461,9 +463,12 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
                   alt={proofVisualAlt}
                   fill
                   sizes="(max-width: 768px) 100vw, 360px"
-                  className="object-cover"
+                  className="object-contain p-2"
                   data-page-module-field="image_url"
                 />
+                <div className="absolute left-2 top-2 bg-[#14100E]/82 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/78 backdrop-blur-sm">
+                  {lang === 'zh' ? '可信证明' : 'Credential proof'}
+                </div>
               </div>
             </div>
           ) : null}
