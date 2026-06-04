@@ -212,16 +212,6 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const secondaryLabel = localizedLabel(secondaryCta, lang, '');
   const primaryHref = displayHref(primaryCta?.href);
   const secondaryHref = displayHref(secondaryCta?.href);
-  const proofItems = items
-    .filter((item) => item.id.startsWith('hero-proof-'))
-    .map((item) => ({
-      id: item.id,
-      value: localizedValue(item, lang, ''),
-      label: localizedLabel(item, lang, ''),
-      body: localizedContent(item, lang, ''),
-    }))
-    .filter((item) => item.value || item.label || item.body);
-  const visibleProofItems = proofItems.slice(0, 4);
   const activeImage = heroSlides.length > 0 ? current % heroSlides.length : 0;
   const activeSlide = heroSlides[activeImage] ?? null;
   const activeTagline = activeSlide?.eyebrow || tagline;
@@ -258,7 +248,8 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
   return (
     <section
-      className="relative flex min-h-[560px] items-center overflow-hidden bg-[#241F1B] sm:min-h-[600px] lg:min-h-[640px] xl:min-h-[650px]"
+      className="relative flex min-h-screen items-center overflow-hidden bg-[#172231]"
+      style={{ minHeight: '100vh' }}
       data-page-module="home:hero"
       data-page-key="home"
       data-module-key="hero"
@@ -278,27 +269,27 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
           data-page-module-field="image_url"
         />
       ))}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#191512]/74 via-[#191512]/30 to-[#191512]/8" />
-      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#191512]/78 to-transparent" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(18,30,44,0.18)_0%,rgba(18,30,44,0.08)_24%,rgba(5,12,18,0.14)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0)_0%,rgba(0,0,0,0.08)_42%,rgba(0,0,0,0.34)_100%)]" />
+      <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#071018]/46 to-transparent" />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col gap-5 px-5 py-10 text-center sm:gap-6 sm:px-6 sm:py-12 lg:px-10 lg:py-14">
-        <div className="mx-auto max-w-6xl">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col px-5 pb-28 pt-32 text-center sm:px-6 lg:px-10 lg:pb-40 lg:pt-40">
+        <div className="mx-auto max-w-[1320px]">
           {activeTagline ? (
-            <div className="mb-6">
+            <div className="mb-8">
                 <p
-                  className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70"
+                  className="text-sm font-semibold uppercase tracking-[0.22em] text-white/86"
                 data-page-module-item={activeTaglineItem}
                 data-page-module-field={activeTaglineField}
               >
                 {activeTagline}
               </p>
-              <div className="mx-auto mt-3 h-px w-14 bg-[#E36F2C]" />
             </div>
           ) : null}
 
           <h1
-            className="mx-auto mb-4 max-w-[22rem] break-words font-[family-name:var(--font-heading)] text-3xl font-normal leading-[1.05] text-white sm:max-w-4xl sm:text-5xl sm:leading-[1] lg:text-5xl xl:text-6xl"
-            style={{ overflowWrap: 'anywhere', textShadow: '0 18px 50px rgba(0,0,0,0.46)' }}
+            className="mx-auto mb-7 max-w-[24rem] break-words font-[family-name:var(--font-heading)] text-4xl font-bold leading-[1.04] text-white sm:max-w-5xl sm:text-6xl sm:leading-[1] lg:max-w-[1280px] lg:text-[70px] xl:text-[78px]"
+            style={{ overflowWrap: 'anywhere', textShadow: '0 20px 58px rgba(0,0,0,0.36)' }}
             data-page-module-item={activeHeadlineItem}
             data-page-module-field={`label_${lang}`}
           >
@@ -307,8 +298,8 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
           {activeSubtitle ? (
             <p
-              className="mx-auto mb-5 max-w-[22rem] text-base leading-7 text-white/78 sm:max-w-2xl sm:text-lg"
-              style={{ overflowWrap: 'anywhere', textShadow: '0 12px 36px rgba(0,0,0,0.42)' }}
+              className="mx-auto mb-9 max-w-[24rem] text-xl leading-snug text-white sm:max-w-[1180px] sm:text-3xl lg:text-[42px]"
+              style={{ overflowWrap: 'anywhere', textShadow: '0 14px 42px rgba(0,0,0,0.34)' }}
               data-page-module-item={activeSubtitleItem}
               data-page-module-field={activeSlide?.subtitle ? `content_${lang}` : `label_${lang}`}
             >
@@ -322,7 +313,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
                 <Link
                   href={activePrimaryHref}
                   {...externalLinkProps(activePrimaryHref)}
-                  className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-6 text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#C85A1F]"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/88 px-8 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#172231]"
                   data-page-module-item="hero-primary-cta"
                   data-page-module-field={`label_${lang}`}
                 >
@@ -333,7 +324,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
                 <Link
                   href={secondaryHref}
                   {...externalLinkProps(secondaryHref)}
-                  className="inline-flex min-h-11 items-center justify-center border px-6 text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:border-white/70"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full border px-8 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#172231]"
                   style={{ borderColor: 'rgba(255,255,255,0.35)' }}
                   data-page-module-item="hero-secondary-cta"
                   data-page-module-field={`label_${lang}`}
@@ -345,84 +336,75 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
           ) : null}
         </div>
 
-        <div className="mt-2 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end lg:gap-5">
-          {visibleProofItems.length > 0 ? (
-            <div className="flex max-w-full flex-wrap items-center gap-x-4 gap-y-2 border-l border-white/24 bg-[#191512]/34 px-4 py-2 text-left backdrop-blur-sm sm:max-w-3xl lg:max-w-[760px] lg:justify-self-start">
-              {visibleProofItems.map((item, index) => (
-                <div
-                  key={item.id}
-                  className={`${index === 3 ? 'hidden xl:flex' : 'flex'} min-w-0 items-baseline gap-2`}
-                  data-page-module-item={item.id}
-                >
-                  {item.value ? (
-                    <p
-                      className="font-[family-name:var(--font-heading)] text-base font-light leading-none text-white sm:text-lg"
-                      data-page-module-field={`value_${lang}`}
-                    >
-                      {item.value}
-                    </p>
-                  ) : null}
-                  {item.label ? (
-                    <p
-                      className="max-w-[10rem] truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-[#F2A36E]"
-                      style={{ color: '#F2A36E' }}
-                      data-page-module-field={`label_${lang}`}
-                    >
-                      {item.label}
-                    </p>
-                  ) : null}
-                  {item.body ? (
-                    <span className="sr-only" data-page-module-field={`content_${lang}`}>
-                      {item.body}
-                    </span>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          ) : null}
-
-          {heroSlides.length > 1 ? (
-            <div className="flex flex-col gap-3 sm:items-end">
-              <div className="hidden w-full items-center justify-end gap-2 sm:flex sm:w-72">
-                <button
-                  type="button"
-                  onClick={() => setCurrent((prev) => (prev + 1) % heroSlides.length)}
-                  className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 border border-white/18 bg-[#191512]/48 px-4 text-xs font-bold uppercase tracking-[0.14em] text-white/82 backdrop-blur-sm transition hover:border-white/42 hover:bg-[#191512]/66 hover:text-white focus:outline-none focus:ring-2 focus:ring-[#E36F2C]/70 focus:ring-offset-2 focus:ring-offset-[#191512]"
-                >
-                  <span>{nextLabel}</span>
-                  <ChevronRight aria-hidden="true" className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsPaused((value) => !value)}
-                  aria-pressed={isPaused}
-                  className="inline-flex min-h-11 w-12 items-center justify-center border border-white/18 bg-[#191512]/48 text-white/82 backdrop-blur-sm transition hover:border-white/42 hover:bg-[#191512]/66 hover:text-white focus:outline-none focus:ring-2 focus:ring-[#E36F2C]/70 focus:ring-offset-2 focus:ring-offset-[#191512]"
-                >
-                  {isPaused ? (
-                    <Play aria-hidden="true" className="h-4 w-4" />
-                  ) : (
-                    <Pause aria-hidden="true" className="h-4 w-4" />
-                  )}
-                  <span className="sr-only">{isPaused ? playLabel : pauseLabel}</span>
-                </button>
-              </div>
-              <div className="flex items-center gap-2 sm:justify-end">
-                {heroSlides.map((slide, index) => (
-                  <button
-                    key={slide.src}
-                    type="button"
-                    onClick={() => setCurrent(index)}
-                    aria-current={index === activeImage ? 'true' : undefined}
-                    className={`h-1.5 w-8 transition-colors focus:outline-none focus:ring-2 focus:ring-[#E36F2C]/70 focus:ring-offset-2 focus:ring-offset-[#191512] ${index === activeImage ? 'bg-[#E36F2C]' : 'bg-white/32 hover:bg-white/58'}`}
-                  >
-                    <span className="sr-only">{slide.headline || slide.eyebrow || String(index + 1)}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </div>
       </div>
+
+      {heroSlides.length > 1 ? (
+        <div
+          className="hidden items-end gap-9 xl:flex"
+          style={{ position: 'absolute', right: 32, bottom: 40, zIndex: 20 }}
+        >
+          <button
+            type="button"
+            onClick={() => setCurrent(activeImage)}
+            className="relative overflow-hidden border border-white/72 bg-white/8 text-left shadow-[0_24px_62px_rgba(0,0,0,0.24)] transition hover:border-white"
+            style={{ height: 158, width: 314 }}
+            aria-current="true"
+          >
+            {activeSlide ? (
+              <Image
+                src={activeSlide.src}
+                alt=""
+                fill
+                sizes="314px"
+                className="object-cover"
+              />
+            ) : null}
+            <span className="sr-only">{activeSlide?.headline || activeSlide?.eyebrow || 'Current slide'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setCurrent((prev) => (prev + 1) % heroSlides.length)}
+            className="inline-flex items-center justify-center gap-3 border border-white/72 bg-black/10 px-5 text-[17px] font-semibold uppercase tracking-[0.04em] text-white backdrop-blur-[1px] transition hover:bg-white/12 focus:outline-none focus:ring-2 focus:ring-white/70"
+            style={{ height: 158, width: 158 }}
+          >
+            <span>{nextLabel}</span>
+            <ChevronRight aria-hidden="true" className="h-6 w-6" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsPaused((value) => !value)}
+            aria-pressed={isPaused}
+            className="inline-flex items-center justify-center border border-white/72 bg-black/10 text-white backdrop-blur-[1px] transition hover:bg-white/12 focus:outline-none focus:ring-2 focus:ring-white/70"
+            style={{ height: 158, width: 54 }}
+          >
+            {isPaused ? (
+              <Play aria-hidden="true" className="h-5 w-5" />
+            ) : (
+              <Pause aria-hidden="true" className="h-5 w-5" />
+            )}
+            <span className="sr-only">{isPaused ? playLabel : pauseLabel}</span>
+          </button>
+        </div>
+      ) : null}
+
+      {heroSlides.length > 1 ? (
+        <div
+          className="hidden items-center gap-2 xl:flex"
+          style={{ position: 'absolute', right: 512, bottom: 206, zIndex: 20 }}
+        >
+          {heroSlides.map((slide, index) => (
+            <button
+              key={slide.src}
+              type="button"
+              onClick={() => setCurrent(index)}
+              aria-current={index === activeImage ? 'true' : undefined}
+              className={`h-1.5 w-8 transition-colors focus:outline-none focus:ring-2 focus:ring-white/70 focus:ring-offset-2 focus:ring-offset-[#172231] ${index === activeImage ? 'bg-white' : 'bg-white/32 hover:bg-white/58'}`}
+            >
+              <span className="sr-only">{slide.headline || slide.eyebrow || String(index + 1)}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/20 animate-bounce">
         <svg width="20" height="28" viewBox="0 0 20 28" fill="none"><path d="M10 0v20M3 13l7 7 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>

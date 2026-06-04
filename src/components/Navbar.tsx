@@ -70,6 +70,8 @@ export default function Navbar() {
     }))
     .filter((item) => item.label && item.href);
   const menuToggleLabel = itemLabel(itemById(uiLabelsModule, 'menu-toggle'), lang);
+  const desktopNavLinks = [...modelLinks, ...navLinks];
+  const currentLanguageLabel = lang === 'zh' ? 'Chinese' : 'English';
 
   useEffect(() => {
     if (Array.isArray(initialSiteModules) && initialSiteModules.length > 0) {
@@ -92,14 +94,14 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed left-0 right-0 top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-[#241F1B]/98 backdrop-blur-md border-b border-[#E36F2C]/20 shadow-lg shadow-black/40'
-          : 'bg-[#241F1B]/88 backdrop-blur-sm'
+          ? 'border-b border-white/10 bg-[#263647]/82 shadow-[0_14px_42px_rgba(15,23,42,0.22)] backdrop-blur-md'
+          : 'bg-[#42576D]/26 backdrop-blur-[2px]'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-[72px]">
+      <div className="relative mx-auto max-w-[1420px] px-5 sm:px-8 lg:px-10">
+        <div className="flex h-16 items-center justify-between lg:h-[92px]">
 
           {logoSrc && logoHref ? (
             <Link href={logoHref} className="flex shrink-0 items-center">
@@ -108,8 +110,8 @@ export default function Navbar() {
                 alt={logoAlt}
                 height={40}
                 width={160}
-                style={{ objectFit: 'contain' }}
-                className="h-6 w-auto max-w-[176px] sm:h-7 sm:max-w-[210px] lg:h-[40px] lg:max-w-none"
+                style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+                className="h-7 w-auto max-w-[176px] sm:h-8 sm:max-w-[210px] lg:h-[42px] lg:max-w-none"
                 priority
                 unoptimized
               />
@@ -117,65 +119,22 @@ export default function Navbar() {
           ) : null}
 
           {/* Desktop Nav */}
-          <div className="hidden lg:flex items-center gap-0.5 mx-3">
-            {navLinks.map((link) => (
+          <div className="mx-10 hidden flex-1 items-center justify-center gap-8 lg:flex xl:gap-9">
+            {desktopNavLinks.map((link) => (
               <div key={link.id} className="relative group">
                 <Link
                   href={link.href}
-                  className="text-white/65 hover:text-[#E36F2C] text-sm font-medium tracking-wide px-2 py-2 transition-colors duration-200 whitespace-nowrap relative group block"
+                  className="relative block whitespace-nowrap py-2 text-[14px] font-medium text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.32)] transition-colors duration-200 hover:text-white"
                 >
                   {link.label}
-                  <span className="absolute bottom-0 left-2 w-0 h-px bg-[#E36F2C] transition-all duration-200 group-hover:w-[calc(100%-16px)]" />
+                  <span className="absolute bottom-0 left-0 h-px w-0 bg-white transition-all duration-200 group-hover:w-full" />
                 </Link>
-                {link.id === 'nav-products' && modelLinks.length > 0 ? (
-                  <div className="pointer-events-none absolute left-0 top-full min-w-[420px] translate-y-3 opacity-0 transition-all duration-200 group-hover:pointer-events-auto group-hover:translate-y-1 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-1 group-focus-within:opacity-100">
-                    <div className="grid grid-cols-2 gap-2 border border-white/10 bg-[#241F1B]/98 p-3 shadow-2xl shadow-black/40 backdrop-blur-md">
-                      {modelLinks.map((model) => (
-                        <Link
-                          key={model.id}
-                          href={model.href}
-                          className="group/model flex items-center gap-3 border border-white/10 bg-white/[0.03] p-2 text-white/80 transition-colors hover:border-[#E36F2C]/60 hover:text-white"
-                        >
-                          {model.imageUrl ? (
-                            <span className="relative h-12 w-16 shrink-0 overflow-hidden bg-white/5">
-                              <Image
-                                src={model.imageUrl}
-                                alt={model.label}
-                                fill
-                                sizes="64px"
-                                className="object-cover transition-transform duration-200 group-hover/model:scale-105"
-                                unoptimized
-                              />
-                            </span>
-                          ) : null}
-                          <span className="min-w-0">
-                            <span className="block truncate text-sm font-semibold tracking-wide">{model.label}</span>
-                            {model.content ? (
-                              <span className="mt-0.5 block truncate text-xs text-white/48">{model.content}</span>
-                            ) : null}
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
               </div>
             ))}
           </div>
 
           {/* CTA + Toggle */}
-          <div className="hidden lg:flex items-center gap-1.5 shrink-0">
-            {actionLinks.map((link, index) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={index === 0
-                  ? 'text-white text-sm font-semibold px-3 py-2 border border-white/50 hover:bg-[#F5F2ED] hover:text-[#241F1B] transition-all duration-200 tracking-wider whitespace-nowrap'
-                  : 'text-white/75 text-sm font-medium px-3 py-2 border border-white/20 hover:border-[#E36F2C] hover:text-[#E36F2C] transition-all duration-200 tracking-wider whitespace-nowrap'}
-              >
-                {link.label}
-              </Link>
-            ))}
+          <div className="hidden shrink-0 items-center gap-3 lg:flex">
             <LanguageToggle />
           </div>
 
@@ -265,6 +224,12 @@ export default function Navbar() {
               <LanguageToggle />
             </div>
           </div>
+        </div>
+      </div>
+      <div className="pointer-events-none absolute left-[max(1.25rem,calc((100vw-1420px)/2+2.5rem))] top-[78px] hidden lg:block">
+        <div className="inline-flex min-h-11 items-center gap-4 rounded-full bg-white px-6 text-[15px] text-[#334155] shadow-[0_14px_36px_rgba(15,23,42,0.14)]">
+          <span>{currentLanguageLabel}</span>
+          <span aria-hidden="true" className="text-xs text-[#64748B]">v</span>
         </div>
       </div>
     </nav>

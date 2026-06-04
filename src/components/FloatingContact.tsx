@@ -85,10 +85,10 @@ export default function FloatingContact() {
     const content = item.content || item.value;
     const body = variant === 'desktop' ? (
       <>
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center bg-[#E36F2C] text-white">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center bg-[#2F3032] text-white">
           <Icon aria-hidden="true" className="h-4 w-4" />
         </span>
-        <span className="pointer-events-none absolute right-full top-1/2 mr-2 hidden min-w-44 -translate-y-1/2 border border-white/10 bg-[#241F1B]/96 px-3 py-2 text-left opacity-0 shadow-[0_16px_40px_rgba(36,31,27,0.24)] backdrop-blur-md transition group-hover:block group-hover:opacity-100 group-focus-visible:block group-focus-visible:opacity-100">
+        <span className="pointer-events-none absolute right-full top-1/2 mr-2 hidden min-w-44 -translate-y-1/2 border border-white/10 bg-[#2F3032]/96 px-3 py-2 text-left opacity-0 shadow-[0_16px_40px_rgba(15,23,42,0.2)] backdrop-blur-md transition group-hover:block group-hover:opacity-100 group-focus-visible:block group-focus-visible:opacity-100">
           <span className="block truncate text-xs font-black uppercase tracking-[0.14em]">{item.label}</span>
           {content ? <span className="mt-0.5 block truncate text-[11px] opacity-65">{content}</span> : null}
         </span>
@@ -101,7 +101,7 @@ export default function FloatingContact() {
     );
 
     const className = variant === 'desktop'
-      ? 'group relative flex h-11 w-11 items-center justify-center overflow-visible border border-white/10 bg-[#241F1B]/92 text-white shadow-[0_16px_40px_rgba(36,31,27,0.26)] backdrop-blur-md transition hover:border-[#E36F2C] hover:bg-[#17120F]'
+      ? 'group relative flex h-11 w-11 items-center justify-center overflow-visible border border-white/10 bg-[#2F3032]/94 text-white shadow-[0_16px_40px_rgba(15,23,42,0.2)] backdrop-blur-md transition hover:border-white/40 hover:bg-[#222326]'
       : 'inline-flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 border border-[#DADDE1] bg-white px-3 text-[#1F2A31] shadow-[0_10px_28px_rgba(36,31,27,0.18)] transition hover:border-[#E36F2C] hover:text-[#C85A1F]';
 
     return isExternalHref(item.href) ? (
