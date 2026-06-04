@@ -474,22 +474,22 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
             {stats.map((s, index) => (
               <div
                 key={s.id}
-                className={`relative min-w-0 overflow-hidden border-white/10 bg-white/[0.035] px-3 py-3 text-left sm:px-4 sm:py-4 ${
+                className={`relative min-w-0 overflow-hidden border-white/10 bg-white/[0.035] px-2.5 py-2 text-left sm:px-4 sm:py-4 ${
                   index % 2 === 0 ? 'border-r' : ''
                 } ${index < 2 ? 'border-b sm:border-b-0' : ''} sm:border-r sm:last:border-r-0`}
                 data-page-module-item={s.id}
                 aria-label={[s.val, s.label].filter(Boolean).join(' ')}
               >
-                <span aria-hidden="true" className="mb-2 block h-[2px] w-8 bg-[#F2A36E]/80" />
+                <span aria-hidden="true" className="mb-1.5 block h-[2px] w-7 bg-[#F2A36E]/80 sm:mb-2 sm:w-8" />
                 <div
-                  className="mb-1.5 font-[family-name:var(--font-heading)] text-2xl font-medium tracking-tight text-[#F2A36E] sm:text-3xl lg:text-4xl"
+                  className="mb-1 font-[family-name:var(--font-heading)] text-xl font-medium tracking-tight text-[#F2A36E] sm:mb-1.5 sm:text-3xl lg:text-4xl"
                   style={{ fontFamily: 'var(--font-heading)', fontFeatureSettings: '"tnum"' }}
                   data-page-module-field={`value_${lang}`}
                 >
                   {s.val}
                 </div>
                 <div
-                  className="max-w-[12rem] break-words text-[10px] font-semibold uppercase leading-snug tracking-[0.14em] text-white/72 sm:text-xs"
+                  className="max-w-[12rem] break-words text-[9px] font-semibold uppercase leading-snug tracking-[0.1em] text-white/72 sm:text-xs sm:tracking-[0.14em]"
                   data-page-module-field={`label_${lang}`}
                 >
                   {s.label}
@@ -499,19 +499,19 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
           </div>
           {proofVisual?.image_url ? (
             <div
-              className="border-t border-white/10 px-3 py-2.5 sm:px-4 sm:py-3 lg:border-l lg:border-t-0"
+              className="border-t border-white/10 px-2.5 py-2 sm:px-4 sm:py-3 lg:border-l lg:border-t-0"
               data-page-module-item={proofVisual.id}
             >
-              <div className="relative mx-auto h-[104px] w-full overflow-hidden bg-[#C7D6EA] sm:h-[124px] lg:h-full lg:min-h-[132px] lg:max-h-[164px]">
+              <div className="relative mx-auto h-[72px] w-full overflow-hidden bg-[#C7D6EA] sm:h-[124px] lg:h-full lg:min-h-[132px] lg:max-h-[164px]">
                 <Image
                   src={proofVisual.image_url}
                   alt={proofVisualAlt}
                   fill
                   sizes="(max-width: 768px) 100vw, 360px"
-                  className="object-contain p-2"
+                  className="object-contain p-1.5 sm:p-2"
                   data-page-module-field="image_url"
                 />
-                <div className="absolute left-2 top-2 bg-[#14100E]/82 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/78 backdrop-blur-sm">
+                <div className="absolute left-1.5 top-1.5 bg-[#14100E]/82 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-white/78 backdrop-blur-sm sm:left-2 sm:top-2 sm:px-2 sm:py-1 sm:text-[10px] sm:tracking-[0.14em]">
                   {lang === 'zh' ? '可信证明' : 'Credential proof'}
                 </div>
               </div>
