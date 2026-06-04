@@ -1,16 +1,16 @@
 # CODEX.md - vessel303.com Codex 接手文档
 
-最后更新：2026-06-01
+最后更新：2026-06-04
 
 这是 `vessel303.com` 给 Codex 使用的接手文档和操作指南。每次新对话或开始大改动时，先读 `AGENTS.md`，再读本文件。
 
 `CLAUDE.md` 是另一个模型留下的历史文档，里面仍然有有用的业务规则和事故记录，但当前 Codex 的工作入口以本文件为准。除非 Wynne 明确要求，不要主动修改 `CLAUDE.md`。
 
-当前开发指导以 Wynne 本机文档库中的 V9 handoff 为准：
+当前开发指导以 Wynne 本机文档库中的 V10 handoff 为准：
 
-`C:\Users\Wynne\Desktop\vessel303\vessel303文档\vessel303_handoff_V9.md`
+`C:\Users\Wynne\Desktop\vessel303\vessel303文档\vessel303_handoff_V10.md`
 
-旧 handoff 已归档，仅作为历史背景，不再作为当前开发依据。
+V9 handoff 是完整历史归档，仅作为追溯背景，不再作为当前日常开发依据。
 
 ## 项目概况
 
@@ -30,15 +30,15 @@
 
 ## 当前 Handoff
 
-当前开发指导以 Wynne 本机文档库中的 V9 handoff 为准：
+当前开发指导以 Wynne 本机文档库中的 V10 handoff 为准：
 
-- `C:\Users\Wynne\Desktop\vessel303\vessel303文档\vessel303_handoff_V9.md`
+- `C:\Users\Wynne\Desktop\vessel303\vessel303文档\vessel303_handoff_V10.md`
 
-V9 handoff 位于 `repo-git` 外层文档库，不随本仓库 Git 提交；它是 Wynne 本机 Codex 接手时使用的当前指导文件。
+V10 handoff 位于 `repo-git` 外层文档库，不随本仓库 Git 提交；它是 Wynne 本机 Codex 接手时使用的当前指导文件。
 
-旧 handoff 已归档，仅作为历史背景，不再作为当前开发依据。
+V9 handoff 保留为完整历史归档，仅作为追溯背景，不再作为当前日常开发依据。
 
-进入开发前，必须对照 V9、当前代码和必要的数据库只读核对结果。业务需求资料不能直接当作当前代码事实。
+进入开发前，必须对照 V10、当前代码和必要的数据库只读核对结果。业务需求资料不能直接当作当前代码事实。
 
 ## 技术栈
 
@@ -125,7 +125,7 @@ B28 主站转化闭环与旧站依赖切断已完成并上线。目标是让 `ve
 
 B29 新站生产切换前总验收与上线准备已完成代码侧检查和上线准备，不执行 DNS、生产域名切换、Search Console 提交、旧站下线或旧站内容批量迁移。代码提交 `7f1de0a chore(site): add B29 readiness audits`（full SHA `7f1de0a15b6c81faefe2602eece049e6b26d5bd3`），Vercel deployment `dpl_76HLe2caKhFCEES5qrwKxNgknE5Z`，URL `https://vessel303-12scc2gge-vessel303.vercel.app`，状态 `READY`，production alias 包含 `https://www.vessel303.com`。本轮新增 `npm.cmd run audit:production-links`，用于生产切换前检查公开主路径 HTTP 状态和旧站依赖：除 `/global` 明确例外和后台备用外链外，主站公开路径不得出现 `en.303vessel.cn/contact.html` 或 `en.303vessel.cn/products_list.html`；`/global` 则必须继续保留老 303 联系和产品跳转。`audit:published-content` 已修正 `300+ Projects Delivered` 这类真实公开指标的误报，仍拦截 `300 对齐`、`300.cn`、`300 后台` 等内部说明词。验收记录：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；线上 `/`、`/contact`、`/products` 为 200 / `PRERENDER`，`/global` 为 200，未登录 `/admin/customers/leads` 302 到 `/admin/login`，`/sitemap.xml` 和 `/robots.txt` 均 200。Chrome 抽查 `/global` 确认 `legacyContact=true`、`legacyProducts=true`、`newContact=false`、`newProducts=false`。B29 真实链路验收写入 7 条低风险测试线索并保留不删除：Contact `8c63d898-9ccf-484f-96fe-68b4f8f5a0be`、Product `e902c978-dda7-4972-800d-c0e008741f48`、Case `c1cdade4-9e80-49ad-b038-0552e48a5786`、FAQ `1df781ce-6bd1-4adb-a114-5f308334c327`、Scenario `943895ec-ed95-4b76-9e3b-f4080e029092`、Innovation `41ffb47e-2b76-4f50-916a-b0c7525c869a`、Media Kit `ff94b926-4c0c-40ec-9799-b94e1b2c399f`；这些记录均带 `Codex B29 test` 标记，按既有 analytics 规则不进入主运营指标。B29 结论：普通公开主路径、Contact、产品 / 案例 / FAQ / Media Kit 线索闭环、基础 analytics、SEO / sitemap / robots 已具备生产切换准备条件；正式切换前仍需 Wynne 单独决定 DNS / 域名、Search Console 真实绑定与提交、旧站下线节奏、旧 303 高价值产品和案例内容迁移，以及 `/global` 地图底层正式接管。生产切换前不得再把 `/global` 的 Contact / Products 改回新站路径。
 
-B30 生产切换决策包与上线 Runbook 已完成。B30 不执行 DNS、域名 alias 切换、Search Console 提交、旧站下线或旧站内容迁移，只输出可执行、可回滚、需人工授权的切换包。规则源复核发现 `AGENTS.md` 仍保留“联系 / 产品统一跳旧站”的广义旧规则，该规则与 B29 / B30 当前业务规则存在冲突；本轮未改 `AGENTS.md`，仅记录风险。当前生产规则以本文件和 V9 handoff 为准：主站普通路径闭环到新站 `/contact` / `leads`，只有 `/global` 的 Contact / Products 在新站正式接管 Global 前继续跳旧 303。B30 彩排验收记录：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；`audit:production-links` 在本地 sandbox 下 HTTP 受限，按既有规则使用已授权网络复跑通过。线上 `/`、`/products`、`/contact`、`/global`、`/sitemap.xml`、`/robots.txt` 均 200，未登录 `/admin/customers/leads` 302 到 `/admin/login`；Chrome 实页抽查 `/global` 确认“查看产品”指向 `https://en.303vessel.cn/products_list.html`，“联系团队”指向 `https://en.303vessel.cn/contact.html`。B30 写入 1 条低风险生产 dry-run 线索并保留不删除：`codex.b30.test@example.com` / `Codex B30 Dry Run`，后台 `/admin/customers/leads` 显示为“通用联系 / Main contact page”，备注含 `Codex B30 dry-run test`，按既有 analytics 规则不进入主运营指标。Resend 正式发件身份仍未配置；客户表单可以入库，但邮件通知 / 客户确认邮件不属于 B30 已闭合的生产能力。B31 前需 Wynne 单独授权并确认：DNS / 域名切换、Vercel domain alias、Search Console token 和 sitemap 提交、旧站下线节奏、旧站内容迁移、Resend 发件域名和通知收件人，以及是否先修正 `AGENTS.md` 的广义旧规则。
+B30 生产切换决策包与上线 Runbook 已完成。B30 不执行 DNS、域名 alias 切换、Search Console 提交、旧站下线或旧站内容迁移，只输出可执行、可回滚、需人工授权的切换包。规则源复核发现 `AGENTS.md` 仍保留“联系 / 产品统一跳旧站”的广义旧规则，该规则与 B29 / B30 当前业务规则存在冲突；本轮未改 `AGENTS.md`，仅记录风险。当前生产规则以本文件和 V10 handoff 为准：主站普通路径闭环到新站 `/contact` / `leads`，只有 `/global` 的 Contact / Products 在新站正式接管 Global 前继续跳旧 303。B30 彩排验收记录：`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；`audit:production-links` 在本地 sandbox 下 HTTP 受限，按既有规则使用已授权网络复跑通过。线上 `/`、`/products`、`/contact`、`/global`、`/sitemap.xml`、`/robots.txt` 均 200，未登录 `/admin/customers/leads` 302 到 `/admin/login`；Chrome 实页抽查 `/global` 确认“查看产品”指向 `https://en.303vessel.cn/products_list.html`，“联系团队”指向 `https://en.303vessel.cn/contact.html`。B30 写入 1 条低风险生产 dry-run 线索并保留不删除：`codex.b30.test@example.com` / `Codex B30 Dry Run`，后台 `/admin/customers/leads` 显示为“通用联系 / Main contact page”，备注含 `Codex B30 dry-run test`，按既有 analytics 规则不进入主运营指标。Resend 正式发件身份仍未配置；客户表单可以入库，但邮件通知 / 客户确认邮件不属于 B30 已闭合的生产能力。B31 前需 Wynne 单独授权并确认：DNS / 域名切换、Vercel domain alias、Search Console token 和 sitemap 提交、旧站下线节奏、旧站内容迁移、Resend 发件域名和通知收件人，以及是否先修正 `AGENTS.md` 的广义旧规则。
 
 B31 海外销售力后台化补强与 303 对齐已完成并上线。代码提交 `f35f2ac feat(site): strengthen overseas sales controls`（full SHA `f35f2aca44eaa9b21f7cad6767c11f29394b8fc1`），Vercel deployment `dpl_9mhRp8ToDogTaDPMR5SUYoBu494x`，URL `https://vessel303-hyrtwzqod-vessel303.vercel.app`，状态 `READY`，production alias 包含 `https://www.vessel303.com`。本轮遵循“后台是控制器，前台是显示器”：新增后台 published 配置 `site:floating-contact` 承接浮动 WhatsApp / Email / Project Inquiry，Footer、Contact、站点默认设置统一到 `303vessel@303industries.cn` 和 `+86 180 2417 6679`；前台只渲染后台已发布配置，无配置则隐藏。`/products` 英文模式修复分类 / 属性筛选中文残留，缺英文 label 时隐藏而不是回退中文；Navbar 桌面断点从 `xl` 调整到 `lg`，避免约 1096px 宽度过早折叠菜单；Footer 支持后台配置的 WhatsApp / http / mailto / tel 链接。后台质检已补充英文字段混中文、旧 400 电话、旧邮箱、旧站链接、产品下载资料缺口、产品商务资料缺口和案例商业证明缺口提示；这些提示只在后台显示，不注入前台。`/api/contact` 已清理硬编码客户确认文案，只有后台 `contact:email` 发布确认邮件文案时才发送客户确认邮件；内部通知默认收件人改为 `303vessel@303industries.cn`。本轮写入低风险后台配置并通过 dry-run 复核，脚本为 `scripts/backfill-b31-sales-contact.mjs`，执行后显示 `No B31 sales contact changes needed.`。验收记录：300 后台登录态已只读确认；`git diff --check`、`npm.cmd run audit:public-content`、`npm.cmd run audit:published-content`、`npm.cmd run audit:production-links`、targeted eslint、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 均通过；线上 `/`、`/products?lang=en`、`/contact?lang=en` 为 200 / `PRERENDER`，`/global` 为 200；Chrome 线上抽查确认 `/products?lang=en` 无 `应用场景 / 度假营地 / 酒店民宿 / 商业展示 / 远程部署 / 产品分类 / 默认配置` 等中文可见残留，普通页面浮动联系入口可见，`/global` 没有被注入新站浮动入口。`/global` 本轮零改动：地图、MapLibre、MapTiler、`/api/map`、Contact / Products 旧站例外均保持不变，继续由 04 专项负责。
 
@@ -141,7 +141,7 @@ B31 海外销售力后台化补强与 303 对齐已完成并上线。代码提�
 - 03 项目案例 / 项目 CMS：项目数据、项目详情页模型、项目 ID 体系、`/cases` 数据接入。
 - 04 Global 地图专项：`/global` 地图链路、MapTiler/MapLibre、点位数据接入风险控制。
 - 05 验收 / 提交 / 推送 / 上线：统一验收、检查、真实场景测试、commit、push `main`、等待 Vercel READY、线上轻量检查；05 不主动改业务代码，除非 Wynne 明确授权或 00 明确交回小修。
-- 06 文档整理 / Handoff 重写：负责 `CODEX.md`、V9 handoff、admin 2.0 plan、docx 等文档收口；repo-git 内默认只允许 `CODEX.md` 进入 Git；06 不提交、不 push、不上线，交 05 复验。
+- 06 文档整理 / Handoff 重写：负责 `CODEX.md`、V10 handoff、admin 2.0 plan、docx 等文档收口；repo-git 内默认只允许 `CODEX.md` 进入 Git；06 不提交、不 push、不上线，交 05 复验。
 - 07 性能 / 图片 / 前台速度专项：负责全站响应速度、首页图片、产品列表打开速度、图片体积治理、缓存策略、前台性能基线、Lighthouse / Chrome Network / 线上轻量测速；发现后台 API 或 CMS 查询瓶颈时交 02，发现产品体验取舍时交 01。
 - 08 可视化页面编辑器：`/admin/pages/visual`、页面模块可视化预览、受控字段编辑、模块高亮、点击定位、草稿预览 / 发布上线、发布前检查、差异摘要、快照恢复、模块内 item 管理、模块注册表 / 动态渲染基础、只读模块库、Home 结构草稿新增 / 排序 / 结构隐藏受控模块和运营使用规范口径收口；不负责普通后台 A/B 包、产品 / 项目 CMS、`/global` 地图、会员支付。
 
@@ -339,7 +339,7 @@ B31 海外销售力后台化补强与 303 对齐已完成并上线。代码提�
 - 03 项目案例 / 项目 CMS：当前 3 个 Excel/static 样板项目已进入 CMS 发布链路；旧 `foshan-shishan-cultural-camp` 保持 draft，不显示在 `/cases`，不进入 `/global`。前台 `/cases` 列表已进入正式 `/cases/[id]` 详情页链路，筛选、300.cn 对照字段、相关案例入口、B2-6 全链路回归和 B2-7 案例询盘接线索已完成，Global 仍只是地图展示渠道。
 - 04 Global 地图专项：`/global` 地图底层仍归 04；03 不直接修改地图底层。`/global` 营地详情首开速度第一阶段已上线：`77b053d perf(global): speed up project detail loading`；预加载 `ProjectDetail` 和 `showcaseProjects`，详情基础文字先显示，轮播图片按当前图加载；未改 `/api/map/[...path]`、runtime、点位、CMS、坐标、HQ，未替换 / 压缩 / 删除图片素材；剩余大图体积治理交 03 / 媒体侧，MapTiler `key=proxied` 403 属既有地图链路问题，`/global` edge runtime warning 仍归 04。
 - 05 测试 / 提交 / 推送 / 上线：继续统一验收、提交、push `main` 和 Vercel 上线控制。
-- 06 文档整理：继续维护 V9、`CODEX.md` 和文档库。
+- 06 文档整理：继续维护 V10、`CODEX.md` 和文档库；V9 仅作为完整历史归档。
 - 07 性能 / 图片 / 前台速度专项：B8 第一轮性能与图片治理已完成；B13 已完成真实性能瓶颈定位、About 首屏原图修复、图片派生管线第二阶段和 B13-3 公开页面缓存 / 旧素材小批量回填。当前公开产品、案例、新闻、FAQ、联系等主路径已可预渲染 / 缓存；新上传图片会写入 `uploads.variants` 并生成 `thumb/card/detail/original`，前台和后台选择器已按场景优先取小图；旧素材已先回填 5 张，后续继续分批推进，不一次性全量改造。后续继续维护首页、产品中心和全站前台响应速度，按旧素材派生回填、后台产品页首屏速度、Lighthouse 深测和真实点击体感拆小步优化。工具故障和流程问题沉淀转入 00 / 06 文档规则管理。
 - 08 可视化页面编辑器：C4-2d Home 安全插入区排序与结构隐藏已上线；可见时“隐藏”发送 `{ isVisible: false }`，隐藏时显示“结构草稿中隐藏”，“恢复显示”发送 `{ isVisible: true }`；测试数据 `C4-2D-QA-20260517` 已清理，无残留；当前仍只支持 Home credentials 后、CoreTech 前的安全插入区，不支持 About、核心模块、整页自由拖拽、跨区排序、自由 HTML / CSS、删除核心模块、产品 / 项目 / 新闻详情或 `/global`；本机 Turbopack `os error 5` 属于本地环境问题，`next build --webpack` 和 Vercel build 已通过；`/global` edge runtime warning 仍归 04 地图专项。
 - 08 可视化页面编辑器：C4-2e 可视化编辑器运营使用规范口径小修已上线：`811efee fix(admin): clarify visual editor guardrails`，full SHA `811efee3d1deffdc180aa5ba92040b4ce549077f`，Vercel deployment `dpl_B4vFHT3sYhNJ7bkRkMEYu1qtqGyy`，Vercel 状态 `READY`，deployment URL `https://vessel303-5ht797ic0-vessel303.vercel.app`，production alias 已包含 `https://www.vessel303.com`。本轮只修正 `/admin/pages/visual` 的运营使用规范和页面结构边界文案，将过期的“不支持结构草稿 / 新增 / 排序”口径对齐为当前 Home 安全插入区可新增、排序、结构隐藏 / 恢复 `simple-text` / `cta-section`，同时明确核心模块、About 结构、自由样式 / 自由布局仍锁定。未改数据库、API、保存 / 发布 / 删除、权限、认证、支付、订单、会员、`/global`、MapLibre、MapTiler 或 `/api/map`。验收记录：`git diff --check`、targeted eslint、`tsc --noEmit`、`next build --webpack` 通过，构建仅出现既有 `/global` edge runtime warning；本地 `/admin/pages/visual` 未登录 307 到 `/admin/login`；线上首页 200，线上 `/admin/pages/visual` 未登录 302 到登录页，已登录 Chrome 打开生产后台确认可见更新后的 Home 安全插入区 / 核心模块锁定口径，无 `__next_error__` / Application error。
@@ -651,7 +651,7 @@ curl -I https://www.vessel303.com/news/<slug>
 - 价格、会员、代理、支付：单独专项，不在普通 CMS 任务中顺手实现。
 - Resend：正式发件身份仍未配置。
 - Vercel edge runtime warning：归入 `/global` 地图专项，暂不处理。
-- 文档：业务结论变化先更新 V9，再判断是否同步 `CODEX.md`。
+- 文档：业务结论变化先更新 V10，再判断是否同步 `CODEX.md`。
 
 ## B23 移动端体感 / 图片比例 / 前台设计级复核（2026-05-30）
 
@@ -1260,3 +1260,22 @@ curl -I https://www.vessel303.com/news/<slug>
 - Mobile limitation: the current Browser path still has no reliable viewport/resize capability, so B73 did not produce a real mobile screenshot. Mobile layout was code-reviewed as a 2-column credentials grid and covered by build/type/audit checks, but should be visually rechecked by 09 / 07 when a viewport-capable browser path is available.
 - `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. Global Contact / Products old 303 exception remains unchanged.
 - Next step: 09 should recompare the live homepage against `en.303vessel.cn`, especially whether the remaining gap is now backend content/material selection, mobile hero readability, or deeper product visual sequencing rather than this credentials display rhythm. Display-template gaps go to 01; backend content/material gaps go to 02 / 03; mobile/image performance regressions go to 07.
+
+## B74 Homepage product visual section tightening (2026-06-03)
+
+- Code commit: `48c98da fix(home): tighten product visual section`
+- Full SHA: `48c98dafd3a7fa5ebc26f6cdaa5d2b4071ad3194`
+- Vercel deployment: `dpl_FUDC5Qk2oNqzXE7phZ5LphGRpRA5`
+- Deployment URL: `https://vessel303-dmfdakvdc-vessel303.vercel.app`
+- Status: `READY`
+- Scope: B74 was a homepage display-template fix after 09 comparison found that `en.303vessel.cn` moves from the hero directly into large product imagery, while vessel303 still used a tall text-heavy `home:large-product-cards` heading block before the first product images. No homepage copy, image URL, CTA label, contact value, product fact, module order, backend data, backend API or `/global` behavior was changed.
+- Frontend display change: `HomePageContent` now tightens only the `large-product-cards` branch of `HomepageVisualSection`: lower section padding, smaller header gap, smaller section heading cap, smaller card-title cap, and a shorter grid top margin. This reduces the product section height and brings the first product images earlier into the second viewport. `model-strip` and other homepage modules keep their existing display rhythm.
+- Backend-control boundary: all visible homepage headlines, subtitles, CTAs, slide images, proof values, proof labels, credentials values, contact entries, product-card copy, product images and links still come from published Home page modules and site configuration. The frontend only controls spacing, type scale, grid timing and responsive presentation.
+- 02 backend check: Home still reads published `home` page modules through `listPublishedPageModules('home')`; dynamic modules still resolve through `module_type`, `module_key` and template-backed renderers. Source inspection confirmed `PAGE_MODULE_TEMPLATES` includes `large-product-cards` and `model-strip`, and the visual editor exposes the template catalog, but `POST /api/admin/page-structures/home/draft/modules` currently validates only `simple-text` and `cta-section`. That backend-add whitelist mismatch was recorded as a risk and was not changed in B74.
+- Validation: `git diff --check`, targeted eslint for `src/components/pages/HomePageContent.tsx`, `npx.cmd tsc --noEmit`, `npm.cmd run audit:public-content`, `npm.cmd run audit:published-content`, `npm.cmd run audit:production-links`, and `npx.cmd next build --webpack` passed. Published-content and production-link audits needed approved network runs after sandbox HTTP 0 failures. Build logs only showed existing PostgreSQL SSL warnings, sandbox database `EACCES` fallback logs, and the known `/global` edge-runtime warning.
+- Online checks: Vercel reached `READY`; `https://www.vessel303.com/` returned 200, `/global` returned 200, and unauthenticated `/admin` redirected to login. Post-deploy published-content audit passed 20 routes and production-link audit passed 18 routes.
+- 09 visual recheck: online Browser at 1920 x 945 confirmed no horizontal overflow and CSS assets served with `dpl_FUDC5Qk2oNqzXE7phZ5LphGRpRA5`. The `home:large-product-cards` section height changed from about 1161 px to 1045 px, `home:model-strip` starts about 116 px earlier, and the first product images in the second viewport moved from about `y=566` to `y=481`.
+- Local visual limitation: local dev rendering was not used because prior sandbox runs could not load published Home modules due PostgreSQL `EACCES`, and a sandbox-outside dev-server run may execute schema or analytics writes against the shared database.
+- Mobile limitation: the current Browser path still has no reliable viewport/resize capability, so B74 did not produce a real mobile screenshot. Mobile behavior remains code-reviewed and covered by build/type/audit checks, but should be visually rechecked by 09 / 07 when a viewport-capable browser path is available.
+- `/global` boundary: no `/global`, MapLibre, MapTiler or `/api/map` diff. Global Contact / Products old 303 exception remains unchanged.
+- Next step: 09 should recompare the live homepage against `en.303vessel.cn`, especially whether the remaining product-section gap now requires backend content/material selection or a larger image-first module design. Display-template gaps go to 01; backend content/material/module-add gaps go to 02 / 03; mobile/image performance regressions go to 07.
