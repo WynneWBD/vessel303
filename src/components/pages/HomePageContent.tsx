@@ -1572,20 +1572,21 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
 
   if (isFuture) {
     const futureLead = featuredCard;
-    const futureCards = cards;
+    const futureCards = secondaryCards;
+    const hasFutureCards = futureCards.length > 0;
 
     return (
       <section
-        className="border-b border-[#2D2925] bg-[#171410] py-6 text-white lg:py-8"
+        className={`border-b border-[#2D2925] bg-[#171410] text-white ${hasFutureCards ? 'py-6 lg:py-8' : ''}`}
         style={{ backgroundColor: '#171410', color: '#FFFFFF' }}
         data-page-module={`home:${pageModule.module_key}`}
         data-page-key="home"
         data-module-key={pageModule.module_key}
       >
-        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
+        <div className={hasFutureCards ? 'mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8' : 'w-full'}>
           <div
             className="relative overflow-hidden bg-[#201B16]"
-            style={{ minHeight: 'clamp(540px, 52vw, 660px)' }}
+            style={{ minHeight: hasFutureCards ? 'clamp(540px, 52vw, 660px)' : 'clamp(620px, 72vw, 900px)' }}
           >
             {(futureLead?.image || futureLead?.video) ? (
               <div className="absolute inset-0" data-page-module-item={futureLead.id}>
@@ -1600,7 +1601,9 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
             <div
               className="absolute inset-0"
               style={{
-                background: 'linear-gradient(90deg, rgba(18, 16, 14, 0.92) 0%, rgba(18, 16, 14, 0.62) 42%, rgba(18, 16, 14, 0.24) 100%)',
+                background: hasFutureCards
+                  ? 'linear-gradient(90deg, rgba(18, 16, 14, 0.92) 0%, rgba(18, 16, 14, 0.62) 42%, rgba(18, 16, 14, 0.24) 100%)'
+                  : 'linear-gradient(90deg, rgba(12, 11, 10, 0.72) 0%, rgba(12, 11, 10, 0.42) 44%, rgba(12, 11, 10, 0.12) 100%)',
               }}
             />
             <div
@@ -1610,8 +1613,8 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
               }}
             />
 
-            <div className="relative grid min-h-[inherit] gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
-              <div className="flex min-h-[inherit] flex-col justify-between p-6 sm:p-8 lg:p-10">
+            <div className={`${hasFutureCards ? 'grid lg:grid-cols-[minmax(0,1fr)_360px]' : 'flex'} relative min-h-[inherit] gap-0`}>
+              <div className={`${hasFutureCards ? 'justify-between p-6 sm:p-8 lg:p-10' : 'justify-center px-6 py-16 sm:px-10 lg:px-[8vw]'} flex min-h-[inherit] flex-col`}>
                 <div className="max-w-4xl">
                   {eyebrow ? (
                     <p
@@ -1624,7 +1627,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                   ) : null}
                   {title ? (
                     <h2
-                      className="font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.02] sm:text-5xl lg:text-6xl"
+                      className={`${hasFutureCards ? 'sm:text-5xl lg:text-6xl' : 'sm:text-6xl lg:text-7xl'} font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.02]`}
                       data-page-module-field={`title_${lang}`}
                     >
                       {title}
@@ -1632,7 +1635,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                   ) : null}
                   {description ? (
                     <p
-                      className="mt-5 max-w-2xl text-sm leading-7 text-white/72 sm:text-base"
+                      className={`${hasFutureCards ? 'max-w-2xl' : 'max-w-3xl'} mt-5 text-sm leading-7 text-white/72 sm:text-base`}
                       data-page-module-field={`description_${lang}`}
                     >
                       {description}
