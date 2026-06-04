@@ -1658,17 +1658,15 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
             className="relative overflow-hidden bg-[#201B16]"
             style={{ minHeight: 'clamp(540px, 52vw, 660px)' }}
           >
-            {futureLead?.image ? (
-              <Image
-                src={futureLead.image}
-                alt={futureLead.title || title}
-                fill
-                loading="lazy"
-                className="object-cover"
-                sizes="100vw"
-                data-page-module-item={futureLead.id}
-                data-page-module-field="image_url"
-              />
+            {(futureLead?.image || futureLead?.video) ? (
+              <div className="absolute inset-0" data-page-module-item={futureLead.id}>
+                <HomepageVisualCardMedia
+                  card={futureLead}
+                  altFallback={title}
+                  className="object-cover"
+                  sizes="100vw"
+                />
+              </div>
             ) : null}
             <div
               className="absolute inset-0"
