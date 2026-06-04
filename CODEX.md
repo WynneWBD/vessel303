@@ -74,10 +74,10 @@ V9 handoff 是完整历史归档，仅用于追溯，不再作为日常开发入
 
 300.cn 后台边界：
 
-- 300.cn 后台只用于只读对照、查看、下载和必要的页面字段读取/填写确认。
+- 300.cn 后台可以登录，但只用于只读对照、学习后台/CMS/Visual Editor/运营后台产品心智、查看、下载和必要的页面字段读取/填写确认。
 - 涉及后台、CMS、Visual Editor 或运营后台产品心智时，不确定处可以多去只读学习和核对 300.cn 后台。
 - 如果已有登录态，可以读取页面内容、复制/下载资料、核对字段和填写临时字段用于观察。
-- 点击保存、发布、上传、发送、删除、付款、购买、提交表单或任何真实变更动作前必须停止确认。
+- 点击保存、发布、上传、发送、删除、付款、购买、提交表单或任何真实变更动作前必须停止，并另行获得 Wynne 明确授权。
 - 300 后台账号密码只从本机 env 使用，不能写入文档、代码、commit、PR 或聊天输出。
 
 ## 4. 主站入口规则
@@ -176,10 +176,10 @@ npx next build --webpack
 
 - 首页已由后台 published Home modules 控制。
 - Home hero、credentials、large product cards、model strip 等核心模块仍由后台内容驱动。
-- B66-B76 连续处理首页展示节奏。
-- B76 已上线：在 B75 基础上二次收紧首页产品露出节奏，hero 进一步压缩，credentials/proof visual 改为更紧凑布局，让产品区更早进入桌面和移动端视野。
+- B66-B77 连续处理首页展示节奏。
+- B77 已上线：在 B76 基础上增强首页可信证明信息表达，调整 `CredentialsBar` proof stats 视觉层级、proof 图 `object-contain` 和通用 caption `可信证明 / Credential proof`，未明显推迟产品区。
 - 当前下一步：09 重新对比线上首页和 `en.303vessel.cn`，判断差距来自显示模板、后台内容/素材、模块新增能力，还是移动端/图片性能；涉及后台不懂处可只读学习 300.cn 后台。
-- 风险：B76 未完成可靠线上桌面/移动截图复核；本轮替代验证为 07 本地桌面/移动视觉指标 + 05/00 线上 HTTP/DOM 补验。Blog 导航、旧站型号 / footer 入口、CTA 节奏仍是 09 后续 P2 / 待判断项，B76 未处理。Home visual editor/catalog 模板多于 draft add-module API 白名单，API 目前只接受 `simple-text` 和 `cta-section`。
+- 风险：B77 只增强 proof 信息表达，不代表完全对齐旧站。Blog 导航、旧站型号 / footer 入口、CTA 节奏仍是 09 后续 P2 / 待判断项，B77 未处理。Home visual editor/catalog 模板多于 draft add-module API 白名单，API 目前只接受 `simple-text` 和 `cta-section`。
 
 Products / 产品中心：
 
@@ -237,23 +237,26 @@ SEO / Analytics / Performance：
 
 ## 9. 当前最新节点
 
-最新线上节点：B76。
+最新线上节点：B77。
 
-B76 摘要：
+B77 摘要：
 
-- 名称：homepage product exposure rhythm second tightening / 首页产品露出节奏二次小修
+- 名称：homepage proof signal clarity / 首页可信证明信息表达增强
 - 日期：2026-06-04
-- commit：`2f54e82ceeb1a5e1b68d638d0bdf745294672c39`
-- Vercel deployment：`dpl_CZXNZ5D1z9FhngtdRn8PHBGtGVb6`
-- Deployment URL：`https://vessel303-c7gsrixz2-vessel303.vercel.app`
+- commit：`fdcee1a` / full `fdcee1adf7a0bed280143ebe523321ea637737d6`
+- Vercel deployment：`dpl_9UDuEUdt2afMFonbTyNfRyEQarNQ`
+- Deployment URL：`https://vessel303-xsoy7xwjj-vessel303.vercel.app`
 - 状态：READY
 - 代码文件：`src/components/pages/HomePageContent.tsx`
-- 范围：只调整首页显示模板。`HeroSection` 从 B75 的 `72svh / 82vh` 进一步压缩到移动约 `56svh`、桌面约 `68-70vh`，减少 hero padding；桌面轮播控件更小、更靠近；`CredentialsBar` desktop 改为 stats 与 proof visual 并排，mobile proof visual 改为更矮的紧凑 strip。
-- 目标：进一步让首页产品大图更早进入桌面和移动端视野。
+- 范围：只调整首页 `CredentialsBar` proof stats 视觉层级、proof 图 `object-contain`、通用 caption `可信证明 / Credential proof`；仍使用现有 `value_*` / `label_*` 和 `image_url`。
+- 目标：让首页可信证明信息更清晰，避免把通用 proof visual 解读成未经确认的具体认证承诺。
 - 未改：首页图片、文案、CTA、href、published 内容来源、Home module 顺序、后台 API、数据库、认证、权限、支付、订单、`/global`。
-- 验证：`git diff --check -- src/components/pages/HomePageContent.tsx`、`npx eslint src/components/pages/HomePageContent.tsx`、`npx tsc --noEmit`、`npx next build --webpack` 通过；本地 `/` 200 且无 `__next_error__`；线上首页 200 且无 `__next_error__`，`/global` 200 且无 `__next_error__`，未登录 `/admin` 302 到登录页。
-- 07 视觉指标：desktop 1440x1000 下 hero 高 700、credentials top 700 height 158、large-product-cards top 858 height 1633，无页面级横向滚动；mobile 390x844 下 hero 高 473、credentials top 473 height 282、large-product-cards top 755 height 1541，无页面级横向滚动，mobile 产品区已在首屏底部露出。
-- 限制：本轮没有可用真实浏览器截图工具完成线上桌面/移动截图复核；后续 09/07 有可用工具时应补视觉复核。
+- 验证：05 线上检查首页 200 且无 `__next_error__`，`/global` 200 且无 `__next_error__`，未登录 `/admin` 302 到 `https://vessel303.com/admin/login`。
+- 07 视觉指标：desktop 1440x1000 下 hero top 0 height 700、credentials top 700 height 158、large-product-cards top 858 height 1633、SV918 heading top 954 height 60、scrollWidth/clientWidth 1434/1434；mobile 390x844 下 hero top 0 height 473、credentials top 473 height 300、large-product-cards top 772 height 1541、SV918 heading top 852 height 38、scrollWidth/clientWidth 384/384。
+- 07 视觉结论：无横向滚动；hero 文案/CTA/轮播控件无重叠；proof stats/caption/visual 无重叠；stats label 可读；proof 图 contain 后未明显裁切；B77 未明显推迟产品区。
+- 截图路径：`C:\Users\Wynne\AppData\Local\Temp\vessel303-b77-verify\edge-desktop-1440x1000.png`、`C:\Users\Wynne\AppData\Local\Temp\vessel303-b77-verify\browser-mobile-390x844.png`。
+- proof 信息边界：可安全使用当前首页已发布 stats：`300+ Projects Delivered`、`30+ Countries`、`150+ Patents`、`28,800 Sqm Factory`。当前 `cred-stat-03` 的 `image_url` 可作为通用 certification/credential proof visual，不要解读成具体认证承诺。
+- 禁止硬编码或新增：`Dual Certified`、`EU+US certified`、`45-day factory production`、具体 cert 名称/编号、或 broad global compliance。
 
 下一步：
 
@@ -263,7 +266,7 @@ B76 摘要：
 4. Home module 内容、素材、模块新增能力问题交 02 / 03。
 5. 移动端、图片、性能问题交 07。
 6. 涉及后台/CMS/Visual Editor/运营后台产品心智时，不确定处可只读学习 300.cn 后台。
-7. Blog 导航、旧站型号 / footer 入口、CTA 节奏仍由 09 后续判断，不要写成 B76 已处理。
+7. Blog 导航、旧站型号 / footer 入口、CTA 节奏仍由 09 后续判断，不要写成 B77 已处理。
 
 ## 10. 文档维护规则
 
