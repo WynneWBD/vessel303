@@ -246,7 +246,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
   return (
     <section
-      className="relative flex min-h-[72svh] items-center overflow-hidden bg-[#172231] sm:min-h-[78svh] lg:min-h-[82vh]"
+      className="relative flex min-h-[56svh] items-center overflow-hidden bg-[#172231] sm:min-h-[62svh] lg:min-h-[68vh] xl:min-h-[70vh]"
       data-page-module="home:hero"
       data-page-key="home"
       data-module-key="hero"
@@ -270,7 +270,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0)_0%,rgba(0,0,0,0.08)_42%,rgba(0,0,0,0.34)_100%)]" />
       <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#071018]/46 to-transparent" />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col px-5 pb-20 pt-28 text-center sm:px-6 sm:pb-24 sm:pt-32 lg:px-10 lg:pb-32 lg:pt-36">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col px-5 pb-16 pt-24 text-center sm:px-6 sm:pb-20 sm:pt-28 lg:px-10 lg:pb-24 lg:pt-32">
         <div className="mx-auto max-w-[1600px]">
           {activeTagline ? (
             <div className="mb-5 sm:mb-6">
@@ -323,21 +323,21 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
       {heroSlides.length > 1 ? (
         <div
-          className="hidden items-end gap-9 xl:flex"
-          style={{ position: 'absolute', right: 32, bottom: 40, zIndex: 20 }}
+          className="hidden items-end gap-6 xl:flex"
+          style={{ position: 'absolute', right: 32, bottom: 32, zIndex: 20 }}
         >
           <button
             type="button"
             onClick={() => setCurrent(nextImage)}
             className="relative overflow-hidden border border-white/72 bg-white/8 text-left shadow-[0_24px_62px_rgba(0,0,0,0.24)] transition hover:border-white"
-            style={{ height: 158, width: 314 }}
+            style={{ height: 132, width: 262 }}
           >
             {previewSlide ? (
               <Image
                 src={previewSlide.src}
                 alt=""
                 fill
-                sizes="314px"
+                sizes="262px"
                 className="object-cover"
               />
             ) : null}
@@ -347,7 +347,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
             type="button"
             onClick={() => setCurrent((prev) => (prev + 1) % heroSlides.length)}
             className="inline-flex items-center justify-center gap-3 border border-white/72 bg-black/10 px-5 text-[17px] font-semibold uppercase tracking-[0.04em] text-white backdrop-blur-[1px] transition hover:bg-white/12 focus:outline-none focus:ring-2 focus:ring-white/70"
-            style={{ height: 158, width: 158 }}
+            style={{ height: 132, width: 132 }}
           >
             <span>{nextLabel}</span>
             <ChevronRight aria-hidden="true" className="h-6 w-6" />
@@ -357,7 +357,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
             onClick={() => setIsPaused((value) => !value)}
             aria-pressed={isPaused}
             className="inline-flex items-center justify-center border border-white/72 bg-black/10 text-white backdrop-blur-[1px] transition hover:bg-white/12 focus:outline-none focus:ring-2 focus:ring-white/70"
-            style={{ height: 158, width: 54 }}
+            style={{ height: 132, width: 48 }}
           >
             {isPaused ? (
               <Play aria-hidden="true" className="h-5 w-5" />
@@ -372,7 +372,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
       {heroSlides.length > 1 ? (
         <div
           className="hidden items-center gap-2 xl:flex"
-          style={{ position: 'absolute', right: 512, bottom: 206, zIndex: 20 }}
+          style={{ position: 'absolute', right: 430, bottom: 174, zIndex: 20 }}
         >
           {heroSlides.map((slide, index) => (
             <button
@@ -424,48 +424,50 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
       data-module-key="credentials"
     >
       <div className="mx-auto max-w-[1540px] px-5 sm:px-6 lg:px-10">
-        <div className="grid grid-cols-2 border-x border-white/10 sm:grid-cols-4">
-          {stats.map((s, index) => (
-            <div
-              key={s.id}
-              className={`min-w-0 border-white/10 px-3 py-3 text-center sm:px-4 sm:py-4 ${
-                index % 2 === 0 ? 'border-r' : ''
-              } ${index < 2 ? 'border-b sm:border-b-0' : ''} sm:border-r sm:last:border-r-0`}
-              data-page-module-item={s.id}
-            >
+        <div className={`${proofVisual?.image_url ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-stretch' : ''} border-x border-white/10`}>
+          <div className="grid grid-cols-2 sm:grid-cols-4">
+            {stats.map((s, index) => (
               <div
-                className="mb-1.5 font-[family-name:var(--font-heading)] text-2xl font-light tracking-tight text-[#F2A36E] sm:text-3xl lg:text-4xl"
-                style={{ fontFamily: 'var(--font-heading)', fontFeatureSettings: '"tnum"' }}
-                data-page-module-field={`value_${lang}`}
+                key={s.id}
+                className={`min-w-0 border-white/10 px-3 py-3 text-center sm:px-4 sm:py-4 ${
+                  index % 2 === 0 ? 'border-r' : ''
+                } ${index < 2 ? 'border-b sm:border-b-0' : ''} sm:border-r sm:last:border-r-0`}
+                data-page-module-item={s.id}
               >
-                {s.val}
+                <div
+                  className="mb-1.5 font-[family-name:var(--font-heading)] text-2xl font-light tracking-tight text-[#F2A36E] sm:text-3xl lg:text-4xl"
+                  style={{ fontFamily: 'var(--font-heading)', fontFeatureSettings: '"tnum"' }}
+                  data-page-module-field={`value_${lang}`}
+                >
+                  {s.val}
+                </div>
+                <div
+                  className="mx-auto max-w-[12rem] truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-white/52 sm:text-xs"
+                  data-page-module-field={`label_${lang}`}
+                >
+                  {s.label}
+                </div>
               </div>
-              <div
-                className="mx-auto max-w-[12rem] truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-white/52 sm:text-xs"
-                data-page-module-field={`label_${lang}`}
-              >
-                {s.label}
-              </div>
-            </div>
-          ))}
-        </div>
-        {proofVisual?.image_url ? (
-          <div
-            className="border-x border-t border-white/10 px-4 py-3 sm:px-6 sm:py-4 lg:px-8"
-            data-page-module-item={proofVisual.id}
-          >
-            <div className="relative mx-auto aspect-[2.6/1] w-full max-w-[920px] overflow-hidden bg-[#C7D6EA] sm:aspect-[3/1] lg:aspect-[3.2/1]">
-              <Image
-                src={proofVisual.image_url}
-                alt={proofVisualAlt}
-                fill
-                sizes="(max-width: 768px) 100vw, 920px"
-                className="object-cover"
-                data-page-module-field="image_url"
-              />
-            </div>
+            ))}
           </div>
-        ) : null}
+          {proofVisual?.image_url ? (
+            <div
+              className="border-t border-white/10 px-3 py-2.5 sm:px-4 sm:py-3 lg:border-l lg:border-t-0"
+              data-page-module-item={proofVisual.id}
+            >
+              <div className="relative mx-auto h-[104px] w-full overflow-hidden bg-[#C7D6EA] sm:h-[124px] lg:h-full lg:min-h-[132px] lg:max-h-[164px]">
+                <Image
+                  src={proofVisual.image_url}
+                  alt={proofVisualAlt}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 360px"
+                  className="object-cover"
+                  data-page-module-field="image_url"
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
       </div>
     </section>
   );
