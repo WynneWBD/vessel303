@@ -101,6 +101,15 @@ h1, h2, h3, h4, h5, h6 {
   background: rgba(227,111,44,0.6);
 }
 
+.home-model-carousel {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.home-model-carousel::-webkit-scrollbar {
+  display: none;
+}
+
 /* Orange gradient text - legacy class name kept for compatibility */
 .text-gold-gradient {
   background: linear-gradient(135deg, #E36F2C 0%, #C85A1F 50%, #E36F2C 100%);
