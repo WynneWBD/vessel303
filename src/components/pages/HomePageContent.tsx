@@ -401,14 +401,18 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
   const { lang } = useLanguage();
   const items = useMemo(() => sortModuleItems(pageModule), [pageModule]);
-  const stats = items
-    .filter((item) => item.is_visible)
+  const visibleItems = items.filter((item) => item.is_visible);
+  const stats = visibleItems
     .map((item) => ({
       id: item.id,
       val: localizedValue(item, lang, ''),
       label: localizedLabel(item, lang, ''),
     }))
     .filter((stat) => stat.val || stat.label);
+  const proofVisual = visibleItems.find((item) => item.image_url);
+  const proofVisualAlt = proofVisual
+    ? [localizedValue(proofVisual, lang, ''), localizedLabel(proofVisual, lang, '')].filter(Boolean).join(' ')
+    : '';
 
   if (!pageModule || !pageModule.is_visible) return null;
   if (stats.length === 0) return null;
@@ -446,6 +450,23 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
             </div>
           ))}
         </div>
+        {proofVisual?.image_url ? (
+          <div
+            className="border-x border-t border-white/10 px-4 py-5 sm:px-6 lg:px-8"
+            data-page-module-item={proofVisual.id}
+          >
+            <div className="relative mx-auto aspect-[2/1] w-full max-w-[1200px] overflow-hidden bg-[#C7D6EA]">
+              <Image
+                src={proofVisual.image_url}
+                alt={proofVisualAlt}
+                fill
+                sizes="(max-width: 768px) 100vw, 1200px"
+                className="object-cover"
+                data-page-module-field="image_url"
+              />
+            </div>
+          </div>
+        ) : null}
       </div>
     </section>
   );
