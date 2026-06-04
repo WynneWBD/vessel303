@@ -202,6 +202,17 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
         href: displayHref(item.href),
       }));
   }, [items, lang]);
+  const heroProofs = useMemo(() => {
+    return items
+      .filter((item) => typeof item.id === 'string' && item.id.startsWith('hero-proof') && item.is_visible)
+      .map((item) => ({
+        id: item.id,
+        value: localizedValue(item, lang, ''),
+        label: localizedLabel(item, lang, ''),
+        body: localizedContent(item, lang, ''),
+      }))
+      .filter((item) => item.value || item.label || item.body);
+  }, [items, lang]);
   const findItem = (id: string) => items.find((item) => typeof item.id === 'string' && item.id === id);
   const tagline = localizedLabel(findItem('hero-tagline'), lang, '');
   const headline = localizedLabel(findItem('hero-headline'), lang, '');
@@ -337,6 +348,46 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
         </div>
 
       </div>
+
+      {heroProofs.length > 0 ? (
+        <div
+          className="absolute bottom-24 left-5 z-20 hidden max-w-[720px] sm:block lg:bottom-28 lg:left-[max(2rem,calc((100vw-1540px)/2+2.5rem))]"
+          data-page-module-item="hero-proof"
+        >
+          <div className="flex flex-wrap overflow-hidden border-y border-white/12 bg-[#11100E]/58 shadow-[0_18px_56px_rgba(0,0,0,0.28)] backdrop-blur-[2px]">
+            {heroProofs.map((proof) => (
+              <div
+                key={proof.id}
+                className="min-w-[150px] border-r border-white/12 px-4 py-3 last:border-r-0"
+                data-page-module-item={proof.id}
+              >
+                {proof.value ? (
+                  <div
+                    className="font-[family-name:var(--font-heading)] text-xl font-light leading-none text-white"
+                    data-page-module-field={`value_${lang}`}
+                  >
+                    {proof.value}
+                  </div>
+                ) : null}
+                {proof.label ? (
+                  <div
+                    className="mt-1 max-w-[11rem] truncate text-[10px] font-bold uppercase text-[#F2A36E]"
+                    data-page-module-field={`label_${lang}`}
+                    title={proof.label}
+                  >
+                    {proof.label}
+                  </div>
+                ) : null}
+                {proof.body ? (
+                  <div className="sr-only" data-page-module-field={`content_${lang}`}>
+                    {proof.body}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {heroSlides.length > 1 ? (
         <div

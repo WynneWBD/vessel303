@@ -3,6 +3,17 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import {
+  Badge,
+  BookOpenText,
+  Camera,
+  Grid2X2,
+  Link2,
+  MessageCircle,
+  Music2,
+  PlaySquare,
+  Video,
+} from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { normalizeSiteHref } from '@/lib/site-links';
 import {
@@ -15,11 +26,72 @@ import {
   moduleMap,
   moduleTitle,
   visibleItems,
+  type PublicPageModuleItem,
   type PublicPageModule,
 } from '@/lib/page-module-client';
+import { useSiteModules } from '@/contexts/SiteModulesContext';
 
 function isExternalActionHref(href: string) {
   return href.startsWith('tel:') || href.startsWith('mailto:') || href.startsWith('http://') || href.startsWith('https://');
+}
+
+function isFooterSocialItem(item: PublicPageModuleItem) {
+  return item.id.startsWith('social-');
+}
+
+function FooterSocialIcon({ itemId }: { itemId: string }) {
+  const className = 'h-[18px] w-[18px]';
+  const strokeWidth = 1.9;
+
+  if (itemId.includes('wechat')) return <MessageCircle aria-hidden="true" className={className} strokeWidth={strokeWidth} />;
+  if (itemId.includes('video')) return <Video aria-hidden="true" className={className} strokeWidth={strokeWidth} />;
+  if (itemId.includes('xiaohongshu')) return <BookOpenText aria-hidden="true" className={className} strokeWidth={strokeWidth} />;
+  if (itemId.includes('mini')) return <Grid2X2 aria-hidden="true" className={className} strokeWidth={strokeWidth} />;
+  if (itemId.includes('tiktok')) return <Music2 aria-hidden="true" className={className} strokeWidth={strokeWidth} />;
+  if (itemId.includes('instagram')) return <Camera aria-hidden="true" className={className} strokeWidth={strokeWidth} />;
+  if (itemId.includes('youtube')) return <PlaySquare aria-hidden="true" className={className} strokeWidth={strokeWidth} />;
+  if (itemId.includes('badge')) return <Badge aria-hidden="true" className={className} strokeWidth={strokeWidth} />;
+  return <Link2 aria-hidden="true" className={className} strokeWidth={strokeWidth} />;
+}
+
+function FooterSocialLink({ item }: { item: PublicPageModuleItem }) {
+  const { lang } = useLanguage();
+  const label = itemLabel(item, lang);
+  const rawHref = item.href ? normalizeSiteHref(item.href, '') : '';
+  if (!label) return null;
+
+  const content = (
+    <span
+      className="inline-flex h-[35px] w-[35px] items-center justify-center rounded-full bg-[#E36F2C] text-white transition hover:bg-[#F2A36E]"
+      title={label}
+    >
+      <FooterSocialIcon itemId={item.id} />
+      <span className="sr-only">{label}</span>
+    </span>
+  );
+
+  if (!rawHref) {
+    return <span>{content}</span>;
+  }
+
+  if (isExternalActionHref(rawHref)) {
+    return (
+      <a
+        href={rawHref}
+        target={rawHref.startsWith('http') ? '_blank' : undefined}
+        rel={rawHref.startsWith('http') ? 'noopener noreferrer' : undefined}
+        aria-label={label}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={rawHref} aria-label={label}>
+      {content}
+    </Link>
+  );
 }
 
 function FooterLinkList({ module }: { module: PublicPageModule | null }) {
@@ -73,9 +145,13 @@ function FooterLinkList({ module }: { module: PublicPageModule | null }) {
 
 export default function Footer() {
   const { lang } = useLanguage();
-  const [siteModules, setSiteModules] = useState<PublicPageModule[] | null>(null);
+  const initialSiteModules = useSiteModules();
+  const [siteModules, setSiteModules] = useState<PublicPageModule[] | null>(initialSiteModules);
 
   useEffect(() => {
+    if (Array.isArray(initialSiteModules) && initialSiteModules.length > 0) {
+      return;
+    }
     const controller = new AbortController();
     fetchPublicPageModules('site', controller.signal)
       .then((modules) => setSiteModules(modules))
@@ -83,7 +159,7 @@ export default function Footer() {
         if ((err as Error).name !== 'AbortError') console.warn('[footer] site modules unavailable', err);
       });
     return () => controller.abort();
-  }, []);
+  }, [initialSiteModules]);
 
   const modules = moduleMap(siteModules);
   const cta = modules.get('footer-cta') ?? null;
@@ -101,7 +177,13 @@ export default function Footer() {
   const brandLogoSrc = brandLogo?.image_url || '';
   const brandLogoHref = brandLogo?.href ? normalizeSiteHref(brandLogo.href, '') : '';
   const brandLogoAlt = itemLabel(brandLogo, lang);
+  const brandTextItems = brandItems.filter((item) => item.id !== 'logo' && !isFooterSocialItem(item));
+  const brandTagline = brandTextItems.find((item) => item.id === 'tagline') ?? brandTextItems[0] ?? null;
+  const brandContactItems = brandTextItems.filter((item) => item.id !== brandTagline?.id);
+  const brandSocialItems = brandItems.filter(isFooterSocialItem);
+  const about = modules.get('footer-about') ?? null;
   const contactItems = visibleItems(contact);
+  const showAboutLinks = Boolean(about && about.is_visible !== false);
 
   return (
     <footer id="contact" className="border-t border-[#E36F2C]/15 bg-[#241F1B]">
@@ -154,7 +236,7 @@ export default function Footer() {
                         alt={brandLogoAlt}
                         height={32}
                         width={128}
-                        style={{ height: '32px', width: 'auto', objectFit: 'contain', marginBottom: 4 }}
+                        style={{ height: '32px', width: 'auto', objectFit: 'contain', marginBottom: 4, filter: 'brightness(0) invert(1)' }}
                         unoptimized
                       />
                     </Link>
@@ -164,20 +246,20 @@ export default function Footer() {
                       alt={brandLogoAlt}
                       height={32}
                       width={128}
-                      style={{ height: '32px', width: 'auto', objectFit: 'contain', marginBottom: 4 }}
+                      style={{ height: '32px', width: 'auto', objectFit: 'contain', marginBottom: 4, filter: 'brightness(0) invert(1)' }}
                       unoptimized
                     />
                   )
                 ) : null}
-                {brandItems[0] ? (
-                  <div className="text-xs tracking-[0.3em] text-white/30">{itemLabel(brandItems[0], lang)}</div>
+                {brandTagline ? (
+                  <div className="text-xs tracking-[0.3em] text-white/30">{itemLabel(brandTagline, lang)}</div>
                 ) : null}
               </div>
               {brandDescription ? (
                 <p className="mb-5 max-w-xs text-xs leading-relaxed text-white/35">{brandDescription}</p>
               ) : null}
               <div className="space-y-1 text-xs text-white/20">
-                {brandItems.slice(1).map((item) => {
+                {brandContactItems.map((item) => {
                   const label = itemLabel(item, lang);
                   if (!label) return null;
                   const href = item.href ? normalizeSiteHref(item.href, '') : '';
@@ -197,13 +279,21 @@ export default function Footer() {
                   return <div key={item.id}>{label}</div>;
                 })}
               </div>
+              {brandSocialItems.length > 0 ? (
+                <div className="mt-5 flex flex-wrap gap-3" aria-label="VESSEL social links">
+                  {brandSocialItems.map((item) => (
+                    <FooterSocialLink key={item.id} item={item} />
+                  ))}
+                </div>
+              ) : null}
             </div>
           ) : null}
 
           <FooterLinkList module={products} />
           <FooterLinkList module={company} />
+          {showAboutLinks ? <FooterLinkList module={about} /> : null}
 
-          {contact?.is_visible !== false ? (
+          {!showAboutLinks && contact?.is_visible !== false ? (
             <div>
               {moduleTitle(contact, lang) ? (
                 <h4 className="mb-5 text-xs font-semibold uppercase tracking-[0.25em] text-white">

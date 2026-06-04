@@ -134,7 +134,7 @@ export default function Navbar() {
           </div>
 
           {/* CTA + Toggle */}
-          <div className="hidden shrink-0 items-center gap-3 lg:flex">
+          <div className="hidden shrink-0 items-center gap-3 2xl:flex">
             <LanguageToggle />
           </div>
 
