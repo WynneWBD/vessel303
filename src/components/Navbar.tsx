@@ -144,7 +144,7 @@ export default function Navbar() {
           {/* Desktop Nav */}
           <div className="mx-10 hidden flex-1 items-center justify-center gap-8 lg:flex xl:gap-9">
             {desktopNavLinks.map((link) => (
-              <div key={link.id} className="relative group">
+              <div key={link.id} className={`relative group ${link.id === 'nav-global' ? 'hidden 2xl:block' : ''}`}>
                 <Link
                   href={link.href}
                   className="relative block whitespace-nowrap py-2 text-[14px] font-medium text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.32)] transition-colors duration-200 hover:text-white"
