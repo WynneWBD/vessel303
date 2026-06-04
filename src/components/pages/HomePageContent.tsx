@@ -970,7 +970,12 @@ function HomepageVisualCardMedia({
           data-page-module-field="video_url"
         />
         {card.videoPoster ? (
-          <span className="sr-only" data-page-module-field="video_poster_url">{card.videoPoster}</span>
+          <span
+            aria-hidden="true"
+            hidden
+            data-page-module-field="video_poster_url"
+            data-page-module-value={card.videoPoster}
+          />
         ) : null}
       </>
     );
