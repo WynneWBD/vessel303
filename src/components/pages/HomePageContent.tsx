@@ -1284,9 +1284,11 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
   }
 
   if (isInnovation) {
+    const cardActionLabel = primaryLabel || secondaryLabel;
+
     return (
       <section
-        className="border-b border-[#E5DED4] bg-white py-8 text-[#241F1B] lg:py-9"
+        className="border-b border-[#E5DED4] bg-white py-12 text-[#241F1B] lg:py-16"
         style={{ backgroundColor: '#FFFFFF', color: '#241F1B' }}
         data-page-module={`home:${pageModule.module_key}`}
         data-page-key="home"
@@ -1305,7 +1307,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
             ) : null}
             {title ? (
               <h2
-                className="font-[family-name:var(--font-heading)] text-2xl font-light leading-[1.05] sm:text-3xl lg:text-4xl"
+                className="font-[family-name:var(--font-heading)] text-3xl font-light leading-[1.05] sm:text-4xl lg:text-5xl"
                 data-page-module-field={`title_${lang}`}
               >
                 {title}
@@ -1322,12 +1324,12 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
           </div>
 
           {cards.length > 0 ? (
-            <div className="mt-6 grid gap-3 md:grid-cols-3">
+            <div className="mt-10 grid gap-4 md:grid-cols-3">
               {cards.map((card, index) => {
                 const innovationCard = (
                   <article
                     className="group relative flex overflow-hidden bg-[#DCD5CC] text-white"
-                    style={{ minHeight: 'clamp(240px, 24vw, 320px)' }}
+                    style={{ minHeight: 'clamp(360px, 39vw, 520px)' }}
                     data-page-module-item={card.id}
                   >
                     <HomepageVisualCardMedia
@@ -1342,7 +1344,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                         background: 'linear-gradient(180deg, rgba(16, 14, 12, 0.58) 0%, rgba(16, 14, 12, 0.12) 58%, rgba(16, 14, 12, 0.34) 100%)',
                       }}
                     />
-                    <div className="relative flex w-full flex-col items-center px-5 pt-12 text-center">
+                    <div className="relative flex w-full flex-col items-center justify-end px-5 pb-8 pt-12 text-center">
                       {card.meta ? (
                         <p
                           className="mb-2 text-[11px] font-semibold text-white/78"
@@ -1364,8 +1366,16 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                           {card.body}
                         </p>
                       ) : null}
-                      {card.href ? (
-                        <ChevronRight className="mt-3 h-5 w-5 text-white/82 transition group-hover:translate-x-1" aria-hidden="true" />
+                      {card.href && cardActionLabel ? (
+                        <span className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-white/86 transition group-hover:text-white">
+                          <span
+                            data-page-module-item="primary-cta"
+                            data-page-module-field={`label_${lang}`}
+                          >
+                            {cardActionLabel}
+                          </span>
+                          <ChevronRight className="h-4 w-4 transition group-hover:translate-x-1" aria-hidden="true" />
+                        </span>
                       ) : null}
                     </div>
                   </article>
@@ -1416,9 +1426,11 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
   }
 
   if (isScenario) {
+    const cardActionLabel = primaryLabel || secondaryLabel;
+
     return (
       <section
-        className="border-b border-[#E5DED4] bg-[#F7F1E9] py-12 text-[#241F1B] lg:py-14"
+        className="border-b border-[#E5DED4] bg-[#F7F1E9] py-14 text-[#241F1B] lg:py-16"
         style={{ backgroundColor: '#F7F1E9', color: '#241F1B' }}
         data-page-module={`home:${pageModule.module_key}`}
         data-page-key="home"
@@ -1459,7 +1471,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                 const scenarioTile = (
                   <article
                     className="group relative flex overflow-hidden bg-[#241F1B] text-white"
-                    style={{ minHeight: 'clamp(360px, 36vw, 440px)' }}
+                    style={{ minHeight: 'clamp(420px, 44vw, 560px)' }}
                     data-page-module-item={card.id}
                   >
                     <HomepageVisualCardMedia
@@ -1493,14 +1505,22 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                       ) : null}
                       {card.body ? (
                         <p
-                          className="mt-3 line-clamp-2 text-sm leading-6 text-white/70"
+                          className="mt-3 line-clamp-2 text-sm leading-6 text-white/72"
                           data-page-module-field={`content_${lang}`}
                         >
                           {card.body}
                         </p>
                       ) : null}
-                      {card.href ? (
-                        <ChevronRight className="mt-5 h-5 w-5 text-[#F2A36E] transition group-hover:translate-x-1" aria-hidden="true" />
+                      {card.href && cardActionLabel ? (
+                        <span className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-[#F2A36E] transition group-hover:text-white">
+                          <span
+                            data-page-module-item="primary-cta"
+                            data-page-module-field={`label_${lang}`}
+                          >
+                            {cardActionLabel}
+                          </span>
+                          <ChevronRight className="h-4 w-4 transition group-hover:translate-x-1" aria-hidden="true" />
+                        </span>
                       ) : null}
                     </div>
                   </article>
