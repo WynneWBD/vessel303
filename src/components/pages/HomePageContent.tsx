@@ -21,6 +21,8 @@ type Lang = 'zh' | 'en';
 type HomeModuleItem = {
   id: string;
   image_url?: string;
+  video_url?: string;
+  video_poster_url?: string;
   href?: string;
   value_zh?: string;
   value_en?: string;
@@ -633,9 +635,11 @@ function ProductShowcaseSection({ pageModule }: { pageModule: HomePageModule | n
       meta: localizedValue(item, lang, ''),
       body: localizedContent(item, lang, ''),
       image: item.image_url || '',
+      video: item.video_url || '',
+      videoPoster: item.video_poster_url || '',
       href: displayHref(item.href),
     }))
-    .filter((item) => item.title || item.body || item.image);
+    .filter((item) => item.title || item.body || item.image || item.video);
   const primary = findModuleItem(pageModule, 'primary-cta');
   const secondary = findModuleItem(pageModule, 'secondary-cta');
   const primaryLabel = localizedLabel(primary, lang, '');
@@ -691,16 +695,13 @@ function ProductShowcaseSection({ pageModule }: { pageModule: HomePageModule | n
                   className="group flex h-full flex-col overflow-hidden border border-[#E5DED4] bg-white shadow-[0_18px_60px_rgba(44,42,40,0.08)]"
                   data-page-module-item={card.id}
                 >
-                  {card.image ? (
+                  {(card.image || card.video) ? (
                     <div className="relative aspect-[4/3] overflow-hidden bg-[#E5DED4]">
-                      <Image
-                        src={card.image}
-                        alt={card.title}
-                        fill
-                        loading="lazy"
+                      <HomepageVisualCardMedia
+                        card={card}
+                        altFallback={title}
                         className="object-cover transition duration-500 group-hover:scale-105"
                         sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
-                        data-page-module-field="image_url"
                       />
                     </div>
                   ) : null}
@@ -790,9 +791,11 @@ function SalesGridSection({ pageModule }: { pageModule: HomePageModule | null })
       meta: localizedValue(item, lang, ''),
       body: localizedContent(item, lang, ''),
       image: item.image_url || '',
+      video: item.video_url || '',
+      videoPoster: item.video_poster_url || '',
       href: displayHref(item.href),
     }))
-    .filter((item) => item.title || item.meta || item.body || item.image);
+    .filter((item) => item.title || item.meta || item.body || item.image || item.video);
   const primary = findModuleItem(pageModule, 'primary-cta');
   const secondary = findModuleItem(pageModule, 'secondary-cta');
   const primaryLabel = localizedLabel(primary, lang, '');
@@ -851,16 +854,13 @@ function SalesGridSection({ pageModule }: { pageModule: HomePageModule | null })
                   className={`${isProjectProof ? 'border-white/12 bg-white/[0.06]' : 'border-[#E5DED4] bg-white'} group flex h-full flex-col overflow-hidden border`}
                   data-page-module-item={card.id}
                 >
-                  {card.image ? (
+                  {(card.image || card.video) ? (
                     <div className={`${isProductSeries ? 'aspect-[16/9]' : 'aspect-[4/3]'} relative overflow-hidden bg-[#E5DED4]`}>
-                      <Image
-                        src={card.image}
-                        alt={card.title}
-                        fill
-                        loading="lazy"
+                      <HomepageVisualCardMedia
+                        card={card}
+                        altFallback={title}
                         className="object-cover transition duration-500 group-hover:scale-[1.03]"
                         sizes={isModelGrid ? '(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw' : '(max-width: 768px) 100vw, 33vw'}
-                        data-page-module-field="image_url"
                       />
                     </div>
                   ) : null}
@@ -935,6 +935,64 @@ function SalesGridSection({ pageModule }: { pageModule: HomePageModule | null })
   );
 }
 
+type HomepageVisualCard = {
+  title: string;
+  image: string;
+  video: string;
+  videoPoster: string;
+};
+
+function HomepageVisualCardMedia({
+  card,
+  altFallback,
+  className,
+  sizes,
+}: {
+  card: HomepageVisualCard;
+  altFallback: string;
+  className: string;
+  sizes: string;
+}) {
+  const videoClassName = className.includes('absolute') ? className : `absolute inset-0 h-full w-full ${className}`;
+
+  if (card.video) {
+    return (
+      <>
+        <video
+          src={card.video}
+          poster={card.videoPoster || card.image || undefined}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          className={videoClassName}
+          data-page-module-field="video_url"
+        />
+        {card.videoPoster ? (
+          <span className="sr-only" data-page-module-field="video_poster_url">{card.videoPoster}</span>
+        ) : null}
+      </>
+    );
+  }
+
+  if (card.image) {
+    return (
+      <Image
+        src={card.image}
+        alt={card.title || altFallback}
+        fill
+        loading="lazy"
+        className={className}
+        sizes={sizes}
+        data-page-module-field="image_url"
+      />
+    );
+  }
+
+  return null;
+}
+
 function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const { lang } = useLanguage();
   if (!pageModule || !pageModule.is_visible) return null;
@@ -950,9 +1008,11 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
       meta: localizedValue(item, lang, ''),
       body: localizedContent(item, lang, ''),
       image: item.image_url || '',
+      video: item.video_url || '',
+      videoPoster: item.video_poster_url || '',
       href: displayHref(item.href),
     }))
-    .filter((item) => item.title || item.meta || item.body || item.image);
+    .filter((item) => item.title || item.meta || item.body || item.image || item.video);
   const primary = findModuleItem(pageModule, 'primary-cta');
   const secondary = findModuleItem(pageModule, 'secondary-cta');
   const primaryLabel = localizedLabel(primary, lang, '');
@@ -1014,16 +1074,13 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
           {cards.length > 0 ? (
             <div className="mt-5 grid gap-3">
               {cards.map((card, index) => {
-                const imagePanel = card.image ? (
+                const imagePanel = (card.image || card.video) ? (
                   <div className={`${index % 2 === 1 ? 'lg:order-2' : ''} relative min-h-[220px] overflow-hidden bg-[#DCD5CC] sm:min-h-[270px] lg:min-h-full`}>
-                    <Image
-                      src={card.image}
-                      alt={card.title || title}
-                      fill
-                      loading="lazy"
+                    <HomepageVisualCardMedia
+                      card={card}
+                      altFallback={title}
                       className="object-cover transition duration-700 group-hover:scale-[1.025]"
                       sizes="(max-width: 1024px) 100vw, 52vw"
-                      data-page-module-field="image_url"
                     />
                     <div className="absolute inset-0 bg-[#11100E]/10" />
                   </div>
@@ -1121,17 +1178,12 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
         style={{ minHeight: 'clamp(440px, 52vw, 660px)' }}
         data-page-module-item={featuredCard.id}
       >
-        {featuredCard.image ? (
-          <Image
-            src={featuredCard.image}
-            alt={featuredCard.title || title}
-            fill
-            loading="lazy"
-            className="object-cover transition duration-700 group-hover:scale-[1.025]"
-            sizes="(max-width: 1024px) 100vw, 70vw"
-            data-page-module-field="image_url"
-          />
-        ) : null}
+        <HomepageVisualCardMedia
+          card={featuredCard}
+          altFallback={title}
+          className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.025]"
+          sizes="(max-width: 1024px) 100vw, 70vw"
+        />
         <div
           className="absolute inset-0"
           style={{
@@ -1233,17 +1285,12 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                         data-page-module-item={card.id}
                       >
                         <div className="relative w-28 shrink-0 overflow-hidden bg-[#241F1B] sm:w-36 lg:w-32" style={{ minHeight: 150 }}>
-                          {card.image ? (
-                            <Image
-                              src={card.image}
-                              alt={card.title || title}
-                              fill
-                              loading="lazy"
-                              className="object-cover transition duration-700 group-hover:scale-[1.035]"
-                              sizes="160px"
-                              data-page-module-field="image_url"
-                            />
-                          ) : null}
+                          <HomepageVisualCardMedia
+                            card={card}
+                            altFallback={title}
+                            className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.035]"
+                            sizes="160px"
+                          />
                           <div className="absolute inset-0 bg-[#11100E]/18" />
                         </div>
                         <div className="flex min-w-0 flex-col justify-between p-4">
@@ -1369,17 +1416,12 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                     style={{ minHeight: 'clamp(240px, 24vw, 320px)' }}
                     data-page-module-item={card.id}
                   >
-                    {card.image ? (
-                      <Image
-                        src={card.image}
-                        alt={card.title || title}
-                        fill
-                        loading="lazy"
-                        className="object-cover transition duration-700 group-hover:scale-[1.03]"
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        data-page-module-field="image_url"
-                      />
-                    ) : null}
+                    <HomepageVisualCardMedia
+                      card={card}
+                      altFallback={title}
+                      className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]"
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                    />
                     <div
                       className="absolute inset-0"
                       style={{
@@ -1506,17 +1548,12 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                     style={{ minHeight: 'clamp(360px, 36vw, 440px)' }}
                     data-page-module-item={card.id}
                   >
-                    {card.image ? (
-                      <Image
-                        src={card.image}
-                        alt={card.title || title}
-                        fill
-                        loading="lazy"
-                        className="object-cover transition duration-700 group-hover:scale-[1.03]"
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        data-page-module-field="image_url"
-                      />
-                    ) : null}
+                    <HomepageVisualCardMedia
+                      card={card}
+                      altFallback={title}
+                      className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]"
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                    />
                     <div
                       className="absolute inset-0"
                       style={{
@@ -1708,16 +1745,13 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                           className="group grid overflow-hidden border border-white/12 bg-white/[0.06] text-white sm:grid-cols-[132px_minmax(0,1fr)] lg:grid-cols-[116px_minmax(0,1fr)]"
                           data-page-module-item={card.id}
                         >
-                          {card.image ? (
+                          {(card.image || card.video) ? (
                             <div className="relative min-h-[112px] overflow-hidden bg-[#241F1B]">
-                              <Image
-                                src={card.image}
-                                alt={card.title || title}
-                                fill
-                                loading="lazy"
+                              <HomepageVisualCardMedia
+                                card={card}
+                                altFallback={title}
                                 className="object-cover transition duration-700 group-hover:scale-[1.035]"
                                 sizes="132px"
-                                data-page-module-field="image_url"
                               />
                               <div className="absolute inset-0 bg-[#11100E]/18" />
                             </div>
@@ -1819,17 +1853,12 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                   className="group relative flex min-h-[460px] overflow-hidden bg-[#241F1B] lg:min-h-[660px]"
                   data-page-module-item={featuredCard.id}
                 >
-                  {featuredCard.image ? (
-                    <Image
-                      src={featuredCard.image}
-                      alt={featuredCard.title}
-                      fill
-                      loading="lazy"
-                      className="object-cover transition duration-700 group-hover:scale-[1.035]"
-                      sizes="(max-width: 1024px) 100vw, 62vw"
-                      data-page-module-field="image_url"
-                    />
-                  ) : null}
+                  <HomepageVisualCardMedia
+                    card={featuredCard}
+                    altFallback={title}
+                    className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.035]"
+                    sizes="(max-width: 1024px) 100vw, 62vw"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#11100E]/94 via-[#11100E]/34 to-transparent" />
                   <div className="relative mt-auto max-w-3xl p-6 text-white sm:p-8 lg:p-10">
                     {featuredCard.meta ? (
@@ -1875,16 +1904,13 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                       className={`${isDark ? 'border-white/12 bg-white/[0.06]' : 'border-[#E5DED4] bg-white'} group grid min-h-[220px] overflow-hidden border sm:grid-cols-[0.88fr_1.12fr] lg:min-h-[213px]`}
                       data-page-module-item={card.id}
                     >
-                      {card.image ? (
+                      {(card.image || card.video) ? (
                         <div className="relative min-h-[180px] overflow-hidden bg-[#DCD5CC] sm:min-h-full">
-                          <Image
-                            src={card.image}
-                            alt={card.title}
-                            fill
-                            loading="lazy"
+                          <HomepageVisualCardMedia
+                            card={card}
+                            altFallback={title}
                             className="object-cover transition duration-700 group-hover:scale-[1.035]"
                             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 42vw, 22vw"
-                            data-page-module-field="image_url"
                           />
                         </div>
                       ) : null}

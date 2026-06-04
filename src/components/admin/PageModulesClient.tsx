@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { Eye, EyeOff, Plus, Save } from 'lucide-react'
+import { Eye, EyeOff, Plus, Save, Video } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
@@ -26,6 +26,22 @@ const PAGE_LABELS = {
   account: '账户中心',
   site: '导航 / 页脚',
 } satisfies Record<string, string>
+
+const HOME_CARD_MODULE_TYPES = new Set([
+  'large-product-cards',
+  'model-strip',
+  'innovation-story',
+  'scenario-tiles',
+  'future-explorer',
+  'product-series',
+  'model-grid',
+  'application-scenes',
+  'project-proof',
+])
+
+function isHomeCardModule(pageModule: PageModuleRow | undefined) {
+  return Boolean(pageModule && pageModule.page_key === 'home' && HOME_CARD_MODULE_TYPES.has(pageModule.module_type))
+}
 
 function pageLabel(pageKey: string) {
   return PAGE_LABELS[pageKey as keyof typeof PAGE_LABELS] ?? pageKey
@@ -65,6 +81,8 @@ function comparableModule(pageModule: PageModuleRow) {
     items: pageModule.items.map((item) => ({
       id: item.id,
       image_url: item.image_url ?? '',
+      video_url: item.video_url ?? '',
+      video_poster_url: item.video_poster_url ?? '',
       href: item.href ?? '',
       value_zh: item.value_zh ?? '',
       value_en: item.value_en ?? '',
@@ -181,23 +199,36 @@ export default function PageModulesClient({
   const addItem = () => {
     if (!active) return
     const maxSort = active.items.reduce((max, item) => Math.max(max, Number(item.sort_order) || 0), 0)
+    const homeCardModule = isHomeCardModule(active)
+    const nextCardNumber = homeCardModule
+      ? active.items.reduce((max, item) => {
+          const match = item.id.match(/^card-(\d+)$/)
+          const value = match ? Number(match[1]) : 0
+          return Number.isFinite(value) ? Math.max(max, value) : max
+        }, 0) + 1
+      : 0
     const item: PageModuleItem = {
-      id: `${active.module_key}-item-${Date.now()}`,
+      id: homeCardModule ? `card-${String(nextCardNumber).padStart(2, '0')}` : `${active.module_key}-item-${Date.now()}`,
       label_zh: '新项目',
       label_en: 'New item',
       is_visible: true,
       sort_order: maxSort + 10,
     }
 
-    if (active.module_type.includes('gallery')) {
+    if (active.module_type.includes('gallery') || homeCardModule) {
       item.image_url = ''
     }
 
-    if (active.module_type === 'list') {
+    if (active.module_type === 'list' || homeCardModule) {
       item.value_zh = ''
       item.value_en = ''
       item.content_zh = ''
       item.content_en = ''
+    }
+    if (homeCardModule) {
+      item.href = ''
+      item.video_url = ''
+      item.video_poster_url = ''
     }
 
     patchActive({ items: [...active.items, item] })
@@ -211,25 +242,34 @@ export default function PageModulesClient({
 
   const isStatsModule = active?.module_type === 'stats'
   const isListModule = active?.module_type === 'list'
+  const activeIsHomeCardModule = isHomeCardModule(active)
 
   const isImageItem = (item: PageModuleItem) => (
     Boolean(item.image_url) ||
     item.id.includes('image') ||
-    Boolean(active?.module_type.includes('gallery'))
+    Boolean(active?.module_type.includes('gallery')) ||
+    (activeIsHomeCardModule && item.id.startsWith('card-'))
+  )
+
+  const isVideoItem = (item: PageModuleItem) => (
+    Boolean(item.video_url?.trim() || item.video_poster_url?.trim()) ||
+    (activeIsHomeCardModule && item.id.startsWith('card-'))
   )
 
   const showValueFields = (item: PageModuleItem) => (
     isStatsModule ||
     isListModule ||
+    (activeIsHomeCardModule && item.id.startsWith('card-')) ||
     Boolean(item.value_zh) ||
     Boolean(item.value_en)
   )
 
-  const isLinkItem = (item: PageModuleItem) => item.id.includes('cta') || Boolean(item.href)
+  const isLinkItem = (item: PageModuleItem) => item.id.includes('cta') || Boolean(item.href) || (activeIsHomeCardModule && item.id.startsWith('card-'))
 
   const isContentItem = (item: PageModuleItem) => (
     Boolean(item.content_zh) ||
     Boolean(item.content_en) ||
+    (activeIsHomeCardModule && item.id.startsWith('card-')) ||
     item.id.includes('paragraph') ||
     item.id.includes('body') ||
     (item.id.startsWith('timeline-') && item.id !== 'timeline-kicker' && item.id !== 'timeline-heading') ||
@@ -406,6 +446,7 @@ export default function PageModulesClient({
               <div className="grid grid-cols-1 gap-4 2xl:grid-cols-2">
                 {active.items.map((item) => {
                   const showImage = isImageItem(item)
+                  const showVideo = isVideoItem(item)
                   const showLink = isLinkItem(item)
                   const showContent = isContentItem(item)
                   return (
@@ -415,7 +456,16 @@ export default function PageModulesClient({
                   >
                     {showImage ? (
                       <div className="overflow-hidden rounded-md bg-white">
-                        {item.image_url ? (
+                        {item.video_url ? (
+                          <video
+                            src={item.video_url}
+                            poster={item.video_poster_url || item.image_url || undefined}
+                            muted
+                            playsInline
+                            preload="metadata"
+                            className="h-28 w-full object-contain p-2"
+                          />
+                        ) : item.image_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={item.image_url} alt="" className="h-28 w-full object-contain p-2" />
                         ) : null}
@@ -463,6 +513,29 @@ export default function PageModulesClient({
                             onChange={(e) => patchItem(item.id, { image_url: e.target.value })}
                             placeholder="图片 URL（可手动粘贴）"
                           />
+                        </div>
+                      ) : null}
+                      {showVideo ? (
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <label className="flex flex-col gap-1 text-xs text-[#8A8580]">
+                            <span className="inline-flex items-center gap-1">
+                              <Video size={12} />
+                              视频 URL
+                            </span>
+                            <Input
+                              value={item.video_url ?? ''}
+                              onChange={(e) => patchItem(item.id, { video_url: e.target.value })}
+                              placeholder="https://...mp4"
+                            />
+                          </label>
+                          <label className="flex flex-col gap-1 text-xs text-[#8A8580]">
+                            <span>视频封面 URL</span>
+                            <Input
+                              value={item.video_poster_url ?? ''}
+                              onChange={(e) => patchItem(item.id, { video_poster_url: e.target.value })}
+                              placeholder="https://...jpg"
+                            />
+                          </label>
                         </div>
                       ) : null}
                       {showValueFields(item) ? (

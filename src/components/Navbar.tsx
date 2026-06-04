@@ -108,8 +108,8 @@ export default function Navbar() {
                 alt={logoAlt}
                 height={40}
                 width={160}
-                style={{ height: '40px', width: 'auto', objectFit: 'contain' }}
-                className="h-7 lg:h-[40px]"
+                style={{ objectFit: 'contain' }}
+                className="h-6 w-auto max-w-[176px] sm:h-7 sm:max-w-[210px] lg:h-[40px] lg:max-w-none"
                 priority
                 unoptimized
               />

@@ -18,6 +18,8 @@ type Ctx = { params: Promise<{ pageKey: string; moduleKey: string }> }
 const itemSchema = z.object({
   id: z.string().min(1).max(120),
   image_url: z.string().max(500).optional(),
+  video_url: z.string().max(500).optional(),
+  video_poster_url: z.string().max(500).optional(),
   href: z.string().max(500).optional(),
   value_zh: z.string().max(80).optional(),
   value_en: z.string().max(80).optional(),

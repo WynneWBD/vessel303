@@ -30,6 +30,8 @@ export type PageModuleTemplateField = {
 export type PageModuleTemplateItem = {
   id: string
   image_url?: string
+  video_url?: string
+  video_poster_url?: string
   href?: string
   value_zh?: string
   value_en?: string
@@ -62,6 +64,11 @@ export type PageModuleTemplate = {
   defaultContent: PageModuleTemplateContent
   fields: PageModuleTemplateField[]
 }
+
+const VISUAL_CARD_MEDIA_FIELDS: PageModuleTemplateField[] = [
+  { id: 'card-01.video_url', label: 'Card video URL', type: 'url', required: false, maxLength: 500 },
+  { id: 'card-01.video_poster_url', label: 'Card video poster', type: 'url', required: false, maxLength: 500 },
+]
 
 export const PAGE_MODULE_TEMPLATES: PageModuleTemplate[] = [
   {
@@ -214,6 +221,7 @@ export const PAGE_MODULE_TEMPLATES: PageModuleTemplate[] = [
       { id: 'card-01.content_zh', label: '卡片中文说明', type: 'textarea', required: false, maxLength: 800 },
       { id: 'card-01.content_en', label: 'Card description', type: 'textarea', required: false, maxLength: 1000 },
       { id: 'card-01.href', label: '卡片链接', type: 'url', required: false, maxLength: 500 },
+      ...VISUAL_CARD_MEDIA_FIELDS,
       { id: 'primary-cta.label_zh', label: '主按钮中文', type: 'text', required: false, maxLength: 500 },
       { id: 'primary-cta.label_en', label: 'Primary button', type: 'text', required: false, maxLength: 700 },
       { id: 'primary-cta.href', label: '主按钮链接', type: 'url', required: false, maxLength: 500 },
@@ -250,6 +258,7 @@ export const PAGE_MODULE_TEMPLATES: PageModuleTemplate[] = [
       { id: 'card-01.label_en', label: 'Card title', type: 'text', required: false, maxLength: 180 },
       { id: 'card-01.content_en', label: 'Card description', type: 'textarea', required: false, maxLength: 1000 },
       { id: 'card-01.href', label: 'Card link', type: 'url', required: false, maxLength: 500 },
+      ...VISUAL_CARD_MEDIA_FIELDS,
       { id: 'primary-cta.label_en', label: 'Primary button', type: 'text', required: false, maxLength: 700 },
       { id: 'primary-cta.href', label: 'Primary link', type: 'url', required: false, maxLength: 500 },
     ],
@@ -285,6 +294,7 @@ export const PAGE_MODULE_TEMPLATES: PageModuleTemplate[] = [
       { id: 'card-01.label_en', label: 'Card title', type: 'text', required: false, maxLength: 180 },
       { id: 'card-01.content_en', label: 'Card description', type: 'textarea', required: false, maxLength: 1000 },
       { id: 'card-01.href', label: 'Card link', type: 'url', required: false, maxLength: 500 },
+      ...VISUAL_CARD_MEDIA_FIELDS,
       { id: 'primary-cta.label_en', label: 'Primary button', type: 'text', required: false, maxLength: 700 },
       { id: 'primary-cta.href', label: 'Primary link', type: 'url', required: false, maxLength: 500 },
     ],
@@ -320,6 +330,7 @@ export const PAGE_MODULE_TEMPLATES: PageModuleTemplate[] = [
       { id: 'card-01.label_en', label: 'Card title', type: 'text', required: false, maxLength: 180 },
       { id: 'card-01.content_en', label: 'Card description', type: 'textarea', required: false, maxLength: 1000 },
       { id: 'card-01.href', label: 'Card link', type: 'url', required: false, maxLength: 500 },
+      ...VISUAL_CARD_MEDIA_FIELDS,
       { id: 'primary-cta.label_en', label: 'Primary button', type: 'text', required: false, maxLength: 700 },
       { id: 'primary-cta.href', label: 'Primary link', type: 'url', required: false, maxLength: 500 },
     ],
@@ -355,6 +366,7 @@ export const PAGE_MODULE_TEMPLATES: PageModuleTemplate[] = [
       { id: 'card-01.label_en', label: 'Card title', type: 'text', required: false, maxLength: 180 },
       { id: 'card-01.content_en', label: 'Card description', type: 'textarea', required: false, maxLength: 1000 },
       { id: 'card-01.href', label: 'Card link', type: 'url', required: false, maxLength: 500 },
+      ...VISUAL_CARD_MEDIA_FIELDS,
       { id: 'primary-cta.label_en', label: 'Primary button', type: 'text', required: false, maxLength: 700 },
       { id: 'primary-cta.href', label: 'Primary link', type: 'url', required: false, maxLength: 500 },
     ],
@@ -421,6 +433,7 @@ export const PAGE_MODULE_TEMPLATES: PageModuleTemplate[] = [
       { id: 'card-01.label_en', label: 'Card title', type: 'text', required: false, maxLength: 180 },
       { id: 'card-01.content_en', label: 'Card description', type: 'textarea', required: false, maxLength: 1000 },
       { id: 'card-01.href', label: 'Card link', type: 'url', required: false, maxLength: 500 },
+      ...VISUAL_CARD_MEDIA_FIELDS,
       { id: 'primary-cta.label_en', label: 'Primary button', type: 'text', required: false, maxLength: 700 },
       { id: 'primary-cta.href', label: 'Primary link', type: 'url', required: false, maxLength: 500 },
     ],
@@ -456,6 +469,7 @@ export const PAGE_MODULE_TEMPLATES: PageModuleTemplate[] = [
       { id: 'card-01.label_en', label: 'Card title', type: 'text', required: false, maxLength: 180 },
       { id: 'card-01.content_en', label: 'Card description', type: 'textarea', required: false, maxLength: 1000 },
       { id: 'card-01.href', label: 'Card link', type: 'url', required: false, maxLength: 500 },
+      ...VISUAL_CARD_MEDIA_FIELDS,
       { id: 'primary-cta.label_en', label: 'Primary button', type: 'text', required: false, maxLength: 700 },
       { id: 'primary-cta.href', label: 'Primary link', type: 'url', required: false, maxLength: 500 },
     ],
@@ -490,6 +504,7 @@ export const PAGE_MODULE_TEMPLATES: PageModuleTemplate[] = [
       { id: 'card-01.label_en', label: 'Card title', type: 'text', required: false, maxLength: 180 },
       { id: 'card-01.content_en', label: 'Card description', type: 'textarea', required: false, maxLength: 1000 },
       { id: 'card-01.href', label: 'Card link', type: 'url', required: false, maxLength: 500 },
+      ...VISUAL_CARD_MEDIA_FIELDS,
       { id: 'primary-cta.label_en', label: 'Primary button', type: 'text', required: false, maxLength: 700 },
       { id: 'primary-cta.href', label: 'Primary link', type: 'url', required: false, maxLength: 500 },
     ],
@@ -525,6 +540,7 @@ export const PAGE_MODULE_TEMPLATES: PageModuleTemplate[] = [
       { id: 'card-01.label_en', label: 'Card title', type: 'text', required: false, maxLength: 180 },
       { id: 'card-01.content_en', label: 'Card description', type: 'textarea', required: false, maxLength: 1000 },
       { id: 'card-01.href', label: 'Card link', type: 'url', required: false, maxLength: 500 },
+      ...VISUAL_CARD_MEDIA_FIELDS,
       { id: 'primary-cta.label_en', label: 'Primary button', type: 'text', required: false, maxLength: 700 },
       { id: 'primary-cta.href', label: 'Primary link', type: 'url', required: false, maxLength: 500 },
     ],
@@ -559,6 +575,7 @@ export const PAGE_MODULE_TEMPLATES: PageModuleTemplate[] = [
       { id: 'card-01.label_en', label: 'Card title', type: 'text', required: false, maxLength: 180 },
       { id: 'card-01.content_en', label: 'Card description', type: 'textarea', required: false, maxLength: 1000 },
       { id: 'card-01.href', label: 'Card link', type: 'url', required: false, maxLength: 500 },
+      ...VISUAL_CARD_MEDIA_FIELDS,
       { id: 'primary-cta.label_en', label: 'Primary button', type: 'text', required: false, maxLength: 700 },
       { id: 'primary-cta.href', label: 'Primary link', type: 'url', required: false, maxLength: 500 },
     ],

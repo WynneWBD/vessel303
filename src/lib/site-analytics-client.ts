@@ -15,6 +15,9 @@ type TrackOptions = {
 
 const VISITOR_KEY = 'vessel303.analytics.visitor'
 const SESSION_KEY = 'vessel303.analytics.session'
+const SITE_ANALYTICS_DISABLED = ['1', 'true'].includes(
+  (process.env.NEXT_PUBLIC_DISABLE_SITE_ANALYTICS ?? '').toLowerCase(),
+)
 
 function getStorageId(storage: Storage, key: string) {
   const existing = storage.getItem(key)
@@ -84,6 +87,7 @@ export function sourceFromHref(href: string | null | undefined) {
 
 export function trackSiteEvent(eventName: SiteAnalyticsEventName, options: TrackOptions = {}) {
   if (typeof window === 'undefined') return
+  if (SITE_ANALYTICS_DISABLED) return
   if (navigator.doNotTrack === '1') return
 
   const pathname = options.path || window.location.pathname

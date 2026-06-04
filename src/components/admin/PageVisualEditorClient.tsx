@@ -26,6 +26,7 @@ import {
   Tablet,
   Trash2,
   Type,
+  Video,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -76,6 +77,8 @@ const HOME_CARD_MODULE_TYPES = new Set([
   'application-scenes',
   'project-proof',
 ])
+
+const HIGH_IMPACT_ITEM_FIELDS = new Set(['image_url', 'video_url', 'video_poster_url', 'href'])
 
 type HighlightRect = {
   top: number
@@ -390,6 +393,8 @@ function comparableModule(pageModule: PageModuleRow | PageModuleLiveState) {
     items: pageModule.items.map((item) => ({
       id: item.id,
       image_url: item.image_url ?? '',
+      video_url: item.video_url ?? '',
+      video_poster_url: item.video_poster_url ?? '',
       href: item.href ?? '',
       value_zh: item.value_zh ?? '',
       value_en: item.value_en ?? '',
@@ -475,6 +480,14 @@ function isImageItem(pageModule: PageModuleRow, item: PageModuleItem) {
   )
 }
 
+function isVideoItem(pageModule: PageModuleRow, item: PageModuleItem) {
+  return Boolean(item.video_url?.trim() || item.video_poster_url?.trim()) || isHomeCardItem(pageModule, item)
+}
+
+function itemHasVisualMedia(item: PageModuleItem) {
+  return Boolean(item.image_url?.trim() || item.video_url?.trim())
+}
+
 function isLinkItem(item: PageModuleItem) {
   return Boolean(item.href) || item.id.includes('cta')
 }
@@ -512,6 +525,8 @@ function fieldLabel(field: string) {
     content_zh: '中文正文',
     content_en: '英文正文',
     image_url: '图片',
+    video_url: '视频 URL',
+    video_poster_url: '视频封面',
     href: '链接',
   }
   return labels[field] ?? field
@@ -706,6 +721,8 @@ function buildModuleChanges(current: PageModuleRow, baseline?: PageModuleLiveSta
       'content_zh',
       'content_en',
       'image_url',
+      'video_url',
+      'video_poster_url',
       'href',
     ] as const
     for (const field of itemFields) {
@@ -713,7 +730,7 @@ function buildModuleChanges(current: PageModuleRow, baseline?: PageModuleLiveSta
         changes.push({
           label: `${readableItemTitle(item)} / ${fieldLabel(field)}`,
           detail: `${readableValue(before[field])} -> ${readableValue(item[field])}`,
-          severity: field === 'image_url' || field === 'href' ? 'high' : 'low',
+          severity: HIGH_IMPACT_ITEM_FIELDS.has(field) ? 'high' : 'low',
         })
       }
     }
@@ -790,17 +807,17 @@ function buildPreflightIssues(pageModule: PageModuleRow | undefined): PreflightI
         item.content_en?.trim(),
     )
 
-    if (!hasReadableText && !item.image_url?.trim()) {
+    if (!hasReadableText && !itemHasVisualMedia(item)) {
       issues.push({
         label: `空条目：${item.id}`,
-        detail: '这个条目没有文字，也没有图片。',
+        detail: '这个条目没有文字，也没有图片或视频。',
         severity: 'warning',
       })
     }
 
-    if (isImageItem(pageModule, item) && !item.image_url?.trim()) {
+    if (isImageItem(pageModule, item) && !itemHasVisualMedia(item)) {
       issues.push({
-        label: `图片为空：${readableItemTitle(item)}`,
+        label: `图片或视频为空：${readableItemTitle(item)}`,
         detail: `item ID：${item.id}`,
         severity: 'danger',
       })
@@ -1086,6 +1103,8 @@ export default function PageVisualEditorClient({
     }
     if (isHomeCardModule) {
       item.href = ''
+      item.video_url = ''
+      item.video_poster_url = ''
     }
 
     patchActive({ items: [...active.items, item] })
@@ -2587,6 +2606,7 @@ export default function PageVisualEditorClient({
 
                 {activeItems.map((item, itemIndex) => {
                   const showImage = isImageItem(active, item)
+                  const showVideo = isVideoItem(active, item)
                   const showLink = isLinkItem(item)
                   const showValue = showValueFields(active, item)
                   const showContent = showContentFields(active, item)
@@ -2663,6 +2683,38 @@ export default function PageVisualEditorClient({
                               placeholder="图片 URL"
                               className="mt-2 bg-white"
                             />
+                          </div>
+                        ) : null}
+
+                        {showVideo ? (
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <div ref={bindFieldRef(item.id, 'video_url')} className={fieldClassName(item.id, 'video_url')}>
+                              <div className="mb-2 flex items-center gap-2 text-xs font-medium text-[#8A8580]">
+                                <Video size={13} />
+                                <span>视频 URL</span>
+                              </div>
+                              <Input
+                                value={item.video_url ?? ''}
+                                onChange={(event) => patchItem(item.id, { video_url: event.target.value })}
+                                placeholder="https://...mp4"
+                                className="bg-white"
+                              />
+                            </div>
+                            <div
+                              ref={bindFieldRef(item.id, 'video_poster_url')}
+                              className={fieldClassName(item.id, 'video_poster_url')}
+                            >
+                              <div className="mb-2 flex items-center gap-2 text-xs font-medium text-[#8A8580]">
+                                <ImageIcon size={13} />
+                                <span>视频封面 URL</span>
+                              </div>
+                              <Input
+                                value={item.video_poster_url ?? ''}
+                                onChange={(event) => patchItem(item.id, { video_poster_url: event.target.value })}
+                                placeholder="https://...jpg"
+                                className="bg-white"
+                              />
+                            </div>
                           </div>
                         ) : null}
 

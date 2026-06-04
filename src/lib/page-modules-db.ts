@@ -72,6 +72,8 @@ export function pageModulePublicPaths(pageKey: string): string[] {
 export type PageModuleItem = {
   id: string
   image_url?: string
+  video_url?: string
+  video_poster_url?: string
   href?: string
   value_zh?: string
   value_en?: string
@@ -2208,15 +2210,35 @@ function pageStructureRendererKey(pageKey: string, moduleKey: string) {
   return PAGE_MODULE_RENDERER_KEYS[`${pageKey}:${moduleKey}`] ?? `${pageKey}.${moduleKey}`
 }
 
+function firstStringValue(...values: unknown[]) {
+  for (const value of values) {
+    if (typeof value === 'string') return value
+  }
+  return undefined
+}
+
 function normalizeItems(value: unknown): PageModuleItem[] {
   if (!Array.isArray(value)) return []
   const items: PageModuleItem[] = []
   value.forEach((item, index) => {
     if (!item || typeof item !== 'object') return
     const raw = item as Partial<PageModuleItem>
+    const rawMedia = raw as Partial<PageModuleItem> & Record<string, unknown>
+    const videoUrl = firstStringValue(raw.video_url, rawMedia.videoUrl, rawMedia.videoUrl_symbol, rawMedia.video_url_symbol)
+    const videoPosterUrl = firstStringValue(
+      raw.video_poster_url,
+      rawMedia.video_poster,
+      rawMedia.videoPosterUrl,
+      rawMedia.video_cover_url,
+      rawMedia.videoCoverUrl,
+      rawMedia.videoCoverUrl_symbol,
+      rawMedia.video_cover_url_symbol,
+    )
     items.push({
       id: typeof raw.id === 'string' && raw.id ? raw.id : `item-${index + 1}`,
       image_url: typeof raw.image_url === 'string' ? raw.image_url : undefined,
+      video_url: videoUrl,
+      video_poster_url: videoPosterUrl,
       href: typeof raw.href === 'string' ? raw.href : undefined,
       value_zh: typeof raw.value_zh === 'string' ? raw.value_zh : undefined,
       value_en: typeof raw.value_en === 'string' ? raw.value_en : undefined,

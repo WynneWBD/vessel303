@@ -3,6 +3,8 @@
 export type PublicPageModuleItem = {
   id: string
   image_url?: string
+  video_url?: string
+  video_poster_url?: string
   href?: string
   value_zh?: string
   value_en?: string

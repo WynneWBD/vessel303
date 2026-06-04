@@ -33,6 +33,8 @@ export default function FloatingContact() {
   const pathname = usePathname();
   const { lang } = useLanguage();
   const [siteModules, setSiteModules] = useState<PublicPageModule[] | null>(null);
+  const isHomePath = pathname === '/';
+  const [showHomeMobileActions, setShowHomeMobileActions] = useState(false);
 
   useEffect(() => {
     if (pathname?.startsWith('/global')) return;
@@ -44,6 +46,23 @@ export default function FloatingContact() {
       });
     return () => controller.abort();
   }, [pathname]);
+
+  useEffect(() => {
+    if (!isHomePath) return;
+
+    const updateHomeMobileActions = () => {
+      setShowHomeMobileActions(window.scrollY > Math.max(480, window.innerHeight * 0.86));
+    };
+
+    const initialFrame = window.requestAnimationFrame(updateHomeMobileActions);
+    window.addEventListener('scroll', updateHomeMobileActions, { passive: true });
+    window.addEventListener('resize', updateHomeMobileActions);
+    return () => {
+      window.cancelAnimationFrame(initialFrame);
+      window.removeEventListener('scroll', updateHomeMobileActions);
+      window.removeEventListener('resize', updateHomeMobileActions);
+    };
+  }, [isHomePath]);
 
   if (pathname?.startsWith('/global')) return null;
 
@@ -113,7 +132,12 @@ export default function FloatingContact() {
       <div className="fixed right-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-end gap-2 lg:flex" data-floating-contact="desktop">
         {items.map((item) => renderAction(item, 'desktop'))}
       </div>
-      <div className="fixed bottom-4 left-4 right-4 z-40 flex gap-2 lg:hidden" data-floating-contact="mobile">
+      <div
+        className={`fixed bottom-4 left-4 right-4 z-40 flex gap-2 transition duration-300 lg:hidden ${
+          isHomePath && !showHomeMobileActions ? 'pointer-events-none translate-y-4 opacity-0' : 'translate-y-0 opacity-100'
+        }`}
+        data-floating-contact="mobile"
+      >
         {items.slice(0, 3).map((item) => renderAction(item, 'mobile'))}
       </div>
     </>
