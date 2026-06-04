@@ -1019,65 +1019,78 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
   if (!title && !description && cards.length === 0) return null;
 
   if (isLargeProducts) {
+    const hasHeader = Boolean(eyebrow || title || description);
+
     return (
       <section
-        className="border-b border-[#E5DED4] bg-[#F7F1E9] py-8 text-[#241F1B] lg:py-9"
-        style={{ backgroundColor: '#F7F1E9', color: '#241F1B' }}
+        className="border-b border-[#E5DED4] bg-[#F3EEE7] py-4 text-[#11100E] lg:py-5"
+        style={{ backgroundColor: '#F3EEE7', color: '#11100E' }}
         data-page-module={`home:${pageModule.module_key}`}
         data-page-key="home"
         data-module-key={pageModule.module_key}
       >
-        <div className="mx-auto max-w-[1520px] px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:items-end">
-            <div>
-              {eyebrow ? (
+        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
+          {hasHeader ? (
+            <div className="mb-5 grid gap-4 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:items-end">
+              <div>
+                {eyebrow ? (
+                  <p
+                    className="mb-2 text-xs font-semibold text-[#E36F2C]"
+                    data-page-module-item="eyebrow"
+                    data-page-module-field={`label_${lang}`}
+                  >
+                    {eyebrow}
+                  </p>
+                ) : null}
+                {title ? (
+                  <h2
+                    className="max-w-4xl break-words font-[family-name:var(--font-heading)] text-2xl font-light leading-[1.04] sm:text-3xl lg:text-4xl"
+                    data-page-module-field={`title_${lang}`}
+                  >
+                    {title}
+                  </h2>
+                ) : null}
+              </div>
+              {description ? (
                 <p
-                  className="mb-2 text-xs font-semibold text-[#E36F2C]"
-                  data-page-module-item="eyebrow"
-                  data-page-module-field={`label_${lang}`}
+                  className="max-w-3xl text-sm leading-6 text-[#6B625B] sm:text-base lg:ml-auto"
+                  data-page-module-field={`description_${lang}`}
                 >
-                  {eyebrow}
+                  {description}
                 </p>
               ) : null}
-              {title ? (
-                <h2
-                  className="max-w-4xl font-[family-name:var(--font-heading)] text-2xl font-light leading-[1.04] sm:text-3xl lg:text-4xl"
-                  data-page-module-field={`title_${lang}`}
-                >
-                  {title}
-                </h2>
-              ) : null}
             </div>
-            {description ? (
-              <p
-                className="max-w-3xl text-sm leading-6 text-[#6B625B] sm:text-base lg:ml-auto"
-                data-page-module-field={`description_${lang}`}
-              >
-                {description}
-              </p>
-            ) : null}
-          </div>
+          ) : null}
 
           {cards.length > 0 ? (
-            <div className="mt-5 grid gap-3">
+            <div className="grid gap-4 lg:grid-cols-2">
               {cards.map((card, index) => {
-                const imagePanel = (card.image || card.video) ? (
-                  <div className={`${index % 2 === 1 ? 'lg:order-2' : ''} relative min-h-[220px] overflow-hidden bg-[#DCD5CC] sm:min-h-[270px] lg:min-h-full`}>
-                    <HomepageVisualCardMedia
-                      card={card}
-                      altFallback={title}
-                      className="object-cover transition duration-700 group-hover:scale-[1.025]"
-                      sizes="(max-width: 1024px) 100vw, 52vw"
+                const isWideCard = index === 0 || (index === 3 && cards.length === 4);
+                const cardPrimaryHref = card.href || primaryHref;
+                const productCard = (
+                  <article
+                    className="group relative flex overflow-hidden bg-[#DCD5CC]"
+                    style={{ minHeight: isWideCard ? 'clamp(390px, 42vw, 560px)' : 'clamp(340px, 31vw, 440px)' }}
+                    data-page-module-item={card.id}
+                  >
+                    {(card.image || card.video) ? (
+                      <HomepageVisualCardMedia
+                        card={card}
+                        altFallback={title}
+                        className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.025]"
+                        sizes={isWideCard ? '100vw' : '(max-width: 1024px) 100vw, 50vw'}
+                      />
+                    ) : null}
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        background: 'linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.34) 34%, rgba(255,255,255,0.08) 70%, rgba(255,255,255,0.16) 100%)',
+                      }}
                     />
-                    <div className="absolute inset-0 bg-[#11100E]/10" />
-                  </div>
-                ) : null;
-
-                const contentPanel = (
-                  <div className={`${index % 2 === 1 ? 'lg:order-1' : ''} flex flex-col justify-center bg-white p-5 sm:p-6 lg:p-8`}>
+                    <div className="relative mx-auto flex w-full max-w-3xl flex-col items-center px-5 pb-8 pt-8 text-center sm:px-8 lg:pt-10">
                     {card.meta ? (
                       <p
-                        className="mb-3 text-[11px] font-semibold text-[#E36F2C]"
+                        className="mb-3 max-w-full break-words text-sm font-medium text-[#11100E] sm:text-base"
                         data-page-module-field={`value_${lang}`}
                       >
                         {card.meta}
@@ -1085,7 +1098,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                     ) : null}
                     {card.title ? (
                       <h3
-                        className="font-[family-name:var(--font-heading)] text-2xl font-light leading-tight sm:text-3xl lg:text-4xl"
+                        className="max-w-full break-words font-[family-name:var(--font-heading)] text-3xl font-light leading-tight sm:text-4xl lg:text-5xl"
                         data-page-module-field={`label_${lang}`}
                       >
                         {card.title}
@@ -1093,64 +1106,50 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                     ) : null}
                     {card.body ? (
                       <p
-                        className="mt-4 max-w-2xl text-sm leading-6 text-[#6B625B] sm:text-base"
+                        className="mt-4 max-w-2xl break-words text-sm font-medium uppercase leading-6 text-[#11100E]/86 sm:text-base"
                         data-page-module-field={`content_${lang}`}
                       >
                         {card.body}
                       </p>
                     ) : null}
-                    {card.href ? (
-                      <ChevronRight className="mt-5 h-5 w-5 text-[#E36F2C] transition group-hover:translate-x-1" aria-hidden="true" />
+                    {((primaryLabel && cardPrimaryHref) || (secondaryLabel && secondaryHref)) ? (
+                      <div className="mt-7 flex flex-wrap items-center justify-center gap-8 text-sm text-[#11100E] sm:text-base">
+                        {primaryLabel && cardPrimaryHref ? (
+                          <Link
+                            href={cardPrimaryHref}
+                            {...externalLinkProps(cardPrimaryHref)}
+                            className="inline-flex items-center gap-2 font-medium transition hover:text-[#E36F2C]"
+                            data-page-module-item="primary-cta"
+                            data-page-module-field={`label_${lang}`}
+                          >
+                            <span>{primaryLabel}</span>
+                            <ChevronRight aria-hidden="true" className="h-4 w-4 transition group-hover:translate-x-1" />
+                          </Link>
+                        ) : null}
+                        {secondaryLabel && secondaryHref ? (
+                          <Link
+                            href={secondaryHref}
+                            {...externalLinkProps(secondaryHref)}
+                            className="inline-flex items-center gap-2 font-medium transition hover:text-[#E36F2C]"
+                            data-page-module-item="secondary-cta"
+                            data-page-module-field={`label_${lang}`}
+                          >
+                            <span>{secondaryLabel}</span>
+                            <ChevronRight aria-hidden="true" className="h-4 w-4" />
+                          </Link>
+                        ) : null}
+                      </div>
                     ) : null}
                   </div>
-                );
-
-                const productBand = (
-                  <article
-                    className="group grid overflow-hidden bg-white lg:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)]"
-                    style={{ minHeight: 'clamp(330px, 29vw, 390px)' }}
-                    data-page-module-item={card.id}
-                  >
-                    {imagePanel}
-                    {contentPanel}
                   </article>
                 );
 
-                return card.href ? (
-                  <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block">
-                    {productBand}
-                  </Link>
-                ) : (
-                  <div key={`${card.id}-${index}`}>{productBand}</div>
+                return (
+                  <div key={`${card.id}-${index}`} className={isWideCard ? 'lg:col-span-2' : ''}>
+                    {productCard}
+                  </div>
                 );
               })}
-            </div>
-          ) : null}
-
-          {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              {primaryLabel && primaryHref ? (
-                <Link
-                  href={primaryHref}
-                  {...externalLinkProps(primaryHref)}
-                  className="inline-flex min-h-10 items-center justify-center bg-[#E36F2C] px-4 text-sm font-bold text-white hover:bg-[#C85A1F]"
-                  data-page-module-item="primary-cta"
-                  data-page-module-field={`label_${lang}`}
-                >
-                  {primaryLabel}
-                </Link>
-              ) : null}
-              {secondaryLabel && secondaryHref ? (
-                <Link
-                  href={secondaryHref}
-                  {...externalLinkProps(secondaryHref)}
-                  className="inline-flex min-h-10 items-center justify-center border border-[#241F1B]/20 px-4 text-sm font-bold text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]"
-                  data-page-module-item="secondary-cta"
-                  data-page-module-field={`label_${lang}`}
-                >
-                  {secondaryLabel}
-                </Link>
-              ) : null}
             </div>
           ) : null}
         </div>
