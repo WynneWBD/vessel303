@@ -499,7 +499,7 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
           </div>
           {proofVisual?.image_url ? (
             <div
-              className="border-t border-white/10 px-2.5 py-2 sm:px-4 sm:py-3 lg:border-l lg:border-t-0"
+              className="hidden border-t border-white/10 px-2.5 py-2 sm:block sm:px-4 sm:py-3 lg:border-l lg:border-t-0"
               data-page-module-item={proofVisual.id}
             >
               <div className="relative mx-auto h-[72px] w-full overflow-hidden bg-[#C7D6EA] sm:h-[124px] lg:h-full lg:min-h-[132px] lg:max-h-[164px]">
