@@ -22,5 +22,7 @@
 - Auth.js v5 使用 split config，middleware/proxy 不能 import `src/auth.ts`。
 - 大文件上传必须走 Vercel Blob client upload，不能把文件 body 直接打到 API route。
 - 管理员安全限制必须在服务端实现，不能只靠前端 UI 禁用。
-- 联系/留资入口统一跳 `https://en.303vessel.cn/contact.html`。
-- 查看产品入口统一跳 `https://en.303vessel.cn/products_list.html`。
+- 普通主站联系/留资/采购咨询入口统一走新站 `/contact` 和后台 `leads` 闭环，不再默认跳旧站 `https://en.303vessel.cn/contact.html`。
+- 普通主站查看产品入口统一走新站 `/products`，不再默认跳旧站 `https://en.303vessel.cn/products_list.html`。
+- `/global` 是唯一明确例外：在新站正式接管 Global 生产链路前，Global 内的 Contact / Products 继续跳旧 303 联系和产品页；不要为了普通主站任务顺手改 `/global`。
+- 300.cn 后台只允许只读查看、下载、对照和必要的页面字段读取/填写；不得保存、发布、上传、发送、删除、付款、购买或执行任何真实变更。300 后台账号密码只从本机 env 使用，不能写入文档、commit 或聊天输出。
