@@ -185,11 +185,28 @@ function optimizedHeroImageUrl(imageUrl: string) {
   return trimmed;
 }
 
-function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
+function HeroSection({
+  pageModule,
+  credentialsModule,
+}: {
+  pageModule: HomePageModule | null;
+  credentialsModule?: HomePageModule | null;
+}) {
   const { lang } = useLanguage();
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const items = useMemo(() => sortModuleItems(pageModule), [pageModule]);
+  const heroProofStats = useMemo(() => {
+    return sortModuleItems(credentialsModule ?? null)
+      .filter((item) => item.is_visible)
+      .map((item) => ({
+        id: item.id,
+        val: localizedValue(item, lang, ''),
+        label: localizedLabel(item, lang, ''),
+      }))
+      .filter((stat) => stat.val || stat.label)
+      .slice(0, 4);
+  }, [credentialsModule, lang]);
   const heroSlides = useMemo(() => {
     return items
       .filter((item) => typeof item.id === 'string' && item.id.startsWith('hero-image') && item.is_visible && item.image_url)
@@ -270,7 +287,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0)_0%,rgba(0,0,0,0.08)_42%,rgba(0,0,0,0.34)_100%)]" />
       <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#071018]/46 to-transparent" />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col px-5 pb-16 pt-24 text-center sm:px-6 sm:pb-20 sm:pt-28 lg:px-10 lg:pb-24 lg:pt-32">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-col px-5 pb-12 pt-20 text-center sm:px-6 sm:pb-16 sm:pt-24 lg:px-10 lg:pb-20 lg:pt-28">
         <div className="mx-auto max-w-[1600px]">
           {activeTagline ? (
             <div className="mb-5 sm:mb-6">
@@ -315,6 +332,34 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
               >
                 {primaryLabel}
               </Link>
+            </div>
+          ) : null}
+
+          {heroProofStats.length > 0 ? (
+            <div className="mx-auto mt-5 w-full max-w-[46rem] border border-white/22 bg-black/20 px-3 py-2 text-white shadow-[0_18px_46px_rgba(0,0,0,0.18)] backdrop-blur-[2px] sm:mt-6 sm:px-4">
+              <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-white/58 sm:text-[10px]">
+                {lang === 'zh' ? '可信证明' : 'Project credentials'}
+              </p>
+              <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+                {heroProofStats.map((stat, index) => (
+                  <div
+                    key={stat.id}
+                    className={`${index === 0 ? '' : 'border-l border-white/14 pl-1.5 sm:pl-2'} min-w-0 text-left sm:text-center`}
+                    aria-label={[stat.val, stat.label].filter(Boolean).join(' ')}
+                  >
+                    {stat.val ? (
+                      <div className="font-[family-name:var(--font-heading)] text-base font-semibold leading-none tracking-tight text-[#F2A36E] sm:text-xl lg:text-2xl">
+                        {stat.val}
+                      </div>
+                    ) : null}
+                    {stat.label ? (
+                      <div className="mt-1 break-words text-[8px] font-semibold uppercase leading-tight tracking-[0.08em] text-white/68 sm:text-[10px]">
+                        {stat.label}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
             </div>
           ) : null}
         </div>
@@ -2072,12 +2117,15 @@ function resolveHomeDynamicModules(pageModules: HomePageModule[] | null) {
   ));
 }
 
-function renderHomeDynamicModule(resolved: ResolvedPageModule<HomePageModule>) {
+function renderHomeDynamicModule(
+  resolved: ResolvedPageModule<HomePageModule>,
+  credentialsModule: HomePageModule | null,
+) {
   if (!isResolvedPageModuleVisible(resolved)) return null;
 
   switch (resolved.registry.rendererKey) {
     case 'home.hero':
-      return <HeroSection key={resolved.registry.rendererKey} pageModule={resolved.pageModule} />;
+      return <HeroSection key={resolved.registry.rendererKey} pageModule={resolved.pageModule} credentialsModule={credentialsModule} />;
     case 'home.credentials':
       return <CredentialsBar key={resolved.registry.rendererKey} pageModule={resolved.pageModule} />;
     case 'home.operatingProof':
@@ -2268,11 +2316,15 @@ export default function HomePageContent({
     () => resolveHomeDynamicModules(pageModules),
     [pageModules],
   );
+  const credentialsModule = useMemo(
+    () => dynamicModules.find((resolved) => resolved.registry.rendererKey === 'home.credentials')?.pageModule ?? null,
+    [dynamicModules],
+  );
 
   return (
     <main className="overflow-x-hidden">
       <Navbar />
-      {dynamicModules.map(renderHomeDynamicModule)}
+      {dynamicModules.map((resolved) => renderHomeDynamicModule(resolved, credentialsModule))}
       <Footer />
     </main>
   );
