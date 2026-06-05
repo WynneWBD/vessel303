@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { pool } from '@/lib/db'
+import { getCatalogProductPublicHref } from '@/lib/product-public-routes'
 import { SITE_URL } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
@@ -134,7 +135,7 @@ async function listProductEntries(): Promise<SitemapEntry[]> {
   )
 
   return res.rows.map((item) =>
-    entry(`/products/${item.detail_slug || item.id}`, {
+    entry(getCatalogProductPublicHref({ id: item.id, detailSlug: item.detail_slug }), {
       lastModified: item.updated_at,
       changeFrequency: 'monthly',
       priority: 0.78,

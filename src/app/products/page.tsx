@@ -13,12 +13,19 @@ import { getPublishedPageModule, listPublishedPageModules } from '@/lib/page-mod
 
 export const revalidate = 300;
 
+const PRODUCTS_METADATA_TITLE_FALLBACK = 'VESSEL Product Catalog | Modular Hospitality Units';
+
+function productsMetadataTitle(value: string) {
+  const title = value.trim();
+  return title && title.toLowerCase() !== 'products' ? title : PRODUCTS_METADATA_TITLE_FALLBACK;
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const heroModule = await getPublishedPageModule('products', 'hero').catch((err) => {
     console.error('[products/metadata] load page module failed', err);
     return null;
   });
-  const title = heroModule?.title_en || heroModule?.title_zh || '';
+  const title = productsMetadataTitle(heroModule?.title_en || heroModule?.title_zh || '');
   const description = heroModule?.description_en || heroModule?.description_zh || '';
   if (!title || !description) return {};
   return buildPageMetadata({ title, description, path: '/products' });

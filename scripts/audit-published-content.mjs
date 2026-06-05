@@ -7,7 +7,6 @@ const DEFAULT_ROUTES = [
   '/about',
   '/products',
   '/products/v9-gen6',
-  '/products/v9-gen6-standard',
   '/cases',
   '/cases/xunliao-bay-holiday-planet',
   '/faq',

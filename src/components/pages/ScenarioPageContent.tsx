@@ -8,6 +8,7 @@ import ProtectedImage from '@/components/ProtectedImage'
 import { useLanguage } from '@/contexts/LanguageContext'
 import type { B9ContentItem } from '@/lib/b9-content-db'
 import type { PageModuleItem, PageModuleRow } from '@/lib/page-modules-db'
+import { normalizeSiteHref } from '@/lib/site-links'
 
 type LabelValue = { label: string; value: string }
 type TitleBody = { title: string; body: string; step?: string }
@@ -93,7 +94,7 @@ function asProductLinks(value: unknown): ProductLink[] {
       if (!item || typeof item !== 'object') return null
       const record = item as Record<string, unknown>
       const label = asString(record.label) || asString(record.name)
-      const href = asString(record.href)
+      const href = normalizeSiteHref(asString(record.href), '')
       return label ? { label, href: href || undefined } : null
     })
     .filter((item): item is ProductLink => Boolean(item))
@@ -213,6 +214,7 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
   const formTitleEn = inquiryTitleEn || inquiryModule?.title_en || ''
   const formDescriptionZh = inquiryDescriptionZh || inquiryModule?.description_zh || ''
   const formDescriptionEn = inquiryDescriptionEn || inquiryModule?.description_en || ''
+  const scenarioCtaHref = scenario.cta_href ? normalizeSiteHref(scenario.cta_href, '') : ''
   const inquiryLabelsZh = {
     eyebrow: itemText(moduleItemById(inquiryModule, 'form-eyebrow'), 'label', 'zh'),
     name: itemText(moduleItemById(inquiryModule, 'form-name'), 'label', 'zh'),
@@ -398,10 +400,10 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
         </section>
       ) : null}
 
-      {(contactLabel && scenario.cta_href) ? (
+      {(contactLabel && scenarioCtaHref) ? (
         <section className="border-t border-[#E5DED4] bg-[#F5F2ED] px-4 py-10 text-center">
           <Link
-            href={scenario.cta_href}
+            href={scenarioCtaHref}
             className="inline-flex min-h-11 items-center justify-center px-8 py-3 text-sm font-bold tracking-wider text-white transition-colors"
             style={{ background: accentColor }}
           >

@@ -100,9 +100,9 @@ const STATIC_SEO_PAGES: StaticSeoPage[] = [
   {
     title: 'Products',
     path: '/products',
-    source: 'buildPageMetadata',
+    source: 'generateMetadata / page_modules:products',
     status: 'ready',
-    detail: '产品列表页已有 title、description、canonical、OG 和 Twitter；详情页优先读取产品 SEO 字段。',
+    detail: '产品列表页 metadata 读取 products hero 已发布模块；当模块标题过泛时使用产品目录语义兜底。',
     actionHref: '/products',
     Icon: Package,
   },

@@ -1,3 +1,5 @@
+import { normalizeCatalogProductPublicHref } from '@/lib/product-public-routes'
+
 export const DEFAULT_CONTACT_URL = 'https://en.303vessel.cn/contact.html'
 
 export const LEGACY_PRODUCTS_URL = 'https://en.303vessel.cn/products_list.html'
@@ -39,7 +41,7 @@ export function normalizeSiteHref(href: string | null | undefined, fallback = SI
     return SITE_PRODUCTS_HREF
   }
 
-  return value
+  return normalizeCatalogProductPublicHref(value)
 }
 
 export function buildLeadSource(...parts: Array<string | number | null | undefined>): string {

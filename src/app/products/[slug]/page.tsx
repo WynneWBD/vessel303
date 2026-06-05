@@ -20,6 +20,7 @@ import {
 } from '@/lib/upload-image-variants';
 import { buildPageMetadata } from '@/lib/seo';
 import { listPublishedPageModules } from '@/lib/page-modules-db';
+import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
 
 function catalogProductImageUrls(product: CatalogProduct) {
   return collectImageUrls([
@@ -78,7 +79,7 @@ export async function generateMetadata({
     return buildPageMetadata({
       title,
       description,
-      path: `/products/${catalogProduct.detailSlug || catalogProduct.id}`,
+      path: getCatalogProductPublicHref(catalogProduct),
       image: catalogProduct.image,
     });
   }

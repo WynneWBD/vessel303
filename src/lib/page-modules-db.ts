@@ -1183,7 +1183,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
       { id: 'e7', href: '/products/e7-gen6-flagship', value_zh: '38.8㎡', value_en: '38.8 sqm', label_zh: 'E7 Gen6', label_en: 'E7 Gen6', is_visible: true, sort_order: 10 },
       { id: 'e6', href: '/products/e6-gen6-standard', value_zh: '29.6㎡', value_en: '29.6 sqm', label_zh: 'E6 Gen6', label_en: 'E6 Gen6', is_visible: true, sort_order: 20 },
       { id: 'e3', href: '/products/e3-gen6-standard', value_zh: '19㎡ mini', value_en: '19 sqm mini', label_zh: 'E3 Gen6', label_en: 'E3 Gen6', is_visible: true, sort_order: 30 },
-      { id: 'v9', href: '/products/v9-gen6-standard', value_zh: '38㎡', value_en: '38 sqm', label_zh: 'V9 Gen6', label_en: 'V9 Gen6', is_visible: true, sort_order: 40 },
+      { id: 'v9', href: '/products/v9-gen6', value_zh: '38㎡', value_en: '38 sqm', label_zh: 'V9 Gen6', label_en: 'V9 Gen6', is_visible: true, sort_order: 40 },
       { id: 'all-products', href: '/products', label_zh: '全部产品', label_en: 'All Products', is_visible: true, sort_order: 50 },
     ],
     is_visible: true,

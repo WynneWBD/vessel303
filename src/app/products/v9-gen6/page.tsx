@@ -57,7 +57,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
     title,
     description,
-    path: `/products/${product.detailSlug || product.id}`,
+    path: `/products/${FIXED_DETAIL_SLUG}`,
     image: product.image,
   })
 }
