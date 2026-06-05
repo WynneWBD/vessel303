@@ -6,7 +6,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 export default function LanguageToggle() {
   const { lang, setLang } = useLanguage();
   const [open, setOpen] = useState(false);
-  const activeLabel = lang === 'zh' ? 'Chinese' : 'English';
+  const activeLabel = lang === 'zh' ? '中文' : 'English';
 
   const selectLanguage = (value: 'zh' | 'en') => {
     setLang(value);
@@ -21,7 +21,7 @@ export default function LanguageToggle() {
         className="inline-flex min-h-9 min-w-[98px] items-center justify-center gap-3 rounded-[3px] bg-white px-4 text-[#334155] shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition hover:bg-white/92"
         aria-expanded={open}
       >
-        <span>{lang === 'zh' ? 'language' : 'language'}</span>
+        <span>{activeLabel}</span>
         <span aria-hidden="true" className="text-[10px] text-[#64748B]">
           v
         </span>
@@ -43,7 +43,7 @@ export default function LanguageToggle() {
           onClick={() => selectLanguage('zh')}
           className={`block min-h-10 w-full px-4 text-left transition hover:bg-[#EEF3F8] ${lang === 'zh' ? 'font-semibold text-[#E36F2C]' : ''}`}
         >
-          Chinese
+          中文
         </button>
       </div>
       <span className="sr-only">{activeLabel}</span>

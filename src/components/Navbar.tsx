@@ -94,8 +94,6 @@ export default function Navbar() {
     .filter((item) => item.label && item.href);
   const menuToggleLabel = itemLabel(itemById(uiLabelsModule, 'menu-toggle'), lang);
   const desktopNavLinks = [...modelLinks, ...navLinks];
-  const currentLanguageLabel = lang === 'zh' ? 'Chinese' : 'English';
-
   useEffect(() => {
     if (Array.isArray(initialSiteModules) && initialSiteModules.length > 0) {
       return;
@@ -142,7 +140,7 @@ export default function Navbar() {
           ) : null}
 
           {/* Desktop Nav */}
-          <div className="mx-10 hidden flex-1 items-center justify-center gap-8 lg:flex xl:gap-9">
+          <div className="mx-5 hidden flex-1 items-center justify-center gap-4 lg:flex xl:gap-5 2xl:mx-10 2xl:gap-8">
             {desktopNavLinks.map((link) => (
               <div key={link.id} className={`relative group ${link.id === 'nav-global' ? 'hidden xl:block' : ''}`}>
                 <Link
@@ -157,7 +155,7 @@ export default function Navbar() {
           </div>
 
           {/* CTA + Toggle */}
-          <div className="hidden shrink-0 items-center gap-3 2xl:flex">
+          <div className="hidden shrink-0 items-center gap-3 xl:flex">
             <LanguageToggle />
           </div>
 
@@ -247,12 +245,6 @@ export default function Navbar() {
               <LanguageToggle />
             </div>
           </div>
-        </div>
-      </div>
-      <div className="pointer-events-none absolute left-[max(1.25rem,calc((100vw-1420px)/2+2.5rem))] top-[78px] hidden lg:block">
-        <div className="inline-flex min-h-11 items-center gap-4 rounded-full bg-white px-6 text-[15px] text-[#334155] shadow-[0_14px_36px_rgba(15,23,42,0.14)]">
-          <span>{currentLanguageLabel}</span>
-          <span aria-hidden="true" className="text-xs text-[#64748B]">v</span>
         </div>
       </div>
     </nav>

@@ -185,28 +185,11 @@ function optimizedHeroImageUrl(imageUrl: string) {
   return trimmed;
 }
 
-function HeroSection({
-  pageModule,
-  credentialsModule,
-}: {
-  pageModule: HomePageModule | null;
-  credentialsModule?: HomePageModule | null;
-}) {
+function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const { lang } = useLanguage();
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const items = useMemo(() => sortModuleItems(pageModule), [pageModule]);
-  const heroProofStats = useMemo(() => {
-    return sortModuleItems(credentialsModule ?? null)
-      .filter((item) => item.is_visible)
-      .map((item) => ({
-        id: item.id,
-        val: localizedValue(item, lang, ''),
-        label: localizedLabel(item, lang, ''),
-      }))
-      .filter((stat) => stat.val || stat.label)
-      .slice(0, 4);
-  }, [credentialsModule, lang]);
   const heroSlides = useMemo(() => {
     return items
       .filter((item) => typeof item.id === 'string' && item.id.startsWith('hero-image') && item.is_visible && item.image_url)
@@ -341,33 +324,6 @@ function HeroSection({
             </div>
           ) : null}
 
-          {heroProofStats.length > 0 ? (
-            <div className="mx-auto mt-5 w-full max-w-[46rem] border border-white/22 bg-black/20 px-3 py-2 text-white shadow-[0_18px_46px_rgba(0,0,0,0.18)] backdrop-blur-[2px] sm:mt-6 sm:px-4">
-              <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-white/58 sm:text-[10px]">
-                {lang === 'zh' ? '可信证明' : 'Project credentials'}
-              </p>
-              <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
-                {heroProofStats.map((stat, index) => (
-                  <div
-                    key={stat.id}
-                    className={`${index === 0 ? '' : 'border-l border-white/14 pl-1.5 sm:pl-2'} min-w-0 text-left sm:text-center`}
-                    aria-label={[stat.val, stat.label].filter(Boolean).join(' ')}
-                  >
-                    {stat.val ? (
-                      <div className="font-[family-name:var(--font-heading)] text-base font-semibold leading-none tracking-tight text-[#F2A36E] sm:text-xl lg:text-2xl">
-                        {stat.val}
-                      </div>
-                    ) : null}
-                    {stat.label ? (
-                      <div className="mt-1 break-words text-[8px] font-semibold uppercase leading-tight tracking-[0.08em] text-white/68 sm:text-[10px]">
-                        {stat.label}
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
         </div>
 
       </div>
@@ -452,6 +408,7 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
   const { lang } = useLanguage();
   const items = useMemo(() => sortModuleItems(pageModule), [pageModule]);
   const visibleItems = items.filter((item) => item.is_visible);
+  const proofVisual = visibleItems.find((item) => item.image_url);
   const stats = visibleItems
     .map((item) => ({
       id: item.id,
@@ -459,7 +416,6 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
       label: localizedLabel(item, lang, ''),
     }))
     .filter((stat) => stat.val || stat.label);
-  const proofVisual = visibleItems.find((item) => item.image_url);
   const proofVisualAlt = proofVisual
     ? [localizedValue(proofVisual, lang, ''), localizedLabel(proofVisual, lang, '')].filter(Boolean).join(' ')
     : '';
@@ -2123,15 +2079,12 @@ function resolveHomeDynamicModules(pageModules: HomePageModule[] | null) {
   ));
 }
 
-function renderHomeDynamicModule(
-  resolved: ResolvedPageModule<HomePageModule>,
-  credentialsModule: HomePageModule | null,
-) {
+function renderHomeDynamicModule(resolved: ResolvedPageModule<HomePageModule>) {
   if (!isResolvedPageModuleVisible(resolved)) return null;
 
   switch (resolved.registry.rendererKey) {
     case 'home.hero':
-      return <HeroSection key={resolved.registry.rendererKey} pageModule={resolved.pageModule} credentialsModule={credentialsModule} />;
+      return <HeroSection key={resolved.registry.rendererKey} pageModule={resolved.pageModule} />;
     case 'home.credentials':
       return <CredentialsBar key={resolved.registry.rendererKey} pageModule={resolved.pageModule} />;
     case 'home.operatingProof':
@@ -2322,15 +2275,11 @@ export default function HomePageContent({
     () => resolveHomeDynamicModules(pageModules),
     [pageModules],
   );
-  const credentialsModule = useMemo(
-    () => dynamicModules.find((resolved) => resolved.registry.rendererKey === 'home.credentials')?.pageModule ?? null,
-    [dynamicModules],
-  );
 
   return (
     <main className="overflow-x-hidden">
       <Navbar />
-      {dynamicModules.map((resolved) => renderHomeDynamicModule(resolved, credentialsModule))}
+      {dynamicModules.map((resolved) => renderHomeDynamicModule(resolved))}
       <Footer />
     </main>
   );
