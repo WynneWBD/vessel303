@@ -104,7 +104,7 @@ const detailModuleTypeOptions: { type: CatalogDetailModuleType; label: string; o
   { type: 'content', label: '图文内容', optionLabel: '图文内容 Content' },
 ]
 
-const priorityProductIssues = ['缺封面', '缺详情图库', '未分类', '缺 SEO']
+const priorityProductIssues = ['缺封面', '缺详情图库', '未分类', '缺 SEO', '缺买家资料链接']
 
 const emptyState: FormState = {
   id: '',
@@ -219,12 +219,35 @@ function hasCommercialTerms(terms: CatalogCommercialTerms) {
   ))
 }
 
+function isBuyerResourceModule(module: CatalogDetailModule) {
+  const marker = [
+    module.id,
+    module.title_en,
+    module.title_cn,
+  ].map((value) => (value ?? '').trim().toLowerCase()).join(' ')
+  return /buyer|download|resource|material/.test(marker)
+}
+
+function hasLinkedModuleItem(items: CatalogDetailModuleItem[] = []) {
+  return items.some((item) => hasText(item.href))
+}
+
+function hasBuyerResourceLinks(modules: CatalogDetailModule[]) {
+  return modules
+    .filter((module) => module.is_visible !== false)
+    .some((module) => (
+      isBuyerResourceModule(module)
+      && (hasLinkedModuleItem(module.items_cn) || hasLinkedModuleItem(module.items_en))
+    ))
+}
+
 function getProductCompleteness(form: FormState, galleryUrls: string[]): {
   level: CompletenessLevel
   issues: string[]
 } {
   const issues: string[] = []
   const visibleDetailModules = form.detail_modules.filter((module) => module.is_visible !== false)
+  const hasBuyerResources = hasBuyerResourceLinks(form.detail_modules)
   const missingBaseForCuratedDetail = hasText(form.detailSlug) && (
     !hasText(form.image)
     || !hasText(form.description_cn)
@@ -260,6 +283,7 @@ function getProductCompleteness(form: FormState, galleryUrls: string[]): {
     issues.push('缺 SEO')
   }
   if (visibleDetailModules.length === 0) issues.push('缺详情模块')
+  if (!hasBuyerResources) issues.push('缺买家资料链接')
   if (missingBaseForCuratedDetail) issues.push('精品页绑定缺 CMS 基础字段')
 
   if (issues.length === 0) {
@@ -316,6 +340,9 @@ function getDetailModuleCompleteness(module: CatalogDetailModule): {
     issues.push(module.type === 'faq' || module.type === 'highlights' ? '缺列表项' : '缺正文')
   }
   if (imageRecommendedTypes.includes(module.type) && !hasImage) issues.push('缺图片')
+  if (isBuyerResourceModule(module) && !hasLinkedModuleItem(module.items_cn) && !hasLinkedModuleItem(module.items_en)) {
+    issues.push('缺资料链接')
+  }
 
   if (issues.length === 0) return { level: '完整', issues }
   if (issues.includes('缺图片')) return { level: '缺图片', issues }
@@ -558,6 +585,25 @@ function buildDetailModuleTemplate(
   }
 }
 
+function buildBuyerResourceModuleTemplate(product: FormState, sortOrder: number): CatalogDetailModule {
+  const productKey = normalizeId(product.id || product.productSeries || 'product')
+
+  return {
+    id: `${productKey || 'product'}-buyer-resources-${Date.now()}-${sortOrder}`,
+    type: 'content',
+    title_cn: '买家资料',
+    title_en: 'Buyer Resources',
+    body_cn: '',
+    body_en: '',
+    items_cn: [],
+    items_en: [],
+    image_url: '',
+    images: [],
+    is_visible: true,
+    sort_order: sortOrder,
+  }
+}
+
 function Field({
   label,
   children,
@@ -651,6 +697,7 @@ export default function ProductForm({
   const curatedPreviewHref = routeInfo.curatedHref
   const galleryUrls = useMemo(() => splitLines(form.gallery), [form.gallery])
   const normalizedDetailModules = useMemo(() => normalizeDetailModules(form.detail_modules), [form.detail_modules])
+  const hasBuyerResources = useMemo(() => hasBuyerResourceLinks(normalizedDetailModules), [normalizedDetailModules])
   const completeness = getProductCompleteness(form, galleryUrls)
   const visibleCompletenessIssues = completeness.issues.slice(0, 3)
   const hiddenCompletenessIssueCount = Math.max(
@@ -755,6 +802,22 @@ export default function ProductForm({
         detail_modules: [...prev.detail_modules, buildDetailModuleTemplate(type, prev, maxSort + 10)],
       }
     })
+  }
+
+  const addBuyerResourceModuleTemplate = () => {
+    if (normalizedDetailModules.some(isBuyerResourceModule)) {
+      toast.info('已存在买家资料模块，请在列表项中补充真实链接')
+      return
+    }
+
+    setForm((prev) => {
+      const maxSort = prev.detail_modules.reduce((max, module) => Math.max(max, Number(module.sort_order) || 0), 0)
+      return {
+        ...prev,
+        detail_modules: [...prev.detail_modules, buildBuyerResourceModuleTemplate(prev, maxSort + 10)],
+      }
+    })
+    toast.success('已生成买家资料空模板，请补充真实资料链接后保存')
   }
 
   const applyStandardDetailTemplates = () => {
@@ -1543,6 +1606,10 @@ export default function ProductForm({
                 <Plus size={14} />
                 生成标准详情模块
               </Button>
+              <Button type="button" size="sm" variant="outline" onClick={addBuyerResourceModuleTemplate}>
+                <Plus size={14} />
+                买家资料模板
+              </Button>
               <Button type="button" size="sm" variant="outline" onClick={addDetailModule}>
                 <Plus size={14} />
                 新增模块
@@ -1563,6 +1630,12 @@ export default function ProductForm({
               </Button>
             ))}
           </div>
+
+          {!hasBuyerResources ? (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-800">
+              买家资料链接缺失。前台只会展示可见详情模块中 id 或标题包含 buyer / download / resource / material，且列表项含真实 href 的资料卡。可先生成空模板，再按 “Title | URL | Description” 填入真实资料链接。
+            </div>
+          ) : null}
 
           {normalizedDetailModules.length > 0 ? (
             <div className="space-y-4">
@@ -1846,6 +1919,9 @@ export default function ProductForm({
                       + {option.label}
                     </Button>
                   ))}
+                  <Button type="button" size="sm" variant="outline" onClick={addBuyerResourceModuleTemplate}>
+                    买家资料模板
+                  </Button>
                   <Button type="button" size="sm" onClick={applyStandardDetailTemplates}>
                     生成标准详情模块
                   </Button>

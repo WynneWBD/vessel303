@@ -52,7 +52,18 @@ const PAGE_SIZE = 50
 type AdminRole = 'admin' | 'operator'
 type ProductStatus = 'draft' | 'published'
 type ProductView = '' | 'incomplete'
-type ProductIssue = '' | 'media' | 'content' | 'category' | 'attributes' | 'seo' | 'price' | 'commercial' | 'keywords' | 'related'
+type ProductIssue =
+  | ''
+  | 'media'
+  | 'content'
+  | 'category'
+  | 'attributes'
+  | 'seo'
+  | 'price'
+  | 'commercial'
+  | 'keywords'
+  | 'related'
+  | 'buyer_resources'
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -182,6 +193,7 @@ const PRODUCT_ISSUE_OPTIONS: { value: ProductIssue; label: string }[] = [
   { value: 'commercial', label: 'Missing business terms' },
   { value: 'keywords', label: 'Missing keywords' },
   { value: 'related', label: 'Missing related products' },
+  { value: 'buyer_resources', label: 'Missing buyer resources' },
 ]
 
 const PRIORITY_ISSUES = ['缺封面', '缺图库', '未分类', '缺 SEO']
@@ -216,6 +228,17 @@ const PRODUCT_INCOMPLETE_SQL = `(
     AND COALESCE(cardinality(keywords_en), 0) = 0
   )
   OR COALESCE(cardinality(related_product_ids), 0) = 0
+  OR NOT EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements(COALESCE(detail_modules, '[]'::jsonb)) AS detail_module(module)
+    CROSS JOIN LATERAL jsonb_array_elements(
+      COALESCE(detail_module.module -> 'items_en', '[]'::jsonb)
+      || COALESCE(detail_module.module -> 'items_cn', '[]'::jsonb)
+    ) AS detail_item(item)
+    WHERE COALESCE(detail_module.module ->> 'is_visible', 'true') <> 'false'
+      AND CONCAT_WS(' ', detail_module.module ->> 'id', detail_module.module ->> 'title_en', detail_module.module ->> 'title_cn') ~* '(buyer|download|resource|material)'
+      AND NULLIF(BTRIM(COALESCE(detail_item.item ->> 'href', '')), '') IS NOT NULL
+  )
 )`
 
 const PRODUCT_INCOMPLETE_SQL_ALIASED = `(
@@ -248,6 +271,17 @@ const PRODUCT_INCOMPLETE_SQL_ALIASED = `(
     AND COALESCE(cardinality(pc.keywords_en), 0) = 0
   )
   OR COALESCE(cardinality(pc.related_product_ids), 0) = 0
+  OR NOT EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements(COALESCE(pc.detail_modules, '[]'::jsonb)) AS detail_module(module)
+    CROSS JOIN LATERAL jsonb_array_elements(
+      COALESCE(detail_module.module -> 'items_en', '[]'::jsonb)
+      || COALESCE(detail_module.module -> 'items_cn', '[]'::jsonb)
+    ) AS detail_item(item)
+    WHERE COALESCE(detail_module.module ->> 'is_visible', 'true') <> 'false'
+      AND CONCAT_WS(' ', detail_module.module ->> 'id', detail_module.module ->> 'title_en', detail_module.module ->> 'title_cn') ~* '(buyer|download|resource|material)'
+      AND NULLIF(BTRIM(COALESCE(detail_item.item ->> 'href', '')), '') IS NOT NULL
+  )
 )`
 
 const PRODUCT_MISSING_MEDIA_SQL_ALIASED = `(
@@ -293,6 +327,18 @@ const PRODUCT_MISSING_KEYWORDS_SQL_ALIASED = `(
 )`
 
 const PRODUCT_MISSING_RELATED_SQL_ALIASED = `COALESCE(cardinality(pc.related_product_ids), 0) = 0`
+
+const PRODUCT_MISSING_BUYER_RESOURCES_SQL_ALIASED = `NOT EXISTS (
+  SELECT 1
+  FROM jsonb_array_elements(COALESCE(pc.detail_modules, '[]'::jsonb)) AS detail_module(module)
+  CROSS JOIN LATERAL jsonb_array_elements(
+    COALESCE(detail_module.module -> 'items_en', '[]'::jsonb)
+    || COALESCE(detail_module.module -> 'items_cn', '[]'::jsonb)
+  ) AS detail_item(item)
+  WHERE COALESCE(detail_module.module ->> 'is_visible', 'true') <> 'false'
+    AND CONCAT_WS(' ', detail_module.module ->> 'id', detail_module.module ->> 'title_en', detail_module.module ->> 'title_cn') ~* '(buyer|download|resource|material)'
+    AND NULLIF(BTRIM(COALESCE(detail_item.item ->> 'href', '')), '') IS NOT NULL
+)`
 
 function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value
@@ -350,6 +396,33 @@ function hasItems(value: unknown[] | null | undefined): boolean {
   return Array.isArray(value) && value.length > 0
 }
 
+function isBuyerResourceModule(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false
+  const record = value as { id?: unknown; title_en?: unknown; title_cn?: unknown; is_visible?: unknown }
+  if (record.is_visible === false) return false
+  const marker = [record.id, record.title_en, record.title_cn]
+    .map((entry) => (typeof entry === 'string' ? entry.toLowerCase() : ''))
+    .join(' ')
+  return /buyer|download|resource|material/.test(marker)
+}
+
+function hasBuyerResourceLinks(value: unknown[] | null | undefined): boolean {
+  if (!Array.isArray(value)) return false
+  return value.some((module) => {
+    if (!isBuyerResourceModule(module)) return false
+    const record = module as { items_en?: unknown; items_cn?: unknown }
+    const items = [
+      ...(Array.isArray(record.items_en) ? record.items_en : []),
+      ...(Array.isArray(record.items_cn) ? record.items_cn : []),
+    ]
+    return items.some((item) => {
+      if (!item || typeof item !== 'object') return false
+      const href = (item as { href?: unknown }).href
+      return typeof href === 'string' && href.trim().length > 0
+    })
+  })
+}
+
 function parseCount(value: string | undefined): number {
   return parseInt(value ?? '0', 10)
 }
@@ -384,6 +457,7 @@ function getProductIssues(product: ProductListRow): string[] {
   if (!product.commercial_terms || Object.keys(product.commercial_terms).length === 0) issues.push('Missing business terms')
   if (!hasItems(product.keywords_zh) && !hasItems(product.keywords_en)) issues.push('Missing keywords')
   if (!hasItems(product.related_product_ids)) issues.push('Missing related products')
+  if (!hasBuyerResourceLinks(product.detail_modules)) issues.push('Missing buyer resources')
   if (
     !hasText(product.seo_title_zh)
     || !hasText(product.seo_title_en)
@@ -452,6 +526,7 @@ function getIssueCondition(issue: ProductIssue): string | null {
   if (issue === 'commercial') return PRODUCT_MISSING_COMMERCIAL_SQL_ALIASED
   if (issue === 'keywords') return PRODUCT_MISSING_KEYWORDS_SQL_ALIASED
   if (issue === 'related') return PRODUCT_MISSING_RELATED_SQL_ALIASED
+  if (issue === 'buyer_resources') return PRODUCT_MISSING_BUYER_RESOURCES_SQL_ALIASED
   return null
 }
 

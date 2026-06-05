@@ -239,15 +239,33 @@ function ProductCard({
   product,
   uiLabels,
   inquiryHref,
+  categories,
+  attributeTemplates,
 }: {
   product: CatalogProduct;
   uiLabels: Record<string, string>;
   inquiryHref: string;
+  categories: DirectoryCategory[];
+  attributeTemplates: ProductAttributeTemplateWithOptions[];
 }) {
   const { lang } = useLanguage();
   const name = lang === 'en' ? product.name_en : product.name_cn;
   const badge = lang === 'en' ? product.badge_en : product.badge_cn;
   const tags = lang === 'en' ? product.tags_en : product.tags_cn;
+  const category = categoryTitle(
+    categories.find((item) => item.id === product.category_id),
+    lang,
+  );
+  const attributeLabels = (product.attribute_option_ids ?? [])
+    .map((id) => attributeOptionTitle(attributeTemplates, String(id), lang))
+    .filter(Boolean)
+    .slice(0, 2);
+  const metaItems = [
+    category,
+    product.size,
+    [product.productSeries, product.gen].filter(Boolean).join(' / '),
+    ...attributeLabels,
+  ].filter(Boolean);
 
   return (
     <article className="group flex min-h-full flex-col border border-[#DADDE1] bg-white transition hover:-translate-y-0.5 hover:border-[#147C94]/60 hover:shadow-[0_18px_46px_rgba(24,44,54,0.13)]">
@@ -277,6 +295,15 @@ function ProductCard({
         <Link href={productHref(product)} className="text-base font-bold leading-snug text-[#1F2A31] break-words hover:text-[#147C94]">
           {name}
         </Link>
+        {metaItems.length > 0 ? (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {metaItems.slice(0, 4).map((item) => (
+              <span key={item} className="rounded-sm bg-[#F2F6F7] px-2 py-1 text-[11px] font-semibold leading-4 text-[#53616B]">
+                {item}
+              </span>
+            ))}
+          </div>
+        ) : null}
         <div className="mt-2 flex flex-wrap gap-1.5">
           {tags.slice(0, 2).map((tag) => (
             <span key={tag} className="border border-[#DADDE1] px-2 py-0.5 text-[11px] text-[#65707A]">
@@ -501,6 +528,12 @@ export default function ProductsPageContent({
     selectedCategory && uiLabels.categoryFilter ? { key: 'category', label: uiLabels.categoryFilter, value: selectedCategory } : null,
     selectedAttribute && uiLabels.attributeFilter ? { key: 'attribute', label: uiLabels.attributeFilter, value: selectedAttribute } : null,
   ].filter((item): item is { key: string; label: string; value: string } => Boolean(item));
+  const removeFilterHref = (key: string) => {
+    if (key === 'q') return buildHref(filters, { q: '', page: 1 });
+    if (key === 'category') return buildHref(filters, { category: '', page: 1 });
+    if (key === 'attribute') return buildHref(filters, { attribute: '', page: 1 });
+    return buildHref(filters, { page: 1 });
+  };
   const heroTitle = moduleTitle(heroModule, lang);
   const heroDescription = moduleDescription(heroModule, lang);
   const primaryCta = itemById(heroModule, 'primary-cta');
@@ -632,7 +665,7 @@ export default function ProductsPageContent({
           </div>
 
           <div className="flex min-w-0 flex-col">
-            <SeriesSummary products={products} uiLabels={uiLabels} className="order-3 mt-4 lg:order-none lg:mt-0" />
+            <SeriesSummary products={products} uiLabels={uiLabels} className="order-2 mt-2 lg:order-none lg:mt-0" />
 
             <div className="order-1 mb-2 border border-[#DADDE1] bg-white p-2.5 lg:order-none">
               <form action="/products" className="flex flex-col gap-2 sm:flex-row">
@@ -670,10 +703,16 @@ export default function ProductsPageContent({
                     <span className="text-xs font-bold uppercase tracking-[0.16em] text-[#65707A]">{uiLabels.activeFilters}</span>
                   ) : null}
                   {activeFilters.map((item) => (
-                    <span key={item.key} className="inline-flex items-center gap-1 border border-[#DADDE1] bg-[#F7F8F8] px-3 py-1 text-xs font-semibold text-[#1F2A31]">
+                    <Link
+                      key={item.key}
+                      href={removeFilterHref(item.key)}
+                      aria-label={`${uiLabels.clearFilter || 'Clear'} ${item.label}: ${item.value}`}
+                      className="inline-flex items-center gap-1 border border-[#DADDE1] bg-[#F7F8F8] px-3 py-1 text-xs font-semibold text-[#1F2A31] transition hover:border-[#147C94] hover:bg-[#EAF4F6]"
+                    >
                       <span className="text-[#65707A]">{item.label}</span>
                       <span>{item.value}</span>
-                    </span>
+                      <span className="ml-1 text-[#147C94]" aria-hidden="true">x</span>
+                    </Link>
                   ))}
                   {uiLabels.clearFilter ? (
                     <Link href="/products" className="inline-flex items-center border border-[#147C94] px-3 py-1 text-xs font-bold text-[#147C94] hover:bg-[#147C94] hover:text-white">
@@ -685,14 +724,21 @@ export default function ProductsPageContent({
             </div>
 
             {pageProducts.length === 0 ? (
-              <div className="order-2 border border-dashed border-[#C7CDD2] bg-white px-6 py-20 text-center text-sm text-[#65707A] lg:order-none">
+              <div className="order-3 border border-dashed border-[#C7CDD2] bg-white px-6 py-20 text-center text-sm text-[#65707A] lg:order-none">
                 {uiLabels.emptyState ? <p className="font-semibold text-[#1F2A31]">{uiLabels.emptyState}</p> : null}
                 {uiLabels.emptyStateBody ? <p className="mt-2">{uiLabels.emptyStateBody}</p> : null}
               </div>
             ) : (
-              <div className="order-2 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 lg:order-none">
+              <div className="order-3 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 lg:order-none">
                 {pageProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} uiLabels={uiLabels} inquiryHref={inquiryHref} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    uiLabels={uiLabels}
+                    inquiryHref={inquiryHref}
+                    categories={categories}
+                    attributeTemplates={attributeTemplates}
+                  />
                 ))}
               </div>
             )}
