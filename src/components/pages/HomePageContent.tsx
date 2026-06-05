@@ -220,9 +220,13 @@ function HeroSection({
       }));
   }, [items, lang]);
   const findItem = (id: string) => items.find((item) => typeof item.id === 'string' && item.id === id);
+  const headlineItem = findItem('hero-headline');
+  const subtitleItem = findItem('hero-subtitle');
   const tagline = localizedLabel(findItem('hero-tagline'), lang, '');
-  const headline = localizedLabel(findItem('hero-headline'), lang, '');
-  const subtitle = localizedLabel(findItem('hero-subtitle'), lang, '');
+  const headline = localizedLabel(headlineItem, lang, '');
+  const moduleHeadline = localizedModuleTitle(pageModule, lang, '');
+  const subtitle = localizedLabel(subtitleItem, lang, '');
+  const moduleSubtitle = localizedModuleDescription(pageModule, lang, '');
   const primaryCta = findItem('hero-primary-cta');
   const primaryLabel = localizedLabel(primaryCta, lang, '');
   const primaryHref = displayHref(primaryCta?.href);
@@ -231,13 +235,15 @@ function HeroSection({
   const activeSlide = heroSlides[activeImage] ?? null;
   const previewSlide = heroSlides[nextImage] ?? activeSlide;
   const activeTagline = activeSlide?.eyebrow || tagline;
-  const activeHeadline = activeSlide?.headline || headline;
-  const activeSubtitle = activeSlide?.subtitle || subtitle;
+  const activeHeadline = headline || moduleHeadline || activeSlide?.headline;
+  const activeSubtitle = subtitle || moduleSubtitle || activeSlide?.subtitle;
   const activePrimaryHref = activeSlide?.href || primaryHref;
   const activeTaglineItem = activeSlide?.eyebrow ? activeSlide.id : 'hero-tagline';
   const activeTaglineField = activeSlide?.eyebrow ? `value_${lang}` : `label_${lang}`;
-  const activeHeadlineItem = activeSlide?.headline ? activeSlide.id : 'hero-headline';
-  const activeSubtitleItem = activeSlide?.subtitle ? activeSlide.id : 'hero-subtitle';
+  const activeHeadlineItem = headline ? 'hero-headline' : (moduleHeadline ? undefined : activeSlide?.id);
+  const activeHeadlineField = headline ? `label_${lang}` : (moduleHeadline ? `title_${lang}` : `label_${lang}`);
+  const activeSubtitleItem = subtitle ? 'hero-subtitle' : (moduleSubtitle ? undefined : activeSlide?.id);
+  const activeSubtitleField = subtitle ? `label_${lang}` : (moduleSubtitle ? `description_${lang}` : `content_${lang}`);
   const nextLabel = lang === 'zh' ? '下一张' : 'Next';
   const pauseLabel = lang === 'zh' ? '暂停' : 'Pause';
   const playLabel = lang === 'zh' ? '播放' : 'Play';
@@ -305,7 +311,7 @@ function HeroSection({
             className="mx-auto mb-5 max-w-[24rem] break-words font-[family-name:var(--font-heading)] text-4xl font-bold leading-[1.06] text-white sm:max-w-5xl sm:text-5xl sm:leading-[1.04] lg:mb-6 lg:max-w-[1420px] lg:text-[56px] xl:max-w-[1600px] xl:text-[62px]"
             style={{ overflowWrap: 'anywhere', textShadow: '0 20px 58px rgba(0,0,0,0.36)' }}
             data-page-module-item={activeHeadlineItem}
-            data-page-module-field={`label_${lang}`}
+            data-page-module-field={activeHeadlineField}
           >
             {activeHeadline}
           </h1>
@@ -315,7 +321,7 @@ function HeroSection({
               className="mx-auto mb-6 max-w-[24rem] text-xl leading-snug text-white sm:max-w-[90vw] sm:text-3xl lg:mb-8 lg:text-[32px] xl:text-[36px]"
               style={{ overflowWrap: 'anywhere', textShadow: '0 14px 42px rgba(0,0,0,0.34)' }}
               data-page-module-item={activeSubtitleItem}
-              data-page-module-field={activeSlide?.subtitle ? `content_${lang}` : `label_${lang}`}
+              data-page-module-field={activeSubtitleField}
             >
               {activeSubtitle}
             </p>
