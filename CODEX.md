@@ -176,10 +176,10 @@ npx next build --webpack
 
 - 首页已由后台 published Home modules 控制。
 - Home hero、credentials、large product cards、model strip 等核心模块仍由后台内容驱动。
-- B66-B81 连续处理首页展示节奏。
-- B81 已上线：稳定 `HeroSection` headline/subtitle source priority，避免轮播状态切换后 H1 被 active slide 文案替换。
+- B66-B82 连续处理首页展示节奏和主导航入口。
+- B82 已上线：修复 desktop 1440 下 `Global Presence` 导航入口不可见问题，`nav-global` wrapper class 从 `hidden 2xl:block` 改为 `hidden xl:block`。
 - 当前下一步：09 重新对比线上首页和 `en.303vessel.cn`，判断差距来自显示模板、后台内容/素材、模块新增能力，还是移动端/图片性能；涉及后台不懂处可只读学习 300.cn 后台。
-- 风险：B81 解决的是 hero 主文案稳定，不代表两个首页已经完全对齐。Blog 导航、旧站型号 / footer 入口、CTA 节奏、nav / footer / model / blog / global presence 仍是 09 后续对比项，B81 未处理。Home visual editor/catalog 模板多于 draft add-module API 白名单，API 目前只接受 `simple-text` 和 `cta-section`。
+- 风险：B82 只解决 `nav-global` desktop 1440 可见性，不代表两个首页已经完全对齐。Blog / News 不公开；`/news` 当前 404 / 保护状态不作为失败；`nav-news` / footer blog 仍 hidden / empty；不恢复 footer old model / blog 列表。Home visual editor/catalog 模板多于 draft add-module API 白名单，API 目前只接受 `simple-text` 和 `cta-section`。
 
 Products / 产品中心：
 
@@ -237,29 +237,28 @@ SEO / Analytics / Performance：
 
 ## 9. 当前最新节点
 
-最新线上节点：B81。
+最新线上节点：B82。
 
-B81 摘要：
+B82 摘要：
 
-- 名称：stabilize hero headline copy / 稳定首页 hero 主文案来源
+- 名称：show global presence on desktop / 恢复桌面 Global Presence 导航入口
 - 日期：2026-06-04
-- commit：`1f601f5` / full `1f601f5c3a2139fe687f77248f530a906eaae0e9`
-- commit message：`fix(home): stabilize hero headline copy`
-- Vercel deployment：`dpl_EyiJaN9JDGz36KatSXEKbvp8n99Q`
-- Deployment URL：`https://vessel303-3m6pcts7g-vessel303.vercel.app`
+- commit：`a5d7e3e` / full `a5d7e3e8e26d572f29c768a47d45d8701834651b`
+- commit message：`fix(nav): show global presence on desktop`
+- Vercel deployment：`dpl_HGyHFfziJbFmQoncrgQSnYaxWkdc`
+- Deployment URL：`https://vessel303-1rfemg7z0-vessel303.vercel.app`
 - Alias：`www.vessel303.com`、`vessel303.com`
 - 状态：READY
-- 代码文件：`src/components/pages/HomePageContent.tsx`
-- 范围：只调整 `HeroSection` headline/subtitle source priority。H1 优先 `hero-headline.label_*`，其次 module `title_*`，最后 fallback active slide `label_*`；subtitle 优先 `hero-subtitle.label_*`，其次 module `description_*`，最后 fallback active slide `content_*`；active slide `value_*` 仍作为 eyebrow 小上下文显示。
-- 目标：轮播图片或 active slide 切换时，首页 H1 和 subtitle 仍稳定使用专用 hero 文案来源。
-- 未改：CTA label/href、图片 URL、轮播图片、proof rail、Home module 顺序、后台 API、数据库、认证、权限、支付、订单、`/global`。
-- 未新增：文案、素材或业务 claim；不要硬编码或新增 `Dual Certified`、`EU+US certified`、`45-day`、具体认证名/编号等未核实事实。
-- 01 验证：`git diff --check`、targeted eslint、`tsc --noEmit`、`next build --webpack` 均通过；仅既有 PostgreSQL SSL warning 和 `/global` edge runtime warning。
-- 05 线上检查：首页 200 且无 `__next_error__`，线上 HTML 检到 H1 `VESSEL | Redefining What Space Can Be`；`/global` 200 且无 `__next_error__`；未登录 `/admin` 302 到 `https://vessel303.com/admin/login`。
+- 代码文件：`src/components/Navbar.tsx`
+- 范围：仅 `src/components/Navbar.tsx`。`nav-global` wrapper class 从 `hidden 2xl:block` 改为 `hidden xl:block`。
+- 目标：CMS/site modules 中 `nav-global` 已发布，href `/global`，label `Global Presence`；原代码只在 `2xl >= 1536` 显示，导致 1440 desktop 看不到，B82 改为 `xl >= 1280` 恢复常规桌面入口。
+- 未改：Blog / News 公开状态；`nav-news` / footer blog 仍 hidden / empty；不恢复 footer old model / blog 列表；不改 `/global` 页面内容、API、MapLibre / MapTiler、`/api/map`、数据库、认证、权限、支付或订单。
+- 05 验证：`git diff --check -- src/components/Navbar.tsx` 通过，仅 LF/CRLF warning；`npx eslint src/components/Navbar.tsx`、`npx tsc --noEmit`、`npx next build --webpack` 通过；build 仅既有 PostgreSQL SSL warning、`/global` edge runtime warning、本机 Neon `EACCES` fallback。
+- 本地只读：`/` 200 且无 `__next_error__`；`/global` 200 且无 `__next_error__`；源码确认 `hidden xl:block` 且无 `hidden 2xl:block` 残留。
+- 00 Browser 渲染采样：desktop 1280x800、1366x768、1440x1000、1536x864 均 `Global Presence` visible=true，`scrollWidth == clientWidth`，无 `__next_error__`，无 nav overlaps/offscreen；mobile 390x844 只显示 logo + `Toggle menu`，desktop nav 未被强行显示，无横向滚动，无 `__next_error__`。
+- 05 线上检查：首页 200 且无 `__next_error__`，HTML 可检到 `Global Presence`；`/global` 200 且无 `__next_error__`；未登录 `/admin` 302 到 `https://vessel303.com/admin/login`。
 - 05 最终 git status：`## main...origin/main`。
-- 00/07 desktop 证据：1440x1000 initial 下 hero 0/700、credentials 700/158、large-product-cards 858/1633、SV918 title 954/60、scrollWidth/clientWidth 1434/1434、`__next_error__=false`；H1 source 为 `hero-headline.label_en`，text 为 `VESSEL | Redefining What Space Can Be`，subtitle source 为 `hero-subtitle.label_en`。轮播状态切到 `Share a destination plan...` 后，H1 仍来自 `hero-headline.label_en`。
-- 00/07 mobile 证据：390x844 initial 下 hero 0/512、credentials 512/140、large-product-cards 652/1541、SV918 title 732/38、scrollWidth/clientWidth 384/384、`__next_error__=false`。4.4s/6.6s 后 active slide 为 `hero-image-02`、eyebrow 为 `MODEL RANGE`，H1 仍为 `VESSEL | Redefining What Space Can Be` 且来自 `hero-headline.label_en`，subtitle 仍来自 `hero-subtitle.label_en`；large-product-cards top 692、SV918 title top 772，不差于 B80 09 mobile 线上测量。
-- 风险：B81 解决的是 hero 主文案稳定，不代表两个首页已经完全对齐；下轮回到 09 继续对比。
+- 风险：B82 只解决 `nav-global` desktop 1440 可见性，不代表两个首页已经完全对齐；下轮回到 09 继续对比新旧首页。
 - proof 信息边界：只复用当前首页已发布 credentials stats；不要硬编码或新增 `Dual Certified`、`EU+US certified`、`45-day factory production`、具体 cert 名称/编号、或 broad global compliance。
 
 下一步：
@@ -270,7 +269,7 @@ B81 摘要：
 4. Home module 内容、素材、模块新增能力问题交 02 / 03。
 5. 移动端、图片、性能问题交 07。
 6. 涉及后台/CMS/Visual Editor/运营后台产品心智时，不确定处可只读学习 300.cn 后台。
-7. Blog 导航、旧站型号 / footer 入口、CTA 节奏仍由 09 后续判断，不要写成 B81 已处理。
+7. Blog / News 公开状态、旧站型号 / footer 入口、CTA 节奏仍由 09 后续判断，不要写成 B82 已处理。
 
 ## 10. 文档维护规则
 
