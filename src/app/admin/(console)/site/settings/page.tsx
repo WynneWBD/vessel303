@@ -84,7 +84,7 @@ const SITE_INFO_ITEMS: InfoItem[] = [
     owner: '/contact',
     keys: ['contactUrl'],
     state: 'active',
-    detail: 'B12：/contact 继续读取 contactUrl；Navbar、Footer、首页、About、FAQ、案例、场景和产品 CTA 统一走这个入口。',
+    detail: 'B28 后 /contact 渲染已发布联系模块，表单写入 leads；contactUrl 仅作为旧站备份入口。',
     href: '/contact',
     Icon: ExternalLink,
   },

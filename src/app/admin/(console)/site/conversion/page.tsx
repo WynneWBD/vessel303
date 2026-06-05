@@ -90,7 +90,7 @@ export default async function AdminSiteConversionPage() {
         <section className="grid grid-cols-1 gap-4 md:grid-cols-4">
           <StatCard label="已进入线索" value={capturedCount} detail="表单会写入 leads 并可在 2.0 处理" />
           <StatCard label="部分追踪" value={partialCount} detail="主要是 CTA 来源参数或外部承接" />
-          <StatCard label="外部承接" value={externalCount} detail="/contact 默认仍跳 300 联系页" />
+          <StatCard label="外部承接" value={externalCount} detail="/contact 主路径写入 leads；仅旧站备份或外部入口计入这里" />
           <StatCard label="30 天真实转化" value={totalLeads} detail={`访问 ${totalViews}，转化率 ${formatAnalyticsPercent(totalViews > 0 ? totalLeads / totalViews : 0)}；已排除测试线索 ${excludedTestLeads}`} />
         </section>
 

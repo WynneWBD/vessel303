@@ -497,8 +497,8 @@ export default function CatalogProductDetailContent({
               <h1 className="text-2xl font-black leading-tight tracking-normal text-[#1F2A31] break-words sm:text-3xl">{name}</h1>
               {facts.length > 0 ? (
                 <div className="mt-5 flex flex-wrap gap-2">
-                  {facts.map((item) => (
-                    <span key={item} className="rounded-full border border-[#DADDE1] bg-white px-3 py-1.5 text-xs font-bold leading-5 text-[#1F2A31]">
+                  {facts.map((item, index) => (
+                    <span key={`${item}-${index}`} className="rounded-full border border-[#DADDE1] bg-white px-3 py-1.5 text-xs font-bold leading-5 text-[#1F2A31]">
                       {item}
                     </span>
                   ))}
@@ -506,8 +506,8 @@ export default function CatalogProductDetailContent({
               ) : null}
               {features.length > 0 ? (
                 <div className="mt-5 flex flex-wrap gap-2">
-                  {features.map((feature) => (
-                    <span key={feature} className="rounded-full bg-[#EAF6F8] px-3 py-1 text-xs font-semibold text-[#147C94]">
+                  {features.map((feature, index) => (
+                    <span key={`${feature}-${index}`} className="rounded-full bg-[#EAF6F8] px-3 py-1 text-xs font-semibold text-[#147C94]">
                       {feature}
                     </span>
                   ))}
@@ -617,8 +617,8 @@ export default function CatalogProductDetailContent({
               <section id="product-specifications" className="scroll-mt-28 border-b border-[#DADDE1] bg-white px-1 py-8 sm:py-10">
                 <h2 className="mb-6 text-3xl font-black tracking-normal text-[#1F2A31]">{specsTitle}</h2>
                 <div className="grid grid-cols-1 border-t border-[#DADDE1] sm:grid-cols-2">
-                  {specs.map((item: SpecItem) => (
-                    <p key={`${item.label}-${item.value}`} className="border-b border-[#DADDE1] bg-white px-4 py-4 text-sm leading-6 text-[#1F2A31] sm:border-r">
+                  {specs.map((item: SpecItem, index) => (
+                    <p key={`${item.label}-${item.value}-${index}`} className="border-b border-[#DADDE1] bg-white px-4 py-4 text-sm leading-6 text-[#1F2A31] sm:border-r">
                       {item.label ? <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#65707A]">{item.label}</span> : null}
                       <span className="font-bold">{item.value}</span>
                     </p>
@@ -632,8 +632,8 @@ export default function CatalogProductDetailContent({
                 {description ? <p className="max-w-4xl whitespace-pre-line text-base leading-8 text-[#5C6670]">{description}</p> : null}
                 {features.length > 0 ? (
                   <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {features.map((feature) => (
-                      <li key={feature} className="border-l-2 border-[#147C94] bg-white px-5 py-4 text-sm leading-6 text-[#1F2A31]">
+                    {features.map((feature, index) => (
+                      <li key={`${feature}-${index}`} className="border-l-2 border-[#147C94] bg-white px-5 py-4 text-sm leading-6 text-[#1F2A31]">
                         {feature}
                       </li>
                     ))}
@@ -664,8 +664,8 @@ export default function CatalogProductDetailContent({
               <div className="border border-[#DADDE1] bg-white p-5">
                 {keywordsTitle ? <p className="mb-3 text-xs font-black uppercase tracking-[0.16em] text-[#65707A]">{keywordsTitle}</p> : null}
                 <div className="flex flex-wrap gap-2">
-                  {keywords.map((keyword) => (
-                    <span key={keyword} className="rounded-full border border-[#DADDE1] px-2.5 py-1 text-xs text-[#5C6670]">
+                  {keywords.map((keyword, index) => (
+                    <span key={`${keyword}-${index}`} className="rounded-full border border-[#DADDE1] px-2.5 py-1 text-xs text-[#5C6670]">
                       {keyword}
                     </span>
                   ))}

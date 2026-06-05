@@ -100,7 +100,7 @@ const SETTINGS_TAKEOVER_ITEMS: SettingsTakeoverItem[] = [
     title: '联系入口',
     fields: 'contactUrl',
     state: 'active',
-    detail: 'B12：前台通用 CTA 统一进入 /contact，再读取 contactUrl；保存设置会写入 site_settings 并记录日志。',
+    detail: 'B28 后前台通用 CTA 进入 /contact，由新站联系表单写入 leads；contactUrl 仅作为旧站备份入口。',
   },
   {
     title: '媒体上传限制',
@@ -481,7 +481,7 @@ export default async function SettingsPage() {
             <LinkRow icon={Mail} title="联系邮件" text="Resend API 配置后，联系表单和资料包请求才能稳定发信。" />
             <LinkRow icon={ImageIcon} title="图片上传" text="Vercel Blob 必须使用 client upload，不能改回 API body 上传。" />
             <LinkRow icon={Map} title="全球地图" text="MapTiler proxy 必须带 Referer，transformRequest 必须返回绝对 URL。" />
-            <LinkRow icon={Globe2} title="外部跳转" text="联系 CTA 统一走 /contact，产品查看统一走 /products；实际 contactUrl 由站点设置控制。" />
+            <LinkRow icon={Globe2} title="外部跳转" text="联系 CTA 统一走 /contact 并写入 leads，产品查看统一走 /products；contactUrl 仅保留为旧站备份。" />
           </CardContent>
         </Card>
 

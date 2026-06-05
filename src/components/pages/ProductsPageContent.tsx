@@ -125,12 +125,14 @@ function Sidebar({
   filters,
   contactModule,
   uiLabels,
+  contactHeadingTag = 'h2',
 }: {
   categories: DirectoryCategory[];
   attributeTemplates: ProductAttributeTemplateWithOptions[];
   filters: DirectoryFilters;
   contactModule: PublicPageModule | null;
   uiLabels: Record<string, string>;
+  contactHeadingTag?: 'h2' | 'p';
 }) {
   const { lang } = useLanguage();
   const eyebrow = itemLabel(itemById(contactModule, 'eyebrow'), lang);
@@ -139,6 +141,7 @@ function Sidebar({
   const cta = itemById(contactModule, 'primary-cta');
   const ctaLabel = itemLabel(cta, lang);
   const ctaHref = displayHref(cta?.href);
+  const ContactHeading = contactHeadingTag;
 
   return (
     <aside className="space-y-3">
@@ -216,7 +219,7 @@ function Sidebar({
           {eyebrow ? (
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#F2A36F]">{eyebrow}</p>
           ) : null}
-          {headline ? <h2 className="mt-3 text-lg font-black leading-snug">{headline}</h2> : null}
+          {headline ? <ContactHeading className="mt-3 text-lg font-black leading-snug">{headline}</ContactHeading> : null}
           {body ? <p className="mt-3 text-sm leading-6 text-white/65">{body}</p> : null}
           {ctaLabel && ctaHref ? (
             <Link
@@ -312,9 +315,11 @@ function ProductCard({
 function SeriesSummary({
   products,
   uiLabels,
+  className = '',
 }: {
   products: CatalogProduct[];
   uiLabels: Record<string, string>;
+  className?: string;
 }) {
   const series = Array.from(
     products.reduce((map, product) => {
@@ -331,7 +336,7 @@ function SeriesSummary({
   if (series.length === 0 || !uiLabels.seriesHeading) return null;
 
   return (
-    <div className="mb-5 border border-[#DADDE1] bg-white p-4">
+    <div className={`mb-5 border border-[#DADDE1] bg-white p-4 ${className}`}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h2 className="text-sm font-black uppercase tracking-[0.18em] text-[#1F2A31]">{uiLabels.seriesHeading}</h2>
         {uiLabels.seriesBody ? <p className="max-w-2xl text-xs leading-5 text-[#65707A]">{uiLabels.seriesBody}</p> : null}
@@ -563,7 +568,7 @@ export default function ProductsPageContent({
                 </div>
               ) : null}
               {hasRouteNote ? (
-                <div className="mt-3 max-w-xl border border-[#DADDE1] bg-white/90 p-3">
+                <div className="mt-2 max-w-xl border border-[#DADDE1] bg-white/90 p-2.5 sm:mt-3 sm:p-3">
                   {routeNoteLabel ? (
                     <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#147C94]">{routeNoteLabel}</p>
                   ) : null}
@@ -578,7 +583,7 @@ export default function ProductsPageContent({
                 <Link
                   href={heroImageHref}
                   data-products-hero-image="true"
-                  className="group relative block min-h-52 overflow-hidden border border-white/70 bg-[#DADDE1] shadow-[0_20px_60px_rgba(31,42,49,0.14)] sm:min-h-64 lg:min-h-72"
+                  className="group relative block min-h-36 overflow-hidden border border-white/70 bg-[#DADDE1] shadow-[0_20px_60px_rgba(31,42,49,0.14)] sm:min-h-64 lg:min-h-72"
                 >
                   <ProtectedImage
                     src={heroImageSrc}
@@ -593,7 +598,7 @@ export default function ProductsPageContent({
               ) : (
                 <div
                   data-products-hero-image="true"
-                  className="relative min-h-52 overflow-hidden border border-white/70 bg-[#DADDE1] shadow-[0_20px_60px_rgba(31,42,49,0.14)] sm:min-h-64 lg:min-h-72"
+                  className="relative min-h-36 overflow-hidden border border-white/70 bg-[#DADDE1] shadow-[0_20px_60px_rgba(31,42,49,0.14)] sm:min-h-64 lg:min-h-72"
                 >
                   <ProtectedImage
                     src={heroImageSrc}
@@ -617,7 +622,7 @@ export default function ProductsPageContent({
             <details className="border border-[#DADDE1] bg-white">
               <summary className="flex min-h-12 cursor-pointer items-center px-4 text-sm font-bold text-[#1F2A31]">{uiLabels.filters}</summary>
               <div className="border-t border-[#DADDE1] p-4">
-                <Sidebar categories={categories} attributeTemplates={attributeTemplates} filters={filters} contactModule={contactModule} uiLabels={uiLabels} />
+                <Sidebar categories={categories} attributeTemplates={attributeTemplates} filters={filters} contactModule={contactModule} uiLabels={uiLabels} contactHeadingTag="p" />
               </div>
             </details>
           </div>
@@ -626,10 +631,10 @@ export default function ProductsPageContent({
             <Sidebar categories={categories} attributeTemplates={attributeTemplates} filters={filters} contactModule={contactModule} uiLabels={uiLabels} />
           </div>
 
-          <div className="min-w-0">
-            <SeriesSummary products={products} uiLabels={uiLabels} />
+          <div className="flex min-w-0 flex-col">
+            <SeriesSummary products={products} uiLabels={uiLabels} className="order-3 mt-4 lg:order-none lg:mt-0" />
 
-            <div className="mb-2 border border-[#DADDE1] bg-white p-2.5">
+            <div className="order-1 mb-2 border border-[#DADDE1] bg-white p-2.5 lg:order-none">
               <form action="/products" className="flex flex-col gap-2 sm:flex-row">
                 <input type="hidden" name="category" value={filters.category} />
                 <input type="hidden" name="attribute" value={filters.attribute} />
@@ -680,21 +685,25 @@ export default function ProductsPageContent({
             </div>
 
             {pageProducts.length === 0 ? (
-              <div className="border border-dashed border-[#C7CDD2] bg-white px-6 py-20 text-center text-sm text-[#65707A]">
+              <div className="order-2 border border-dashed border-[#C7CDD2] bg-white px-6 py-20 text-center text-sm text-[#65707A] lg:order-none">
                 {uiLabels.emptyState ? <p className="font-semibold text-[#1F2A31]">{uiLabels.emptyState}</p> : null}
                 {uiLabels.emptyStateBody ? <p className="mt-2">{uiLabels.emptyStateBody}</p> : null}
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="order-2 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 lg:order-none">
                 {pageProducts.map((product) => (
                   <ProductCard key={product.id} product={product} uiLabels={uiLabels} inquiryHref={inquiryHref} />
                 ))}
               </div>
             )}
 
-            <CatalogHighlights items={catalogHighlights} />
+            <div className="order-4 lg:order-none">
+              <CatalogHighlights items={catalogHighlights} />
+            </div>
 
-            <Pagination filters={filters} currentPage={currentPage} totalPages={totalPages} />
+            <div className="order-5 lg:order-none">
+              <Pagination filters={filters} currentPage={currentPage} totalPages={totalPages} />
+            </div>
           </div>
         </div>
       </section>
