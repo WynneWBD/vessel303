@@ -1,6 +1,6 @@
 # CODEX.md - vessel303.com Codex 当前操作入口
 
-最后更新：2026-06-04
+最后更新：2026-06-05
 
 本文件是 `vessel303.com` 给 Codex 使用的当前操作入口。它只保留当前事实、硬规则、模块边界和下一步，不再承载 B1-B74 的完整历史流水。
 
@@ -195,6 +195,8 @@ Products / 产品中心：
 - `/products` 是正式产品目录入口。
 - 产品前台详情有两类合法入口：CMS 通用详情 `/products/{id}` 和固定精品详情 `/products/{detailSlug}`。
 - 有 `detailSlug` 优先固定精品页，没有则走 CMS 通用详情。
+- B83 已完成产品页优化闭环：以 E7、V9、E6、E3、S5 五个样板为主，打磨 `/products`、V9/S5 详情页、CMS 字段完整度、公开内容清洗、图片展示负载和产品审计脚本；这不是“全部产品上架”任务。
+- V9/S5 样板产品 CMS 字段已由 00 授权写入 vessel 自有后台范围；300.cn 后台未保存、上传、发布、删除或改配置。
 - 价格仅展示，不接支付、订单、会员价、代理价或权限矩阵。
 - CMS 数据为空时允许安全兜底或隐藏缺失字段，不用 TBD 硬填。
 
@@ -246,39 +248,34 @@ SEO / Analytics / Performance：
 
 ## 9. 当前最新节点
 
-最新线上节点：B82。
+最新线上节点：B83。
 
-B82 摘要：
+B83 摘要：
 
-- 名称：show global presence on desktop / 恢复桌面 Global Presence 导航入口
-- 日期：2026-06-04
-- commit：`a5d7e3e` / full `a5d7e3e8e26d572f29c768a47d45d8701834651b`
-- commit message：`fix(nav): show global presence on desktop`
-- Vercel deployment：`dpl_HGyHFfziJbFmQoncrgQSnYaxWkdc`
-- Deployment URL：`https://vessel303-1rfemg7z0-vessel303.vercel.app`
-- Alias：`www.vessel303.com`、`vessel303.com`
-- 状态：READY
-- 代码文件：`src/components/Navbar.tsx`
-- 范围：仅 `src/components/Navbar.tsx`。`nav-global` wrapper class 从 `hidden 2xl:block` 改为 `hidden xl:block`。
-- 目标：CMS/site modules 中 `nav-global` 已发布，href `/global`，label `Global Presence`；原代码只在 `2xl >= 1536` 显示，导致 1440 desktop 看不到，B82 改为 `xl >= 1280` 恢复常规桌面入口。
-- 未改：Blog / News 公开状态；`nav-news` / footer blog 仍 hidden / empty；不恢复 footer old model / blog 列表；不改 `/global` 页面内容、API、MapLibre / MapTiler、`/api/map`、数据库、认证、权限、支付或订单。
-- 05 验证：`git diff --check -- src/components/Navbar.tsx` 通过，仅 LF/CRLF warning；`npx eslint src/components/Navbar.tsx`、`npx tsc --noEmit`、`npx next build --webpack` 通过；build 仅既有 PostgreSQL SSL warning、`/global` edge runtime warning、本机 Neon `EACCES` fallback。
-- 本地只读：`/` 200 且无 `__next_error__`；`/global` 200 且无 `__next_error__`；源码确认 `hidden xl:block` 且无 `hidden 2xl:block` 残留。
-- 00 Browser 渲染采样：desktop 1280x800、1366x768、1440x1000、1536x864 均 `Global Presence` visible=true，`scrollWidth == clientWidth`，无 `__next_error__`，无 nav overlaps/offscreen；mobile 390x844 只显示 logo + `Toggle menu`，desktop nav 未被强行显示，无横向滚动，无 `__next_error__`。
-- 05 线上检查：首页 200 且无 `__next_error__`，HTML 可检到 `Global Presence`；`/global` 200 且无 `__next_error__`；未登录 `/admin` 302 到 `https://vessel303.com/admin/login`。
-- 05 最终 git status：`## main...origin/main`。
-- 风险：B82 只解决 `nav-global` desktop 1440 可见性，不代表两个首页已经完全对齐；下轮回到 09 继续对比新旧首页。
-- proof 信息边界：只复用当前首页已发布 credentials stats；不要硬编码或新增 `Dual Certified`、`EU+US certified`、`45-day factory production`、具体 cert 名称/编号、或 broad global compliance。
+- 名称：product page optimization closure / 产品页优化闭环。
+- 日期：2026-06-05（America/New_York；部署 READY 跨 UTC 2026-06-06）。
+- commit：`bef8fdb` / full `bef8fdba6b8c3c954fc0dd9854d0255741457f93`。
+- commit message：`feat(products): close sample product page loop`。
+- Vercel deployment：`dpl_6JErfD5tpKzfiGRaWhGSfcG9NnxH`。
+- Deployment URL：`https://vessel303-b5jbyh7i1-vessel303.vercel.app`。
+- Alias：`www.vessel303.com`、`vessel303.com`。
+- 状态：READY。
+- 范围：`/products` 产品列表页、核心产品详情页、产品后台字段完整度、产品图片公开展示负载、产品审计 / 授权 / 写入脚本。
+- 样板范围：E7、V9、E6、E3、S5 五个重点样板；不是全部产品上架。
+- 已完成：V9/S5 样板 CMS 字段补齐，产品列表和详情页公开内容清洗，V9 图库公开展示截断，详情模块 `items` / `links` 渲染支持，产品卡片 / 详情价格空值安全兜底，后台产品列表完整度提示和商业条款字段识别。
+- 00 授权边界：本轮只写入 vessel 自有后台 V9/S5 样板产品字段；300.cn 后台未保存、上传、发布、删除、提交表单或改配置。
+- 05 验证：targeted eslint、`git diff --check`、`git diff --cached --check`、`npx.cmd tsc --noEmit`、`npx.cmd next build --webpack` 通过；线上 `/products`、`/products/v9-gen6`、`/products/s5` 均 200；线上 `audit:published-content` 通过，线上 `audit:product-public-rhythm` 为 0 issue。
+- 未改：`/global`、MapLibre / MapTiler、300.cn 后台、权限、认证、支付、订单、会员、代理价、国家版本价格规则。
+- 非阻断风险：V9 CMS 内部图片库存仍多于公开展示负载，但前台已截断展示且图片审计无性能告警；后续如要整理媒体库，单独交 07。
 
 下一步：
 
-1. 05 验收 docs、commit、push 并等待 Vercel READY 后，交 09 重新对比 `www.vessel303.com` 与 `en.303vessel.cn`。
-2. 09 下一轮重点看 hero H1/copy 语义是否仍有差异、mobile 首屏产品露出位置、nav / footer / model / blog / global presence 差异，以及旧站与新站 desktop/mobile product rhythm 是否还需要继续收敛。
-3. 显示模板问题交 01。
-4. Home module 内容、素材、模块新增能力问题交 02 / 03。
-5. 移动端、图片、性能问题交 07。
-6. 涉及后台/CMS/Visual Editor/运营后台产品心智时，不确定处可只读学习 300.cn 后台。
-7. Blog / News 公开状态、旧站型号 / footer 入口、CTA 节奏仍由 09 后续判断，不要写成 B82 已处理。
+1. 05 验收 docs、commit、push 并等待 Vercel READY 后，交 09 做产品页只读复核。
+2. 09 下一轮重点看 `www.vessel303.com/products`、V9/S5 详情页与 `en.303vessel.cn` 产品列表 / 详情节奏是否仍有差距。
+3. 若是显示方式、详情页首屏、图库、CTA、相关产品、询盘路径问题，交 01。
+4. 若是 CMS 字段、published 内容、产品资料样板缺口，交 02；继续控制在 3-5 个样板，不追求全部产品上架。
+5. 若是图片体积、移动端加载、V9 CMS 图片库存治理，交 07。
+6. 300.cn 后台仍只读对照和资料获取，不得保存、上传、发布、删除、付款、购买、提交表单或改配置。
 
 ## 10. 文档维护规则
 
