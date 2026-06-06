@@ -16,6 +16,48 @@ import {
   type PublicPageModule,
 } from '@/lib/page-module-client';
 
+const AUTH_FALLBACK_MODULES: PublicPageModule[] = [
+  {
+    page_key: 'auth',
+    module_key: 'shared',
+    is_visible: true,
+    sort_order: 10,
+    items: [
+      {
+        id: 'brand',
+        href: '/',
+        label_zh: 'VESSEL',
+        label_en: 'VESSEL',
+        is_visible: true,
+        sort_order: 10,
+      },
+    ],
+  },
+  {
+    page_key: 'auth',
+    module_key: 'login',
+    title_zh: 'Sign in',
+    title_en: 'Sign in',
+    description_zh: 'Access your VESSEL account.',
+    description_en: 'Access your VESSEL account.',
+    is_visible: true,
+    sort_order: 20,
+    items: [
+      { id: 'email-label', label_zh: 'Email', label_en: 'Email', is_visible: true, sort_order: 10 },
+      { id: 'email-placeholder', label_zh: 'Email placeholder', label_en: 'Email placeholder', value_zh: 'name@example.com', value_en: 'name@example.com', is_visible: true, sort_order: 20 },
+      { id: 'password-label', label_zh: 'Password', label_en: 'Password', is_visible: true, sort_order: 30 },
+      { id: 'password-placeholder', label_zh: 'Password placeholder', label_en: 'Password placeholder', value_zh: 'Enter password', value_en: 'Enter password', is_visible: true, sort_order: 40 },
+      { id: 'google-button', label_zh: 'Continue with Google', label_en: 'Continue with Google', is_visible: true, sort_order: 50 },
+      { id: 'divider', label_zh: 'or', label_en: 'or', is_visible: true, sort_order: 60 },
+      { id: 'submit', label_zh: 'Sign in', label_en: 'Sign in', is_visible: true, sort_order: 70 },
+      { id: 'submitting', label_zh: 'Signing in', label_en: 'Signing in', is_visible: true, sort_order: 80 },
+      { id: 'error', label_zh: 'Sign in failed. Check your email or password.', label_en: 'Sign in failed. Check your email or password.', is_visible: true, sort_order: 90 },
+      { id: 'no-account', label_zh: 'No account yet?', label_en: 'No account yet?', is_visible: true, sort_order: 100 },
+      { id: 'register-link', href: '/register', label_zh: 'Create account', label_en: 'Create account', is_visible: true, sort_order: 110 },
+    ],
+  },
+];
+
 function LoginForm() {
   const { lang } = useLanguage();
   const router = useRouter();
@@ -37,7 +79,7 @@ function LoginForm() {
     return () => controller.abort();
   }, []);
 
-  const modules = moduleMap(pageModules);
+  const modules = moduleMap(pageModules?.length ? pageModules : AUTH_FALLBACK_MODULES);
   const loginModule = modules.get('login') ?? null;
   const sharedModule = modules.get('shared') ?? null;
   const title = moduleTitle(loginModule, lang);
