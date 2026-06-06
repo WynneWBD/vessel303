@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
@@ -941,6 +941,54 @@ type HomepageVisualCard = {
   videoPoster: string;
 };
 
+function LazyHomepageVideo({
+  src,
+  poster,
+  className,
+}: {
+  src: string;
+  poster?: string;
+  className: string;
+}) {
+  const ref = useRef<HTMLVideoElement | null>(null);
+  const [canLoad, setCanLoad] = useState(() => typeof window !== 'undefined' && !('IntersectionObserver' in window));
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    if (!('IntersectionObserver' in window)) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setCanLoad(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '640px 0px' },
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <video
+      ref={ref}
+      src={canLoad ? src : undefined}
+      poster={poster}
+      autoPlay={canLoad}
+      muted
+      loop
+      playsInline
+      preload="none"
+      className={className}
+      data-page-module-field="video_url"
+    />
+  );
+}
+
 function HomepageVisualCardMedia({
   card,
   altFallback,
@@ -957,16 +1005,10 @@ function HomepageVisualCardMedia({
   if (card.video) {
     return (
       <>
-        <video
+        <LazyHomepageVideo
           src={card.video}
           poster={card.videoPoster || card.image || undefined}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
           className={videoClassName}
-          data-page-module-field="video_url"
         />
         {card.videoPoster ? (
           <span

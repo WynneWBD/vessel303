@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import {
-  listPublishedCatalogProducts,
+  listPublishedCatalogProductCards,
   listPublicProductAttributeTemplatesWithOptions,
   listPublicProductCategories,
 } from '@/lib/product-catalog-db';
@@ -54,32 +54,49 @@ function normalizeFilters(searchParams: ProductsSearchParams | undefined) {
   };
 }
 
+function shouldLookupUploadVariants(url: string | null | undefined) {
+  const value = String(url ?? '').trim();
+  if (!/^https?:\/\//i.test(value)) return false;
+
+  try {
+    return new URL(value).hostname.endsWith('.public.blob.vercel-storage.com');
+  } catch {
+    return false;
+  }
+}
+
 export default async function ProductsPage({
   searchParams,
 }: {
   searchParams?: Promise<ProductsSearchParams>;
 }) {
   const filters = normalizeFilters(searchParams ? await searchParams : undefined);
-  const catalogRows = await listPublishedCatalogProducts().catch((err) => {
+  const catalogRowsPromise = listPublishedCatalogProductCards().catch((err) => {
     console.error('[products] catalog db unavailable', err);
     return [];
   });
-  const [categories, attributeTemplates] = await Promise.all([
-    listPublicProductCategories().catch((err) => {
-      console.error('[products] load categories failed', err);
-      return [];
-    }),
-    listPublicProductAttributeTemplatesWithOptions().catch((err) => {
-      console.error('[products] load attribute templates failed', err);
-      return [];
-    }),
-  ]);
-  const pageModules = await listPublishedPageModules('products').catch((err) => {
+  const categoriesPromise = listPublicProductCategories().catch((err) => {
+    console.error('[products] load categories failed', err);
+    return [];
+  });
+  const attributeTemplatesPromise = listPublicProductAttributeTemplatesWithOptions().catch((err) => {
+    console.error('[products] load attribute templates failed', err);
+    return [];
+  });
+  const pageModulesPromise = listPublishedPageModules('products').catch((err) => {
     console.error('[products] load page modules failed', err);
     return [];
   });
 
-  const imageVariants = await getUploadVariantsByUrls(catalogRows.map((product) => product.image)).catch((err) => {
+  const [catalogRows, categories, attributeTemplates, pageModules] = await Promise.all([
+    catalogRowsPromise,
+    categoriesPromise,
+    attributeTemplatesPromise,
+    pageModulesPromise,
+  ]);
+
+  const imageVariantUrls = catalogRows.map((product) => product.image).filter(shouldLookupUploadVariants);
+  const imageVariants = await getUploadVariantsByUrls(imageVariantUrls).catch((err) => {
     console.error('[products] load product image variants failed', err);
     return new Map();
   });

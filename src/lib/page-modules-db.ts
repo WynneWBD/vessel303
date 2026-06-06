@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'crypto'
+import { unstable_cache } from 'next/cache'
 import { pool } from '@/lib/db'
 import {
   clonePageModuleTemplateContent,
@@ -26,6 +27,9 @@ export const PAGE_MODULE_PAGE_KEYS = [
   'account',
   'site',
 ] as const
+
+export const PAGE_MODULE_PUBLIC_CACHE_TAG = 'page-module-public'
+const PAGE_MODULE_PUBLIC_CACHE_SECONDS = 300
 
 export type PageModulePageKey = (typeof PAGE_MODULE_PAGE_KEYS)[number]
 
@@ -2837,7 +2841,7 @@ export async function getPageModule(pageKey: string, moduleKey: string): Promise
   return res.rows[0] ? normalizeRow(res.rows[0]) : null
 }
 
-export async function listPublishedPageModules(pageKey?: string): Promise<PageModuleRow[]> {
+async function loadPublishedPageModules(pageKey?: string): Promise<PageModuleRow[]> {
   await ensurePageModulesSchema()
   const params: string[] = []
   const where = ['pm.is_visible = TRUE']
@@ -2871,7 +2875,17 @@ export async function listPublishedPageModules(pageKey?: string): Promise<PageMo
   return res.rows.map(normalizePublishedRow)
 }
 
-export async function getPublishedPageModule(pageKey: string, moduleKey: string): Promise<PageModuleRow | null> {
+const listPublishedPageModulesCached = unstable_cache(
+  async (pageKeyKey: string): Promise<PageModuleRow[]> => loadPublishedPageModules(pageKeyKey || undefined),
+  ['page-modules-public-list'],
+  { revalidate: PAGE_MODULE_PUBLIC_CACHE_SECONDS, tags: [PAGE_MODULE_PUBLIC_CACHE_TAG] },
+)
+
+export async function listPublishedPageModules(pageKey?: string): Promise<PageModuleRow[]> {
+  return listPublishedPageModulesCached(pageKey ?? '')
+}
+
+async function loadPublishedPageModule(pageKey: string, moduleKey: string): Promise<PageModuleRow | null> {
   await ensurePageModulesSchema()
   const res = await pool.query<DbPageModuleRow>(
     `SELECT
@@ -2898,6 +2912,16 @@ export async function getPublishedPageModule(pageKey: string, moduleKey: string)
   )
 
   return res.rows[0] ? normalizePublishedRow(res.rows[0]) : null
+}
+
+const getPublishedPageModuleCached = unstable_cache(
+  async (pageKey: string, moduleKey: string): Promise<PageModuleRow | null> => loadPublishedPageModule(pageKey, moduleKey),
+  ['page-modules-public-one'],
+  { revalidate: PAGE_MODULE_PUBLIC_CACHE_SECONDS, tags: [PAGE_MODULE_PUBLIC_CACHE_TAG] },
+)
+
+export async function getPublishedPageModule(pageKey: string, moduleKey: string): Promise<PageModuleRow | null> {
+  return getPublishedPageModuleCached(pageKey, moduleKey)
 }
 
 export async function getPageModuleDraft(pageKey: string, moduleKey: string): Promise<PageModuleRow | null> {

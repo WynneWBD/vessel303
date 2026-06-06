@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
-import { isPageModulePageKey, pageModulePublicPaths, publishPageModuleDraft } from '@/lib/page-modules-db'
+import { isPageModulePageKey, PAGE_MODULE_PUBLIC_CACHE_TAG, pageModulePublicPaths, publishPageModuleDraft } from '@/lib/page-modules-db'
 
 export const dynamic = 'force-dynamic'
 
 type Ctx = { params: Promise<{ pageKey: string; moduleKey: string }> }
 
 function revalidatePageModulePath(pageKey: string) {
+  revalidateTag(PAGE_MODULE_PUBLIC_CACHE_TAG, { expire: 0 })
   for (const path of pageModulePublicPaths(pageKey)) revalidatePath(path)
 }
 

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { requireSuperAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
-import { publishPageStructureDraft } from '@/lib/page-modules-db'
+import { PAGE_MODULE_PUBLIC_CACHE_TAG, publishPageStructureDraft } from '@/lib/page-modules-db'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,6 +15,7 @@ function isPageKey(value: string): value is (typeof pageKeys)[number] {
 }
 
 function revalidatePagePath(pageKey: string) {
+  revalidateTag(PAGE_MODULE_PUBLIC_CACHE_TAG, { expire: 0 })
   if (pageKey === 'home') revalidatePath('/')
   if (pageKey === 'about') revalidatePath('/about')
 }

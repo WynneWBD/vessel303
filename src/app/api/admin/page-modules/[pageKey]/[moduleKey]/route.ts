@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
@@ -7,6 +7,7 @@ import {
   createPageModuleSnapshot,
   getPageModule,
   isPageModulePageKey,
+  PAGE_MODULE_PUBLIC_CACHE_TAG,
   pageModuleInputChanged,
   pageModulePublicPaths,
   prunePageModuleSnapshots,
@@ -44,6 +45,7 @@ const patchSchema = z.object({
 })
 
 function revalidatePageModulePath(pageKey: string) {
+  revalidateTag(PAGE_MODULE_PUBLIC_CACHE_TAG, { expire: 0 })
   for (const path of pageModulePublicPaths(pageKey)) revalidatePath(path)
 }
 

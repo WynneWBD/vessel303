@@ -307,6 +307,34 @@ const COLUMNS = `
   deleted_at::text AS deleted_at
 `
 
+const PUBLIC_LIST_COLUMNS = `
+  id, product_series, name_cn, name_en, gen, size, area, generation,
+  product_type, badge_cn, badge_en, tags_cn, tags_en, features_cn, features_en,
+  image, description_cn, description_en,
+  '[]'::jsonb AS gallery,
+  '[]'::jsonb AS specs_cn,
+  '[]'::jsonb AS specs_en,
+  '[]'::jsonb AS detail_modules,
+  is_custom, detail_slug, category_id,
+  price_display_zh, price_display_en,
+  '{}'::jsonb AS commercial_terms,
+  keywords_zh, keywords_en,
+  '{}'::text[] AS related_product_ids,
+  NULL::varchar(160) AS seo_title_zh,
+  NULL::varchar(160) AS seo_title_en,
+  NULL::varchar(300) AS seo_description_zh,
+  NULL::varchar(300) AS seo_description_en,
+  status, sort_order,
+  COALESCE((
+    SELECT array_agg(pav.option_id ORDER BY pav.sort_order ASC, pav.option_id ASC)
+    FROM product_attribute_values pav
+    WHERE pav.product_id = product_catalog.id
+  ), '{}'::int[]) AS attribute_option_ids,
+  created_at::text AS created_at,
+  updated_at::text AS updated_at,
+  deleted_at::text AS deleted_at
+`
+
 const DEFAULT_PRODUCT_CATEGORIES: CreateProductCategoryInput[] = [
   {
     slug: 'standard-products',
@@ -872,6 +900,23 @@ const listPublishedCatalogProductsCached = unstable_cache(
 
 export async function listPublishedCatalogProducts(): Promise<CatalogProduct[]> {
   return listPublishedCatalogProductsCached()
+}
+
+const listPublishedCatalogProductCardsCached = unstable_cache(
+  async (): Promise<CatalogProduct[]> => {
+    const { rows } = await pool.query(
+      `SELECT ${PUBLIC_LIST_COLUMNS} FROM product_catalog
+       WHERE status = 'published' AND deleted_at IS NULL
+       ORDER BY sort_order ASC, updated_at DESC`,
+    )
+    return rows.map(rowToCatalogProduct)
+  },
+  ['product-public-card-list'],
+  { revalidate: PRODUCT_PUBLIC_CACHE_REVALIDATE_SECONDS, tags: [PRODUCT_PUBLIC_CACHE_TAG] },
+)
+
+export async function listPublishedCatalogProductCards(): Promise<CatalogProduct[]> {
+  return listPublishedCatalogProductCardsCached()
 }
 
 export async function listPublishedCatalogProductsUncached(): Promise<CatalogProduct[]> {
