@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type TouchEvent } from 'react
 import Image from 'next/image';
 import Link from 'next/link';
 import type { DisplaySlide } from '@/lib/display-slides';
+import { buildContactHref, normalizeSiteHref, SITE_PRODUCTS_HREF } from '@/lib/site-links';
 
 type DisplayContentRow = DisplaySlide & {
   title_zh?: string;
@@ -17,6 +18,7 @@ type DisplayContentRow = DisplaySlide & {
 };
 
 const INTERVAL = 5000;
+const DISPLAY_CONTACT_HREF = buildContactHref('display:showcase-contact');
 
 function asText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
@@ -54,11 +56,37 @@ function mapDisplayRow(row: DisplayContentRow): DisplaySlide | null {
       : asTextArray(payload.features).concat(textLines(row.body_zh || row.body_en)).slice(0, 3),
     price: row.price || asText(payload.price),
     image,
-    detailHref: row.detailHref || asText(payload.href) || asText(payload.product_href) || asText(payload.detail_href) || undefined,
+    detailHref: normalizeSiteHref(row.detailHref || asText(payload.href) || asText(payload.product_href) || asText(payload.detail_href), SITE_PRODUCTS_HREF) || undefined,
     detailLabel: row.detailLabel || asText(payload.detail_label),
-    consultHref: row.consultHref || asText(payload.consult_href) || undefined,
+    consultHref: normalizeDisplayContactHref(row.consultHref || asText(payload.consult_href)) || undefined,
     consultLabel: row.consultLabel || asText(payload.consult_label),
   };
+}
+
+function normalizeDisplayContactHref(href: string | null | undefined) {
+  const normalized = normalizeSiteHref(href, DISPLAY_CONTACT_HREF);
+  return normalized === '/contact' ? DISPLAY_CONTACT_HREF : normalized;
+}
+
+function DisplayTopNav() {
+  return (
+    <header className="absolute left-4 right-4 top-4 z-40 flex flex-wrap items-center justify-between gap-3 border border-white/12 bg-[#241F1B]/55 px-4 py-3 text-white shadow-2xl shadow-black/20 backdrop-blur md:left-6 md:right-6 md:px-5">
+      <Link href="/" className="text-sm font-black uppercase tracking-[0.24em] text-white">
+        VESSEL Display
+      </Link>
+      <nav aria-label="Display page navigation" className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
+        <Link href={SITE_PRODUCTS_HREF} className="min-h-9 px-3 py-2 transition hover:text-white">
+          Products
+        </Link>
+        <Link href="/cases" className="min-h-9 px-3 py-2 transition hover:text-white">
+          Cases
+        </Link>
+        <Link href={DISPLAY_CONTACT_HREF} className="min-h-9 bg-[#E36F2C] px-3 py-2 text-white transition hover:bg-[#C95E22]">
+          Contact
+        </Link>
+      </nav>
+    </header>
+  );
 }
 
 export default function DisplayPageContent({
@@ -157,10 +185,20 @@ export default function DisplayPageContent({
   };
 
   const slide = slides[current];
-  if (!slide) return <div className="min-h-screen bg-[#241F1B]" />;
+  if (!slide) {
+    return (
+      <div className="relative min-h-screen bg-[#241F1B] text-white">
+        <DisplayTopNav />
+      </div>
+    );
+  }
 
   const idx = String(current + 1).padStart(2, '0');
   const total = String(slideCount).padStart(2, '0');
+  const detailHref = normalizeSiteHref(slide.detailHref, SITE_PRODUCTS_HREF);
+  const detailLabel = slide.detailLabel || 'View Products';
+  const consultHref = normalizeDisplayContactHref(slide.consultHref);
+  const consultLabel = slide.consultLabel || 'Start Inquiry';
 
   return (
     <div
@@ -168,6 +206,8 @@ export default function DisplayPageContent({
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
+      <DisplayTopNav />
+
       <div className="absolute inset-0 transition-opacity duration-700" style={{ opacity: transitioning ? 0 : 1 }}>
         <Image
           key={slide.image + slide.model}
@@ -182,7 +222,7 @@ export default function DisplayPageContent({
         <div className="absolute inset-0 bg-gradient-to-t from-[#241F1B]/75 via-transparent to-[#241F1B]/35" />
       </div>
 
-      <div className="absolute inset-0 z-10 flex flex-col justify-center px-6 pb-24 transition-opacity duration-500 sm:px-12 lg:px-24" style={{ opacity: transitioning ? 0 : 1 }}>
+      <div className="absolute inset-0 z-10 flex flex-col justify-center px-6 pb-36 pt-28 transition-opacity duration-500 sm:px-12 lg:px-24" style={{ opacity: transitioning ? 0 : 1 }}>
         {(slide.gen || slide.tag) ? (
           <div className="mb-5 flex items-center gap-3">
             {slide.gen ? (
@@ -227,13 +267,14 @@ export default function DisplayPageContent({
         ) : null}
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 z-20 flex items-end justify-between px-6 pb-7 sm:px-12 lg:px-24">
+      <div className="absolute bottom-0 left-0 right-0 z-20 flex flex-col gap-5 px-6 pb-7 sm:px-12 md:flex-row md:items-end md:justify-between lg:px-24">
         <div>
           <div className="flex items-center gap-3">
             {slides.map((item, index) => (
               <button
                 key={`${item.model}-${index}`}
                 type="button"
+                aria-label={`Show ${item.model}`}
                 onClick={() => {
                   setPaused(true);
                   goTo(index);
@@ -252,16 +293,12 @@ export default function DisplayPageContent({
         <div className="flex flex-col items-end gap-3">
           {slide.price ? <div className="text-2xl font-black tracking-wider text-[#E36F2C]">{slide.price}</div> : null}
           <div className="flex flex-wrap justify-end gap-2">
-            {slide.detailHref && slide.detailLabel ? (
-              <Link href={slide.detailHref} className="inline-flex min-h-10 items-center border border-white/30 bg-white/12 px-4 text-xs font-bold uppercase tracking-[0.18em] text-white backdrop-blur transition hover:border-[#E36F2C] hover:bg-[#E36F2C]">
-                {slide.detailLabel}
-              </Link>
-            ) : null}
-            {slide.consultHref && slide.consultLabel ? (
-              <Link href={slide.consultHref} className="inline-flex min-h-10 items-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.18em] text-white transition hover:bg-[#C95E22]">
-                {slide.consultLabel}
-              </Link>
-            ) : null}
+            <Link href={detailHref} className="inline-flex min-h-10 items-center border border-white/30 bg-white/12 px-4 text-xs font-bold uppercase tracking-[0.18em] text-white backdrop-blur transition hover:border-[#E36F2C] hover:bg-[#E36F2C]">
+              {detailLabel}
+            </Link>
+            <Link href={consultHref} className="inline-flex min-h-10 items-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.18em] text-white transition hover:bg-[#C95E22]">
+              {consultLabel}
+            </Link>
           </div>
         </div>
       </div>

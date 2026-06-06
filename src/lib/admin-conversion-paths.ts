@@ -71,6 +71,17 @@ export const CONVERSION_PATHS: ConversionPathItem[] = [
     risk: 'Media Kit mobile form spacing and resource card density need periodic review; no private download or member permission layer in this phase.',
   },
   {
+    key: 'display',
+    area: 'Display showroom',
+    frontendHref: '/display',
+    adminHref: '/admin/content/display',
+    cta: 'Product detail fallback + contact handoff',
+    leadCapture: 'Routes to new site contact form',
+    sourceRule: 'display:showcase-contact -> contact:main:inquiry_form',
+    status: 'lead',
+    risk: 'Display stays a controlled showcase surface backed by published display_slide content; do not add free-form builder behavior or hardcode product facts.',
+  },
+  {
     key: 'scenarios',
     area: 'Scenarios',
     frontendHref: '/scenarios/tourism',
