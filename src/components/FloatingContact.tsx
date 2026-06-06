@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ExternalLink, Mail, MessageCircle, Phone, Send } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSiteModules } from '@/contexts/SiteModulesContext';
 import {
   fetchPublicPageModules,
   itemContent,
@@ -33,12 +34,17 @@ function actionIcon(id: string) {
 export default function FloatingContact() {
   const pathname = usePathname();
   const { lang } = useLanguage();
-  const [siteModules, setSiteModules] = useState<PublicPageModule[] | null>(null);
+  const initialSiteModules = useSiteModules();
+  const [siteModules, setSiteModules] = useState<PublicPageModule[] | null>(initialSiteModules);
+  const [activeDesktopItemId, setActiveDesktopItemId] = useState<string | null>(null);
   const isHomePath = pathname === '/';
   const [showHomeMobileActions, setShowHomeMobileActions] = useState(false);
 
   useEffect(() => {
     if (pathname?.startsWith('/global')) return;
+    if (Array.isArray(initialSiteModules) && initialSiteModules.length > 0) {
+      return;
+    }
     const controller = new AbortController();
     fetchPublicPageModules('site', controller.signal)
       .then((modules) => setSiteModules(modules))
@@ -46,7 +52,7 @@ export default function FloatingContact() {
         if ((err as Error).name !== 'AbortError') console.warn('[floating-contact] site modules unavailable', err);
       });
     return () => controller.abort();
-  }, [pathname]);
+  }, [initialSiteModules, pathname]);
 
   useEffect(() => {
     if (!isHomePath) return;
@@ -85,6 +91,15 @@ export default function FloatingContact() {
   const renderAction = (item: (typeof items)[number], variant: 'desktop' | 'mobile') => {
     const Icon = actionIcon(item.id);
     const content = item.content || item.value;
+    const showDesktopImage = variant === 'desktop' && item.image && activeDesktopItemId === item.id;
+    const desktopInteractionProps = variant === 'desktop'
+      ? {
+          onMouseEnter: () => setActiveDesktopItemId(item.id),
+          onMouseLeave: () => setActiveDesktopItemId((current) => current === item.id ? null : current),
+          onFocus: () => setActiveDesktopItemId(item.id),
+          onBlur: () => setActiveDesktopItemId((current) => current === item.id ? null : current),
+        }
+      : {};
     const body = variant === 'desktop' ? (
       <>
         <span className="flex h-11 w-11 shrink-0 items-center justify-center bg-[#2F3032] text-white">
@@ -93,7 +108,7 @@ export default function FloatingContact() {
         <span className={`pointer-events-none invisible absolute right-full top-1/2 mr-2 -translate-y-1/2 border border-white/10 bg-[#2F3032]/96 px-3 py-2 text-left opacity-0 shadow-[0_16px_40px_rgba(15,23,42,0.2)] backdrop-blur-md transition group-hover:visible group-hover:opacity-100 group-focus-visible:visible group-focus-visible:opacity-100 group-focus-within:visible group-focus-within:opacity-100 ${item.image ? 'w-48' : 'min-w-44'}`}>
           <span className="block truncate text-xs font-black uppercase tracking-[0.14em]">{item.label}</span>
           {content ? <span className="mt-0.5 block truncate text-[11px] opacity-65">{content}</span> : null}
-          {item.image ? (
+          {showDesktopImage ? (
             <span className="mt-3 block bg-white p-2">
               <Image
                 src={item.image}
@@ -125,6 +140,7 @@ export default function FloatingContact() {
           type="button"
           className={className}
           aria-label={content ? `${item.label} ${content}` : item.label}
+          {...desktopInteractionProps}
         >
           {body}
         </button>
@@ -139,6 +155,7 @@ export default function FloatingContact() {
         rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
         className={className}
         aria-label={content ? `${item.label} ${content}` : item.label}
+        {...desktopInteractionProps}
       >
         {body}
       </a>
@@ -146,8 +163,10 @@ export default function FloatingContact() {
       <Link
         key={item.id}
         href={item.href}
+        prefetch={false}
         className={className}
         aria-label={content ? `${item.label} ${content}` : item.label}
+        {...desktopInteractionProps}
       >
         {body}
       </Link>

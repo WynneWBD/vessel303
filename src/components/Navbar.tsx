@@ -125,7 +125,7 @@ export default function Navbar() {
         <div className="flex h-16 items-center justify-between lg:h-[92px]">
 
           {logoSrc && logoHref ? (
-            <Link href={logoHref} className="flex shrink-0 items-center">
+            <Link href={logoHref} prefetch={false} className="flex shrink-0 items-center">
               <Image
                 src={logoSrc}
                 alt={logoAlt}
@@ -145,6 +145,7 @@ export default function Navbar() {
               <div key={link.id} className={`relative group ${link.id === 'nav-global' ? 'hidden xl:block' : ''}`}>
                 <Link
                   href={link.href}
+                  prefetch={false}
                   className="relative block whitespace-nowrap py-2 text-[14px] font-medium text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.32)] transition-colors duration-200 hover:text-white"
                 >
                   {link.id.startsWith('nav-model-') ? <ModelNavLabel link={link} /> : link.label}
@@ -186,6 +187,7 @@ export default function Navbar() {
               <div key={link.id}>
                 <Link
                   href={link.href}
+                  prefetch={false}
                   className="block text-white/70 hover:text-[#E36F2C] text-sm py-3 px-2 border-b border-white/5 transition-colors tracking-wider"
                   onClick={() => setIsOpen(false)}
                 >
@@ -197,6 +199,7 @@ export default function Navbar() {
                       <Link
                         key={model.id}
                         href={model.href}
+                        prefetch={false}
                         className="flex min-h-14 items-center gap-2 border border-white/10 bg-white/[0.03] px-2 py-2 text-white/75"
                         onClick={() => setIsOpen(false)}
                       >
@@ -231,6 +234,7 @@ export default function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
+                    prefetch={false}
                     className={index === 0
                       ? 'inline-flex min-h-11 items-center justify-center bg-[#241F1B] px-4 text-center text-sm font-semibold tracking-wider text-white border border-white/60'
                       : 'inline-flex min-h-11 items-center justify-center bg-transparent px-4 text-center text-sm tracking-wider text-white/80 border border-white/25'}

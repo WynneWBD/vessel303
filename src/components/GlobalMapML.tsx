@@ -391,6 +391,127 @@ export default function GlobalMapML({
       className: 'vessel-camp-popup',
     })
 
+    let htmlMarkersMounted = false
+    const mountPrimaryHtmlMarkers = () => {
+      if (htmlMarkersMounted) return
+      htmlMarkersMounted = true
+
+      const hqWrapper = document.createElement('div')
+      hqWrapper.style.cssText = `width:36px;height:36px;cursor:${previewMode ? 'default' : 'pointer'};z-index:9999;`
+      hqWrapper.innerHTML = `
+        <svg class="vessel-hq-star" width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="18,2 22.8,13.2 35,13.2 25,21.4 28.5,33 18,26 7.5,33 11,21.4 1,13.2 13.2,13.2"
+            fill="#E36F2C" stroke="#fff" stroke-width="1.5"/>
+        </svg>
+        <div class="vessel-hq-label">${isZhRef.current ? HQ.labelZh : HQ.labelEn}</div>
+      `
+      hqLabelRef.current = hqWrapper.querySelector<HTMLDivElement>('.vessel-hq-label')
+
+      const hqPopup = new Popup({
+        closeButton: false,
+        closeOnClick: true,
+        offset: 22,
+        className: 'vessel-hq-popup',
+      })
+      hqPopupRef.current = hqPopup
+
+      function getHqPopupHtml() {
+        const zh = isZhRef.current
+        const name = zh ? HQ_MARKER.name.zh : HQ_MARKER.name.en
+        const addr = zh ? HQ_MARKER.location.zh : HQ_MARKER.location.en
+        return `<div class="vessel-hq-popup-name">${name}</div><div class="vessel-hq-popup-addr">${addr}</div>`
+      }
+
+      if (!previewMode) {
+        hqWrapper.addEventListener('mouseenter', () => {
+          const map = mapRef.current
+          if (!map) return
+          hqPopup.setLngLat([HQ.lng, HQ.lat]).setHTML(getHqPopupHtml()).addTo(map)
+        })
+        hqWrapper.addEventListener('mouseleave', () => {
+          hqPopup.remove()
+        })
+        hqWrapper.addEventListener('click', (ev) => {
+          ev.stopPropagation()
+          const map = mapRef.current
+          if (!map) return
+          if (!hqPopup.isOpen()) {
+            hqPopup.setLngLat([HQ.lng, HQ.lat]).setHTML(getHqPopupHtml()).addTo(map)
+          }
+        })
+      }
+
+      const showcasePins: HTMLDivElement[] = []
+
+      function getPinScale(zoom: number): number {
+        if (zoom <= 2) return 0.35
+        if (zoom <= 6) return 0.35 + (zoom - 2) / 4 * 0.65
+        if (zoom <= 10) return 1.0 + (zoom - 6) / 4 * 0.5
+        return 1.5
+      }
+
+      function updatePinScales() {
+        const s = getPinScale(map.getZoom()).toFixed(3)
+        showcasePins.forEach(p => p.style.setProperty('--vessel-zoom-scale', s))
+      }
+
+      map.on('zoom', updatePinScales)
+
+      showcaseMarkers.forEach((marker) => {
+        const wrap = document.createElement('div')
+        wrap.className = 'vessel-showcase-wrap'
+
+        const pin = document.createElement('div')
+        pin.className = 'vessel-showcase-pin'
+        pin.title = marker.name.en
+        wrap.appendChild(pin)
+        showcasePins.push(pin)
+
+        if (previewMode) {
+          pin.style.cursor = 'default'
+        } else {
+          pin.addEventListener('click', (ev) => {
+            ev.stopPropagation()
+            onShowcaseSelectRef.current?.(marker)
+          })
+        }
+
+        const showcasePopup = new Popup({
+          closeButton: false,
+          closeOnClick: false,
+          offset: 18,
+          className: 'vessel-camp-popup',
+        })
+
+        if (!previewMode) {
+          pin.addEventListener('mouseenter', () => {
+            map.getCanvas().style.cursor = 'pointer'
+            showcasePopup
+              .setLngLat(marker.coordinates)
+              .setText(marker.name[isZhRef.current ? 'zh' : 'en'])
+              .addTo(map)
+          })
+          pin.addEventListener('mouseleave', () => {
+            map.getCanvas().style.cursor = ''
+            showcasePopup.remove()
+          })
+        }
+
+        new Marker({ element: wrap, anchor: 'center' })
+          .setLngLat(marker.coordinates)
+          .addTo(map)
+      })
+
+      updatePinScales()
+
+      new Marker({ element: hqWrapper, anchor: 'center' })
+        .setLngLat([HQ.lng, HQ.lat])
+        .addTo(map)
+    }
+
+    mountPrimaryHtmlMarkers()
+    scheduleMapUsable(900)
+
     // Surface maplibre's own error events to the console for debugging,
     // but never automatically promote them to a "失败" UI — individual
     // tile / glyph errors over a flaky mainland-China link are routine
@@ -483,6 +604,9 @@ export default function GlobalMapML({
       // ── VESSEL HQ star ────────────────────────────────────────────────
       // Declared here, added to map AFTER showcase markers so it sits on top
       // in DOM order and is never covered by any showcase pin.
+      if (htmlMarkersMounted) return
+      htmlMarkersMounted = true
+
       const hqWrapper = document.createElement('div')
       hqWrapper.style.cssText = `width:36px;height:36px;cursor:${previewMode ? 'default' : 'pointer'};z-index:9999;`
       hqWrapper.innerHTML = `

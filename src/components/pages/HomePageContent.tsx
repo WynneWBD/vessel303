@@ -157,10 +157,10 @@ function localizedModuleDescription(pageModule: HomePageModule | null, lang: Lan
 
 function externalLinkProps(href: string) {
   if (/^https?:\/\//i.test(href)) {
-    return { target: '_blank', rel: 'noopener noreferrer' };
+    return { target: '_blank', rel: 'noopener noreferrer', prefetch: false };
   }
 
-  return {};
+  return { prefetch: false };
 }
 
 function displayHref(href: string | null | undefined) {
@@ -230,15 +230,6 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const nextLabel = lang === 'zh' ? '下一张' : 'Next';
   const pauseLabel = lang === 'zh' ? '暂停' : 'Pause';
   const playLabel = lang === 'zh' ? '播放' : 'Play';
-  const visibleHeroImages = useMemo(() => {
-    if (heroSlides.length === 0) return [];
-    return Array.from(new Set([activeImage, nextImage])).map((index) => ({
-      index,
-      slide: heroSlides[index],
-      active: index === activeImage,
-    }));
-  }, [activeImage, heroSlides, nextImage]);
-
   useEffect(() => {
     if (heroSlides.length === 0) return;
     if (isPaused) return;
@@ -258,20 +249,20 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
       data-module-key="hero"
     >
       {/* Carousel images */}
-      {visibleHeroImages.map(({ slide, index, active }) => (
+      {activeSlide ? (
         <Image
-          key={slide.src}
-          src={slide.src}
+          key={activeSlide.src}
+          src={activeSlide.src}
           alt=""
           fill
-          priority={active && index === 0}
+          priority={activeImage === 0}
           sizes="100vw"
           quality={75}
-          className={`object-cover transition-opacity duration-1000 ${active ? 'opacity-100' : 'opacity-0'}`}
-          data-page-module-item={slide.id}
+          className="object-cover transition-opacity duration-700"
+          data-page-module-item={activeSlide.id}
           data-page-module-field="image_url"
         />
-      ))}
+      ) : null}
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(18,30,44,0.18)_0%,rgba(18,30,44,0.08)_24%,rgba(5,12,18,0.14)_100%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0)_0%,rgba(0,0,0,0.08)_42%,rgba(0,0,0,0.34)_100%)]" />
       <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#071018]/46 to-transparent" />

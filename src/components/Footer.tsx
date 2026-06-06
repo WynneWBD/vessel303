@@ -88,7 +88,7 @@ function FooterSocialLink({ item }: { item: PublicPageModuleItem }) {
   }
 
   return (
-    <Link href={rawHref} aria-label={label}>
+    <Link href={rawHref} prefetch={false} aria-label={label}>
       {content}
     </Link>
   );
@@ -126,6 +126,7 @@ function FooterLinkList({ module }: { module: PublicPageModule | null }) {
               ) : (
                 <Link
                   href={href}
+                  prefetch={false}
                   className="group flex items-center gap-2 text-sm text-white/40 transition-colors hover:text-[#E36F2C]"
                 >
                 <span className="text-[#E36F2C]/30 transition-colors group-hover:text-[#E36F2C]">-</span>
@@ -214,7 +215,7 @@ export default function Footer() {
                       {label}
                     </a>
                   ) : (
-                    <Link key={item.id} href={href} className={className}>{label}</Link>
+                    <Link key={item.id} href={href} prefetch={false} className={className}>{label}</Link>
                   );
                 })}
               </div>
@@ -230,7 +231,7 @@ export default function Footer() {
               <div className="mb-4">
                 {brandLogoSrc ? (
                   brandLogoHref ? (
-                    <Link href={brandLogoHref}>
+                    <Link href={brandLogoHref} prefetch={false}>
                       <Image
                         src={brandLogoSrc}
                         alt={brandLogoAlt}
@@ -325,7 +326,7 @@ export default function Footer() {
                           {body}
                         </a>
                       ) : href ? (
-                        <Link href={href} className="transition-colors hover:text-[#E36F2C]">
+                        <Link href={href} prefetch={false} className="transition-colors hover:text-[#E36F2C]">
                           {body}
                         </Link>
                       ) : (
