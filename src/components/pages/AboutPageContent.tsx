@@ -1135,19 +1135,19 @@ export default function AboutPageContent({
           </div>
           <Reveal delay={180} className="mt-10">
             <div className="flex flex-wrap gap-3 border-t border-[#E5E0DA] pt-8">
-              <Link
+              <Link prefetch={false}
                 href="/products"
                 className="inline-flex min-h-11 items-center justify-center bg-[#241F1B] px-5 text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#E36F2C]"
               >
                 {zh ? '查看产品' : 'View Products'}
               </Link>
-              <Link
+              <Link prefetch={false}
                 href="/cases"
                 className="inline-flex min-h-11 items-center justify-center border border-[#241F1B]/20 px-5 text-sm font-bold uppercase tracking-[0.12em] text-[#241F1B] transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
               >
                 {zh ? '项目案例' : 'Project Cases'}
               </Link>
-              <Link
+              <Link prefetch={false}
                 href="/contact?source=about:inquiry_cta"
                 className="inline-flex min-h-11 items-center justify-center border border-[#E36F2C]/60 px-5 text-sm font-bold uppercase tracking-[0.12em] text-[#E36F2C] transition-colors hover:bg-[#E36F2C] hover:text-white"
               >

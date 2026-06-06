@@ -301,7 +301,7 @@ export default function FaqView({
             {(contactCta || secondaryCta) ? (
               <div className="mb-8 flex flex-col justify-center gap-3 sm:flex-row">
                 {contactCta && itemLabel(contactCta, lang) && contactCta.href ? (
-                  <Link
+                  <Link prefetch={false}
                     href={contactCta.href}
                     className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-8 py-3.5 text-sm font-semibold tracking-wider text-white transition-colors hover:bg-[#C85A1F]"
                   >
@@ -309,7 +309,7 @@ export default function FaqView({
                   </Link>
                 ) : null}
                 {secondaryCta && itemLabel(secondaryCta, lang) && secondaryCta.href ? (
-                  <Link
+                  <Link prefetch={false}
                     href={secondaryCta.href}
                     className="inline-flex min-h-11 items-center justify-center border border-white/20 px-8 py-3.5 text-sm font-medium tracking-wider text-white/70 transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
                   >

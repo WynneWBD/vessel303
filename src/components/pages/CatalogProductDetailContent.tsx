@@ -146,7 +146,7 @@ function DetailModuleBlock({
               </>
             );
             return isInternalHref(href) ? (
-              <Link
+              <Link prefetch={false}
                 key={`${itemTitle || href}-${index}`}
                 href={href}
                 className="group border border-[#147C94]/20 bg-white p-5 transition hover:border-[#147C94]/60 hover:bg-[#F2F8F8]"
@@ -253,7 +253,7 @@ function BuyerResourceHub({
                     );
                     const className = 'block border border-[#147C94]/20 bg-white p-4 transition hover:border-[#147C94]/60 hover:bg-[#F2F8F8]';
                     return isInternalHref(href) ? (
-                      <Link key={`${itemTitle || href}-${index}`} href={href} className={className}>
+                      <Link prefetch={false} key={`${itemTitle || href}-${index}`} href={href} className={className}>
                         {card}
                       </Link>
                     ) : (
@@ -313,7 +313,7 @@ function RelatedCard({ product }: { product: CatalogProduct }) {
   const name = localizedProductName(product, lang);
   if (!name || !product.image) return null;
   return (
-    <Link href={productHref(product)} className="group overflow-hidden border border-[#DADDE1] bg-white transition hover:-translate-y-0.5 hover:border-[#147C94]/60">
+    <Link prefetch={false} href={productHref(product)} className="group overflow-hidden border border-[#DADDE1] bg-white transition hover:-translate-y-0.5 hover:border-[#147C94]/60">
       <span className="relative block aspect-[4/3] overflow-hidden bg-[#EEF1F3]">
         <ProtectedImage
           src={product.image}
@@ -638,7 +638,7 @@ export default function CatalogProductDetailContent({
                       );
                       const className = 'block rounded-md border border-[#147C94]/20 bg-[#F2F8F8] px-3 py-2 transition hover:border-[#147C94]/60 hover:bg-white';
                       return isInternalHref(item.href) ? (
-                        <Link key={`${item.href}-${index}`} href={item.href} className={className}>
+                        <Link prefetch={false} key={`${item.href}-${index}`} href={item.href} className={className}>
                           {body}
                         </Link>
                       ) : (
@@ -693,7 +693,7 @@ export default function CatalogProductDetailContent({
                     ? 'inline-flex min-h-10 shrink-0 items-center justify-center rounded-sm bg-[#E36F2C] px-4 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[#C85A1F]'
                     : 'inline-flex min-h-10 shrink-0 items-center justify-center rounded-sm border border-[#147C94]/35 bg-[#EAF6F8] px-4 text-xs font-black uppercase tracking-[0.12em] text-[#147C94] transition hover:border-[#147C94] hover:bg-white';
                   return isInternalHref(action.href) ? (
-                    <Link key={action.href} href={action.href} className={className}>
+                    <Link prefetch={false} key={action.href} href={action.href} className={className}>
                       {action.label}
                     </Link>
                   ) : (

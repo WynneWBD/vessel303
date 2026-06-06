@@ -153,7 +153,7 @@ function Sidebar({
           {uiLabels.categoryHeading}
         </div>
         <div className="divide-y divide-[#ECEFF1]">
-          <Link
+          <Link prefetch={false}
             href={buildHref(filters, { category: '', page: 1 })}
             className={`block px-4 py-2.5 text-sm transition ${
               !filters.category ? 'bg-[#EAF4F6] font-semibold text-[#147C94]' : 'text-[#5C6670] hover:bg-[#F7FAFA]'
@@ -165,7 +165,7 @@ function Sidebar({
             const categoryLabel = localizedText(category.title_en, category.title_zh, lang);
             if (!categoryLabel) return null;
             return (
-              <Link
+              <Link prefetch={false}
                 key={category.id}
                 href={buildHref(filters, { category: String(category.id), page: 1 })}
                 className={`block px-4 py-2.5 text-sm transition ${
@@ -200,7 +200,7 @@ function Sidebar({
             ) : null}
             <div className="divide-y divide-[#ECEFF1]">
               {visibleOptions.map((option) => (
-                <Link
+                <Link prefetch={false}
                   key={option.id}
                   href={buildHref(filters, { attribute: String(option.id), page: 1 })}
                   className={`block px-4 py-2.5 text-sm transition ${
@@ -225,7 +225,7 @@ function Sidebar({
           {headline ? <ContactHeading className="mt-3 text-lg font-black leading-snug">{headline}</ContactHeading> : null}
           {body ? <p className="mt-3 text-sm leading-6 text-white/65">{body}</p> : null}
           {ctaLabel && ctaHref ? (
-            <Link
+            <Link prefetch={false}
               href={ctaHref}
               className="mt-5 inline-flex min-h-10 w-full items-center justify-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#C85A1F]"
             >
@@ -273,7 +273,7 @@ function ProductCard({
 
   return (
     <article className="group flex min-h-full flex-col border border-[#DADDE1] bg-white transition hover:-translate-y-0.5 hover:border-[#147C94]/60 hover:shadow-[0_18px_46px_rgba(24,44,54,0.13)]">
-      <Link href={productHref(product)} className="relative block aspect-[4/3] overflow-hidden bg-[#EEF1F3] sm:aspect-square">
+      <Link prefetch={false} href={productHref(product)} className="relative block aspect-[4/3] overflow-hidden bg-[#EEF1F3] sm:aspect-square">
         <ProtectedImage
           src={product.image}
           alt={name}
@@ -296,7 +296,7 @@ function ProductCard({
           <span>{product.productSeries}</span>
           <span>{product.size}</span>
         </div>
-        <Link href={productHref(product)} className="text-base font-bold leading-snug text-[#1F2A31] break-words hover:text-[#147C94]">
+        <Link prefetch={false} href={productHref(product)} className="text-base font-bold leading-snug text-[#1F2A31] break-words hover:text-[#147C94]">
           {name}
         </Link>
         {metaItems.length > 0 ? (
@@ -321,7 +321,7 @@ function ProductCard({
           ) : null}
           <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
             {uiLabels.detailsCta ? (
-              <Link
+              <Link prefetch={false}
                 href={productHref(product)}
                 className="inline-flex min-h-10 items-center justify-center bg-[#147C94] px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#0E6479]"
               >
@@ -329,7 +329,7 @@ function ProductCard({
               </Link>
             ) : null}
             {uiLabels.inquiryCta && inquiryHref ? (
-              <Link
+              <Link prefetch={false}
                 href={inquiryHref}
                 className="inline-flex min-h-10 items-center justify-center border border-[#E36F2C]/35 px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-[#C65F22] transition hover:border-[#E36F2C] hover:bg-[#FFF4EC]"
               >
@@ -374,7 +374,7 @@ function SeriesSummary({
       </div>
       <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
         {series.map(([code, item]) => (
-          <Link
+          <Link prefetch={false}
             key={code}
             href={item.href}
             className="group relative flex min-h-[120px] min-w-[190px] overflow-hidden border border-[#E5E9EC] bg-[#1F2A31] transition hover:border-[#147C94]/55"
@@ -442,14 +442,14 @@ function Pagination({
 
   return (
     <nav className="mt-8 flex flex-wrap items-center justify-center gap-2">
-      <Link
+      <Link prefetch={false}
         href={buildHref(filters, { page: Math.max(1, currentPage - 1) })}
         className="border border-[#DADDE1] bg-white px-3 py-2 text-sm font-semibold text-[#5C6670] hover:border-[#147C94]"
       >
         &lt;
       </Link>
       {pages.map((page) => (
-        <Link
+        <Link prefetch={false}
           key={page}
           href={buildHref(filters, { page })}
           className={`border px-3 py-2 text-sm font-semibold ${
@@ -461,7 +461,7 @@ function Pagination({
           {page}
         </Link>
       ))}
-      <Link
+      <Link prefetch={false}
         href={buildHref(filters, { page: Math.min(totalPages, currentPage + 1) })}
         className="border border-[#DADDE1] bg-white px-3 py-2 text-sm font-semibold text-[#5C6670] hover:border-[#147C94]"
       >
@@ -578,7 +578,7 @@ export default function ProductsPageContent({
               {(breadcrumbHomeLabel || breadcrumbCurrentLabel) ? (
                 <div className="text-xs text-[#65707A]">
                   {breadcrumbHomeLabel && breadcrumbHome?.href ? (
-                    <Link href={displayHref(breadcrumbHome.href)} className="hover:text-[#147C94]">{breadcrumbHomeLabel}</Link>
+                    <Link prefetch={false} href={displayHref(breadcrumbHome.href)} className="hover:text-[#147C94]">{breadcrumbHomeLabel}</Link>
                   ) : null}
                   {breadcrumbHomeLabel && breadcrumbCurrentLabel ? <span className="mx-2">/</span> : null}
                   {breadcrumbCurrentLabel ? <span>{breadcrumbCurrentLabel}</span> : null}
@@ -595,12 +595,12 @@ export default function ProductsPageContent({
               {((primaryCtaLabel && primaryCtaHref) || (secondaryCtaLabel && secondaryCtaHref)) ? (
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                   {primaryCtaLabel && primaryCtaHref ? (
-                    <Link href={primaryCtaHref} className="inline-flex min-h-10 w-full items-center justify-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#C85A1F] sm:w-auto">
+                    <Link prefetch={false} href={primaryCtaHref} className="inline-flex min-h-10 w-full items-center justify-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#C85A1F] sm:w-auto">
                       {primaryCtaLabel}
                     </Link>
                   ) : null}
                   {secondaryCtaLabel && secondaryCtaHref ? (
-                    <Link href={secondaryCtaHref} className="inline-flex min-h-10 w-full items-center justify-center border border-[#C7CDD2] bg-white px-4 text-xs font-semibold text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94] sm:w-auto">
+                    <Link prefetch={false} href={secondaryCtaHref} className="inline-flex min-h-10 w-full items-center justify-center border border-[#C7CDD2] bg-white px-4 text-xs font-semibold text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94] sm:w-auto">
                       {secondaryCtaLabel}
                     </Link>
                   ) : null}
@@ -619,7 +619,7 @@ export default function ProductsPageContent({
             </div>
             {heroImageSrc ? (
               heroImageHref ? (
-                <Link
+                <Link prefetch={false}
                   href={heroImageHref}
                   data-products-hero-image="true"
                   className="group relative block min-h-36 overflow-hidden border border-white/70 bg-[#DADDE1] shadow-[0_20px_60px_rgba(31,42,49,0.14)] sm:min-h-64 lg:min-h-72"
@@ -690,7 +690,7 @@ export default function ProductsPageContent({
                   {uiLabels.searchButton}
                 </button>
                 {(filters.q || filters.category || filters.attribute) ? (
-                  <Link
+                  <Link prefetch={false}
                     href="/products"
                     className="inline-flex min-h-9 items-center justify-center border border-[#DADDE1] px-4 text-sm font-semibold text-[#5C6670] hover:border-[#147C94]"
                   >
@@ -712,7 +712,7 @@ export default function ProductsPageContent({
                     <span className="text-xs font-bold uppercase tracking-[0.16em] text-[#65707A]">{uiLabels.activeFilters}</span>
                   ) : null}
                   {activeFilters.map((item) => (
-                    <Link
+                    <Link prefetch={false}
                       key={item.key}
                       href={removeFilterHref(item.key)}
                       aria-label={`${uiLabels.clearFilter || 'Clear'} ${item.label}: ${item.value}`}
@@ -724,7 +724,7 @@ export default function ProductsPageContent({
                     </Link>
                   ))}
                   {uiLabels.clearFilter ? (
-                    <Link href="/products" className="inline-flex items-center border border-[#147C94] px-3 py-1 text-xs font-bold text-[#147C94] hover:bg-[#147C94] hover:text-white">
+                    <Link prefetch={false} href="/products" className="inline-flex items-center border border-[#147C94] px-3 py-1 text-xs font-bold text-[#147C94] hover:bg-[#147C94] hover:text-white">
                       {uiLabels.clearFilter}
                     </Link>
                   ) : null}

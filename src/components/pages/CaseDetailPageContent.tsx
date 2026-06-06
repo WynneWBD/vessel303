@@ -317,7 +317,7 @@ export default function CaseDetailPageContent({
                 if (!relatedName) return null
 
                 return (
-                  <Link
+                  <Link prefetch={false}
                     key={item.id}
                     href={`/cases/${item.id}`}
                     className="group border border-[#E5DED4] bg-white transition-colors hover:border-[#E36F2C]/35"

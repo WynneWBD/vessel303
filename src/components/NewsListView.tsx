@@ -97,7 +97,7 @@ export default function NewsListView({
               const dateStr = formatNewsDate(item.published_at, lang)
 
               return (
-                <Link
+                <Link prefetch={false}
                   key={item.id}
                   href={`/news/${item.slug}`}
                   className="group flex flex-col overflow-hidden rounded-lg border border-[#E5DED4] bg-white transition-all duration-300 hover:border-[#E36F2C]/40 hover:shadow-[0_18px_50px_rgba(44,42,40,0.10)]"

@@ -157,10 +157,10 @@ function localizedModuleDescription(pageModule: HomePageModule | null, lang: Lan
 
 function externalLinkProps(href: string) {
   if (/^https?:\/\//i.test(href)) {
-    return { target: '_blank', rel: 'noopener noreferrer', prefetch: false };
+    return { target: '_blank', rel: 'noopener noreferrer' };
   }
 
-  return { prefetch: false };
+  return {};
 }
 
 function displayHref(href: string | null | undefined) {
@@ -303,7 +303,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
           {primaryLabel && activePrimaryHref ? (
             <div className="flex flex-col justify-center gap-3 sm:flex-row sm:items-center">
-              <Link
+              <Link prefetch={false}
                 href={activePrimaryHref}
                 {...externalLinkProps(activePrimaryHref)}
                 className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/88 px-8 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#172231]"
@@ -582,7 +582,7 @@ function CtaModuleSection({ pageModule }: { pageModule: HomePageModule | null })
         {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           {primaryLabel && primaryHref ? (
-            <Link
+            <Link prefetch={false}
               href={primaryHref}
               {...externalLinkProps(primaryHref)}
               className="bg-[#E36F2C] text-white px-10 py-4 text-sm tracking-wider hover:bg-[#C85A1F] transition-colors"
@@ -593,7 +593,7 @@ function CtaModuleSection({ pageModule }: { pageModule: HomePageModule | null })
             </Link>
           ) : null}
           {secondaryLabel && secondaryHref ? (
-            <Link
+            <Link prefetch={false}
               href={secondaryHref}
               {...externalLinkProps(secondaryHref)}
               className="border border-white/25 text-white/80 px-10 py-4 text-sm tracking-wider hover:border-white/60 transition-colors"
@@ -725,7 +725,7 @@ function ProductShowcaseSection({ pageModule }: { pageModule: HomePageModule | n
               );
 
               return card.href ? (
-                <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                <Link prefetch={false} key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
                   {content}
                 </Link>
               ) : (
@@ -738,7 +738,7 @@ function ProductShowcaseSection({ pageModule }: { pageModule: HomePageModule | n
         {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
           <div className="mt-6 flex flex-wrap gap-3">
             {primaryLabel && primaryHref ? (
-              <Link
+              <Link prefetch={false}
                 href={primaryHref}
                 {...externalLinkProps(primaryHref)}
                 className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C85A1F]"
@@ -749,7 +749,7 @@ function ProductShowcaseSection({ pageModule }: { pageModule: HomePageModule | n
               </Link>
             ) : null}
             {secondaryLabel && secondaryHref ? (
-              <Link
+              <Link prefetch={false}
                 href={secondaryHref}
                 {...externalLinkProps(secondaryHref)}
                 className="inline-flex min-h-11 items-center justify-center border border-[#241F1B]/20 px-5 text-sm font-bold uppercase tracking-[0.12em] text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]"
@@ -884,7 +884,7 @@ function SalesGridSection({ pageModule }: { pageModule: HomePageModule | null })
               );
 
               return card.href ? (
-                <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                <Link prefetch={false} key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
                   {cardContent}
                 </Link>
               ) : (
@@ -897,7 +897,7 @@ function SalesGridSection({ pageModule }: { pageModule: HomePageModule | null })
         {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
           <div className="mt-9 flex flex-wrap gap-3">
             {primaryLabel && primaryHref ? (
-              <Link
+              <Link prefetch={false}
                 href={primaryHref}
                 {...externalLinkProps(primaryHref)}
                 className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C85A1F]"
@@ -908,7 +908,7 @@ function SalesGridSection({ pageModule }: { pageModule: HomePageModule | null })
               </Link>
             ) : null}
             {secondaryLabel && secondaryHref ? (
-              <Link
+              <Link prefetch={false}
                 href={secondaryHref}
                 {...externalLinkProps(secondaryHref)}
                 className={`${isProjectProof ? 'border-white/24 text-white/78 hover:border-white/60' : 'border-[#241F1B]/20 text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]'} inline-flex min-h-11 items-center justify-center border px-5 text-sm font-bold uppercase tracking-[0.12em]`}
@@ -1175,7 +1175,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                     {((primaryLabel && cardPrimaryHref) || (secondaryLabel && secondaryHref)) ? (
                       <div className="mt-7 flex flex-wrap items-center justify-center gap-8 text-sm text-[#11100E] sm:text-base">
                         {primaryLabel && cardPrimaryHref ? (
-                          <Link
+                          <Link prefetch={false}
                             href={cardPrimaryHref}
                             {...externalLinkProps(cardPrimaryHref)}
                             className="inline-flex items-center gap-2 font-medium transition hover:text-[#E36F2C]"
@@ -1187,7 +1187,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                           </Link>
                         ) : null}
                         {secondaryLabel && secondaryHref ? (
-                          <Link
+                          <Link prefetch={false}
                             href={secondaryHref}
                             {...externalLinkProps(secondaryHref)}
                             className="inline-flex items-center gap-2 font-medium transition hover:text-[#E36F2C]"
@@ -1298,7 +1298,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                   {((primaryLabel && cardPrimaryHref) || (secondaryLabel && secondaryHref)) ? (
                     <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
                       {primaryLabel && cardPrimaryHref ? (
-                        <Link
+                        <Link prefetch={false}
                           href={cardPrimaryHref}
                           {...externalLinkProps(cardPrimaryHref)}
                           className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/76 px-7 text-sm font-medium text-white transition hover:bg-white hover:text-[#11100E]"
@@ -1309,7 +1309,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                         </Link>
                       ) : null}
                       {secondaryLabel && secondaryHref ? (
-                        <Link
+                        <Link prefetch={false}
                           href={secondaryHref}
                           {...externalLinkProps(secondaryHref)}
                           className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/76 px-7 text-sm font-medium text-white transition hover:bg-white hover:text-[#11100E]"
@@ -1458,7 +1458,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                 );
 
                 return card.href ? (
-                  <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                  <Link prefetch={false} key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
                     {innovationCard}
                   </Link>
                 ) : (
@@ -1473,7 +1473,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
           {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
             <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
               {primaryLabel && primaryHref ? (
-                <Link
+                <Link prefetch={false}
                   href={primaryHref}
                   {...externalLinkProps(primaryHref)}
                   className="inline-flex min-h-10 items-center justify-center bg-[#E36F2C] px-4 text-sm font-bold text-white hover:bg-[#C85A1F]"
@@ -1484,7 +1484,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                 </Link>
               ) : null}
               {secondaryLabel && secondaryHref ? (
-                <Link
+                <Link prefetch={false}
                   href={secondaryHref}
                   {...externalLinkProps(secondaryHref)}
                   className="inline-flex min-h-10 items-center justify-center border border-[#241F1B]/20 px-4 text-sm font-bold text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]"
@@ -1603,7 +1603,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                 );
 
                 return card.href ? (
-                  <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                  <Link prefetch={false} key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
                     {scenarioTile}
                   </Link>
                 ) : (
@@ -1618,7 +1618,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
           {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
               {primaryLabel && primaryHref ? (
-                <Link
+                <Link prefetch={false}
                   href={primaryHref}
                   {...externalLinkProps(primaryHref)}
                   className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold text-white hover:bg-[#C85A1F]"
@@ -1629,7 +1629,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                 </Link>
               ) : null}
               {secondaryLabel && secondaryHref ? (
-                <Link
+                <Link prefetch={false}
                   href={secondaryHref}
                   {...externalLinkProps(secondaryHref)}
                   className="inline-flex min-h-11 items-center justify-center border border-[#241F1B]/20 px-5 text-sm font-bold text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]"
@@ -1722,7 +1722,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                 {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
                   <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                     {primaryLabel && primaryHref ? (
-                      <Link
+                      <Link prefetch={false}
                         href={primaryHref}
                         {...externalLinkProps(primaryHref)}
                         className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold text-white hover:bg-[#C85A1F]"
@@ -1733,7 +1733,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                       </Link>
                     ) : null}
                     {secondaryLabel && secondaryHref ? (
-                      <Link
+                      <Link prefetch={false}
                         href={secondaryHref}
                         {...externalLinkProps(secondaryHref)}
                         className="inline-flex min-h-11 items-center justify-center border border-white/24 px-5 text-sm font-bold text-white/78 hover:border-white/60 hover:text-white"
@@ -1800,7 +1800,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                       );
 
                       return card.href ? (
-                        <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block">
+                        <Link prefetch={false} key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block">
                           {futureTile}
                         </Link>
                       ) : (
@@ -1901,7 +1901,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
               );
 
               return featuredCard.href ? (
-                <Link href={featuredCard.href} {...externalLinkProps(featuredCard.href)} className="block h-full">
+                <Link prefetch={false} href={featuredCard.href} {...externalLinkProps(featuredCard.href)} className="block h-full">
                   {featuredArticle}
                 </Link>
               ) : featuredArticle;
@@ -1955,7 +1955,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                   );
 
                   return card.href ? (
-                    <Link key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                    <Link prefetch={false} key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
                       {compactArticle}
                     </Link>
                   ) : (
@@ -1970,7 +1970,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
         {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             {primaryLabel && primaryHref ? (
-              <Link
+              <Link prefetch={false}
                 href={primaryHref}
                 {...externalLinkProps(primaryHref)}
                 className="inline-flex min-h-12 items-center justify-center bg-[#E36F2C] px-7 text-sm font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C85A1F]"
@@ -1981,7 +1981,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
               </Link>
             ) : null}
             {secondaryLabel && secondaryHref ? (
-              <Link
+              <Link prefetch={false}
                 href={secondaryHref}
                 {...externalLinkProps(secondaryHref)}
                 className={`${isDark ? 'border-white/24 text-white/78 hover:border-white/60' : 'border-[#241F1B]/20 text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]'} inline-flex min-h-12 items-center justify-center border px-7 text-sm font-bold uppercase tracking-[0.12em]`}
@@ -2052,7 +2052,7 @@ function ContactBandSection({ pageModule }: { pageModule: HomePageModule | null 
         {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
             {primaryLabel && primaryHref ? (
-              <Link
+              <Link prefetch={false}
                 href={primaryHref}
                 {...externalLinkProps(primaryHref)}
                 className="inline-flex min-h-12 items-center justify-center bg-white px-6 text-sm font-bold uppercase tracking-[0.12em] text-[#241F1B] hover:bg-[#F5F2ED]"
@@ -2063,7 +2063,7 @@ function ContactBandSection({ pageModule }: { pageModule: HomePageModule | null 
               </Link>
             ) : null}
             {secondaryLabel && secondaryHref ? (
-              <Link
+              <Link prefetch={false}
                 href={secondaryHref}
                 {...externalLinkProps(secondaryHref)}
                 className="inline-flex min-h-12 items-center justify-center border border-white/45 px-6 text-sm font-bold uppercase tracking-[0.12em] text-white hover:border-white"
@@ -2268,7 +2268,7 @@ function BackendOperatingProofSection({ pageModule }: { pageModule: HomePageModu
         {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
           <div className="mt-8 flex flex-wrap gap-2">
             {primaryLabel && primaryHref ? (
-              <Link
+              <Link prefetch={false}
                 href={primaryHref}
                 {...externalLinkProps(primaryHref)}
                 className="inline-flex min-h-10 items-center justify-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C85A1F]"
@@ -2279,7 +2279,7 @@ function BackendOperatingProofSection({ pageModule }: { pageModule: HomePageModu
               </Link>
             ) : null}
             {secondaryLabel && secondaryHref ? (
-              <Link
+              <Link prefetch={false}
                 href={secondaryHref}
                 {...externalLinkProps(secondaryHref)}
                 className="inline-flex min-h-10 items-center justify-center border border-[#241F1B]/20 px-4 text-xs font-bold uppercase tracking-[0.12em] text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]"

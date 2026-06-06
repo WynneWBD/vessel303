@@ -316,7 +316,7 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
                   {pathCards.map((item) => {
                     const Icon = item.Icon
                     return (
-                      <Link
+                      <Link prefetch={false}
                         key={item.href}
                         href={item.href}
                         data-scenario-route-card="true"
@@ -379,7 +379,7 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
         <section className="border-b border-[#E5DED4] bg-[#F5F2ED] py-14">
           <div className="mx-auto flex max-w-7xl flex-wrap justify-center gap-3 px-4 sm:gap-4 sm:px-6 lg:px-8">
             {products.map((product) => product.href ? (
-              <Link
+              <Link prefetch={false}
                 key={product.label}
                 href={product.href}
                 data-scenario-product-link="true"
@@ -406,7 +406,7 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
             {cases.map((item) => (
               <article key={item.name} data-scenario-case-card="true" className="border border-[#E5DED4] bg-white p-5">
                 {item.href ? (
-                  <Link href={item.href} className="font-bold tracking-wider text-[#2C2A28] hover:text-[#E36F2C]">
+                  <Link prefetch={false} href={item.href} className="font-bold tracking-wider text-[#2C2A28] hover:text-[#E36F2C]">
                     {item.name}
                   </Link>
                 ) : (
@@ -424,7 +424,7 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
         <section className="py-14">
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-5 px-4 sm:px-6 md:grid-cols-2 lg:px-8">
             {relatedScenarios.map((item) => (
-              <Link
+              <Link prefetch={false}
                 key={item.slug}
                 href={`/scenarios/${item.slug}`}
                 className="group border border-[#E5DED4] bg-white p-6 transition-all hover:border-[#E36F2C]/30"
@@ -461,7 +461,7 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
 
       {(contactLabel && scenarioCtaHref) ? (
         <section className="border-t border-[#E5DED4] bg-[#F5F2ED] px-4 py-10 text-center">
-          <Link
+          <Link prefetch={false}
             href={scenarioCtaHref}
             className="inline-flex min-h-11 items-center justify-center px-8 py-3 text-sm font-bold tracking-wider text-white transition-colors"
             style={{ background: accentColor }}

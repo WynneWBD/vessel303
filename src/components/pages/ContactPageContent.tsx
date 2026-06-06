@@ -139,7 +139,7 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems }: Pr
                 ) : null}
                 <div className="mt-7 flex flex-wrap gap-3">
                   {primaryCta && itemLabel(primaryCta, lang) && primaryCta.href ? (
-                    <Link
+                    <Link prefetch={false}
                       href={normalizeSiteHref(primaryCta.href)}
                       className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-6 py-3 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#C85A1F]"
                     >
@@ -147,7 +147,7 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems }: Pr
                     </Link>
                   ) : null}
                   {secondaryCta && itemLabel(secondaryCta, lang) && secondaryCta.href ? (
-                    <Link
+                    <Link prefetch={false}
                       href={normalizeSiteHref(secondaryCta.href, '/products')}
                       className="inline-flex min-h-11 items-center justify-center border border-white/25 px-6 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-white/80 transition hover:border-[#E36F2C] hover:text-[#E36F2C]"
                     >

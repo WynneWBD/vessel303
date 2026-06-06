@@ -71,17 +71,17 @@ function normalizeDisplayContactHref(href: string | null | undefined) {
 function DisplayTopNav() {
   return (
     <header className="absolute left-4 right-4 top-4 z-40 flex flex-wrap items-center justify-between gap-3 border border-white/12 bg-[#241F1B]/55 px-4 py-3 text-white shadow-2xl shadow-black/20 backdrop-blur md:left-6 md:right-6 md:px-5">
-      <Link href="/" className="text-sm font-black uppercase tracking-[0.24em] text-white">
+      <Link prefetch={false} href="/" className="text-sm font-black uppercase tracking-[0.24em] text-white">
         VESSEL Display
       </Link>
       <nav aria-label="Display page navigation" className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
-        <Link href={SITE_PRODUCTS_HREF} className="min-h-9 px-3 py-2 transition hover:text-white">
+        <Link prefetch={false} href={SITE_PRODUCTS_HREF} className="min-h-9 px-3 py-2 transition hover:text-white">
           Products
         </Link>
-        <Link href="/cases" className="min-h-9 px-3 py-2 transition hover:text-white">
+        <Link prefetch={false} href="/cases" className="min-h-9 px-3 py-2 transition hover:text-white">
           Cases
         </Link>
-        <Link href={DISPLAY_CONTACT_HREF} className="min-h-9 bg-[#E36F2C] px-3 py-2 text-white transition hover:bg-[#C95E22]">
+        <Link prefetch={false} href={DISPLAY_CONTACT_HREF} className="min-h-9 bg-[#E36F2C] px-3 py-2 text-white transition hover:bg-[#C95E22]">
           Contact
         </Link>
       </nav>
@@ -293,10 +293,10 @@ export default function DisplayPageContent({
         <div className="flex flex-col items-end gap-3">
           {slide.price ? <div className="text-2xl font-black tracking-wider text-[#E36F2C]">{slide.price}</div> : null}
           <div className="flex flex-wrap justify-end gap-2">
-            <Link href={detailHref} className="inline-flex min-h-10 items-center border border-white/30 bg-white/12 px-4 text-xs font-bold uppercase tracking-[0.18em] text-white backdrop-blur transition hover:border-[#E36F2C] hover:bg-[#E36F2C]">
+            <Link prefetch={false} href={detailHref} className="inline-flex min-h-10 items-center border border-white/30 bg-white/12 px-4 text-xs font-bold uppercase tracking-[0.18em] text-white backdrop-blur transition hover:border-[#E36F2C] hover:bg-[#E36F2C]">
               {detailLabel}
             </Link>
-            <Link href={consultHref} className="inline-flex min-h-10 items-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.18em] text-white transition hover:bg-[#C95E22]">
+            <Link prefetch={false} href={consultHref} className="inline-flex min-h-10 items-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.18em] text-white transition hover:bg-[#C95E22]">
               {consultLabel}
             </Link>
           </div>

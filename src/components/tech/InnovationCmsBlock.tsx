@@ -157,7 +157,7 @@ export default function InnovationCmsBlock({
               {routeCards.map((item) => {
                 const Icon = item.Icon
                 return (
-                  <Link
+                  <Link prefetch={false}
                     key={item.href}
                     href={item.href}
                     data-innovation-route-card="true"
@@ -199,7 +199,7 @@ export default function InnovationCmsBlock({
         )}
 
         {ctaLabel && row.cta_href && (
-          <Link
+          <Link prefetch={false}
             href={primaryHref}
             className="mt-8 inline-flex items-center gap-2 bg-[#E36F2C] px-6 py-3 text-sm font-semibold tracking-wider text-white transition hover:bg-[#C85A1F]"
           >

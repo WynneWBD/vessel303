@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { DM_Sans, Inter } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
-import SessionProviderWrapper from "@/components/SessionProviderWrapper";
 import ImageProtection from "@/components/ImageProtection";
 import SiteAnalyticsTracker from "@/components/SiteAnalyticsTracker";
 import FloatingContact from "@/components/FloatingContact";
@@ -90,7 +89,7 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col bg-[#F5F2ED]">
         <LanguageProvider>
           <SiteModulesProvider initialModules={siteModules}>
-            <SessionProviderWrapper>{children}</SessionProviderWrapper>
+            {children}
             <FloatingContact />
           </SiteModulesProvider>
         </LanguageProvider>

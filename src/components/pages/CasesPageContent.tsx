@@ -245,7 +245,7 @@ export default function CasesPageContent({
               const featured = index === 0
 
               return (
-                <Link
+                <Link prefetch={false}
                   key={item.id}
                   href={`/cases/${item.id}`}
                   className={`group flex min-h-full flex-col overflow-hidden border border-[#E5DED4] bg-white transition-all duration-300 hover:-translate-y-0.5 hover:border-[#E36F2C]/35 hover:shadow-[0_24px_60px_rgba(44,42,40,0.10)] ${featured ? 'xl:col-span-2' : ''}`}
