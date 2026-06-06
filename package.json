@@ -26,6 +26,7 @@
     "audit:about-alignment": "node scripts/audit-about-alignment.mjs",
     "audit:display-conversion": "node scripts/audit-display-conversion.mjs",
     "audit:innovation-alignment": "node scripts/audit-innovation-alignment.mjs",
+    "audit:scenario-alignment": "node scripts/audit-scenario-alignment.mjs",
     "audit:product-sample-readiness": "node scripts/audit-product-sample-readiness.mjs",
     "audit:product-image-readiness": "node scripts/audit-product-image-readiness.mjs",
     "audit:product-public-rhythm": "node scripts/audit-product-public-rhythm.mjs",

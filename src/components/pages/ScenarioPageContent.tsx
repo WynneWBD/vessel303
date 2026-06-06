@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { ArrowRight, Boxes, Building2, Send } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ConversionInquiryForm from '@/components/pages/ConversionInquiryForm'
@@ -8,7 +9,7 @@ import ProtectedImage from '@/components/ProtectedImage'
 import { useLanguage } from '@/contexts/LanguageContext'
 import type { B9ContentItem } from '@/lib/b9-content-db'
 import type { PageModuleItem, PageModuleRow } from '@/lib/page-modules-db'
-import { normalizeSiteHref } from '@/lib/site-links'
+import { buildContactHref, normalizeSiteHref } from '@/lib/site-links'
 
 type LabelValue = { label: string; value: string }
 type TitleBody = { title: string; body: string; step?: string }
@@ -214,7 +215,27 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
   const formTitleEn = inquiryTitleEn || inquiryModule?.title_en || ''
   const formDescriptionZh = inquiryDescriptionZh || inquiryModule?.description_zh || ''
   const formDescriptionEn = inquiryDescriptionEn || inquiryModule?.description_en || ''
-  const scenarioCtaHref = scenario.cta_href ? normalizeSiteHref(scenario.cta_href, '') : ''
+  const scenarioCtaHref = normalizeSiteHref(scenario.cta_href, buildContactHref(`scenario:${scenario.slug}:contact_cta`))
+  const pathCards = [
+    {
+      href: '/products',
+      label: lang === 'zh' ? '匹配产品' : 'Products',
+      description: lang === 'zh' ? '系列、规格与型号详情' : 'Series, specs and model detail pages',
+      Icon: Boxes,
+    },
+    {
+      href: '/cases',
+      label: lang === 'zh' ? '项目案例' : 'Cases',
+      description: lang === 'zh' ? '已发布项目与应用场景' : 'Published projects and scenario references',
+      Icon: Building2,
+    },
+    {
+      href: scenarioCtaHref,
+      label: contactLabel || (lang === 'zh' ? '提交需求' : 'Start Inquiry'),
+      description: lang === 'zh' ? '带场景来源进入咨询表单' : 'Continue with a source-aware inquiry path',
+      Icon: Send,
+    },
+  ]
   const inquiryLabelsZh = {
     eyebrow: itemText(moduleItemById(inquiryModule, 'form-eyebrow'), 'label', 'zh'),
     name: itemText(moduleItemById(inquiryModule, 'form-name'), 'label', 'zh'),
@@ -256,7 +277,7 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
 
       {(intro || specs.length > 0 || scenario.cover_image_url) ? (
         <section className="border-b border-[#E5DED4] py-12 sm:py-16">
-          <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-4 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:px-8">
+          <div className="mx-auto grid max-w-7xl grid-cols-1 items-start gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12 lg:px-8">
             <div>
               {intro ? <p className="mb-8 text-base leading-loose text-[#6B625B]">{intro}</p> : null}
               {specs.length > 0 ? (
@@ -272,17 +293,49 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
                 </div>
               ) : null}
             </div>
-            {scenario.cover_image_url ? (
-              <div className="relative aspect-[4/3] overflow-hidden bg-[#E5DED4]">
-                <ProtectedImage
-                  src={scenario.cover_image_url}
-                  alt={title}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                />
-              </div>
-            ) : null}
+            <aside className="space-y-4">
+              {scenario.cover_image_url ? (
+                <div className="relative aspect-[4/3] overflow-hidden bg-[#E5DED4]">
+                  <ProtectedImage
+                    src={scenario.cover_image_url}
+                    alt={title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                  />
+                </div>
+              ) : null}
+              <nav
+                aria-label={lang === 'zh' ? '场景页面转化路径' : 'Scenario conversion paths'}
+                className="border border-[#E5DED4] bg-white p-4"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8C8176]">
+                  {lang === 'zh' ? '项目路径' : 'Project paths'}
+                </p>
+                <div className="mt-4 grid gap-3">
+                  {pathCards.map((item) => {
+                    const Icon = item.Icon
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        data-scenario-route-card="true"
+                        className="group flex min-h-[76px] items-center gap-3 border border-[#E5DED4] bg-[#FAF7F2] px-4 py-3 text-left transition hover:border-[#E36F2C] hover:text-[#C85A1F]"
+                      >
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#E5DED4] text-[#B66A3A]">
+                          <Icon className="h-4 w-4" aria-hidden="true" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-semibold text-[#2C2A28] group-hover:text-[#C85A1F]">{item.label}</span>
+                          <span className="mt-1 block text-xs leading-5 text-[#6B625B]">{item.description}</span>
+                        </span>
+                        <ArrowRight className="h-4 w-4 shrink-0 text-[#B66A3A] transition group-hover:translate-x-0.5" aria-hidden="true" />
+                      </Link>
+                    )
+                  })}
+                </div>
+              </nav>
+            </aside>
           </div>
         </section>
       ) : null}
@@ -302,7 +355,11 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
             ) : null}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {section.rows.map((item, index) => (
-                <div key={`${section.key}-${item.title}-${index}`} className="border border-[#E5DED4] bg-white p-6">
+                <div
+                  key={`${section.key}-${item.title}-${index}`}
+                  data-scenario-section-card="true"
+                  className="border border-[#E5DED4] bg-white p-6"
+                >
                   <div
                     className="mb-4 flex h-10 w-10 items-center justify-center text-sm font-black"
                     style={{ background: `${accentColor}15`, color: accentColor }}
@@ -325,6 +382,7 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
               <Link
                 key={product.label}
                 href={product.href}
+                data-scenario-product-link="true"
                 className="inline-flex min-h-11 items-center justify-center border border-[#E5DED4] px-6 py-3 text-sm tracking-wider text-[#6B625B] transition-all hover:border-[#E36F2C]/50 hover:text-[#E36F2C]"
               >
                 {product.label}
@@ -332,6 +390,7 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
             ) : (
               <span
                 key={product.label}
+                data-scenario-product-link="true"
                 className="inline-flex min-h-11 items-center justify-center border border-[#E5DED4] px-6 py-3 text-sm tracking-wider text-[#6B625B]"
               >
                 {product.label}
@@ -345,7 +404,7 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
         <section className="border-b border-[#E5DED4] py-16">
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-5 px-4 sm:px-6 md:grid-cols-3 lg:px-8">
             {cases.map((item) => (
-              <article key={item.name} className="border border-[#E5DED4] bg-white p-5">
+              <article key={item.name} data-scenario-case-card="true" className="border border-[#E5DED4] bg-white p-5">
                 {item.href ? (
                   <Link href={item.href} className="font-bold tracking-wider text-[#2C2A28] hover:text-[#E36F2C]">
                     {item.name}
