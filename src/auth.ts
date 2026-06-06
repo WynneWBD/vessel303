@@ -36,6 +36,9 @@ const credentialsSchema = z.object({
   password: z.string().min(1),
 })
 
+const sharedAuthCookieDomain =
+  process.env.NODE_ENV === 'production' ? '.vessel303.com' : undefined
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
@@ -79,6 +82,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
 
   session: { strategy: 'jwt' },
+
+  ...(sharedAuthCookieDomain
+    ? {
+        cookies: {
+          sessionToken: { options: { domain: sharedAuthCookieDomain } },
+          callbackUrl: { options: { domain: sharedAuthCookieDomain } },
+          pkceCodeVerifier: { options: { domain: sharedAuthCookieDomain } },
+          state: { options: { domain: sharedAuthCookieDomain } },
+          nonce: { options: { domain: sharedAuthCookieDomain } },
+        },
+      }
+    : {}),
 
   callbacks: {
     async signIn({ user, account }) {
