@@ -968,7 +968,7 @@ function LazyHomepageVideo({
     <video
       ref={ref}
       src={canLoad ? src : undefined}
-      poster={poster}
+      poster={canLoad ? poster : undefined}
       autoPlay={canLoad}
       muted
       loop
