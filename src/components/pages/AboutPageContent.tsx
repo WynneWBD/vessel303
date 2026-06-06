@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import ProtectedImage from '@/components/ProtectedImage';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -219,6 +220,18 @@ function localValue(item: RemotePageModuleItem | undefined, zh: boolean, _fallba
   return (zh ? item.value_zh : item.value_en) || '';
 }
 
+function cleanAboutModuleTitle(value: string) {
+  return value
+    .replace(/^About\s*·\s*/i, '')
+    .replace(/^关于我们\s*·\s*/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function moduleTitleText(pageModule: RemotePageModule | null, zh: boolean) {
+  return cleanAboutModuleTitle((zh ? pageModule?.title_zh : pageModule?.title_en) || '');
+}
+
 export default function AboutPageContent({
   initialModules = null,
 }: {
@@ -358,6 +371,58 @@ export default function AboutPageContent({
         }))
         .filter((award) => award.isVisible)
     : [];
+  const aboutAnchorItems = [
+    {
+      visible: showBrandStory,
+      id: 'brand-story',
+      href: '#brand-story',
+      label: moduleTitleText(brandStoryModule, zh) || localText(itemById(storyItems, 'story-kicker'), zh, ''),
+    },
+    {
+      visible: showFactory,
+      id: 'factory',
+      href: '#factory',
+      label: moduleTitleText(factoryModule, zh) || localText(itemById(factoryItems, 'factory-kicker'), zh, ''),
+    },
+    {
+      visible: showTimeline && timelineEntries.length > 0,
+      id: 'timeline',
+      href: '#timeline',
+      label: moduleTitleText(timelineModule, zh) || localText(itemById(timelineItems, 'timeline-kicker'), zh, ''),
+    },
+    {
+      visible: showTechnologies && technologyCards.length > 0,
+      id: 'technologies',
+      href: '#technologies',
+      label: moduleTitleText(technologiesModule, zh) || localText(itemById(techModuleItems, 'tech-kicker'), zh, ''),
+    },
+    {
+      visible: showRecognitionAwards && awards.length > 0,
+      id: 'certifications',
+      href: '#certifications',
+      label: moduleTitleText(recognitionAwardsModule, zh),
+    },
+    {
+      visible: showPartners && partnerImages.length > 0,
+      id: 'partners',
+      href: '#partners',
+      label: moduleTitleText(partnersModule, zh) || localText(itemById(partnerItems, 'partners-kicker'), zh, ''),
+    },
+    {
+      visible: showFounder,
+      id: 'founder',
+      href: '#founder',
+      label: moduleTitleText(founderModule, zh) || localText(itemById(founderItems, 'founder-section-kicker'), zh, ''),
+    },
+    {
+      visible: showServices && serviceCards.length > 0,
+      id: 'services',
+      href: '#services',
+      label: moduleTitleText(servicesModule, zh) || localText(itemById(serviceModuleItems, 'services-kicker'), zh, ''),
+    },
+  ]
+    .filter((item) => item.visible && item.label)
+    .map((item) => ({ id: item.id, href: item.href, label: item.label }));
 
   const openTech = (tech: Tech) => {
     setActiveTech(tech);
@@ -384,7 +449,7 @@ export default function AboutPageContent({
             fill
             priority
             sizes="100vw"
-            quality={78}
+            quality={75}
             className="object-cover"
             unoptimized={!canUseNextImageOptimization(heroImage)}
             data-page-module-item="about-hero-image"
@@ -424,6 +489,27 @@ export default function AboutPageContent({
       ) : null}
 
       {/* ── Anchor Nav ───────────────────────────────────────── */}
+      {aboutAnchorItems.length > 1 ? (
+        <section
+          className="bg-[#241F1B] border-y border-[#3A302A]"
+          style={{ order: 20_000 }}
+          aria-label={zh ? '关于我们页面导航' : 'About page navigation'}
+        >
+          <div className="max-w-6xl mx-auto px-6">
+            <nav className="flex gap-6 overflow-x-auto py-4 text-xs font-semibold text-[#F5F2ED]/55">
+              {aboutAnchorItems.map((item) => (
+                <a
+                  key={item.id}
+                  href={item.href}
+                  className="whitespace-nowrap border-b border-transparent pb-1 transition-colors hover:border-[#E36F2C] hover:text-[#F5F2ED] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#E36F2C]"
+                >
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+        </section>
+      ) : null}
 
       {/* ── S2 Stats bar ─────────────────────────────────────── */}
       {aboutStats.length > 0 ? (
@@ -523,7 +609,7 @@ export default function AboutPageContent({
                 alt={localText(itemById(storyItems, 'story-image'), zh, '')}
                 fill
                 sizes="(min-width: 1024px) 40vw, 100vw"
-                quality={78}
+                quality={75}
                 className="object-cover"
                 unoptimized={!canUseNextImageOptimization(storyImage)}
               />
@@ -555,6 +641,7 @@ export default function AboutPageContent({
       {/* ── S4 Factory ───────────────────────────────────────── */}
       {showFactory ? (
       <section
+        id="factory"
         className="bg-[#241F1B] py-24 px-6"
         style={{ order: moduleVisualOrder(dynamicModules, 'factory', ABOUT_ORDER_GROUPS.preCertifications, 40) }}
         data-page-module="about:factory"
@@ -629,6 +716,7 @@ export default function AboutPageContent({
       {/* ── S5 Timeline ──────────────────────────────────────── */}
       {showTimeline && timelineEntries.length > 0 ? (
       <section
+        id="timeline"
         className="bg-[#F5F2ED] py-24 px-6"
         style={{ order: moduleVisualOrder(dynamicModules, 'timeline', ABOUT_ORDER_GROUPS.preCertifications, 45) }}
         data-page-module="about:timeline"
@@ -797,7 +885,7 @@ export default function AboutPageContent({
                       alt={zh ? award.zh : award.en}
                       fill
                       sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
-                      quality={78}
+                      quality={75}
                       className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
                       unoptimized={!canUseNextImageOptimization(optimizedAboutImage(award.src))}
                       data-page-module-field="image_url"
@@ -820,6 +908,7 @@ export default function AboutPageContent({
       {/* ── S9 Partners ──────────────────────────────────────── */}
       {showPartners && partnerImages.length > 0 ? (
       <section
+        id="partners"
         className="bg-[#F5F2ED] py-24 px-6"
         style={{ order: moduleVisualOrder(dynamicModules, 'partners', ABOUT_ORDER_GROUPS.postCertifications, 80) }}
         data-page-module="about:partners"
@@ -871,7 +960,7 @@ export default function AboutPageContent({
                     alt={partner.alt}
                     fill
                     sizes="(min-width: 1024px) 12.5vw, (min-width: 640px) 16vw, 25vw"
-                    quality={78}
+                    quality={75}
                     className="object-contain p-3"
                     unoptimized={!canUseNextImageOptimization(partner.src)}
                   />
@@ -925,7 +1014,7 @@ export default function AboutPageContent({
                 alt={localText(itemById(founderItems, 'founder-name'), zh, '')}
                 fill
                 sizes="256px"
-                quality={78}
+                quality={75}
                 className="object-cover object-top"
                 unoptimized={!canUseNextImageOptimization(founderPhoto)}
               />
@@ -987,6 +1076,7 @@ export default function AboutPageContent({
       {/* ── S7 Three Services ────────────────────────────────── */}
       {showServices ? (
       <section
+        id="services"
         className="bg-[#F5F2ED] py-24 px-6"
         style={{ order: moduleVisualOrder(dynamicModules, 'services', ABOUT_ORDER_GROUPS.postCertifications, 100) }}
         data-page-module="about:services"
@@ -1043,6 +1133,28 @@ export default function AboutPageContent({
               </Reveal>
             ))}
           </div>
+          <Reveal delay={180} className="mt-10">
+            <div className="flex flex-wrap gap-3 border-t border-[#E5E0DA] pt-8">
+              <Link
+                href="/products"
+                className="inline-flex min-h-11 items-center justify-center bg-[#241F1B] px-5 text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#E36F2C]"
+              >
+                {zh ? '查看产品' : 'View Products'}
+              </Link>
+              <Link
+                href="/cases"
+                className="inline-flex min-h-11 items-center justify-center border border-[#241F1B]/20 px-5 text-sm font-bold uppercase tracking-[0.12em] text-[#241F1B] transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
+              >
+                {zh ? '项目案例' : 'Project Cases'}
+              </Link>
+              <Link
+                href="/contact?source=about:inquiry_cta"
+                className="inline-flex min-h-11 items-center justify-center border border-[#E36F2C]/60 px-5 text-sm font-bold uppercase tracking-[0.12em] text-[#E36F2C] transition-colors hover:bg-[#E36F2C] hover:text-white"
+              >
+                {zh ? '发起咨询' : 'Start Inquiry'}
+              </Link>
+            </div>
+          </Reveal>
         </div>
       </section>
       ) : null}

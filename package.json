@@ -23,6 +23,7 @@
     "preflight:home-media-apply": "node scripts/preflight-homepage-303-media-apply.mjs",
     "audit:published-content": "node scripts/audit-published-content.mjs",
     "audit:production-links": "node scripts/audit-production-links.mjs",
+    "audit:about-alignment": "node scripts/audit-about-alignment.mjs",
     "audit:product-sample-readiness": "node scripts/audit-product-sample-readiness.mjs",
     "audit:product-image-readiness": "node scripts/audit-product-image-readiness.mjs",
     "audit:product-public-rhythm": "node scripts/audit-product-public-rhythm.mjs",
