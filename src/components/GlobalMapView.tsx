@@ -154,10 +154,12 @@ function MapFallbackAccess({
   markers,
   lang,
   onSelect,
+  onDismiss,
 }: {
   markers: ShowcaseMarker[]
   lang: string
   onSelect: (marker: ShowcaseMarker) => void
+  onDismiss: () => void
 }) {
   const zh = lang === 'zh'
   const labels = {
@@ -169,26 +171,23 @@ function MapFallbackAccess({
 
   return (
     <aside
-      style={{
-        position: 'absolute',
-        left: 20,
-        bottom: 20,
-        zIndex: 80,
-        width: 'min(420px, calc(100% - 40px))',
-        background: 'rgba(36,31,27,0.92)',
-        border: '1px solid rgba(227,111,44,0.25)',
-        color: '#F5F2ED',
-        padding: 18,
-        boxShadow: '0 18px 50px rgba(0,0,0,0.28)',
-      }}
+      className="vessel-map-fallback"
     >
-      <p style={{ margin: 0, color: '#E36F2C', fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', fontWeight: 700 }}>
+      <button
+        type="button"
+        className="vessel-map-fallback-close"
+        aria-label="Close project list"
+        onClick={onDismiss}
+      >
+        X
+      </button>
+      <p className="vessel-map-fallback-eyebrow">
         {labels.eyebrow}
       </p>
-      <h2 style={{ margin: '8px 0 14px', fontSize: 18, lineHeight: 1.35, fontWeight: 800 }}>
+      <h2 className="vessel-map-fallback-title">
         {labels.title}
       </h2>
-      <div style={{ display: 'grid', gap: 8, marginBottom: 14 }}>
+      <div className="vessel-map-fallback-list">
         {markers.map((marker) => {
           const name = marker.name[zh ? 'zh' : 'en'] ?? marker.name.en
           return (
@@ -196,29 +195,19 @@ function MapFallbackAccess({
               type="button"
               key={marker.id}
               onClick={() => onSelect(marker)}
-              style={{
-                width: '100%',
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: '#F5F2ED',
-                textAlign: 'left',
-                padding: '9px 10px',
-                cursor: 'pointer',
-                fontSize: 13,
-                lineHeight: 1.35,
-              }}
+              className="vessel-map-fallback-item"
             >
               {name}
             </button>
           )
         })}
       </div>
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+      <div className="vessel-map-fallback-actions">
         <a
           href={GLOBAL_LEGACY_PRODUCTS_HREF}
           target="_blank"
           rel="noopener noreferrer"
-          style={{ background: '#E36F2C', color: '#fff', padding: '9px 13px', fontSize: 12, fontWeight: 800, textDecoration: 'none' }}
+          className="vessel-map-fallback-primary"
         >
           {labels.products}
         </a>
@@ -226,11 +215,150 @@ function MapFallbackAccess({
           href={GLOBAL_LEGACY_CONTACT_HREF}
           target="_blank"
           rel="noopener noreferrer"
-          style={{ border: '1px solid rgba(245,242,237,0.35)', color: '#F5F2ED', padding: '9px 13px', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}
+          className="vessel-map-fallback-secondary"
         >
           {labels.contact}
         </a>
       </div>
+      <style>{`
+        .vessel-map-fallback {
+          position: absolute;
+          left: 20px;
+          bottom: 20px;
+          z-index: 80;
+          width: min(360px, calc(100% - 40px));
+          background: rgba(36,31,27,0.92);
+          border: 1px solid rgba(227,111,44,0.25);
+          color: #F5F2ED;
+          padding: 16px;
+          box-shadow: 0 18px 50px rgba(0,0,0,0.28);
+        }
+        .vessel-map-fallback-close {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.16);
+          color: #F5F2ED;
+          cursor: pointer;
+          font-size: 12px;
+          font-weight: 800;
+          line-height: 1;
+        }
+        .vessel-map-fallback-close:hover {
+          background: rgba(227,111,44,0.22);
+          border-color: rgba(227,111,44,0.5);
+        }
+        .vessel-map-fallback-eyebrow {
+          margin: 0 36px 0 0;
+          color: #E36F2C;
+          font-size: 11px;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          font-weight: 700;
+        }
+        .vessel-map-fallback-title {
+          margin: 8px 32px 12px 0;
+          font-size: 16px;
+          line-height: 1.35;
+          font-weight: 800;
+        }
+        .vessel-map-fallback-list {
+          display: grid;
+          gap: 7px;
+          margin-bottom: 12px;
+          max-height: 178px;
+          overflow: auto;
+        }
+        .vessel-map-fallback-item {
+          width: 100%;
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.08);
+          color: #F5F2ED;
+          text-align: left;
+          padding: 8px 10px;
+          cursor: pointer;
+          font-size: 12px;
+          line-height: 1.35;
+        }
+        .vessel-map-fallback-actions {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+        .vessel-map-fallback-actions a {
+          padding: 8px 12px;
+          font-size: 12px;
+          font-weight: 800;
+          text-decoration: none;
+        }
+        .vessel-map-fallback-primary {
+          background: #E36F2C;
+          color: #fff;
+        }
+        .vessel-map-fallback-secondary {
+          border: 1px solid rgba(245,242,237,0.35);
+          color: #F5F2ED;
+        }
+        @media (max-width: 640px) {
+          .vessel-map-fallback {
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            width: auto;
+            max-height: 30vh;
+            overflow: auto;
+            padding: 12px;
+          }
+          .vessel-map-fallback-close {
+            top: 7px;
+            right: 7px;
+            width: 26px;
+            height: 26px;
+          }
+          .vessel-map-fallback-eyebrow {
+            font-size: 10px;
+            margin-right: 34px;
+          }
+          .vessel-map-fallback-title {
+            margin: 6px 32px 9px 0;
+            font-size: 13px;
+            line-height: 1.35;
+          }
+          .vessel-map-fallback-list {
+            gap: 6px;
+            max-height: 88px;
+            margin-bottom: 9px;
+          }
+          .vessel-map-fallback-item {
+            padding: 7px 8px;
+            font-size: 11px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+          .vessel-map-fallback-actions {
+            gap: 8px;
+          }
+          .vessel-map-fallback-actions a {
+            padding: 7px 9px;
+            font-size: 11px;
+          }
+        }
+        @media (max-width: 420px) {
+          .vessel-map-fallback {
+            max-height: 26vh;
+          }
+          .vessel-map-fallback-item:nth-child(n+4) {
+            display: none;
+          }
+        }
+      `}</style>
     </aside>
   )
 }
@@ -241,6 +369,8 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
   const [selectedMarker, setSelectedMarker] = useState<ShowcaseMarker | null>(null)
   const [selectedProject, setSelectedProject] = useState<ShowcaseProject | null>(null)
   const [showFallbackAccess, setShowFallbackAccess] = useState(false)
+  const [fallbackDismissed, setFallbackDismissed] = useState(false)
+  const [mapUsable, setMapUsable] = useState(false)
   const [resetViewKey, setResetViewKey] = useState(0)
   const { lang } = useLanguage()
   const panelOpen = selectedMarker !== null
@@ -325,6 +455,11 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
     loadProjectDetails(marker.id, requestId)
   }, [loadProjectDetails])
 
+  const handleMapReady = useCallback(() => {
+    setMapUsable(true)
+    setShowFallbackAccess(false)
+  }, [])
+
   const handleClose = useCallback(() => {
     detailRequestId.current += 1
     setSelectedMarker(null)
@@ -358,6 +493,7 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
         <GlobalMapDynamic
           onShowcaseSelect={handleShowcaseSelect}
           onMapClick={handleClose}
+          onMapReady={handleMapReady}
           flyTarget={flyTarget}
           resetViewKey={resetViewKey}
           lang={lang}
@@ -365,11 +501,12 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
         />
       </div>
 
-      {!panelOpen && showFallbackAccess ? (
+      {!panelOpen && showFallbackAccess && !fallbackDismissed && !mapUsable ? (
         <MapFallbackAccess
           markers={showcaseMarkers.slice(0, 5)}
           lang={lang}
           onSelect={handleShowcaseSelect}
+          onDismiss={() => setFallbackDismissed(true)}
         />
       ) : null}
 

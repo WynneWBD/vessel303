@@ -275,6 +275,7 @@ function applyTaiwanLabelOverride(map: MaptilerMap, isZh: boolean) {
 interface Props {
   onShowcaseSelect?: (marker: ShowcaseMarker) => void
   onMapClick?: () => void
+  onMapReady?: () => void
   flyTarget?: [number, number] | null  // [lat, lng] — Leaflet convention from parent
   resetViewKey?: number  // increment to fly back to global default view
   lang?: string
@@ -285,6 +286,7 @@ interface Props {
 export default function GlobalMapML({
   onShowcaseSelect,
   onMapClick,
+  onMapReady,
   flyTarget,
   resetViewKey,
   lang,
@@ -299,6 +301,7 @@ export default function GlobalMapML({
   const prevFlyKey = useRef('')
   const prevResetKey = useRef(resetViewKey ?? 0)
   const isZhRef = useRef(lang === 'zh')
+  const mapReadySignaled = useRef(false)
   const [mapReady, setMapReady] = useState(false)
   // 'init-failed' = MaptilerMap constructor threw (e.g. WebGL2 unsupported);
   // 'fatal'       = maplibre fired an 'error' event we couldn't recover from.
@@ -310,14 +313,17 @@ export default function GlobalMapML({
   // Keep callbacks current without re-initializing the map
   const onShowcaseSelectRef = useRef(onShowcaseSelect)
   const onMapClickRef = useRef(onMapClick)
+  const onMapReadyRef = useRef(onMapReady)
   useEffect(() => { onShowcaseSelectRef.current = onShowcaseSelect }, [onShowcaseSelect])
   useEffect(() => { onMapClickRef.current = onMapClick }, [onMapClick])
+  useEffect(() => { onMapReadyRef.current = onMapReady }, [onMapReady])
 
   const isZh = lang === 'zh'
 
   // ── Initialize map (once) ─────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
+    mapReadySignaled.current = false
 
     const cssId = 'vessel-mapml-css'
     if (!document.getElementById(cssId)) {
@@ -358,6 +364,25 @@ export default function GlobalMapML({
     }
     mapRef.current = map
 
+    let disposed = false
+    const readyTimers: number[] = []
+    const markMapUsable = () => {
+      if (disposed || mapReadySignaled.current) return
+      mapReadySignaled.current = true
+      setMapReady(true)
+      onMapReadyRef.current?.()
+    }
+    const scheduleMapUsable = (delay = 0) => {
+      const handle = window.setTimeout(markMapUsable, delay)
+      readyTimers.push(handle)
+    }
+
+    // Stop blocking the screen as soon as the style is parsed. Waiting for the
+    // full load event can keep users on a blank loading screen while slow tiles
+    // are still streaming.
+    map.once('styledata', () => scheduleMapUsable(120))
+    map.once('idle', markMapUsable)
+
     // Hover popup for regular camp name
     const hoverPopup = new Popup({
       closeButton: false,
@@ -379,7 +404,7 @@ export default function GlobalMapML({
       // ── Language ──────────────────────────────────────────────────────
       map.setLanguage(isZhRef.current ? Language.CHINESE : Language.ENGLISH)
       applyTaiwanLabelOverride(map, isZhRef.current)
-      setMapReady(true)
+      markMapUsable()
 
       // ── Regular camp GeoJSON ──────────────────────────────────────────
       const campFeatures: GeoJSON.Feature<GeoJSON.Point>[] = CAMPS.map((camp, i) => ({
@@ -586,6 +611,8 @@ export default function GlobalMapML({
     ro.observe(containerRef.current)
 
     return () => {
+      disposed = true
+      readyTimers.forEach((handle) => window.clearTimeout(handle))
       ro.disconnect()
       map.remove()
       mapRef.current = null
