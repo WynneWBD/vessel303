@@ -13,6 +13,7 @@ import {
 import '@maptiler/sdk/dist/maptiler-sdk.css'
 import { CAMPS } from '@/data/camps'
 import { SHOWCASE_MARKERS, HQ_MARKER, type ShowcaseMarker } from '@/data/showcaseMarkers'
+import StaticGlobalMapPreview from './StaticGlobalMapPreview'
 
 // The real MapTiler API key now lives on the edge proxy (see src/app/api/map/
 // [...path]/route.ts). Setting the SDK's apiKey to a placeholder stops it from
@@ -809,16 +810,25 @@ export default function GlobalMapML({
 
   return (
     <div style={{ position: 'relative', height: '100%', width: '100%', background: '#F5F2ED', pointerEvents: previewMode ? 'none' : 'auto' }}>
+      <StaticGlobalMapPreview />
       <div
         ref={containerRef}
-        style={{ height: '100%', width: '100%', background: '#F5F2ED' }}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          height: '100%',
+          width: '100%',
+          background: 'transparent',
+          opacity: mapReady && !loadError ? 1 : 0,
+          transition: 'opacity 320ms ease-out',
+        }}
       />
       <div
         aria-hidden={mapReady && !loadError}
         style={{
           position: 'absolute',
           inset: 0,
-          background: '#F5F2ED',
+          background: loadError ? 'rgba(245,242,237,0.9)' : 'transparent',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
