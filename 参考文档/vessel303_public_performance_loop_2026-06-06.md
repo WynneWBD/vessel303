@@ -100,12 +100,31 @@
 
 ## 上线复验
 
-状态：等待 commit/push 触发 Vercel 后执行。
+状态：已完成。
 
-计划：
+部署：
 
-- 等待 Vercel deployment `READY`。
-- 对 `https://www.vessel303.com` 运行：
-  - `npm run audit:public-performance -- --route home --route products --route cases --route about --route faq --asset-limit 140`
-  - `npm run audit:route-js-weight -- --limit 20`
-- 线上结果以最终回复为准。
+- commit：`8da0eb6 perf(public): reduce homepage media and cache public CMS reads`
+- Vercel status：`success`
+- Vercel deployment：`dpl_69MUXmxqhuPwe2Za2AUMpy9KCTph`
+
+线上命令：
+
+- `npm run audit:public-performance -- --no-old --asset-limit 140 --route home --route products --route cases --route about --route faq`
+- `npm run audit:public-performance -- --no-old --no-assets --route products --route home --route cases --route about --route faq`
+- 产品页 5 次连续 HTML 请求。
+
+线上结果：
+
+- `/`：`HTTP 200 / HTML 183 ms / known 4107.5 KB / assets 37 / scripts 12 / images 21 / videos 0`
+- `/products`：`HTTP 200 / HTML 185 ms / known 2756.3 KB / assets 25 / scripts 11 / images 12 / videos 0`
+- `/products` 5 次连续 HTML：第一次冷启动约 `2007 ms`，后续 `292 ms`、`306 ms`、`343 ms`、`299 ms`
+- `/cases`：`HTTP 200 / HTML 128 ms / known 4070.8 KB`
+- `/about`：`HTTP 200 / HTML 124 ms / known 3799 KB`
+- `/faq`：`HTTP 200 / HTML 123 ms / known 957.3 KB`
+
+线上结论：
+
+- 首页首屏视频资源已从 HTML 可发现资源中移除，线上资源审计视频数为 `0`。
+- `/products` 仍可能有部署冷启动，但 warm path 已从秒级降到约 `300 ms` 级。
+- 本轮达到“打开页面明显变轻”的第一批目标；剩余 case/about 图片和 route JS 进入下一轮候选，不在本次继续展开。
