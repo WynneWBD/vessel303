@@ -1,7 +1,8 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, RotateCcw } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ProtectedImage from '@/components/ProtectedImage'
@@ -15,6 +16,61 @@ import {
   type PublicPageModule,
 } from '@/lib/page-module-client'
 import type { ProjectCaseRow } from '@/lib/project-cases-static'
+
+const ALL_FILTER = 'all'
+
+type FilterOption = {
+  key: string
+  label: string
+}
+
+function cleanText(value: string | null | undefined) {
+  return value?.trim() ?? ''
+}
+
+function optionKey(value: string | null | undefined) {
+  return cleanText(value).toLowerCase().replace(/\s+/g, ' ')
+}
+
+function optionFromPair(zh: boolean, zhValue: string | null | undefined, enValue: string | null | undefined): FilterOption | null {
+  const key = optionKey(enValue || zhValue)
+  const label = cleanText(zh ? zhValue || enValue : enValue || zhValue)
+  if (!key || !label) return null
+  return { key, label }
+}
+
+function localizedText(zh: boolean, zhValue: string | null | undefined, enValue: string | null | undefined) {
+  return cleanText(zh ? zhValue || enValue : enValue || zhValue)
+}
+
+function localizedList(zh: boolean, zhValues: string[], enValues: string[]) {
+  return zhValues.length > 0 ? (zh ? zhValues : enValues.length > 0 ? enValues : zhValues) : enValues
+}
+
+function tagOptionsForCase(project: ProjectCaseRow, zh: boolean) {
+  const tagsZh = Array.isArray(project.tags_zh) ? project.tags_zh : []
+  const tagsEn = Array.isArray(project.tags_en) ? project.tags_en : []
+  const maxLength = Math.max(tagsZh.length, tagsEn.length)
+  return Array.from({ length: maxLength }, (_item, index) => optionFromPair(zh, tagsZh[index], tagsEn[index]))
+    .filter((item): item is FilterOption => Boolean(item))
+}
+
+function uniqueOptions(options: FilterOption[]) {
+  const optionMap = new Map<string, FilterOption>()
+  for (const option of options) {
+    if (!optionMap.has(option.key)) optionMap.set(option.key, option)
+  }
+  return Array.from(optionMap.values())
+}
+
+function filterButtonClass(active: boolean) {
+  return [
+    'min-h-10 max-w-full border px-3 py-2 text-left text-xs font-bold uppercase tracking-[0.1em] transition-colors',
+    active
+      ? 'border-[#E36F2C] bg-[#E36F2C] text-white'
+      : 'border-[#E5DED4] bg-[#FAF7F2] text-[#5F5A55] hover:border-[#E36F2C]/45 hover:text-[#2C2A28]',
+  ].join(' ')
+}
 
 export default function CasesPageContent({
   cases,
@@ -32,6 +88,34 @@ export default function CasesPageContent({
   const heroTitle = moduleTitle(heroModule, lang)
   const heroDescription = moduleDescription(heroModule, lang)
   const showHero = heroModule?.is_visible !== false && (heroEyebrow || heroTitle || heroDescription)
+  const typeFilterLabel = itemLabel(itemById(detailLabelsModule, 'fact-type'), lang) || (zh ? '项目类型' : 'Project Type')
+  const tagFilterLabel = zh ? '标签' : 'Tags'
+  const allTypeLabel = zh ? '全部类型' : 'All Projects'
+  const allTagLabel = zh ? '全部标签' : 'All Tags'
+  const resetLabel = zh ? '重置' : 'Reset'
+  const emptyLabel = zh ? '当前筛选暂无案例' : 'No cases match the selected filters.'
+  const [activeType, setActiveType] = useState(ALL_FILTER)
+  const [activeTag, setActiveTag] = useState(ALL_FILTER)
+  const typeOptions = useMemo(
+    () => uniqueOptions(cases.map((project) => optionFromPair(zh, project.project_type_zh, project.project_type_en)).filter((item): item is FilterOption => Boolean(item))),
+    [cases, zh],
+  )
+  const tagOptions = useMemo(
+    () => uniqueOptions(cases.flatMap((project) => tagOptionsForCase(project, zh))),
+    [cases, zh],
+  )
+  const filteredCases = useMemo(
+    () => cases.filter((project) => {
+      const projectTypeKey = optionKey(project.project_type_en || project.project_type_zh)
+      const projectTagKeys = tagOptionsForCase(project, false).map((option) => option.key)
+      const typeMatches = activeType === ALL_FILTER || projectTypeKey === activeType
+      const tagMatches = activeTag === ALL_FILTER || projectTagKeys.includes(activeTag)
+      return typeMatches && tagMatches
+    }),
+    [activeTag, activeType, cases],
+  )
+  const hasFilters = typeOptions.length > 1 || tagOptions.length > 1
+  const hasActiveFilter = activeType !== ALL_FILTER || activeTag !== ALL_FILTER
 
   return (
     <main className="bg-[#FAF7F2] text-[#2C2A28]">
@@ -61,13 +145,95 @@ export default function CasesPageContent({
 
       {cases.length > 0 ? (
         <section className="mx-auto max-w-[1500px] px-4 py-8 sm:px-6 lg:px-8">
+          {hasFilters ? (
+            <div className="mb-5 border border-[#E5DED4] bg-white px-4 py-4 shadow-sm">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0 flex-1 space-y-4">
+                  {typeOptions.length > 1 ? (
+                    <div className="grid gap-2 sm:grid-cols-[128px_minmax(0,1fr)] sm:items-start">
+                      <p className="pt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]">{typeFilterLabel}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          aria-pressed={activeType === ALL_FILTER}
+                          className={filterButtonClass(activeType === ALL_FILTER)}
+                          onClick={() => setActiveType(ALL_FILTER)}
+                        >
+                          {allTypeLabel}
+                        </button>
+                        {typeOptions.map((option) => (
+                          <button
+                            key={option.key}
+                            type="button"
+                            aria-pressed={activeType === option.key}
+                            className={filterButtonClass(activeType === option.key)}
+                            onClick={() => setActiveType(option.key)}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {tagOptions.length > 1 ? (
+                    <div className="grid gap-2 sm:grid-cols-[128px_minmax(0,1fr)] sm:items-start">
+                      <p className="pt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]">{tagFilterLabel}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          aria-pressed={activeTag === ALL_FILTER}
+                          className={filterButtonClass(activeTag === ALL_FILTER)}
+                          onClick={() => setActiveTag(ALL_FILTER)}
+                        >
+                          {allTagLabel}
+                        </button>
+                        {tagOptions.map((option) => (
+                          <button
+                            key={option.key}
+                            type="button"
+                            aria-pressed={activeTag === option.key}
+                            className={filterButtonClass(activeTag === option.key)}
+                            onClick={() => setActiveTag(option.key)}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="flex shrink-0 items-center justify-between gap-3 border-t border-[#E5DED4] pt-3 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#8A8580]">
+                    {filteredCases.length}/{cases.length}
+                  </p>
+                  {hasActiveFilter ? (
+                    <button
+                      type="button"
+                      className="inline-flex min-h-10 items-center gap-2 border border-[#E5DED4] bg-[#FAF7F2] px-3 text-xs font-bold uppercase tracking-[0.1em] text-[#5F5A55] transition-colors hover:border-[#E36F2C]/45 hover:text-[#2C2A28]"
+                      onClick={() => {
+                        setActiveType(ALL_FILTER)
+                        setActiveTag(ALL_FILTER)
+                      }}
+                    >
+                      <RotateCcw size={14} strokeWidth={2.4} aria-hidden="true" />
+                      {resetLabel}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {filteredCases.length > 0 ? (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {cases.map((item, index) => {
-              const name = zh ? item.name_zh : item.name_en
-              const location = zh ? item.location_zh : item.location_en
-              const type = zh ? item.project_type_zh : item.project_type_en
-              const desc = zh ? item.description_zh : item.description_en
-              const tags = zh ? item.tags_zh : item.tags_en
+            {filteredCases.map((item, index) => {
+              const name = localizedText(zh, item.name_zh, item.name_en)
+              const location = localizedText(zh, item.location_zh, item.location_en)
+              const type = localizedText(zh, item.project_type_zh, item.project_type_en)
+              const desc = localizedText(zh, item.description_zh, item.description_en)
+              const tags = localizedList(zh, item.tags_zh, item.tags_en)
               const facts = [
                 { label: itemLabel(itemById(detailLabelsModule, 'fact-type'), lang), value: type },
                 { label: itemLabel(itemById(detailLabelsModule, 'fact-location'), lang), value: location },
@@ -151,6 +317,11 @@ export default function CasesPageContent({
               )
             })}
           </div>
+          ) : (
+            <div className="border border-[#E5DED4] bg-white px-5 py-10 text-center text-sm font-bold uppercase tracking-[0.12em] text-[#8A8580]">
+              {emptyLabel}
+            </div>
+          )}
         </section>
       ) : null}
 

@@ -3,6 +3,7 @@ import CasesPageContent from '@/components/pages/CasesPageContent'
 import { listPublishedProjectCases } from '@/lib/project-cases-db'
 import { getUploadVariantsByUrls, mapUploadImageUrl } from '@/lib/upload-image-variants'
 import { listPublishedPageModules } from '@/lib/page-modules-db'
+import { mapCaseStaticImageUrl } from '@/lib/case-static-image-variants'
 
 export const revalidate = 300
 
@@ -19,7 +20,7 @@ export default async function CasesPage() {
   })
   const displayCases = cases.map((item) => ({
     ...item,
-    cover_image_url: mapUploadImageUrl(item.cover_image_url, imageVariants, 'card') || item.cover_image_url,
+    cover_image_url: mapCaseStaticImageUrl(mapUploadImageUrl(item.cover_image_url, imageVariants, 'card') || item.cover_image_url, 'card'),
   }))
   const pageModules = await listPublishedPageModules('cases').catch((err) => {
     console.error('[cases] page modules unavailable', err)

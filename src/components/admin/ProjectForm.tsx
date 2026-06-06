@@ -14,6 +14,11 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import type { ProjectCaseRow, ProjectCaseStatus } from '@/lib/project-cases-db'
+import {
+  MAX_PROJECT_CASE_DESCRIPTION_CHARS,
+  getProjectCaseReadinessIssues,
+  getProjectCaseReadinessLevel,
+} from '@/lib/project-case-readiness'
 import { useUnsavedChangesWarning } from './useUnsavedChangesWarning'
 
 type FormState = {
@@ -51,7 +56,7 @@ type FormState = {
   sort_order: string
 }
 
-type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
+type ProjectCompletenessLevel = ReturnType<typeof getProjectCaseReadinessLevel>
 
 const emptyState: FormState = {
   id: '',
@@ -111,10 +116,6 @@ function splitRows(value: string) {
     .filter(Boolean)
 }
 
-function hasText(value: string | null | undefined) {
-  return Boolean(value?.trim())
-}
-
 function getProjectCompleteness({
   form,
   imageUrls,
@@ -130,19 +131,15 @@ function getProjectCompleteness({
   hasCompleteCoordinates: boolean
   coordinatesValid: boolean
 }): {
-  level: CompletenessLevel
+  level: ProjectCompletenessLevel
   issues: string[]
 } {
-  const issues: string[] = []
-
-  if (!hasText(form.cover_image_url)) issues.push('缺封面')
-  if (imageUrls.length === 0) issues.push('缺图库')
-  if (!hasText(form.description_zh)) issues.push('缺中文简介')
-  if (!hasText(form.description_en)) issues.push('缺英文简介')
-  if (!hasText(form.products)) issues.push('缺产品型号')
-  if (splitLines(form.tags_zh).length === 0 || splitLines(form.tags_en).length === 0) {
-    issues.push('缺标签')
-  }
+  const issues = getProjectCaseReadinessIssues({
+    ...form,
+    images: imageUrls,
+    tags_zh: splitLines(form.tags_zh),
+    tags_en: splitLines(form.tags_en),
+  })
 
   if (hasLatitude !== hasLongitude) {
     issues.push('坐标需成对')
@@ -154,18 +151,10 @@ function getProjectCompleteness({
     issues.push('有坐标待发布')
   }
 
-  if (issues.length === 0) {
-    return { level: '完整', issues }
-  }
-
-  if (issues.includes('缺封面') || issues.includes('缺图库')) {
-    return { level: '待补素材', issues }
-  }
-
-  return { level: '可展示但待补充', issues }
+  return { level: getProjectCaseReadinessLevel(issues), issues }
 }
 
-function completenessBadgeClass(level: CompletenessLevel) {
+function completenessBadgeClass(level: ProjectCompletenessLevel) {
   if (level === '完整') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
   if (level === '待补素材') return 'border-orange-200 bg-orange-50 text-orange-700'
   return 'border-zinc-200 bg-zinc-50 text-zinc-600'
@@ -335,6 +324,8 @@ export default function ProjectForm({
   const [savedForm, setSavedForm] = useState<FormState>(() => fromProject(project))
   const [saving, setSaving] = useState(false)
   const imageUrls = useMemo(() => splitLines(form.images), [form.images])
+  const descriptionZhLength = form.description_zh.length
+  const descriptionEnLength = form.description_en.length
   const globalAmenities = useMemo(() => parseAmenityRows(form.global_amenities), [form.global_amenities])
   const globalTransportZh = useMemo(() => parseTransportRows(form.global_transport_zh), [form.global_transport_zh])
   const globalTransportEn = useMemo(() => parseTransportRows(form.global_transport_en), [form.global_transport_en])
@@ -568,11 +559,21 @@ export default function ProjectForm({
             description="这是正式项目案例内容，不等同于 Global 地图说明。中英文简介和标签会影响案例列表与详情页展示质量。"
           >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="中文简介">
-              <Textarea className="min-h-32" value={form.description_zh} onChange={(e) => patch('description_zh', e.target.value)} />
+            <Field label="中文简介" hint={`${descriptionZhLength}/${MAX_PROJECT_CASE_DESCRIPTION_CHARS} 字符。核心样板可录入更完整的项目背景、落地节奏和交付证明。`}>
+              <Textarea
+                className="min-h-40"
+                maxLength={MAX_PROJECT_CASE_DESCRIPTION_CHARS}
+                value={form.description_zh}
+                onChange={(e) => patch('description_zh', e.target.value)}
+              />
             </Field>
-            <Field label="英文简介">
-              <Textarea className="min-h-32" value={form.description_en} onChange={(e) => patch('description_en', e.target.value)} />
+            <Field label="英文简介" hint={`${descriptionEnLength}/${MAX_PROJECT_CASE_DESCRIPTION_CHARS} characters. Keep customer-visible facts from confirmed published content.`}>
+              <Textarea
+                className="min-h-40"
+                maxLength={MAX_PROJECT_CASE_DESCRIPTION_CHARS}
+                value={form.description_en}
+                onChange={(e) => patch('description_en', e.target.value)}
+              />
             </Field>
             <Field label="中文标签" hint="一行一个，也支持英文逗号分隔。">
               <Textarea value={form.tags_zh} onChange={(e) => patch('tags_zh', e.target.value)} />

@@ -4,6 +4,11 @@ import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { pool } from '@/lib/db'
 import {
+  MIN_PROJECT_CASE_DESCRIPTION_CHARS,
+  getProjectCaseReadinessIssues,
+  getProjectCaseReadinessLevel,
+} from '@/lib/project-case-readiness'
+import {
   Archive,
   CheckCircle2,
   CircleDashed,
@@ -61,6 +66,10 @@ type ProjectListRow = {
   location_zh: string
   location_en: string
   country: string
+  project_type_zh: string | null
+  project_type_en: string | null
+  area_display: string | null
+  units_display: string | null
   products: string
   description_zh: string | null
   description_en: string | null
@@ -102,6 +111,12 @@ const PROJECT_INCOMPLETE_SQL = `(
   OR jsonb_array_length(COALESCE(images, '[]'::jsonb)) = 0
   OR NULLIF(BTRIM(COALESCE(description_zh, '')), '') IS NULL
   OR NULLIF(BTRIM(COALESCE(description_en, '')), '') IS NULL
+  OR LENGTH(BTRIM(COALESCE(description_zh, ''))) < ${MIN_PROJECT_CASE_DESCRIPTION_CHARS}
+  OR LENGTH(BTRIM(COALESCE(description_en, ''))) < ${MIN_PROJECT_CASE_DESCRIPTION_CHARS}
+  OR NULLIF(BTRIM(COALESCE(project_type_zh, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(project_type_en, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(area_display, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(units_display, '')), '') IS NULL
   OR NULLIF(BTRIM(COALESCE(products, '')), '') IS NULL
   OR jsonb_array_length(COALESCE(tags_zh, '[]'::jsonb)) = 0
   OR jsonb_array_length(COALESCE(tags_en, '[]'::jsonb)) = 0
@@ -153,10 +168,6 @@ function hasText(value: string | null | undefined): boolean {
   return Boolean(value?.trim())
 }
 
-function hasItems(value: unknown[] | null | undefined): boolean {
-  return Array.isArray(value) && value.length > 0
-}
-
 function hasCoordinates(project: ProjectListRow): boolean {
   return project.latitude != null && project.longitude != null
 }
@@ -166,23 +177,11 @@ function parseCount(value: string | undefined): number {
 }
 
 function getProjectIssues(project: ProjectListRow): string[] {
-  const issues: string[] = []
-
-  if (!hasText(project.cover_image_url)) issues.push('缺封面')
-  if (!hasItems(project.images)) issues.push('缺图库')
-  if (!hasText(project.description_zh)) issues.push('缺中文简介')
-  if (!hasText(project.description_en)) issues.push('缺英文简介')
-  if (!hasText(project.products)) issues.push('缺产品型号')
-  if (!hasItems(project.tags_zh) || !hasItems(project.tags_en)) issues.push('缺标签')
-  if (!hasCoordinates(project)) issues.push('缺坐标')
-
-  return issues
+  return getProjectCaseReadinessIssues(project, { includeCoordinates: true })
 }
 
 function getCompletenessLabel(issues: string[]): string {
-  if (issues.length === 0) return '完整'
-  if (issues.includes('缺封面') || issues.includes('缺图库')) return '待补素材'
-  return '可展示但待补充'
+  return getProjectCaseReadinessLevel(issues)
 }
 
 function completenessClass(label: string): string {
@@ -341,6 +340,10 @@ async function getProjects(filters: FilterState): Promise<ProjectListResult> {
        location_zh,
        location_en,
        country,
+       project_type_zh,
+       project_type_en,
+       area_display,
+       units_display,
        products,
        description_zh,
        description_en,

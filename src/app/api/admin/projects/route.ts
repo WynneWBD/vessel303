@@ -3,6 +3,7 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
+import { MAX_PROJECT_CASE_DESCRIPTION_CHARS } from '@/lib/project-case-readiness'
 import {
   createProjectCase,
   isProjectCaseIdTaken,
@@ -63,8 +64,8 @@ const projectSchema = z.object({
   investment_display: z.string().max(120).optional().default(''),
   units_display: z.string().max(80).optional().default(''),
   products: z.string().max(260).optional().default(''),
-  description_zh: z.string().max(1800).optional().default(''),
-  description_en: z.string().max(1800).optional().default(''),
+  description_zh: z.string().max(MAX_PROJECT_CASE_DESCRIPTION_CHARS).optional().default(''),
+  description_en: z.string().max(MAX_PROJECT_CASE_DESCRIPTION_CHARS).optional().default(''),
   tags_zh: z.array(z.string().min(1).max(50)).max(12).optional().default([]),
   tags_en: z.array(z.string().min(1).max(50)).max(12).optional().default([]),
   cover_image_url: z.string().max(500).nullable().optional().default(null),

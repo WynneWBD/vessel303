@@ -11,12 +11,13 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import type { ProjectCaseRow, ProjectCaseStatus } from '@/lib/project-cases-db'
+import { getProjectCaseReadinessIssues, getProjectCaseReadinessLevel } from '@/lib/project-case-readiness'
 
 type Filters = { status: string; mapStatus: string; search: string }
 type PendingAction =
   | { type: 'status'; item: ProjectCaseRow; status: ProjectCaseStatus }
   | { type: 'delete'; item: ProjectCaseRow }
-type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
+type CompletenessLevel = ReturnType<typeof getProjectCaseReadinessLevel>
 
 const LIMIT = 20
 const STATUS_QUICK_FILTERS: Array<{ label: string; value: Filters['status'] }> = [
@@ -41,31 +42,12 @@ function hasMapCoordinates(item: ProjectCaseRow) {
   return item.latitude != null && item.longitude != null
 }
 
-function hasText(value: string | null | undefined) {
-  return Boolean(value?.trim())
-}
-
 function getProjectCompleteness(item: ProjectCaseRow): {
   level: CompletenessLevel
   issues: string[]
 } {
-  const issues: string[] = []
-  const hasCoords = hasMapCoordinates(item)
-
-  if (!hasText(item.cover_image_url)) issues.push('缺封面')
-  if (item.images.length === 0) issues.push('缺图库')
-  if (!hasText(item.description_zh)) issues.push('缺中文简介')
-  if (!hasText(item.description_en)) issues.push('缺英文简介')
-  if (!hasText(item.products)) issues.push('缺产品型号')
-  if (item.tags_zh.length === 0 || item.tags_en.length === 0) issues.push('缺标签')
-  if (!hasCoords) issues.push('缺坐标')
-  if (hasCoords && item.status !== 'published') issues.push('有坐标待发布')
-
-  if (issues.length === 0) return { level: '完整', issues }
-  if (issues.includes('缺封面') || issues.includes('缺图库')) {
-    return { level: '待补素材', issues }
-  }
-  return { level: '可展示但待补充', issues }
+  const issues = getProjectCaseReadinessIssues(item, { includeCoordinates: true })
+  return { level: getProjectCaseReadinessLevel(issues), issues }
 }
 
 function completenessBadgeClass(level: CompletenessLevel) {

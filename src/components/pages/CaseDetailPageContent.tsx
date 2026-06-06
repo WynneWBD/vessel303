@@ -19,6 +19,14 @@ function text(value: string | null | undefined) {
   return value?.trim() ?? ''
 }
 
+function localizedText(zh: boolean, zhValue: string | null | undefined, enValue: string | null | undefined) {
+  return text(zh ? zhValue || enValue : enValue || zhValue)
+}
+
+function localizedList(zh: boolean, zhValues: string[], enValues: string[]) {
+  return zhValues.length > 0 ? (zh ? zhValues : enValues.length > 0 ? enValues : zhValues) : enValues
+}
+
 function ProjectImage({ src, alt, className }: { src: string | null | undefined; alt: string; className: string }) {
   if (!src) return null
   return (
@@ -79,11 +87,11 @@ export default function CaseDetailPageContent({
 }) {
   const { lang } = useLanguage()
   const zh = lang === 'zh'
-  const name = zh ? project.name_zh || project.name_en : project.name_en || project.name_zh
-  const location = zh ? project.location_zh || project.location_en : project.location_en || project.location_zh
-  const type = zh ? project.project_type_zh || project.project_type_en : project.project_type_en || project.project_type_zh
-  const description = zh ? project.description_zh || project.description_en : project.description_en || project.description_zh
-  const tags = zh ? project.tags_zh : project.tags_en
+  const name = localizedText(zh, project.name_zh, project.name_en)
+  const location = localizedText(zh, project.location_zh, project.location_en)
+  const type = localizedText(zh, project.project_type_zh, project.project_type_en)
+  const description = localizedText(zh, project.description_zh, project.description_en)
+  const tags = localizedList(zh, project.tags_zh, project.tags_en)
   const heroImage = project.cover_image_url || project.images[0] || null
   const gallery = [
     project.cover_image_url,
@@ -122,6 +130,13 @@ export default function CaseDetailPageContent({
     companyPrefix: itemLabel(itemById(inquiryModule, 'form-company-prefix'), lang),
   }
   const heroGallery = gallery.filter((image) => image !== heroImage).slice(0, 3)
+  const storyPanelFacts = facts.length > 0
+    ? facts
+    : tags.map((tag) => ({ label: '', value: tag }))
+  const storyPanels = gallery.slice(0, 4).map((image, index) => ({
+    image,
+    fact: storyPanelFacts[index % Math.max(storyPanelFacts.length, 1)] ?? null,
+  }))
 
   if (!name) return null
 
@@ -208,6 +223,43 @@ export default function CaseDetailPageContent({
                   alt={`${name} ${index + 1}`}
                   className={`${index === 0 ? 'md:col-span-2 md:row-span-2' : ''} aspect-[4/3] w-full border border-white/12 bg-white/8`}
                 />
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {storyPanels.length >= 3 ? (
+        <section className="border-b border-[#E5DED4] bg-[#FAF7F2] py-12 lg:py-16" data-case-story-rhythm="true">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+              {storyPanels.map((panel, index) => (
+                <article
+                  key={`${panel.image}-${index}`}
+                  className={`group border border-[#E5DED4] bg-white ${index === 0 ? 'lg:col-span-2' : ''}`}
+                  data-case-story-panel={index + 1}
+                >
+                  <ProjectImage
+                    src={panel.image}
+                    alt={`${name} ${index + 1}`}
+                    className={`${index === 0 ? 'aspect-[16/10]' : 'aspect-[4/3]'} w-full border-b border-[#E5DED4]`}
+                  />
+                  {panel.fact ? (
+                    <div className="grid grid-cols-[44px_minmax(0,1fr)] gap-3 p-4">
+                      <p className="text-xl font-black leading-none text-[#E36F2C]/70">
+                        {String(index + 1).padStart(2, '0')}
+                      </p>
+                      <div className="min-w-0">
+                        {panel.fact.label ? (
+                          <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#8A8580]">
+                            {panel.fact.label}
+                          </p>
+                        ) : null}
+                        <p className="text-sm font-bold leading-6 text-[#2C2A28]">{panel.fact.value}</p>
+                      </div>
+                    </div>
+                  ) : null}
+                </article>
               ))}
             </div>
           </div>

@@ -10,6 +10,7 @@ import {
   type UploadVariantMap,
 } from '@/lib/upload-image-variants'
 import { listPublishedPageModules } from '@/lib/page-modules-db'
+import { mapCaseStaticImageUrl } from '@/lib/case-static-image-variants'
 
 export const revalidate = 300
 
@@ -30,11 +31,40 @@ function caseImageUrls(project: ProjectCaseRow) {
 }
 
 function applyCaseImageVariants(project: ProjectCaseRow, variantsByUrl: UploadVariantMap, preferred: 'card' | 'detail') {
+  const coverImageUrl = mapUploadImageUrl(project.cover_image_url, variantsByUrl, preferred) || project.cover_image_url
   return {
     ...project,
-    cover_image_url: mapUploadImageUrl(project.cover_image_url, variantsByUrl, preferred) || project.cover_image_url,
-    images: project.images.map((image) => mapUploadImageUrl(image, variantsByUrl, preferred) || image),
+    cover_image_url: mapCaseStaticImageUrl(coverImageUrl, preferred),
+    images: project.images.map((image) => mapCaseStaticImageUrl(mapUploadImageUrl(image, variantsByUrl, preferred) || image, preferred)),
   }
+}
+
+function normalized(value: string | null | undefined) {
+  return value?.trim().toLowerCase() ?? ''
+}
+
+function caseTagKeys(project: ProjectCaseRow) {
+  const tagsEn = Array.isArray(project.tags_en) ? project.tags_en : []
+  const tagsZh = Array.isArray(project.tags_zh) ? project.tags_zh : []
+  return new Set([...tagsEn, ...tagsZh].map(normalized).filter(Boolean))
+}
+
+function relatedCaseScore(current: ProjectCaseRow, candidate: ProjectCaseRow) {
+  let score = 0
+  const currentTags = caseTagKeys(current)
+  const candidateTags = caseTagKeys(candidate)
+
+  if (normalized(current.project_type_en) && normalized(current.project_type_en) === normalized(candidate.project_type_en)) score += 5
+  if (normalized(current.project_type_zh) && normalized(current.project_type_zh) === normalized(candidate.project_type_zh)) score += 5
+  if (normalized(current.country) && normalized(current.country) === normalized(candidate.country)) score += 2
+  if (normalized(current.location_en) && normalized(current.location_en) === normalized(candidate.location_en)) score += 1
+  if (normalized(current.location_zh) && normalized(current.location_zh) === normalized(candidate.location_zh)) score += 1
+
+  for (const tag of candidateTags) {
+    if (currentTags.has(tag)) score += 2
+  }
+
+  return score
 }
 
 async function loadPublishedProjectCase(id: string): Promise<ProjectCaseRow | null> {
@@ -46,12 +76,17 @@ async function loadPublishedProjectCase(id: string): Promise<ProjectCaseRow | nu
   return project
 }
 
-async function loadRelatedProjectCases(id: string): Promise<ProjectCaseRow[]> {
+async function loadRelatedProjectCases(project: ProjectCaseRow): Promise<ProjectCaseRow[]> {
   const cases = await listPublishedProjectCases().catch((err) => {
     console.error('[cases/detail] related project cases db unavailable', err)
     return []
   })
-  return cases.filter((item) => item.id !== id).slice(0, 3)
+  return cases
+    .filter((item) => item.id !== project.id)
+    .map((item) => ({ item, score: relatedCaseScore(project, item) }))
+    .sort((a, b) => b.score - a.score || a.item.sort_order - b.item.sort_order || a.item.id.localeCompare(b.item.id))
+    .slice(0, 3)
+    .map(({ item }) => item)
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -82,7 +117,7 @@ export default async function CaseDetailPage({ params }: Props) {
   if (!project) notFound()
 
   const [relatedCases, pageModules] = await Promise.all([
-    loadRelatedProjectCases(project.id),
+    loadRelatedProjectCases(project),
     listPublishedPageModules('cases').catch((err) => {
       console.error('[cases/detail] load case page modules failed', err)
       return []

@@ -3,6 +3,7 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
+import { MAX_PROJECT_CASE_DESCRIPTION_CHARS } from '@/lib/project-case-readiness'
 import {
   getProjectCaseById,
   PROJECT_CASE_PUBLIC_CACHE_TAG,
@@ -52,8 +53,8 @@ const patchSchema = z.object({
   investment_display: z.string().max(120).optional(),
   units_display: z.string().max(80).optional(),
   products: z.string().max(260).optional(),
-  description_zh: z.string().max(1800).optional(),
-  description_en: z.string().max(1800).optional(),
+  description_zh: z.string().max(MAX_PROJECT_CASE_DESCRIPTION_CHARS).optional(),
+  description_en: z.string().max(MAX_PROJECT_CASE_DESCRIPTION_CHARS).optional(),
   tags_zh: z.array(z.string().min(1).max(50)).max(12).optional(),
   tags_en: z.array(z.string().min(1).max(50)).max(12).optional(),
   cover_image_url: z.string().max(500).nullable().optional(),

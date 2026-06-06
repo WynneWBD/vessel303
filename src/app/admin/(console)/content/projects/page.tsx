@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { pool } from '@/lib/db'
+import { MIN_PROJECT_CASE_DESCRIPTION_CHARS } from '@/lib/project-case-readiness'
 import {
   Archive,
   ArrowRight,
@@ -39,6 +40,10 @@ type ProjectStats = {
   missingGallery: number
   missingCnDescription: number
   missingEnDescription: number
+  shortDescription: number
+  missingProjectType: number
+  missingArea: number
+  missingUnits: number
   missingProducts: number
   missingTags: number
   missingCoordinates: number
@@ -72,6 +77,10 @@ const EMPTY_PROJECT_STATS: ProjectStats = {
   missingGallery: 0,
   missingCnDescription: 0,
   missingEnDescription: 0,
+  shortDescription: 0,
+  missingProjectType: 0,
+  missingArea: 0,
+  missingUnits: 0,
   missingProducts: 0,
   missingTags: 0,
   missingCoordinates: 0,
@@ -116,6 +125,20 @@ async function getProjectStats(): Promise<ProjectStats> {
        COUNT(*) FILTER (WHERE jsonb_array_length(COALESCE(images, '[]'::jsonb)) = 0)::text AS "missingGallery",
        COUNT(*) FILTER (WHERE NULLIF(BTRIM(description_zh), '') IS NULL)::text AS "missingCnDescription",
        COUNT(*) FILTER (WHERE NULLIF(BTRIM(description_en), '') IS NULL)::text AS "missingEnDescription",
+       COUNT(*) FILTER (
+         WHERE NULLIF(BTRIM(COALESCE(description_zh, '')), '') IS NOT NULL
+           AND NULLIF(BTRIM(COALESCE(description_en, '')), '') IS NOT NULL
+           AND (
+             LENGTH(BTRIM(COALESCE(description_zh, ''))) < ${MIN_PROJECT_CASE_DESCRIPTION_CHARS}
+             OR LENGTH(BTRIM(COALESCE(description_en, ''))) < ${MIN_PROJECT_CASE_DESCRIPTION_CHARS}
+           )
+       )::text AS "shortDescription",
+       COUNT(*) FILTER (
+         WHERE NULLIF(BTRIM(COALESCE(project_type_zh, '')), '') IS NULL
+            OR NULLIF(BTRIM(COALESCE(project_type_en, '')), '') IS NULL
+       )::text AS "missingProjectType",
+       COUNT(*) FILTER (WHERE NULLIF(BTRIM(COALESCE(area_display, '')), '') IS NULL)::text AS "missingArea",
+       COUNT(*) FILTER (WHERE NULLIF(BTRIM(COALESCE(units_display, '')), '') IS NULL)::text AS "missingUnits",
        COUNT(*) FILTER (WHERE NULLIF(BTRIM(products), '') IS NULL)::text AS "missingProducts",
        COUNT(*) FILTER (
          WHERE jsonb_array_length(COALESCE(tags_zh, '[]'::jsonb)) = 0
@@ -139,6 +162,10 @@ async function getProjectStats(): Promise<ProjectStats> {
     missingGallery: parseCount(row?.missingGallery),
     missingCnDescription: parseCount(row?.missingCnDescription),
     missingEnDescription: parseCount(row?.missingEnDescription),
+    shortDescription: parseCount(row?.shortDescription),
+    missingProjectType: parseCount(row?.missingProjectType),
+    missingArea: parseCount(row?.missingArea),
+    missingUnits: parseCount(row?.missingUnits),
     missingProducts: parseCount(row?.missingProducts),
     missingTags: parseCount(row?.missingTags),
     missingCoordinates: parseCount(row?.missingCoordinates),
@@ -152,6 +179,10 @@ function getTodoCount(stats: ProjectStats): number {
     stats.missingGallery,
     stats.missingCnDescription,
     stats.missingEnDescription,
+    stats.shortDescription,
+    stats.missingProjectType,
+    stats.missingArea,
+    stats.missingUnits,
     stats.missingProducts,
     stats.missingTags,
   ].filter((count) => count > 0).length
@@ -252,6 +283,30 @@ function getTodoEntries(stats: ProjectStats): TodoEntry[] {
       detail: '海外展示需要英文介绍',
       count: stats.missingEnDescription,
       Icon: FileText,
+    },
+    {
+      title: '详情叙事偏短',
+      detail: '核心样板详情页需要更完整的项目故事',
+      count: stats.shortDescription,
+      Icon: FileText,
+    },
+    {
+      title: '缺项目类型',
+      detail: '影响列表筛选和详情页项目定位',
+      count: stats.missingProjectType,
+      Icon: Tags,
+    },
+    {
+      title: '缺项目面积',
+      detail: '影响详情页项目信息完整度',
+      count: stats.missingArea,
+      Icon: ListChecks,
+    },
+    {
+      title: '缺舱数',
+      detail: '影响项目规模和交付证明表达',
+      count: stats.missingUnits,
+      Icon: ListChecks,
     },
     {
       title: '缺产品型号',
