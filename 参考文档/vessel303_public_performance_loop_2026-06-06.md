@@ -2,7 +2,7 @@
 
 日期：2026-06-06
 
-范围：公开页性能小批次优化；不包含 `/global`、权限、认证、支付、订单、会员、代理价、国家价格规则、生产数据写入、300 后台真实内容变更。
+范围：公开页性能小批次优化，包含 `/global` 首屏加载体验；不包含权限、认证核心、支付、订单、会员、代理价、国家价格规则、生产数据写入、300 后台真实内容变更。
 
 ## 结论
 
@@ -13,6 +13,12 @@
 - P1：新增 3 个只读审计脚本，用于后续循环持续记录线上资源、route JS 和 public assets 体积。
 
 本轮不是视觉改版，也没有重做页面结构。
+
+追加闭环结论：
+
+- `en.303vessel.cn` 体感快的核心原因不是“图片和视频更少”，而是旧站更接近静态建站器 / CDN 直出；`vessel303` 当前是 Next.js / React / CMS / MapLibre 架构，会额外承担 hydration、route chunks、动态读取和地图初始化成本。
+- 本轮已修掉新站内部几条明确的额外成本：公开页无关 route prefetch、公开页根级 SessionProvider hydration、首页多余 hero image 挂载、悬浮联系组件重复请求、首页视频 poster 首屏下载、`/global` 地图 loading 空白等待。
+- 最新线上基线 commit 为 `a5d61d5`；本轮性能相关最终 commits 为 `171b268`、`dc07a25`、`aa7f897`、`a5d61d5`。
 
 ## Baseline 摘要
 
@@ -50,6 +56,26 @@
 - `src/app/api/admin/page-modules/...`
 - `src/app/api/admin/page-structures/...`
   - 在原有 `revalidatePath` 基础上同步 `revalidateTag('page-module-public', { expire: 0 })`，避免 CMS 发布后公开读取缓存长时间不刷新。
+
+追加修改：
+
+- `src/app/layout.tsx`
+  - 移除公开页根级 `SessionProviderWrapper`，避免所有公开页默认承担 session hydration。
+
+- 多个公开页组件
+  - 为内部 `Link` 增加 `prefetch={false}`，避免 `/products` 等页面因可见链接提前拉取首页、案例、联系、详情页等无关 route chunks。
+
+- `src/components/FloatingContact.tsx`
+  - 复用 `useSiteModules`，避免重复拉取站点模块；QR 仅在需要时渲染。
+
+- `src/components/pages/HomePageContent.tsx`
+  - 首页 hero 只挂载当前图片。
+  - below-fold 视频的 `src` 和 `poster` 都延迟到接近视口后再设置。
+
+- `src/components/StaticGlobalMapPreview.tsx`
+- `src/components/MapSkeleton.tsx`
+- `src/components/GlobalMapML.tsx`
+  - `/global` 在 SSR 阶段先显示静态世界地图和 41 个点位，MapLibre ready 后再覆盖。
 
 新增只读脚本：
 
@@ -128,3 +154,26 @@
 - 首页首屏视频资源已从 HTML 可发现资源中移除，线上资源审计视频数为 `0`。
 - `/products` 仍可能有部署冷启动，但 warm path 已从秒级降到约 `300 ms` 级。
 - 本轮达到“打开页面明显变轻”的第一批目标；剩余 case/about 图片和 route JS 进入下一轮候选，不在本次继续展开。
+
+## 最终 Chrome 线上复验
+
+状态：已完成。
+
+最新部署：
+
+- latest commit：`a5d61d5 fix(performance): defer homepage video posters`
+- Vercel deployment：`https://vessel303-5wl24lvyt-vessel303.vercel.app`
+- Alias：`https://www.vessel303.com`
+- 状态：READY。
+
+Chrome 复验结果：
+
+- `https://www.vessel303.com/global?perf=a5d61d5`：静态地图 1 个、静态点位 41 个、MapLibre canvas 1 个、loading fallback 不再占屏，未见横向溢出。
+- `https://www.vessel303.com/?perf=a5d61d5`：初始 video 资源为 0，below-fold video 的 `src` 和 `poster` 均未在首屏提前加载，页面资源约 `image 11 / script 10 / video 0`。
+- `https://www.vessel303.com/products`：实际浏览器资源只加载当前 products route chunk，不再因为可见链接提前拉取首页、案例、联系或详情页 route JS。
+- `/about`、`/cases`、案例详情、`/contact`、`/display`、`/faq`：desktop / mobile 抽样未见横向溢出，未发现首屏视频提前加载。
+
+最终判断：
+
+- 本轮公开页性能问题已闭环，尤其是“打开就慢”“`/global` 长时间空白 loading”“首页视频和 poster 过早加载”“产品页预取无关 JS”等 P0/P1 路径。
+- 若后续要求与 `en.303vessel.cn` 完全同等瞬开，需要单独评估静态化、边缘缓存和更大范围架构改造；这已超出本轮小批次性能优化边界。
