@@ -35,6 +35,8 @@ const blockedPatterns = [
   { pattern: /\u5f00\u53d1\u4efb\u52a1/gi, reason: 'development task copy' },
   { pattern: /\u9a8c\u6536\u4efb\u52a1|acceptance/gi, reason: 'acceptance copy' },
   { pattern: /\u8c03\u8bd5|debug/gi, reason: 'debug copy' },
+  { pattern: /future\s+CMS/gi, reason: 'internal staging copy' },
+  { pattern: /stage\s+one\s+keeps\s+pricing/gi, reason: 'internal staging copy' },
 ]
 
 const args = process.argv.slice(2)
@@ -141,8 +143,11 @@ function snippetFor(text, index, length) {
 
 function textWithoutLanguageToggle(text) {
   return text
-    .replace(/\bEN\s+中/g, ' ')
-    .replace(/中\s+EN\b/g, ' ')
+    .replace(/\u4e2d\u6587/g, ' ')
+    .replace(/\bEN\s+CN\b/gi, ' ')
+    .replace(/\bCN\s+EN\b/gi, ' ')
+    .replace(/\bEnglish\s+CN\b/gi, ' ')
+    .replace(/\bCN\s+English\b/gi, ' ')
 }
 
 function routePath(route) {

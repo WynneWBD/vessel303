@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react';
 import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
+import { hasInternalPublicCopy, publicText } from '@/lib/product-public-content';
 import {
   itemById,
   itemLabel,
@@ -41,6 +43,14 @@ const TERM_FIELDS: Array<{
   { zh: 'moq_zh', en: 'moq_en' },
 ];
 
+const HERO_IMAGE_SIZES_WITH_RAIL = '(max-width: 1024px) 100vw, (max-width: 1344px) calc(100vw - 624px), 720px';
+const HERO_IMAGE_SIZES_WITHOUT_RAIL = '(max-width: 1024px) 100vw, (max-width: 1344px) calc(100vw - 496px), 848px';
+const DETAIL_MODULE_IMAGE_SIZES = '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 460px';
+const RESOURCE_MODULE_IMAGE_SIZES = '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 220px';
+const DETAIL_GALLERY_PRIMARY_SIZES = '(max-width: 1024px) 100vw, 680px';
+const HERO_DESKTOP_THUMBNAILS = 8;
+const HERO_MOBILE_THUMBNAILS = 9;
+
 function uniqueImages(values: Array<string | undefined | null>) {
   return Array.from(new Set(values.map((value) => value?.trim()).filter((value): value is string => Boolean(value))));
 }
@@ -53,8 +63,34 @@ function text(value: string | null | undefined) {
   return value?.trim() ?? '';
 }
 
+function visibleDetailItems(items: DetailModuleItem[]) {
+  return items.filter((item) => !hasInternalPublicCopy(item.title, item.body));
+}
+
+function moduleItemsForLanguage(module: DetailModule, lang: 'en' | 'zh') {
+  const localizedItems = lang === 'en' ? module.items_en ?? [] : module.items_cn ?? [];
+  const seen = new Set<string>();
+  return visibleDetailItems([...localizedItems, ...(module.items ?? []), ...(module.links ?? [])]).filter((item) => {
+    const key = [item.href ?? '', item.title ?? '', item.body ?? ''].join('\n');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function isInternalHref(href: string) {
   return href.startsWith('/') && !href.startsWith('//');
+}
+
+function thumbnailWindow<T>(items: T[], activeIndex: number, size: number) {
+  if (items.length <= size) return { start: 0, items };
+  const half = Math.floor(size / 2);
+  const maxStart = Math.max(0, items.length - size);
+  const start = Math.min(Math.max(activeIndex - half, 0), maxStart);
+  return {
+    start,
+    items: items.slice(start, start + size),
+  };
 }
 
 function isBuyerResourceModule(module: DetailModule) {
@@ -85,12 +121,12 @@ function DetailModuleBlock({
   name: string;
   anchorId?: string;
 }) {
-  const title = lang === 'en' ? module.title_en : module.title_cn;
-  const body = lang === 'en' ? module.body_en : module.body_cn;
-  const items = lang === 'en' ? module.items_en ?? [] : module.items_cn ?? [];
+  const title = publicText(lang === 'en' ? module.title_en : module.title_cn);
+  const body = publicText(lang === 'en' ? module.body_en : module.body_cn);
+  const items = moduleItemsForLanguage(module, lang);
   const images = uniqueImages([module.image_url, ...(module.images ?? [])]);
   const linkItems = items.filter((item) => text(item.href));
-  const textItems = items.filter((item) => !text(item.href));
+  const textItems = items.filter((item) => !text(item.href) && (publicText(item.title) || publicText(item.body)));
   if (!text(title) && !text(body) && items.length === 0 && images.length === 0) return null;
 
   return (
@@ -101,15 +137,17 @@ function DetailModuleBlock({
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {linkItems.map((item: DetailModuleItem, index: number) => {
             const href = text(item.href);
+            const itemTitle = publicText(item.title);
+            const itemBody = publicText(item.body);
             const card = (
               <>
-                {item.title ? <span className="block text-sm font-black uppercase tracking-[0.12em] text-[#1F2A31]">{item.title}</span> : null}
-                {item.body ? <span className="mt-3 block text-sm leading-6 text-[#65707A]">{item.body}</span> : null}
+                {itemTitle ? <span className="block text-sm font-black uppercase tracking-[0.12em] text-[#1F2A31]">{itemTitle}</span> : null}
+                {itemBody ? <span className="mt-3 block text-sm leading-6 text-[#65707A]">{itemBody}</span> : null}
               </>
             );
             return isInternalHref(href) ? (
               <Link
-                key={`${item.title}-${index}`}
+                key={`${itemTitle || href}-${index}`}
                 href={href}
                 className="group border border-[#147C94]/20 bg-white p-5 transition hover:border-[#147C94]/60 hover:bg-[#F2F8F8]"
               >
@@ -117,7 +155,7 @@ function DetailModuleBlock({
               </Link>
             ) : (
               <a
-                key={`${item.title}-${index}`}
+                key={`${itemTitle || href}-${index}`}
                 href={href}
                 target={/^https?:\/\//i.test(href) ? '_blank' : undefined}
                 rel={/^https?:\/\//i.test(href) ? 'noopener noreferrer' : undefined}
@@ -132,10 +170,12 @@ function DetailModuleBlock({
       {textItems.length > 0 ? (
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {textItems.map((item: DetailModuleItem, index: number) => {
+            const itemTitle = publicText(item.title);
+            const itemBody = publicText(item.body);
             return (
-              <div key={`${item.title}-${index}`} className="border-l-2 border-[#147C94] bg-white px-5 py-4">
-                {item.title ? <p className="text-sm font-black uppercase tracking-[0.12em] text-[#1F2A31]">{item.title}</p> : null}
-                {item.body ? <p className="mt-2 text-sm leading-6 text-[#65707A]">{item.body}</p> : null}
+              <div key={`${itemTitle}-${index}`} className="border-l-2 border-[#147C94] bg-white px-5 py-4">
+                {itemTitle ? <p className="text-sm font-black uppercase tracking-[0.12em] text-[#1F2A31]">{itemTitle}</p> : null}
+                {itemBody ? <p className="mt-2 text-sm leading-6 text-[#65707A]">{itemBody}</p> : null}
               </div>
             );
           })}
@@ -151,7 +191,7 @@ function DetailModuleBlock({
                 fill
                 loading="lazy"
                 className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
+                sizes={DETAIL_MODULE_IMAGE_SIZES}
               />
             </div>
           ))}
@@ -174,9 +214,9 @@ function BuyerResourceHub({
 }) {
   if (modules.length === 0) return null;
   const hasContent = modules.some((module) => {
-    const moduleTitleText = lang === 'en' ? module.title_en : module.title_cn;
-    const moduleBodyText = lang === 'en' ? module.body_en : module.body_cn;
-    const items = lang === 'en' ? module.items_en ?? [] : module.items_cn ?? [];
+    const moduleTitleText = publicText(lang === 'en' ? module.title_en : module.title_cn);
+    const moduleBodyText = publicText(lang === 'en' ? module.body_en : module.body_cn);
+    const items = moduleItemsForLanguage(module, lang);
     const images = uniqueImages([module.image_url, ...(module.images ?? [])]);
     return text(moduleTitleText) || text(moduleBodyText) || items.length > 0 || images.length > 0;
   });
@@ -187,12 +227,12 @@ function BuyerResourceHub({
       {title ? <h2 className="px-1 text-3xl font-black leading-tight text-[#1F2A31]">{title}</h2> : null}
       <div className={title ? 'mt-6 grid grid-cols-1 gap-4 px-1 lg:grid-cols-2' : 'grid grid-cols-1 gap-4 px-1 lg:grid-cols-2'}>
         {modules.map((module) => {
-          const moduleTitleText = lang === 'en' ? module.title_en : module.title_cn;
-          const moduleBodyText = lang === 'en' ? module.body_en : module.body_cn;
-          const items = lang === 'en' ? module.items_en ?? [] : module.items_cn ?? [];
+          const moduleTitleText = publicText(lang === 'en' ? module.title_en : module.title_cn);
+          const moduleBodyText = publicText(lang === 'en' ? module.body_en : module.body_cn);
+          const items = moduleItemsForLanguage(module, lang);
           const images = uniqueImages([module.image_url, ...(module.images ?? [])]);
           const linkItems = items.filter((item) => text(item.href));
-          const textItems = items.filter((item) => !text(item.href));
+          const textItems = items.filter((item) => !text(item.href) && (publicText(item.title) || publicText(item.body)));
           if (!text(moduleTitleText) && !text(moduleBodyText) && items.length === 0 && images.length === 0) return null;
 
           return (
@@ -203,20 +243,22 @@ function BuyerResourceHub({
                 <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {linkItems.map((item: DetailModuleItem, index: number) => {
                     const href = text(item.href);
+                    const itemTitle = publicText(item.title);
+                    const itemBody = publicText(item.body);
                     const card = (
                       <>
-                        {item.title ? <span className="block text-sm font-black text-[#1F2A31]">{item.title}</span> : null}
-                        {item.body ? <span className="mt-2 block text-sm leading-6 text-[#65707A]">{item.body}</span> : null}
+                        {itemTitle ? <span className="block text-sm font-black text-[#1F2A31]">{itemTitle}</span> : null}
+                        {itemBody ? <span className="mt-2 block text-sm leading-6 text-[#65707A]">{itemBody}</span> : null}
                       </>
                     );
                     const className = 'block border border-[#147C94]/20 bg-white p-4 transition hover:border-[#147C94]/60 hover:bg-[#F2F8F8]';
                     return isInternalHref(href) ? (
-                      <Link key={`${item.title}-${index}`} href={href} className={className}>
+                      <Link key={`${itemTitle || href}-${index}`} href={href} className={className}>
                         {card}
                       </Link>
                     ) : (
                       <a
-                        key={`${item.title}-${index}`}
+                        key={`${itemTitle || href}-${index}`}
                         href={href}
                         target={/^https?:\/\//i.test(href) ? '_blank' : undefined}
                         rel={/^https?:\/\//i.test(href) ? 'noopener noreferrer' : undefined}
@@ -230,12 +272,16 @@ function BuyerResourceHub({
               ) : null}
               {textItems.length > 0 ? (
                 <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {textItems.map((item: DetailModuleItem, index: number) => (
-                    <div key={`${item.title}-${index}`} className="border-l-2 border-[#147C94] bg-white px-4 py-3">
-                      {item.title ? <p className="text-sm font-black text-[#1F2A31]">{item.title}</p> : null}
-                      {item.body ? <p className="mt-2 text-sm leading-6 text-[#65707A]">{item.body}</p> : null}
-                    </div>
-                  ))}
+                  {textItems.map((item: DetailModuleItem, index: number) => {
+                    const itemTitle = publicText(item.title);
+                    const itemBody = publicText(item.body);
+                    return (
+                      <div key={`${itemTitle}-${index}`} className="border-l-2 border-[#147C94] bg-white px-4 py-3">
+                        {itemTitle ? <p className="text-sm font-black text-[#1F2A31]">{itemTitle}</p> : null}
+                        {itemBody ? <p className="mt-2 text-sm leading-6 text-[#65707A]">{itemBody}</p> : null}
+                      </div>
+                    );
+                  })}
                 </div>
               ) : null}
               {images.length > 0 ? (
@@ -248,7 +294,7 @@ function BuyerResourceHub({
                         fill
                         loading="lazy"
                         className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 50vw"
+                        sizes={RESOURCE_MODULE_IMAGE_SIZES}
                       />
                     </div>
                   ))}
@@ -308,7 +354,7 @@ function ProductVisualGallery({
             fill
             loading="lazy"
             className="object-cover"
-            sizes="(max-width: 1024px) 100vw, 58vw"
+            sizes={DETAIL_GALLERY_PRIMARY_SIZES}
           />
         </div>
         {secondaryImages.length > 0 ? (
@@ -346,10 +392,6 @@ export default function CatalogProductDetailContent({
   const features = lang === 'en' ? product.features_en : product.features_cn;
   const keywords = (lang === 'en' ? product.keywords_en : product.keywords_zh) ?? [];
   const specs = localizedSpecRows(product, lang);
-  const price = (lang === 'en' ? product.price_display_en : product.price_display_zh)
-    || product.price_display_en
-    || product.price_display_zh
-    || '';
   const terms = product.commercial_terms ?? {};
   const media = useMemo(() => uniqueImages([product.image, ...(product.gallery ?? [])]), [product.gallery, product.image]);
   const activeImage = media[activeImageIndex] ?? media[0] ?? product.image;
@@ -370,6 +412,11 @@ export default function CatalogProductDetailContent({
   const modules = moduleMap(pageModules);
   const uiLabels = modules.get('ui-labels') ?? null;
   const inquiryModule = modules.get('inquiry-form') ?? null;
+  const priceEmptyLabel = itemLabel(itemById(uiLabels, 'price-empty'), lang);
+  const price = (lang === 'en' ? product.price_display_en : product.price_display_zh)
+    || product.price_display_en
+    || product.price_display_zh
+    || priceEmptyLabel;
   const imageLabelPrefix = itemLabel(itemById(uiLabels, 'image-label-prefix'), lang);
   const specsTitle = itemLabel(itemById(uiLabels, 'specs-title'), lang);
   const descriptionTitle = itemLabel(itemById(uiLabels, 'description-title'), lang);
@@ -420,7 +467,7 @@ export default function CatalogProductDetailContent({
     allProductsLabel ? { href: '/products', label: allProductsLabel, tone: 'secondary' } : null,
   ].filter((item): item is { href: string; label: string; tone: 'primary' | 'secondary' } => Boolean(item));
   const buyerResourceLinks = resourceModules
-    .flatMap((module) => (lang === 'en' ? module.items_en ?? [] : module.items_cn ?? [])
+    .flatMap((module) => moduleItemsForLanguage(module, lang)
       .map((item) => ({
         href: text(item.href),
         title: text(item.title),
@@ -429,9 +476,19 @@ export default function CatalogProductDetailContent({
     .filter((item) => item.href && (item.title || item.body))
     .slice(0, 3);
   const hasMediaRail = media.length > 1;
+  const desktopThumbnailWindow = thumbnailWindow(media, activeImageIndex, HERO_DESKTOP_THUMBNAILS);
+  const mobileThumbnailWindow = thumbnailWindow(media, activeImageIndex, HERO_MOBILE_THUMBNAILS);
+  const canMovePreviousImage = activeImageIndex > 0;
+  const canMoveNextImage = activeImageIndex < media.length - 1;
+  const previousImageLabel = imageLabelPrefix ? `${imageLabelPrefix} previous` : 'Previous image';
+  const nextImageLabel = imageLabelPrefix ? `${imageLabelPrefix} next` : 'Next image';
+  const selectImageLabel = (index: number) => imageLabelPrefix ? `${imageLabelPrefix} ${index + 1}` : `Image ${index + 1}`;
+  const goToPreviousImage = () => setActiveImageIndex((index) => Math.max(index - 1, 0));
+  const goToNextImage = () => setActiveImageIndex((index) => Math.min(index + 1, media.length - 1));
   const heroGridClass = hasMediaRail
     ? 'grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,96px)_minmax(0,1fr)_400px] lg:items-start'
     : 'grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start';
+  const heroImageSizes = hasMediaRail ? HERO_IMAGE_SIZES_WITH_RAIL : HERO_IMAGE_SIZES_WITHOUT_RAIL;
 
   if (!name) return null;
 
@@ -441,20 +498,43 @@ export default function CatalogProductDetailContent({
         <div className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
           <div className={heroGridClass}>
             {hasMediaRail ? (
-              <div className="hidden min-w-0 gap-2 lg:flex lg:max-h-[640px] lg:flex-col lg:overflow-y-auto lg:pr-1">
-                {media.map((src, index) => (
-                  <button
-                    key={`${src}-${index}-rail`}
-                    type="button"
-                    onClick={() => setActiveImageIndex(index)}
-                    className={`relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-md border-2 bg-[#EEF1F3] transition ${
-                      index === activeImageIndex ? 'border-[#147C94]' : 'border-[#DADDE1] opacity-75 hover:opacity-100'
-                    }`}
-                    aria-label={imageLabelPrefix ? `${imageLabelPrefix} ${index + 1}` : undefined}
-                  >
-                    <ProtectedImage src={src} alt={`${name} ${index + 1}`} fill className="object-cover" sizes="96px" />
-                  </button>
-                ))}
+              <div className="hidden min-w-0 gap-2 lg:flex lg:max-h-[640px] lg:flex-col lg:pr-1">
+                <button
+                  type="button"
+                  onClick={goToPreviousImage}
+                  disabled={!canMovePreviousImage}
+                  aria-label={previousImageLabel}
+                  className="inline-flex h-8 shrink-0 items-center justify-center rounded-sm border border-[#DADDE1] bg-white text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94] disabled:pointer-events-none disabled:opacity-35"
+                >
+                  <ChevronUp size={16} />
+                </button>
+                <div className="flex min-w-0 flex-col gap-2 overflow-hidden">
+                  {desktopThumbnailWindow.items.map((src, offset) => {
+                    const index = desktopThumbnailWindow.start + offset;
+                    return (
+                      <button
+                        key={`${src}-${index}-rail`}
+                        type="button"
+                        onClick={() => setActiveImageIndex(index)}
+                        className={`relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-md border-2 bg-[#EEF1F3] transition ${
+                          index === activeImageIndex ? 'border-[#147C94]' : 'border-[#DADDE1] opacity-75 hover:opacity-100'
+                        }`}
+                        aria-label={selectImageLabel(index)}
+                      >
+                        <ProtectedImage src={src} alt={`${name} ${index + 1}`} fill className="object-cover" sizes="96px" />
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  onClick={goToNextImage}
+                  disabled={!canMoveNextImage}
+                  aria-label={nextImageLabel}
+                  className="inline-flex h-8 shrink-0 items-center justify-center rounded-sm border border-[#DADDE1] bg-white text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94] disabled:pointer-events-none disabled:opacity-35"
+                >
+                  <ChevronDown size={16} />
+                </button>
               </div>
             ) : null}
 
@@ -468,26 +548,49 @@ export default function CatalogProductDetailContent({
                     priority
                     draggable={false}
                     className="object-cover"
-                    sizes="(max-width: 1024px) 100vw, 58vw"
+                    sizes={heroImageSizes}
                     style={{ userSelect: 'none' }}
                   />
                 </div>
               ) : null}
               {media.length > 1 ? (
-                <div className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:hidden">
-                  {media.map((src, index) => (
-                    <button
-                      key={`${src}-${index}`}
-                      type="button"
-                      onClick={() => setActiveImageIndex(index)}
-                      className={`relative h-16 w-20 shrink-0 overflow-hidden rounded-md border-2 ${
-                        index === activeImageIndex ? 'border-[#147C94]' : 'border-[#DADDE1] opacity-70'
-                      }`}
-                      aria-label={imageLabelPrefix ? `${imageLabelPrefix} ${index + 1}` : undefined}
-                    >
-                      <ProtectedImage src={src} alt={`${name} ${index + 1}`} fill className="object-cover" sizes="80px" />
-                    </button>
-                  ))}
+                <div className="mt-3 grid grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2 lg:hidden">
+                  <button
+                    type="button"
+                    onClick={goToPreviousImage}
+                    disabled={!canMovePreviousImage}
+                    aria-label={previousImageLabel}
+                    className="inline-flex h-16 items-center justify-center rounded-md border border-[#DADDE1] bg-white text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94] disabled:pointer-events-none disabled:opacity-35"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <div className="flex min-w-0 gap-2 overflow-x-auto pb-1">
+                    {mobileThumbnailWindow.items.map((src, offset) => {
+                      const index = mobileThumbnailWindow.start + offset;
+                      return (
+                        <button
+                          key={`${src}-${index}`}
+                          type="button"
+                          onClick={() => setActiveImageIndex(index)}
+                          className={`relative h-16 w-20 shrink-0 overflow-hidden rounded-md border-2 ${
+                            index === activeImageIndex ? 'border-[#147C94]' : 'border-[#DADDE1] opacity-70'
+                          }`}
+                          aria-label={selectImageLabel(index)}
+                        >
+                          <ProtectedImage src={src} alt={`${name} ${index + 1}`} fill className="object-cover" sizes="80px" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={goToNextImage}
+                    disabled={!canMoveNextImage}
+                    aria-label={nextImageLabel}
+                    className="inline-flex h-16 items-center justify-center rounded-md border border-[#DADDE1] bg-white text-[#1F2A31] transition hover:border-[#147C94] hover:text-[#147C94] disabled:pointer-events-none disabled:opacity-35"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
                 </div>
               ) : null}
             </div>
@@ -647,7 +750,7 @@ export default function CatalogProductDetailContent({
             ) : null}
 
             {contentModules.map((module, index) => {
-              const moduleHasLinks = ((lang === 'en' ? module.items_en : module.items_cn) ?? []).some((item) => text(item.href));
+              const moduleHasLinks = moduleItemsForLanguage(module, lang).some((item) => text(item.href));
               return (
                 <div key={module.id}>
                   {moduleHasLinks && downloadsTitle ? (

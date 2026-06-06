@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
+import { getMissingCommercialTermLanguages } from '@/lib/product-commercial-terms'
 import type { CatalogProductRow, CatalogProductStatus } from '@/lib/product-catalog-db'
 import { getCatalogProductPublicHref, getCatalogProductRouteInfo } from '@/lib/product-public-routes'
 import type { CatalogCommercialTerms, ProductSeriesCode } from '@/lib/products'
@@ -45,15 +46,12 @@ function hasText(value: string | null | undefined) {
   return Boolean(value?.trim())
 }
 
-function hasCommercialTerms(terms: CatalogCommercialTerms | null | undefined) {
-  return Object.values(terms ?? {}).some((value) => hasText(String(value ?? '')))
-}
-
 function getProductCompleteness(item: CatalogProductRow): {
   level: CompletenessLevel
   issues: string[]
 } {
   const issues: string[] = []
+  const commercialIssue = commercialTermsIssueLabel(item.commercial_terms)
   const missingBaseForCuratedDetail = Boolean(item.detailSlug) && (
     !hasText(item.image)
     || !hasText(item.description_cn)
@@ -73,7 +71,7 @@ function getProductCompleteness(item: CatalogProductRow): {
   if (!item.category_id) issues.push('未分类')
   if ((item.attribute_option_ids ?? []).length === 0) issues.push('缺产品属性')
   if (!hasText(item.price_display_zh) && !hasText(item.price_display_en)) issues.push('缺价格展示')
-  if (!hasCommercialTerms(item.commercial_terms)) issues.push('缺商务条款')
+  if (commercialIssue) issues.push(commercialIssue)
   if ((item.keywords_zh ?? []).length === 0 && (item.keywords_en ?? []).length === 0) issues.push('缺关键词')
   if ((item.related_product_ids ?? []).length === 0) issues.push('缺相关产品')
   if ((item.detail_modules ?? []).length === 0) issues.push('缺详情模块')
@@ -88,6 +86,13 @@ function getProductCompleteness(item: CatalogProductRow): {
   }
 
   return { level: '可展示但待补充', issues }
+}
+
+function commercialTermsIssueLabel(terms: CatalogCommercialTerms | null | undefined): string | null {
+  const missing = getMissingCommercialTermLanguages(terms)
+  if (missing.length === 0) return null
+  if (missing.length === 2) return '缺商务条款'
+  return missing[0] === 'zh' ? '缺中文商务条款' : '缺英文商务条款'
 }
 
 function completenessBadgeClass(level: CompletenessLevel) {

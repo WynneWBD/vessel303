@@ -38,6 +38,9 @@ interface Props {
   initialFilters: DirectoryFilters;
 }
 
+const PRODUCTS_HERO_IMAGE_SIZES = '(max-width: 1024px) 100vw, (max-width: 1564px) 40vw, 560px';
+const PRODUCT_CARD_IMAGE_SIZES = '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) calc((100vw - 356px) / 2), (max-width: 1564px) calc((100vw - 372px) / 3), 400px';
+
 function buildHref(filters: DirectoryFilters, patch: Partial<DirectoryFilters>) {
   const next = { ...filters, ...patch };
   const params = new URLSearchParams();
@@ -260,6 +263,7 @@ function ProductCard({
     .map((id) => attributeOptionTitle(attributeTemplates, String(id), lang))
     .filter(Boolean)
     .slice(0, 2);
+  const displayPrice = productPrice(product, lang) || uiLabels.priceEmpty;
   const metaItems = [
     category,
     product.size,
@@ -276,7 +280,7 @@ function ProductCard({
           fill
           loading="lazy"
           className="object-cover transition duration-500 group-hover:scale-105"
-          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 280px"
+          sizes={PRODUCT_CARD_IMAGE_SIZES}
         />
         <div className="absolute left-3 top-3 bg-[#1F2A31]/88 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-white">
           {product.gen}
@@ -312,8 +316,8 @@ function ProductCard({
           ))}
         </div>
         <div className="mt-3 border-t border-[#ECEFF1] pt-3">
-          {productPrice(product, lang) ? (
-            <span className="min-w-0 truncate text-sm font-semibold text-[#C65F22]">{productPrice(product, lang)}</span>
+          {displayPrice ? (
+            <span className="min-w-0 truncate text-sm font-semibold text-[#C65F22]">{displayPrice}</span>
           ) : null}
           <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
             {uiLabels.detailsCta ? (
@@ -483,6 +487,9 @@ export default function ProductsPageContent({
   const uiModule = modules.get('ui-labels') ?? null;
   const label = (id: string) => itemLabel(itemById(uiModule, id), lang);
   const uiItem = (id: string) => itemById(uiModule, id);
+  const primaryCta = itemById(heroModule, 'primary-cta');
+  const secondaryCta = itemById(heroModule, 'secondary-cta');
+  const contactCta = itemById(contactModule, 'primary-cta');
   const uiLabels = {
     categoryHeading: label('category-heading'),
     allProducts: label('all-products-label'),
@@ -503,12 +510,13 @@ export default function ProductsPageContent({
     emptyStateBody: label('empty-state-body'),
     detailsCta: label('details-cta'),
     inquiryCta: label('inquiry-cta'),
+    priceEmpty: label('price-empty'),
     seriesHeading: label('series-heading'),
     seriesBody: label('series-body'),
     seriesCountSuffix: label('series-count-suffix'),
     seriesCta: label('series-cta'),
   };
-  const inquiryHref = displayHref(uiItem('inquiry-cta')?.href);
+  const inquiryHref = displayHref(uiItem('inquiry-cta')?.href) || displayHref(primaryCta?.href) || displayHref(contactCta?.href);
   const rawFilters = initialFilters;
   const filteredProducts = useMemo(
     () => products.filter((product) => productMatchesFilters(product, rawFilters)),
@@ -536,8 +544,6 @@ export default function ProductsPageContent({
   };
   const heroTitle = moduleTitle(heroModule, lang);
   const heroDescription = moduleDescription(heroModule, lang);
-  const primaryCta = itemById(heroModule, 'primary-cta');
-  const secondaryCta = itemById(heroModule, 'secondary-cta');
   const heroImage = itemById(heroModule, 'hero-image');
   const primaryCtaLabel = itemLabel(primaryCta, lang);
   const secondaryCtaLabel = itemLabel(secondaryCta, lang);
@@ -624,7 +630,7 @@ export default function ProductsPageContent({
                     fill
                     priority
                     className="object-cover transition duration-700 group-hover:scale-105"
-                    sizes="(max-width: 1024px) 100vw, 42vw"
+                    sizes={PRODUCTS_HERO_IMAGE_SIZES}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#111820]/35 via-transparent to-transparent" />
                 </Link>
@@ -639,7 +645,7 @@ export default function ProductsPageContent({
                     fill
                     priority
                     className="object-cover"
-                    sizes="(max-width: 1024px) 100vw, 42vw"
+                    sizes={PRODUCTS_HERO_IMAGE_SIZES}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#111820]/35 via-transparent to-transparent" />
                 </div>

@@ -10,6 +10,7 @@ import ProductsPageContent from '@/components/pages/ProductsPageContent';
 import { getUploadVariantsByUrls, mapUploadImageUrl } from '@/lib/upload-image-variants';
 import { buildPageMetadata } from '@/lib/seo';
 import { getPublishedPageModule, listPublishedPageModules } from '@/lib/page-modules-db';
+import { sanitizePublicCatalogProduct } from '@/lib/product-public-content';
 
 export const revalidate = 300;
 
@@ -83,7 +84,7 @@ export default async function ProductsPage({
     return new Map();
   });
   const displayProducts = catalogRows.map((product) => ({
-    ...product,
+    ...sanitizePublicCatalogProduct(product),
     image: mapUploadImageUrl(product.image, imageVariants, 'card') || product.image,
   }));
 

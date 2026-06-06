@@ -532,8 +532,10 @@ export interface CatalogDetailModule {
   title_en: string;
   body_cn?: string;
   body_en?: string;
+  items?: CatalogDetailModuleItem[];
   items_cn?: CatalogDetailModuleItem[];
   items_en?: CatalogDetailModuleItem[];
+  links?: CatalogDetailModuleItem[];
   image_url?: string;
   images?: string[];
   is_visible: boolean;

@@ -21,6 +21,7 @@ import {
 import { buildPageMetadata } from '@/lib/seo';
 import { listPublishedPageModules } from '@/lib/page-modules-db';
 import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
+import { sanitizePublicCatalogProduct } from '@/lib/product-public-content';
 
 function catalogProductImageUrls(product: CatalogProduct) {
   return collectImageUrls([
@@ -121,9 +122,9 @@ export default async function ProductDetailPage({
       console.error('[products/detail] load product image variants failed', err);
       return new Map();
     });
-    const displayProduct = applyCatalogProductImageVariants(catalogProduct, imageVariants);
+    const displayProduct = sanitizePublicCatalogProduct(applyCatalogProductImageVariants(catalogProduct, imageVariants));
     const displayRelatedProducts = relatedProducts.map((product) => ({
-      ...product,
+      ...sanitizePublicCatalogProduct(product),
       image: mapUploadImageUrl(product.image, imageVariants, 'card') || product.image,
     }));
 

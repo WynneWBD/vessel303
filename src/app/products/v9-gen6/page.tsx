@@ -20,6 +20,7 @@ import {
 } from '@/lib/upload-image-variants'
 import { buildPageMetadata } from '@/lib/seo'
 import { listPublishedPageModules } from '@/lib/page-modules-db'
+import { sanitizePublicCatalogProduct } from '@/lib/product-public-content'
 
 const FIXED_DETAIL_SLUG = 'v9-gen6'
 const FIXED_PRODUCT_ID = 'v9-gen6-standard'
@@ -85,9 +86,9 @@ export default async function V9Gen6Page() {
     ...catalogProductImageUrls(product),
     ...relatedProducts.map((item) => item.image),
   ]).catch(() => new Map())
-  const displayProduct = applyCatalogProductImageVariants(product, imageVariants)
+  const displayProduct = sanitizePublicCatalogProduct(applyCatalogProductImageVariants(product, imageVariants))
   const displayRelatedProducts = relatedProducts.map((item) => ({
-    ...item,
+    ...sanitizePublicCatalogProduct(item),
     image: mapUploadImageUrl(item.image, imageVariants, 'card') || item.image,
   }))
 

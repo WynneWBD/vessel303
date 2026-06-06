@@ -19,10 +19,23 @@ const PRODUCT_ISSUES = [
   'cover_gallery',
   'detail_modules',
   'seo',
+  'price_display',
   'commercial_terms',
+  'commercial_terms_zh',
+  'commercial_terms_en',
   'keywords',
   'related_products',
   'buyer_resources',
+]
+
+const COMMERCIAL_TERM_PAIRS = [
+  ['delivery_method_zh', 'delivery_method_en'],
+  ['shipping_location_zh', 'shipping_location_en'],
+  ['payment_terms_zh', 'payment_terms_en'],
+  ['delivery_time_zh', 'delivery_time_en'],
+  ['electrical_standard_zh', 'electrical_standard_en'],
+  ['warranty_support_zh', 'warranty_support_en'],
+  ['moq_zh', 'moq_en'],
 ]
 
 function loadEnvFile(name) {
@@ -73,6 +86,18 @@ function objectHasValue(value) {
   })
 }
 
+function commercialTermCoverage(value) {
+  const terms = value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+  const zhKeys = COMMERCIAL_TERM_PAIRS.map(([zh]) => zh)
+  const enKeys = COMMERCIAL_TERM_PAIRS.map(([, en]) => en)
+  const hasKeyText = (key) => hasText(terms[key])
+
+  return {
+    zhFields: zhKeys.filter(hasKeyText).length,
+    enFields: enKeys.filter(hasKeyText).length,
+  }
+}
+
 function labelForItem(item) {
   const label = item?.label_en || item?.label_zh || item?.title_en || item?.title_zh || item?.id || 'unknown'
   return String(label).replace(/\s+/g, ' ').trim().slice(0, 80)
@@ -100,6 +125,8 @@ function detailModulesHaveBuyerResourceLinks(value) {
     .filter(isBuyerResourceModule)
     .some((module) => {
       const items = [
+        ...asArray(module.links),
+        ...asArray(module.items),
         ...asArray(module.items_en),
         ...asArray(module.items_cn),
       ]
@@ -174,13 +201,21 @@ function productIssues(product) {
   const keywordsEn = asArray(product.keywords_en)
   const relatedProductIds = asArray(product.related_product_ids)
   const seoMissing = missingSeoFields(product)
+  const commercialTerms = objectHasValue(product.commercial_terms)
+  const termsCoverage = commercialTermCoverage(product.commercial_terms)
 
   if (!product.category_id || product.category_status !== 'visible') issues.push('category')
   if (Number(product.attribute_count ?? 0) === 0) issues.push('attributes')
   if (!hasText(product.image) || gallery.length === 0) issues.push('cover_gallery')
   if (!detailModulesHaveVisibleModule(product.detail_modules)) issues.push('detail_modules')
   if (seoMissing.length > 0) issues.push('seo')
-  if (!objectHasValue(product.commercial_terms)) issues.push('commercial_terms')
+  if (!hasText(product.price_display_zh) && !hasText(product.price_display_en)) issues.push('price_display')
+  if (!commercialTerms) {
+    issues.push('commercial_terms')
+  } else {
+    if (termsCoverage.zhFields === 0) issues.push('commercial_terms_zh')
+    if (termsCoverage.enFields === 0) issues.push('commercial_terms_en')
+  }
   if (keywordsZh.length === 0 && keywordsEn.length === 0) issues.push('keywords')
   if (relatedProductIds.length === 0) issues.push('related_products')
   if (!detailModulesHaveBuyerResourceLinks(product.detail_modules)) issues.push('buyer_resources')
@@ -190,6 +225,7 @@ function productIssues(product) {
 
 function productDetail(product) {
   const issues = productIssues(product)
+  const termsCoverage = commercialTermCoverage(product.commercial_terms)
   return {
     id: product.id,
     label: productLabel(product),
@@ -200,10 +236,14 @@ function productDetail(product) {
       attributes: Number(product.attribute_count ?? 0),
       galleryImages: asArray(product.gallery).length,
       visibleDetailModules: asArray(product.detail_modules).filter((module) => module?.is_visible !== false).length,
+      priceDisplayZh: hasText(product.price_display_zh) ? 1 : 0,
+      priceDisplayEn: hasText(product.price_display_en) ? 1 : 0,
       keywordsZh: asArray(product.keywords_zh).length,
       keywordsEn: asArray(product.keywords_en).length,
       relatedProducts: asArray(product.related_product_ids).length,
       buyerResourceLinks: detailModulesHaveBuyerResourceLinks(product.detail_modules) ? 1 : 0,
+      commercialTermsZhFields: termsCoverage.zhFields,
+      commercialTermsEnFields: termsCoverage.enFields,
     },
   }
 }
@@ -253,6 +293,8 @@ async function loadProducts(client) {
        pc.image,
        pc.gallery,
        pc.detail_modules,
+       pc.price_display_zh,
+       pc.price_display_en,
        pc.commercial_terms,
        pc.keywords_zh,
        pc.keywords_en,

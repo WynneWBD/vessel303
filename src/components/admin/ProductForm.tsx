@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { getMissingCommercialTermLanguages } from '@/lib/product-commercial-terms'
 import { getCatalogProductRouteInfo } from '@/lib/product-public-routes'
 import type {
   CatalogProductRow,
@@ -213,12 +214,6 @@ function hasText(value: string | null | undefined) {
   return Boolean(value?.trim())
 }
 
-function hasCommercialTerms(terms: CatalogCommercialTerms) {
-  return commercialTermFields.some((field) => (
-    hasText(String(terms[field.zh] ?? '')) || hasText(String(terms[field.en] ?? ''))
-  ))
-}
-
 function isBuyerResourceModule(module: CatalogDetailModule) {
   const marker = [
     module.id,
@@ -241,11 +236,19 @@ function hasBuyerResourceLinks(modules: CatalogDetailModule[]) {
     ))
 }
 
+function commercialTermsIssueLabel(terms: CatalogCommercialTerms): string | null {
+  const missing = getMissingCommercialTermLanguages(terms)
+  if (missing.length === 0) return null
+  if (missing.length === 2) return '缺商务条款'
+  return missing[0] === 'zh' ? '缺中文商务条款' : '缺英文商务条款'
+}
+
 function getProductCompleteness(form: FormState, galleryUrls: string[]): {
   level: CompletenessLevel
   issues: string[]
 } {
   const issues: string[] = []
+  const commercialIssue = commercialTermsIssueLabel(form.commercial_terms)
   const visibleDetailModules = form.detail_modules.filter((module) => module.is_visible !== false)
   const hasBuyerResources = hasBuyerResourceLinks(form.detail_modules)
   const missingBaseForCuratedDetail = hasText(form.detailSlug) && (
@@ -271,7 +274,7 @@ function getProductCompleteness(form: FormState, galleryUrls: string[]): {
   if (!form.category_id) issues.push('未分类')
   if (form.attribute_option_ids.length === 0) issues.push('缺产品属性')
   if (!hasText(form.price_display_zh) && !hasText(form.price_display_en)) issues.push('缺价格展示')
-  if (!hasCommercialTerms(form.commercial_terms)) issues.push('缺商务条款')
+  if (commercialIssue) issues.push(commercialIssue)
   if (splitLines(form.keywords_zh).length === 0 && splitLines(form.keywords_en).length === 0) issues.push('缺关键词')
   if (form.related_product_ids.length === 0) issues.push('缺相关产品')
   if (

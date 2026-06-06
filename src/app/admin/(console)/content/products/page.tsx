@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { pool } from '@/lib/db'
+import { COMMERCIAL_TERM_FIELD_PAIRS } from '@/lib/product-commercial-terms'
 import { ensureProductCatalogSchema, listProductAttributeTemplates, listProductCategories } from '@/lib/product-catalog-db'
 import { listProductBrands, listProductFilterGroups, listProductMarks, listProductShowcases } from '@/lib/product-operations-db'
 import {
@@ -46,6 +47,7 @@ type ProductStats = {
   missingCategory: number
   missingSeo: number
   missingAttributes: number
+  missingPriceDisplay: number
   missingCommercialTerms: number
   missingKeywords: number
   missingRelatedProducts: number
@@ -92,6 +94,7 @@ const EMPTY_PRODUCT_STATS: ProductStats = {
   missingCategory: 0,
   missingSeo: 0,
   missingAttributes: 0,
+  missingPriceDisplay: 0,
   missingCommercialTerms: 0,
   missingKeywords: 0,
   missingRelatedProducts: 0,
@@ -111,6 +114,26 @@ function formatNumber(value: number): string {
 function parseCount(value: string | undefined): number {
   return parseInt(value ?? '0', 10)
 }
+
+const COMMERCIAL_TERM_ZH_KEYS = COMMERCIAL_TERM_FIELD_PAIRS.map((field) => field.zh)
+const COMMERCIAL_TERM_EN_KEYS = COMMERCIAL_TERM_FIELD_PAIRS.map((field) => field.en)
+
+function missingCommercialTermsSql(fieldRef: string): string {
+  const missingAll = (keys: readonly string[]) => keys
+    .map((key) => `NULLIF(BTRIM(COALESCE(${fieldRef} ->> '${key}', '')), '') IS NULL`)
+    .join('\n             AND ')
+
+  return `(
+             (
+               ${missingAll(COMMERCIAL_TERM_ZH_KEYS)}
+             )
+             OR (
+               ${missingAll(COMMERCIAL_TERM_EN_KEYS)}
+             )
+           )`
+}
+
+const PRODUCT_MISSING_COMMERCIAL_SQL = missingCommercialTermsSql('commercial_terms')
 
 async function tableExists(tableName: string): Promise<boolean> {
   const res = await pool.query<{ table_name: string | null }>(
@@ -176,10 +199,12 @@ async function getProductStats(): Promise<ProductStats> {
        )::text AS "missingAttributes",
        COUNT(*) FILTER (
          WHERE deleted_at IS NULL
-           AND (
-             commercial_terms IS NULL
-             OR commercial_terms = '{}'::jsonb
-           )
+           AND NULLIF(BTRIM(COALESCE(price_display_zh, '')), '') IS NULL
+           AND NULLIF(BTRIM(COALESCE(price_display_en, '')), '') IS NULL
+       )::text AS "missingPriceDisplay",
+       COUNT(*) FILTER (
+         WHERE deleted_at IS NULL
+           AND ${PRODUCT_MISSING_COMMERCIAL_SQL}
        )::text AS "missingCommercialTerms",
        COUNT(*) FILTER (
          WHERE deleted_at IS NULL
@@ -217,6 +242,7 @@ async function getProductStats(): Promise<ProductStats> {
     missingCategory: parseCount(row?.missingCategory),
     missingSeo: parseCount(row?.missingSeo),
     missingAttributes: parseCount(row?.missingAttributes),
+    missingPriceDisplay: parseCount(row?.missingPriceDisplay),
     missingCommercialTerms: parseCount(row?.missingCommercialTerms),
     missingKeywords: parseCount(row?.missingKeywords),
     missingRelatedProducts: parseCount(row?.missingRelatedProducts),
@@ -279,6 +305,7 @@ function getTodoCount(stats: ProductStats): number {
     stats.missingCategory,
     stats.missingAttributes,
     stats.missingSeo,
+    stats.missingPriceDisplay,
     stats.missingCommercialTerms,
     stats.missingKeywords,
     stats.missingRelatedProducts,
@@ -388,8 +415,15 @@ function getTodoEntries(stats: ProductStats): TodoEntry[] {
       Icon: SlidersHorizontal,
     },
     {
-      title: 'Missing business terms',
-      detail: 'Price or trade terms need 300-style detail copy',
+      title: '缺价格展示',
+      detail: '产品卡片和详情决策区缺少询价或价格展示口径',
+      count: stats.missingPriceDisplay,
+      href: '/admin/content/products/list?view=incomplete&issue=price',
+      Icon: FileText,
+    },
+    {
+      title: '商务条款中英文不完整',
+      detail: '中文和英文至少各保留一组交付、付款、质保等条款',
       count: stats.missingCommercialTerms,
       href: '/admin/content/products/list?view=incomplete&issue=commercial',
       Icon: FileText,

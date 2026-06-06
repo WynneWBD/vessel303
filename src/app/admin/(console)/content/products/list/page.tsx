@@ -14,6 +14,10 @@ import {
   type ProductCategoryRow,
 } from '@/lib/product-catalog-db'
 import {
+  COMMERCIAL_TERM_FIELD_PAIRS,
+  getMissingCommercialTermLanguages,
+} from '@/lib/product-commercial-terms'
+import {
   ensureProductOperationsSchema,
   listProductBrands,
   listProductMarks,
@@ -190,13 +194,33 @@ const PRODUCT_ISSUE_OPTIONS: { value: ProductIssue; label: string }[] = [
   { value: 'attributes', label: '缺属性' },
   { value: 'seo', label: '缺 SEO' },
   { value: 'price', label: '缺价格展示' },
-  { value: 'commercial', label: 'Missing business terms' },
+  { value: 'commercial', label: '商务条款中英文不完整' },
   { value: 'keywords', label: 'Missing keywords' },
   { value: 'related', label: 'Missing related products' },
   { value: 'buyer_resources', label: 'Missing buyer resources' },
 ]
 
 const PRIORITY_ISSUES = ['缺封面', '缺图库', '未分类', '缺 SEO']
+const COMMERCIAL_TERM_ZH_KEYS = COMMERCIAL_TERM_FIELD_PAIRS.map((field) => field.zh)
+const COMMERCIAL_TERM_EN_KEYS = COMMERCIAL_TERM_FIELD_PAIRS.map((field) => field.en)
+
+function missingCommercialTermsSql(fieldRef: string): string {
+  const missingAll = (keys: readonly string[]) => keys
+    .map((key) => `NULLIF(BTRIM(COALESCE(${fieldRef} ->> '${key}', '')), '') IS NULL`)
+    .join('\n    AND ')
+
+  return `(
+  (
+    ${missingAll(COMMERCIAL_TERM_ZH_KEYS)}
+  )
+  OR (
+    ${missingAll(COMMERCIAL_TERM_EN_KEYS)}
+  )
+)`
+}
+
+const PRODUCT_MISSING_COMMERCIAL_SQL = missingCommercialTermsSql('commercial_terms')
+const PRODUCT_MISSING_COMMERCIAL_SQL_ALIASED = missingCommercialTermsSql('pc.commercial_terms')
 
 const PRODUCT_INCOMPLETE_SQL = `(
   NULLIF(BTRIM(image), '') IS NULL
@@ -221,8 +245,7 @@ const PRODUCT_INCOMPLETE_SQL = `(
     NULLIF(BTRIM(COALESCE(price_display_zh, '')), '') IS NULL
     AND NULLIF(BTRIM(COALESCE(price_display_en, '')), '') IS NULL
   )
-  OR commercial_terms IS NULL
-  OR commercial_terms = '{}'::jsonb
+  OR ${PRODUCT_MISSING_COMMERCIAL_SQL}
   OR (
     COALESCE(cardinality(keywords_zh), 0) = 0
     AND COALESCE(cardinality(keywords_en), 0) = 0
@@ -264,8 +287,7 @@ const PRODUCT_INCOMPLETE_SQL_ALIASED = `(
     NULLIF(BTRIM(COALESCE(pc.price_display_zh, '')), '') IS NULL
     AND NULLIF(BTRIM(COALESCE(pc.price_display_en, '')), '') IS NULL
   )
-  OR pc.commercial_terms IS NULL
-  OR pc.commercial_terms = '{}'::jsonb
+  OR ${PRODUCT_MISSING_COMMERCIAL_SQL_ALIASED}
   OR (
     COALESCE(cardinality(pc.keywords_zh), 0) = 0
     AND COALESCE(cardinality(pc.keywords_en), 0) = 0
@@ -314,11 +336,6 @@ const PRODUCT_MISSING_SEO_SQL_ALIASED = `(
 const PRODUCT_MISSING_PRICE_SQL_ALIASED = `(
   NULLIF(BTRIM(COALESCE(pc.price_display_zh, '')), '') IS NULL
   AND NULLIF(BTRIM(COALESCE(pc.price_display_en, '')), '') IS NULL
-)`
-
-const PRODUCT_MISSING_COMMERCIAL_SQL_ALIASED = `(
-  pc.commercial_terms IS NULL
-  OR pc.commercial_terms = '{}'::jsonb
 )`
 
 const PRODUCT_MISSING_KEYWORDS_SQL_ALIASED = `(
@@ -423,6 +440,13 @@ function hasBuyerResourceLinks(value: unknown[] | null | undefined): boolean {
   })
 }
 
+function commercialTermsIssueLabel(terms: Record<string, string> | null | undefined): string | null {
+  const missing = getMissingCommercialTermLanguages(terms)
+  if (missing.length === 0) return null
+  if (missing.length === 2) return 'Missing business terms'
+  return missing[0] === 'zh' ? '缺中文商务条款' : 'Missing English business terms'
+}
+
 function parseCount(value: string | undefined): number {
   return parseInt(value ?? '0', 10)
 }
@@ -443,6 +467,7 @@ function getProductTypeLabel(value: string): string {
 
 function getProductIssues(product: ProductListRow): string[] {
   const issues: string[] = []
+  const commercialIssue = commercialTermsIssueLabel(product.commercial_terms)
 
   if (!hasText(product.image)) issues.push('缺封面')
   if (!hasItems(product.gallery)) issues.push('缺图库')
@@ -454,7 +479,7 @@ function getProductIssues(product: ProductListRow): string[] {
   if (!product.category_id) issues.push('未分类')
   if (Number(product.attribute_option_count ?? 0) === 0) issues.push('缺产品属性')
   if (!hasText(product.price_display_zh) && !hasText(product.price_display_en)) issues.push('缺价格展示')
-  if (!product.commercial_terms || Object.keys(product.commercial_terms).length === 0) issues.push('Missing business terms')
+  if (commercialIssue) issues.push(commercialIssue)
   if (!hasItems(product.keywords_zh) && !hasItems(product.keywords_en)) issues.push('Missing keywords')
   if (!hasItems(product.related_product_ids)) issues.push('Missing related products')
   if (!hasBuyerResourceLinks(product.detail_modules)) issues.push('Missing buyer resources')

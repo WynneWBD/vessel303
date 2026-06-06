@@ -22,7 +22,16 @@
     "publish:home-media-draft": "node scripts/publish-homepage-303-media-draft.mjs",
     "preflight:home-media-apply": "node scripts/preflight-homepage-303-media-apply.mjs",
     "audit:published-content": "node scripts/audit-published-content.mjs",
-    "audit:production-links": "node scripts/audit-production-links.mjs"
+    "audit:production-links": "node scripts/audit-production-links.mjs",
+    "audit:product-sample-readiness": "node scripts/audit-product-sample-readiness.mjs",
+    "audit:product-image-readiness": "node scripts/audit-product-image-readiness.mjs",
+    "audit:product-public-rhythm": "node scripts/audit-product-public-rhythm.mjs",
+    "audit:product-closure-readiness": "node scripts/audit-product-closure-readiness.mjs",
+    "prepare:v9-product-content-draft": "node scripts/prepare-v9-product-content-draft.mjs",
+    "prepare:product-sample-content-drafts": "node scripts/prepare-product-sample-content-drafts.mjs",
+    "prepare:product-cms-authorization-packet": "node scripts/prepare-product-cms-authorization-packet.mjs",
+    "preflight:product-cms-save": "node scripts/preflight-product-cms-save.mjs",
+    "apply:product-cms-sample-fields": "node scripts/apply-product-cms-sample-fields.mjs"
   },
   "dependencies": {
     "@fontsource/dm-sans": "^5.2.8",
