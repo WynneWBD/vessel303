@@ -1,6 +1,8 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { ArrowRight, Boxes, Building2, Send } from 'lucide-react'
 import ConversionInquiryForm, { type FormLabels } from '@/components/pages/ConversionInquiryForm'
 import { useLanguage } from '@/contexts/LanguageContext'
 import {
@@ -11,6 +13,7 @@ import {
   moduleTitle,
   type PublicPageModule,
 } from '@/lib/page-module-client'
+import { buildContactHref, normalizeSiteHref } from '@/lib/site-links'
 
 type InnovationRow = {
   id: number
@@ -87,6 +90,28 @@ export default function InnovationCmsBlock({
   const body = zh ? row.body_zh : row.body_en
   const ctaLabel = zh ? row.cta_label_zh : row.cta_label_en
   const sections = getSections(row.payload)
+  const primaryHref = normalizeSiteHref(row.cta_href, slug === 'vols' ? '/cases' : '/products')
+  const contactHref = buildContactHref(`innovation:${slug}:contact_cta`)
+  const routeCards = [
+    {
+      href: '/products',
+      label: zh ? '产品路径' : 'Products',
+      description: zh ? '系列、规格与型号详情' : 'Series, specs and model detail pages',
+      Icon: Boxes,
+    },
+    {
+      href: '/cases',
+      label: zh ? '项目案例' : 'Cases',
+      description: zh ? '已发布项目与应用场景' : 'Published projects and scenario references',
+      Icon: Building2,
+    },
+    {
+      href: contactHref,
+      label: zh ? '提交需求' : 'Start Inquiry',
+      description: zh ? '带专题来源进入咨询表单' : 'Continue with a source-aware inquiry path',
+      Icon: Send,
+    },
+  ]
   const modules = moduleMap(pageModules)
   const inquiryModule = modules.get('inquiry-form') ?? null
   const inquiryTitle = moduleTitle(inquiryModule, lang)
@@ -110,10 +135,48 @@ export default function InnovationCmsBlock({
 
   return (
     <section className="border-y border-[#E5DED4] bg-white">
-      <div className="mx-auto max-w-5xl px-6 py-12 lg:px-10">
-        <h1 className="text-3xl font-bold text-[#2C2A28] md:text-4xl">{title}</h1>
-        {summary && <p className="mt-4 max-w-3xl text-sm leading-7 text-[#6B625B]">{summary}</p>}
-        {body && <p className="mt-6 max-w-4xl whitespace-pre-line text-sm leading-7 text-[#2C2A28]/75">{body}</p>}
+      <div className="mx-auto max-w-6xl px-6 py-12 lg:px-10">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#B66A3A]">
+              {zh ? '技术专题' : 'Innovation Topic'}
+            </p>
+            <h1 className="mt-3 text-3xl font-bold text-[#2C2A28] md:text-4xl">{title}</h1>
+            {summary && <p className="mt-4 max-w-3xl text-sm leading-7 text-[#6B625B]">{summary}</p>}
+            {body && <p className="mt-6 max-w-4xl whitespace-pre-line text-sm leading-7 text-[#2C2A28]/75">{body}</p>}
+          </div>
+
+          <nav
+            aria-label={zh ? '技术专题转化路径' : 'Innovation conversion paths'}
+            className="border border-[#E5DED4] bg-[#FAF7F2] p-4"
+          >
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8C8176]">
+              {zh ? '下一步' : 'Next paths'}
+            </p>
+            <div className="mt-4 grid gap-3">
+              {routeCards.map((item) => {
+                const Icon = item.Icon
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    data-innovation-route-card="true"
+                    className="group flex min-h-[76px] items-center gap-3 border border-[#E5DED4] bg-white px-4 py-3 text-left transition hover:border-[#E36F2C] hover:text-[#C85A1F]"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#E5DED4] text-[#B66A3A]">
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold text-[#2C2A28] group-hover:text-[#C85A1F]">{item.label}</span>
+                      <span className="mt-1 block text-xs leading-5 text-[#6B625B]">{item.description}</span>
+                    </span>
+                    <ArrowRight className="h-4 w-4 shrink-0 text-[#B66A3A] transition group-hover:translate-x-0.5" aria-hidden="true" />
+                  </Link>
+                )
+              })}
+            </div>
+          </nav>
+        </div>
 
         {sections.length > 0 && (
           <div className="mt-8 grid gap-4 md:grid-cols-2">
@@ -122,7 +185,11 @@ export default function InnovationCmsBlock({
               const sectionBody = zh ? section.body_zh : section.body_en
               if (!sectionTitle && !sectionBody) return null
               return (
-                <article key={`${sectionTitle ?? 'section'}-${index}`} className="border border-[#E5DED4] bg-[#FAF7F2] p-5">
+                <article
+                  key={`${sectionTitle ?? 'section'}-${index}`}
+                  data-innovation-section-card="true"
+                  className="border border-[#E5DED4] bg-[#FAF7F2] p-5"
+                >
                   {sectionTitle && <h2 className="text-base font-bold text-[#2C2A28]">{sectionTitle}</h2>}
                   {sectionBody && <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#6B625B]">{sectionBody}</p>}
                 </article>
@@ -132,12 +199,13 @@ export default function InnovationCmsBlock({
         )}
 
         {ctaLabel && row.cta_href && (
-          <a
-            href={row.cta_href}
-            className="mt-8 inline-flex bg-[#E36F2C] px-6 py-3 text-sm font-semibold tracking-wider text-white transition hover:bg-[#C85A1F]"
+          <Link
+            href={primaryHref}
+            className="mt-8 inline-flex items-center gap-2 bg-[#E36F2C] px-6 py-3 text-sm font-semibold tracking-wider text-white transition hover:bg-[#C85A1F]"
           >
-            {ctaLabel}
-          </a>
+            <span>{ctaLabel}</span>
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
         )}
 
         {inquiryTitle ? (
