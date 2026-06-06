@@ -656,22 +656,25 @@ export default function ProductsPageContent({
       </section>
 
       <section className="bg-[#F7F8F8] py-2">
-        <div className="mx-auto grid max-w-[1500px] grid-cols-1 gap-4 px-4 sm:px-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:px-8">
-          <div className="lg:hidden">
-            <details className="border border-[#DADDE1] bg-white">
-              <summary className="flex min-h-12 cursor-pointer items-center px-4 text-sm font-bold text-[#1F2A31]">{uiLabels.filters}</summary>
-              <div className="border-t border-[#DADDE1] p-4">
-                <Sidebar categories={categories} attributeTemplates={attributeTemplates} filters={filters} contactModule={contactModule} uiLabels={uiLabels} contactHeadingTag="p" />
-              </div>
-            </details>
-          </div>
+        <div className="mx-auto max-w-[1500px] px-4 sm:px-6 lg:px-8">
+          <CatalogHighlights items={catalogHighlights} />
 
-          <div className="hidden lg:block lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1">
-            <Sidebar categories={categories} attributeTemplates={attributeTemplates} filters={filters} contactModule={contactModule} uiLabels={uiLabels} />
-          </div>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
+            <div className="lg:hidden">
+              <details className="border border-[#DADDE1] bg-white">
+                <summary className="flex min-h-12 cursor-pointer items-center px-4 text-sm font-bold text-[#1F2A31]">{uiLabels.filters}</summary>
+                <div className="border-t border-[#DADDE1] p-4">
+                  <Sidebar categories={categories} attributeTemplates={attributeTemplates} filters={filters} contactModule={contactModule} uiLabels={uiLabels} contactHeadingTag="p" />
+                </div>
+              </details>
+            </div>
 
-          <div className="flex min-w-0 flex-col">
-            <SeriesSummary products={products} uiLabels={uiLabels} className="order-2 mt-2 lg:order-none lg:mt-0" />
+            <div className="hidden lg:block lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1">
+              <Sidebar categories={categories} attributeTemplates={attributeTemplates} filters={filters} contactModule={contactModule} uiLabels={uiLabels} />
+            </div>
+
+            <div className="flex min-w-0 flex-col">
+              <SeriesSummary products={products} uiLabels={uiLabels} className="order-2 mt-2 lg:order-none lg:mt-0" />
 
             <div className="order-1 mb-2 border border-[#DADDE1] bg-white p-2.5 lg:order-none">
               <form action="/products" className="flex flex-col gap-2 sm:flex-row">
@@ -749,12 +752,9 @@ export default function ProductsPageContent({
               </div>
             )}
 
-            <div className="order-4 lg:order-none">
-              <CatalogHighlights items={catalogHighlights} />
-            </div>
-
             <div className="order-5 lg:order-none">
               <Pagination filters={filters} currentPage={currentPage} totalPages={totalPages} />
+            </div>
             </div>
           </div>
         </div>
