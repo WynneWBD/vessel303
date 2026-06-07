@@ -22,7 +22,6 @@ import {
   ExternalLink,
   FileText,
   Filter,
-  Globe2,
   ImageIcon,
   Layers3,
   ListChecks,
@@ -533,14 +532,31 @@ function ProjectList({
     <section className="space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <AdminSectionTitle
-          title="项目案例列表"
+          title="当前项目结果"
           detail={`当前筛选下共 ${formatNumber(total)} 个项目，本页显示 ${formatNumber(rows.length)} 个。`}
         />
       </div>
-      <div className="space-y-3">
-        {rows.map((project) => (
-          <ProjectRow key={project.id} project={project} />
-        ))}
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="min-w-[1160px] w-full border-collapse text-left text-sm">
+            <thead className="bg-[#F7FAFA] text-xs font-semibold uppercase tracking-[0.08em] text-[#61767D]">
+              <tr>
+                <th className="w-[34%] border-b border-[#D8E7E8] px-4 py-3">项目案例</th>
+                <th className="w-[13%] border-b border-[#D8E7E8] px-4 py-3">状态</th>
+                <th className="w-[19%] border-b border-[#D8E7E8] px-4 py-3">位置 / 类型</th>
+                <th className="w-[17%] border-b border-[#D8E7E8] px-4 py-3">待补项</th>
+                <th className="w-[11%] border-b border-[#D8E7E8] px-4 py-3">Global</th>
+                <th className="w-[10%] border-b border-[#D8E7E8] px-4 py-3">更新时间</th>
+                <th className="w-[12%] border-b border-[#D8E7E8] px-4 py-3 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E6EEEE]">
+              {rows.map((project) => (
+                <ProjectRow key={project.id} project={project} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
       <Pagination filters={filters} total={total} />
     </section>
@@ -554,77 +570,113 @@ function ProjectRow({ project }: { project: ProjectListRow }) {
   const hiddenIssueCount = Math.max(0, issues.length - visibleIssues.length)
   const published = project.status === 'published'
   const globalStatus = getGlobalStatus(project)
+  const imageCount = Array.isArray(project.images) ? project.images.length : 0
+  const detailHref = `/cases/${project.id}`
 
   return (
-    <article className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm transition hover:border-[#1889B6]/55 hover:shadow-md">
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[112px_minmax(0,1fr)_180px_190px_168px] xl:items-center">
-        <div className="h-28 w-full overflow-hidden rounded-md bg-[#E6EEEE] xl:h-20 xl:w-28">
-          {hasText(project.cover_image_url) ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={project.cover_image_url ?? ''} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-[#8A9EA4]">
-              <ImageIcon size={20} />
+    <tr className="align-top transition hover:bg-[#F7FAFA]">
+      <td className="px-4 py-3">
+        <div className="flex min-w-0 gap-3">
+          <div className="h-16 w-24 shrink-0 overflow-hidden rounded-md bg-[#E6EEEE]">
+            {hasText(project.cover_image_url) ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={project.cover_image_url ?? ''} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-[#8A9EA4]">
+                <ImageIcon size={18} />
+              </div>
+            )}
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/admin/content/projects/${project.id}/edit`}
+                className="truncate text-sm font-bold text-[#1E2C31] hover:text-[#1889B6]"
+              >
+                {project.name_zh || project.name_en || project.id}
+              </Link>
             </div>
+            <p className="mt-1 truncate text-xs text-[#61767D]">{project.name_en || '未填写英文名称'}</p>
+            <p className="mt-1 truncate font-mono text-[11px] text-[#8A9EA4]">{project.id}</p>
+            <p className="mt-1 truncate text-[11px] text-[#8A9EA4]">{detailHref}</p>
+          </div>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-col items-start gap-2">
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+              published ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FFF2E7] text-[#E36F2C]'
+            }`}
+          >
+            {published ? '已发布' : '草稿'}
+          </span>
+          <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${completenessClass(label)}`}>
+            {label}
+          </span>
+          <span className="text-[11px] text-[#8A9EA4]">图库 {imageCount} 张</span>
+        </div>
+      </td>
+      <td className="px-4 py-3 text-xs">
+        <div className="space-y-1.5">
+          <p className="font-semibold text-[#1E2C31]">{project.country || '未标记国家'}</p>
+          <p className="text-[#61767D]">{project.location_zh || project.location_en || '未标记位置'}</p>
+          <p className="text-[#61767D]">{project.project_type_zh || project.project_type_en || '未标记类型'}</p>
+          <p className="truncate text-[#8A9EA4]">{project.products || '未关联产品'}</p>
+          <p className="text-[#8A9EA4]">
+            {project.area_display || '未填面积'} · {project.units_display || '未填舱数'}
+          </p>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-wrap gap-1.5">
+          {visibleIssues.length === 0 ? (
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+              基础内容完整
+            </span>
+          ) : (
+            visibleIssues.map((issue) => (
+              <span key={issue} className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-600">
+                {issue}
+              </span>
+            ))
+          )}
+          {hiddenIssueCount > 0 && (
+            <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-500">
+              还有 {hiddenIssueCount} 项
+            </span>
           )}
         </div>
-
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate text-base font-bold text-[#1E2C31]">{project.name_zh || project.name_en || project.id}</h3>
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                published ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FFF2E7] text-[#E36F2C]'
-              }`}
-            >
-              {published ? '已发布' : '草稿'}
-            </span>
-            <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${completenessClass(label)}`}>
-              {label}
-            </span>
-          </div>
-          <p className="mt-1 truncate text-sm text-[#61767D]">{project.name_en}</p>
-          <p className="mt-1 text-xs text-[#8A9EA4]">{project.id}</p>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {visibleIssues.length === 0 ? (
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                基础内容完整
-              </span>
-            ) : (
-              visibleIssues.map((issue) => (
-                <span key={issue} className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-600">
-                  {issue}
-                </span>
-              ))
-            )}
-            {hiddenIssueCount > 0 && (
-              <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-500">
-                还有 {hiddenIssueCount} 项
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 rounded-md bg-[#F7FAFA] p-3 text-xs xl:grid-cols-1">
-          <ProjectMeta label="国家 / 地区" value={project.country} />
-          <ProjectMeta label="城市 / 位置" value={project.location_zh || project.location_en} />
-          <ProjectMeta label="产品型号" value={project.products} />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 rounded-md bg-[#F7FAFA] p-3 text-xs xl:grid-cols-1">
-          <span>
-            <span className="block text-[#8A9EA4]">Global 入图状态</span>
-            <span className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${globalStatus.className}`}>
-              {globalStatus.label}
-            </span>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-col items-start gap-2">
+          <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${globalStatus.className}`}>
+            {globalStatus.label}
           </span>
-          <ProjectMeta label="更新时间" value={formatDate(project.updated_at)} />
+          <span className="text-[11px] text-[#8A9EA4]">
+            {hasCoordinates(project) ? '已有坐标' : '缺坐标'}
+          </span>
+          {globalStatus.href ? (
+            <Link
+              href={globalStatus.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-[#E36F2C] hover:text-[#C95E22]"
+            >
+              Global
+              <ExternalLink size={12} />
+            </Link>
+          ) : null}
         </div>
-
-        <div className="flex flex-wrap gap-2 xl:justify-end">
+      </td>
+      <td className="px-4 py-3 text-xs font-semibold text-[#61767D]">
+        {formatDate(project.updated_at)}
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-wrap justify-end gap-2">
           {published ? (
             <Link
-              href="/cases"
+              href={detailHref}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex h-9 items-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
@@ -638,17 +690,6 @@ function ProjectRow({ project }: { project: ProjectListRow }) {
               草稿
             </span>
           )}
-          {globalStatus.href ? (
-            <Link
-              href={globalStatus.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-9 items-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#E36F2C] transition hover:border-[#E36F2C] hover:bg-[#FFF7F0]"
-            >
-              <Globe2 size={14} />
-              Global
-            </Link>
-          ) : null}
           <Link
             href={`/admin/content/projects/${project.id}/edit`}
             className="inline-flex h-9 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95E22]"
@@ -657,17 +698,8 @@ function ProjectRow({ project }: { project: ProjectListRow }) {
             编辑
           </Link>
         </div>
-      </div>
-    </article>
-  )
-}
-
-function ProjectMeta({ label, value }: { label: string; value: string }) {
-  return (
-    <span className="min-w-0">
-      <span className="block text-[#8A9EA4]">{label}</span>
-      <span className="mt-1 block truncate font-semibold text-[#1E2C31]">{value || '未标记'}</span>
-    </span>
+      </td>
+    </tr>
   )
 }
 
