@@ -5,7 +5,19 @@ import type { ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { Save, Send, ArrowLeft, Plus, Trash2, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
+import {
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  ListChecks,
+  Plus,
+  Save,
+  Send,
+  Trash2,
+} from 'lucide-react'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import MediaImagePicker, { MediaGalleryPicker } from '@/components/admin/MediaImagePicker'
 import { Badge } from '@/components/ui/badge'
@@ -82,6 +94,13 @@ type ProductBrandOption = Pick<ProductBrandRow, 'id' | 'title_zh' | 'title_en' |
 type ProductMarkOption = Pick<ProductMarkRow, 'id' | 'title_zh' | 'title_en' | 'status'>
 type ProductShowcaseOption = Pick<ProductShowcaseRow, 'id' | 'title_zh' | 'title_en' | 'status'>
 type ProductRelatedOption = Pick<CatalogProductRow, 'id' | 'name_cn' | 'name_en' | 'status'>
+type ProductFormSectionProgress = {
+  id: string
+  title: string
+  detail: string
+  done: boolean
+  issueCount: number
+}
 
 const commercialTermFields: Array<{
   zh: keyof CatalogCommercialTerms
@@ -652,6 +671,302 @@ function FormSection({
   )
 }
 
+function countMissing(checks: boolean[]) {
+  return checks.filter((check) => !check).length
+}
+
+function buildProductFormProgress({
+  form,
+  galleryUrls,
+  normalizedDetailModules,
+  hasBuyerResources,
+  completeness,
+}: {
+  form: FormState
+  galleryUrls: string[]
+  normalizedDetailModules: CatalogDetailModule[]
+  hasBuyerResources: boolean
+  completeness: ReturnType<typeof getProductCompleteness>
+}): ProductFormSectionProgress[] {
+  const visibleDetailModules = normalizedDetailModules.filter((module) => module.is_visible !== false)
+  const detailModuleIssueCount = visibleDetailModules.reduce((total, module) => (
+    total + getDetailModuleCompleteness(module).issues.length
+  ), 0)
+  const commercialIssueCount = countMissing([
+    hasText(form.price_display_zh) || hasText(form.price_display_en),
+    !commercialTermsIssueLabel(form.commercial_terms),
+  ])
+  const specCnCount = parseSpecItems(form.specs_cn).length
+  const specEnCount = parseSpecItems(form.specs_en).length
+
+  return [
+    {
+      id: 'basic',
+      title: '基础信息',
+      detail: 'ID、名称、系列、面积、分类入口',
+      issueCount: countMissing([
+        hasText(form.id),
+        hasText(form.name_cn),
+        hasText(form.name_en),
+        hasText(form.gen),
+        hasText(form.size),
+        Number(form.area) > 0,
+      ]),
+    },
+    {
+      id: 'seo',
+      title: 'SEO 信息',
+      detail: '中英文标题和搜索摘要',
+      issueCount: countMissing([
+        hasText(form.seo_title_zh),
+        hasText(form.seo_title_en),
+        hasText(form.seo_description_zh),
+        hasText(form.seo_description_en),
+      ]),
+    },
+    {
+      id: 'commercial',
+      title: 'Business Terms',
+      detail: '价格展示、交付、付款、售后条款',
+      issueCount: commercialIssueCount,
+    },
+    {
+      id: 'relations',
+      title: 'Keywords / Related',
+      detail: '关键词和相关产品推荐',
+      issueCount: countMissing([
+        splitLines(form.keywords_zh).length > 0 || splitLines(form.keywords_en).length > 0,
+        form.related_product_ids.length > 0,
+      ]),
+    },
+    {
+      id: 'attributes',
+      title: '产品属性',
+      detail: '分类、筛选属性、品牌和运营标记',
+      issueCount: countMissing([
+        Boolean(form.category_id),
+        form.attribute_option_ids.length > 0,
+      ]),
+    },
+    {
+      id: 'media',
+      title: '图片素材',
+      detail: '封面图和详情图库',
+      issueCount: countMissing([
+        hasText(form.image),
+        galleryUrls.length > 0,
+      ]),
+    },
+    {
+      id: 'content',
+      title: '中英文内容',
+      detail: '标签、亮点、简介',
+      issueCount: countMissing([
+        splitLines(form.tags_cn).length > 0,
+        splitLines(form.tags_en).length > 0,
+        splitLines(form.features_cn).length > 0,
+        splitLines(form.features_en).length > 0,
+        hasText(form.description_cn),
+        hasText(form.description_en),
+      ]),
+    },
+    {
+      id: 'details',
+      title: '详情内容',
+      detail: '模块、图片和买家资料链接',
+      issueCount: countMissing([
+        visibleDetailModules.length > 0,
+        hasBuyerResources,
+      ]) + detailModuleIssueCount,
+    },
+    {
+      id: 'specs',
+      title: '规格参数',
+      detail: '中英文规格表',
+      issueCount: countMissing([
+        specCnCount > 0,
+        specEnCount > 0,
+      ]),
+    },
+    {
+      id: 'publish-check',
+      title: '发布检查',
+      detail: '状态、完整度、前台预览',
+      issueCount: completeness.issues.length,
+    },
+  ].map((section) => ({
+    ...section,
+    done: section.issueCount === 0,
+  }))
+}
+
+function ProductFormSidebar({
+  sectionProgress,
+  completedSectionCount,
+  completeness,
+  status,
+  hasUnsavedChanges,
+  showPreviewLink,
+  previewHref,
+  cmsPreviewHref,
+  curatedPreviewHref,
+  publicLabel,
+  galleryCount,
+  visibleDetailModuleCount,
+}: {
+  sectionProgress: ProductFormSectionProgress[]
+  completedSectionCount: number
+  completeness: ReturnType<typeof getProductCompleteness>
+  status: CatalogProductStatus
+  hasUnsavedChanges: boolean
+  showPreviewLink: boolean
+  previewHref: string
+  cmsPreviewHref: string
+  curatedPreviewHref?: string | null
+  publicLabel: string
+  galleryCount: number
+  visibleDetailModuleCount: number
+}) {
+  const issueCount = completeness.issues.length
+
+  return (
+    <aside className="space-y-4 xl:sticky xl:top-36 xl:self-start" aria-label="产品编辑进度">
+      <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
+              <ListChecks size={17} />
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-[#1E2C31]">发布检查摘要</h3>
+              <p className="mt-1 text-xs leading-5 text-[#61767D]">
+                跟随表单实时更新，作为保存前的运营核对清单。
+              </p>
+            </div>
+          </div>
+          <Badge className={completenessBadgeClass(completeness.level) + ' shrink-0 text-xs'}>
+            {completeness.level}
+          </Badge>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3">
+            <p className="text-[11px] font-semibold text-[#61767D]">章节</p>
+            <p className="mt-1 text-lg font-bold text-[#1E2C31]">
+              {completedSectionCount}/{sectionProgress.length}
+            </p>
+          </div>
+          <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3">
+            <p className="text-[11px] font-semibold text-[#61767D]">缺项</p>
+            <p className={issueCount > 0 ? 'mt-1 text-lg font-bold text-[#E36F2C]' : 'mt-1 text-lg font-bold text-emerald-700'}>
+              {issueCount}
+            </p>
+          </div>
+          <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3">
+            <p className="text-[11px] font-semibold text-[#61767D]">图库</p>
+            <p className="mt-1 text-lg font-bold text-[#1E2C31]">{galleryCount}</p>
+          </div>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+          <div className="rounded-md border border-[#D8E7E8] px-3 py-2">
+            <span className="block text-[#8A9EA4]">状态</span>
+            <span className={status === 'published' ? 'font-semibold text-emerald-700' : 'font-semibold text-[#E36F2C]'}>
+              {status === 'published' ? '已发布' : '草稿'}
+            </span>
+          </div>
+          <div className="rounded-md border border-[#D8E7E8] px-3 py-2">
+            <span className="block text-[#8A9EA4]">详情模块</span>
+            <span className="font-semibold text-[#1E2C31]">{visibleDetailModuleCount}</span>
+          </div>
+        </div>
+
+        {hasUnsavedChanges ? (
+          <div className="mt-3 rounded-md border border-[#F2C6A7] bg-[#FFF7F0] px-3 py-2 text-xs font-medium text-[#8A3F16]">
+            当前有未保存修改，离开页面前请先保存。
+          </div>
+        ) : (
+          <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+            当前表单与最近一次保存一致。
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-bold text-[#1E2C31]">编辑导航</h3>
+          <span className="text-xs font-semibold text-[#8A9EA4]">点击跳转</span>
+        </div>
+        <nav className="mt-3 space-y-1.5">
+          {sectionProgress.map((section) => (
+            <a
+              key={section.id}
+              href={`#${section.id}`}
+              className={`flex items-start gap-3 rounded-md border px-3 py-2.5 transition ${
+                section.done
+                  ? 'border-emerald-100 bg-emerald-50/70 hover:border-emerald-200'
+                  : 'border-[#F2C6A7] bg-[#FFF7F0] hover:border-[#E36F2C]/45'
+              }`}
+            >
+              <span className={section.done ? 'mt-0.5 text-emerald-700' : 'mt-0.5 text-[#E36F2C]'}>
+                {section.done ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center justify-between gap-2">
+                  <span className="truncate text-xs font-bold text-[#1E2C31]">{section.title}</span>
+                  <span className={section.done ? 'shrink-0 text-[11px] font-semibold text-emerald-700' : 'shrink-0 text-[11px] font-semibold text-[#E36F2C]'}>
+                    {section.done ? '完成' : `${section.issueCount} 项`}
+                  </span>
+                </span>
+                <span className="mt-0.5 block text-[11px] leading-4 text-[#61767D]">{section.detail}</span>
+              </span>
+            </a>
+          ))}
+        </nav>
+      </section>
+
+      <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
+        <h3 className="text-sm font-bold text-[#1E2C31]">预览入口</h3>
+        {showPreviewLink ? (
+          <div className="mt-3 space-y-2 text-xs">
+            <Link
+              href={previewHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between gap-3 rounded-md border border-[#D8E7E8] px-3 py-2 font-semibold text-[#1E2C31] hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
+            >
+              <span>官方前台页 · {publicLabel}</span>
+              <ExternalLink size={13} />
+            </Link>
+            <Link
+              href={cmsPreviewHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between gap-3 rounded-md border border-[#D8E7E8] px-3 py-2 text-[#61767D] hover:border-[#1889B6]/60 hover:text-[#1889B6]"
+            >
+              <span>CMS 通用详情页</span>
+              <ExternalLink size={13} />
+            </Link>
+            {curatedPreviewHref ? (
+              <Link
+                href={curatedPreviewHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between gap-3 rounded-md border border-[#D8E7E8] px-3 py-2 text-[#61767D] hover:border-[#1889B6]/60 hover:text-[#1889B6]"
+              >
+                <span>固定精细页</span>
+                <ExternalLink size={13} />
+              </Link>
+            ) : null}
+          </div>
+        ) : (
+          <p className="mt-2 text-xs leading-5 text-[#61767D]">草稿产品暂不提供前台预览入口。</p>
+        )}
+      </section>
+    </aside>
+  )
+}
+
 export default function ProductForm({
   mode,
   product,
@@ -702,6 +1017,15 @@ export default function ProductForm({
   const normalizedDetailModules = useMemo(() => normalizeDetailModules(form.detail_modules), [form.detail_modules])
   const hasBuyerResources = useMemo(() => hasBuyerResourceLinks(normalizedDetailModules), [normalizedDetailModules])
   const completeness = getProductCompleteness(form, galleryUrls)
+  const visibleDetailModuleCount = normalizedDetailModules.filter((module) => module.is_visible !== false).length
+  const sectionProgress = buildProductFormProgress({
+    form,
+    galleryUrls,
+    normalizedDetailModules,
+    hasBuyerResources,
+    completeness,
+  })
+  const completedSectionCount = sectionProgress.filter((section) => section.done).length
   const visibleCompletenessIssues = completeness.issues.slice(0, 3)
   const hiddenCompletenessIssueCount = Math.max(
     0,
@@ -1030,7 +1354,8 @@ export default function ProductForm({
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="space-y-6">
         <FormSection
           id="basic"
           title="基础信息"
@@ -2065,6 +2390,22 @@ export default function ProductForm({
             </div>
           </div>
         </FormSection>
+        </div>
+
+        <ProductFormSidebar
+          sectionProgress={sectionProgress}
+          completedSectionCount={completedSectionCount}
+          completeness={completeness}
+          status={form.status}
+          hasUnsavedChanges={hasUnsavedChanges}
+          showPreviewLink={showPreviewLink}
+          previewHref={previewHref}
+          cmsPreviewHref={cmsPreviewHref}
+          curatedPreviewHref={curatedPreviewHref}
+          publicLabel={routeInfo.publicLabel}
+          galleryCount={galleryUrls.length}
+          visibleDetailModuleCount={visibleDetailModuleCount}
+        />
       </div>
     </div>
     <AdminConfirmDialog
