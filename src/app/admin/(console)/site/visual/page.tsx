@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import { AdminPageHero } from '@/components/admin/AdminUI'
 import PageVisualEditorClient from '@/components/admin/PageVisualEditorClient'
 import {
   defaultSiteSettings,
@@ -93,14 +94,12 @@ export default async function SiteVisualEditorPage() {
       sideNavGroups={getSiteToolNav()}
       activeItem="visual"
     >
+      <AdminPageHero
+        kicker="VISUAL EDITOR"
+        title="页面模块编辑"
+        description="这里是受控页面模块的预览发布入口。字段标注为显示到前台时，发布后会直接影响客户可见内容；仅后台说明不会进入前台。"
+      />
       <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-        <div className="mb-5 flex flex-col gap-2 border-b border-[#E6EEEE] pb-5">
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#1889B6]">VISUAL EDITOR</p>
-          <h1 className="text-2xl font-bold text-[#1E2C31]">页面模块编辑</h1>
-          <p className="max-w-3xl text-sm leading-6 text-[#61767D]">
-            这里是受控页面模块的预览发布入口。字段标注为显示到前台时，发布后会直接影响客户可见内容；仅后台说明不会进入前台。
-          </p>
-        </div>
         <PageVisualEditorClient
           initialModules={modules}
           initialStructureDrafts={structureDrafts}

@@ -174,8 +174,8 @@ export default async function AdminCustomerLeadsPage({
       topNavActive="customers"
       role={adminRole}
       email={session.user.email}
-      title="客户与线索"
-      description="处理官网询盘、更新跟进状态，并把旧线索入口统一收口到 2.0。"
+      title="客户线索"
+      description="处理官网询盘、更新跟进状态，并把旧线索入口统一收口到 2.0；不扩展订单、支付或会员价格体系。"
       sideNavGroups={getCustomerSideNav(summary)}
       activeItem={getActiveItem(filters.status)}
     >

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import { AdminMetricCard, AdminSectionTitle, AdminStatusChip } from '@/components/admin/AdminUI'
 import { formatNumber, sumContent, type ActivityItem, type StatusOverview } from '@/lib/admin-status-metrics'
 import {
   Activity,
@@ -154,12 +155,7 @@ export function getStatusSideNav(badges: StatusBadges): AdminSideNavGroup[] {
 }
 
 export function SectionTitle({ title, detail }: { title: string; detail?: string }) {
-  return (
-    <div>
-      <h2 className="text-xl font-bold text-[#1E2C31]">{title}</h2>
-      {detail && <p className="mt-1 text-sm text-[#61767D]">{detail}</p>}
-    </div>
-  )
+  return <AdminSectionTitle title={title} detail={detail} />
 }
 
 export function MetricCard({
@@ -177,36 +173,7 @@ export function MetricCard({
   Icon: LucideIcon
   tone?: 'blue' | 'green' | 'orange' | 'gray'
 }) {
-  const content = (
-    <>
-      <span className="flex items-start justify-between gap-4">
-        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${toneIconClass(tone)}`}>
-          <Icon size={20} />
-        </span>
-        {href && <ArrowRight size={15} className="text-[#9FB0B4] transition group-hover:translate-x-0.5 group-hover:text-[#E36F2C]" />}
-      </span>
-      <span>
-        <span className="block text-sm text-[#61767D]">{title}</span>
-        <span className="mt-2 block text-3xl font-bold text-[#1E2C31]">
-          {typeof value === 'number' ? formatNumber(value) : value}
-        </span>
-        <span className="mt-2 block text-xs leading-5 text-[#61767D]">{detail}</span>
-      </span>
-    </>
-  )
-
-  const className =
-    'group flex min-h-44 flex-col justify-between rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm transition hover:border-[#1889B6]/60'
-
-  if (href) {
-    return (
-      <Link href={href} className={`${className} hover:-translate-y-0.5`}>
-        {content}
-      </Link>
-    )
-  }
-
-  return <div className={className}>{content}</div>
+  return <AdminMetricCard title={title} value={value} detail={detail} href={href} Icon={Icon} tone={tone} />
 }
 
 export function ActionCard({
@@ -247,16 +214,7 @@ export function ActionCard({
 }
 
 export function StatusPill({ ok, label }: { ok: boolean; label: string }) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
-        ok ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FFF2E7] text-[#E36F2C]'
-      }`}
-    >
-      {ok ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
-      {label}
-    </span>
-  )
+  return <AdminStatusChip ok={ok} label={label} />
 }
 
 export function ActivityList({ items }: { items: ActivityItem[] }) {
@@ -301,13 +259,6 @@ export function formatDateTime(value: string): string {
     hour: '2-digit',
     minute: '2-digit',
   })
-}
-
-function toneIconClass(tone: 'blue' | 'green' | 'orange' | 'gray'): string {
-  if (tone === 'orange') return 'bg-[#FFF2E7] text-[#E36F2C]'
-  if (tone === 'green') return 'bg-[#E7F7F4] text-[#159477]'
-  if (tone === 'gray') return 'bg-[#F0F2F2] text-[#61767D]'
-  return 'bg-[#EAF4FF] text-[#3078C8]'
 }
 
 function sourceDotClass(source: ActivityItem['source']): string {

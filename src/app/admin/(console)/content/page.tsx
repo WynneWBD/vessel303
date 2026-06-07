@@ -2,6 +2,12 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import {
+  AdminActionLink,
+  AdminMetricCard,
+  AdminPageHero,
+  AdminSectionTitle,
+} from '@/components/admin/AdminUI'
 import { pool } from '@/lib/db'
 import {
   Archive,
@@ -316,107 +322,38 @@ function Hero({ summary }: { summary: ContentDashboardSummary }) {
   const totals = getTotals(summary)
 
   return (
-    <section id="overview" className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#DDF6F8_0%,#F4FBFC_62%,#FFF3E7_100%)] p-5 shadow-sm md:p-6">
-      <div className="flex flex-col gap-5">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-[#1889B6]">内容管理</p>
-            <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">内容经营中心</h1>
-            <p className="mt-2 text-sm text-[#61767D]">
-              先看内容状态，再发布产品、项目和新闻。
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <PrimaryAction href="/admin/content/products/new" Icon={Package} label="发布产品" primary />
-            <PrimaryAction href="/admin/content/projects/new" Icon={MapPinned} label="发布项目" />
-            <PrimaryAction href="/admin/content/news/new" Icon={Newspaper} label="发布新闻" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-          <HeroMetric title="内容总量" value={totals.total} detail={`已发布 ${formatNumber(totals.published)}`} />
-          <HeroMetric title="草稿内容" value={totals.draft} detail="等待检查或发布" tone="orange" />
-          <HeroMetric title="近 30 天新增" value={totals.recent} detail="产品 / 项目 / 新闻" tone="green" />
-          <HeroMetric
+    <AdminPageHero
+      kicker="Content Operations"
+      title="内容经营中心"
+      description="先看内容状态，再发布产品、项目和新闻；核心 CMS 与固定内容入口保持同一套编辑心智。"
+      actions={
+        <>
+          <AdminActionLink href="/admin/content/products/new" Icon={Package} label="发布产品" primary />
+          <AdminActionLink href="/admin/content/projects/new" Icon={MapPinned} label="发布项目" />
+          <AdminActionLink href="/admin/content/news/new" Icon={Newspaper} label="发布新闻" />
+        </>
+      }
+    >
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+          <AdminMetricCard title="内容总量" value={totals.total} detail={`已发布 ${formatNumber(totals.published)}`} Icon={Package} />
+          <AdminMetricCard title="草稿内容" value={totals.draft} detail="等待检查或发布" Icon={FileText} tone="orange" />
+          <AdminMetricCard title="近 30 天新增" value={totals.recent} detail="产品 / 项目 / 新闻" Icon={CheckCircle2} tone="green" />
+          <AdminMetricCard
             title="内容域"
             value={CONTENT_DOMAINS.length + SECONDARY_CONTENT_DOMAINS.length}
             detail="核心 CMS + 固定内容"
+            Icon={LayoutTemplate}
             tone="blue"
           />
-        </div>
       </div>
-    </section>
-  )
-}
-
-function PrimaryAction({
-  href,
-  Icon,
-  label,
-  primary = false,
-}: {
-  href: string
-  Icon: LucideIcon
-  label: string
-  primary?: boolean
-}) {
-  return (
-    <Link
-      href={href}
-      className={`inline-flex h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
-        primary
-          ? 'bg-[#E36F2C] text-white shadow-sm hover:bg-[#C95E22]'
-          : 'border border-[#D8E7E8] bg-white text-[#1E2C31] hover:border-[#E36F2C]/55 hover:text-[#E36F2C]'
-      }`}
-    >
-      <Icon size={16} />
-      {label}
-    </Link>
-  )
-}
-
-function HeroMetric({
-  title,
-  value,
-  detail,
-  tone = 'blue',
-}: {
-  title: string
-  value: number
-  detail: string
-  tone?: 'blue' | 'green' | 'orange'
-}) {
-  const toneClass =
-    tone === 'orange'
-      ? 'from-[#FF9F2F] to-[#F06B22]'
-      : tone === 'green'
-        ? 'from-[#20B486] to-[#118F79]'
-        : 'from-[#1889B6] to-[#3078C8]'
-
-  return (
-    <div className={`flex min-h-36 flex-col justify-between rounded-md bg-gradient-to-br ${toneClass} p-5 text-white`}>
-      <span className="text-sm font-medium text-white/82">{title}</span>
-      <span>
-        <span className="block text-4xl font-bold">{formatNumber(value)}</span>
-        <span className="mt-2 block text-sm text-white/82">{detail}</span>
-      </span>
-    </div>
-  )
-}
-
-function SectionTitle({ title, detail }: { title: string; detail?: string }) {
-  return (
-    <div>
-      <h2 className="text-xl font-bold text-[#1E2C31]">{title}</h2>
-      {detail && <p className="mt-1 text-sm text-[#61767D]">{detail}</p>}
-    </div>
+    </AdminPageHero>
   )
 }
 
 function ContentDomainGrid({ summary }: { summary: ContentDashboardSummary }) {
   return (
     <section id="drafts" className="scroll-mt-24 space-y-4">
-      <SectionTitle title="内容经营" detail="按内容域查看总量、草稿和近 30 天新增。" />
+      <AdminSectionTitle title="内容经营" detail="按内容域查看总量、草稿和近 30 天新增。" />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         {CONTENT_DOMAINS.map((domain) => (
           <ContentDomainCard key={domain.key} domain={domain} summary={summary[domain.key]} />
@@ -520,7 +457,7 @@ function ActionMatrix() {
 
   return (
     <section className="space-y-4">
-      <SectionTitle title="管理入口" detail="查看已有内容，继续筛选、编辑和发布。" />
+      <AdminSectionTitle title="管理入口" detail="查看已有内容，继续筛选、编辑和发布。" />
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         {actions.map((action) => (
           <Link
@@ -544,7 +481,7 @@ function WorkflowPanel() {
 
   return (
     <section className="space-y-4">
-      <SectionTitle title="内容运营流程" />
+      <AdminSectionTitle title="内容运营流程" />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
         {steps.map((step, index) => (
           <div key={step} className="rounded-md border border-[#D8E7E8] bg-white p-4">
@@ -686,7 +623,7 @@ export default async function AdminContentPage() {
     >
       <Hero summary={summary} />
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-8">
+        <div className="space-y-6">
           <ContentDomainGrid summary={summary} />
           <ActionMatrix />
           <WorkflowPanel />

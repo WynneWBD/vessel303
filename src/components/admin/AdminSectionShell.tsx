@@ -39,9 +39,9 @@ export function AdminSectionShell({
   children: ReactNode
 }) {
   return (
-    <main className="min-h-screen bg-[#EEF5F3] text-[#1E2C31]" style={{ fontFamily: 'Inter, sans-serif' }}>
+    <main className="min-h-screen bg-[#F3F7F7] text-[#1E2C31]" style={{ fontFamily: 'Inter, sans-serif' }}>
       <AdminTopNav active={topNavActive} role={role} email={email} />
-      <div className="mx-auto grid w-full max-w-[1520px] grid-cols-1 gap-6 px-4 py-7 lg:grid-cols-[260px_minmax(0,1fr)] lg:px-8">
+      <div className="mx-auto grid w-full max-w-[1600px] grid-cols-1 gap-5 px-4 py-6 lg:grid-cols-[252px_minmax(0,1fr)] lg:px-8">
         <AdminSideNav
           title={title}
           description={description}
@@ -49,7 +49,7 @@ export function AdminSectionShell({
           activeItem={activeItem}
           role={role}
         />
-        <div className="min-w-0 space-y-8">{children}</div>
+        <div className="min-w-0 space-y-6">{children}</div>
       </div>
     </main>
   )
@@ -77,16 +77,16 @@ export function AdminSideNav({
 
   return (
     <aside className="lg:sticky lg:top-24 lg:self-start">
-      <div className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-        <div className="border-b border-[#E6EEEE] p-5">
-          <p className="text-xs font-semibold text-[#1889B6]">业务导航</p>
-          <h1 className="mt-2 text-xl font-bold text-[#1E2C31]">{title}</h1>
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="border-b border-[#E6EEEE] bg-[#FBFDFD] p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">业务导航</p>
+          <h1 className="mt-2 text-lg font-bold text-[#1E2C31]">{title}</h1>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">{description}</p>
         </div>
-        <nav className="space-y-5 p-4">
+        <nav className="space-y-4 p-3">
           {visibleGroups.map((group) => (
             <div key={group.title}>
-              <p className="px-2 text-xs font-semibold text-[#8A9EA4]">{group.title}</p>
+              <p className="px-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[#8A9EA4]">{group.title}</p>
               <div className="mt-2 space-y-1">
                 {group.items.map((item) => (
                   <AdminSideNavRow key={item.key} item={item} active={item.key === activeItem} />
@@ -131,7 +131,7 @@ function AdminSideNavRow({ item, active }: { item: AdminSideNavItem; active: boo
     </>
   )
 
-  const className = `flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-semibold transition ${
+  const className = `flex min-h-10 items-center gap-2.5 rounded-md px-2.5 text-sm font-semibold transition ${
     active
       ? 'bg-[#1889B6] text-white shadow-sm'
       : item.disabled || item.planned

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
@@ -264,9 +264,9 @@ function fromProject(project?: ProjectCaseRow | null): FormState {
 function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   return (
     <div className="flex flex-col gap-2">
-      <div className="text-xs text-[#C4B9AB] font-medium">{label}</div>
+      <div className="text-xs font-semibold text-[#61767D]">{label}</div>
       {children}
-      {hint && <div className="text-[11px] leading-relaxed text-[#6B6560]">{hint}</div>}
+      {hint && <div className="text-[11px] leading-relaxed text-[#8A9EA4]">{hint}</div>}
     </div>
   )
 }
@@ -287,15 +287,15 @@ function FormSection({
   const toneClass =
     tone === 'global'
       ? 'border-[#D8E7E8] bg-[#F7FAFA]'
-      : tone === 'warning'
+    : tone === 'warning'
         ? 'border-[#F2C6A7] bg-[#FFF7F0]'
-        : 'border-[#E5DED4] bg-[#FFFFFF]'
+        : 'border-[#D8E7E8] bg-white'
 
   return (
-    <section id={id} className={`scroll-mt-24 rounded-lg border p-5 space-y-5 ${toneClass}`}>
+    <section id={id} className={`scroll-mt-24 space-y-5 rounded-md border p-4 shadow-sm md:p-5 ${toneClass}`}>
       <div>
-        <h2 className="text-sm font-semibold text-[#2C2A28]">{title}</h2>
-        <p className="mt-1 text-xs leading-relaxed text-[#8A8580]">{description}</p>
+        <h2 className="text-sm font-bold text-[#1E2C31]">{title}</h2>
+        <p className="mt-1 text-xs leading-5 text-[#61767D]">{description}</p>
       </div>
       {children}
     </section>
@@ -453,16 +453,16 @@ export default function ProjectForm({
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-6xl">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+    <div className="flex max-w-none flex-col gap-6">
+      <div className="sticky top-16 z-20 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#D8E7E8] bg-white/95 p-3 shadow-sm backdrop-blur">
         <div>
-          <Link href={backHref} className="inline-flex items-center gap-2 text-xs text-[#8A8580] hover:text-[#E36F2C] mb-2">
+          <Link href={backHref} className="mb-1 inline-flex items-center gap-2 text-xs font-semibold text-[#61767D] hover:text-[#1889B6]">
             <ArrowLeft size={14} />
             {backLabel}
           </Link>
-          <h1 className="text-[#2C2A28]" style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 24, fontWeight: 700 }}>
+          <h2 className="text-base font-bold text-[#1E2C31] md:text-lg">
             {title ?? (mode === 'create' ? '新建项目案例' : '编辑项目案例')}
-          </h1>
+          </h2>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           {hasUnsavedChanges ? (
@@ -475,8 +475,9 @@ export default function ProjectForm({
               href="/cases"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-9 items-center justify-center rounded-md border border-[#E5DED4] px-3 text-sm font-medium text-[#2C2A28] hover:bg-[#FFFFFF]"
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm font-semibold text-[#1889B6] hover:border-[#1889B6] hover:bg-[#F0F7F8]"
             >
+              <ExternalLink size={14} />
               预览列表
             </Link>
           ) : null}
@@ -517,8 +518,8 @@ export default function ProjectForm({
             <Field label="英文项目类型">
               <Input value={form.project_type_en} onChange={(e) => patch('project_type_en', e.target.value)} />
             </Field>
-            <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3 md:col-span-2">
-              <div className="mb-3 text-xs font-semibold text-[#8A8580]">维护字段</div>
+            <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3 md:col-span-2">
+              <div className="mb-3 text-xs font-semibold text-[#61767D]">维护字段</div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Field label="案例 ID / Slug" hint="新建后不可修改。示例: shanxi-yunqiu-home">
                   <Input value={form.id} disabled={mode === 'edit'} onChange={(e) => patch('id', normalizeId(e.target.value))} />
@@ -734,14 +735,14 @@ export default function ProjectForm({
             </Select>
           </Field>
 
-          <div className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4">
+          <div className="rounded-lg border border-[#D8E7E8] bg-[#F7FAFA] p-4">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-sm font-medium text-[#2C2A28]">发布前检查</div>
+              <div className="text-sm font-medium text-[#1E2C31]">发布前检查</div>
               <Badge className={`${completenessBadgeClass(completeness.level)} text-xs`}>
                 {completeness.level}
               </Badge>
             </div>
-            <p className="mt-2 text-xs leading-relaxed text-[#6B6560]">
+            <p className="mt-2 text-xs leading-relaxed text-[#61767D]">
               仅做运营提示，不会阻止保存或发布。
             </p>
             {visibleCompletenessIssues.length > 0 ? (
@@ -765,21 +766,21 @@ export default function ProjectForm({
             )}
           </div>
 
-          <div className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4">
+          <div className="rounded-lg border border-[#D8E7E8] bg-[#F7FAFA] p-4">
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm font-medium text-[#2C2A28]">
+              <div className="flex items-center gap-2 text-sm font-medium text-[#1E2C31]">
                 <MapPinned size={16} className="text-[#E36F2C]" />
                 /global 地图状态
               </div>
               {mapReady ? (
                 <Badge className="bg-[#E36F2C]/15 text-[#E36F2C] border-[#E36F2C]/30">已入图</Badge>
               ) : (
-                <Badge className="bg-[#E5DED4] text-[#8A8580] border-[#C4B9AB]">
+                <Badge className="bg-[#D8E7E8] text-[#61767D] border-[#9AA9AD]">
                   {coordinatesValid ? '待发布' : hasCompleteCoordinates ? '坐标需检查' : '未入图'}
                 </Badge>
               )}
             </div>
-            <p className="mt-3 text-xs leading-relaxed text-[#6B6560]">
+            <p className="mt-3 text-xs leading-relaxed text-[#61767D]">
               案例发布后，同时填写有效经纬度，才会进入 /global 地图点位和右侧详情；不填坐标时仍可正常展示在 /cases。
             </p>
             {mode === 'edit' && coordinatesValid ? (

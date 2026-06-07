@@ -1,4 +1,4 @@
-import {
+﻿import {
   Activity,
   CheckCircle2,
   CircleAlert,
@@ -179,7 +179,7 @@ function TakeoverBadge({ state }: { state: SettingsTakeoverState }) {
   const map = {
     active: 'border-emerald-200 bg-emerald-50 text-emerald-700',
     planned: 'border-[#E36F2C]/30 bg-[#E36F2C]/10 text-[#E36F2C]',
-    hold: 'border-[#C4B9AB] bg-[#F5F2ED] text-[#8A8580]',
+    hold: 'border-[#9AA9AD] bg-[#F0F2F2] text-[#61767D]',
   } satisfies Record<SettingsTakeoverState, string>
 
   const label = {
@@ -221,14 +221,14 @@ function MetricCard({
   return (
     <Card>
       <CardContent className="p-5">
-        <div className="flex items-center gap-2 text-[#8A8580]">
+        <div className="flex items-center gap-2 text-[#61767D]">
           <Icon size={16} />
           <span className="text-sm">{label}</span>
         </div>
-        <div className="mt-3 text-2xl font-bold text-[#2C2A28]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+        <div className="mt-3 text-2xl font-bold text-[#1E2C31]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
           {value}
         </div>
-        <div className="mt-2 text-xs text-[#8A8580]">{detail}</div>
+        <div className="mt-2 text-xs text-[#61767D]">{detail}</div>
       </CardContent>
     </Card>
   )
@@ -345,17 +345,17 @@ export default async function SettingsPage() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1
-              className="text-[#2C2A28]"
+              className="text-[#1E2C31]"
               style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 28, fontWeight: 700 }}
             >
               设置
             </h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#8A8580]">
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
               运营配置、系统健康检查、管理员白名单和最近操作日志。当前配置会保存到数据库并写入审计日志，前台模块后续逐步接入这些统一配置。
             </p>
           </div>
-          <div className="rounded-md border border-[#E5DED4] bg-[#FFFFFF] px-4 py-3 text-xs text-[#8A8580]">
-            <span className="text-[#2C2A28]">最近保存：</span>
+          <div className="rounded-md border border-[#D8E7E8] bg-[#FFFFFF] px-4 py-3 text-xs text-[#61767D]">
+            <span className="text-[#1E2C31]">最近保存：</span>
             {settingsMeta
               ? `${formatDateTime(settingsMeta.updated_at)} · ${settingsMeta.updated_by_email ?? 'unknown'}`
               : '尚未保存过'}
@@ -377,15 +377,15 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent className="grid gap-3 lg:grid-cols-2">
           {SETTINGS_TAKEOVER_ITEMS.map((item) => (
-            <div key={item.title} className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4">
+            <div key={item.title} className="rounded-lg border border-[#D8E7E8] bg-[#F7FAFA] p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium text-[#2C2A28]">{item.title}</p>
-                  <p className="mt-1 text-xs text-[#8A8580]">{item.fields}</p>
+                  <p className="text-sm font-medium text-[#1E2C31]">{item.title}</p>
+                  <p className="mt-1 text-xs text-[#61767D]">{item.fields}</p>
                 </div>
                 <TakeoverBadge state={item.state} />
               </div>
-              <p className="mt-3 text-sm leading-6 text-[#8A8580]">{item.detail}</p>
+              <p className="mt-3 text-sm leading-6 text-[#61767D]">{item.detail}</p>
             </div>
           ))}
         </CardContent>
@@ -428,15 +428,15 @@ export default async function SettingsPage() {
             <CardDescription>只显示是否配置，不展示任何密钥内容。</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="divide-y divide-[#E5DED4]">
+            <div className="divide-y divide-[#D8E7E8]">
               {configItems.map((item) => (
                 <div key={item.label} className="grid grid-cols-1 gap-3 py-4 md:grid-cols-[180px_120px_1fr] md:items-center">
-                  <div className="text-sm font-medium text-[#2C2A28]">{item.label}</div>
+                  <div className="text-sm font-medium text-[#1E2C31]">{item.label}</div>
                   <div className="flex items-center gap-2">
                     <StatusBadge state={item.state} />
-                    <span className="text-xs text-[#8A8580]">{item.value}</span>
+                    <span className="text-xs text-[#61767D]">{item.value}</span>
                   </div>
-                  <div className="text-sm text-[#8A8580]">{item.detail}</div>
+                  <div className="text-sm text-[#61767D]">{item.detail}</div>
                 </div>
               ))}
             </div>
@@ -455,13 +455,13 @@ export default async function SettingsPage() {
             {ADMIN_EMAIL_WHITELIST.map((email) => (
               <div
                 key={email}
-                className="flex items-center justify-between rounded-md border border-[#E5DED4] bg-[#FAF7F2] px-3 py-2"
+                className="flex items-center justify-between rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-2"
               >
-                <span className="text-sm text-[#2C2A28]">{email}</span>
+                <span className="text-sm text-[#1E2C31]">{email}</span>
                 <Badge className="border-[#E36F2C]/30 bg-[#E36F2C]/10 text-[#E36F2C]">白名单</Badge>
               </div>
             ))}
-            <div className="rounded-md border border-[#E5DED4] bg-[#F5F2ED] p-3 text-xs leading-5 text-[#8A8580]">
+            <div className="rounded-md border border-[#D8E7E8] bg-[#F0F2F2] p-3 text-xs leading-5 text-[#61767D]">
               白名单用户登录时会被强制保护为管理员。下一版如果要做可编辑白名单，应先把 Auth.js 登录回调、用户 PATCH 保护和审计日志一起迁移到 DB 配置。
             </div>
           </CardContent>
@@ -495,20 +495,20 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {roadmap.map((item) => (
-              <div key={item.name} className="flex gap-3 rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
+              <div key={item.name} className="flex gap-3 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3">
                 <div className="pt-0.5">
                   {item.state === '进行中' ? (
                     <CircleAlert size={16} className="text-[#E36F2C]" />
                   ) : (
-                    <CheckCircle2 size={16} className="text-[#8A8580]" />
+                    <CheckCircle2 size={16} className="text-[#61767D]" />
                   )}
                 </div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-medium text-[#2C2A28]">{item.name}</p>
-                    <Badge className="border-[#C4B9AB] bg-[#FFFFFF] text-[#8A8580]">{item.state}</Badge>
+                    <p className="text-sm font-medium text-[#1E2C31]">{item.name}</p>
+                    <Badge className="border-[#9AA9AD] bg-[#FFFFFF] text-[#61767D]">{item.state}</Badge>
                   </div>
-                  <p className="mt-1 text-sm leading-5 text-[#8A8580]">{item.detail}</p>
+                  <p className="mt-1 text-sm leading-5 text-[#61767D]">{item.detail}</p>
                 </div>
               </div>
             ))}
@@ -526,12 +526,12 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           {logs.length === 0 ? (
-            <div className="rounded-md border border-dashed border-[#E5DED4] py-10 text-center text-sm text-[#8A8580]">
+            <div className="rounded-md border border-dashed border-[#D8E7E8] py-10 text-center text-sm text-[#61767D]">
               暂无操作日志
             </div>
           ) : (
-            <div className="overflow-hidden rounded-md border border-[#E5DED4]">
-              <div className="grid grid-cols-[150px_minmax(0,1fr)_180px_160px] gap-3 border-b border-[#E5DED4] bg-[#FAF7F2] px-4 py-3 text-xs text-[#8A8580]">
+            <div className="overflow-hidden rounded-md border border-[#D8E7E8]">
+              <div className="grid grid-cols-[150px_minmax(0,1fr)_180px_160px] gap-3 border-b border-[#D8E7E8] bg-[#F7FAFA] px-4 py-3 text-xs text-[#61767D]">
                 <span>时间</span>
                 <span>操作</span>
                 <span>对象</span>
@@ -544,13 +544,13 @@ export default async function SettingsPage() {
                 return (
                   <div
                     key={log.id}
-                    className="grid grid-cols-[150px_minmax(0,1fr)_180px_160px] gap-3 border-b border-[#E5DED4] px-4 py-3 text-sm last:border-b-0"
+                    className="grid grid-cols-[150px_minmax(0,1fr)_180px_160px] gap-3 border-b border-[#D8E7E8] px-4 py-3 text-sm last:border-b-0"
                   >
-                    <span className="text-[#8A8580]">{formatDateTime(log.created_at)}</span>
+                    <span className="text-[#61767D]">{formatDateTime(log.created_at)}</span>
                     <div className="min-w-0">
-                      <p className="truncate text-[#2C2A28]">{formatAction(log.action)}</p>
+                      <p className="truncate text-[#1E2C31]">{formatAction(log.action)}</p>
                       {log.action ? (
-                        <p className="mt-0.5 truncate text-[11px] text-[#8A8580]">{log.action}</p>
+                        <p className="mt-0.5 truncate text-[11px] text-[#61767D]">{log.action}</p>
                       ) : null}
                     </div>
                     {targetHref ? (
@@ -562,9 +562,9 @@ export default async function SettingsPage() {
                         <ExternalLink size={12} className="shrink-0" />
                       </Link>
                     ) : (
-                      <span className="truncate text-[#8A8580]">{targetText}</span>
+                      <span className="truncate text-[#61767D]">{targetText}</span>
                     )}
-                    <span className="truncate text-[#8A8580]">{log.admin_email ?? 'unknown'}</span>
+                    <span className="truncate text-[#61767D]">{log.admin_email ?? 'unknown'}</span>
                   </div>
                 )
               })}
@@ -586,11 +586,11 @@ function LinkRow({
   text: string
 }) {
   return (
-    <div className="flex gap-3 rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
+    <div className="flex gap-3 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3">
       <Icon size={16} className="mt-0.5 shrink-0 text-[#E36F2C]" />
       <div>
-        <p className="text-sm font-medium text-[#2C2A28]">{title}</p>
-        <p className="mt-1 text-sm leading-5 text-[#8A8580]">{text}</p>
+        <p className="text-sm font-medium text-[#1E2C31]">{title}</p>
+        <p className="mt-1 text-sm leading-5 text-[#61767D]">{text}</p>
       </div>
     </div>
   )

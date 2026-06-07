@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import { AdminActionLink, AdminMetricCard, AdminPageHero } from '@/components/admin/AdminUI'
 import { defaultSiteSettings } from '@/lib/admin-settings-db'
 import { pool } from '@/lib/db'
 import { hasGoogleSiteVerificationToken } from '@/lib/google-site-verification'
@@ -314,25 +315,7 @@ function SummaryTile({
   tone: 'blue' | 'green' | 'orange' | 'gray'
   Icon: LucideIcon
 }) {
-  const toneClass =
-    tone === 'orange'
-      ? 'from-[#FF9F2F] to-[#F06B22]'
-      : tone === 'green'
-        ? 'from-[#20B486] to-[#118F79]'
-        : tone === 'gray'
-          ? 'from-[#74838A] to-[#526168]'
-          : 'from-[#1889B6] to-[#3078C8]'
-
-  return (
-    <div className={`rounded-md bg-gradient-to-br ${toneClass} p-5 text-white shadow-sm`}>
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-medium text-white/82">{title}</span>
-        <Icon size={19} className="text-white/82" />
-      </div>
-      <p className="mt-4 text-4xl font-bold">{value}</p>
-      <p className="mt-2 text-sm text-white/82">{detail}</p>
-    </div>
-  )
+  return <AdminMetricCard title={title} value={value} detail={detail} tone={tone} Icon={Icon} />
 }
 
 function SiteInfoCard({
@@ -501,34 +484,18 @@ export default async function AdminSiteSettingsPage() {
       sideNavGroups={sideNavGroups}
       activeItem="settings"
     >
-      <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#F3FBFC_0%,#FFFFFF_58%,#FFF4E9_100%)] p-5 shadow-sm md:p-6">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-[#1889B6]">B5-5 网站信息</p>
-            <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">网站信息与搜索边界</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-              将 300 的网站信息、三方代码和搜索引擎连接拆成可接管项、待规划项和受保护项，运营先看状态，不在这里保存高风险配置。
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/admin/settings"
-              className="inline-flex h-10 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-sm font-semibold text-white transition hover:bg-[#C95E22]"
-            >
-              管理员设置
-              <ArrowRight size={16} />
-            </Link>
-            <Link
-              href="/admin/site/seo"
-              className="inline-flex h-10 items-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]"
-            >
-              SEO 检查
-              <SearchCheck size={16} />
-            </Link>
-          </div>
-        </div>
-
-        <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-4">
+      <AdminPageHero
+        kicker="B5-5 网站信息"
+        title="网站信息与搜索边界"
+        description="将 300 的网站信息、三方代码和搜索引擎连接拆成可接管项、待规划项和受保护项，运营先看状态，不在这里保存高风险配置。"
+        actions={(
+          <>
+            <AdminActionLink href="/admin/settings" Icon={ArrowRight} label="管理员设置" primary />
+            <AdminActionLink href="/admin/site/seo" Icon={SearchCheck} label="SEO 检查" />
+          </>
+        )}
+      >
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
           <SummaryTile
             title="设置字段"
             value={`${snapshot.storedCount}/${snapshot.expectedCount}`}
@@ -540,7 +507,7 @@ export default async function AdminSiteSettingsPage() {
           <SummaryTile title="搜索待补" value={plannedSearchCount} detail="Sitemap / 验证 / 提交" tone={plannedSearchCount > 0 ? 'orange' : 'green'} Icon={SearchCheck} />
           <SummaryTile title="三方代码" value="只读" detail="不开放粘贴保存" tone="gray" Icon={Code2} />
         </div>
-      </section>
+      </AdminPageHero>
 
       <AlignmentPanel />
 

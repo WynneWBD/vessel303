@@ -2,6 +2,13 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import {
+  AdminActionLink,
+  AdminMetricCard,
+  AdminPageHero,
+  AdminSectionTitle,
+  AdminSegmentTabs,
+} from '@/components/admin/AdminUI'
 import { pool } from '@/lib/db'
 import {
   MIN_PROJECT_CASE_DESCRIPTION_CHARS,
@@ -26,6 +33,7 @@ import {
   Plus,
   Search,
   Tags,
+  type LucideIcon,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -94,6 +102,7 @@ type StatCard = {
   value: number
   detail: string
   tone: 'blue' | 'green' | 'orange' | 'neutral'
+  Icon: LucideIcon
 }
 
 const EMPTY_SUMMARY: ProjectSummary = {
@@ -400,32 +409,23 @@ function getSideNavGroups(summary: ProjectSummary): AdminSideNavGroup[] {
 
 function SummaryCards({ summary }: { summary: ProjectSummary }) {
   const cards: StatCard[] = [
-    { title: '项目总数', value: summary.total, detail: '当前未删除项目案例', tone: 'blue' },
-    { title: '已发布', value: summary.published, detail: '可在 /cases 展示', tone: 'green' },
-    { title: '草稿', value: summary.draft, detail: '待检查或待发布', tone: 'orange' },
-    { title: '近 30 天新增', value: summary.recent, detail: '按创建时间统计', tone: 'neutral' },
+    { title: '项目总数', value: summary.total, detail: '当前未删除项目案例', tone: 'blue', Icon: MapPinned },
+    { title: '已发布', value: summary.published, detail: '可在 /cases 展示', tone: 'green', Icon: CheckCircle2 },
+    { title: '草稿', value: summary.draft, detail: '待检查或待发布', tone: 'orange', Icon: FileText },
+    { title: '近 30 天新增', value: summary.recent, detail: '按创建时间统计', tone: 'neutral', Icon: Newspaper },
   ]
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       {cards.map((card) => (
-        <div key={card.title} className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold text-[#61767D]">{card.title}</p>
-          <p
-            className={`mt-3 text-3xl font-bold ${
-              card.tone === 'green'
-                ? 'text-emerald-700'
-                : card.tone === 'orange'
-                  ? 'text-[#E36F2C]'
-                  : card.tone === 'neutral'
-                    ? 'text-[#61767D]'
-                    : 'text-[#1889B6]'
-            }`}
-          >
-            {formatNumber(card.value)}
-          </p>
-          <p className="mt-2 text-xs text-[#8A9EA4]">{card.detail}</p>
-        </div>
+        <AdminMetricCard
+          key={card.title}
+          title={card.title}
+          value={formatNumber(card.value)}
+          detail={card.detail}
+          tone={card.tone}
+          Icon={card.Icon}
+        />
       ))}
     </div>
   )
@@ -466,26 +466,7 @@ function StatusTabs({ filters, summary }: { filters: FilterState; summary: Proje
     },
   ]
 
-  return (
-    <div className="flex flex-wrap gap-2">
-      {tabs.map((tab) => (
-        <Link
-          key={tab.label}
-          href={tab.href}
-          className={`inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition ${
-            tab.active
-              ? 'border-[#E36F2C] bg-[#E36F2C] text-white'
-              : 'border-[#D8E7E8] bg-white text-[#1E2C31] hover:border-[#E36F2C]/60 hover:text-[#E36F2C]'
-          }`}
-        >
-          {tab.label}
-          <span className={`rounded-full px-2 py-0.5 text-xs ${tab.active ? 'bg-white/20 text-white' : 'bg-[#FFF2E7] text-[#E36F2C]'}`}>
-            {formatNumber(tab.count)}
-          </span>
-        </Link>
-      ))}
-    </div>
-  )
+  return <AdminSegmentTabs items={tabs.map((tab) => ({ ...tab, count: formatNumber(tab.count) }))} />
 }
 
 function FilterPanel({ filters }: { filters: FilterState }) {
@@ -527,34 +508,10 @@ function FilterPanel({ filters }: { filters: FilterState }) {
 function QuickActions() {
   return (
     <div className="flex flex-wrap gap-2">
-      <Link
-        href="/admin/content/projects/new"
-        className="inline-flex h-10 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-sm font-semibold text-white transition hover:bg-[#C95E22]"
-      >
-        <Plus size={16} />
-        新增项目
-      </Link>
-      <Link
-        href="/admin/content/projects/list?status=draft"
-        className="inline-flex h-10 items-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm font-semibold text-[#1E2C31] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
-      >
-        <FileText size={16} />
-        查看草稿
-      </Link>
-      <Link
-        href="/admin/content/projects/list?status=published"
-        className="inline-flex h-10 items-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm font-semibold text-[#1E2C31] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
-      >
-        <CheckCircle2 size={16} />
-        查看已发布
-      </Link>
-      <Link
-        href="/admin/projects"
-        className="inline-flex h-10 items-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm font-semibold text-[#61767D] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
-      >
-        <ListChecks size={16} />
-        维护列表
-      </Link>
+      <AdminActionLink href="/admin/content/projects/new" Icon={Plus} label="新增项目" primary />
+      <AdminActionLink href="/admin/content/projects/list?status=draft" Icon={FileText} label="查看草稿" />
+      <AdminActionLink href="/admin/content/projects/list?status=published" Icon={CheckCircle2} label="查看已发布" />
+      <AdminActionLink href="/admin/projects" Icon={ListChecks} label="维护列表" />
     </div>
   )
 }
@@ -575,12 +532,10 @@ function ProjectList({
   return (
     <section className="space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-[#1E2C31]">项目案例列表</h2>
-          <p className="mt-1 text-sm text-[#61767D]">
-            当前筛选下共 {formatNumber(total)} 个项目，本页显示 {formatNumber(rows.length)} 个。
-          </p>
-        </div>
+        <AdminSectionTitle
+          title="项目案例列表"
+          detail={`当前筛选下共 ${formatNumber(total)} 个项目，本页显示 ${formatNumber(rows.length)} 个。`}
+        />
       </div>
       <div className="space-y-3">
         {rows.map((project) => (
@@ -814,18 +769,12 @@ export default async function AdminContentProjectsListPage({ searchParams }: Pag
       sideNavGroups={getSideNavGroups(summary)}
       activeItem="project-list"
     >
-      <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#E7F7F8_0%,#F7FAFA_58%,#FFF2E7_100%)] p-5 shadow-sm md:p-6">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-[#1889B6]">项目案例</p>
-            <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">项目案例列表</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-              这里查看正式项目案例内容状态。Global 只显示地图入图状态，本轮不改地图底层和点位渲染。
-            </p>
-          </div>
-          <QuickActions />
-        </div>
-      </section>
+      <AdminPageHero
+        kicker="项目案例"
+        title="项目案例列表"
+        description="这里查看正式项目案例内容状态。Global 只显示地图入图状态，本轮不改地图底层和点位渲染。"
+        actions={<QuickActions />}
+      />
 
       <div className="space-y-6">
         <SummaryCards summary={summary} />

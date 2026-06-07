@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -55,14 +55,14 @@ function LoginForm() {
   return (
     <div
       className="min-h-screen flex items-center justify-center"
-      style={{ background: '#F5F2ED' }}
+      style={{ background: '#F3F7F7' }}
     >
       <div
         style={{
           width: 360,
           padding: '40px 36px',
           background: '#FFFFFF',
-          border: '1px solid #E5DED4',
+          border: '1px solid #D8E7E8',
           borderRadius: 8,
         }}
       >
@@ -74,13 +74,13 @@ function LoginForm() {
               fontWeight: 700,
               fontSize: 20,
               letterSpacing: '0.12em',
-              color: '#E36F2C',
+              color: '#176F8F',
             }}
           >
             VESSEL
           </span>
           <span
-            style={{ display: 'block', fontSize: 12, color: 'rgba(44,42,40,0.35)', marginTop: 4, letterSpacing: '0.1em' }}
+            style={{ display: 'block', fontSize: 12, color: '#8A9EA4', marginTop: 4, letterSpacing: '0.1em' }}
           >
             Admin Portal
           </span>
@@ -132,7 +132,7 @@ function LoginForm() {
           <div>
             <label
               htmlFor="email"
-              style={{ display: 'block', fontSize: 12, color: 'rgba(44,42,40,0.55)', marginBottom: 8, letterSpacing: '0.08em' }}
+              style={{ display: 'block', fontSize: 12, color: '#61767D', marginBottom: 8, letterSpacing: '0.08em' }}
             >
               EMAIL
             </label>
@@ -147,23 +147,23 @@ function LoginForm() {
               style={{
                 width: '100%',
                 padding: '10px 14px',
-                background: '#F5F2ED',
-                border: '1px solid #E5DED4',
+                background: '#F3F7F7',
+                border: '1px solid #D8E7E8',
                 borderRadius: 4,
-                color: '#2C2A28',
+                color: '#1E2C31',
                 fontSize: 14,
                 outline: 'none',
                 boxSizing: 'border-box',
               }}
-              onFocus={e => (e.target.style.borderColor = '#E36F2C')}
-              onBlur={e => (e.target.style.borderColor = '#E5DED4')}
+              onFocus={e => (e.target.style.borderColor = '#1889B6')}
+              onBlur={e => (e.target.style.borderColor = '#D8E7E8')}
             />
           </div>
 
           <div>
             <label
               htmlFor="password"
-              style={{ display: 'block', fontSize: 12, color: 'rgba(44,42,40,0.55)', marginBottom: 8, letterSpacing: '0.08em' }}
+              style={{ display: 'block', fontSize: 12, color: '#61767D', marginBottom: 8, letterSpacing: '0.08em' }}
             >
               PASSWORD
             </label>
@@ -178,16 +178,16 @@ function LoginForm() {
               style={{
                 width: '100%',
                 padding: '10px 14px',
-                background: '#F5F2ED',
-                border: '1px solid #E5DED4',
+                background: '#F3F7F7',
+                border: '1px solid #D8E7E8',
                 borderRadius: 4,
-                color: '#2C2A28',
+                color: '#1E2C31',
                 fontSize: 14,
                 outline: 'none',
                 boxSizing: 'border-box',
               }}
-              onFocus={e => (e.target.style.borderColor = '#E36F2C')}
-              onBlur={e => (e.target.style.borderColor = '#E5DED4')}
+              onFocus={e => (e.target.style.borderColor = '#1889B6')}
+              onBlur={e => (e.target.style.borderColor = '#D8E7E8')}
             />
           </div>
 
@@ -214,9 +214,9 @@ function LoginForm() {
 
         {/* OR divider */}
         <div className="flex items-center gap-3 my-5">
-          <div style={{ flex: 1, height: 1, background: '#E5DED4' }} />
-          <span style={{ fontSize: 11, color: '#8A8580', letterSpacing: '0.1em' }}>OR</span>
-          <div style={{ flex: 1, height: 1, background: '#E5DED4' }} />
+          <div style={{ flex: 1, height: 1, background: '#D8E7E8' }} />
+          <span style={{ fontSize: 11, color: '#61767D', letterSpacing: '0.1em' }}>OR</span>
+          <div style={{ flex: 1, height: 1, background: '#D8E7E8' }} />
         </div>
 
         {/* Google OAuth */}
@@ -231,16 +231,16 @@ function LoginForm() {
             justifyContent: 'center',
             gap: 10,
             background: '#FFFFFF',
-            border: '1px solid #E5DED4',
+            border: '1px solid #D8E7E8',
             borderRadius: 4,
-            color: '#2C2A28',
+            color: '#1E2C31',
             fontSize: 13,
             fontWeight: 500,
             cursor: 'pointer',
             transition: 'border-color 0.15s',
           }}
-          onMouseEnter={e => (e.currentTarget.style.borderColor = '#E36F2C')}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = '#E5DED4')}
+          onMouseEnter={e => (e.currentTarget.style.borderColor = '#1889B6')}
+          onMouseLeave={e => (e.currentTarget.style.borderColor = '#D8E7E8')}
         >
           <svg width="18" height="18" viewBox="0 0 48 48" fill="none">
             <path d="M43.611 20.083H42V20H24v8h11.303C33.977 32.244 29.383 35 24 35c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" fill="#FFC107"/>
@@ -254,7 +254,7 @@ function LoginForm() {
         <div
           className="mt-6 text-center"
           style={{
-            color: 'rgba(44,42,40,0.45)',
+            color: '#8A9EA4',
             fontSize: 11,
             lineHeight: 1.6,
             letterSpacing: '0.03em',

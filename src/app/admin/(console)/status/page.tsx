@@ -10,6 +10,7 @@ import {
   sourceTypeLabel,
   type AnalyticsRankRow,
 } from '@/lib/site-analytics'
+import { AdminPageHero } from '@/components/admin/AdminUI'
 import {
   ActionCard,
   ActivityList,
@@ -49,25 +50,20 @@ export default async function AdminStatusPage() {
       activeItem="overview"
       badges={buildStatusBadges(overview, role)}
     >
-      <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#DDF6F8_0%,#F4FBFC_62%,#FFF3E7_100%)] p-5 shadow-sm md:p-6">
-        <div className="flex flex-col gap-5">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-[#1889B6]">B6 数据分析 / 运营统计</p>
-              <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">运营数据中心</h1>
-              <p className="mt-2 text-sm text-[#61767D]">
-                先看访问、转化、内容缺口、线索漏斗和站点健康；统计只读，不写业务数据。
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <StatusPill ok={analytics.available} label={analytics.available ? '第一方事件可用' : '事件表未就绪'} />
-              <StatusPill ok label={`排除测试 ${formatNumber(thirtyDays.testEvents)} 事件 / ${formatNumber(thirtyDays.testLeads)} 线索`} />
-              <StatusPill ok label="不接第三方 API" />
-              <StatusPill ok label="不触碰 /global" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <AdminPageHero
+        kicker="Analytics / Operations"
+        title="运营数据中心"
+        description="先看访问、转化、内容缺口、线索漏斗和站点健康；统计只读，不写业务数据。"
+        actions={
+          <>
+            <StatusPill ok={analytics.available} label={analytics.available ? '第一方事件可用' : '事件表未就绪'} />
+            <StatusPill ok label={`排除测试 ${formatNumber(thirtyDays.testEvents)} 事件 / ${formatNumber(thirtyDays.testLeads)} 线索`} />
+            <StatusPill ok label="不接第三方 API" />
+            <StatusPill ok label="不触碰 /global" />
+          </>
+        }
+      >
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
             <MetricCard
               title="30 天 PV"
               value={thirtyDays.pageViews}
@@ -108,9 +104,8 @@ export default async function AdminStatusPage() {
               Icon={STATUS_ICONS.AlertCircle}
               tone={contentTotals.issues + siteIssues + overview.leads.new > 0 ? 'orange' : 'green'}
             />
-          </div>
         </div>
-      </section>
+      </AdminPageHero>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-8">

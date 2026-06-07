@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import { AdminActionLink, AdminPageHero } from '@/components/admin/AdminUI'
 import ProductForm from '@/components/admin/ProductForm'
 import { defaultSiteSettings, normalizeMediaMaxUploadMb } from '@/lib/admin-settings-db'
 import { pool } from '@/lib/db'
@@ -366,47 +367,26 @@ function Hero({ product }: { product: CatalogProductRow }) {
   const routeInfo = getCatalogProductRouteInfo(product)
 
   return (
-    <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#E7F7F8_0%,#F7FAFA_58%,#FFF2E7_100%)] p-5 shadow-sm md:p-6">
-      <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-        <div className="min-w-0">
-          <Link
-            href="/admin/content/products/list"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[#1889B6] transition hover:text-[#E36F2C]"
-          >
-            <ArrowLeft size={15} />
-            返回产品列表
-          </Link>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <h1 className="text-3xl font-bold text-[#1E2C31] md:text-4xl">
-              {product.name_cn || product.name_en || product.id}
-            </h1>
-            <StatusBadge status={product.status} />
-          </div>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-            本页把编辑分区、状态提醒和当前保存规则收进同一个运营页面。
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+    <AdminPageHero
+      kicker="产品编辑"
+      title={product.name_cn || product.name_en || product.id}
+      description="本页把编辑分区、状态提醒和当前保存规则收进同一个运营页面。"
+      actions={(
+        <>
+          <AdminActionLink href="/admin/content/products/list" Icon={ArrowLeft} label="返回产品列表" />
           {published ? (
-            <Link
-              href={previewHref(product)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
-            >
-              <CheckCircle2 size={16} />
-              官方预览
-            </Link>
+            <AdminActionLink href={previewHref(product)} Icon={CheckCircle2} label="官方预览" external />
           ) : null}
-        </div>
-      </div>
-
+        </>
+      )}
+    >
+      <StatusBadge status={product.status} />
       <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
         <InfoCard title="产品 ID" value={product.id} />
         <InfoCard title="更新时间" value={formatDate(product.updated_at)} />
         <InfoCard title="官方前台" value={published ? `${routeInfo.publicLabel} · ${routeInfo.publicHref}` : '草稿未公开展示'} tone={published ? 'warning' : 'neutral'} />
       </div>
-    </section>
+    </AdminPageHero>
   )
 }
 
@@ -420,7 +400,7 @@ function InfoCard({
   tone?: 'neutral' | 'warning'
 }) {
   return (
-    <div className="rounded-md border border-white/70 bg-white/82 p-4 shadow-sm">
+    <div className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
       <p className="text-xs font-semibold text-[#61767D]">{title}</p>
       <p className={`mt-2 text-sm font-bold ${tone === 'warning' ? 'text-[#E36F2C]' : 'text-[#1E2C31]'}`}>
         {value}

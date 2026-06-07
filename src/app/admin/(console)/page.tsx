@@ -2,6 +2,13 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminTopNav } from '@/components/admin/AdminTopNav'
+import {
+  AdminActionLink,
+  AdminInfoCard,
+  AdminMetricCard,
+  AdminPageHero,
+  AdminSectionTitle,
+} from '@/components/admin/AdminUI'
 import { pool } from '@/lib/db'
 import { countLeadsByStatus } from '@/lib/leads-db'
 import { countNewsByStatus } from '@/lib/news-db'
@@ -414,81 +421,57 @@ function Hero({
   const contentTotal = productSummary.total + projectSummary.total + newsSummary.total
 
   return (
-    <section
-      id="overview"
-      className="border-b border-[#D8E7E8] bg-[linear-gradient(135deg,#DDF6F8_0%,#F4FBFC_62%,#FFF3E7_100%)]"
-    >
-      <div className="mx-auto flex w-full max-w-[1520px] flex-col gap-5 px-4 py-7 lg:px-8">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div className="min-w-0">
-            <h1 className="text-3xl font-bold text-[#1E2C31] md:text-4xl">运营管理控制台</h1>
-            <p className="mt-2 text-sm text-[#61767D]">先看状态，再处理内容、线索和素材。</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {QUICK_ACTIONS.map((action) => (
-              <ActionButton key={action.label} action={action} />
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_1fr_1fr_1fr]">
-          <div className="rounded-md border border-white/70 bg-white/78 p-5 shadow-sm">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm text-[#61767D]">当前站点</p>
-                <p className="mt-2 text-2xl font-bold text-[#1E2C31]">运营中</p>
+    <section id="overview" className="border-b border-[#D8E7E8] bg-[#F3F7F7]">
+      <div className="mx-auto w-full max-w-[1600px] px-4 py-6 lg:px-8">
+        <AdminPageHero
+          kicker="Operations Workbench"
+          title="运营管理控制台"
+          description="先看今日优先级，再进入内容、线索、素材和数据处理。这里是后台 2.0 的日常入口，不承载自由建站器能力。"
+          actions={QUICK_ACTIONS.map((action) => (
+            <AdminActionLink
+              key={action.label}
+              href={action.href}
+              Icon={action.Icon}
+              label={action.label}
+              primary={action.primary}
+            />
+          ))}
+        >
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr_1fr_1fr]">
+            <AdminInfoCard title="当前站点" detail="主站内容由后台 published 内容驱动。" Icon={ShieldCheck} tone="green">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <SiteChip label="主站域名" value="www.vessel303.com" href="https://www.vessel303.com" />
+                <SiteChip label="网站管理" value="页面、素材、状态" href="/admin/site" />
               </div>
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                正常
-              </span>
-            </div>
-            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <SiteChip label="主站域名" value="www.vessel303.com" href="https://www.vessel303.com" />
-              <SiteChip label="网站管理" value="页面、素材、状态" href="/admin/site" />
-            </div>
-          </div>
-
-          <HeroMetric
-            label="内容总量"
+            </AdminInfoCard>
+            <AdminMetricCard
+            title="内容总量"
             value={contentTotal}
             detail={`草稿 ${formatNumber(draftTotal)} / 页面 ${formatNumber(pageDraftCount)}`}
             href="#content"
+            Icon={Package}
             tone="blue"
           />
-          <HeroMetric
-            label="待处理线索"
+            <AdminMetricCard
+            title="待处理线索"
             value={leadSummary.new}
             detail={`线索总量 ${formatNumber(leadSummary.total)}`}
             href="/admin/customers/leads?status=new"
+            Icon={Inbox}
             tone={leadSummary.new > 0 ? 'orange' : 'green'}
           />
-          <HeroMetric
-            label="媒体空间"
+            <AdminMetricCard
+            title="媒体空间"
             value={formatBytes(uploadBytes)}
             detail={uploadBytes > STORAGE_WARNING_BYTES ? '建议检查素材' : '状态正常'}
             href="/admin/site/media"
+            Icon={ImageIcon}
             tone={uploadBytes > STORAGE_WARNING_BYTES ? 'orange' : 'green'}
           />
-        </div>
+          </div>
+        </AdminPageHero>
       </div>
     </section>
-  )
-}
-
-function ActionButton({ action }: { action: ActionItem }) {
-  const Icon = action.Icon
-  return (
-    <Link
-      href={action.href}
-      className={`inline-flex h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
-        action.primary
-          ? 'bg-[#E36F2C] text-white shadow-sm hover:bg-[#C95E22]'
-          : 'border border-[#D8E7E8] bg-white text-[#1E2C31] hover:border-[#E36F2C]/55 hover:text-[#E36F2C]'
-      }`}
-    >
-      <Icon size={16} />
-      {action.label}
-    </Link>
   )
 }
 
@@ -519,52 +502,6 @@ function SiteChip({
   )
 }
 
-function HeroMetric({
-  label,
-  value,
-  detail,
-  href,
-  tone,
-}: {
-  label: string
-  value: number | string
-  detail: string
-  href: string
-  tone: 'blue' | 'green' | 'orange'
-}) {
-  const toneClass =
-    tone === 'orange'
-      ? 'from-[#FF9F2F] to-[#F06B22]'
-      : tone === 'green'
-        ? 'from-[#20B486] to-[#118F79]'
-        : 'from-[#1889B6] to-[#3078C8]'
-
-  return (
-    <Link
-      href={href}
-      className={`group flex min-h-40 flex-col justify-between rounded-md bg-gradient-to-br ${toneClass} p-5 text-white shadow-sm transition hover:-translate-y-0.5`}
-    >
-      <span className="flex items-center justify-between gap-3">
-        <span className="text-sm font-medium text-white/82">{label}</span>
-        <ArrowRight size={17} className="text-white/76 transition group-hover:translate-x-0.5" />
-      </span>
-      <span>
-        <span className="block text-4xl font-bold">{typeof value === 'number' ? formatNumber(value) : value}</span>
-        <span className="mt-2 block text-sm text-white/82">{detail}</span>
-      </span>
-    </Link>
-  )
-}
-
-function SectionTitle({ title, detail }: { title: string; detail?: string }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <h2 className="text-xl font-bold text-[#1E2C31]">{title}</h2>
-      {detail && <p className="text-sm text-[#61767D]">{detail}</p>}
-    </div>
-  )
-}
-
 function ContentCards({
   productSummary,
   projectSummary,
@@ -580,7 +517,7 @@ function ContentCards({
 }) {
   return (
     <section id="content" className="space-y-4">
-      <SectionTitle title="内容经营" detail="看总量、草稿和近 30 天新增。" />
+      <AdminSectionTitle title="内容经营" detail="看总量、草稿和近 30 天新增。" />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
         <ContentStatCard
           title="产品"
@@ -693,7 +630,7 @@ function ContentStatCard({
 function CustomerPanel({ leadSummary, role }: { leadSummary: LeadSummary; role: AdminRole }) {
   return (
     <section id="customer" className="space-y-4">
-      <SectionTitle title="客户与会员" />
+      <AdminSectionTitle title="客户线索" />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Link
           href="/admin/customers/leads"
@@ -745,7 +682,7 @@ function StatusPanel({
 }) {
   return (
     <section id="status" className="space-y-4">
-      <SectionTitle title="数据与状态" />
+      <AdminSectionTitle title="数据与状态" />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <StatusLineCard
           title="近 30 天内容变化"
@@ -880,7 +817,7 @@ function MaintenanceBlock({
 
   return (
     <section id="maintenance" className="space-y-4">
-      <SectionTitle title="维护中心" detail="管理员低频使用，不作为日常运营入口。" />
+      <AdminSectionTitle title="维护中心" detail="管理员低频使用，不作为日常运营入口。" />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
         <MaintenanceLink title="高级维护" detail="集中入口" href="/admin/legacy" Icon={Wrench} />
         <MaintenanceLink title="表单模式" detail="页面备用编辑" href="/admin/pages" Icon={FileText} />
@@ -981,7 +918,7 @@ export default async function AdminConsolePage() {
   })
 
   return (
-    <main className="min-h-screen bg-[#EEF5F3] text-[#1E2C31]" style={{ fontFamily: 'Inter, sans-serif' }}>
+    <main className="min-h-screen bg-[#F3F7F7] text-[#1E2C31]" style={{ fontFamily: 'Inter, sans-serif' }}>
       <AdminTopNav active="overview" role={role} email={session.user.email} />
       <Hero
         leadSummary={leadSummary}
@@ -992,8 +929,8 @@ export default async function AdminConsolePage() {
         uploadBytes={uploadBytes}
       />
 
-      <div className="mx-auto grid w-full max-w-[1520px] grid-cols-1 gap-6 px-4 py-7 lg:px-8 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-8">
+      <div className="mx-auto grid w-full max-w-[1600px] grid-cols-1 gap-5 px-4 py-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_348px]">
+        <div className="space-y-6">
           <ContentCards
             productSummary={productSummary}
             projectSummary={projectSummary}

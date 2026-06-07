@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
@@ -618,9 +618,9 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <div className="text-xs text-[#C4B9AB] font-medium">{label}</div>
+      <div className="text-xs font-semibold text-[#61767D]">{label}</div>
       {children}
-      {hint && <div className="text-[11px] leading-relaxed text-[#6B6560]">{hint}</div>}
+      {hint && <div className="text-[11px] leading-relaxed text-[#8A9EA4]">{hint}</div>}
     </div>
   )
 }
@@ -639,11 +639,11 @@ function FormSection({
   children: ReactNode
 }) {
   return (
-    <section id={id} className="scroll-mt-24 rounded-lg border border-[#E5DED4] bg-[#FFFFFF] p-5 space-y-5">
+    <section id={id} className="scroll-mt-24 space-y-5 rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm md:p-5">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <h2 className="text-sm font-semibold text-[#2C2A28]">{title}</h2>
-          <p className="mt-1 text-xs leading-relaxed text-[#8A8580]">{description}</p>
+          <h2 className="text-sm font-bold text-[#1E2C31]">{title}</h2>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">{description}</p>
         </div>
         {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
       </div>
@@ -987,22 +987,19 @@ export default function ProductForm({
 
   return (
     <>
-    <div className="flex flex-col gap-6 max-w-6xl">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+    <div className="flex max-w-none flex-col gap-6">
+      <div className="sticky top-16 z-20 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#D8E7E8] bg-white/95 p-3 shadow-sm backdrop-blur">
         <div>
           <Link
             href={backHref}
-            className="inline-flex items-center gap-2 text-xs text-[#8A8580] hover:text-[#E36F2C] mb-2"
+            className="mb-1 inline-flex items-center gap-2 text-xs font-semibold text-[#61767D] hover:text-[#1889B6]"
           >
             <ArrowLeft size={14} />
             {backLabel}
           </Link>
-          <h1
-            className="text-[#2C2A28]"
-            style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 24, fontWeight: 700 }}
-          >
+          <h2 className="text-base font-bold text-[#1E2C31] md:text-lg">
             {title ?? (mode === 'create' ? '新建产品' : '编辑产品')}
-          </h1>
+          </h2>
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -1016,8 +1013,9 @@ export default function ProductForm({
               href={previewHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-9 items-center justify-center rounded-md border border-[#E5DED4] px-3 text-sm font-medium text-[#2C2A28] hover:bg-[#FFFFFF]"
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm font-semibold text-[#1889B6] hover:border-[#1889B6] hover:bg-[#F0F7F8]"
             >
+              <ExternalLink size={14} />
               官方预览
             </Link>
           )}
@@ -1143,14 +1141,14 @@ export default function ProductForm({
             <Field label="详情页 Slug" hint="普通新产品建议留空，系统会用产品 ID 生成 CMS 通用详情页；只有要复用已有固定精细页时才填 e7、v9-gen6 等 slug。">
               <Input value={form.detailSlug} onChange={(e) => patch('detailSlug', normalizeId(e.target.value))} />
             </Field>
-            <label className="flex items-center gap-3 rounded-md border border-[#E5DED4] bg-[#FAF7F2] px-3 py-3 self-end">
+            <label className="flex items-center gap-3 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-3 self-end">
               <input
                 type="checkbox"
                 checked={form.isCustom}
                 onChange={(e) => patch('isCustom', e.target.checked)}
                 className="h-4 w-4 accent-[#E36F2C]"
               />
-              <span className="text-sm text-[#C4B9AB]">定制案例</span>
+              <span className="text-sm text-[#9AA9AD]">定制案例</span>
             </label>
           </div>
 
@@ -1247,8 +1245,8 @@ export default function ProductForm({
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {commercialTermFields.map((field) => (
-              <div key={field.label} className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-4">
-                <p className="mb-3 text-xs font-semibold text-[#6B6560]">{field.label}</p>
+              <div key={field.label} className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-4">
+                <p className="mb-3 text-xs font-semibold text-[#61767D]">{field.label}</p>
                 <div className="grid grid-cols-1 gap-3">
                   <Input
                     value={String(form.commercial_terms[field.zh] ?? '')}
@@ -1279,11 +1277,11 @@ export default function ProductForm({
               <Textarea value={form.keywords_en} onChange={(e) => patch('keywords_en', e.target.value)} />
             </Field>
           </div>
-          <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-4">
+          <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-4">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-[#2C2A28]">Related products</h3>
-                <p className="text-xs text-[#8A8580]">The public page only shows published related products.</p>
+                <h3 className="text-sm font-semibold text-[#1E2C31]">Related products</h3>
+                <p className="text-xs text-[#61767D]">The public page only shows published related products.</p>
               </div>
               <span className="text-xs font-semibold text-[#1889B6]">
                 Selected {form.related_product_ids.length}
@@ -1291,7 +1289,7 @@ export default function ProductForm({
             </div>
             <div className="mt-3 grid max-h-80 grid-cols-1 gap-2 overflow-auto pr-1 md:grid-cols-2">
               {relatedProductOptions.length === 0 ? (
-                <p className="text-xs text-[#8A8580]">No product options yet.</p>
+                <p className="text-xs text-[#61767D]">No product options yet.</p>
               ) : (
                 relatedProductOptions
                   .filter((item) => item.id !== form.id)
@@ -1303,7 +1301,7 @@ export default function ProductForm({
                         className={`flex cursor-pointer items-start gap-2 rounded-md border px-3 py-2 text-xs transition ${
                           checked
                             ? 'border-[#1889B6] bg-[#F0F7F8] text-[#1E2C31]'
-                            : 'border-[#E5DED4] bg-white text-[#6B6560] hover:border-[#1889B6]/50'
+                            : 'border-[#D8E7E8] bg-white text-[#61767D] hover:border-[#1889B6]/50'
                         }`}
                       >
                         <input
@@ -1314,7 +1312,7 @@ export default function ProductForm({
                         />
                         <span>
                           <span className="block font-semibold">{item.name_cn}</span>
-                          <span className="mt-0.5 block text-[#8A8580]">{item.name_en || item.id}</span>
+                          <span className="mt-0.5 block text-[#61767D]">{item.name_en || item.id}</span>
                         </span>
                       </label>
                     )
@@ -1330,17 +1328,17 @@ export default function ProductForm({
           description="对照 300 属性模板；用于后台筛选和后续前台筛选底座，不影响当前前台产品详情展示。"
         >
           {attributeTemplates.length === 0 ? (
-            <div className="rounded-md border border-dashed border-[#E5DED4] bg-[#FAF7F2] px-4 py-5 text-sm text-[#8A8580]">
+            <div className="rounded-md border border-dashed border-[#D8E7E8] bg-[#F7FAFA] px-4 py-5 text-sm text-[#61767D]">
               暂无属性模板。可先到属性模板管理维护应用场景、交付方式、认证 / 标准等属性组。
             </div>
           ) : (
             <div className="space-y-4" data-testid="product-attributes-section">
               {attributeTemplates.map((template) => (
-                <div key={template.id} className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-4">
+                <div key={template.id} className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-4">
                   <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h3 className="text-sm font-semibold text-[#2C2A28]">{template.title_zh}</h3>
-                      <p className="text-xs text-[#8A8580]">{template.title_en}</p>
+                      <h3 className="text-sm font-semibold text-[#1E2C31]">{template.title_zh}</h3>
+                      <p className="text-xs text-[#61767D]">{template.title_en}</p>
                     </div>
                     {template.status === 'hidden' ? (
                       <span className="inline-flex w-fit rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-xs font-semibold text-zinc-500">
@@ -1349,11 +1347,11 @@ export default function ProductForm({
                     ) : null}
                   </div>
                   {template.description_zh ? (
-                    <p className="mt-2 text-xs leading-5 text-[#6B6560]">{template.description_zh}</p>
+                    <p className="mt-2 text-xs leading-5 text-[#61767D]">{template.description_zh}</p>
                   ) : null}
                   <div className="mt-3 flex flex-wrap gap-2">
                     {template.options.length === 0 ? (
-                      <span className="text-xs text-[#8A8580]">暂无选项</span>
+                      <span className="text-xs text-[#61767D]">暂无选项</span>
                     ) : (
                       template.options.map((option) => {
                         const checked = selectedAttributeIds.has(option.id)
@@ -1364,7 +1362,7 @@ export default function ProductForm({
                             className={`inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs font-semibold transition ${
                               checked
                                 ? 'border-[#E36F2C] bg-[#FFF2E7] text-[#B85D21]'
-                                : 'border-[#E5DED4] bg-white text-[#6B6560] hover:border-[#E36F2C]/50'
+                                : 'border-[#D8E7E8] bg-white text-[#61767D] hover:border-[#E36F2C]/50'
                             }`}
                           >
                             <input
@@ -1375,7 +1373,7 @@ export default function ProductForm({
                             />
                             <span>{option.label_zh}</span>
                             {option.status === 'hidden' ? (
-                              <span className="font-normal text-[#8A8580]">隐藏</span>
+                              <span className="font-normal text-[#61767D]">隐藏</span>
                             ) : null}
                           </label>
                         )
@@ -1386,19 +1384,19 @@ export default function ProductForm({
               ))}
             </div>
           )}
-          <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-4 space-y-4">
+          <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-4 space-y-4">
             <div>
-              <h3 className="text-sm font-semibold text-[#2C2A28]">运营标记 / 橱窗</h3>
-              <p className="mt-1 text-xs leading-5 text-[#8A8580]">
+              <h3 className="text-sm font-semibold text-[#1E2C31]">运营标记 / 橱窗</h3>
+              <p className="mt-1 text-xs leading-5 text-[#61767D]">
                 对照 300 的标记管理和橱窗管理；只影响后台运营归类和后续展示策略，不改变当前产品详情页排版。
               </p>
             </div>
             <div className="space-y-3">
               <div>
-                <p className="text-xs font-semibold text-[#6B6560]">产品标记</p>
+                <p className="text-xs font-semibold text-[#61767D]">产品标记</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {marks.length === 0 ? (
-                    <span className="text-xs text-[#8A8580]">暂无标记，可先到标记管理维护。</span>
+                    <span className="text-xs text-[#61767D]">暂无标记，可先到标记管理维护。</span>
                   ) : (
                     marks.map((mark) => {
                       const checked = selectedMarkIds.has(mark.id)
@@ -1408,7 +1406,7 @@ export default function ProductForm({
                           className={`inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs font-semibold transition ${
                             checked
                               ? 'border-[#E36F2C] bg-[#FFF2E7] text-[#B85D21]'
-                              : 'border-[#E5DED4] bg-white text-[#6B6560] hover:border-[#E36F2C]/50'
+                              : 'border-[#D8E7E8] bg-white text-[#61767D] hover:border-[#E36F2C]/50'
                           }`}
                         >
                           <input
@@ -1418,7 +1416,7 @@ export default function ProductForm({
                             className="h-4 w-4 accent-[#E36F2C]"
                           />
                           <span>{mark.title_zh}</span>
-                          {mark.status === 'hidden' ? <span className="font-normal text-[#8A8580]">隐藏</span> : null}
+                          {mark.status === 'hidden' ? <span className="font-normal text-[#61767D]">隐藏</span> : null}
                         </label>
                       )
                     })
@@ -1426,10 +1424,10 @@ export default function ProductForm({
                 </div>
               </div>
               <div>
-                <p className="text-xs font-semibold text-[#6B6560]">产品橱窗</p>
+                <p className="text-xs font-semibold text-[#61767D]">产品橱窗</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {showcases.length === 0 ? (
-                    <span className="text-xs text-[#8A8580]">暂无橱窗，可先到橱窗管理维护。</span>
+                    <span className="text-xs text-[#61767D]">暂无橱窗，可先到橱窗管理维护。</span>
                   ) : (
                     showcases.map((showcase) => {
                       const checked = selectedShowcaseIds.has(showcase.id)
@@ -1439,7 +1437,7 @@ export default function ProductForm({
                           className={`inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs font-semibold transition ${
                             checked
                               ? 'border-[#1889B6] bg-[#F0F7F8] text-[#1889B6]'
-                              : 'border-[#E5DED4] bg-white text-[#6B6560] hover:border-[#1889B6]/50'
+                              : 'border-[#D8E7E8] bg-white text-[#61767D] hover:border-[#1889B6]/50'
                           }`}
                         >
                           <input
@@ -1449,7 +1447,7 @@ export default function ProductForm({
                             className="h-4 w-4 accent-[#1889B6]"
                           />
                           <span>{showcase.title_zh}</span>
-                          {showcase.status === 'hidden' ? <span className="font-normal text-[#8A8580]">隐藏</span> : null}
+                          {showcase.status === 'hidden' ? <span className="font-normal text-[#61767D]">隐藏</span> : null}
                         </label>
                       )
                     })
@@ -1651,12 +1649,12 @@ export default function ProductForm({
                 const moduleTitle = module.title_cn || module.title_en || `未命名内容块 ${index + 1}`
 
                 return (
-                  <div key={moduleKey} className="overflow-hidden rounded-lg border border-[#E5DED4] bg-[#FAF7F2]">
-                    <div className="border-b border-[#E5DED4] bg-white p-4">
+                  <div key={moduleKey} className="overflow-hidden rounded-lg border border-[#D8E7E8] bg-[#F7FAFA]">
+                    <div className="border-b border-[#D8E7E8] bg-white p-4">
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                         <div className="min-w-0 space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
-                            <Badge className="border-[#E5DED4] bg-[#F5F2ED] text-xs text-[#6B6560]">
+                            <Badge className="border-[#D8E7E8] bg-[#F0F2F2] text-xs text-[#61767D]">
                               {getDetailModuleTypeLabel(module.type)}
                             </Badge>
                             <Badge
@@ -1673,8 +1671,8 @@ export default function ProductForm({
                             </Badge>
                           </div>
                           <div>
-                            <h3 className="truncate text-sm font-semibold text-[#2C2A28]">{moduleTitle}</h3>
-                            <p className="mt-1 text-xs leading-relaxed text-[#8A8580]">
+                            <h3 className="truncate text-sm font-semibold text-[#1E2C31]">{moduleTitle}</h3>
+                            <p className="mt-1 text-xs leading-relaxed text-[#61767D]">
                               第 {index + 1} 个内容块。调整内容后，需要点击保存才会写入产品详情。
                             </p>
                           </div>
@@ -1698,7 +1696,7 @@ export default function ProductForm({
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
-                          <label className="flex items-center gap-2 rounded-md border border-[#E5DED4] bg-[#FAF7F2] px-2.5 py-1.5 text-xs text-[#6B6560]">
+                          <label className="flex items-center gap-2 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-2.5 py-1.5 text-xs text-[#61767D]">
                             <input
                               type="checkbox"
                               checked={module.is_visible}
@@ -1720,7 +1718,7 @@ export default function ProductForm({
                             type="button"
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 text-[#8A8580] hover:text-red-600"
+                            className="h-8 w-8 text-[#61767D] hover:text-red-600"
                             aria-label="删除详情内容块"
                             onClick={() => setDeletingDetailModule(module)}
                           >
@@ -1732,10 +1730,10 @@ export default function ProductForm({
 
                     {!isCollapsed ? (
                       <div className="space-y-5 p-4">
-                        <div className="rounded-md border border-[#E5DED4] bg-white p-4 space-y-4">
+                        <div className="rounded-md border border-[#D8E7E8] bg-white p-4 space-y-4">
                           <div>
-                            <h4 className="text-xs font-semibold text-[#2C2A28]">标题与正文</h4>
-                            <p className="mt-1 text-[11px] leading-relaxed text-[#8A8580]">
+                            <h4 className="text-xs font-semibold text-[#1E2C31]">标题与正文</h4>
+                            <p className="mt-1 text-[11px] leading-relaxed text-[#61767D]">
                               维护这个内容块在详情页中的主标题和说明文字。
                             </p>
                           </div>
@@ -1769,10 +1767,10 @@ export default function ProductForm({
                           </div>
                         </div>
 
-                        <div className="rounded-md border border-[#E5DED4] bg-white p-4 space-y-4">
+                        <div className="rounded-md border border-[#D8E7E8] bg-white p-4 space-y-4">
                           <div>
-                            <h4 className="text-xs font-semibold text-[#2C2A28]">列表项</h4>
-                            <p className="mt-1 text-[11px] leading-relaxed text-[#8A8580]">
+                            <h4 className="text-xs font-semibold text-[#1E2C31]">列表项</h4>
+                            <p className="mt-1 text-[11px] leading-relaxed text-[#61767D]">
                               用于亮点、场景、FAQ 或定制范围。每行一个条目。
                             </p>
                           </div>
@@ -1794,10 +1792,10 @@ export default function ProductForm({
                           </div>
                         </div>
 
-                        <div className="rounded-md border border-[#E5DED4] bg-white p-4 space-y-4">
+                        <div className="rounded-md border border-[#D8E7E8] bg-white p-4 space-y-4">
                           <div>
-                            <h4 className="text-xs font-semibold text-[#2C2A28]">图片素材</h4>
-                            <p className="mt-1 text-[11px] leading-relaxed text-[#8A8580]">
+                            <h4 className="text-xs font-semibold text-[#1E2C31]">图片素材</h4>
+                            <p className="mt-1 text-[11px] leading-relaxed text-[#61767D]">
                               可选择模块主图或图片组。上传和选择只会回填当前表单，仍需点击保存。
                             </p>
                           </div>
@@ -1862,10 +1860,10 @@ export default function ProductForm({
                           </div>
                         </div>
 
-                        <div className="rounded-md border border-[#E5DED4] bg-white p-4 space-y-4">
+                        <div className="rounded-md border border-[#D8E7E8] bg-white p-4 space-y-4">
                           <div>
-                            <h4 className="text-xs font-semibold text-[#2C2A28]">高级设置</h4>
-                            <p className="mt-1 text-[11px] leading-relaxed text-[#8A8580]">
+                            <h4 className="text-xs font-semibold text-[#1E2C31]">高级设置</h4>
+                            <p className="mt-1 text-[11px] leading-relaxed text-[#61767D]">
                               这些字段用于识别内容块和控制展示顺序，一般只在维护时调整。
                             </p>
                           </div>
@@ -1902,11 +1900,11 @@ export default function ProductForm({
               })}
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed border-[#E5DED4] bg-[#FAF7F2] p-6">
+            <div className="rounded-lg border border-dashed border-[#D8E7E8] bg-[#F7FAFA] p-6">
               <div className="max-w-2xl space-y-3">
                 <div>
-                  <p className="text-sm font-semibold text-[#2C2A28]">暂无详情内容块</p>
-                  <p className="mt-1 text-xs leading-relaxed text-[#8A8580]">
+                  <p className="text-sm font-semibold text-[#1E2C31]">暂无详情内容块</p>
+                  <p className="mt-1 text-xs leading-relaxed text-[#61767D]">
                     可以先添加产品亮点、使用场景、FAQ、图文内容或定制范围。新增后仍需点击保存才会写入产品。
                   </p>
                 </div>
@@ -1988,7 +1986,7 @@ export default function ProductForm({
                 className={`rounded-lg border p-4 text-xs leading-relaxed ${
                   isCurrentlyPublished
                     ? 'border-[#F2C6A7] bg-[#FFF7F0] text-[#8A3F16]'
-                    : 'border-[#E5DED4] bg-[#FAF7F2] text-[#6B6560]'
+                    : 'border-[#D8E7E8] bg-[#F7FAFA] text-[#61767D]'
                 }`}
               >
                 {isCurrentlyPublished
@@ -1997,7 +1995,7 @@ export default function ProductForm({
               </div>
 
               {showPreviewLink ? (
-                <div className="space-y-2 rounded-lg border border-[#E5DED4] bg-white p-3 text-xs">
+                <div className="space-y-2 rounded-lg border border-[#D8E7E8] bg-white p-3 text-xs">
                   <Link
                     href={previewHref}
                     target="_blank"
@@ -2029,20 +2027,20 @@ export default function ProductForm({
                   ) : null}
                 </div>
               ) : (
-                <div className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4 text-xs leading-relaxed text-[#8A8580]">
+                <div className="rounded-lg border border-[#D8E7E8] bg-[#F7FAFA] p-4 text-xs leading-relaxed text-[#61767D]">
                   草稿产品暂不提供前台预览入口。
                 </div>
               )}
             </div>
 
-            <div className="rounded-lg border border-[#E5DED4] bg-[#FAF7F2] p-4">
+            <div className="rounded-lg border border-[#D8E7E8] bg-[#F7FAFA] p-4">
               <div className="flex items-center justify-between gap-3">
-                <div className="text-sm font-medium text-[#2C2A28]">发布前检查</div>
+                <div className="text-sm font-medium text-[#1E2C31]">发布前检查</div>
                 <Badge className={completenessBadgeClass(completeness.level) + ' text-xs'}>
                   {completeness.level}
                 </Badge>
               </div>
-              <p className="mt-2 text-xs leading-relaxed text-[#6B6560]">
+              <p className="mt-2 text-xs leading-relaxed text-[#61767D]">
                 只做运营提示，不阻止保存或发布。发布前请人工确认图片、中英文内容、分类、属性、SEO、详情模块和前台页面绑定关系。
               </p>
               {visibleCompletenessIssues.length > 0 ? (

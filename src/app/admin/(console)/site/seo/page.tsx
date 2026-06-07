@@ -4,6 +4,7 @@ import { existsSync } from 'fs'
 import { join } from 'path'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import { AdminActionLink, AdminMetricCard, AdminPageHero } from '@/components/admin/AdminUI'
 import { pool } from '@/lib/db'
 import { hasGoogleSiteVerificationToken } from '@/lib/google-site-verification'
 import {
@@ -450,26 +451,14 @@ function SummaryTile({
   tone: 'blue' | 'green' | 'orange' | 'gray'
   Icon: LucideIcon
 }) {
-  const toneClass =
-    tone === 'orange'
-      ? 'from-[#FF9F2F] to-[#F06B22]'
-      : tone === 'green'
-        ? 'from-[#20B486] to-[#118F79]'
-        : tone === 'gray'
-          ? 'from-[#74838A] to-[#526168]'
-          : 'from-[#1889B6] to-[#3078C8]'
-
   return (
-    <div className={`rounded-md bg-gradient-to-br ${toneClass} p-5 text-white shadow-sm`}>
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-medium text-white/82">{title}</span>
-        <Icon size={19} className="text-white/82" />
-      </div>
-      <p className="mt-4 text-4xl font-bold">
-        {typeof value === 'number' ? formatNumber(value) : value}
-      </p>
-      <p className="mt-2 text-sm text-white/82">{detail}</p>
-    </div>
+    <AdminMetricCard
+      title={title}
+      value={typeof value === 'number' ? formatNumber(value) : value}
+      detail={detail}
+      tone={tone}
+      Icon={Icon}
+    />
   )
 }
 
@@ -723,40 +712,24 @@ export default async function AdminSiteSeoPage() {
       sideNavGroups={sideNavGroups}
       activeItem="seo"
     >
-      <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#F3FBFC_0%,#FFFFFF_58%,#FFF4E9_100%)] p-5 shadow-sm md:p-6">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-[#1889B6]">B17 Search Console 接入</p>
-            <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">SEO / 收录准备中心</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-              把 300 的 SEO 优化心智拆成页面 metadata、sitemap、robots、内容 SEO 缺项和 Search Console 验证状态，让运营知道 Google 是否可抓取、是否已具备验证和提交条件。
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/admin/content/products/list?view=incomplete&issue=seo"
-              className="inline-flex h-10 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-sm font-semibold text-white transition hover:bg-[#C95E22]"
-            >
-              产品 SEO 待补
-              <ArrowRight size={16} />
-            </Link>
-            <Link
-              href="/admin/site"
-              className="inline-flex h-10 items-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]"
-            >
-              返回概览
-              <ListChecks size={16} />
-            </Link>
-          </div>
-        </div>
-
-        <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-4">
+      <AdminPageHero
+        kicker="B17 Search Console 接入"
+        title="SEO / 收录准备中心"
+        description="把 300 的 SEO 优化心智拆成页面 metadata、sitemap、robots、内容 SEO 缺项和 Search Console 验证状态，让运营知道 Google 是否可抓取、是否已具备验证和提交条件。"
+        actions={(
+          <>
+            <AdminActionLink href="/admin/content/products/list?view=incomplete&issue=seo" Icon={ArrowRight} label="产品 SEO 待补" primary />
+            <AdminActionLink href="/admin/site" Icon={ListChecks} label="返回概览" />
+          </>
+        )}
+      >
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
           <SummaryTile title="页面已完整" value={staticReady} detail="静态 / 列表页面" tone="green" Icon={Globe2} />
           <SummaryTile title="内容待补" value={missingTotal} detail="已发布内容缺 SEO 或派生字段" tone={missingTotal > 0 ? 'orange' : 'green'} Icon={SearchCheck} />
           <SummaryTile title="详情来源" value={products.published + news.published + projects.published} detail="已发布产品 / 新闻 / 案例" tone="blue" Icon={FileText} />
           <SummaryTile title="保护项" value={protectedCount} detail="Global 暂不纳入 B17 底层改动" tone="gray" Icon={LockKeyhole} />
         </div>
-      </section>
+      </AdminPageHero>
 
       <AlignmentPanel />
 

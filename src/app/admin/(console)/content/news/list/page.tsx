@@ -1,12 +1,12 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
+import { AdminPageHero } from '@/components/admin/AdminUI'
 import NewsListClient from '@/components/admin/NewsListClient'
 import { listNews, listNewsCategories, type NewsStatus } from '@/lib/news-db'
 import {
   EMPTY_NEWS_STATS,
   NewsConsoleShell,
   PrimaryAction,
-  SectionTitle,
   getNewsStats,
   safeLoad,
   type AdminRole,
@@ -76,23 +76,20 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
       stats={stats}
       activeItem="news-list"
     >
-      <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <SectionTitle title="新闻列表" detail="筛选、预览、编辑和删除新闻内容。" />
-            <p className="mt-2 text-xs leading-5 text-[#61767D]">
-              参照 300 的新闻列表保留状态筛选、搜索、发布状态和操作入口；B3-10 已开放单篇定时字段和定时筛选，批量定时、批量发布和删除暂不启用。
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
+      <AdminPageHero
+        kicker="新闻运营"
+        title="新闻列表"
+        description="筛选、预览、编辑和删除新闻内容；单篇定时字段和定时筛选已开放，批量定时、批量发布和批量删除继续后置。"
+        actions={(
+          <>
             <PrimaryAction href="/admin/content/news/new" Icon={Plus} label="新增新闻" primary />
             <PrimaryAction href="/admin/content/news/list?status=draft" Icon={FileText} label="查看草稿" />
             <PrimaryAction href="/admin/content/news/categories" Icon={Tags} label="分类管理" />
             <PrimaryAction href="/admin/content/news/recycle" Icon={Archive} label="回收站" />
             <PrimaryAction href="/admin/content/news" Icon={ListChecks} label="新闻概览" />
-          </div>
-        </div>
-      </section>
+          </>
+        )}
+      />
       <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
         <NewsListClient
           initialRows={rows}

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import { AdminMetricCard, AdminPageHero } from '@/components/admin/AdminUI'
 import { CONVERSION_PATHS, type ConversionPathStatus } from '@/lib/admin-conversion-paths'
 import { formatAnalyticsPercent, loadConversionPathAnalytics, loadSiteAnalyticsDashboard } from '@/lib/site-analytics'
 import {
@@ -87,6 +88,11 @@ export default async function AdminSiteConversionPage() {
       activeItem="conversion"
     >
       <div className="space-y-6">
+        <AdminPageHero
+          kicker="转化路径"
+          title="入口与线索路径盘点"
+          description="集中查看前台入口、后台维护位置、CTA 去向、移动端与图片比例复核状态和线索 source 规则。"
+        />
         <section className="grid grid-cols-1 gap-4 md:grid-cols-4">
           <StatCard label="已进入线索" value={capturedCount} detail="表单会写入 leads 并可在 2.0 处理" />
           <StatCard label="部分追踪" value={partialCount} detail="主要是 CTA 来源参数或外部承接" />
@@ -142,7 +148,7 @@ export default async function AdminSiteConversionPage() {
                         <div className="mt-1">动作 {metric.ctaClicks} / 表单 {metric.formSubmits}</div>
                         <div className="mt-1">线索 {metric.leads} / {formatAnalyticsPercent(metric.conversionRate)}</div>
                       </td>
-                      <td className="max-w-[260px] px-4 py-4 font-mono text-xs text-[#2C2A28]">{item.sourceRule}</td>
+                      <td className="max-w-[260px] px-4 py-4 font-mono text-xs text-[#1E2C31]">{item.sourceRule}</td>
                       <td className="px-4 py-4">
                         <Link href={item.adminHref} className="inline-flex items-center gap-1 text-[#E36F2C] hover:underline">
                           管理入口 <ArrowRight size={13} />
@@ -162,11 +168,5 @@ export default async function AdminSiteConversionPage() {
 }
 
 function StatCard({ label, value, detail }: { label: string; value: number; detail: string }) {
-  return (
-    <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-      <div className="text-sm font-semibold text-[#61767D]">{label}</div>
-      <div className="mt-3 text-3xl font-black text-[#1E2C31]">{value}</div>
-      <div className="mt-1 text-xs text-[#8A9EA4]">{detail}</div>
-    </div>
-  )
+  return <AdminMetricCard title={label} value={value.toLocaleString('zh-CN')} detail={detail} tone="blue" />
 }

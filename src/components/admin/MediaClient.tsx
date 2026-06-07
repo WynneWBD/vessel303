@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import {
   useCallback,
@@ -466,7 +466,7 @@ export default function MediaClient({
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div className="flex flex-col gap-2">
           <h1
-            className="text-[#2C2A28]"
+            className="text-[#1E2C31]"
             style={{
               fontFamily: 'DM Sans, sans-serif',
               fontSize: 24,
@@ -476,14 +476,14 @@ export default function MediaClient({
           >
             图片库 Media
           </h1>
-          <div className="text-xs text-[#8A8580]">
+          <div className="text-xs text-[#61767D]">
             共 {total} 张图片 ·{' '}
             <span className={usageWarning ? 'text-[#E36F2C]' : ''}>
               已用 {formatBytes(storageBytes)}
             </span>{' '}
             / 1 GB 免费额度
           </div>
-          <div className="h-1 w-64 rounded-full bg-[#E5DED4] overflow-hidden">
+          <div className="h-1 w-64 rounded-full bg-[#D8E7E8] overflow-hidden">
             <div
               className="h-full rounded-full transition-all"
               style={{
@@ -520,7 +520,7 @@ export default function MediaClient({
               上传
             </Button>
           </div>
-          <p className="text-[11px] text-[#8A8580]">
+          <p className="text-[11px] text-[#61767D]">
             支持 JPEG / PNG / WebP / GIF / SVG · 最大 {uploadLimitMb} MB · 一次最多 {BATCH_LIMIT} 张
           </p>
           <p className="text-[11px] text-[#A76632]">
@@ -558,16 +558,16 @@ export default function MediaClient({
 
       {/* Grid */}
       {uploads.length === 0 && !loading ? (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#E5DED4] bg-[#FFFFFF] py-20 text-center">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#D8E7E8] bg-[#FFFFFF] py-20 text-center">
           {hasActiveFilters ? (
             <SearchX size={48} className="text-[#4A4744]" />
           ) : (
             <ImageOff size={48} className="text-[#4A4744]" />
           )}
-          <p className="text-[#C4B9AB]">
+          <p className="text-[#9AA9AD]">
             {hasActiveFilters ? '没有找到符合条件的图片' : '还没有图片'}
           </p>
-          <p className="text-xs text-[#6B6560]">点击右上角上传,或直接拖拽图片到此页面</p>
+          <p className="text-xs text-[#61767D]">点击右上角上传,或直接拖拽图片到此页面</p>
           {hasActiveFilters ? (
             <Button type="button" variant="outline" size="sm" onClick={resetFilters}>
               清空筛选
@@ -597,18 +597,18 @@ export default function MediaClient({
         />
       ) : null}
 
-      {loading && <div className="text-xs text-[#8A8580]">加载中…</div>}
+      {loading && <div className="text-xs text-[#61767D]">加载中…</div>}
 
       {/* Upload progress panel */}
       {tasks.length > 0 && (
-        <div className="fixed bottom-6 right-6 z-40 w-80 rounded-lg border border-[#E5DED4] bg-[#FFFFFF] shadow-xl">
-          <div className="flex items-center justify-between border-b border-[#E5DED4] px-4 py-2.5">
-            <span className="text-xs text-[#C4B9AB]">
+        <div className="fixed bottom-6 right-6 z-40 w-80 rounded-lg border border-[#D8E7E8] bg-[#FFFFFF] shadow-xl">
+          <div className="flex items-center justify-between border-b border-[#D8E7E8] px-4 py-2.5">
+            <span className="text-xs text-[#9AA9AD]">
               上传进度 ({tasks.filter((t) => t.status === 'done').length}/{tasks.length})
             </span>
             <button
               onClick={() => setTasks([])}
-              className="text-[#8A8580] hover:text-[#2C2A28]"
+              className="text-[#61767D] hover:text-[#1E2C31]"
             >
               <X size={14} />
             </button>
@@ -617,10 +617,10 @@ export default function MediaClient({
             {tasks.map((t) => (
               <div
                 key={t.id}
-                className="rounded-md bg-[#FAF7F2] border border-[#E5DED4] p-2"
+                className="rounded-md bg-[#F7FAFA] border border-[#D8E7E8] p-2"
               >
                 <div className="flex items-center justify-between text-xs gap-2">
-                  <span className="truncate text-[#2C2A28]" title={t.name}>
+                  <span className="truncate text-[#1E2C31]" title={t.name}>
                     {t.name}
                   </span>
                   <span
@@ -629,13 +629,13 @@ export default function MediaClient({
                         ? 'text-red-400'
                         : t.status === 'done'
                           ? 'text-green-400'
-                          : 'text-[#8A8580]'
+                          : 'text-[#61767D]'
                     }
                   >
                     {t.status === 'error' ? '失败' : `${t.progress}%`}
                   </span>
                 </div>
-                <div className="mt-1.5 h-1 w-full rounded-full bg-[#E5DED4] overflow-hidden">
+                <div className="mt-1.5 h-1 w-full rounded-full bg-[#D8E7E8] overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all"
                     style={{
@@ -715,9 +715,9 @@ function MediaCard({ upload, onClick }: { upload: Upload; onClick: () => void })
   }
 
   return (
-    <div className="group relative aspect-square overflow-hidden rounded-md border border-[#E5DED4] bg-[#FAF7F2]">
+    <div className="group relative aspect-square overflow-hidden rounded-md border border-[#D8E7E8] bg-[#F7FAFA]">
       {!loaded && (
-        <div className="absolute inset-0 bg-[#E5DED4] animate-pulse" aria-hidden />
+        <div className="absolute inset-0 bg-[#D8E7E8] animate-pulse" aria-hidden />
       )}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -783,10 +783,10 @@ function ReferenceSourceList({
   const hiddenCount = Math.max(0, count - items.length)
 
   return (
-    <div className="rounded-md border border-[#E5DED4] bg-white/70 p-2.5">
+    <div className="rounded-md border border-[#D8E7E8] bg-white/70 p-2.5">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <span className="text-xs font-medium text-[#2C2A28]">{label}</span>
-        <span className="text-xs text-[#8A8580]">{count} 条</span>
+        <span className="text-xs font-medium text-[#1E2C31]">{label}</span>
+        <span className="text-xs text-[#61767D]">{count} 条</span>
       </div>
       {items.length > 0 ? (
         <div className="space-y-2">
@@ -794,14 +794,14 @@ function ReferenceSourceList({
             <a
               key={`${label}-${item.id}`}
               href={item.href}
-              className="flex items-start justify-between gap-3 rounded-md border border-[#E5DED4] bg-white px-2.5 py-2 text-left transition-colors hover:border-[#E36F2C]/50 hover:bg-[#FFF8F2]"
+              className="flex items-start justify-between gap-3 rounded-md border border-[#D8E7E8] bg-white px-2.5 py-2 text-left transition-colors hover:border-[#E36F2C]/50 hover:bg-[#FFF8F2]"
             >
               <span className="min-w-0">
-                <span className="block truncate text-sm font-medium text-[#2C2A28]">
+                <span className="block truncate text-sm font-medium text-[#1E2C31]">
                   {item.title}
                 </span>
                 {item.fields.length > 0 && (
-                  <span className="mt-1 block truncate text-xs text-[#8A8580]">
+                  <span className="mt-1 block truncate text-xs text-[#61767D]">
                     {item.fields.join(' / ')}
                   </span>
                 )}
@@ -814,12 +814,12 @@ function ReferenceSourceList({
           ))}
         </div>
       ) : (
-        <div className="rounded-md border border-dashed border-[#E5DED4] bg-white px-2.5 py-2 text-xs text-[#8A8580]">
+        <div className="rounded-md border border-dashed border-[#D8E7E8] bg-white px-2.5 py-2 text-xs text-[#61767D]">
           已检测到引用，但来源明细暂不可显示
         </div>
       )}
       {hiddenCount > 0 && (
-        <div className="mt-2 text-xs text-[#8A8580]">
+        <div className="mt-2 text-xs text-[#61767D]">
           还有 {hiddenCount} 条未显示，请进入对应列表继续检查。
         </div>
       )}
@@ -913,7 +913,7 @@ function MediaDetailSheet({
 
             <div className="flex-1 overflow-auto p-6 flex flex-col gap-6">
               {/* Preview */}
-              <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] overflow-hidden flex items-center justify-center max-h-[400px]">
+              <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] overflow-hidden flex items-center justify-center max-h-[400px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={detailPreviewUrl || upload.url}
@@ -961,7 +961,7 @@ function MediaDetailSheet({
 
               {/* URL */}
               <div>
-                <div className="text-xs text-[#8A8580] mb-2 flex items-center justify-between">
+                <div className="text-xs text-[#61767D] mb-2 flex items-center justify-between">
                   <span>Blob URL</span>
                   <button
                     onClick={copyUrl}
@@ -971,60 +971,60 @@ function MediaDetailSheet({
                     复制
                   </button>
                 </div>
-                <div className="rounded-md bg-[#FAF7F2] border border-[#E5DED4] p-3 text-xs font-mono text-[#C4B9AB] break-all">
+                <div className="rounded-md bg-[#F7FAFA] border border-[#D8E7E8] p-3 text-xs font-mono text-[#9AA9AD] break-all">
                   {upload.url}
                 </div>
               </div>
 
               {/* References */}
-              <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3 text-sm">
-                <div className="text-xs text-[#8A8580] mb-1.5">引用统计</div>
-                <div className="text-[#2C2A28]">
+              <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3 text-sm">
+                <div className="text-xs text-[#61767D] mb-1.5">引用统计</div>
+                <div className="text-[#1E2C31]">
                   涉及 <span className="text-[#E36F2C]">{refs.total}</span> 条内容
                   {refs.news > 0 && (
-                    <span className="text-[#8A8580]">
+                    <span className="text-[#61767D]">
                       {' '}
                       · 新闻 {refs.news} 条
                     </span>
                   )}
                   {refs.products > 0 && (
-                    <span className="text-[#8A8580]">
+                    <span className="text-[#61767D]">
                       {' '}
                       · 产品 {refs.products} 条
                     </span>
                   )}
                   {refs.projects > 0 && (
-                    <span className="text-[#8A8580]">
+                    <span className="text-[#61767D]">
                       {' '}
                       · 项目案例 {refs.projects} 条
                     </span>
                   )}
                   {refs.pages > 0 && (
-                    <span className="text-[#8A8580]">
+                    <span className="text-[#61767D]">
                       {' '}
                       · 页面模块 {refs.pages} 条
                     </span>
                   )}
                   {refs.pageDrafts > 0 && (
-                    <span className="text-[#8A8580]">
+                    <span className="text-[#61767D]">
                       {' '}
                       · 页面草稿 {refs.pageDrafts} 条
                     </span>
                   )}
                   {refs.pageSnapshots > 0 && (
-                    <span className="text-[#8A8580]">
+                    <span className="text-[#61767D]">
                       {' '}
                       · 历史快照 {refs.pageSnapshots} 条
                     </span>
                   )}
                   {refs.pageStructureDrafts > 0 && (
-                    <span className="text-[#8A8580]">
+                    <span className="text-[#61767D]">
                       {' '}
                       · 页面结构草稿 {refs.pageStructureDrafts} 条
                     </span>
                   )}
                   {refs.pageStructureSnapshots > 0 && (
-                    <span className="text-[#8A8580]">
+                    <span className="text-[#61767D]">
                       {' '}
                       · 页面结构快照 {refs.pageStructureSnapshots} 条
                     </span>
@@ -1036,8 +1036,8 @@ function MediaDetailSheet({
                   </div>
                 )}
                 {refs.total > 0 && (
-                  <div className="mt-3 space-y-2 border-t border-[#E5DED4] pt-3">
-                    <div className="text-xs font-medium text-[#2C2A28]">引用来源</div>
+                  <div className="mt-3 space-y-2 border-t border-[#D8E7E8] pt-3">
+                    <div className="text-xs font-medium text-[#1E2C31]">引用来源</div>
                     <ReferenceSourceList label="新闻" count={refs.news} items={refs.items.news} />
                     <ReferenceSourceList
                       label="产品"
@@ -1111,8 +1111,8 @@ function Field({
 }) {
   return (
     <div className={fullWidth ? 'col-span-2' : ''}>
-      <div className="text-xs text-[#8A8580]">{label}</div>
-      <div className="text-sm text-[#2C2A28] break-all">{value || '—'}</div>
+      <div className="text-xs text-[#61767D]">{label}</div>
+      <div className="text-sm text-[#1E2C31] break-all">{value || '—'}</div>
     </div>
   )
 }

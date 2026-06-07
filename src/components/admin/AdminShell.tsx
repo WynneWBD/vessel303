@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -87,22 +87,22 @@ export default function AdminShell({
 
   return (
     <div
-      className="flex h-screen bg-[#F5F2ED] text-[#2C2A28]"
+      className="flex h-screen bg-[#F3F7F7] text-[#1E2C31]"
       style={{ fontFamily: 'Inter, sans-serif' }}
     >
       {/* ── Sidebar ── */}
       <aside
         className="flex flex-col shrink-0"
-        style={{ width: 240, background: '#FFFFFF', borderRight: '1px solid #E5DED4' }}
+        style={{ width: 252, background: '#FBFDFD', borderRight: '1px solid #D8E7E8' }}
       >
         {/* Logo */}
         <div
           className="flex items-center gap-2 px-6"
-          style={{ height: 56, borderBottom: '1px solid #E5DED4' }}
+          style={{ height: 56, borderBottom: '1px solid #D8E7E8' }}
         >
           <span
             style={{
-              color: '#E36F2C',
+              color: '#176F8F',
               fontWeight: 700,
               fontSize: 15,
               letterSpacing: '0.1em',
@@ -111,7 +111,7 @@ export default function AdminShell({
           >
             VESSEL
           </span>
-          <span style={{ color: 'rgba(44,42,40,0.35)', fontSize: 12 }}>Admin</span>
+          <span style={{ color: '#8A9EA4', fontSize: 12 }}>Admin</span>
         </div>
 
         {/* Nav */}
@@ -128,11 +128,11 @@ export default function AdminShell({
                   height: 44,
                   paddingLeft: 16,
                   paddingRight: 16,
-                  color: active ? '#2C2A28' : '#6B625B',
-                  background: active ? '#F5F2ED' : 'transparent',
+                  color: active ? '#1E2C31' : '#61767D',
+                  background: active ? '#EAF6F8' : 'transparent',
                 }}
                 onMouseEnter={(e) => {
-                  if (!active) e.currentTarget.style.background = 'rgba(227,111,44,0.08)'
+                  if (!active) e.currentTarget.style.background = '#F0F7F8'
                 }}
                 onMouseLeave={(e) => {
                   if (!active) e.currentTarget.style.background = 'transparent'
@@ -148,13 +148,13 @@ export default function AdminShell({
                       top: 0,
                       bottom: 0,
                       width: 3,
-                      background: '#E36F2C',
+                      background: '#1889B6',
                     }}
                   />
                 )}
                 <item.Icon
                   size={20}
-                  style={{ color: active ? '#E36F2C' : '#8A8580', flexShrink: 0 }}
+                  style={{ color: active ? '#1889B6' : '#61767D', flexShrink: 0 }}
                 />
                 <span
                   className="ml-3 flex-1"
@@ -184,12 +184,12 @@ export default function AdminShell({
         </nav>
 
         {/* Logout */}
-        <div className="p-3" style={{ borderTop: '1px solid #E5DED4' }}>
-          <div className="mb-3 rounded-md border border-[#E5DED4] bg-[#F5F2ED] px-3 py-2">
-            <div className="text-xs font-semibold text-[#2C2A28]">
+        <div className="p-3" style={{ borderTop: '1px solid #D8E7E8' }}>
+          <div className="mb-3 rounded-md border border-[#D8E7E8] bg-[#F3F7F7] px-3 py-2">
+            <div className="text-xs font-semibold text-[#1E2C31]">
               {role === 'admin' ? '总管理' : '运营'}
             </div>
-            <div className="mt-1 truncate text-xs text-[#8A8580]">{email}</div>
+            <div className="mt-1 truncate text-xs text-[#61767D]">{email}</div>
           </div>
           <form action={logoutAction}>
             <button
@@ -217,8 +217,8 @@ export default function AdminShell({
           className="flex items-center justify-between px-8 shrink-0"
           style={{
             height: 56,
-            borderBottom: '1px solid #E5DED4',
-            background: '#FAF7F2',
+            borderBottom: '1px solid #D8E7E8',
+            background: '#FBFDFD',
           }}
         >
           <span
@@ -226,7 +226,7 @@ export default function AdminShell({
               fontFamily: 'DM Sans, sans-serif',
               fontWeight: 500,
               fontSize: 15,
-              color: '#2C2A28',
+              color: '#1E2C31',
             }}
           >
             {headerTitle}
@@ -234,9 +234,9 @@ export default function AdminShell({
           <div className="flex items-center gap-2">
             <span
               className="inline-block rounded-full"
-              style={{ width: 8, height: 8, background: '#E36F2C' }}
+              style={{ width: 8, height: 8, background: '#1889B6' }}
             />
-            <span style={{ fontSize: 13, color: 'rgba(44,42,40,0.60)' }}>{email}</span>
+            <span style={{ fontSize: 13, color: '#61767D' }}>{email}</span>
           </div>
         </header>
 
@@ -250,8 +250,8 @@ export default function AdminShell({
         toastOptions={{
           style: {
             background: '#FFFFFF',
-            border: '1px solid #E5DED4',
-            color: '#2C2A28',
+            border: '1px solid #D8E7E8',
+            color: '#1E2C31',
           },
         }}
       />

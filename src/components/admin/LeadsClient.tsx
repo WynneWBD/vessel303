@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -401,7 +401,7 @@ export default function LeadsClient({
                       <p className="text-[#61767D]">
                         {hasActiveFilters ? '没有找到符合条件的线索' : '暂无线索'}
                       </p>
-                      <p className="text-xs text-[#6B6560]">
+                      <p className="text-xs text-[#61767D]">
                         公开询价表单接入后,线索会自动显示在这里
                       </p>
                       {hasActiveFilters ? (
@@ -424,7 +424,7 @@ export default function LeadsClient({
                       {STATUS_LABEL[lead.status] ?? lead.status}
                     </Badge>
                   </td>
-                  <td className="px-4 py-3 text-[#2C2A28]">{lead.email}</td>
+                  <td className="px-4 py-3 text-[#1E2C31]">{lead.email}</td>
                   <td className="px-4 py-3 text-[#61767D]">{lead.name ?? '—'}</td>
                   <td className="px-4 py-3 text-[#61767D]">{lead.company ?? '—'}</td>
                   <td className="px-4 py-3 text-[#61767D]">{lead.country ?? '—'}</td>
@@ -435,7 +435,7 @@ export default function LeadsClient({
                     </span>
                   </td>
                   <td className="px-4 py-3 text-[#61767D]">{lead.sku_interest ?? '—'}</td>
-                  <td className="px-4 py-3 text-[#8A8580] whitespace-nowrap">
+                  <td className="px-4 py-3 text-[#61767D] whitespace-nowrap">
                     {formatDate(lead.created_at)}
                   </td>
                   <td className="px-4 py-3">
@@ -570,7 +570,7 @@ function LeadDetailSheet({
                 <Badge className={statusBadgeClass(lead.status)}>
                   {STATUS_LABEL[lead.status] ?? lead.status}
                 </Badge>
-                <span className="text-xs text-[#8A8580]">
+                <span className="text-xs text-[#61767D]">
                   创建于 {formatDate(lead.created_at)}
                 </span>
               </div>
@@ -586,8 +586,8 @@ function LeadDetailSheet({
                 <Field label="身份" value={lead.inquiry_type} />
                 <Field label="SKU 兴趣" value={lead.sku_interest} />
                 <div className="col-span-2 rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-3">
-                  <div className="text-xs text-[#8A8580]">来源</div>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-[#2C2A28]">
+                  <div className="text-xs text-[#61767D]">来源</div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-[#1E2C31]">
                     <span className="font-semibold">{sourceInfo?.label ?? lead.source ?? '—'}</span>
                     <span className="rounded-full bg-white px-2 py-0.5 text-xs text-[#61767D]">
                       {sourceInfo?.typeLabel ?? '其他来源'}
@@ -603,22 +603,22 @@ function LeadDetailSheet({
                       </a>
                     ) : null}
                   </div>
-                  <div className="mt-1 break-all text-xs text-[#8A8580]">{lead.source || '—'}</div>
+                  <div className="mt-1 break-all text-xs text-[#61767D]">{lead.source || '—'}</div>
                 </div>
                 <Field label="更新时间" value={formatDate(lead.updated_at)} />
               </div>
 
               {/* Message */}
               <div>
-                <div className="text-xs text-[#8A8580] mb-2">留言内容</div>
-                <div className="rounded-md bg-[#FAF7F2] border border-[#E5DED4] p-3 text-sm text-[#2C2A28] whitespace-pre-wrap min-h-[80px]">
-                  {lead.message || <span className="text-[#6B6560]">(无留言)</span>}
+                <div className="text-xs text-[#61767D] mb-2">留言内容</div>
+                <div className="rounded-md bg-[#F7FAFA] border border-[#D8E7E8] p-3 text-sm text-[#1E2C31] whitespace-pre-wrap min-h-[80px]">
+                  {lead.message || <span className="text-[#61767D]">(无留言)</span>}
                 </div>
               </div>
 
               {/* Status */}
               <div>
-                <div className="text-xs text-[#8A8580] mb-2">状态</div>
+                <div className="text-xs text-[#61767D] mb-2">状态</div>
                 <Select
                   value={status}
                   onChange={(e) => setStatus(e.target.value as LeadStatus)}
@@ -633,7 +633,7 @@ function LeadDetailSheet({
 
               {/* Assigned to */}
               <div>
-                <div className="text-xs text-[#8A8580] mb-2">分配销售(邮箱)</div>
+                <div className="text-xs text-[#61767D] mb-2">分配销售(邮箱)</div>
                 <Input
                   type="email"
                   placeholder="sales@example.com"
@@ -644,7 +644,7 @@ function LeadDetailSheet({
 
               {/* Notes */}
               <div>
-                <div className="text-xs text-[#8A8580] mb-2">追加备注</div>
+                <div className="text-xs text-[#61767D] mb-2">追加备注</div>
                 <Textarea
                   rows={3}
                   placeholder="本次保存时会追加到备注顶部,带时间戳"
@@ -653,8 +653,8 @@ function LeadDetailSheet({
                 />
                 {lead.notes && (
                   <div className="mt-3">
-                    <div className="text-xs text-[#8A8580] mb-2">历史备注</div>
-                    <div className="rounded-md bg-[#FAF7F2] border border-[#E5DED4] p-3 text-xs text-[#C4B9AB] whitespace-pre-wrap max-h-40 overflow-auto">
+                    <div className="text-xs text-[#61767D] mb-2">历史备注</div>
+                    <div className="rounded-md bg-[#F7FAFA] border border-[#D8E7E8] p-3 text-xs text-[#9AA9AD] whitespace-pre-wrap max-h-40 overflow-auto">
                       {lead.notes}
                     </div>
                   </div>
@@ -688,8 +688,8 @@ function LeadDetailSheet({
 function Field({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
-      <div className="text-xs text-[#8A8580]">{label}</div>
-      <div className="text-sm text-[#2C2A28] break-all">{value || '—'}</div>
+      <div className="text-xs text-[#61767D]">{label}</div>
+      <div className="text-sm text-[#1E2C31] break-all">{value || '—'}</div>
     </div>
   )
 }
@@ -736,7 +736,7 @@ function NewLeadDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="text-xs text-[#8A8580] mb-1.5 block">邮箱 *</label>
+            <label className="text-xs text-[#61767D] mb-1.5 block">邮箱 *</label>
             <Input
               type="email"
               required
@@ -746,11 +746,11 @@ function NewLeadDialog({
             />
           </div>
           <div>
-            <label className="text-xs text-[#8A8580] mb-1.5 block">姓名</label>
+            <label className="text-xs text-[#61767D] mb-1.5 block">姓名</label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div>
-            <label className="text-xs text-[#8A8580] mb-1.5 block">身份</label>
+            <label className="text-xs text-[#61767D] mb-1.5 block">身份</label>
             <Select
               value={inquiryType}
               onChange={(e) => setInquiryType(e.target.value)}
@@ -763,7 +763,7 @@ function NewLeadDialog({
             </Select>
           </div>
           <div>
-            <label className="text-xs text-[#8A8580] mb-1.5 block">留言</label>
+            <label className="text-xs text-[#61767D] mb-1.5 block">留言</label>
             <Textarea
               rows={3}
               value={message}

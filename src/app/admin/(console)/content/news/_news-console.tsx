@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import { AdminActionLink, AdminSectionTitle } from '@/components/admin/AdminUI'
 import { pool } from '@/lib/db'
 import {
   Archive,
@@ -228,28 +228,11 @@ export function PrimaryAction({
   label: string
   primary?: boolean
 }) {
-  return (
-    <Link
-      href={href}
-      className={`inline-flex h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
-        primary
-          ? 'bg-[#E36F2C] text-white shadow-sm hover:bg-[#C95E22]'
-          : 'border border-[#D8E7E8] bg-white text-[#1E2C31] hover:border-[#E36F2C]/55 hover:text-[#E36F2C]'
-      }`}
-    >
-      <Icon size={16} />
-      {label}
-    </Link>
-  )
+  return <AdminActionLink href={href} Icon={Icon} label={label} primary={primary} />
 }
 
 export function SectionTitle({ title, detail }: { title: string; detail?: string }) {
-  return (
-    <div>
-      <h2 className="text-xl font-bold text-[#1E2C31]">{title}</h2>
-      {detail && <p className="mt-1 text-sm text-[#61767D]">{detail}</p>}
-    </div>
-  )
+  return <AdminSectionTitle title={title} detail={detail} />
 }
 
 export function TodoMetric({

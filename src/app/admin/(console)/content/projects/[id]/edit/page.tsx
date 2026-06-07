@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import { AdminActionLink, AdminPageHero } from '@/components/admin/AdminUI'
 import ProjectForm from '@/components/admin/ProjectForm'
 import { pool } from '@/lib/db'
 import type { ProjectCaseRow, ProjectCaseStatus } from '@/lib/project-cases-db'
@@ -328,56 +329,27 @@ function Hero({ project }: { project: ProjectCaseRow }) {
   const globalStatus = getGlobalStatus(project)
 
   return (
-    <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#E7F7F8_0%,#F7FAFA_58%,#FFF2E7_100%)] p-5 shadow-sm md:p-6">
-      <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-        <div className="min-w-0">
-          <Link
-            href="/admin/content/projects/list"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[#1889B6] transition hover:text-[#E36F2C]"
-          >
-            <ArrowLeft size={15} />
-            返回项目列表
-          </Link>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <h1 className="text-3xl font-bold text-[#1E2C31] md:text-4xl">
-              {project.name_zh || project.name_en || project.id}
-            </h1>
-            <StatusBadge status={project.status} />
-          </div>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-            本页编辑的是正式项目案例内容。Global 只是地图展示渠道，坐标和地图字段只决定是否能进入地图点位，不等于案例详情页。
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/cases"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
-          >
-            <ExternalLink size={16} />
-            查看案例列表
-          </Link>
+    <AdminPageHero
+      kicker="项目案例编辑"
+      title={project.name_zh || project.name_en || project.id}
+      description="本页编辑的是正式项目案例内容。Global 只是地图展示渠道，坐标和地图字段只决定是否能进入地图点位，不等于案例详情页。"
+      actions={(
+        <>
+          <AdminActionLink href="/admin/content/projects/list" Icon={ArrowLeft} label="返回项目列表" />
+          <AdminActionLink href="/cases" Icon={ExternalLink} label="查看案例列表" external />
           {globalStatus.href ? (
-            <Link
-              href={globalStatus.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#F2C6A7] bg-white px-3 text-sm font-semibold text-[#E36F2C] transition hover:border-[#E36F2C] hover:bg-[#FFF7F0]"
-            >
-              <MapPinned size={16} />
-              查看 Global 展示
-            </Link>
+            <AdminActionLink href={globalStatus.href} Icon={MapPinned} label="查看 Global 展示" external />
           ) : null}
-        </div>
-      </div>
-
+        </>
+      )}
+    >
+      <StatusBadge status={project.status} />
       <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
         <InfoCard title="项目 ID" value={project.id} />
         <InfoCard title="更新时间" value={formatDate(project.updated_at)} />
         <InfoCard title="Global 入图状态" value={globalStatus.label} tone={globalStatus.tone === 'ready' ? 'success' : 'neutral'} />
       </div>
-    </section>
+    </AdminPageHero>
   )
 }
 
@@ -391,7 +363,7 @@ function InfoCard({
   tone?: 'neutral' | 'success'
 }) {
   return (
-    <div className="rounded-md border border-white/70 bg-white/82 p-4 shadow-sm">
+    <div className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
       <p className="text-xs font-semibold text-[#61767D]">{title}</p>
       <p className={`mt-2 text-sm font-bold ${tone === 'success' ? 'text-emerald-700' : 'text-[#1E2C31]'}`}>
         {value}

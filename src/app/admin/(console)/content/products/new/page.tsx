@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import { AdminActionLink, AdminPageHero } from '@/components/admin/AdminUI'
 import ProductForm from '@/components/admin/ProductForm'
 import { defaultSiteSettings, normalizeMediaMaxUploadMb } from '@/lib/admin-settings-db'
 import { pool } from '@/lib/db'
@@ -163,40 +164,24 @@ function getSideNavGroups(): AdminSideNavGroup[] {
 
 function Hero() {
   return (
-    <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#E7F7F8_0%,#F7FAFA_58%,#FFF2E7_100%)] p-5 shadow-sm md:p-6">
-      <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-        <div className="min-w-0">
-          <Link
-            href="/admin/content/products/list"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[#1889B6] transition hover:text-[#E36F2C]"
-          >
-            <ArrowLeft size={15} />
-            返回产品列表
-          </Link>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <h1 className="text-3xl font-bold text-[#1E2C31] md:text-4xl">新建产品内容</h1>
-            <span className="inline-flex h-7 items-center rounded-full bg-[#FFF2E7] px-3 text-xs font-semibold text-[#E36F2C]">
-              草稿
-            </span>
-          </div>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-            先创建产品草稿，再补齐图片、中英文内容、详情模块和发布检查。
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
+    <AdminPageHero
+      kicker="产品管理"
+      title="新建产品内容"
+      description="先创建产品草稿，再补齐图片、中英文内容、详情模块和发布检查。"
+      actions={<AdminActionLink href="/admin/content/products/list" Icon={ArrowLeft} label="返回产品列表" />}
+    >
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         <InfoCard title="默认状态" value="草稿" />
         <InfoCard title="保存后去向" value="新版产品编辑页" />
         <InfoCard title="前台状态" value="保存前不会公开展示" />
       </div>
-    </section>
+    </AdminPageHero>
   )
 }
 
 function InfoCard({ title, value }: { title: string; value: string }) {
   return (
-    <div className="rounded-md border border-white/70 bg-white/82 p-4 shadow-sm">
+    <div className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
       <p className="text-xs font-semibold text-[#61767D]">{title}</p>
       <p className="mt-2 text-sm font-bold text-[#1E2C31]">{value}</p>
     </div>

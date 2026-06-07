@@ -2,6 +2,12 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import {
+  AdminActionLink,
+  AdminMetricCard,
+  AdminPageHero,
+  AdminSectionTitle,
+} from '@/components/admin/AdminUI'
 import { pool } from '@/lib/db'
 import {
   ArrowRight,
@@ -23,7 +29,7 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: '客户与线索 - VESSEL' }
+export const metadata = { title: '客户线索 - VESSEL' }
 
 type AdminRole = 'admin' | 'operator'
 
@@ -274,103 +280,44 @@ function buildTodos(summary: LeadSummary): TodoItem[] {
 
 function Hero({ summary }: { summary: LeadSummary }) {
   return (
-    <section id="overview" className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#DDF6F8_0%,#F4FBFC_62%,#FFF3E7_100%)] p-5 shadow-sm md:p-6">
-      <div className="flex flex-col gap-5">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-[#1889B6]">客户与线索</p>
-            <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">客户运营中心</h1>
-            <p className="mt-2 text-sm text-[#61767D]">
-              先处理新线索，再跟进报价、成交和关闭状态。
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <PrimaryAction href="/admin/customers/leads?status=new" Icon={Inbox} label="处理新线索" primary />
-            <PrimaryAction href="/admin/customers/leads" Icon={MessageSquareText} label="查看全部线索" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-          <HeroMetric title="线索总量" value={summary.total} detail="全部有效线索" />
-          <HeroMetric title="新线索" value={summary.new} detail="待处理询盘" tone={summary.new > 0 ? 'orange' : 'green'} />
-          <HeroMetric id="recent" title="近 7 天新增" value={summary.recent7} detail={`近 30 天 ${formatNumber(summary.recent30)}`} tone="green" />
-          <HeroMetric title="跟进中" value={summary.contacting} detail="需要持续更新" tone="blue" />
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function PrimaryAction({
-  href,
-  Icon,
-  label,
-  primary = false,
-}: {
-  href: string
-  Icon: LucideIcon
-  label: string
-  primary?: boolean
-}) {
-  return (
-    <Link
-      href={href}
-      className={`inline-flex h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
-        primary
-          ? 'bg-[#E36F2C] text-white shadow-sm hover:bg-[#C95E22]'
-          : 'border border-[#D8E7E8] bg-white text-[#1E2C31] hover:border-[#E36F2C]/55 hover:text-[#E36F2C]'
-      }`}
+    <AdminPageHero
+      kicker="Lead Operations"
+      title="客户线索中心"
+      description="先处理新线索，再跟进报价、成交和关闭状态；本轮只做线索运营，不扩展订单、支付或会员价格体系。"
+      actions={
+        <>
+          <AdminActionLink href="/admin/customers/leads?status=new" Icon={Inbox} label="处理新线索" primary />
+          <AdminActionLink href="/admin/customers/leads" Icon={MessageSquareText} label="查看全部线索" />
+        </>
+      }
     >
-      <Icon size={16} />
-      {label}
-    </Link>
-  )
-}
-
-function HeroMetric({
-  id,
-  title,
-  value,
-  detail,
-  tone = 'blue',
-}: {
-  id?: string
-  title: string
-  value: number
-  detail: string
-  tone?: 'blue' | 'green' | 'orange'
-}) {
-  const toneClass =
-    tone === 'orange'
-      ? 'from-[#FF9F2F] to-[#F06B22]'
-      : tone === 'green'
-        ? 'from-[#20B486] to-[#118F79]'
-        : 'from-[#1889B6] to-[#3078C8]'
-
-  return (
-    <div id={id} className={`flex min-h-36 flex-col justify-between rounded-md bg-gradient-to-br ${toneClass} p-5 text-white`}>
-      <span className="text-sm font-medium text-white/82">{title}</span>
-      <span>
-        <span className="block text-4xl font-bold">{formatNumber(value)}</span>
-        <span className="mt-2 block text-sm text-white/82">{detail}</span>
-      </span>
-    </div>
-  )
-}
-
-function SectionTitle({ title, detail }: { title: string; detail?: string }) {
-  return (
-    <div>
-      <h2 className="text-xl font-bold text-[#1E2C31]">{title}</h2>
-      {detail && <p className="mt-1 text-sm text-[#61767D]">{detail}</p>}
-    </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+        <AdminMetricCard title="线索总量" value={summary.total} detail="全部有效线索" Icon={MessageSquareText} />
+        <AdminMetricCard
+          title="新线索"
+          value={summary.new}
+          detail="待处理询盘"
+          Icon={Inbox}
+          tone={summary.new > 0 ? 'orange' : 'green'}
+        />
+        <AdminMetricCard
+          id="recent"
+          title="近 7 天新增"
+          value={summary.recent7}
+          detail={`近 30 天 ${formatNumber(summary.recent30)}`}
+          Icon={Clock3}
+          tone="green"
+        />
+        <AdminMetricCard title="跟进中" value={summary.contacting} detail="需要持续更新" Icon={FileText} tone="blue" />
+      </div>
+    </AdminPageHero>
   )
 }
 
 function StatusGrid({ summary }: { summary: LeadSummary }) {
   return (
     <section className="space-y-4">
-      <SectionTitle title="线索状态" detail="按当前跟进状态查看线索数量。" />
+      <AdminSectionTitle title="线索状态" detail="按当前跟进状态查看线索数量。" />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
         {STATUS_CARDS.map((card) => (
           <StatusCard key={card.value} card={card} count={summary[card.value]} />
@@ -410,7 +357,7 @@ function StatusCard({ card, count }: { card: StatusCardConfig; count: number }) 
 function ActionGrid() {
   return (
     <section className="space-y-4">
-      <SectionTitle title="常用动作" />
+      <AdminSectionTitle title="常用动作" />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         {ACTIONS.map((action) => (
           <ActionCard key={action.label} action={action} />
@@ -451,7 +398,7 @@ function WorkflowPanel() {
 
   return (
     <section className="space-y-4">
-      <SectionTitle title="线索处理流程" />
+      <AdminSectionTitle title="线索处理流程" />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
         {steps.map((step, index) => (
           <div key={step} className="rounded-md border border-[#D8E7E8] bg-white p-4">
@@ -590,13 +537,13 @@ export default async function AdminCustomersPage() {
       role={adminRole}
       email={session.user.email}
       title="客户与线索"
-      description="处理新线索，并查看报价、成交和关闭状态。"
+      description="处理新线索，并查看报价、成交和关闭状态。会员、订单和支付不在本轮范围。"
       sideNavGroups={sideNavGroups}
       activeItem="overview"
     >
       <Hero summary={summary} />
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-8">
+        <div className="space-y-6">
           <StatusGrid summary={summary} />
           <ActionGrid />
           <WorkflowPanel />

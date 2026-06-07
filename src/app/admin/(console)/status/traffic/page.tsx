@@ -13,6 +13,7 @@ import {
   type SiteAnalyticsDashboard,
   type AnalyticsTrendRow,
 } from '@/lib/site-analytics'
+import { AdminPageHero } from '@/components/admin/AdminUI'
 import {
   buildStatusBadges,
   MetricCard,
@@ -44,23 +45,18 @@ export default async function AdminStatusTrafficPage() {
       badges={buildStatusBadges(overview, role)}
     >
       <section className="space-y-6">
-        <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-[#1889B6]">B15 网站数据分析 / 转化分析 1.0</p>
-              <h1 className="mt-2 text-2xl font-bold text-[#1E2C31]">第一方网站数据分析</h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-                对齐 300 的网站访问统计、落地页分析、访问行为、线索转化和 Google 分析心智；本页先读取本站第一方事件和现有 leads，不接外部 API，不保存个人隐私字段。
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <StatusPill ok={analytics.available} label={analytics.available ? '事件表可用' : '事件表未就绪'} />
-              <StatusPill ok label="不采集表单隐私" />
-              <StatusPill ok label="不接第三方 API" />
-              <StatusPill ok label={`已排除测试数据 ${formatNumber(thirtyDays.testEvents)} 事件 / ${formatNumber(thirtyDays.testLeads)} 线索`} />
-            </div>
+        <AdminPageHero
+          kicker="B15 网站数据分析 / 转化分析 1.0"
+          title="第一方网站数据分析"
+          description="对齐 300 的网站访问统计、落地页分析、访问行为、线索转化和 Google 分析心智；本页先读取本站第一方事件和现有 leads，不接外部 API，不保存个人隐私字段。"
+        >
+          <div className="flex flex-wrap gap-2">
+            <StatusPill ok={analytics.available} label={analytics.available ? '事件表可用' : '事件表未就绪'} />
+            <StatusPill ok label="不采集表单隐私" />
+            <StatusPill ok label="不接第三方 API" />
+            <StatusPill ok label={`已排除测试数据 ${formatNumber(thirtyDays.testEvents)} 事件 / ${formatNumber(thirtyDays.testLeads)} 线索`} />
           </div>
-        </div>
+        </AdminPageHero>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
           <MetricCard

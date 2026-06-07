@@ -2,6 +2,13 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import {
+  AdminActionLink,
+  AdminMetricCard,
+  AdminPageHero,
+  AdminSectionTitle,
+  AdminSegmentTabs,
+} from '@/components/admin/AdminUI'
 import ProductBatchCategoryBar from '@/components/admin/ProductBatchCategoryBar'
 import ProductListDeleteAction from '@/components/admin/ProductListDeleteAction'
 import { pool } from '@/lib/db'
@@ -159,6 +166,7 @@ type StatCard = {
   value: number
   detail: string
   tone: 'blue' | 'green' | 'orange' | 'neutral'
+  Icon: LucideIcon
 }
 
 type QuickLink = {
@@ -903,32 +911,23 @@ function getSideNavGroups(summary: ProductSummary): AdminSideNavGroup[] {
 
 function SummaryCards({ summary }: { summary: ProductSummary }) {
   const cards: StatCard[] = [
-    { title: '产品总数', value: summary.total, detail: '当前未删除产品', tone: 'blue' },
-    { title: '已发布', value: summary.published, detail: '前台可展示', tone: 'green' },
-    { title: '草稿', value: summary.draft, detail: '待检查或待发布', tone: 'orange' },
-    { title: '待补内容', value: summary.incomplete, detail: '至少一项基础内容缺失', tone: 'neutral' },
+    { title: '产品总数', value: summary.total, detail: '当前未删除产品', tone: 'blue', Icon: Package },
+    { title: '已发布', value: summary.published, detail: '前台可展示', tone: 'green', Icon: CheckCircle2 },
+    { title: '草稿', value: summary.draft, detail: '待检查或待发布', tone: 'orange', Icon: FileText },
+    { title: '待补内容', value: summary.incomplete, detail: '至少一项基础内容缺失', tone: 'neutral', Icon: CircleDashed },
   ]
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       {cards.map((card) => (
-        <div key={card.title} className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold text-[#61767D]">{card.title}</p>
-          <p
-            className={`mt-3 text-3xl font-bold ${
-              card.tone === 'green'
-                ? 'text-emerald-700'
-                : card.tone === 'orange'
-                  ? 'text-[#E36F2C]'
-                  : card.tone === 'neutral'
-                    ? 'text-[#61767D]'
-                    : 'text-[#1889B6]'
-            }`}
-          >
-            {formatNumber(card.value)}
-          </p>
-          <p className="mt-2 text-xs text-[#8A9EA4]">{card.detail}</p>
-        </div>
+        <AdminMetricCard
+          key={card.title}
+          title={card.title}
+          value={formatNumber(card.value)}
+          detail={card.detail}
+          tone={card.tone}
+          Icon={card.Icon}
+        />
       ))}
     </div>
   )
@@ -957,26 +956,7 @@ function StatusTabs({ filters, summary }: { filters: FilterState; summary: Produ
     },
   ]
 
-  return (
-    <div className="flex flex-wrap gap-2">
-      {tabs.map((tab) => (
-        <Link
-          key={tab.label}
-          href={tab.href}
-          className={`inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition ${
-            tab.active
-              ? 'border-[#E36F2C] bg-[#E36F2C] text-white'
-              : 'border-[#D8E7E8] bg-white text-[#1E2C31] hover:border-[#E36F2C]/60 hover:text-[#E36F2C]'
-          }`}
-        >
-          {tab.label}
-          <span className={`rounded-full px-2 py-0.5 text-xs ${tab.active ? 'bg-white/20 text-white' : 'bg-[#FFF2E7] text-[#E36F2C]'}`}>
-            {formatNumber(tab.count)}
-          </span>
-        </Link>
-      ))}
-    </div>
-  )
+  return <AdminSegmentTabs items={tabs.map((tab) => ({ ...tab, count: formatNumber(tab.count) }))} />
 }
 
 function FilterPanel({ filters, options }: { filters: FilterState; options: ProductOptions }) {
@@ -1155,18 +1135,13 @@ function QuickActions() {
   return (
     <div className="flex flex-wrap gap-2">
       {links.map((link) => (
-        <Link
+        <AdminActionLink
           key={link.href}
           href={link.href}
-          className={`inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
-            link.primary
-              ? 'bg-[#E36F2C] text-white hover:bg-[#C95E22]'
-              : 'border border-[#D8E7E8] bg-white text-[#1E2C31] hover:border-[#E36F2C]/60 hover:text-[#E36F2C]'
-          }`}
-        >
-          <link.Icon size={16} />
-          {link.label}
-        </Link>
+          Icon={link.Icon}
+          label={link.label}
+          primary={link.primary}
+        />
       ))}
     </div>
   )
@@ -1194,12 +1169,10 @@ function ProductList({
   return (
     <section className="space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-[#1E2C31]">产品列表</h2>
-          <p className="mt-1 text-sm text-[#61767D]">
-            当前筛选下共 {formatNumber(total)} 个产品，本页显示 {formatNumber(rows.length)} 个。
-          </p>
-        </div>
+        <AdminSectionTitle
+          title="产品列表"
+          detail={`当前筛选下共 ${formatNumber(total)} 个产品，本页显示 ${formatNumber(rows.length)} 个。`}
+        />
       </div>
       <ProductBatchCategoryBar categories={categories} marks={marks} showcases={showcases} />
       <div className="space-y-3">
@@ -1501,18 +1474,12 @@ export default async function AdminContentProductsListPage({ searchParams }: Pag
       sideNavGroups={getSideNavGroups(summary)}
       activeItem="product-list"
     >
-      <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#E7F7F8_0%,#F7FAFA_58%,#FFF2E7_100%)] p-5 shadow-sm md:p-6">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-[#1889B6]">产品管理</p>
-            <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">产品列表</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-              按状态、系列和完整度快速找到要处理的产品；日常编辑进入新版编辑页，维护列表仅作为备用入口。
-            </p>
-          </div>
-          <QuickActions />
-        </div>
-      </section>
+      <AdminPageHero
+        kicker="产品管理"
+        title="产品列表"
+        description="按状态、系列和完整度快速找到要处理的产品；日常编辑进入新版编辑页，维护列表仅作为备用入口。"
+        actions={<QuickActions />}
+      />
 
       <div className="space-y-6">
         <SummaryCards summary={summary} />

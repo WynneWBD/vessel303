@@ -2,6 +2,12 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import {
+  AdminActionLink,
+  AdminMetricCard,
+  AdminPageHero,
+  AdminSectionTitle,
+} from '@/components/admin/AdminUI'
 import { pool } from '@/lib/db'
 import { countUploads, sumStorageSize } from '@/lib/uploads-db'
 import {
@@ -31,15 +37,6 @@ export const dynamic = 'force-dynamic'
 export const metadata = { title: '网站管理 - VESSEL' }
 
 type AdminRole = 'admin' | 'operator'
-
-type SiteStat = {
-  id?: string
-  title: string
-  value: string | number
-  detail: string
-  href?: string
-  tone: 'blue' | 'green' | 'orange' | 'gray'
-}
 
 type SiteApp = {
   title: string
@@ -240,10 +237,6 @@ function getSiteSideNav({
   ]
 }
 
-function formatNumber(n: number): string {
-  return n.toLocaleString('zh-CN')
-}
-
 function formatBytes(n: number): string {
   if (!n) return '0 B'
   if (n < 1024) return `${n} B`
@@ -329,24 +322,19 @@ function Hero({
   visibleModules: number
 }) {
   return (
-    <section id="overview" className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#DDF6F8_0%,#F4FBFC_62%,#FFF3E7_100%)] p-5 shadow-sm md:p-6">
-      <div className="flex flex-col gap-5">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-[#1889B6]">网站管理</p>
-            <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">网站运营中心</h1>
-            <p className="mt-2 text-sm text-[#61767D]">
-              先看站点状态，再进入页面编辑、图片素材和前台查看。
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <PrimaryAction href="/admin/site/visual" Icon={LayoutTemplate} label="编辑网站" primary />
-            <PrimaryAction href="/admin/site/media" Icon={ImageIcon} label="管理图片" />
-            <PrimaryAction href="/" Icon={Eye} label="查看主站" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_1fr_1fr_1fr]">
+    <AdminPageHero
+      kicker="Site Operations"
+      title="网站运营中心"
+      description="先看站点状态，再进入页面编辑、图片素材、SEO、转化和前台查看；Global 只做展示入口，不开放底层地图管理。"
+      actions={
+        <>
+          <AdminActionLink href="/admin/site/visual" Icon={LayoutTemplate} label="编辑网站" primary />
+          <AdminActionLink href="/admin/site/media" Icon={ImageIcon} label="管理图片" />
+          <AdminActionLink href="/" Icon={Eye} label="查看主站" />
+        </>
+      }
+    >
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_1fr_1fr_1fr]">
           <div className="rounded-md border border-white/70 bg-white/80 p-5 shadow-sm">
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -363,61 +351,33 @@ function Hero({
               ))}
             </div>
           </div>
-          <StatCard
+          <AdminMetricCard
             id="drafts"
             title="页面草稿"
             value={pageDraftCount}
             detail={pageDraftCount > 0 ? '等待确认发布' : '暂无待发布草稿'}
             href="/admin/site/visual"
+            Icon={FileText}
             tone={pageDraftCount > 0 ? 'orange' : 'green'}
           />
-          <StatCard
+          <AdminMetricCard
             title="可见模块"
             value={visibleModules}
             detail="Home / About 已接入"
             href="/admin/site/visual"
+            Icon={LayoutTemplate}
             tone="blue"
           />
-          <StatCard
+          <AdminMetricCard
             title="图片素材"
             value={uploadCount}
             detail={uploadBytes ? formatBytes(uploadBytes) : '暂无占用'}
             href="/admin/site/media"
+            Icon={ImageIcon}
             tone={uploadBytes > STORAGE_WARNING_BYTES ? 'orange' : 'green'}
           />
-        </div>
       </div>
-    </section>
-  )
-}
-
-function PrimaryAction({
-  href,
-  Icon,
-  label,
-  primary = false,
-  external = false,
-}: {
-  href: string
-  Icon: LucideIcon
-  label: string
-  primary?: boolean
-  external?: boolean
-}) {
-  return (
-    <Link
-      href={href}
-      target={external ? '_blank' : undefined}
-      rel={external ? 'noreferrer' : undefined}
-      className={`inline-flex h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
-        primary
-          ? 'bg-[#E36F2C] text-white shadow-sm hover:bg-[#C95E22]'
-          : 'border border-[#D8E7E8] bg-white text-[#1E2C31] hover:border-[#E36F2C]/55 hover:text-[#E36F2C]'
-      }`}
-    >
-      <Icon size={16} />
-      {label}
-    </Link>
+    </AdminPageHero>
   )
 }
 
@@ -444,56 +404,12 @@ function DomainCard({ site }: { site: SiteDomain }) {
   )
 }
 
-function StatCard({ id, title, value, detail, href, tone }: SiteStat) {
-  const toneClass =
-    tone === 'orange'
-      ? 'from-[#FF9F2F] to-[#F06B22]'
-      : tone === 'green'
-        ? 'from-[#20B486] to-[#118F79]'
-        : tone === 'gray'
-          ? 'from-[#74838A] to-[#526168]'
-          : 'from-[#1889B6] to-[#3078C8]'
-
-  const content = (
-    <>
-      <span className="flex items-center justify-between gap-3">
-        <span className="text-sm font-medium text-white/82">{title}</span>
-        {href && <ArrowRight size={17} className="text-white/76 transition group-hover:translate-x-0.5" />}
-      </span>
-      <span>
-        <span className="block text-4xl font-bold">
-          {typeof value === 'number' ? formatNumber(value) : value}
-        </span>
-        <span className="mt-2 block text-sm text-white/82">{detail}</span>
-      </span>
-    </>
-  )
-
-  const className = `group flex min-h-40 flex-col justify-between rounded-md bg-gradient-to-br ${toneClass} p-5 text-white shadow-sm transition hover:-translate-y-0.5`
-
-  if (!href) return <div id={id} className={className}>{content}</div>
-  return (
-    <Link id={id} href={href} className={className}>
-      {content}
-    </Link>
-  )
-}
-
-function SectionTitle({ title, detail }: { title: string; detail?: string }) {
-  return (
-    <div>
-      <h2 className="text-xl font-bold text-[#1E2C31]">{title}</h2>
-      {detail && <p className="mt-1 text-sm text-[#61767D]">{detail}</p>}
-    </div>
-  )
-}
-
 function AppGrid({ role }: { role: AdminRole }) {
   const visibleApps = SITE_APPS.filter((app) => !app.adminOnly || role === 'admin')
 
   return (
     <section className="space-y-4">
-      <SectionTitle title="常用管理" detail="网站相关操作集中在这里，日常编辑更容易找到入口。" />
+      <AdminSectionTitle title="常用管理" detail="网站相关操作集中在这里，日常编辑更容易找到入口。" />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {visibleApps.map((app) => (
           <AppCard key={app.title} app={app} />
@@ -506,7 +422,7 @@ function AppGrid({ role }: { role: AdminRole }) {
 function PublishGrid() {
   return (
     <section className="space-y-4">
-      <SectionTitle
+      <AdminSectionTitle
         title="发布与更新"
         detail="对照 300 后台，把产品、项目、新闻和页面草稿的主动动作收到网站管理首页。"
       />
@@ -575,7 +491,7 @@ function WorkflowPanel() {
 
   return (
     <section className="space-y-4">
-      <SectionTitle title="页面运营流程" detail="按受控模块编辑，避免自由改结构造成线上风险。" />
+      <AdminSectionTitle title="页面运营流程" detail="按受控模块编辑，避免自由改结构造成线上风险。" />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
         {steps.map((step, index) => (
           <div key={step} className="rounded-md border border-[#D8E7E8] bg-white p-4">
@@ -756,7 +672,7 @@ export default async function AdminSitePage() {
         visibleModules={visibleModules}
       />
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-8">
+        <div className="space-y-6">
           <PublishGrid />
           <AppGrid role={adminRole} />
           <WorkflowPanel />

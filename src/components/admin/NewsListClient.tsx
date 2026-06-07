@@ -305,20 +305,14 @@ export default function NewsListClient({
   const totalPages = Math.max(1, Math.ceil(total / LIMIT))
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1
-          className="text-[#2C2A28]"
-          style={{
-            fontFamily: 'DM Sans, sans-serif',
-            fontSize: 24,
-            fontWeight: 700,
-            letterSpacing: '-0.02em',
-          }}
-        >
-          新闻管理 News
-        </h1>
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-sm font-bold text-[#1E2C31]">当前新闻</p>
+          <p className="mt-1 text-xs text-[#61767D]">
+            共 {total.toLocaleString('zh-CN')} 条，本页 {rows.length.toLocaleString('zh-CN')} 条。
+          </p>
+        </div>
         <Button asChild size="sm">
           <Link href={`${basePath}/new`}>
             <Plus size={16} />
@@ -328,24 +322,24 @@ export default function NewsListClient({
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3">
         <div className="flex flex-wrap items-center gap-2">
           {STATUS_QUICK_FILTERS.map((option) => (
             <button
               key={option.label}
               type="button"
               onClick={() => handleFilterChange({ status: option.status, schedule: option.schedule ?? '' })}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              className={`inline-flex h-8 items-center rounded-md border px-3 text-xs font-semibold transition-colors ${
                 filters.status === option.status && filters.schedule === (option.schedule ?? '')
-                  ? 'border-[#E36F2C] bg-[#E36F2C]/10 text-[#E36F2C]'
-                  : 'border-[#E5DED4] bg-white text-[#8A8580] hover:text-[#2C2A28]'
+                  ? 'border-[#1889B6] bg-[#1889B6] text-white'
+                  : 'border-[#D8E7E8] bg-white text-[#1E2C31] hover:border-[#1889B6]/65 hover:text-[#1889B6]'
               }`}
             >
               {option.label}
             </button>
           ))}
         </div>
-        <div className="flex flex-wrap items-center gap-3 max-w-xl">
+        <div className="flex max-w-3xl flex-wrap items-center gap-3">
           <Select
             value={filters.status}
             onChange={(e) => handleFilterChange({ status: e.target.value, schedule: '' })}
@@ -380,7 +374,7 @@ export default function NewsListClient({
           placeholder="搜索标题…"
           value={filters.search}
           onChange={(e) => handleFilterChange({ search: e.target.value })}
-          className="flex-1 min-w-[180px]"
+          className="min-w-[180px] flex-1"
         />
         </div>
       </div>
@@ -390,7 +384,7 @@ export default function NewsListClient({
           <div>
             <p className="text-sm font-semibold text-[#1E2C31]">批量操作</p>
             <p className="mt-1 text-xs leading-5 text-[#61767D]">
-              对照 300 底部批量工具栏；B3-10 已开放单篇定时字段，批量定时、批量发布和删除继续后置。
+              目前只开放低风险批量转分类；批量定时、批量发布和批量删除继续后置。
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -441,17 +435,17 @@ export default function NewsListClient({
 
       {/* Table */}
       {rows.length === 0 && !loading ? (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#E5DED4] bg-[#FFFFFF] py-20">
-          <p className="text-[#C4B9AB]">暂无新闻</p>
+        <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-dashed border-[#D8E7E8] bg-white py-16">
+          <p className="text-sm font-semibold text-[#61767D]">暂无新闻</p>
           <Button asChild size="sm" variant="outline">
             <Link href={`${basePath}/new`}>+ 新建第一条新闻</Link>
           </Button>
         </div>
       ) : (
-        <div className="rounded-lg border border-[#E5DED4] overflow-hidden">
+        <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white">
           {/* Table head */}
           <div
-            className="grid gap-3 px-4 py-3 text-xs text-[#8A8580] bg-[#FAF7F2] border-b border-[#E5DED4]"
+            className="grid gap-3 border-b border-[#D8E7E8] bg-[#F7FAFA] px-4 py-2.5 text-xs font-semibold text-[#61767D]"
             style={{ gridTemplateColumns: TABLE_GRID_COLUMNS }}
           >
             <label className="flex items-center justify-center" title="选择当前页新闻">
@@ -460,7 +454,7 @@ export default function NewsListClient({
                 checked={allCurrentPageSelected}
                 onChange={toggleAllCurrentPage}
                 data-testid="news-list-select-current-page"
-                className="h-4 w-4 rounded border-[#C4B9AB]"
+                className="h-4 w-4 rounded border-[#D8E7E8] accent-[#E36F2C]"
                 aria-label="选择当前页新闻"
               />
             </label>
@@ -482,7 +476,7 @@ export default function NewsListClient({
             <div
               key={item.id}
               data-testid={`news-list-row-${item.slug}`}
-              className="grid gap-3 items-center px-4 py-3 border-b border-[#E5DED4] last:border-b-0 hover:bg-[#FAF7F2] transition-colors"
+              className="grid items-center gap-3 border-b border-[#D8E7E8] px-4 py-2.5 transition-colors last:border-b-0 hover:bg-[#F7FAFA]"
               style={{ gridTemplateColumns: TABLE_GRID_COLUMNS }}
             >
               <label className="flex items-center justify-center" title="选择这条新闻">
@@ -491,31 +485,31 @@ export default function NewsListClient({
                   checked={selectedIds.includes(item.id)}
                   onChange={() => toggleSelected(item.id)}
                   data-testid={`news-list-select-${item.slug}`}
-                  className="h-4 w-4 rounded border-[#C4B9AB]"
+                  className="h-4 w-4 rounded border-[#D8E7E8] accent-[#E36F2C]"
                   aria-label={`选择新闻 ${item.title_zh || item.title_en || item.id}`}
                 />
               </label>
 
               {/* Cover */}
-              <div className="w-[60px] h-[38px] rounded overflow-hidden bg-[#E5DED4] shrink-0">
+              <div className="h-[38px] w-[60px] shrink-0 overflow-hidden rounded-md bg-[#E6EEEE]">
                 {item.cover_image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={item.cover_image_url}
                     alt=""
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-[#E5DED4]" />
+                  <div className="h-full w-full bg-[#E6EEEE]" />
                 )}
               </div>
 
               {/* Title */}
               <div className="min-w-0">
-                <p className="text-sm text-[#2C2A28] truncate font-medium">
+                <p className="truncate text-sm font-semibold text-[#1E2C31]">
                   {item.title_zh || '(无中文标题)'}
                 </p>
-                <p className="text-xs text-[#6B6560] truncate mt-0.5">
+                <p className="mt-0.5 truncate text-xs text-[#61767D]">
                   {item.title_en || '(no English title)'}
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -544,14 +538,14 @@ export default function NewsListClient({
                     {item.category_title_zh}
                   </Badge>
                 ) : (
-                  <span className="text-xs text-[#C4B9AB]">未分类</span>
+                  <span className="text-xs text-[#9AA9AD]">未分类</span>
                 )}
               </div>
 
               {/* Status badge */}
               <div>
                 {item.status === 'published' ? (
-                  <Badge className="bg-green-600/20 text-green-400 border-green-600/30 text-xs">
+                  <Badge className="border-emerald-200 bg-emerald-50 text-xs text-emerald-700">
                     已发布
                   </Badge>
                 ) : isScheduled(item) ? (
@@ -559,14 +553,14 @@ export default function NewsListClient({
                     定时
                   </Badge>
                 ) : (
-                  <Badge className="bg-[#E5DED4] text-[#8A8580] border-[#C4B9AB] text-xs">
+                  <Badge className="border-[#F2C6A7] bg-[#FFF2E7] text-xs text-[#E36F2C]">
                     草稿
                   </Badge>
                 )}
               </div>
 
               {/* Updated at */}
-              <p className="text-xs leading-5 text-[#8A8580]">
+              <p className="text-xs leading-5 text-[#61767D]">
                 {isScheduled(item) && item.scheduled_at ? (
                   <>
                     <span className="block font-semibold text-sky-700">{formatDate(item.scheduled_at)}</span>
@@ -585,14 +579,14 @@ export default function NewsListClient({
                     target="_blank"
                     rel="noopener noreferrer"
                     title="查看前台新闻"
-                    className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-[#E36F2C] hover:bg-[#E36F2C]/10 transition-colors"
+                    className="flex h-8 w-8 items-center justify-center rounded text-[#61767D] transition-colors hover:bg-[#F0F7F8] hover:text-[#1889B6]"
                   >
                     <ExternalLink size={14} />
                   </Link>
                 ) : (
                   <span
                     title="草稿未发布，暂无前台入口"
-                    className="h-8 w-8 flex items-center justify-center rounded text-[#C4B9AB]"
+                    className="flex h-8 w-8 items-center justify-center rounded text-[#9AA9AD]"
                   >
                     <ExternalLink size={14} />
                   </span>
@@ -606,7 +600,7 @@ export default function NewsListClient({
                   type="button"
                   title="删除"
                   onClick={() => setPendingDelete(item)}
-                  className="h-8 w-8 flex items-center justify-center rounded text-[#8A8580] hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                  className="flex h-8 w-8 items-center justify-center rounded text-[#61767D] transition-colors hover:bg-red-50 hover:text-red-700"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -617,11 +611,11 @@ export default function NewsListClient({
         </div>
       )}
 
-      {loading && <p className="text-xs text-[#8A8580]">加载中…</p>}
+      {loading && <p className="text-xs text-[#61767D]">加载中…</p>}
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-[#D8E7E8] bg-white px-4 py-3">
           <Button
             variant="outline"
             size="sm"
@@ -630,7 +624,7 @@ export default function NewsListClient({
           >
             上一页
           </Button>
-          <span className="text-sm text-[#8A8580]">
+          <span className="text-sm text-[#61767D]">
             {page} / {totalPages}（共 {total} 条）
           </span>
           <Button

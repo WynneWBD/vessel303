@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import { AdminPageHero } from '@/components/admin/AdminUI'
 import MediaClient from '@/components/admin/MediaClient'
 import {
   defaultSiteSettings,
@@ -104,15 +105,12 @@ export default async function SiteMediaPage({
       sideNavGroups={getSiteToolNav(total)}
       activeItem="media"
     >
+      <AdminPageHero
+        kicker="MEDIA CENTER"
+        title="图片素材"
+        description="这里承接前台产品、案例、新闻、页面模块和 Media Kit 的图片素材。运营上传后优先生成缩略图，前台页面按场景读取小图，原图继续保留作为资产。"
+      />
       <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-        <div className="mb-5 flex flex-col gap-2 border-b border-[#E6EEEE] pb-5">
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#1889B6]">MEDIA CENTER</p>
-          <h1 className="text-2xl font-bold text-[#1E2C31]">图片素材</h1>
-          <p className="max-w-3xl text-sm leading-6 text-[#61767D]">
-            这里承接前台产品、案例、新闻、页面模块和 Media Kit 的图片素材。运营上传后优先生成缩略图，
-            前台页面按场景读取小图，原图继续保留作为资产。
-          </p>
-        </div>
         <MediaClient
           initialUploads={uploads}
           initialTotal={total}
