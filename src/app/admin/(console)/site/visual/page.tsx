@@ -99,15 +99,13 @@ export default async function SiteVisualEditorPage() {
         title="页面模块编辑"
         description="这里是受控页面模块的预览发布入口。字段标注为显示到前台时，发布后会直接影响客户可见内容；仅后台说明不会进入前台。"
       />
-      <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-        <PageVisualEditorClient
-          initialModules={modules}
-          initialStructureDrafts={structureDrafts}
-          initialStructureSnapshots={{ home: homeStructureSnapshots, about: aboutStructureSnapshots }}
-          currentAdminRole={currentAdminRole}
-          maxUploadMb={normalizeMediaMaxUploadMb(settings.mediaMaxUploadMb)}
-        />
-      </section>
+      <PageVisualEditorClient
+        initialModules={modules}
+        initialStructureDrafts={structureDrafts}
+        initialStructureSnapshots={{ home: homeStructureSnapshots, about: aboutStructureSnapshots }}
+        currentAdminRole={currentAdminRole}
+        maxUploadMb={normalizeMediaMaxUploadMb(settings.mediaMaxUploadMb)}
+      />
     </AdminSectionShell>
   )
 }

@@ -27,6 +27,7 @@ import {
   Trash2,
   Type,
   Video,
+  type LucideIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -134,26 +135,6 @@ const EDITABLE_MODULE_IDS = [
 
 const EDITABLE_MODULE_ID_SET = new Set(EDITABLE_MODULE_IDS)
 
-const OPERATING_WORKFLOW = [
-  '先选 Home 或 About，再选左侧模块；也可以直接点击预览里的高亮模块定位。',
-  '文字、链接、图片和显示状态只会先改到当前草稿，保存草稿不会影响前台。',
-  '发布前先看 Desktop / Tablet / Mobile 三种预览，再核对右侧变更摘要和发布前检查。',
-  '确认无误后再发布草稿；发布会立即影响前台，并在发布前自动保留线上版本快照。',
-]
-
-const OPERATING_GUARDRAILS = [
-  '仅支持 Home 安全插入区内受控模板模块的有限新增、排序、隐藏；仍不支持整页自由拖拽、跨区排序、About 新增、核心模块删除。',
-  '不能自由改字体、颜色、间距、布局、SEO、导航和页脚；这些仍由代码和品牌规则控制。',
-  '恢复快照只会恢复到草稿，不会直接影响前台；恢复后仍需要预览、检查并手动发布。',
-  '发现图片、链接、空内容、隐藏模块等检查提醒时，先确认业务意图，再保存或发布。',
-]
-
-const OPERATOR_CHECKLIST = [
-  '保存草稿后刷新预览，确认预览内容和右侧字段一致。',
-  '发布前确认变更摘要没有异常，尤其是图片、链接、显示/隐藏变化。',
-  '发布后回到真实前台 Home / About 核对一次。',
-]
-
 function moduleId(pageModule: Pick<PageModuleRow, 'page_key' | 'module_key'>) {
   return `${pageModule.page_key}:${pageModule.module_key}`
 }
@@ -197,6 +178,81 @@ function CapabilityBadge({ enabled, label }: { enabled: boolean; label: string }
     >
       {label}：{enabled ? '规划支持' : '不支持'}
     </span>
+  )
+}
+
+function visualMetricTone(tone: 'blue' | 'green' | 'orange' | 'gray') {
+  if (tone === 'green') return {
+    border: 'border-l-emerald-500',
+    icon: 'bg-emerald-50 text-emerald-700',
+  }
+  if (tone === 'orange') return {
+    border: 'border-l-[#E36F2C]',
+    icon: 'bg-[#FFF2E7] text-[#E36F2C]',
+  }
+  if (tone === 'gray') return {
+    border: 'border-l-[#8A9EA4]',
+    icon: 'bg-[#F0F2F2] text-[#61767D]',
+  }
+  return {
+    border: 'border-l-[#1889B6]',
+    icon: 'bg-[#EAF6F8] text-[#1889B6]',
+  }
+}
+
+function VisualMetricCard({
+  title,
+  value,
+  detail,
+  Icon,
+  tone,
+}: {
+  title: string
+  value: number | string
+  detail: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+}) {
+  const toneClass = visualMetricTone(tone)
+
+  return (
+    <div className={`rounded-md border border-l-4 border-[#D8E7E8] ${toneClass.border} bg-white p-4 shadow-sm`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#61767D]">{title}</div>
+          <div className="mt-2 break-words text-3xl font-bold text-[#1E2C31]">{value}</div>
+        </div>
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${toneClass.icon}`}>
+          <Icon size={18} />
+        </span>
+      </div>
+      <div className="mt-3 text-xs leading-5 text-[#61767D]">{detail}</div>
+    </div>
+  )
+}
+
+function VisualStatusItem({
+  label,
+  value,
+  detail,
+  tone = 'gray',
+}: {
+  label: string
+  value: string
+  detail: string
+  tone?: 'green' | 'orange' | 'gray'
+}) {
+  const valueClass =
+    tone === 'orange' ? 'text-[#E36F2C]' : tone === 'green' ? 'text-emerald-700' : 'text-[#1E2C31]'
+
+  return (
+    <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-2">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs font-medium text-[#61767D]">{label}</span>
+        <span className={`text-sm font-bold ${valueClass}`}>{value}</span>
+      </div>
+      <p className="mt-1 text-[11px] leading-4 text-[#61767D]">{detail}</p>
+    </div>
   )
 }
 
@@ -966,6 +1022,12 @@ export default function PageVisualEditorClient({
       }),
     [dirtyIds, modules],
   )
+  const currentPageStats = pageStats.find((page) => page.key === selectedPage) ?? pageStats[0]
+  const totalDraftModules = pageStats.reduce((total, page) => total + page.draftCount, 0)
+  const totalUnsavedModules = pageStats.reduce((total, page) => total + page.unsavedCount, 0)
+  const totalPreflightIssues = pageStats.reduce((total, page) => total + page.issueCount, 0)
+  const totalHiddenModules = pageStats.reduce((total, page) => total + page.hiddenCount, 0)
+  const structureDraftCount = structureDrafts.length
   const activeLiveState = active?.live_state ?? null
   const activeDraftChanges = useMemo(
     () => (active ? buildModuleChanges(active, activeLiveState) : []),
@@ -1740,46 +1802,126 @@ export default function PageVisualEditorClient({
 
   return (
     <div className={`flex min-h-[calc(100vh-8rem)] flex-col gap-5 ${activeHasUnsavedChanges ? 'pb-24' : ''}`}>
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <p className="text-xs font-semibold tracking-[0.18em] text-[#E36F2C] uppercase">
-            Visual Editor
-          </p>
-          <h1 className="mt-2 text-2xl font-bold text-[#2C2A28]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-            页面可视化编辑器
-          </h1>
-          <p className="mt-2 max-w-4xl text-sm leading-6 text-[#8A8580]">
-            受控可视化编辑，只能修改已接入 page_modules 的文字、链接、图片和模块显示状态。
-            支持重复型模块内的项目新增、隐藏、恢复和排序；Home 安全插入区支持受控模板的有限新增、排序和结构隐藏。
-            核心模块、About 结构、自由样式和自由布局仍保持锁定。
-            当前编辑的是草稿预览：保存草稿不会影响前台，点击发布后才会上线；发布前会自动保留当前线上版本快照。
-          </p>
-        </div>
+      <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">Visual Operations</p>
+            <h1 className="mt-2 text-2xl font-bold text-[#1E2C31] md:text-3xl">
+              页面模块运营台
+            </h1>
+            <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
+              受控编辑 Home / About 的文字、链接、图片、模块显示状态和 Home 安全插入区结构草稿。保存草稿不影响前台，发布后才上线。
+            </p>
 
-        <div className="flex flex-col items-start gap-2 lg:items-end">
-          <div className="flex flex-wrap gap-2 rounded-lg border border-[#E5DED4] bg-white p-1">
-            {PAGES.map((page) => {
-              const activePage = page.key === selectedPage
-              return (
-                <button
-                  key={page.key}
-                  type="button"
-                  onClick={() => handleSelectPage(page.key)}
-                  className="rounded-md px-4 py-2 text-sm font-medium transition-colors"
-                  style={{
-                    background: activePage ? '#E36F2C' : 'transparent',
-                    color: activePage ? '#FFFFFF' : '#6B625B',
-                  }}
-                >
-                  {page.label}
-                </button>
-              )
-            })}
+            <div className="mt-4 flex flex-wrap gap-2 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-1">
+              {PAGES.map((page) => {
+                const activePage = page.key === selectedPage
+                return (
+                  <button
+                    key={page.key}
+                    type="button"
+                    onClick={() => handleSelectPage(page.key)}
+                    className={`inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-semibold transition ${
+                      activePage ? 'bg-[#1889B6] text-white shadow-sm' : 'text-[#1E2C31] hover:bg-white hover:text-[#1889B6]'
+                    }`}
+                  >
+                    {page.label}
+                  </button>
+                )
+              })}
+            </div>
           </div>
-          <p className="text-xs text-[#8A8580]">
-            {hasAnyUnsavedChanges ? `${dirtyIds.size} 个模块有未保存草稿修改` : '当前没有未保存草稿修改'}
-          </p>
+
+          <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Publish Desk</p>
+                <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">发布状态</h2>
+              </div>
+              <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                hasAnyUnsavedChanges ? 'bg-[#FFF2E7] text-[#E36F2C]' : 'bg-emerald-50 text-emerald-700'
+              }`}>
+                {hasAnyUnsavedChanges ? `${dirtyIds.size} 个未保存` : '无未保存'}
+              </span>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <VisualStatusItem
+                label="当前页面"
+                value={currentPage.label}
+                detail={`${currentPage.path} · ${currentPageStats.moduleCount} 个模块`}
+                tone="gray"
+              />
+              <VisualStatusItem
+                label="当前模块"
+                value={readableModuleTitle(active)}
+                detail={activeHasSavedDraft ? '有已保存草稿，发布后影响前台。' : '当前使用线上版本。'}
+                tone={activeHasSavedDraft ? 'orange' : 'green'}
+              />
+              <VisualStatusItem
+                label="预览设备"
+                value={currentPreviewDevice.label}
+                detail={frameLoaded ? '草稿预览已加载。' : '预览加载中。'}
+                tone={frameLoaded ? 'green' : 'gray'}
+              />
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setFrameLoaded(false)
+                  setPreviewVersion(Date.now())
+                }}
+              >
+                <RefreshCcw size={14} />
+                刷新预览
+              </Button>
+              <Link
+                href={currentPage.path}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/65 hover:text-[#1889B6]"
+              >
+                <ArrowUpRight size={14} />
+                真实前台
+              </Link>
+            </div>
+          </div>
         </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <VisualMetricCard
+          title="模块草稿"
+          value={totalDraftModules}
+          detail="已保存但未发布的模块草稿"
+          Icon={Save}
+          tone={totalDraftModules > 0 ? 'orange' : 'green'}
+        />
+        <VisualMetricCard
+          title="未保存修改"
+          value={totalUnsavedModules}
+          detail="离开页面前需要保存或撤销"
+          Icon={Clock3}
+          tone={totalUnsavedModules > 0 ? 'orange' : 'green'}
+        />
+        <VisualMetricCard
+          title="发布检查项"
+          value={totalPreflightIssues}
+          detail={`隐藏模块 ${totalHiddenModules} 个`}
+          Icon={CheckCircle2}
+          tone={totalPreflightIssues > 0 ? 'orange' : 'green'}
+        />
+        <VisualMetricCard
+          title="结构草稿"
+          value={structureDraftCount}
+          detail="Home / About 页面级结构草稿"
+          Icon={Layers3}
+          tone={structureDraftCount > 0 ? 'orange' : 'gray'}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -1790,99 +1932,41 @@ export default function PageVisualEditorClient({
               key={page.key}
               type="button"
               onClick={() => handleSelectPage(page.key)}
-              className="rounded-lg border bg-white p-4 text-left transition-colors"
-              style={{
-                borderColor: isActive ? '#E36F2C' : '#E5DED4',
-                boxShadow: isActive ? '0 0 0 3px rgba(227,111,44,0.10)' : 'none',
-              }}
+              className={`rounded-md border bg-white p-4 text-left shadow-sm transition ${
+                isActive ? 'border-[#1889B6] ring-2 ring-[#1889B6]/10' : 'border-[#D8E7E8] hover:border-[#1889B6]/65'
+              }`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-[#2C2A28]">{page.label} 页面总览</p>
-                  <p className="mt-1 text-xs text-[#8A8580]">{page.path}</p>
+                  <p className="text-sm font-bold text-[#1E2C31]">{page.label} 页面总览</p>
+                  <p className="mt-1 text-xs text-[#61767D]">{page.path}</p>
                 </div>
-                <span className="rounded-full bg-[#F5F2ED] px-2 py-1 text-xs text-[#6B625B]">
+                <span className="rounded-full bg-[#F0F7F8] px-2 py-1 text-xs font-semibold text-[#1889B6]">
                   {page.moduleCount} 个模块
                 </span>
               </div>
               <div className="mt-4 grid grid-cols-4 gap-2 text-center">
-                <div className="rounded-md bg-[#F8F6F2] px-2 py-2">
-                  <p className="text-base font-semibold text-[#2C2A28]">{page.draftCount}</p>
-                  <p className="mt-1 text-[11px] text-[#8A8580]">草稿</p>
+                <div className="rounded-md bg-[#F7FAFA] px-2 py-2">
+                  <p className="text-base font-bold text-[#1E2C31]">{page.draftCount}</p>
+                  <p className="mt-1 text-[11px] text-[#61767D]">草稿</p>
                 </div>
-                <div className="rounded-md bg-[#F8F6F2] px-2 py-2">
-                  <p className="text-base font-semibold text-[#2C2A28]">{page.unsavedCount}</p>
-                  <p className="mt-1 text-[11px] text-[#8A8580]">未保存</p>
+                <div className="rounded-md bg-[#F7FAFA] px-2 py-2">
+                  <p className="text-base font-bold text-[#1E2C31]">{page.unsavedCount}</p>
+                  <p className="mt-1 text-[11px] text-[#61767D]">未保存</p>
                 </div>
-                <div className="rounded-md bg-[#F8F6F2] px-2 py-2">
-                  <p className="text-base font-semibold text-[#2C2A28]">{page.issueCount}</p>
-                  <p className="mt-1 text-[11px] text-[#8A8580]">检查项</p>
+                <div className="rounded-md bg-[#F7FAFA] px-2 py-2">
+                  <p className="text-base font-bold text-[#1E2C31]">{page.issueCount}</p>
+                  <p className="mt-1 text-[11px] text-[#61767D]">检查项</p>
                 </div>
-                <div className="rounded-md bg-[#F8F6F2] px-2 py-2">
-                  <p className="text-base font-semibold text-[#2C2A28]">{page.hiddenCount}</p>
-                  <p className="mt-1 text-[11px] text-[#8A8580]">隐藏</p>
+                <div className="rounded-md bg-[#F7FAFA] px-2 py-2">
+                  <p className="text-base font-bold text-[#1E2C31]">{page.hiddenCount}</p>
+                  <p className="mt-1 text-[11px] text-[#61767D]">隐藏</p>
                 </div>
               </div>
             </button>
           )
         })}
       </div>
-
-      <section className="rounded-lg border border-[#E5DED4] bg-white p-4">
-        <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-[#2C2A28]">运营使用规范</p>
-            <p className="mt-1 text-xs leading-5 text-[#8A8580]">
-              这里是运营编辑 Home / About 的主入口。当前编辑器只做受控内容编辑和草稿发布，不做自由建站。
-            </p>
-          </div>
-          <span className="inline-flex w-fit rounded-full bg-[#E36F2C]/10 px-3 py-1 text-xs font-medium text-[#E36F2C]">
-            保存草稿不影响前台，发布后立即上线
-          </span>
-        </div>
-
-        <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-3">
-          <div className="rounded-md bg-[#FAF7F2] p-3">
-            <p className="text-xs font-semibold text-[#2C2A28]">推荐流程</p>
-            <ol className="mt-3 space-y-2 text-xs leading-5 text-[#6B625B]">
-              {OPERATING_WORKFLOW.map((item, index) => (
-                <li key={item} className="flex gap-2">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-[#E36F2C]">
-                    {index + 1}
-                  </span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          <div className="rounded-md bg-[#FAF7F2] p-3">
-            <p className="text-xs font-semibold text-[#2C2A28]">安全边界</p>
-            <ul className="mt-3 space-y-2 text-xs leading-5 text-[#6B625B]">
-              {OPERATING_GUARDRAILS.map((item) => (
-                <li key={item} className="flex gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E36F2C]" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="rounded-md bg-[#FAF7F2] p-3">
-            <p className="text-xs font-semibold text-[#2C2A28]">发布前确认</p>
-            <ul className="mt-3 space-y-2 text-xs leading-5 text-[#6B625B]">
-              {OPERATOR_CHECKLIST.map((item) => (
-                <li key={item} className="flex gap-2">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-[#E36F2C]">
-                    ✓
-                  </span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
 
       <ModuleCatalogPanel
         selectedPage={selectedPage}
