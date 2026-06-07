@@ -86,12 +86,21 @@ export type AnalyticsHourlyTrendRow = {
   formSubmits: number
 }
 
+export type AnalyticsBehaviorStep = {
+  step: number
+  label: string
+  visits: number
+  retainedRate: number
+  nodes: AnalyticsRankRow[]
+}
+
 export type SiteAnalyticsDashboard = {
   available: boolean
   periods: AnalyticsPeriodMetric[]
   windows: AnalyticsWindowMetric[]
   hourlyTrend: AnalyticsHourlyTrendRow[]
   dailyTrend: AnalyticsTrendRow[]
+  behaviorSteps: AnalyticsBehaviorStep[]
   topPages: AnalyticsRankRow[]
   topReferrers: AnalyticsRankRow[]
   sourceTypes: AnalyticsRankRow[]
@@ -158,6 +167,7 @@ export const EMPTY_ANALYTICS_DASHBOARD: SiteAnalyticsDashboard = {
   })),
   hourlyTrend: [],
   dailyTrend: [],
+  behaviorSteps: [],
   topPages: [],
   topReferrers: [],
   sourceTypes: [],
@@ -498,6 +508,74 @@ async function loadHourlyTrend(): Promise<AnalyticsHourlyTrendRow[]> {
   }))
 }
 
+async function loadBehaviorSteps(days = 30): Promise<AnalyticsBehaviorStep[]> {
+  const res = await pool.query<{
+    step: string
+    path: string
+    visits: string
+    total: string
+  }>(
+    `WITH ordered AS (
+       SELECT
+         ROW_NUMBER() OVER (
+           PARTITION BY COALESCE(session_id_hash, visitor_id_hash, id::text)
+           ORDER BY created_at ASC, id ASC
+         ) AS step,
+         path
+       FROM site_events
+       WHERE event_name = 'page_view'
+         AND ${REAL_EVENT_CONDITION}
+         AND created_at >= NOW() - ($1::int * INTERVAL '1 day')
+     ),
+     grouped AS (
+       SELECT step, path, COUNT(*)::text AS visits
+       FROM ordered
+       WHERE step BETWEEN 1 AND 5
+       GROUP BY step, path
+     ),
+     ranked AS (
+       SELECT
+         step,
+         path,
+         visits,
+         SUM(visits::int) OVER (PARTITION BY step)::text AS total,
+         ROW_NUMBER() OVER (PARTITION BY step ORDER BY visits::int DESC, path ASC) AS rank
+       FROM grouped
+     )
+     SELECT step::text, path, visits, total
+     FROM ranked
+     WHERE rank <= 6
+     ORDER BY step ASC, visits::int DESC, path ASC`,
+    [days],
+  )
+  const byStep = new Map<number, { visits: number; nodes: AnalyticsRankRow[] }>()
+
+  for (const row of res.rows) {
+    const step = toInt(row.step)
+    const visits = toInt(row.total)
+    const nodes = byStep.get(step)?.nodes ?? []
+    nodes.push({
+      key: row.path,
+      label: row.path,
+      value: toInt(row.visits),
+    })
+    byStep.set(step, { visits, nodes })
+  }
+
+  const entryVisits = byStep.get(1)?.visits ?? 0
+  return [1, 2, 3, 4, 5].map((step) => {
+    const item = byStep.get(step)
+    const visits = item?.visits ?? 0
+    return {
+      step,
+      label: step === 1 ? '入口页面' : `行为 ${step - 1}`,
+      visits,
+      retainedRate: entryVisits > 0 ? visits / entryVisits : 0,
+      nodes: item?.nodes ?? [],
+    }
+  })
+}
+
 async function loadDailyTrend(days = 14): Promise<AnalyticsTrendRow[]> {
   const [eventRes, leadCounts] = await Promise.all([
     pool.query<{
@@ -561,12 +639,25 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
       return EMPTY_ANALYTICS_DASHBOARD
     }
 
-    const [periods, windows, hourlyTrend, dailyTrend, topPages, topReferrers, sourceTypes, landingPages, conversionPaths, recentEvents] =
+    const [
+      periods,
+      windows,
+      hourlyTrend,
+      dailyTrend,
+      behaviorSteps,
+      topPages,
+      topReferrers,
+      sourceTypes,
+      landingPages,
+      conversionPaths,
+      recentEvents,
+    ] =
       await Promise.all([
         Promise.all([loadPeriodMetric('today'), loadPeriodMetric('yesterday')]),
         Promise.all([loadWindowMetric(7), loadWindowMetric(30)]),
         loadHourlyTrend(),
         loadDailyTrend(14),
+        loadBehaviorSteps(30),
         loadRankRows(
           `SELECT path AS key, COUNT(*)::text AS value,
                   COUNT(DISTINCT visitor_id_hash) FILTER (WHERE visitor_id_hash IS NOT NULL)::text AS secondary
@@ -649,6 +740,7 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
       windows,
       hourlyTrend,
       dailyTrend,
+      behaviorSteps,
       topPages,
       topReferrers,
       sourceTypes,

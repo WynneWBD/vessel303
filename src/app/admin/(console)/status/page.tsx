@@ -8,6 +8,7 @@ import {
   formatAnalyticsPercent,
   loadSiteAnalyticsDashboard,
   sourceTypeLabel,
+  type AnalyticsBehaviorStep,
   type AnalyticsPeriodMetric,
   type AnalyticsRankRow,
   type AnalyticsTrendRow,
@@ -127,6 +128,7 @@ export default async function AdminStatusPage() {
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
                   <TrendPreview rows={analytics.dailyTrend} />
                   <BehaviorFlowPreview
+                    behaviorSteps={analytics.behaviorSteps}
                     topPages={analytics.topPages}
                     landingPages={analytics.landingPages}
                     sourceTypes={analytics.sourceTypes}
@@ -466,16 +468,19 @@ function TrendPreview({ rows }: { rows: AnalyticsTrendRow[] }) {
 }
 
 function BehaviorFlowPreview({
+  behaviorSteps,
   topPages,
   landingPages,
   sourceTypes,
   windowMetric,
 }: {
+  behaviorSteps: AnalyticsBehaviorStep[]
   topPages: AnalyticsRankRow[]
   landingPages: AnalyticsRankRow[]
   sourceTypes: AnalyticsRankRow[]
   windowMetric: AnalyticsWindowMetric
 }) {
+  const hasBehaviorSteps = behaviorSteps.some((step) => step.nodes.length > 0)
   const actionRows = landingPages
     .filter((row) => (row.secondary ?? 0) > 0)
     .map((row) => ({ ...row, value: row.secondary ?? 0 }))
@@ -496,12 +501,26 @@ function BehaviorFlowPreview({
           行为分析
         </Link>
       </div>
-      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
-        <FlowColumn title="入口页面" rows={topPages} empty="暂无入口" />
-        <FlowColumn title="后续动作" rows={actionRows} empty="暂无动作" />
-        <FlowColumn title="来源类型" rows={sourceTypes} empty="暂无来源" formatLabel={sourceTypeLabel} />
-        <FlowColumn title="线索结果" rows={conversionRows} empty="暂无线索" percentKey="rate" />
-      </div>
+      {hasBehaviorSteps ? (
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-5">
+          {behaviorSteps.map((step) => (
+            <FlowColumn
+              key={step.step}
+              title={step.label}
+              rows={step.nodes}
+              empty="暂无路径"
+              meta={`${formatNumber(step.visits)} 次 / ${formatAnalyticsPercent(step.retainedRate)}`}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+          <FlowColumn title="入口页面" rows={topPages} empty="暂无入口" />
+          <FlowColumn title="后续动作" rows={actionRows} empty="暂无动作" />
+          <FlowColumn title="来源类型" rows={sourceTypes} empty="暂无来源" formatLabel={sourceTypeLabel} />
+          <FlowColumn title="线索结果" rows={conversionRows} empty="暂无线索" percentKey="rate" />
+        </div>
+      )}
     </div>
   )
 }
@@ -512,18 +531,23 @@ function FlowColumn({
   empty,
   formatLabel,
   percentKey,
+  meta,
 }: {
   title: string
   rows: AnalyticsRankRow[]
   empty: string
   formatLabel?: (value: string) => string
   percentKey?: string
+  meta?: string
 }) {
   const displayRows = rows.slice(0, 5)
 
   return (
     <div className="min-w-0 rounded-md border border-[#E6EEEE] bg-[#FBFDFD]">
-      <div className="border-b border-[#E6EEEE] px-3 py-2 text-xs font-bold text-[#1E2C31]">{title}</div>
+      <div className="border-b border-[#E6EEEE] px-3 py-2">
+        <div className="text-xs font-bold text-[#1E2C31]">{title}</div>
+        {meta ? <div className="mt-1 text-[11px] font-semibold text-[#1889B6]">{meta}</div> : null}
+      </div>
       <div className="divide-y divide-[#E6EEEE]">
         {displayRows.length === 0 ? (
           <div className="px-3 py-3 text-xs text-[#8A9EA4]">{empty}</div>

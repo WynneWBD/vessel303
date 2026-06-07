@@ -9,6 +9,7 @@ import {
   formatAnalyticsPercent,
   loadSiteAnalyticsDashboard,
   sourceTypeLabel,
+  type AnalyticsBehaviorStep,
   type AnalyticsHourlyTrendRow,
   type AnalyticsPeriodMetric,
   type AnalyticsWindowMetric,
@@ -124,7 +125,7 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
           />
         </div>
 
-          <TrafficModeNav
+        <TrafficModeNav
           pageViews={activeMetric.pageViews}
           landingPages={analytics.landingPages.length}
           actions={activeMetric.ctaClicks + activeMetric.contactRedirects + activeMetric.formSubmits}
@@ -156,6 +157,7 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
 
         <section id="behavior-analysis" className="space-y-4">
           <SectionTitle title="访问行为分析" detail="把 Top Pages、referrer、source type 和动作来源放在同屏，先判断访客从哪里来、看什么、点什么。" />
+          <BehaviorPathBoard steps={analytics.behaviorSteps} />
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(360px,0.75fr)]">
             <section className="space-y-4">
               <SectionTitle title="Top Pages" detail="近 30 天访问最多的前台页面。" />
@@ -444,6 +446,69 @@ function TrendTable({ rows }: { rows: TrendDisplayRow[] }) {
             ))}
           </tbody>
         </table>
+    </div>
+  )
+}
+
+function BehaviorPathBoard({ steps }: { steps: AnalyticsBehaviorStep[] }) {
+  const hasData = steps.some((step) => step.nodes.length > 0)
+
+  if (!hasData) {
+    return (
+      <div className="rounded-md border border-[#D8E7E8] bg-white p-5 text-sm text-[#61767D] shadow-sm">
+        暂无足够的访问路径数据。
+      </div>
+    )
+  }
+
+  return (
+    <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h3 className="text-sm font-bold text-[#1E2C31]">访问路径流</h3>
+          <p className="mt-1 text-xs text-[#61767D]">按匿名 session / visitor 的前 5 次页面访问聚合，只显示路径和次数。</p>
+        </div>
+        <span className="text-xs text-[#8A9EA4]">不是表单个人信息，不保存 IP。</span>
+      </div>
+      <div className="overflow-x-auto">
+        <div className="grid min-w-[980px] grid-cols-5 gap-3 p-4">
+          {steps.map((step) => (
+            <div key={step.step} className="min-w-0 rounded-md border border-[#E6EEEE] bg-[#FBFDFD]">
+              <div className="border-b border-[#E6EEEE] px-3 py-3">
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="text-xs font-bold text-[#1E2C31]">{step.label}</h4>
+                  <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-[#1889B6]">
+                    {formatAnalyticsPercent(step.retainedRate)}
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] text-[#8A9EA4]">{formatNumber(step.visits)} 次访问</p>
+              </div>
+              <div className="divide-y divide-[#E6EEEE]">
+                {step.nodes.length === 0 ? (
+                  <div className="px-3 py-4 text-xs text-[#8A9EA4]">暂无路径</div>
+                ) : (
+                  step.nodes.map((node) => (
+                    <div key={node.key} className="px-3 py-2.5">
+                      <div className="truncate text-xs font-semibold text-[#1E2C31]" title={node.label}>
+                        {node.label}
+                      </div>
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="h-1.5 flex-1 rounded-full bg-[#E6EEEE]">
+                          <span
+                            className="block h-1.5 rounded-full bg-[#1889B6]"
+                            style={{ width: `${Math.max(4, Math.round((node.value / Math.max(1, step.visits)) * 100))}%` }}
+                          />
+                        </span>
+                        <span className="w-8 shrink-0 text-right text-[11px] font-bold text-[#1889B6]">{formatNumber(node.value)}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
