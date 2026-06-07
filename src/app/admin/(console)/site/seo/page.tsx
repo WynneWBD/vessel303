@@ -63,6 +63,18 @@ type IndexFoundationItem = {
   Icon: LucideIcon
 }
 
+type SeoPriorityTone = 'critical' | 'warning' | 'ready' | 'protected'
+
+type SeoPriorityItem = {
+  title: string
+  owner: string
+  count: number | string
+  detail: string
+  href?: string
+  Icon: LucideIcon
+  tone: SeoPriorityTone
+}
+
 const EMPTY_CONTENT_SUMMARY: ContentSeoSummary = {
   total: 0,
   published: 0,
@@ -429,6 +441,87 @@ function loadIndexFoundationItems(): IndexFoundationItem[] {
   ]
 }
 
+function priorityToneClassName(tone: SeoPriorityTone): string {
+  if (tone === 'critical') return 'border-l-[#E36F2C] bg-[#FFF8F2]'
+  if (tone === 'warning') return 'border-l-[#1889B6] bg-[#F7FAFA]'
+  if (tone === 'ready') return 'border-l-emerald-500 bg-emerald-50'
+  return 'border-l-[#8A9EA4] bg-[#F5F2ED]'
+}
+
+function priorityBadgeClassName(tone: SeoPriorityTone): string {
+  if (tone === 'critical') return 'bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'warning') return 'bg-[#EAF6F8] text-[#1889B6]'
+  if (tone === 'ready') return 'bg-emerald-100 text-emerald-800'
+  return 'bg-white text-[#61767D]'
+}
+
+function buildSeoPriorityItems({
+  products,
+  news,
+  projects,
+  indexFoundationItems,
+}: {
+  products: ContentSeoSummary
+  news: ContentSeoSummary
+  projects: ContentSeoSummary
+  indexFoundationItems: IndexFoundationItem[]
+}): SeoPriorityItem[] {
+  const contentItems: SeoPriorityItem[] = [
+    {
+      title: '产品详情 SEO 字段',
+      owner: '内容管理 / 产品',
+      count: products.missing,
+      detail: products.missing > 0
+        ? '已发布产品仍有 SEO 标题或描述缺项，优先影响产品详情页搜索摘要质量。'
+        : '已发布产品暂无 SEO 字段缺项。',
+      href: products.href,
+      Icon: Package,
+      tone: products.missing > 0 ? 'critical' : 'ready',
+    },
+    {
+      title: '新闻详情 SEO 字段',
+      owner: '内容管理 / 新闻',
+      count: news.missing,
+      detail: news.missing > 0
+        ? '已发布新闻仍有 SEO 标题或描述缺项，优先补齐会影响外部搜索展示的文章。'
+        : '已发布新闻暂无 SEO 字段缺项。',
+      href: news.href,
+      Icon: Newspaper,
+      tone: news.missing > 0 ? 'critical' : 'ready',
+    },
+    {
+      title: '案例详情派生字段',
+      owner: '内容管理 / 项目案例',
+      count: projects.missing,
+      detail: projects.missing > 0
+        ? '已发布案例缺描述或封面，会影响详情页 metadata 派生质量。'
+        : '已发布案例派生 metadata 基础字段完整。',
+      href: projects.href,
+      Icon: MapPinned,
+      tone: projects.missing > 0 ? 'critical' : 'ready',
+    },
+  ]
+
+  const foundationItems: SeoPriorityItem[] = indexFoundationItems.map((item) => ({
+    title: item.title,
+    owner: '网站管理 / 收录基础',
+    count: indexStatusLabel(item.status),
+    detail: item.detail,
+    href: item.title === 'Search Console' ? '/admin/site/seo#search-console' : undefined,
+    Icon: item.Icon,
+    tone: item.status === 'waiting' ? 'warning' : item.status === 'protected' ? 'protected' : 'ready',
+  }))
+
+  const score = (item: SeoPriorityItem) => {
+    if (item.tone === 'critical') return 0
+    if (item.tone === 'warning') return 1
+    if (item.tone === 'protected') return 2
+    return 3
+  }
+
+  return [...contentItems, ...foundationItems].sort((a, b) => score(a) - score(b))
+}
+
 function SectionTitle({ title, detail }: { title: string; detail?: string }) {
   return (
     <div>
@@ -471,7 +564,7 @@ function IndexFoundationPanel({ items }: { items: IndexFoundationItem[] }) {
   ]
 
   return (
-    <section className="space-y-4">
+    <section id="search-console" className="space-y-4">
       <SectionTitle
         title="索引基础与 Search Console 接入清单"
         detail="对照 300 的网站地图、Robots、TDK 设置和搜索引擎连接，本页跟踪 URL 前缀验证、sitemap 提交和后续索引观察。"
@@ -573,6 +666,51 @@ function MetricPill({
       <span className="block text-lg font-bold text-[#1E2C31]">{formatNumber(value)}</span>
       {label}
     </span>
+  )
+}
+
+function SeoPriorityPanel({ items }: { items: SeoPriorityItem[] }) {
+  return (
+    <section className="space-y-4">
+      <SectionTitle
+        title="SEO 处理优先级"
+        detail="先处理会影响搜索展示和收录基础的项目，再回到来源后台补字段；本页只做只读排序和跳转。"
+      />
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-4">
+        {items.slice(0, 8).map((item) => {
+          const Icon = item.Icon
+          const content = (
+            <>
+              <div className="flex items-start justify-between gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white text-[#1889B6]">
+                  <Icon size={18} />
+                </span>
+                <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${priorityBadgeClassName(item.tone)}`}>
+                  {typeof item.count === 'number' ? `${formatNumber(item.count)} 项` : item.count}
+                </span>
+              </div>
+              <h3 className="mt-4 text-base font-bold text-[#1E2C31]">{item.title}</h3>
+              <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{item.owner}</p>
+              <p className="mt-3 text-sm leading-6 text-[#61767D]">{item.detail}</p>
+              {item.href ? (
+                <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
+                  去处理
+                  <ArrowRight size={14} />
+                </span>
+              ) : null}
+            </>
+          )
+          const className = `rounded-md border border-l-4 border-[#D8E7E8] p-4 shadow-sm transition ${priorityToneClassName(item.tone)}`
+
+          if (!item.href) return <div key={`${item.owner}-${item.title}`} className={className}>{content}</div>
+          return (
+            <Link key={`${item.owner}-${item.title}`} href={item.href} className={`${className} hover:-translate-y-0.5 hover:border-[#1889B6]/60`}>
+              {content}
+            </Link>
+          )
+        })}
+      </div>
+    </section>
   )
 }
 
@@ -701,6 +839,7 @@ export default async function AdminSiteSeoPage() {
   const missingTotal = products.missing + news.missing + projects.missing
   const sideNavGroups = getSeoSideNav(adminRole === 'admin')
   const indexFoundationItems = loadIndexFoundationItems()
+  const priorityItems = buildSeoPriorityItems({ products, news, projects, indexFoundationItems })
 
   return (
     <AdminSectionShell
@@ -732,6 +871,8 @@ export default async function AdminSiteSeoPage() {
       </AdminPageHero>
 
       <AlignmentPanel />
+
+      <SeoPriorityPanel items={priorityItems} />
 
       <IndexFoundationPanel items={indexFoundationItems} />
 
