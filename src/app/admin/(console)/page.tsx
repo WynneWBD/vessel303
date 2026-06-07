@@ -239,14 +239,18 @@ async function countMediaIssueUploads(): Promise<number> {
 
   const variantsReady = await columnExists('public.uploads', 'variants')
   const variantsIssue = variantsReady
-    ? `OR variants IS NULL OR variants = '{}'::jsonb`
+    ? `OR variants IS NULL
+         OR variants = '{}'::jsonb
+         OR NOT (variants ? 'thumb')
+         OR NOT (variants ? 'card')
+         OR NOT (variants ? 'detail')`
     : ''
   const res = await pool.query<{ count: string }>(
     `SELECT COUNT(*)::text AS count
      FROM uploads
      WHERE mime ILIKE 'image/%'
        AND (
-         COALESCE(size, 0) > 3000000
+         COALESCE(size, 0) > 1572864
          ${variantsIssue}
        )`,
   )
@@ -366,7 +370,7 @@ function buildTodos({
     {
       title: '媒体图片风险',
       detail: mediaIssueCount > 0 ? '检查大图或缺少缩略图派生' : '暂无图片风险',
-      href: '/admin/site/media',
+      href: '/admin/site/media?view=issues',
       count: mediaIssueCount,
       ok: mediaIssueCount === 0,
     },

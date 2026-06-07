@@ -74,6 +74,7 @@ export default async function SiteMediaPage({
   }
   const filters = {
     mime: getStr('mime') ?? 'all',
+    view: getStr('view') ?? '',
     search: getStr('search') ?? '',
   }
   const page = Math.max(1, Number(getStr('page') ?? 1) || 1)
@@ -82,6 +83,7 @@ export default async function SiteMediaPage({
   const [{ uploads, total }, bytes, settings] = await Promise.all([
     listUploads({
       mime: filters.mime,
+      view: filters.view,
       search: filters.search || undefined,
       page,
       limit,

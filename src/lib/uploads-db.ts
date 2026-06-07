@@ -18,6 +18,7 @@ export type Upload = {
 export type UploadFilter = {
   search?: string
   mime?: string // 'all' | 'jpeg' | 'png' | 'webp' | 'gif' | 'svg'
+  view?: string // 'issues' shows large images or images missing generated variants.
   page?: number
   limit?: number
 }
@@ -120,6 +121,17 @@ function buildWhere(filter: UploadFilter) {
   if (filter.search) {
     params.push(`%${filter.search}%`)
     conds.push(`u.filename ILIKE $${params.length}`)
+  }
+  if (filter.view === 'issues') {
+    conds.push(`u.mime ILIKE 'image/%'`)
+    conds.push(`(
+      COALESCE(u.size, 0) > 1572864
+      OR u.variants IS NULL
+      OR u.variants = '{}'::jsonb
+      OR NOT (u.variants ? 'thumb')
+      OR NOT (u.variants ? 'card')
+      OR NOT (u.variants ? 'detail')
+    )`)
   }
 
   return {

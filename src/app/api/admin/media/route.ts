@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
   const result = await listUploads({
     search: sp.get('search') ?? undefined,
     mime: sp.get('mime') ?? undefined,
+    view: sp.get('view') ?? undefined,
     page: sp.get('page') ? Number(sp.get('page')) : undefined,
     limit: sp.get('limit') ? Number(sp.get('limit')) : undefined,
   })

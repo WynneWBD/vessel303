@@ -61,6 +61,7 @@ const ACCEPT_MIMES = new Set([
 
 type Filters = {
   mime: string
+  view: string
   search: string
 }
 
@@ -191,10 +192,13 @@ export default function MediaClient({
   const uploadLimitMb = useMemo(() => normalizeMaxUploadMb(maxUploadMb), [maxUploadMb])
   const uploadLimitBytes = uploadLimitMb * BYTES_PER_MB
 
-  const hasActiveFilters = filters.mime !== 'all' || filters.search.trim().length > 0
+  const hasActiveFilters =
+    filters.mime !== 'all' ||
+    filters.view !== '' ||
+    filters.search.trim().length > 0
 
   const resetFilters = () => {
-    setFilters({ mime: 'all', search: '' })
+    setFilters({ mime: 'all', view: '', search: '' })
     setPage(1)
   }
 
@@ -206,6 +210,7 @@ export default function MediaClient({
   const buildQuery = useCallback((f: Filters, paging?: { page: number; limit: number }) => {
     const sp = new URLSearchParams()
     if (f.mime && f.mime !== 'all') sp.set('mime', f.mime)
+    if (f.view) sp.set('view', f.view)
     if (f.search) sp.set('search', f.search)
     if (paging) {
       sp.set('page', String(paging.page))
@@ -525,7 +530,7 @@ export default function MediaClient({
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-xl">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-3xl">
         <Select
           value={filters.mime}
           onChange={(e) => updateFilters({ mime: e.target.value })}
@@ -536,6 +541,13 @@ export default function MediaClient({
           <option value="webp">WebP</option>
           <option value="gif">GIF</option>
           <option value="svg">SVG</option>
+        </Select>
+        <Select
+          value={filters.view}
+          onChange={(e) => updateFilters({ view: e.target.value })}
+        >
+          <option value="">视图:全部</option>
+          <option value="issues">只看风险图片</option>
         </Select>
         <Input
           placeholder="搜索文件名"
