@@ -53,9 +53,19 @@ export type AnalyticsConversionMetric = {
   conversionRate: number
 }
 
+export type AnalyticsTrendRow = {
+  date: string
+  pageViews: number
+  visitors: number
+  actions: number
+  formSubmits: number
+  leads: number
+}
+
 export type SiteAnalyticsDashboard = {
   available: boolean
   windows: AnalyticsWindowMetric[]
+  dailyTrend: AnalyticsTrendRow[]
   topPages: AnalyticsRankRow[]
   topReferrers: AnalyticsRankRow[]
   sourceTypes: AnalyticsRankRow[]
@@ -92,6 +102,7 @@ export const EMPTY_ANALYTICS_DASHBOARD: SiteAnalyticsDashboard = {
     testLeads: 0,
     conversionRate: 0,
   })),
+  dailyTrend: [],
   topPages: [],
   topReferrers: [],
   sourceTypes: [],
@@ -318,6 +329,68 @@ async function loadLeadSourceCounts(days: number) {
   return counts
 }
 
+async function loadLeadDailyCounts(days: number) {
+  if (!(await tableExists('public.leads'))) return new Map<string, number>()
+  const res = await pool.query<{ date: string; count: string }>(
+    `SELECT created_at::date::text AS date, COUNT(*)::text AS count
+     FROM leads
+     WHERE ${REAL_LEAD_CONDITION}
+       AND created_at >= CURRENT_DATE - (($1::int - 1) * INTERVAL '1 day')
+     GROUP BY created_at::date
+     ORDER BY created_at::date`,
+    [days],
+  )
+  return new Map(res.rows.map((row) => [row.date, toInt(row.count)]))
+}
+
+async function loadDailyTrend(days = 14): Promise<AnalyticsTrendRow[]> {
+  const [eventRes, leadCounts] = await Promise.all([
+    pool.query<{
+      date: string
+      page_views: string
+      visitors: string
+      actions: string
+      form_submits: string
+    }>(
+      `WITH days AS (
+         SELECT generate_series(
+           CURRENT_DATE - (($1::int - 1) * INTERVAL '1 day'),
+           CURRENT_DATE,
+           INTERVAL '1 day'
+         )::date AS day
+       )
+       SELECT
+         days.day::text AS date,
+         COUNT(site_events.id) FILTER (WHERE site_events.event_name = 'page_view' AND ${REAL_EVENT_CONDITION})::text AS page_views,
+         COUNT(DISTINCT site_events.visitor_id_hash) FILTER (
+           WHERE site_events.event_name = 'page_view'
+             AND site_events.visitor_id_hash IS NOT NULL
+             AND ${REAL_EVENT_CONDITION}
+         )::text AS visitors,
+         COUNT(site_events.id) FILTER (
+           WHERE site_events.event_name IN ('cta_click', 'contact_redirect', 'form_submit_success')
+             AND ${REAL_EVENT_CONDITION}
+         )::text AS actions,
+         COUNT(site_events.id) FILTER (WHERE site_events.event_name = 'form_submit_success' AND ${REAL_EVENT_CONDITION})::text AS form_submits
+       FROM days
+       LEFT JOIN site_events ON site_events.created_at::date = days.day
+       GROUP BY days.day
+       ORDER BY days.day`,
+      [days],
+    ),
+    loadLeadDailyCounts(days),
+  ])
+
+  return eventRes.rows.map((row) => ({
+    date: row.date,
+    pageViews: toInt(row.page_views),
+    visitors: toInt(row.visitors),
+    actions: toInt(row.actions),
+    formSubmits: toInt(row.form_submits),
+    leads: leadCounts.get(row.date) ?? 0,
+  }))
+}
+
 async function loadRankRows(
   sql: string,
   params: unknown[],
@@ -333,9 +406,10 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
       return EMPTY_ANALYTICS_DASHBOARD
     }
 
-    const [windows, topPages, topReferrers, sourceTypes, landingPages, conversionPaths, recentEvents] =
+    const [windows, dailyTrend, topPages, topReferrers, sourceTypes, landingPages, conversionPaths, recentEvents] =
       await Promise.all([
         Promise.all([loadWindowMetric(7), loadWindowMetric(30)]),
+        loadDailyTrend(14),
         loadRankRows(
           `SELECT path AS key, COUNT(*)::text AS value,
                   COUNT(DISTINCT visitor_id_hash) FILTER (WHERE visitor_id_hash IS NOT NULL)::text AS secondary
@@ -380,7 +454,7 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
         ),
         loadRankRows(
           `SELECT path AS key,
-                  COUNT(*)::text AS value,
+                  COUNT(*) FILTER (WHERE event_name = 'page_view')::text AS value,
                   COUNT(*) FILTER (WHERE event_name IN ('cta_click', 'contact_redirect', 'form_submit_success'))::text AS secondary
            FROM site_events
            WHERE ${REAL_EVENT_CONDITION}
@@ -415,6 +489,7 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
     return {
       available: true,
       windows,
+      dailyTrend,
       topPages,
       topReferrers,
       sourceTypes,

@@ -9,6 +9,7 @@ import {
   loadSiteAnalyticsDashboard,
   sourceTypeLabel,
   type AnalyticsRankRow,
+  type AnalyticsTrendRow,
 } from '@/lib/site-analytics'
 import {
   buildStatusBadges,
@@ -105,10 +106,15 @@ export default async function AdminStatusTrafficPage() {
           <AnalysisModeCard title="Google 统计分析" value={`${readiness.readyCount}/${readiness.items.length}`} detail="本轮只显示接入状态，不拉 Google API。" />
         </section>
 
+        <section className="space-y-4">
+          <SectionTitle title="14 天趋势" detail="按天聚合 PV、访客、转化动作、表单成功和真实线索，帮助运营判断最近是否在变好。" />
+          <TrendTable rows={analytics.dailyTrend} />
+        </section>
+
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(360px,0.75fr)]">
           <section className="space-y-4">
             <SectionTitle title="Top Pages" detail="近 30 天访问最多的前台页面。" />
-            <RankTable rows={analytics.topPages} empty="暂无页面访问事件。" secondaryLabel="访客" />
+            <RankTable rows={analytics.topPages} empty="暂无页面访问事件。" valueLabel="访问" secondaryLabel="访客" />
           </section>
 
           <section className="space-y-4">
@@ -121,7 +127,7 @@ export default async function AdminStatusTrafficPage() {
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
           <section className="space-y-4">
             <SectionTitle title="落地页动作" detail="同一路径内页面访问、CTA、联系跳转和表单成功的合计。" />
-            <RankTable rows={analytics.landingPages} empty="暂无落地页事件。" secondaryLabel="动作" />
+            <RankTable rows={analytics.landingPages} empty="暂无落地页事件。" valueLabel="访问" secondaryLabel="动作" />
           </section>
 
           <section className="space-y-4">
@@ -170,13 +176,64 @@ function AnalysisModeCard({ title, value, detail }: { title: string; value: numb
   )
 }
 
+function TrendTable({ rows }: { rows: AnalyticsTrendRow[] }) {
+  if (rows.length === 0) {
+    return <div className="rounded-md border border-[#D8E7E8] bg-white p-5 text-sm text-[#61767D] shadow-sm">暂无可用趋势数据。</div>
+  }
+
+  const maxViews = Math.max(1, ...rows.map((row) => row.pageViews))
+
+  return (
+    <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[760px] text-sm">
+          <thead>
+            <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
+              <th className="px-4 py-3 text-left font-medium">日期</th>
+              <th className="px-4 py-3 text-left font-medium">PV 趋势</th>
+              <th className="px-4 py-3 text-right font-medium">访客</th>
+              <th className="px-4 py-3 text-right font-medium">动作</th>
+              <th className="px-4 py-3 text-right font-medium">表单</th>
+              <th className="px-4 py-3 text-right font-medium">线索</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.date} className="border-b border-[#E6EEEE] last:border-0">
+                <td className="px-4 py-3 font-medium text-[#1E2C31]">{formatTrendDate(row.date)}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <span className="w-12 shrink-0 text-right font-semibold text-[#1E2C31]">{formatNumber(row.pageViews)}</span>
+                    <span className="h-2 min-w-28 flex-1 rounded-full bg-[#E6EEEE]">
+                      <span
+                        className="block h-2 rounded-full bg-[#1889B6]"
+                        style={{ width: `${Math.max(4, Math.round((row.pageViews / maxViews) * 100))}%` }}
+                      />
+                    </span>
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.visitors)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.actions)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.formSubmits)}</td>
+                <td className="px-4 py-3 text-right font-semibold text-[#E36F2C]">{formatNumber(row.leads)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 function RankTable({
   rows,
   empty,
+  valueLabel = '数量',
   secondaryLabel,
 }: {
   rows: AnalyticsRankRow[]
   empty: string
+  valueLabel?: string
   secondaryLabel: string
 }) {
   if (rows.length === 0) {
@@ -188,7 +245,7 @@ function RankTable({
         <thead>
           <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
             <th className="px-4 py-3 text-left font-medium">页面</th>
-            <th className="px-4 py-3 text-right font-medium">数量</th>
+            <th className="px-4 py-3 text-right font-medium">{valueLabel}</th>
             <th className="px-4 py-3 text-right font-medium">{secondaryLabel}</th>
           </tr>
         </thead>
@@ -204,6 +261,15 @@ function RankTable({
       </table>
     </div>
   )
+}
+
+function formatTrendDate(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+  })
 }
 
 function RankList({ rows, empty }: { rows: AnalyticsRankRow[]; empty: string }) {
