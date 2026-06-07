@@ -33,6 +33,10 @@ type NewsItem = {
   content_en?: unknown
   excerpt_zh?: string | null
   excerpt_en?: string | null
+  seo_title_zh?: string | null
+  seo_title_en?: string | null
+  seo_description_zh?: string | null
+  seo_description_en?: string | null
   cover_image_url: string | null
   category_id: number | null
   category_slug: string | null
@@ -48,7 +52,7 @@ type NewsCategoryOption = Pick<NewsCategoryRow, 'id' | 'slug' | 'title_zh' | 'ti
 type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
 
 const LIMIT = 20
-const TABLE_GRID_COLUMNS = '36px 60px 1fr 118px 92px 150px 120px'
+const TABLE_GRID_COLUMNS = '36px 60px minmax(260px,1.25fr) minmax(170px,0.85fr) 118px 92px 150px 120px'
 const STATUS_QUICK_FILTERS: Array<{ label: string; status: Filters['status']; schedule?: Filters['schedule'] }> = [
   { label: '全部', status: '', schedule: '' },
   { label: '草稿', status: 'draft', schedule: '' },
@@ -114,6 +118,15 @@ function getNewsCompleteness(item: NewsItem): {
   if (!hasText(item.excerpt_en)) issues.push('缺英文摘要')
   if (!hasRichTextContent(item.content_zh)) issues.push('缺中文正文')
   if (!hasRichTextContent(item.content_en)) issues.push('缺英文正文')
+  if (!item.category_id) issues.push('未分类')
+  if (
+    !hasText(item.seo_title_zh)
+    || !hasText(item.seo_title_en)
+    || !hasText(item.seo_description_zh)
+    || !hasText(item.seo_description_en)
+  ) {
+    issues.push('缺 SEO')
+  }
 
   if (issues.length === 0) {
     return { level: '完整', issues }
@@ -460,6 +473,7 @@ export default function NewsListClient({
             </label>
             <span>封面</span>
             <span>标题</span>
+            <span>内容 / SEO</span>
             <span>所属分类</span>
             <span>状态</span>
             <span>排期/更新</span>
@@ -512,18 +526,28 @@ export default function NewsListClient({
                 <p className="mt-0.5 truncate text-xs text-[#61767D]">
                   {item.title_en || '(no English title)'}
                 </p>
-                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <p className="mt-1 truncate font-mono text-[11px] text-[#8A9EA4]">/news/{item.slug}</p>
+              </div>
+
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <Badge className={`${completenessBadgeClass(completeness.level)} text-[11px]`}>
                     {completeness.level}
                   </Badge>
-                  {visibleIssues.map((issue) => (
-                    <span
-                      key={issue}
-                      className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] text-zinc-600"
-                    >
-                      {issue}
+                  {visibleIssues.length === 0 ? (
+                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                      基础内容完整
                     </span>
-                  ))}
+                  ) : (
+                    visibleIssues.map((issue) => (
+                      <span
+                        key={issue}
+                        className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] text-zinc-600"
+                      >
+                        {issue}
+                      </span>
+                    ))
+                  )}
                   {hiddenIssueCount > 0 ? (
                     <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] text-zinc-500">
                       还有 {hiddenIssueCount} 项
