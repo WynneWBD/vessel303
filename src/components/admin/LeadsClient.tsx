@@ -3,7 +3,29 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Download, Plus, Trash2, Mail, SearchX, Inbox, Clock3, FileText, BadgeCheck, ExternalLink } from 'lucide-react'
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  BadgeCheck,
+  CheckCircle2,
+  Clock3,
+  Download,
+  ExternalLink,
+  FileText,
+  Filter,
+  Inbox,
+  ListChecks,
+  Mail,
+  MessageSquareText,
+  Phone,
+  Plus,
+  RefreshCcw,
+  SearchX,
+  ShieldCheck,
+  Trash2,
+  UserRoundCheck,
+  type LucideIcon,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -65,6 +87,18 @@ const STATUS_LABEL: Record<string, string> = Object.fromEntries(
   STATUS_OPTIONS.map((o) => [o.value, o.label]),
 )
 
+type LeadPriorityTone = 'critical' | 'warning' | 'active' | 'success' | 'muted'
+
+type LeadPriority = {
+  label: string
+  detail: string
+  score: number
+  tone: LeadPriorityTone
+  Icon: LucideIcon
+}
+
+const ACTIVE_LEAD_STATUSES: LeadStatus[] = ['new', 'contacting', 'quoted']
+
 function statusBadgeClass(status: string) {
   switch (status) {
     case 'new':
@@ -80,6 +114,175 @@ function statusBadgeClass(status: string) {
     default:
       return 'border-slate-200 bg-slate-50 text-slate-600'
   }
+}
+
+function priorityBadgeClass(tone: LeadPriorityTone) {
+  switch (tone) {
+    case 'critical':
+      return 'border-orange-200 bg-orange-50 text-orange-700'
+    case 'warning':
+      return 'border-amber-200 bg-amber-50 text-amber-700'
+    case 'active':
+      return 'border-sky-200 bg-sky-50 text-sky-700'
+    case 'success':
+      return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    default:
+      return 'border-slate-200 bg-slate-50 text-slate-600'
+  }
+}
+
+function sourceBadgeClass(type: string) {
+  switch (type) {
+    case 'product':
+    case 'case':
+      return 'border-[#1889B6]/20 bg-[#EAF6F8] text-[#14789E]'
+    case 'media-kit':
+    case 'scenario':
+    case 'innovation':
+      return 'border-blue-200 bg-blue-50 text-blue-700'
+    case 'contact':
+    case 'faq':
+      return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    case 'admin-test':
+      return 'border-slate-200 bg-slate-50 text-slate-600'
+    default:
+      return 'border-amber-200 bg-amber-50 text-amber-700'
+  }
+}
+
+function isActiveLeadStatus(status: LeadStatus) {
+  return ACTIVE_LEAD_STATUSES.includes(status)
+}
+
+function hoursSince(ts: string) {
+  const time = new Date(ts).getTime()
+  if (!Number.isFinite(time)) return 0
+  return Math.max(0, Math.floor((Date.now() - time) / 36e5))
+}
+
+function formatAge(ts: string) {
+  const hours = hoursSince(ts)
+  if (hours < 1) return '<1 小时'
+  if (hours < 24) return `${hours} 小时`
+  return `${Math.floor(hours / 24)} 天`
+}
+
+function compactValue(value: string | null | undefined, fallback = '—') {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : fallback
+}
+
+function truncateText(value: string | null | undefined, max = 64) {
+  const text = value?.trim()
+  if (!text) return '—'
+  if (text.length <= max) return text
+  return `${text.slice(0, max)}...`
+}
+
+function getLeadPriority(lead: Lead): LeadPriority {
+  const createdHours = hoursSince(lead.created_at)
+  const updatedHours = hoursSince(lead.updated_at)
+
+  if (lead.status === 'new') {
+    if (createdHours >= 24) {
+      return {
+        label: 'P0 超时新线索',
+        detail: '新线索超过 24 小时未转入跟进',
+        score: 50,
+        tone: 'critical',
+        Icon: AlertTriangle,
+      }
+    }
+    return {
+      label: 'P0 首次响应',
+      detail: '确认需求、来源和负责人',
+      score: 45,
+      tone: 'critical',
+      Icon: Inbox,
+    }
+  }
+
+  if (lead.status === 'contacting') {
+    if (updatedHours >= 24 * 7) {
+      return {
+        label: 'P1 跟进断点',
+        detail: '跟进中超过 7 天未更新',
+        score: 40,
+        tone: 'warning',
+        Icon: Clock3,
+      }
+    }
+    return {
+      label: 'P1 持续跟进',
+      detail: '保持沟通并补充备注',
+      score: 32,
+      tone: 'active',
+      Icon: MessageSquareText,
+    }
+  }
+
+  if (lead.status === 'quoted') {
+    if (updatedHours >= 24 * 7) {
+      return {
+        label: 'P2 报价回访',
+        detail: '报价后超过 7 天未更新',
+        score: 30,
+        tone: 'warning',
+        Icon: FileText,
+      }
+    }
+    return {
+      label: 'P2 等待反馈',
+      detail: '关注客户报价反馈',
+      score: 24,
+      tone: 'active',
+      Icon: FileText,
+    }
+  }
+
+  if (lead.status === 'won') {
+    return {
+      label: '已成交',
+      detail: '保留归档记录',
+      score: 10,
+      tone: 'success',
+      Icon: BadgeCheck,
+    }
+  }
+
+  return {
+    label: '已关闭',
+    detail: '低优先级归档线索',
+    score: 0,
+    tone: 'muted',
+    Icon: ShieldCheck,
+  }
+}
+
+function getLeadGaps(lead: Lead) {
+  const gaps: string[] = []
+  if (isActiveLeadStatus(lead.status) && !lead.assigned_to?.trim()) gaps.push('未分配')
+  if (!lead.name?.trim()) gaps.push('缺姓名')
+  if (!lead.phone?.trim()) gaps.push('缺电话')
+  if (!lead.company?.trim()) gaps.push('缺公司')
+  if (!lead.message?.trim()) gaps.push('缺留言')
+  return gaps
+}
+
+function buildSourceBreakdown(leads: Lead[]) {
+  const counts = new Map<string, { label: string; count: number; type: string }>()
+  for (const lead of leads) {
+    const source = describeLeadSource(lead.source)
+    const current = counts.get(source.type) ?? {
+      label: source.typeLabel,
+      count: 0,
+      type: source.type,
+    }
+    current.count += 1
+    counts.set(source.type, current)
+  }
+
+  return Array.from(counts.values()).sort((a, b) => b.count - a.count)
 }
 
 function formatDate(ts: string) {
@@ -130,6 +333,9 @@ export default function LeadsClient({
     filters.source_type !== 'all' ||
     filters.country.trim().length > 0 ||
     filters.search.trim().length > 0
+  const visibleStart = total === 0 ? 0 : (page - 1) * limit + 1
+  const visibleEnd = Math.min(total, (page - 1) * limit + leads.length)
+  const visibleRange = total === 0 ? '0' : `${visibleStart}-${visibleEnd}`
 
   const resetFilters = () => {
     setFilters({ status: 'all', inquiry_type: 'all', source_type: 'all', country: '', search: '' })
@@ -302,10 +508,10 @@ export default function LeadsClient({
       <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold tracking-[0.22em] text-[#1889B6] uppercase">B11 Leads 2.0</p>
-            <h1 className="mt-2 text-2xl font-bold text-[#1E2C31]">线索管理 2.0</h1>
+            <p className="text-xs font-semibold tracking-[0.22em] text-[#1889B6] uppercase">Lead Operations</p>
+            <h1 className="mt-2 text-2xl font-bold text-[#1E2C31]">线索处理台</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-              新后台统一处理官网表单、案例询盘和 Media Kit 申请。旧 /admin/leads 只做兼容入口，不再展示旧侧边栏。
+              按优先级处理官网表单、案例询盘和 Media Kit 申请；本页只更新线索跟进状态和备注，不扩展订单、支付或会员价格体系。
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -324,74 +530,114 @@ export default function LeadsClient({
         {summary && <LeadSummaryGrid summary={summary} />}
       </section>
 
+      <LeadOperationsDesk
+        leads={leads}
+        summary={summary}
+        total={total}
+        loading={loading}
+        onSelect={handleSelect}
+      />
+
       {/* Filter bar */}
-      <div className="grid grid-cols-1 gap-3 rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm md:grid-cols-2 xl:grid-cols-5">
-        <Select
-          value={filters.status}
-          onChange={(e) => updateFilters({ status: e.target.value })}
-        >
-          <option value="all">状态:全部</option>
-          {STATUS_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </Select>
-        <Select
-          value={filters.inquiry_type}
-          onChange={(e) => updateFilters({ inquiry_type: e.target.value })}
-        >
-          <option value="all">身份:全部</option>
-          {INQUIRY_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </Select>
-        <Select
-          value={filters.source_type}
-          onChange={(e) => updateFilters({ source_type: e.target.value })}
-        >
-          {LEAD_SOURCE_TYPE_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </Select>
-        <Input
-          placeholder="国家"
-          value={filters.country}
-          onChange={(e) => updateFilters({ country: e.target.value })}
-        />
-        <Input
-          placeholder="关键词(邮箱/姓名/公司/留言)"
-          value={filters.search}
-          onChange={(e) => updateFilters({ search: e.target.value })}
-        />
-      </div>
+      <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-[#E6EEEE] pb-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <Filter size={16} className="text-[#1889B6]" />
+              <h2 className="text-base font-bold text-[#1E2C31]">线索筛选</h2>
+              {loading ? (
+                <span className="rounded-full bg-[#F0F7F8] px-2 py-0.5 text-xs font-semibold text-[#1889B6]">
+                  加载中
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-1 text-xs text-[#61767D]">
+              当前匹配 {total.toLocaleString('zh-CN')} 条，显示 {visibleRange}。
+            </p>
+          </div>
+          {hasActiveFilters ? (
+            <Button type="button" variant="outline" size="sm" onClick={resetFilters}>
+              <RefreshCcw size={14} />
+              清空筛选
+            </Button>
+          ) : null}
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <Select
+            value={filters.status}
+            onChange={(e) => updateFilters({ status: e.target.value })}
+          >
+            <option value="all">状态:全部</option>
+            {STATUS_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+          <Select
+            value={filters.inquiry_type}
+            onChange={(e) => updateFilters({ inquiry_type: e.target.value })}
+          >
+            <option value="all">身份:全部</option>
+            {INQUIRY_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+          <Select
+            value={filters.source_type}
+            onChange={(e) => updateFilters({ source_type: e.target.value })}
+          >
+            {LEAD_SOURCE_TYPE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+          <Input
+            placeholder="国家"
+            value={filters.country}
+            onChange={(e) => updateFilters({ country: e.target.value })}
+          />
+          <Input
+            placeholder="关键词(邮箱/姓名/公司/留言)"
+            value={filters.search}
+            onChange={(e) => updateFilters({ search: e.target.value })}
+          />
+        </div>
+      </section>
 
       {/* Table */}
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="flex flex-col gap-2 border-b border-[#E6EEEE] px-4 py-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-base font-bold text-[#1E2C31]">当前线索结果</h2>
+            <p className="mt-1 text-xs text-[#61767D]">
+              按创建时间倒序；点击任意行打开右侧处理抽屉。
+            </p>
+          </div>
+          <span className="text-xs font-semibold text-[#61767D]">
+            {leads.length.toLocaleString('zh-CN')} / {total.toLocaleString('zh-CN')} 条
+          </span>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
+                <th className="text-left font-medium px-4 py-3">优先级</th>
+                <th className="text-left font-medium px-4 py-3">客户</th>
                 <th className="text-left font-medium px-4 py-3">状态</th>
-                <th className="text-left font-medium px-4 py-3">邮箱</th>
-                <th className="text-left font-medium px-4 py-3">姓名</th>
-                <th className="text-left font-medium px-4 py-3">公司</th>
-                <th className="text-left font-medium px-4 py-3">国家</th>
-                <th className="text-left font-medium px-4 py-3">身份</th>
-                <th className="text-left font-medium px-4 py-3">来源</th>
-                <th className="text-left font-medium px-4 py-3">SKU 兴趣</th>
-                <th className="text-left font-medium px-4 py-3">创建时间</th>
+                <th className="text-left font-medium px-4 py-3">来源路径</th>
+                <th className="text-left font-medium px-4 py-3">需求摘要</th>
+                <th className="text-left font-medium px-4 py-3">缺项 / 更新</th>
                 <th className="text-left font-medium px-4 py-3">操作</th>
               </tr>
             </thead>
             <tbody>
               {leads.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={10} className="px-4 py-16">
+                  <td colSpan={7} className="px-4 py-16">
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
                       {hasActiveFilters ? (
                         <SearchX size={32} className="text-[#8A9EA4]" />
@@ -413,36 +659,98 @@ export default function LeadsClient({
                   </td>
                 </tr>
               )}
-              {leads.map((lead) => (
-                <tr
-                  key={lead.id}
-                  className="cursor-pointer border-b border-[#E6EEEE] transition-colors hover:bg-[#F7FAFA]"
-                  onClick={() => handleSelect(lead)}
-                >
-                  <td className="px-4 py-3">
-                    <Badge className={statusBadgeClass(lead.status)}>
-                      {STATUS_LABEL[lead.status] ?? lead.status}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-[#1E2C31]">{lead.email}</td>
-                  <td className="px-4 py-3 text-[#61767D]">{lead.name ?? '—'}</td>
-                  <td className="px-4 py-3 text-[#61767D]">{lead.company ?? '—'}</td>
-                  <td className="px-4 py-3 text-[#61767D]">{lead.country ?? '—'}</td>
-                  <td className="px-4 py-3 text-[#61767D]">{lead.inquiry_type ?? '—'}</td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex rounded-full border border-[#D8E7E8] bg-[#F7FAFA] px-2 py-1 text-xs text-[#61767D]">
-                      {describeLeadSource(lead.source).typeLabel}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-[#61767D]">{lead.sku_interest ?? '—'}</td>
-                  <td className="px-4 py-3 text-[#61767D] whitespace-nowrap">
-                    {formatDate(lead.created_at)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-[#E36F2C] text-xs">查看 ›</span>
-                  </td>
-                </tr>
-              ))}
+              {leads.map((lead) => {
+                const priority = getLeadPriority(lead)
+                const PriorityIcon = priority.Icon
+                const sourceInfo = describeLeadSource(lead.source)
+                const gaps = getLeadGaps(lead)
+
+                return (
+                  <tr
+                    key={lead.id}
+                    data-lead-id={lead.id}
+                    className="cursor-pointer border-b border-[#E6EEEE] align-top transition-colors hover:bg-[#F7FAFA]"
+                    onClick={() => handleSelect(lead)}
+                  >
+                    <td className="w-[190px] px-4 py-3">
+                      <Badge className={priorityBadgeClass(priority.tone)}>
+                        <PriorityIcon size={12} className="mr-1" />
+                        {priority.label}
+                      </Badge>
+                      <p className="mt-1 text-xs leading-5 text-[#61767D]">{priority.detail}</p>
+                    </td>
+                    <td className="min-w-[260px] px-4 py-3">
+                      <p className="break-all font-semibold text-[#1E2C31]">{lead.email}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#61767D]">
+                        <span>{compactValue(lead.name, '未填姓名')}</span>
+                        <span>{compactValue(lead.company, '未填公司')}</span>
+                        <span>{compactValue(lead.country, '未填国家')}</span>
+                      </div>
+                      {lead.phone ? (
+                        <p className="mt-1 inline-flex items-center gap-1 text-xs text-[#61767D]">
+                          <Phone size={12} />
+                          {lead.phone}
+                        </p>
+                      ) : null}
+                    </td>
+                    <td className="w-[160px] px-4 py-3">
+                      <Badge className={statusBadgeClass(lead.status)}>
+                        {STATUS_LABEL[lead.status] ?? lead.status}
+                      </Badge>
+                      <p className="mt-2 text-xs text-[#61767D]">
+                        {lead.assigned_to ? `负责人 ${lead.assigned_to}` : '未分配负责人'}
+                      </p>
+                    </td>
+                    <td className="min-w-[220px] px-4 py-3">
+                      <Badge className={sourceBadgeClass(sourceInfo.type)}>
+                        {sourceInfo.typeLabel}
+                      </Badge>
+                      <p className="mt-2 max-w-[260px] truncate text-xs font-semibold text-[#1E2C31]">
+                        {sourceInfo.label}
+                      </p>
+                      <p className="mt-1 max-w-[260px] truncate text-xs text-[#8A9EA4]">
+                        {sourceInfo.raw}
+                      </p>
+                    </td>
+                    <td className="min-w-[230px] px-4 py-3">
+                      <p className="text-xs font-semibold text-[#1E2C31]">
+                        {compactValue(lead.inquiry_type, '身份未填')}
+                        {lead.sku_interest ? ` / ${lead.sku_interest}` : ''}
+                      </p>
+                      <p className="mt-2 max-w-[300px] text-xs leading-5 text-[#61767D]">
+                        {truncateText(lead.message, 78)}
+                      </p>
+                    </td>
+                    <td className="w-[210px] px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {gaps.length > 0 ? (
+                          gaps.slice(0, 4).map((gap) => (
+                            <span
+                              key={gap}
+                              className="rounded-full bg-[#FFF2E7] px-2 py-0.5 text-[11px] font-semibold text-[#E36F2C]"
+                            >
+                              {gap}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[#E7F7F4] px-2 py-0.5 text-[11px] font-semibold text-[#159477]">
+                            <CheckCircle2 size={11} />
+                            信息完整
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-2 text-xs text-[#61767D]">
+                        创建 {formatAge(lead.created_at)}前 / 更新 {formatAge(lead.updated_at)}前
+                      </p>
+                    </td>
+                    <td className="w-[96px] px-4 py-3">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#E36F2C]">
+                        查看 <ArrowUpRight size={12} />
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -493,6 +801,171 @@ export default function LeadsClient({
         loading={confirmingDelete}
         onConfirm={handleConfirmDelete}
       />
+    </div>
+  )
+}
+
+function LeadOperationsDesk({
+  leads,
+  summary,
+  total,
+  loading,
+  onSelect,
+}: {
+  leads: Lead[]
+  summary?: LeadDashboardSummary
+  total: number
+  loading: boolean
+  onSelect: (lead: Lead) => void
+}) {
+  const ranked = leads
+    .map((lead) => ({ lead, priority: getLeadPriority(lead) }))
+    .filter(({ lead }) => isActiveLeadStatus(lead.status))
+    .sort((a, b) => {
+      if (b.priority.score !== a.priority.score) return b.priority.score - a.priority.score
+      return new Date(a.lead.created_at).getTime() - new Date(b.lead.created_at).getTime()
+    })
+  const queue = ranked.slice(0, 5)
+  const pageP0 = ranked.filter(({ priority }) => priority.tone === 'critical').length
+  const pageWarning = ranked.filter(({ priority }) => priority.tone === 'warning').length
+  const pageUnassigned = leads.filter(
+    (lead) => isActiveLeadStatus(lead.status) && !lead.assigned_to?.trim(),
+  ).length
+  const sourceBreakdown = buildSourceBreakdown(leads).slice(0, 4)
+  const activePipeline = summary ? summary.new + summary.contacting + summary.quoted : 0
+
+  return (
+    <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="flex flex-col gap-2 border-b border-[#E6EEEE] px-5 py-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-[#1E2C31]">当前筛选处理队列</h2>
+            <p className="mt-1 text-xs text-[#61767D]">
+              按状态、超时和更新时间排序；这里只读取当前页线索，不修改数据。
+            </p>
+          </div>
+          <span className="rounded-full bg-[#F0F7F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
+            {loading ? '刷新中' : `${queue.length} 条优先项`}
+          </span>
+        </div>
+        <div className="divide-y divide-[#E6EEEE]">
+          {queue.length === 0 ? (
+            <div className="flex items-center gap-3 px-5 py-6">
+              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[#E7F7F4] text-[#159477]">
+                <CheckCircle2 size={18} />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-[#1E2C31]">当前页暂无高优先级待处理线索</p>
+                <p className="mt-1 text-xs text-[#61767D]">可继续调整筛选条件或查看全部线索。</p>
+              </div>
+            </div>
+          ) : (
+            queue.map(({ lead, priority }) => {
+              const sourceInfo = describeLeadSource(lead.source)
+              const PriorityIcon = priority.Icon
+
+              return (
+                <button
+                  key={lead.id}
+                  type="button"
+                  className="flex w-full items-start gap-4 px-5 py-4 text-left transition hover:bg-[#F7FAFA]"
+                  onClick={() => onSelect(lead)}
+                >
+                  <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${priorityBadgeClass(priority.tone)}`}>
+                    <PriorityIcon size={16} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+                      <span className="break-all text-sm font-semibold text-[#1E2C31]">{lead.email}</span>
+                      <span className="text-xs text-[#61767D]">创建 {formatAge(lead.created_at)}前</span>
+                    </span>
+                    <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#61767D]">
+                      <Badge className={priorityBadgeClass(priority.tone)}>{priority.label}</Badge>
+                      <span>{STATUS_LABEL[lead.status] ?? lead.status}</span>
+                      <span>{sourceInfo.typeLabel}</span>
+                      <span>{compactValue(lead.country, '国家未填')}</span>
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-[#61767D]">
+                      {priority.detail} / {truncateText(lead.message, 72)}
+                    </span>
+                  </span>
+                </button>
+              )
+            })
+          )}
+        </div>
+      </div>
+
+      <aside className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="border-b border-[#E6EEEE] px-5 py-4">
+          <h2 className="text-lg font-bold text-[#1E2C31]">处理负载</h2>
+          <p className="mt-1 text-xs text-[#61767D]">总量来自当前筛选，风险项来自当前页。</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 p-5">
+          <LeadDeskMetric label="活跃漏斗" value={activePipeline} detail="新线索+跟进+报价" Icon={ListChecks} />
+          <LeadDeskMetric label="当前匹配" value={total} detail="筛选后的总数" Icon={MessageSquareText} />
+          <LeadDeskMetric label="P0 新线索" value={pageP0} detail="当前页需先处理" Icon={AlertTriangle} tone="orange" />
+          <LeadDeskMetric label="未分配" value={pageUnassigned} detail="当前页活跃线索" Icon={UserRoundCheck} tone="blue" />
+        </div>
+        <div className="border-t border-[#E6EEEE] px-5 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-sm font-bold text-[#1E2C31]">当前页来源</h3>
+            {pageWarning > 0 ? (
+              <span className="text-xs font-semibold text-[#E36F2C]">{pageWarning} 条需回访</span>
+            ) : null}
+          </div>
+          <div className="mt-3 space-y-2">
+            {sourceBreakdown.length === 0 ? (
+              <p className="text-xs text-[#61767D]">暂无来源数据。</p>
+            ) : (
+              sourceBreakdown.map((item) => (
+                <div key={item.type} className="flex items-center justify-between gap-3 text-xs">
+                  <span className={`rounded-full border px-2 py-0.5 font-semibold ${sourceBadgeClass(item.type)}`}>
+                    {item.label}
+                  </span>
+                  <span className="font-bold text-[#1E2C31]">{item.count}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </aside>
+    </section>
+  )
+}
+
+function LeadDeskMetric({
+  label,
+  value,
+  detail,
+  Icon,
+  tone = 'teal',
+}: {
+  label: string
+  value: number
+  detail: string
+  Icon: LucideIcon
+  tone?: 'teal' | 'orange' | 'blue'
+}) {
+  const toneClass =
+    tone === 'orange'
+      ? 'bg-[#FFF2E7] text-[#E36F2C]'
+      : tone === 'blue'
+        ? 'bg-blue-50 text-blue-700'
+        : 'bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <div className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] p-3">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+          <p className="mt-2 text-2xl font-bold text-[#1E2C31]">{value.toLocaleString('zh-CN')}</p>
+        </div>
+        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${toneClass}`}>
+          <Icon size={15} />
+        </span>
+      </div>
+      <p className="mt-1 text-[11px] leading-4 text-[#8A9EA4]">{detail}</p>
     </div>
   )
 }
@@ -553,6 +1026,9 @@ function LeadDetailSheet({
     setSaving(false)
   }
   const sourceInfo = lead ? describeLeadSource(lead.source) : null
+  const priority = lead ? getLeadPriority(lead) : null
+  const gaps = lead ? getLeadGaps(lead) : []
+  const PriorityIcon = priority?.Icon ?? Mail
 
   return (
     <Sheet
@@ -561,7 +1037,7 @@ function LeadDetailSheet({
         if (!v) onClose()
       }}
     >
-      <SheetContent>
+      <SheetContent className="w-[680px]">
         {lead && (
           <>
             <SheetHeader>
@@ -577,6 +1053,50 @@ function LeadDetailSheet({
             </SheetHeader>
 
             <div className="flex-1 overflow-auto p-6 flex flex-col gap-6">
+              {priority && (
+                <section className="rounded-md border border-[#D8E7E8] bg-[#FBFDFD] p-4">
+                  <div className="flex items-start gap-3">
+                    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border ${priorityBadgeClass(priority.tone)}`}>
+                      <PriorityIcon size={18} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge className={priorityBadgeClass(priority.tone)}>{priority.label}</Badge>
+                        <Badge className={statusBadgeClass(lead.status)}>
+                          {STATUS_LABEL[lead.status] ?? lead.status}
+                        </Badge>
+                        {sourceInfo ? (
+                          <Badge className={sourceBadgeClass(sourceInfo.type)}>
+                            {sourceInfo.typeLabel}
+                          </Badge>
+                        ) : null}
+                      </div>
+                      <p className="mt-2 text-sm font-semibold text-[#1E2C31]">{priority.detail}</p>
+                      <p className="mt-1 text-xs leading-5 text-[#61767D]">
+                        创建 {formatAge(lead.created_at)}前 / 更新 {formatAge(lead.updated_at)}前。保存只会更新状态、负责人和追加备注。
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-1">
+                        {gaps.length > 0 ? (
+                          gaps.map((gap) => (
+                            <span
+                              key={gap}
+                              className="rounded-full bg-[#FFF2E7] px-2 py-0.5 text-[11px] font-semibold text-[#E36F2C]"
+                            >
+                              {gap}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[#E7F7F4] px-2 py-0.5 text-[11px] font-semibold text-[#159477]">
+                            <CheckCircle2 size={11} />
+                            当前字段完整
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              )}
+
               {/* Core info */}
               <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                 <Field label="姓名" value={lead.name} />
