@@ -4,7 +4,16 @@ import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, ExternalLink, MapPinned, Save, Send } from 'lucide-react'
+import {
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle2,
+  ExternalLink,
+  ListChecks,
+  MapPinned,
+  Save,
+  Send,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import CoverImagePicker from '@/components/admin/CoverImagePicker'
 import ProductGalleryPicker from '@/components/admin/ProductGalleryPicker'
@@ -57,6 +66,13 @@ type FormState = {
 }
 
 type ProjectCompletenessLevel = ReturnType<typeof getProjectCaseReadinessLevel>
+type ProjectFormSectionProgress = {
+  id: string
+  title: string
+  detail: string
+  done: boolean
+  issueCount: number
+}
 
 const emptyState: FormState = {
   id: '',
@@ -116,6 +132,14 @@ function splitRows(value: string) {
     .filter(Boolean)
 }
 
+function hasText(value: string | null | undefined) {
+  return Boolean(value?.trim())
+}
+
+function countMissing(checks: boolean[]) {
+  return checks.filter((check) => !check).length
+}
+
 function getProjectCompleteness({
   form,
   imageUrls,
@@ -158,6 +182,87 @@ function completenessBadgeClass(level: ProjectCompletenessLevel) {
   if (level === '完整') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
   if (level === '待补素材') return 'border-orange-200 bg-orange-50 text-orange-700'
   return 'border-zinc-200 bg-zinc-50 text-zinc-600'
+}
+
+function buildProjectFormProgress({
+  form,
+  imageUrls,
+  completeness,
+  coordinatesValid,
+  hasCompleteCoordinates,
+}: {
+  form: FormState
+  imageUrls: string[]
+  completeness: ReturnType<typeof getProjectCompleteness>
+  coordinatesValid: boolean
+  hasCompleteCoordinates: boolean
+}): ProjectFormSectionProgress[] {
+  return [
+    {
+      id: 'basic',
+      title: '基础信息',
+      detail: '名称、地点、类型、维护字段',
+      issueCount: countMissing([
+        hasText(form.id),
+        hasText(form.name_zh),
+        hasText(form.name_en),
+        hasText(form.location_zh),
+        hasText(form.location_en),
+        hasText(form.project_type_zh),
+        hasText(form.project_type_en),
+      ]),
+    },
+    {
+      id: 'media',
+      title: '图片素材',
+      detail: '封面和案例图库',
+      issueCount: countMissing([
+        hasText(form.cover_image_url),
+        imageUrls.length > 0,
+      ]),
+    },
+    {
+      id: 'content',
+      title: '案例内容',
+      detail: '简介和中英文标签',
+      issueCount: countMissing([
+        hasText(form.description_zh),
+        hasText(form.description_en),
+        splitLines(form.tags_zh).length > 0,
+        splitLines(form.tags_en).length > 0,
+      ]),
+    },
+    {
+      id: 'params',
+      title: '项目参数',
+      detail: '面积、投资、舱数、产品型号',
+      issueCount: countMissing([
+        hasText(form.area_display),
+        hasText(form.investment_display),
+        hasText(form.units_display),
+        hasText(form.products),
+      ]),
+    },
+    {
+      id: 'global',
+      title: 'Global 入图信息',
+      detail: '国家、坐标和地图资料',
+      issueCount: countMissing([
+        hasText(form.country),
+        hasCompleteCoordinates,
+        coordinatesValid,
+      ]),
+    },
+    {
+      id: 'publish-check',
+      title: '发布检查',
+      detail: '状态、完整度和展示影响',
+      issueCount: completeness.issues.length,
+    },
+  ].map((section) => ({
+    ...section,
+    done: section.issueCount === 0,
+  }))
 }
 
 function parseOptionalNumber(value: string) {
@@ -302,6 +407,205 @@ function FormSection({
   )
 }
 
+function ProjectFormSidebar({
+  sectionProgress,
+  completedSectionCount,
+  completeness,
+  status,
+  hasUnsavedChanges,
+  mapReady,
+  coordinatesValid,
+  hasCompleteCoordinates,
+  imageCount,
+  previewHref,
+  previewLabel,
+  showPreviewLink,
+  globalHref,
+  children,
+}: {
+  sectionProgress: ProjectFormSectionProgress[]
+  completedSectionCount: number
+  completeness: ReturnType<typeof getProjectCompleteness>
+  status: ProjectCaseStatus
+  hasUnsavedChanges: boolean
+  mapReady: boolean
+  coordinatesValid: boolean
+  hasCompleteCoordinates: boolean
+  imageCount: number
+  previewHref: string
+  previewLabel: string
+  showPreviewLink: boolean
+  globalHref: string | null
+  children: ReactNode
+}) {
+  const issueCount = completeness.issues.length
+
+  return (
+    <aside className="space-y-4 lg:sticky lg:top-36 lg:self-start">
+      <FormSection
+        id="publish-check"
+        title="发布检查"
+        description="仅做运营提醒，不阻止保存或发布。已发布项目保存后会影响公开案例内容；坐标有效时也会影响 Global 地图展示。"
+        tone="warning"
+      >
+        {children}
+
+        <div className="rounded-lg border border-[#D8E7E8] bg-white p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
+                <ListChecks size={17} />
+              </span>
+              <div>
+                <div className="text-sm font-bold text-[#1E2C31]">发布检查摘要</div>
+                <p className="mt-1 text-xs leading-5 text-[#61767D]">根据当前表单实时汇总缺项和展示影响。</p>
+              </div>
+            </div>
+            <Badge className={`${completenessBadgeClass(completeness.level)} shrink-0 text-xs`}>
+              {completeness.level}
+            </Badge>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3">
+              <p className="text-[11px] font-semibold text-[#61767D]">章节</p>
+              <p className="mt-1 text-lg font-bold text-[#1E2C31]">
+                {completedSectionCount}/{sectionProgress.length}
+              </p>
+            </div>
+            <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3">
+              <p className="text-[11px] font-semibold text-[#61767D]">缺项</p>
+              <p className={issueCount > 0 ? 'mt-1 text-lg font-bold text-[#E36F2C]' : 'mt-1 text-lg font-bold text-emerald-700'}>
+                {issueCount}
+              </p>
+            </div>
+            <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3">
+              <p className="text-[11px] font-semibold text-[#61767D]">图库</p>
+              <p className="mt-1 text-lg font-bold text-[#1E2C31]">{imageCount}</p>
+            </div>
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+            <div className="rounded-md border border-[#D8E7E8] px-3 py-2">
+              <span className="block text-[#8A9EA4]">状态</span>
+              <span className={status === 'published' ? 'font-semibold text-emerald-700' : 'font-semibold text-[#E36F2C]'}>
+                {status === 'published' ? '已发布' : '草稿'}
+              </span>
+            </div>
+            <div className="rounded-md border border-[#D8E7E8] px-3 py-2">
+              <span className="block text-[#8A9EA4]">坐标</span>
+              <span className={coordinatesValid ? 'font-semibold text-emerald-700' : 'font-semibold text-[#61767D]'}>
+                {coordinatesValid ? '有效' : hasCompleteCoordinates ? '需检查' : '未完整'}
+              </span>
+            </div>
+          </div>
+
+          {hasUnsavedChanges ? (
+            <div className="mt-3 rounded-md border border-[#F2C6A7] bg-[#FFF7F0] px-3 py-2 text-xs font-medium text-[#8A3F16]">
+              当前有未保存修改，离开页面前请先保存。
+            </div>
+          ) : (
+            <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+              当前表单与最近一次保存一致。
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-lg border border-[#D8E7E8] bg-white p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-[#1E2C31]">
+              <MapPinned size={16} className="text-[#E36F2C]" />
+              /global 地图状态
+            </div>
+            {mapReady ? (
+              <Badge className="border-[#E36F2C]/30 bg-[#E36F2C]/15 text-[#E36F2C]">已入图</Badge>
+            ) : (
+              <Badge className="border-[#9AA9AD] bg-[#D8E7E8] text-[#61767D]">
+                {coordinatesValid ? '待发布' : hasCompleteCoordinates ? '坐标需检查' : '未入图'}
+              </Badge>
+            )}
+          </div>
+          <p className="mt-3 text-xs leading-relaxed text-[#61767D]">
+            案例发布后，同时填写有效经纬度，才会进入 /global 地图点位；不填坐标时仍可正常维护 /cases 内容。
+          </p>
+          {globalHref ? (
+            <Link
+              href={globalHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-[#E36F2C] hover:text-[#C85A1F]"
+            >
+              查看地图深链
+              <ExternalLink size={13} />
+            </Link>
+          ) : null}
+        </div>
+      </FormSection>
+
+      <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-bold text-[#1E2C31]">编辑导航</h3>
+          <span className="text-xs font-semibold text-[#8A9EA4]">点击跳转</span>
+        </div>
+        <nav className="mt-3 space-y-1.5">
+          {sectionProgress.map((section) => (
+            <a
+              key={section.id}
+              href={`#${section.id}`}
+              className={`flex items-start gap-3 rounded-md border px-3 py-2.5 transition ${
+                section.done
+                  ? 'border-emerald-100 bg-emerald-50/70 hover:border-emerald-200'
+                  : 'border-[#F2C6A7] bg-[#FFF7F0] hover:border-[#E36F2C]/45'
+              }`}
+            >
+              <span className={section.done ? 'mt-0.5 text-emerald-700' : 'mt-0.5 text-[#E36F2C]'}>
+                {section.done ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center justify-between gap-2">
+                  <span className="truncate text-xs font-bold text-[#1E2C31]">{section.title}</span>
+                  <span className={section.done ? 'shrink-0 text-[11px] font-semibold text-emerald-700' : 'shrink-0 text-[11px] font-semibold text-[#E36F2C]'}>
+                    {section.done ? '完成' : `${section.issueCount} 项`}
+                  </span>
+                </span>
+                <span className="mt-0.5 block text-[11px] leading-4 text-[#61767D]">{section.detail}</span>
+              </span>
+            </a>
+          ))}
+        </nav>
+      </section>
+
+      <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
+        <h3 className="text-sm font-bold text-[#1E2C31]">预览入口</h3>
+        {showPreviewLink ? (
+          <div className="mt-3 space-y-2 text-xs">
+            <Link
+              href={previewHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between gap-3 rounded-md border border-[#D8E7E8] px-3 py-2 font-semibold text-[#1E2C31] hover:border-[#1889B6]/60 hover:text-[#1889B6]"
+            >
+              <span>{previewLabel}</span>
+              <ExternalLink size={13} />
+            </Link>
+            <Link
+              href="/cases"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between gap-3 rounded-md border border-[#D8E7E8] px-3 py-2 text-[#61767D] hover:border-[#1889B6]/60 hover:text-[#1889B6]"
+            >
+              <span>案例列表页</span>
+              <ExternalLink size={13} />
+            </Link>
+          </div>
+        ) : (
+          <p className="mt-2 text-xs leading-5 text-[#61767D]">新建草稿保存前暂不提供公开预览入口。</p>
+        )}
+      </section>
+    </aside>
+  )
+}
+
 export default function ProjectForm({
   mode,
   project,
@@ -359,12 +663,20 @@ export default function ProjectForm({
     hasCompleteCoordinates,
     coordinatesValid,
   })
-  const visibleCompletenessIssues = completeness.issues.slice(0, 3)
-  const hiddenCompletenessIssueCount = Math.max(
-    0,
-    completeness.issues.length - visibleCompletenessIssues.length,
-  )
+  const sectionProgress = buildProjectFormProgress({
+    form,
+    imageUrls,
+    completeness,
+    coordinatesValid,
+    hasCompleteCoordinates,
+  })
+  const completedSectionCount = sectionProgress.filter((section) => section.done).length
   const hasUnsavedChanges = useMemo(() => JSON.stringify(form) !== JSON.stringify(savedForm), [form, savedForm])
+  const savedProjectId = project?.id ?? savedForm.id
+  const savedProjectPublished = mode === 'edit' && savedForm.status === 'published' && hasText(savedProjectId)
+  const previewHref = savedProjectPublished ? `/cases/${savedProjectId}` : '/cases'
+  const previewLabel = savedProjectPublished ? '预览案例' : '查看案例列表'
+  const globalHref = mode === 'edit' && coordinatesValid && project?.id ? `/global?camp=${project.id}` : null
 
   useUnsavedChangesWarning(hasUnsavedChanges)
 
@@ -472,13 +784,13 @@ export default function ProjectForm({
           ) : null}
           {showPreviewLink ? (
             <Link
-              href="/cases"
+              href={previewHref}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm font-semibold text-[#1889B6] hover:border-[#1889B6] hover:bg-[#F0F7F8]"
             >
               <ExternalLink size={14} />
-              预览列表
+              {previewLabel}
             </Link>
           ) : null}
           <Button variant="outline" size="sm" disabled={saving} onClick={() => handleSave()}>
@@ -721,82 +1033,28 @@ export default function ProjectForm({
           </FormSection>
         </div>
 
-        <aside className="h-fit">
-          <FormSection
-            id="publish-check"
-            title="发布检查"
-            description="这里仅做运营提醒，不阻止保存或发布。已发布项目保存后会影响公开案例内容；坐标有效时也会影响 Global 地图展示。"
-            tone="warning"
-          >
+        <ProjectFormSidebar
+          sectionProgress={sectionProgress}
+          completedSectionCount={completedSectionCount}
+          completeness={completeness}
+          status={form.status}
+          hasUnsavedChanges={hasUnsavedChanges}
+          mapReady={mapReady}
+          coordinatesValid={coordinatesValid}
+          hasCompleteCoordinates={hasCompleteCoordinates}
+          imageCount={imageUrls.length}
+          previewHref={previewHref}
+          previewLabel={previewLabel}
+          showPreviewLink={showPreviewLink}
+          globalHref={globalHref}
+        >
           <Field label="状态">
             <Select value={form.status} onChange={(e) => patch('status', e.target.value as ProjectCaseStatus)}>
               <option value="draft">草稿</option>
               <option value="published">已发布</option>
             </Select>
           </Field>
-
-          <div className="rounded-lg border border-[#D8E7E8] bg-[#F7FAFA] p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-sm font-medium text-[#1E2C31]">发布前检查</div>
-              <Badge className={`${completenessBadgeClass(completeness.level)} text-xs`}>
-                {completeness.level}
-              </Badge>
-            </div>
-            <p className="mt-2 text-xs leading-relaxed text-[#61767D]">
-              仅做运营提示，不会阻止保存或发布。
-            </p>
-            {visibleCompletenessIssues.length > 0 ? (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {visibleCompletenessIssues.map((issue) => (
-                  <span
-                    key={issue}
-                    className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-600"
-                  >
-                    {issue}
-                  </span>
-                ))}
-                {hiddenCompletenessIssueCount > 0 ? (
-                  <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-500">
-                    还有 {hiddenCompletenessIssueCount} 项
-                  </span>
-                ) : null}
-              </div>
-            ) : (
-              <p className="mt-3 text-xs text-emerald-700">当前基础内容完整。</p>
-            )}
-          </div>
-
-          <div className="rounded-lg border border-[#D8E7E8] bg-[#F7FAFA] p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm font-medium text-[#1E2C31]">
-                <MapPinned size={16} className="text-[#E36F2C]" />
-                /global 地图状态
-              </div>
-              {mapReady ? (
-                <Badge className="bg-[#E36F2C]/15 text-[#E36F2C] border-[#E36F2C]/30">已入图</Badge>
-              ) : (
-                <Badge className="bg-[#D8E7E8] text-[#61767D] border-[#9AA9AD]">
-                  {coordinatesValid ? '待发布' : hasCompleteCoordinates ? '坐标需检查' : '未入图'}
-                </Badge>
-              )}
-            </div>
-            <p className="mt-3 text-xs leading-relaxed text-[#61767D]">
-              案例发布后，同时填写有效经纬度，才会进入 /global 地图点位和右侧详情；不填坐标时仍可正常展示在 /cases。
-            </p>
-            {mode === 'edit' && coordinatesValid ? (
-              <Link
-                href={`/global?camp=${project?.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-[#E36F2C] hover:text-[#C85A1F]"
-              >
-                查看地图深链
-                <ExternalLink size={13} />
-              </Link>
-            ) : null}
-          </div>
-          </FormSection>
-        </aside>
+        </ProjectFormSidebar>
       </div>
     </div>
   )
