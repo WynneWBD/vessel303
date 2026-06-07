@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { toast } from 'sonner'
-import { RotateCcw, Save } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Globe2, RotateCcw, Save, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -17,6 +17,26 @@ type FieldProps = {
   children: ReactNode
 }
 
+type SettingsImpactTone = 'green' | 'orange' | 'gray'
+
+const FRONTEND_SETTING_KEYS: Array<keyof SiteSettings> = [
+  'siteNameZh',
+  'siteNameEn',
+  'seoTitleZh',
+  'seoTitleEn',
+  'seoDescriptionZh',
+  'seoDescriptionEn',
+  'contactUrl',
+  'mediaMaxUploadMb',
+]
+
+const SENSITIVE_SETTING_KEYS: Array<keyof SiteSettings> = [
+  'maintenanceMode',
+  'maintenanceNotice',
+  'mapProvider',
+  'productsLegacyUrl',
+]
+
 function Field({ label, hint, children }: FieldProps) {
   return (
     <label className="flex flex-col gap-2">
@@ -24,6 +44,53 @@ function Field({ label, hint, children }: FieldProps) {
       {children}
       {hint && <span className="text-[11px] leading-5 text-[#8A8580]">{hint}</span>}
     </label>
+  )
+}
+
+function valueConfigured(value: unknown): boolean {
+  if (typeof value === 'string') return value.trim().length > 0
+  if (typeof value === 'number') return Number.isFinite(value)
+  if (typeof value === 'boolean') return true
+  return value != null
+}
+
+function settingValueChanged(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a) !== JSON.stringify(b)
+}
+
+function SettingsImpactCard({
+  title,
+  value,
+  detail,
+  tone,
+  Icon,
+}: {
+  title: string
+  value: string | number
+  detail: string
+  tone: SettingsImpactTone
+  Icon: typeof Save
+}) {
+  const toneClass =
+    tone === 'orange'
+      ? 'bg-[#FFF2E7] text-[#E36F2C]'
+      : tone === 'green'
+        ? 'bg-emerald-50 text-emerald-700'
+        : 'bg-[#F0F2F2] text-[#61767D]'
+
+  return (
+    <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#61767D]">{title}</p>
+          <p className="mt-2 text-2xl font-bold text-[#1E2C31]">{value}</p>
+        </div>
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${toneClass}`}>
+          <Icon size={17} />
+        </span>
+      </div>
+      <p className="mt-2 text-xs leading-5 text-[#61767D]">{detail}</p>
+    </div>
   )
 }
 
@@ -36,6 +103,19 @@ export default function SiteSettingsForm({
   const [form, setForm] = useState<SiteSettings>(settings)
   const [saving, setSaving] = useState(false)
   const hasUnsavedChanges = useMemo(() => JSON.stringify(form) !== JSON.stringify(saved), [form, saved])
+  const changedKeys = useMemo(
+    () =>
+      (Object.keys(form) as Array<keyof SiteSettings>).filter((key) =>
+        settingValueChanged(form[key], saved[key]),
+      ),
+    [form, saved],
+  )
+  const configuredCount = useMemo(
+    () => (Object.keys(form) as Array<keyof SiteSettings>).filter((key) => valueConfigured(form[key])).length,
+    [form],
+  )
+  const frontendChangedCount = changedKeys.filter((key) => FRONTEND_SETTING_KEYS.includes(key)).length
+  const sensitiveChangedCount = changedKeys.filter((key) => SENSITIVE_SETTING_KEYS.includes(key)).length
 
   useUnsavedChangesWarning(hasUnsavedChanges)
 
@@ -76,7 +156,7 @@ export default function SiteSettingsForm({
             站点运营配置
           </h2>
           <p className="mt-1 text-sm text-[#8A8580]">
-            先用于后台统一维护，后续模块会逐步读取这些配置，避免联系方式和外链散落在代码里。
+            管理员保存后写入 site_settings 并记录审计日志；前台读取范围按已接管模块逐步生效。
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -94,6 +174,37 @@ export default function SiteSettingsForm({
             {saving ? '保存中' : '保存设置'}
           </Button>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 border-b border-[#E5DED4] p-5 md:grid-cols-2 xl:grid-cols-4">
+        <SettingsImpactCard
+          title="已填写字段"
+          value={`${configuredCount}/${Object.keys(form).length}`}
+          detail="空字段不会自动补默认文案。"
+          tone="green"
+          Icon={CheckCircle2}
+        />
+        <SettingsImpactCard
+          title="未保存修改"
+          value={changedKeys.length}
+          detail={hasUnsavedChanges ? '保存前不会进入数据库。' : '当前表单与保存版本一致。'}
+          tone={hasUnsavedChanges ? 'orange' : 'green'}
+          Icon={Save}
+        />
+        <SettingsImpactCard
+          title="前台相关"
+          value={frontendChangedCount}
+          detail="品牌、SEO、联系入口和媒体上限属于前台相关字段。"
+          tone={frontendChangedCount > 0 ? 'orange' : 'gray'}
+          Icon={Globe2}
+        />
+        <SettingsImpactCard
+          title="敏感变更"
+          value={sensitiveChangedCount}
+          detail="维护模式、地图和旧产品入口需要保存前复核。"
+          tone={sensitiveChangedCount > 0 ? 'orange' : 'gray'}
+          Icon={sensitiveChangedCount > 0 ? AlertCircle : ShieldCheck}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-6 p-5 xl:grid-cols-2">
