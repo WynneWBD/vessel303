@@ -11,14 +11,23 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { upload as blobUpload } from '@vercel/blob/client'
 import {
+  AlertCircle,
+  CheckCircle2,
   Copy,
   ExternalLink,
+  Filter,
+  HardDrive,
+  Image as ImageIcon,
   ImagePlus,
   ImageUp,
   ImageOff,
+  Images,
+  Layers,
+  ListFilter,
   RefreshCw,
   SearchX,
   Trash2,
+  type LucideIcon,
   Upload as UploadIcon,
   X,
 } from 'lucide-react'
@@ -150,9 +159,34 @@ function mimeLabel(mime: string | null): string {
   return mime
 }
 
+const FRONTEND_VARIANT_ROLES = ['thumb', 'card', 'detail'] as const
+
+function generatedVariantCount(upload: Upload | null | undefined): number {
+  const variants = normalizeImageVariants(upload?.variants)
+  return FRONTEND_VARIANT_ROLES.filter((role) => variants[role]?.url).length
+}
+
+function isFrontendRiskUpload(upload: Upload | null | undefined): boolean {
+  return (upload?.size ?? 0) > FRONTEND_RISK_IMAGE_BYTES
+}
+
+function isMissingFrontendVariants(upload: Upload | null | undefined): boolean {
+  if (!upload?.mime?.startsWith('image/')) return false
+  return generatedVariantCount(upload) < FRONTEND_VARIANT_ROLES.length
+}
+
+function mediaToneClass(tone: 'blue' | 'green' | 'orange' | 'gray') {
+  if (tone === 'green') return 'border-l-emerald-500 bg-emerald-50 text-emerald-700'
+  if (tone === 'orange') return 'border-l-[#E36F2C] bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'gray') return 'border-l-[#8A9EA4] bg-[#F0F2F2] text-[#61767D]'
+  return 'border-l-[#1889B6] bg-[#EAF6F8] text-[#1889B6]'
+}
+
 export default function MediaClient({
   initialUploads,
   initialTotal,
+  initialAllTotal,
+  initialIssueTotal,
   initialBytes,
   initialFilters,
   initialPage,
@@ -161,6 +195,8 @@ export default function MediaClient({
 }: {
   initialUploads: Upload[]
   initialTotal: number
+  initialAllTotal: number
+  initialIssueTotal: number
   initialBytes: number
   initialFilters: Filters
   initialPage: number
@@ -170,6 +206,8 @@ export default function MediaClient({
   const router = useRouter()
   const [uploads, setUploads] = useState<Upload[]>(initialUploads)
   const [total, setTotal] = useState(initialTotal)
+  const [allTotal] = useState(initialAllTotal)
+  const [issueTotal] = useState(initialIssueTotal)
   const [storageBytes, setStorageBytes] = useState(initialBytes)
   const [filters, setFilters] = useState<Filters>(initialFilters)
   const [page, setPage] = useState(initialPage)
@@ -191,6 +229,20 @@ export default function MediaClient({
   const usageWarning = storageBytes > WARNING_BYTES
   const uploadLimitMb = useMemo(() => normalizeMaxUploadMb(maxUploadMb), [maxUploadMb])
   const uploadLimitBytes = uploadLimitMb * BYTES_PER_MB
+  const currentLargeCount = useMemo(
+    () => uploads.filter((upload) => isFrontendRiskUpload(upload)).length,
+    [uploads],
+  )
+  const currentMissingVariantCount = useMemo(
+    () => uploads.filter((upload) => isMissingFrontendVariants(upload)).length,
+    [uploads],
+  )
+  const currentWebpCount = useMemo(
+    () => uploads.filter((upload) => upload.mime === 'image/webp').length,
+    [uploads],
+  )
+  const resultStart = total === 0 ? 0 : (page - 1) * limit + 1
+  const resultEnd = total === 0 ? 0 : Math.min(total, page * limit)
 
   const hasActiveFilters =
     filters.mime !== 'all' ||
@@ -461,143 +513,195 @@ export default function MediaClient({
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Title + stats */}
-      <div className="flex items-start justify-between flex-wrap gap-3">
-        <div className="flex flex-col gap-2">
-          <h1
-            className="text-[#1E2C31]"
-            style={{
-              fontFamily: 'DM Sans, sans-serif',
-              fontSize: 24,
-              fontWeight: 700,
-              letterSpacing: '-0.02em',
-            }}
-          >
-            图片库 Media
-          </h1>
-          <div className="text-xs text-[#61767D]">
-            共 {total} 张图片 ·{' '}
-            <span className={usageWarning ? 'text-[#E36F2C]' : ''}>
-              已用 {formatBytes(storageBytes)}
-            </span>{' '}
-            / 1 GB 免费额度
-          </div>
-          <div className="h-1 w-64 rounded-full bg-[#D8E7E8] overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all"
-              style={{
-                width: `${usagePct}%`,
-                background: usageWarning ? '#E36F2C' : '#4A9EFF',
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-col items-start gap-1 sm:items-end">
-          <div className="flex items-center gap-2">
-            <input
-              ref={batchInputRef}
-              type="file"
-              accept={ACCEPT}
-              multiple
-              className="hidden"
-              onChange={handleSelectFile}
-            />
-            <input
-              ref={singleInputRef}
-              type="file"
-              accept={ACCEPT}
-              className="hidden"
-              onChange={handleSelectFile}
-            />
-            <Button variant="outline" size="sm" onClick={() => batchInputRef.current?.click()}>
-              <ImagePlus size={16} />
-              批量上传
-            </Button>
-            <Button size="sm" onClick={() => singleInputRef.current?.click()}>
-              <ImageUp size={16} />
-              上传
-            </Button>
-          </div>
-          <p className="text-[11px] text-[#61767D]">
-            支持 JPEG / PNG / WebP / GIF / SVG · 最大 {uploadLimitMb} MB · 一次最多 {BATCH_LIMIT} 张
-          </p>
-          <p className="text-[11px] text-[#A76632]">
-            前台图片建议压缩到 {RECOMMENDED_FRONTEND_IMAGE_MB} MB 以内，首页、产品卡片和案例列表优先使用小图。
-          </p>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-3xl">
-        <Select
-          value={filters.mime}
-          onChange={(e) => updateFilters({ mime: e.target.value })}
-        >
-          <option value="all">类型:全部</option>
-          <option value="jpeg">JPEG</option>
-          <option value="png">PNG</option>
-          <option value="webp">WebP</option>
-          <option value="gif">GIF</option>
-          <option value="svg">SVG</option>
-        </Select>
-        <Select
-          value={filters.view}
-          onChange={(e) => updateFilters({ view: e.target.value })}
-        >
-          <option value="">视图:全部</option>
-          <option value="issues">只看风险图片</option>
-        </Select>
-        <Input
-          placeholder="搜索文件名"
-          value={filters.search}
-          onChange={(e) => updateFilters({ search: e.target.value })}
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <MediaMetricCard
+          title="全部素材"
+          value={allTotal}
+          detail={hasActiveFilters ? `当前结果 ${total} 张` : '媒体库总记录'}
+          Icon={Images}
+          tone="blue"
+        />
+        <MediaMetricCard
+          title="风险素材"
+          value={issueTotal}
+          detail="大原图或缺少前台派生图"
+          Icon={AlertCircle}
+          tone={issueTotal > 0 ? 'orange' : 'green'}
+        />
+        <MediaMetricCard
+          title="空间使用"
+          value={formatBytes(storageBytes)}
+          detail={`${usagePct.toFixed(1)}% / 1 GB 免费额度`}
+          Icon={HardDrive}
+          tone={usageWarning ? 'orange' : 'green'}
+        />
+        <MediaMetricCard
+          title="当前页检查"
+          value={`${currentLargeCount + currentMissingVariantCount}`}
+          detail={`大图 ${currentLargeCount} · 缺派生图 ${currentMissingVariantCount}`}
+          Icon={ListFilter}
+          tone={currentLargeCount + currentMissingVariantCount > 0 ? 'orange' : 'green'}
         />
       </div>
 
-      {/* Grid */}
-      {uploads.length === 0 && !loading ? (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#D8E7E8] bg-[#FFFFFF] py-20 text-center">
-          {hasActiveFilters ? (
-            <SearchX size={48} className="text-[#4A4744]" />
-          ) : (
-            <ImageOff size={48} className="text-[#4A4744]" />
-          )}
-          <p className="text-[#9AA9AD]">
-            {hasActiveFilters ? '没有找到符合条件的图片' : '还没有图片'}
-          </p>
-          <p className="text-xs text-[#61767D]">点击右上角上传,或直接拖拽图片到此页面</p>
-          {hasActiveFilters ? (
-            <Button type="button" variant="outline" size="sm" onClick={resetFilters}>
-              清空筛选
-            </Button>
-          ) : null}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {uploads.map((u) => (
-            <MediaCard key={u.id} upload={u} onClick={() => handleSelect(u)} />
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="space-y-4">
+          <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-end 2xl:justify-between">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
+                  <Filter size={15} />
+                  Library Controls
+                </div>
+                <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">素材筛选与上传</h2>
+                <p className="mt-1 text-xs leading-5 text-[#61767D]">
+                  支持 JPEG / PNG / WebP / GIF / SVG · 最大 {uploadLimitMb} MB · 一次最多 {BATCH_LIMIT} 张
+                </p>
+              </div>
 
-      {total > 0 ? (
-        <AdminPagination
-          total={total}
-          page={page}
-          limit={limit}
-          loading={loading}
-          itemLabel="张图片"
-          onPageChange={setPage}
-          onLimitChange={(nextLimit) => {
-            setLimit(nextLimit)
-            setPage(1)
-          }}
+              <div className="flex flex-col items-start gap-1 sm:items-end">
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    ref={batchInputRef}
+                    type="file"
+                    accept={ACCEPT}
+                    multiple
+                    className="hidden"
+                    onChange={handleSelectFile}
+                  />
+                  <input
+                    ref={singleInputRef}
+                    type="file"
+                    accept={ACCEPT}
+                    className="hidden"
+                    onChange={handleSelectFile}
+                  />
+                  <Button variant="outline" size="sm" onClick={() => batchInputRef.current?.click()}>
+                    <ImagePlus size={16} />
+                    批量上传
+                  </Button>
+                  <Button size="sm" onClick={() => singleInputRef.current?.click()}>
+                    <ImageUp size={16} />
+                    上传
+                  </Button>
+                </div>
+                <p className="text-[11px] text-[#A76632]">
+                  前台图片建议压缩到 {RECOMMENDED_FRONTEND_IMAGE_MB} MB 以内。
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[180px_180px_minmax(0,1fr)_auto]">
+              <Select
+                value={filters.mime}
+                onChange={(e) => updateFilters({ mime: e.target.value })}
+              >
+                <option value="all">类型:全部</option>
+                <option value="jpeg">JPEG</option>
+                <option value="png">PNG</option>
+                <option value="webp">WebP</option>
+                <option value="gif">GIF</option>
+                <option value="svg">SVG</option>
+              </Select>
+              <Select
+                value={filters.view}
+                onChange={(e) => updateFilters({ view: e.target.value })}
+              >
+                <option value="">视图:全部</option>
+                <option value="issues">只看风险图片</option>
+              </Select>
+              <Input
+                placeholder="搜索文件名"
+                value={filters.search}
+                onChange={(e) => updateFilters({ search: e.target.value })}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={resetFilters}
+                disabled={!hasActiveFilters}
+              >
+                清空筛选
+              </Button>
+            </div>
+          </section>
+
+          <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
+                  <ImageIcon size={15} />
+                  Asset Results
+                </div>
+                <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">当前素材结果</h2>
+              </div>
+              <div className="text-xs text-[#61767D]">
+                显示 {resultStart}-{resultEnd} / {total} 张
+              </div>
+            </div>
+
+            {uploads.length === 0 && !loading ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-dashed border-[#D8E7E8] bg-[#F7FAFA] py-20 text-center">
+                {hasActiveFilters ? (
+                  <SearchX size={48} className="text-[#4A4744]" />
+                ) : (
+                  <ImageOff size={48} className="text-[#4A4744]" />
+                )}
+                <p className="text-[#9AA9AD]">
+                  {hasActiveFilters ? '没有找到符合条件的图片' : '还没有图片'}
+                </p>
+                <p className="text-xs text-[#61767D]">点击上传，或直接拖拽图片到此页面</p>
+                {hasActiveFilters ? (
+                  <Button type="button" variant="outline" size="sm" onClick={resetFilters}>
+                    清空筛选
+                  </Button>
+                ) : null}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-cols-6">
+                {uploads.map((u) => (
+                  <MediaCard key={u.id} upload={u} onClick={() => handleSelect(u)} />
+                ))}
+              </div>
+            )}
+
+            {loading && <div className="mt-3 text-xs text-[#61767D]">加载中…</div>}
+
+            {total > 0 ? (
+              <div className="mt-4">
+                <AdminPagination
+                  total={total}
+                  page={page}
+                  limit={limit}
+                  loading={loading}
+                  itemLabel="张图片"
+                  onPageChange={setPage}
+                  onLimitChange={(nextLimit) => {
+                    setLimit(nextLimit)
+                    setPage(1)
+                  }}
+                />
+              </div>
+            ) : null}
+          </section>
+        </div>
+
+        <MediaOperationsPanel
+          issueTotal={issueTotal}
+          currentLargeCount={currentLargeCount}
+          currentMissingVariantCount={currentMissingVariantCount}
+          currentWebpCount={currentWebpCount}
+          uploadLimitMb={uploadLimitMb}
+          usagePct={usagePct}
+          usageWarning={usageWarning}
+          activeFilters={hasActiveFilters}
+          onShowAll={resetFilters}
+          onShowIssues={() => updateFilters({ view: 'issues' })}
+          onShowWebp={() => updateFilters({ mime: 'webp', view: '' })}
         />
-      ) : null}
-
-      {loading && <div className="text-xs text-[#61767D]">加载中…</div>}
+      </div>
 
       {/* Upload progress panel */}
       {tasks.length > 0 && (
@@ -696,11 +800,163 @@ export default function MediaClient({
   )
 }
 
+function MediaMetricCard({
+  title,
+  value,
+  detail,
+  Icon,
+  tone,
+}: {
+  title: string
+  value: number | string
+  detail: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+}) {
+  return (
+    <div className={`rounded-md border border-l-4 border-[#D8E7E8] bg-white p-4 shadow-sm ${mediaToneClass(tone).split(' ')[0]}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#61767D]">{title}</div>
+          <div className="mt-2 break-words text-3xl font-bold text-[#1E2C31]">{value}</div>
+        </div>
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${mediaToneClass(tone).replace(/^\\S+\\s/, '')}`}>
+          <Icon size={18} />
+        </span>
+      </div>
+      <div className="mt-3 text-xs leading-5 text-[#61767D]">{detail}</div>
+    </div>
+  )
+}
+
+function MediaOperationsPanel({
+  issueTotal,
+  currentLargeCount,
+  currentMissingVariantCount,
+  currentWebpCount,
+  uploadLimitMb,
+  usagePct,
+  usageWarning,
+  activeFilters,
+  onShowAll,
+  onShowIssues,
+  onShowWebp,
+}: {
+  issueTotal: number
+  currentLargeCount: number
+  currentMissingVariantCount: number
+  currentWebpCount: number
+  uploadLimitMb: number
+  usagePct: number
+  usageWarning: boolean
+  activeFilters: boolean
+  onShowAll: () => void
+  onShowIssues: () => void
+  onShowWebp: () => void
+}) {
+  const currentIssueCount = currentLargeCount + currentMissingVariantCount
+
+  return (
+    <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+      <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
+              Operations
+            </div>
+            <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">素材治理</h2>
+          </div>
+          <span className={`flex h-9 w-9 items-center justify-center rounded-md ${issueTotal > 0 ? 'bg-[#FFF2E7] text-[#E36F2C]' : 'bg-emerald-50 text-emerald-700'}`}>
+            {issueTotal > 0 ? <AlertCircle size={17} /> : <CheckCircle2 size={17} />}
+          </span>
+        </div>
+
+        <div className="mt-4 space-y-2">
+          <MediaOperationRow label="全库风险" value={`${issueTotal} 张`} tone={issueTotal > 0 ? 'orange' : 'green'} />
+          <MediaOperationRow label="当前页大图" value={`${currentLargeCount} 张`} tone={currentLargeCount > 0 ? 'orange' : 'green'} />
+          <MediaOperationRow label="当前页缺派生图" value={`${currentMissingVariantCount} 张`} tone={currentMissingVariantCount > 0 ? 'orange' : 'green'} />
+          <MediaOperationRow label="当前页 WebP" value={`${currentWebpCount} 张`} tone="blue" />
+          <MediaOperationRow label="上传上限" value={`${uploadLimitMb} MB`} tone="gray" />
+        </div>
+
+        <div className="mt-4">
+          <div className="mb-1.5 text-xs text-[#61767D]">空间占用</div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-[#D8E7E8]">
+            <div
+              className={`h-full rounded-full ${usageWarning ? 'bg-[#E36F2C]' : 'bg-[#1889B6]'}`}
+              style={{ width: `${usagePct}%` }}
+            />
+          </div>
+          <div className="mt-1 text-[11px] text-[#61767D]">{usagePct.toFixed(1)}% / 1 GB</div>
+        </div>
+      </section>
+
+      <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
+        <div className="flex items-center gap-2 text-sm font-bold text-[#1E2C31]">
+          <Layers size={16} />
+          快速视图
+        </div>
+        <div className="mt-3 grid gap-2">
+          <Button type="button" variant={activeFilters ? 'outline' : 'default'} size="sm" onClick={onShowAll}>
+            <Images size={15} />
+            全部素材
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={onShowIssues}>
+            <AlertCircle size={15} />
+            风险素材
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={onShowWebp}>
+            <CheckCircle2 size={15} />
+            WebP 素材
+          </Button>
+        </div>
+      </section>
+
+      <section className="rounded-md border border-[#D8E7E8] bg-white p-4 text-xs leading-5 text-[#61767D] shadow-sm">
+        <div className="mb-2 text-sm font-bold text-[#1E2C31]">当前页处理建议</div>
+        {currentIssueCount > 0 ? (
+          <p>优先处理当前页的大原图和缺派生图素材，再进入详情查看引用来源。</p>
+        ) : (
+          <p>当前页未发现大原图或缺派生图问题，可继续按文件名、类型或风险视图筛选。</p>
+        )}
+      </section>
+    </aside>
+  )
+}
+
+function MediaOperationRow({
+  label,
+  value,
+  tone,
+}: {
+  label: string
+  value: string
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+}) {
+  const color =
+    tone === 'orange'
+      ? 'text-[#E36F2C]'
+      : tone === 'green'
+        ? 'text-emerald-700'
+        : tone === 'blue'
+          ? 'text-[#1889B6]'
+          : 'text-[#61767D]'
+
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-2">
+      <span className="text-xs text-[#61767D]">{label}</span>
+      <span className={`text-sm font-bold ${color}`}>{value}</span>
+    </div>
+  )
+}
+
 function MediaCard({ upload, onClick }: { upload: Upload; onClick: () => void }) {
   const [loaded, setLoaded] = useState(false)
   const [copyOk, setCopyOk] = useState(false)
   const thumbUrl = getImageVariantUrl(upload.url, upload.variants, 'thumb')
-  const isLargeOriginal = (upload.size ?? 0) > FRONTEND_RISK_IMAGE_BYTES
+  const variantCount = generatedVariantCount(upload)
+  const isLargeOriginal = isFrontendRiskUpload(upload)
+  const missingVariants = isMissingFrontendVariants(upload)
 
   const copyUrl = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -745,11 +1001,27 @@ function MediaCard({ upload, onClick }: { upload: Upload; onClick: () => void })
           {upload.size ? formatBytes(upload.size) : ''}
         </span>
       </div>
-      {isLargeOriginal ? (
-        <div className="pointer-events-none absolute left-1.5 top-1.5 z-30 rounded-sm bg-[#E36F2C] px-1.5 py-0.5 text-[10px] font-semibold text-white">
-          LARGE
+      <div className="pointer-events-none absolute left-1.5 top-1.5 z-30 flex flex-wrap gap-1">
+        {isLargeOriginal ? (
+          <div className="rounded-sm bg-[#E36F2C] px-1.5 py-0.5 text-[10px] font-semibold text-white">
+            大图
+          </div>
+        ) : null}
+        {missingVariants ? (
+          <div className="rounded-sm bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+            派生 {variantCount}/3
+          </div>
+        ) : (
+          <div className="rounded-sm bg-emerald-600/90 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+            派生齐
+          </div>
+        )}
+      </div>
+      {copyOk && (
+        <div className="pointer-events-none absolute left-1.5 top-8 z-30 rounded-sm bg-green-600/90 px-1.5 py-0.5 text-[10px] text-white">
+          已复制
         </div>
-      ) : null}
+      )}
       <div className="absolute right-1.5 top-1.5 z-30 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
         <button
           type="button"
@@ -760,11 +1032,6 @@ function MediaCard({ upload, onClick }: { upload: Upload; onClick: () => void })
           <Copy size={14} />
         </button>
       </div>
-      {copyOk && (
-        <div className="pointer-events-none absolute left-1.5 top-1.5 z-30 rounded-sm bg-green-600/90 px-1.5 py-0.5 text-[10px] text-white">
-          已复制
-        </div>
-      )}
     </div>
   )
 }
@@ -846,9 +1113,8 @@ function MediaDetailSheet({
   }>(() => ({ uploadId: null, refs: emptyMediaReferences() }))
   const refs = refsState.uploadId === uploadId ? refsState.refs : EMPTY_MEDIA_REFERENCES
   const detailPreviewUrl = upload ? getImageVariantUrl(upload.url, upload.variants, 'detail') : ''
-  const variants = normalizeImageVariants(upload?.variants)
-  const variantCount = (['thumb', 'card', 'detail'] as const).filter((role) => variants[role]?.url).length
-  const isLargeOriginal = (upload?.size ?? 0) > FRONTEND_RISK_IMAGE_BYTES
+  const variantCount = generatedVariantCount(upload)
+  const isLargeOriginal = isFrontendRiskUpload(upload)
   const canGenerateVariants = Boolean(
     upload?.mime && ['image/jpeg', 'image/png', 'image/webp'].includes(upload.mime),
   )
@@ -877,9 +1143,9 @@ function MediaDetailSheet({
       const data = (await res.json().catch(() => ({}))) as { upload?: Upload; error?: string }
       if (!res.ok || !data.upload) throw new Error(data.error || 'Variant generation failed')
       onUploadUpdated(data.upload)
-      toast.success('Variants generated')
+      toast.success('派生图已生成')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Variant generation failed')
+      toast.error(err instanceof Error ? err.message : '派生图生成失败')
     } finally {
       setGeneratingVariants(false)
     }
@@ -902,7 +1168,7 @@ function MediaDetailSheet({
         if (!v) onClose()
       }}
     >
-      <SheetContent>
+      <SheetContent className="w-[560px]">
         {upload && (
           <>
             <SheetHeader>
@@ -931,10 +1197,10 @@ function MediaDetailSheet({
                   value={upload.size ? formatBytes(upload.size) : null}
                 />
                 <Field label="MIME" value={mimeLabel(upload.mime)} />
-                <Field label="Variants" value={`${variantCount}/3 generated`} />
+                <Field label="派生图" value={`${variantCount}/3 已生成`} />
                 <Field
-                  label="Frontend risk"
-                  value={isLargeOriginal ? 'Original > 1.5 MB. Use card/detail variants.' : 'OK'}
+                  label="前台风险"
+                  value={isLargeOriginal ? '原图超过 1.5 MB，前台优先使用 card/detail 派生图。' : '正常'}
                   fullWidth
                 />
                 <Field label="上传时间" value={formatDate(upload.created_at)} />
@@ -944,7 +1210,7 @@ function MediaDetailSheet({
               {canGenerateVariants && variantCount < 3 ? (
                 <div className="rounded-md border border-[#F2C9A8] bg-[#FFF8F2] p-3 text-sm">
                   <div className="mb-2 text-xs font-medium text-[#A76632]">
-                    Missing frontend variants. Generate thumb/card/detail before using this image on public pages.
+                    该素材缺少前台派生图。用于首页、产品、案例或新闻前，建议先生成 thumb / card / detail。
                   </div>
                   <Button
                     type="button"
@@ -954,7 +1220,7 @@ function MediaDetailSheet({
                     disabled={generatingVariants}
                   >
                     <RefreshCw size={14} className={generatingVariants ? 'animate-spin' : ''} />
-                    Generate variants
+                    生成派生图
                   </Button>
                 </div>
               ) : null}
@@ -962,7 +1228,7 @@ function MediaDetailSheet({
               {/* URL */}
               <div>
                 <div className="text-xs text-[#61767D] mb-2 flex items-center justify-between">
-                  <span>Blob URL</span>
+                  <span>素材 URL</span>
                   <button
                     onClick={copyUrl}
                     className="inline-flex items-center gap-1 text-[#E36F2C] hover:underline"

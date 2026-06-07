@@ -81,7 +81,7 @@ export default async function SiteMediaPage({
   const page = Math.max(1, Number(getStr('page') ?? 1) || 1)
   const limit = Math.min(100, Math.max(20, Number(getStr('limit') ?? 50) || 50))
 
-  const [{ uploads, total }, bytes, settings] = await Promise.all([
+  const [currentResult, allResult, issueResult, bytes, settings] = await Promise.all([
     listUploads({
       mime: filters.mime,
       view: filters.view,
@@ -89,9 +89,12 @@ export default async function SiteMediaPage({
       page,
       limit,
     }),
+    listUploads({ page: 1, limit: 1 }),
+    listUploads({ view: 'issues', page: 1, limit: 1 }),
     sumStorageSize(),
     getSiteSettings().catch(() => defaultSiteSettings),
   ])
+  const { uploads, total } = currentResult
 
   const adminRole: AdminRole = role
 
@@ -102,7 +105,7 @@ export default async function SiteMediaPage({
       email={session.user.email}
       title="网站管理"
       description="管理前台图片素材、上传派生图和大图风险提示。"
-      sideNavGroups={getSiteToolNav(total)}
+      sideNavGroups={getSiteToolNav(allResult.total)}
       activeItem="media"
     >
       <AdminPageHero
@@ -110,17 +113,17 @@ export default async function SiteMediaPage({
         title="图片素材"
         description="这里承接前台产品、案例、新闻、页面模块和 Media Kit 的图片素材。运营上传后优先生成缩略图，前台页面按场景读取小图，原图继续保留作为资产。"
       />
-      <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-        <MediaClient
-          initialUploads={uploads}
-          initialTotal={total}
-          initialBytes={bytes}
-          initialFilters={filters}
-          initialPage={page}
-          initialLimit={limit}
-          maxUploadMb={normalizeMediaMaxUploadMb(settings.mediaMaxUploadMb)}
-        />
-      </section>
+      <MediaClient
+        initialUploads={uploads}
+        initialTotal={total}
+        initialAllTotal={allResult.total}
+        initialIssueTotal={issueResult.total}
+        initialBytes={bytes}
+        initialFilters={filters}
+        initialPage={page}
+        initialLimit={limit}
+        maxUploadMb={normalizeMediaMaxUploadMb(settings.mediaMaxUploadMb)}
+      />
     </AdminSectionShell>
   )
 }
