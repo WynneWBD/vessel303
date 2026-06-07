@@ -1175,10 +1175,37 @@ function ProductList({
         />
       </div>
       <ProductBatchCategoryBar categories={categories} marks={marks} showcases={showcases} />
-      <div className="space-y-3">
-        {rows.map((product) => (
-          <ProductRow key={product.id} product={product} />
-        ))}
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-sm font-bold text-[#1E2C31]">当前产品结果</h2>
+            <p className="mt-1 text-xs text-[#61767D]">表格视图用于快速扫描状态、缺项、分类、属性和运营标记；勾选后可使用上方批量操作。</p>
+          </div>
+          <span className="text-xs font-semibold text-[#61767D]">
+            每页 {formatNumber(PAGE_SIZE)} 条 / 当前 {formatNumber(rows.length)} 条
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1220px] text-sm">
+            <thead>
+              <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-xs text-[#61767D]">
+                <th className="w-12 px-3 py-3 text-left font-medium">选</th>
+                <th className="px-3 py-3 text-left font-medium">产品</th>
+                <th className="w-36 px-3 py-3 text-left font-medium">状态</th>
+                <th className="w-52 px-3 py-3 text-left font-medium">分类 / 属性</th>
+                <th className="w-72 px-3 py-3 text-left font-medium">待补项</th>
+                <th className="w-52 px-3 py-3 text-left font-medium">运营标记</th>
+                <th className="w-28 px-3 py-3 text-left font-medium">更新时间</th>
+                <th className="w-44 px-3 py-3 text-right font-medium">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((product) => (
+                <ProductRow key={product.id} product={product} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
       <Pagination filters={filters} total={total} />
     </section>
@@ -1188,11 +1215,11 @@ function ProductList({
 function ProductRow({ product }: { product: ProductListRow }) {
   const issues = getProductIssues(product)
   const label = getCompletenessLabel(issues)
-  const visibleIssues = issues.slice(0, 3)
+  const visibleIssues = issues.slice(0, 4)
   const hiddenIssueCount = Math.max(0, issues.length - visibleIssues.length)
-  const attributeLabels = (product.attribute_labels_zh ?? []).slice(0, 3)
+  const attributeLabels = (product.attribute_labels_zh ?? []).slice(0, 2)
   const hiddenAttributeCount = Math.max(0, Number(product.attribute_option_count ?? 0) - attributeLabels.length)
-  const markLabels = (product.mark_labels_zh ?? []).slice(0, 3)
+  const markLabels = (product.mark_labels_zh ?? []).slice(0, 2)
   const showcaseTitles = (product.showcase_titles_zh ?? []).slice(0, 2)
   const published = product.status === 'published'
   const routeInfo = getCatalogProductRouteInfo({
@@ -1201,9 +1228,9 @@ function ProductRow({ product }: { product: ProductListRow }) {
   })
 
   return (
-    <article className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm transition hover:border-[#1889B6]/55 hover:shadow-md">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[28px_96px_minmax(0,1fr)_220px_168px] lg:items-center">
-        <label className="flex h-9 w-9 items-center justify-center rounded-md border border-[#D8E7E8] bg-white" title="选择产品">
+    <tr className="border-b border-[#E6EEEE] align-top transition last:border-0 hover:bg-[#F7FAFA]">
+      <td className="px-3 py-3">
+        <label className="flex h-8 w-8 items-center justify-center rounded-md border border-[#D8E7E8] bg-white" title="选择产品">
           <input
             type="checkbox"
             value={product.id}
@@ -1211,139 +1238,125 @@ function ProductRow({ product }: { product: ProductListRow }) {
             className="h-4 w-4 accent-[#E36F2C]"
           />
         </label>
-        <div className="h-24 w-full overflow-hidden rounded-md bg-[#E6EEEE] lg:h-16 lg:w-24">
-          {hasText(product.image) ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={product.image ?? ''} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-[#8A9EA4]">
-              <ImageIcon size={20} />
-            </div>
-          )}
-        </div>
-
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate text-base font-bold text-[#1E2C31]">{product.name_cn || product.name_en || product.id}</h3>
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                published ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FFF2E7] text-[#E36F2C]'
-              }`}
-            >
-              {published ? '已发布' : '草稿'}
-            </span>
-            <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${completenessClass(label)}`}>
-              {label}
-            </span>
-          </div>
-          <p className="mt-1 truncate text-sm text-[#61767D]">{product.name_en}</p>
-          <p className="mt-1 text-xs text-[#8A9EA4]">
-            {product.detail_slug ? `${product.id} / ${product.detail_slug}` : product.id}
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-[#8A8580]">
-            <span className="rounded-full border border-[#D8E7E8] bg-white px-2 py-0.5 text-[#61767D]">
-              官方前台：{routeInfo.publicLabel}
-            </span>
-            <span className="max-w-[240px] truncate rounded-full border border-[#E5DED4] bg-[#FAF7F2] px-2 py-0.5">
-              {routeInfo.publicHref}
-            </span>
-            {routeInfo.usesCuratedDetail ? (
-              <span className="max-w-[240px] truncate rounded-full border border-[#E5DED4] bg-[#FAF7F2] px-2 py-0.5">
-                CMS：{routeInfo.cmsHref}
-              </span>
-            ) : null}
-          </div>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {visibleIssues.length === 0 ? (
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                基础内容完整
-              </span>
+      </td>
+      <td className="px-3 py-3">
+        <div className="flex min-w-0 gap-3">
+          <div className="h-16 w-24 shrink-0 overflow-hidden rounded-md bg-[#E6EEEE]">
+            {hasText(product.image) ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={product.image ?? ''} alt="" className="h-full w-full object-cover" />
             ) : (
-              visibleIssues.map((issue) => (
-                <span key={issue} className={`rounded-full border px-2 py-0.5 text-xs ${issueClass(issue)}`}>
-                  {issue}
-                </span>
-              ))
-            )}
-            {hiddenIssueCount > 0 && (
-              <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-500">
-                还有 {hiddenIssueCount} 项
-              </span>
+              <div className="flex h-full w-full items-center justify-center text-[#8A9EA4]">
+                <ImageIcon size={20} />
+              </div>
             )}
           </div>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="min-w-0">
+            <h3 className="truncate text-base font-bold text-[#1E2C31]">{product.name_cn || product.name_en || product.id}</h3>
+            <p className="mt-1 truncate text-sm text-[#61767D]">{product.name_en}</p>
+            <p className="mt-1 text-xs text-[#8A9EA4]">{product.detail_slug ? `${product.id} / ${product.detail_slug}` : product.id}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-[#8A8580]">
+              <span className="rounded-full border border-[#D8E7E8] bg-white px-2 py-0.5 text-[#61767D]">
+                {routeInfo.publicLabel}
+              </span>
+              <span className="max-w-[260px] truncate rounded-full border border-[#E5DED4] bg-[#FAF7F2] px-2 py-0.5">
+                {routeInfo.publicHref}
+              </span>
+            </div>
+          </div>
+        </div>
+      </td>
+      <td className="px-3 py-3">
+        <div className="flex flex-col items-start gap-1.5">
+          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${published ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FFF2E7] text-[#E36F2C]'}`}>
+            {published ? '已发布' : '草稿'}
+          </span>
+          <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${completenessClass(label)}`}>{label}</span>
+          <span className="text-xs text-[#8A9EA4]">{product.product_series} {product.gen} / {getProductTypeLabel(product.product_type)}</span>
+        </div>
+      </td>
+      <td className="px-3 py-3">
+        <div className="space-y-2 text-xs">
+          <div>
+            <span className="block text-[#8A9EA4]">分类</span>
+            <span className="font-semibold text-[#1E2C31]">{product.category_title_zh ?? '未分类'}</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
             {attributeLabels.length > 0 ? (
               <>
                 {attributeLabels.map((attribute) => (
-                  <span key={attribute} className="rounded-full border border-[#D8E7E8] bg-[#F0F7F8] px-2 py-0.5 text-xs font-semibold text-[#1889B6]">
+                  <span key={attribute} className="rounded-full border border-[#D8E7E8] bg-[#F0F7F8] px-2 py-0.5 font-semibold text-[#1889B6]">
                     {attribute}
                   </span>
                 ))}
                 {hiddenAttributeCount > 0 ? (
-                  <span className="rounded-full border border-[#D8E7E8] bg-white px-2 py-0.5 text-xs text-[#61767D]">
-                    还有 {hiddenAttributeCount} 个属性
-                  </span>
+                  <span className="rounded-full border border-[#D8E7E8] bg-white px-2 py-0.5 text-[#61767D]">+{hiddenAttributeCount}</span>
                 ) : null}
               </>
             ) : (
-              <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-600">
-                缺产品属性
-              </span>
+              <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-zinc-600">缺产品属性</span>
             )}
           </div>
-          {(markLabels.length > 0 || showcaseTitles.length > 0 || product.brand_title_zh) ? (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {product.brand_title_zh ? (
-                <span className="rounded-full border border-[#F2C6A7] bg-[#FFF7F0] px-2 py-0.5 text-xs font-semibold text-[#B85D21]">
-                  品牌：{product.brand_title_zh}
-                </span>
-              ) : null}
-              {markLabels.map((mark) => (
-                <span key={mark} className="rounded-full border border-[#D8E7E8] bg-white px-2 py-0.5 text-xs font-semibold text-[#61767D]">
-                  {mark}
-                </span>
-              ))}
-              {showcaseTitles.map((showcase) => (
-                <span key={showcase} className="rounded-full border border-[#D8E7E8] bg-[#F7FAFA] px-2 py-0.5 text-xs font-semibold text-[#1889B6]">
-                  橱窗：{showcase}
-                </span>
-              ))}
-            </div>
+        </div>
+      </td>
+      <td className="px-3 py-3">
+        <div className="flex flex-wrap gap-1.5">
+          {visibleIssues.length === 0 ? (
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+              基础内容完整
+            </span>
+          ) : (
+            visibleIssues.map((issue) => (
+              <span key={issue} className={`rounded-full border px-2 py-0.5 text-xs ${issueClass(issue)}`}>
+                {issue}
+              </span>
+            ))
+          )}
+          {hiddenIssueCount > 0 ? (
+            <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-500">+{hiddenIssueCount} 项</span>
           ) : null}
         </div>
-
-        <div className="grid grid-cols-2 gap-3 rounded-md bg-[#F7FAFA] p-3 text-xs lg:grid-cols-1">
-          <ProductMeta label="系列" value={`${product.product_series} ${product.gen}`} />
-          <ProductMeta label="类型" value={getProductTypeLabel(product.product_type)} />
-          <ProductMeta label="分类" value={product.category_title_zh ?? '未分类'} />
-          <ProductMeta label="品牌" value={product.brand_title_zh ?? '未标记'} />
-          <ProductMeta label="属性" value={`${Number(product.attribute_option_count ?? 0)} 个`} />
-          <ProductMeta label="橱窗" value={showcaseTitles.length > 0 ? showcaseTitles.join(' / ') : '未加入'} />
-          <ProductMeta label="更新时间" value={formatDate(product.updated_at)} />
+      </td>
+      <td className="px-3 py-3">
+        <div className="flex flex-wrap gap-1.5">
+          {product.brand_title_zh ? (
+            <span className="rounded-full border border-[#F2C6A7] bg-[#FFF7F0] px-2 py-0.5 text-xs font-semibold text-[#B85D21]">
+              品牌：{product.brand_title_zh}
+            </span>
+          ) : (
+            <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-600">未标品牌</span>
+          )}
+          {markLabels.map((mark) => (
+            <span key={mark} className="rounded-full border border-[#D8E7E8] bg-white px-2 py-0.5 text-xs font-semibold text-[#61767D]">
+              {mark}
+            </span>
+          ))}
+          {showcaseTitles.map((showcase) => (
+            <span key={showcase} className="rounded-full border border-[#D8E7E8] bg-[#F7FAFA] px-2 py-0.5 text-xs font-semibold text-[#1889B6]">
+              橱窗：{showcase}
+            </span>
+          ))}
         </div>
-
-        <div className="flex flex-wrap gap-2 lg:justify-end">
+      </td>
+      <td className="px-3 py-3 text-xs font-semibold text-[#61767D]">{formatDate(product.updated_at)}</td>
+      <td className="px-3 py-3">
+        <div className="flex flex-wrap justify-end gap-2">
           {published ? (
             <Link
               href={productPreviewHref(product)}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-9 items-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
             >
-              <ExternalLink size={14} />
+              <ExternalLink size={13} />
               预览
             </Link>
-          ) : (
-            <span className="inline-flex h-9 items-center gap-2 rounded-md border border-[#E6EEEE] bg-[#F7FAFA] px-3 text-xs font-semibold text-[#9AA9AD]">
-              <ExternalLink size={14} />
-              草稿
-            </span>
-          )}
+          ) : null}
           <Link
             href={`/admin/content/products/${product.id}/edit`}
-            className="inline-flex h-9 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95E22]"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[#E36F2C] px-2.5 text-xs font-semibold text-white transition hover:bg-[#C95E22]"
           >
-            <Pencil size={14} />
+            <Pencil size={13} />
             编辑
           </Link>
           <ProductListDeleteAction
@@ -1351,17 +1364,8 @@ function ProductRow({ product }: { product: ProductListRow }) {
             productName={product.name_cn || product.name_en || product.id}
           />
         </div>
-      </div>
-    </article>
-  )
-}
-
-function ProductMeta({ label, value }: { label: string; value: string }) {
-  return (
-    <span className="min-w-0">
-      <span className="block text-[#8A9EA4]">{label}</span>
-      <span className="mt-1 block truncate font-semibold text-[#1E2C31]">{value || '未标记'}</span>
-    </span>
+      </td>
+    </tr>
   )
 }
 
