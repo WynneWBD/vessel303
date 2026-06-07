@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { CONVERSION_PATHS } from '@/lib/admin-conversion-paths'
 import {
   loadAnalyticsReadinessMetrics,
   loadStatusOverview,
@@ -18,6 +19,7 @@ import {
   type AnalyticsRankRow,
   type SiteAnalyticsDashboard,
   type AnalyticsTrendRow,
+  type AnalyticsConversionMetric,
 } from '@/lib/site-analytics'
 import { AdminPageHero } from '@/components/admin/AdminUI'
 import {
@@ -145,6 +147,12 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
         />
 
         <ComparisonStrip comparison={activeComparison} />
+
+        <TrafficDrilldownWorkbench
+          analytics={analytics}
+          activeMetric={activeMetric}
+          activeRange={activeRange}
+        />
 
         <section id="trend-analysis" className="space-y-4">
           <SectionTitle title={activeRange === 'today' ? '今日小时趋势' : activeRange === 'yesterday' ? '昨日小时趋势' : '访问趋势'} detail="聚合 PV、访客、转化动作、表单成功和真实线索，先看趋势再看排行。" />
@@ -399,6 +407,181 @@ function ComparisonStrip({ comparison }: { comparison?: AnalyticsComparisonMetri
       </div>
     </section>
   )
+}
+
+function TrafficDrilldownWorkbench({
+  analytics,
+  activeMetric,
+  activeRange,
+}: {
+  analytics: SiteAnalyticsDashboard
+  activeMetric: TrafficMetric
+  activeRange: TrafficRange
+}) {
+  const topPage = analytics.topPages[0]
+  const topReferrer = analytics.topReferrers[0]
+  const topSource = analytics.sourceTypes[0]
+  const quietLandingPage = analytics.landingPages.find((row) => row.value >= 20 && (row.secondary ?? 0) === 0)
+  const topConversion = getTopConversionPath(analytics.conversionPaths)
+  const activeActions = activeMetric.ctaClicks + activeMetric.contactRedirects + activeMetric.formSubmits
+  const hasTrafficSample = activeMetric.pageViews > 0
+  const rows = [
+    {
+      label: '页面访问',
+      value: topPage?.label ?? '暂无访问页面',
+      detail: topPage
+        ? `${formatNumber(topPage.value)} PV / ${formatNumber(topPage.secondary ?? 0)} 名匿名访客`
+        : `${rangeLabel(activeRange)}没有页面访问样本。`,
+      href: '#behavior-analysis',
+      tone: 'blue',
+    },
+    {
+      label: '落地页低动作',
+      value: quietLandingPage?.label ?? '暂无明显低动作页',
+      detail: quietLandingPage
+        ? `${formatNumber(quietLandingPage.value)} 次访问，但动作数为 ${formatNumber(quietLandingPage.secondary ?? 0)}。`
+        : '当前落地页没有明显“访问高但无动作”的样本。',
+      href: '#landing-analysis',
+      tone: quietLandingPage ? 'orange' : 'green',
+    },
+    {
+      label: '来源渠道',
+      value: topReferrer?.label ?? topSource?.label ?? '暂无来源数据',
+      detail: topReferrer
+        ? `${formatNumber(topReferrer.value)} 次 referrer 样本。`
+        : topSource
+          ? `${formatNumber(topSource.value)} 次 source type 样本。`
+          : '暂无 referrer 或 source type 样本。',
+      href: '#behavior-analysis',
+      tone: topReferrer || topSource ? 'blue' : 'gray',
+    },
+    {
+      label: '转化路径',
+      value: topConversion?.label ?? '暂无转化路径样本',
+      detail: topConversion
+        ? `访问 ${formatNumber(topConversion.metric.views)} / 动作 ${formatNumber(topConversion.metric.ctaClicks)} / 线索 ${formatNumber(topConversion.metric.leads)}。`
+        : '暂无路径级访问、动作或线索样本。',
+      href: '/admin/site/conversion',
+      tone: topConversion ? 'green' : 'gray',
+    },
+  ] satisfies Array<{
+    label: string
+    value: string
+    detail: string
+    href: string
+    tone: 'blue' | 'green' | 'orange' | 'gray'
+  }>
+
+  return (
+    <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-[#1E2C31]">下钻诊断工作台</h2>
+            <p className="mt-1 text-xs text-[#61767D]">
+              先选时间口径，再按页面、落地页、来源和转化路径下钻；所有入口只读跳转。
+            </p>
+          </div>
+          <span className="rounded-full bg-[#EAF6F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
+            {rangeLabel(activeRange)}口径
+          </span>
+        </div>
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0">
+          {rows.map((row) => (
+            <TrafficDrilldownRow key={row.label} row={row} />
+          ))}
+        </div>
+      </div>
+
+      <aside className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="border-b border-[#E6EEEE] px-5 py-4">
+          <h2 className="text-lg font-bold text-[#1E2C31]">当前口径快照</h2>
+          <p className="mt-1 text-xs text-[#61767D]">用于判断是否值得继续下钻，不替代完整审计日志。</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 p-5">
+          <SnapshotMetric label="PV" value={activeMetric.pageViews} detail="页面访问" />
+          <SnapshotMetric label="UV" value={activeMetric.visitors} detail="匿名访客" />
+          <SnapshotMetric label="动作" value={activeActions} detail="CTA/联系/表单" />
+          <SnapshotMetric label="线索" value={activeMetric.leads} detail="真实 leads" />
+        </div>
+        <div className="border-t border-[#E6EEEE] px-5 py-4">
+          <div className="space-y-2 text-xs">
+            <StatusLine ok={analytics.available} label={analytics.available ? '第一方事件表可读取' : '第一方事件表未就绪'} />
+            <StatusLine ok={hasTrafficSample} label={hasTrafficSample ? '当前口径已有访问样本' : '当前口径暂无访问样本'} />
+            <StatusLine ok label={`已排除测试 ${formatNumber(activeMetric.testEvents)} 事件 / ${formatNumber(activeMetric.testLeads)} 线索`} />
+          </div>
+        </div>
+      </aside>
+    </section>
+  )
+}
+
+function TrafficDrilldownRow({
+  row,
+}: {
+  row: {
+    label: string
+    value: string
+    detail: string
+    href: string
+    tone: 'blue' | 'green' | 'orange' | 'gray'
+  }
+}) {
+  const toneClass =
+    row.tone === 'orange'
+      ? 'bg-[#FFF2E7] text-[#E36F2C]'
+      : row.tone === 'green'
+        ? 'bg-emerald-50 text-emerald-700'
+        : row.tone === 'gray'
+          ? 'bg-[#F0F2F2] text-[#61767D]'
+          : 'bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <Link href={row.href} className="block p-5 transition hover:bg-[#F7FAFA]">
+      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${toneClass}`}>{row.label}</span>
+      <span className="mt-3 block truncate text-xl font-black text-[#1E2C31]">{row.value}</span>
+      <span className="mt-2 block text-xs leading-5 text-[#61767D]">{row.detail}</span>
+    </Link>
+  )
+}
+
+function SnapshotMetric({ label, value, detail }: { label: string; value: number; detail: string }) {
+  return (
+    <div className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] p-3">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className="mt-2 text-2xl font-black text-[#1E2C31]">{formatNumber(value)}</p>
+      <p className="mt-1 text-[11px] text-[#8A9EA4]">{detail}</p>
+    </div>
+  )
+}
+
+function StatusLine({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <div className="flex items-start gap-2">
+      <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${ok ? 'bg-emerald-500' : 'bg-[#E36F2C]'}`} />
+      <span className="leading-5 text-[#61767D]">{label}</span>
+    </div>
+  )
+}
+
+function getTopConversionPath(conversionPaths: Record<string, AnalyticsConversionMetric>) {
+  const rows = CONVERSION_PATHS.map((item) => ({
+    key: item.key,
+    label: item.area,
+    metric: conversionPaths[item.key] ?? {
+      views: 0,
+      ctaClicks: 0,
+      formSubmits: 0,
+      leads: 0,
+      conversionRate: 0,
+    },
+  })).sort((a, b) => conversionMetricScore(b.metric) - conversionMetricScore(a.metric))
+
+  return rows.find((row) => conversionMetricScore(row.metric) > 0)
+}
+
+function conversionMetricScore(metric: AnalyticsConversionMetric) {
+  return metric.views + metric.ctaClicks * 3 + metric.formSubmits * 5 + metric.leads * 10
 }
 
 function ComparisonCell({
