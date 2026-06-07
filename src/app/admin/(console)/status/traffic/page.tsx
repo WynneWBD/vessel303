@@ -8,7 +8,9 @@ import {
   formatAnalyticsPercent,
   loadSiteAnalyticsDashboard,
   sourceTypeLabel,
+  type AnalyticsWindowMetric,
   type AnalyticsRankRow,
+  type SiteAnalyticsDashboard,
   type AnalyticsTrendRow,
 } from '@/lib/site-analytics'
 import {
@@ -32,6 +34,7 @@ export default async function AdminStatusTrafficPage() {
   const analytics = await loadSiteAnalyticsDashboard()
   const sevenDays = analytics.windows.find((item) => item.days === 7) ?? analytics.windows[0]
   const thirtyDays = analytics.windows.find((item) => item.days === 30) ?? analytics.windows[1] ?? sevenDays
+  const insights = buildInsightItems(analytics, thirtyDays)
 
   return (
     <StatusPageShell
@@ -109,6 +112,15 @@ export default async function AdminStatusTrafficPage() {
         <section className="space-y-4">
           <SectionTitle title="14 天趋势" detail="按天聚合 PV、访客、转化动作、表单成功和真实线索，帮助运营判断最近是否在变好。" />
           <TrendTable rows={analytics.dailyTrend} />
+        </section>
+
+        <section className="space-y-4">
+          <SectionTitle title="运营诊断" detail="把 300 后台式统计结果转成可处理提示；这里只提示风险，不自动改内容或线索状态。" />
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
+            {insights.map((item) => (
+              <InsightCard key={item.key} item={item} />
+            ))}
+          </div>
         </section>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(360px,0.75fr)]">
@@ -225,6 +237,84 @@ function TrendTable({ rows }: { rows: AnalyticsTrendRow[] }) {
   )
 }
 
+type InsightSeverity = 'ok' | 'watch' | 'issue'
+
+type InsightItem = {
+  key: string
+  title: string
+  value: string
+  detail: string
+  severity: InsightSeverity
+}
+
+function buildInsightItems(analytics: SiteAnalyticsDashboard, windowMetric: AnalyticsWindowMetric): InsightItem[] {
+  const actionTotal = analytics.sourceTypes.reduce((sum, row) => sum + row.value, 0)
+  const otherActions = analytics.sourceTypes.find((row) => row.key === 'other')?.value ?? 0
+  const otherShare = actionTotal > 0 ? otherActions / actionTotal : 0
+  const quietLandingPage = analytics.landingPages.find((row) => row.value >= 20 && (row.secondary ?? 0) === 0)
+  const topPage = analytics.topPages[0]
+  const conversionSeverity: InsightSeverity =
+    windowMetric.pageViews >= 100 && windowMetric.leads === 0
+      ? 'issue'
+      : windowMetric.pageViews >= 100 && windowMetric.conversionRate < 0.005
+        ? 'watch'
+        : 'ok'
+
+  return [
+    {
+      key: 'conversion-rate',
+      title: '访问转化率',
+      value: formatAnalyticsPercent(windowMetric.conversionRate),
+      detail:
+        windowMetric.pageViews === 0
+          ? '暂无 30 天访问事件。'
+          : `30 天 ${formatNumber(windowMetric.pageViews)} PV / ${formatNumber(windowMetric.leads)} 条真实线索。`,
+      severity: conversionSeverity,
+    },
+    {
+      key: 'quiet-landing-page',
+      title: '高访问低动作',
+      value: quietLandingPage ? quietLandingPage.label : '暂无',
+      detail: quietLandingPage
+        ? `${formatNumber(quietLandingPage.value)} 次访问但暂无 CTA / 联系 / 表单动作。`
+        : '当前 Top landing pages 均有动作或访问量较低。',
+      severity: quietLandingPage ? 'watch' : 'ok',
+    },
+    {
+      key: 'source-classification',
+      title: '来源归类',
+      value: actionTotal > 0 ? `${Math.round(otherShare * 100)}% other` : '暂无动作',
+      detail:
+        actionTotal > 0
+          ? `30 天动作 ${formatNumber(actionTotal)} 次，其中 other ${formatNumber(otherActions)} 次。`
+          : '暂无 CTA / 联系 / 表单来源事件。',
+      severity: otherShare > 0.5 ? 'watch' : 'ok',
+    },
+    {
+      key: 'top-page',
+      title: '最高访问页',
+      value: topPage?.label ?? '暂无',
+      detail: topPage
+        ? `${formatNumber(topPage.value)} 次访问 / ${formatNumber(topPage.secondary ?? 0)} 名匿名访客。`
+        : '暂无 30 天页面访问事件。',
+      severity: 'ok',
+    },
+  ]
+}
+
+function InsightCard({ item }: { item: InsightItem }) {
+  return (
+    <div className={`rounded-md border p-5 shadow-sm ${insightClass(item.severity)}`}>
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-[#1E2C31]">{item.title}</h3>
+        <span className="rounded-full bg-white/70 px-2 py-0.5 text-xs font-semibold">{insightLabel(item.severity)}</span>
+      </div>
+      <div className="mt-4 truncate text-2xl font-black text-[#1E2C31]">{item.value}</div>
+      <p className="mt-2 text-xs leading-5 text-[#61767D]">{item.detail}</p>
+    </div>
+  )
+}
+
 function RankTable({
   rows,
   empty,
@@ -261,6 +351,18 @@ function RankTable({
       </table>
     </div>
   )
+}
+
+function insightLabel(severity: InsightSeverity): string {
+  if (severity === 'issue') return '需处理'
+  if (severity === 'watch') return '需观察'
+  return '正常'
+}
+
+function insightClass(severity: InsightSeverity): string {
+  if (severity === 'issue') return 'border-[#E36F2C]/45 bg-[#FFF2E7]'
+  if (severity === 'watch') return 'border-[#F2C46D]/60 bg-[#FFF9EA]'
+  return 'border-[#D8E7E8] bg-white'
 }
 
 function formatTrendDate(value: string) {
