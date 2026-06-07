@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import type { JSONContent } from '@tiptap/core'
+import { AlertCircle, CheckCircle2, ExternalLink, ListChecks } from 'lucide-react'
 import type { NewsCategoryRow, NewsRow, NewsStatus } from '@/lib/news-db'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -75,6 +77,11 @@ function getNewsCompleteness({
   contentZh,
   contentEn,
   coverImageUrl,
+  categoryId,
+  seoTitleZh,
+  seoTitleEn,
+  seoDescriptionZh,
+  seoDescriptionEn,
 }: {
   slug: string
   titleZh: string
@@ -84,6 +91,11 @@ function getNewsCompleteness({
   contentZh: JSONContent
   contentEn: JSONContent
   coverImageUrl: string | null
+  categoryId: string
+  seoTitleZh: string
+  seoTitleEn: string
+  seoDescriptionZh: string
+  seoDescriptionEn: string
 }): {
   level: CompletenessLevel
   issues: string[]
@@ -98,6 +110,10 @@ function getNewsCompleteness({
   if (!hasText(excerptEn)) issues.push('缺英文摘要')
   if (!hasRichTextContent(contentZh)) issues.push('缺中文正文')
   if (!hasRichTextContent(contentEn)) issues.push('缺英文正文')
+  if (!categoryId) issues.push('未分类')
+  if (!hasText(seoTitleZh) || !hasText(seoTitleEn) || !hasText(seoDescriptionZh) || !hasText(seoDescriptionEn)) {
+    issues.push('缺 SEO')
+  }
 
   if (issues.length === 0) {
     return { level: '完整', issues }
@@ -114,6 +130,106 @@ function completenessBadgeClass(level: CompletenessLevel) {
   if (level === '完整') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
   if (level === '待补素材') return 'border-orange-200 bg-orange-50 text-orange-700'
   return 'border-zinc-200 bg-zinc-50 text-zinc-600'
+}
+
+function countMissing(checks: boolean[]) {
+  return checks.filter((check) => !check).length
+}
+
+function buildNewsFormProgress({
+  slug,
+  titleZh,
+  titleEn,
+  excerptZh,
+  excerptEn,
+  contentZh,
+  contentEn,
+  coverImageUrl,
+  categoryId,
+  scheduledAt,
+  seoTitleZh,
+  seoTitleEn,
+  seoDescriptionZh,
+  seoDescriptionEn,
+  completeness,
+}: {
+  slug: string
+  titleZh: string
+  titleEn: string
+  excerptZh: string
+  excerptEn: string
+  contentZh: JSONContent
+  contentEn: JSONContent
+  coverImageUrl: string | null
+  categoryId: string
+  scheduledAt: string
+  seoTitleZh: string
+  seoTitleEn: string
+  seoDescriptionZh: string
+  seoDescriptionEn: string
+  completeness: ReturnType<typeof getNewsCompleteness>
+}): NewsFormSectionProgress[] {
+  const hasValidSchedule = !scheduledAt || isScheduledAtValue(scheduledAt)
+
+  return [
+    {
+      id: 'publish-check',
+      title: '发布检查',
+      detail: '状态、完整度和发布影响',
+      issueCount: completeness.issues.length,
+    },
+    {
+      id: 'basic',
+      title: 'Slug',
+      detail: '新闻 URL 路径',
+      issueCount: countMissing([Boolean(normalizeSlug(slug))]),
+    },
+    {
+      id: 'taxonomy',
+      title: '所属分类',
+      detail: '新闻分类与列表归属',
+      issueCount: countMissing([Boolean(categoryId)]),
+    },
+    {
+      id: 'schedule',
+      title: '定时发布',
+      detail: '计划发布时间格式',
+      issueCount: countMissing([hasValidSchedule]),
+    },
+    {
+      id: 'seo',
+      title: 'SEO 字段',
+      detail: '中英文搜索标题和描述',
+      issueCount: countMissing([
+        hasText(seoTitleZh),
+        hasText(seoTitleEn),
+        hasText(seoDescriptionZh),
+        hasText(seoDescriptionEn),
+      ]),
+    },
+    {
+      id: 'media',
+      title: '封面图',
+      detail: '新闻列表和详情封面',
+      issueCount: countMissing([hasText(coverImageUrl)]),
+    },
+    {
+      id: 'content',
+      title: '中英文内容',
+      detail: '标题、摘要、正文',
+      issueCount: countMissing([
+        hasText(titleZh),
+        hasText(titleEn),
+        hasText(excerptZh),
+        hasText(excerptEn),
+        hasRichTextContent(contentZh),
+        hasRichTextContent(contentEn),
+      ]),
+    },
+  ].map((section) => ({
+    ...section,
+    done: section.issueCount === 0,
+  }))
 }
 
 function toDateTimeLocalValue(value: string | null | undefined) {
@@ -139,6 +255,162 @@ type SavedNews = {
   status: NewsStatus
   category_id: number | null
   scheduled_at: string | null
+}
+
+type NewsFormSectionProgress = {
+  id: string
+  title: string
+  detail: string
+  done: boolean
+  issueCount: number
+}
+
+function NewsFormSidebar({
+  sectionProgress,
+  completedSectionCount,
+  completeness,
+  currentStatus,
+  hasUnsavedChanges,
+  isScheduled,
+  scheduledAt,
+  categoryLabel,
+  previewHref,
+  previewLabel,
+}: {
+  sectionProgress: NewsFormSectionProgress[]
+  completedSectionCount: number
+  completeness: ReturnType<typeof getNewsCompleteness>
+  currentStatus: NewsStatus
+  hasUnsavedChanges: boolean
+  isScheduled: boolean
+  scheduledAt: string
+  categoryLabel: string
+  previewHref: string
+  previewLabel: string
+}) {
+  const issueCount = completeness.issues.length
+
+  return (
+    <aside className="space-y-4 xl:sticky xl:top-36 xl:self-start">
+      <section className="rounded-lg border border-[#E5DED4] bg-white p-4 shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#FFF2E7] text-[#E36F2C]">
+              <ListChecks size={17} />
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-[#2C2A28]">发布检查摘要</h3>
+              <p className="mt-1 text-xs leading-5 text-[#6B6560]">集中查看内容、分类、SEO 和发布状态。</p>
+            </div>
+          </div>
+          <Badge className={`${completenessBadgeClass(completeness.level)} shrink-0 text-xs`}>
+            {completeness.level}
+          </Badge>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
+            <p className="text-[11px] font-semibold text-[#8A8580]">章节</p>
+            <p className="mt-1 text-lg font-bold text-[#2C2A28]">
+              {completedSectionCount}/{sectionProgress.length}
+            </p>
+          </div>
+          <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
+            <p className="text-[11px] font-semibold text-[#8A8580]">缺项</p>
+            <p className={issueCount > 0 ? 'mt-1 text-lg font-bold text-[#E36F2C]' : 'mt-1 text-lg font-bold text-emerald-700'}>
+              {issueCount}
+            </p>
+          </div>
+          <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
+            <p className="text-[11px] font-semibold text-[#8A8580]">状态</p>
+            <p className={currentStatus === 'published' ? 'mt-1 text-sm font-bold text-emerald-700' : 'mt-1 text-sm font-bold text-[#E36F2C]'}>
+              {currentStatus === 'published' ? '已发布' : isScheduled ? '定时' : '草稿'}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+          <div className="rounded-md border border-[#E5DED4] px-3 py-2">
+            <span className="block text-[#8A8580]">分类</span>
+            <span className="font-semibold text-[#2C2A28]">{categoryLabel}</span>
+          </div>
+          <div className="rounded-md border border-[#E5DED4] px-3 py-2">
+            <span className="block text-[#8A8580]">排期</span>
+            <span className={isScheduled ? 'font-semibold text-sky-700' : 'font-semibold text-[#6B6560]'}>
+              {isScheduled ? scheduledAt : '未设置'}
+            </span>
+          </div>
+        </div>
+
+        {hasUnsavedChanges ? (
+          <div className="mt-3 rounded-md border border-[#F2C6A7] bg-[#FFF7F0] px-3 py-2 text-xs font-medium text-[#8A3F16]">
+            当前有未保存修改，离开页面前请先保存。
+          </div>
+        ) : (
+          <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+            当前表单与最近一次保存一致。
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-lg border border-[#E5DED4] bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-bold text-[#2C2A28]">编辑导航</h3>
+          <span className="text-xs font-semibold text-[#8A8580]">点击跳转</span>
+        </div>
+        <nav className="mt-3 space-y-1.5">
+          {sectionProgress.map((section) => (
+            <a
+              key={section.id}
+              href={`#${section.id}`}
+              className={`flex items-start gap-3 rounded-md border px-3 py-2.5 transition ${
+                section.done
+                  ? 'border-emerald-100 bg-emerald-50/70 hover:border-emerald-200'
+                  : 'border-[#F2C6A7] bg-[#FFF7F0] hover:border-[#E36F2C]/45'
+              }`}
+            >
+              <span className={section.done ? 'mt-0.5 text-emerald-700' : 'mt-0.5 text-[#E36F2C]'}>
+                {section.done ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center justify-between gap-2">
+                  <span className="truncate text-xs font-bold text-[#2C2A28]">{section.title}</span>
+                  <span className={section.done ? 'shrink-0 text-[11px] font-semibold text-emerald-700' : 'shrink-0 text-[11px] font-semibold text-[#E36F2C]'}>
+                    {section.done ? '完成' : `${section.issueCount} 项`}
+                  </span>
+                </span>
+                <span className="mt-0.5 block text-[11px] leading-4 text-[#6B6560]">{section.detail}</span>
+              </span>
+            </a>
+          ))}
+        </nav>
+      </section>
+
+      <section className="rounded-lg border border-[#E5DED4] bg-white p-4 shadow-sm">
+        <h3 className="text-sm font-bold text-[#2C2A28]">预览入口</h3>
+        <div className="mt-3 space-y-2 text-xs">
+          <Link
+            href={previewHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between gap-3 rounded-md border border-[#E5DED4] px-3 py-2 font-semibold text-[#2C2A28] hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
+          >
+            <span>{previewLabel}</span>
+            <ExternalLink size={13} />
+          </Link>
+          <Link
+            href="/news"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between gap-3 rounded-md border border-[#E5DED4] px-3 py-2 text-[#6B6560] hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
+          >
+            <span>新闻列表页</span>
+            <ExternalLink size={13} />
+          </Link>
+        </div>
+      </section>
+    </aside>
+  )
 }
 
 export default function NewsForm({
@@ -219,6 +491,11 @@ export default function NewsForm({
     contentZh,
     contentEn,
     coverImageUrl,
+    categoryId,
+    seoTitleZh,
+    seoTitleEn,
+    seoDescriptionZh,
+    seoDescriptionEn,
   })
   const visibleCompletenessIssues = completeness.issues.slice(0, 3)
   const hiddenCompletenessIssueCount = Math.max(
@@ -365,6 +642,29 @@ export default function NewsForm({
 
   const isPublished = currentStatus === 'published'
   const isScheduled = !isPublished && Boolean(scheduledAt)
+  const sectionProgress = buildNewsFormProgress({
+    slug,
+    titleZh,
+    titleEn,
+    excerptZh,
+    excerptEn,
+    contentZh,
+    contentEn,
+    coverImageUrl,
+    categoryId,
+    scheduledAt,
+    seoTitleZh,
+    seoTitleEn,
+    seoDescriptionZh,
+    seoDescriptionEn,
+    completeness,
+  })
+  const completedSectionCount = sectionProgress.filter((section) => section.done).length
+  const currentCategory = categories.find((category) => String(category.id) === categoryId)
+  const categoryLabel = currentCategory?.title_zh ?? '未分类'
+  const previewSlug = normalizeSlug(slug)
+  const previewHref = isPublished && previewSlug ? `/news/${previewSlug}` : '/news'
+  const previewLabel = isPublished && previewSlug ? '查看前台页面' : '新闻列表页'
   const handleBackToList = () => {
     if (!hasUnsavedChanges || window.confirm(UNSAVED_CHANGES_MESSAGE)) {
       router.push(listPath)
@@ -380,8 +680,9 @@ export default function NewsForm({
   }
 
   return (
-    <div className="mx-auto max-w-4xl pb-28">
-      <div className="flex flex-col gap-6">
+    <div className="mx-auto max-w-none pb-28">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1
@@ -394,9 +695,9 @@ export default function NewsForm({
               {isPublished ? '当前状态: 已发布' : isScheduled ? '当前状态: 定时发布草稿' : '当前状态: 草稿'}
             </p>
           </div>
-          {isPublished && slug && (
+          {isPublished && previewSlug && (
             <a
-              href={`/news/${normalizeSlug(slug)}`}
+              href={previewHref}
               target="_blank"
               rel="noreferrer"
               className="text-sm text-[#E36F2C] hover:text-[#F08A50] transition-colors"
@@ -674,11 +975,24 @@ export default function NewsForm({
             </div>
           </div>
         </div>
+        </div>
+        <NewsFormSidebar
+          sectionProgress={sectionProgress}
+          completedSectionCount={completedSectionCount}
+          completeness={completeness}
+          currentStatus={currentStatus}
+          hasUnsavedChanges={hasUnsavedChanges}
+          isScheduled={isScheduled}
+          scheduledAt={scheduledAt}
+          categoryLabel={categoryLabel}
+          previewHref={previewHref}
+          previewLabel={previewLabel}
+        />
       </div>
 
       {/* Sticky bottom bar */}
       <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-[#E5DED4] bg-[#F5F2ED] px-6 py-4">
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3">
+        <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
