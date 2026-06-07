@@ -329,7 +329,9 @@ async function loadRankRows(
 
 export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboard> {
   try {
-    await ensureSiteAnalyticsTables()
+    if (!(await tableExists('public.site_events'))) {
+      return EMPTY_ANALYTICS_DASHBOARD
+    }
 
     const [windows, topPages, topReferrers, sourceTypes, landingPages, conversionPaths, recentEvents] =
       await Promise.all([
@@ -434,7 +436,10 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
 
 export async function loadConversionPathAnalytics(days = 30): Promise<Record<string, AnalyticsConversionMetric>> {
   try {
-    await ensureSiteAnalyticsTables()
+    if (!(await tableExists('public.site_events'))) {
+      return Object.fromEntries(CONVERSION_PATHS.map((item) => [item.key, EMPTY_CONVERSION_METRIC]))
+    }
+
     const [eventRes, leadCounts] = await Promise.all([
       pool.query<{ event_name: string; path: string; source_type: string | null; count: string }>(
         `SELECT event_name, path, source_type, COUNT(*)::text AS count
