@@ -129,6 +129,22 @@ const RECENT_CONTENT_SQL = {
   `,
 } as const
 
+const PRODUCT_INCOMPLETE_SQL = `(
+  NULLIF(BTRIM(COALESCE(image, '')), '') IS NULL
+  OR jsonb_array_length(COALESCE(gallery, '[]'::jsonb)) = 0
+  OR NULLIF(BTRIM(COALESCE(description_cn, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(description_en, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(seo_title_zh, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(seo_title_en, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(seo_description_zh, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(seo_description_en, '')), '') IS NULL
+  OR jsonb_array_length(COALESCE(detail_modules, '[]'::jsonb)) = 0
+  OR category_id IS NULL
+  OR COALESCE(array_length(keywords_zh, 1), 0) = 0
+  OR COALESCE(array_length(keywords_en, 1), 0) = 0
+  OR COALESCE(array_length(related_product_ids, 1), 0) = 0
+)`
+
 function formatNumber(n: number): string {
   return n.toLocaleString('zh-CN')
 }
@@ -163,6 +179,23 @@ async function tableExists(tableName: string): Promise<boolean> {
   return Boolean(res.rows[0]?.table_name)
 }
 
+async function columnExists(tableName: string, columnName: string): Promise<boolean> {
+  const [schemaName, rawTableName] = tableName.includes('.')
+    ? tableName.split('.', 2)
+    : ['public', tableName]
+  const res = await pool.query<{ exists: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1
+       FROM information_schema.columns
+       WHERE table_schema = $1
+         AND table_name = $2
+         AND column_name = $3
+     ) AS exists`,
+    [schemaName, rawTableName, columnName],
+  )
+  return Boolean(res.rows[0]?.exists)
+}
+
 async function countPageDrafts(): Promise<number> {
   const [moduleDraftsReady, structureDraftsReady] = await Promise.all([
     tableExists('public.page_module_drafts'),
@@ -188,6 +221,36 @@ async function countPageDrafts(): Promise<number> {
     parseInt(moduleDrafts.rows[0]?.count ?? '0', 10) +
     parseInt(structureDrafts.rows[0]?.count ?? '0', 10)
   )
+}
+
+async function countIncompleteProducts(): Promise<number> {
+  const res = await pool.query<{ count: string }>(
+    `SELECT COUNT(*)::text AS count
+     FROM product_catalog
+     WHERE deleted_at IS NULL
+       AND ${PRODUCT_INCOMPLETE_SQL}`,
+  )
+  return parseInt(res.rows[0]?.count ?? '0', 10)
+}
+
+async function countMediaIssueUploads(): Promise<number> {
+  const uploadsReady = await tableExists('public.uploads')
+  if (!uploadsReady) return 0
+
+  const variantsReady = await columnExists('public.uploads', 'variants')
+  const variantsIssue = variantsReady
+    ? `OR variants IS NULL OR variants = '{}'::jsonb`
+    : ''
+  const res = await pool.query<{ count: string }>(
+    `SELECT COUNT(*)::text AS count
+     FROM uploads
+     WHERE mime ILIKE 'image/%'
+       AND (
+         COALESCE(size, 0) > 3000000
+         ${variantsIssue}
+       )`,
+  )
+  return parseInt(res.rows[0]?.count ?? '0', 10)
 }
 
 async function getRecentContentSummary(): Promise<RecentContentSummary> {
@@ -240,6 +303,8 @@ function buildTodos({
   productSummary,
   projectSummary,
   newsSummary,
+  productIssueCount,
+  mediaIssueCount,
   uploadBytes,
   configIssues,
   isAdmin,
@@ -249,6 +314,8 @@ function buildTodos({
   productSummary: StatusSummary
   projectSummary: StatusSummary
   newsSummary: StatusSummary
+  productIssueCount: number
+  mediaIssueCount: number
   uploadBytes: number
   configIssues: number
   isAdmin: boolean
@@ -283,11 +350,25 @@ function buildTodos({
       ok: productSummary.draft === 0,
     },
     {
+      title: '产品内容缺口',
+      detail: productIssueCount > 0 ? '检查图片、SEO、分类和详情完整度' : '暂无产品内容缺口',
+      href: '/admin/content/products/list?view=incomplete',
+      count: productIssueCount,
+      ok: productIssueCount === 0,
+    },
+    {
       title: '新闻草稿',
       detail: newsSummary.draft > 0 ? '检查标题、封面和正文' : '暂无新闻草稿',
       href: '/admin/content/news/list?status=draft',
       count: newsSummary.draft,
       ok: newsSummary.draft === 0,
+    },
+    {
+      title: '媒体图片风险',
+      detail: mediaIssueCount > 0 ? '检查大图或缺少缩略图派生' : '暂无图片风险',
+      href: '/admin/site/media',
+      count: mediaIssueCount,
+      ok: mediaIssueCount === 0,
     },
     {
       title: '媒体空间',
@@ -862,6 +943,8 @@ export default async function AdminConsolePage() {
     uploadBytes,
     recentSummary,
     userSummary,
+    productIssueCount,
+    mediaIssueCount,
   ] = await Promise.all([
     safeLoad('lead summary', () => getLeadSummary(), EMPTY_LEAD_SUMMARY),
     safeLoad('count news', () => countNewsByStatus(), EMPTY_STATUS_SUMMARY),
@@ -874,6 +957,8 @@ export default async function AdminConsolePage() {
     isAdmin
       ? safeLoad<UserSummary | null>('user summary', () => getUserSummary(), null)
       : Promise.resolve(null),
+    safeLoad('count incomplete products', () => countIncompleteProducts(), 0),
+    safeLoad('count media issue uploads', () => countMediaIssueUploads(), 0),
   ])
 
   const checks = isAdmin ? getSystemChecks() : []
@@ -884,6 +969,8 @@ export default async function AdminConsolePage() {
     productSummary,
     projectSummary,
     newsSummary,
+    productIssueCount,
+    mediaIssueCount,
     uploadBytes,
     configIssues,
     isAdmin,

@@ -1,7 +1,7 @@
-import ProjectForm from '@/components/admin/ProjectForm'
+import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
 export default function NewProjectPage() {
-  return <ProjectForm mode="create" />
+  redirect('/admin/content/projects/new')
 }

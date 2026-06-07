@@ -1,8 +1,7 @@
-import NewsForm from '@/components/admin/NewsForm'
-import { listNewsCategories } from '@/lib/news-db'
+import { redirect } from 'next/navigation'
 
-export default async function NewNewsPage() {
-  const categories = await listNewsCategories().catch(() => [])
+export const dynamic = 'force-dynamic'
 
-  return <NewsForm mode="create" initialCategories={categories} />
+export default function NewNewsPage() {
+  redirect('/admin/content/news/new')
 }
