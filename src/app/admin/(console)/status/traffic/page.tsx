@@ -10,6 +10,8 @@ import {
   loadSiteAnalyticsDashboard,
   sourceTypeLabel,
   type AnalyticsBehaviorStep,
+  type AnalyticsComparisonMetric,
+  type AnalyticsDeltaMetric,
   type AnalyticsHourlyTrendRow,
   type AnalyticsPeriodMetric,
   type AnalyticsWindowMetric,
@@ -60,7 +62,8 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
   const sevenDays = analytics.windows.find((item) => item.days === 7) ?? analytics.windows[0]
   const thirtyDays = analytics.windows.find((item) => item.days === 30) ?? analytics.windows[1] ?? sevenDays
   const activeMetric = getActiveMetric(activeRange, today, yesterday, sevenDays, thirtyDays)
-  const trendRows = buildTrendRows(activeRange, analytics.hourlyTrend, analytics.dailyTrend)
+  const activeComparison = analytics.comparisons.find((item) => item.key === activeRange)
+  const trendRows = buildTrendRows(activeRange, analytics.hourlyTrend, analytics.yesterdayHourlyTrend, analytics.dailyTrend)
   const insights = buildInsightItems(analytics, activeMetric, activeRange)
 
   return (
@@ -141,8 +144,10 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
           activeRange={activeRange}
         />
 
+        <ComparisonStrip comparison={activeComparison} />
+
         <section id="trend-analysis" className="space-y-4">
-          <SectionTitle title={activeRange === 'today' ? '今日小时趋势' : '访问趋势'} detail="聚合 PV、访客、转化动作、表单成功和真实线索，先看趋势再看排行。" />
+          <SectionTitle title={activeRange === 'today' ? '今日小时趋势' : activeRange === 'yesterday' ? '昨日小时趋势' : '访问趋势'} detail="聚合 PV、访客、转化动作、表单成功和真实线索，先看趋势再看排行。" />
           <TrendWorkspace rows={trendRows} />
         </section>
 
@@ -359,13 +364,82 @@ function TrafficSummaryTable({
   )
 }
 
+function ComparisonStrip({ comparison }: { comparison?: AnalyticsComparisonMetric }) {
+  if (!comparison) {
+    return (
+      <div className="rounded-md border border-[#D8E7E8] bg-white p-5 text-sm text-[#61767D] shadow-sm">
+        暂无上一周期对比数据。
+      </div>
+    )
+  }
+
+  const items = [
+    { label: 'PV', metric: comparison.pageViews, kind: 'number' as const },
+    { label: '访客(UV)', metric: comparison.visitors, kind: 'number' as const },
+    { label: '转化动作', metric: comparison.actions, kind: 'number' as const },
+    { label: '真实线索', metric: comparison.leads, kind: 'number' as const },
+    { label: '访问转化率', metric: comparison.conversionRate, kind: 'rate' as const },
+  ]
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h2 className="text-sm font-bold text-[#1E2C31]">上一周期对比</h2>
+          <p className="mt-1 text-xs text-[#61767D]">
+            {comparison.label} 对比 {comparison.previousLabel}，先看变化幅度，再判断是否需要下钻页面和来源。
+          </p>
+        </div>
+        <span className="text-xs text-[#8A9EA4]">所有口径均排除测试事件和测试线索。</span>
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-5">
+        {items.map((item) => (
+          <ComparisonCell key={item.label} label={item.label} metric={item.metric} kind={item.kind} previousLabel={comparison.previousLabel} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function ComparisonCell({
+  label,
+  metric,
+  kind,
+  previousLabel,
+}: {
+  label: string
+  metric: AnalyticsDeltaMetric
+  kind: 'number' | 'rate'
+  previousLabel: string
+}) {
+  const tone = comparisonTone(metric)
+  const currentValue = kind === 'rate' ? formatAnalyticsPercent(metric.current) : formatNumber(metric.current)
+  const previousValue = kind === 'rate' ? formatAnalyticsPercent(metric.previous) : formatNumber(metric.previous)
+  const deltaValue = kind === 'rate' ? formatRateDelta(metric) : formatNumberDelta(metric)
+
+  return (
+    <div className="min-w-0 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs font-semibold text-[#61767D]">{label}</span>
+        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${tone.badge}`}>{tone.label}</span>
+      </div>
+      <div className="mt-3 text-2xl font-black text-[#1E2C31]">{currentValue}</div>
+      <div className="mt-2 flex items-center justify-between gap-3 text-xs">
+        <span className="text-[#8A9EA4]">{previousLabel}</span>
+        <span className="font-semibold text-[#61767D]">{previousValue}</span>
+      </div>
+      <div className={`mt-3 text-sm font-bold ${tone.text}`}>{deltaValue}</div>
+    </div>
+  )
+}
+
 function TrendWorkspace({ rows }: { rows: TrendDisplayRow[] }) {
   if (rows.length === 0) {
     return <div className="rounded-md border border-[#D8E7E8] bg-white p-5 text-sm text-[#61767D] shadow-sm">暂无可用趋势数据。</div>
   }
 
   const maxViews = Math.max(1, ...rows.map((row) => row.pageViews))
-  const displayRows = rows.slice(-14)
+  const displayRows = rows.slice(-30)
 
   return (
     <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
@@ -728,10 +802,12 @@ function getActiveMetric(
 function buildTrendRows(
   range: TrafficRange,
   hourlyRows: AnalyticsHourlyTrendRow[],
+  yesterdayHourlyRows: AnalyticsHourlyTrendRow[],
   dailyRows: AnalyticsTrendRow[],
 ): TrendDisplayRow[] {
-  if (range === 'today') {
-    return hourlyRows.map((row) => ({
+  if (range === 'today' || range === 'yesterday') {
+    const rows = range === 'today' ? hourlyRows : yesterdayHourlyRows
+    return rows.map((row) => ({
       key: row.hour,
       label: row.hour,
       pageViews: row.pageViews,
@@ -742,7 +818,7 @@ function buildTrendRows(
     }))
   }
 
-  const days = range === '7' ? 7 : 14
+  const days = range === '7' ? 7 : 30
   return dailyRows.slice(-days).map((row) => ({
     key: row.date,
     label: formatTrendDate(row.date),
@@ -752,6 +828,39 @@ function buildTrendRows(
     formSubmits: row.formSubmits,
     leads: row.leads,
   }))
+}
+
+function formatNumberDelta(metric: AnalyticsDeltaMetric): string {
+  const signedDelta = `${metric.delta > 0 ? '+' : ''}${formatNumber(metric.delta)}`
+  if (metric.rate === null) return `${signedDelta} / 新增`
+  return `${signedDelta} / ${metric.rate > 0 ? '+' : ''}${(metric.rate * 100).toFixed(1)}%`
+}
+
+function formatRateDelta(metric: AnalyticsDeltaMetric): string {
+  const percentagePoints = metric.delta * 100
+  return `${percentagePoints > 0 ? '+' : ''}${percentagePoints.toFixed(2)}pp`
+}
+
+function comparisonTone(metric: AnalyticsDeltaMetric) {
+  if (metric.delta > 0) {
+    return {
+      label: '上升',
+      text: 'text-emerald-700',
+      badge: 'bg-emerald-50 text-emerald-700',
+    }
+  }
+  if (metric.delta < 0) {
+    return {
+      label: '下降',
+      text: 'text-[#E36F2C]',
+      badge: 'bg-[#FFF2E7] text-[#E36F2C]',
+    }
+  }
+  return {
+    label: '持平',
+    text: 'text-[#61767D]',
+    badge: 'bg-[#F0F7F8] text-[#61767D]',
+  }
 }
 
 function rangeLabel(range: TrafficRange): string {

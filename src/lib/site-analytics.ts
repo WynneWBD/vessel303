@@ -94,13 +94,35 @@ export type AnalyticsBehaviorStep = {
   nodes: AnalyticsRankRow[]
 }
 
+export type AnalyticsComparisonKey = 'today' | 'yesterday' | '7' | '30'
+
+export type AnalyticsDeltaMetric = {
+  current: number
+  previous: number
+  delta: number
+  rate: number | null
+}
+
+export type AnalyticsComparisonMetric = {
+  key: AnalyticsComparisonKey
+  label: string
+  previousLabel: string
+  pageViews: AnalyticsDeltaMetric
+  visitors: AnalyticsDeltaMetric
+  actions: AnalyticsDeltaMetric
+  leads: AnalyticsDeltaMetric
+  conversionRate: AnalyticsDeltaMetric
+}
+
 export type SiteAnalyticsDashboard = {
   available: boolean
   periods: AnalyticsPeriodMetric[]
   windows: AnalyticsWindowMetric[]
   hourlyTrend: AnalyticsHourlyTrendRow[]
+  yesterdayHourlyTrend: AnalyticsHourlyTrendRow[]
   dailyTrend: AnalyticsTrendRow[]
   behaviorSteps: AnalyticsBehaviorStep[]
+  comparisons: AnalyticsComparisonMetric[]
   topPages: AnalyticsRankRow[]
   topReferrers: AnalyticsRankRow[]
   sourceTypes: AnalyticsRankRow[]
@@ -166,8 +188,10 @@ export const EMPTY_ANALYTICS_DASHBOARD: SiteAnalyticsDashboard = {
     conversionRate: 0,
   })),
   hourlyTrend: [],
+  yesterdayHourlyTrend: [],
   dailyTrend: [],
   behaviorSteps: [],
+  comparisons: [],
   topPages: [],
   topReferrers: [],
   sourceTypes: [],
@@ -320,7 +344,7 @@ export async function recordSiteEventSafe(input: RecordSiteEventInput) {
   }
 }
 
-async function loadWindowMetric(days: number): Promise<AnalyticsWindowMetric> {
+async function loadWindowMetric(days: number, offsetDays = 0): Promise<AnalyticsWindowMetric> {
   const [eventRes, leadRes] = await Promise.all([
     pool.query<{
       page_views: string
@@ -338,10 +362,11 @@ async function loadWindowMetric(days: number): Promise<AnalyticsWindowMetric> {
          COUNT(*) FILTER (WHERE event_name = 'form_submit_success' AND ${REAL_EVENT_CONDITION})::text AS form_submits,
          COUNT(*) FILTER (WHERE ${TEST_EVENT_CONDITION})::text AS test_events
        FROM site_events
-       WHERE created_at >= NOW() - ($1::int * INTERVAL '1 day')`,
-      [days],
+       WHERE created_at >= NOW() - (($1::int + $2::int) * INTERVAL '1 day')
+         AND created_at < NOW() - ($2::int * INTERVAL '1 day')`,
+      [days, offsetDays],
     ),
-    loadLeadCount(days),
+    loadLeadCount(days, offsetDays),
   ])
 
   const row = eventRes.rows[0]
@@ -362,7 +387,17 @@ async function loadWindowMetric(days: number): Promise<AnalyticsWindowMetric> {
 }
 
 async function loadPeriodMetric(key: AnalyticsPeriodKey): Promise<AnalyticsPeriodMetric> {
-  const { label, startSql, endSql } = periodSql(key)
+  const metric = await loadRelativeDayMetric(periodSql(key).label, key === 'today' ? 0 : 1)
+  return {
+    key,
+    ...metric,
+  }
+}
+
+async function loadRelativeDayMetric(
+  label: string,
+  offsetDays: number,
+): Promise<Omit<AnalyticsPeriodMetric, 'key'>> {
   const [eventRes, leadRes] = await Promise.all([
     pool.query<{
       page_views: string
@@ -380,17 +415,17 @@ async function loadPeriodMetric(key: AnalyticsPeriodKey): Promise<AnalyticsPerio
          COUNT(*) FILTER (WHERE event_name = 'form_submit_success' AND ${REAL_EVENT_CONDITION})::text AS form_submits,
          COUNT(*) FILTER (WHERE ${TEST_EVENT_CONDITION})::text AS test_events
        FROM site_events
-       WHERE created_at >= ${startSql}
-         AND created_at < ${endSql}`,
+       WHERE created_at >= CURRENT_DATE - ($1::int * INTERVAL '1 day')
+         AND created_at < CURRENT_DATE - (($1::int - 1) * INTERVAL '1 day')`,
+      [offsetDays],
     ),
-    loadLeadPeriodCount(key),
+    loadLeadPeriodCount(offsetDays),
   ])
 
   const row = eventRes.rows[0]
   const pageViews = toInt(row?.page_views)
   const leads = leadRes.leads
   return {
-    key,
     label,
     pageViews,
     visitors: toInt(row?.visitors),
@@ -404,15 +439,15 @@ async function loadPeriodMetric(key: AnalyticsPeriodKey): Promise<AnalyticsPerio
   }
 }
 
-async function loadLeadPeriodCount(key: AnalyticsPeriodKey) {
+async function loadLeadPeriodCount(offsetDays: number) {
   if (!(await tableExists('public.leads'))) return { leads: 0, testLeads: 0 }
-  const { startSql, endSql } = periodSql(key)
   const res = await pool.query<{ count: string; test_count: string }>(
     `SELECT COUNT(*) FILTER (WHERE ${REAL_LEAD_CONDITION})::text AS count,
             COUNT(*) FILTER (WHERE ${TEST_LEAD_CONDITION})::text AS test_count
      FROM leads
-     WHERE created_at >= ${startSql}
-       AND created_at < ${endSql}`,
+     WHERE created_at >= CURRENT_DATE - ($1::int * INTERVAL '1 day')
+       AND created_at < CURRENT_DATE - (($1::int - 1) * INTERVAL '1 day')`,
+    [offsetDays],
   )
   return {
     leads: toInt(res.rows[0]?.count),
@@ -420,18 +455,56 @@ async function loadLeadPeriodCount(key: AnalyticsPeriodKey) {
   }
 }
 
-async function loadLeadCount(days: number) {
+async function loadLeadCount(days: number, offsetDays = 0) {
   if (!(await tableExists('public.leads'))) return { leads: 0, testLeads: 0 }
   const res = await pool.query<{ count: string; test_count: string }>(
     `SELECT COUNT(*) FILTER (WHERE ${REAL_LEAD_CONDITION})::text AS count,
             COUNT(*) FILTER (WHERE ${TEST_LEAD_CONDITION})::text AS test_count
      FROM leads
-     WHERE created_at >= NOW() - ($1::int * INTERVAL '1 day')`,
-    [days],
+     WHERE created_at >= NOW() - (($1::int + $2::int) * INTERVAL '1 day')
+       AND created_at < NOW() - ($2::int * INTERVAL '1 day')`,
+    [days, offsetDays],
   )
   return {
     leads: toInt(res.rows[0]?.count),
     testLeads: toInt(res.rows[0]?.test_count),
+  }
+}
+
+type ComparisonMetricSource = Pick<
+  AnalyticsWindowMetric,
+  'pageViews' | 'visitors' | 'ctaClicks' | 'contactRedirects' | 'formSubmits' | 'leads' | 'conversionRate'
+>
+
+function metricActions(metric: ComparisonMetricSource) {
+  return metric.ctaClicks + metric.contactRedirects + metric.formSubmits
+}
+
+function deltaMetric(current: number, previous: number): AnalyticsDeltaMetric {
+  return {
+    current,
+    previous,
+    delta: current - previous,
+    rate: previous > 0 ? (current - previous) / previous : current > 0 ? null : 0,
+  }
+}
+
+function buildComparisonMetric(
+  key: AnalyticsComparisonKey,
+  label: string,
+  previousLabel: string,
+  current: ComparisonMetricSource,
+  previous: ComparisonMetricSource,
+): AnalyticsComparisonMetric {
+  return {
+    key,
+    label,
+    previousLabel,
+    pageViews: deltaMetric(current.pageViews, previous.pageViews),
+    visitors: deltaMetric(current.visitors, previous.visitors),
+    actions: deltaMetric(metricActions(current), metricActions(previous)),
+    leads: deltaMetric(current.leads, previous.leads),
+    conversionRate: deltaMetric(current.conversionRate, previous.conversionRate),
   }
 }
 
@@ -467,7 +540,7 @@ async function loadLeadDailyCounts(days: number) {
   return new Map(res.rows.map((row) => [row.date, toInt(row.count)]))
 }
 
-async function loadHourlyTrend(): Promise<AnalyticsHourlyTrendRow[]> {
+async function loadHourlyTrend(offsetDays = 0): Promise<AnalyticsHourlyTrendRow[]> {
   const res = await pool.query<{
     hour: string
     page_views: string
@@ -493,10 +566,11 @@ async function loadHourlyTrend(): Promise<AnalyticsHourlyTrendRow[]> {
        COUNT(site_events.id) FILTER (WHERE site_events.event_name = 'form_submit_success' AND ${REAL_EVENT_CONDITION})::text AS form_submits
      FROM hours
      LEFT JOIN site_events
-       ON site_events.created_at >= CURRENT_DATE + (hours.hour * INTERVAL '1 hour')
-      AND site_events.created_at < CURRENT_DATE + ((hours.hour + 1) * INTERVAL '1 hour')
+       ON site_events.created_at >= CURRENT_DATE - ($1::int * INTERVAL '1 day') + (hours.hour * INTERVAL '1 hour')
+      AND site_events.created_at < CURRENT_DATE - ($1::int * INTERVAL '1 day') + ((hours.hour + 1) * INTERVAL '1 hour')
      GROUP BY hours.hour
      ORDER BY hours.hour`,
+    [offsetDays],
   )
 
   return res.rows.map((row) => ({
@@ -641,8 +715,11 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
 
     const [
       periods,
+      previousDay,
       windows,
+      previousWindows,
       hourlyTrend,
+      yesterdayHourlyTrend,
       dailyTrend,
       behaviorSteps,
       topPages,
@@ -654,9 +731,12 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
     ] =
       await Promise.all([
         Promise.all([loadPeriodMetric('today'), loadPeriodMetric('yesterday')]),
+        loadRelativeDayMetric('前一日', 2),
         Promise.all([loadWindowMetric(7), loadWindowMetric(30)]),
-        loadHourlyTrend(),
-        loadDailyTrend(14),
+        Promise.all([loadWindowMetric(7, 7), loadWindowMetric(30, 30)]),
+        loadHourlyTrend(0),
+        loadHourlyTrend(1),
+        loadDailyTrend(30),
         loadBehaviorSteps(30),
         loadRankRows(
           `SELECT path AS key, COUNT(*)::text AS value,
@@ -730,17 +810,32 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
            FROM site_events
            WHERE ${REAL_EVENT_CONDITION}
            ORDER BY created_at DESC
-           LIMIT 12`,
+          LIMIT 12`,
         ),
       ])
+
+    const today = periods.find((item) => item.key === 'today') ?? periods[0]
+    const yesterday = periods.find((item) => item.key === 'yesterday') ?? periods[1] ?? today
+    const sevenDays = windows.find((item) => item.days === 7) ?? windows[0]
+    const thirtyDays = windows.find((item) => item.days === 30) ?? windows[1] ?? sevenDays
+    const previousSevenDays = previousWindows.find((item) => item.days === 7) ?? previousWindows[0] ?? sevenDays
+    const previousThirtyDays = previousWindows.find((item) => item.days === 30) ?? previousWindows[1] ?? thirtyDays
+    const comparisons: AnalyticsComparisonMetric[] = [
+      buildComparisonMetric('today', '今日', '昨日', today, yesterday),
+      buildComparisonMetric('yesterday', '昨日', '前一日', yesterday, previousDay),
+      buildComparisonMetric('7', '最近 7 天', '前 7 天', sevenDays, previousSevenDays),
+      buildComparisonMetric('30', '最近 30 天', '前 30 天', thirtyDays, previousThirtyDays),
+    ]
 
     return {
       available: true,
       periods,
       windows,
       hourlyTrend,
+      yesterdayHourlyTrend,
       dailyTrend,
       behaviorSteps,
+      comparisons,
       topPages,
       topReferrers,
       sourceTypes,
