@@ -502,6 +502,142 @@ function SiteChip({
   )
 }
 
+function OperationsCommandPanel({
+  leadSummary,
+  pageDraftCount,
+  productIssueCount,
+  mediaIssueCount,
+  configIssues,
+  isAdmin,
+}: {
+  leadSummary: LeadSummary
+  pageDraftCount: number
+  productIssueCount: number
+  mediaIssueCount: number
+  configIssues: number
+  isAdmin: boolean
+}) {
+  const cards = [
+    {
+      title: '新线索优先',
+      value: leadSummary.new,
+      detail: `线索总量 ${formatNumber(leadSummary.total)}，先处理首次响应。`,
+      href: '/admin/customers/leads?status=new',
+      Icon: Inbox,
+      tone: leadSummary.new > 0 ? 'orange' : 'green',
+    },
+    {
+      title: '内容缺口',
+      value: productIssueCount + pageDraftCount,
+      detail: `产品缺项 ${formatNumber(productIssueCount)} / 页面草稿 ${formatNumber(pageDraftCount)}。`,
+      href: productIssueCount > 0 ? '/admin/content/products/list?view=incomplete' : '/admin/site/visual',
+      Icon: Package,
+      tone: productIssueCount + pageDraftCount > 0 ? 'orange' : 'green',
+    },
+    {
+      title: '图片治理',
+      value: mediaIssueCount,
+      detail: '检查大图、缺派生图和素材空间风险。',
+      href: '/admin/site/media?view=issues',
+      Icon: ImageIcon,
+      tone: mediaIssueCount > 0 ? 'orange' : 'green',
+    },
+    {
+      title: '数据分析',
+      value: '只读',
+      detail: '进入访问、来源、行为、落地页和转化诊断。',
+      href: '/admin/status/traffic',
+      Icon: BarChart3,
+      tone: 'blue',
+    },
+    {
+      title: '转化路径',
+      value: '只读',
+      detail: '查看入口、CTA、表单和线索 source 匹配。',
+      href: '/admin/site/conversion',
+      Icon: LayoutTemplate,
+      tone: 'blue',
+    },
+  ] satisfies Array<{
+    title: string
+    value: number | string
+    detail: string
+    href: string
+    Icon: LucideIcon
+    tone: 'blue' | 'green' | 'orange'
+  }>
+
+  if (isAdmin) {
+    cards.push({
+      title: '系统配置',
+      value: configIssues,
+      detail: '仅管理员处理账号、密钥和站点设置。',
+      href: '/admin/settings',
+      Icon: Settings,
+      tone: configIssues > 0 ? 'orange' : 'green',
+    })
+  }
+
+  return (
+    <section className="space-y-4">
+      <AdminSectionTitle
+        title="今日指挥台"
+        detail="日常先处理线索、内容缺口和素材风险；数据分析与转化路径只读诊断，不直接写业务数据。"
+      />
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
+        {cards.map((card) => (
+          <CommandCard key={card.title} card={card} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function CommandCard({
+  card,
+}: {
+  card: {
+    title: string
+    value: number | string
+    detail: string
+    href: string
+    Icon: LucideIcon
+    tone: 'blue' | 'green' | 'orange'
+  }
+}) {
+  const Icon = card.Icon
+  const toneClass =
+    card.tone === 'orange'
+      ? 'bg-[#FFF2E7] text-[#E36F2C]'
+      : card.tone === 'green'
+        ? 'bg-emerald-50 text-emerald-700'
+        : 'bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <Link
+      href={card.href}
+      className="group flex min-h-32 items-start gap-4 rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60"
+    >
+      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${toneClass}`}>
+        <Icon size={19} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center justify-between gap-3">
+          <span className="text-sm font-bold text-[#1E2C31]">{card.title}</span>
+          <span className="text-lg font-black text-[#1E2C31]">
+            {typeof card.value === 'number' ? formatNumber(card.value) : card.value}
+          </span>
+        </span>
+        <span className="mt-2 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
+        <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#E36F2C]">
+          进入处理
+          <ArrowRight size={13} className="transition group-hover:translate-x-0.5" />
+        </span>
+      </span>
+    </Link>
+  )
+}
+
 function ContentCards({
   productSummary,
   projectSummary,
@@ -931,6 +1067,14 @@ export default async function AdminConsolePage() {
 
       <div className="mx-auto grid w-full max-w-[1600px] grid-cols-1 gap-5 px-4 py-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_348px]">
         <div className="space-y-6">
+          <OperationsCommandPanel
+            leadSummary={leadSummary}
+            pageDraftCount={pageDraftCount}
+            productIssueCount={productIssueCount}
+            mediaIssueCount={mediaIssueCount}
+            configIssues={configIssues}
+            isAdmin={isAdmin}
+          />
           <ContentCards
             productSummary={productSummary}
             projectSummary={projectSummary}

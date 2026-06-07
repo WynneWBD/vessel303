@@ -74,6 +74,11 @@ export function AdminSideNav({
       items: group.items.filter((item) => !item.adminOnly || role === 'admin'),
     }))
     .filter((group) => group.items.length > 0)
+  const visibleItemCount = visibleGroups.reduce((sum, group) => sum + group.items.length, 0)
+  const plannedItemCount = visibleGroups.reduce(
+    (sum, group) => sum + group.items.filter((item) => item.planned).length,
+    0,
+  )
 
   return (
     <aside className="lg:sticky lg:top-24 lg:self-start">
@@ -82,6 +87,16 @@ export function AdminSideNav({
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">业务导航</p>
           <h1 className="mt-2 text-lg font-bold text-[#1E2C31]">{title}</h1>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">{description}</p>
+          <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+            <span className="rounded-md border border-[#D8E7E8] bg-white px-2 py-1.5">
+              <span className="block font-bold text-[#1E2C31]">{visibleItemCount}</span>
+              <span className="text-[#8A9EA4]">可用入口</span>
+            </span>
+            <span className="rounded-md border border-[#D8E7E8] bg-white px-2 py-1.5">
+              <span className="block font-bold text-[#1E2C31]">{plannedItemCount}</span>
+              <span className="text-[#8A9EA4]">规划入口</span>
+            </span>
+          </div>
         </div>
         <nav className="space-y-4 p-3">
           {visibleGroups.map((group) => (
