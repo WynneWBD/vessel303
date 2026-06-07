@@ -71,7 +71,7 @@ export function StatusPageShell({
       role={role}
       email={email}
       title="运营数据中心"
-      description="集中查看待办、内容缺口、线索漏斗和站点健康状态。"
+      description="集中查看访问、入口、行为、转化和运营待办状态。"
       sideNavGroups={getStatusSideNav(badges)}
       activeItem={activeItem}
     >
@@ -85,9 +85,40 @@ export function getStatusSideNav(badges: StatusBadges): AdminSideNavGroup[] {
 
   return [
     {
-      title: '数据中心',
+      title: '数据分析',
       items: [
-        { key: 'overview', label: '运营总览', href: '/admin/status', Icon: Activity },
+        { key: 'overview', label: '数据分析总览', href: '/admin/status', Icon: Activity },
+        {
+          key: 'traffic',
+          label: '网站访问统计',
+          href: '/admin/status/traffic',
+          Icon: BarChart3,
+        },
+        {
+          key: 'landing',
+          label: '落地页跳出分析',
+          href: '/admin/status/traffic#landing-analysis',
+          Icon: LayoutTemplate,
+        },
+        {
+          key: 'behavior',
+          label: '访问行为分析',
+          href: '/admin/status/traffic#behavior-analysis',
+          Icon: ListChecks,
+        },
+        {
+          key: 'conversion',
+          label: '线索转化分析',
+          href: '/admin/site/conversion',
+          badge: badges.leadNew && badges.leadNew > 0 ? badges.leadNew : undefined,
+          Icon: PieChart,
+        },
+        { key: 'google', label: 'Google收录分析', href: '/admin/site/seo', Icon: SearchCheck },
+      ],
+    },
+    {
+      title: '运营健康',
+      items: [
         {
           key: 'content',
           label: '内容统计',
@@ -116,12 +147,6 @@ export function getStatusSideNav(badges: StatusBadges): AdminSideNavGroup[] {
           badge: badges.activityCount && badges.activityCount > 0 ? formatNumber(badges.activityCount) : undefined,
           Icon: ListChecks,
         },
-        {
-          key: 'traffic',
-          label: '网站数据分析',
-          href: '/admin/status/traffic',
-          Icon: BarChart3,
-        },
       ],
     },
     {
@@ -145,9 +170,8 @@ export function getStatusSideNav(badges: StatusBadges): AdminSideNavGroup[] {
       ],
     },
     {
-      title: '后续规划',
+      title: '后续治理',
       items: [
-        { key: 'search-console', label: '搜索表现', planned: true, Icon: SearchCheck },
         { key: 'audit-log', label: '完整操作日志', planned: true, adminOnly: true, Icon: ShieldCheck },
       ],
     },

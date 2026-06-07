@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import {
   loadAnalyticsReadinessMetrics,
   loadStatusOverview,
@@ -28,14 +29,23 @@ export const dynamic = 'force-dynamic'
 
 export const metadata = { title: '网站数据分析 - 运营数据中心 - VESSEL' }
 
-export default async function AdminStatusTrafficPage() {
+type PageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
+}
+
+type TrafficRange = 7 | 30
+
+export default async function AdminStatusTrafficPage({ searchParams }: PageProps) {
+  const sp = searchParams ? await searchParams : {}
+  const activeRange = normalizeRange(sp.range)
   const { role, email } = await getStatusAccess()
   const overview = await loadStatusOverview()
   const readiness = loadAnalyticsReadinessMetrics()
   const analytics = await loadSiteAnalyticsDashboard()
   const sevenDays = analytics.windows.find((item) => item.days === 7) ?? analytics.windows[0]
   const thirtyDays = analytics.windows.find((item) => item.days === 30) ?? analytics.windows[1] ?? sevenDays
-  const insights = buildInsightItems(analytics, thirtyDays)
+  const activeWindow = activeRange === 7 ? sevenDays : thirtyDays
+  const insights = buildInsightItems(analytics, activeWindow, activeRange)
 
   return (
     <StatusPageShell
@@ -46,43 +56,45 @@ export default async function AdminStatusTrafficPage() {
     >
       <section className="space-y-6">
         <AdminPageHero
-          kicker="B15 网站数据分析 / 转化分析 1.0"
-          title="第一方网站数据分析"
-          description="对齐 300 的网站访问统计、落地页分析、访问行为、线索转化和 Google 分析心智；本页先读取本站第一方事件和现有 leads，不接外部 API，不保存个人隐私字段。"
+          kicker="Website Analytics"
+          title="网站访问统计"
+          description="按专业后台的数据分析流程组织：选择站点与时间口径，先看汇总表和趋势，再进入来源、落地页、行为事件和线索转化。"
         >
           <div className="flex flex-wrap gap-2">
             <StatusPill ok={analytics.available} label={analytics.available ? '事件表可用' : '事件表未就绪'} />
             <StatusPill ok label="不采集表单隐私" />
             <StatusPill ok label="不接第三方 API" />
-            <StatusPill ok label={`已排除测试数据 ${formatNumber(thirtyDays.testEvents)} 事件 / ${formatNumber(thirtyDays.testLeads)} 线索`} />
+            <StatusPill ok label={`已排除测试数据 ${formatNumber(activeWindow.testEvents)} 事件 / ${formatNumber(activeWindow.testLeads)} 线索`} />
           </div>
         </AdminPageHero>
 
+        <TrafficControlBar activeRange={activeRange} />
+
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
           <MetricCard
-            title="30 天 PV"
-            value={thirtyDays.pageViews}
-            detail={`近 7 天 ${formatNumber(sevenDays.pageViews)} 次页面访问`}
+            title={`${activeRange} 天 PV`}
+            value={activeWindow.pageViews}
+            detail={`对照 30 天 ${formatNumber(thirtyDays.pageViews)} 次页面访问`}
             Icon={STATUS_ICONS.BarChart3}
             tone="blue"
           />
           <MetricCard
-            title="30 天访客"
-            value={thirtyDays.visitors}
+            title={`${activeRange} 天访客`}
+            value={activeWindow.visitors}
             detail="基于匿名 visitor id hash，不保存 IP。"
             Icon={STATUS_ICONS.Activity}
             tone="green"
           />
           <MetricCard
             title="CTA 动作"
-            value={thirtyDays.ctaClicks + thirtyDays.contactRedirects}
-            detail={`表单成功 ${formatNumber(thirtyDays.formSubmits)} 次`}
+            value={activeWindow.ctaClicks + activeWindow.contactRedirects}
+            detail={`表单成功 ${formatNumber(activeWindow.formSubmits)} 次`}
             Icon={STATUS_ICONS.ListChecks}
             tone="orange"
           />
           <MetricCard
             title="线索"
-            value={thirtyDays.leads}
+            value={activeWindow.leads}
             detail={`近 7 天 ${formatNumber(sevenDays.leads)} 条 leads；不含 Codex 测试线索`}
             href="/admin/customers/leads"
             Icon={STATUS_ICONS.Inbox}
@@ -90,24 +102,26 @@ export default async function AdminStatusTrafficPage() {
           />
           <MetricCard
             title="访问转化率"
-            value={formatAnalyticsPercent(thirtyDays.conversionRate)}
+            value={formatAnalyticsPercent(activeWindow.conversionRate)}
             detail="真实线索数 / 页面访问数，已排除 admin_test 和 Codex 测试。"
             Icon={STATUS_ICONS.ShieldCheck}
             tone="blue"
           />
         </div>
 
-        <section className="grid grid-cols-1 gap-4 xl:grid-cols-5">
-          <AnalysisModeCard title="网站访问统计" value={`${formatNumber(thirtyDays.pageViews)} PV`} detail="PV、匿名访客、Top Pages 和来源入口。" />
-          <AnalysisModeCard title="落地页跳出分析" value={analytics.landingPages.length} detail="先看入口页访问与后续动作数，复杂跳出率后续补。" />
-          <AnalysisModeCard title="访问行为分析" value={formatNumber(thirtyDays.ctaClicks + thirtyDays.contactRedirects)} detail="记录 CTA 点击、联系跳转和表单成功。" />
-          <AnalysisModeCard title="线索转化分析" value={formatNumber(thirtyDays.leads)} detail="与 B14 source 和线索 2.0 联动。" />
-          <AnalysisModeCard title="Google 统计分析" value={`${readiness.readyCount}/${readiness.items.length}`} detail="本轮只显示接入状态，不拉 Google API。" />
-        </section>
+        <TrafficModeNav
+          pageViews={activeWindow.pageViews}
+          landingPages={analytics.landingPages.length}
+          actions={activeWindow.ctaClicks + activeWindow.contactRedirects + activeWindow.formSubmits}
+          leads={activeWindow.leads}
+          readiness={`${readiness.readyCount}/${readiness.items.length}`}
+        />
 
-        <section className="space-y-4">
-          <SectionTitle title="14 天趋势" detail="按天聚合 PV、访客、转化动作、表单成功和真实线索，帮助运营判断最近是否在变好。" />
-          <TrendTable rows={analytics.dailyTrend} />
+        <TrafficSummaryTable sevenDays={sevenDays} thirtyDays={thirtyDays} activeRange={activeRange} />
+
+        <section id="trend-analysis" className="space-y-4">
+          <SectionTitle title="访问趋势" detail="按天聚合 PV、访客、转化动作、表单成功和真实线索，先看趋势再看排行。" />
+          <TrendWorkspace rows={analytics.dailyTrend} />
         </section>
 
         <section className="space-y-4">
@@ -119,22 +133,25 @@ export default async function AdminStatusTrafficPage() {
           </div>
         </section>
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(360px,0.75fr)]">
-          <section className="space-y-4">
-            <SectionTitle title="Top Pages" detail="近 30 天访问最多的前台页面。" />
-            <RankTable rows={analytics.topPages} empty="暂无页面访问事件。" valueLabel="访问" secondaryLabel="访客" />
-          </section>
+        <section id="behavior-analysis" className="space-y-4">
+          <SectionTitle title="访问行为分析" detail="把 Top Pages、referrer、source type 和动作来源放在同屏，先判断访客从哪里来、看什么、点什么。" />
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(360px,0.75fr)]">
+            <section className="space-y-4">
+              <SectionTitle title="Top Pages" detail="近 30 天访问最多的前台页面。" />
+              <RankTable rows={analytics.topPages} empty="暂无页面访问事件。" valueLabel="访问" secondaryLabel="访客" />
+            </section>
 
-          <section className="space-y-4">
-            <SectionTitle title="来源与入口" detail="先按 referrer 和 source type 做运营判断。" />
-            <RankList rows={analytics.topReferrers} empty="暂无 referrer 数据。" />
-            <RankList rows={analytics.sourceTypes} empty="暂无 CTA / 表单来源数据。" />
-          </section>
-        </div>
+            <section className="space-y-4">
+              <SectionTitle title="来源与入口" detail="先按 referrer 和 source type 做运营判断。" />
+              <RankList rows={analytics.topReferrers} empty="暂无 referrer 数据。" />
+              <RankList rows={analytics.sourceTypes} empty="暂无 CTA / 表单来源数据。" />
+            </section>
+          </div>
+        </section>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-          <section className="space-y-4">
-            <SectionTitle title="落地页动作" detail="同一路径内页面访问、CTA、联系跳转和表单成功的合计。" />
+          <section id="landing-analysis" className="space-y-4">
+            <SectionTitle title="落地页跳出分析" detail="先用同一路径内页面访问和后续动作判断高访问低动作页面；精确跳出率需要会话级链路后续单独接入。" />
             <RankTable rows={analytics.landingPages} empty="暂无落地页事件。" valueLabel="访问" secondaryLabel="动作" />
           </section>
 
@@ -174,12 +191,179 @@ export default async function AdminStatusTrafficPage() {
   )
 }
 
-function AnalysisModeCard({ title, value, detail }: { title: string; value: number | string; detail: string }) {
+function TrafficControlBar({ activeRange }: { activeRange: TrafficRange }) {
   return (
-    <div className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
-      <div className="text-xs font-semibold text-[#1889B6]">{title}</div>
-      <div className="mt-3 text-2xl font-black text-[#1E2C31]">{typeof value === 'number' ? formatNumber(value) : value}</div>
-      <div className="mt-2 text-xs leading-5 text-[#61767D]">{detail}</div>
+    <div className="rounded-md border border-[#D8E7E8] bg-white p-3 shadow-sm">
+      <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex h-9 min-w-60 items-center rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 text-sm font-medium text-[#1E2C31]">
+            英文站 en.303vessel.cn / vessel303.com
+          </span>
+          <span className="inline-flex overflow-hidden rounded-md border border-[#D8E7E8] bg-white">
+            <Link
+              href="/admin/status/traffic?range=7"
+              className={`inline-flex h-9 items-center px-3 text-sm font-semibold ${
+                activeRange === 7 ? 'bg-[#1889B6] text-white' : 'text-[#61767D] hover:bg-[#F0F7F8] hover:text-[#1889B6]'
+              }`}
+            >
+              最近 7 天
+            </Link>
+            <Link
+              href="/admin/status/traffic?range=30"
+              className={`inline-flex h-9 items-center border-l border-[#D8E7E8] px-3 text-sm font-semibold ${
+                activeRange === 30 ? 'bg-[#1889B6] text-white' : 'text-[#61767D] hover:bg-[#F0F7F8] hover:text-[#1889B6]'
+              }`}
+            >
+              最近 30 天
+            </Link>
+          </span>
+          <span className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 text-sm text-[#61767D]">
+            指标：浏览次数(PV)
+          </span>
+          <span className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 text-sm text-[#61767D]">
+            + 转化动作
+          </span>
+        </div>
+        <span className="text-xs text-[#8A9EA4]">页面打开时实时读取第一方事件；测试数据不计入运营口径。</span>
+      </div>
+    </div>
+  )
+}
+
+function TrafficModeNav({
+  pageViews,
+  landingPages,
+  actions,
+  leads,
+  readiness,
+}: {
+  pageViews: number
+  landingPages: number
+  actions: number
+  leads: number
+  readiness: string
+}) {
+  const items = [
+    { title: '网站访问统计', value: `${formatNumber(pageViews)} PV`, href: '#trend-analysis' },
+    { title: '落地页跳出分析', value: `${formatNumber(landingPages)} 页`, href: '#landing-analysis' },
+    { title: '访问行为分析', value: `${formatNumber(actions)} 次`, href: '#behavior-analysis' },
+    { title: '线索转化分析', value: `${formatNumber(leads)} 条`, href: '/admin/site/conversion' },
+    { title: 'Google收录分析', value: readiness, href: '/admin/site/seo' },
+  ]
+
+  return (
+    <section className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+      {items.map((item) => (
+        <Link
+          key={item.title}
+          href={item.href}
+          className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60"
+        >
+          <span className="block text-xs font-semibold text-[#1889B6]">{item.title}</span>
+          <span className="mt-3 block text-2xl font-black text-[#1E2C31]">{item.value}</span>
+        </Link>
+      ))}
+    </section>
+  )
+}
+
+function TrafficSummaryTable({
+  sevenDays,
+  thirtyDays,
+  activeRange,
+}: {
+  sevenDays: AnalyticsWindowMetric
+  thirtyDays: AnalyticsWindowMetric
+  activeRange: TrafficRange
+}) {
+  const rows = [
+    { label: '最近 7 天', metric: sevenDays, active: activeRange === 7 },
+    { label: '最近 30 天', metric: thirtyDays, active: activeRange === 30 },
+  ]
+
+  return (
+    <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3">
+        <h2 className="text-sm font-bold text-[#1E2C31]">网站访问统计表</h2>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[860px] text-sm">
+          <thead>
+            <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
+              <th className="px-4 py-3 text-left font-medium">口径</th>
+              <th className="px-4 py-3 text-right font-medium">PV</th>
+              <th className="px-4 py-3 text-right font-medium">访客(UV)</th>
+              <th className="px-4 py-3 text-right font-medium">CTA</th>
+              <th className="px-4 py-3 text-right font-medium">联系跳转</th>
+              <th className="px-4 py-3 text-right font-medium">表单成功</th>
+              <th className="px-4 py-3 text-right font-medium">真实线索</th>
+              <th className="px-4 py-3 text-right font-medium">访问转化率</th>
+              <th className="px-4 py-3 text-right font-medium">排除测试</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.label} className={`border-b border-[#E6EEEE] last:border-0 ${row.active ? 'bg-[#F0F7F8]' : ''}`}>
+                <td className="px-4 py-3 font-semibold text-[#1E2C31]">{row.label}</td>
+                <td className="px-4 py-3 text-right font-semibold text-[#1E2C31]">{formatNumber(row.metric.pageViews)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.visitors)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.ctaClicks)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.contactRedirects)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.formSubmits)}</td>
+                <td className="px-4 py-3 text-right font-semibold text-[#E36F2C]">{formatNumber(row.metric.leads)}</td>
+                <td className="px-4 py-3 text-right font-semibold text-[#1889B6]">{formatAnalyticsPercent(row.metric.conversionRate)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">
+                  {formatNumber(row.metric.testEvents)} / {formatNumber(row.metric.testLeads)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function TrendWorkspace({ rows }: { rows: AnalyticsTrendRow[] }) {
+  if (rows.length === 0) {
+    return <div className="rounded-md border border-[#D8E7E8] bg-white p-5 text-sm text-[#61767D] shadow-sm">暂无可用趋势数据。</div>
+  }
+
+  const maxViews = Math.max(1, ...rows.map((row) => row.pageViews))
+  const displayRows = rows.slice(-14)
+
+  return (
+    <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-md border border-[#D8E7E8] bg-white px-3 py-1.5 text-xs font-semibold text-[#1889B6]">浏览次数(PV)</span>
+          <span className="rounded-md border border-[#D8E7E8] bg-white px-3 py-1.5 text-xs font-semibold text-[#61767D]">访客(UV)</span>
+          <span className="rounded-md border border-[#D8E7E8] bg-white px-3 py-1.5 text-xs font-semibold text-[#61767D]">转化动作</span>
+        </div>
+        <span className="text-xs text-[#8A9EA4]">蓝色为 PV，橙色为转化动作。</span>
+      </div>
+      <div className="grid grid-cols-1 gap-0 xl:grid-cols-[minmax(0,1fr)_390px]">
+        <div className="p-5">
+          <div className="flex h-72 items-end gap-2 border-b border-[#E6EEEE] pb-4">
+            {displayRows.map((row) => {
+              const height = Math.max(10, Math.round((row.pageViews / maxViews) * 230))
+              const actionHeight = Math.max(6, Math.round((row.actions / maxViews) * 230))
+              return (
+                <div key={row.date} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-2">
+                  <div className="flex h-60 w-full items-end justify-center gap-1">
+                    <span className="w-2.5 rounded-t bg-[#1889B6]" style={{ height }} title={`${formatNumber(row.pageViews)} PV`} />
+                    <span className="w-2.5 rounded-t bg-[#E36F2C]" style={{ height: actionHeight }} title={`${formatNumber(row.actions)} 动作`} />
+                  </div>
+                  <span className="w-full truncate text-center text-[11px] text-[#8A9EA4]">{formatTrendDate(row.date)}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+        <div className="border-t border-[#E6EEEE] xl:border-l xl:border-t-0">
+          <TrendTable rows={displayRows} />
+        </div>
+      </div>
     </div>
   )
 }
@@ -192,8 +376,7 @@ function TrendTable({ rows }: { rows: AnalyticsTrendRow[] }) {
   const maxViews = Math.max(1, ...rows.map((row) => row.pageViews))
 
   return (
-    <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-      <div className="overflow-x-auto">
+    <div className="overflow-x-auto">
         <table className="w-full min-w-[760px] text-sm">
           <thead>
             <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
@@ -228,7 +411,6 @@ function TrendTable({ rows }: { rows: AnalyticsTrendRow[] }) {
             ))}
           </tbody>
         </table>
-      </div>
     </div>
   )
 }
@@ -243,12 +425,17 @@ type InsightItem = {
   severity: InsightSeverity
 }
 
-function buildInsightItems(analytics: SiteAnalyticsDashboard, windowMetric: AnalyticsWindowMetric): InsightItem[] {
+function buildInsightItems(
+  analytics: SiteAnalyticsDashboard,
+  windowMetric: AnalyticsWindowMetric,
+  activeRange: TrafficRange,
+): InsightItem[] {
   const actionTotal = analytics.sourceTypes.reduce((sum, row) => sum + row.value, 0)
   const otherActions = analytics.sourceTypes.find((row) => row.key === 'other')?.value ?? 0
   const otherShare = actionTotal > 0 ? otherActions / actionTotal : 0
   const quietLandingPage = analytics.landingPages.find((row) => row.value >= 20 && (row.secondary ?? 0) === 0)
   const topPage = analytics.topPages[0]
+  const rangeLabel = `${activeRange} 天`
   const conversionSeverity: InsightSeverity =
     windowMetric.pageViews >= 100 && windowMetric.leads === 0
       ? 'issue'
@@ -263,8 +450,8 @@ function buildInsightItems(analytics: SiteAnalyticsDashboard, windowMetric: Anal
       value: formatAnalyticsPercent(windowMetric.conversionRate),
       detail:
         windowMetric.pageViews === 0
-          ? '暂无 30 天访问事件。'
-          : `30 天 ${formatNumber(windowMetric.pageViews)} PV / ${formatNumber(windowMetric.leads)} 条真实线索。`,
+          ? `暂无 ${rangeLabel}访问事件。`
+          : `${rangeLabel} ${formatNumber(windowMetric.pageViews)} PV / ${formatNumber(windowMetric.leads)} 条真实线索。`,
       severity: conversionSeverity,
     },
     {
@@ -282,7 +469,7 @@ function buildInsightItems(analytics: SiteAnalyticsDashboard, windowMetric: Anal
       value: actionTotal > 0 ? `${Math.round(otherShare * 100)}% other` : '暂无动作',
       detail:
         actionTotal > 0
-          ? `30 天动作 ${formatNumber(actionTotal)} 次，其中 other ${formatNumber(otherActions)} 次。`
+          ? `${rangeLabel}动作 ${formatNumber(actionTotal)} 次，其中 other ${formatNumber(otherActions)} 次。`
           : '暂无 CTA / 联系 / 表单来源事件。',
       severity: otherShare > 0.5 ? 'watch' : 'ok',
     },
@@ -292,7 +479,7 @@ function buildInsightItems(analytics: SiteAnalyticsDashboard, windowMetric: Anal
       value: topPage?.label ?? '暂无',
       detail: topPage
         ? `${formatNumber(topPage.value)} 次访问 / ${formatNumber(topPage.secondary ?? 0)} 名匿名访客。`
-        : '暂无 30 天页面访问事件。',
+        : `暂无 ${rangeLabel}页面访问事件。`,
       severity: 'ok',
     },
   ]
@@ -425,6 +612,11 @@ function formatEventDate(value: string) {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function normalizeRange(value: string | string[] | undefined): TrafficRange {
+  const raw = Array.isArray(value) ? value[0] : value
+  return raw === '7' ? 7 : 30
 }
 
 function stateLabel(state: AnalyticsReadinessItem['state']): string {

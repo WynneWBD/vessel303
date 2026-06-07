@@ -9,6 +9,8 @@ import {
   loadSiteAnalyticsDashboard,
   sourceTypeLabel,
   type AnalyticsRankRow,
+  type AnalyticsTrendRow,
+  type AnalyticsWindowMetric,
 } from '@/lib/site-analytics'
 import { AdminPageHero } from '@/components/admin/AdminUI'
 import {
@@ -110,47 +112,85 @@ export default async function AdminStatusPage() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-8">
           <section className="space-y-4">
-            <SectionTitle title="数据分析总览" detail="按 300 后台常见心智先看访问、入口、行为、线索和转化，再进入细分页面。" />
+            <SectionTitle
+              title="数据分析总览"
+              detail="按 300 后台的数据分析心智组织：先选站点和时间，再看访问汇总、趋势、行为路径、入口页面和转化处理。"
+            />
+            <AnalysisToolbar activeRange="30" />
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <AnalysisEntry
-                  title="网站访问统计"
-                  value={`${formatNumber(thirtyDays.pageViews)} PV`}
-                  detail="查看 7 / 30 天访问、访客、Top Pages。"
-                  href="/admin/status/traffic"
-                />
-                <AnalysisEntry
-                  title="落地页分析"
-                  value={analytics.landingPages.length}
-                  detail="看入口页访问与后续动作，不先做复杂跳出率。"
-                  href="/admin/status/traffic"
-                />
-                <AnalysisEntry
-                  title="访问行为"
-                  value={formatNumber(thirtyDayActions)}
-                  detail="聚合 CTA 点击、联系跳转和表单成功。"
-                  href="/admin/status/traffic"
-                />
-                <AnalysisEntry
-                  title="线索转化"
-                  value={formatAnalyticsPercent(thirtyDays.conversionRate)}
-                  detail="真实线索数 / 页面访问数，排除测试数据。"
-                  href="/admin/site/conversion"
-                />
+              <div className="space-y-4">
+                <WindowSummaryTable sevenDays={sevenDays} thirtyDays={thirtyDays} />
+
+                <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+                  <TrendPreview rows={analytics.dailyTrend} />
+                  <BehaviorFlowPreview
+                    topPages={analytics.topPages}
+                    landingPages={analytics.landingPages}
+                    sourceTypes={analytics.sourceTypes}
+                    windowMetric={thirtyDays}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  <AnalysisModuleCard
+                    title="网站访问统计"
+                    value={`${formatNumber(thirtyDays.pageViews)} PV`}
+                    detail="PV、UV、Top Pages、来源入口和趋势。"
+                    href="/admin/status/traffic?range=30"
+                    tone="blue"
+                  />
+                  <AnalysisModuleCard
+                    title="落地页跳出分析"
+                    value={`${formatNumber(analytics.landingPages.length)} 页`}
+                    detail="入口页访问与后续动作，优先识别高访问低动作页面。"
+                    href="/admin/status/traffic#landing-analysis"
+                    tone="orange"
+                  />
+                  <AnalysisModuleCard
+                    title="访问行为分析"
+                    value={formatNumber(thirtyDayActions)}
+                    detail="CTA 点击、联系跳转、表单成功按路径聚合。"
+                    href="/admin/status/traffic#behavior-analysis"
+                    tone="green"
+                  />
+                  <AnalysisModuleCard
+                    title="线索转化分析"
+                    value={formatAnalyticsPercent(thirtyDays.conversionRate)}
+                    detail="真实线索 / 页面访问，排除测试线索。"
+                    href="/admin/site/conversion"
+                    tone="green"
+                  />
+                  <AnalysisModuleCard
+                    title="Google收录分析"
+                    value={`${formatNumber(overview.site.seo.missing)} 缺项`}
+                    detail="先从 SEO 字段和站点地图状态进入，不接第三方 API。"
+                    href="/admin/site/seo"
+                    tone="blue"
+                  />
+                  <AnalysisModuleCard
+                    title="运营待处理"
+                    value={formatNumber(contentTotals.issues + siteIssues + overview.leads.new)}
+                    detail="内容缺项、站点问题和新线索统一排优先级。"
+                    href="/admin/status/content"
+                    tone="orange"
+                  />
+                </div>
               </div>
+
               <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h2 className="text-base font-bold text-[#1E2C31]">30 天入口概览</h2>
                     <p className="mt-1 text-xs leading-5 text-[#61767D]">只展示路径、来源和动作数量，不展示表单隐私字段。</p>
                   </div>
-                  <Link href="/admin/status/traffic" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+                  <Link href="/admin/status/traffic?range=30" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
                     详细分析
                   </Link>
                 </div>
                 <div className="mt-4 space-y-4">
                   <MiniRankList title="Top Pages" rows={analytics.topPages} empty="暂无页面访问事件。" />
                   <MiniRankList title="来源类型" rows={analytics.sourceTypes} empty="暂无 CTA / 表单来源数据。" formatLabel={sourceTypeLabel} />
+                  <MiniRankList title="落地页动作" rows={analytics.landingPages} empty="暂无落地页事件。" />
                 </div>
               </div>
             </div>
@@ -259,29 +299,273 @@ export default async function AdminStatusPage() {
   )
 }
 
-function AnalysisEntry({
+function AnalysisToolbar({ activeRange }: { activeRange: '7' | '30' }) {
+  return (
+    <div className="rounded-md border border-[#D8E7E8] bg-white p-3 shadow-sm">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex h-9 min-w-60 items-center rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 text-sm font-medium text-[#1E2C31]">
+            英文站 www.vessel303.com
+          </span>
+          <span className="inline-flex overflow-hidden rounded-md border border-[#D8E7E8] bg-white">
+            <Link
+              href="/admin/status/traffic?range=7"
+              className={`inline-flex h-9 items-center px-3 text-sm font-semibold ${
+                activeRange === '7' ? 'bg-[#1889B6] text-white' : 'text-[#61767D] hover:bg-[#F0F7F8] hover:text-[#1889B6]'
+              }`}
+            >
+              最近 7 天
+            </Link>
+            <Link
+              href="/admin/status/traffic?range=30"
+              className={`inline-flex h-9 items-center border-l border-[#D8E7E8] px-3 text-sm font-semibold ${
+                activeRange === '30' ? 'bg-[#1889B6] text-white' : 'text-[#61767D] hover:bg-[#F0F7F8] hover:text-[#1889B6]'
+              }`}
+            >
+              最近 30 天
+            </Link>
+          </span>
+          <span className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 text-sm text-[#61767D]">
+            指标：浏览次数(PV) + 转化动作
+          </span>
+        </div>
+        <Link href="/admin/status/traffic?range=30" className="text-sm font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+          进入网站访问统计
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+function WindowSummaryTable({
+  sevenDays,
+  thirtyDays,
+}: {
+  sevenDays: AnalyticsWindowMetric
+  thirtyDays: AnalyticsWindowMetric
+}) {
+  const rows = [
+    { label: '最近 7 天', metric: sevenDays, note: '短期观察' },
+    { label: '最近 30 天', metric: thirtyDays, note: '运营主口径' },
+  ]
+
+  return (
+    <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3">
+        <h2 className="text-sm font-bold text-[#1E2C31]">访问与转化汇总</h2>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[760px] text-sm">
+          <thead>
+            <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
+              <th className="px-4 py-3 text-left font-medium">统计口径</th>
+              <th className="px-4 py-3 text-right font-medium">PV</th>
+              <th className="px-4 py-3 text-right font-medium">访客</th>
+              <th className="px-4 py-3 text-right font-medium">CTA</th>
+              <th className="px-4 py-3 text-right font-medium">联系跳转</th>
+              <th className="px-4 py-3 text-right font-medium">表单</th>
+              <th className="px-4 py-3 text-right font-medium">线索</th>
+              <th className="px-4 py-3 text-right font-medium">转化率</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.label} className="border-b border-[#E6EEEE] last:border-0">
+                <td className="px-4 py-3">
+                  <div className="font-semibold text-[#1E2C31]">{row.label}</div>
+                  <div className="mt-1 text-xs text-[#8A9EA4]">{row.note}</div>
+                </td>
+                <td className="px-4 py-3 text-right font-semibold text-[#1E2C31]">{formatNumber(row.metric.pageViews)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.visitors)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.ctaClicks)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.contactRedirects)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.formSubmits)}</td>
+                <td className="px-4 py-3 text-right font-semibold text-[#E36F2C]">{formatNumber(row.metric.leads)}</td>
+                <td className="px-4 py-3 text-right font-semibold text-[#1889B6]">{formatAnalyticsPercent(row.metric.conversionRate)}</td>
+              </tr>
+            ))}
+            <tr>
+              <td className="px-4 py-3">
+                <div className="font-semibold text-[#1E2C31]">已排除测试</div>
+                <div className="mt-1 text-xs text-[#8A9EA4]">不计入运营判断</div>
+              </td>
+              <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(thirtyDays.testEvents)}</td>
+              <td className="px-4 py-3 text-right text-[#8A9EA4]">--</td>
+              <td className="px-4 py-3 text-right text-[#8A9EA4]">--</td>
+              <td className="px-4 py-3 text-right text-[#8A9EA4]">--</td>
+              <td className="px-4 py-3 text-right text-[#8A9EA4]">--</td>
+              <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(thirtyDays.testLeads)}</td>
+              <td className="px-4 py-3 text-right text-[#8A9EA4]">--</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function TrendPreview({ rows }: { rows: AnalyticsTrendRow[] }) {
+  const displayRows = rows.slice(-10)
+  if (displayRows.length === 0) {
+    return (
+      <div className="rounded-md border border-[#D8E7E8] bg-white p-5 text-sm text-[#61767D] shadow-sm">
+        暂无可用趋势数据。
+      </div>
+    )
+  }
+
+  const maxViews = Math.max(1, ...displayRows.map((row) => row.pageViews))
+
+  return (
+    <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-bold text-[#1E2C31]">访问趋势预览</h2>
+          <p className="mt-1 text-xs text-[#61767D]">最近 {formatNumber(displayRows.length)} 天 PV 与动作对照。</p>
+        </div>
+        <Link href="/admin/status/traffic?range=30#trend-analysis" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+          查看趋势
+        </Link>
+      </div>
+      <div className="mt-5 flex h-48 items-end gap-2 border-b border-[#E6EEEE] pb-3">
+        {displayRows.map((row) => {
+          const height = Math.max(8, Math.round((row.pageViews / maxViews) * 150))
+          const actionHeight = Math.max(4, Math.round((row.actions / maxViews) * 150))
+          return (
+            <div key={row.date} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-2">
+              <div className="flex h-40 w-full items-end justify-center gap-1">
+                <span className="w-2 rounded-t bg-[#1889B6]" style={{ height }} title={`${formatNumber(row.pageViews)} PV`} />
+                <span className="w-2 rounded-t bg-[#E36F2C]" style={{ height: actionHeight }} title={`${formatNumber(row.actions)} 动作`} />
+              </div>
+              <span className="w-full truncate text-center text-[11px] text-[#8A9EA4]">{formatTrendDate(row.date)}</span>
+            </div>
+          )
+        })}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-4 text-xs text-[#61767D]">
+        <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#1889B6]" />PV</span>
+        <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#E36F2C]" />转化动作</span>
+      </div>
+    </div>
+  )
+}
+
+function BehaviorFlowPreview({
+  topPages,
+  landingPages,
+  sourceTypes,
+  windowMetric,
+}: {
+  topPages: AnalyticsRankRow[]
+  landingPages: AnalyticsRankRow[]
+  sourceTypes: AnalyticsRankRow[]
+  windowMetric: AnalyticsWindowMetric
+}) {
+  const actionRows = landingPages
+    .filter((row) => (row.secondary ?? 0) > 0)
+    .map((row) => ({ ...row, value: row.secondary ?? 0 }))
+  const conversionRows: AnalyticsRankRow[] = [
+    { key: 'leads', label: '真实线索', value: windowMetric.leads },
+    { key: 'forms', label: '表单成功', value: windowMetric.formSubmits },
+    { key: 'rate', label: '访问转化率', value: Math.round(windowMetric.conversionRate * 10000) / 100 },
+  ]
+
+  return (
+    <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-bold text-[#1E2C31]">访问行为路径</h2>
+          <p className="mt-1 text-xs text-[#61767D]">入口页面、动作来源和线索结果放在同屏判断。</p>
+        </div>
+        <Link href="/admin/status/traffic#behavior-analysis" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+          行为分析
+        </Link>
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+        <FlowColumn title="入口页面" rows={topPages} empty="暂无入口" />
+        <FlowColumn title="后续动作" rows={actionRows} empty="暂无动作" />
+        <FlowColumn title="来源类型" rows={sourceTypes} empty="暂无来源" formatLabel={sourceTypeLabel} />
+        <FlowColumn title="线索结果" rows={conversionRows} empty="暂无线索" percentKey="rate" />
+      </div>
+    </div>
+  )
+}
+
+function FlowColumn({
+  title,
+  rows,
+  empty,
+  formatLabel,
+  percentKey,
+}: {
+  title: string
+  rows: AnalyticsRankRow[]
+  empty: string
+  formatLabel?: (value: string) => string
+  percentKey?: string
+}) {
+  const displayRows = rows.slice(0, 5)
+
+  return (
+    <div className="min-w-0 rounded-md border border-[#E6EEEE] bg-[#FBFDFD]">
+      <div className="border-b border-[#E6EEEE] px-3 py-2 text-xs font-bold text-[#1E2C31]">{title}</div>
+      <div className="divide-y divide-[#E6EEEE]">
+        {displayRows.length === 0 ? (
+          <div className="px-3 py-3 text-xs text-[#8A9EA4]">{empty}</div>
+        ) : (
+          displayRows.map((row) => (
+            <div key={row.key} className="px-3 py-2">
+              <div className="truncate text-xs font-semibold text-[#1E2C31]">{formatLabel ? formatLabel(row.key) : row.label}</div>
+              <div className="mt-1 text-xs font-bold text-[#1889B6]">
+                {percentKey === row.key ? `${formatNumber(row.value)}%` : formatNumber(row.value)}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
+function AnalysisModuleCard({
   title,
   value,
   detail,
   href,
+  tone,
 }: {
   title: string
   value: number | string
   detail: string
   href: string
+  tone: 'blue' | 'green' | 'orange'
 }) {
+  const toneClass =
+    tone === 'orange'
+      ? 'border-l-[#E36F2C]'
+      : tone === 'green'
+        ? 'border-l-emerald-500'
+        : 'border-l-[#1889B6]'
+
   return (
     <Link
       href={href}
-      className="flex min-h-32 flex-col justify-between rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60"
+      className={`rounded-md border border-l-4 border-[#D8E7E8] ${toneClass} bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60`}
     >
-      <span className="block text-xs font-semibold text-[#1889B6]">{title}</span>
-      <span>
-        <span className="block text-2xl font-black text-[#1E2C31]">{typeof value === 'number' ? formatNumber(value) : value}</span>
-        <span className="mt-2 block text-xs leading-5 text-[#61767D]">{detail}</span>
-      </span>
+      <span className="block text-sm font-bold text-[#1E2C31]">{title}</span>
+      <span className="mt-3 block text-2xl font-black text-[#1E2C31]">{typeof value === 'number' ? formatNumber(value) : value}</span>
+      <span className="mt-2 block text-xs leading-5 text-[#61767D]">{detail}</span>
     </Link>
   )
+}
+
+function formatTrendDate(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+  })
 }
 
 function MiniRankList({
