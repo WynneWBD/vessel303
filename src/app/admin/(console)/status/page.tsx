@@ -9,6 +9,8 @@ import {
   loadSiteAnalyticsDashboard,
   sourceTypeLabel,
   type AnalyticsBehaviorStep,
+  type AnalyticsComparisonMetric,
+  type AnalyticsDeltaMetric,
   type AnalyticsPeriodMetric,
   type AnalyticsRankRow,
   type AnalyticsTrendRow,
@@ -42,7 +44,9 @@ export default async function AdminStatusPage() {
   const yesterday = analytics.periods.find((item) => item.key === 'yesterday') ?? analytics.periods[1] ?? today
   const sevenDays = analytics.windows.find((item) => item.days === 7) ?? analytics.windows[0]
   const thirtyDays = analytics.windows.find((item) => item.days === 30) ?? analytics.windows[1] ?? sevenDays
-  const thirtyDayActions = thirtyDays.ctaClicks + thirtyDays.contactRedirects + thirtyDays.formSubmits
+  const todayComparison = analytics.comparisons.find((item) => item.key === 'today')
+  const thirtyComparison = analytics.comparisons.find((item) => item.key === '30')
+  const thirtyDayActions = metricActions(thirtyDays)
   const siteIssues =
     overview.site.pages.total +
     overview.site.seo.missing +
@@ -112,6 +116,19 @@ export default async function AdminStatusPage() {
             />
         </div>
       </AdminPageHero>
+
+      <OperationsPulseBoard
+        today={today}
+        yesterday={yesterday}
+        sevenDays={sevenDays}
+        thirtyDays={thirtyDays}
+        todayComparison={todayComparison}
+        thirtyComparison={thirtyComparison}
+        newLeads={overview.leads.new}
+        contentIssues={contentTotals.issues}
+        siteIssues={siteIssues}
+        pageDrafts={overview.site.pages.total}
+      />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-8">
@@ -344,6 +361,132 @@ function AnalysisToolbar({ activeRange }: { activeRange: 'today' | 'yesterday' |
           进入网站访问统计
         </Link>
       </div>
+    </div>
+  )
+}
+
+function OperationsPulseBoard({
+  today,
+  yesterday,
+  sevenDays,
+  thirtyDays,
+  todayComparison,
+  thirtyComparison,
+  newLeads,
+  contentIssues,
+  siteIssues,
+  pageDrafts,
+}: {
+  today: AnalyticsPeriodMetric
+  yesterday: AnalyticsPeriodMetric
+  sevenDays: AnalyticsWindowMetric
+  thirtyDays: AnalyticsWindowMetric
+  todayComparison?: AnalyticsComparisonMetric
+  thirtyComparison?: AnalyticsComparisonMetric
+  newLeads: number
+  contentIssues: number
+  siteIssues: number
+  pageDrafts: number
+}) {
+  const rows = [
+    { label: '今日', metric: today, href: '/admin/status/traffic?range=today', note: '实时' },
+    { label: '昨日', metric: yesterday, href: '/admin/status/traffic?range=yesterday', note: '对照' },
+    { label: '近 7 天', metric: sevenDays, href: '/admin/status/traffic?range=7', note: '短期' },
+    { label: '近 30 天', metric: thirtyDays, href: '/admin/status/traffic?range=30', note: '主口径' },
+  ]
+
+  const queue = [
+    { label: '新线索', value: newLeads, href: '/admin/customers/leads?status=new' },
+    { label: '内容缺项', value: contentIssues, href: '/admin/status/content' },
+    { label: '站点问题', value: siteIssues, href: '/admin/status/site' },
+    { label: '页面草稿', value: pageDrafts, href: '/admin/site/visual' },
+  ]
+
+  return (
+    <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <h2 className="text-sm font-bold text-[#1E2C31]">运营日报看板</h2>
+            <p className="mt-1 text-xs text-[#61767D]">把 300 后台常用的时间口径、访问、动作、线索和转化率压到一张表里。</p>
+          </div>
+          <Link href="/admin/status/traffic?range=30" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+            进入详细数据分析
+          </Link>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[880px] text-sm">
+            <thead>
+              <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
+                <th className="px-4 py-3 text-left font-medium">口径</th>
+                <th className="px-4 py-3 text-right font-medium">PV</th>
+                <th className="px-4 py-3 text-right font-medium">访客</th>
+                <th className="px-4 py-3 text-right font-medium">转化动作</th>
+                <th className="px-4 py-3 text-right font-medium">表单</th>
+                <th className="px-4 py-3 text-right font-medium">真实线索</th>
+                <th className="px-4 py-3 text-right font-medium">访问转化率</th>
+                <th className="px-4 py-3 text-right font-medium">下钻</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.label} className="border-b border-[#E6EEEE] last:border-0">
+                  <td className="px-4 py-3">
+                    <div className="font-semibold text-[#1E2C31]">{row.label}</div>
+                    <div className="mt-1 text-xs text-[#8A9EA4]">{row.note}</div>
+                  </td>
+                  <td className="px-4 py-3 text-right font-semibold text-[#1E2C31]">{formatNumber(row.metric.pageViews)}</td>
+                  <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.visitors)}</td>
+                  <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(metricActions(row.metric))}</td>
+                  <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.formSubmits)}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-[#E36F2C]">{formatNumber(row.metric.leads)}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-[#1889B6]">{formatAnalyticsPercent(row.metric.conversionRate)}</td>
+                  <td className="px-4 py-3 text-right">
+                    <Link href={row.href} className="font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+                      查看
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3">
+          <h2 className="text-sm font-bold text-[#1E2C31]">今日变化与处理队列</h2>
+          <p className="mt-1 text-xs text-[#61767D]">先看变化，再处理会影响运营效率的事项。</p>
+        </div>
+        <div className="grid grid-cols-2 border-b border-[#E6EEEE]">
+          <PulseChangeCard title="今日 PV" metric={todayComparison?.pageViews} />
+          <PulseChangeCard title="今日线索" metric={todayComparison?.leads} />
+          <PulseChangeCard title="30 天 PV" metric={thirtyComparison?.pageViews} />
+          <PulseChangeCard title="30 天转化率" metric={thirtyComparison?.conversionRate} rate />
+        </div>
+        <div className="divide-y divide-[#E6EEEE]">
+          {queue.map((item) => (
+            <Link key={item.label} href={item.href} className="flex items-center justify-between gap-3 px-4 py-3 transition hover:bg-[#F7FAFA]">
+              <span className="text-sm font-semibold text-[#1E2C31]">{item.label}</span>
+              <span className={`text-sm font-bold ${item.value > 0 ? 'text-[#E36F2C]' : 'text-emerald-700'}`}>{formatNumber(item.value)}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function PulseChangeCard({ title, metric, rate = false }: { title: string; metric?: AnalyticsDeltaMetric; rate?: boolean }) {
+  const tone = metric && metric.delta > 0 ? 'text-emerald-700' : metric && metric.delta < 0 ? 'text-[#E36F2C]' : 'text-[#61767D]'
+  const value = metric ? (rate ? formatAnalyticsPercent(metric.current) : formatNumber(metric.current)) : '--'
+  const delta = metric ? (rate ? formatRateDelta(metric) : formatNumberDelta(metric)) : '暂无对比'
+
+  return (
+    <div className="border-r border-b border-[#E6EEEE] p-4 even:border-r-0 [&:nth-last-child(-n+2)]:border-b-0">
+      <div className="text-xs font-semibold text-[#61767D]">{title}</div>
+      <div className="mt-2 text-xl font-black text-[#1E2C31]">{value}</div>
+      <div className={`mt-1 text-xs font-bold ${tone}`}>{delta}</div>
     </div>
   )
 }
@@ -596,6 +739,21 @@ function AnalysisModuleCard({
       <span className="mt-2 block text-xs leading-5 text-[#61767D]">{detail}</span>
     </Link>
   )
+}
+
+function metricActions(metric: AnalyticsPeriodMetric | AnalyticsWindowMetric) {
+  return metric.ctaClicks + metric.contactRedirects + metric.formSubmits
+}
+
+function formatNumberDelta(metric: AnalyticsDeltaMetric): string {
+  const signedDelta = `${metric.delta > 0 ? '+' : ''}${formatNumber(metric.delta)}`
+  if (metric.rate === null) return `${signedDelta} / 新增`
+  return `${signedDelta} / ${metric.rate > 0 ? '+' : ''}${(metric.rate * 100).toFixed(1)}%`
+}
+
+function formatRateDelta(metric: AnalyticsDeltaMetric): string {
+  const percentagePoints = metric.delta * 100
+  return `${percentagePoints > 0 ? '+' : ''}${percentagePoints.toFixed(2)}pp`
 }
 
 function formatTrendDate(value: string) {
