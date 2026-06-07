@@ -38,6 +38,22 @@ export type AnalyticsWindowMetric = {
   conversionRate: number
 }
 
+export type AnalyticsPeriodKey = 'today' | 'yesterday'
+
+export type AnalyticsPeriodMetric = {
+  key: AnalyticsPeriodKey
+  label: string
+  pageViews: number
+  visitors: number
+  ctaClicks: number
+  contactRedirects: number
+  formSubmits: number
+  leads: number
+  testEvents: number
+  testLeads: number
+  conversionRate: number
+}
+
 export type AnalyticsRankRow = {
   key: string
   label: string
@@ -62,9 +78,19 @@ export type AnalyticsTrendRow = {
   leads: number
 }
 
+export type AnalyticsHourlyTrendRow = {
+  hour: string
+  pageViews: number
+  visitors: number
+  actions: number
+  formSubmits: number
+}
+
 export type SiteAnalyticsDashboard = {
   available: boolean
+  periods: AnalyticsPeriodMetric[]
   windows: AnalyticsWindowMetric[]
+  hourlyTrend: AnalyticsHourlyTrendRow[]
   dailyTrend: AnalyticsTrendRow[]
   topPages: AnalyticsRankRow[]
   topReferrers: AnalyticsRankRow[]
@@ -90,6 +116,34 @@ const EMPTY_CONVERSION_METRIC: AnalyticsConversionMetric = {
 
 export const EMPTY_ANALYTICS_DASHBOARD: SiteAnalyticsDashboard = {
   available: false,
+  periods: [
+    {
+      key: 'today',
+      label: '今日',
+      pageViews: 0,
+      visitors: 0,
+      ctaClicks: 0,
+      contactRedirects: 0,
+      formSubmits: 0,
+      leads: 0,
+      testEvents: 0,
+      testLeads: 0,
+      conversionRate: 0,
+    },
+    {
+      key: 'yesterday',
+      label: '昨日',
+      pageViews: 0,
+      visitors: 0,
+      ctaClicks: 0,
+      contactRedirects: 0,
+      formSubmits: 0,
+      leads: 0,
+      testEvents: 0,
+      testLeads: 0,
+      conversionRate: 0,
+    },
+  ],
   windows: [7, 30].map((days) => ({
     days,
     pageViews: 0,
@@ -102,6 +156,7 @@ export const EMPTY_ANALYTICS_DASHBOARD: SiteAnalyticsDashboard = {
     testLeads: 0,
     conversionRate: 0,
   })),
+  hourlyTrend: [],
   dailyTrend: [],
   topPages: [],
   topReferrers: [],
@@ -296,6 +351,65 @@ async function loadWindowMetric(days: number): Promise<AnalyticsWindowMetric> {
   }
 }
 
+async function loadPeriodMetric(key: AnalyticsPeriodKey): Promise<AnalyticsPeriodMetric> {
+  const { label, startSql, endSql } = periodSql(key)
+  const [eventRes, leadRes] = await Promise.all([
+    pool.query<{
+      page_views: string
+      visitors: string
+      cta_clicks: string
+      contact_redirects: string
+      form_submits: string
+      test_events: string
+    }>(
+      `SELECT
+         COUNT(*) FILTER (WHERE event_name = 'page_view' AND ${REAL_EVENT_CONDITION})::text AS page_views,
+         COUNT(DISTINCT visitor_id_hash) FILTER (WHERE event_name = 'page_view' AND visitor_id_hash IS NOT NULL AND ${REAL_EVENT_CONDITION})::text AS visitors,
+         COUNT(*) FILTER (WHERE event_name = 'cta_click' AND ${REAL_EVENT_CONDITION})::text AS cta_clicks,
+         COUNT(*) FILTER (WHERE event_name = 'contact_redirect' AND ${REAL_EVENT_CONDITION})::text AS contact_redirects,
+         COUNT(*) FILTER (WHERE event_name = 'form_submit_success' AND ${REAL_EVENT_CONDITION})::text AS form_submits,
+         COUNT(*) FILTER (WHERE ${TEST_EVENT_CONDITION})::text AS test_events
+       FROM site_events
+       WHERE created_at >= ${startSql}
+         AND created_at < ${endSql}`,
+    ),
+    loadLeadPeriodCount(key),
+  ])
+
+  const row = eventRes.rows[0]
+  const pageViews = toInt(row?.page_views)
+  const leads = leadRes.leads
+  return {
+    key,
+    label,
+    pageViews,
+    visitors: toInt(row?.visitors),
+    ctaClicks: toInt(row?.cta_clicks),
+    contactRedirects: toInt(row?.contact_redirects),
+    formSubmits: toInt(row?.form_submits),
+    leads,
+    testEvents: toInt(row?.test_events),
+    testLeads: leadRes.testLeads,
+    conversionRate: pageViews > 0 ? leads / pageViews : 0,
+  }
+}
+
+async function loadLeadPeriodCount(key: AnalyticsPeriodKey) {
+  if (!(await tableExists('public.leads'))) return { leads: 0, testLeads: 0 }
+  const { startSql, endSql } = periodSql(key)
+  const res = await pool.query<{ count: string; test_count: string }>(
+    `SELECT COUNT(*) FILTER (WHERE ${REAL_LEAD_CONDITION})::text AS count,
+            COUNT(*) FILTER (WHERE ${TEST_LEAD_CONDITION})::text AS test_count
+     FROM leads
+     WHERE created_at >= ${startSql}
+       AND created_at < ${endSql}`,
+  )
+  return {
+    leads: toInt(res.rows[0]?.count),
+    testLeads: toInt(res.rows[0]?.test_count),
+  }
+}
+
 async function loadLeadCount(days: number) {
   if (!(await tableExists('public.leads'))) return { leads: 0, testLeads: 0 }
   const res = await pool.query<{ count: string; test_count: string }>(
@@ -341,6 +455,47 @@ async function loadLeadDailyCounts(days: number) {
     [days],
   )
   return new Map(res.rows.map((row) => [row.date, toInt(row.count)]))
+}
+
+async function loadHourlyTrend(): Promise<AnalyticsHourlyTrendRow[]> {
+  const res = await pool.query<{
+    hour: string
+    page_views: string
+    visitors: string
+    actions: string
+    form_submits: string
+  }>(
+    `WITH hours AS (
+       SELECT generate_series(0, 23) AS hour
+     )
+     SELECT
+       LPAD(hours.hour::text, 2, '0') || ':00' AS hour,
+       COUNT(site_events.id) FILTER (WHERE site_events.event_name = 'page_view' AND ${REAL_EVENT_CONDITION})::text AS page_views,
+       COUNT(DISTINCT site_events.visitor_id_hash) FILTER (
+         WHERE site_events.event_name = 'page_view'
+           AND site_events.visitor_id_hash IS NOT NULL
+           AND ${REAL_EVENT_CONDITION}
+       )::text AS visitors,
+       COUNT(site_events.id) FILTER (
+         WHERE site_events.event_name IN ('cta_click', 'contact_redirect', 'form_submit_success')
+           AND ${REAL_EVENT_CONDITION}
+       )::text AS actions,
+       COUNT(site_events.id) FILTER (WHERE site_events.event_name = 'form_submit_success' AND ${REAL_EVENT_CONDITION})::text AS form_submits
+     FROM hours
+     LEFT JOIN site_events
+       ON site_events.created_at >= CURRENT_DATE + (hours.hour * INTERVAL '1 hour')
+      AND site_events.created_at < CURRENT_DATE + ((hours.hour + 1) * INTERVAL '1 hour')
+     GROUP BY hours.hour
+     ORDER BY hours.hour`,
+  )
+
+  return res.rows.map((row) => ({
+    hour: row.hour,
+    pageViews: toInt(row.page_views),
+    visitors: toInt(row.visitors),
+    actions: toInt(row.actions),
+    formSubmits: toInt(row.form_submits),
+  }))
 }
 
 async function loadDailyTrend(days = 14): Promise<AnalyticsTrendRow[]> {
@@ -406,9 +561,11 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
       return EMPTY_ANALYTICS_DASHBOARD
     }
 
-    const [windows, dailyTrend, topPages, topReferrers, sourceTypes, landingPages, conversionPaths, recentEvents] =
+    const [periods, windows, hourlyTrend, dailyTrend, topPages, topReferrers, sourceTypes, landingPages, conversionPaths, recentEvents] =
       await Promise.all([
+        Promise.all([loadPeriodMetric('today'), loadPeriodMetric('yesterday')]),
         Promise.all([loadWindowMetric(7), loadWindowMetric(30)]),
+        loadHourlyTrend(),
         loadDailyTrend(14),
         loadRankRows(
           `SELECT path AS key, COUNT(*)::text AS value,
@@ -488,7 +645,9 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
 
     return {
       available: true,
+      periods,
       windows,
+      hourlyTrend,
       dailyTrend,
       topPages,
       topReferrers,
@@ -567,6 +726,22 @@ export async function loadConversionPathAnalytics(days = 30): Promise<Record<str
   } catch (err) {
     console.error('[site-analytics] conversion metrics failed', err)
     return Object.fromEntries(CONVERSION_PATHS.map((item) => [item.key, EMPTY_CONVERSION_METRIC]))
+  }
+}
+
+function periodSql(key: AnalyticsPeriodKey) {
+  if (key === 'yesterday') {
+    return {
+      label: '昨日',
+      startSql: "CURRENT_DATE - INTERVAL '1 day'",
+      endSql: 'CURRENT_DATE',
+    }
+  }
+
+  return {
+    label: '今日',
+    startSql: 'CURRENT_DATE',
+    endSql: "CURRENT_DATE + INTERVAL '1 day'",
   }
 }
 

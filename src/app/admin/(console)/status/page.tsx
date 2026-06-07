@@ -8,6 +8,7 @@ import {
   formatAnalyticsPercent,
   loadSiteAnalyticsDashboard,
   sourceTypeLabel,
+  type AnalyticsPeriodMetric,
   type AnalyticsRankRow,
   type AnalyticsTrendRow,
   type AnalyticsWindowMetric,
@@ -36,6 +37,8 @@ export default async function AdminStatusPage() {
     loadSiteAnalyticsDashboard(),
   ])
   const contentTotals = sumContent(overview.content)
+  const today = analytics.periods.find((item) => item.key === 'today') ?? analytics.periods[0]
+  const yesterday = analytics.periods.find((item) => item.key === 'yesterday') ?? analytics.periods[1] ?? today
   const sevenDays = analytics.windows.find((item) => item.days === 7) ?? analytics.windows[0]
   const thirtyDays = analytics.windows.find((item) => item.days === 30) ?? analytics.windows[1] ?? sevenDays
   const thirtyDayActions = thirtyDays.ctaClicks + thirtyDays.contactRedirects + thirtyDays.formSubmits
@@ -119,7 +122,7 @@ export default async function AdminStatusPage() {
             <AnalysisToolbar activeRange="30" />
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
               <div className="space-y-4">
-                <WindowSummaryTable sevenDays={sevenDays} thirtyDays={thirtyDays} />
+                <WindowSummaryTable today={today} yesterday={yesterday} sevenDays={sevenDays} thirtyDays={thirtyDays} />
 
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
                   <TrendPreview rows={analytics.dailyTrend} />
@@ -299,7 +302,14 @@ export default async function AdminStatusPage() {
   )
 }
 
-function AnalysisToolbar({ activeRange }: { activeRange: '7' | '30' }) {
+function AnalysisToolbar({ activeRange }: { activeRange: 'today' | 'yesterday' | '7' | '30' }) {
+  const ranges = [
+    { key: 'today', label: '今天' },
+    { key: 'yesterday', label: '昨天' },
+    { key: '7', label: '最近 7 天' },
+    { key: '30', label: '最近 30 天' },
+  ] as const
+
   return (
     <div className="rounded-md border border-[#D8E7E8] bg-white p-3 shadow-sm">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
@@ -308,22 +318,21 @@ function AnalysisToolbar({ activeRange }: { activeRange: '7' | '30' }) {
             英文站 www.vessel303.com
           </span>
           <span className="inline-flex overflow-hidden rounded-md border border-[#D8E7E8] bg-white">
-            <Link
-              href="/admin/status/traffic?range=7"
-              className={`inline-flex h-9 items-center px-3 text-sm font-semibold ${
-                activeRange === '7' ? 'bg-[#1889B6] text-white' : 'text-[#61767D] hover:bg-[#F0F7F8] hover:text-[#1889B6]'
-              }`}
-            >
-              最近 7 天
-            </Link>
-            <Link
-              href="/admin/status/traffic?range=30"
-              className={`inline-flex h-9 items-center border-l border-[#D8E7E8] px-3 text-sm font-semibold ${
-                activeRange === '30' ? 'bg-[#1889B6] text-white' : 'text-[#61767D] hover:bg-[#F0F7F8] hover:text-[#1889B6]'
-              }`}
-            >
-              最近 30 天
-            </Link>
+            {ranges.map((item, index) => (
+              <Link
+                key={item.key}
+                href={`/admin/status/traffic?range=${item.key}`}
+                className={`inline-flex h-9 items-center px-3 text-sm font-semibold ${
+                  index > 0 ? 'border-l border-[#D8E7E8]' : ''
+                } ${
+                  activeRange === item.key
+                    ? 'bg-[#1889B6] text-white'
+                    : 'text-[#61767D] hover:bg-[#F0F7F8] hover:text-[#1889B6]'
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
           </span>
           <span className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 text-sm text-[#61767D]">
             指标：浏览次数(PV) + 转化动作
@@ -338,13 +347,19 @@ function AnalysisToolbar({ activeRange }: { activeRange: '7' | '30' }) {
 }
 
 function WindowSummaryTable({
+  today,
+  yesterday,
   sevenDays,
   thirtyDays,
 }: {
+  today: AnalyticsPeriodMetric
+  yesterday: AnalyticsPeriodMetric
   sevenDays: AnalyticsWindowMetric
   thirtyDays: AnalyticsWindowMetric
 }) {
   const rows = [
+    { label: '今天', metric: today, note: '实时口径' },
+    { label: '昨天', metric: yesterday, note: '昨日对照' },
     { label: '最近 7 天', metric: sevenDays, note: '短期观察' },
     { label: '最近 30 天', metric: thirtyDays, note: '运营主口径' },
   ]
