@@ -531,6 +531,174 @@ function SectionTitle({ title, detail }: { title: string; detail?: string }) {
   )
 }
 
+function SeoMatrixCell({
+  title,
+  value,
+  detail,
+  tone,
+  Icon,
+}: {
+  title: string
+  value: string | number
+  detail: string
+  tone: 'green' | 'orange' | 'blue' | 'gray'
+  Icon: LucideIcon
+}) {
+  const toneClass =
+    tone === 'green'
+      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      : tone === 'orange'
+        ? 'bg-[#FFF2E7] text-[#E36F2C] border-[#F1D0BD]'
+        : tone === 'blue'
+          ? 'bg-[#EAF6F8] text-[#1889B6] border-[#CDE7EE]'
+          : 'bg-[#F5F2ED] text-[#6B625B] border-[#E5DED4]'
+
+  return (
+    <div className="rounded-md border border-[#D8E7E8] bg-white p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#61767D]">{title}</p>
+          <p className="mt-2 text-2xl font-bold text-[#1E2C31]">{typeof value === 'number' ? formatNumber(value) : value}</p>
+        </div>
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border ${toneClass}`}>
+          <Icon size={18} />
+        </span>
+      </div>
+      <p className="mt-3 text-xs leading-5 text-[#61767D]">{detail}</p>
+    </div>
+  )
+}
+
+function SeoOperationsMatrix({
+  products,
+  news,
+  projects,
+  indexFoundationItems,
+  priorityItems,
+}: {
+  products: ContentSeoSummary
+  news: ContentSeoSummary
+  projects: ContentSeoSummary
+  indexFoundationItems: IndexFoundationItem[]
+  priorityItems: SeoPriorityItem[]
+}) {
+  const contentRows = [
+    { label: '产品详情', summary: products, href: products.href },
+    { label: '新闻详情', summary: news, href: news.href },
+    { label: '项目案例', summary: projects, href: projects.href },
+  ]
+  const publishedTotal = contentRows.reduce((total, row) => total + row.summary.published, 0)
+  const missingTotal = contentRows.reduce((total, row) => total + row.summary.missing, 0)
+  const foundationWaiting = indexFoundationItems.filter((item) => item.status === 'waiting').length
+  const foundationReady = indexFoundationItems.filter((item) => item.status === 'ready').length
+  const staticReady = STATIC_SEO_PAGES.filter((page) => page.status === 'ready').length
+  const staticProtected = STATIC_SEO_PAGES.filter((page) => page.status === 'protected').length
+  const activePriorityCount = priorityItems.filter((item) => item.tone === 'critical' || item.tone === 'warning').length
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-5 shadow-sm">
+      <div className="flex flex-col gap-2 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-[#1E2C31]">SEO 运营矩阵</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            先看内容缺口、索引基础、页面 metadata 覆盖和保护边界，再进入来源后台补字段或做 Search Console 接入。
+          </p>
+        </div>
+        <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1889B6]">
+          只读检查 · 不批量写入
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <SeoMatrixCell
+          title="内容 SEO 缺口"
+          value={missingTotal}
+          detail={`${publishedTotal} 个已发布详情来源；缺口只回来源后台补字段`}
+          tone={missingTotal > 0 ? 'orange' : 'green'}
+          Icon={SearchCheck}
+        />
+        <SeoMatrixCell
+          title="索引基础"
+          value={`${foundationReady}/${indexFoundationItems.length}`}
+          detail={`${foundationWaiting} 个待接入；包括 Robots、Sitemap、Search Console`}
+          tone={foundationWaiting > 0 ? 'orange' : 'green'}
+          Icon={ListChecks}
+        />
+        <SeoMatrixCell
+          title="页面 metadata"
+          value={staticReady}
+          detail={`${STATIC_SEO_PAGES.length} 个公开页面组；${staticProtected} 个受保护边界`}
+          tone="blue"
+          Icon={Globe2}
+        />
+        <SeoMatrixCell
+          title="当前处理项"
+          value={activePriorityCount}
+          detail="来自 SEO 处理优先级；不自动修改 TDK、sitemap 或 token"
+          tone={activePriorityCount > 0 ? 'orange' : 'green'}
+          Icon={ArrowRight}
+        />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="rounded-md border border-[#D8E7E8] bg-white p-4">
+          <h3 className="text-sm font-bold text-[#1E2C31]">内容来源覆盖</h3>
+          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">
+            {contentRows.map((row) => {
+              const ok = row.summary.missing === 0
+              return (
+                <Link
+                  key={row.label}
+                  href={row.href}
+                  className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-3 transition hover:border-[#1889B6]/60 hover:bg-white"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-semibold text-[#1E2C31]">{row.label}</p>
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${ok ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FFF2E7] text-[#E36F2C]'}`}>
+                      待补 {row.summary.missing}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-[#61767D]">
+                    已发布 {formatNumber(row.summary.published)} / 总数 {formatNumber(row.summary.total)}
+                  </p>
+                  <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
+                    进入后台 <ArrowRight size={13} />
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-md border border-[#D8E7E8] bg-white p-4">
+          <h3 className="text-sm font-bold text-[#1E2C31]">收录基础状态</h3>
+          <div className="mt-3 space-y-2">
+            {indexFoundationItems.map((item) => {
+              const Icon = item.Icon
+              return (
+                <div key={item.title} className="flex items-start gap-3 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-2">
+                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white text-[#1889B6]">
+                    <Icon size={14} />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-[#1E2C31]">{item.title}</p>
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${indexStatusClassName(item.status)}`}>
+                        {indexStatusLabel(item.status)}
+                      </span>
+                    </div>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#61767D]">{item.detail}</p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function SummaryTile({
   title,
   value,
@@ -871,6 +1039,14 @@ export default async function AdminSiteSeoPage() {
       </AdminPageHero>
 
       <AlignmentPanel />
+
+      <SeoOperationsMatrix
+        products={products}
+        news={news}
+        projects={projects}
+        indexFoundationItems={indexFoundationItems}
+        priorityItems={priorityItems}
+      />
 
       <SeoPriorityPanel items={priorityItems} />
 
