@@ -319,7 +319,7 @@ export default function PageModulesClient({
     <div className={`flex flex-col gap-6 ${activeHasUnsavedChanges ? 'pb-24' : ''}`}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-xs tracking-[0.18em] uppercase text-[#E36F2C]">Page Builder</p>
+          <p className="text-xs tracking-[0.18em] uppercase text-[#E36F2C]">Controlled Modules</p>
           <h1 className="mt-2 text-2xl font-bold text-[#2C2A28]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
             页面模块
           </h1>
