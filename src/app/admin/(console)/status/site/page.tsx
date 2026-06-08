@@ -1,7 +1,8 @@
 import Link from 'next/link'
-import { formatBytes, formatNumber, loadStatusOverview } from '@/lib/admin-status-metrics'
+import { formatBytes, formatNumber, loadStatusOverview, type SiteMetrics } from '@/lib/admin-status-metrics'
 import {
   ActionCard,
+  type AdminRole,
   buildStatusBadges,
   MetricCard,
   SectionTitle,
@@ -15,11 +16,24 @@ export const dynamic = 'force-dynamic'
 
 export const metadata = { title: '站点健康 - 运营数据中心 - VESSEL' }
 
+type SiteHealthRow = {
+  key: string
+  scope: string
+  title: string
+  value: string
+  detail: string
+  ok: boolean
+  status: string
+  href: string
+  actionLabel: string
+}
+
 export default async function AdminStatusSitePage() {
   const { role, email } = await getStatusAccess()
   const overview = await loadStatusOverview()
   const site = overview.site
   const configIssues = site.configChecks.filter((item) => !item.ok).length
+  const healthRows = buildSiteHealthRows(site, configIssues, role)
 
   return (
     <StatusPageShell
@@ -71,6 +85,10 @@ export default async function AdminStatusSitePage() {
             tone={site.sitemapOk && site.robotsOk ? 'green' : 'orange'}
           />
         </div>
+
+        <section className="space-y-4">
+          <SiteHealthMatrix rows={healthRows} />
+        </section>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <section className="space-y-4">
@@ -138,6 +156,127 @@ export default async function AdminStatusSitePage() {
         </section>
       </section>
     </StatusPageShell>
+  )
+}
+
+function buildSiteHealthRows(site: SiteMetrics, configIssues: number, role: AdminRole): SiteHealthRow[] {
+  const filesOk = site.sitemapOk && site.robotsOk
+  const mediaWarn = site.media.bytes > 800 * 1024 * 1024
+
+  return [
+    {
+      key: 'page-drafts',
+      scope: '页面',
+      title: '页面草稿收口',
+      value: formatNumber(site.pages.total),
+      detail: `模块草稿 ${formatNumber(site.pages.moduleDrafts)} / 结构草稿 ${formatNumber(site.pages.structureDrafts)}`,
+      ok: site.pages.total === 0,
+      status: site.pages.total > 0 ? '待确认' : '正常',
+      href: '/admin/site/visual',
+      actionLabel: '处理草稿',
+    },
+    {
+      key: 'seo-fields',
+      scope: 'SEO',
+      title: '已发布内容 SEO / 展示字段',
+      value: formatNumber(site.seo.missing),
+      detail: `参与检查 ${formatNumber(site.seo.total)} 项；产品 ${formatNumber(site.seo.productsMissing)} / 新闻 ${formatNumber(site.seo.newsMissing)} / 案例 ${formatNumber(site.seo.projectsMissing)}`,
+      ok: site.seo.missing === 0,
+      status: site.seo.missing > 0 ? '需补齐' : '正常',
+      href: '/admin/site/seo',
+      actionLabel: '检查 SEO',
+    },
+    {
+      key: 'media-storage',
+      scope: '媒体',
+      title: '素材容量和上传上限',
+      value: formatBytes(site.media.bytes),
+      detail: `${formatNumber(site.media.count)} 个素材；单图上限 ${formatNumber(site.media.maxUploadMb)} MB`,
+      ok: !mediaWarn,
+      status: mediaWarn ? '容量偏高' : '可控',
+      href: '/admin/site/media',
+      actionLabel: '管理素材',
+    },
+    {
+      key: 'site-files',
+      scope: '站点文件',
+      title: 'Sitemap / Robots',
+      value: filesOk ? '正常' : '需检查',
+      detail: `sitemap ${site.sitemapOk ? '可用' : '异常'} / robots ${site.robotsOk ? '可用' : '异常'}`,
+      ok: filesOk,
+      status: filesOk ? '正常' : '需检查',
+      href: '/admin/site/seo',
+      actionLabel: '查看收录',
+    },
+    {
+      key: 'config-checks',
+      scope: '配置',
+      title: role === 'admin' ? '发信 / 存储 / 联系入口配置' : '配置详情',
+      value: role === 'admin' ? formatNumber(configIssues) : '受限',
+      detail:
+        role === 'admin'
+          ? `当前 ${formatNumber(site.configChecks.length)} 项配置检查，异常 ${formatNumber(configIssues)} 项。`
+          : 'operator 可查看运营统计，不展示发信、存储等配置详情。',
+      ok: role !== 'admin' || configIssues === 0,
+      status: role === 'admin' ? (configIssues > 0 ? '需配置' : '正常') : '受限可见',
+      href: '/admin/site/settings',
+      actionLabel: role === 'admin' ? '站点设置' : '查看网站',
+    },
+  ]
+}
+
+function SiteHealthMatrix({ rows }: { rows: SiteHealthRow[] }) {
+  return (
+    <>
+      <SectionTitle title="站点运维矩阵" detail="把页面草稿、SEO、媒体、站点文件和配置检查放在一张表里，先处理异常项。" />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-xs text-[#61767D]">
+                <th className="min-w-24 px-5 py-3 text-left font-semibold">范围</th>
+                <th className="min-w-56 px-4 py-3 text-left font-semibold">检查项</th>
+                <th className="min-w-28 px-4 py-3 text-right font-semibold">当前值</th>
+                <th className="min-w-72 px-4 py-3 text-left font-semibold">说明</th>
+                <th className="min-w-28 px-4 py-3 text-left font-semibold">状态</th>
+                <th className="min-w-28 px-5 py-3 text-right font-semibold">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E6EEEE]">
+              {rows.map((row) => (
+                <tr key={row.key}>
+                  <td className="px-5 py-4">
+                    <span className="rounded-full bg-[#F0F7F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
+                      {row.scope}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <Link href={row.href} className="font-semibold text-[#1E2C31] hover:text-[#1889B6]">
+                      {row.title}
+                    </Link>
+                  </td>
+                  <td className={`px-4 py-4 text-right text-lg font-bold ${row.ok ? 'text-[#1E2C31]' : 'text-[#E36F2C]'}`}>
+                    {row.value}
+                  </td>
+                  <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">{row.detail}</td>
+                  <td className="px-4 py-4">
+                    <StatusPill ok={row.ok} label={row.status} />
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <Link
+                      href={row.href}
+                      className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#E36F2C]/50 hover:text-[#E36F2C]"
+                    >
+                      {row.actionLabel}
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
   )
 }
 
