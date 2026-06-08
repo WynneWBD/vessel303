@@ -92,6 +92,19 @@ type ControlLane = {
   tone: 'blue' | 'green' | 'orange' | 'gray'
 }
 
+type ContentWorkbenchRow = {
+  title: string
+  detail: string
+  total: number
+  draft: number
+  signal: number
+  signalLabel: string
+  href: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+  actions: Array<{ label: string; href: string }>
+}
+
 const EMPTY_STATUS_SUMMARY: StatusSummary = {
   draft: 0,
   published: 0,
@@ -824,6 +837,167 @@ function ControlMatrixRow({ lane }: { lane: ControlLane }) {
   )
 }
 
+function ContentListWorkbench({
+  productSummary,
+  projectSummary,
+  newsSummary,
+  pageDraftCount,
+  productIssueCount,
+}: {
+  productSummary: StatusSummary
+  projectSummary: StatusSummary
+  newsSummary: StatusSummary
+  pageDraftCount: number
+  productIssueCount: number
+}) {
+  const rows: ContentWorkbenchRow[] = [
+    {
+      title: '产品列表',
+      detail: '产品发布、缺项治理、分类和运营标记',
+      total: productSummary.total,
+      draft: productSummary.draft,
+      signal: productIssueCount,
+      signalLabel: '内容缺项',
+      href: '/admin/content/products/list',
+      Icon: Package,
+      tone: productIssueCount > 0 || productSummary.draft > 0 ? 'orange' : 'green',
+      actions: [
+        { label: '全部', href: '/admin/content/products/list' },
+        { label: '草稿', href: '/admin/content/products/list?status=draft' },
+        { label: '待补', href: '/admin/content/products/list?view=incomplete' },
+        { label: '新建', href: '/admin/content/products/new' },
+      ],
+    },
+    {
+      title: '项目案例',
+      detail: '案例内容、封面图库、坐标和 Global 入图状态',
+      total: projectSummary.total,
+      draft: projectSummary.draft,
+      signal: projectSummary.draft,
+      signalLabel: '草稿待审',
+      href: '/admin/content/projects/list',
+      Icon: MapPinned,
+      tone: projectSummary.draft > 0 ? 'orange' : 'green',
+      actions: [
+        { label: '全部', href: '/admin/content/projects/list' },
+        { label: '草稿', href: '/admin/content/projects/list?status=draft' },
+        { label: '入图', href: '/admin/content/projects/list?view=map-ready' },
+        { label: '新建', href: '/admin/content/projects/new' },
+      ],
+    },
+    {
+      title: '新闻列表',
+      detail: '新闻标题、封面正文、分类、排期和 SEO',
+      total: newsSummary.total,
+      draft: newsSummary.draft,
+      signal: newsSummary.draft,
+      signalLabel: '草稿 / 排期',
+      href: '/admin/content/news/list',
+      Icon: Newspaper,
+      tone: newsSummary.draft > 0 ? 'orange' : 'green',
+      actions: [
+        { label: '全部', href: '/admin/content/news/list' },
+        { label: '草稿', href: '/admin/content/news/list?status=draft' },
+        { label: '定时', href: '/admin/content/news/list?schedule=scheduled' },
+        { label: '新建', href: '/admin/content/news/new' },
+      ],
+    },
+    {
+      title: '页面编辑',
+      detail: '页面模块草稿、结构草稿和站点视觉发布链路',
+      total: pageDraftCount,
+      draft: pageDraftCount,
+      signal: pageDraftCount,
+      signalLabel: '页面草稿',
+      href: '/admin/site/visual',
+      Icon: LayoutTemplate,
+      tone: pageDraftCount > 0 ? 'orange' : 'green',
+      actions: [
+        { label: '视觉编辑', href: '/admin/site/visual' },
+        { label: '页面管理', href: '/admin/site/pages' },
+        { label: '网站管理', href: '/admin/site' },
+      ],
+    },
+  ]
+
+  return (
+    <section className="space-y-4">
+      <AdminSectionTitle
+        title="内容列表工作台"
+        detail="产品、项目、新闻和页面的高频处理入口统一在这里，先扫数量和风险，再进对应列表。"
+      />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="hidden grid-cols-[210px_120px_120px_minmax(0,1fr)_190px] gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 text-xs font-semibold text-[#61767D] lg:grid">
+          <span>内容线</span>
+          <span>总量 / 草稿</span>
+          <span>当前信号</span>
+          <span>处理入口</span>
+          <span>主工作台</span>
+        </div>
+        <div className="divide-y divide-[#E6EEEE]">
+          {rows.map((row) => (
+            <ContentWorkbenchRowView key={row.title} row={row} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function ContentWorkbenchRowView({ row }: { row: ContentWorkbenchRow }) {
+  const Icon = row.Icon
+  const toneClass =
+    row.tone === 'orange'
+      ? 'bg-[#FFF2E7] text-[#E36F2C]'
+      : row.tone === 'green'
+        ? 'bg-emerald-50 text-emerald-700'
+        : row.tone === 'gray'
+          ? 'bg-[#F0F2F2] text-[#61767D]'
+          : 'bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <div className="grid grid-cols-1 gap-3 px-4 py-4 text-sm lg:grid-cols-[210px_120px_120px_minmax(0,1fr)_190px] lg:items-center">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${toneClass}`}>
+          <Icon size={18} />
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate font-bold text-[#1E2C31]">{row.title}</span>
+          <span className="mt-1 block truncate text-xs text-[#61767D]">{row.detail}</span>
+        </span>
+      </div>
+      <span className="font-bold text-[#1E2C31]">
+        {formatNumber(row.total)} / {formatNumber(row.draft)}
+      </span>
+      <span
+        className={`inline-flex w-fit rounded-md px-2 py-1 text-xs font-bold ${
+          row.signal > 0 ? 'bg-[#FFF2E7] text-[#E36F2C]' : 'bg-emerald-50 text-emerald-700'
+        }`}
+      >
+        {row.signalLabel} {formatNumber(row.signal)}
+      </span>
+      <span className="flex flex-wrap gap-2">
+        {row.actions.map((action) => (
+          <Link
+            key={`${row.title}-${action.label}`}
+            href={action.href}
+            className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-2.5 text-xs font-semibold text-[#61767D] transition hover:border-[#1889B6] hover:bg-white hover:text-[#1889B6]"
+          >
+            {action.label}
+          </Link>
+        ))}
+      </span>
+      <Link
+        href={row.href}
+        className="inline-flex h-9 w-fit items-center gap-1 rounded-md border border-[#1889B6]/25 bg-[#EAF6F8] px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+      >
+        进入列表工作台
+        <ArrowRight size={13} />
+      </Link>
+    </div>
+  )
+}
+
 function ContentCards({
   productSummary,
   projectSummary,
@@ -1273,6 +1447,13 @@ export default async function AdminConsolePage() {
             mediaIssueCount={mediaIssueCount}
             configIssues={configIssues}
             isAdmin={isAdmin}
+          />
+          <ContentListWorkbench
+            productSummary={productSummary}
+            projectSummary={projectSummary}
+            newsSummary={newsSummary}
+            pageDraftCount={pageDraftCount}
+            productIssueCount={productIssueCount}
           />
           <ContentCards
             productSummary={productSummary}
