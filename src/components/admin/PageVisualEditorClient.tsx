@@ -690,6 +690,14 @@ type PreflightIssue = {
   severity: 'warning' | 'danger'
 }
 
+type PageOperationsStats = PageMeta & {
+  moduleCount: number
+  draftCount: number
+  hiddenCount: number
+  unsavedCount: number
+  issueCount: number
+}
+
 function readableModuleTitle(pageModule: PageModuleRow | PageModuleLiveState | PageModuleSnapshotRow) {
   return truncateText(
     pageModule.title_zh.trim() ||
@@ -899,6 +907,296 @@ function buildPreflightIssues(pageModule: PageModuleRow | undefined): PreflightI
   return issues
 }
 
+function countVisualMedia(pageModules: PageModuleRow[]) {
+  return pageModules.reduce(
+    (acc, pageModule) => {
+      for (const item of pageModule.items) {
+        if (item.image_url?.trim()) acc.images += 1
+        if (item.video_url?.trim() || item.video_poster_url?.trim()) acc.videos += 1
+        if (item.href?.trim()) acc.links += 1
+        if (isImageItem(pageModule, item) && item.is_visible && !itemHasVisualMedia(item)) acc.missingMedia += 1
+        if (item.href?.trim() && !isAllowedHref(item.href)) acc.badLinks += 1
+      }
+      return acc
+    },
+    { images: 0, videos: 0, links: 0, missingMedia: 0, badLinks: 0 },
+  )
+}
+
+function countLocatedModules(pageModules: PageModuleRow[], locatedModules: Record<string, boolean>, frameLoaded: boolean) {
+  if (!frameLoaded) return { located: 0, missing: 0 }
+  return pageModules.reduce(
+    (acc, pageModule) => {
+      if (locatedModules[moduleId(pageModule)] === true) acc.located += 1
+      else acc.missing += 1
+      return acc
+    },
+    { located: 0, missing: 0 },
+  )
+}
+
+function buildVisualPriorityReason({
+  dirty,
+  hasDraft,
+  issueCount,
+  hidden,
+  missingPreview,
+}: {
+  dirty: boolean
+  hasDraft: boolean
+  issueCount: number
+  hidden: boolean
+  missingPreview: boolean
+}) {
+  if (dirty) return '先保存或撤销未保存修改'
+  if (hasDraft && issueCount > 0) return '草稿发布前需要复核检查项'
+  if (hasDraft) return '复核草稿并决定是否发布'
+  if (issueCount > 0) return '处理发布前检查提醒'
+  if (missingPreview) return '预览中未定位到模块 DOM 标记'
+  if (hidden) return '确认隐藏模块是否符合当前运营计划'
+  return '可进入常规内容巡检'
+}
+
+function buildVisualPriorityItems(
+  pageModules: PageModuleRow[],
+  dirtyIds: Set<string>,
+  locatedModules: Record<string, boolean>,
+  frameLoaded: boolean,
+) {
+  return pageModules
+    .map((pageModule) => {
+      const id = moduleId(pageModule)
+      const issueCount = buildPreflightIssues(pageModule).length
+      const dirty = dirtyIds.has(id)
+      const hasDraft = pageModule.has_draft === true
+      const hidden = !pageModule.is_visible
+      const missingPreview = frameLoaded && locatedModules[id] !== true
+      const highImpactChanges = buildModuleChanges(pageModule, pageModule.live_state).filter(
+        (change) => change.severity === 'high',
+      ).length
+      const score =
+        (dirty ? 100 : 0) +
+        (hasDraft ? 70 : 0) +
+        issueCount * 24 +
+        (missingPreview ? 20 : 0) +
+        (hidden ? 14 : 0) +
+        highImpactChanges * 8
+
+      return {
+        id,
+        pageModule,
+        score,
+        issueCount,
+        highImpactChanges,
+        reason: buildVisualPriorityReason({ dirty, hasDraft, issueCount, hidden, missingPreview }),
+      }
+    })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id))
+    .slice(0, 6)
+}
+
+function VisualMatrixCell({
+  label,
+  value,
+  detail,
+  tone = 'gray',
+}: {
+  label: string
+  value: string | number
+  detail: string
+  tone?: 'green' | 'orange' | 'gray'
+}) {
+  const valueClass =
+    tone === 'orange' ? 'text-[#E36F2C]' : tone === 'green' ? 'text-emerald-700' : 'text-[#1E2C31]'
+
+  return (
+    <div className="rounded-md border border-[#D8E7E8] bg-white px-3 py-3">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+        <p className={`text-lg font-bold ${valueClass}`}>{value}</p>
+      </div>
+      <p className="mt-2 text-xs leading-5 text-[#61767D]">{detail}</p>
+    </div>
+  )
+}
+
+function VisualOperationsMatrix({
+  currentPage,
+  currentPageStats,
+  currentModules,
+  allModules,
+  pageStats,
+  dirtyIds,
+  locatedModules,
+  frameLoaded,
+  structureDrafts,
+  currentStructureDraft,
+  onSelectModule,
+}: {
+  currentPage: PageMeta
+  currentPageStats: PageOperationsStats
+  currentModules: PageModuleRow[]
+  allModules: PageModuleRow[]
+  pageStats: PageOperationsStats[]
+  dirtyIds: Set<string>
+  locatedModules: Record<string, boolean>
+  frameLoaded: boolean
+  structureDrafts: PageStructureDraftRow[]
+  currentStructureDraft: PageStructureDraftRow | null
+  onSelectModule: (pageModule: PageModuleRow) => void
+}) {
+  const currentMedia = countVisualMedia(currentModules)
+  const allMedia = countVisualMedia(allModules)
+  const currentLocated = countLocatedModules(currentModules, locatedModules, frameLoaded)
+  const totalLocated = countLocatedModules(allModules, locatedModules, frameLoaded)
+  const priorityItems = buildVisualPriorityItems(allModules, dirtyIds, locatedModules, frameLoaded)
+  const highImpactDrafts = allModules.filter((pageModule) =>
+    pageModule.has_draft && buildModuleChanges(pageModule, pageModule.live_state).some((change) => change.severity === 'high'),
+  ).length
+  const activeStructureSummary = structureDrafts.reduce(
+    (acc, draft) => {
+      acc.modules += draft.summary.moduleCount
+      acc.added += draft.summary.addedCount
+      acc.hidden += draft.summary.hiddenCount
+      acc.images += draft.image_refs.length || draft.summary.imageCount
+      return acc
+    },
+    { modules: 0, added: 0, hidden: 0, images: 0 },
+  )
+  const highestIssuePage = [...pageStats].sort((a, b) => b.issueCount - a.issueCount)[0] ?? currentPageStats
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-4 shadow-sm">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-bold text-[#1E2C31]">
+            <MousePointer2 size={16} className="text-[#1889B6]" />
+            <span>视觉运营矩阵</span>
+          </div>
+          <p className="mt-1 max-w-4xl text-xs leading-5 text-[#61767D]">
+            按 300 后台常见操作心智先看发布阻塞、预览覆盖、视觉素材、转化链接和结构草稿，再进入模块编辑。
+          </p>
+        </div>
+        <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1889B6]">
+          当前：{currentPage.label} · {currentPage.path}
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <VisualMatrixCell
+          label="当前页发布队列"
+          value={`${currentPageStats.draftCount + currentPageStats.unsavedCount}`}
+          detail={`${currentPageStats.draftCount} 个已保存草稿，${currentPageStats.unsavedCount} 个未保存修改`}
+          tone={currentPageStats.draftCount + currentPageStats.unsavedCount > 0 ? 'orange' : 'green'}
+        />
+        <VisualMatrixCell
+          label="预览定位覆盖"
+          value={frameLoaded ? `${currentLocated.located}/${currentPageStats.moduleCount}` : '检测中'}
+          detail={frameLoaded ? `${currentLocated.missing} 个模块未在预览中定位` : '等待 iframe 加载后检测 DOM 标记'}
+          tone={frameLoaded && currentLocated.missing === 0 ? 'green' : 'orange'}
+        />
+        <VisualMatrixCell
+          label="视觉素材信号"
+          value={`${currentMedia.images + currentMedia.videos}`}
+          detail={`${currentMedia.images} 图 / ${currentMedia.videos} 视频，${currentMedia.missingMedia} 个可见素材位为空`}
+          tone={currentMedia.missingMedia > 0 ? 'orange' : 'green'}
+        />
+        <VisualMatrixCell
+          label="链接与转化"
+          value={currentMedia.links}
+          detail={`${currentMedia.badLinks} 个链接格式提醒；只检查当前已加载字段`}
+          tone={currentMedia.badLinks > 0 ? 'orange' : 'green'}
+        />
+        <VisualMatrixCell
+          label="全局发布风险"
+          value={highestIssuePage.issueCount}
+          detail={`${highestIssuePage.label} 检查项最多；全站隐藏模块 ${pageStats.reduce((total, page) => total + page.hiddenCount, 0)} 个`}
+          tone={highestIssuePage.issueCount > 0 ? 'orange' : 'green'}
+        />
+        <VisualMatrixCell
+          label="高影响草稿"
+          value={highImpactDrafts}
+          detail="涉及显示状态、图片、视频、链接或新增条目的已保存草稿"
+          tone={highImpactDrafts > 0 ? 'orange' : 'green'}
+        />
+        <VisualMatrixCell
+          label="结构草稿影响"
+          value={structureDrafts.length}
+          detail={`${activeStructureSummary.added} 新增 / ${activeStructureSummary.hidden} 隐藏 / ${activeStructureSummary.images} 图片引用`}
+          tone={structureDrafts.length > 0 ? 'orange' : 'gray'}
+        />
+        <VisualMatrixCell
+          label="全站预览覆盖"
+          value={frameLoaded ? `${totalLocated.located}/${allModules.length}` : '检测中'}
+          detail={`${allMedia.images} 图 / ${allMedia.links} 链接；当前结构草稿 ${currentStructureDraft ? structureDraftStatusLabel(currentStructureDraft.draft_status) : '暂无'}`}
+          tone={frameLoaded && totalLocated.missing === 0 ? 'green' : 'orange'}
+        />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="rounded-md border border-[#D8E7E8] bg-white p-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-[#1E2C31]">优先处理队列</p>
+              <p className="mt-1 text-xs leading-5 text-[#61767D]">
+                按未保存、已保存草稿、发布检查、预览定位和隐藏状态排序。
+              </p>
+            </div>
+            <span className="rounded-full bg-[#F0F7F8] px-2 py-1 text-xs font-semibold text-[#1889B6]">
+              {priorityItems.length} 项
+            </span>
+          </div>
+          <div className="mt-3 space-y-2">
+            {priorityItems.length > 0 ? (
+              priorityItems.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onSelectModule(item.pageModule)}
+                  className="flex w-full items-start justify-between gap-3 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-2 text-left transition hover:border-[#1889B6]/65 hover:bg-white"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold text-[#1E2C31]">
+                      {pageLabel(item.pageModule.page_key)} / {readableModuleTitle(item.pageModule)}
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-[#61767D]">
+                      {item.reason}；检查项 {item.issueCount} 个，高影响变更 {item.highImpactChanges} 个。
+                    </span>
+                  </span>
+                  <ArrowUpRight size={14} className="mt-0.5 shrink-0 text-[#1889B6]" />
+                </button>
+              ))
+            ) : (
+              <p className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-3 text-xs leading-5 text-[#61767D]">
+                当前没有未保存、草稿、发布检查或预览定位风险。
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-md border border-[#D8E7E8] bg-white p-3">
+          <p className="text-sm font-bold text-[#1E2C31]">页面分布</p>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">用于快速判断哪一页先进入发布复核。</p>
+          <div className="mt-3 space-y-2">
+            {pageStats.map((page) => (
+              <div key={page.key} className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-2">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-[#1E2C31]">{page.label}</p>
+                  <p className="text-xs font-semibold text-[#1889B6]">{page.moduleCount} 模块</p>
+                </div>
+                <p className="mt-1 text-xs leading-5 text-[#61767D]">
+                  草稿 {page.draftCount} / 未保存 {page.unsavedCount} / 检查项 {page.issueCount} / 隐藏 {page.hiddenCount}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function PageVisualEditorClient({
   initialModules,
   initialStructureDrafts = [],
@@ -1002,7 +1300,7 @@ export default function PageVisualEditorClient({
 
   const activeHasUnsavedChanges = active ? dirtyIds.has(activeModuleId) : false
   const hasAnyUnsavedChanges = dirtyIds.size > 0
-  const pageStats = useMemo(
+  const pageStats = useMemo<PageOperationsStats[]>(
     () =>
       PAGES.map((page) => {
         const pageModules = modules.filter((pageModule) => pageModule.page_key === page.key)
@@ -1923,6 +2221,20 @@ export default function PageVisualEditorClient({
           tone={structureDraftCount > 0 ? 'orange' : 'gray'}
         />
       </div>
+
+      <VisualOperationsMatrix
+        currentPage={currentPage}
+        currentPageStats={currentPageStats}
+        currentModules={currentModules}
+        allModules={modules}
+        pageStats={pageStats}
+        dirtyIds={dirtyIds}
+        locatedModules={locatedModules}
+        frameLoaded={frameLoaded}
+        structureDrafts={structureDrafts}
+        currentStructureDraft={currentStructureDraft}
+        onSelectModule={handleSelectModule}
+      />
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         {pageStats.map((page) => {
