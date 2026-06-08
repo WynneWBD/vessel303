@@ -156,6 +156,38 @@ function orderConversionPaths(pathAnalytics: Record<string, AnalyticsConversionM
   })
 }
 
+function buildConversionHealthRows(pathAnalytics: Record<string, AnalyticsConversionMetric>) {
+  const statuses: ConversionPathStatus[] = ['lead', 'partial', 'external', 'review']
+
+  return statuses.map((status) => {
+    const paths = CONVERSION_PATHS.filter((item) => item.status === status)
+    const totals = paths.reduce(
+      (acc, item) => {
+        const metric = getMetric(pathAnalytics, item.key)
+        const priority = getConversionPriority(item, metric)
+        acc.views += metric.views
+        acc.ctaClicks += metric.ctaClicks
+        acc.formSubmits += metric.formSubmits
+        acc.leads += metric.leads
+        if (priority.tone === 'critical' || priority.tone === 'warning') acc.gaps += 1
+        if (metric.views > 0 && metric.ctaClicks + metric.formSubmits + metric.leads === 0) acc.noAction += 1
+        return acc
+      },
+      { views: 0, ctaClicks: 0, formSubmits: 0, leads: 0, gaps: 0, noAction: 0 },
+    )
+    const adminHrefs = Array.from(new Set(paths.map((item) => item.adminHref)))
+
+    return {
+      status,
+      paths,
+      adminHrefs,
+      ...totals,
+      actionRate: totals.views > 0 ? totals.ctaClicks / totals.views : 0,
+      leadRate: totals.views > 0 ? totals.leads / totals.views : 0,
+    }
+  })
+}
+
 function getSideNav(): AdminSideNavGroup[] {
   return [
     {
@@ -204,6 +236,7 @@ export default async function AdminSiteConversionPage() {
   const orderedPaths = orderConversionPaths(pathAnalytics)
   const totalActions = Object.values(pathAnalytics).reduce((sum, metric) => sum + metric.ctaClicks, 0)
   const totalForms = Object.values(pathAnalytics).reduce((sum, metric) => sum + metric.formSubmits, 0)
+  const healthRows = buildConversionHealthRows(pathAnalytics)
 
   return (
     <AdminSectionShell
@@ -227,6 +260,8 @@ export default async function AdminSiteConversionPage() {
           <StatCard label="外部承接" value={externalCount} detail="/contact 主路径写入 leads；仅旧站备份或外部入口计入这里" />
           <StatCard label="30 天真实转化" value={totalLeads} detail={`访问 ${totalViews}，转化率 ${formatAnalyticsPercent(totalViews > 0 ? totalLeads / totalViews : 0)}；已排除测试线索 ${excludedTestLeads}`} />
         </section>
+
+        <ConversionHealthMatrix rows={healthRows} />
 
         <ConversionCommandBoard
           orderedPaths={orderedPaths}
@@ -317,6 +352,93 @@ export default async function AdminSiteConversionPage() {
         </section>
       </div>
     </AdminSectionShell>
+  )
+}
+
+function ConversionHealthMatrix({
+  rows,
+}: {
+  rows: ReturnType<typeof buildConversionHealthRows>
+}) {
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-[#1E2C31]">转化链路健康矩阵</h2>
+          <p className="mt-1 text-xs text-[#61767D]">
+            按链路状态聚合访问、动作、表单、线索和缺口数量，先判断是入口配置问题、追踪问题还是线索承接问题。
+          </p>
+        </div>
+        <span className="inline-flex w-fit rounded-full bg-[#F0F7F8] px-3 py-1 text-xs font-semibold text-[#1889B6]">
+          只读聚合 · 不改配置
+        </span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[980px] text-sm">
+          <thead>
+            <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
+              <th className="px-5 py-3 text-left font-medium">链路状态</th>
+              <th className="px-4 py-3 text-right font-medium">路径数</th>
+              <th className="px-4 py-3 text-right font-medium">30 天访问</th>
+              <th className="px-4 py-3 text-right font-medium">动作 / 表单 / 线索</th>
+              <th className="px-4 py-3 text-right font-medium">动作率 / 线索率</th>
+              <th className="px-4 py-3 text-left font-medium">当前缺口</th>
+              <th className="px-5 py-3 text-left font-medium">处理入口</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => {
+              const meta = STATUS_META[row.status]
+              const gapTone = row.gaps > 0 ? 'text-[#E36F2C]' : 'text-emerald-700'
+              return (
+                <tr key={row.status} className="border-b border-[#E6EEEE] last:border-0">
+                  <td className="px-5 py-4">
+                    <span className={`inline-flex rounded-full border px-2 py-1 text-xs font-semibold ${meta.className}`}>
+                      {meta.label}
+                    </span>
+                    <p className="mt-2 text-xs leading-5 text-[#61767D]">
+                      {row.paths.map((item) => item.area).join(' / ') || '暂无路径'}
+                    </p>
+                  </td>
+                  <td className="px-4 py-4 text-right font-bold text-[#1E2C31]">{row.paths.length}</td>
+                  <td className="px-4 py-4 text-right font-bold text-[#1E2C31]">{row.views.toLocaleString('zh-CN')}</td>
+                  <td className="px-4 py-4 text-right text-[#61767D]">
+                    {row.ctaClicks.toLocaleString('zh-CN')} / {row.formSubmits.toLocaleString('zh-CN')} / {row.leads.toLocaleString('zh-CN')}
+                  </td>
+                  <td className="px-4 py-4 text-right text-[#61767D]">
+                    {formatAnalyticsPercent(row.actionRate)} / {formatAnalyticsPercent(row.leadRate)}
+                  </td>
+                  <td className="px-4 py-4">
+                    <p className={`text-sm font-bold ${gapTone}`}>{row.gaps} 个需处理</p>
+                    <p className="mt-1 text-xs leading-5 text-[#61767D]">
+                      {row.noAction} 条路径有访问但无动作；优先核对 CTA 位置、source 规则和表单事件。
+                    </p>
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex flex-wrap gap-2">
+                      {row.adminHrefs.slice(0, 3).map((href) => (
+                        <Link
+                          key={href}
+                          href={href}
+                          className="inline-flex h-8 items-center gap-1 rounded-md border border-[#D8E7E8] px-2.5 text-xs font-semibold text-[#E36F2C] hover:border-[#E36F2C]/60"
+                        >
+                          管理 <ArrowRight size={12} />
+                        </Link>
+                      ))}
+                      {row.adminHrefs.length > 3 ? (
+                        <span className="inline-flex h-8 items-center rounded-md bg-[#F7FAFA] px-2.5 text-xs text-[#61767D]">
+                          +{row.adminHrefs.length - 3}
+                        </span>
+                      ) : null}
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
   )
 }
 
