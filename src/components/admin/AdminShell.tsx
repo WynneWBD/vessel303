@@ -23,21 +23,27 @@ type MenuItem = {
   href: string
   Icon: LucideIcon
   title: string
+  group: 'daily' | 'maintenance'
   badge?: string
   superAdminOnly?: boolean
 }
 
 const menuItems: MenuItem[] = [
-  { label: '2.0 控制台', href: '/admin', Icon: LayoutDashboard, title: '2.0 控制台 Dashboard' },
-  { label: '线索管理', href: '/admin/customers/leads', Icon: Inbox, title: '线索管理 Leads' },
-  { label: '用户管理', href: '/admin/users', Icon: Users, title: '用户管理 Users', superAdminOnly: true },
-  { label: '页面模块', href: '/admin/pages', Icon: LayoutTemplate, title: '页面模块 Pages', superAdminOnly: true },
-  { label: '新闻管理', href: '/admin/news', Icon: Newspaper, title: '新闻管理 News' },
-  { label: '产品管理', href: '/admin/products', Icon: Package, title: '产品管理 Products' },
-  { label: '项目案例', href: '/admin/projects', Icon: MapPinned, title: '项目案例 Projects' },
-  { label: '图片库', href: '/admin/media', Icon: ImageIcon, title: '图片库 Media' },
-  { label: '设置', href: '/admin/settings', Icon: Settings, title: '设置 Settings', superAdminOnly: true },
+  { label: '2.0 控制台', href: '/admin', Icon: LayoutDashboard, title: '2.0 控制台 Dashboard', group: 'daily' },
+  { label: '线索处理', href: '/admin/customers/leads', Icon: Inbox, title: '线索运营 Leads', group: 'daily' },
+  { label: '新闻运营', href: '/admin/content/news/list', Icon: Newspaper, title: '新闻运营 News', group: 'daily' },
+  { label: '产品运营', href: '/admin/content/products/list', Icon: Package, title: '产品运营 Products', group: 'daily' },
+  { label: '项目案例', href: '/admin/content/projects/list', Icon: MapPinned, title: '项目案例 Projects', group: 'daily' },
+  { label: '媒体库', href: '/admin/site/media', Icon: ImageIcon, title: '媒体运营 Media', group: 'daily' },
+  { label: '后台账号', href: '/admin/users', Icon: Users, title: '用户管理 Users', group: 'maintenance', superAdminOnly: true },
+  { label: '页面模块旧表单', href: '/admin/pages', Icon: LayoutTemplate, title: '页面模块旧表单 Pages', group: 'maintenance', superAdminOnly: true },
+  { label: '站点设置', href: '/admin/settings', Icon: Settings, title: '站点设置 Settings', group: 'maintenance', superAdminOnly: true },
 ]
+
+const MENU_GROUP_LABELS = {
+  daily: '日常运营 2.0',
+  maintenance: '高级维护',
+} satisfies Record<MenuItem['group'], string>
 
 function isActive(pathname: string, href: string) {
   if (href === '/admin') return pathname === '/admin'
@@ -72,16 +78,23 @@ export default function AdminShell({
 }) {
   const pathname = usePathname() ?? '/admin'
   const visibleMenuItems = menuItems.filter((item) => role === 'admin' || !item.superAdminOnly)
+  const menuGroups = (['daily', 'maintenance'] as const)
+    .map((group) => ({
+      key: group,
+      label: MENU_GROUP_LABELS[group],
+      items: visibleMenuItems.filter((item) => item.group === group),
+    }))
+    .filter((group) => group.items.length > 0)
   const current = visibleMenuItems.find((m) => isActive(pathname, m.href))
   const headerTitle = current?.title ?? '旧后台维护 Legacy'
 
   const badgeFor = (href: string): string | undefined => {
     if (href === '/admin/customers/leads' && leadBadge > 0) return clampBadge(leadBadge)
     if (href === '/admin/users' && userBadge > 0) return clampBadge(userBadge)
-    if (href === '/admin/media' && mediaBadge > 0) return clampBadge(mediaBadge)
-    if (href === '/admin/news' && newsBadge > 0) return clampBadge(newsBadge)
-    if (href === '/admin/products' && productBadge > 0) return clampBadge(productBadge)
-    if (href === '/admin/projects' && projectBadge > 0) return clampBadge(projectBadge)
+    if (href === '/admin/site/media' && mediaBadge > 0) return clampBadge(mediaBadge)
+    if (href === '/admin/content/news/list' && newsBadge > 0) return clampBadge(newsBadge)
+    if (href === '/admin/content/products/list' && productBadge > 0) return clampBadge(productBadge)
+    if (href === '/admin/content/projects/list' && projectBadge > 0) return clampBadge(projectBadge)
     return undefined
   }
 
@@ -97,7 +110,7 @@ export default function AdminShell({
       >
         {/* Logo */}
         <div
-          className="flex items-center gap-2 px-6"
+          className="flex items-center gap-2 px-5"
           style={{ height: 56, borderBottom: '1px solid #D8E7E8' }}
         >
           <span
@@ -111,76 +124,85 @@ export default function AdminShell({
           >
             VESSEL
           </span>
-          <span style={{ color: '#8A9EA4', fontSize: 12 }}>Admin</span>
+          <span style={{ color: '#8A9EA4', fontSize: 12 }}>2.0</span>
+        </div>
+
+        <div className="border-b border-[#D8E7E8] bg-[#F3F7F7] px-4 py-3">
+          <div className="rounded-md border border-[#D8E7E8] bg-white px-3 py-2">
+            <div className="text-xs font-bold text-[#1E2C31]">旧维护壳层</div>
+            <div className="mt-1 text-[11px] leading-4 text-[#61767D]">
+              日常运营入口已指向 2.0；旧表单仅用于低频维护。
+            </div>
+          </div>
         </div>
 
         {/* Nav */}
-        <nav className="flex flex-col flex-1 py-3">
-          {visibleMenuItems.map((item) => {
-            const active = isActive(pathname, item.href)
-            const badge = badgeFor(item.href)
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="relative flex items-center transition-colors"
-                style={{
-                  height: 44,
-                  paddingLeft: 16,
-                  paddingRight: 16,
-                  color: active ? '#1E2C31' : '#61767D',
-                  background: active ? '#EAF6F8' : 'transparent',
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) e.currentTarget.style.background = '#F0F7F8'
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) e.currentTarget.style.background = 'transparent'
-                }}
-              >
-                {/* Active left bar */}
-                {active && (
-                  <span
-                    aria-hidden
+        <nav className="flex flex-1 flex-col gap-4 overflow-y-auto py-3">
+          {menuGroups.map((group) => (
+            <div key={group.key}>
+              <div className="px-4 pb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#8A9EA4]">
+                {group.label}
+              </div>
+              {group.items.map((item) => {
+                const active = isActive(pathname, item.href)
+                const badge = badgeFor(item.href)
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="relative mx-2 flex min-h-11 items-center rounded-md px-3 transition-colors"
                     style={{
-                      position: 'absolute',
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: 3,
-                      background: '#1889B6',
+                      color: active ? '#1E2C31' : '#61767D',
+                      background: active ? '#EAF6F8' : 'transparent',
                     }}
-                  />
-                )}
-                <item.Icon
-                  size={20}
-                  style={{ color: active ? '#1889B6' : '#61767D', flexShrink: 0 }}
-                />
-                <span
-                  className="ml-3 flex-1"
-                  style={{ fontSize: 14, fontWeight: 500 }}
-                >
-                  {item.label}
-                </span>
-                {badge && (
-                  <span
-                    className="flex items-center justify-center rounded-full"
-                    style={{
-                      background: '#E36F2C',
-                      color: '#FFFFFF',
-                      fontSize: 11,
-                      fontWeight: 600,
-                      minWidth: 20,
-                      height: 20,
-                      padding: '0 6px',
+                    onMouseEnter={(e) => {
+                      if (!active) e.currentTarget.style.background = '#F0F7F8'
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!active) e.currentTarget.style.background = 'transparent'
                     }}
                   >
-                    {badge}
-                  </span>
-                )}
-              </Link>
-            )
-          })}
+                    {/* Active left bar */}
+                    {active && (
+                      <span
+                        aria-hidden
+                        style={{
+                          position: 'absolute',
+                          left: 0,
+                          top: 6,
+                          bottom: 6,
+                          width: 3,
+                          borderRadius: 999,
+                          background: '#1889B6',
+                        }}
+                      />
+                    )}
+                    <item.Icon
+                      size={18}
+                      style={{ color: active ? '#1889B6' : '#61767D', flexShrink: 0 }}
+                    />
+                    <span className="ml-3 flex-1 text-sm font-semibold">{item.label}</span>
+                    {badge && (
+                      <span
+                        className="flex items-center justify-center rounded-full"
+                        style={{
+                          background: '#E36F2C',
+                          color: '#FFFFFF',
+                          fontSize: 11,
+                          fontWeight: 600,
+                          minWidth: 20,
+                          height: 20,
+                          padding: '0 6px',
+                        }}
+                      >
+                        {badge}
+                      </span>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          ))}
         </nav>
 
         {/* Logout */}
