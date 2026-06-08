@@ -17,6 +17,8 @@ import {
 } from '@/lib/project-case-readiness'
 import {
   Archive,
+  ArrowRight,
+  BarChart3,
   CheckCircle2,
   CircleDashed,
   ExternalLink,
@@ -104,6 +106,21 @@ type StatCard = {
   Icon: LucideIcon
 }
 
+type ProjectSignalBucket = {
+  key: string
+  label: string
+  detail: string
+  href: (filters: FilterState) => string
+  matches: (project: ProjectListRow, issues: string[]) => boolean
+}
+
+type ProjectPriorityItem = {
+  project: ProjectListRow
+  issues: string[]
+  label: string
+  score: number
+}
+
 const EMPTY_SUMMARY: ProjectSummary = {
   total: 0,
   published: 0,
@@ -129,6 +146,51 @@ const PROJECT_INCOMPLETE_SQL = `(
   OR jsonb_array_length(COALESCE(tags_zh, '[]'::jsonb)) = 0
   OR jsonb_array_length(COALESCE(tags_en, '[]'::jsonb)) = 0
 )`
+
+const PROJECT_SIGNAL_BUCKETS: ProjectSignalBucket[] = [
+  {
+    key: 'media',
+    label: '素材缺口',
+    detail: '封面或项目图库缺失',
+    href: (filters) => createHref(filters, { status: '', view: 'incomplete' }),
+    matches: (_project, issues) => issues.includes('缺封面') || issues.includes('缺图库'),
+  },
+  {
+    key: 'story',
+    label: '叙事缺口',
+    detail: '中英文简介缺失或详情叙事偏短',
+    href: (filters) => createHref(filters, { status: '', view: 'incomplete' }),
+    matches: (_project, issues) => issues.includes('缺中文简介') || issues.includes('缺英文简介') || issues.includes('详情叙事偏短'),
+  },
+  {
+    key: 'facts',
+    label: '项目事实缺口',
+    detail: '类型、面积、舱数或产品型号缺失',
+    href: (filters) => createHref(filters, { status: '', view: 'incomplete' }),
+    matches: (_project, issues) => issues.some((issue) => ['缺项目类型', '缺项目面积', '缺舱数', '缺产品型号'].includes(issue)),
+  },
+  {
+    key: 'tags',
+    label: '标签缺口',
+    detail: '中英文标签缺失',
+    href: (filters) => createHref(filters, { status: '', view: 'incomplete' }),
+    matches: (_project, issues) => issues.includes('缺标签'),
+  },
+  {
+    key: 'coordinates',
+    label: '坐标缺口',
+    detail: '缺少 Global 点位坐标',
+    href: (filters) => createHref(filters, { status: '', view: 'missing-coordinates' }),
+    matches: (_project, issues) => issues.includes('缺坐标'),
+  },
+  {
+    key: 'pending-global',
+    label: '有坐标待发布',
+    detail: '已有坐标但仍是草稿',
+    href: (filters) => createHref(filters, { status: '', view: 'unpublished-with-coordinates' }),
+    matches: (_project, issues) => issues.includes('有坐标待发布'),
+  },
+]
 
 function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value
@@ -166,6 +228,11 @@ function formatNumber(value: number): string {
   return value.toLocaleString('zh-CN')
 }
 
+function formatPercent(value: number, total: number): string {
+  if (total <= 0) return '0%'
+  return `${Math.round((value / total) * 100)}%`
+}
+
 function formatDate(value: string): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
@@ -190,6 +257,46 @@ function getProjectIssues(project: ProjectListRow): string[] {
 
 function getCompletenessLabel(issues: string[]): string {
   return getProjectCaseReadinessLevel(issues)
+}
+
+function getProjectPriorityScore(project: ProjectListRow, issues: string[]): number {
+  let score = 0
+  if (issues.includes('缺封面') || issues.includes('缺图库')) score += 24
+  if (issues.includes('缺坐标')) score += project.status === 'published' ? 22 : 10
+  if (issues.includes('有坐标待发布')) score += 18
+  if (issues.includes('缺中文简介') || issues.includes('缺英文简介') || issues.includes('详情叙事偏短')) score += 16
+  if (issues.some((issue) => ['缺项目类型', '缺项目面积', '缺舱数', '缺产品型号'].includes(issue))) score += 14
+  if (project.status === 'draft') score += 8
+  score += Math.min(10, Math.max(0, issues.length - 1) * 2)
+  return score
+}
+
+function getProjectPriorityLabel(project: ProjectListRow, issues: string[]): string {
+  if (issues.includes('缺封面') || issues.includes('缺图库')) return '先补素材'
+  if (issues.includes('缺坐标') && project.status === 'published') return '补 Global 坐标'
+  if (issues.includes('有坐标待发布')) return '检查后发布'
+  if (issues.includes('缺中文简介') || issues.includes('缺英文简介') || issues.includes('详情叙事偏短')) return '补案例叙事'
+  if (issues.some((issue) => ['缺项目类型', '缺项目面积', '缺舱数', '缺产品型号'].includes(issue))) return '补项目事实'
+  return '补运营字段'
+}
+
+function buildProjectPriorityItems(rows: ProjectListRow[]): ProjectPriorityItem[] {
+  return rows
+    .map((project) => {
+      const issues = getProjectIssues(project)
+      return {
+        project,
+        issues,
+        label: getProjectPriorityLabel(project, issues),
+        score: getProjectPriorityScore(project, issues),
+      }
+    })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score
+      return new Date(b.project.updated_at).getTime() - new Date(a.project.updated_at).getTime()
+    })
+    .slice(0, 6)
 }
 
 function completenessClass(label: string): string {
@@ -466,6 +573,171 @@ function StatusTabs({ filters, summary }: { filters: FilterState; summary: Proje
   ]
 
   return <AdminSegmentTabs items={tabs.map((tab) => ({ ...tab, count: formatNumber(tab.count) }))} />
+}
+
+function ProjectOperationsMatrix({
+  summary,
+  rows,
+  filters,
+}: {
+  summary: ProjectSummary
+  rows: ProjectListRow[]
+  filters: FilterState
+}) {
+  const signalStats = PROJECT_SIGNAL_BUCKETS.map((bucket) => {
+    const count = rows.filter((project) => bucket.matches(project, getProjectIssues(project))).length
+    return {
+      ...bucket,
+      count,
+      href: bucket.href(filters),
+    }
+  })
+  const priorityItems = buildProjectPriorityItems(rows)
+  const publishedRate = formatPercent(summary.published, summary.total)
+  const incompleteRate = formatPercent(summary.incomplete, summary.total)
+  const mapReadyRate = formatPercent(summary.mapReady, summary.total)
+
+  return (
+    <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Case Operations</p>
+            <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">项目案例运营矩阵</h2>
+            <p className="mt-1 text-sm leading-6 text-[#61767D]">
+              先扫案例发布、内容缺口和 Global 入图状态，再进入案例编辑或现有筛选。
+            </p>
+          </div>
+          <Link
+            href={createHref(filters, { status: '', view: 'incomplete' })}
+            className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            查看待补案例
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
+          <ProjectMatrixKpi label="发布率" value={publishedRate} detail={`${formatNumber(summary.published)} / ${formatNumber(summary.total)}`} tone="green" />
+          <ProjectMatrixKpi label="缺项率" value={incompleteRate} detail={`${formatNumber(summary.incomplete)} 个待补`} tone={summary.incomplete > 0 ? 'orange' : 'green'} />
+          <ProjectMatrixKpi label="Global 入图率" value={mapReadyRate} detail={`${formatNumber(summary.mapReady)} 个可入 Global`} tone={summary.mapReady > 0 ? 'blue' : 'gray'} />
+          <ProjectMatrixKpi label="缺坐标" value={formatNumber(summary.missingCoordinates)} detail="影响地图点位展示" tone={summary.missingCoordinates > 0 ? 'orange' : 'green'} />
+        </div>
+
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-3">
+          {signalStats.map((bucket) => (
+            <Link
+              key={bucket.key}
+              href={bucket.href}
+              className="group min-h-[112px] border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-[#F7FAFA] xl:border-b-0"
+            >
+              <span className="flex items-start justify-between gap-3">
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-[#1E2C31]">{bucket.label}</span>
+                  <span className="mt-1 block text-xs leading-5 text-[#61767D]">{bucket.detail}</span>
+                </span>
+                <span className={`rounded-md px-2 py-1 text-xs font-bold ${
+                  bucket.count > 0 ? 'bg-[#FFF2E7] text-[#E36F2C]' : 'bg-emerald-50 text-emerald-700'
+                }`}>
+                  {formatNumber(bucket.count)}
+                </span>
+              </span>
+              <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] opacity-80 transition group-hover:opacity-100">
+                下钻筛选
+                <ArrowRight size={13} />
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <aside className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="border-b border-[#E6EEEE] px-4 py-4">
+          <div className="flex items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
+              <BarChart3 size={17} />
+            </span>
+            <div>
+              <h2 className="text-sm font-bold text-[#1E2C31]">本页优先处理</h2>
+              <p className="mt-1 text-xs text-[#61767D]">按素材、Global 坐标、叙事和项目事实排序。</p>
+            </div>
+          </div>
+        </div>
+        {priorityItems.length > 0 ? (
+          <div className="divide-y divide-[#E6EEEE]">
+            {priorityItems.map((item) => (
+              <Link
+                key={item.project.id}
+                href={`/admin/content/projects/${item.project.id}/edit`}
+                className="block px-4 py-3 transition hover:bg-[#F7FAFA]"
+              >
+                <span className="flex items-start justify-between gap-3">
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-bold text-[#1E2C31]">
+                      {item.project.name_zh || item.project.name_en || item.project.id}
+                    </span>
+                    <span className="mt-1 block truncate text-xs text-[#61767D]">
+                      {item.project.country || '未标记国家'} · {item.project.location_zh || item.project.location_en || '未标记位置'}
+                    </span>
+                  </span>
+                  <span className="shrink-0 rounded-md bg-[#FFF2E7] px-2 py-1 text-xs font-bold text-[#E36F2C]">
+                    {item.label}
+                  </span>
+                </span>
+                <span className="mt-2 flex flex-wrap gap-1.5">
+                  {item.issues.slice(0, 3).map((issue) => (
+                    <span key={issue} className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] text-zinc-600">
+                      {issue}
+                    </span>
+                  ))}
+                  {item.issues.length > 3 ? (
+                    <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] text-zinc-500">
+                      +{item.issues.length - 3}
+                    </span>
+                  ) : null}
+                </span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="px-4 py-8 text-center">
+            <CheckCircle2 className="mx-auto text-emerald-600" size={28} />
+            <p className="mt-3 text-sm font-bold text-[#1E2C31]">当前页无高优先级缺口</p>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">可继续切换筛选条件检查其他案例。</p>
+          </div>
+        )}
+      </aside>
+    </section>
+  )
+}
+
+function ProjectMatrixKpi({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string
+  value: string
+  detail: string
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+}) {
+  const toneClass =
+    tone === 'green'
+      ? 'text-emerald-700'
+      : tone === 'orange'
+        ? 'text-[#E36F2C]'
+        : tone === 'gray'
+          ? 'text-[#61767D]'
+          : 'text-[#1889B6]'
+
+  return (
+    <div className="border-b border-[#E6EEEE] px-4 py-3 md:border-b-0 md:border-r last:border-r-0">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-1 text-2xl font-bold ${toneClass}`}>{value}</p>
+      <p className="mt-1 text-xs text-[#8A9EA4]">{detail}</p>
+    </div>
+  )
 }
 
 function FilterPanel({ filters }: { filters: FilterState }) {
@@ -811,6 +1083,7 @@ export default async function AdminContentProjectsListPage({ searchParams }: Pag
       <div className="space-y-6">
         <SummaryCards summary={summary} />
         <StatusTabs filters={filters} summary={summary} />
+        <ProjectOperationsMatrix summary={summary} rows={list.rows} filters={filters} />
         <FilterPanel filters={filters} />
         <ProjectList rows={list.rows} total={list.total} filters={filters} />
       </div>
