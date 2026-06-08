@@ -8,7 +8,12 @@ import {
   getSiteSettings,
   normalizeMediaMaxUploadMb,
 } from '@/lib/admin-settings-db'
-import { listUploads, sumStorageSize } from '@/lib/uploads-db'
+import {
+  emptyMediaReferenceSummary,
+  listUploads,
+  sumStorageSize,
+  summarizeMediaReferences,
+} from '@/lib/uploads-db'
 import {
   Image as ImageIcon,
   LayoutTemplate,
@@ -95,6 +100,10 @@ export default async function SiteMediaPage({
     getSiteSettings().catch(() => defaultSiteSettings),
   ])
   const { uploads, total } = currentResult
+  const referenceSummary = await summarizeMediaReferences(uploads).catch((err) => {
+    console.error('[admin-site-media] load media reference summary failed', err)
+    return emptyMediaReferenceSummary()
+  })
 
   const adminRole: AdminRole = role
 
@@ -119,6 +128,7 @@ export default async function SiteMediaPage({
         initialAllTotal={allResult.total}
         initialIssueTotal={issueResult.total}
         initialBytes={bytes}
+        initialReferenceSummary={referenceSummary}
         initialFilters={filters}
         initialPage={page}
         initialLimit={limit}

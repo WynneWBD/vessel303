@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
 import { requireAdmin } from '@/lib/auth-check'
-import { createUpload, listUploads } from '@/lib/uploads-db'
+import {
+  createUpload,
+  emptyMediaReferenceSummary,
+  listUploads,
+  summarizeMediaReferences,
+} from '@/lib/uploads-db'
 import { logAdminAction } from '@/lib/leads-db'
 import { generateImageVariants } from '@/lib/media-variant-generation'
 import { UPLOAD_VARIANTS_CACHE_TAG } from '@/lib/upload-image-variants'
@@ -39,7 +44,11 @@ export async function GET(req: NextRequest) {
     page: sp.get('page') ? Number(sp.get('page')) : undefined,
     limit: sp.get('limit') ? Number(sp.get('limit')) : undefined,
   })
-  return NextResponse.json(result)
+  const referenceSummary = await summarizeMediaReferences(result.uploads).catch((err) => {
+    console.error('[media GET] reference summary failed', err)
+    return emptyMediaReferenceSummary()
+  })
+  return NextResponse.json({ ...result, referenceSummary })
 }
 
 // NOTE: Do NOT call requireAdmin() at the top of POST — Vercel Blob fires a second,

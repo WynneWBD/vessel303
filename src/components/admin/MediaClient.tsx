@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -48,6 +49,8 @@ import type {
   MediaReferenceDetails,
   MediaReferenceItems,
   MediaReferenceItem,
+  MediaReferenceSummary,
+  MediaReferenceSummaryItem,
   Upload,
 } from '@/lib/uploads-db'
 
@@ -188,6 +191,7 @@ export default function MediaClient({
   initialAllTotal,
   initialIssueTotal,
   initialBytes,
+  initialReferenceSummary,
   initialFilters,
   initialPage,
   initialLimit,
@@ -198,6 +202,7 @@ export default function MediaClient({
   initialAllTotal: number
   initialIssueTotal: number
   initialBytes: number
+  initialReferenceSummary: MediaReferenceSummary
   initialFilters: Filters
   initialPage: number
   initialLimit: number
@@ -209,6 +214,7 @@ export default function MediaClient({
   const [allTotal] = useState(initialAllTotal)
   const [issueTotal] = useState(initialIssueTotal)
   const [storageBytes, setStorageBytes] = useState(initialBytes)
+  const [referenceSummary, setReferenceSummary] = useState(initialReferenceSummary)
   const [filters, setFilters] = useState<Filters>(initialFilters)
   const [page, setPage] = useState(initialPage)
   const [limit, setLimit] = useState(initialLimit)
@@ -241,6 +247,9 @@ export default function MediaClient({
     () => uploads.filter((upload) => upload.mime === 'image/webp').length,
     [uploads],
   )
+  const referenceLookup = useMemo(() => (
+    new Map(referenceSummary.items.map((item) => [item.uploadId, item]))
+  ), [referenceSummary.items])
   const resultStart = total === 0 ? 0 : (page - 1) * limit + 1
   const resultEnd = total === 0 ? 0 : Math.min(total, page * limit)
 
@@ -280,11 +289,18 @@ export default function MediaClient({
           cache: 'no-store',
         })
         if (!res.ok) throw new Error('load failed')
-        const data = (await res.json()) as { uploads: Upload[]; total: number; page: number; limit: number }
+        const data = (await res.json()) as {
+          uploads: Upload[]
+          total: number
+          page: number
+          limit: number
+          referenceSummary?: MediaReferenceSummary
+        }
         setUploads(data.uploads)
         setTotal(data.total)
         setPage(data.page)
         setLimit(data.limit)
+        if (data.referenceSummary) setReferenceSummary(data.referenceSummary)
       } catch (err) {
         toast.error('加载失败')
         console.error(err)
@@ -514,7 +530,7 @@ export default function MediaClient({
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <MediaMetricCard
           title="全部素材"
           value={allTotal}
@@ -537,11 +553,18 @@ export default function MediaClient({
           tone={usageWarning ? 'orange' : 'green'}
         />
         <MediaMetricCard
-          title="当前页检查"
+          title="当前页风险"
           value={`${currentLargeCount + currentMissingVariantCount}`}
           detail={`大图 ${currentLargeCount} · 缺派生图 ${currentMissingVariantCount}`}
           Icon={ListFilter}
           tone={currentLargeCount + currentMissingVariantCount > 0 ? 'orange' : 'green'}
+        />
+        <MediaMetricCard
+          title="引用状态"
+          value={`${referenceSummary.unused}/${referenceSummary.sampled}`}
+          detail="当前页未引用 / 已采样"
+          Icon={Layers}
+          tone={referenceSummary.unused > 0 ? 'orange' : 'green'}
         />
       </div>
 
@@ -662,7 +685,12 @@ export default function MediaClient({
             ) : (
               <div className="grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-cols-6">
                 {uploads.map((u) => (
-                  <MediaCard key={u.id} upload={u} onClick={() => handleSelect(u)} />
+                  <MediaCard
+                    key={u.id}
+                    upload={u}
+                    reference={referenceLookup.get(u.id)}
+                    onClick={() => handleSelect(u)}
+                  />
                 ))}
               </div>
             )}
@@ -693,6 +721,7 @@ export default function MediaClient({
           currentLargeCount={currentLargeCount}
           currentMissingVariantCount={currentMissingVariantCount}
           currentWebpCount={currentWebpCount}
+          referenceSummary={referenceSummary}
           uploadLimitMb={uploadLimitMb}
           usagePct={usagePct}
           usageWarning={usageWarning}
@@ -834,6 +863,7 @@ function MediaOperationsPanel({
   currentLargeCount,
   currentMissingVariantCount,
   currentWebpCount,
+  referenceSummary,
   uploadLimitMb,
   usagePct,
   usageWarning,
@@ -846,6 +876,7 @@ function MediaOperationsPanel({
   currentLargeCount: number
   currentMissingVariantCount: number
   currentWebpCount: number
+  referenceSummary: MediaReferenceSummary
   uploadLimitMb: number
   usagePct: number
   usageWarning: boolean
@@ -855,6 +886,43 @@ function MediaOperationsPanel({
   onShowWebp: () => void
 }) {
   const currentIssueCount = currentLargeCount + currentMissingVariantCount
+  const referencedRate = referenceSummary.sampled > 0
+    ? Math.round((referenceSummary.referenced / referenceSummary.sampled) * 100)
+    : 0
+  const priorityItems = [
+    {
+      id: 'global-issues',
+      title: '全库风险素材',
+      detail: '先进入风险视图，集中处理大原图和缺派生图。',
+      count: issueTotal,
+      actionLabel: '查看风险',
+      onClick: onShowIssues,
+    },
+    {
+      id: 'unused',
+      title: '当前页未引用素材',
+      detail: '逐张打开详情确认引用，再决定是否保留或删除。',
+      count: referenceSummary.unused,
+      actionLabel: '逐张核对',
+      onClick: onShowAll,
+    },
+    {
+      id: 'large',
+      title: '当前页大原图',
+      detail: '用于前台前先压缩或改用派生图，降低页面负载。',
+      count: currentLargeCount,
+      actionLabel: '查看当前页',
+      onClick: onShowAll,
+    },
+    {
+      id: 'variants',
+      title: '当前页缺派生图',
+      detail: '打开详情生成 thumb / card / detail，补齐前台小图链路。',
+      count: currentMissingVariantCount,
+      actionLabel: '查看当前页',
+      onClick: onShowAll,
+    },
+  ].filter((item) => item.count > 0).slice(0, 4)
 
   return (
     <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
@@ -875,6 +943,8 @@ function MediaOperationsPanel({
           <MediaOperationRow label="全库风险" value={`${issueTotal} 张`} tone={issueTotal > 0 ? 'orange' : 'green'} />
           <MediaOperationRow label="当前页大图" value={`${currentLargeCount} 张`} tone={currentLargeCount > 0 ? 'orange' : 'green'} />
           <MediaOperationRow label="当前页缺派生图" value={`${currentMissingVariantCount} 张`} tone={currentMissingVariantCount > 0 ? 'orange' : 'green'} />
+          <MediaOperationRow label="当前页未引用" value={`${referenceSummary.unused} 张`} tone={referenceSummary.unused > 0 ? 'orange' : 'green'} />
+          <MediaOperationRow label="当前页被引用" value={`${referenceSummary.referenced} 张`} tone="blue" />
           <MediaOperationRow label="当前页 WebP" value={`${currentWebpCount} 张`} tone="blue" />
           <MediaOperationRow label="上传上限" value={`${uploadLimitMb} MB`} tone="gray" />
         </div>
@@ -888,6 +958,78 @@ function MediaOperationsPanel({
             />
           </div>
           <div className="mt-1 text-[11px] text-[#61767D]">{usagePct.toFixed(1)}% / 1 GB</div>
+        </div>
+      </section>
+
+      <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
+              Priority Queue
+            </div>
+            <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">素材处理优先级</h2>
+          </div>
+          <BadgeLike tone={priorityItems.length > 0 ? 'orange' : 'green'}>
+            {priorityItems.length > 0 ? `${priorityItems.length} 类待处理` : '当前页可复核'}
+          </BadgeLike>
+        </div>
+
+        <div className="mt-3">
+          <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-[#61767D]">
+            <span>引用覆盖率</span>
+            <span>{referencedRate}%</span>
+          </div>
+          <div className="h-2 rounded-full bg-[#E8F0F1]">
+            <div
+              className={referencedRate > 0 ? 'h-2 rounded-full bg-[#1889B6]' : 'h-2 rounded-full bg-[#E36F2C]'}
+              style={{ width: `${referencedRate}%` }}
+            />
+          </div>
+          <p className="mt-1 text-[11px] leading-4 text-[#61767D]">
+            当前页采样 {referenceSummary.sampled} 张；未引用素材只代表未被现有 CMS 字段检测到，删除前仍需打开详情确认。
+          </p>
+        </div>
+
+        <div className="mt-3 space-y-2">
+          {priorityItems.length > 0 ? (
+            priorityItems.map((item, index) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={item.onClick}
+                className="flex w-full items-start gap-3 rounded-md border border-[#F2C6A7] bg-[#FFF7F0] px-3 py-2.5 text-left hover:border-[#E36F2C]/50"
+              >
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[#E36F2C]">
+                  {index + 1}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="truncate text-xs font-bold text-[#1E2C31]">{item.title}</span>
+                    <span className="shrink-0 text-[11px] font-semibold text-[#E36F2C]">{item.count} 张</span>
+                  </span>
+                  <span className="mt-0.5 block text-[11px] leading-4 text-[#61767D]">{item.detail}</span>
+                  <span className="mt-1 block text-[11px] font-bold text-[#1889B6]">{item.actionLabel}</span>
+                </span>
+              </button>
+            ))
+          ) : (
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs font-medium text-emerald-700">
+              当前页未发现大图、缺派生图或未引用素材，可继续按类型或文件名核对。
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-bold text-[#1E2C31]">媒体运营矩阵</h2>
+          <span className="text-xs font-semibold text-[#8A9EA4]">当前页</span>
+        </div>
+        <div className="mt-3 grid grid-cols-1 gap-2">
+          <MediaOperationRow label="内容引用" value={`${referenceSummary.contentRefs} 处`} tone={referenceSummary.contentRefs > 0 ? 'blue' : 'gray'} />
+          <MediaOperationRow label="页面模块引用" value={`${referenceSummary.pageRefs} 处`} tone={referenceSummary.pageRefs > 0 ? 'blue' : 'gray'} />
+          <MediaOperationRow label="草稿/快照引用" value={`${referenceSummary.draftRefs} 处`} tone={referenceSummary.draftRefs > 0 ? 'orange' : 'gray'} />
+          <MediaOperationRow label="采样上限" value={`${referenceSummary.sampled} 张`} tone="gray" />
         </div>
       </section>
 
@@ -950,13 +1092,41 @@ function MediaOperationRow({
   )
 }
 
-function MediaCard({ upload, onClick }: { upload: Upload; onClick: () => void }) {
+function BadgeLike({
+  children,
+  tone,
+}: {
+  children: ReactNode
+  tone: 'green' | 'orange'
+}) {
+  return (
+    <span className={`inline-flex h-7 shrink-0 items-center rounded-full border px-2.5 text-[11px] font-semibold ${
+      tone === 'green'
+        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+        : 'border-[#F2C6A7] bg-[#FFF7F0] text-[#E36F2C]'
+    }`}>
+      {children}
+    </span>
+  )
+}
+
+function MediaCard({
+  upload,
+  reference,
+  onClick,
+}: {
+  upload: Upload
+  reference?: MediaReferenceSummaryItem
+  onClick: () => void
+}) {
   const [loaded, setLoaded] = useState(false)
   const [copyOk, setCopyOk] = useState(false)
   const thumbUrl = getImageVariantUrl(upload.url, upload.variants, 'thumb')
   const variantCount = generatedVariantCount(upload)
   const isLargeOriginal = isFrontendRiskUpload(upload)
   const missingVariants = isMissingFrontendVariants(upload)
+  const referenceTotal = reference?.total ?? null
+  const hasReferenceSample = referenceTotal !== null
 
   const copyUrl = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -1016,6 +1186,13 @@ function MediaCard({ upload, onClick }: { upload: Upload; onClick: () => void })
             派生齐
           </div>
         )}
+        {hasReferenceSample ? (
+          <div className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold text-white ${
+            referenceTotal > 0 ? 'bg-[#1889B6]/95' : 'bg-zinc-700/90'
+          }`}>
+            {referenceTotal > 0 ? `引用 ${referenceTotal}` : '未引用'}
+          </div>
+        ) : null}
       </div>
       {copyOk && (
         <div className="pointer-events-none absolute left-1.5 top-8 z-30 rounded-sm bg-green-600/90 px-1.5 py-0.5 text-[10px] text-white">

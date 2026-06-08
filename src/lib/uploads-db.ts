@@ -57,6 +57,20 @@ export type MediaReferenceDetails = MediaReferenceCounts & {
   items: MediaReferenceItems
 }
 
+export type MediaReferenceSummaryItem = MediaReferenceCounts & {
+  uploadId: string
+}
+
+export type MediaReferenceSummary = {
+  sampled: number
+  referenced: number
+  unused: number
+  contentRefs: number
+  pageRefs: number
+  draftRefs: number
+  items: MediaReferenceSummaryItem[]
+}
+
 type PageSnapshotRefRow = {
   id: string
   page_key: string
@@ -487,6 +501,190 @@ export async function countMediaReferences(url: string): Promise<MediaReferenceC
     pageStructureDrafts,
     pageStructureSnapshots,
     total: news + products + projects + pages + pageDrafts + pageSnapshots + pageStructureDrafts + pageStructureSnapshots,
+  }
+}
+
+export function emptyMediaReferenceSummary(): MediaReferenceSummary {
+  return {
+    sampled: 0,
+    referenced: 0,
+    unused: 0,
+    contentRefs: 0,
+    pageRefs: 0,
+    draftRefs: 0,
+    items: [],
+  }
+}
+
+type CountByUrlRow = {
+  url: string
+  count: string
+}
+
+async function countReferencesByUrl(urls: string[], sql: string): Promise<Map<string, number>> {
+  if (urls.length === 0) return new Map()
+  const res = await pool.query<CountByUrlRow>(sql, [urls])
+  return new Map(res.rows.map((row) => [row.url, parseInt(row.count, 10) || 0]))
+}
+
+async function countOptionalReferencesByUrl(
+  tableName: string,
+  urls: string[],
+  sql: string,
+): Promise<Map<string, number>> {
+  if (urls.length === 0) return new Map()
+  if (!(await tableExists(tableName))) return new Map()
+  return countReferencesByUrl(urls, sql)
+}
+
+export async function summarizeMediaReferences(
+  uploads: Pick<Upload, 'id' | 'url'>[],
+  limit = 50,
+): Promise<MediaReferenceSummary> {
+  const sampledUploads = uploads.slice(0, Math.max(0, limit))
+  const urls = Array.from(new Set(sampledUploads.map((upload) => upload.url).filter(Boolean)))
+  const [
+    newsMap,
+    productsMap,
+    projectsMap,
+    pagesMap,
+    pageDraftsMap,
+    pageSnapshotsMap,
+    pageStructureDraftsMap,
+    pageStructureSnapshotsMap,
+  ] = await Promise.all([
+    countReferencesByUrl(
+      urls,
+      `WITH targets AS (SELECT unnest($1::text[]) AS url)
+       SELECT t.url, COUNT(n.id)::text AS count
+       FROM targets t
+       LEFT JOIN news n
+         ON n.deleted_at IS NULL
+        AND (
+          n.cover_image_url = t.url
+          OR strpos(COALESCE(n.content_zh::text, ''), t.url) > 0
+          OR strpos(COALESCE(n.content_en::text, ''), t.url) > 0
+        )
+       GROUP BY t.url`,
+    ),
+    countReferencesByUrl(
+      urls,
+      `WITH targets AS (SELECT unnest($1::text[]) AS url)
+       SELECT t.url, COUNT(p.id)::text AS count
+       FROM targets t
+       LEFT JOIN product_catalog p
+         ON p.deleted_at IS NULL
+        AND (
+          p.image = t.url
+          OR p.gallery @> jsonb_build_array(t.url)
+          OR strpos(COALESCE(p.detail_modules::text, ''), t.url) > 0
+        )
+       GROUP BY t.url`,
+    ),
+    countReferencesByUrl(
+      urls,
+      `WITH targets AS (SELECT unnest($1::text[]) AS url)
+       SELECT t.url, COUNT(c.id)::text AS count
+       FROM targets t
+       LEFT JOIN project_cases c
+         ON c.deleted_at IS NULL
+        AND (
+          c.cover_image_url = t.url
+          OR c.images @> jsonb_build_array(t.url)
+        )
+       GROUP BY t.url`,
+    ),
+    countReferencesByUrl(
+      urls,
+      `WITH targets AS (SELECT unnest($1::text[]) AS url)
+       SELECT t.url, COUNT(m.id)::text AS count
+       FROM targets t
+       LEFT JOIN page_modules m
+         ON strpos(COALESCE(m.items::text, ''), t.url) > 0
+       GROUP BY t.url`,
+    ),
+    countOptionalReferencesByUrl(
+      'public.page_module_drafts',
+      urls,
+      `WITH targets AS (SELECT unnest($1::text[]) AS url)
+       SELECT t.url, COUNT(d.id)::text AS count
+       FROM targets t
+       LEFT JOIN page_module_drafts d
+         ON strpos(COALESCE(d.items::text, ''), t.url) > 0
+       GROUP BY t.url`,
+    ),
+    countOptionalReferencesByUrl(
+      'public.page_module_snapshots',
+      urls,
+      `WITH targets AS (SELECT unnest($1::text[]) AS url)
+       SELECT t.url, COUNT(s.id)::text AS count
+       FROM targets t
+       LEFT JOIN page_module_snapshots s
+         ON strpos(COALESCE(s.items::text, ''), t.url) > 0
+       GROUP BY t.url`,
+    ),
+    countOptionalReferencesByUrl(
+      'public.page_structure_drafts',
+      urls,
+      `WITH targets AS (SELECT unnest($1::text[]) AS url)
+       SELECT t.url, COUNT(d.id)::text AS count
+       FROM targets t
+       LEFT JOIN page_structure_drafts d
+         ON strpos(COALESCE(d.modules::text, ''), t.url) > 0
+         OR d.image_refs @> jsonb_build_array(t.url)
+       GROUP BY t.url`,
+    ),
+    countOptionalReferencesByUrl(
+      'public.page_structure_snapshots',
+      urls,
+      `WITH targets AS (SELECT unnest($1::text[]) AS url)
+       SELECT t.url, COUNT(s.id)::text AS count
+       FROM targets t
+       LEFT JOIN page_structure_snapshots s
+         ON strpos(COALESCE(s.modules::text, ''), t.url) > 0
+         OR s.image_refs @> jsonb_build_array(t.url)
+       GROUP BY t.url`,
+    ),
+  ])
+  const items = sampledUploads.map((upload): MediaReferenceSummaryItem => {
+    const news = newsMap.get(upload.url) ?? 0
+    const products = productsMap.get(upload.url) ?? 0
+    const projects = projectsMap.get(upload.url) ?? 0
+    const pages = pagesMap.get(upload.url) ?? 0
+    const pageDrafts = pageDraftsMap.get(upload.url) ?? 0
+    const pageSnapshots = pageSnapshotsMap.get(upload.url) ?? 0
+    const pageStructureDrafts = pageStructureDraftsMap.get(upload.url) ?? 0
+    const pageStructureSnapshots = pageStructureSnapshotsMap.get(upload.url) ?? 0
+
+    return {
+      uploadId: upload.id,
+      news,
+      products,
+      projects,
+      pages,
+      pageDrafts,
+      pageSnapshots,
+      pageStructureDrafts,
+      pageStructureSnapshots,
+      total: news + products + projects + pages + pageDrafts + pageSnapshots + pageStructureDrafts + pageStructureSnapshots,
+    }
+  })
+  const referenced = items.filter((item) => item.total > 0).length
+
+  return {
+    sampled: items.length,
+    referenced,
+    unused: items.length - referenced,
+    contentRefs: items.reduce((total, item) => total + item.news + item.products + item.projects, 0),
+    pageRefs: items.reduce((total, item) => total + item.pages, 0),
+    draftRefs: items.reduce((total, item) => (
+      total
+      + item.pageDrafts
+      + item.pageSnapshots
+      + item.pageStructureDrafts
+      + item.pageStructureSnapshots
+    ), 0),
+    items,
   }
 }
 
