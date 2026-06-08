@@ -2,7 +2,14 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import LeadsClient, { type LeadDashboardSummary } from '@/components/admin/LeadsClient'
-import { countLeadsByStatus, listLeads, type Lead, type LeadStatus } from '@/lib/leads-db'
+import {
+  countLeadsByStatus,
+  listLeads,
+  summarizeLeadsBySourceStatus,
+  type Lead,
+  type LeadSourceStatusSummary,
+  type LeadStatus,
+} from '@/lib/leads-db'
 import {
   BadgeCheck,
   Clock3,
@@ -40,6 +47,8 @@ const EMPTY_SUMMARY: LeadDashboardSummary = {
   won: 0,
   lost: 0,
 }
+
+const EMPTY_SOURCE_STATUS_SUMMARY: LeadSourceStatusSummary[] = []
 
 function buildLeadsPath(status?: LeadStatus) {
   return status ? `/admin/customers/leads?status=${status}` : '/admin/customers/leads'
@@ -149,7 +158,7 @@ export default async function AdminCustomerLeadsPage({
   const page = Math.max(1, Number(getStr('page') ?? 1) || 1)
   const limit = Math.min(100, Math.max(20, Number(getStr('limit') ?? 50) || 50))
 
-  const [summary, result] = await Promise.all([
+  const [summary, result, sourceStatusSummary] = await Promise.all([
     safeLoad('lead summary', () => getLeadSummary(), EMPTY_SUMMARY),
     safeLoad(
       'lead list',
@@ -162,8 +171,13 @@ export default async function AdminCustomerLeadsPage({
           search: filters.search || undefined,
           page,
           limit,
-        }),
+      }),
       { ...EMPTY_LEADS_RESULT, page, limit },
+    ),
+    safeLoad(
+      'lead source status summary',
+      () => summarizeLeadsBySourceStatus(),
+      EMPTY_SOURCE_STATUS_SUMMARY,
     ),
   ])
 
@@ -188,6 +202,7 @@ export default async function AdminCustomerLeadsPage({
         allowTestLeadCreation={process.env.NODE_ENV !== 'production'}
         allowDelete={false}
         summary={summary}
+        sourceStatusSummary={sourceStatusSummary}
       />
     </AdminSectionShell>
   )

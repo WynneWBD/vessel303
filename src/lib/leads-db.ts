@@ -1,5 +1,11 @@
 import { pool } from '@/lib/db'
-import { getLeadSourceWherePatterns } from '@/lib/lead-source'
+import {
+  getLeadSourceType,
+  getLeadSourceTypeLabel,
+  getLeadSourceWherePatterns,
+  LEAD_SOURCE_TYPE_OPTIONS,
+  type LeadSourceType,
+} from '@/lib/lead-source'
 
 export type LeadStatus = 'new' | 'contacting' | 'quoted' | 'won' | 'lost'
 
@@ -32,10 +38,26 @@ export type ListLeadsFilter = {
   limit?: number
 }
 
+export type LeadSourceStatusSummary = {
+  type: Exclude<LeadSourceType, 'all'>
+  label: string
+  total: number
+  new: number
+  contacting: number
+  quoted: number
+  won: number
+  lost: number
+}
+
 const LEAD_COLUMNS = `
   id, email, name, phone, company, country, inquiry_type, sku_interest,
   message, source, status, assigned_to, notes, created_at, updated_at, deleted_at
 `
+
+const LEAD_STATUSES: LeadStatus[] = ['new', 'contacting', 'quoted', 'won', 'lost']
+const LEAD_SOURCE_TYPES = LEAD_SOURCE_TYPE_OPTIONS
+  .map((item) => item.value)
+  .filter((type): type is Exclude<LeadSourceType, 'all'> => type !== 'all')
 
 // Build WHERE clause fragments shared by listLeads + exportLeads.
 function buildWhere(filter: ListLeadsFilter) {
@@ -111,6 +133,51 @@ export async function exportLeads(filter: ListLeadsFilter) {
     params,
   )
   return res.rows
+}
+
+export async function summarizeLeadsBySourceStatus(): Promise<LeadSourceStatusSummary[]> {
+  const initial = new Map<Exclude<LeadSourceType, 'all'>, LeadSourceStatusSummary>()
+
+  for (const type of LEAD_SOURCE_TYPES) {
+    initial.set(type, {
+      type,
+      label: getLeadSourceTypeLabel(type),
+      total: 0,
+      new: 0,
+      contacting: 0,
+      quoted: 0,
+      won: 0,
+      lost: 0,
+    })
+  }
+
+  const res = await pool.query<{
+    source: string | null
+    status: LeadStatus
+    count: string
+  }>(
+    `SELECT source, status, COUNT(*)::text AS count
+       FROM leads
+      WHERE deleted_at IS NULL
+      GROUP BY source, status`,
+  )
+
+  for (const row of res.rows) {
+    const type = getLeadSourceType(row.source)
+    if (type === 'all' || !LEAD_STATUSES.includes(row.status)) continue
+
+    const item = initial.get(type)
+    if (!item) continue
+
+    const count = parseInt(row.count ?? '0', 10)
+    const safeCount = Number.isFinite(count) ? count : 0
+    item[row.status] += safeCount
+    item.total += safeCount
+  }
+
+  return Array.from(initial.values())
+    .filter((item) => item.total > 0)
+    .sort((a, b) => b.total - a.total)
 }
 
 export async function getLead(id: string) {

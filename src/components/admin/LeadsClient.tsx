@@ -48,7 +48,7 @@ import {
 } from '@/components/ui/sheet'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import AdminPagination from '@/components/admin/AdminPagination'
-import type { Lead, LeadStatus } from '@/lib/leads-db'
+import type { Lead, LeadSourceStatusSummary, LeadStatus } from '@/lib/leads-db'
 import { describeLeadSource, LEAD_SOURCE_TYPE_OPTIONS } from '@/lib/lead-source'
 
 type Filters = {
@@ -305,6 +305,7 @@ export default function LeadsClient({
   allowTestLeadCreation,
   allowDelete = false,
   summary,
+  sourceStatusSummary = [],
 }: {
   initialLeads: Lead[]
   initialTotal: number
@@ -314,6 +315,7 @@ export default function LeadsClient({
   allowTestLeadCreation: boolean
   allowDelete?: boolean
   summary?: LeadDashboardSummary
+  sourceStatusSummary?: LeadSourceStatusSummary[]
 }) {
   const router = useRouter()
   const [filters, setFilters] = useState<Filters>(initialFilters)
@@ -536,6 +538,13 @@ export default function LeadsClient({
         total={total}
         loading={loading}
         onSelect={handleSelect}
+      />
+
+      <LeadSourceStatusMatrix
+        sourceStatusSummary={sourceStatusSummary}
+        activeSourceType={filters.source_type}
+        activeStatus={filters.status}
+        onApplyFilter={updateFilters}
       />
 
       {/* Filter bar */}
@@ -931,6 +940,158 @@ function LeadOperationsDesk({
         </div>
       </aside>
     </section>
+  )
+}
+
+function LeadSourceStatusMatrix({
+  sourceStatusSummary,
+  activeSourceType,
+  activeStatus,
+  onApplyFilter,
+}: {
+  sourceStatusSummary: LeadSourceStatusSummary[]
+  activeSourceType: string
+  activeStatus: string
+  onApplyFilter: (patch: Partial<Filters>) => void
+}) {
+  const total = sourceStatusSummary.reduce((sum, item) => sum + item.total, 0)
+  const activePipeline = sourceStatusSummary.reduce(
+    (sum, item) => sum + item.new + item.contacting + item.quoted,
+    0,
+  )
+  const closed = sourceStatusSummary.reduce((sum, item) => sum + item.won + item.lost, 0)
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p className="text-xs font-semibold tracking-[0.18em] text-[#1889B6] uppercase">Source Funnel</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">来源转化矩阵</h2>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-[#61767D]">
+            按站点入口聚合全部有效线索，观察每个来源从新线索、跟进、报价到成交/关闭的状态分布；点击计数会复用下方现有筛选。
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-xs sm:min-w-[360px]">
+          <SourceMatrixMetric label="全部来源线索" value={total} />
+          <SourceMatrixMetric label="活跃漏斗" value={activePipeline} />
+          <SourceMatrixMetric label="已收口" value={closed} />
+        </div>
+      </div>
+
+      {sourceStatusSummary.length === 0 ? (
+        <div className="flex items-center gap-3 px-5 py-6">
+          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[#F0F7F8] text-[#1889B6]">
+            <ListChecks size={18} />
+          </span>
+          <div>
+            <p className="text-sm font-semibold text-[#1E2C31]">暂无来源矩阵数据</p>
+            <p className="mt-1 text-xs text-[#61767D]">当前 leads 表没有可聚合的有效线索。</p>
+          </div>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-xs text-[#61767D]">
+                <th className="min-w-44 px-5 py-3 text-left font-semibold">来源入口</th>
+                <th className="px-3 py-3 text-right font-semibold">全部</th>
+                {STATUS_OPTIONS.map((status) => (
+                  <th key={status.value} className="px-3 py-3 text-right font-semibold">
+                    {status.label}
+                  </th>
+                ))}
+                <th className="min-w-28 px-5 py-3 text-right font-semibold">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E6EEEE]">
+              {sourceStatusSummary.map((item) => {
+                const isActiveSource = activeSourceType === item.type
+                const activeCount =
+                  item.total > 0 ? Math.round(((item.new + item.contacting + item.quoted) / item.total) * 100) : 0
+
+                return (
+                  <tr key={item.type} className={isActiveSource ? 'bg-[#F7FAFA]' : undefined}>
+                    <td className="px-5 py-3">
+                      <button
+                        type="button"
+                        onClick={() => onApplyFilter({ source_type: item.type, status: 'all' })}
+                        className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold transition hover:border-[#1889B6]/60 ${
+                          isActiveSource && activeStatus === 'all'
+                            ? 'border-[#1889B6] bg-[#EAF6F8] text-[#1889B6]'
+                            : sourceBadgeClass(item.type)
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                      <p className="mt-1 text-[11px] text-[#8A9EA4]">活跃占比 {activeCount}%</p>
+                    </td>
+                    <td className="px-3 py-3 text-right text-base font-bold text-[#1E2C31]">
+                      {item.total.toLocaleString('zh-CN')}
+                    </td>
+                    {STATUS_OPTIONS.map((status) => (
+                      <td key={status.value} className="px-3 py-3 text-right">
+                        <SourceStatusButton
+                          count={item[status.value]}
+                          active={isActiveSource && activeStatus === status.value}
+                          onClick={() => onApplyFilter({ source_type: item.type, status: status.value })}
+                        />
+                      </td>
+                    ))}
+                    <td className="px-5 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => onApplyFilter({ source_type: item.type, status: 'all' })}
+                        className="inline-flex items-center justify-end gap-1 text-xs font-semibold text-[#1889B6] transition hover:text-[#E36F2C]"
+                      >
+                        查看来源
+                        <ArrowUpRight size={13} />
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function SourceMatrixMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2">
+      <p className="text-[11px] font-semibold text-[#61767D]">{label}</p>
+      <p className="mt-1 text-xl font-bold text-[#1E2C31]">{value.toLocaleString('zh-CN')}</p>
+    </div>
+  )
+}
+
+function SourceStatusButton({
+  count,
+  active,
+  onClick,
+}: {
+  count: number
+  active: boolean
+  onClick: () => void
+}) {
+  if (count === 0) {
+    return <span className="text-xs font-semibold text-[#B4C0C4]">0</span>
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`min-w-10 rounded-md border px-2 py-1 text-xs font-bold transition hover:border-[#1889B6]/60 hover:bg-[#EAF6F8] hover:text-[#1889B6] ${
+        active
+          ? 'border-[#1889B6] bg-[#EAF6F8] text-[#1889B6]'
+          : 'border-[#E6EEEE] bg-white text-[#1E2C31]'
+      }`}
+    >
+      {count.toLocaleString('zh-CN')}
+    </button>
   )
 }
 
