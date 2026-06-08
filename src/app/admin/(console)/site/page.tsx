@@ -69,6 +69,17 @@ type SiteTodo = {
   ok: boolean
 }
 
+type SiteConsoleRow = {
+  title: string
+  detail: string
+  metric: string
+  signal: string
+  href: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange'
+  actions: Array<{ label: string; href: string }>
+}
+
 const STORAGE_WARNING_BYTES = 800 * 1024 * 1024
 
 const SITE_DOMAINS: SiteDomain[] = [
@@ -404,6 +415,146 @@ function DomainCard({ site }: { site: SiteDomain }) {
   )
 }
 
+function SiteOperationsConsole({
+  pageDraftCount,
+  uploadCount,
+  uploadBytes,
+  visibleModules,
+  configIssues,
+  isAdmin,
+}: {
+  pageDraftCount: number
+  uploadCount: number
+  uploadBytes: number
+  visibleModules: number
+  configIssues: number
+  isAdmin: boolean
+}) {
+  const rows: SiteConsoleRow[] = [
+    {
+      title: '页面发布',
+      detail: '受控模块、页面草稿、页面清单和可视化编辑',
+      metric: `${visibleModules.toLocaleString('zh-CN')} 模块`,
+      signal: `${pageDraftCount.toLocaleString('zh-CN')} 草稿`,
+      href: '/admin/site/visual',
+      Icon: LayoutTemplate,
+      tone: pageDraftCount > 0 ? 'orange' : 'green',
+      actions: [
+        { label: '可视化', href: '/admin/site/visual' },
+        { label: '页面清单', href: '/admin/site/pages' },
+        { label: '前台首页', href: '/' },
+      ],
+    },
+    {
+      title: '素材资产',
+      detail: '图片上传、引用关系、空间体量和派生图风险',
+      metric: `${uploadCount.toLocaleString('zh-CN')} 记录`,
+      signal: formatBytes(uploadBytes),
+      href: '/admin/site/media',
+      Icon: ImageIcon,
+      tone: uploadBytes > STORAGE_WARNING_BYTES ? 'orange' : 'blue',
+      actions: [
+        { label: '素材库', href: '/admin/site/media' },
+        { label: '风险视图', href: '/admin/site/media?view=issues' },
+      ],
+    },
+    {
+      title: '转化路径',
+      detail: '入口、CTA、表单、线索来源和运营数据诊断',
+      metric: '只读',
+      signal: '诊断入口',
+      href: '/admin/site/conversion',
+      Icon: Link2,
+      tone: 'blue',
+      actions: [
+        { label: '转化路径', href: '/admin/site/conversion' },
+        { label: '访问统计', href: '/admin/status/traffic' },
+      ],
+    },
+    {
+      title: 'SEO 与网站信息',
+      detail: 'TDK、网站信息、三方代码、搜索引擎连接和环境边界',
+      metric: '检查',
+      signal: isAdmin ? `${configIssues.toLocaleString('zh-CN')} 配置项` : '运营只读',
+      href: '/admin/site/seo',
+      Icon: SearchCheck,
+      tone: configIssues > 0 && isAdmin ? 'orange' : 'blue',
+      actions: [
+        { label: 'SEO 检查', href: '/admin/site/seo' },
+        { label: '网站信息', href: '/admin/site/settings' },
+        ...(isAdmin ? [{ label: '站点设置', href: '/admin/settings' }] : []),
+      ],
+    },
+  ]
+
+  return (
+    <section className="space-y-4">
+      <AdminSectionTitle
+        title="网站运营控制台"
+        detail="把页面、素材、转化、SEO 和设置入口收成一张表，先判断状态，再进入对应后台。"
+      />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="hidden grid-cols-[200px_130px_130px_minmax(0,1fr)_160px] gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 text-xs font-semibold text-[#61767D] lg:grid">
+          <span>网站链路</span>
+          <span>当前量</span>
+          <span>信号</span>
+          <span>处理入口</span>
+          <span>主工作台</span>
+        </div>
+        <div className="divide-y divide-[#E6EEEE]">
+          {rows.map((row) => (
+            <SiteConsoleRowView key={row.title} row={row} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function SiteConsoleRowView({ row }: { row: SiteConsoleRow }) {
+  const Icon = row.Icon
+  const toneClass =
+    row.tone === 'orange'
+      ? 'bg-[#FFF2E7] text-[#E36F2C]'
+      : row.tone === 'green'
+        ? 'bg-emerald-50 text-emerald-700'
+        : 'bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <div className="grid grid-cols-1 gap-3 px-4 py-4 text-sm lg:grid-cols-[200px_130px_130px_minmax(0,1fr)_160px] lg:items-center">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${toneClass}`}>
+          <Icon size={18} />
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate font-bold text-[#1E2C31]">{row.title}</span>
+          <span className="mt-1 block truncate text-xs text-[#61767D]">{row.detail}</span>
+        </span>
+      </div>
+      <span className="font-bold text-[#1E2C31]">{row.metric}</span>
+      <span className="text-sm font-semibold text-[#61767D]">{row.signal}</span>
+      <span className="flex flex-wrap gap-2">
+        {row.actions.map((action) => (
+          <Link
+            key={`${row.title}-${action.label}`}
+            href={action.href}
+            className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-2.5 text-xs font-semibold text-[#61767D] transition hover:border-[#1889B6] hover:bg-white hover:text-[#1889B6]"
+          >
+            {action.label}
+          </Link>
+        ))}
+      </span>
+      <Link
+        href={row.href}
+        className="inline-flex h-9 w-fit items-center gap-1 rounded-md border border-[#1889B6]/25 bg-[#EAF6F8] px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+      >
+        进入工作台
+        <ArrowRight size={13} />
+      </Link>
+    </div>
+  )
+}
+
 function AppGrid({ role }: { role: AdminRole }) {
   const visibleApps = SITE_APPS.filter((app) => !app.adminOnly || role === 'admin')
 
@@ -673,6 +824,14 @@ export default async function AdminSitePage() {
       />
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-6">
+          <SiteOperationsConsole
+            pageDraftCount={pageDraftCount}
+            uploadCount={uploadCount}
+            uploadBytes={uploadBytes}
+            visibleModules={visibleModules}
+            configIssues={configIssues}
+            isAdmin={isAdmin}
+          />
           <PublishGrid />
           <AppGrid role={adminRole} />
           <WorkflowPanel />
