@@ -13,6 +13,7 @@
   Map,
   Shield,
   Users,
+  type LucideIcon,
 } from 'lucide-react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -55,6 +56,27 @@ type SettingsTakeoverItem = {
   fields: string
   state: SettingsTakeoverState
   detail: string
+}
+
+type SettingsMeta = Awaited<ReturnType<typeof getSettingsUpdatedMeta>> | null
+
+type OperationsTone = 'ok' | 'warning' | 'missing' | 'neutral'
+
+type OperationsCardItem = {
+  title: string
+  value: string
+  detail: string
+  href: string
+  tone: OperationsTone
+  Icon: LucideIcon
+}
+
+type PriorityItem = {
+  title: string
+  detail: string
+  href: string
+  tone: OperationsTone
+  Icon: LucideIcon
 }
 
 const ACTION_LABELS: Record<string, string> = {
@@ -207,13 +229,252 @@ function StatusBadge({ state }: { state: HealthState }) {
   return <Badge className={map[state]}>{label[state]}</Badge>
 }
 
+function operationsToneClass(tone: OperationsTone) {
+  if (tone === 'ok') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  if (tone === 'warning') return 'border-[#E36F2C]/30 bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'missing') return 'border-red-200 bg-red-50 text-red-700'
+  return 'border-[#D8E7E8] bg-[#F0F2F2] text-[#61767D]'
+}
+
+function buildSettingsPriorityItems({
+  configItems,
+  takeoverItems,
+  logs,
+  settingsMeta,
+  siteSettings,
+}: {
+  configItems: ConfigItem[]
+  takeoverItems: SettingsTakeoverItem[]
+  logs: AdminLogRow[]
+  settingsMeta: SettingsMeta
+  siteSettings: typeof defaultSiteSettings
+}): PriorityItem[] {
+  const items: PriorityItem[] = []
+  const missingConfig = configItems.filter((item) => item.state === 'missing')
+  const warningConfig = configItems.filter((item) => item.state === 'warning')
+  const plannedTakeover = takeoverItems.filter((item) => item.state === 'planned')
+
+  if (missingConfig.length > 0) {
+    items.push({
+      title: '环境依赖缺失',
+      detail: missingConfig.map((item) => item.label).slice(0, 3).join(' / '),
+      href: '#system-config',
+      tone: 'missing',
+      Icon: Database,
+    })
+  }
+
+  if (warningConfig.length > 0) {
+    items.push({
+      title: '配置需要复核',
+      detail: warningConfig.map((item) => item.label).slice(0, 3).join(' / '),
+      href: '#system-config',
+      tone: 'warning',
+      Icon: CircleAlert,
+    })
+  }
+
+  if (!settingsMeta) {
+    items.push({
+      title: '站点设置尚未保存',
+      detail: '当前表单读取默认值或缓存值，首次保存前需要管理员逐项复核。',
+      href: '#settings-form',
+      tone: 'warning',
+      Icon: KeyRound,
+    })
+  }
+
+  if (siteSettings.maintenanceMode) {
+    items.push({
+      title: '维护模式已开启',
+      detail: '维护模式属于前台高影响配置，发布前必须确认访问影响。',
+      href: '#settings-form',
+      tone: 'warning',
+      Icon: Shield,
+    })
+  }
+
+  if (plannedTakeover.length > 0) {
+    items.push({
+      title: '待确认接管项',
+      detail: plannedTakeover.map((item) => item.title).slice(0, 3).join(' / '),
+      href: '#takeover-plan',
+      tone: 'neutral',
+      Icon: CircleDashed,
+    })
+  }
+
+  if (logs.length === 0) {
+    items.push({
+      title: '操作日志为空',
+      detail: 'admin_logs 当前未返回最近操作，无法在本页判断最近设置变更链路。',
+      href: '#admin-logs',
+      tone: 'neutral',
+      Icon: Activity,
+    })
+  }
+
+  return items.slice(0, 6)
+}
+
+function SettingsOperationsCard({ item }: { item: OperationsCardItem }) {
+  const Icon = item.Icon
+  return (
+    <Link href={item.href} className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm transition hover:border-[#1889B6]/60 hover:shadow-md">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#61767D]">{item.title}</p>
+          <p className="mt-2 text-2xl font-bold text-[#1E2C31]">{item.value}</p>
+        </div>
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${operationsToneClass(item.tone)}`}>
+          <Icon size={17} />
+        </span>
+      </div>
+      <p className="mt-3 text-xs leading-5 text-[#61767D]">{item.detail}</p>
+    </Link>
+  )
+}
+
+function SettingsOperationsMatrix({
+  configItems,
+  takeoverItems,
+  logs,
+  settingsMeta,
+  siteSettings,
+}: {
+  configItems: ConfigItem[]
+  takeoverItems: SettingsTakeoverItem[]
+  logs: AdminLogRow[]
+  settingsMeta: SettingsMeta
+  siteSettings: typeof defaultSiteSettings
+}) {
+  const missingConfig = configItems.filter((item) => item.state === 'missing')
+  const warningConfig = configItems.filter((item) => item.state === 'warning')
+  const activeTakeover = takeoverItems.filter((item) => item.state === 'active')
+  const plannedTakeover = takeoverItems.filter((item) => item.state === 'planned')
+  const holdTakeover = takeoverItems.filter((item) => item.state === 'hold')
+  const priorityItems = buildSettingsPriorityItems({ configItems, takeoverItems, logs, settingsMeta, siteSettings })
+
+  const cards: OperationsCardItem[] = [
+    {
+      title: '环境健康',
+      value: `${configItems.length - missingConfig.length}/${configItems.length}`,
+      detail: `缺失 ${missingConfig.length} · 注意 ${warningConfig.length}`,
+      href: '#system-config',
+      tone: missingConfig.length > 0 ? 'missing' : warningConfig.length > 0 ? 'warning' : 'ok',
+      Icon: Database,
+    },
+    {
+      title: '设置保存',
+      value: settingsMeta ? '已保存' : '未保存',
+      detail: settingsMeta ? `${formatDateTime(settingsMeta.updated_at)} · ${settingsMeta.updated_by_email ?? 'unknown'}` : '尚未发现保存记录',
+      href: '#settings-form',
+      tone: settingsMeta ? 'ok' : 'warning',
+      Icon: KeyRound,
+    },
+    {
+      title: '接管状态',
+      value: `${activeTakeover.length}/${takeoverItems.length}`,
+      detail: `待确认 ${plannedTakeover.length} · 暂缓 ${holdTakeover.length}`,
+      href: '#takeover-plan',
+      tone: plannedTakeover.length > 0 || holdTakeover.length > 0 ? 'warning' : 'ok',
+      Icon: Globe2,
+    },
+    {
+      title: '审计信号',
+      value: logs.length.toString(),
+      detail: '最近管理员操作记录',
+      href: '#admin-logs',
+      tone: logs.length > 0 ? 'ok' : 'neutral',
+      Icon: Activity,
+    },
+  ]
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-5 shadow-sm">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-[#1E2C31]">设置运营矩阵</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            先看环境依赖、保存记录、接管计划和审计信号，再进入具体设置表单。
+          </p>
+        </div>
+        <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1889B6]">
+          Admin-only · 高风险配置受控
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+        {cards.map((item) => (
+          <SettingsOperationsCard key={item.title} item={item} />
+        ))}
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="rounded-md border border-[#D8E7E8] bg-white p-4">
+          <h3 className="text-sm font-bold text-[#1E2C31]">配置分层</h3>
+          <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+            <div className="rounded-md bg-[#F7FAFA] px-3 py-2 text-xs leading-5">
+              <span className="block text-[#8A9EA4]">环境依赖</span>
+              <span className="mt-1 block text-lg font-bold text-[#1E2C31]">{configItems.length}</span>
+            </div>
+            <div className="rounded-md bg-[#F7FAFA] px-3 py-2 text-xs leading-5">
+              <span className="block text-[#8A9EA4]">缺失配置</span>
+              <span className="mt-1 block text-lg font-bold text-[#1E2C31]">{missingConfig.length}</span>
+            </div>
+            <div className="rounded-md bg-[#F7FAFA] px-3 py-2 text-xs leading-5">
+              <span className="block text-[#8A9EA4]">待确认接管</span>
+              <span className="mt-1 block text-lg font-bold text-[#1E2C31]">{plannedTakeover.length}</span>
+            </div>
+            <div className="rounded-md bg-[#F7FAFA] px-3 py-2 text-xs leading-5">
+              <span className="block text-[#8A9EA4]">维护模式</span>
+              <span className="mt-1 block text-lg font-bold text-[#1E2C31]">{siteSettings.maintenanceMode ? '开启' : '关闭'}</span>
+            </div>
+          </div>
+        </div>
+
+        <aside className="rounded-md border border-[#D8E7E8] bg-white p-4">
+          <h3 className="text-sm font-bold text-[#1E2C31]">优先处理队列</h3>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">按缺失配置、警告配置、保存状态和接管计划排序。</p>
+          <div className="mt-3 space-y-2">
+            {priorityItems.length > 0 ? (
+              priorityItems.map((item) => {
+                const Icon = item.Icon
+                return (
+                  <Link
+                    key={item.title}
+                    href={item.href}
+                    className="flex items-start gap-3 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-3 transition hover:border-[#1889B6]/60 hover:bg-white"
+                  >
+                    <span className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${operationsToneClass(item.tone)}`}>
+                      <Icon size={14} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-bold text-[#1E2C31]">{item.title}</span>
+                      <span className="mt-1 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+                    </span>
+                  </Link>
+                )
+              })
+            ) : (
+              <p className="rounded-md bg-[#F7FAFA] px-3 py-3 text-xs leading-5 text-[#61767D]">
+                当前没有缺失配置、警告配置或接管阻断项。
+              </p>
+            )}
+          </div>
+        </aside>
+      </div>
+    </section>
+  )
+}
+
 function MetricCard({
   icon: Icon,
   label,
   value,
   detail,
 }: {
-  icon: typeof Activity
+  icon: LucideIcon
   label: string
   value: string
   detail: string
@@ -363,9 +624,19 @@ export default async function SettingsPage() {
         </div>
       </div>
 
-      <SiteSettingsForm settings={siteSettings} />
+      <SettingsOperationsMatrix
+        configItems={configItems}
+        takeoverItems={SETTINGS_TAKEOVER_ITEMS}
+        logs={logs}
+        settingsMeta={settingsMeta}
+        siteSettings={siteSettings}
+      />
 
-      <Card>
+      <div id="settings-form">
+        <SiteSettingsForm settings={siteSettings} />
+      </div>
+
+      <Card id="takeover-plan">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CircleDashed size={18} className="text-[#E36F2C]" />
@@ -419,7 +690,7 @@ export default async function SettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <Card>
+        <Card id="system-config">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Database size={18} className="text-[#E36F2C]" />
@@ -516,7 +787,7 @@ export default async function SettingsPage() {
         </Card>
       </div>
 
-      <Card>
+      <Card id="admin-logs">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity size={18} className="text-[#E36F2C]" />
@@ -581,7 +852,7 @@ function LinkRow({
   title,
   text,
 }: {
-  icon: typeof Activity
+  icon: LucideIcon
   title: string
   text: string
 }) {
