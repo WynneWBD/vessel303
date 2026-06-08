@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { CONVERSION_PATHS } from '@/lib/admin-conversion-paths'
 import {
   formatNumber,
   loadStatusOverview,
@@ -10,9 +11,11 @@ import {
   sourceTypeLabel,
   type AnalyticsBehaviorStep,
   type AnalyticsComparisonMetric,
+  type AnalyticsConversionMetric,
   type AnalyticsDeltaMetric,
   type AnalyticsPeriodMetric,
   type AnalyticsRankRow,
+  type SiteAnalyticsDashboard,
   type AnalyticsTrendRow,
   type AnalyticsWindowMetric,
 } from '@/lib/site-analytics'
@@ -124,6 +127,18 @@ export default async function AdminStatusPage() {
         thirtyDays={thirtyDays}
         todayComparison={todayComparison}
         thirtyComparison={thirtyComparison}
+        newLeads={overview.leads.new}
+        contentIssues={contentTotals.issues}
+        siteIssues={siteIssues}
+        pageDrafts={overview.site.pages.total}
+      />
+
+      <AnalyticsCommandWorkbench
+        analytics={analytics}
+        today={today}
+        yesterday={yesterday}
+        sevenDays={sevenDays}
+        thirtyDays={thirtyDays}
         newLeads={overview.leads.new}
         contentIssues={contentTotals.issues}
         siteIssues={siteIssues}
@@ -319,6 +334,281 @@ export default async function AdminStatusPage() {
       </div>
     </StatusPageShell>
   )
+}
+
+function AnalyticsCommandWorkbench({
+  analytics,
+  today,
+  yesterday,
+  sevenDays,
+  thirtyDays,
+  newLeads,
+  contentIssues,
+  siteIssues,
+  pageDrafts,
+}: {
+  analytics: SiteAnalyticsDashboard
+  today: AnalyticsPeriodMetric
+  yesterday: AnalyticsPeriodMetric
+  sevenDays: AnalyticsWindowMetric
+  thirtyDays: AnalyticsWindowMetric
+  newLeads: number
+  contentIssues: number
+  siteIssues: number
+  pageDrafts: number
+}) {
+  const bestDay = getBestTrafficDay(analytics.dailyTrend)
+  const topPage = analytics.topPages[0]
+  const topLandingPage = analytics.landingPages[0]
+  const quietLandingPage = analytics.landingPages.find((row) => row.value >= 10 && (row.secondary ?? 0) === 0)
+  const topSource = analytics.sourceTypes[0]
+  const topConversionPath = getTopConversionPath(analytics.conversionPaths)
+  const queueTotal = newLeads + contentIssues + siteIssues + pageDrafts
+  const timeRows = [
+    { label: '今日', value: today.pageViews, visitors: today.visitors, actions: metricActions(today), leads: today.leads, rate: today.conversionRate },
+    { label: '昨日', value: yesterday.pageViews, visitors: yesterday.visitors, actions: metricActions(yesterday), leads: yesterday.leads, rate: yesterday.conversionRate },
+    { label: '近 7 天', value: sevenDays.pageViews, visitors: sevenDays.visitors, actions: metricActions(sevenDays), leads: sevenDays.leads, rate: sevenDays.conversionRate },
+    { label: '近 30 天', value: thirtyDays.pageViews, visitors: thirtyDays.visitors, actions: metricActions(thirtyDays), leads: thirtyDays.leads, rate: thirtyDays.conversionRate },
+  ]
+  const funnelRows = [
+    {
+      label: '入口访问',
+      value: thirtyDays.pageViews,
+      detail: topPage ? `Top page ${topPage.label}` : '暂无访问页面',
+      href: '/admin/status/traffic?range=30#trend-analysis',
+    },
+    {
+      label: '有效访客',
+      value: thirtyDays.visitors,
+      detail: '匿名 hash 统计，不保存 IP',
+      href: '/admin/status/traffic?range=30',
+    },
+    {
+      label: '转化动作',
+      value: metricActions(thirtyDays),
+      detail: `CTA ${formatNumber(thirtyDays.ctaClicks)} / 表单 ${formatNumber(thirtyDays.formSubmits)}`,
+      href: '/admin/status/traffic#behavior-analysis',
+    },
+    {
+      label: '真实线索',
+      value: thirtyDays.leads,
+      detail: `访问转化率 ${formatAnalyticsPercent(thirtyDays.conversionRate)}`,
+      href: '/admin/site/conversion',
+    },
+    {
+      label: '处理队列',
+      value: queueTotal,
+      detail: `线索 ${formatNumber(newLeads)} / 内容 ${formatNumber(contentIssues)} / 站点 ${formatNumber(siteIssues)}`,
+      href: queueTotal > 0 ? '/admin/status/content' : '/admin/status/activity',
+    },
+  ]
+  const signalRows = [
+    {
+      signal: '高访问页面',
+      value: topPage ? `${topPage.label} / ${formatNumber(topPage.value)} PV` : '暂无访问',
+      status: topPage ? '可下钻' : '等待数据',
+      detail: topPage ? `${formatNumber(topPage.secondary ?? 0)} 个匿名访客` : '第一方事件表没有可展示样本。',
+      href: '/admin/status/traffic?range=30#behavior-analysis',
+      tone: topPage ? 'blue' : 'gray',
+    },
+    {
+      signal: '高访问低动作',
+      value: quietLandingPage ? `${quietLandingPage.label} / ${formatNumber(quietLandingPage.value)} PV` : '未发现',
+      status: quietLandingPage ? '优先检查' : '正常',
+      detail: quietLandingPage
+        ? '该落地页当前没有后续动作，建议核对 CTA、首屏和内容匹配。'
+        : topLandingPage
+          ? `当前入口页已有动作样本：${topLandingPage.label}`
+          : '暂无落地页样本。',
+      href: '/admin/status/traffic#landing-analysis',
+      tone: quietLandingPage ? 'orange' : 'green',
+    },
+    {
+      signal: '线索承接',
+      value: `${formatNumber(newLeads)} 新线索`,
+      status: newLeads > 0 ? '立即处理' : '正常',
+      detail: topConversionPath
+        ? `当前最高转化入口：${topConversionPath.label}`
+        : '暂无可排序的转化路径样本。',
+      href: '/admin/customers/leads?status=new',
+      tone: newLeads > 0 ? 'orange' : 'green',
+    },
+    {
+      signal: '内容与站点缺口',
+      value: `${formatNumber(contentIssues + siteIssues + pageDrafts)} 项`,
+      status: contentIssues + siteIssues + pageDrafts > 0 ? '排队处理' : '正常',
+      detail: `内容 ${formatNumber(contentIssues)} / 站点 ${formatNumber(siteIssues)} / 页面草稿 ${formatNumber(pageDrafts)}`,
+      href: '/admin/status/content',
+      tone: contentIssues + siteIssues + pageDrafts > 0 ? 'orange' : 'green',
+    },
+  ]
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-base font-bold text-[#1E2C31]">分析指挥台</h2>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">
+            英文站、访问口径、转化动作和处理队列集中在同一屏；只读统计，不写业务数据。
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 font-semibold text-[#1E2C31]">
+            www.vessel303.com
+          </span>
+          <span className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-[#61767D]">
+            主口径：近 30 天
+          </span>
+          <Link href="/admin/status/traffic?range=30" className="inline-flex h-8 items-center rounded-md bg-[#1889B6] px-3 font-semibold text-white hover:bg-[#14799F]">
+            详细数据分析
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-0 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
+        <div className="border-b border-[#E6EEEE] xl:border-r xl:border-b-0">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-sm">
+              <thead>
+                <tr className="border-b border-[#E6EEEE] bg-white text-[#61767D]">
+                  <th className="px-5 py-3 text-left font-medium">时间口径</th>
+                  <th className="px-4 py-3 text-right font-medium">PV</th>
+                  <th className="px-4 py-3 text-right font-medium">访客</th>
+                  <th className="px-4 py-3 text-right font-medium">动作</th>
+                  <th className="px-4 py-3 text-right font-medium">线索</th>
+                  <th className="px-5 py-3 text-right font-medium">转化率</th>
+                </tr>
+              </thead>
+              <tbody>
+                {timeRows.map((row) => (
+                  <tr key={row.label} className="border-b border-[#E6EEEE] last:border-0">
+                    <td className="px-5 py-3 font-semibold text-[#1E2C31]">{row.label}</td>
+                    <td className="px-4 py-3 text-right font-bold text-[#1E2C31]">{formatNumber(row.value)}</td>
+                    <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.visitors)}</td>
+                    <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.actions)}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-[#E36F2C]">{formatNumber(row.leads)}</td>
+                    <td className="px-5 py-3 text-right font-semibold text-[#1889B6]">{formatAnalyticsPercent(row.rate)}</td>
+                  </tr>
+                ))}
+                <tr className="bg-[#FBFDFD]">
+                  <td className="px-5 py-3 font-semibold text-[#1E2C31]">近 30 天最高日</td>
+                  <td className="px-4 py-3 text-right font-bold text-[#1E2C31]">{bestDay ? formatNumber(bestDay.pageViews) : '--'}</td>
+                  <td className="px-4 py-3 text-right text-[#61767D]">{bestDay ? formatNumber(bestDay.visitors) : '--'}</td>
+                  <td className="px-4 py-3 text-right text-[#61767D]">{bestDay ? formatNumber(bestDay.actions) : '--'}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-[#E36F2C]">{bestDay ? formatNumber(bestDay.leads) : '--'}</td>
+                  <td className="px-5 py-3 text-right text-xs font-semibold text-[#61767D]">{bestDay ? formatTrendDate(bestDay.date) : '暂无趋势'}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] border-t border-[#E6EEEE] md:grid-cols-5 md:divide-x md:divide-y-0">
+            {funnelRows.map((row) => (
+              <Link key={row.label} href={row.href} className="min-h-28 p-4 transition hover:bg-[#F7FAFA]">
+                <span className="block text-xs font-semibold text-[#61767D]">{row.label}</span>
+                <span className="mt-2 block text-2xl font-black text-[#1E2C31]">{formatNumber(row.value)}</span>
+                <span className="mt-2 block text-xs leading-5 text-[#61767D]">{row.detail}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="p-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-1">
+            <SignalMiniCard
+              label="主要来源"
+              value={topSource ? `${sourceTypeLabel(topSource.key)} / ${formatNumber(topSource.value)}` : '暂无来源'}
+              detail="按 CTA、联系跳转和表单 source type 聚合。"
+            />
+            <SignalMiniCard
+              label="最高转化入口"
+              value={topConversionPath ? topConversionPath.label : '暂无转化路径'}
+              detail={topConversionPath ? `动作 ${formatNumber(topConversionPath.metric.ctaClicks)} / 线索 ${formatNumber(topConversionPath.metric.leads)}` : '等待更多事件样本。'}
+            />
+          </div>
+          <div className="mt-4 overflow-hidden rounded-md border border-[#E6EEEE]">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
+                  <th className="px-3 py-2 text-left font-medium">运营信号</th>
+                  <th className="px-3 py-2 text-left font-medium">状态</th>
+                  <th className="px-3 py-2 text-right font-medium">处理</th>
+                </tr>
+              </thead>
+              <tbody>
+                {signalRows.map((row) => (
+                  <tr key={row.signal} className="border-b border-[#E6EEEE] last:border-0">
+                    <td className="px-3 py-3">
+                      <div className="font-semibold text-[#1E2C31]">{row.signal}</div>
+                      <div className="mt-1 text-xs text-[#61767D]">{row.value}</div>
+                    </td>
+                    <td className="px-3 py-3">
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-bold ${signalToneClass(row.tone)}`}>
+                        {row.status}
+                      </span>
+                      <div className="mt-1 text-xs leading-5 text-[#61767D]">{row.detail}</div>
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <Link href={row.href} className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+                        进入
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function SignalMiniCard({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <div className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] p-3">
+      <div className="text-xs font-semibold text-[#61767D]">{label}</div>
+      <div className="mt-1 truncate text-sm font-bold text-[#1E2C31]">{value}</div>
+      <div className="mt-1 text-xs leading-5 text-[#61767D]">{detail}</div>
+    </div>
+  )
+}
+
+function getBestTrafficDay(rows: AnalyticsTrendRow[]) {
+  if (rows.length === 0) return null
+  return rows.reduce((best, row) => {
+    if (row.pageViews > best.pageViews) return row
+    if (row.pageViews === best.pageViews && row.actions > best.actions) return row
+    return best
+  }, rows[0])
+}
+
+function getTopConversionPath(conversionPaths: Record<string, AnalyticsConversionMetric>) {
+  const rows = CONVERSION_PATHS
+    .map((item) => ({
+      key: item.key,
+      label: item.area,
+      metric: conversionPaths[item.key] ?? {
+        views: 0,
+        ctaClicks: 0,
+        formSubmits: 0,
+        leads: 0,
+        conversionRate: 0,
+      },
+    }))
+    .sort((a, b) => conversionMetricScore(b.metric) - conversionMetricScore(a.metric))
+  return rows.find((row) => conversionMetricScore(row.metric) > 0)
+}
+
+function conversionMetricScore(metric: AnalyticsConversionMetric) {
+  return metric.leads * 1000 + metric.formSubmits * 100 + metric.ctaClicks + metric.views * 0.01
+}
+
+function signalToneClass(tone: string) {
+  if (tone === 'orange') return 'bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'green') return 'bg-emerald-50 text-emerald-700'
+  if (tone === 'blue') return 'bg-[#EAF6F8] text-[#1889B6]'
+  return 'bg-[#F0F2F2] text-[#61767D]'
 }
 
 function AnalysisToolbar({ activeRange }: { activeRange: 'today' | 'yesterday' | '7' | '30' }) {
