@@ -2,6 +2,10 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
+import ProductEditorConsole, {
+  type ProductEditorMetric,
+  type ProductEditorSignal,
+} from '@/components/admin/ProductEditorConsole'
 import ProjectForm from '@/components/admin/ProjectForm'
 import {
   AlertTriangle,
@@ -201,6 +205,58 @@ export default async function AdminContentProjectNewPage() {
   }
 
   const adminRole: AdminRole = role
+  const consoleMetrics: ProductEditorMetric[] = [
+    {
+      label: '默认状态',
+      value: '草稿',
+      detail: '保存后进入项目编辑页，发布前不会公开展示。',
+      tone: 'ready',
+    },
+    {
+      label: '编辑分区',
+      value: EDIT_SECTIONS.length.toString(),
+      detail: '基础、媒体、内容、参数、Global、发布检查。',
+      tone: 'neutral',
+    },
+    {
+      label: 'Global 入图',
+      value: '受控',
+      detail: '发布且坐标有效后才进入公开地图点位。',
+      tone: 'warning',
+    },
+    {
+      label: '公开案例',
+      value: '未公开',
+      detail: '创建草稿不会影响 /cases 和 /global。',
+      tone: 'ready',
+    },
+  ]
+  const consoleSignals: ProductEditorSignal[] = [
+    {
+      label: '新建会写入项目数据',
+      detail: '点击保存后创建项目案例记录；发布仍由 ProjectForm 的状态字段和保存动作控制。',
+      tone: 'warning',
+      href: '#publish-check',
+    },
+    {
+      label: '图片上传立即进入媒体库',
+      detail: '选择图片只回填当前表单，最终仍需保存项目才生效。',
+      tone: 'warning',
+      href: '#media',
+    },
+    {
+      label: 'Global 不是案例详情页',
+      detail: 'Global 只做地图点位；正式案例内容、图库和叙事归 /cases/[id]。',
+      tone: 'neutral',
+      href: '#global',
+    },
+    {
+      label: '先补正式展示再看入图',
+      detail: '建议先补基础信息、封面图库、案例简介和项目参数，再填写坐标与地图资料。',
+      tone: 'ready',
+      href: '#basic',
+    },
+  ]
 
   return (
     <AdminSectionShell
@@ -213,6 +269,13 @@ export default async function AdminContentProjectNewPage() {
       activeItem="project-new"
     >
       <Hero />
+      <ProductEditorConsole
+        title="新建项目案例任务台"
+        description="先确认项目案例的创建边界、编辑顺序、图片保存和 Global 入图规则，再进入长表单填写。"
+        sections={EDIT_SECTIONS}
+        metrics={consoleMetrics}
+        signals={consoleSignals}
+      />
       <EditSectionGrid />
       <RiskNotice />
       <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm md:p-5">
