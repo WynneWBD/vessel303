@@ -121,6 +121,12 @@ type ProjectPriorityItem = {
   score: number
 }
 
+type ActiveFilterChip = {
+  label: string
+  value: string
+  href: string
+}
+
 const EMPTY_SUMMARY: ProjectSummary = {
   total: 0,
   published: 0,
@@ -353,6 +359,44 @@ function createHref(filters: FilterState, patch: Partial<FilterState & { clearSe
   return query ? `/admin/content/projects/list?${query}` : '/admin/content/projects/list'
 }
 
+function getProjectViewLabel(view: ProjectView): string {
+  if (view === 'incomplete') return '待补内容'
+  if (view === 'map-ready') return '可入 Global'
+  if (view === 'missing-coordinates') return '缺坐标'
+  if (view === 'unpublished-with-coordinates') return '有坐标待发布'
+  return '全部视图'
+}
+
+function buildActiveFilterChips(filters: FilterState): ActiveFilterChip[] {
+  const chips: ActiveFilterChip[] = []
+
+  if (filters.status) {
+    chips.push({
+      label: '状态',
+      value: filters.status === 'published' ? '已发布' : '草稿',
+      href: createHref(filters, { status: '' }),
+    })
+  }
+
+  if (filters.view) {
+    chips.push({
+      label: '视图',
+      value: getProjectViewLabel(filters.view),
+      href: createHref(filters, { view: '' }),
+    })
+  }
+
+  if (filters.search) {
+    chips.push({
+      label: '搜索',
+      value: filters.search,
+      href: createHref(filters, { clearSearch: true }),
+    })
+  }
+
+  return chips
+}
+
 function buildWhere(filters: FilterState): { where: string; params: unknown[] } {
   const conditions = ['deleted_at IS NULL']
   const params: unknown[] = []
@@ -573,6 +617,150 @@ function StatusTabs({ filters, summary }: { filters: FilterState; summary: Proje
   ]
 
   return <AdminSegmentTabs items={tabs.map((tab) => ({ ...tab, count: formatNumber(tab.count) }))} />
+}
+
+function ProjectListControlStrip({
+  filters,
+  summary,
+  total,
+  rowsCount,
+}: {
+  filters: FilterState
+  summary: ProjectSummary
+  total: number
+  rowsCount: number
+}) {
+  const chips = buildActiveFilterChips(filters)
+  const firstRowNumber = total > 0 ? (filters.page - 1) * PAGE_SIZE + 1 : 0
+  const lastRowNumber = total > 0 ? Math.min(total, firstRowNumber + rowsCount - 1) : 0
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const quickLinks = [
+    { label: '全部项目', href: '/admin/content/projects/list', count: summary.total, active: chips.length === 0 },
+    {
+      label: '已发布',
+      href: createHref(filters, { status: 'published', view: '' }),
+      count: summary.published,
+      active: filters.status === 'published' && !filters.view,
+    },
+    {
+      label: '草稿',
+      href: createHref(filters, { status: 'draft', view: '' }),
+      count: summary.draft,
+      active: filters.status === 'draft' && !filters.view,
+    },
+    {
+      label: '待补内容',
+      href: createHref(filters, { status: '', view: 'incomplete' }),
+      count: summary.incomplete,
+      active: filters.view === 'incomplete',
+    },
+    {
+      label: '可入 Global',
+      href: createHref(filters, { status: '', view: 'map-ready' }),
+      count: summary.mapReady,
+      active: filters.view === 'map-ready',
+    },
+    {
+      label: '缺坐标',
+      href: createHref(filters, { status: '', view: 'missing-coordinates' }),
+      count: summary.missingCoordinates,
+      active: filters.view === 'missing-coordinates',
+    },
+    {
+      label: '坐标待发布',
+      href: createHref(filters, { status: '', view: 'unpublished-with-coordinates' }),
+      count: null,
+      active: filters.view === 'unpublished-with-coordinates',
+    },
+  ]
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px]">
+        <div className="border-l-4 border-[#1889B6] px-4 py-4">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Case List Console</p>
+          <div className="mt-2 flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+            <div className="min-w-0">
+              <h2 className="text-lg font-bold text-[#1E2C31]">当前案例视图</h2>
+              <p className="mt-1 text-sm leading-6 text-[#61767D]">
+                当前筛选命中 {formatNumber(total)} 个项目，本页显示 {formatNumber(rowsCount)} 个；先确认内容完整度和 Global 入图状态，再进入编辑处理。
+              </p>
+            </div>
+            <Link
+              href="/admin/content/projects/list"
+              className="inline-flex h-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#61767D] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
+            >
+              清空全部筛选
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 border-t border-[#E6EEEE] bg-[#FBFDFD] lg:border-l lg:border-t-0">
+          <ProjectControlStat label="结果总量" value={formatNumber(total)} detail={`第 ${formatNumber(filters.page)} / ${formatNumber(pageCount)} 页`} />
+          <ProjectControlStat label="当前区间" value={`${formatNumber(firstRowNumber)}-${formatNumber(lastRowNumber)}`} detail={`每页 ${formatNumber(PAGE_SIZE)} 条`} />
+          <ProjectControlStat label="入图率" value={formatPercent(summary.mapReady, summary.total)} detail={`${formatNumber(summary.mapReady)} 可入 Global`} />
+        </div>
+      </div>
+
+      <div className="border-t border-[#E6EEEE] px-4 py-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#8A9EA4]">Active Filters</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {chips.length > 0 ? (
+                chips.map((chip) => (
+                  <Link
+                    key={`${chip.label}-${chip.value}`}
+                    href={chip.href}
+                    className="inline-flex min-h-8 items-center gap-2 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-2.5 py-1 text-xs text-[#61767D] transition hover:border-[#1889B6] hover:bg-[#EAF6F8] hover:text-[#1889B6]"
+                  >
+                    <span className="font-semibold text-[#1E2C31]">{chip.label}</span>
+                    <span className="max-w-[220px] truncate">{chip.value}</span>
+                    <span className="text-[#8A9EA4]">移除</span>
+                  </Link>
+                ))
+              ) : (
+                <span className="inline-flex min-h-8 items-center rounded-md border border-dashed border-[#D8E7E8] px-2.5 py-1 text-xs font-semibold text-[#8A9EA4]">
+                  当前为全部项目视图
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="grid min-w-full grid-cols-2 gap-2 sm:grid-cols-3 lg:min-w-[560px] xl:grid-cols-4">
+            {quickLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className={`flex min-h-11 items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs font-semibold transition ${
+                  link.active
+                    ? 'border-[#1889B6] bg-[#EAF6F8] text-[#1889B6]'
+                    : 'border-[#D8E7E8] bg-white text-[#61767D] hover:border-[#1889B6] hover:text-[#1889B6]'
+                }`}
+              >
+                <span>{link.label}</span>
+                {link.count === null ? (
+                  <ArrowRight size={13} />
+                ) : (
+                  <span className="rounded bg-[#F0F7F8] px-1.5 py-0.5 text-[11px]">{formatNumber(link.count)}</span>
+                )}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function ProjectControlStat({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <div className="border-r border-[#E6EEEE] px-4 py-4 last:border-r-0">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className="mt-1 truncate text-xl font-bold text-[#1E2C31]">{value}</p>
+      <p className="mt-1 truncate text-xs text-[#8A9EA4]">{detail}</p>
+    </div>
+  )
 }
 
 function ProjectOperationsMatrix({
@@ -1083,6 +1271,12 @@ export default async function AdminContentProjectsListPage({ searchParams }: Pag
       <div className="space-y-6">
         <SummaryCards summary={summary} />
         <StatusTabs filters={filters} summary={summary} />
+        <ProjectListControlStrip
+          filters={filters}
+          summary={summary}
+          total={list.total}
+          rowsCount={list.rows.length}
+        />
         <ProjectOperationsMatrix summary={summary} rows={list.rows} filters={filters} />
         <FilterPanel filters={filters} />
         <ProjectList rows={list.rows} total={list.total} filters={filters} />
