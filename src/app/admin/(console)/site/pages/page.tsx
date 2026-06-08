@@ -147,6 +147,14 @@ function formatDateTime(value: string | null): string {
   }).format(date)
 }
 
+function latestContractDate(values: Array<string | null | undefined>): string | null {
+  const dates = values
+    .map((value) => (value ? new Date(value) : null))
+    .filter((value): value is Date => value instanceof Date && !Number.isNaN(value.getTime()))
+    .sort((a, b) => b.getTime() - a.getTime())
+  return dates[0]?.toISOString() ?? null
+}
+
 function levelLabel(level: GovernanceContractStatus['issueLevel']): string {
   if (level === 'ok') return '已闭合'
   if (level === 'warning') return '需补内容'
@@ -213,6 +221,181 @@ function SummaryTile({
       <p className="mt-3 text-3xl font-bold text-[#1E2C31]">{value}</p>
       <p className="mt-1 text-xs text-[#61767D]">{detail}</p>
     </div>
+  )
+}
+
+function contractPriorityScore(contract: GovernanceContractStatus) {
+  if (contract.issueLevel === 'warning') return 100
+  if (contract.issueLevel === 'notice') return 70
+  if (contract.issueLevel === 'protected') return 20
+  return 0
+}
+
+function buildSourceOperationsRows(contracts: GovernanceContractStatus[]) {
+  const sourceTypes: GovernanceSourceType[] = [
+    'page_modules',
+    'product_cms',
+    'project_cms',
+    'news_cms',
+    'b9_cms',
+    'site_settings',
+    'protected',
+  ]
+
+  return sourceTypes
+    .map((sourceType) => {
+      const items = contracts.filter((contract) => contract.sourceType === sourceType)
+      const published = items.reduce((sum, contract) => sum + contract.metrics.published, 0)
+      const draft = items.reduce((sum, contract) => sum + contract.metrics.draft + contract.metrics.draftModules, 0)
+      const issues = items.filter((contract) => contract.issueLevel === 'warning' || contract.issueLevel === 'notice').length
+      const warnings = items.reduce((sum, contract) => sum + contract.metrics.contentWarnings.length, 0)
+      const latestUpdatedAt = latestContractDate(items.map((contract) => contract.metrics.latestUpdatedAt))
+      const hrefs = Array.from(new Set(items.map((contract) => contract.adminHref).filter((href): href is string => Boolean(href))))
+
+      return {
+        sourceType,
+        items,
+        published,
+        draft,
+        issues,
+        warnings,
+        latestUpdatedAt,
+        hrefs,
+      }
+    })
+    .filter((row) => row.items.length > 0)
+}
+
+function buildContentSourcePriority(contracts: GovernanceContractStatus[]) {
+  return [...contracts]
+    .map((contract) => ({
+      contract,
+      score:
+        contractPriorityScore(contract) +
+        contract.issues.length * 8 +
+        contract.metrics.contentWarnings.length * 4 +
+        contract.metrics.draftModules * 2 +
+        contract.metrics.draft,
+    }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || a.contract.title.localeCompare(b.contract.title))
+    .slice(0, 6)
+}
+
+function ContentSourceOperationsMatrix({ contracts }: { contracts: GovernanceContractStatus[] }) {
+  const sourceRows = buildSourceOperationsRows(contracts)
+  const priorityRows = buildContentSourcePriority(contracts)
+  const warningContracts = contracts.filter((contract) => contract.issueLevel === 'warning').length
+  const noticeContracts = contracts.filter((contract) => contract.issueLevel === 'notice').length
+  const contentWarnings = contracts.reduce((sum, contract) => sum + contract.metrics.contentWarnings.length, 0)
+  const publishedTotal = contracts.reduce((sum, contract) => sum + contract.metrics.published, 0)
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-5 shadow-sm">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-[#1E2C31]">内容来源运营矩阵</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            先按来源类型看 published、草稿、缺口和内部词提示，再进入对应后台 owner 处理。
+          </p>
+        </div>
+        <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1889B6]">
+          {warningContracts} 个 warning / {noticeContracts} 个 notice / {contentWarnings} 个内容提示
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+        <SummaryTile title="published 来源" value={publishedTotal} detail="来自页面模块、CMS 和站点设置" Icon={Database} />
+        <SummaryTile title="需优先处理" value={priorityRows.length} detail="按 warning、notice、内容提示排序" Icon={AlertTriangle} />
+        <SummaryTile title="来源类型" value={sourceRows.length} detail="当前已登记的后台来源" Icon={ListChecks} />
+        <SummaryTile title="受保护边界" value={contracts.filter((contract) => contract.issueLevel === 'protected').length} detail="Global 等专项不在此页修改" Icon={LockKeyhole} />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="rounded-md border border-[#D8E7E8] bg-white p-4">
+          <h3 className="text-sm font-bold text-[#1E2C31]">来源类型分布</h3>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full min-w-[760px] text-sm">
+              <thead>
+                <tr className="border-b border-[#E6EEEE] text-[#61767D]">
+                  <th className="py-2 text-left font-medium">来源</th>
+                  <th className="py-2 text-right font-medium">合同</th>
+                  <th className="py-2 text-right font-medium">published</th>
+                  <th className="py-2 text-right font-medium">草稿</th>
+                  <th className="py-2 text-right font-medium">缺口</th>
+                  <th className="py-2 text-right font-medium">内容提示</th>
+                  <th className="py-2 text-left font-medium">入口</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sourceRows.map((row) => (
+                  <tr key={row.sourceType} className="border-b border-[#E6EEEE] last:border-0">
+                    <td className="py-3">
+                      <span className={`rounded-full px-2 py-1 text-xs font-semibold ${sourceClassName(row.sourceType)}`}>
+                        {SOURCE_LABEL[row.sourceType]}
+                      </span>
+                      <p className="mt-1 text-xs text-[#8A9EA4]">最近 {formatDateTime(row.latestUpdatedAt)}</p>
+                    </td>
+                    <td className="py-3 text-right font-bold text-[#1E2C31]">{row.items.length}</td>
+                    <td className="py-3 text-right text-[#61767D]">{row.published}</td>
+                    <td className="py-3 text-right text-[#61767D]">{row.draft}</td>
+                    <td className="py-3 text-right text-[#E36F2C]">{row.issues}</td>
+                    <td className="py-3 text-right text-[#E36F2C]">{row.warnings}</td>
+                    <td className="py-3">
+                      <div className="flex flex-wrap gap-1.5">
+                        {row.hrefs.slice(0, 2).map((href) => (
+                          <Link key={href} href={href} className="inline-flex h-7 items-center gap-1 rounded-md border border-[#D8E7E8] px-2 text-xs font-semibold text-[#1889B6] hover:border-[#1889B6]/60">
+                            进入 <ArrowRight size={12} />
+                          </Link>
+                        ))}
+                        {row.hrefs.length > 2 ? (
+                          <span className="inline-flex h-7 items-center rounded-md bg-[#F7FAFA] px-2 text-xs text-[#61767D]">
+                            +{row.hrefs.length - 2}
+                          </span>
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <aside className="rounded-md border border-[#D8E7E8] bg-white p-4">
+          <h3 className="text-sm font-bold text-[#1E2C31]">优先处理队列</h3>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">点击进入合同 owner，避免从前台猜内容来源。</p>
+          <div className="mt-3 space-y-2">
+            {priorityRows.length > 0 ? (
+              priorityRows.map(({ contract, score }) => (
+                <Link
+                  key={contract.key}
+                  href={contract.adminHref ?? contract.previewHref}
+                  className="block rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-3 transition hover:border-[#1889B6]/60 hover:bg-white"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-[#1E2C31]">{contract.title}</p>
+                      <p className="mt-1 text-xs text-[#61767D]">{SOURCE_LABEL[contract.sourceType]} · {contract.owner}</p>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${levelClassName(contract.issueLevel)}`}>
+                      {levelLabel(contract.issueLevel)}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-[#61767D]">
+                    {contract.issues[0] ?? contract.note} / score {score}
+                  </p>
+                </Link>
+              ))
+            ) : (
+              <p className="rounded-md bg-[#F7FAFA] px-3 py-3 text-xs leading-5 text-[#61767D]">
+                当前没有 warning 或 notice 合同。
+              </p>
+            )}
+          </div>
+        </aside>
+      </div>
+    </section>
   )
 }
 
@@ -449,6 +632,7 @@ export default async function AdminSitePagesPage() {
       </section>
 
       <GuardrailPanel />
+      <ContentSourceOperationsMatrix contracts={contracts} />
       <ContractMatrix contracts={contracts} />
     </AdminSectionShell>
   )
