@@ -261,6 +261,12 @@ export default async function AdminSiteConversionPage() {
           <StatCard label="30 天真实转化" value={totalLeads} detail={`访问 ${totalViews}，转化率 ${formatAnalyticsPercent(totalViews > 0 ? totalLeads / totalViews : 0)}；已排除测试线索 ${excludedTestLeads}`} />
         </section>
 
+        <ConversionPathLedger
+          orderedPaths={orderedPaths}
+          pathAnalytics={pathAnalytics}
+          totalViews={totalViews}
+        />
+
         <ConversionHealthMatrix rows={healthRows} />
 
         <ConversionCommandBoard
@@ -352,6 +358,115 @@ export default async function AdminSiteConversionPage() {
         </section>
       </div>
     </AdminSectionShell>
+  )
+}
+
+function ConversionPathLedger({
+  orderedPaths,
+  pathAnalytics,
+  totalViews,
+}: {
+  orderedPaths: ConversionPathItem[]
+  pathAnalytics: Record<string, AnalyticsConversionMetric>
+  totalViews: number
+}) {
+  const rows = orderedPaths.map((item, index) => {
+    const metric = getMetric(pathAnalytics, item.key)
+    const priority = getConversionPriority(item, metric)
+    const actions = metric.ctaClicks + metric.formSubmits
+    return {
+      item,
+      metric,
+      priority,
+      actions,
+      rank: index + 1,
+      share: totalViews > 0 ? metric.views / totalViews : 0,
+      actionRate: metric.views > 0 ? actions / metric.views : 0,
+      leadRate: metric.views > 0 ? metric.leads / metric.views : 0,
+    }
+  })
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-[#1E2C31]">转化路径口径总表</h2>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">
+            对齐 300 后台的先看表格再下钻心智：路径、source 规则、访问、动作、表单、线索和处理入口放在同一张表里。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs font-semibold">
+          <span className="rounded-full bg-[#F0F7F8] px-2.5 py-1 text-[#1889B6]">30 天窗口</span>
+          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">排除测试线索</span>
+          <span className="rounded-full bg-[#FFF2E7] px-2.5 py-1 text-[#E36F2C]">只读不写配置</span>
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1120px] text-sm">
+          <thead>
+            <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
+              <th className="px-4 py-3 text-left font-medium">序号</th>
+              <th className="px-4 py-3 text-left font-medium">入口 / 状态</th>
+              <th className="px-4 py-3 text-left font-medium">source 规则</th>
+              <th className="px-4 py-3 text-right font-medium">访问</th>
+              <th className="px-4 py-3 text-right font-medium">访问占比</th>
+              <th className="px-4 py-3 text-right font-medium">动作 / 表单</th>
+              <th className="px-4 py-3 text-right font-medium">线索</th>
+              <th className="px-4 py-3 text-right font-medium">动作率 / 线索率</th>
+              <th className="px-4 py-3 text-left font-medium">处理判断</th>
+              <th className="px-4 py-3 text-right font-medium">入口</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(({ item, metric, priority, actions, rank, share, actionRate, leadRate }) => {
+              const statusMeta = STATUS_META[item.status]
+              return (
+                <tr key={item.key} className="border-b border-[#E6EEEE] last:border-0">
+                  <td className="px-4 py-3 font-mono text-xs text-[#8A9EA4]">{rank.toString().padStart(2, '0')}</td>
+                  <td className="px-4 py-3">
+                    <div className="font-semibold text-[#1E2C31]">{item.area}</div>
+                    <span className={`mt-2 inline-flex rounded-full border px-2 py-1 text-[11px] font-semibold ${statusMeta.className}`}>
+                      {statusMeta.label}
+                    </span>
+                  </td>
+                  <td className="max-w-[280px] px-4 py-3">
+                    <div className="truncate font-mono text-xs text-[#1E2C31]" title={item.sourceRule}>
+                      {item.sourceRule}
+                    </div>
+                    <div className="mt-1 text-[11px] text-[#8A9EA4]">{item.leadCapture}</div>
+                  </td>
+                  <td className="px-4 py-3 text-right font-bold text-[#1E2C31]">{metric.views.toLocaleString('zh-CN')}</td>
+                  <td className="px-4 py-3 text-right text-[#61767D]">{formatAnalyticsPercent(share)}</td>
+                  <td className="px-4 py-3 text-right text-[#61767D]">
+                    {actions.toLocaleString('zh-CN')} / {metric.formSubmits.toLocaleString('zh-CN')}
+                  </td>
+                  <td className="px-4 py-3 text-right font-bold text-[#1E2C31]">{metric.leads.toLocaleString('zh-CN')}</td>
+                  <td className="px-4 py-3 text-right text-[#61767D]">
+                    {formatAnalyticsPercent(actionRate)} / {formatAnalyticsPercent(leadRate)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex rounded-full border px-2 py-1 text-[11px] font-semibold ${priorityClass(priority.tone)}`}>
+                      {priority.label}
+                    </span>
+                    <p className="mt-1 line-clamp-2 max-w-[240px] text-xs leading-5 text-[#61767D]">{priority.detail}</p>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex justify-end gap-2">
+                      <Link href={item.adminHref} className="text-xs font-semibold text-[#E36F2C] hover:underline">
+                        管理
+                      </Link>
+                      <Link href={item.frontendHref} target="_blank" className="text-xs font-semibold text-[#1889B6] hover:underline">
+                        预览
+                      </Link>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
   )
 }
 
