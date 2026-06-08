@@ -237,6 +237,12 @@ export default async function AdminSiteConversionPage() {
           totalLeads={totalLeads}
         />
 
+        <ConversionFunnelMatrix
+          orderedPaths={orderedPaths}
+          pathAnalytics={pathAnalytics}
+          totalViews={totalViews}
+        />
+
         <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
           <div className="border-b border-[#E6EEEE] px-5 py-4">
             <h2 className="text-lg font-bold text-[#1E2C31]">关键转化入口结果</h2>
@@ -431,6 +437,117 @@ function ConversionCommandBoard({
         </div>
       </aside>
     </section>
+  )
+}
+
+function ConversionFunnelMatrix({
+  orderedPaths,
+  pathAnalytics,
+  totalViews,
+}: {
+  orderedPaths: ConversionPathItem[]
+  pathAnalytics: Record<string, AnalyticsConversionMetric>
+  totalViews: number
+}) {
+  const rows = [...orderedPaths]
+    .map((item) => {
+      const metric = getMetric(pathAnalytics, item.key)
+      const priority = getConversionPriority(item, metric)
+      return {
+        item,
+        metric,
+        priority,
+        share: totalViews > 0 ? metric.views / totalViews : 0,
+        actionRate: metric.views > 0 ? metric.ctaClicks / metric.views : 0,
+        formRate: metric.views > 0 ? metric.formSubmits / metric.views : 0,
+        leadRate: metric.views > 0 ? metric.leads / metric.views : 0,
+      }
+    })
+    .sort((a, b) => {
+      if (b.metric.views !== a.metric.views) return b.metric.views - a.metric.views
+      if (b.metric.ctaClicks !== a.metric.ctaClicks) return b.metric.ctaClicks - a.metric.ctaClicks
+      return b.metric.leads - a.metric.leads
+    })
+  const visibleRows = rows.slice(0, 8)
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-[#1E2C31]">转化漏斗效率矩阵</h2>
+          <p className="mt-1 text-xs text-[#61767D]">
+            按路径查看访问占比、动作率、表单率和线索率；用于决定先优化哪条入口，不直接改配置。
+          </p>
+        </div>
+        <Link href="/admin/status/traffic?range=30" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+          回到网站访问统计
+        </Link>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1080px] text-sm">
+          <thead>
+            <tr className="border-b border-[#E6EEEE] bg-white text-[#61767D]">
+              <th className="px-5 py-3 text-left font-medium">路径</th>
+              <th className="px-4 py-3 text-right font-medium">访问</th>
+              <th className="px-4 py-3 text-right font-medium">访问占比</th>
+              <th className="px-4 py-3 text-right font-medium">动作率</th>
+              <th className="px-4 py-3 text-right font-medium">表单率</th>
+              <th className="px-4 py-3 text-right font-medium">线索率</th>
+              <th className="px-4 py-3 text-left font-medium">判断</th>
+              <th className="px-5 py-3 text-right font-medium">下钻</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleRows.map(({ item, metric, priority, share, actionRate, formRate, leadRate }) => (
+              <tr key={item.key} className="border-b border-[#E6EEEE] last:border-0">
+                <td className="px-5 py-3">
+                  <div className="font-semibold text-[#1E2C31]">{item.area}</div>
+                  <div className="mt-1 max-w-[280px] truncate font-mono text-[11px] text-[#8A9EA4]" title={item.sourceRule}>
+                    {item.sourceRule}
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-right font-bold text-[#1E2C31]">{metric.views.toLocaleString('zh-CN')}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatAnalyticsPercent(share)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">
+                  <FunnelRate value={actionRate} count={metric.ctaClicks} />
+                </td>
+                <td className="px-4 py-3 text-right text-[#61767D]">
+                  <FunnelRate value={formRate} count={metric.formSubmits} />
+                </td>
+                <td className="px-4 py-3 text-right text-[#61767D]">
+                  <FunnelRate value={leadRate} count={metric.leads} />
+                </td>
+                <td className="px-4 py-3">
+                  <span className={`inline-flex rounded-full border px-2 py-1 text-xs font-semibold ${priorityClass(priority.tone)}`}>
+                    {priority.label}
+                  </span>
+                  <div className="mt-1 text-xs leading-5 text-[#61767D]">{priority.detail}</div>
+                </td>
+                <td className="px-5 py-3 text-right">
+                  <div className="flex justify-end gap-2">
+                    <Link href={item.adminHref} className="text-xs font-semibold text-[#E36F2C] hover:underline">
+                      管理
+                    </Link>
+                    <Link href={item.frontendHref} target="_blank" className="text-xs font-semibold text-[#1889B6] hover:underline">
+                      预览
+                    </Link>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
+function FunnelRate({ value, count }: { value: number; count: number }) {
+  return (
+    <span className="inline-flex min-w-24 flex-col items-end">
+      <span className="font-semibold text-[#1E2C31]">{formatAnalyticsPercent(value)}</span>
+      <span className="text-[11px] text-[#8A9EA4]">{count.toLocaleString('zh-CN')} 次</span>
+    </span>
   )
 }
 
