@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
 import { listPublishedNews } from '@/lib/news-db'
 import NewsListView from '@/components/NewsListView'
 import { getUploadVariantsByUrls, mapUploadImageUrl } from '@/lib/upload-image-variants'
@@ -33,7 +32,6 @@ export default async function NewsPage() {
     total: 0,
   }))
   const credibleRows = rows.filter((item) => !isLikelyTestNews(item))
-  if (credibleRows.length === 0) notFound()
   const imageVariants = await getUploadVariantsByUrls(credibleRows.map((item) => item.cover_image_url)).catch((err) => {
     console.error('[news] load news image variants failed', err)
     return new Map()
