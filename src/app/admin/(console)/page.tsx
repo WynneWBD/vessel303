@@ -83,6 +83,15 @@ type TodoItem = {
   ok: boolean
 }
 
+type ControlLane = {
+  title: string
+  metric: string
+  detail: string
+  href: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+}
+
 const EMPTY_STATUS_SUMMARY: StatusSummary = {
   draft: 0,
   published: 0,
@@ -638,6 +647,183 @@ function CommandCard({
   )
 }
 
+function ControlMatrix({
+  leadSummary,
+  productSummary,
+  projectSummary,
+  newsSummary,
+  pageDraftCount,
+  mediaIssueCount,
+  uploadCount,
+  recentSummary,
+  configIssues,
+  isAdmin,
+  todos,
+}: {
+  leadSummary: LeadSummary
+  productSummary: StatusSummary
+  projectSummary: StatusSummary
+  newsSummary: StatusSummary
+  pageDraftCount: number
+  mediaIssueCount: number
+  uploadCount: number
+  recentSummary: RecentContentSummary
+  configIssues: number
+  isAdmin: boolean
+  todos: TodoItem[]
+}) {
+  const contentDrafts = productSummary.draft + projectSummary.draft + newsSummary.draft
+  const contentTotal = productSummary.total + projectSummary.total + newsSummary.total
+  const recentTotal = recentSummary.products + recentSummary.projects + recentSummary.news
+  const priorityTodos = todos
+    .filter((item) => !item.ok)
+    .sort((a, b) => (b.count ?? 0) - (a.count ?? 0) || a.title.localeCompare(b.title))
+    .slice(0, 5)
+
+  const lanes: ControlLane[] = [
+    {
+      title: '线索响应',
+      metric: `${formatNumber(leadSummary.new)} / ${formatNumber(leadSummary.total)}`,
+      detail: '新线索 / 全部线索',
+      href: '/admin/customers/leads?status=new',
+      Icon: Inbox,
+      tone: leadSummary.new > 0 ? 'orange' : 'green',
+    },
+    {
+      title: '内容发布',
+      metric: `${formatNumber(contentDrafts)} / ${formatNumber(contentTotal)}`,
+      detail: '草稿 / 内容总量',
+      href: '/admin/content',
+      Icon: Package,
+      tone: contentDrafts > 0 ? 'orange' : 'green',
+    },
+    {
+      title: '页面发布',
+      metric: formatNumber(pageDraftCount),
+      detail: '页面模块与结构草稿',
+      href: '/admin/site/visual',
+      Icon: LayoutTemplate,
+      tone: pageDraftCount > 0 ? 'orange' : 'green',
+    },
+    {
+      title: '媒体治理',
+      metric: `${formatNumber(mediaIssueCount)} / ${formatNumber(uploadCount)}`,
+      detail: '图片风险 / 媒体记录',
+      href: '/admin/site/media?view=issues',
+      Icon: ImageIcon,
+      tone: mediaIssueCount > 0 ? 'orange' : 'green',
+    },
+    {
+      title: '数据诊断',
+      metric: formatNumber(recentTotal),
+      detail: '近 30 天内容变化',
+      href: '/admin/status/traffic',
+      Icon: BarChart3,
+      tone: 'blue',
+    },
+  ]
+
+  if (isAdmin) {
+    lanes.push({
+      title: '系统边界',
+      metric: formatNumber(configIssues),
+      detail: '环境配置待处理',
+      href: '/admin/settings',
+      Icon: ShieldCheck,
+      tone: configIssues > 0 ? 'orange' : 'green',
+    })
+  }
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-5 shadow-sm">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-[#1E2C31]">总控运营矩阵</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把每日运营入口压成一张表：先判断线索、内容、页面、媒体和系统边界，再进入对应后台处理。
+          </p>
+        </div>
+        <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1889B6]">
+          入口统一 · 只读判断
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 2xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white">
+          <div className="hidden gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 text-xs font-semibold text-[#61767D] md:grid md:grid-cols-[170px_130px_minmax(0,1fr)_110px] lg:grid-cols-[180px_150px_minmax(0,1fr)_120px]">
+            <span>运营链路</span>
+            <span>当前信号</span>
+            <span>判断口径</span>
+            <span>入口</span>
+          </div>
+          {lanes.map((lane) => (
+            <ControlMatrixRow key={lane.title} lane={lane} />
+          ))}
+        </div>
+
+        <aside className="rounded-md border border-[#D8E7E8] bg-white p-4">
+          <h3 className="text-sm font-bold text-[#1E2C31]">今日优先级</h3>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">来自右侧待办，只显示仍需处理的事项。</p>
+          <div className="mt-3 space-y-2">
+            {priorityTodos.length > 0 ? (
+              priorityTodos.map((item) => (
+                <Link
+                  key={item.title}
+                  href={item.href ?? '#status'}
+                  className="flex items-start justify-between gap-3 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-3 transition hover:border-[#1889B6]/60 hover:bg-white"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-bold text-[#1E2C31]">{item.title}</span>
+                    <span className="mt-1 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+                  </span>
+                  {typeof item.count === 'number' ? (
+                    <span className="shrink-0 rounded-full bg-[#FFF2E7] px-2 py-0.5 text-xs font-bold text-[#E36F2C]">
+                      {formatNumber(item.count)}
+                    </span>
+                  ) : null}
+                </Link>
+              ))
+            ) : (
+              <p className="rounded-md bg-[#F7FAFA] px-3 py-3 text-xs leading-5 text-[#61767D]">
+                当前没有未处理的运营待办。
+              </p>
+            )}
+          </div>
+        </aside>
+      </div>
+    </section>
+  )
+}
+
+function ControlMatrixRow({ lane }: { lane: ControlLane }) {
+  const Icon = lane.Icon
+  const toneClass =
+    lane.tone === 'orange'
+      ? 'bg-[#FFF2E7] text-[#E36F2C]'
+      : lane.tone === 'green'
+        ? 'bg-emerald-50 text-emerald-700'
+        : lane.tone === 'gray'
+          ? 'bg-[#F0F2F2] text-[#61767D]'
+          : 'bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <div className="grid grid-cols-1 gap-2 border-b border-[#E6EEEE] px-4 py-3 text-sm last:border-b-0 md:grid-cols-[170px_130px_minmax(0,1fr)_110px] md:items-center md:gap-3 lg:grid-cols-[180px_150px_minmax(0,1fr)_120px]">
+      <div className="flex min-w-0 items-center gap-2">
+        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${toneClass}`}>
+          <Icon size={15} />
+        </span>
+        <span className="truncate font-bold text-[#1E2C31]">{lane.title}</span>
+      </div>
+      <span className="font-bold text-[#1E2C31]">{lane.metric}</span>
+      <span className="min-w-0 truncate text-[#61767D]">{lane.detail}</span>
+      <Link href={lane.href} className="inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
+        进入处理
+        <ArrowRight size={13} />
+      </Link>
+    </div>
+  )
+}
+
 function ContentCards({
   productSummary,
   projectSummary,
@@ -1067,6 +1253,19 @@ export default async function AdminConsolePage() {
 
       <div className="mx-auto grid w-full max-w-[1600px] grid-cols-1 gap-5 px-4 py-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_348px]">
         <div className="space-y-6">
+          <ControlMatrix
+            leadSummary={leadSummary}
+            productSummary={productSummary}
+            projectSummary={projectSummary}
+            newsSummary={newsSummary}
+            pageDraftCount={pageDraftCount}
+            mediaIssueCount={mediaIssueCount}
+            uploadCount={uploadCount}
+            recentSummary={recentSummary}
+            configIssues={configIssues}
+            isAdmin={isAdmin}
+            todos={todos}
+          />
           <OperationsCommandPanel
             leadSummary={leadSummary}
             pageDraftCount={pageDraftCount}
