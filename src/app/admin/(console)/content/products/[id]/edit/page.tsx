@@ -3,6 +3,10 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { AdminActionLink, AdminPageHero } from '@/components/admin/AdminUI'
+import ProductEditorConsole, {
+  type ProductEditorMetric,
+  type ProductEditorSignal,
+} from '@/components/admin/ProductEditorConsole'
 import ProductForm from '@/components/admin/ProductForm'
 import { defaultSiteSettings, normalizeMediaMaxUploadMb } from '@/lib/admin-settings-db'
 import { pool } from '@/lib/db'
@@ -318,6 +322,19 @@ function previewHref(product: CatalogProductRow): string {
   return getCatalogProductRouteInfo(product).publicHref
 }
 
+function hasText(value: string | null | undefined): boolean {
+  return typeof value === 'string' && value.trim().length > 0
+}
+
+function productSeoComplete(product: CatalogProductRow): boolean {
+  return (
+    hasText(product.seo_title_zh)
+    && hasText(product.seo_title_en)
+    && hasText(product.seo_description_zh)
+    && hasText(product.seo_description_en)
+  )
+}
+
 function getSideNavGroups(product: CatalogProductRow): AdminSideNavGroup[] {
   return [
     {
@@ -500,6 +517,65 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
   if (!product) notFound()
 
   const adminRole: AdminRole = role
+  const galleryCount = product.gallery?.length ?? 0
+  const visibleDetailModuleCount = (product.detail_modules ?? []).filter((module) => module.is_visible !== false).length
+  const attributeCount = product.attribute_option_ids?.length ?? 0
+  const seoComplete = productSeoComplete(product)
+  const routeInfo = getCatalogProductRouteInfo(product)
+  const consoleMetrics: ProductEditorMetric[] = [
+    {
+      label: '状态',
+      value: product.status === 'published' ? '已发布' : '草稿',
+      detail: product.status === 'published' ? '保存会影响公开产品页。' : '发布前不会公开展示。',
+      tone: product.status === 'published' ? 'warning' : 'ready',
+    },
+    {
+      label: '图片',
+      value: `${galleryCount}`,
+      detail: product.image ? '已有封面图；数字为详情图库数量。' : '缺封面图；优先补媒体素材。',
+      tone: product.image && galleryCount > 0 ? 'ready' : 'warning',
+    },
+    {
+      label: '详情模块',
+      value: visibleDetailModuleCount.toString(),
+      detail: '仅统计可见详情模块。',
+      tone: visibleDetailModuleCount > 0 ? 'ready' : 'warning',
+    },
+    {
+      label: 'SEO / 属性',
+      value: `${seoComplete ? 'OK' : '缺'} / ${attributeCount}`,
+      detail: '搜索字段完整度与筛选属性数量。',
+      tone: seoComplete && attributeCount > 0 ? 'ready' : 'warning',
+    },
+  ]
+  const consoleSignals: ProductEditorSignal[] = [
+    {
+      label: product.status === 'published' ? '保存会更新前台' : '当前仍是草稿',
+      detail: product.status === 'published'
+        ? `官方路由 ${routeInfo.publicHref} 已公开，保存前需要复核图片、SEO、详情和商务条款。`
+        : '草稿产品保存后不会公开展示，发布仍需 ProductForm 的确认弹窗。',
+      tone: product.status === 'published' ? 'warning' : 'ready',
+      href: product.status === 'published' ? routeInfo.publicHref : '#publish-check',
+    },
+    {
+      label: product.category_id ? '分类已绑定' : '缺产品分类',
+      detail: product.category_id ? `category_id ${product.category_id}` : '分类缺失会影响产品列表筛选和内容治理。',
+      tone: product.category_id ? 'ready' : 'warning',
+      href: '#attributes',
+    },
+    {
+      label: attributeCount > 0 ? '属性已选择' : '缺筛选属性',
+      detail: attributeCount > 0 ? `${attributeCount} 个属性选项` : '属性缺失会降低列表筛选和对比效率。',
+      tone: attributeCount > 0 ? 'ready' : 'warning',
+      href: '#attributes',
+    },
+    {
+      label: '媒体上传受站点设置控制',
+      detail: `当前上传上限 ${maxUploadMb} MB；图片上传进入媒体库，保存产品才回写引用。`,
+      tone: 'neutral',
+      href: '/admin/site/media',
+    },
+  ]
 
   return (
     <AdminSectionShell
@@ -512,6 +588,13 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
       activeItem="product-edit"
     >
       <Hero product={product} />
+      <ProductEditorConsole
+        title="产品编辑任务台"
+        description="先看当前发布影响、媒体状态、详情模块、SEO 和属性信号，再进入长表单编辑。"
+        sections={EDIT_SECTIONS}
+        metrics={consoleMetrics}
+        signals={consoleSignals}
+      />
       <EditSectionGrid />
       <RiskNotice product={product} />
       <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm md:p-5">

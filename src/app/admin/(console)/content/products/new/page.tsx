@@ -3,6 +3,10 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { AdminActionLink, AdminPageHero } from '@/components/admin/AdminUI'
+import ProductEditorConsole, {
+  type ProductEditorMetric,
+  type ProductEditorSignal,
+} from '@/components/admin/ProductEditorConsole'
 import ProductForm from '@/components/admin/ProductForm'
 import { defaultSiteSettings, normalizeMediaMaxUploadMb } from '@/lib/admin-settings-db'
 import { pool } from '@/lib/db'
@@ -270,6 +274,57 @@ export default async function AdminContentProductNewPage() {
     }),
   ])
   const adminRole: AdminRole = role
+  const consoleMetrics: ProductEditorMetric[] = [
+    {
+      label: '分类',
+      value: categories.length.toString(),
+      detail: '可选产品分类，保存时写入 category_id。',
+      tone: categories.length > 0 ? 'ready' : 'warning',
+    },
+    {
+      label: '属性模板',
+      value: attributeTemplates.length.toString(),
+      detail: '用于筛选属性和前台产品对比。',
+      tone: attributeTemplates.length > 0 ? 'ready' : 'warning',
+    },
+    {
+      label: '运营标签',
+      value: `${brands.length}/${marks.length}/${showcases.length}`,
+      detail: '品牌 / 标记 / 展位选项数量。',
+      tone: 'neutral',
+    },
+    {
+      label: '相关产品',
+      value: relatedProducts.rows.length.toString(),
+      detail: '用于详情页相关推荐。',
+      tone: relatedProducts.rows.length > 0 ? 'ready' : 'neutral',
+    },
+  ]
+  const consoleSignals: ProductEditorSignal[] = [
+    {
+      label: '默认状态为草稿',
+      detail: '新建保存后进入编辑页，发布前不会出现在公开产品页。',
+      tone: 'ready',
+    },
+    {
+      label: '图片上传立即进入媒体库',
+      detail: `当前上传上限 ${maxUploadMb} MB；选择图片只回填表单，最终仍需保存产品才生效。`,
+      tone: 'warning',
+      href: '/admin/site/media',
+    },
+    {
+      label: '保存会写入产品数据',
+      detail: '本页不新增自动发布规则，点击保存或发布前仍由 ProductForm 处理确认。',
+      tone: 'warning',
+      href: '#publish-check',
+    },
+    {
+      label: '发布前先补完整度',
+      detail: '建议按基础信息、SEO、商务条款、图片、内容、详情和规格顺序补齐。',
+      tone: 'neutral',
+      href: '#basic',
+    },
+  ]
 
   return (
     <AdminSectionShell
@@ -282,6 +337,13 @@ export default async function AdminContentProductNewPage() {
       activeItem="product-new"
     >
       <Hero />
+      <ProductEditorConsole
+        title="新建产品编辑任务台"
+        description="先确认分类、属性、运营标签、相关产品和媒体上传环境，再进入长表单逐项填写。"
+        sections={EDIT_SECTIONS}
+        metrics={consoleMetrics}
+        signals={consoleSignals}
+      />
       <EditSectionGrid />
       <RiskNotice />
       <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm md:p-5">
