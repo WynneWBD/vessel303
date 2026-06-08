@@ -79,6 +79,19 @@ type PriorityItem = {
   Icon: LucideIcon
 }
 
+type SiteSettingKey = keyof typeof defaultSiteSettings
+
+type SettingFieldImpact = 'public' | 'ops' | 'sensitive'
+
+type SettingFieldRow = {
+  group: string
+  key: SiteSettingKey
+  label: string
+  impact: SettingFieldImpact
+  owner: string
+  detail: string
+}
+
 const ACTION_LABELS: Record<string, string> = {
   create: '新建线索',
   update: '更新线索',
@@ -153,6 +166,129 @@ const SETTINGS_TAKEOVER_ITEMS: SettingsTakeoverItem[] = [
     fields: 'mapProvider, maintenanceMode, maintenanceNotice',
     state: 'hold',
     detail: '/global 地图底层归 04 专项；维护模式会影响前台访问，需单独方案和授权。',
+  },
+]
+
+const SETTINGS_FIELD_ROWS: SettingFieldRow[] = [
+  {
+    group: '品牌与 SEO',
+    key: 'siteNameZh',
+    label: '中文站点名',
+    impact: 'public',
+    owner: '默认 metadata / 后台显示',
+    detail: '用于统一站点名，接入前需要避免覆盖页面级标题。',
+  },
+  {
+    group: '品牌与 SEO',
+    key: 'siteNameEn',
+    label: '英文站点名',
+    impact: 'public',
+    owner: '默认 metadata / 后台显示',
+    detail: '英文站默认品牌名；与公开页 title 接管分开验收。',
+  },
+  {
+    group: '品牌与 SEO',
+    key: 'seoTitleZh',
+    label: '中文 SEO 标题',
+    impact: 'public',
+    owner: 'SEO 默认值',
+    detail: '只作为默认口径，不能覆盖已确认页面文案。',
+  },
+  {
+    group: '品牌与 SEO',
+    key: 'seoTitleEn',
+    label: '英文 SEO 标题',
+    impact: 'public',
+    owner: 'SEO 默认值',
+    detail: '用于英文默认搜索标题，需和页面级 metadata 分层。',
+  },
+  {
+    group: '品牌与 SEO',
+    key: 'seoDescriptionZh',
+    label: '中文 SEO 描述',
+    impact: 'public',
+    owner: 'SEO 默认值',
+    detail: '不硬编码未经确认的业务事实；正式接入前需内容复核。',
+  },
+  {
+    group: '品牌与 SEO',
+    key: 'seoDescriptionEn',
+    label: '英文 SEO 描述',
+    impact: 'public',
+    owner: 'SEO 默认值',
+    detail: '保持和英文公开页事实一致，不自动翻译覆盖。',
+  },
+  {
+    group: '联系链路',
+    key: 'contactUrl',
+    label: '联系入口 URL',
+    impact: 'ops',
+    owner: '/contact backup',
+    detail: '/contact 已是主链路；该字段只保留旧站备份语义。',
+  },
+  {
+    group: '联系链路',
+    key: 'productsLegacyUrl',
+    label: '旧产品列表 URL',
+    impact: 'ops',
+    owner: '旧站备份入口',
+    detail: '是否继续外跳旧站需要单独确认，不在本页自动替换。',
+  },
+  {
+    group: '联系链路',
+    key: 'salesEmail',
+    label: '销售邮箱',
+    impact: 'ops',
+    owner: '联系展示 / 邮件通知规划',
+    detail: '展示位置和通知逻辑需要单独验收，不能直接改发信规则。',
+  },
+  {
+    group: '联系链路',
+    key: 'salesPhone',
+    label: '销售电话',
+    impact: 'ops',
+    owner: '联系展示规划',
+    detail: '电话展示涉及公开页隐私与地区格式，需要受控接入。',
+  },
+  {
+    group: '联系链路',
+    key: 'whatsapp',
+    label: 'WhatsApp',
+    impact: 'ops',
+    owner: '联系展示规划',
+    detail: '不自动生成外链，避免错误号码进入公开 CTA。',
+  },
+  {
+    group: '媒体与地图',
+    key: 'mediaMaxUploadMb',
+    label: '媒体上传上限',
+    impact: 'ops',
+    owner: '媒体库 / 图片选择器',
+    detail: '影响后台上传体验，但不改变已上传素材。',
+  },
+  {
+    group: '媒体与地图',
+    key: 'mapProvider',
+    label: '地图服务商',
+    impact: 'sensitive',
+    owner: 'Global 专项边界',
+    detail: '/global 地图底层归专项，不在本页调整 MapLibre / MapTiler。',
+  },
+  {
+    group: '维护模式',
+    key: 'maintenanceMode',
+    label: '维护模式',
+    impact: 'sensitive',
+    owner: '前台访问保护',
+    detail: '高影响开关；保存前必须确认前台访问影响。',
+  },
+  {
+    group: '维护模式',
+    key: 'maintenanceNotice',
+    label: '维护提示',
+    impact: 'sensitive',
+    owner: '前台访问保护',
+    detail: '只有维护模式专项确认后才应对公开访问产生影响。',
   },
 ]
 
@@ -234,6 +370,30 @@ function operationsToneClass(tone: OperationsTone) {
   if (tone === 'warning') return 'border-[#E36F2C]/30 bg-[#FFF2E7] text-[#E36F2C]'
   if (tone === 'missing') return 'border-red-200 bg-red-50 text-red-700'
   return 'border-[#D8E7E8] bg-[#F0F2F2] text-[#61767D]'
+}
+
+function settingFieldImpactLabel(impact: SettingFieldImpact) {
+  if (impact === 'public') return '公开显示'
+  if (impact === 'ops') return '运营配置'
+  return '高风险'
+}
+
+function settingFieldImpactClass(impact: SettingFieldImpact) {
+  if (impact === 'public') return 'border-[#D8E7E8] bg-[#EAF6F8] text-[#1889B6]'
+  if (impact === 'ops') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  return 'border-[#E36F2C]/30 bg-[#FFF2E7] text-[#E36F2C]'
+}
+
+function settingFieldState(settings: typeof defaultSiteSettings, key: SiteSettingKey) {
+  const value = settings[key]
+  const fallback = defaultSiteSettings[key]
+  if (typeof value === 'string' && value.trim().length === 0) {
+    return { label: '空值', className: 'border-red-200 bg-red-50 text-red-700' }
+  }
+  if (JSON.stringify(value) === JSON.stringify(fallback)) {
+    return { label: '默认值', className: 'border-[#D8E7E8] bg-[#F0F2F2] text-[#61767D]' }
+  }
+  return { label: '已覆盖', className: 'border-emerald-200 bg-emerald-50 text-emerald-700' }
 }
 
 function buildSettingsPriorityItems({
@@ -468,6 +628,79 @@ function SettingsOperationsMatrix({
   )
 }
 
+function SettingsFieldLedger({
+  siteSettings,
+  settingsMeta,
+}: {
+  siteSettings: typeof defaultSiteSettings
+  settingsMeta: SettingsMeta
+}) {
+  const coveredCount = SETTINGS_FIELD_ROWS.filter((item) => settingFieldState(siteSettings, item.key).label === '已覆盖').length
+  const defaultCount = SETTINGS_FIELD_ROWS.filter((item) => settingFieldState(siteSettings, item.key).label === '默认值').length
+  const highRiskCount = SETTINGS_FIELD_ROWS.filter((item) => item.impact === 'sensitive').length
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-[#1E2C31]">设置字段口径总表</h2>
+          <p className="mt-1 text-sm leading-6 text-[#61767D]">
+            按专业后台配置中心的方式，把字段分组、接管对象、默认 / 覆盖状态和风险等级前置到表单之前。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs font-semibold">
+          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">已覆盖 {coveredCount}</span>
+          <span className="rounded-full bg-[#F0F2F2] px-2.5 py-1 text-[#61767D]">默认值 {defaultCount}</span>
+          <span className="rounded-full bg-[#FFF2E7] px-2.5 py-1 text-[#E36F2C]">高风险 {highRiskCount}</span>
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1120px] text-sm">
+          <thead>
+            <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
+              <th className="px-4 py-3 text-left font-medium">分组</th>
+              <th className="px-4 py-3 text-left font-medium">字段</th>
+              <th className="px-4 py-3 text-left font-medium">key</th>
+              <th className="px-4 py-3 text-left font-medium">当前状态</th>
+              <th className="px-4 py-3 text-left font-medium">影响等级</th>
+              <th className="px-4 py-3 text-left font-medium">接管对象</th>
+              <th className="px-4 py-3 text-left font-medium">运营说明</th>
+              <th className="px-4 py-3 text-left font-medium">保存记录</th>
+            </tr>
+          </thead>
+          <tbody>
+            {SETTINGS_FIELD_ROWS.map((item) => {
+              const state = settingFieldState(siteSettings, item.key)
+              return (
+                <tr key={item.key} className="border-b border-[#E6EEEE] last:border-0">
+                  <td className="px-4 py-3 text-xs font-semibold text-[#61767D]">{item.group}</td>
+                  <td className="px-4 py-3 font-semibold text-[#1E2C31]">{item.label}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-[#61767D]">{item.key}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex rounded-full border px-2 py-1 text-xs font-semibold ${state.className}`}>
+                      {state.label}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex rounded-full border px-2 py-1 text-xs font-semibold ${settingFieldImpactClass(item.impact)}`}>
+                      {settingFieldImpactLabel(item.impact)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-[#61767D]">{item.owner}</td>
+                  <td className="max-w-[320px] px-4 py-3 text-xs leading-5 text-[#61767D]">{item.detail}</td>
+                  <td className="px-4 py-3 text-xs text-[#8A9EA4]">
+                    {settingsMeta ? formatDateTime(settingsMeta.updated_at) : '尚无保存记录'}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
 function MetricCard({
   icon: Icon,
   label,
@@ -631,6 +864,8 @@ export default async function SettingsPage() {
         settingsMeta={settingsMeta}
         siteSettings={siteSettings}
       />
+
+      <SettingsFieldLedger siteSettings={siteSettings} settingsMeta={settingsMeta} />
 
       <div id="settings-form">
         <SiteSettingsForm settings={siteSettings} />
