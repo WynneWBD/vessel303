@@ -76,6 +76,20 @@ type SecondaryContentDomain = {
   Icon: LucideIcon
 }
 
+type ContentWorkbenchRow = {
+  title: string
+  detail: string
+  total: number
+  draft: number
+  recent: number
+  signal: number
+  signalLabel: string
+  href: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange'
+  actions: Array<{ label: string; href: string }>
+}
+
 const EMPTY_SUMMARY: ContentSummary = {
   draft: 0,
   published: 0,
@@ -297,7 +311,7 @@ function buildTodos({
     {
       title: '项目草稿',
       detail: summary.projects.draft > 0 ? '检查封面、图库和坐标' : '暂无项目草稿',
-      href: '/admin/content/projects',
+      href: '/admin/content/projects/list?status=draft',
       count: summary.projects.draft,
       ok: summary.projects.draft === 0,
     },
@@ -311,7 +325,7 @@ function buildTodos({
     {
       title: '项目地图信息',
       detail: missingProjectCoordinates > 0 ? '有项目缺少坐标' : '项目坐标状态正常',
-      href: '/admin/content/projects',
+      href: '/admin/content/projects/list?view=missing-coordinates',
       count: missingProjectCoordinates,
       ok: missingProjectCoordinates === 0,
     },
@@ -347,6 +361,148 @@ function Hero({ summary }: { summary: ContentDashboardSummary }) {
           />
       </div>
     </AdminPageHero>
+  )
+}
+
+function ContentListWorkbench({
+  summary,
+  missingProjectCoordinates,
+}: {
+  summary: ContentDashboardSummary
+  missingProjectCoordinates: number
+}) {
+  const rows: ContentWorkbenchRow[] = [
+    {
+      title: '产品列表',
+      detail: '产品发布、草稿、内容缺项和运营标记',
+      total: summary.products.total,
+      draft: summary.products.draft,
+      recent: summary.products.recent,
+      signal: summary.products.draft,
+      signalLabel: '草稿',
+      href: '/admin/content/products/list',
+      Icon: Package,
+      tone: summary.products.draft > 0 ? 'orange' : 'green',
+      actions: [
+        { label: '全部', href: '/admin/content/products/list' },
+        { label: '草稿', href: '/admin/content/products/list?status=draft' },
+        { label: '待补', href: '/admin/content/products/list?view=incomplete' },
+        { label: '新建', href: '/admin/content/products/new' },
+      ],
+    },
+    {
+      title: '项目案例',
+      detail: '项目草稿、封面图库、坐标和 Global 入图',
+      total: summary.projects.total,
+      draft: summary.projects.draft,
+      recent: summary.projects.recent,
+      signal: missingProjectCoordinates,
+      signalLabel: '缺坐标',
+      href: '/admin/content/projects/list',
+      Icon: MapPinned,
+      tone: missingProjectCoordinates > 0 || summary.projects.draft > 0 ? 'orange' : 'green',
+      actions: [
+        { label: '全部', href: '/admin/content/projects/list' },
+        { label: '草稿', href: '/admin/content/projects/list?status=draft' },
+        { label: '缺坐标', href: '/admin/content/projects/list?view=missing-coordinates' },
+        { label: '新建', href: '/admin/content/projects/new' },
+      ],
+    },
+    {
+      title: '新闻列表',
+      detail: '新闻草稿、分类、排期、正文和 SEO',
+      total: summary.news.total,
+      draft: summary.news.draft,
+      recent: summary.news.recent,
+      signal: summary.news.draft,
+      signalLabel: '草稿',
+      href: '/admin/content/news/list',
+      Icon: Newspaper,
+      tone: summary.news.draft > 0 ? 'orange' : 'green',
+      actions: [
+        { label: '全部', href: '/admin/content/news/list' },
+        { label: '草稿', href: '/admin/content/news/list?status=draft' },
+        { label: '定时', href: '/admin/content/news/list?schedule=scheduled' },
+        { label: '新建', href: '/admin/content/news/new' },
+      ],
+    },
+  ]
+
+  return (
+    <section className="space-y-4">
+      <AdminSectionTitle
+        title="内容处理工作台"
+        detail="先进入列表处理，再按草稿、待补、坐标、排期等筛选推进。"
+      />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="hidden grid-cols-[200px_120px_120px_120px_minmax(0,1fr)_170px] gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 text-xs font-semibold text-[#61767D] lg:grid">
+          <span>内容类型</span>
+          <span>总量 / 草稿</span>
+          <span>近 30 天</span>
+          <span>当前信号</span>
+          <span>处理入口</span>
+          <span>列表工作台</span>
+        </div>
+        <div className="divide-y divide-[#E6EEEE]">
+          {rows.map((row) => (
+            <ContentWorkbenchRowView key={row.title} row={row} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function ContentWorkbenchRowView({ row }: { row: ContentWorkbenchRow }) {
+  const Icon = row.Icon
+  const toneClass =
+    row.tone === 'orange'
+      ? 'bg-[#FFF2E7] text-[#E36F2C]'
+      : row.tone === 'green'
+        ? 'bg-emerald-50 text-emerald-700'
+        : 'bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <div className="grid grid-cols-1 gap-3 px-4 py-4 text-sm lg:grid-cols-[200px_120px_120px_120px_minmax(0,1fr)_170px] lg:items-center">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${toneClass}`}>
+          <Icon size={18} />
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate font-bold text-[#1E2C31]">{row.title}</span>
+          <span className="mt-1 block truncate text-xs text-[#61767D]">{row.detail}</span>
+        </span>
+      </div>
+      <span className="font-bold text-[#1E2C31]">
+        {formatNumber(row.total)} / {formatNumber(row.draft)}
+      </span>
+      <span className="text-sm font-semibold text-[#61767D]">{formatNumber(row.recent)}</span>
+      <span
+        className={`inline-flex w-fit rounded-md px-2 py-1 text-xs font-bold ${
+          row.signal > 0 ? 'bg-[#FFF2E7] text-[#E36F2C]' : 'bg-emerald-50 text-emerald-700'
+        }`}
+      >
+        {row.signalLabel} {formatNumber(row.signal)}
+      </span>
+      <span className="flex flex-wrap gap-2">
+        {row.actions.map((action) => (
+          <Link
+            key={`${row.title}-${action.label}`}
+            href={action.href}
+            className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-2.5 text-xs font-semibold text-[#61767D] transition hover:border-[#1889B6] hover:bg-white hover:text-[#1889B6]"
+          >
+            {action.label}
+          </Link>
+        ))}
+      </span>
+      <Link
+        href={row.href}
+        className="inline-flex h-9 w-fit items-center gap-1 rounded-md border border-[#1889B6]/25 bg-[#EAF6F8] px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+      >
+        进入列表
+        <ArrowRight size={13} />
+      </Link>
+    </div>
   )
 }
 
@@ -624,6 +780,7 @@ export default async function AdminContentPage() {
       <Hero summary={summary} />
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-6">
+          <ContentListWorkbench summary={summary} missingProjectCoordinates={missingProjectCoordinates} />
           <ContentDomainGrid summary={summary} />
           <ActionMatrix />
           <WorkflowPanel />
