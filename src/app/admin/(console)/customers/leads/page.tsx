@@ -11,14 +11,17 @@ import {
   type LeadStatus,
 } from '@/lib/leads-db'
 import {
+  ArrowRight,
   BadgeCheck,
   Clock3,
   FileText,
+  Filter,
   Inbox,
   ListChecks,
   MessageSquareText,
   SearchCheck,
   Settings,
+  type LucideIcon,
   UserRoundCheck,
   UserRoundX,
   Users,
@@ -31,6 +34,41 @@ export const metadata = { title: '线索管理 2.0 - VESSEL' }
 type AdminRole = 'admin' | 'operator'
 
 type LeadsResult = Awaited<ReturnType<typeof listLeads>>
+
+type LeadFilterState = {
+  status: string
+  inquiry_type: string
+  source_type: string
+  country: string
+  search: string
+  page: number
+  limit: number
+}
+
+type ActiveFilterChip = {
+  label: string
+  value: string
+  href: string
+}
+
+type LeadConsoleTone = 'blue' | 'green' | 'orange' | 'gray'
+
+type LeadConsoleAction = {
+  label: string
+  href: string
+  primary?: boolean
+}
+
+type LeadConsoleRow = {
+  title: string
+  detail: string
+  metric: string
+  signal: string
+  href: string
+  Icon: LucideIcon
+  tone: LeadConsoleTone
+  actions: LeadConsoleAction[]
+}
 
 const EMPTY_LEADS_RESULT: LeadsResult = {
   leads: [] as Lead[],
@@ -52,6 +90,313 @@ const EMPTY_SOURCE_STATUS_SUMMARY: LeadSourceStatusSummary[] = []
 
 function buildLeadsPath(status?: LeadStatus) {
   return status ? `/admin/customers/leads?status=${status}` : '/admin/customers/leads'
+}
+
+function formatNumber(value: number): string {
+  return value.toLocaleString('zh-CN')
+}
+
+function formatPercent(value: number): string {
+  return `${Math.round(value * 100)}%`
+}
+
+function statusLabel(value: string): string {
+  const labels: Record<string, string> = {
+    all: '全部状态',
+    new: '新线索',
+    contacting: '跟进中',
+    quoted: '已报价',
+    won: '已成交',
+    lost: '已关闭',
+  }
+  return labels[value] ?? value
+}
+
+function inquiryLabel(value: string): string {
+  const labels: Record<string, string> = {
+    all: '全部身份',
+    'B-buyer': 'B-采购商',
+    'B-investor': 'B-投资方',
+    'B-agent': 'B-代理',
+    'C-individual': 'C-个人',
+  }
+  return labels[value] ?? value
+}
+
+function sourceTypeLabel(value: string): string {
+  const labels: Record<string, string> = {
+    all: '全部来源',
+    product: '产品',
+    case: '案例',
+    contact: '联系',
+    faq: 'FAQ',
+    'media-kit': 'Media Kit',
+    scenario: '场景',
+    innovation: '技术专题',
+    display: '展示',
+    'admin-test': '测试',
+    other: '其他',
+  }
+  return labels[value] ?? value
+}
+
+function createLeadsHref(filters: LeadFilterState, patch: Partial<LeadFilterState> = {}): string {
+  const next = { ...filters, ...patch }
+  const params = new URLSearchParams()
+  const page = Math.max(1, Number(next.page) || 1)
+  const limit = Math.min(100, Math.max(20, Number(next.limit) || 50))
+
+  if (next.status && next.status !== 'all') params.set('status', next.status)
+  if (next.inquiry_type && next.inquiry_type !== 'all') params.set('inquiry_type', next.inquiry_type)
+  if (next.source_type && next.source_type !== 'all') params.set('source_type', next.source_type)
+  if (next.country.trim()) params.set('country', next.country.trim())
+  if (next.search.trim()) params.set('search', next.search.trim())
+  if (page > 1) params.set('page', String(page))
+  if (limit !== 50) params.set('limit', String(limit))
+
+  const query = params.toString()
+  return query ? `/admin/customers/leads?${query}` : '/admin/customers/leads'
+}
+
+function buildActiveFilterChips(filters: LeadFilterState): ActiveFilterChip[] {
+  const chips: ActiveFilterChip[] = []
+  if (filters.status !== 'all') {
+    chips.push({ label: '状态', value: statusLabel(filters.status), href: createLeadsHref(filters, { status: 'all', page: 1 }) })
+  }
+  if (filters.inquiry_type !== 'all') {
+    chips.push({ label: '身份', value: inquiryLabel(filters.inquiry_type), href: createLeadsHref(filters, { inquiry_type: 'all', page: 1 }) })
+  }
+  if (filters.source_type !== 'all') {
+    chips.push({ label: '来源', value: sourceTypeLabel(filters.source_type), href: createLeadsHref(filters, { source_type: 'all', page: 1 }) })
+  }
+  if (filters.country.trim()) {
+    chips.push({ label: '国家', value: filters.country.trim(), href: createLeadsHref(filters, { country: '', page: 1 }) })
+  }
+  if (filters.search.trim()) {
+    chips.push({ label: '搜索', value: filters.search.trim(), href: createLeadsHref(filters, { search: '', page: 1 }) })
+  }
+  if (filters.limit !== 50) {
+    chips.push({ label: '每页', value: `${filters.limit}`, href: createLeadsHref(filters, { limit: 50, page: 1 }) })
+  }
+  return chips
+}
+
+function leadConsoleToneClass(tone: LeadConsoleTone): string {
+  if (tone === 'green') return 'border-l-emerald-500 bg-emerald-50'
+  if (tone === 'orange') return 'border-l-[#E36F2C] bg-[#FFF7F0]'
+  if (tone === 'gray') return 'border-l-[#8A9EA4] bg-[#F7FAFA]'
+  return 'border-l-[#1889B6] bg-[#F4FBFC]'
+}
+
+function leadConsoleSignalClass(tone: LeadConsoleTone): string {
+  if (tone === 'green') return 'bg-emerald-50 text-emerald-700'
+  if (tone === 'orange') return 'bg-[#FFF2E7] text-[#C85F24]'
+  if (tone === 'gray') return 'bg-[#EEF3F4] text-[#61767D]'
+  return 'bg-[#EAF6F8] text-[#1889B6]'
+}
+
+function LeadsQueueConsole({
+  summary,
+  result,
+  filters,
+  sourceStatusSummary,
+}: {
+  summary: LeadDashboardSummary
+  result: LeadsResult
+  filters: LeadFilterState
+  sourceStatusSummary: LeadSourceStatusSummary[]
+}) {
+  const activeFilterChips = buildActiveFilterChips(filters)
+  const activePipeline = summary.new + summary.contacting + summary.quoted
+  const closeRate = summary.total > 0 ? summary.won / summary.total : 0
+  const currentRows = result.leads.length
+  const topSource = sourceStatusSummary[0]
+  const sourceNewTotal = sourceStatusSummary.reduce((total, source) => total + source.new, 0)
+  const clearHref = createLeadsHref({
+    status: 'all',
+    inquiry_type: 'all',
+    source_type: 'all',
+    country: '',
+    search: '',
+    page: 1,
+    limit: 50,
+  })
+
+  const rows: LeadConsoleRow[] = [
+    {
+      title: '首次响应队列',
+      detail: '新线索优先进入首次响应，确认需求、来源和负责人。',
+      metric: `${formatNumber(summary.new)} 条`,
+      signal: summary.new > 0 ? 'P0 待处理' : '已清空',
+      href: buildLeadsPath('new'),
+      Icon: Inbox,
+      tone: summary.new > 0 ? 'orange' : 'green',
+      actions: [
+        { label: '新线索', href: buildLeadsPath('new'), primary: summary.new > 0 },
+        { label: '全部线索', href: buildLeadsPath() },
+      ],
+    },
+    {
+      title: '跟进与报价',
+      detail: '跟进中与已报价线索构成当前活跃商机池，先看更新断点再推进。',
+      metric: `${formatNumber(summary.contacting + summary.quoted)} 条`,
+      signal: `${formatNumber(summary.quoted)} 已报价`,
+      href: buildLeadsPath('contacting'),
+      Icon: MessageSquareText,
+      tone: summary.contacting + summary.quoted > 0 ? 'blue' : 'gray',
+      actions: [
+        { label: '跟进中', href: buildLeadsPath('contacting'), primary: summary.contacting > 0 },
+        { label: '已报价', href: buildLeadsPath('quoted') },
+      ],
+    },
+    {
+      title: '当前筛选结果',
+      detail: activeFilterChips.length > 0 ? activeFilterChips.map((chip) => `${chip.label}:${chip.value}`).join(' / ') : '当前显示全部线索。',
+      metric: `${formatNumber(result.total)} 命中`,
+      signal: `本页 ${formatNumber(currentRows)} 条`,
+      href: createLeadsHref(filters),
+      Icon: Filter,
+      tone: activeFilterChips.length > 0 ? 'blue' : 'gray',
+      actions: [
+        { label: '清空筛选', href: clearHref },
+        { label: '每页 100', href: createLeadsHref(filters, { limit: 100, page: 1 }) },
+      ],
+    },
+    {
+      title: '来源与转化',
+      detail: topSource
+        ? `Top 来源 ${topSource.label}: ${formatNumber(topSource.total)} 条，其中新线索 ${formatNumber(topSource.new)} 条。`
+        : '暂无来源分布；公开表单进线后会显示来源类型。',
+      metric: `${formatNumber(sourceStatusSummary.length)} 类来源`,
+      signal: `${formatNumber(sourceNewTotal)} 新线索`,
+      href: '/admin/site/conversion',
+      Icon: SearchCheck,
+      tone: sourceNewTotal > 0 ? 'orange' : 'green',
+      actions: [
+        { label: '来源矩阵', href: '/admin/customers/leads', primary: true },
+        { label: '转化路径', href: '/admin/site/conversion' },
+      ],
+    },
+  ]
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-4 border-b border-[#D8E7E8] p-5 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
+            <ListChecks size={15} />
+            Lead Queue
+          </div>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">线索运营总览</h2>
+          <p className="mt-1 max-w-4xl text-xs leading-5 text-[#61767D]">
+            先看首次响应、跟进报价、当前筛选和来源分布，再进入下方处理台更新状态与备注。
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {activeFilterChips.length > 0 ? (
+            activeFilterChips.map((chip) => (
+              <a
+                key={`${chip.label}-${chip.value}`}
+                href={chip.href}
+                className="inline-flex min-h-8 items-center gap-2 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-3 text-xs font-semibold text-[#1E2C31] hover:border-[#1889B6] hover:text-[#1889B6]"
+              >
+                <span className="text-[#61767D]">{chip.label}</span>
+                <span>{chip.value}</span>
+                <span aria-hidden="true" className="text-[#9AA9AD]">×</span>
+              </a>
+            ))
+          ) : (
+            <span className="inline-flex min-h-8 items-center rounded-md bg-emerald-50 px-3 text-xs font-semibold text-emerald-700">
+              当前显示全部线索
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-b border-[#D8E7E8] md:grid-cols-5">
+        <LeadControlStat label="总线索" value={`${formatNumber(summary.total)} 条`} />
+        <LeadControlStat label="新线索" value={`${formatNumber(summary.new)} 条`} tone={summary.new > 0 ? 'orange' : 'green'} />
+        <LeadControlStat label="活跃池" value={`${formatNumber(activePipeline)} 条`} />
+        <LeadControlStat label="已成交" value={`${formatNumber(summary.won)} 条`} tone="green" />
+        <LeadControlStat label="成交占比" value={formatPercent(closeRate)} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 p-5 xl:grid-cols-4">
+        {rows.map((row) => (
+          <LeadConsoleRowView key={row.title} row={row} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function LeadControlStat({
+  label,
+  value,
+  tone = 'blue',
+}: {
+  label: string
+  value: string
+  tone?: LeadConsoleTone
+}) {
+  return (
+    <div className="border-b border-[#D8E7E8] px-5 py-4 md:border-b-0 md:border-r last:md:border-r-0">
+      <div className="text-xs font-semibold text-[#61767D]">{label}</div>
+      <div className={`mt-1 text-2xl font-bold ${tone === 'orange' ? 'text-[#C85F24]' : tone === 'green' ? 'text-emerald-700' : 'text-[#1E2C31]'}`}>
+        {value}
+      </div>
+    </div>
+  )
+}
+
+function LeadConsoleRowView({ row }: { row: LeadConsoleRow }) {
+  const Icon = row.Icon
+
+  return (
+    <article className={`flex h-full flex-col rounded-md border border-[#D8E7E8] border-l-4 p-4 ${leadConsoleToneClass(row.tone)}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${leadConsoleSignalClass(row.tone)}`}>
+            <Icon size={18} />
+          </span>
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-bold text-[#1E2C31]">{row.title}</h3>
+            <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#61767D]">{row.detail}</p>
+          </div>
+        </div>
+        <span className={`shrink-0 rounded-md px-2 py-1 text-[11px] font-bold ${leadConsoleSignalClass(row.tone)}`}>
+          {row.signal}
+        </span>
+      </div>
+
+      <div className="mt-5">
+        <div className="text-3xl font-bold text-[#1E2C31]">{row.metric}</div>
+        <a
+          href={row.href}
+          className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6] hover:text-[#0F6F95]"
+        >
+          进入处理
+          <ArrowRight size={14} />
+        </a>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {row.actions.map((action) => (
+          <a
+            key={action.label}
+            href={action.href}
+            className={`inline-flex min-h-8 items-center rounded-md border px-3 text-xs font-semibold ${
+              action.primary
+                ? 'border-[#1889B6] bg-[#1889B6] text-white hover:bg-[#0F6F95]'
+                : 'border-[#D8E7E8] bg-white text-[#1E2C31] hover:border-[#1889B6] hover:text-[#1889B6]'
+            }`}
+          >
+            {action.label}
+          </a>
+        ))}
+      </div>
+    </article>
+  )
 }
 
 function getCustomerSideNav(summary: LeadDashboardSummary): AdminSideNavGroup[] {
@@ -182,6 +527,11 @@ export default async function AdminCustomerLeadsPage({
   ])
 
   const adminRole: AdminRole = role
+  const leadFilters: LeadFilterState = {
+    ...filters,
+    page,
+    limit,
+  }
 
   return (
     <AdminSectionShell
@@ -193,6 +543,12 @@ export default async function AdminCustomerLeadsPage({
       sideNavGroups={getCustomerSideNav(summary)}
       activeItem={getActiveItem(filters.status)}
     >
+      <LeadsQueueConsole
+        summary={summary}
+        result={result}
+        filters={leadFilters}
+        sourceStatusSummary={sourceStatusSummary}
+      />
       <LeadsClient
         initialLeads={result.leads}
         initialTotal={result.total}
