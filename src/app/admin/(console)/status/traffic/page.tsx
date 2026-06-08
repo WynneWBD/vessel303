@@ -154,6 +154,8 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
           activeRange={activeRange}
         />
 
+        <TrafficRouteMatrix analytics={analytics} activeMetric={activeMetric} />
+
         <section id="trend-analysis" className="space-y-4">
           <SectionTitle title={activeRange === 'today' ? '今日小时趋势' : activeRange === 'yesterday' ? '昨日小时趋势' : '访问趋势'} detail="聚合 PV、访客、转化动作、表单成功和真实线索，先看趋势再看排行。" />
           <TrendWorkspace rows={trendRows} />
@@ -543,6 +545,145 @@ function TrafficDrilldownRow({
       <span className="mt-2 block text-xs leading-5 text-[#61767D]">{row.detail}</span>
     </Link>
   )
+}
+
+function TrafficRouteMatrix({
+  analytics,
+  activeMetric,
+}: {
+  analytics: SiteAnalyticsDashboard
+  activeMetric: TrafficMetric
+}) {
+  const topPage = analytics.topPages[0]
+  const topLandingPage = analytics.landingPages[0]
+  const quietLandingPage = analytics.landingPages.find((row) => row.value >= 20 && (row.secondary ?? 0) === 0)
+  const topReferrer = analytics.topReferrers[0]
+  const topSource = analytics.sourceTypes[0]
+  const topConversion = getTopConversionPath(analytics.conversionPaths)
+  const actionTotal = activeMetric.ctaClicks + activeMetric.contactRedirects + activeMetric.formSubmits
+  const sourceTotal = analytics.sourceTypes.reduce((sum, row) => sum + row.value, 0)
+  const otherSource = analytics.sourceTypes.find((row) => row.key === 'other')?.value ?? 0
+  const otherShare = sourceTotal > 0 ? otherSource / sourceTotal : 0
+  const rows = [
+    {
+      stage: '入口页',
+      signal: topPage ? topPage.label : '暂无页面访问',
+      metric: topPage ? `${formatNumber(topPage.value)} PV / ${formatNumber(topPage.secondary ?? 0)} UV` : '0',
+      judgement: topPage ? '可继续看访问路径' : '等待事件样本',
+      action: 'Top Pages',
+      href: '#behavior-analysis',
+      tone: topPage ? 'blue' : 'gray',
+    },
+    {
+      stage: '落地页',
+      signal: quietLandingPage ? quietLandingPage.label : topLandingPage?.label ?? '暂无落地页',
+      metric: quietLandingPage
+        ? `${formatNumber(quietLandingPage.value)} 访问 / 0 动作`
+        : topLandingPage
+          ? `${formatNumber(topLandingPage.value)} 访问 / ${formatNumber(topLandingPage.secondary ?? 0)} 动作`
+          : '0',
+      judgement: quietLandingPage ? '高访问低动作' : topLandingPage ? '可观察' : '等待样本',
+      action: '落地页分析',
+      href: '#landing-analysis',
+      tone: quietLandingPage ? 'orange' : topLandingPage ? 'green' : 'gray',
+    },
+    {
+      stage: '来源',
+      signal: topReferrer?.label ?? (topSource ? sourceTypeLabel(topSource.key) : '暂无来源'),
+      metric: topReferrer
+        ? `${formatNumber(topReferrer.value)} referrer`
+        : topSource
+          ? `${formatNumber(topSource.value)} source`
+          : '0',
+      judgement: otherShare > 0.5 ? 'other 占比偏高' : topReferrer || topSource ? '来源可读' : '等待样本',
+      action: '来源与入口',
+      href: '#behavior-analysis',
+      tone: otherShare > 0.5 ? 'orange' : topReferrer || topSource ? 'blue' : 'gray',
+    },
+    {
+      stage: '动作',
+      signal: actionTotal > 0 ? 'CTA / 联系 / 表单' : '暂无转化动作',
+      metric: `CTA ${formatNumber(activeMetric.ctaClicks)} / 联系 ${formatNumber(activeMetric.contactRedirects)} / 表单 ${formatNumber(activeMetric.formSubmits)}`,
+      judgement: actionTotal > 0 ? '有动作样本' : activeMetric.pageViews > 0 ? '访问未触发动作' : '等待访问',
+      action: '行为分析',
+      href: '#behavior-analysis',
+      tone: actionTotal > 0 ? 'green' : activeMetric.pageViews > 0 ? 'orange' : 'gray',
+    },
+    {
+      stage: '线索',
+      signal: topConversion?.label ?? '暂无路径线索',
+      metric: `${formatNumber(activeMetric.leads)} 真实线索 / ${formatAnalyticsPercent(activeMetric.conversionRate)}`,
+      judgement: activeMetric.leads > 0 ? '已有线索承接' : activeMetric.pageViews > 0 ? '访问未转化为线索' : '等待访问',
+      action: '转化路径',
+      href: '/admin/site/conversion',
+      tone: activeMetric.leads > 0 ? 'green' : activeMetric.pageViews > 0 ? 'orange' : 'gray',
+    },
+  ] satisfies Array<{
+    stage: string
+    signal: string
+    metric: string
+    judgement: string
+    action: string
+    href: string
+    tone: 'blue' | 'green' | 'orange' | 'gray'
+  }>
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-[#1E2C31]">入口 / 来源 / 动作 / 线索矩阵</h2>
+          <p className="mt-1 text-xs text-[#61767D]">把访问统计页拆成可处理的运营链路，避免只看单个数字。</p>
+        </div>
+        <span className="rounded-full bg-[#EAF6F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
+          当前口径动作 {formatNumber(actionTotal)}
+        </span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[960px] text-sm">
+          <thead>
+            <tr className="border-b border-[#E6EEEE] bg-white text-[#61767D]">
+              <th className="px-5 py-3 text-left font-medium">链路阶段</th>
+              <th className="px-4 py-3 text-left font-medium">当前信号</th>
+              <th className="px-4 py-3 text-left font-medium">指标</th>
+              <th className="px-4 py-3 text-left font-medium">判断</th>
+              <th className="px-5 py-3 text-right font-medium">下钻</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.stage} className="border-b border-[#E6EEEE] last:border-0">
+                <td className="px-5 py-3 font-semibold text-[#1E2C31]">{row.stage}</td>
+                <td className="max-w-[280px] px-4 py-3">
+                  <div className="truncate font-medium text-[#1E2C31]" title={row.signal}>
+                    {row.signal}
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-[#61767D]">{row.metric}</td>
+                <td className="px-4 py-3">
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${trafficMatrixToneClass(row.tone)}`}>
+                    {row.judgement}
+                  </span>
+                </td>
+                <td className="px-5 py-3 text-right">
+                  <Link href={row.href} className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+                    {row.action}
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
+function trafficMatrixToneClass(tone: 'blue' | 'green' | 'orange' | 'gray') {
+  if (tone === 'orange') return 'bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'green') return 'bg-emerald-50 text-emerald-700'
+  if (tone === 'blue') return 'bg-[#EAF6F8] text-[#1889B6]'
+  return 'bg-[#F0F2F2] text-[#61767D]'
 }
 
 function SnapshotMetric({ label, value, detail }: { label: string; value: number; detail: string }) {
