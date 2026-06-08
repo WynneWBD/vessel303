@@ -148,6 +148,175 @@ function SummaryTile({
   )
 }
 
+function classifyNavigationHref(href: string | undefined) {
+  const value = href?.trim() ?? ''
+  if (!value) return 'empty'
+  if (/^(javascript:|#)/i.test(value)) return 'invalid'
+  if (value.startsWith('/contact') || value.includes('contact.html')) return 'contact'
+  if (value.startsWith('/')) return 'internal'
+  if (/^https?:\/\//i.test(value)) return 'external'
+  return 'invalid'
+}
+
+function getNavigationLinkStats(modules: PageModuleRow[]) {
+  return modules.reduce(
+    (acc, pageModule) => {
+      for (const item of pageModule.items) {
+        if (!item.is_visible) continue
+        const type = classifyNavigationHref(item.href)
+        acc.total += 1
+        acc[type] += 1
+      }
+      return acc
+    },
+    { total: 0, internal: 0, contact: 0, external: 0, empty: 0, invalid: 0 },
+  )
+}
+
+function buildNavigationPriorityItems(modules: PageModuleRow[], contract?: GovernanceContractStatus) {
+  const items: Array<{
+    key: string
+    title: string
+    detail: string
+    href: string
+    score: number
+    Icon: LucideIcon
+  }> = []
+
+  if (contract?.issues.length) {
+    items.push({
+      key: 'contract',
+      title: '内容合同质检',
+      detail: contract.issues.slice(0, 2).join(' / '),
+      href: '/admin/site/pages',
+      score: 120,
+      Icon: AlertTriangle,
+    })
+  }
+
+  for (const pageModule of modules) {
+    const warnings = getLinkWarnings(pageModule)
+    if (warnings.length > 0) {
+      items.push({
+        key: `${pageModule.module_key}:warnings`,
+        title: pageModule.title_zh || pageModule.title_en || pageModule.module_key,
+        detail: warnings.slice(0, 2).join(' / '),
+        href: `/admin/pages?module=site:${pageModule.module_key}`,
+        score: 90 + warnings.length * 6,
+        Icon: Link2,
+      })
+    }
+    if (pageModule.has_draft) {
+      items.push({
+        key: `${pageModule.module_key}:draft`,
+        title: pageModule.title_zh || pageModule.title_en || pageModule.module_key,
+        detail: '当前模块有已保存草稿，发布前需要复核前台导航和页脚影响。',
+        href: `/admin/pages?module=site:${pageModule.module_key}`,
+        score: 70,
+        Icon: FileText,
+      })
+    }
+    if (!pageModule.is_visible) {
+      items.push({
+        key: `${pageModule.module_key}:hidden`,
+        title: pageModule.title_zh || pageModule.title_en || pageModule.module_key,
+        detail: '模块当前隐藏，确认是否符合公开导航计划。',
+        href: `/admin/pages?module=site:${pageModule.module_key}`,
+        score: 40,
+        Icon: LockKeyhole,
+      })
+    }
+  }
+
+  return items.sort((a, b) => b.score - a.score || a.title.localeCompare(b.title)).slice(0, 6)
+}
+
+function NavigationOperationsMatrix({
+  modules,
+  contract,
+}: {
+  modules: PageModuleRow[]
+  contract?: GovernanceContractStatus
+}) {
+  const linkStats = getNavigationLinkStats(modules)
+  const priorityItems = buildNavigationPriorityItems(modules, contract)
+  const footerModules = modules.filter((pageModule) => pageModule.module_key.startsWith('footer')).length
+  const contactModules = modules.filter((pageModule) => pageModule.module_key.includes('contact') || pageModule.module_key.includes('cta')).length
+  const invalidCount = linkStats.empty + linkStats.invalid
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-5 shadow-sm">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-[#1E2C31]">导航运营矩阵</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            先看 Contact 闭环、内部链接、页脚模块和草稿风险，再进入固定模块编辑。
+          </p>
+        </div>
+        <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1889B6]">
+          固定字段 · 非自由建站器
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+        <SummaryTile title="内部入口" value={linkStats.internal} detail={`可见链接 ${linkStats.total} 个`} Icon={Navigation} />
+        <SummaryTile title="Contact 闭环" value={linkStats.contact} detail={`${contactModules} 个联系/CTA 模块`} Icon={Link2} />
+        <SummaryTile title="外部入口" value={linkStats.external} detail="需确认是否为旧站备份或外部承接" Icon={ExternalLink} />
+        <SummaryTile title="链接风险" value={invalidCount} detail="空链接、# 或脚本链接" Icon={AlertTriangle} />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="rounded-md border border-[#D8E7E8] bg-white p-4">
+          <h3 className="text-sm font-bold text-[#1E2C31]">模块角色分布</h3>
+          <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+            <InfoPill label="site 模块" value={modules.length} />
+            <InfoPill label="页脚模块" value={footerModules} />
+            <InfoPill label="联系模块" value={contactModules} />
+            <InfoPill label="模块草稿" value={modules.filter((pageModule) => pageModule.has_draft).length} />
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+            <InfoPill label="内部链接" value={linkStats.internal} />
+            <InfoPill label="Contact" value={linkStats.contact} />
+            <InfoPill label="外部链接" value={linkStats.external} />
+            <InfoPill label="无效链接" value={invalidCount} />
+          </div>
+        </div>
+
+        <aside className="rounded-md border border-[#D8E7E8] bg-white p-4">
+          <h3 className="text-sm font-bold text-[#1E2C31]">优先处理队列</h3>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">按内容合同、链接质检、草稿和隐藏模块排序。</p>
+          <div className="mt-3 space-y-2">
+            {priorityItems.length > 0 ? (
+              priorityItems.map((item) => {
+                const Icon = item.Icon
+                return (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    className="flex items-start gap-3 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-3 transition hover:border-[#1889B6]/60 hover:bg-white"
+                  >
+                    <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white text-[#1889B6]">
+                      <Icon size={14} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-bold text-[#1E2C31]">{item.title}</span>
+                      <span className="mt-1 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+                    </span>
+                  </Link>
+                )
+              })
+            ) : (
+              <p className="rounded-md bg-[#F7FAFA] px-3 py-3 text-xs leading-5 text-[#61767D]">
+                当前没有链接质检、草稿或合同阻断项。
+              </p>
+            )}
+          </div>
+        </aside>
+      </div>
+    </section>
+  )
+}
+
 function InfoPill({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-md bg-[#F7FAFA] px-3 py-2 text-xs leading-5">
@@ -334,6 +503,8 @@ export default async function AdminSiteNavigationPage() {
           <SummaryTile title="链接提示" value={linkWarningCount} detail="空链接或无效链接" Icon={AlertTriangle} />
         </div>
       </section>
+
+      <NavigationOperationsMatrix modules={modules} contract={siteContract} />
 
       <ContractStatusPanel contract={siteContract} />
 
