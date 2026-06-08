@@ -3,6 +3,10 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { AdminActionLink, AdminPageHero } from '@/components/admin/AdminUI'
+import ProductEditorConsole, {
+  type ProductEditorMetric,
+  type ProductEditorSignal,
+} from '@/components/admin/ProductEditorConsole'
 import ProjectForm from '@/components/admin/ProjectForm'
 import { pool } from '@/lib/db'
 import type { ProjectCaseRow, ProjectCaseStatus } from '@/lib/project-cases-db'
@@ -254,6 +258,10 @@ function formatDate(value: string): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
+function hasText(value: string | null | undefined): boolean {
+  return typeof value === 'string' && value.trim().length > 0
+}
+
 function hasCompleteCoordinates(project: ProjectCaseRow): boolean {
   return project.latitude != null && project.longitude != null
 }
@@ -468,6 +476,76 @@ export default async function AdminContentProjectEditPage({ params }: PageProps)
   if (!project) notFound()
 
   const adminRole: AdminRole = role
+  const imageCount = project.images?.length ?? 0
+  const hasCover = hasText(project.cover_image_url)
+  const hasCoreContent = (
+    hasText(project.description_zh)
+    && hasText(project.description_en)
+    && (project.tags_zh?.length ?? 0) > 0
+    && (project.tags_en?.length ?? 0) > 0
+  )
+  const hasProjectParams = (
+    hasText(project.area_display)
+    && hasText(project.investment_display)
+    && hasText(project.units_display)
+    && hasText(project.products)
+  )
+  const validCoordinates = coordinatesValid(project)
+  const globalStatus = getGlobalStatus(project)
+  const consoleMetrics: ProductEditorMetric[] = [
+    {
+      label: '状态',
+      value: project.status === 'published' ? '已发布' : '草稿',
+      detail: project.status === 'published' ? '保存会影响公开案例页。' : '发布前不会公开展示。',
+      tone: project.status === 'published' ? 'warning' : 'ready',
+    },
+    {
+      label: '图片',
+      value: `${imageCount}`,
+      detail: hasCover ? '已有封面图；数字为案例图库数量。' : '缺封面图；优先补正式案例素材。',
+      tone: hasCover && imageCount > 0 ? 'ready' : 'warning',
+    },
+    {
+      label: '内容',
+      value: hasCoreContent ? 'OK' : '待补',
+      detail: '中英文简介与标签会影响案例列表和详情页质量。',
+      tone: hasCoreContent ? 'ready' : 'warning',
+    },
+    {
+      label: 'Global',
+      value: validCoordinates ? '坐标有效' : '未入图',
+      detail: globalStatus.detail,
+      tone: validCoordinates ? 'ready' : 'neutral',
+    },
+  ]
+  const consoleSignals: ProductEditorSignal[] = [
+    {
+      label: project.status === 'published' ? '保存会更新公开案例' : '当前仍是草稿',
+      detail: project.status === 'published'
+        ? '公开 /cases/[id] 已展示；如坐标有效，也会影响 /global 地图点位。'
+        : '草稿项目保存后不会公开展示，也不会进入公开 Global 点位。',
+      tone: project.status === 'published' ? 'warning' : 'ready',
+      href: project.status === 'published' ? `/cases/${project.id}` : '#publish-check',
+    },
+    {
+      label: validCoordinates ? 'Global 坐标有效' : hasCompleteCoordinates(project) ? '坐标需检查' : '缺 Global 坐标',
+      detail: validCoordinates ? `${project.latitude}, ${project.longitude}` : '坐标只影响 Global 入图，不影响正式案例内容维护。',
+      tone: validCoordinates ? 'ready' : 'warning',
+      href: '#global',
+    },
+    {
+      label: hasProjectParams ? '项目参数已填写' : '项目参数待补',
+      detail: '面积、投资、数量和产品型号帮助运营判断案例是否具备正式展示信息。',
+      tone: hasProjectParams ? 'ready' : 'warning',
+      href: '#params',
+    },
+    {
+      label: 'Global 不是案例详情页',
+      detail: 'Global 只做地图可视化；正式案例叙事和图库仍以 /cases/[id] 为准。',
+      tone: 'neutral',
+      href: `/cases/${project.id}`,
+    },
+  ]
 
   return (
     <AdminSectionShell
@@ -480,6 +558,13 @@ export default async function AdminContentProjectEditPage({ params }: PageProps)
       activeItem="project-edit"
     >
       <Hero project={project} />
+      <ProductEditorConsole
+        title="项目案例编辑任务台"
+        description="先看案例发布影响、图片与内容完整度、项目参数和 Global 入图信号，再进入长表单编辑。"
+        sections={EDIT_SECTIONS}
+        metrics={consoleMetrics}
+        signals={consoleSignals}
+      />
       <EditSectionGrid />
       <GlobalStatusPanel project={project} />
       <RiskNotice project={project} />
