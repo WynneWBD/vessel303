@@ -569,6 +569,192 @@ function SeoMatrixCell({
   )
 }
 
+function readinessToneClassName(tone: SeoPriorityTone): string {
+  if (tone === 'critical') return 'bg-[#FFF2E7] text-[#C85F24]'
+  if (tone === 'warning') return 'bg-[#EAF6F8] text-[#1889B6]'
+  if (tone === 'ready') return 'bg-emerald-50 text-emerald-700'
+  return 'bg-[#F5F2ED] text-[#6B625B]'
+}
+
+function SeoReadinessOverviewTable({
+  products,
+  news,
+  projects,
+  indexFoundationItems,
+  priorityItems,
+}: {
+  products: ContentSeoSummary
+  news: ContentSeoSummary
+  projects: ContentSeoSummary
+  indexFoundationItems: IndexFoundationItem[]
+  priorityItems: SeoPriorityItem[]
+}) {
+  const contentRows = [
+    { label: '产品', summary: products },
+    { label: '新闻', summary: news },
+    { label: '案例', summary: projects },
+  ]
+  const publishedTotal = contentRows.reduce((total, row) => total + row.summary.published, 0)
+  const missingTotal = contentRows.reduce((total, row) => total + row.summary.missing, 0)
+  const staticReady = STATIC_SEO_PAGES.filter((page) => page.status === 'ready').length
+  const protectedCount = STATIC_SEO_PAGES.filter((page) => page.status === 'protected').length
+  const foundationWaiting = indexFoundationItems.filter((item) => item.status === 'waiting').length
+  const searchConsole = indexFoundationItems.find((item) => item.title === 'Search Console')
+  const robots = indexFoundationItems.find((item) => item.title === 'Robots')
+  const sitemap = indexFoundationItems.find((item) => item.title === 'Sitemap')
+  const firstAction = priorityItems.find((item) => item.href)
+  const firstContentGap = contentRows.find((row) => row.summary.missing > 0)
+
+  const rows: Array<{
+    title: string
+    owner: string
+    metric: string
+    status: string
+    detail: string
+    href?: string
+    tone: SeoPriorityTone
+    Icon: LucideIcon
+  }> = [
+    {
+      title: '内容 SEO 字段',
+      owner: '内容管理 / 产品、新闻、案例',
+      metric: `${formatNumber(missingTotal)} 缺口 / ${formatNumber(publishedTotal)} 已发布`,
+      status: missingTotal > 0 ? '待补字段' : '字段完整',
+      detail: contentRows.map((row) => `${row.label} ${row.summary.missing}`).join(' · '),
+      href: firstContentGap?.summary.href ?? products.href,
+      tone: missingTotal > 0 ? 'critical' : 'ready',
+      Icon: SearchCheck,
+    },
+    {
+      title: '页面 metadata 覆盖',
+      owner: '公开页面 / generateMetadata',
+      metric: `${formatNumber(staticReady)} / ${formatNumber(STATIC_SEO_PAGES.length)} 页面组`,
+      status: protectedCount > 0 ? `${formatNumber(protectedCount)} 个保护边界` : '全部公开',
+      detail: '覆盖首页、产品、案例、新闻、FAQ、媒体资源、场景、展示和技术专题。',
+      href: '#metadata-coverage',
+      tone: 'ready',
+      Icon: Globe2,
+    },
+    {
+      title: 'Robots 与 Sitemap',
+      owner: '收录基础 / 文件与动态路由',
+      metric: `${robots ? indexStatusLabel(robots.status) : '未知'} / ${sitemap ? indexStatusLabel(sitemap.status) : '未知'}`,
+      status: foundationWaiting > 0 ? `${formatNumber(foundationWaiting)} 项待接入` : '基础就绪',
+      detail: '只检查 robots.txt 与 sitemap 路径是否具备，不执行提交或写入。',
+      href: '#search-console',
+      tone: foundationWaiting > 0 ? 'warning' : 'ready',
+      Icon: ListChecks,
+    },
+    {
+      title: 'Search Console 验证',
+      owner: 'Google URL 前缀 / 环境变量',
+      metric: searchConsole ? indexStatusLabel(searchConsole.status) : '未知',
+      status: searchConsole?.status === 'ready' ? '可提交 sitemap' : '等待 token',
+      detail: searchConsole?.detail ?? '未读取到 Search Console 基础状态。',
+      href: '#search-console',
+      tone: searchConsole?.status === 'ready' ? 'ready' : 'warning',
+      Icon: SearchCheck,
+    },
+    {
+      title: '当前优先处理项',
+      owner: firstAction?.owner ?? 'SEO 处理优先级',
+      metric: `${formatNumber(priorityItems.filter((item) => item.tone === 'critical' || item.tone === 'warning').length)} 项`,
+      status: firstAction?.title ?? '暂无高优先级',
+      detail: firstAction?.detail ?? '当前只剩保护边界和已就绪项。',
+      href: firstAction?.href,
+      tone: firstAction?.tone ?? 'ready',
+      Icon: ArrowRight,
+    },
+    {
+      title: 'Global 保护边界',
+      owner: '地图页 / 不进入本批 SEO 改动',
+      metric: '只读保护',
+      status: '不改地图底层',
+      detail: '本批不修改 /global、MapLibre、MapTiler 或 /api/map，只保留索引边界说明。',
+      href: '/global',
+      tone: 'protected',
+      Icon: LockKeyhole,
+    },
+  ]
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#D8E7E8] p-5 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
+            <SearchCheck size={15} />
+            Index Readiness
+          </div>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">收录准备总览表</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            按 300 后台常见 SEO 操作顺序，先集中判断内容字段、页面 metadata、Robots、Sitemap、Search Console 和保护边界。
+          </p>
+        </div>
+        <span className={`inline-flex w-fit rounded-md px-3 py-2 text-xs font-bold ${missingTotal + foundationWaiting > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
+          {missingTotal + foundationWaiting > 0 ? `${formatNumber(missingTotal + foundationWaiting)} 项需处理` : '收录准备就绪'}
+        </span>
+      </div>
+
+      <div className="hidden grid-cols-[1.15fr_1fr_0.85fr_0.95fr_1.35fr_0.55fr] border-b border-[#D8E7E8] bg-[#F7FAFA] px-5 py-2 text-xs font-semibold text-[#61767D] xl:grid">
+        <span>检查项</span>
+        <span>归属</span>
+        <span>指标</span>
+        <span>状态</span>
+        <span>说明</span>
+        <span>入口</span>
+      </div>
+      <div className="divide-y divide-[#D8E7E8]">
+        {rows.map((row) => {
+          const Icon = row.Icon
+          const content = (
+            <>
+              <div className="flex min-w-0 items-center gap-3">
+                <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${readinessToneClassName(row.tone)}`}>
+                  <Icon size={17} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold text-[#1E2C31]">{row.title}</span>
+                  <span className="mt-1 block text-xs text-[#8A9EA4] xl:hidden">{row.owner}</span>
+                </span>
+              </div>
+              <div className="hidden text-xs font-semibold text-[#61767D] xl:block">{row.owner}</div>
+              <div className="text-sm font-bold text-[#1E2C31]">{row.metric}</div>
+              <div>
+                <span className={`inline-flex rounded-md px-2 py-1 text-[11px] font-bold ${readinessToneClassName(row.tone)}`}>
+                  {row.status}
+                </span>
+              </div>
+              <p className="text-xs leading-5 text-[#61767D]">{row.detail}</p>
+              <span className="inline-flex min-h-8 w-fit items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1E2C31] group-hover:border-[#1889B6] group-hover:text-[#1889B6]">
+                查看
+                <ArrowRight size={13} />
+              </span>
+            </>
+          )
+
+          if (!row.href) {
+            return (
+              <div key={row.title} className="grid grid-cols-1 gap-3 px-5 py-4 xl:grid-cols-[1.15fr_1fr_0.85fr_0.95fr_1.35fr_0.55fr] xl:items-center">
+                {content}
+              </div>
+            )
+          }
+
+          return (
+            <Link
+              key={row.title}
+              href={row.href}
+              className="group grid grid-cols-1 gap-3 px-5 py-4 transition hover:bg-[#F7FAFA] xl:grid-cols-[1.15fr_1fr_0.85fr_0.95fr_1.35fr_0.55fr] xl:items-center"
+            >
+              {content}
+            </Link>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 function SeoOperationsMatrix({
   products,
   news,
@@ -1038,6 +1224,14 @@ export default async function AdminSiteSeoPage() {
         </div>
       </AdminPageHero>
 
+      <SeoReadinessOverviewTable
+        products={products}
+        news={news}
+        projects={projects}
+        indexFoundationItems={indexFoundationItems}
+        priorityItems={priorityItems}
+      />
+
       <AlignmentPanel />
 
       <SeoOperationsMatrix
@@ -1052,7 +1246,7 @@ export default async function AdminSiteSeoPage() {
 
       <IndexFoundationPanel items={indexFoundationItems} />
 
-      <section className="space-y-4">
+      <section id="metadata-coverage" className="space-y-4">
         <SectionTitle title="内容详情 SEO" detail="运营补字段时回到来源后台，不在网站管理里批量写入。" />
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <ContentSeoCard
