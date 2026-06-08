@@ -289,6 +289,52 @@ function NewsFormSidebar({
   previewLabel: string
 }) {
   const issueCount = completeness.issues.length
+  const completionPercent = sectionProgress.length > 0
+    ? Math.round((completedSectionCount / sectionProgress.length) * 100)
+    : 0
+  const incompleteSections = sectionProgress.filter((section) => !section.done)
+  const prioritySections = [
+    ...incompleteSections.filter((section) => section.id !== 'publish-check'),
+    ...incompleteSections.filter((section) => section.id === 'publish-check'),
+  ].slice(0, 4)
+  const mainActionHref = prioritySections[0] ? `#${prioritySections[0].id}` : '#publish-check'
+  const mainActionLabel = prioritySections[0] ? `先处理：${prioritySections[0].title}` : '进入发布复核'
+  const readinessGroups = [
+    {
+      id: 'content',
+      title: '内容基础',
+      detail: 'Slug / 中英文标题摘要正文',
+      sectionIds: ['basic', 'content'],
+    },
+    {
+      id: 'taxonomy',
+      title: '分类与排期',
+      detail: '所属分类 / 定时发布格式',
+      sectionIds: ['taxonomy', 'schedule'],
+    },
+    {
+      id: 'seo',
+      title: 'SEO 表现',
+      detail: '中英文搜索标题和描述',
+      sectionIds: ['seo'],
+    },
+    {
+      id: 'media-publish',
+      title: '素材与发布',
+      detail: '封面图 / 发布检查',
+      sectionIds: ['media', 'publish-check'],
+    },
+  ].map((group) => {
+    const sections = group.sectionIds
+      .map((sectionId) => sectionProgress.find((section) => section.id === sectionId))
+      .filter((section): section is NewsFormSectionProgress => Boolean(section))
+    const groupIssueCount = sections.reduce((total, section) => total + section.issueCount, 0)
+    return {
+      ...group,
+      done: groupIssueCount === 0,
+      issueCount: groupIssueCount,
+    }
+  })
 
   return (
     <aside className="space-y-4 xl:sticky xl:top-36 xl:self-start">
@@ -329,6 +375,19 @@ function NewsFormSidebar({
           </div>
         </div>
 
+        <div className="mt-4">
+          <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-[#8A8580]">
+            <span>新闻完成度</span>
+            <span>{completionPercent}%</span>
+          </div>
+          <div className="h-2 rounded-full bg-[#EFE8DE]">
+            <div
+              className={issueCount > 0 ? 'h-2 rounded-full bg-[#E36F2C]' : 'h-2 rounded-full bg-emerald-600'}
+              style={{ width: `${completionPercent}%` }}
+            />
+          </div>
+        </div>
+
         <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
           <div className="rounded-md border border-[#E5DED4] px-3 py-2">
             <span className="block text-[#8A8580]">分类</span>
@@ -351,6 +410,82 @@ function NewsFormSidebar({
             当前表单与最近一次保存一致。
           </div>
         )}
+      </section>
+
+      <section className="rounded-lg border border-[#E5DED4] bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-bold text-[#2C2A28]">新闻运营优先级</h3>
+            <p className="mt-1 text-xs leading-5 text-[#6B6560]">先补可见内容，再处理 SEO 和发布复核。</p>
+          </div>
+          <Badge className={issueCount > 0 ? 'border-[#F2C6A7] bg-[#FFF7F0] text-[#E36F2C] text-xs' : 'border-emerald-200 bg-emerald-50 text-emerald-700 text-xs'}>
+            {issueCount > 0 ? `${issueCount} 项待处理` : '可复核'}
+          </Badge>
+        </div>
+
+        <a
+          href={mainActionHref}
+          className="mt-3 flex items-center justify-between gap-3 rounded-md border border-[#E36F2C]/25 bg-[#FFF7F0] px-3 py-2.5 text-xs font-bold text-[#E36F2C] hover:border-[#E36F2C]/60"
+        >
+          <span>{mainActionLabel}</span>
+          <span>查看</span>
+        </a>
+
+        <div className="mt-3 space-y-2">
+          {prioritySections.length > 0 ? (
+            prioritySections.map((section, index) => (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+                className="flex items-start gap-3 rounded-md border border-[#F2C6A7] bg-[#FFF7F0] px-3 py-2.5 hover:border-[#E36F2C]/50"
+              >
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[#E36F2C]">
+                  {index + 1}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="truncate text-xs font-bold text-[#2C2A28]">{section.title}</span>
+                    <span className="shrink-0 text-[11px] font-semibold text-[#E36F2C]">{section.issueCount} 项</span>
+                  </span>
+                  <span className="mt-0.5 block text-[11px] leading-4 text-[#6B6560]">{section.detail}</span>
+                </span>
+              </a>
+            ))
+          ) : (
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs font-medium text-emerald-700">
+              当前检查项已完成，可进入发布前人工复核。
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-[#E5DED4] bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-bold text-[#2C2A28]">新闻发布矩阵</h3>
+          <span className="text-xs font-semibold text-[#8A8580]">300 式核对</span>
+        </div>
+        <div className="mt-3 grid grid-cols-1 gap-2">
+          {readinessGroups.map((group) => (
+            <div
+              key={group.id}
+              className={`rounded-md border px-3 py-2.5 ${
+                group.done
+                  ? 'border-emerald-100 bg-emerald-50/70'
+                  : 'border-[#F2C6A7] bg-[#FFF7F0]'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-bold text-[#2C2A28]">{group.title}</p>
+                  <p className="mt-0.5 text-[11px] leading-4 text-[#6B6560]">{group.detail}</p>
+                </div>
+                <span className={group.done ? 'shrink-0 text-[11px] font-semibold text-emerald-700' : 'shrink-0 text-[11px] font-semibold text-[#E36F2C]'}>
+                  {group.done ? '完成' : `${group.issueCount} 项`}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="rounded-lg border border-[#E5DED4] bg-white p-4 shadow-sm">
