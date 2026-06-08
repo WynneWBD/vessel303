@@ -43,6 +43,11 @@ const nextConfig: NextConfig = {
         statusCode: 301,
       },
       {
+        source: '/:locale(en|zh|cn)/global',
+        destination: '/global',
+        permanent: true,
+      },
+      {
         source: '/innovation',
         destination: '/about#technologies',
         permanent: true,
