@@ -36,6 +36,8 @@ import {
 import { getCatalogProductRouteInfo } from '@/lib/product-public-routes'
 import {
   Archive,
+  ArrowRight,
+  BarChart3,
   CheckCircle2,
   CircleDashed,
   ExternalLink,
@@ -176,6 +178,19 @@ type QuickLink = {
   primary?: boolean
 }
 
+type ProductIssueBucket = {
+  issue: Exclude<ProductIssue, ''>
+  label: string
+  detail: string
+}
+
+type ProductPriorityItem = {
+  product: ProductListRow
+  issues: string[]
+  label: string
+  score: number
+}
+
 const EMPTY_SUMMARY: ProductSummary = {
   total: 0,
   published: 0,
@@ -206,6 +221,17 @@ const PRODUCT_ISSUE_OPTIONS: { value: ProductIssue; label: string }[] = [
   { value: 'keywords', label: 'Missing keywords' },
   { value: 'related', label: 'Missing related products' },
   { value: 'buyer_resources', label: 'Missing buyer resources' },
+]
+
+const PRODUCT_ISSUE_BUCKETS: ProductIssueBucket[] = [
+  { issue: 'media', label: '素材缺口', detail: '封面或图库缺失' },
+  { issue: 'content', label: '内容缺口', detail: '简介、标签、亮点或详情模块缺失' },
+  { issue: 'category', label: '分类缺口', detail: '未绑定产品分类' },
+  { issue: 'attributes', label: '属性缺口', detail: '缺少可筛选属性' },
+  { issue: 'seo', label: 'SEO 缺口', detail: '标题或描述缺失' },
+  { issue: 'commercial', label: '商务条款', detail: '中英文商务条款不完整' },
+  { issue: 'related', label: '关联产品', detail: '缺少相关产品推荐' },
+  { issue: 'buyer_resources', label: '买家资料', detail: '缺少下载或资源链接' },
 ]
 
 const PRIORITY_ISSUES = ['缺封面', '缺图库', '未分类', '缺 SEO']
@@ -407,6 +433,11 @@ function formatNumber(value: number): string {
   return value.toLocaleString('zh-CN')
 }
 
+function formatPercent(value: number, total: number): string {
+  if (total <= 0) return '0%'
+  return `${Math.round((value / total) * 100)}%`
+}
+
 function formatDate(value: string): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
@@ -547,6 +578,62 @@ function sortIssues(issues: string[]): string[] {
     if (bIndex === -1) return -1
     return aIndex - bIndex
   })
+}
+
+function productHasIssue(issue: ProductIssueBucket['issue'], issues: string[]): boolean {
+  if (issue === 'media') return issues.includes('缺封面') || issues.includes('缺图库')
+  if (issue === 'content') {
+    return issues.some((item) => ['缺中文简介', '缺英文简介', '缺标签', '缺亮点', '缺详情模块'].includes(item))
+  }
+  if (issue === 'category') return issues.includes('未分类')
+  if (issue === 'attributes') return issues.includes('缺产品属性')
+  if (issue === 'seo') return issues.includes('缺 SEO')
+  if (issue === 'commercial') return issues.some((item) => item.includes('business terms') || item.includes('商务条款'))
+  if (issue === 'keywords') return issues.includes('Missing keywords')
+  if (issue === 'related') return issues.includes('Missing related products')
+  if (issue === 'buyer_resources') return issues.includes('Missing buyer resources')
+  return false
+}
+
+function getProductPriorityScore(product: ProductListRow, issues: string[]): number {
+  let score = 0
+  if (product.status === 'draft') score += 8
+  if (issues.includes('缺封面') || issues.includes('缺图库')) score += 24
+  if (issues.includes('未分类')) score += 18
+  if (issues.includes('缺 SEO')) score += 16
+  if (issues.includes('精品页绑定缺 CMS 基础字段')) score += 14
+  if (issues.includes('缺详情模块')) score += 12
+  if (issues.includes('Missing buyer resources')) score += 8
+  score += Math.min(10, Math.max(0, issues.length - 1) * 2)
+  return score
+}
+
+function getPriorityLabel(issues: string[]): string {
+  if (issues.includes('缺封面') || issues.includes('缺图库')) return '先补素材'
+  if (issues.includes('未分类')) return '先定分类'
+  if (issues.includes('缺 SEO')) return '补 SEO'
+  if (issues.includes('精品页绑定缺 CMS 基础字段')) return '补精品页基础字段'
+  if (issues.includes('缺详情模块')) return '补详情模块'
+  return '补运营字段'
+}
+
+function buildProductPriorityItems(rows: ProductListRow[]): ProductPriorityItem[] {
+  return rows
+    .map((product) => {
+      const issues = getProductIssues(product)
+      return {
+        product,
+        issues,
+        label: getPriorityLabel(issues),
+        score: getProductPriorityScore(product, issues),
+      }
+    })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score
+      return new Date(b.product.updated_at).getTime() - new Date(a.product.updated_at).getTime()
+    })
+    .slice(0, 6)
 }
 
 function getIssueCondition(issue: ProductIssue): string | null {
@@ -957,6 +1044,169 @@ function StatusTabs({ filters, summary }: { filters: FilterState; summary: Produ
   ]
 
   return <AdminSegmentTabs items={tabs.map((tab) => ({ ...tab, count: formatNumber(tab.count) }))} />
+}
+
+function ProductOperationsMatrix({
+  summary,
+  rows,
+  filters,
+}: {
+  summary: ProductSummary
+  rows: ProductListRow[]
+  filters: FilterState
+}) {
+  const pageIssueStats = PRODUCT_ISSUE_BUCKETS.map((bucket) => {
+    const count = rows.filter((product) => productHasIssue(bucket.issue, getProductIssues(product))).length
+    return {
+      ...bucket,
+      count,
+      href: createHref(filters, { view: 'incomplete', issue: bucket.issue }),
+    }
+  })
+  const priorityItems = buildProductPriorityItems(rows)
+  const incompleteRate = formatPercent(summary.incomplete, summary.total)
+  const publishedRate = formatPercent(summary.published, summary.total)
+  const draftRate = formatPercent(summary.draft, summary.total)
+
+  return (
+    <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Operations Matrix</p>
+            <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品运营处理矩阵</h2>
+            <p className="mt-1 text-sm leading-6 text-[#61767D]">
+              先看发布、草稿和缺口，再按当前筛选页的缺项类型进入下钻处理。
+            </p>
+          </div>
+          <Link
+            href={createHref(filters, { status: '', view: 'incomplete', issue: '' })}
+            className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            查看全部待补
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
+          <MatrixKpi label="发布率" value={publishedRate} detail={`${formatNumber(summary.published)} / ${formatNumber(summary.total)}`} tone="green" />
+          <MatrixKpi label="缺项率" value={incompleteRate} detail={`${formatNumber(summary.incomplete)} 个待补`} tone={summary.incomplete > 0 ? 'orange' : 'green'} />
+          <MatrixKpi label="草稿压力" value={draftRate} detail={`${formatNumber(summary.draft)} 个草稿`} tone={summary.draft > 0 ? 'orange' : 'gray'} />
+          <MatrixKpi label="当前页样本" value={formatNumber(rows.length)} detail={`每页最多 ${formatNumber(PAGE_SIZE)} 条`} tone="blue" />
+        </div>
+
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+          {pageIssueStats.map((bucket) => (
+            <Link
+              key={bucket.issue}
+              href={bucket.href}
+              className="group min-h-[118px] border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-[#F7FAFA] xl:border-b-0"
+            >
+              <span className="flex items-start justify-between gap-3">
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-[#1E2C31]">{bucket.label}</span>
+                  <span className="mt-1 block text-xs leading-5 text-[#61767D]">{bucket.detail}</span>
+                </span>
+                <span className={`rounded-md px-2 py-1 text-xs font-bold ${
+                  bucket.count > 0 ? 'bg-[#FFF2E7] text-[#E36F2C]' : 'bg-emerald-50 text-emerald-700'
+                }`}>
+                  {formatNumber(bucket.count)}
+                </span>
+              </span>
+              <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] opacity-80 transition group-hover:opacity-100">
+                下钻筛选
+                <ArrowRight size={13} />
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <aside className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="border-b border-[#E6EEEE] px-4 py-4">
+          <div className="flex items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
+              <BarChart3 size={17} />
+            </span>
+            <div>
+              <h2 className="text-sm font-bold text-[#1E2C31]">本页优先处理</h2>
+              <p className="mt-1 text-xs text-[#61767D]">按素材、分类、SEO、详情模块和草稿状态排序。</p>
+            </div>
+          </div>
+        </div>
+        {priorityItems.length > 0 ? (
+          <div className="divide-y divide-[#E6EEEE]">
+            {priorityItems.map((item) => (
+              <Link
+                key={item.product.id}
+                href={`/admin/content/products/${item.product.id}/edit`}
+                className="block px-4 py-3 transition hover:bg-[#F7FAFA]"
+              >
+                <span className="flex items-start justify-between gap-3">
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-bold text-[#1E2C31]">
+                      {item.product.name_cn || item.product.name_en || item.product.id}
+                    </span>
+                    <span className="mt-1 block truncate text-xs text-[#61767D]">{item.product.id}</span>
+                  </span>
+                  <span className="shrink-0 rounded-md bg-[#FFF2E7] px-2 py-1 text-xs font-bold text-[#E36F2C]">
+                    {item.label}
+                  </span>
+                </span>
+                <span className="mt-2 flex flex-wrap gap-1.5">
+                  {item.issues.slice(0, 3).map((issue) => (
+                    <span key={issue} className={`rounded-full border px-2 py-0.5 text-[11px] ${issueClass(issue)}`}>
+                      {issue}
+                    </span>
+                  ))}
+                  {item.issues.length > 3 ? (
+                    <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] text-zinc-500">
+                      +{item.issues.length - 3}
+                    </span>
+                  ) : null}
+                </span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="px-4 py-8 text-center">
+            <CheckCircle2 className="mx-auto text-emerald-600" size={28} />
+            <p className="mt-3 text-sm font-bold text-[#1E2C31]">当前页无高优先级缺口</p>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">可继续切换筛选条件检查其他产品。</p>
+          </div>
+        )}
+      </aside>
+    </section>
+  )
+}
+
+function MatrixKpi({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string
+  value: string
+  detail: string
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+}) {
+  const toneClass =
+    tone === 'green'
+      ? 'text-emerald-700'
+      : tone === 'orange'
+        ? 'text-[#E36F2C]'
+        : tone === 'gray'
+          ? 'text-[#61767D]'
+          : 'text-[#1889B6]'
+
+  return (
+    <div className="border-b border-[#E6EEEE] px-4 py-3 md:border-b-0 md:border-r last:border-r-0">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-1 text-2xl font-bold ${toneClass}`}>{value}</p>
+      <p className="mt-1 text-xs text-[#8A9EA4]">{detail}</p>
+    </div>
+  )
 }
 
 function FilterPanel({ filters, options }: { filters: FilterState; options: ProductOptions }) {
@@ -1488,6 +1738,7 @@ export default async function AdminContentProductsListPage({ searchParams }: Pag
       <div className="space-y-6">
         <SummaryCards summary={summary} />
         <StatusTabs filters={filters} summary={summary} />
+        <ProductOperationsMatrix summary={summary} rows={list.rows} filters={filters} />
         <FilterPanel filters={filters} options={options} />
         <ProductList
           rows={list.rows}
