@@ -24,11 +24,9 @@ import {
 import { AdminPageHero } from '@/components/admin/AdminUI'
 import {
   buildStatusBadges,
-  MetricCard,
   SectionTitle,
   StatusPageShell,
   StatusPill,
-  STATUS_ICONS,
 } from '../_components'
 import { getStatusAccess } from '../_access'
 
@@ -91,59 +89,16 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
 
         <TrafficControlBar activeRange={activeRange} />
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <MetricCard
-            title={`${rangeLabel(activeRange)} PV`}
-            value={activeMetric.pageViews}
-            detail={`对照 30 天 ${formatNumber(thirtyDays.pageViews)} 次页面访问`}
-            Icon={STATUS_ICONS.BarChart3}
-            tone="blue"
-          />
-          <MetricCard
-            title={`${rangeLabel(activeRange)}访客`}
-            value={activeMetric.visitors}
-            detail="基于匿名 visitor id hash，不保存 IP。"
-            Icon={STATUS_ICONS.Activity}
-            tone="green"
-          />
-          <MetricCard
-            title="CTA 动作"
-            value={activeMetric.ctaClicks + activeMetric.contactRedirects}
-            detail={`表单成功 ${formatNumber(activeMetric.formSubmits)} 次`}
-            Icon={STATUS_ICONS.ListChecks}
-            tone="orange"
-          />
-          <MetricCard
-            title="线索"
-            value={activeMetric.leads}
-            detail={`近 7 天 ${formatNumber(sevenDays.leads)} 条 leads；不含 Codex 测试线索`}
-            href="/admin/customers/leads"
-            Icon={STATUS_ICONS.Inbox}
-            tone="green"
-          />
-          <MetricCard
-            title="访问转化率"
-            value={formatAnalyticsPercent(activeMetric.conversionRate)}
-            detail="真实线索数 / 页面访问数，已排除 admin_test 和 Codex 测试。"
-            Icon={STATUS_ICONS.ShieldCheck}
-            tone="blue"
-          />
-        </div>
-
-        <TrafficModeNav
-          pageViews={activeMetric.pageViews}
-          landingPages={analytics.landingPages.length}
-          actions={activeMetric.ctaClicks + activeMetric.contactRedirects + activeMetric.formSubmits}
-          leads={activeMetric.leads}
-          readiness={`${readiness.readyCount}/${readiness.items.length}`}
-        />
-
-        <TrafficSummaryTable
+        <TrafficAnalysisConsole
+          analytics={analytics}
+          trendRows={trendRows}
           today={today}
           yesterday={yesterday}
           sevenDays={sevenDays}
           thirtyDays={thirtyDays}
           activeRange={activeRange}
+          activeMetric={activeMetric}
+          readiness={`${readiness.readyCount}/${readiness.items.length}`}
         />
 
         <ComparisonStrip comparison={activeComparison} />
@@ -269,6 +224,213 @@ function TrafficControlBar({ activeRange }: { activeRange: TrafficRange }) {
           </span>
         </div>
         <span className="text-xs text-[#8A9EA4]">页面打开时实时读取第一方事件；测试数据不计入运营口径。</span>
+      </div>
+    </div>
+  )
+}
+
+function TrafficAnalysisConsole({
+  analytics,
+  trendRows,
+  today,
+  yesterday,
+  sevenDays,
+  thirtyDays,
+  activeRange,
+  activeMetric,
+  readiness,
+}: {
+  analytics: SiteAnalyticsDashboard
+  trendRows: TrendDisplayRow[]
+  today: AnalyticsPeriodMetric
+  yesterday: AnalyticsPeriodMetric
+  sevenDays: AnalyticsWindowMetric
+  thirtyDays: AnalyticsWindowMetric
+  activeRange: TrafficRange
+  activeMetric: TrafficMetric
+  readiness: string
+}) {
+  const actions = activeMetric.ctaClicks + activeMetric.contactRedirects + activeMetric.formSubmits
+
+  return (
+    <section className="space-y-4">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+        <SectionTitle
+          title="网站访问统计工作台"
+          detail="按 300 后台式流程组织：先看统计表和趋势，再看 Top 页面、落地页、来源和下钻入口。"
+        />
+        <div className="flex flex-wrap gap-2 text-xs">
+          <span className="rounded-md border border-[#D8E7E8] bg-white px-3 py-2 font-semibold text-[#1E2C31]">
+            当前口径：{rangeLabel(activeRange)}
+          </span>
+          <span className="rounded-md border border-[#D8E7E8] bg-white px-3 py-2 font-semibold text-[#1889B6]">
+            PV {formatNumber(activeMetric.pageViews)}
+          </span>
+          <span className="rounded-md border border-[#D8E7E8] bg-white px-3 py-2 font-semibold text-[#E36F2C]">
+            动作 {formatNumber(actions)}
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 2xl:grid-cols-[minmax(0,1.18fr)_minmax(420px,0.82fr)]">
+        <div className="space-y-4">
+          <TrafficSummaryTable
+            today={today}
+            yesterday={yesterday}
+            sevenDays={sevenDays}
+            thirtyDays={thirtyDays}
+            activeRange={activeRange}
+          />
+          <TrafficModeNav
+            pageViews={activeMetric.pageViews}
+            landingPages={analytics.landingPages.length}
+            actions={actions}
+            leads={activeMetric.leads}
+            readiness={readiness}
+          />
+        </div>
+
+        <div className="space-y-4">
+          <TrafficLineChart rows={trendRows} activeRange={activeRange} />
+          <TrafficRankConsole analytics={analytics} />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function TrafficLineChart({ rows, activeRange }: { rows: TrendDisplayRow[]; activeRange: TrafficRange }) {
+  if (rows.length === 0) {
+    return (
+      <div className="rounded-md border border-[#D8E7E8] bg-white p-5 text-sm text-[#61767D] shadow-sm">
+        暂无可用趋势数据。
+      </div>
+    )
+  }
+
+  const displayRows = rows.slice(activeRange === 'today' || activeRange === 'yesterday' ? -24 : -14)
+  const width = 520
+  const height = 210
+  const left = 34
+  const right = 18
+  const top = 22
+  const bottom = 34
+  const chartWidth = width - left - right
+  const chartHeight = height - top - bottom
+  const maxValue = Math.max(1, ...displayRows.flatMap((row) => [row.pageViews, row.actions]))
+  const xFor = (index: number) => left + (displayRows.length <= 1 ? chartWidth : (index / (displayRows.length - 1)) * chartWidth)
+  const yFor = (value: number) => top + chartHeight - (value / maxValue) * chartHeight
+  const pvPoints = displayRows.map((row, index) => `${xFor(index)},${yFor(row.pageViews)}`).join(' ')
+  const actionPoints = displayRows.map((row, index) => `${xFor(index)},${yFor(row.actions)}`).join(' ')
+  const lastRow = displayRows[displayRows.length - 1]
+  const firstLabel = displayRows[0]?.label ?? ''
+  const lastLabel = lastRow?.label ?? ''
+
+  return (
+    <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h2 className="text-sm font-bold text-[#1E2C31]">流量趋势图</h2>
+          <p className="mt-1 text-xs text-[#61767D]">蓝线为 PV，橙线为 CTA / 联系 / 表单动作合计。</p>
+        </div>
+        <span className="text-xs font-semibold text-[#1889B6]">{rangeLabel(activeRange)} / {formatNumber(displayRows.length)} 个点</span>
+      </div>
+      <div className="px-4 py-4">
+        <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="PV 和转化动作趋势" className="h-64 w-full">
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+            const y = top + ratio * chartHeight
+            return <line key={ratio} x1={left} x2={width - right} y1={y} y2={y} stroke="#E6EEEE" strokeWidth="1" />
+          })}
+          <polyline fill="none" points={pvPoints} stroke="#1889B6" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
+          <polyline fill="none" points={actionPoints} stroke="#E36F2C" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
+          {displayRows.map((row, index) => (
+            <circle key={`${row.key}-pv`} cx={xFor(index)} cy={yFor(row.pageViews)} r="3.5" fill="#1889B6">
+              <title>{`${row.label}: ${formatNumber(row.pageViews)} PV`}</title>
+            </circle>
+          ))}
+          {displayRows.map((row, index) => (
+            <circle key={`${row.key}-actions`} cx={xFor(index)} cy={yFor(row.actions)} r="3" fill="#E36F2C">
+              <title>{`${row.label}: ${formatNumber(row.actions)} 动作`}</title>
+            </circle>
+          ))}
+          <text x={left} y={height - 10} fill="#8A9EA4" fontSize="11">{firstLabel}</text>
+          <text x={width - right} y={height - 10} fill="#8A9EA4" fontSize="11" textAnchor="end">{lastLabel}</text>
+        </svg>
+        <div className="mt-3 grid grid-cols-3 gap-3">
+          <SnapshotMetric label="末点 PV" value={lastRow?.pageViews ?? 0} detail="最后一个趋势点" />
+          <SnapshotMetric label="末点动作" value={lastRow?.actions ?? 0} detail="转化动作" />
+          <SnapshotMetric label="末点访客" value={lastRow?.visitors ?? 0} detail="匿名 UV" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TrafficRankConsole({ analytics }: { analytics: SiteAnalyticsDashboard }) {
+  return (
+    <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3">
+        <h2 className="text-sm font-bold text-[#1E2C31]">核心排行</h2>
+        <p className="mt-1 text-xs text-[#61767D]">同屏查看页面、落地页和来源，避免只看单一 PV。</p>
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] xl:grid-cols-3 xl:divide-x xl:divide-y-0">
+        <TrafficRankMiniSection title="Top Pages" rows={analytics.topPages} empty="暂无页面访问事件。" valueLabel="PV" secondaryLabel="UV" />
+        <TrafficRankMiniSection title="落地页动作" rows={analytics.landingPages} empty="暂无落地页事件。" valueLabel="访问" secondaryLabel="动作" />
+        <TrafficRankMiniSection
+          title="来源类型"
+          rows={analytics.sourceTypes}
+          empty="暂无来源事件。"
+          valueLabel="动作"
+          secondaryLabel="占位"
+          formatLabel={sourceTypeLabel}
+          hideSecondary
+        />
+      </div>
+    </div>
+  )
+}
+
+function TrafficRankMiniSection({
+  title,
+  rows,
+  empty,
+  valueLabel,
+  secondaryLabel,
+  formatLabel,
+  hideSecondary = false,
+}: {
+  title: string
+  rows: AnalyticsRankRow[]
+  empty: string
+  valueLabel: string
+  secondaryLabel: string
+  formatLabel?: (value: string) => string
+  hideSecondary?: boolean
+}) {
+  const displayRows = rows.slice(0, 5)
+
+  return (
+    <div className="min-w-0">
+      <div className="flex items-center justify-between gap-3 border-b border-[#E6EEEE] px-4 py-3">
+        <h3 className="text-xs font-bold text-[#1E2C31]">{title}</h3>
+        <span className="text-[11px] font-semibold text-[#8A9EA4]">{valueLabel}{hideSecondary ? '' : ` / ${secondaryLabel}`}</span>
+      </div>
+      <div className="divide-y divide-[#E6EEEE]">
+        {displayRows.length === 0 ? (
+          <div className="px-4 py-4 text-xs text-[#8A9EA4]">{empty}</div>
+        ) : (
+          displayRows.map((row) => (
+            <div key={row.key} className="grid grid-cols-[minmax(0,1fr)_72px] gap-3 px-4 py-3 text-xs">
+              <div className="min-w-0">
+                <div className="truncate font-semibold text-[#1E2C31]" title={row.label}>
+                  {formatLabel ? formatLabel(row.key) : row.label}
+                </div>
+                {!hideSecondary ? <div className="mt-1 text-[#8A9EA4]">{secondaryLabel} {formatNumber(row.secondary ?? 0)}</div> : null}
+              </div>
+              <div className="text-right font-bold text-[#1889B6]">{formatNumber(row.value)}</div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   )
