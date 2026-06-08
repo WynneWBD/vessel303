@@ -24,7 +24,6 @@ import {
   ActionCard,
   ActivityList,
   buildStatusBadges,
-  MetricCard,
   SectionTitle,
   StatusPageShell,
   StatusPill,
@@ -76,48 +75,13 @@ export default async function AdminStatusPage() {
           </>
         }
       >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-            <MetricCard
-              title="30 天 PV"
-              value={thirtyDays.pageViews}
-              detail={`近 7 天 ${formatNumber(sevenDays.pageViews)} 次页面访问`}
-              href="/admin/status/traffic"
-              Icon={STATUS_ICONS.BarChart3}
-              tone="blue"
-            />
-            <MetricCard
-              title="30 天访客"
-              value={thirtyDays.visitors}
-              detail="匿名 visitor hash 统计，不保存 IP。"
-              href="/admin/status/traffic"
-              Icon={STATUS_ICONS.Activity}
-              tone="green"
-            />
-            <MetricCard
-              title="转化动作"
-              value={thirtyDayActions}
-              detail={`CTA ${formatNumber(thirtyDays.ctaClicks)} / 跳转 ${formatNumber(thirtyDays.contactRedirects)} / 表单 ${formatNumber(thirtyDays.formSubmits)}`}
-              href="/admin/status/traffic"
-              Icon={STATUS_ICONS.ListChecks}
-              tone={thirtyDayActions > 0 ? 'orange' : 'gray'}
-            />
-            <MetricCard
-              title="30 天真实线索"
-              value={thirtyDays.leads}
-              detail={`近 7 天 ${formatNumber(sevenDays.leads)} 条 / 转化率 ${formatAnalyticsPercent(thirtyDays.conversionRate)}`}
-              href="/admin/status/leads"
-              Icon={STATUS_ICONS.Inbox}
-              tone={thirtyDays.leads > 0 ? 'green' : 'blue'}
-            />
-            <MetricCard
-              title="运营待处理"
-              value={contentTotals.issues + siteIssues + overview.leads.new}
-              detail={`内容缺项 ${formatNumber(contentTotals.issues)} / 站点 ${formatNumber(siteIssues)} / 新线索 ${formatNumber(overview.leads.new)}`}
-              href="/admin/status/content"
-              Icon={STATUS_ICONS.AlertCircle}
-              tone={contentTotals.issues + siteIssues + overview.leads.new > 0 ? 'orange' : 'green'}
-            />
-        </div>
+        <OverviewHeroConsole
+          sevenDays={sevenDays}
+          thirtyDays={thirtyDays}
+          contentIssues={contentTotals.issues}
+          siteIssues={siteIssues}
+          newLeads={overview.leads.new}
+        />
       </AdminPageHero>
 
       <OperationsPulseBoard
@@ -333,6 +297,116 @@ export default async function AdminStatusPage() {
         </aside>
       </div>
     </StatusPageShell>
+  )
+}
+
+function OverviewHeroConsole({
+  sevenDays,
+  thirtyDays,
+  contentIssues,
+  siteIssues,
+  newLeads,
+}: {
+  sevenDays: AnalyticsWindowMetric
+  thirtyDays: AnalyticsWindowMetric
+  contentIssues: number
+  siteIssues: number
+  newLeads: number
+}) {
+  const sevenDayActions = metricActions(sevenDays)
+  const thirtyDayActions = metricActions(thirtyDays)
+  const pendingTotal = contentIssues + siteIssues + newLeads
+  const rows = [
+    {
+      metric: '页面访问',
+      seven: formatNumber(sevenDays.pageViews),
+      thirty: formatNumber(thirtyDays.pageViews),
+      detail: 'PV',
+      href: '/admin/status/traffic?range=30',
+    },
+    {
+      metric: '匿名访客',
+      seven: formatNumber(sevenDays.visitors),
+      thirty: formatNumber(thirtyDays.visitors),
+      detail: 'visitor hash',
+      href: '/admin/status/traffic?range=30',
+    },
+    {
+      metric: '转化动作',
+      seven: formatNumber(sevenDayActions),
+      thirty: formatNumber(thirtyDayActions),
+      detail: `CTA ${formatNumber(thirtyDays.ctaClicks)} / 表单 ${formatNumber(thirtyDays.formSubmits)}`,
+      href: '/admin/status/traffic#behavior-analysis',
+    },
+    {
+      metric: '真实线索',
+      seven: formatNumber(sevenDays.leads),
+      thirty: formatNumber(thirtyDays.leads),
+      detail: `30 天转化率 ${formatAnalyticsPercent(thirtyDays.conversionRate)}`,
+      href: '/admin/status/leads',
+    },
+    {
+      metric: '运营待处理',
+      seven: formatNumber(newLeads),
+      thirty: formatNumber(pendingTotal),
+      detail: `内容 ${formatNumber(contentIssues)} / 站点 ${formatNumber(siteIssues)} / 新线索 ${formatNumber(newLeads)}`,
+      href: pendingTotal > 0 ? '/admin/status/content' : '/admin/status/activity',
+    },
+  ]
+  const queue = [
+    { label: '新线索', value: newLeads, href: '/admin/customers/leads?status=new' },
+    { label: '内容缺项', value: contentIssues, href: '/admin/status/content' },
+    { label: '站点问题', value: siteIssues, href: '/admin/status/site' },
+  ]
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h2 className="text-sm font-bold text-[#1E2C31]">运营总览表</h2>
+          <p className="mt-1 text-xs text-[#61767D]">把访问、转化、线索和待处理事项放进同一张表，减少首屏卡片跳读。</p>
+        </div>
+        <Link href="/admin/status/traffic?range=30" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+          进入详细数据分析
+        </Link>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[820px] text-sm">
+          <thead>
+            <tr className="border-b border-[#E6EEEE] bg-white text-[#61767D]">
+              <th className="px-4 py-3 text-left font-medium">运营指标</th>
+              <th className="px-4 py-3 text-right font-medium">近 7 天</th>
+              <th className="px-4 py-3 text-right font-medium">近 30 天 / 当前队列</th>
+              <th className="px-4 py-3 text-left font-medium">判断口径</th>
+              <th className="px-4 py-3 text-right font-medium">入口</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.metric} className="border-b border-[#E6EEEE] last:border-0">
+                <td className="px-4 py-3 font-semibold text-[#1E2C31]">{row.metric}</td>
+                <td className="px-4 py-3 text-right font-bold text-[#1E2C31]">{row.seven}</td>
+                <td className="px-4 py-3 text-right font-bold text-[#1889B6]">{row.thirty}</td>
+                <td className="px-4 py-3 text-[#61767D]">{row.detail}</td>
+                <td className="px-4 py-3 text-right">
+                  <Link href={row.href} className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+                    查看
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] border-t border-[#E6EEEE] md:grid-cols-3 md:divide-x md:divide-y-0">
+        {queue.map((item) => (
+          <Link key={item.label} href={item.href} className="flex items-center justify-between gap-3 px-4 py-3 transition hover:bg-[#F7FAFA]">
+            <span className="text-xs font-semibold text-[#61767D]">{item.label}</span>
+            <span className={`text-sm font-black ${item.value > 0 ? 'text-[#E36F2C]' : 'text-emerald-700'}`}>{formatNumber(item.value)}</span>
+          </Link>
+        ))}
+      </div>
+    </section>
   )
 }
 
