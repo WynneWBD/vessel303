@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminPageHero } from '@/components/admin/AdminUI'
 import NewsListClient from '@/components/admin/NewsListClient'
-import { listNews, listNewsCategories, type NewsRow, type NewsStatus } from '@/lib/news-db'
+import { listNews, listNewsCategories, type NewsCategoryRow, type NewsRow, type NewsStatus } from '@/lib/news-db'
 import {
   EMPTY_NEWS_STATS,
   NewsConsoleShell,
@@ -27,11 +27,29 @@ type NewsListPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
+type NewsScheduleFilter = '' | 'scheduled'
+
+type NewsFilterState = {
+  status: NewsStatus | ''
+  schedule: NewsScheduleFilter
+  category: string
+  search: string
+  page: number
+}
+
+type NewsCategoryOption = Pick<NewsCategoryRow, 'id' | 'title_zh' | 'title_en' | 'news_count'>
+
 type NewsPriorityItem = {
   item: NewsRow
   issues: string[]
   label: string
   score: number
+}
+
+type ActiveFilterChip = {
+  label: string
+  value: string
+  href: string
 }
 
 function firstParam(value: string | string[] | undefined) {
@@ -50,6 +68,73 @@ function formatNumber(value: number) {
 function formatPercent(value: number, total: number) {
   if (total <= 0) return '0%'
   return `${Math.round((value / total) * 100)}%`
+}
+
+function createHref(filters: NewsFilterState, patch: Partial<NewsFilterState & { clearSearch: boolean }>) {
+  const next: NewsFilterState = {
+    ...filters,
+    ...patch,
+    page: patch.page ?? 1,
+  }
+  const params = new URLSearchParams()
+
+  if (next.status) params.set('status', next.status)
+  if (next.schedule) params.set('schedule', next.schedule)
+  if (next.category) params.set('category', next.category)
+  if (!patch.clearSearch && next.search) params.set('search', next.search)
+  if (next.page > 1) params.set('page', String(next.page))
+
+  const query = params.toString()
+  return query ? `/admin/content/news/list?${query}` : '/admin/content/news/list'
+}
+
+function displayTitle(zh?: string | null, en?: string | null) {
+  return zh?.trim() || en?.trim() || '未命名'
+}
+
+function findCategoryTitle(categories: NewsCategoryOption[], value: string) {
+  const id = Number(value)
+  if (!Number.isInteger(id) || id <= 0) return null
+  const category = categories.find((item) => item.id === id)
+  return category ? displayTitle(category.title_zh, category.title_en) : null
+}
+
+function buildActiveFilterChips(filters: NewsFilterState, categories: NewsCategoryOption[]): ActiveFilterChip[] {
+  const chips: ActiveFilterChip[] = []
+
+  if (filters.status) {
+    chips.push({
+      label: '状态',
+      value: filters.status === 'published' ? '已发布' : '草稿',
+      href: createHref(filters, { status: '' }),
+    })
+  }
+
+  if (filters.schedule) {
+    chips.push({
+      label: '排期',
+      value: '定时发布',
+      href: createHref(filters, { schedule: '' }),
+    })
+  }
+
+  if (filters.category) {
+    chips.push({
+      label: '分类',
+      value: findCategoryTitle(categories, filters.category) ?? filters.category,
+      href: createHref(filters, { category: '' }),
+    })
+  }
+
+  if (filters.search) {
+    chips.push({
+      label: '搜索',
+      value: filters.search,
+      href: createHref(filters, { clearSearch: true }),
+    })
+  }
+
+  return chips
 }
 
 function hasText(value: string | null | undefined) {
@@ -147,6 +232,152 @@ function buildNewsPriorityItems(rows: NewsRow[]): NewsPriorityItem[] {
 
 function countPageIssue(rows: NewsRow[], predicate: (issues: string[], item: NewsRow) => boolean) {
   return rows.filter((item) => predicate(getNewsIssues(item), item)).length
+}
+
+function NewsListControlStrip({
+  filters,
+  categories,
+  stats,
+  total,
+  rowsCount,
+}: {
+  filters: NewsFilterState
+  categories: NewsCategoryOption[]
+  stats: NewsStats
+  total: number
+  rowsCount: number
+}) {
+  const chips = buildActiveFilterChips(filters, categories)
+  const firstRowNumber = total > 0 ? (filters.page - 1) * LIMIT + 1 : 0
+  const lastRowNumber = total > 0 ? Math.min(total, firstRowNumber + rowsCount - 1) : 0
+  const pageCount = Math.max(1, Math.ceil(total / LIMIT))
+  const quickLinks: Array<{ label: string; href: string; count: number | null; active: boolean }> = [
+    { label: '全部新闻', href: '/admin/content/news/list', count: stats.total, active: chips.length === 0 },
+    {
+      label: '已发布',
+      href: createHref(filters, { status: 'published', schedule: '' }),
+      count: stats.published,
+      active: filters.status === 'published' && !filters.schedule,
+    },
+    {
+      label: '草稿',
+      href: createHref(filters, { status: 'draft', schedule: '' }),
+      count: stats.draft,
+      active: filters.status === 'draft' && !filters.schedule,
+    },
+    {
+      label: '定时',
+      href: createHref(filters, { status: '', schedule: 'scheduled' }),
+      count: stats.scheduled,
+      active: filters.schedule === 'scheduled',
+    },
+    {
+      label: '待补治理',
+      href: '/admin/content/news#todo',
+      count: stats.incomplete,
+      active: false,
+    },
+    {
+      label: '缺 SEO',
+      href: '/admin/content/news#b3-3-plan',
+      count: stats.missingSeo,
+      active: false,
+    },
+    {
+      label: '分类管理',
+      href: '/admin/content/news/categories',
+      count: categories.length,
+      active: false,
+    },
+  ]
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px]">
+        <div className="border-l-4 border-[#1889B6] px-4 py-4">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">News List Console</p>
+          <div className="mt-2 flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+            <div className="min-w-0">
+              <h2 className="text-lg font-bold text-[#1E2C31]">当前新闻视图</h2>
+              <p className="mt-1 text-sm leading-6 text-[#61767D]">
+                当前筛选命中 {formatNumber(total)} 条新闻，本页显示 {formatNumber(rowsCount)} 条；先确认状态、排期、分类和搜索条件，再进入下方列表处理。
+              </p>
+            </div>
+            <Link
+              href="/admin/content/news/list"
+              className="inline-flex h-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#61767D] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
+            >
+              清空全部筛选
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 border-t border-[#E6EEEE] bg-[#FBFDFD] lg:border-l lg:border-t-0">
+          <NewsControlStat label="结果总量" value={formatNumber(total)} detail={`第 ${formatNumber(filters.page)} / ${formatNumber(pageCount)} 页`} />
+          <NewsControlStat label="当前区间" value={`${formatNumber(firstRowNumber)}-${formatNumber(lastRowNumber)}`} detail={`每页 ${formatNumber(LIMIT)} 条`} />
+          <NewsControlStat label="发布率" value={formatPercent(stats.published, stats.total)} detail={`${formatNumber(stats.published)} 已发布`} />
+        </div>
+      </div>
+
+      <div className="border-t border-[#E6EEEE] px-4 py-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#8A9EA4]">Active Filters</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {chips.length > 0 ? (
+                chips.map((chip) => (
+                  <Link
+                    key={`${chip.label}-${chip.value}`}
+                    href={chip.href}
+                    className="inline-flex min-h-8 items-center gap-2 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-2.5 py-1 text-xs text-[#61767D] transition hover:border-[#1889B6] hover:bg-[#EAF6F8] hover:text-[#1889B6]"
+                  >
+                    <span className="font-semibold text-[#1E2C31]">{chip.label}</span>
+                    <span className="max-w-[220px] truncate">{chip.value}</span>
+                    <span className="text-[#8A9EA4]">移除</span>
+                  </Link>
+                ))
+              ) : (
+                <span className="inline-flex min-h-8 items-center rounded-md border border-dashed border-[#D8E7E8] px-2.5 py-1 text-xs font-semibold text-[#8A9EA4]">
+                  当前为全部新闻视图
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="grid min-w-full grid-cols-2 gap-2 sm:grid-cols-3 lg:min-w-[560px] xl:grid-cols-4">
+            {quickLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className={`flex min-h-11 items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs font-semibold transition ${
+                  link.active
+                    ? 'border-[#1889B6] bg-[#EAF6F8] text-[#1889B6]'
+                    : 'border-[#D8E7E8] bg-white text-[#61767D] hover:border-[#1889B6] hover:text-[#1889B6]'
+                }`}
+              >
+                <span>{link.label}</span>
+                {link.count === null ? (
+                  <ArrowRight size={13} />
+                ) : (
+                  <span className="rounded bg-[#F0F7F8] px-1.5 py-0.5 text-[11px]">{formatNumber(link.count)}</span>
+                )}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function NewsControlStat({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <div className="border-r border-[#E6EEEE] px-4 py-4 last:border-r-0">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className="mt-1 truncate text-xl font-bold text-[#1E2C31]">{value}</p>
+      <p className="mt-1 truncate text-xs text-[#8A9EA4]">{detail}</p>
+    </div>
+  )
 }
 
 function NewsOperationsMatrix({ stats, rows }: { stats: NewsStats; rows: NewsRow[] }) {
@@ -355,6 +586,13 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
   const status = STATUSES.has(statusParam ?? '') ? statusParam as NewsStatus : undefined
   const scheduleParam = firstParam(sp.schedule)
   const schedule = SCHEDULES.has(scheduleParam ?? '') ? scheduleParam as 'scheduled' : undefined
+  const filters: NewsFilterState = {
+    status: status ?? '',
+    schedule: schedule ?? '',
+    category: categoryId ? String(categoryId) : '',
+    search,
+    page,
+  }
 
   const [{ rows, total }, categories, stats] = await Promise.all([
     listNews({
@@ -393,22 +631,26 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
           </>
         )}
       />
-      <NewsOperationsMatrix stats={stats} rows={rows} />
-      <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-        <NewsListClient
-          initialRows={rows}
-          initialTotal={total}
-          initialPage={page}
-          initialFilters={{
-            status: status ?? '',
-            search,
-            category: categoryId ? String(categoryId) : '',
-            schedule: schedule ?? '',
-          }}
-          initialCategories={categories}
-          basePath="/admin/content/news"
+      <div className="space-y-6">
+        <NewsListControlStrip
+          filters={filters}
+          categories={categories}
+          stats={stats}
+          total={total}
+          rowsCount={rows.length}
         />
-      </section>
+        <NewsOperationsMatrix stats={stats} rows={rows} />
+        <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+          <NewsListClient
+            initialRows={rows}
+            initialTotal={total}
+            initialPage={page}
+            initialFilters={filters}
+            initialCategories={categories}
+            basePath="/admin/content/news"
+          />
+        </section>
+      </div>
     </NewsConsoleShell>
   )
 }
