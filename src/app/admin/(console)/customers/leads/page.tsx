@@ -5,10 +5,12 @@ import LeadsClient, { type LeadDashboardSummary } from '@/components/admin/Leads
 import {
   countLeadsByStatus,
   getLeadOperationsSummary,
+  getLeadSlaSummary,
   listLeads,
   summarizeLeadsBySourceStatus,
   type Lead,
   type LeadOperationsSummary,
+  type LeadSlaSummary,
   type LeadSourceStatusSummary,
   type LeadStatus,
 } from '@/lib/leads-db'
@@ -100,6 +102,21 @@ const EMPTY_OPERATIONS_SUMMARY: LeadOperationsSummary = {
   new7d: 0,
   new30d: 0,
   updatedToday: 0,
+}
+
+const EMPTY_SLA_SUMMARY: LeadSlaSummary = {
+  firstResponseOpen: 0,
+  firstResponseOverdue: 0,
+  firstResponseToday: 0,
+  contactingOpen: 0,
+  contactingStalled: 0,
+  quotedOpen: 0,
+  quotedStalled: 0,
+  unassignedActive: 0,
+  activeMissingPhone: 0,
+  activeMissingCompany: 0,
+  won30d: 0,
+  lost30d: 0,
 }
 
 function buildLeadsPath(status?: LeadStatus) {
@@ -529,9 +546,10 @@ export default async function AdminCustomerLeadsPage({
   const page = Math.max(1, Number(getStr('page') ?? 1) || 1)
   const limit = Math.min(100, Math.max(20, Number(getStr('limit') ?? 50) || 50))
 
-  const [summary, operationsSummary, result, sourceStatusSummary] = await Promise.all([
+  const [summary, operationsSummary, slaSummary, result, sourceStatusSummary] = await Promise.all([
     safeLoad('lead summary', () => getLeadSummary(), EMPTY_SUMMARY),
     safeLoad('lead operations summary', () => getLeadOperationsSummary(), EMPTY_OPERATIONS_SUMMARY),
+    safeLoad('lead sla summary', () => getLeadSlaSummary(), EMPTY_SLA_SUMMARY),
     safeLoad(
       'lead list',
       () =>
@@ -588,6 +606,7 @@ export default async function AdminCustomerLeadsPage({
         allowDelete={false}
         summary={summary}
         operationsSummary={operationsSummary}
+        slaSummary={slaSummary}
         sourceStatusSummary={sourceStatusSummary}
       />
     </AdminSectionShell>

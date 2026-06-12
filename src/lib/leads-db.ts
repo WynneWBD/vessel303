@@ -62,6 +62,21 @@ export type LeadOperationsSummary = {
   updatedToday: number
 }
 
+export type LeadSlaSummary = {
+  firstResponseOpen: number
+  firstResponseOverdue: number
+  firstResponseToday: number
+  contactingOpen: number
+  contactingStalled: number
+  quotedOpen: number
+  quotedStalled: number
+  unassignedActive: number
+  activeMissingPhone: number
+  activeMissingCompany: number
+  won30d: number
+  lost30d: number
+}
+
 const LEAD_COLUMNS = `
   id, email, name, phone, company, country, inquiry_type, sku_interest,
   message, source, status, assigned_to, notes, created_at, updated_at, deleted_at
@@ -247,6 +262,55 @@ export async function getLeadOperationsSummary(): Promise<LeadOperationsSummary>
     new7d: toCount(row?.new7d),
     new30d: toCount(row?.new30d),
     updatedToday: toCount(row?.updated_today),
+  }
+}
+
+export async function getLeadSlaSummary(): Promise<LeadSlaSummary> {
+  const res = await pool.query<{
+    first_response_open: string
+    first_response_overdue: string
+    first_response_today: string
+    contacting_open: string
+    contacting_stalled: string
+    quoted_open: string
+    quoted_stalled: string
+    unassigned_active: string
+    active_missing_phone: string
+    active_missing_company: string
+    won30d: string
+    lost30d: string
+  }>(
+    `SELECT
+        COUNT(*) FILTER (WHERE status = 'new')::text AS first_response_open,
+        COUNT(*) FILTER (WHERE status = 'new' AND created_at < NOW() - INTERVAL '24 hours')::text AS first_response_overdue,
+        COUNT(*) FILTER (WHERE status = 'new' AND created_at >= CURRENT_DATE)::text AS first_response_today,
+        COUNT(*) FILTER (WHERE status = 'contacting')::text AS contacting_open,
+        COUNT(*) FILTER (WHERE status = 'contacting' AND updated_at < NOW() - INTERVAL '7 days')::text AS contacting_stalled,
+        COUNT(*) FILTER (WHERE status = 'quoted')::text AS quoted_open,
+        COUNT(*) FILTER (WHERE status = 'quoted' AND updated_at < NOW() - INTERVAL '7 days')::text AS quoted_stalled,
+        COUNT(*) FILTER (WHERE ${ACTIVE_STATUS_SQL} AND ${UNASSIGNED_SQL})::text AS unassigned_active,
+        COUNT(*) FILTER (WHERE ${ACTIVE_STATUS_SQL} AND (phone IS NULL OR BTRIM(phone) = ''))::text AS active_missing_phone,
+        COUNT(*) FILTER (WHERE ${ACTIVE_STATUS_SQL} AND (company IS NULL OR BTRIM(company) = ''))::text AS active_missing_company,
+        COUNT(*) FILTER (WHERE status = 'won' AND updated_at >= NOW() - INTERVAL '30 days')::text AS won30d,
+        COUNT(*) FILTER (WHERE status = 'lost' AND updated_at >= NOW() - INTERVAL '30 days')::text AS lost30d
+       FROM leads
+      WHERE deleted_at IS NULL`,
+  )
+  const row = res.rows[0]
+
+  return {
+    firstResponseOpen: toCount(row?.first_response_open),
+    firstResponseOverdue: toCount(row?.first_response_overdue),
+    firstResponseToday: toCount(row?.first_response_today),
+    contactingOpen: toCount(row?.contacting_open),
+    contactingStalled: toCount(row?.contacting_stalled),
+    quotedOpen: toCount(row?.quoted_open),
+    quotedStalled: toCount(row?.quoted_stalled),
+    unassignedActive: toCount(row?.unassigned_active),
+    activeMissingPhone: toCount(row?.active_missing_phone),
+    activeMissingCompany: toCount(row?.active_missing_company),
+    won30d: toCount(row?.won30d),
+    lost30d: toCount(row?.lost30d),
   }
 }
 

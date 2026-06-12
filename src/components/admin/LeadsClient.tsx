@@ -48,7 +48,13 @@ import {
 } from '@/components/ui/sheet'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import AdminPagination from '@/components/admin/AdminPagination'
-import type { Lead, LeadOperationsSummary, LeadSourceStatusSummary, LeadStatus } from '@/lib/leads-db'
+import type {
+  Lead,
+  LeadOperationsSummary,
+  LeadSlaSummary,
+  LeadSourceStatusSummary,
+  LeadStatus,
+} from '@/lib/leads-db'
 import { describeLeadSource, LEAD_SOURCE_TYPE_OPTIONS } from '@/lib/lead-source'
 
 type Filters = {
@@ -318,6 +324,7 @@ export default function LeadsClient({
   allowDelete = false,
   summary,
   operationsSummary,
+  slaSummary,
   sourceStatusSummary = [],
 }: {
   initialLeads: Lead[]
@@ -329,6 +336,7 @@ export default function LeadsClient({
   allowDelete?: boolean
   summary?: LeadDashboardSummary
   operationsSummary: LeadOperationsSummary
+  slaSummary: LeadSlaSummary
   sourceStatusSummary?: LeadSourceStatusSummary[]
 }) {
   const router = useRouter()
@@ -547,6 +555,8 @@ export default function LeadsClient({
           </div>
         </div>
       </section>
+
+      <LeadSlaBoard slaSummary={slaSummary} onApplyFilter={updateFilters} />
 
       <LeadOperationsDesk
         leads={leads}
@@ -838,6 +848,199 @@ export default function LeadsClient({
         onConfirm={handleConfirmDelete}
       />
     </div>
+  )
+}
+
+type LeadSlaAction = {
+  label: string
+  patch: Partial<Filters>
+  primary?: boolean
+}
+
+type LeadSlaLane = {
+  title: string
+  kicker: string
+  metric: number
+  detail: string
+  signal: string
+  Icon: LucideIcon
+  tone: LeadPriorityTone
+  actions: LeadSlaAction[]
+}
+
+function leadSlaLaneClass(tone: LeadPriorityTone) {
+  switch (tone) {
+    case 'critical':
+      return 'border-l-orange-500 bg-orange-50'
+    case 'warning':
+      return 'border-l-amber-500 bg-amber-50'
+    case 'active':
+      return 'border-l-sky-500 bg-sky-50'
+    case 'success':
+      return 'border-l-emerald-500 bg-emerald-50'
+    default:
+      return 'border-l-slate-400 bg-slate-50'
+  }
+}
+
+function LeadSlaBoard({
+  slaSummary,
+  onApplyFilter,
+}: {
+  slaSummary: LeadSlaSummary
+  onApplyFilter: (patch: Partial<Filters>) => void
+}) {
+  const missingProfile = slaSummary.activeMissingPhone + slaSummary.activeMissingCompany
+  const totalRisk =
+    slaSummary.firstResponseOverdue +
+    slaSummary.contactingStalled +
+    slaSummary.quotedStalled +
+    slaSummary.unassignedActive +
+    missingProfile
+
+  const lanes: LeadSlaLane[] = [
+    {
+      kicker: 'Response SLA',
+      title: '首次响应',
+      metric: slaSummary.firstResponseOpen,
+      detail: `今日新增 ${slaSummary.firstResponseToday.toLocaleString('zh-CN')} 条；超过 24 小时未转入跟进会进入超时队列。`,
+      signal:
+        slaSummary.firstResponseOverdue > 0
+          ? `${slaSummary.firstResponseOverdue.toLocaleString('zh-CN')} 条超时`
+          : '24h 内可控',
+      Icon: Inbox,
+      tone: slaSummary.firstResponseOverdue > 0 ? 'critical' : slaSummary.firstResponseOpen > 0 ? 'warning' : 'success',
+      actions: [
+        { label: '新线索', patch: { status: 'new', attention: 'all' }, primary: slaSummary.firstResponseOpen > 0 },
+        { label: '超时', patch: { status: 'all', attention: 'overdue' }, primary: slaSummary.firstResponseOverdue > 0 },
+      ],
+    },
+    {
+      kicker: 'Follow-up',
+      title: '跟进推进',
+      metric: slaSummary.contactingOpen,
+      detail: '跟进中超过 7 天没有更新会被视为跟进断点，需要补备注或推进下一步。',
+      signal:
+        slaSummary.contactingStalled > 0
+          ? `${slaSummary.contactingStalled.toLocaleString('zh-CN')} 条断点`
+          : '无断点',
+      Icon: MessageSquareText,
+      tone: slaSummary.contactingStalled > 0 ? 'warning' : slaSummary.contactingOpen > 0 ? 'active' : 'muted',
+      actions: [
+        { label: '跟进中', patch: { status: 'contacting', attention: 'all' }, primary: slaSummary.contactingOpen > 0 },
+        { label: '活跃商机', patch: { status: 'all', attention: 'active' } },
+      ],
+    },
+    {
+      kicker: 'Quote Review',
+      title: '报价回访',
+      metric: slaSummary.quotedOpen,
+      detail: '已报价线索需要持续回访；超过 7 天未更新时优先确认预算、交期和决策进展。',
+      signal:
+        slaSummary.quotedStalled > 0
+          ? `${slaSummary.quotedStalled.toLocaleString('zh-CN')} 条待回访`
+          : '回访正常',
+      Icon: FileText,
+      tone: slaSummary.quotedStalled > 0 ? 'warning' : slaSummary.quotedOpen > 0 ? 'active' : 'muted',
+      actions: [
+        { label: '已报价', patch: { status: 'quoted', attention: 'all' }, primary: slaSummary.quotedOpen > 0 },
+        { label: '超时', patch: { status: 'all', attention: 'overdue' }, primary: slaSummary.quotedStalled > 0 },
+      ],
+    },
+    {
+      kicker: 'Owner / Profile',
+      title: '分配与资料',
+      metric: slaSummary.unassignedActive,
+      detail: `活跃线索中缺电话 ${slaSummary.activeMissingPhone.toLocaleString('zh-CN')} 条，缺公司 ${slaSummary.activeMissingCompany.toLocaleString('zh-CN')} 条。`,
+      signal: missingProfile > 0 ? `${missingProfile.toLocaleString('zh-CN')} 个缺口` : '资料完整',
+      Icon: UserRoundCheck,
+      tone: slaSummary.unassignedActive > 0 || missingProfile > 0 ? 'warning' : 'success',
+      actions: [
+        { label: '未分配', patch: { status: 'all', attention: 'unassigned' }, primary: slaSummary.unassignedActive > 0 },
+        { label: '活跃线索', patch: { status: 'all', attention: 'active' }, primary: missingProfile > 0 },
+      ],
+    },
+    {
+      kicker: 'Close-out',
+      title: '成交 / 关闭',
+      metric: slaSummary.won30d,
+      detail: `近 30 天成交 ${slaSummary.won30d.toLocaleString('zh-CN')} 条，关闭 ${slaSummary.lost30d.toLocaleString('zh-CN')} 条；用于复盘来源质量。`,
+      signal: slaSummary.won30d > 0 ? '有成交记录' : '待成交',
+      Icon: BadgeCheck,
+      tone: slaSummary.won30d > 0 ? 'success' : 'muted',
+      actions: [
+        { label: '已成交', patch: { status: 'won', attention: 'all' }, primary: slaSummary.won30d > 0 },
+        { label: '已废弃', patch: { status: 'lost', attention: 'all' } },
+      ],
+    },
+  ]
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p className="text-xs font-semibold tracking-[0.18em] text-[#1889B6] uppercase">SLA Command</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">线索响应与分配看板</h2>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-[#61767D]">
+            全库只读聚合，排除已删除线索；用于判断首次响应、跟进断点、报价回访、负责人分配和资料缺口。
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-xs sm:min-w-[280px]">
+          <div className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2">
+            <p className="font-semibold text-[#61767D]">待处理风险</p>
+            <p className="mt-1 text-2xl font-bold text-[#E36F2C]">{totalRisk.toLocaleString('zh-CN')}</p>
+          </div>
+          <div className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2">
+            <p className="font-semibold text-[#61767D]">当前口径</p>
+            <p className="mt-1 text-sm font-bold text-[#1E2C31]">一方 leads</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 p-5 xl:grid-cols-5">
+        {lanes.map((lane) => {
+          const Icon = lane.Icon
+
+          return (
+            <article
+              key={lane.title}
+              className={`flex min-h-[230px] flex-col rounded-md border border-[#D8E7E8] border-l-4 p-4 ${leadSlaLaneClass(lane.tone)}`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#61767D]">{lane.kicker}</p>
+                  <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">{lane.title}</h3>
+                </div>
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${priorityBadgeClass(lane.tone)}`}>
+                  <Icon size={17} />
+                </span>
+              </div>
+              <div className="mt-4">
+                <p className="text-3xl font-bold text-[#1E2C31]">{lane.metric.toLocaleString('zh-CN')}</p>
+                <Badge className={`mt-2 ${priorityBadgeClass(lane.tone)}`}>{lane.signal}</Badge>
+              </div>
+              <p className="mt-3 flex-1 text-xs leading-5 text-[#61767D]">{lane.detail}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {lane.actions.map((action) => (
+                  <button
+                    key={action.label}
+                    type="button"
+                    onClick={() => onApplyFilter(action.patch)}
+                    className={`inline-flex min-h-8 items-center rounded-md border px-3 text-xs font-semibold transition ${
+                      action.primary
+                        ? 'border-[#1889B6] bg-[#1889B6] text-white hover:bg-[#0F6F95]'
+                        : 'border-[#D8E7E8] bg-white text-[#1E2C31] hover:border-[#1889B6] hover:text-[#1889B6]'
+                    }`}
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            </article>
+          )
+        })}
+      </div>
+    </section>
   )
 }
 
