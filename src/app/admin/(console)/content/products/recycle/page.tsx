@@ -10,13 +10,17 @@ import {
 import {
   Archive,
   ArrowLeft,
+  ArrowRight,
   FileText,
   Layers3,
   ListChecks,
   Package,
+  RotateCcw,
   Search,
+  ShieldCheck,
   SlidersHorizontal,
   Tags,
+  type LucideIcon,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -29,6 +33,31 @@ type AdminRole = 'admin' | 'operator'
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+type RecycleSummary = {
+  products: number
+  draft: number
+  published: number
+  deleted: number
+  pageRows: number
+  deletedPublishedOnPage: number
+  deletedDraftOnPage: number
+  search: string
+}
+
+type RecycleGovernanceCard = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  cta: string
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+  Icon: LucideIcon
+}
+
+function formatNumber(value: number): string {
+  return value.toLocaleString('zh-CN')
 }
 
 function firstParam(value: string | string[] | undefined): string | undefined {
@@ -54,13 +83,16 @@ function getSideNavGroups({
         { key: 'drafts', label: '草稿内容', href: '/admin/content/products/list?status=draft', badge: draft, Icon: FileText },
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
+        { key: 'brands', label: '品牌管理', href: '/admin/content/products/brands#brand-governance', Icon: Package },
+        { key: 'marks', label: '标记管理', href: '/admin/content/products/marks#mark-governance', Icon: Tags },
+        { key: 'batch-governance', label: '批量治理', href: '/admin/content/products/list#product-batch-governance', Icon: ListChecks },
         { key: 'recycle', label: '产品回收站', href: '/admin/content/products/recycle', badge: deleted, Icon: Archive },
       ],
     },
   ]
 }
 
-function Hero({ search }: { search: string }) {
+function Hero({ summary }: { summary: RecycleSummary }) {
   return (
     <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#E7F7F8_0%,#F7FAFA_58%,#FFF2E7_100%)] p-5 shadow-sm md:p-6">
       <Link
@@ -75,7 +107,7 @@ function Hero({ search }: { search: string }) {
           <p className="text-sm font-semibold text-[#1889B6]">产品管理</p>
           <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">产品回收站</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-            对照 300 的“回收站”，已删除产品只允许恢复为草稿，不开放永久删除。
+            对照 300.cn 后台的“回收站”，已删除产品只允许恢复为草稿，不开放永久删除。
           </p>
         </div>
         <form action="/admin/content/products/recycle" className="flex flex-wrap items-center gap-2">
@@ -83,7 +115,7 @@ function Hero({ search }: { search: string }) {
             <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8A9EA4]" size={16} />
             <input
               name="search"
-              defaultValue={search}
+              defaultValue={summary.search}
               placeholder="搜索已删除产品"
               className="h-10 w-56 rounded-md border border-[#D8E7E8] bg-white pl-9 pr-3 text-sm text-[#1E2C31] outline-none transition focus:border-[#1889B6]"
             />
@@ -94,7 +126,7 @@ function Hero({ search }: { search: string }) {
           >
             搜索
           </button>
-          {search ? (
+          {summary.search ? (
             <Link
               href="/admin/content/products/recycle"
               className="inline-flex h-10 items-center rounded-md border border-[#D8E7E8] bg-white px-4 text-sm font-semibold text-[#61767D] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
@@ -103,6 +135,12 @@ function Hero({ search }: { search: string }) {
             </Link>
           ) : null}
         </form>
+      </div>
+      <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-4">
+        <HeroStat title="回收站" value={summary.deleted} detail={summary.search ? '当前搜索结果' : '全部已删除'} tone={summary.deleted > 0 ? 'orange' : 'blue'} />
+        <HeroStat title="当前页" value={summary.pageRows} detail="可恢复产品" />
+        <HeroStat title="删前已发布" value={summary.deletedPublishedOnPage} detail={`删前草稿 ${formatNumber(summary.deletedDraftOnPage)}`} tone="orange" />
+        <HeroStat title="当前草稿" value={summary.draft} detail="恢复后进入这里" />
       </div>
     </section>
   )
@@ -133,6 +171,16 @@ export default async function AdminContentProductRecyclePage({ searchParams }: P
   ])
 
   const adminRole: AdminRole = role
+  const summary: RecycleSummary = {
+    products: counts.total,
+    draft: counts.draft,
+    published: counts.published,
+    deleted: deleted.total,
+    pageRows: deleted.rows.length,
+    deletedPublishedOnPage: deleted.rows.filter((item) => item.status === 'published').length,
+    deletedDraftOnPage: deleted.rows.filter((item) => item.status === 'draft').length,
+    search,
+  }
 
   return (
     <AdminSectionShell
@@ -144,8 +192,146 @@ export default async function AdminContentProductRecyclePage({ searchParams }: P
       sideNavGroups={getSideNavGroups({ total: counts.total, draft: counts.draft, deleted: deleted.total })}
       activeItem="recycle"
     >
-      <Hero search={search} />
-      <ProductRecycleClient initialRows={deleted.rows} total={deleted.total} />
+      <Hero summary={summary} />
+      <RecycleGovernancePanel summary={summary} />
+      <div id="recycle-list" className="scroll-mt-24">
+        <ProductRecycleClient initialRows={deleted.rows} total={deleted.total} />
+      </div>
     </AdminSectionShell>
+  )
+}
+
+function RecycleGovernancePanel({ summary }: { summary: RecycleSummary }) {
+  const cards: RecycleGovernanceCard[] = [
+    {
+      label: '安全边界',
+      value: '仅恢复',
+      detail: '产品回收站只开放恢复为草稿，不提供永久删除；恢复动作不会直接重新发布到前台。',
+      href: '#recycle-list',
+      cta: '查看可恢复项',
+      tone: 'green',
+      Icon: ShieldCheck,
+    },
+    {
+      label: '待恢复池',
+      value: formatNumber(summary.deleted),
+      detail: summary.search
+        ? `当前关键词“${summary.search}”命中 ${formatNumber(summary.deleted)} 个已删除产品。`
+        : `当前共有 ${formatNumber(summary.deleted)} 个已删除产品，按删除时间倒序处理。`,
+      href: '#recycle-list',
+      cta: '复核回收站',
+      tone: summary.deleted > 0 ? 'orange' : 'green',
+      Icon: RotateCcw,
+    },
+    {
+      label: '恢复后草稿',
+      value: formatNumber(summary.draft),
+      detail: '恢复后的产品统一进入草稿队列，运营需要补内容、分类、品牌、标记和 SEO 后再发布。',
+      href: '/admin/content/products/list?status=draft',
+      cta: '查看草稿',
+      tone: 'blue',
+      Icon: FileText,
+    },
+    {
+      label: '补齐路径',
+      value: '闭环',
+      detail: `当前公开产品 ${formatNumber(summary.products)} 个、已发布 ${formatNumber(summary.published)} 个；恢复后回到产品列表做批量治理。`,
+      href: '/admin/content/products/list#product-batch-governance',
+      cta: '打开批量治理',
+      tone: 'blue',
+      Icon: ListChecks,
+    },
+  ]
+
+  return (
+    <section id="recycle-governance" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">回收治理</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">误删保护到恢复草稿闭环</h2>
+          <p className="mt-1 text-sm leading-6 text-[#61767D]">
+            回收站把误删保护、恢复草稿、产品补齐和批量治理串成同一条安全运营路径；本区只做只读统计和入口串联，不新增删除能力。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/content/products/brands#brand-governance"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            <Package size={13} />
+            品牌治理
+          </Link>
+          <Link
+            href="/admin/content/products/marks#mark-governance"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-[#1889B6] px-3 text-xs font-semibold text-white transition hover:bg-[#126D91]"
+          >
+            <Tags size={13} />
+            标记治理
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-2 xl:grid-cols-4">
+        {cards.map((card) => (
+          <RecycleGovernanceLink key={card.label} card={card} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function RecycleGovernanceLink({ card }: { card: RecycleGovernanceCard }) {
+  const Icon = card.Icon
+  const toneClass =
+    card.tone === 'green'
+      ? 'text-emerald-700'
+      : card.tone === 'orange'
+        ? 'text-[#E36F2C]'
+        : card.tone === 'gray'
+          ? 'text-[#61767D]'
+          : 'text-[#1889B6]'
+
+  return (
+    <Link
+      href={card.href}
+      className="group min-h-[148px] border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-white md:odd:border-r xl:border-b-0 xl:border-r xl:last:border-r-0"
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-xs font-bold tracking-[0.08em] text-[#8A9EA4]">{card.label}</span>
+          <span className={`mt-2 block text-2xl font-bold ${toneClass}`}>{card.value}</span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block min-h-10 text-xs leading-5 text-[#61767D]">{card.detail}</span>
+      <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
+        {card.cta}
+        <ArrowRight size={13} />
+      </span>
+    </Link>
+  )
+}
+
+function HeroStat({
+  title,
+  value,
+  detail,
+  tone = 'blue',
+}: {
+  title: string
+  value: number
+  detail: string
+  tone?: 'blue' | 'orange'
+}) {
+  return (
+    <div className="rounded-md border border-white/70 bg-white/82 p-4 shadow-sm">
+      <p className="text-xs font-semibold text-[#61767D]">{title}</p>
+      <p className={`mt-2 text-2xl font-bold ${tone === 'orange' ? 'text-[#E36F2C]' : 'text-[#1889B6]'}`}>
+        {formatNumber(value)}
+      </p>
+      <p className="mt-1 text-xs text-[#8A9EA4]">{detail}</p>
+    </div>
   )
 }
