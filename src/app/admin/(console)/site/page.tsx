@@ -80,6 +80,19 @@ type SiteConsoleRow = {
   actions: Array<{ label: string; href: string }>
 }
 
+type B195QueueTone = 'blue' | 'green' | 'orange' | 'gray'
+
+type B195QueueItem = {
+  title: string
+  owner: string
+  status: string
+  detail: string
+  href: string
+  action: string
+  Icon: LucideIcon
+  tone: B195QueueTone
+}
+
 const STORAGE_WARNING_BYTES = 800 * 1024 * 1024
 
 const SITE_DOMAINS: SiteDomain[] = [
@@ -207,6 +220,10 @@ function getSiteSideNav({
   isAdmin: boolean
 }): AdminSideNavGroup[] {
   const todoCount = pageDraftCount + (uploadBytes > STORAGE_WARNING_BYTES ? 1 : 0) + (isAdmin ? configIssues : 0)
+  const b195AlertCount =
+    (pageDraftCount > 0 ? 1 : 0) +
+    (uploadBytes > STORAGE_WARNING_BYTES ? 1 : 0) +
+    (isAdmin && configIssues > 0 ? 1 : 0)
 
   return [
     {
@@ -220,6 +237,7 @@ function getSiteSideNav({
         { key: 'settings', label: '网站信息', href: '/admin/site/settings', Icon: Settings },
         { key: 'visual', label: '编辑网站', href: '/admin/site/visual', Icon: FileText },
         { key: 'drafts', label: '页面草稿', href: '#drafts', badge: pageDraftCount, Icon: CircleDashed },
+        { key: 'b195', label: 'B195 队列', href: '#b195-queue', badge: b195AlertCount, Icon: ListChecks },
         { key: 'todo', label: '网站待办', href: '#todo', badge: todoCount, Icon: ListChecks },
       ],
     },
@@ -319,6 +337,87 @@ function getConfigIssueCount(): number {
     Boolean(process.env.MAPTILER_KEY),
   ]
   return checks.filter((ok) => !ok).length
+}
+
+function buildB195QueueItems({
+  pageDraftCount,
+  uploadBytes,
+  configIssues,
+  isAdmin,
+}: {
+  pageDraftCount: number
+  uploadBytes: number
+  configIssues: number
+  isAdmin: boolean
+}): B195QueueItem[] {
+  return [
+    {
+      title: '页面发布复核',
+      owner: '02_content_cms_workflow / 04_frontend_visual_system',
+      status: pageDraftCount > 0 ? `${pageDraftCount.toLocaleString('zh-CN')} 个草稿` : '暂无草稿阻塞',
+      detail: pageDraftCount > 0
+        ? '先预览页面草稿，再确认是否发布，避免运营内容直接进入前台。'
+        : '页面编辑链路可继续保持巡检，下一步重点看公开页转化节奏。',
+      href: '/admin/site/visual',
+      action: '查看草稿',
+      Icon: FileText,
+      tone: pageDraftCount > 0 ? 'orange' : 'green',
+    },
+    {
+      title: '素材风险视图',
+      owner: '06_assets_media_pipeline',
+      status: uploadBytes > STORAGE_WARNING_BYTES ? '空间使用偏高' : formatBytes(uploadBytes),
+      detail: '优先看大图、缺少派生图和引用关系，再决定是否进入素材治理；本队列不执行删除。',
+      href: '/admin/site/media?view=issues',
+      action: '查看风险素材',
+      Icon: ImageIcon,
+      tone: uploadBytes > STORAGE_WARNING_BYTES ? 'orange' : 'blue',
+    },
+    {
+      title: '转化路径诊断',
+      owner: '01_public_site_conversion / 07_growth_analytics_seo',
+      status: '只读诊断',
+      detail: '把首页、产品、案例、联系表单和访问路径串起来看，判断公开页是否优于 en303 的获客路径。',
+      href: '/admin/site/conversion',
+      action: '查看转化路径',
+      Icon: Link2,
+      tone: 'blue',
+    },
+    {
+      title: 'SEO 与收录准备',
+      owner: '07_growth_analytics_seo',
+      status: '内容缺口优先',
+      detail: '先处理已发布产品、新闻、案例的 SEO 字段缺口，再做 Search Console 提交流程。',
+      href: '/admin/site/seo',
+      action: '查看 SEO 检查',
+      Icon: SearchCheck,
+      tone: 'blue',
+    },
+    {
+      title: '网站信息边界',
+      owner: '08_security_production_guard / 03_admin_operations_center',
+      status: isAdmin
+        ? configIssues > 0
+          ? `${configIssues.toLocaleString('zh-CN')} 个配置项`
+          : '关键配置就绪'
+        : '运营只读',
+      detail: '站点信息、三方代码和搜索连接只做状态盘点；高风险配置仍走管理员设置和代码审查。',
+      href: isAdmin ? '/admin/settings' : '/admin/site/settings',
+      action: isAdmin ? '查看站点设置' : '查看网站信息',
+      Icon: Settings,
+      tone: configIssues > 0 && isAdmin ? 'orange' : 'gray',
+    },
+    {
+      title: 'Global 保护边界',
+      owner: '08_security_production_guard',
+      status: '只读查看',
+      detail: 'Global、MapLibre、MapTiler 和 /api/map 仍为保护链路，本批次只保留前台查看入口。',
+      href: '/global',
+      action: '查看 Global',
+      Icon: MapPinned,
+      tone: 'gray',
+    },
+  ]
 }
 
 function Hero({
@@ -552,6 +651,84 @@ function SiteConsoleRowView({ row }: { row: SiteConsoleRow }) {
         <ArrowRight size={13} />
       </Link>
     </div>
+  )
+}
+
+function queueToneClass(tone: B195QueueTone): string {
+  if (tone === 'orange') return 'border-l-[#E36F2C] bg-[#FFF7F0]'
+  if (tone === 'green') return 'border-l-emerald-500 bg-emerald-50/70'
+  if (tone === 'gray') return 'border-l-[#8A9EA4] bg-[#F7FAFA]'
+  return 'border-l-[#1889B6] bg-white'
+}
+
+function queueIconClass(tone: B195QueueTone): string {
+  if (tone === 'orange') return 'bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'green') return 'bg-emerald-50 text-emerald-700'
+  if (tone === 'gray') return 'bg-[#F0F2F2] text-[#61767D]'
+  return 'bg-[#EAF6F8] text-[#1889B6]'
+}
+
+function B195PriorityQueue({
+  pageDraftCount,
+  uploadBytes,
+  configIssues,
+  isAdmin,
+}: {
+  pageDraftCount: number
+  uploadBytes: number
+  configIssues: number
+  isAdmin: boolean
+}) {
+  const items = buildB195QueueItems({ pageDraftCount, uploadBytes, configIssues, isAdmin })
+  const alertCount = items.filter((item) => item.tone === 'orange').length
+
+  return (
+    <section id="b195-queue" className="scroll-mt-24 space-y-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <AdminSectionTitle
+          title="B195 优先级队列"
+          detail="把本轮未完成差距收成一个运营队列：先处理阻塞信号，再进入素材、转化、SEO 和网站信息复核。"
+        />
+        <span className={`inline-flex w-fit rounded-md px-3 py-2 text-xs font-bold ${alertCount > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
+          {alertCount > 0 ? `${alertCount} 项需优先处理` : '暂无阻塞项'}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
+        {items.map((item) => (
+          <B195QueueCard key={item.title} item={item} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function B195QueueCard({ item }: { item: B195QueueItem }) {
+  const Icon = item.Icon
+
+  return (
+    <Link
+      href={item.href}
+      className={`group flex min-h-56 flex-col justify-between rounded-md border border-l-4 border-[#D8E7E8] p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60 hover:shadow-md ${queueToneClass(item.tone)}`}
+    >
+      <span>
+        <span className="flex items-start justify-between gap-3">
+          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${queueIconClass(item.tone)}`}>
+            <Icon size={18} />
+          </span>
+          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${queueIconClass(item.tone)}`}>
+            {item.status}
+          </span>
+        </span>
+        <span className="mt-4 block text-base font-bold text-[#1E2C31]">{item.title}</span>
+        <span className="mt-1 block text-xs font-semibold text-[#8A9EA4]">{item.owner}</span>
+        <span className="mt-3 block text-sm leading-6 text-[#61767D]">{item.detail}</span>
+      </span>
+      <span className="mt-5 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6] transition group-hover:text-[#0F6F95]">
+        {item.action}
+        <ArrowRight size={14} />
+      </span>
+    </Link>
   )
 }
 
@@ -829,6 +1006,12 @@ export default async function AdminSitePage() {
             uploadCount={uploadCount}
             uploadBytes={uploadBytes}
             visibleModules={visibleModules}
+            configIssues={configIssues}
+            isAdmin={isAdmin}
+          />
+          <B195PriorityQueue
+            pageDraftCount={pageDraftCount}
+            uploadBytes={uploadBytes}
             configIssues={configIssues}
             isAdmin={isAdmin}
           />
