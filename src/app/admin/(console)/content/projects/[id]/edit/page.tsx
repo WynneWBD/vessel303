@@ -117,6 +117,28 @@ type ProjectEditorReadiness = {
   nextIssue: ProjectEditorReadinessIssue | null
 }
 
+type CaseConversionCheckpoint = {
+  key: string
+  title: string
+  detail: string
+  href: string
+  done: boolean
+  external?: boolean
+}
+
+const CASE_CONVERSION_ISSUE_KEYS = new Set([
+  'cover',
+  'gallery',
+  'description-zh',
+  'description-en',
+  'story-depth',
+  'tags',
+  'project-type',
+  'area',
+  'units',
+  'products',
+])
+
 const EDIT_SECTIONS: EditSection[] = [
   {
     key: 'basic',
@@ -319,6 +341,7 @@ function getSideNavGroups(project: ProjectCaseRow): AdminSideNavGroup[] {
       title: '后续规划',
       items: [
         { key: 'project-new', label: '新增项目', href: '/admin/content/projects/new', Icon: FileText },
+        { key: 'case-conversion', label: '案例咨询承接', href: '#case-conversion', Icon: SearchCheck },
         { key: 'form-sections', label: '表单分区优化', planned: true, Icon: SearchCheck },
         { key: 'case-detail', label: '查看案例详情页', href: `/cases/${project.id}`, Icon: ExternalLink },
       ],
@@ -598,6 +621,61 @@ function buildProjectEditorReadiness(project: ProjectCaseRow): ProjectEditorRead
   }
 }
 
+function getCaseConversionIssues(readiness: ProjectEditorReadiness): ProjectEditorReadinessIssue[] {
+  return readiness.issues.filter((issue) => CASE_CONVERSION_ISSUE_KEYS.has(issue.key))
+}
+
+function hasCaseConversionIssue(issues: ProjectEditorReadinessIssue[], keys: string[]): boolean {
+  return issues.some((issue) => keys.includes(issue.key))
+}
+
+function buildCaseConversionCheckpoints(
+  project: ProjectCaseRow,
+  conversionIssues: ProjectEditorReadinessIssue[],
+): CaseConversionCheckpoint[] {
+  const inquiryHref = `/cases/${project.id}#case-inquiry`
+
+  return [
+    {
+      key: 'media',
+      title: '素材可信度',
+      detail: '封面和图库支撑案例列表、详情首屏和客户信任。',
+      href: '#media',
+      done: !hasCaseConversionIssue(conversionIssues, ['cover', 'gallery']),
+    },
+    {
+      key: 'story',
+      title: '双语案例叙事',
+      detail: '中英文简介、叙事长度和标签决定咨询前上下文。',
+      href: '#content',
+      done: !hasCaseConversionIssue(conversionIssues, ['description-zh', 'description-en', 'story-depth', 'tags']),
+    },
+    {
+      key: 'facts',
+      title: '项目事实',
+      detail: '类型、面积、舱数和产品型号帮助销售理解需求来源。',
+      href: hasCaseConversionIssue(conversionIssues, ['project-type']) ? '#basic' : '#params',
+      done: !hasCaseConversionIssue(conversionIssues, ['project-type', 'area', 'units', 'products']),
+    },
+    {
+      key: 'inquiry-path',
+      title: '咨询入口路径',
+      detail: project.status === 'published'
+        ? '前台案例咨询锚点可直接人工核查。'
+        : '草稿不会进入公开案例页，发布后才有咨询入口。',
+      href: project.status === 'published' ? inquiryHref : '#publish-check',
+      done: project.status === 'published',
+      external: project.status === 'published',
+    },
+  ]
+}
+
+function caseConversionToneClass(done: boolean) {
+  return done
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    : 'border-[#F2C6A7] bg-[#FFF7F0] text-[#E36F2C]'
+}
+
 function StatusBadge({ status }: { status: ProjectCaseStatus }) {
   const published = status === 'published'
   return (
@@ -655,6 +733,94 @@ function InfoCard({
         {value}
       </p>
     </div>
+  )
+}
+
+function CaseConversionPanel({
+  project,
+  readiness,
+}: {
+  project: ProjectCaseRow
+  readiness: ProjectEditorReadiness
+}) {
+  const conversionIssues = getCaseConversionIssues(readiness)
+  const checkpoints = buildCaseConversionCheckpoints(project, conversionIssues)
+  const published = project.status === 'published'
+  const inquiryHref = `/cases/${project.id}#case-inquiry`
+  const ready = published && conversionIssues.length === 0
+  const nextIssue = conversionIssues[0] ?? null
+  const status = !published
+    ? {
+        label: '草稿未上线',
+        detail: '发布后才会进入公开案例页和案例咨询锚点。',
+        href: '#publish-check',
+        action: '检查发布状态',
+      }
+    : ready
+      ? {
+          label: '可承接案例咨询',
+          detail: '素材、叙事、项目事实和公开路径均已具备，可核查前台咨询入口。',
+          href: inquiryHref,
+          action: '核查咨询入口',
+        }
+      : {
+          label: '转化承接待补',
+          detail: `还有 ${conversionIssues.length} 项会削弱案例咨询前的判断信息。`,
+          href: nextIssue?.href ?? '#project-form',
+          action: nextIssue ? `先处理：${nextIssue.label}` : '进入表单复核',
+        }
+
+  return (
+    <section id="case-conversion" className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm md:p-5">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#1889B6]">Case Inquiry Readiness</p>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">案例咨询承接</h2>
+          <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
+            对齐项目列表的“转化承接”判断：这里仅做只读提示，帮助运营定位会影响 `/cases/[id]#case-inquiry` 咨询承接的字段，不改变保存、发布和上传逻辑。
+          </p>
+        </div>
+        <div className="w-full max-w-sm rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-4">
+          <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${caseConversionToneClass(ready)}`}>
+            {status.label}
+          </span>
+          <p className="mt-2 text-xs leading-5 text-[#61767D]">{status.detail}</p>
+          <Link
+            href={status.href}
+            target={ready ? '_blank' : undefined}
+            rel={ready ? 'noopener noreferrer' : undefined}
+            className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[#1889B6] px-3 text-xs font-bold text-white hover:bg-[#137A9F]"
+          >
+            {status.action}
+            {ready ? <ExternalLink size={13} /> : <ArrowRight size={13} />}
+          </Link>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+        {checkpoints.map((checkpoint) => (
+          <Link
+            key={checkpoint.key}
+            href={checkpoint.href}
+            target={checkpoint.external ? '_blank' : undefined}
+            rel={checkpoint.external ? 'noopener noreferrer' : undefined}
+            className={`min-h-32 rounded-md border p-4 transition hover:-translate-y-0.5 hover:shadow-md ${caseConversionToneClass(checkpoint.done)}`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-white">
+                {checkpoint.done ? <CheckCircle2 size={17} /> : <AlertTriangle size={17} />}
+              </span>
+              <span className="inline-flex items-center gap-1 text-xs font-bold">
+                {checkpoint.external ? '核查' : '定位'}
+                {checkpoint.external ? <ExternalLink size={12} /> : <ArrowRight size={12} />}
+              </span>
+            </div>
+            <h3 className="mt-3 text-sm font-bold text-[#1E2C31]">{checkpoint.title}</h3>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">{checkpoint.detail}</p>
+          </Link>
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -912,6 +1078,8 @@ export default async function AdminContentProjectEditPage({ params }: PageProps)
   const validCoordinates = coordinatesValid(project)
   const globalStatus = getGlobalStatus(project)
   const editorReadiness = buildProjectEditorReadiness(project)
+  const caseConversionIssues = getCaseConversionIssues(editorReadiness)
+  const caseConversionReady = project.status === 'published' && caseConversionIssues.length === 0
   const consoleMetrics: ProductEditorMetric[] = [
     {
       label: '状态',
@@ -939,6 +1107,17 @@ export default async function AdminContentProjectEditPage({ params }: PageProps)
     },
   ]
   const consoleSignals: ProductEditorSignal[] = [
+    {
+      label: caseConversionReady ? '案例咨询可承接' : project.status === 'published' ? '案例咨询承接待补' : '案例咨询待发布',
+      detail: caseConversionReady
+        ? '可直接打开前台案例咨询锚点，人工核查客户路径。'
+        : project.status === 'published'
+          ? `还有 ${caseConversionIssues.length} 项素材、叙事或项目事实会影响咨询前判断。`
+          : '草稿不会进入公开案例页，发布后才有案例咨询入口。',
+      tone: caseConversionReady ? 'ready' : 'warning',
+      href: caseConversionReady ? `/cases/${project.id}#case-inquiry` : (caseConversionIssues[0]?.href ?? '#publish-check'),
+      Icon: SearchCheck,
+    },
     {
       label: project.status === 'published' ? '保存会更新公开案例' : '当前仍是草稿',
       detail: project.status === 'published'
@@ -985,6 +1164,7 @@ export default async function AdminContentProjectEditPage({ params }: PageProps)
         metrics={consoleMetrics}
         signals={consoleSignals}
       />
+      <CaseConversionPanel project={project} readiness={editorReadiness} />
       <EditSectionGrid />
       <ProjectReadinessPanel readiness={editorReadiness} />
       <GlobalStatusPanel project={project} />
