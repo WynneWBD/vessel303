@@ -37,6 +37,20 @@ export const dynamic = 'force-dynamic'
 export const metadata = { title: '导航页脚配置 - VESSEL' }
 
 type AdminRole = 'admin' | 'operator'
+type NavigationReleaseLedgerTone = 'danger' | 'warning' | 'review' | 'safe'
+
+type NavigationReleaseLedgerRow = {
+  key: string
+  module: PageModuleRow
+  role: string
+  stage: string
+  signal: string
+  counts: string
+  tone: NavigationReleaseLedgerTone
+  updatedAt: string | null | undefined
+  href: string
+  previewHref: string
+}
 
 function getNavigationSideNav(isAdmin: boolean): AdminSideNavGroup[] {
   return [
@@ -171,6 +185,96 @@ function getNavigationLinkStats(modules: PageModuleRow[]) {
     },
     { total: 0, internal: 0, contact: 0, external: 0, empty: 0, invalid: 0 },
   )
+}
+
+function getModuleLinkStats(pageModule: PageModuleRow) {
+  return pageModule.items.reduce(
+    (acc, item) => {
+      if (!item.is_visible) return acc
+      const type = classifyNavigationHref(item.href)
+      acc.total += 1
+      acc[type] += 1
+      return acc
+    },
+    { total: 0, internal: 0, contact: 0, external: 0, empty: 0, invalid: 0 },
+  )
+}
+
+function navigationReleaseLedgerToneClass(tone: NavigationReleaseLedgerTone): string {
+  if (tone === 'danger') return 'border-l-orange-600 bg-orange-50/60'
+  if (tone === 'warning') return 'border-l-[#E36F2C] bg-[#FFF7EF]'
+  if (tone === 'review') return 'border-l-[#1889B6] bg-[#F3FBFC]'
+  return 'border-l-emerald-600 bg-emerald-50/60'
+}
+
+function navigationReleaseLedgerBadgeClass(tone: NavigationReleaseLedgerTone): string {
+  if (tone === 'danger') return 'bg-orange-100 text-orange-700'
+  if (tone === 'warning') return 'bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'review') return 'bg-[#EAF6F8] text-[#1889B6]'
+  return 'bg-emerald-50 text-emerald-700'
+}
+
+function buildNavigationReleaseLedgerRows(modules: PageModuleRow[]): NavigationReleaseLedgerRow[] {
+  return modules
+    .map((pageModule) => {
+      const warnings = getLinkWarnings(pageModule)
+      const linkStats = getModuleLinkStats(pageModule)
+      const visibleItems = pageModule.items.filter((item) => item.is_visible).length
+      const hiddenItems = pageModule.items.length - visibleItems
+      const hasContactRole = pageModule.module_key.includes('contact') || pageModule.module_key.includes('cta')
+      const missingContact = hasContactRole && linkStats.contact === 0
+      const score =
+        warnings.length * 100 +
+        (missingContact ? 80 : 0) +
+        (pageModule.has_draft ? 60 : 0) +
+        (!pageModule.is_visible ? 45 : 0) +
+        linkStats.external * 10 +
+        hiddenItems
+
+      let tone: NavigationReleaseLedgerTone = 'safe'
+      let stage = '已发布'
+      let signal = '可见链接未发现空链接、# 或脚本链接。'
+
+      if (warnings.length > 0) {
+        tone = 'danger'
+        stage = '链接修复'
+        signal = warnings.slice(0, 2).join(' / ')
+      } else if (missingContact) {
+        tone = 'warning'
+        stage = '联系入口复核'
+        signal = '联系/CTA 模块没有指向 /contact 或旧 303 联系页的可见入口。'
+      } else if (pageModule.has_draft) {
+        tone = 'warning'
+        stage = '草稿待发布'
+        signal = '已保存草稿会影响全站导航或页脚，发布前需要复核前台。'
+      } else if (!pageModule.is_visible) {
+        tone = 'review'
+        stage = '隐藏复核'
+        signal = '模块当前隐藏，确认是否符合公开导航计划。'
+      } else if (linkStats.external > 0) {
+        tone = 'review'
+        stage = '外链复核'
+        signal = `包含 ${linkStats.external} 个外部入口，确认是否为旧站备份或外部承接。`
+      }
+
+      return {
+        row: {
+          key: pageModule.id,
+          module: pageModule,
+          role: getModuleRole(pageModule.module_key),
+          stage,
+          signal,
+          counts: `${visibleItems} 可见 / ${hiddenItems} 隐藏 / ${linkStats.total} 链接`,
+          tone,
+          updatedAt: pageModule.draft_updated_at ?? pageModule.updated_at,
+          href: `/admin/pages?module=site:${pageModule.module_key}`,
+          previewHref: '/',
+        },
+        score,
+      }
+    })
+    .sort((a, b) => b.score - a.score || a.row.module.sort_order - b.row.module.sort_order || a.row.module.module_key.localeCompare(b.row.module.module_key))
+    .map((entry) => entry.row)
 }
 
 function buildNavigationPriorityItems(modules: PageModuleRow[], contract?: GovernanceContractStatus) {
@@ -312,6 +416,120 @@ function NavigationOperationsMatrix({
             )}
           </div>
         </aside>
+      </div>
+    </section>
+  )
+}
+
+function NavigationReleaseLedger({ modules }: { modules: PageModuleRow[] }) {
+  const rows = buildNavigationReleaseLedgerRows(modules)
+  const urgentCount = rows.filter((row) => row.tone === 'danger' || row.tone === 'warning').length
+  const reviewCount = rows.filter((row) => row.tone === 'review').length
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-[#1E2C31]">导航发布治理台账</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            按链接风险、Contact 闭环、草稿、隐藏和外链复核排序；运营先处理台账，再进入固定模块编辑。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs font-semibold">
+          <span className="rounded-full bg-orange-50 px-3 py-1 text-orange-700">优先 {urgentCount}</span>
+          <span className="rounded-full bg-[#EAF6F8] px-3 py-1 text-[#1889B6]">复核 {reviewCount}</span>
+          <span className="rounded-full bg-[#F7FAFA] px-3 py-1 text-[#61767D]">模块 {rows.length}</span>
+        </div>
+      </div>
+
+      <div className="hidden overflow-x-auto xl:block">
+        <table className="min-w-full divide-y divide-[#E6EEEE] text-left text-sm">
+          <thead className="bg-[#F7FAFA] text-xs font-bold uppercase tracking-wide text-[#8A9EA4]">
+            <tr>
+              <th className="px-5 py-3">模块 / 角色</th>
+              <th className="px-4 py-3">阶段</th>
+              <th className="px-4 py-3">处理信号</th>
+              <th className="px-4 py-3">计数</th>
+              <th className="px-4 py-3">最近更新</th>
+              <th className="px-5 py-3 text-right">入口</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#E6EEEE]">
+            {rows.map((row) => (
+              <tr key={row.key} className={`border-l-4 ${navigationReleaseLedgerToneClass(row.tone)}`}>
+                <td className="px-5 py-4">
+                  <div className="min-w-0">
+                    <p className="font-bold text-[#1E2C31]">{row.module.title_zh || row.module.title_en || row.module.module_key}</p>
+                    <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">site:{row.module.module_key} / {row.role}</p>
+                  </div>
+                </td>
+                <td className="px-4 py-4">
+                  <span className={`rounded-full px-2 py-1 text-xs font-bold ${navigationReleaseLedgerBadgeClass(row.tone)}`}>
+                    {row.stage}
+                  </span>
+                </td>
+                <td className="max-w-xl px-4 py-4 text-sm leading-6 text-[#61767D]">{row.signal}</td>
+                <td className="px-4 py-4 text-xs font-semibold text-[#61767D]">{row.counts}</td>
+                <td className="px-4 py-4 text-xs text-[#61767D]">{formatDateTime(row.updatedAt)}</td>
+                <td className="px-5 py-4">
+                  <div className="flex justify-end gap-2">
+                    <Link
+                      href={row.href}
+                      className="inline-flex h-8 items-center gap-1 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95E22]"
+                    >
+                      编辑
+                      <ArrowRight size={13} />
+                    </Link>
+                    <Link
+                      href={row.previewHref}
+                      className="inline-flex h-8 items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]"
+                    >
+                      预览
+                      <ExternalLink size={13} />
+                    </Link>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 p-4 xl:hidden">
+        {rows.map((row) => (
+          <article key={row.key} className={`rounded-md border border-[#D8E7E8] border-l-4 p-4 ${navigationReleaseLedgerToneClass(row.tone)}`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-bold text-[#1E2C31]">{row.module.title_zh || row.module.title_en || row.module.module_key}</p>
+                <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">site:{row.module.module_key} / {row.role}</p>
+              </div>
+              <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-bold ${navigationReleaseLedgerBadgeClass(row.tone)}`}>
+                {row.stage}
+              </span>
+            </div>
+            <p className="mt-3 text-sm leading-6 text-[#61767D]">{row.signal}</p>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-[#61767D]">
+              <span className="rounded-md bg-white px-2 py-1">{row.counts}</span>
+              <span className="rounded-md bg-white px-2 py-1">{formatDateTime(row.updatedAt)}</span>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <Link
+                href={row.href}
+                className="inline-flex h-8 items-center gap-1 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white"
+              >
+                编辑
+                <ArrowRight size={13} />
+              </Link>
+              <Link
+                href={row.previewHref}
+                className="inline-flex h-8 items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1E2C31]"
+              >
+                预览
+                <ExternalLink size={13} />
+              </Link>
+            </div>
+          </article>
+        ))}
       </div>
     </section>
   )
@@ -505,6 +723,8 @@ export default async function AdminSiteNavigationPage() {
       </section>
 
       <NavigationOperationsMatrix modules={modules} contract={siteContract} />
+
+      <NavigationReleaseLedger modules={modules} />
 
       <ContractStatusPanel contract={siteContract} />
 
