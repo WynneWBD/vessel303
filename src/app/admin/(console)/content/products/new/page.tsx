@@ -15,6 +15,7 @@ import { listProductBrands, listProductMarks, listProductShowcases } from '@/lib
 import {
   AlertTriangle,
   ArrowLeft,
+  BarChart3,
   FileText,
   ImageIcon,
   Layers3,
@@ -25,6 +26,7 @@ import {
   SearchCheck,
   Settings2,
   SlidersHorizontal,
+  Sparkles,
   Tags,
   type LucideIcon,
 } from 'lucide-react'
@@ -41,6 +43,15 @@ type EditSection = {
   detail: string
   href: string
   Icon: LucideIcon
+}
+
+type NewProductClosureItem = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  Icon: LucideIcon
+  tone: 'ready' | 'warning' | 'neutral'
 }
 
 const EDIT_SECTIONS: EditSection[] = [
@@ -60,15 +71,15 @@ const EDIT_SECTIONS: EditSection[] = [
   },
   {
     key: 'commercial',
-    title: 'Business Terms',
-    detail: 'Price display and 300-style trade terms',
+    title: '商务条款',
+    detail: '价格展示、300 风格贸易条款',
     href: '#commercial',
     Icon: FileText,
   },
   {
     key: 'relations',
-    title: 'Keywords / Related',
-    detail: 'Keywords and related product picks',
+    title: '关键词 / 关联产品',
+    detail: '搜索关键词和关联推荐产品',
     href: '#relations',
     Icon: Tags,
   },
@@ -158,6 +169,7 @@ function getSideNavGroups(): AdminSideNavGroup[] {
     {
       title: '产品治理',
       items: [
+        { key: 'new-product-closure', label: '新建闭环', href: '#new-product-closure', Icon: BarChart3 },
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
         { key: 'publish-flow', label: '发布审核', planned: true, Icon: SearchCheck },
@@ -180,6 +192,109 @@ function Hero() {
         <InfoCard title="前台状态" value="保存前不会公开展示" />
       </div>
     </AdminPageHero>
+  )
+}
+
+function closureToneClass(tone: NewProductClosureItem['tone']): string {
+  if (tone === 'ready') return 'border-emerald-100 bg-emerald-50 text-emerald-700'
+  if (tone === 'warning') return 'border-[#F2C6A7] bg-[#FFF2E7] text-[#E36F2C]'
+  return 'border-[#D8E7E8] bg-white text-[#61767D]'
+}
+
+function NewProductPreflightPanel({
+  categories,
+  attributeTemplates,
+  relatedProductCount,
+  maxUploadMb,
+}: {
+  categories: number
+  attributeTemplates: number
+  relatedProductCount: number
+  maxUploadMb: number
+}) {
+  const items: NewProductClosureItem[] = [
+    {
+      label: '产品内容闭环',
+      value: 'B233',
+      detail: '创建前先看产品总览里的内容缺口、SEO 待补和路径承接。',
+      href: '/admin/content/products#content-closure',
+      Icon: Package,
+      tone: 'neutral',
+    },
+    {
+      label: '分类与筛选底座',
+      value: `${categories}/${attributeTemplates}`,
+      detail: '对照 en303 的分类、面积和国家筛选心智，先确认分类与属性模板可用。',
+      href: categories > 0 && attributeTemplates > 0 ? '/admin/content/products/attributes' : '/admin/content/products/categories',
+      Icon: SlidersHorizontal,
+      tone: categories > 0 && attributeTemplates > 0 ? 'ready' : 'warning',
+    },
+    {
+      label: '媒体准备',
+      value: `${maxUploadMb} MB`,
+      detail: '封面和图库会决定产品列表与详情页首屏质量；上传仍走媒体库。',
+      href: '/admin/site/media',
+      Icon: ImageIcon,
+      tone: maxUploadMb > 0 ? 'ready' : 'warning',
+    },
+    {
+      label: 'SEO 与关键词',
+      value: '待填写',
+      detail: '新建时同步准备 SEO 标题、摘要、关键词和关联产品。',
+      href: '/admin/content/products/list?view=incomplete&issue=seo',
+      Icon: Sparkles,
+      tone: 'neutral',
+    },
+    {
+      label: '产品路径分析',
+      value: 'B232',
+      detail: '上线后回到路径分析看产品访问、动作、表单和真实线索。',
+      href: '/admin/status/traffic#product-conversion-path',
+      Icon: BarChart3,
+      tone: 'neutral',
+    },
+    {
+      label: '关联推荐池',
+      value: relatedProductCount.toString(),
+      detail: '创建时可选择已发布产品做详情页继续浏览入口。',
+      href: '/admin/content/products/list?status=published',
+      Icon: Tags,
+      tone: relatedProductCount > 0 ? 'ready' : 'neutral',
+    },
+  ]
+
+  return (
+    <section id="new-product-closure" className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <p className="text-xs font-bold text-[#1889B6]">B236 新建前运营闭环</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">创建产品前先确认内容、分类、媒体、SEO 和后续路径</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
+            对齐 en303 的产品分类、搜索、产品列表和联系入口心智，把新建前准备项放在同一屏；这里只读提示和跳转，不新增保存、发布或价格规则。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <AdminActionLink href="/admin/content/products/list" Icon={ListChecks} label="产品列表" />
+          <AdminActionLink href="/admin/content/products#content-closure" Icon={Package} label="产品闭环总览" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-3">
+        {items.map((item) => (
+          <Link key={item.label} href={item.href} className="group block min-h-40 p-5 transition hover:bg-[#F7FAFA]">
+            <div className="flex items-start justify-between gap-3">
+              <span className={`flex h-10 w-10 items-center justify-center rounded-md border ${closureToneClass(item.tone)}`}>
+                <item.Icon size={18} />
+              </span>
+              <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${closureToneClass(item.tone)}`}>
+                {item.value}
+              </span>
+            </div>
+            <p className="mt-4 text-sm font-semibold text-[#1E2C31]">{item.label}</p>
+            <p className="mt-2 text-xs leading-5 text-[#61767D]">{item.detail}</p>
+          </Link>
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -314,7 +429,7 @@ export default async function AdminContentProductNewPage() {
     },
     {
       label: '保存会写入产品数据',
-      detail: '本页不新增自动发布规则，点击保存或发布前仍由 ProductForm 处理确认。',
+      detail: '本页不新增自动发布规则，点击保存或发布前仍由表单处理确认。',
       tone: 'warning',
       href: '#publish-check',
     },
@@ -343,6 +458,12 @@ export default async function AdminContentProductNewPage() {
         sections={EDIT_SECTIONS}
         metrics={consoleMetrics}
         signals={consoleSignals}
+      />
+      <NewProductPreflightPanel
+        categories={categories.length}
+        attributeTemplates={attributeTemplates.length}
+        relatedProductCount={relatedProducts.rows.length}
+        maxUploadMb={maxUploadMb}
       />
       <EditSectionGrid />
       <RiskNotice />
