@@ -105,6 +105,10 @@ const ATTENTION_LABEL: Record<string, string> = Object.fromEntries(
   ATTENTION_OPTIONS.map((o) => [o.value, o.label.replace('重点:', '')]),
 )
 
+const SOURCE_TYPE_LABEL: Record<string, string> = Object.fromEntries(
+  LEAD_SOURCE_TYPE_OPTIONS.map((o) => [o.value, o.label.replace('来源:', '')]),
+)
+
 type LeadPriorityTone = 'critical' | 'warning' | 'active' | 'success' | 'muted'
 
 type LeadPriority = {
@@ -113,6 +117,18 @@ type LeadPriority = {
   score: number
   tone: LeadPriorityTone
   Icon: LucideIcon
+}
+
+type LeadHandoffStep = {
+  priority: string
+  title: string
+  detail: string
+  metric: string
+  signal: string
+  tone: LeadPriorityTone
+  Icon: LucideIcon
+  patch: Partial<Filters>
+  disabled?: boolean
 }
 
 const ACTIVE_LEAD_STATUSES: LeadStatus[] = ['new', 'contacting', 'quoted']
@@ -556,6 +572,16 @@ export default function LeadsClient({
         </div>
       </section>
 
+      <LeadTodayHandoff
+        filters={filters}
+        total={total}
+        summary={summary}
+        operationsSummary={operationsSummary}
+        slaSummary={slaSummary}
+        sourceStatusSummary={sourceStatusSummary}
+        onApplyFilter={updateFilters}
+      />
+
       <LeadSlaBoard slaSummary={slaSummary} onApplyFilter={updateFilters} />
 
       <LeadOperationsDesk
@@ -848,6 +874,157 @@ export default function LeadsClient({
         onConfirm={handleConfirmDelete}
       />
     </div>
+  )
+}
+
+function LeadTodayHandoff({
+  filters,
+  total,
+  summary,
+  operationsSummary,
+  slaSummary,
+  sourceStatusSummary,
+  onApplyFilter,
+}: {
+  filters: Filters
+  total: number
+  summary?: LeadDashboardSummary
+  operationsSummary: LeadOperationsSummary
+  slaSummary: LeadSlaSummary
+  sourceStatusSummary: LeadSourceStatusSummary[]
+  onApplyFilter: (patch: Partial<Filters>) => void
+}) {
+  const topSource = sourceStatusSummary[0]
+  const topSourceActive = topSource ? topSource.new + topSource.contacting + topSource.quoted : 0
+  const stalledFollowups = slaSummary.contactingStalled + slaSummary.quotedStalled
+  const missingProfile = slaSummary.activeMissingPhone + slaSummary.activeMissingCompany
+  const activePipeline = summary ? summary.new + summary.contacting + summary.quoted : operationsSummary.active
+  const currentScope = [
+    filters.attention !== 'all' ? ATTENTION_LABEL[filters.attention] ?? filters.attention : null,
+    filters.status !== 'all' ? STATUS_LABEL[filters.status] ?? filters.status : null,
+    filters.source_type !== 'all' ? SOURCE_TYPE_LABEL[filters.source_type] ?? filters.source_type : null,
+    filters.country.trim() ? `国家:${filters.country.trim()}` : null,
+    filters.search.trim() ? `关键词:${filters.search.trim()}` : null,
+  ].filter(Boolean).join(' / ') || '全部线索'
+
+  const steps: LeadHandoffStep[] = [
+    {
+      priority: slaSummary.firstResponseOverdue > 0 ? 'P0' : 'P1',
+      title: '先处理首次响应',
+      detail: '新询盘先确认需求、来源和负责人；超过 24 小时的线索进入超时队列。',
+      metric: `${(slaSummary.firstResponseOverdue || slaSummary.firstResponseOpen).toLocaleString('zh-CN')} 条`,
+      signal: slaSummary.firstResponseOverdue > 0 ? '已有超时' : '查看新线索',
+      tone: slaSummary.firstResponseOverdue > 0 ? 'critical' : slaSummary.firstResponseOpen > 0 ? 'warning' : 'success',
+      Icon: Inbox,
+      patch:
+        slaSummary.firstResponseOverdue > 0
+          ? { status: 'all', attention: 'overdue' }
+          : { status: 'new', attention: 'all' },
+    },
+    {
+      priority: operationsSummary.unassignedActive > 0 ? 'P0' : 'OK',
+      title: '补负责人和关键资料',
+      detail: `活跃线索缺电话或公司共 ${missingProfile.toLocaleString('zh-CN')} 个缺口，先让负责人可接手。`,
+      metric: `${operationsSummary.unassignedActive.toLocaleString('zh-CN')} 未分配`,
+      signal: operationsSummary.unassignedActive > 0 ? '需分配' : '负责人正常',
+      tone: operationsSummary.unassignedActive > 0 || missingProfile > 0 ? 'warning' : 'success',
+      Icon: UserRoundCheck,
+      patch:
+        operationsSummary.unassignedActive > 0
+          ? { status: 'all', attention: 'unassigned' }
+          : { status: 'all', attention: 'active' },
+    },
+    {
+      priority: stalledFollowups > 0 ? 'P1' : 'P2',
+      title: '推进跟进和报价断点',
+      detail: '跟进中和已报价线索超过 7 天未更新时，优先补备注、确认下一次动作。',
+      metric: `${stalledFollowups.toLocaleString('zh-CN')} 断点`,
+      signal: activePipeline > 0 ? `${activePipeline.toLocaleString('zh-CN')} 活跃商机` : '无活跃积压',
+      tone: stalledFollowups > 0 ? 'warning' : activePipeline > 0 ? 'active' : 'success',
+      Icon: MessageSquareText,
+      patch:
+        stalledFollowups > 0
+          ? { status: 'all', attention: 'overdue' }
+          : { status: 'all', attention: 'active' },
+    },
+    {
+      priority: topSource ? 'P2' : 'HOLD',
+      title: '回看来源质量',
+      detail: topSource
+        ? `${topSource.label} 当前最多，先判断入口页、询盘质量和后续内容缺口。`
+        : '暂无来源矩阵数据；等公开表单进线后再做来源复盘。',
+      metric: topSource ? `${topSource.total.toLocaleString('zh-CN')} 条` : '暂无',
+      signal: topSource ? `${topSourceActive.toLocaleString('zh-CN')} 活跃` : '无来源',
+      tone: topSourceActive > 0 ? 'active' : topSource ? 'muted' : 'muted',
+      Icon: ArrowUpRight,
+      patch: topSource
+        ? {
+            status: 'all',
+            attention: topSourceActive > 0 ? 'active' : 'all',
+            source_type: topSource.type,
+          }
+        : {},
+      disabled: !topSource,
+    },
+  ]
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-4 border-b border-[#E6EEEE] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold tracking-[0.18em] text-[#1889B6] uppercase">B197 Lead Handoff</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">今日线索处理顺序</h2>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-[#61767D]">
+            把 300 后台式的待办优先级落到当前 leads 数据：先响应、再分配、再推进断点，最后复盘来源；点击卡片只切换筛选，不直接写入线索。
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-xs sm:min-w-[360px]">
+          <div className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2">
+            <p className="font-semibold text-[#61767D]">当前范围</p>
+            <p className="mt-1 line-clamp-1 font-bold text-[#1E2C31]">{currentScope}</p>
+          </div>
+          <div className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2">
+            <p className="font-semibold text-[#61767D]">当前命中</p>
+            <p className="mt-1 text-lg font-bold text-[#1E2C31]">{total.toLocaleString('zh-CN')} 条</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 p-5 xl:grid-cols-4">
+        {steps.map((step) => {
+          const Icon = step.Icon
+
+          return (
+            <button
+              key={step.title}
+              type="button"
+              disabled={step.disabled}
+              onClick={() => onApplyFilter(step.patch)}
+              className={`flex min-h-[190px] flex-col rounded-md border border-[#D8E7E8] p-4 text-left transition ${
+                step.disabled
+                  ? 'cursor-not-allowed bg-[#F7FAFA] opacity-70'
+                  : 'bg-white hover:-translate-y-0.5 hover:border-[#1889B6]/50 hover:shadow-sm'
+              }`}
+            >
+              <span className="flex items-start justify-between gap-3">
+                <span>
+                  <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-bold ${priorityBadgeClass(step.tone)}`}>
+                    {step.priority}
+                  </span>
+                  <span className="mt-3 block text-sm font-bold text-[#1E2C31]">{step.title}</span>
+                </span>
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${priorityBadgeClass(step.tone)}`}>
+                  <Icon size={17} />
+                </span>
+              </span>
+              <span className="mt-4 block text-2xl font-bold text-[#1E2C31]">{step.metric}</span>
+              <span className="mt-1 block text-xs font-semibold text-[#1889B6]">{step.signal}</span>
+              <span className="mt-3 block flex-1 text-xs leading-5 text-[#61767D]">{step.detail}</span>
+            </button>
+          )
+        })}
+      </div>
+    </section>
   )
 }
 

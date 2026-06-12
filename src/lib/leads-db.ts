@@ -151,12 +151,59 @@ function buildWhere(filter: ListLeadsFilter) {
   return { where: `WHERE ${conds.join(' AND ')}`, params }
 }
 
+function getLeadOrderBy(filter: ListLeadsFilter) {
+  if (filter.attention === 'overdue') {
+    return `
+      ORDER BY
+        CASE
+          WHEN status = 'new' THEN 0
+          WHEN status = 'contacting' THEN 1
+          WHEN status = 'quoted' THEN 2
+          ELSE 3
+        END ASC,
+        CASE WHEN status = 'new' THEN created_at ELSE updated_at END ASC,
+        created_at DESC
+    `
+  }
+
+  if (filter.attention === 'unassigned') {
+    return `
+      ORDER BY
+        CASE
+          WHEN status = 'new' THEN 0
+          WHEN status = 'contacting' THEN 1
+          WHEN status = 'quoted' THEN 2
+          ELSE 3
+        END ASC,
+        created_at ASC
+    `
+  }
+
+  if (filter.attention === 'active') {
+    return `
+      ORDER BY
+        CASE
+          WHEN ${OVERDUE_SQL} THEN 0
+          WHEN status = 'new' THEN 1
+          WHEN status = 'contacting' THEN 2
+          WHEN status = 'quoted' THEN 3
+          ELSE 4
+        END ASC,
+        CASE WHEN ${OVERDUE_SQL} THEN COALESCE(updated_at, created_at) ELSE created_at END ASC,
+        created_at DESC
+    `
+  }
+
+  return 'ORDER BY created_at DESC'
+}
+
 export async function listLeads(filter: ListLeadsFilter) {
   const page = Math.max(1, filter.page ?? 1)
   const limit = Math.min(200, Math.max(1, filter.limit ?? 50))
   const offset = (page - 1) * limit
 
   const { where, params } = buildWhere(filter)
+  const orderBy = getLeadOrderBy(filter)
 
   const countRes = await pool.query<{ count: string }>(
     `SELECT COUNT(*)::text AS count FROM leads ${where}`,
@@ -166,7 +213,7 @@ export async function listLeads(filter: ListLeadsFilter) {
 
   const listRes = await pool.query<Lead>(
     `SELECT ${LEAD_COLUMNS} FROM leads ${where}
-     ORDER BY created_at DESC
+     ${orderBy}
      LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
     [...params, limit, offset],
   )
@@ -176,8 +223,9 @@ export async function listLeads(filter: ListLeadsFilter) {
 
 export async function exportLeads(filter: ListLeadsFilter) {
   const { where, params } = buildWhere(filter)
+  const orderBy = getLeadOrderBy(filter)
   const res = await pool.query<Lead>(
-    `SELECT ${LEAD_COLUMNS} FROM leads ${where} ORDER BY created_at DESC`,
+    `SELECT ${LEAD_COLUMNS} FROM leads ${where} ${orderBy}`,
     params,
   )
   return res.rows
