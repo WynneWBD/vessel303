@@ -6,7 +6,7 @@ import { ArrowRight, Filter, Search, SlidersHorizontal, X } from 'lucide-react';
 import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
-import { normalizeSiteHref } from '@/lib/site-links';
+import { buildContactHref, buildLeadSource, normalizeSiteHref } from '@/lib/site-links';
 import {
   itemById,
   itemContent,
@@ -55,6 +55,13 @@ function buildHref(filters: DirectoryFilters, patch: Partial<DirectoryFilters>) 
 
 function productHref(product: CatalogProduct) {
   return getCatalogProductPublicHref(product);
+}
+
+function productInquiryHref(product: CatalogProduct, fallbackHref: string) {
+  const productId = String(product.id ?? '').trim();
+  if (!productId) return fallbackHref;
+
+  return buildContactHref(buildLeadSource('product_detail', productId, 'catalog_card_cta'));
 }
 
 function displayHref(href: string | null | undefined) {
@@ -319,6 +326,7 @@ function ProductCard({
     .filter(Boolean)
     .slice(0, 2);
   const displayPrice = productPrice(product, lang) || uiLabels.priceEmpty;
+  const inquiryCtaHref = productInquiryHref(product, inquiryHref);
   const metaItems = [
     category,
     [product.productSeries, product.gen].filter(Boolean).join(' / '),
@@ -407,9 +415,10 @@ function ProductCard({
                 {uiLabels.detailsCta}
               </Link>
             ) : null}
-            {uiLabels.inquiryCta && inquiryHref ? (
+            {uiLabels.inquiryCta && inquiryCtaHref ? (
               <Link prefetch={false}
-                href={inquiryHref}
+                href={inquiryCtaHref}
+                aria-label={`${uiLabels.inquiryCta} ${name}`}
                 className="inline-flex min-h-10 items-center justify-center border border-[#E36F2C]/35 px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-[#C65F22] transition hover:border-[#E36F2C] hover:bg-[#FFF4EC]"
               >
                 {uiLabels.inquiryCta}
