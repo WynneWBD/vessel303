@@ -361,6 +361,7 @@ export default async function AdminSiteConversionPage() {
   const totalActions = Object.values(pathAnalytics).reduce((sum, metric) => sum + metric.ctaClicks, 0)
   const totalForms = Object.values(pathAnalytics).reduce((sum, metric) => sum + metric.formSubmits, 0)
   const healthRows = buildConversionHealthRows(pathAnalytics)
+  const productPathMetric = getMetric(pathAnalytics, 'products')
   const casePathMetric = getMetric(pathAnalytics, 'cases')
 
   return (
@@ -395,6 +396,11 @@ export default async function AdminSiteConversionPage() {
           totalForms={totalForms}
           totalLeads={totalLeads}
           excludedTestLeads={excludedTestLeads}
+        />
+        <ProductConversionClosurePanel
+          productPathMetric={productPathMetric}
+          leadSourceSummary={leadSourceSummary}
+          sourceStageSummary={sourceStageSummary}
         />
         <CaseInquiryConversionPanel summary={caseInquirySummary} casePathMetric={casePathMetric} />
         <ConversionPathFlow
@@ -825,11 +831,194 @@ function CaseInquiryConversionPanel({
   )
 }
 
+function ProductConversionClosurePanel({
+  productPathMetric,
+  leadSourceSummary,
+  sourceStageSummary,
+}: {
+  productPathMetric: AnalyticsConversionMetric
+  leadSourceSummary: LeadSourceStatusSummary[]
+  sourceStageSummary: LeadSourceStageStatusSummary[]
+}) {
+  const productSource = leadSourceSummary.find((source) => source.type === 'product')
+  const productStages = sourceStageSummary.filter((stage) => stage.type === 'product')
+  const inquiryForm = sourceStageSummary.find((stage) => stage.key === 'product:inquiry_form')
+  const ctaClick = sourceStageSummary.find((stage) => stage.key === 'product:cta_click')
+  const productTotal = productSource?.total ?? 0
+  const productActive = productSource ? productSource.new + productSource.contacting + productSource.quoted : 0
+  const closureLinks = [
+    {
+      label: 'B230 SEO 闭环',
+      detail: '从产品 SEO 待补回看路径与线索承接',
+      href: '/admin/site/seo#seo-conversion-closure',
+      tone: 'blue' as const,
+    },
+    {
+      label: 'B229 线索承接',
+      detail: '看产品路径与 leads 漏斗质量桥接',
+      href: '/admin/status/leads#product-lead-path-bridge',
+      tone: productPathMetric.leads > 0 ? 'green' as const : productPathMetric.views > 0 ? 'orange' as const : 'gray' as const,
+    },
+    {
+      label: 'B228 产品线索',
+      detail: '进入 source_type=product 的线索队列',
+      href: '/admin/customers/leads?source_type=product',
+      tone: productActive > 0 ? 'orange' as const : productTotal > 0 ? 'blue' as const : 'gray' as const,
+    },
+    {
+      label: '产品表单线索',
+      detail: '只看 product:inquiry_form 阶段',
+      href: '/admin/customers/leads?source_type=product&source_stage=product%3Ainquiry_form',
+      tone: inquiryForm && inquiryForm.total > 0 ? 'green' as const : 'gray' as const,
+    },
+  ]
+  const cards = [
+    {
+      label: '产品路径样本',
+      value: productPathMetric.views,
+      detail: `动作 ${productPathMetric.ctaClicks} / 表单 ${productPathMetric.formSubmits} / 线索 ${productPathMetric.leads}`,
+      href: '/admin/status/leads#product-lead-path-bridge',
+      Icon: BarChart3,
+      tone: productPathMetric.leads > 0 ? 'green' as const : productPathMetric.views > 0 ? 'orange' as const : 'gray' as const,
+    },
+    {
+      label: '产品来源线索',
+      value: productTotal,
+      detail: `活跃 ${productActive} / 新 ${productSource?.new ?? 0} / 报价 ${productSource?.quoted ?? 0}`,
+      href: '/admin/customers/leads?source_type=product',
+      Icon: ListChecks,
+      tone: productActive > 0 ? 'orange' as const : productTotal > 0 ? 'blue' as const : 'gray' as const,
+    },
+    {
+      label: '产品表单阶段',
+      value: inquiryForm?.total ?? 0,
+      detail: `新 ${inquiryForm?.new ?? 0} / 跟进 ${inquiryForm?.contacting ?? 0} / 报价 ${inquiryForm?.quoted ?? 0}`,
+      href: '/admin/customers/leads?source_type=product&source_stage=product%3Ainquiry_form',
+      Icon: FileText,
+      tone: inquiryForm && inquiryForm.new + inquiryForm.contacting + inquiryForm.quoted > 0 ? 'orange' as const : inquiryForm && inquiryForm.total > 0 ? 'blue' as const : 'gray' as const,
+    },
+    {
+      label: '产品详情 CTA',
+      value: ctaClick?.total ?? 0,
+      detail: `新 ${ctaClick?.new ?? 0} / 跟进 ${ctaClick?.contacting ?? 0} / 报价 ${ctaClick?.quoted ?? 0}`,
+      href: '/admin/customers/leads?source_type=product&source_stage=product%3Acta_click',
+      Icon: MousePointerClick,
+      tone: ctaClick && ctaClick.new + ctaClick.contacting + ctaClick.quoted > 0 ? 'orange' as const : ctaClick && ctaClick.total > 0 ? 'blue' as const : 'gray' as const,
+    },
+    {
+      label: '产品 SEO 回修',
+      value: 'B230',
+      detail: `产品阶段 ${productStages.length} 类；从 SEO 待补回到路径与线索质量复盘。`,
+      href: '/admin/site/seo#seo-conversion-closure',
+      Icon: SearchCheck,
+      tone: 'blue' as const,
+    },
+  ]
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Product Conversion Closure</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品路径复盘</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把产品路径数据、产品来源线索、产品阶段线索和 SEO 修复闭环放进转化中心；本面板只读，不改变产品内容或线索状态。
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Link
+            href="/admin/site/seo#seo-conversion-closure"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            SEO 闭环
+            <ArrowRight size={13} />
+          </Link>
+          <Link
+            href="/admin/status/leads#product-lead-path-bridge"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            线索承接
+            <ArrowRight size={13} />
+          </Link>
+          <Link
+            href="/admin/content/products/list?view=incomplete&issue=seo"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            产品 SEO 待补
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-5">
+        {cards.map((card) => (
+          <ProductConversionClosureCard key={card.label} card={card} />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:grid-cols-4">
+        {closureLinks.map((item) => (
+          <Link
+            key={item.label}
+            href={item.href}
+            className="group rounded-md border border-[#D8E7E8] bg-white px-3 py-3 transition hover:border-[#1889B6] hover:bg-[#F7FAFA]"
+          >
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${caseInquiryToneClass(item.tone)}`}>
+              {item.label}
+            </span>
+            <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+            <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
+              进入闭环
+              <ArrowRight size={12} />
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function caseInquiryToneClass(tone: 'green' | 'orange' | 'gray' | 'blue') {
   if (tone === 'green') return 'bg-emerald-50 text-emerald-700'
   if (tone === 'orange') return 'bg-[#FFF2E7] text-[#E36F2C]'
   if (tone === 'blue') return 'bg-[#EAF6F8] text-[#1889B6]'
   return 'bg-[#F0F2F2] text-[#61767D]'
+}
+
+function ProductConversionClosureCard({
+  card,
+}: {
+  card: {
+    label: string
+    value: number | string
+    detail: string
+    href: string
+    Icon: LucideIcon
+    tone: 'green' | 'orange' | 'gray' | 'blue'
+  }
+}) {
+  const Icon = card.Icon
+  const toneClass =
+    card.tone === 'green'
+      ? 'bg-emerald-50 text-emerald-700'
+      : card.tone === 'orange'
+        ? 'bg-[#FFF2E7] text-[#E36F2C]'
+        : card.tone === 'blue'
+          ? 'bg-[#EAF6F8] text-[#1889B6]'
+          : 'bg-[#F0F2F2] text-[#61767D]'
+
+  return (
+    <Link href={card.href} className="group block px-5 py-5 transition hover:bg-[#F7FAFA]">
+      <span className={`flex h-10 w-10 items-center justify-center rounded-md ${toneClass}`}>
+        <Icon size={18} />
+      </span>
+      <span className="mt-5 block text-sm font-semibold text-[#61767D]">{card.label}</span>
+      <span className="mt-1 block text-3xl font-bold text-[#1E2C31]">{typeof card.value === 'number' ? card.value.toLocaleString('zh-CN') : card.value}</span>
+      <span className="mt-2 block min-h-10 text-xs leading-5 text-[#61767D]">{card.detail}</span>
+      <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] opacity-80 transition group-hover:opacity-100">
+        进入处理
+        <ArrowRight size={13} />
+      </span>
+    </Link>
+  )
 }
 
 function CaseInquiryConversionCard({
