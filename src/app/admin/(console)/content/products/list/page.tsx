@@ -1181,7 +1181,7 @@ function getSideNavGroups(summary: ProductSummary): AdminSideNavGroup[] {
         { key: 'filters', label: '筛选管理', href: '/admin/content/products/filters', Icon: Filter },
         { key: 'showcases', label: '橱窗管理', href: '/admin/content/products/showcases', Icon: ListChecks },
         { key: 'recycle', label: '产品回收站', href: '/admin/content/products/recycle', badge: summary.deleted, Icon: Archive },
-        { key: 'bulk-check', label: '批量检查', planned: true, Icon: ListChecks },
+        { key: 'bulk-check', label: '批量治理', href: '/admin/content/products/list#product-batch-governance', Icon: ListChecks },
       ],
     },
   ]
@@ -1619,6 +1619,186 @@ function ProductOperationsMatrix({
   )
 }
 
+function ProductBatchGovernancePanel({
+  summary,
+  issueSummary,
+  rows,
+  filters,
+  productPathMetric,
+}: {
+  summary: ProductSummary
+  issueSummary: ProductIssueSummary
+  rows: ProductListRow[]
+  filters: FilterState
+  productPathMetric: AnalyticsConversionMetric
+}) {
+  const taxonomyGapCount = issueSummary.category + issueSummary.attributes
+  const publishingGapCount = issueSummary.commercial + issueSummary.keywords + issueSummary.related + issueSummary.buyer_resources
+  const pagePublishedRiskCount = rows.filter((product) => (
+    product.status === 'published' && getProductIssues(product).length > 0
+  )).length
+  const pageDraftCount = rows.filter((product) => product.status === 'draft').length
+  const activeFilterCount = buildActiveFilterChips(filters, EMPTY_OPTIONS).length
+  const sequence = [
+    {
+      label: '01 定位队列',
+      value: formatNumber(summary.incomplete),
+      detail: `当前筛选 ${activeFilterCount > 0 ? `${activeFilterCount} 项` : '全部产品'}；先锁定待补、草稿或公开筛选缺口。`,
+      href: createHref(filters, { status: '', view: 'incomplete', issue: '' }),
+      cta: '进入待补队列',
+      Icon: SearchCheck,
+      tone: 'blue',
+    },
+    {
+      label: '02 批量归类',
+      value: formatNumber(taxonomyGapCount),
+      detail: `分类和属性缺口优先处理；本页可勾选 ${formatNumber(rows.length)} 个产品。`,
+      href: '#product-batch-tools',
+      cta: '打开批量工具',
+      Icon: ListChecks,
+      tone: taxonomyGapCount > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '03 发布前检查',
+      value: formatNumber(publishingGapCount),
+      detail: `商务条款、关键词、关联产品和买家资料缺口；本页草稿 ${formatNumber(pageDraftCount)} 个。`,
+      href: createHref(filters, { status: 'draft', view: 'incomplete', issue: '' }),
+      cta: '查看草稿缺口',
+      Icon: FileText,
+      tone: publishingGapCount > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '04 发布后复盘',
+      value: formatNumber(productPathMetric.views),
+      detail: `30 天产品路径访问；线索 ${formatNumber(productPathMetric.leads)}，本页已发布缺口 ${formatNumber(pagePublishedRiskCount)} 个。`,
+      href: '/admin/status/traffic#product-conversion-path',
+      cta: '查看路径分析',
+      Icon: BarChart3,
+      tone: productPathMetric.leads > 0 ? 'green' : productPathMetric.views > 0 ? 'orange' : 'gray',
+    },
+  ] as const
+  const supportLinks = [
+    {
+      label: '新建前准备',
+      detail: '先核对分类、属性、媒体、SEO 和关联推荐池，再进入产品表单。',
+      href: '/admin/content/products/new#new-product-closure',
+      Icon: Plus,
+    },
+    {
+      label: '产品内容闭环',
+      detail: '从内容总览回看公开目录、SEO、转化路径和产品线索承接。',
+      href: '/admin/content/products#content-closure',
+      Icon: Layers3,
+    },
+    {
+      label: '产品 SEO 待补',
+      detail: '只看标题、描述和关键词相关缺口，补齐后再看转化数据。',
+      href: createHref(filters, { status: '', view: 'incomplete', issue: 'seo' }),
+      Icon: SearchCheck,
+    },
+    {
+      label: '产品线索队列',
+      detail: '把公开产品路径带来的询盘接回客户运营视角。',
+      href: '/admin/customers/leads?source_type=product',
+      Icon: BarChart3,
+    },
+  ]
+
+  return (
+    <section id="product-batch-governance" className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">批量治理</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品列表批量治理工作台</h2>
+          <p className="mt-1 text-sm leading-6 text-[#61767D]">
+            对照 300.cn 后台的列表处理心智，把公开产品目录筛选、内容缺口、批量分类标记、产品表单发布检查和转化复盘放进同一条操作路径；本区只提供入口和只读统计。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/content/products/new#new-product-closure"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95D22]"
+          >
+            <Plus size={13} />
+            新建前准备
+          </Link>
+          <Link
+            href="#product-batch-tools"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            <ListChecks size={13} />
+            批量工具
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-2 xl:grid-cols-4">
+        {sequence.map((step) => {
+          const Icon = step.Icon
+          const toneClass =
+            step.tone === 'green'
+              ? 'text-emerald-700'
+              : step.tone === 'orange'
+                ? 'text-[#E36F2C]'
+                : step.tone === 'gray'
+                  ? 'text-[#61767D]'
+                  : 'text-[#1889B6]'
+
+          return (
+            <Link
+              key={step.label}
+              href={step.href}
+              className="group min-h-[150px] border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-white md:odd:border-r xl:border-b-0 xl:border-r xl:last:border-r-0"
+            >
+              <span className="flex items-start justify-between gap-3">
+                <span className="min-w-0">
+                  <span className="block text-xs font-bold tracking-[0.08em] text-[#8A9EA4]">{step.label}</span>
+                  <span className={`mt-2 block text-2xl font-bold ${toneClass}`}>{step.value}</span>
+                </span>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+                  <Icon size={16} />
+                </span>
+              </span>
+              <span className="mt-3 block min-h-10 text-xs leading-5 text-[#61767D]">{step.detail}</span>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
+                {step.cta}
+                <ArrowRight size={13} />
+              </span>
+            </Link>
+          )
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+        {supportLinks.map((link) => {
+          const Icon = link.Icon
+          return (
+            <Link
+              key={link.label}
+              href={link.href}
+              className="group px-4 py-4 transition hover:bg-[#F7FAFA]"
+            >
+              <span className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6] transition group-hover:bg-[#1889B6] group-hover:text-white">
+                  <Icon size={16} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-[#1E2C31]">{link.label}</span>
+                  <span className="mt-1 block text-xs leading-5 text-[#61767D]">{link.detail}</span>
+                  <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
+                    打开
+                    <ArrowRight size={13} />
+                  </span>
+                </span>
+              </span>
+            </Link>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 function MatrixKpi({
   label,
   value,
@@ -1892,7 +2072,9 @@ function ProductList({
           detail={`当前筛选下共 ${formatNumber(total)} 个产品，本页显示 ${formatNumber(rows.length)} 个。`}
         />
       </div>
-      <ProductBatchCategoryBar categories={categories} marks={marks} showcases={showcases} />
+      <div id="product-batch-tools" className="scroll-mt-24">
+        <ProductBatchCategoryBar categories={categories} marks={marks} showcases={showcases} />
+      </div>
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -2219,6 +2401,13 @@ export default async function AdminContentProductsListPage({ searchParams }: Pag
           rowsCount={list.rows.length}
         />
         <ProductOperationsMatrix
+          summary={summary}
+          issueSummary={issueSummary}
+          rows={list.rows}
+          filters={filters}
+          productPathMetric={productPathMetric}
+        />
+        <ProductBatchGovernancePanel
           summary={summary}
           issueSummary={issueSummary}
           rows={list.rows}

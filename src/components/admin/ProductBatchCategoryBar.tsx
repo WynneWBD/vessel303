@@ -226,7 +226,7 @@ export default function ProductBatchCategoryBar({
         <div>
           <p className="text-sm font-semibold text-[#1E2C31]">批量操作</p>
           <p className="mt-1 text-xs leading-5 text-[#61767D]">
-            对照 300 产品列表底部工具栏；当前开放批量转移分类、标记、转移橱窗。
+            对照 300.cn 后台产品列表底部工具栏；当前开放批量转移分类、标记、转移橱窗。
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -323,7 +323,7 @@ export default function ProductBatchCategoryBar({
             <span
               key={action}
               className="inline-flex h-8 items-center rounded-md border border-dashed border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#9AA9AD]"
-              title="对照 300 产品列表批量工具栏；本阶段只展示规划位，不开放批量写入。"
+              title="对照 300.cn 后台产品列表批量工具栏；本阶段只展示规划位，不开放批量写入。"
             >
               {action}
             </span>
