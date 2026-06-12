@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { ArrowRight, CheckCircle2, Images, MapPin } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ProtectedImage from '@/components/ProtectedImage'
@@ -25,6 +26,10 @@ function localizedText(zh: boolean, zhValue: string | null | undefined, enValue:
 
 function localizedList(zh: boolean, zhValues: string[], enValues: string[]) {
   return zhValues.length > 0 ? (zh ? zhValues : enValues.length > 0 ? enValues : zhValues) : enValues
+}
+
+function fallbackLabel(value: string, fallback: string) {
+  return value || fallback
 }
 
 function ProjectImage({ src, alt, className }: { src: string | null | undefined; alt: string; className: string }) {
@@ -76,6 +81,120 @@ function FactGrid({
   )
 }
 
+function CaseDecisionSummary({
+  title,
+  subtitle,
+  snapshotTitle,
+  proofTitle,
+  actionTitle,
+  snapshotFacts,
+  proofFacts,
+  galleryHref,
+  galleryLabel,
+  inquiryHref,
+  inquiryLabel,
+  hasGallery,
+  zh,
+}: {
+  title: string
+  subtitle: string
+  snapshotTitle: string
+  proofTitle: string
+  actionTitle: string
+  snapshotFacts: Array<{ label: string; value: string }>
+  proofFacts: Array<{ label: string; value: string }>
+  galleryHref: string
+  galleryLabel: string
+  inquiryHref: string
+  inquiryLabel: string
+  hasGallery: boolean
+  zh: boolean
+}) {
+  const actionItems = [
+    zh ? '先核对项目地点、类型、面积和舱体规模。' : 'Check location, project type, area, and unit scale first.',
+    zh ? '再查看产品引用、投资信息和图库证据。' : 'Then review product references, investment context, and gallery evidence.',
+    zh ? '最后带着项目背景进入案例咨询表单。' : 'Finally open the case inquiry with project context.',
+  ]
+
+  return (
+    <section className="border-b border-[#E5DED4] bg-white py-8 lg:py-10" data-case-decision-summary="true">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-5 grid gap-3 lg:grid-cols-[minmax(0,0.72fr)_minmax(260px,0.28fr)] lg:items-end">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#1889B6]">
+              {zh ? '案例决策摘要' : 'Case decision summary'}
+            </p>
+            <h2 className="mt-2 text-2xl font-black leading-tight text-[#2C2A28] sm:text-3xl">{title}</h2>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-[#6B6560]">{subtitle}</p>
+          </div>
+          <div className="flex flex-wrap gap-2 lg:justify-end">
+            {hasGallery ? (
+              <a
+                href={galleryHref}
+                className="inline-flex min-h-10 items-center gap-2 border border-[#E5DED4] bg-[#FAF7F2] px-3 text-xs font-black uppercase tracking-[0.12em] text-[#2C2A28] transition-colors hover:border-[#E36F2C]/45"
+              >
+                <Images size={15} strokeWidth={2.4} aria-hidden="true" />
+                {galleryLabel}
+              </a>
+            ) : null}
+            <a
+              href={inquiryHref}
+              className="inline-flex min-h-10 items-center gap-2 border border-[#E36F2C] bg-[#E36F2C] px-3 text-xs font-black uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#C75D22]"
+            >
+              {inquiryLabel}
+              <ArrowRight size={15} strokeWidth={2.4} aria-hidden="true" />
+            </a>
+          </div>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          <article className="border border-[#E5DED4] bg-[#FAF7F2] p-4">
+            <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[#2C2A28]">
+              <MapPin size={15} strokeWidth={2.4} className="text-[#1889B6]" aria-hidden="true" />
+              {snapshotTitle}
+            </p>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+              {snapshotFacts.map((fact) => (
+                <div key={`${fact.label}-${fact.value}`} className="border border-[#E5DED4] bg-white px-3 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#8A8580]">{fact.label}</p>
+                  <p className="mt-1 text-sm font-black leading-5 text-[#2C2A28]">{fact.value}</p>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className="border border-[#E5DED4] bg-[#FAF7F2] p-4">
+            <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[#2C2A28]">
+              <CheckCircle2 size={15} strokeWidth={2.4} className="text-[#1889B6]" aria-hidden="true" />
+              {proofTitle}
+            </p>
+            <div className="mt-4 grid gap-2">
+              {proofFacts.map((fact) => (
+                <div key={`${fact.label}-${fact.value}`} className="border border-[#E5DED4] bg-white px-3 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#8A8580]">{fact.label}</p>
+                  <p className="mt-1 text-sm font-black leading-5 text-[#2C2A28]">{fact.value}</p>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className="border border-[#E5DED4] bg-[#2C2A28] p-4 text-white">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-white/70">{actionTitle}</p>
+            <div className="mt-4 grid gap-3">
+              {actionItems.map((item, index) => (
+                <p key={item} className="grid grid-cols-[28px_minmax(0,1fr)] gap-3 text-sm leading-6 text-white/78">
+                  <span className="text-lg font-black leading-6 text-[#E36F2C]">{String(index + 1).padStart(2, '0')}</span>
+                  <span>{item}</span>
+                </p>
+              ))}
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function CaseDetailPageContent({
   project,
   relatedCases = [],
@@ -99,17 +218,23 @@ export default function CaseDetailPageContent({
   ].filter((image, index, images): image is string => Boolean(image) && images.indexOf(image) === index)
   const modules = moduleMap(pageModules)
   const detailLabels = modules.get('detail-labels') ?? null
+  const locationLabel = fallbackLabel(itemLabel(itemById(detailLabels, 'fact-location'), lang), zh ? '项目位置' : 'Location')
+  const typeLabel = fallbackLabel(itemLabel(itemById(detailLabels, 'fact-type'), lang), zh ? '项目类型' : 'Project Type')
+  const areaLabel = fallbackLabel(itemLabel(itemById(detailLabels, 'fact-area'), lang), zh ? '项目面积' : 'Project Area')
+  const investmentLabel = fallbackLabel(itemLabel(itemById(detailLabels, 'fact-investment'), lang), zh ? '投资规模' : 'Investment')
+  const unitsLabel = fallbackLabel(itemLabel(itemById(detailLabels, 'fact-units'), lang), zh ? '舱体数量' : 'Units')
+  const productsLabel = fallbackLabel(itemLabel(itemById(detailLabels, 'fact-products'), lang), zh ? '产品型号' : 'Products')
   const facts = [
-    { label: itemLabel(itemById(detailLabels, 'fact-location'), lang), value: location },
-    { label: itemLabel(itemById(detailLabels, 'fact-type'), lang), value: type },
-    { label: itemLabel(itemById(detailLabels, 'fact-area'), lang), value: project.area_display },
-    { label: itemLabel(itemById(detailLabels, 'fact-investment'), lang), value: project.investment_display },
-    { label: itemLabel(itemById(detailLabels, 'fact-units'), lang), value: project.units_display },
-    { label: itemLabel(itemById(detailLabels, 'fact-products'), lang), value: project.products },
+    { label: locationLabel, value: location },
+    { label: typeLabel, value: type },
+    { label: areaLabel, value: project.area_display },
+    { label: investmentLabel, value: project.investment_display },
+    { label: unitsLabel, value: project.units_display },
+    { label: productsLabel, value: project.products },
   ].map((fact) => ({ ...fact, value: text(fact.value) })).filter((fact) => Boolean(fact.value))
-  const proofTitle = itemLabel(itemById(detailLabels, 'proof-title'), lang)
-  const galleryTitle = itemLabel(itemById(detailLabels, 'gallery-title'), lang)
-  const relatedTitle = itemLabel(itemById(detailLabels, 'related-title'), lang)
+  const proofTitle = fallbackLabel(itemLabel(itemById(detailLabels, 'proof-title'), lang), zh ? '项目证据' : 'Project proof')
+  const galleryTitle = fallbackLabel(itemLabel(itemById(detailLabels, 'gallery-title'), lang), zh ? '项目图库' : 'Project gallery')
+  const relatedTitle = fallbackLabel(itemLabel(itemById(detailLabels, 'related-title'), lang), zh ? '相关案例' : 'Related cases')
   const inquiryModule = modules.get('inquiry-form') ?? null
   const inquiryTitle = moduleTitle(inquiryModule, lang)
   const inquiryType = itemLabel(itemById(inquiryModule, 'inquiry-type'), lang)
@@ -137,6 +262,17 @@ export default function CaseDetailPageContent({
     image,
     fact: storyPanelFacts[index % Math.max(storyPanelFacts.length, 1)] ?? null,
   }))
+  const snapshotFacts = [
+    { label: locationLabel, value: location },
+    { label: typeLabel, value: type },
+    { label: areaLabel, value: project.area_display },
+    { label: unitsLabel, value: project.units_display },
+  ].map((fact) => ({ ...fact, value: text(fact.value) })).filter((fact) => Boolean(fact.value))
+  const proofFacts = [
+    { label: productsLabel, value: project.products },
+    { label: investmentLabel, value: project.investment_display },
+    { label: zh ? '图库素材' : 'Gallery assets', value: gallery.length > 0 ? String(gallery.length) : '' },
+  ].map((fact) => ({ ...fact, value: text(fact.value) })).filter((fact) => Boolean(fact.value))
 
   if (!name) return null
 
@@ -210,6 +346,26 @@ export default function CaseDetailPageContent({
           </aside>
         </div>
       </section>
+
+      {(snapshotFacts.length > 0 || proofFacts.length > 0) ? (
+        <CaseDecisionSummary
+          title={zh ? '先完成项目适配判断，再进入图库和咨询。' : 'Validate project fit before opening gallery and inquiry.'}
+          subtitle={zh
+            ? '案例详情页先把地点、类型、规模、产品引用和询盘路径集中展示，减少用户在长页面里反复查找。'
+            : 'The case detail page surfaces location, type, scale, product references, and inquiry path before the longer story sections.'}
+          snapshotTitle={zh ? '项目快照' : 'Project snapshot'}
+          proofTitle={zh ? '交付证据' : 'Delivery proof'}
+          actionTitle={zh ? '阅读路径' : 'Reading path'}
+          snapshotFacts={snapshotFacts}
+          proofFacts={proofFacts}
+          galleryHref="#case-gallery"
+          galleryLabel={galleryTitle}
+          inquiryHref="#case-inquiry"
+          inquiryLabel={inquiryLabels.submit || (zh ? '提交案例咨询' : 'Submit Case Inquiry')}
+          hasGallery={gallery.length > 1}
+          zh={zh}
+        />
+      ) : null}
 
       {gallery.length > 1 ? (
         <section id="case-gallery" className="border-b border-[#E5DED4] bg-[#201B17] py-12 text-white lg:py-16">

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, RotateCcw } from 'lucide-react'
+import { ArrowRight, BarChart3, Filter, Globe2, Layers3, MapPin, RotateCcw, Search, ShieldCheck } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ProtectedImage from '@/components/ProtectedImage'
@@ -22,6 +22,7 @@ const ALL_FILTER = 'all'
 type FilterOption = {
   key: string
   label: string
+  count?: number
 }
 
 function cleanText(value: string | null | undefined) {
@@ -47,6 +48,32 @@ function localizedList(zh: boolean, zhValues: string[], enValues: string[]) {
   return zhValues.length > 0 ? (zh ? zhValues : enValues.length > 0 ? enValues : zhValues) : enValues
 }
 
+function splitProducts(value: string | null | undefined) {
+  return cleanText(value)
+    .split(/[·,，、/|]+/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+function uniqueProductCount(projects: ProjectCaseRow[]) {
+  const productSet = new Set<string>()
+  for (const project of projects) {
+    for (const product of splitProducts(project.products)) {
+      productSet.add(product.toLowerCase())
+    }
+  }
+  return productSet.size
+}
+
+function uniqueLocationCount(projects: ProjectCaseRow[], zh: boolean) {
+  const locationSet = new Set<string>()
+  for (const project of projects) {
+    const location = localizedText(zh, project.location_zh, project.location_en)
+    if (location) locationSet.add(location.toLowerCase())
+  }
+  return locationSet.size
+}
+
 function tagOptionsForCase(project: ProjectCaseRow, zh: boolean) {
   const tagsZh = Array.isArray(project.tags_zh) ? project.tags_zh : []
   const tagsEn = Array.isArray(project.tags_en) ? project.tags_en : []
@@ -58,7 +85,11 @@ function tagOptionsForCase(project: ProjectCaseRow, zh: boolean) {
 function uniqueOptions(options: FilterOption[]) {
   const optionMap = new Map<string, FilterOption>()
   for (const option of options) {
-    if (!optionMap.has(option.key)) optionMap.set(option.key, option)
+    const current = optionMap.get(option.key)
+    optionMap.set(option.key, {
+      ...option,
+      count: (current?.count ?? 0) + 1,
+    })
   }
   return Array.from(optionMap.values())
 }
@@ -70,6 +101,186 @@ function filterButtonClass(active: boolean) {
       ? 'border-[#E36F2C] bg-[#E36F2C] text-white'
       : 'border-[#E5DED4] bg-[#FAF7F2] text-[#5F5A55] hover:border-[#E36F2C]/45 hover:text-[#2C2A28]',
   ].join(' ')
+}
+
+function CountedFilterLabel({ label, count }: { label: string; count?: number }) {
+  return (
+    <span className="inline-flex max-w-full items-center gap-2">
+      <span className="truncate">{label}</span>
+      {typeof count === 'number' ? (
+        <span className="shrink-0 rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-black text-[#2C2A28]">
+          {count}
+        </span>
+      ) : null}
+    </span>
+  )
+}
+
+function CaseCommandPanel({
+  cases,
+  filteredCases,
+  typeOptions,
+  tagOptions,
+  activeType,
+  activeTag,
+  onTypeChange,
+  onTagChange,
+  onReset,
+  zh,
+}: {
+  cases: ProjectCaseRow[]
+  filteredCases: ProjectCaseRow[]
+  typeOptions: FilterOption[]
+  tagOptions: FilterOption[]
+  activeType: string
+  activeTag: string
+  onTypeChange: (key: string) => void
+  onTagChange: (key: string) => void
+  onReset: () => void
+  zh: boolean
+}) {
+  const activeTypeLabel = typeOptions.find((option) => option.key === activeType)?.label
+  const activeTagLabel = tagOptions.find((option) => option.key === activeTag)?.label
+  const productCount = uniqueProductCount(filteredCases)
+  const locationCount = uniqueLocationCount(filteredCases, zh)
+  const hasActiveFilter = activeType !== ALL_FILTER || activeTag !== ALL_FILTER
+  const quickTypes = typeOptions.slice(0, 4)
+  const quickTags = tagOptions.slice(0, 6)
+  const statItems = [
+    {
+      label: zh ? '已发布案例' : 'Published cases',
+      value: cases.length,
+      detail: zh ? '来自公开项目案例库' : 'Visible public case library',
+      Icon: ShieldCheck,
+    },
+    {
+      label: zh ? '当前匹配' : 'Matching now',
+      value: filteredCases.length,
+      detail: zh ? '跟随当前类型和标签筛选' : 'Follows type and tag filters',
+      Icon: Search,
+    },
+    {
+      label: zh ? '产品引用' : 'Product references',
+      value: productCount,
+      detail: zh ? '当前范围内出现的型号/系列' : 'Models or series in this scope',
+      Icon: Layers3,
+    },
+    {
+      label: zh ? '项目地点' : 'Project locations',
+      value: locationCount,
+      detail: zh ? '当前范围内的地点数量' : 'Locations represented in this scope',
+      Icon: MapPin,
+    },
+  ]
+
+  return (
+    <section
+      className="mb-5 border border-[#E5DED4] bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-5"
+      data-case-command-panel="true"
+    >
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.45fr)]">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[#1889B6]">
+                <BarChart3 size={15} strokeWidth={2.4} aria-hidden="true" />
+                {zh ? '案例控制台' : 'Case control'}
+              </p>
+              <h2 className="mt-2 text-2xl font-black leading-tight text-[#2C2A28] sm:text-3xl">
+                {zh ? '先筛场景，再看证据，最后进入项目咨询。' : 'Filter the scenario, verify proof, then open the project inquiry.'}
+              </h2>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-[#6B6560]">
+                {zh
+                  ? '按项目类型、标签、产品引用和地点快速缩小范围，列表页先完成第一轮项目适配判断。'
+                  : 'Use project type, tags, product references, and locations to narrow the library before opening a detailed case.'}
+              </p>
+            </div>
+            {hasActiveFilter ? (
+              <button
+                type="button"
+                className="inline-flex min-h-10 items-center gap-2 border border-[#E5DED4] bg-[#FAF7F2] px-3 text-xs font-bold uppercase tracking-[0.1em] text-[#5F5A55] transition-colors hover:border-[#E36F2C]/45 hover:text-[#2C2A28]"
+                onClick={onReset}
+              >
+                <RotateCcw size={14} strokeWidth={2.4} aria-hidden="true" />
+                {zh ? '重置' : 'Reset'}
+              </button>
+            ) : null}
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {statItems.map(({ label, value, detail, Icon }) => (
+              <div key={label} className="border border-[#E5DED4] bg-[#FAF7F2] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]">{label}</p>
+                  <Icon size={16} strokeWidth={2.4} className="text-[#1889B6]" aria-hidden="true" />
+                </div>
+                <p className="mt-3 text-3xl font-black leading-none text-[#2C2A28]">{value}</p>
+                <p className="mt-2 text-xs leading-5 text-[#6B6560]">{detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <aside className="min-w-0 border border-[#E5DED4] bg-[#FAF7F2] p-4">
+          <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[#2C2A28]">
+            <Filter size={15} strokeWidth={2.4} aria-hidden="true" />
+            {zh ? '高频筛选' : 'High-signal filters'}
+          </p>
+          <div className="mt-3 border border-[#E5DED4] bg-white px-3 py-2 text-xs leading-5 text-[#6B6560]">
+            <span className="font-black text-[#2C2A28]">{zh ? '当前路径' : 'Current route'}: </span>
+            {activeTypeLabel || activeTagLabel
+              ? [activeTypeLabel, activeTagLabel].filter(Boolean).join(' / ')
+              : zh ? '全部公开案例' : 'All published cases'}
+          </div>
+
+          {quickTypes.length > 0 ? (
+            <div className="mt-4">
+              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]">{zh ? '项目类型' : 'Project type'}</p>
+              <div className="flex flex-wrap gap-2">
+                {quickTypes.map((option) => (
+                  <button
+                    key={option.key}
+                    type="button"
+                    aria-pressed={activeType === option.key}
+                    className={filterButtonClass(activeType === option.key)}
+                    onClick={() => onTypeChange(option.key)}
+                  >
+                    <CountedFilterLabel label={option.label} count={option.count} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {quickTags.length > 0 ? (
+            <div className="mt-4">
+              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]">{zh ? '案例标签' : 'Case tags'}</p>
+              <div className="flex flex-wrap gap-2">
+                {quickTags.map((option) => (
+                  <button
+                    key={option.key}
+                    type="button"
+                    aria-pressed={activeTag === option.key}
+                    className={filterButtonClass(activeTag === option.key)}
+                    onClick={() => onTagChange(option.key)}
+                  >
+                    <CountedFilterLabel label={option.label} count={option.count} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="mt-5 grid gap-2 border-t border-[#E5DED4] pt-4 text-xs leading-5 text-[#6B6560]">
+            <p className="flex items-start gap-2">
+              <Globe2 size={14} strokeWidth={2.4} className="mt-0.5 shrink-0 text-[#1889B6]" aria-hidden="true" />
+              <span>{zh ? '项目地点和产品引用只从现有案例字段读取。' : 'Locations and product references are derived from existing case fields.'}</span>
+            </p>
+          </div>
+        </aside>
+      </div>
+    </section>
+  )
 }
 
 export default function CasesPageContent({
@@ -94,6 +305,7 @@ export default function CasesPageContent({
   const allTagLabel = zh ? '全部标签' : 'All Tags'
   const resetLabel = zh ? '重置' : 'Reset'
   const emptyLabel = zh ? '当前筛选暂无案例' : 'No cases match the selected filters.'
+  const openCaseLabel = zh ? '查看案例' : 'Open case'
   const [activeType, setActiveType] = useState(ALL_FILTER)
   const [activeTag, setActiveTag] = useState(ALL_FILTER)
   const typeOptions = useMemo(
@@ -145,6 +357,22 @@ export default function CasesPageContent({
 
       {cases.length > 0 ? (
         <section className="mx-auto max-w-[1500px] px-4 py-8 sm:px-6 lg:px-8">
+          <CaseCommandPanel
+            cases={cases}
+            filteredCases={filteredCases}
+            typeOptions={typeOptions}
+            tagOptions={tagOptions}
+            activeType={activeType}
+            activeTag={activeTag}
+            onTypeChange={setActiveType}
+            onTagChange={setActiveTag}
+            onReset={() => {
+              setActiveType(ALL_FILTER)
+              setActiveTag(ALL_FILTER)
+            }}
+            zh={zh}
+          />
+
           {hasFilters ? (
             <div className="mb-5 border border-[#E5DED4] bg-white px-4 py-4 shadow-sm">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -159,7 +387,7 @@ export default function CasesPageContent({
                           className={filterButtonClass(activeType === ALL_FILTER)}
                           onClick={() => setActiveType(ALL_FILTER)}
                         >
-                          {allTypeLabel}
+                          <CountedFilterLabel label={allTypeLabel} count={cases.length} />
                         </button>
                         {typeOptions.map((option) => (
                           <button
@@ -169,7 +397,7 @@ export default function CasesPageContent({
                             className={filterButtonClass(activeType === option.key)}
                             onClick={() => setActiveType(option.key)}
                           >
-                            {option.label}
+                            <CountedFilterLabel label={option.label} count={option.count} />
                           </button>
                         ))}
                       </div>
@@ -186,7 +414,7 @@ export default function CasesPageContent({
                           className={filterButtonClass(activeTag === ALL_FILTER)}
                           onClick={() => setActiveTag(ALL_FILTER)}
                         >
-                          {allTagLabel}
+                          <CountedFilterLabel label={allTagLabel} count={cases.length} />
                         </button>
                         {tagOptions.map((option) => (
                           <button
@@ -196,7 +424,7 @@ export default function CasesPageContent({
                             className={filterButtonClass(activeTag === option.key)}
                             onClick={() => setActiveTag(option.key)}
                           >
-                            {option.label}
+                            <CountedFilterLabel label={option.label} count={option.count} />
                           </button>
                         ))}
                       </div>
@@ -309,8 +537,9 @@ export default function CasesPageContent({
                         ))}
                       </div>
                     ) : null}
-                    <span className="mt-auto inline-flex justify-end pt-6 text-[#E36F2C] transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">
-                      <ArrowRight size={20} strokeWidth={2.4} />
+                    <span className="mt-auto inline-flex items-center justify-end gap-2 pt-6 text-xs font-black uppercase tracking-[0.14em] text-[#E36F2C] transition-transform duration-300 group-hover:translate-x-1">
+                      {openCaseLabel}
+                      <ArrowRight size={18} strokeWidth={2.4} aria-hidden="true" />
                     </span>
                   </div>
                 </Link>
