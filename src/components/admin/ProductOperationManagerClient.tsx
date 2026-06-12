@@ -97,7 +97,7 @@ const COPY: Record<ProductOperationKind, {
   showcases: {
     title: '当前橱窗',
     createTitle: '新增橱窗',
-    description: '对照 300 的橱窗管理，用于运营人员把重点产品编组成展示橱窗。',
+    description: '对照 300.cn 后台的橱窗管理，用于运营人员把重点产品编组成展示橱窗。',
     empty: '暂无橱窗',
     relationTitle: '包含产品',
     relationHint: '选择后，产品会加入该橱窗。',
