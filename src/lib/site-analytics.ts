@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { pool } from '@/lib/db'
 import { CONVERSION_PATHS } from '@/lib/admin-conversion-paths'
-import { getLeadSourceType, type LeadSourceType } from '@/lib/lead-source'
+import { describeLeadSourceStage, getLeadSourceType, type LeadSourceType } from '@/lib/lead-source'
 
 export type SiteAnalyticsEventName =
   | 'page_view'
@@ -76,6 +76,13 @@ export type AnalyticsRankRow = {
   secondary?: number
 }
 
+export type AnalyticsSourceStageRow = {
+  key: string
+  label: string
+  value: number
+  href: string
+}
+
 export type AnalyticsConversionMetric = {
   views: number
   ctaClicks: number
@@ -143,6 +150,7 @@ export type SiteAnalyticsDashboard = {
   topPages: AnalyticsRankRow[]
   topReferrers: AnalyticsRankRow[]
   sourceTypes: AnalyticsRankRow[]
+  productSourceStages: AnalyticsSourceStageRow[]
   landingPages: AnalyticsRankRow[]
   conversionPaths: Record<string, AnalyticsConversionMetric>
   recentEvents: Array<{
@@ -229,6 +237,7 @@ export const EMPTY_ANALYTICS_DASHBOARD: SiteAnalyticsDashboard = {
   topPages: [],
   topReferrers: [],
   sourceTypes: [],
+  productSourceStages: [],
   landingPages: [],
   conversionPaths: Object.fromEntries(CONVERSION_PATHS.map((item) => [item.key, EMPTY_CONVERSION_METRIC])),
   recentEvents: [],
@@ -851,6 +860,36 @@ async function loadRankRows(
   return res.rows.map(mapRow)
 }
 
+async function loadProductSourceStageRows(days = 30): Promise<AnalyticsSourceStageRow[]> {
+  const res = await pool.query<{ source: string | null; value: string }>(
+    `SELECT source, COUNT(*)::text AS value
+     FROM site_events
+     WHERE event_name IN ('cta_click', 'contact_redirect', 'form_submit_success')
+       AND ${REAL_EVENT_CONDITION}
+       AND created_at >= NOW() - ($1::int * INTERVAL '1 day')
+       AND source ILIKE 'product_detail:%'
+     GROUP BY source`,
+    [days],
+  )
+  const grouped = new Map<string, AnalyticsSourceStageRow>()
+
+  for (const row of res.rows) {
+    const stage = describeLeadSourceStage(row.source)
+    const current = grouped.get(stage.key)
+    const nextValue = (current?.value ?? 0) + toInt(row.value)
+    grouped.set(stage.key, {
+      key: stage.key,
+      label: stage.label,
+      href: stage.href,
+      value: nextValue,
+    })
+  }
+
+  return [...grouped.values()]
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label, 'zh-CN'))
+    .slice(0, 10)
+}
+
 export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboard> {
   try {
     if (!(await tableExists('public.site_events'))) {
@@ -871,6 +910,7 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
       topPages,
       topReferrers,
       sourceTypes,
+      productSourceStages,
       landingPages,
       conversionPaths,
       recentEvents,
@@ -928,6 +968,7 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
           [],
           (row) => ({ key: String(row.key), label: sourceTypeLabel(String(row.key)), value: toInt(row.value) }),
         ),
+        loadProductSourceStageRows(30),
         loadRankRows(
           `SELECT path AS key,
                   COUNT(*) FILTER (WHERE event_name = 'page_view')::text AS value,
@@ -989,6 +1030,7 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
       topPages,
       topReferrers,
       sourceTypes,
+      productSourceStages,
       landingPages,
       conversionPaths,
       recentEvents: recentEvents.rows.map((row) => ({
