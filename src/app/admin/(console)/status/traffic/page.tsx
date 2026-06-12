@@ -146,6 +146,8 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
 
         <TrafficSourceStagePanel analytics={analytics} />
 
+        <ProductTrafficPanel analytics={analytics} />
+
         <CaseInquiryTrafficPanel analytics={analytics} health={caseInquiryHealth} />
 
         <section id="trend-analysis" className="space-y-4">
@@ -366,6 +368,7 @@ function TrafficAnalysisConsole({
             actions={actions}
             leads={activeMetric.leads}
             readiness={readiness}
+            productPathActions={analytics.conversionPaths.products?.ctaClicks ?? 0}
             casePathActions={analytics.conversionPaths.cases?.ctaClicks ?? 0}
             weakCases={caseInquiryHealth.weak}
           />
@@ -523,6 +526,7 @@ function TrafficModuleStrip({
   actions,
   leads,
   readiness,
+  productPathActions,
   casePathActions,
   weakCases,
 }: {
@@ -531,21 +535,23 @@ function TrafficModuleStrip({
   actions: number
   leads: number
   readiness: string
+  productPathActions: number
   casePathActions: number
   weakCases: number
 }) {
   const items = [
-    { title: '网站访问统计', value: `${formatNumber(pageViews)} PV`, href: '#trend-analysis' },
-    { title: '落地页跳出分析', value: `${formatNumber(landingPages)} 页`, href: '#landing-analysis' },
-    { title: '访问行为分析', value: `${formatNumber(actions)} 次`, href: '#behavior-analysis' },
-    { title: '线索转化分析', value: `${formatNumber(leads)} 条`, href: '/admin/site/conversion' },
-    { title: '案例询盘路径', value: `${formatNumber(casePathActions)} 动作`, href: '#case-inquiry-path' },
-    { title: 'Google收录分析', value: readiness, href: '/admin/site/seo' },
+    { title: '网站访问统计', value: `${formatNumber(pageViews)} PV`, href: '#trend-analysis', detail: '进入下钻' },
+    { title: '落地页跳出分析', value: `${formatNumber(landingPages)} 页`, href: '#landing-analysis', detail: '进入下钻' },
+    { title: '访问行为分析', value: `${formatNumber(actions)} 次`, href: '#behavior-analysis', detail: '进入下钻' },
+    { title: '线索转化分析', value: `${formatNumber(leads)} 条`, href: '/admin/site/conversion', detail: '进入下钻' },
+    { title: '产品路径分析', value: `${formatNumber(productPathActions)} 动作`, href: '#product-conversion-path', detail: '回连产品闭环' },
+    { title: '案例询盘路径', value: `${formatNumber(casePathActions)} 动作`, href: '#case-inquiry-path', detail: `弱案例 ${formatNumber(weakCases)}` },
+    { title: 'Google收录分析', value: readiness, href: '/admin/site/seo', detail: '进入下钻' },
   ]
 
   return (
     <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-3 md:divide-x md:divide-y-0 2xl:grid-cols-6">
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-3 md:divide-x md:divide-y-0 2xl:grid-cols-7">
       {items.map((item) => (
         <Link
           key={item.title}
@@ -554,7 +560,7 @@ function TrafficModuleStrip({
         >
           <span className="block truncate text-xs font-semibold text-[#1889B6]">{item.title}</span>
           <span className="mt-3 block truncate text-xl font-black text-[#1E2C31]">{item.value}</span>
-          <span className="mt-2 block text-[11px] text-[#8A9EA4]">{item.title === '案例询盘路径' ? `弱案例 ${formatNumber(weakCases)}` : '进入下钻'}</span>
+          <span className="mt-2 block text-[11px] text-[#8A9EA4]">{item.detail}</span>
         </Link>
       ))}
       </div>
@@ -1276,6 +1282,143 @@ function TrafficSourceStagePanel({ analytics }: { analytics: SiteAnalyticsDashbo
           </table>
         </div>
       )}
+    </section>
+  )
+}
+
+function ProductTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) {
+  const metric = analytics.conversionPaths.products ?? {
+    views: 0,
+    ctaClicks: 0,
+    formSubmits: 0,
+    leads: 0,
+    conversionRate: 0,
+  }
+  const hasPathActions = metric.ctaClicks > 0
+  const rows = [
+    {
+      label: '产品访问',
+      value: `${formatNumber(metric.views)} PV`,
+      detail: '近 30 天 /products 与产品详情访问',
+      href: '#behavior-analysis',
+      tone: metric.views > 0 ? 'blue' : 'gray',
+    },
+    {
+      label: '路径动作',
+      value: formatNumber(metric.ctaClicks),
+      detail: `CTA / 联系 / 表单动作合计，表单成功 ${formatNumber(metric.formSubmits)}。`,
+      href: '#behavior-analysis',
+      tone: hasPathActions ? 'green' : metric.views > 0 ? 'orange' : 'gray',
+    },
+    {
+      label: '真实线索',
+      value: formatNumber(metric.leads),
+      detail: `产品路径访问转化率 ${formatAnalyticsPercent(metric.conversionRate)}。`,
+      href: '/admin/status/leads#product-lead-path-bridge',
+      tone: metric.leads > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
+    },
+    {
+      label: 'SEO 回修',
+      value: 'B230',
+      detail: '从产品 SEO 待补回看路径、表单和线索承接。',
+      href: '/admin/site/seo#seo-conversion-closure',
+      tone: 'blue',
+    },
+  ] satisfies Array<{
+    label: string
+    value: string
+    detail: string
+    href: string
+    tone: 'blue' | 'green' | 'orange' | 'gray'
+  }>
+
+  const decision =
+    metric.views > 0 && metric.leads === 0
+      ? '产品已有访问但暂无真实线索，优先复核产品详情 CTA、表单阶段和 SEO 摘要质量。'
+      : metric.leads > 0
+        ? '产品路径已有线索样本，继续观察来源阶段、表单和 SEO 修复后的转化质量。'
+        : '产品路径暂无访问样本，先等待事件或从前台产品入口复验。'
+  const closureLinks = [
+    {
+      label: 'B231 产品复盘',
+      detail: '回到转化中心产品路径复盘',
+      href: '/admin/site/conversion',
+      tone: 'blue' as const,
+    },
+    {
+      label: 'B229 线索承接',
+      detail: '看产品路径与线索承接',
+      href: '/admin/status/leads#product-lead-path-bridge',
+      tone: metric.leads > 0 ? 'green' as const : metric.views > 0 ? 'orange' as const : 'gray' as const,
+    },
+    {
+      label: '产品线索队列',
+      detail: '回到 B228 source_type=product',
+      href: '/admin/customers/leads?source_type=product',
+      tone: metric.leads > 0 ? 'green' as const : 'blue' as const,
+    },
+    {
+      label: '产品 SEO 待补',
+      detail: '回到 B230 SEO 修复闭环',
+      href: '/admin/content/products/list?view=incomplete&issue=seo',
+      tone: metric.views > 0 && metric.leads === 0 ? 'orange' as const : 'blue' as const,
+    },
+  ] satisfies Array<{
+    label: string
+    detail: string
+    href: string
+    tone: 'blue' | 'green' | 'orange' | 'gray'
+  }>
+
+  return (
+    <section id="product-conversion-path" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-[#1E2C31]">产品路径分析</h2>
+          <p className="mt-1 text-xs text-[#61767D]">
+            把产品访问、路径动作、表单成功、真实线索和 SEO 修复入口放在同屏；本区只读，不写线索、不保存产品内容。
+          </p>
+        </div>
+        <span className="rounded-full bg-[#EAF6F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
+          30 天产品路径
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+        {rows.map((row) => (
+          <Link key={row.label} href={row.href} className="block min-w-0 p-5 transition hover:bg-[#F7FAFA]">
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${trafficMatrixToneClass(row.tone)}`}>
+              {row.label}
+            </span>
+            <span className="mt-3 block truncate text-2xl font-black text-[#1E2C31]" title={row.value}>
+              {row.value}
+            </span>
+            <span className="mt-2 block text-xs leading-5 text-[#61767D]">{row.detail}</span>
+          </Link>
+        ))}
+      </div>
+
+      <div className="border-t border-[#E6EEEE] px-5 py-4 text-sm font-semibold text-[#1E2C31]">
+        运营判断：{decision}
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:grid-cols-4">
+        {closureLinks.map((item) => (
+          <Link
+            key={item.label}
+            href={item.href}
+            className="group rounded-md border border-[#D8E7E8] bg-white px-3 py-3 transition hover:border-[#1889B6] hover:bg-[#F7FAFA]"
+          >
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${trafficMatrixToneClass(item.tone)}`}>
+              {item.label}
+            </span>
+            <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+            <span className="mt-2 inline-flex text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
+              进入闭环
+            </span>
+          </Link>
+        ))}
+      </div>
     </section>
   )
 }
