@@ -897,6 +897,100 @@ function SeoOperationsMatrix({
   )
 }
 
+function SeoConversionRepairPanel({
+  products,
+  projects,
+}: {
+  products: ContentSeoSummary
+  projects: ContentSeoSummary
+}) {
+  const items = [
+    {
+      title: '产品 SEO 待补',
+      value: products.missing,
+      detail: `已发布产品 ${formatNumber(products.published)} 个；先补标题与描述，再复看产品转化。`,
+      href: products.href,
+      Icon: Package,
+      tone: products.missing > 0 ? 'orange' as const : 'green' as const,
+    },
+    {
+      title: '案例派生待补',
+      value: projects.missing,
+      detail: `已发布案例 ${formatNumber(projects.published)} 个；描述和封面同时影响 SEO 摘要与询盘说服力。`,
+      href: projects.href,
+      Icon: MapPinned,
+      tone: projects.missing > 0 ? 'orange' as const : 'green' as const,
+    },
+    {
+      title: '转化中心回看',
+      value: 'B225',
+      detail: '从 SEO 修复回看案例、产品和表单转化路径，不在本页写入内容。',
+      href: '/admin/site/conversion',
+      Icon: Link2,
+      tone: 'blue' as const,
+    },
+    {
+      title: '线索承接复盘',
+      value: 'B223',
+      detail: '把案例路径、线索来源和处理队列合并复盘，避免只补 SEO 不看线索质量。',
+      href: '/admin/status/leads#case-lead-path-bridge',
+      Icon: SearchCheck,
+      tone: 'blue' as const,
+    },
+  ]
+
+  return (
+    <section className="space-y-4" id="seo-conversion-closure">
+      <SectionTitle
+        title="B226 SEO 与转化修复闭环"
+        detail="把搜索增长、内容缺口和转化线索放在同一条运营链路里：先补可被搜索理解的内容，再回到转化与线索面板验证质量。"
+      />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+          {items.map((item) => {
+            const Icon = item.Icon
+            const toneClass =
+              item.tone === 'green'
+                ? 'bg-emerald-50 text-emerald-700'
+                : item.tone === 'orange'
+                  ? 'bg-[#FFF2E7] text-[#E36F2C]'
+                  : 'bg-[#EAF6F8] text-[#1889B6]'
+
+            return (
+              <Link key={item.title} href={item.href} className="group block p-5 transition hover:bg-[#F7FAFA]">
+                <span className={`flex h-10 w-10 items-center justify-center rounded-md ${toneClass}`}>
+                  <Icon size={18} />
+                </span>
+                <span className="mt-5 block text-sm font-semibold text-[#61767D]">{item.title}</span>
+                <span className="mt-1 block text-3xl font-bold text-[#1E2C31]">{typeof item.value === 'number' ? formatNumber(item.value) : item.value}</span>
+                <span className="mt-2 block min-h-12 text-xs leading-5 text-[#61767D]">{item.detail}</span>
+                <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] opacity-80 transition group-hover:text-[#E36F2C] group-hover:opacity-100">
+                  进入处理
+                  <ArrowRight size={13} />
+                </span>
+              </Link>
+            )
+          })}
+        </div>
+        <div className="flex flex-wrap gap-2 border-t border-[#E6EEEE] px-5 py-4">
+          <Link
+            href="/admin/status/traffic#case-inquiry-path"
+            className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+          >
+            看案例路径分析
+          </Link>
+          <Link
+            href="/admin/customers/leads?source_type=case"
+            className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+          >
+            看案例线索队列
+          </Link>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function SummaryTile({
   title,
   value,
@@ -1481,6 +1575,8 @@ export default async function AdminSiteSeoPage() {
         indexFoundationItems={indexFoundationItems}
         priorityItems={priorityItems}
       />
+
+      <SeoConversionRepairPanel products={products} projects={projects} />
 
       <SeoActionLedger items={priorityItems} />
 
