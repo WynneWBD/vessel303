@@ -150,7 +150,7 @@ export type SiteAnalyticsDashboard = {
   topPages: AnalyticsRankRow[]
   topReferrers: AnalyticsRankRow[]
   sourceTypes: AnalyticsRankRow[]
-  productSourceStages: AnalyticsSourceStageRow[]
+  sourceStageActions: AnalyticsSourceStageRow[]
   landingPages: AnalyticsRankRow[]
   conversionPaths: Record<string, AnalyticsConversionMetric>
   recentEvents: Array<{
@@ -237,7 +237,7 @@ export const EMPTY_ANALYTICS_DASHBOARD: SiteAnalyticsDashboard = {
   topPages: [],
   topReferrers: [],
   sourceTypes: [],
-  productSourceStages: [],
+  sourceStageActions: [],
   landingPages: [],
   conversionPaths: Object.fromEntries(CONVERSION_PATHS.map((item) => [item.key, EMPTY_CONVERSION_METRIC])),
   recentEvents: [],
@@ -860,14 +860,14 @@ async function loadRankRows(
   return res.rows.map(mapRow)
 }
 
-async function loadProductSourceStageRows(days = 30): Promise<AnalyticsSourceStageRow[]> {
+async function loadSourceStageActionRows(days = 30): Promise<AnalyticsSourceStageRow[]> {
   const res = await pool.query<{ source: string | null; value: string }>(
     `SELECT source, COUNT(*)::text AS value
      FROM site_events
      WHERE event_name IN ('cta_click', 'contact_redirect', 'form_submit_success')
        AND ${REAL_EVENT_CONDITION}
        AND created_at >= NOW() - ($1::int * INTERVAL '1 day')
-       AND source ILIKE 'product_detail:%'
+       AND (source ILIKE 'product_detail:%' OR source ILIKE 'case_detail:%')
      GROUP BY source`,
     [days],
   )
@@ -910,7 +910,7 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
       topPages,
       topReferrers,
       sourceTypes,
-      productSourceStages,
+      sourceStageActions,
       landingPages,
       conversionPaths,
       recentEvents,
@@ -968,7 +968,7 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
           [],
           (row) => ({ key: String(row.key), label: sourceTypeLabel(String(row.key)), value: toInt(row.value) }),
         ),
-        loadProductSourceStageRows(30),
+        loadSourceStageActionRows(30),
         loadRankRows(
           `SELECT path AS key,
                   COUNT(*) FILTER (WHERE event_name = 'page_view')::text AS value,
@@ -1030,7 +1030,7 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
       topPages,
       topReferrers,
       sourceTypes,
-      productSourceStages,
+      sourceStageActions,
       landingPages,
       conversionPaths,
       recentEvents: recentEvents.rows.map((row) => ({

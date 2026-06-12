@@ -55,7 +55,12 @@ import type {
   LeadSourceStatusSummary,
   LeadStatus,
 } from '@/lib/leads-db'
-import { describeLeadSource, LEAD_SOURCE_STAGE_OPTIONS, LEAD_SOURCE_TYPE_OPTIONS } from '@/lib/lead-source'
+import {
+  describeLeadSource,
+  getLeadSourceStageType,
+  LEAD_SOURCE_STAGE_OPTIONS,
+  LEAD_SOURCE_TYPE_OPTIONS,
+} from '@/lib/lead-source'
 
 type Filters = {
   status: string
@@ -658,9 +663,10 @@ export default function LeadsClient({
             value={filters.source_type}
             onChange={(e) => {
               const value = e.target.value
+              const stageType = getLeadSourceStageType(filters.source_stage)
               updateFilters({
                 source_type: value,
-                source_stage: value === 'product' || value === 'all' ? filters.source_stage : 'all',
+                source_stage: value === 'all' || value === stageType ? filters.source_stage : 'all',
               })
             }}
           >
@@ -672,7 +678,13 @@ export default function LeadsClient({
           </Select>
           <Select
             value={filters.source_stage}
-            onChange={(e) => updateFilters({ source_stage: e.target.value, source_type: e.target.value === 'all' ? filters.source_type : 'product' })}
+            onChange={(e) => {
+              const value = e.target.value
+              updateFilters({
+                source_stage: value,
+                source_type: getLeadSourceStageType(value) ?? filters.source_type,
+              })
+            }}
           >
             {LEAD_SOURCE_STAGE_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>

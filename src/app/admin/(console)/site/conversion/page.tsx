@@ -430,8 +430,8 @@ export default async function AdminSiteConversionPage() {
           pathAnalytics={pathAnalytics}
         />
 
-        <ProductStageConversionMatrix
-          productSourceStages={dashboard.productSourceStages}
+        <SourceStageConversionMatrix
+          sourceStageActions={dashboard.sourceStageActions}
           sourceStageSummary={sourceStageSummary}
         />
 
@@ -969,18 +969,18 @@ function LeadSourceMatrix({
   )
 }
 
-function ProductStageConversionMatrix({
-  productSourceStages,
+function SourceStageConversionMatrix({
+  sourceStageActions,
   sourceStageSummary,
 }: {
-  productSourceStages: AnalyticsSourceStageRow[]
+  sourceStageActions: AnalyticsSourceStageRow[]
   sourceStageSummary: LeadSourceStageStatusSummary[]
 }) {
-  const actionMap = new Map(productSourceStages.map((row) => [row.key, row]))
-  const productLeadStages = sourceStageSummary.filter((row) => row.type === 'product')
-  const leadMap = new Map(productLeadStages.map((row) => [row.key, row]))
+  const actionMap = new Map(sourceStageActions.map((row) => [row.key, row]))
+  const publicLeadStages = sourceStageSummary.filter((row) => row.type === 'product' || row.type === 'case')
+  const leadMap = new Map(publicLeadStages.map((row) => [row.key, row]))
   const keys = Array.from(new Set([...actionMap.keys(), ...leadMap.keys()]))
-  const actionTotal = productSourceStages.reduce((sum, row) => sum + row.value, 0)
+  const actionTotal = sourceStageActions.reduce((sum, row) => sum + row.value, 0)
   const rows = keys
     .map((key) => {
       const action = actionMap.get(key)
@@ -1030,9 +1030,9 @@ function ProductStageConversionMatrix({
     <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <h2 className="text-lg font-bold text-[#1E2C31]">B204 产品阶段承接矩阵</h2>
+          <h2 className="text-lg font-bold text-[#1E2C31]">B207 公开站来源阶段承接矩阵</h2>
           <p className="mt-1 text-xs text-[#61767D]">
-            把访问统计里的产品阶段动作和线索库里的产品阶段状态放在同一张表，判断哪类入口需要优先跟进或核对 source。
+            把访问统计里的产品与案例阶段动作和线索库里的来源阶段状态放在同一张表，判断哪类入口需要优先跟进或核对 source。
           </p>
         </div>
         <Link href="/admin/status/traffic?range=30" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
@@ -1041,13 +1041,13 @@ function ProductStageConversionMatrix({
       </div>
 
       {rows.length === 0 ? (
-        <div className="p-5 text-sm text-[#61767D]">暂无产品阶段动作或产品阶段线索样本。</div>
+        <div className="p-5 text-sm text-[#61767D]">暂无公开站来源阶段动作或阶段线索样本。</div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1120px] text-sm">
             <thead>
               <tr className="border-b border-[#E6EEEE] bg-white text-[#61767D]">
-                <th className="px-5 py-3 text-left font-medium">产品阶段</th>
+                <th className="px-5 py-3 text-left font-medium">来源阶段</th>
                 <th className="px-4 py-3 text-right font-medium">30 天动作</th>
                 <th className="px-4 py-3 text-right font-medium">动作占比</th>
                 <th className="px-4 py-3 text-right font-medium">阶段线索</th>

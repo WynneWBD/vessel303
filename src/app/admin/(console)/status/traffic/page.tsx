@@ -139,7 +139,7 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
 
         <TrafficRouteMatrix analytics={analytics} activeMetric={activeMetric} />
 
-        <TrafficProductStagePanel analytics={analytics} />
+        <TrafficSourceStagePanel analytics={analytics} />
 
         <section id="trend-analysis" className="space-y-4">
           <SectionTitle title={activeRange === 'today' ? '今日小时趋势' : activeRange === 'yesterday' ? '昨日小时趋势' : '访问趋势'} detail="聚合 PV、访客、转化动作、表单成功和真实线索，先看趋势再看排行。" />
@@ -1201,8 +1201,8 @@ function TrafficRouteMatrix({
   )
 }
 
-function TrafficProductStagePanel({ analytics }: { analytics: SiteAnalyticsDashboard }) {
-  const rows = analytics.productSourceStages
+function TrafficSourceStagePanel({ analytics }: { analytics: SiteAnalyticsDashboard }) {
+  const rows = analytics.sourceStageActions
   const total = rows.reduce((sum, row) => sum + row.value, 0)
   const topRow = rows[0]
 
@@ -1210,24 +1210,24 @@ function TrafficProductStagePanel({ analytics }: { analytics: SiteAnalyticsDashb
     <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <h2 className="text-lg font-bold text-[#1E2C31]">B203 产品来源阶段复盘</h2>
+          <h2 className="text-lg font-bold text-[#1E2C31]">B207 公开站来源阶段复盘</h2>
           <p className="mt-1 text-xs text-[#61767D]">
-            按近 30 天产品 CTA、联系跳转和表单成功事件聚合来源阶段；下钻到对应线索列表，不写入业务数据。
+            按近 30 天产品与案例 CTA、联系跳转和表单成功事件聚合来源阶段；下钻到对应线索列表，不写入业务数据。
           </p>
         </div>
         <span className="rounded-full bg-[#EAF6F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
-          产品阶段动作 {formatNumber(total)}
+          来源阶段动作 {formatNumber(total)}
         </span>
       </div>
 
       {rows.length === 0 ? (
-        <div className="p-5 text-sm text-[#61767D]">暂无近 30 天产品来源阶段事件。</div>
+        <div className="p-5 text-sm text-[#61767D]">暂无近 30 天公开站来源阶段事件。</div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] text-sm">
             <thead>
               <tr className="border-b border-[#E6EEEE] bg-white text-[#61767D]">
-                <th className="px-5 py-3 text-left font-medium">产品阶段</th>
+                <th className="px-5 py-3 text-left font-medium">来源阶段</th>
                 <th className="px-4 py-3 text-right font-medium">动作数</th>
                 <th className="px-4 py-3 text-right font-medium">阶段占比</th>
                 <th className="px-4 py-3 text-left font-medium">运营判断</th>

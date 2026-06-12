@@ -571,6 +571,14 @@ function buildLeadSourceStageRows(sourceStageStatusSummary: LeadSourceStageStatu
               : closed > 0
                 ? '该产品来源阶段线索已收口，适合复盘关闭原因和客户匹配度。'
                 : '该产品来源阶段暂无足够样本，继续观察公开站咨询入口。'
+          : stage.type === 'case'
+            ? active > 0
+              ? `该案例来源阶段还有 ${formatNumber(active)} 条未收口线索，先进入案例线索列表处理。`
+              : stage.won > 0
+                ? `该案例来源阶段已有成交样本，可复盘案例页 CTA、项目证明和后续跟进质量。`
+                : closed > 0
+                  ? '该案例来源阶段线索已收口，适合复盘关闭原因和案例匹配度。'
+                  : '该案例来源阶段暂无足够样本，继续观察案例咨询入口。'
           : active > 0
             ? `该来源阶段还有 ${formatNumber(active)} 条活跃线索，先进入现有线索流程处理。`
             : '该来源阶段当前无活跃积压，可作为入口质量观察项。'
@@ -610,18 +618,19 @@ function LeadSourceStageMatrix({
   const total = rows.reduce((sum, row) => sum + row.total, 0)
   const active = rows.reduce((sum, row) => sum + row.active, 0)
   const productStages = rows.filter((row) => row.type === 'product').length
+  const caseStages = rows.filter((row) => row.type === 'case').length
   const topStage = rows[0]
 
   return (
     <section className="space-y-4" id="source-stage-quality">
       <SectionTitle
         title="B201 来源阶段矩阵"
-        detail="在来源类型之上继续拆出产品卡片 CTA、产品详情表单、产品详情 CTA 等阶段；本页只读，处理动作仍回到客户线索页。"
+        detail="在来源类型之上继续拆出产品与案例 CTA、表单等阶段；本页只读，处理动作仍回到客户线索页。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
           <FunnelSummary label="来源阶段" value={rows.length} detail="按 source 阶段聚合" />
-          <FunnelSummary label="产品阶段" value={productStages} detail="产品卡片 / 详情表单 / 详情 CTA" />
+          <FunnelSummary label="产品/案例阶段" value={`${productStages}/${caseStages}`} detail="产品阶段 / 案例阶段" />
           <FunnelSummary label="活跃阶段线索" value={active} detail={`全部阶段线索 ${formatNumber(total)} 条`} warn={active > 0} />
           <FunnelSummary label="Top 阶段" value={topStage ? topStage.label : '-'} detail={topStage ? `${formatNumber(topStage.total)} 条线索` : '暂无阶段样本'} />
         </div>

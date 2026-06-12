@@ -48,6 +48,9 @@ export const LEAD_SOURCE_STAGE_OPTIONS = [
   { value: 'product:inquiry_form', label: '产品详情表单' },
   { value: 'product:cta_click', label: '产品详情 CTA' },
   { value: 'product:unknown', label: '产品详情询盘' },
+  { value: 'case:cta_click', label: '案例详情 CTA' },
+  { value: 'case:inquiry_form', label: '案例咨询表单' },
+  { value: 'case:unknown', label: '案例详情咨询' },
 ] as const
 
 const TYPE_LABELS = Object.fromEntries(
@@ -96,10 +99,33 @@ const PRODUCT_SOURCE_STAGE_PATTERNS: Record<string, string[]> = {
   cta_click: ['product_detail:%:cta_click'],
 }
 
+const CASE_SOURCE_ENTRY_LABELS: Record<string, string> = {
+  inquiry_form: '案例咨询表单',
+  cta_click: '案例详情 CTA',
+}
+
+const CASE_SOURCE_STAGE_LABELS: Record<string, string> = {
+  inquiry_form: '案例咨询表单',
+  cta_click: '案例详情 CTA',
+}
+
+const CASE_SOURCE_STAGE_PATTERNS: Record<string, string[]> = {
+  inquiry_form: ['case_detail:%:inquiry_form'],
+  cta_click: ['case_detail:%:cta_click'],
+}
+
 function productLeadSourceLabel(raw: string) {
   const id = part(raw, 1)
   const stage = part(raw, 2)
   const stageLabel = PRODUCT_SOURCE_ENTRY_LABELS[stage] ?? '产品详情询盘'
+
+  return id ? `${stageLabel}: ${id}` : stageLabel
+}
+
+function caseLeadSourceLabel(raw: string) {
+  const id = part(raw, 1)
+  const stage = part(raw, 2)
+  const stageLabel = CASE_SOURCE_ENTRY_LABELS[stage] ?? '案例详情咨询'
 
   return id ? `${stageLabel}: ${id}` : stageLabel
 }
@@ -135,6 +161,20 @@ export function describeLeadSourceStage(source: string | null | undefined): Lead
       type: safeType,
       typeLabel,
       label: PRODUCT_SOURCE_STAGE_LABELS[rawStage] ?? '产品详情询盘',
+      rawStage,
+      href: leadSourceTypeHref(safeType, sourceStage),
+    }
+  }
+
+  if (safeType === 'case') {
+    const rawStage = part(raw, 2) || 'unknown'
+    const knownStage = CASE_SOURCE_STAGE_LABELS[rawStage] ? rawStage : 'unknown'
+    const sourceStage = `case:${knownStage}`
+    return {
+      key: sourceStage,
+      type: safeType,
+      typeLabel,
+      label: CASE_SOURCE_STAGE_LABELS[rawStage] ?? '案例详情咨询',
       rawStage,
       href: leadSourceTypeHref(safeType, sourceStage),
     }
@@ -193,7 +233,7 @@ export function describeLeadSource(source: string | null | undefined): LeadSourc
       return {
         type,
         typeLabel,
-        label: id ? `案例详情询盘: ${id}` : '案例详情询盘',
+        label: caseLeadSourceLabel(raw),
         href: id ? `/cases/${id}` : '/cases',
         raw,
       }
@@ -260,16 +300,27 @@ export function getLeadSourceWherePatterns(type: string | null | undefined) {
 export function getLeadSourceStageWherePatterns(stage: string | null | undefined) {
   if (!stage || stage === 'all') return []
   if (stage === 'product:unknown') return ['product_detail:%']
+  if (stage === 'case:unknown') return ['case_detail:%']
 
   const rawStage = stage.startsWith('product:') ? stage.split(':')[1] : ''
-  return PRODUCT_SOURCE_STAGE_PATTERNS[rawStage] ?? []
+  if (rawStage) return PRODUCT_SOURCE_STAGE_PATTERNS[rawStage] ?? []
+
+  const rawCaseStage = stage.startsWith('case:') ? stage.split(':')[1] : ''
+  return CASE_SOURCE_STAGE_PATTERNS[rawCaseStage] ?? []
 }
 
 export function getLeadSourceStageExcludeWherePatterns(stage: string | null | undefined) {
-  if (stage !== 'product:unknown') return []
-  return Object.values(PRODUCT_SOURCE_STAGE_PATTERNS).flat()
+  if (stage === 'product:unknown') return Object.values(PRODUCT_SOURCE_STAGE_PATTERNS).flat()
+  if (stage === 'case:unknown') return Object.values(CASE_SOURCE_STAGE_PATTERNS).flat()
+  return []
 }
 
 export function isKnownLeadSourceType(type: string | null | undefined): type is LeadSourceType {
   return LEAD_SOURCE_TYPE_OPTIONS.some((item) => item.value === type)
+}
+
+export function getLeadSourceStageType(stage: string | null | undefined): Extract<LeadSourceType, 'product' | 'case'> | null {
+  if (stage?.startsWith('product:')) return 'product'
+  if (stage?.startsWith('case:')) return 'case'
+  return null
 }
