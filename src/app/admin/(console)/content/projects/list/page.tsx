@@ -68,6 +68,15 @@ type ProjectSummary = {
   missingCoordinates: number
 }
 
+type ProjectIssueSummary = {
+  media: number
+  story: number
+  facts: number
+  tags: number
+  coordinates: number
+  pendingGlobal: number
+}
+
 type ProjectListRow = {
   id: string
   name_zh: string
@@ -108,6 +117,7 @@ type StatCard = {
 
 type ProjectSignalBucket = {
   key: string
+  summaryKey: keyof ProjectIssueSummary
   label: string
   detail: string
   href: (filters: FilterState) => string
@@ -137,6 +147,15 @@ const EMPTY_SUMMARY: ProjectSummary = {
   missingCoordinates: 0,
 }
 
+const EMPTY_ISSUE_SUMMARY: ProjectIssueSummary = {
+  media: 0,
+  story: 0,
+  facts: 0,
+  tags: 0,
+  coordinates: 0,
+  pendingGlobal: 0,
+}
+
 const PROJECT_INCOMPLETE_SQL = `(
   NULLIF(BTRIM(COALESCE(cover_image_url, '')), '') IS NULL
   OR jsonb_array_length(COALESCE(images, '[]'::jsonb)) = 0
@@ -156,6 +175,7 @@ const PROJECT_INCOMPLETE_SQL = `(
 const PROJECT_SIGNAL_BUCKETS: ProjectSignalBucket[] = [
   {
     key: 'media',
+    summaryKey: 'media',
     label: '素材缺口',
     detail: '封面或项目图库缺失',
     href: (filters) => createHref(filters, { status: '', view: 'incomplete' }),
@@ -163,6 +183,7 @@ const PROJECT_SIGNAL_BUCKETS: ProjectSignalBucket[] = [
   },
   {
     key: 'story',
+    summaryKey: 'story',
     label: '叙事缺口',
     detail: '中英文简介缺失或详情叙事偏短',
     href: (filters) => createHref(filters, { status: '', view: 'incomplete' }),
@@ -170,6 +191,7 @@ const PROJECT_SIGNAL_BUCKETS: ProjectSignalBucket[] = [
   },
   {
     key: 'facts',
+    summaryKey: 'facts',
     label: '项目事实缺口',
     detail: '类型、面积、舱数或产品型号缺失',
     href: (filters) => createHref(filters, { status: '', view: 'incomplete' }),
@@ -177,6 +199,7 @@ const PROJECT_SIGNAL_BUCKETS: ProjectSignalBucket[] = [
   },
   {
     key: 'tags',
+    summaryKey: 'tags',
     label: '标签缺口',
     detail: '中英文标签缺失',
     href: (filters) => createHref(filters, { status: '', view: 'incomplete' }),
@@ -184,6 +207,7 @@ const PROJECT_SIGNAL_BUCKETS: ProjectSignalBucket[] = [
   },
   {
     key: 'coordinates',
+    summaryKey: 'coordinates',
     label: '坐标缺口',
     detail: '缺少 Global 点位坐标',
     href: (filters) => createHref(filters, { status: '', view: 'missing-coordinates' }),
@@ -191,6 +215,7 @@ const PROJECT_SIGNAL_BUCKETS: ProjectSignalBucket[] = [
   },
   {
     key: 'pending-global',
+    summaryKey: 'pendingGlobal',
     label: '有坐标待发布',
     detail: '已有坐标但仍是草稿',
     href: (filters) => createHref(filters, { status: '', view: 'unpublished-with-coordinates' }),
@@ -483,6 +508,59 @@ async function getProjectSummary(): Promise<ProjectSummary> {
   }
 }
 
+async function getProjectIssueSummary(): Promise<ProjectIssueSummary> {
+  if (!(await tableExists('public.project_cases'))) return EMPTY_ISSUE_SUMMARY
+
+  const res = await pool.query<{
+    media: string
+    story: string
+    facts: string
+    tags: string
+    coordinates: string
+    pendingGlobal: string
+  }>(
+    `SELECT
+       COUNT(*) FILTER (
+         WHERE NULLIF(BTRIM(COALESCE(cover_image_url, '')), '') IS NULL
+            OR jsonb_array_length(COALESCE(images, '[]'::jsonb)) = 0
+       )::text AS media,
+       COUNT(*) FILTER (
+         WHERE NULLIF(BTRIM(COALESCE(description_zh, '')), '') IS NULL
+            OR NULLIF(BTRIM(COALESCE(description_en, '')), '') IS NULL
+            OR LENGTH(BTRIM(COALESCE(description_zh, ''))) < ${MIN_PROJECT_CASE_DESCRIPTION_CHARS}
+            OR LENGTH(BTRIM(COALESCE(description_en, ''))) < ${MIN_PROJECT_CASE_DESCRIPTION_CHARS}
+       )::text AS story,
+       COUNT(*) FILTER (
+         WHERE NULLIF(BTRIM(COALESCE(project_type_zh, '')), '') IS NULL
+            OR NULLIF(BTRIM(COALESCE(project_type_en, '')), '') IS NULL
+            OR NULLIF(BTRIM(COALESCE(area_display, '')), '') IS NULL
+            OR NULLIF(BTRIM(COALESCE(units_display, '')), '') IS NULL
+            OR NULLIF(BTRIM(COALESCE(products, '')), '') IS NULL
+       )::text AS facts,
+       COUNT(*) FILTER (
+         WHERE jsonb_array_length(COALESCE(tags_zh, '[]'::jsonb)) = 0
+            OR jsonb_array_length(COALESCE(tags_en, '[]'::jsonb)) = 0
+       )::text AS tags,
+       COUNT(*) FILTER (
+         WHERE latitude IS NULL OR longitude IS NULL
+       )::text AS coordinates,
+       COUNT(*) FILTER (
+         WHERE status <> 'published' AND latitude IS NOT NULL AND longitude IS NOT NULL
+       )::text AS "pendingGlobal"
+     FROM project_cases
+     WHERE deleted_at IS NULL`,
+  )
+  const row = res.rows[0]
+  return {
+    media: parseCount(row?.media),
+    story: parseCount(row?.story),
+    facts: parseCount(row?.facts),
+    tags: parseCount(row?.tags),
+    coordinates: parseCount(row?.coordinates),
+    pendingGlobal: parseCount(row?.pendingGlobal),
+  }
+}
+
 async function getProjects(filters: FilterState): Promise<ProjectListResult> {
   if (!(await tableExists('public.project_cases'))) return { rows: [], total: 0 }
 
@@ -765,18 +843,21 @@ function ProjectControlStat({ label, value, detail }: { label: string; value: st
 
 function ProjectOperationsMatrix({
   summary,
+  issueSummary,
   rows,
   filters,
 }: {
   summary: ProjectSummary
+  issueSummary: ProjectIssueSummary
   rows: ProjectListRow[]
   filters: FilterState
 }) {
   const signalStats = PROJECT_SIGNAL_BUCKETS.map((bucket) => {
-    const count = rows.filter((project) => bucket.matches(project, getProjectIssues(project))).length
+    const pageCount = rows.filter((project) => bucket.matches(project, getProjectIssues(project))).length
     return {
       ...bucket,
-      count,
+      count: issueSummary[bucket.summaryKey],
+      pageCount,
       href: bucket.href(filters),
     }
   })
@@ -823,6 +904,7 @@ function ProjectOperationsMatrix({
                 <span className="min-w-0">
                   <span className="block text-sm font-bold text-[#1E2C31]">{bucket.label}</span>
                   <span className="mt-1 block text-xs leading-5 text-[#61767D]">{bucket.detail}</span>
+                  <span className="mt-1 block text-[11px] leading-5 text-[#8A9EA4]">本页命中 {formatNumber(bucket.pageCount)}</span>
                 </span>
                 <span className={`rounded-md px-2 py-1 text-xs font-bold ${
                   bucket.count > 0 ? 'bg-[#FFF2E7] text-[#E36F2C]' : 'bg-emerald-50 text-emerald-700'
@@ -1245,8 +1327,9 @@ export default async function AdminContentProjectsListPage({ searchParams }: Pag
   }
 
   const filters = parseFilters(await searchParams)
-  const [summary, list] = await Promise.all([
+  const [summary, issueSummary, list] = await Promise.all([
     safeLoad('project summary', getProjectSummary, EMPTY_SUMMARY),
+    safeLoad('project issue summary', getProjectIssueSummary, EMPTY_ISSUE_SUMMARY),
     safeLoad('project list', () => getProjects(filters), { rows: [], total: 0 }),
   ])
   const adminRole: AdminRole = role
@@ -1277,7 +1360,7 @@ export default async function AdminContentProjectsListPage({ searchParams }: Pag
           total={list.total}
           rowsCount={list.rows.length}
         />
-        <ProjectOperationsMatrix summary={summary} rows={list.rows} filters={filters} />
+        <ProjectOperationsMatrix summary={summary} issueSummary={issueSummary} rows={list.rows} filters={filters} />
         <FilterPanel filters={filters} />
         <ProjectList rows={list.rows} total={list.total} filters={filters} />
       </div>
