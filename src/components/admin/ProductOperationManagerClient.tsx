@@ -89,7 +89,7 @@ const COPY: Record<ProductOperationKind, {
   filters: {
     title: '当前筛选组',
     createTitle: '新增筛选组',
-    description: '对照 300 的筛选管理，把属性模板组合成运营筛选组，为后续前台筛选打底。',
+    description: '对照 300.cn 后台的筛选管理，把属性模板组合成运营筛选组，为后续前台筛选打底。',
     empty: '暂无筛选组',
     relationTitle: '包含属性模板',
     relationHint: '选择后，该筛选组会引用这些属性模板。',
