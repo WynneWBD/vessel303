@@ -1315,7 +1315,7 @@ function CaseInquiryTrafficPanel({
       label: '真实线索',
       value: formatNumber(metric.leads),
       detail: `案例路径访问转化率 ${formatAnalyticsPercent(metric.conversionRate)}。`,
-      href: '/admin/site/conversion',
+      href: '/admin/status/leads#case-lead-path-bridge',
       tone: metric.leads > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
     },
     {
@@ -1341,6 +1341,37 @@ function CaseInquiryTrafficPanel({
         : metric.leads > 0
           ? '案例路径已有线索样本，继续观察来源、表单和内容承接质量。'
           : '案例路径暂无访问样本，先等待事件或从前台入口复验。'
+  const closureLinks = [
+    {
+      label: '线索承接面板',
+      detail: '看 B223 案例路径与线索承接',
+      href: '/admin/status/leads#case-lead-path-bridge',
+      tone: metric.leads > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
+    },
+    {
+      label: '案例线索队列',
+      detail: '回到 B222 source_type=case',
+      href: '/admin/customers/leads?source_type=case',
+      tone: metric.leads > 0 ? 'green' : 'blue',
+    },
+    {
+      label: '案例表单线索',
+      detail: '只看 case:inquiry_form 阶段',
+      href: '/admin/customers/leads?source_type=case&source_stage=case%3Ainquiry_form',
+      tone: metric.formSubmits > 0 ? 'green' : 'gray',
+    },
+    {
+      label: '发布转化弱',
+      detail: `当前弱案例 ${formatNumber(health.weak)}`,
+      href: '/admin/content/projects/list?view=case-conversion-weak',
+      tone: health.weak > 0 ? 'orange' : 'green',
+    },
+  ] satisfies Array<{
+    label: string
+    detail: string
+    href: string
+    tone: 'blue' | 'green' | 'orange' | 'gray'
+  }>
 
   return (
     <section id="case-inquiry-path" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
@@ -1372,6 +1403,24 @@ function CaseInquiryTrafficPanel({
 
       <div className="border-t border-[#E6EEEE] px-5 py-4 text-sm font-semibold text-[#1E2C31]">
         运营判断：{decision}
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:grid-cols-4">
+        {closureLinks.map((item) => (
+          <Link
+            key={item.label}
+            href={item.href}
+            className="group rounded-md border border-[#D8E7E8] bg-white px-3 py-3 transition hover:border-[#1889B6] hover:bg-[#F7FAFA]"
+          >
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${trafficMatrixToneClass(item.tone)}`}>
+              {item.label}
+            </span>
+            <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+            <span className="mt-2 inline-flex text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
+              进入闭环
+            </span>
+          </Link>
+        ))}
       </div>
     </section>
   )
