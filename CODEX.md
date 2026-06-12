@@ -8,9 +8,9 @@
 
 - 官网：`https://www.vessel303.com`
 - 代码仓库：`C:\Users\Wynne\Desktop\vessel303\repo-git`
-- 当前循环：B196 已完成并上线；下一轮从 B197 继续按 00-11 工作流推进。
-- 最近功能批次：B196 / `db00c01 feat(admin): add conversion handoff strip`
-- 最近生产验证 deployment：`dpl_DkYoyB2eka2keSkSkdV3SHQFRhtv`
+- 当前循环：B197 已完成并上线；下一轮从 B198 继续按 00-11 工作流推进。
+- 最近功能批次：B197 / `a689c68 feat(admin): add lead operations handoff`
+- 最近生产验证 deployment：`dpl_AFeeMe4fnFmbARAKpLbXNLTjVQD4`
 - 当前精确状态以 `00_项目总控入口/vessel303_当前总控handoff.md` 和 `vercel inspect https://www.vessel303.com` 为准。
 - 当前目标：前台对齐 `en.303vessel.cn` 的生产官网能力，后台对齐 `300.cn 后台` 的运营效率和数据分析心智。
 
