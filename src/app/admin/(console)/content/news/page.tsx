@@ -15,6 +15,7 @@ import {
 } from './_news-console'
 import {
   Archive,
+  ArrowRight,
   CalendarClock,
   CheckCircle2,
   CircleDashed,
@@ -39,6 +40,16 @@ type StatusEntry = {
   href: string
   Icon: LucideIcon
   tone: 'blue' | 'green' | 'orange' | 'neutral'
+}
+
+type OperationsHubCard = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  cta: string
+  tone: 'blue' | 'green' | 'orange' | 'neutral'
+  Icon: LucideIcon
 }
 
 function getStatusEntries(stats: NewsStats): StatusEntry[] {
@@ -94,7 +105,7 @@ function Hero({ stats }: { stats: NewsStats }) {
           <p className="text-sm font-semibold text-[#1889B6]">新闻资讯</p>
           <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">新闻运营中心</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-            先看发布状态和待补内容，再进入列表处理新建、编辑、预览和发布。
+            先看发布状态、待补内容、分类治理和回收安全，再进入列表处理新建、编辑、预览和发布。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -145,13 +156,121 @@ function HeroMetric({
 function StatusGrid({ stats }: { stats: NewsStats }) {
   return (
     <section className="space-y-4">
-      <SectionTitle title="发布状态" detail="按 300 后台的列表思路，把状态、待补和入口集中在新闻域内。" />
+      <SectionTitle title="发布状态" detail="按 300.cn 后台的列表思路，把状态、待补和入口集中在新闻域内。" />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
         {getStatusEntries(stats).map((entry) => (
           <StatusCard key={entry.title} entry={entry} />
         ))}
       </div>
     </section>
+  )
+}
+
+function OperationsHub({ stats }: { stats: NewsStats }) {
+  const cards: OperationsHubCard[] = [
+    {
+      label: '列表矩阵',
+      value: formatNumber(stats.total),
+      detail: `已发布 ${formatNumber(stats.published)} 条，草稿 ${formatNumber(stats.draft)} 条；进入新闻列表处理筛选、批量转分类和单篇编辑。`,
+      href: '/admin/content/news/list',
+      cta: '打开新闻列表',
+      tone: 'blue',
+      Icon: ListChecks,
+    },
+    {
+      label: '分类治理',
+      value: '已接入',
+      detail: '分类管理已接回新闻列表筛选、批量转分类、待补内容和分类管理器。',
+      href: '/admin/content/news/categories#news-category-governance',
+      cta: '查看分类闭环',
+      tone: 'green',
+      Icon: Tags,
+    },
+    {
+      label: '回收安全',
+      value: formatNumber(stats.deleted),
+      detail: '回收站只恢复为草稿，不开放永久删除；恢复后继续回到内容复核和发布检查。',
+      href: '/admin/content/news/recycle#news-recycle-governance',
+      cta: '查看回收站',
+      tone: stats.deleted > 0 ? 'orange' : 'green',
+      Icon: Archive,
+    },
+    {
+      label: '定时复核',
+      value: formatNumber(stats.scheduled),
+      detail: '定时字段用于记录计划发布时间；自动执行、失败重试和批量定时仍单独排期。',
+      href: '/admin/content/news/list?schedule=scheduled',
+      cta: '查看定时草稿',
+      tone: stats.scheduled > 0 ? 'blue' : 'neutral',
+      Icon: CalendarClock,
+    },
+    {
+      label: 'SEO 与待补',
+      value: formatNumber(stats.missingSeo),
+      detail: `当前内容待补 ${formatNumber(stats.incomplete)} 条，SEO 字段待补 ${formatNumber(stats.missingSeo)} 条。`,
+      href: '#todo',
+      cta: '进入待补内容',
+      tone: stats.incomplete > 0 || stats.missingSeo > 0 ? 'orange' : 'green',
+      Icon: SearchCheck,
+    },
+  ]
+
+  return (
+    <section id="news-operations-hub" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">运营总览</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻运营总览闭环</h2>
+          <p className="mt-1 text-sm leading-6 text-[#61767D]">
+            把新闻列表矩阵、分类治理、回收安全、定时复核和 SEO 待补集中到一屏；本区只做只读统计和入口串联，不新增保存、发布或删除能力。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <PrimaryAction href="/admin/content/news/list" Icon={ListChecks} label="新闻列表" primary />
+          <PrimaryAction href="/admin/content/news/categories#news-category-governance" Icon={Tags} label="分类治理" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-2 xl:grid-cols-5">
+        {cards.map((card) => (
+          <OperationsHubLink key={card.label} card={card} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function OperationsHubLink({ card }: { card: OperationsHubCard }) {
+  const Icon = card.Icon
+  const toneClass =
+    card.tone === 'green'
+      ? 'text-emerald-700'
+      : card.tone === 'orange'
+        ? 'text-[#E36F2C]'
+        : card.tone === 'neutral'
+          ? 'text-[#61767D]'
+          : 'text-[#1889B6]'
+
+  return (
+    <Link
+      href={card.href}
+      className="group min-h-[156px] border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-white md:odd:border-r xl:border-b-0 xl:border-r xl:last:border-r-0"
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-xs font-bold tracking-[0.08em] text-[#8A9EA4]">{card.label}</span>
+          <span className={`mt-2 block text-2xl font-bold ${toneClass}`}>{card.value}</span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block min-h-12 text-xs leading-5 text-[#61767D]">{card.detail}</span>
+      <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
+        {card.cta}
+        <ArrowRight size={13} />
+      </span>
+    </Link>
   )
 }
 
@@ -215,28 +334,28 @@ function OperationRoadmap({ stats }: { stats: NewsStats }) {
   const plans: OperationPlan[] = [
     {
       title: '分类管理',
-      status: 'B3-5',
-      detail: '300 列表有“所属分类”和“分类管理”，当前新闻表已接入分类字段。',
+      status: '已接入',
+      detail: '300.cn 后台列表有“所属分类”和“分类管理”，当前新闻表已接入分类字段。',
       evidence: '已新增 news_categories 和 news.category_id，表单保存与列表筛选已接入。',
-      next: '查看分类管理页，确认分类数量、分类状态和新闻引用数量。',
-      href: '/admin/content/news/categories',
+      next: '查看分类治理面板，确认分类覆盖、隐藏状态、未分类缺口和批量转分类入口。',
+      href: '/admin/content/news/categories#news-category-governance',
       Icon: Tags,
       tone: 'blue',
     },
     {
       title: '回收站',
-      status: `B3-8 · ${formatNumber(stats.deleted)} 条`,
+      status: `${formatNumber(stats.deleted)} 条`,
       detail: '现有删除是软删除，前台和列表已经排除 deleted_at 不为空的新闻。',
       evidence: '已提供回收站列表和恢复为草稿能力，恢复不会直接重新发布到前台。',
-      next: '进入回收站检查已删除新闻；永久删除、批量恢复和权限分级后续单独排期。',
-      href: '/admin/content/news/recycle',
+      next: '进入回收治理面板检查已删除新闻；永久删除、批量恢复和权限分级后续单独排期。',
+      href: '/admin/content/news/recycle#news-recycle-governance',
       Icon: Archive,
       tone: 'green',
     },
     {
       title: '批量操作',
-      status: 'B3-9',
-      detail: '300 底部有发布、定时任务、置顶、状态、转移、删除、翻译等批量按钮。',
+      status: '低风险',
+      detail: '300.cn 后台底部有发布、定时任务、置顶、状态、转移、删除、翻译等批量按钮。',
       evidence: '新闻列表已开放低风险的批量转分类；发布、删除、定时任务和状态批改仍保持禁用。',
       next: '进入新闻列表选择内容后转移分类；高风险批量写入等权限分级后再开放。',
       href: '/admin/content/news/list',
@@ -245,7 +364,7 @@ function OperationRoadmap({ stats }: { stats: NewsStats }) {
     },
     {
       title: '定时发布',
-      status: `B3-10 · ${formatNumber(stats.scheduled)} 条`,
+      status: `${formatNumber(stats.scheduled)} 条`,
       detail: '已新增 scheduled_at 字段和后台筛选入口，用于记录单篇新闻的计划发布时间。',
       evidence: '表单可保存 / 清除计划发布时间；列表可筛选定时发布草稿，前台仍只展示已发布新闻。',
       next: '自动执行器、失败重试和批量定时任务后续单独排期，避免运营误以为排期后已自动上线。',
@@ -255,8 +374,8 @@ function OperationRoadmap({ stats }: { stats: NewsStats }) {
     },
     {
       title: 'SEO 字段治理',
-      status: `B3-11 · ${formatNumber(stats.missingSeo)} 条待补`,
-      detail: '300 后台有 SEO 信息维护入口，当前新闻详情页需要能单独控制搜索标题和描述。',
+      status: `${formatNumber(stats.missingSeo)} 条待补`,
+      detail: '300.cn 后台有 SEO 信息维护入口，当前新闻详情页需要能单独控制搜索标题和描述。',
       evidence: '已新增单篇新闻 SEO 标题和 SEO 描述字段，前台详情页 metadata 会优先读取 SEO 字段。',
       next: '进入新闻编辑页，在“SEO 字段”区域维护搜索标题和描述；关键词和批量 SEO 后续单独排期。',
       href: '/admin/content/news/list',
@@ -268,8 +387,8 @@ function OperationRoadmap({ stats }: { stats: NewsStats }) {
   return (
     <section id="b3-3-plan" className="scroll-mt-24 space-y-4">
       <SectionTitle
-        title="B3-3 运营能力规划"
-        detail="按 300 新闻后台对照分类、回收站、批量操作、定时发布和 SEO；B3-11 先落单篇 SEO 标题与描述。"
+        title="新闻运营能力规划"
+        detail="按 300.cn 后台新闻内容工作流对照分类、回收站、批量操作、定时发布和 SEO；当前先保持低风险、可回滚、可验证。"
       />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
         {plans.map((plan) => (
@@ -335,7 +454,7 @@ function OperationBoundary() {
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">本轮已收口</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
-            新闻 2.0 主路径、状态筛选、完整度提醒、前台预览和发布入口。
+            新闻运营总览、状态筛选、待补提醒、分类治理、回收安全、定时复核和 SEO 治理入口。
           </p>
         </div>
         <div>
@@ -374,6 +493,7 @@ export default async function AdminContentNewsPage() {
       activeItem="news"
     >
       <Hero stats={stats} />
+      <OperationsHub stats={stats} />
       <StatusGrid stats={stats} />
       <TodoPanel stats={stats} />
       <OperationRoadmap stats={stats} />

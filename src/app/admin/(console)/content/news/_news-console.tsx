@@ -178,7 +178,7 @@ export function getNewsSideNavGroups(stats: NewsStats): AdminSideNavGroup[] {
       ],
     },
     {
-      title: 'B3-3 规划',
+      title: '运营规划',
       items: [
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/news/categories', Icon: Tags },
         { key: 'recycle', label: '新闻回收站', href: '/admin/content/news/recycle', badge: stats.deleted, Icon: Archive },
@@ -270,7 +270,7 @@ export const NEWS_EDIT_SECTIONS: Array<{
   {
     key: 'schedule',
     title: '定时发布',
-    detail: '计划发布时间，B3-10 先保存排期字段',
+    detail: '计划发布时间，先保存排期字段',
     href: '#schedule',
     Icon: Clock3,
   },
