@@ -42,9 +42,21 @@ export const LEAD_SOURCE_TYPE_OPTIONS: Array<{ value: LeadSourceType; label: str
   { value: 'other', label: '其他来源' },
 ]
 
+export const LEAD_SOURCE_STAGE_OPTIONS = [
+  { value: 'all', label: '阶段:全部' },
+  { value: 'product:catalog_card_cta', label: '产品卡片 CTA' },
+  { value: 'product:inquiry_form', label: '产品详情表单' },
+  { value: 'product:cta_click', label: '产品详情 CTA' },
+  { value: 'product:unknown', label: '产品详情询盘' },
+] as const
+
 const TYPE_LABELS = Object.fromEntries(
   LEAD_SOURCE_TYPE_OPTIONS.map((item) => [item.value, item.label.replace('来源:', '')]),
 ) as Record<LeadSourceType, string>
+
+const STAGE_LABELS = Object.fromEntries(
+  LEAD_SOURCE_STAGE_OPTIONS.map((item) => [item.value, item.label.replace('阶段:', '')]),
+) as Record<string, string>
 
 const SOURCE_PATTERNS: Record<Exclude<LeadSourceType, 'all' | 'other'>, string[]> = {
   product: ['product_detail:%'],
@@ -78,6 +90,12 @@ const PRODUCT_SOURCE_STAGE_LABELS: Record<string, string> = {
   cta_click: '产品详情 CTA',
 }
 
+const PRODUCT_SOURCE_STAGE_PATTERNS: Record<string, string[]> = {
+  catalog_card_cta: ['product_detail:%:catalog_card_cta'],
+  inquiry_form: ['product_detail:%:inquiry_form'],
+  cta_click: ['product_detail:%:cta_click'],
+}
+
 function productLeadSourceLabel(raw: string) {
   const id = part(raw, 1)
   const stage = part(raw, 2)
@@ -86,10 +104,20 @@ function productLeadSourceLabel(raw: string) {
   return id ? `${stageLabel}: ${id}` : stageLabel
 }
 
-function leadSourceTypeHref(type: Exclude<LeadSourceType, 'all'>) {
-  return type === 'other'
-    ? '/admin/customers/leads?source_type=other'
-    : `/admin/customers/leads?source_type=${type}`
+function adminLeadsHref(params: Record<string, string | null | undefined>) {
+  const query = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value) query.set(key, value)
+  }
+  const suffix = query.toString()
+  return suffix ? `/admin/customers/leads?${suffix}` : '/admin/customers/leads'
+}
+
+function leadSourceTypeHref(type: Exclude<LeadSourceType, 'all'>, sourceStage?: string) {
+  return adminLeadsHref({
+    source_type: type,
+    source_stage: sourceStage,
+  })
 }
 
 export function describeLeadSourceStage(source: string | null | undefined): LeadSourceStageDescriptor {
@@ -101,13 +129,14 @@ export function describeLeadSourceStage(source: string | null | undefined): Lead
   if (safeType === 'product') {
     const rawStage = part(raw, 2) || 'unknown'
     const knownStage = PRODUCT_SOURCE_STAGE_LABELS[rawStage] ? rawStage : 'unknown'
+    const sourceStage = `product:${knownStage}`
     return {
-      key: `product:${knownStage}`,
+      key: sourceStage,
       type: safeType,
       typeLabel,
       label: PRODUCT_SOURCE_STAGE_LABELS[rawStage] ?? '产品详情询盘',
       rawStage,
-      href: leadSourceTypeHref(safeType),
+      href: leadSourceTypeHref(safeType, sourceStage),
     }
   }
 
@@ -137,6 +166,10 @@ export function getLeadSourceType(source: string | null | undefined): LeadSource
 
 export function getLeadSourceTypeLabel(type: LeadSourceType) {
   return TYPE_LABELS[type] ?? '其他来源'
+}
+
+export function getLeadSourceStageLabel(stage: string | null | undefined) {
+  return STAGE_LABELS[String(stage ?? 'all')] ?? String(stage ?? '未知阶段')
 }
 
 export function describeLeadSource(source: string | null | undefined): LeadSourceDescriptor {
@@ -222,6 +255,19 @@ export function getLeadSourceWherePatterns(type: string | null | undefined) {
     return Object.values(SOURCE_PATTERNS).flat()
   }
   return SOURCE_PATTERNS[type as keyof typeof SOURCE_PATTERNS] ?? []
+}
+
+export function getLeadSourceStageWherePatterns(stage: string | null | undefined) {
+  if (!stage || stage === 'all') return []
+  if (stage === 'product:unknown') return ['product_detail:%']
+
+  const rawStage = stage.startsWith('product:') ? stage.split(':')[1] : ''
+  return PRODUCT_SOURCE_STAGE_PATTERNS[rawStage] ?? []
+}
+
+export function getLeadSourceStageExcludeWherePatterns(stage: string | null | undefined) {
+  if (stage !== 'product:unknown') return []
+  return Object.values(PRODUCT_SOURCE_STAGE_PATTERNS).flat()
 }
 
 export function isKnownLeadSourceType(type: string | null | undefined): type is LeadSourceType {

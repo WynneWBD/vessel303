@@ -14,6 +14,7 @@ import {
   type LeadSourceStatusSummary,
   type LeadStatus,
 } from '@/lib/leads-db'
+import { getLeadSourceStageLabel } from '@/lib/lead-source'
 import {
   ArrowRight,
   BadgeCheck,
@@ -43,6 +44,7 @@ type LeadFilterState = {
   status: string
   inquiry_type: string
   source_type: string
+  source_stage: string
   attention: string
   country: string
   search: string
@@ -186,6 +188,7 @@ function createLeadsHref(filters: LeadFilterState, patch: Partial<LeadFilterStat
   if (next.status && next.status !== 'all') params.set('status', next.status)
   if (next.inquiry_type && next.inquiry_type !== 'all') params.set('inquiry_type', next.inquiry_type)
   if (next.source_type && next.source_type !== 'all') params.set('source_type', next.source_type)
+  if (next.source_stage && next.source_stage !== 'all') params.set('source_stage', next.source_stage)
   if (next.attention && next.attention !== 'all') params.set('attention', next.attention)
   if (next.country.trim()) params.set('country', next.country.trim())
   if (next.search.trim()) params.set('search', next.search.trim())
@@ -205,7 +208,10 @@ function buildActiveFilterChips(filters: LeadFilterState): ActiveFilterChip[] {
     chips.push({ label: '身份', value: inquiryLabel(filters.inquiry_type), href: createLeadsHref(filters, { inquiry_type: 'all', page: 1 }) })
   }
   if (filters.source_type !== 'all') {
-    chips.push({ label: '来源', value: sourceTypeLabel(filters.source_type), href: createLeadsHref(filters, { source_type: 'all', page: 1 }) })
+    chips.push({ label: '来源', value: sourceTypeLabel(filters.source_type), href: createLeadsHref(filters, { source_type: 'all', source_stage: 'all', page: 1 }) })
+  }
+  if (filters.source_stage !== 'all') {
+    chips.push({ label: '阶段', value: getLeadSourceStageLabel(filters.source_stage), href: createLeadsHref(filters, { source_stage: 'all', page: 1 }) })
   }
   if (filters.attention !== 'all') {
     chips.push({ label: '重点', value: attentionLabel(filters.attention), href: createLeadsHref(filters, { attention: 'all', page: 1 }) })
@@ -257,6 +263,7 @@ function LeadsQueueConsole({
     status: 'all',
     inquiry_type: 'all',
     source_type: 'all',
+    source_stage: 'all',
     attention: 'all',
     country: '',
     search: '',
@@ -539,6 +546,7 @@ export default async function AdminCustomerLeadsPage({
     status: getStr('status') ?? 'all',
     inquiry_type: getStr('inquiry_type') ?? 'all',
     source_type: getStr('source_type') ?? 'all',
+    source_stage: getStr('source_stage') ?? 'all',
     attention: getStr('attention') ?? 'all',
     country: getStr('country') ?? '',
     search: getStr('search') ?? '',
@@ -557,6 +565,7 @@ export default async function AdminCustomerLeadsPage({
           status: filters.status,
           inquiry_type: filters.inquiry_type,
           source_type: filters.source_type,
+          source_stage: filters.source_stage,
           attention: filters.attention,
           country: filters.country || undefined,
           search: filters.search || undefined,

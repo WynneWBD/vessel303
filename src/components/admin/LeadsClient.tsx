@@ -55,12 +55,13 @@ import type {
   LeadSourceStatusSummary,
   LeadStatus,
 } from '@/lib/leads-db'
-import { describeLeadSource, LEAD_SOURCE_TYPE_OPTIONS } from '@/lib/lead-source'
+import { describeLeadSource, LEAD_SOURCE_STAGE_OPTIONS, LEAD_SOURCE_TYPE_OPTIONS } from '@/lib/lead-source'
 
 type Filters = {
   status: string
   inquiry_type: string
   source_type: string
+  source_stage: string
   attention: string
   country: string
   search: string
@@ -107,6 +108,10 @@ const ATTENTION_LABEL: Record<string, string> = Object.fromEntries(
 
 const SOURCE_TYPE_LABEL: Record<string, string> = Object.fromEntries(
   LEAD_SOURCE_TYPE_OPTIONS.map((o) => [o.value, o.label.replace('来源:', '')]),
+)
+
+const SOURCE_STAGE_LABEL: Record<string, string> = Object.fromEntries(
+  LEAD_SOURCE_STAGE_OPTIONS.map((o) => [o.value, o.label.replace('阶段:', '')]),
 )
 
 type LeadPriorityTone = 'critical' | 'warning' | 'active' | 'success' | 'muted'
@@ -371,6 +376,7 @@ export default function LeadsClient({
     filters.status !== 'all' ||
     filters.inquiry_type !== 'all' ||
     filters.source_type !== 'all' ||
+    filters.source_stage !== 'all' ||
     filters.attention !== 'all' ||
     filters.country.trim().length > 0 ||
     filters.search.trim().length > 0
@@ -379,7 +385,7 @@ export default function LeadsClient({
   const visibleRange = total === 0 ? '0' : `${visibleStart}-${visibleEnd}`
 
   const resetFilters = () => {
-    setFilters({ status: 'all', inquiry_type: 'all', source_type: 'all', attention: 'all', country: '', search: '' })
+    setFilters({ status: 'all', inquiry_type: 'all', source_type: 'all', source_stage: 'all', attention: 'all', country: '', search: '' })
     setPage(1)
   }
 
@@ -393,6 +399,7 @@ export default function LeadsClient({
     if (f.status && f.status !== 'all') sp.set('status', f.status)
     if (f.inquiry_type && f.inquiry_type !== 'all') sp.set('inquiry_type', f.inquiry_type)
     if (f.source_type && f.source_type !== 'all') sp.set('source_type', f.source_type)
+    if (f.source_stage && f.source_stage !== 'all') sp.set('source_stage', f.source_stage)
     if (f.attention && f.attention !== 'all') sp.set('attention', f.attention)
     if (f.country) sp.set('country', f.country)
     if (f.search) sp.set('search', f.search)
@@ -624,7 +631,7 @@ export default function LeadsClient({
             </Button>
           ) : null}
         </div>
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[repeat(7,minmax(0,1fr))]">
           <Select
             value={filters.status}
             onChange={(e) => updateFilters({ status: e.target.value })}
@@ -649,9 +656,25 @@ export default function LeadsClient({
           </Select>
           <Select
             value={filters.source_type}
-            onChange={(e) => updateFilters({ source_type: e.target.value })}
+            onChange={(e) => {
+              const value = e.target.value
+              updateFilters({
+                source_type: value,
+                source_stage: value === 'product' || value === 'all' ? filters.source_stage : 'all',
+              })
+            }}
           >
             {LEAD_SOURCE_TYPE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+          <Select
+            value={filters.source_stage}
+            onChange={(e) => updateFilters({ source_stage: e.target.value, source_type: e.target.value === 'all' ? filters.source_type : 'product' })}
+          >
+            {LEAD_SOURCE_STAGE_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>
@@ -903,6 +926,7 @@ function LeadTodayHandoff({
     filters.attention !== 'all' ? ATTENTION_LABEL[filters.attention] ?? filters.attention : null,
     filters.status !== 'all' ? STATUS_LABEL[filters.status] ?? filters.status : null,
     filters.source_type !== 'all' ? SOURCE_TYPE_LABEL[filters.source_type] ?? filters.source_type : null,
+    filters.source_stage !== 'all' ? SOURCE_STAGE_LABEL[filters.source_stage] ?? filters.source_stage : null,
     filters.country.trim() ? `国家:${filters.country.trim()}` : null,
     filters.search.trim() ? `关键词:${filters.search.trim()}` : null,
   ].filter(Boolean).join(' / ') || '全部线索'
@@ -962,6 +986,7 @@ function LeadTodayHandoff({
             status: 'all',
             attention: topSourceActive > 0 ? 'active' : 'all',
             source_type: topSource.type,
+            source_stage: 'all',
           }
         : {},
       disabled: !topSource,
@@ -1423,7 +1448,7 @@ function LeadSourceStatusMatrix({
                     <td className="px-5 py-3">
                       <button
                         type="button"
-                        onClick={() => onApplyFilter({ source_type: item.type, status: 'all' })}
+                        onClick={() => onApplyFilter({ source_type: item.type, source_stage: 'all', status: 'all' })}
                         className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold transition hover:border-[#1889B6]/60 ${
                           isActiveSource && activeStatus === 'all'
                             ? 'border-[#1889B6] bg-[#EAF6F8] text-[#1889B6]'
@@ -1442,14 +1467,14 @@ function LeadSourceStatusMatrix({
                         <SourceStatusButton
                           count={item[status.value]}
                           active={isActiveSource && activeStatus === status.value}
-                          onClick={() => onApplyFilter({ source_type: item.type, status: status.value })}
+                          onClick={() => onApplyFilter({ source_type: item.type, source_stage: 'all', status: status.value })}
                         />
                       </td>
                     ))}
                     <td className="px-5 py-3 text-right">
                       <button
                         type="button"
-                        onClick={() => onApplyFilter({ source_type: item.type, status: 'all' })}
+                        onClick={() => onApplyFilter({ source_type: item.type, source_stage: 'all', status: 'all' })}
                         className="inline-flex items-center justify-end gap-1 text-xs font-semibold text-[#1889B6] transition hover:text-[#E36F2C]"
                       >
                         查看来源

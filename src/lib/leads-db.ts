@@ -1,6 +1,8 @@
 import { pool } from '@/lib/db'
 import {
   describeLeadSourceStage,
+  getLeadSourceStageExcludeWherePatterns,
+  getLeadSourceStageWherePatterns,
   getLeadSourceType,
   getLeadSourceTypeLabel,
   getLeadSourceWherePatterns,
@@ -34,6 +36,7 @@ export type ListLeadsFilter = {
   status?: string
   inquiry_type?: string
   source_type?: string
+  source_stage?: string
   attention?: string
   country?: string
   search?: string
@@ -141,6 +144,24 @@ function buildWhere(filter: ListLeadsFilter) {
         return `source ILIKE $${params.length}`
       })
       conds.push(`(${clauses.join(' OR ')})`)
+    }
+  }
+  if (filter.source_stage && filter.source_stage !== 'all') {
+    const includePatterns = getLeadSourceStageWherePatterns(filter.source_stage)
+    const excludePatterns = getLeadSourceStageExcludeWherePatterns(filter.source_stage)
+    if (includePatterns.length > 0) {
+      const clauses = includePatterns.map((pattern) => {
+        params.push(pattern)
+        return `source ILIKE $${params.length}`
+      })
+      conds.push(`(${clauses.join(' OR ')})`)
+    }
+    if (excludePatterns.length > 0) {
+      const clauses = excludePatterns.map((pattern) => {
+        params.push(pattern)
+        return `source NOT ILIKE $${params.length}`
+      })
+      conds.push(`(${clauses.join(' AND ')})`)
     }
   }
   if (filter.attention === 'active') {
