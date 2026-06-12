@@ -9,6 +9,7 @@ import { listProductBrands, listProductFilterGroups, listProductMarks, listProdu
 import {
   Archive,
   ArrowRight,
+  BarChart3,
   CheckCircle2,
   CircleDashed,
   ClipboardCheck,
@@ -23,6 +24,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Tags,
+  UsersRound,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -77,6 +79,15 @@ type TodoEntry = {
   count: number
   href: string
   Icon: LucideIcon
+}
+
+type ProductClosureEntry = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange' | 'neutral'
 }
 
 const EMPTY_PRODUCT_STATS: ProductStats = {
@@ -265,6 +276,7 @@ function getSideNavGroups(stats: ProductStats): AdminSideNavGroup[] {
         { key: 'products', label: '产品管理', href: '/admin/content/products', badge: stats.total, Icon: Package },
         { key: 'product-list', label: '产品列表', href: '/admin/content/products/list', Icon: ListChecks },
         { key: 'drafts', label: '草稿内容', href: '#drafts', badge: stats.draft, Icon: FileText },
+        { key: 'content-closure', label: '产品闭环', href: '#content-closure', Icon: BarChart3 },
         { key: 'todo', label: '待补内容', href: '#todo', badge: getTodoCount(stats), Icon: CircleDashed },
         { key: 'checks', label: '发布前检查', href: '#checks', Icon: SearchCheck },
       ],
@@ -429,15 +441,15 @@ function getTodoEntries(stats: ProductStats): TodoEntry[] {
       Icon: FileText,
     },
     {
-      title: 'Missing keywords',
-      detail: 'Product detail pages need search keywords',
+      title: '缺关键词',
+      detail: '产品详情页需要搜索关键词',
       count: stats.missingKeywords,
       href: '/admin/content/products/list?view=incomplete&issue=keywords',
       Icon: Tags,
     },
     {
-      title: 'Missing related products',
-      detail: 'Product detail pages need related product picks',
+      title: '缺关联产品',
+      detail: '产品详情页需要关联推荐产品',
       count: stats.missingRelatedProducts,
       href: '/admin/content/products/list?view=incomplete&issue=related',
       Icon: Package,
@@ -448,6 +460,43 @@ function getTodoEntries(stats: ProductStats): TodoEntry[] {
       count: stats.missingSeo,
       href: '/admin/content/products/list?view=incomplete&issue=seo',
       Icon: Sparkles,
+    },
+  ]
+}
+
+function getProductClosureEntries(stats: ProductStats): ProductClosureEntry[] {
+  return [
+    {
+      label: '产品路径分析',
+      value: 'B232',
+      detail: '查看产品访问、动作、表单和真实线索表现。',
+      href: '/admin/status/traffic#product-conversion-path',
+      Icon: BarChart3,
+      tone: 'blue',
+    },
+    {
+      label: '产品转化复盘',
+      value: 'B231',
+      detail: '从转化中心回看产品路径、来源阶段和线索承接。',
+      href: '/admin/site/conversion',
+      Icon: SearchCheck,
+      tone: 'green',
+    },
+    {
+      label: 'SEO 修复闭环',
+      value: formatNumber(stats.missingSeo),
+      detail: '先补产品 SEO，再回看产品路径转化质量。',
+      href: '/admin/site/seo#seo-conversion-closure',
+      Icon: Sparkles,
+      tone: stats.missingSeo > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '产品线索队列',
+      value: 'B228',
+      detail: '进入 source_type=product 队列核对线索阶段。',
+      href: '/admin/customers/leads?source_type=product',
+      Icon: UsersRound,
+      tone: 'neutral',
     },
   ]
 }
@@ -635,6 +684,74 @@ function TodoStat({ entry }: { entry: TodoEntry }) {
   )
 }
 
+function ProductContentClosurePanel({ stats }: { stats: ProductStats }) {
+  const entries = getProductClosureEntries(stats)
+
+  return (
+    <section id="content-closure" className="scroll-mt-24 space-y-4">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+        <SectionTitle
+          title="产品内容闭环"
+          detail="把产品内容待补、流量路径、SEO 修复和产品线索放在同一入口；这里只做只读导航，不改变产品或线索状态。"
+        />
+        <div className="flex flex-wrap gap-2">
+          <PrimaryAction href="/admin/content/products/list?view=incomplete&issue=seo" Icon={Sparkles} label="产品 SEO 待补" />
+          <PrimaryAction href="/admin/content/products/list" Icon={Package} label="产品列表" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {entries.map((entry) => (
+          <ProductClosureCard key={entry.label} entry={entry} />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 gap-3 rounded-md border border-[#D8E7E8] bg-white p-4 text-sm shadow-sm md:grid-cols-3">
+        <ClosureSnapshot label="已发布产品" value={stats.published} detail="前台产品页可见内容" />
+        <ClosureSnapshot label="待补类型" value={getTodoCount(stats)} detail="影响内容完整度的字段组" />
+        <ClosureSnapshot label="SEO 待补" value={stats.missingSeo} detail="搜索标题或摘要未补齐" />
+      </div>
+    </section>
+  )
+}
+
+function ProductClosureCard({ entry }: { entry: ProductClosureEntry }) {
+  const Icon = entry.Icon
+  const toneClass =
+    entry.tone === 'orange'
+      ? 'bg-[#FFF2E7] text-[#E36F2C]'
+      : entry.tone === 'green'
+        ? 'bg-[#E7F7F4] text-[#159477]'
+        : entry.tone === 'neutral'
+          ? 'bg-[#F0F2F2] text-[#61767D]'
+          : 'bg-[#EAF4FF] text-[#3078C8]'
+
+  return (
+    <Link
+      href={entry.href}
+      className="group rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/55 hover:shadow-md"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <span className={`flex h-10 w-10 items-center justify-center rounded-md ${toneClass}`}>
+          <Icon size={18} />
+        </span>
+        <ArrowRight size={16} className="mt-2 text-[#B6C6CA] transition group-hover:text-[#1889B6]" />
+      </div>
+      <p className="mt-5 text-sm font-semibold text-[#61767D]">{entry.label}</p>
+      <p className="mt-1 text-3xl font-bold text-[#1E2C31]">{entry.value}</p>
+      <p className="mt-2 text-xs leading-5 text-[#61767D]">{entry.detail}</p>
+    </Link>
+  )
+}
+
+function ClosureSnapshot({ label, value, detail }: { label: string; value: number; detail: string }) {
+  return (
+    <div className="min-w-0 rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3">
+      <div className="text-xs font-semibold text-[#61767D]">{label}</div>
+      <div className="mt-1 text-2xl font-bold text-[#1E2C31]">{formatNumber(value)}</div>
+      <div className="mt-1 text-xs leading-5 text-[#8A9EA4]">{detail}</div>
+    </div>
+  )
+}
+
 function ActionPanel() {
   const actions = [
     { label: '新增产品', detail: '创建新草稿并进入新版产品表单', href: '/admin/content/products/new', Icon: Plus },
@@ -751,6 +868,7 @@ export default async function AdminContentProductsPage() {
     >
       <Hero stats={stats} />
       <div className="space-y-8">
+        <ProductContentClosurePanel stats={stats} />
         <StatusGrid stats={stats} />
         <TodoPanel stats={stats} />
         <ActionPanel />
