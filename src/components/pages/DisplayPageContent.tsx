@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type TouchEvent } from 'react
 import Image from 'next/image';
 import Link from 'next/link';
 import type { DisplaySlide } from '@/lib/display-slides';
+import { buildNextImageFallbackSrc } from '@/lib/image-optimization';
 import { buildContactHref, normalizeSiteHref, SITE_PRODUCTS_HREF } from '@/lib/site-links';
 
 type DisplayContentRow = DisplaySlide & {
@@ -217,6 +218,7 @@ export default function DisplayPageContent({
           className="object-cover object-center"
           priority
           sizes="100vw"
+          overrideSrc={buildNextImageFallbackSrc(slide.image, 1920)}
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#241F1B]/88 via-[#241F1B]/55 to-[#241F1B]/20" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#241F1B]/75 via-transparent to-[#241F1B]/35" />

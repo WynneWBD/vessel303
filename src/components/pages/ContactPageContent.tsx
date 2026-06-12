@@ -17,6 +17,7 @@ import {
   visibleItems,
   type PublicPageModule,
 } from '@/lib/page-module-client'
+import { buildNextImageFallbackSrc } from '@/lib/image-optimization'
 import { buildLeadSource, normalizeSiteHref } from '@/lib/site-links'
 
 type Props = {
@@ -116,6 +117,7 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems }: Pr
                 fill
                 priority
                 sizes="100vw"
+                overrideSrc={buildNextImageFallbackSrc(heroPrimaryImage.image_url, 1920)}
                 className="absolute inset-0 h-full w-full object-cover"
               />
             ) : null}

@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { buildNextImageFallbackSrc, inferNextImageFallbackWidth } from '@/lib/image-optimization';
 import { normalizeSiteHref } from '@/lib/site-links';
 import {
   isResolvedPageModuleVisible,
@@ -258,6 +259,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
           priority={activeImage === 0}
           sizes="100vw"
           quality={75}
+          overrideSrc={buildNextImageFallbackSrc(activeSlide.src, activeImage === 0 ? 1920 : 1200)}
           className="object-cover transition-opacity duration-700"
           data-page-module-item={activeSlide.id}
           data-page-module-field="image_url"
@@ -336,6 +338,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
                 alt=""
                 fill
                 sizes="262px"
+                overrideSrc={buildNextImageFallbackSrc(previewSlide.src, 640)}
                 className="object-cover"
               />
             ) : null}
@@ -461,6 +464,7 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
                   alt={proofVisualAlt}
                   fill
                   sizes="(max-width: 768px) 100vw, 360px"
+                  overrideSrc={buildNextImageFallbackSrc(proofVisual.image_url, 750)}
                   className="object-contain p-1.5 sm:p-2"
                   data-page-module-field="image_url"
                 />
@@ -1022,6 +1026,7 @@ function HomepageVisualCardMedia({
         loading="lazy"
         className={className}
         sizes={sizes}
+        overrideSrc={buildNextImageFallbackSrc(card.image, inferNextImageFallbackWidth(sizes))}
         data-page-module-field="image_url"
       />
     );
@@ -2251,6 +2256,7 @@ function BackendOperatingProofSection({ pageModule }: { pageModule: HomePageModu
                   loading="lazy"
                   className="object-cover"
                   sizes={index === 0 ? '(max-width: 768px) 100vw, 48vw' : '(max-width: 768px) 100vw, 26vw'}
+                  overrideSrc={buildNextImageFallbackSrc(item.image_url, index === 0 ? 1200 : 750)}
                   data-page-module-field="image_url"
                 />
                 {localizedLabel(item, lang, '') ? (

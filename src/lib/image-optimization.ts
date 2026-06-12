@@ -10,6 +10,54 @@ export function canUseNextImageOptimization(src: unknown) {
   }
 }
 
+const NEXT_IMAGE_WIDTHS = [16, 32, 48, 64, 96, 128, 256, 384, 640, 750, 828, 1080, 1200, 1920, 2048, 3840] as const
+
+function nearestNextImageWidth(width: number) {
+  if (!Number.isFinite(width)) return 1200
+  const target = Math.max(16, Math.min(3840, Math.round(width)))
+  return NEXT_IMAGE_WIDTHS.find((candidate) => candidate >= target) ?? 3840
+}
+
+function normalizedImageQuality(value: unknown) {
+  const quality = Number(value)
+  if (!Number.isFinite(quality)) return 75
+  return Math.max(1, Math.min(100, Math.round(quality)))
+}
+
+export function inferNextImageFallbackWidth(sizes: unknown, priority = false) {
+  const value = typeof sizes === 'string' ? sizes : ''
+  const viewportMatches = [...value.matchAll(/(\d+(?:\.\d+)?)vw/g)]
+    .map((match) => Number(match[1]))
+    .filter(Number.isFinite)
+  const pixelMatches = [...value.matchAll(/(\d+(?:\.\d+)?)px/g)]
+    .map((match) => Number(match[1]))
+    .filter(Number.isFinite)
+
+  if (pixelMatches.length > 0 && viewportMatches.length === 0) {
+    return nearestNextImageWidth(Math.max(...pixelMatches) * 2)
+  }
+
+  if (priority) return 1920
+
+  if (viewportMatches.length > 0) {
+    const maxViewportWidth = Math.max(...viewportMatches)
+    return nearestNextImageWidth(1920 * Math.min(maxViewportWidth, 100) / 100)
+  }
+
+  return 1200
+}
+
+export function buildNextImageFallbackSrc(src: unknown, width = 1200, quality: unknown = 75) {
+  if (typeof src !== 'string') return undefined
+  const cleanSrc = src.trim()
+  if (!cleanSrc || cleanSrc.startsWith('data:') || cleanSrc.startsWith('blob:')) return undefined
+  if (!canUseNextImageOptimization(cleanSrc)) return undefined
+
+  const normalizedWidth = nearestNextImageWidth(width)
+  const normalizedQuality = normalizedImageQuality(quality)
+  return `/_next/image?url=${encodeURIComponent(cleanSrc)}&w=${normalizedWidth}&q=${normalizedQuality}`
+}
+
 export type ImageVariantRole = 'thumb' | 'card' | 'detail' | 'original'
 
 export type ImageVariant = {

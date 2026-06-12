@@ -14,7 +14,7 @@ import {
   type PageModuleRegistryEntry,
   type ResolvedPageModule,
 } from '@/lib/page-module-rendering';
-import { canUseNextImageOptimization } from '@/lib/image-optimization';
+import { buildNextImageFallbackSrc, canUseNextImageOptimization } from '@/lib/image-optimization';
 
 type Tech = 'viie' | 'vols' | 'vipc';
 
@@ -450,6 +450,7 @@ export default function AboutPageContent({
             priority
             sizes="100vw"
             quality={75}
+            overrideSrc={buildNextImageFallbackSrc(heroImage, 1920)}
             className="object-cover"
             unoptimized={!canUseNextImageOptimization(heroImage)}
             data-page-module-item="about-hero-image"
@@ -610,6 +611,7 @@ export default function AboutPageContent({
                 fill
                 sizes="(min-width: 1024px) 40vw, 100vw"
                 quality={75}
+                overrideSrc={buildNextImageFallbackSrc(storyImage, 1200)}
                 className="object-cover"
                 unoptimized={!canUseNextImageOptimization(storyImage)}
               />
@@ -886,6 +888,7 @@ export default function AboutPageContent({
                       fill
                       sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
                       quality={75}
+                      overrideSrc={buildNextImageFallbackSrc(award.src, 750)}
                       className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
                       unoptimized={!canUseNextImageOptimization(optimizedAboutImage(award.src))}
                       data-page-module-field="image_url"
@@ -961,6 +964,7 @@ export default function AboutPageContent({
                     fill
                     sizes="(min-width: 1024px) 12.5vw, (min-width: 640px) 16vw, 25vw"
                     quality={75}
+                    overrideSrc={buildNextImageFallbackSrc(partner.src, 384)}
                     className="object-contain p-3"
                     unoptimized={!canUseNextImageOptimization(partner.src)}
                   />
@@ -1015,6 +1019,7 @@ export default function AboutPageContent({
                 fill
                 sizes="256px"
                 quality={75}
+                overrideSrc={buildNextImageFallbackSrc(founderPhoto, 640)}
                 className="object-cover object-top"
                 unoptimized={!canUseNextImageOptimization(founderPhoto)}
               />
