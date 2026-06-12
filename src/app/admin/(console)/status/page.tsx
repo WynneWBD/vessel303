@@ -6,6 +6,7 @@ import {
   sumContent,
   type ContentMetric,
 } from '@/lib/admin-status-metrics'
+import { loadCaseInquiryHealth, type CaseInquiryHealth } from '@/lib/project-case-inquiry-health'
 import {
   formatAnalyticsPercent,
   loadSiteAnalyticsDashboard,
@@ -59,9 +60,10 @@ type LedgerRow = {
 
 export default async function AdminStatusPage() {
   const { role, email } = await getStatusAccess()
-  const [overview, analytics] = await Promise.all([
+  const [overview, analytics, caseInquiryHealth] = await Promise.all([
     loadStatusOverview(),
     loadSiteAnalyticsDashboard(),
+    loadCaseInquiryHealth(),
   ])
 
   const contentTotals = sumContent(overview.content)
@@ -76,7 +78,7 @@ export default async function AdminStatusPage() {
     overview.site.seo.missing +
     (overview.site.media.bytes > 800 * 1024 * 1024 ? 1 : 0) +
     (role === 'admin' ? overview.site.configChecks.filter((item) => !item.ok).length : 0)
-  const queueTotal = overview.leads.new + contentTotals.issues + siteIssues
+  const queueTotal = overview.leads.new + contentTotals.issues + siteIssues + caseInquiryHealth.weak
 
   return (
     <StatusPageShell
@@ -106,6 +108,7 @@ export default async function AdminStatusPage() {
             contentIssues={contentTotals.issues}
             siteIssues={siteIssues}
             newLeads={overview.leads.new}
+            caseConversionWeak={caseInquiryHealth.weak}
           />
         </AdminPageHero>
 
@@ -160,11 +163,18 @@ export default async function AdminStatusPage() {
               contentIssues={contentTotals.issues}
               siteIssues={siteIssues}
               pageDrafts={overview.site.pages.total}
+              caseInquiryHealth={caseInquiryHealth}
               thirtyDays={thirtyDays}
               todayComparison={todayComparison}
               thirtyComparison={thirtyComparison}
             />
-            <ModuleEntryPanel analytics={analytics} contentIssues={contentTotals.issues} siteIssues={siteIssues} newLeads={overview.leads.new} />
+            <ModuleEntryPanel
+              analytics={analytics}
+              contentIssues={contentTotals.issues}
+              siteIssues={siteIssues}
+              newLeads={overview.leads.new}
+              caseInquiryHealth={caseInquiryHealth}
+            />
           </aside>
         </div>
       </section>
@@ -179,6 +189,7 @@ function ExecutiveStrip({
   contentIssues,
   siteIssues,
   newLeads,
+  caseConversionWeak,
 }: {
   today: AnalyticsPeriodMetric
   thirtyDays: AnalyticsWindowMetric
@@ -186,6 +197,7 @@ function ExecutiveStrip({
   contentIssues: number
   siteIssues: number
   newLeads: number
+  caseConversionWeak: number
 }) {
   const cells = [
     {
@@ -209,8 +221,8 @@ function ExecutiveStrip({
     {
       label: '运营待处理',
       value: formatNumber(queueTotal),
-      detail: `线索 ${formatNumber(newLeads)} / 内容 ${formatNumber(contentIssues)} / 站点 ${formatNumber(siteIssues)}`,
-      href: queueTotal > 0 ? '/admin/status/content' : '/admin/status/activity',
+      detail: `线索 ${formatNumber(newLeads)} / 内容 ${formatNumber(contentIssues)} / 案例 ${formatNumber(caseConversionWeak)} / 站点 ${formatNumber(siteIssues)}`,
+      href: caseConversionWeak > 0 ? '/admin/content/projects/list?view=case-conversion-weak' : queueTotal > 0 ? '/admin/status/content' : '/admin/status/activity',
     },
   ]
 
@@ -730,6 +742,7 @@ function PriorityQueue({
   contentIssues,
   siteIssues,
   pageDrafts,
+  caseInquiryHealth,
   thirtyDays,
   todayComparison,
   thirtyComparison,
@@ -739,6 +752,7 @@ function PriorityQueue({
   contentIssues: number
   siteIssues: number
   pageDrafts: number
+  caseInquiryHealth: CaseInquiryHealth
   thirtyDays: AnalyticsWindowMetric
   todayComparison?: AnalyticsComparisonMetric
   thirtyComparison?: AnalyticsComparisonMetric
@@ -757,6 +771,16 @@ function PriorityQueue({
       detail: contentIssues > 0 ? '优先补齐会影响展示和 SEO 的字段。' : '内容关键字段状态正常。',
       href: '/admin/status/content',
       ok: contentIssues === 0,
+    },
+    {
+      label: '发布转化弱',
+      value: caseInquiryHealth.weak,
+      detail:
+        caseInquiryHealth.weak > 0
+          ? `已发布案例 ${formatNumber(caseInquiryHealth.published)} 个，其中 ${formatNumber(caseInquiryHealth.weak)} 个待补询盘承接要素。`
+          : `已发布案例 ${formatNumber(caseInquiryHealth.published)} 个，询盘承接关键字段正常。`,
+      href: '/admin/content/projects/list?view=case-conversion-weak',
+      ok: caseInquiryHealth.weak === 0,
     },
     {
       label: '站点问题',
@@ -800,11 +824,13 @@ function ModuleEntryPanel({
   contentIssues,
   siteIssues,
   newLeads,
+  caseInquiryHealth,
 }: {
   analytics: SiteAnalyticsDashboard
   contentIssues: number
   siteIssues: number
   newLeads: number
+  caseInquiryHealth: CaseInquiryHealth
 }) {
   const modules = [
     {
@@ -830,6 +856,15 @@ function ModuleEntryPanel({
       value: formatNumber(newLeads),
       detail: '进入客户线索和转化路径处理。',
       href: '/admin/site/conversion',
+    },
+    {
+      label: '案例转化健康',
+      value: formatNumber(caseInquiryHealth.weak),
+      detail:
+        caseInquiryHealth.weak > 0
+          ? `已发布 ${formatNumber(caseInquiryHealth.published)}，可承接 ${formatNumber(caseInquiryHealth.ready)}。`
+          : '案例询盘承接字段正常。',
+      href: '/admin/content/projects/list?view=case-conversion-weak',
     },
     {
       label: 'Google收录分析',
