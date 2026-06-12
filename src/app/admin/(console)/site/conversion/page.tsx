@@ -4,6 +4,8 @@ import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { AdminMetricCard, AdminPageHero } from '@/components/admin/AdminUI'
 import { CONVERSION_PATHS, type ConversionPathItem, type ConversionPathStatus } from '@/lib/admin-conversion-paths'
+import { getLeadSourceTypeLabel, type LeadSourceType } from '@/lib/lead-source'
+import { summarizeLeadsBySourceStatus, type LeadSourceStatusSummary } from '@/lib/leads-db'
 import {
   formatAnalyticsPercent,
   loadConversionPathAnalytics,
@@ -35,6 +37,7 @@ export const dynamic = 'force-dynamic'
 export const metadata = { title: '转化路径看板 - VESSEL' }
 
 type AdminRole = 'admin' | 'operator'
+type ConversionLeadSourceType = Exclude<LeadSourceType, 'all'>
 
 const STATUS_META: Record<ConversionPathStatus, { label: string; className: string }> = {
   lead: { label: '进入线索', className: 'border-emerald-200 bg-emerald-50 text-emerald-700' },
@@ -211,6 +214,15 @@ function getSideNav(): AdminSideNavGroup[] {
   ]
 }
 
+async function loadLeadSourceStatusSummarySafe(): Promise<LeadSourceStatusSummary[]> {
+  try {
+    return await summarizeLeadsBySourceStatus()
+  } catch (err) {
+    console.error('[admin-site-conversion] lead source summary failed', err)
+    return []
+  }
+}
+
 export default async function AdminSiteConversionPage() {
   const session = await auth()
   if (!session?.user) {
@@ -225,9 +237,10 @@ export default async function AdminSiteConversionPage() {
   const capturedCount = CONVERSION_PATHS.filter((item) => item.status === 'lead').length
   const partialCount = CONVERSION_PATHS.filter((item) => item.status === 'partial').length
   const externalCount = CONVERSION_PATHS.filter((item) => item.status === 'external').length
-  const [pathAnalytics, dashboard] = await Promise.all([
+  const [pathAnalytics, dashboard, leadSourceSummary] = await Promise.all([
     loadConversionPathAnalytics(30),
     loadSiteAnalyticsDashboard(),
+    loadLeadSourceStatusSummarySafe(),
   ])
   const thirtyDays = dashboard.windows.find((item) => item.days === 30) ?? dashboard.windows[1] ?? dashboard.windows[0]
   const totalViews = thirtyDays?.pageViews ?? 0
@@ -254,6 +267,14 @@ export default async function AdminSiteConversionPage() {
           title="转化路径运营台"
           description="按访问、CTA、表单、线索和追踪完整度判断先处理哪条前台入口；本页只做只读诊断，不保存配置。"
         />
+        <ConversionControlStrip
+          dashboard={dashboard}
+          totalViews={totalViews}
+          totalActions={totalActions}
+          totalForms={totalForms}
+          totalLeads={totalLeads}
+          excludedTestLeads={excludedTestLeads}
+        />
         <section className="grid grid-cols-1 gap-4 md:grid-cols-4">
           <StatCard label="已进入线索" value={capturedCount} detail="表单会写入 leads 并可在 2.0 处理" />
           <StatCard label="部分追踪" value={partialCount} detail="主要是 CTA 来源参数或外部承接" />
@@ -276,6 +297,11 @@ export default async function AdminSiteConversionPage() {
           totalActions={totalActions}
           totalForms={totalForms}
           totalLeads={totalLeads}
+        />
+
+        <LeadSourceMatrix
+          leadSourceSummary={leadSourceSummary}
+          pathAnalytics={pathAnalytics}
         />
 
         <ConversionFunnelMatrix
@@ -358,6 +384,175 @@ export default async function AdminSiteConversionPage() {
         </section>
       </div>
     </AdminSectionShell>
+  )
+}
+
+function ConversionControlStrip({
+  dashboard,
+  totalViews,
+  totalActions,
+  totalForms,
+  totalLeads,
+  excludedTestLeads,
+}: {
+  dashboard: Awaited<ReturnType<typeof loadSiteAnalyticsDashboard>>
+  totalViews: number
+  totalActions: number
+  totalForms: number
+  totalLeads: number
+  excludedTestLeads: number
+}) {
+  const bestDay = dashboard.bestDay
+  const historyWindow =
+    dashboard.allTime.firstEventAt && dashboard.allTime.lastEventAt
+      ? `${formatDateShort(dashboard.allTime.firstEventAt)} - ${formatDateShort(dashboard.allTime.lastEventAt)}`
+      : '暂无历史事件'
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid grid-cols-1 border-b border-[#E6EEEE] text-sm xl:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="flex flex-wrap items-center gap-2 px-4 py-3">
+          <span className="inline-flex h-9 min-w-56 items-center border border-[#D8E7E8] bg-[#FBFDFD] px-3 font-semibold text-[#1E2C31]">
+            英文站 vessel303.com
+          </span>
+          <span className="inline-flex overflow-hidden rounded-md border border-[#D8E7E8] bg-white">
+            <Link href="/admin/site/conversion" className="inline-flex h-9 items-center bg-[#1889B6] px-3 text-xs font-semibold text-white md:text-sm">
+              最近 30 天
+            </Link>
+            <Link href="/admin/status/traffic?range=30" className="inline-flex h-9 items-center border-l border-[#D8E7E8] px-3 text-xs font-semibold text-[#61767D] hover:bg-[#F0F7F8] hover:text-[#1889B6] md:text-sm">
+              访问统计
+            </Link>
+            <Link href="/admin/customers/leads" className="inline-flex h-9 items-center border-l border-[#D8E7E8] px-3 text-xs font-semibold text-[#61767D] hover:bg-[#F0F7F8] hover:text-[#1889B6] md:text-sm">
+              线索列表
+            </Link>
+          </span>
+          <span className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 text-xs font-semibold text-[#61767D] md:text-sm">
+            数据源：site_events + leads
+          </span>
+        </div>
+        <div className="flex items-center border-t border-[#E6EEEE] px-4 py-3 text-xs text-[#61767D] xl:border-t-0 xl:border-l">
+          只读分析，不保存配置，不改线索状态。
+        </div>
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-5 md:divide-x md:divide-y-0">
+        <ControlStat label="30 天访问" value={totalViews.toLocaleString('zh-CN')} />
+        <ControlStat label="转化动作" value={totalActions.toLocaleString('zh-CN')} detail={`表单 ${totalForms.toLocaleString('zh-CN')}`} />
+        <ControlStat label="真实线索" value={totalLeads.toLocaleString('zh-CN')} detail={`排除测试 ${excludedTestLeads.toLocaleString('zh-CN')}`} />
+        <ControlStat label="历史窗口" value={historyWindow} />
+        <ControlStat label="最高访问日" value={bestDay ? `${formatDateShort(bestDay.date)} / ${bestDay.pageViews.toLocaleString('zh-CN')} PV` : '暂无趋势'} />
+      </div>
+    </section>
+  )
+}
+
+function ControlStat({ label, value, detail }: { label: string; value: string; detail?: string }) {
+  return (
+    <div className="min-w-0 px-4 py-3">
+      <div className="text-xs font-semibold text-[#61767D]">{label}</div>
+      <div className="mt-1 truncate text-sm font-bold text-[#1E2C31]">{value}</div>
+      {detail ? <div className="mt-1 text-[11px] text-[#8A9EA4]">{detail}</div> : null}
+    </div>
+  )
+}
+
+function LeadSourceMatrix({
+  leadSourceSummary,
+  pathAnalytics,
+}: {
+  leadSourceSummary: LeadSourceStatusSummary[]
+  pathAnalytics: Record<string, AnalyticsConversionMetric>
+}) {
+  const sourceTypes = Array.from(new Set(CONVERSION_PATHS.map((item) => conversionPathSourceType(item.key))))
+  const rows = sourceTypes
+    .map((type) => {
+      const paths = CONVERSION_PATHS.filter((item) => conversionPathSourceType(item.key) === type)
+      const metric = sumConversionMetrics(paths, pathAnalytics)
+      const summary = leadSourceSummary.find((item) => item.type === type)
+      const leadTotal = summary?.total ?? 0
+      const activeLeads = (summary?.new ?? 0) + (summary?.contacting ?? 0) + (summary?.quoted ?? 0)
+      return {
+        type,
+        label: getLeadSourceTypeLabel(type),
+        paths,
+        metric,
+        summary,
+        leadTotal,
+        activeLeads,
+        closeRate: leadTotal > 0 ? (summary?.won ?? 0) / leadTotal : 0,
+      }
+    })
+    .sort((a, b) => {
+      if (b.activeLeads !== a.activeLeads) return b.activeLeads - a.activeLeads
+      if (b.metric.views !== a.metric.views) return b.metric.views - a.metric.views
+      return b.leadTotal - a.leadTotal
+    })
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-[#1E2C31]">来源线索处理矩阵</h2>
+          <p className="mt-1 text-xs text-[#61767D]">
+            把 30 天转化路径样本和线索库来源状态放在同一张表，运营可以直接跳到对应来源队列处理。
+          </p>
+        </div>
+        <Link href="/admin/customers/leads" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+          进入线索列表
+        </Link>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1080px] text-sm">
+          <thead>
+            <tr className="border-b border-[#E6EEEE] bg-white text-[#61767D]">
+              <th className="px-5 py-3 text-left font-medium">来源类型</th>
+              <th className="px-4 py-3 text-left font-medium">覆盖路径</th>
+              <th className="px-4 py-3 text-right font-medium">30 天访问</th>
+              <th className="px-4 py-3 text-right font-medium">动作 / 表单 / 线索</th>
+              <th className="px-4 py-3 text-right font-medium">线索库总量</th>
+              <th className="px-4 py-3 text-right font-medium">新 / 跟进 / 报价</th>
+              <th className="px-4 py-3 text-right font-medium">成交 / 关闭</th>
+              <th className="px-5 py-3 text-right font-medium">处理</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.type} className="border-b border-[#E6EEEE] last:border-0">
+                <td className="px-5 py-4">
+                  <div className="font-semibold text-[#1E2C31]">{row.label}</div>
+                  <div className="mt-1 text-xs text-[#8A9EA4]">close rate {formatAnalyticsPercent(row.closeRate)}</div>
+                </td>
+                <td className="max-w-[280px] px-4 py-4">
+                  <div className="line-clamp-2 text-xs leading-5 text-[#61767D]">
+                    {row.paths.map((item) => item.area).join(' / ')}
+                  </div>
+                </td>
+                <td className="px-4 py-4 text-right font-bold text-[#1E2C31]">{row.metric.views.toLocaleString('zh-CN')}</td>
+                <td className="px-4 py-4 text-right text-[#61767D]">
+                  {row.metric.ctaClicks.toLocaleString('zh-CN')} / {row.metric.formSubmits.toLocaleString('zh-CN')} / {row.metric.leads.toLocaleString('zh-CN')}
+                </td>
+                <td className="px-4 py-4 text-right font-bold text-[#1E2C31]">{row.leadTotal.toLocaleString('zh-CN')}</td>
+                <td className="px-4 py-4 text-right text-[#61767D]">
+                  {(row.summary?.new ?? 0).toLocaleString('zh-CN')} / {(row.summary?.contacting ?? 0).toLocaleString('zh-CN')} / {(row.summary?.quoted ?? 0).toLocaleString('zh-CN')}
+                </td>
+                <td className="px-4 py-4 text-right text-[#61767D]">
+                  {(row.summary?.won ?? 0).toLocaleString('zh-CN')} / {(row.summary?.lost ?? 0).toLocaleString('zh-CN')}
+                </td>
+                <td className="px-5 py-4 text-right">
+                  <div className="flex justify-end gap-2">
+                    <Link href={leadSourceHref(row.type, 'new')} className="text-xs font-semibold text-[#E36F2C] hover:underline">
+                      新线索
+                    </Link>
+                    <Link href={leadSourceHref(row.type)} className="text-xs font-semibold text-[#1889B6] hover:underline">
+                      全部
+                    </Link>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   )
 }
 
@@ -786,6 +981,56 @@ function FunnelRate({ value, count }: { value: number; count: number }) {
       <span className="text-[11px] text-[#8A9EA4]">{count.toLocaleString('zh-CN')} 次</span>
     </span>
   )
+}
+
+function conversionPathSourceType(key: string): ConversionLeadSourceType {
+  if (key === 'products') return 'product'
+  if (key === 'cases') return 'case'
+  if (key === 'media-kit') return 'media-kit'
+  if (key === 'faq') return 'faq'
+  if (key === 'scenarios') return 'scenario'
+  if (key === 'innovation') return 'innovation'
+  if (key === 'news') return 'news'
+  if (key === 'contact' || key === 'navbar' || key === 'display') return 'contact'
+  return 'other'
+}
+
+function sumConversionMetrics(
+  paths: ConversionPathItem[],
+  pathAnalytics: Record<string, AnalyticsConversionMetric>,
+): AnalyticsConversionMetric {
+  const totals = paths.reduce(
+    (acc, item) => {
+      const metric = getMetric(pathAnalytics, item.key)
+      acc.views += metric.views
+      acc.ctaClicks += metric.ctaClicks
+      acc.formSubmits += metric.formSubmits
+      acc.leads += metric.leads
+      return acc
+    },
+    { views: 0, ctaClicks: 0, formSubmits: 0, leads: 0 },
+  )
+
+  return {
+    ...totals,
+    conversionRate: totals.views > 0 ? totals.leads / totals.views : 0,
+  }
+}
+
+function leadSourceHref(type: ConversionLeadSourceType, status?: string) {
+  const params = new URLSearchParams()
+  params.set('source_type', type)
+  if (status) params.set('status', status)
+  return `/admin/customers/leads?${params.toString()}`
+}
+
+function formatDateShort(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+  })
 }
 
 function ConversionMiniMetric({
