@@ -247,7 +247,7 @@ function TrafficControlBar({
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2 border-t border-[#E6EEEE] px-4 py-3 xl:border-l xl:border-t-0">
-          <span className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8A9EA4]">Range</span>
+          <span className="text-xs font-semibold text-[#8A9EA4]">时间口径</span>
           <span className="inline-flex overflow-hidden border border-[#D8E7E8] bg-white">
             {ranges.map((item, index) => (
               <Link
@@ -284,7 +284,7 @@ function TrafficControlBar({
 function ToolbarStat({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
     <div className="px-4 py-3">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8A9EA4]">{label}</div>
+      <div className="text-[11px] font-semibold text-[#8A9EA4]">{label}</div>
       <div className="mt-1 truncate text-sm font-black text-[#1E2C31]" title={value}>{value}</div>
       <div className="mt-1 truncate text-xs text-[#61767D]" title={detail}>{detail}</div>
     </div>
@@ -1379,54 +1379,87 @@ function BehaviorPathBoard({ steps }: { steps: AnalyticsBehaviorStep[] }) {
     )
   }
 
+  const visibleSteps = steps.slice(0, 5)
+  const nodeCount = visibleSteps.reduce((sum, step) => sum + step.nodes.length, 0)
+  const activeStepCount = visibleSteps.filter((step) => step.nodes.length > 0).length
+  const entryVisits = visibleSteps[0]?.visits ?? 0
+  const finalStep = [...visibleSteps].reverse().find((step) => step.visits > 0) ?? visibleSteps[0]
+  const maxNodeValue = Math.max(1, ...visibleSteps.flatMap((step) => step.nodes.map((node) => node.value)))
+
   return (
     <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <h3 className="text-sm font-bold text-[#1E2C31]">访问路径流</h3>
-          <p className="mt-1 text-xs text-[#61767D]">按匿名 session / visitor 的前 5 次页面访问聚合，只显示路径和次数。</p>
+          <p className="mt-1 text-xs text-[#61767D]">按匿名 session / visitor 的前 5 次页面访问聚合，显示路径节点、节点占比和跨步留存。</p>
         </div>
         <span className="text-xs text-[#8A9EA4]">不是表单个人信息，不保存 IP。</span>
       </div>
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-4 md:divide-x md:divide-y-0">
+        <PathSummaryCell label="入口访问" value={`${formatNumber(entryVisits)} 次`} detail={visibleSteps[0]?.label ?? '入口页面'} />
+        <PathSummaryCell label="有效层级" value={`${formatNumber(activeStepCount)} / ${formatNumber(visibleSteps.length)}`} detail="有节点的路径步骤" />
+        <PathSummaryCell label="路径节点" value={`${formatNumber(nodeCount)} 个`} detail="每步最多显示 6 个节点" />
+        <PathSummaryCell
+          label="末级留存"
+          value={formatAnalyticsPercent(finalStep?.retainedRate ?? 0)}
+          detail={finalStep ? `${finalStep.label} / ${formatNumber(finalStep.visits)} 次` : '暂无末级访问'}
+        />
+      </div>
       <div className="overflow-x-auto">
-        <div className="grid min-w-[980px] grid-cols-5 gap-3 p-4">
-          {steps.map((step) => (
-            <div key={step.step} className="min-w-0 rounded-md border border-[#E6EEEE] bg-[#FBFDFD]">
-              <div className="border-b border-[#E6EEEE] px-3 py-3">
-                <div className="flex items-center justify-between gap-2">
-                  <h4 className="text-xs font-bold text-[#1E2C31]">{step.label}</h4>
-                  <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-[#1889B6]">
-                    {formatAnalyticsPercent(step.retainedRate)}
-                  </span>
+        <div className="grid min-w-[1120px] grid-cols-5 gap-3 p-4">
+          {visibleSteps.map((step, index) => (
+            <div key={step.step} className="relative min-w-0">
+              {index > 0 ? <span className="absolute -left-3 top-16 h-px w-3 bg-[#C9DCDF]" /> : null}
+              <div className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD]">
+                <div className="border-b border-[#E6EEEE] bg-white px-3 py-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="text-xs font-bold text-[#1E2C31]">{step.label}</h4>
+                    <span className="rounded bg-[#E8F6FA] px-2 py-0.5 text-[11px] font-bold text-[#1889B6]">
+                      {formatAnalyticsPercent(step.retainedRate)}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-[#8A9EA4]">{formatNumber(step.visits)} 次访问</p>
                 </div>
-                <p className="mt-1 text-[11px] text-[#8A9EA4]">{formatNumber(step.visits)} 次访问</p>
-              </div>
-              <div className="divide-y divide-[#E6EEEE]">
-                {step.nodes.length === 0 ? (
-                  <div className="px-3 py-4 text-xs text-[#8A9EA4]">暂无路径</div>
-                ) : (
-                  step.nodes.map((node) => (
-                    <div key={node.key} className="px-3 py-2.5">
-                      <div className="truncate text-xs font-semibold text-[#1E2C31]" title={node.label}>
-                        {node.label}
-                      </div>
-                      <div className="mt-1 flex items-center gap-2">
-                        <span className="h-1.5 flex-1 rounded-full bg-[#E6EEEE]">
-                          <span
-                            className="block h-1.5 rounded-full bg-[#1889B6]"
-                            style={{ width: `${Math.max(4, Math.round((node.value / Math.max(1, step.visits)) * 100))}%` }}
-                          />
-                        </span>
-                        <span className="w-8 shrink-0 text-right text-[11px] font-bold text-[#1889B6]">{formatNumber(node.value)}</span>
-                      </div>
-                    </div>
-                  ))
-                )}
+                <div className="space-y-2 p-3">
+                  {step.nodes.length === 0 ? (
+                    <div className="rounded border border-dashed border-[#D8E7E8] bg-white px-3 py-4 text-xs text-[#8A9EA4]">暂无路径节点</div>
+                  ) : (
+                    step.nodes.slice(0, 6).map((node) => {
+                      const stepShare = step.visits > 0 ? node.value / step.visits : 0
+                      const width = Math.max(8, Math.round((node.value / maxNodeValue) * 100))
+
+                      return (
+                        <div key={node.key} className="rounded border border-[#E6EEEE] bg-white p-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="min-w-0 truncate text-xs font-semibold text-[#1E2C31]" title={node.label}>
+                              {node.label}
+                            </span>
+                            <span className="shrink-0 text-xs font-bold text-[#1889B6]">{formatNumber(node.value)}</span>
+                          </div>
+                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#E6EEEE]">
+                            <span className="block h-full rounded-full bg-[#1889B6]" style={{ width: `${width}%` }} />
+                          </div>
+                          <div className="mt-1 text-[11px] text-[#8A9EA4]">{formatAnalyticsPercent(stepShare)} / 本步</div>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
               </div>
             </div>
           ))}
         </div>
       </div>
+    </div>
+  )
+}
+
+function PathSummaryCell({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <div className="min-w-0 px-4 py-3">
+      <div className="text-[11px] font-semibold text-[#8A9EA4]">{label}</div>
+      <div className="mt-1 truncate text-sm font-black text-[#1E2C31]" title={value}>{value}</div>
+      <div className="mt-1 truncate text-xs text-[#61767D]" title={detail}>{detail}</div>
     </div>
   )
 }
