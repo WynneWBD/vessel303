@@ -77,7 +77,7 @@ const COPY: Record<ProductOperationKind, {
   marks: {
     title: '当前标记',
     createTitle: '新增标记',
-    description: '对照 300 的标记管理，用于给产品打运营标签，不做物理删除。',
+    description: '对照 300.cn 后台的标记管理，用于给产品打运营标签，不做物理删除。',
     empty: '暂无标记',
   },
   brands: {
