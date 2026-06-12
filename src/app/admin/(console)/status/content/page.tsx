@@ -1,5 +1,7 @@
 import Link from 'next/link'
-import { formatNumber, loadStatusOverview, sumContent, type ContentMetric } from '@/lib/admin-status-metrics'
+import { formatNumber, loadStatusOverview, sumContent, tableExists, type ContentMetric } from '@/lib/admin-status-metrics'
+import { pool } from '@/lib/db'
+import { MIN_PROJECT_CASE_DESCRIPTION_CHARS } from '@/lib/project-case-readiness'
 import {
   ActionCard,
   buildStatusBadges,
@@ -26,6 +28,14 @@ type ContentDecision = {
   actionLabel: string
 }
 
+type CaseInquiryHealth = {
+  total: number
+  published: number
+  ready: number
+  weak: number
+  draft: number
+}
+
 type ContentReleaseRow = {
   key: string
   priority: string
@@ -41,9 +51,79 @@ type ContentReleaseRow = {
   Icon: typeof STATUS_ICONS.AlertCircle
 }
 
+const EMPTY_CASE_INQUIRY_HEALTH: CaseInquiryHealth = {
+  total: 0,
+  published: 0,
+  ready: 0,
+  weak: 0,
+  draft: 0,
+}
+
+const CASE_INQUIRY_READY_SQL = `(
+  NULLIF(BTRIM(COALESCE(cover_image_url, '')), '') IS NOT NULL
+  AND jsonb_array_length(COALESCE(images, '[]'::jsonb)) > 0
+  AND NULLIF(BTRIM(COALESCE(description_zh, '')), '') IS NOT NULL
+  AND NULLIF(BTRIM(COALESCE(description_en, '')), '') IS NOT NULL
+  AND LENGTH(BTRIM(COALESCE(description_zh, ''))) >= ${MIN_PROJECT_CASE_DESCRIPTION_CHARS}
+  AND LENGTH(BTRIM(COALESCE(description_en, ''))) >= ${MIN_PROJECT_CASE_DESCRIPTION_CHARS}
+  AND NULLIF(BTRIM(COALESCE(project_type_zh, '')), '') IS NOT NULL
+  AND NULLIF(BTRIM(COALESCE(project_type_en, '')), '') IS NOT NULL
+  AND NULLIF(BTRIM(COALESCE(area_display, '')), '') IS NOT NULL
+  AND NULLIF(BTRIM(COALESCE(units_display, '')), '') IS NOT NULL
+  AND NULLIF(BTRIM(COALESCE(products, '')), '') IS NOT NULL
+  AND jsonb_array_length(COALESCE(tags_zh, '[]'::jsonb)) > 0
+  AND jsonb_array_length(COALESCE(tags_en, '[]'::jsonb)) > 0
+)`
+
+function parseCount(value: string | undefined): number {
+  return parseInt(value ?? '0', 10)
+}
+
+async function loadCaseInquiryHealth(): Promise<CaseInquiryHealth> {
+  try {
+    if (!(await tableExists('public.project_cases'))) return EMPTY_CASE_INQUIRY_HEALTH
+
+    const res = await pool.query<{
+      total: string
+      published: string
+      ready: string
+      weak: string
+      draft: string
+    }>(
+      `SELECT
+         COUNT(*)::text AS total,
+         COUNT(*) FILTER (WHERE status = 'published')::text AS published,
+         COUNT(*) FILTER (
+           WHERE status = 'published' AND ${CASE_INQUIRY_READY_SQL}
+         )::text AS ready,
+         COUNT(*) FILTER (
+           WHERE status = 'published' AND NOT ${CASE_INQUIRY_READY_SQL}
+         )::text AS weak,
+         COUNT(*) FILTER (WHERE status = 'draft')::text AS draft
+       FROM project_cases
+       WHERE deleted_at IS NULL`,
+    )
+    const row = res.rows[0]
+
+    return {
+      total: parseCount(row?.total),
+      published: parseCount(row?.published),
+      ready: parseCount(row?.ready),
+      weak: parseCount(row?.weak),
+      draft: parseCount(row?.draft),
+    }
+  } catch (err) {
+    console.error('[admin-status-content] case inquiry health failed', err)
+    return EMPTY_CASE_INQUIRY_HEALTH
+  }
+}
+
 export default async function AdminStatusContentPage() {
   const { role, email } = await getStatusAccess()
-  const overview = await loadStatusOverview()
+  const [overview, caseInquiryHealth] = await Promise.all([
+    loadStatusOverview(),
+    loadCaseInquiryHealth(),
+  ])
   const totals = sumContent(overview.content)
   const contentItems = Object.values(overview.content)
 
@@ -95,6 +175,7 @@ export default async function AdminStatusContentPage() {
         </div>
 
         <section className="space-y-4">
+          <CaseInquiryHealthPanel health={caseInquiryHealth} />
           <ContentReleaseLedger items={contentItems} totals={totals} />
           <ContentOperationsMatrix items={contentItems} totals={totals} />
         </section>
@@ -110,7 +191,7 @@ export default async function AdminStatusContentPage() {
 
         <section className="space-y-4">
           <SectionTitle title="处理入口" detail="按运营优先级进入已有列表或编辑流程。" />
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             <ActionCard
               title="处理产品缺项"
               detail={`${formatNumber(overview.content.products.issues)} 个产品存在关键字段缺口。`}
@@ -126,6 +207,13 @@ export default async function AdminStatusContentPage() {
               primary={overview.content.projects.issues > 0}
             />
             <ActionCard
+              title="处理发布转化弱"
+              detail={`${formatNumber(caseInquiryHealth.weak)} 个已发布案例需要补齐素材、叙事、项目事实或标签。`}
+              href="/admin/content/projects/list?view=case-conversion-weak"
+              Icon={STATUS_ICONS.SearchCheck}
+              primary={caseInquiryHealth.weak > 0}
+            />
+            <ActionCard
               title="处理新闻草稿"
               detail={`${formatNumber(overview.content.news.draft)} 条新闻仍处于草稿状态。`}
               href={overview.content.news.draftHref}
@@ -136,6 +224,53 @@ export default async function AdminStatusContentPage() {
         </section>
       </section>
     </StatusPageShell>
+  )
+}
+
+function CaseInquiryHealthPanel({ health }: { health: CaseInquiryHealth }) {
+  const readyRate = percent(health.ready, health.published)
+
+  return (
+    <div>
+      <SectionTitle
+        title="案例询盘承接健康"
+        detail="把项目案例内容质量和前台询盘承接放到内容健康页；本区只读统计，不发布、不保存、不改线索。"
+      />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <MetricCard
+          title="询盘可承接"
+          value={health.ready}
+          detail={`已发布案例承接率 ${readyRate}%`}
+          href="/admin/content/projects/list?status=published"
+          Icon={STATUS_ICONS.CheckCircle2}
+          tone={health.ready > 0 ? 'green' : 'gray'}
+        />
+        <MetricCard
+          title="发布转化弱"
+          value={health.weak}
+          detail="已发布但素材、叙事、项目事实或标签待补"
+          href="/admin/content/projects/list?view=case-conversion-weak"
+          Icon={STATUS_ICONS.AlertCircle}
+          tone={health.weak > 0 ? 'orange' : 'green'}
+        />
+        <MetricCard
+          title="草稿待承接"
+          value={health.draft}
+          detail="草稿发布前先补齐案例咨询上下文"
+          href="/admin/content/projects/list?status=draft"
+          Icon={STATUS_ICONS.FileText}
+          tone={health.draft > 0 ? 'orange' : 'green'}
+        />
+        <MetricCard
+          title="前台案例入口"
+          value={health.published}
+          detail={`项目总量 ${formatNumber(health.total)}，发布后进入 /cases`}
+          href="/cases"
+          Icon={STATUS_ICONS.Globe2}
+          tone="blue"
+        />
+      </div>
+    </div>
   )
 }
 
