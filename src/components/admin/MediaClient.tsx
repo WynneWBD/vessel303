@@ -86,6 +86,20 @@ type UploadTask = {
   error?: string
 }
 
+type MediaLedgerTone = 'high' | 'medium' | 'safe'
+
+type MediaLedgerRow = {
+  upload: Upload
+  reference?: MediaReferenceSummaryItem
+  stage: string
+  issue: string
+  detail: string
+  signal: string
+  actionLabel: string
+  tone: MediaLedgerTone
+  score: number
+}
+
 const emptyMediaReferenceItems = (): MediaReferenceItems => ({
   news: [],
   products: [],
@@ -178,6 +192,143 @@ function isMissingFrontendVariants(upload: Upload | null | undefined): boolean {
   return generatedVariantCount(upload) < FRONTEND_VARIANT_ROLES.length
 }
 
+function referenceTotal(reference: MediaReferenceSummaryItem | undefined): number | null {
+  return reference ? reference.total : null
+}
+
+function draftReferenceTotal(reference: MediaReferenceSummaryItem | undefined): number {
+  if (!reference) return 0
+  return (
+    reference.pageDrafts
+    + reference.pageSnapshots
+    + reference.pageStructureDrafts
+    + reference.pageStructureSnapshots
+  )
+}
+
+function buildMediaLedgerRow(
+  upload: Upload,
+  reference: MediaReferenceSummaryItem | undefined,
+): MediaLedgerRow {
+  const variantCount = generatedVariantCount(upload)
+  const isLargeOriginal = isFrontendRiskUpload(upload)
+  const missingVariants = isMissingFrontendVariants(upload)
+  const refs = referenceTotal(reference)
+  const draftRefs = draftReferenceTotal(reference)
+
+  if (isLargeOriginal && missingVariants) {
+    return {
+      upload,
+      reference,
+      stage: '前台风险',
+      issue: '大原图 + 缺派生图',
+      detail: '打开详情生成派生图；用于首页、产品、案例或新闻前优先降负载。',
+      signal: `${formatBytes(upload.size ?? 0)} / 派生 ${variantCount}/3`,
+      actionLabel: '处理素材',
+      tone: 'high',
+      score: 100,
+    }
+  }
+
+  if (missingVariants) {
+    return {
+      upload,
+      reference,
+      stage: '派生缺口',
+      issue: '缺少前台派生图',
+      detail: '补齐 thumb / card / detail，避免前台读取原图。',
+      signal: `派生 ${variantCount}/3`,
+      actionLabel: '生成派生',
+      tone: 'high',
+      score: 85,
+    }
+  }
+
+  if (isLargeOriginal) {
+    return {
+      upload,
+      reference,
+      stage: '大图复核',
+      issue: '原图偏大',
+      detail: '前台优先使用派生图；如未被引用，再判断是否保留原始资产。',
+      signal: formatBytes(upload.size ?? 0),
+      actionLabel: '查看引用',
+      tone: 'medium',
+      score: 70,
+    }
+  }
+
+  if (refs === 0) {
+    return {
+      upload,
+      reference,
+      stage: '引用复核',
+      issue: '当前采样未引用',
+      detail: '未检测到 CMS 引用；删除前仍需打开详情做最终确认。',
+      signal: '未引用',
+      actionLabel: '复核详情',
+      tone: 'medium',
+      score: 55,
+    }
+  }
+
+  if (draftRefs > 0) {
+    return {
+      upload,
+      reference,
+      stage: '草稿引用',
+      issue: '存在草稿/快照引用',
+      detail: '删除或替换前先确认视觉编辑草稿、快照和页面结构引用。',
+      signal: `${draftRefs} 处草稿/快照`,
+      actionLabel: '查看来源',
+      tone: 'medium',
+      score: 45,
+    }
+  }
+
+  if ((refs ?? 0) > 0) {
+    return {
+      upload,
+      reference,
+      stage: '已上线引用',
+      issue: '被内容或页面使用',
+      detail: '作为有效资产保留；替换前先进入引用来源编辑。',
+      signal: `${refs} 处引用`,
+      actionLabel: '查看来源',
+      tone: 'safe',
+      score: 25,
+    }
+  }
+
+  return {
+    upload,
+    reference,
+    stage: '待采样',
+    issue: '引用状态待加载',
+    detail: '当前页引用摘要尚未返回，打开详情可触发精确引用检查。',
+    signal: mimeLabel(upload.mime),
+    actionLabel: '查看详情',
+    tone: 'safe',
+    score: 10,
+  }
+}
+
+function buildMediaLedgerRows(
+  uploads: Upload[],
+  referenceLookup: Map<string, MediaReferenceSummaryItem>,
+): MediaLedgerRow[] {
+  return uploads
+    .map((upload) => buildMediaLedgerRow(upload, referenceLookup.get(upload.id)))
+    .sort((a, b) => b.score - a.score || new Date(b.upload.created_at).getTime() - new Date(a.upload.created_at).getTime())
+    .slice(0, 8)
+}
+
+function mediaLedgerToneClass(tone: MediaLedgerTone): string {
+  if (tone === 'high') return 'border-[#F2C6A7] bg-[#FFF7F0] text-[#E36F2C]'
+  if (tone === 'medium') return 'border-[#D8E7E8] bg-[#F7FAFA] text-[#1889B6]'
+  return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+}
+
 function mediaToneClass(tone: 'blue' | 'green' | 'orange' | 'gray') {
   if (tone === 'green') return 'border-l-emerald-500 bg-emerald-50 text-emerald-700'
   if (tone === 'orange') return 'border-l-[#E36F2C] bg-[#FFF2E7] text-[#E36F2C]'
@@ -250,6 +401,10 @@ export default function MediaClient({
   const referenceLookup = useMemo(() => (
     new Map(referenceSummary.items.map((item) => [item.uploadId, item]))
   ), [referenceSummary.items])
+  const currentLedgerRows = useMemo(
+    () => buildMediaLedgerRows(uploads, referenceLookup),
+    [uploads, referenceLookup],
+  )
   const resultStart = total === 0 ? 0 : (page - 1) * limit + 1
   const resultEnd = total === 0 ? 0 : Math.min(total, page * limit)
 
@@ -651,6 +806,12 @@ export default function MediaClient({
             </div>
           </section>
 
+          <MediaIssueLedger
+            rows={currentLedgerRows}
+            totalRows={uploads.length}
+            onSelect={handleSelect}
+          />
+
           <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
             <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
@@ -855,6 +1016,159 @@ function MediaMetricCard({
       </div>
       <div className="mt-3 text-xs leading-5 text-[#61767D]">{detail}</div>
     </div>
+  )
+}
+
+function MediaIssueLedger({
+  rows,
+  totalRows,
+  onSelect,
+}: {
+  rows: MediaLedgerRow[]
+  totalRows: number
+  onSelect: (upload: Upload) => void | Promise<unknown>
+}) {
+  const highCount = rows.filter((row) => row.tone === 'high').length
+  const reviewCount = rows.filter((row) => row.tone === 'medium').length
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#D8E7E8] p-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
+            <ListFilter size={15} />
+            Asset Ledger
+          </div>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">当前页处理台账</h2>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-[#61767D]">
+            按前台风险、派生缺口、引用复核和已上线引用排序，先处理会影响页面负载和素材删除判断的项目。
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex min-h-7 items-center rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-2.5 text-[11px] font-semibold text-[#61767D]">
+            当前页 {totalRows} 张
+          </span>
+          <span className={`inline-flex min-h-7 items-center rounded-md border px-2.5 text-[11px] font-semibold ${mediaLedgerToneClass(highCount > 0 ? 'high' : 'safe')}`}>
+            优先 {highCount}
+          </span>
+          <span className={`inline-flex min-h-7 items-center rounded-md border px-2.5 text-[11px] font-semibold ${mediaLedgerToneClass(reviewCount > 0 ? 'medium' : 'safe')}`}>
+            复核 {reviewCount}
+          </span>
+        </div>
+      </div>
+
+      {rows.length > 0 ? (
+        <>
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full min-w-[760px] border-collapse text-left text-xs">
+              <thead className="bg-[#F7FAFA] text-[11px] uppercase tracking-[0.08em] text-[#61767D]">
+                <tr>
+                  <th className="border-b border-[#D8E7E8] px-4 py-3 font-bold">阶段</th>
+                  <th className="border-b border-[#D8E7E8] px-4 py-3 font-bold">素材</th>
+                  <th className="border-b border-[#D8E7E8] px-4 py-3 font-bold">处理信号</th>
+                  <th className="border-b border-[#D8E7E8] px-4 py-3 font-bold">引用</th>
+                  <th className="border-b border-[#D8E7E8] px-4 py-3 font-bold">派生图</th>
+                  <th className="border-b border-[#D8E7E8] px-4 py-3 text-right font-bold">入口</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => {
+                  const variantCount = generatedVariantCount(row.upload)
+                  const refs = referenceTotal(row.reference)
+                  const draftRefs = draftReferenceTotal(row.reference)
+
+                  return (
+                    <tr key={row.upload.id} className="border-b border-[#D8E7E8] last:border-b-0 hover:bg-[#F7FAFA]">
+                      <td className="px-4 py-3 align-top">
+                        <span className={`inline-flex min-h-7 items-center rounded-md border px-2.5 text-[11px] font-bold ${mediaLedgerToneClass(row.tone)}`}>
+                          {row.stage}
+                        </span>
+                      </td>
+                      <td className="max-w-[240px] px-4 py-3 align-top">
+                        <div className="truncate text-sm font-bold text-[#1E2C31]" title={row.upload.filename ?? ''}>
+                          {row.upload.filename ?? '未命名素材'}
+                        </div>
+                        <div className="mt-1 text-[11px] text-[#61767D]">
+                          {mimeLabel(row.upload.mime)} · {formatBytes(row.upload.size ?? 0)}
+                        </div>
+                      </td>
+                      <td className="max-w-[280px] px-4 py-3 align-top">
+                        <div className="text-sm font-semibold text-[#1E2C31]">{row.issue}</div>
+                        <div className="mt-1 text-[11px] leading-4 text-[#61767D]">{row.detail}</div>
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <div className="text-sm font-bold text-[#1E2C31]">
+                          {refs === null ? '待采样' : `${refs} 处`}
+                        </div>
+                        <div className="mt-1 text-[11px] text-[#61767D]">
+                          内容 {(row.reference?.news ?? 0) + (row.reference?.products ?? 0) + (row.reference?.projects ?? 0)}
+                          {' / '}
+                          页面 {row.reference?.pages ?? 0}
+                          {' / '}
+                          草稿 {draftRefs}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <div className="text-sm font-bold text-[#1E2C31]">{variantCount}/3</div>
+                        <div className="mt-1 text-[11px] text-[#61767D]">{row.signal}</div>
+                      </td>
+                      <td className="px-4 py-3 text-right align-top">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void onSelect(row.upload)
+                          }}
+                          className="inline-flex min-h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-bold text-[#1889B6] hover:border-[#1889B6] hover:bg-[#EAF6F8]"
+                        >
+                          {row.actionLabel}
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="grid gap-3 p-4 md:hidden">
+            {rows.map((row) => {
+              const refs = referenceTotal(row.reference)
+              return (
+                <button
+                  key={row.upload.id}
+                  type="button"
+                  onClick={() => {
+                    void onSelect(row.upload)
+                  }}
+                  className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3 text-left"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <span className={`inline-flex min-h-7 items-center rounded-md border px-2.5 text-[11px] font-bold ${mediaLedgerToneClass(row.tone)}`}>
+                      {row.stage}
+                    </span>
+                    <span className="text-[11px] font-bold text-[#1889B6]">{row.actionLabel}</span>
+                  </div>
+                  <div className="mt-2 truncate text-sm font-bold text-[#1E2C31]">
+                    {row.upload.filename ?? '未命名素材'}
+                  </div>
+                  <div className="mt-1 text-xs text-[#61767D]">{row.issue}</div>
+                  <div className="mt-2 text-[11px] text-[#61767D]">
+                    {mimeLabel(row.upload.mime)} · {formatBytes(row.upload.size ?? 0)} · 引用 {refs === null ? '待采样' : refs}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </>
+      ) : (
+        <div className="p-4">
+          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs font-medium text-emerald-700">
+            当前页没有可排查素材。
+          </div>
+        </div>
+      )}
+    </section>
   )
 }
 
