@@ -937,6 +937,14 @@ function SeoConversionRepairPanel({
       Icon: SearchCheck,
       tone: 'blue' as const,
     },
+    {
+      title: '产品线索承接',
+      value: 'B229',
+      detail: '把产品路径、产品阶段线索和活跃队列合并复盘，避免只补产品 SEO 不看询盘质量。',
+      href: '/admin/status/leads#product-lead-path-bridge',
+      Icon: SearchCheck,
+      tone: 'blue' as const,
+    },
   ]
 
   return (
@@ -946,7 +954,7 @@ function SeoConversionRepairPanel({
         detail="把搜索增长、内容缺口和转化线索放在同一条运营链路里：先补可被搜索理解的内容，再回到转化与线索面板验证质量。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-5">
           {items.map((item) => {
             const Icon = item.Icon
             const toneClass =
@@ -973,6 +981,18 @@ function SeoConversionRepairPanel({
           })}
         </div>
         <div className="flex flex-wrap gap-2 border-t border-[#E6EEEE] px-5 py-4">
+          <Link
+            href="/admin/status/leads#product-lead-path-bridge"
+            className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+          >
+            看产品线索承接
+          </Link>
+          <Link
+            href="/admin/customers/leads?source_type=product"
+            className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+          >
+            看产品线索队列
+          </Link>
           <Link
             href="/admin/status/traffic#case-inquiry-path"
             className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
