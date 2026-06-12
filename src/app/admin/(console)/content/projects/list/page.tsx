@@ -756,7 +756,7 @@ function ProjectListControlStrip({
     <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px]">
         <div className="border-l-4 border-[#1889B6] px-4 py-4">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Case List Console</p>
+          <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">案例列表控制台</p>
           <div className="mt-2 flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
             <div className="min-w-0">
               <h2 className="text-lg font-bold text-[#1E2C31]">当前案例视图</h2>
@@ -783,7 +783,7 @@ function ProjectListControlStrip({
       <div className="border-t border-[#E6EEEE] px-4 py-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#8A9EA4]">Active Filters</p>
+            <p className="text-xs font-bold tracking-[0.08em] text-[#8A9EA4]">当前筛选</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {chips.length > 0 ? (
                 chips.map((chip) => (
@@ -852,8 +852,12 @@ function ProjectOperationsMatrix({
   rows: ProjectListRow[]
   filters: FilterState
 }) {
+  const pageIssueEntries = rows.map((project) => ({
+    project,
+    issues: getProjectIssues(project),
+  }))
   const signalStats = PROJECT_SIGNAL_BUCKETS.map((bucket) => {
-    const pageCount = rows.filter((project) => bucket.matches(project, getProjectIssues(project))).length
+    const pageCount = pageIssueEntries.filter((entry) => bucket.matches(entry.project, entry.issues)).length
     return {
       ...bucket,
       count: issueSummary[bucket.summaryKey],
@@ -865,13 +869,17 @@ function ProjectOperationsMatrix({
   const publishedRate = formatPercent(summary.published, summary.total)
   const incompleteRate = formatPercent(summary.incomplete, summary.total)
   const mapReadyRate = formatPercent(summary.mapReady, summary.total)
+  const pageReadyCount = pageIssueEntries.filter((entry) => entry.issues.length === 0).length
+  const pagePublishedRiskCount = pageIssueEntries.filter((entry) => entry.project.status === 'published' && entry.issues.length > 0).length
+  const pageMapReadyCount = pageIssueEntries.filter((entry) => entry.project.status === 'published' && hasCoordinates(entry.project)).length
+  const pageCoordinatePendingCount = pageIssueEntries.filter((entry) => entry.project.status !== 'published' && hasCoordinates(entry.project)).length
 
   return (
     <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Case Operations</p>
+            <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">案例运营</p>
             <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">项目案例运营矩阵</h2>
             <p className="mt-1 text-sm leading-6 text-[#61767D]">
               先扫案例发布、内容缺口和 Global 入图状态，再进入案例编辑或现有筛选。
@@ -932,6 +940,32 @@ function ProjectOperationsMatrix({
               <p className="mt-1 text-xs text-[#61767D]">按素材、Global 坐标、叙事和项目事实排序。</p>
             </div>
           </div>
+        </div>
+        <div className="grid grid-cols-2 border-b border-[#E6EEEE] bg-[#FBFDFD]">
+          <ProjectReadinessMiniStat
+            label="本页完整"
+            value={formatNumber(pageReadyCount)}
+            detail={`${formatPercent(pageReadyCount, rows.length)} 完整率`}
+            tone="green"
+          />
+          <ProjectReadinessMiniStat
+            label="发布中有缺口"
+            value={formatNumber(pagePublishedRiskCount)}
+            detail="已发布但仍需回补"
+            tone={pagePublishedRiskCount > 0 ? 'orange' : 'green'}
+          />
+          <ProjectReadinessMiniStat
+            label="可入 Global"
+            value={formatNumber(pageMapReadyCount)}
+            detail="已发布且有坐标"
+            tone={pageMapReadyCount > 0 ? 'blue' : 'gray'}
+          />
+          <ProjectReadinessMiniStat
+            label="坐标待发布"
+            value={formatNumber(pageCoordinatePendingCount)}
+            detail="已有坐标但仍是草稿"
+            tone={pageCoordinatePendingCount > 0 ? 'orange' : 'green'}
+          />
         </div>
         {priorityItems.length > 0 ? (
           <div className="divide-y divide-[#E6EEEE]">
@@ -1010,6 +1044,35 @@ function ProjectMatrixKpi({
   )
 }
 
+function ProjectReadinessMiniStat({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string
+  value: string
+  detail: string
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+}) {
+  const toneClass =
+    tone === 'green'
+      ? 'text-emerald-700'
+      : tone === 'orange'
+        ? 'text-[#E36F2C]'
+        : tone === 'gray'
+          ? 'text-[#61767D]'
+          : 'text-[#1889B6]'
+
+  return (
+    <div className="border-t border-[#E6EEEE] px-4 py-3 odd:border-r">
+      <p className="truncate text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-1 text-xl font-bold ${toneClass}`}>{value}</p>
+      <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#8A9EA4]">{detail}</p>
+    </div>
+  )
+}
+
 function FilterPanel({ filters }: { filters: FilterState }) {
   return (
     <form action="/admin/content/projects/list" className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
@@ -1081,11 +1144,11 @@ function ProjectList({
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="min-w-[1160px] w-full border-collapse text-left text-sm">
-            <thead className="bg-[#F7FAFA] text-xs font-semibold uppercase tracking-[0.08em] text-[#61767D]">
+            <thead className="bg-[#F7FAFA] text-xs font-semibold text-[#61767D]">
               <tr>
                 <th className="w-[34%] border-b border-[#D8E7E8] px-4 py-3">项目案例</th>
                 <th className="w-[13%] border-b border-[#D8E7E8] px-4 py-3">状态</th>
-                <th className="w-[19%] border-b border-[#D8E7E8] px-4 py-3">位置 / 类型</th>
+                <th className="w-[19%] border-b border-[#D8E7E8] px-4 py-3">位置与类型</th>
                 <th className="w-[17%] border-b border-[#D8E7E8] px-4 py-3">待补项</th>
                 <th className="w-[11%] border-b border-[#D8E7E8] px-4 py-3">Global</th>
                 <th className="w-[10%] border-b border-[#D8E7E8] px-4 py-3">更新时间</th>
