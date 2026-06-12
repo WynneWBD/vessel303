@@ -996,6 +996,276 @@ function buildVisualPriorityItems(
     .slice(0, 6)
 }
 
+type VisualReleaseLedgerTone = 'danger' | 'warning' | 'review' | 'safe'
+
+type VisualReleaseLedgerRow = {
+  id: string
+  pageModule?: PageModuleRow
+  page: string
+  module: string
+  stage: string
+  signal: string
+  detail: string
+  counters: string
+  tone: VisualReleaseLedgerTone
+  score: number
+}
+
+function visualReleaseLedgerToneClass(tone: VisualReleaseLedgerTone) {
+  if (tone === 'danger') return 'border-l-[#B54318] bg-[#FFF7F0]'
+  if (tone === 'warning') return 'border-l-[#E36F2C] bg-[#FFF7F0]'
+  if (tone === 'safe') return 'border-l-emerald-500 bg-emerald-50/60'
+  return 'border-l-[#1889B6] bg-[#F4FBFC]'
+}
+
+function visualReleaseLedgerBadgeClass(tone: VisualReleaseLedgerTone) {
+  if (tone === 'danger') return 'bg-[#FDE9DF] text-[#B54318]'
+  if (tone === 'warning') return 'bg-[#FFF2E7] text-[#C85F24]'
+  if (tone === 'safe') return 'bg-emerald-50 text-emerald-700'
+  return 'bg-[#EAF6F8] text-[#1889B6]'
+}
+
+function visualReleaseLedgerToneLabel(tone: VisualReleaseLedgerTone) {
+  if (tone === 'danger') return '优先'
+  if (tone === 'warning') return '复核'
+  if (tone === 'safe') return '已闭合'
+  return '观察'
+}
+
+function buildVisualReleaseLedgerRows({
+  pageModules,
+  dirtyIds,
+  locatedModules,
+  frameLoaded,
+  currentPageKey,
+}: {
+  pageModules: PageModuleRow[]
+  dirtyIds: Set<string>
+  locatedModules: Record<string, boolean>
+  frameLoaded: boolean
+  currentPageKey: PageKey
+}): VisualReleaseLedgerRow[] {
+  const rows = pageModules
+    .map((pageModule) => {
+      const id = moduleId(pageModule)
+      const issues = buildPreflightIssues(pageModule)
+      const dangerIssues = issues.filter((issue) => issue.severity === 'danger').length
+      const warningIssues = issues.filter((issue) => issue.severity === 'warning').length
+      const dirty = dirtyIds.has(id)
+      const hasDraft = pageModule.has_draft === true
+      const hidden = !pageModule.is_visible
+      const missingPreview = frameLoaded && pageModule.page_key === currentPageKey && locatedModules[id] !== true
+      const highImpactChanges = buildModuleChanges(pageModule, pageModule.live_state).filter(
+        (change) => change.severity === 'high',
+      ).length
+
+      let tone: VisualReleaseLedgerTone = 'safe'
+      let stage = '常规巡检'
+      let signal = '无待发布动作'
+      let detail = '当前模块没有未保存修改、已保存草稿或明显发布检查提醒。'
+      const counters = `${issues.length} 检查 · ${highImpactChanges} 高影响 · ${hasDraft ? '有草稿' : '无草稿'}`
+      const score =
+        (dirty ? 130 : 0) +
+        (hasDraft ? 80 : 0) +
+        dangerIssues * 36 +
+        warningIssues * 18 +
+        highImpactChanges * 14 +
+        (missingPreview ? 22 : 0) +
+        (hidden ? 12 : 0)
+
+      if (dirty) {
+        tone = 'danger'
+        stage = '未保存修改'
+        signal = '先保存或撤销'
+        detail = '当前编辑器内修改还没有进入草稿，离开页面可能丢失；发布前必须先保存或撤销。'
+      } else if (hasDraft && dangerIssues > 0) {
+        tone = 'danger'
+        stage = '草稿发布风险'
+        signal = `${dangerIssues} 个阻断提醒`
+        detail = issues.find((issue) => issue.severity === 'danger')?.detail ?? '草稿含高风险检查项，发布前先处理字段或素材。'
+      } else if (hasDraft && highImpactChanges > 0) {
+        tone = 'warning'
+        stage = '高影响草稿'
+        signal = `${highImpactChanges} 个高影响变更`
+        detail = '草稿涉及显示状态、图片、视频、链接或新增条目，发布前需要预览确认。'
+      } else if (hasDraft) {
+        tone = 'review'
+        stage = '待发布草稿'
+        signal = '复核后发布'
+        detail = '已有保存草稿但尚未发布，先看预览和变更摘要，再决定发布或丢弃。'
+      } else if (dangerIssues > 0) {
+        tone = 'danger'
+        stage = '发布检查'
+        signal = `${dangerIssues} 个阻断提醒`
+        detail = issues.find((issue) => issue.severity === 'danger')?.detail ?? '当前模块存在发布前高风险提醒。'
+      } else if (warningIssues > 0) {
+        tone = 'warning'
+        stage = '内容复核'
+        signal = `${warningIssues} 个提醒`
+        detail = issues.find((issue) => issue.severity === 'warning')?.detail ?? '当前模块存在发布前复核提醒。'
+      } else if (missingPreview) {
+        tone = 'warning'
+        stage = '预览定位'
+        signal = '未定位到 DOM'
+        detail = '当前预览 iframe 中没有找到模块标记，需确认前台模板是否接入该模块。'
+      } else if (hidden) {
+        tone = 'review'
+        stage = '隐藏复核'
+        signal = '模块已隐藏'
+        detail = '当前模块不显示在前台，确认这符合本轮页面运营计划。'
+      }
+
+      return {
+        id,
+        pageModule,
+        page: pageLabel(pageModule.page_key),
+        module: readableModuleTitle(pageModule),
+        stage,
+        signal,
+        detail,
+        counters,
+        tone,
+        score,
+      }
+    })
+    .filter((row) => row.score > 0)
+    .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id))
+    .slice(0, 10)
+
+  if (rows.length > 0) return rows
+
+  return [
+    {
+      id: 'release-ledger-safe',
+      page: 'Home / About',
+      module: '全部受控模块',
+      stage: '发布复核',
+      signal: '当前无待处理',
+      detail: '当前没有未保存修改、已保存草稿、发布检查提醒、隐藏复核或预览定位风险。',
+      counters: '0 检查 · 0 高影响 · 无草稿',
+      tone: 'safe',
+      score: 0,
+    },
+  ]
+}
+
+function VisualReleaseLedger({
+  rows,
+  onSelectModule,
+}: {
+  rows: VisualReleaseLedgerRow[]
+  onSelectModule: (pageModule: PageModuleRow) => void
+}) {
+  const priorityCount = rows.filter((row) => row.tone === 'danger').length
+  const reviewCount = rows.filter((row) => row.tone === 'warning' || row.tone === 'review').length
+  const hasActionableRows = rows.some((row) => row.pageModule)
+
+  return (
+    <div className="mt-4 rounded-md border border-[#D8E7E8] bg-white p-3">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-sm font-bold text-[#1E2C31]">发布复核台账</p>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">
+            按未保存、草稿、发布检查、预览定位和隐藏状态生成处理入口，先处理优先项再发布。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full bg-[#FDE9DF] px-2 py-1 text-xs font-semibold text-[#B54318]">
+            优先 {priorityCount}
+          </span>
+          <span className="rounded-full bg-[#EAF6F8] px-2 py-1 text-xs font-semibold text-[#1889B6]">
+            复核 {reviewCount}
+          </span>
+          <span className="rounded-full bg-[#F7FAFA] px-2 py-1 text-xs font-semibold text-[#61767D]">
+            共 {rows.length} 项
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-3 hidden overflow-x-auto lg:block">
+        <table className="w-full min-w-[920px] text-sm">
+          <thead>
+            <tr className="border-b border-[#E6EEEE] text-xs text-[#61767D]">
+              <th className="py-2 pr-3 text-left font-semibold">阶段</th>
+              <th className="py-2 pr-3 text-left font-semibold">模块</th>
+              <th className="py-2 pr-3 text-left font-semibold">处理信号</th>
+              <th className="py-2 pr-3 text-left font-semibold">复核说明</th>
+              <th className="py-2 pr-3 text-left font-semibold">计数</th>
+              <th className="py-2 text-left font-semibold">入口</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.id} className="border-b border-[#E6EEEE] last:border-0">
+                <td className="py-3 pr-3 align-top">
+                  <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${visualReleaseLedgerBadgeClass(row.tone)}`}>
+                    {visualReleaseLedgerToneLabel(row.tone)}
+                  </span>
+                  <p className="mt-1 text-xs text-[#61767D]">{row.stage}</p>
+                </td>
+                <td className="py-3 pr-3 align-top">
+                  <p className="font-semibold text-[#1E2C31]">{row.module}</p>
+                  <p className="mt-1 text-xs text-[#8A9EA4]">{row.page}</p>
+                </td>
+                <td className="py-3 pr-3 align-top text-[#1E2C31]">{row.signal}</td>
+                <td className="max-w-[320px] py-3 pr-3 align-top text-xs leading-5 text-[#61767D]">{row.detail}</td>
+                <td className="py-3 pr-3 align-top text-xs text-[#61767D]">{row.counters}</td>
+                <td className="py-3 align-top">
+                  {row.pageModule ? (
+                    <button
+                      type="button"
+                      onClick={() => onSelectModule(row.pageModule as PageModuleRow)}
+                      className="inline-flex min-h-8 items-center rounded-md border border-[#1889B6] bg-[#1889B6] px-3 text-xs font-semibold text-white transition hover:bg-[#0F6F95]"
+                    >
+                      进入模块
+                    </button>
+                  ) : (
+                    <span className="text-xs text-[#8A9EA4]">无需处理</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-3 grid grid-cols-1 gap-2 lg:hidden">
+        {rows.map((row) => (
+          <div key={row.id} className={`rounded-md border border-l-4 border-[#D8E7E8] p-3 ${visualReleaseLedgerToneClass(row.tone)}`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-[#1E2C31]">{row.module}</p>
+                <p className="mt-1 text-xs text-[#61767D]">{row.page} · {row.stage}</p>
+              </div>
+              <span className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${visualReleaseLedgerBadgeClass(row.tone)}`}>
+                {visualReleaseLedgerToneLabel(row.tone)}
+              </span>
+            </div>
+            <p className="mt-2 text-xs font-semibold text-[#1E2C31]">{row.signal}</p>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">{row.detail}</p>
+            <p className="mt-2 text-[11px] text-[#8A9EA4]">{row.counters}</p>
+            {row.pageModule ? (
+              <button
+                type="button"
+                onClick={() => onSelectModule(row.pageModule as PageModuleRow)}
+                className="mt-3 inline-flex min-h-8 items-center rounded-md border border-[#1889B6] bg-[#1889B6] px-3 text-xs font-semibold text-white transition hover:bg-[#0F6F95]"
+              >
+                进入模块
+              </button>
+            ) : null}
+          </div>
+        ))}
+      </div>
+
+      {!hasActionableRows ? (
+        <p className="mt-3 rounded-md bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-700">
+          当前台账没有需要下钻的模块。发布前仍建议按 05 流程做前台预览和线上 smoke。
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
 function VisualMatrixCell({
   label,
   value,
@@ -1051,6 +1321,13 @@ function VisualOperationsMatrix({
   const currentLocated = countLocatedModules(currentModules, locatedModules, frameLoaded)
   const totalLocated = countLocatedModules(allModules, locatedModules, frameLoaded)
   const priorityItems = buildVisualPriorityItems(allModules, dirtyIds, locatedModules, frameLoaded)
+  const releaseLedgerRows = buildVisualReleaseLedgerRows({
+    pageModules: allModules,
+    dirtyIds,
+    locatedModules,
+    frameLoaded,
+    currentPageKey: currentPage.key,
+  })
   const highImpactDrafts = allModules.filter((pageModule) =>
     pageModule.has_draft && buildModuleChanges(pageModule, pageModule.live_state).some((change) => change.severity === 'high'),
   ).length
@@ -1133,6 +1410,8 @@ function VisualOperationsMatrix({
           tone={frameLoaded && totalLocated.missing === 0 ? 'green' : 'orange'}
         />
       </div>
+
+      <VisualReleaseLedger rows={releaseLedgerRows} onSelectModule={onSelectModule} />
 
       <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="rounded-md border border-[#D8E7E8] bg-white p-3">
