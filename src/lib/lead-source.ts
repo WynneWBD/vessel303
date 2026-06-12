@@ -57,6 +57,20 @@ function part(raw: string, index: number) {
   return raw.split(':')[index]?.trim() || ''
 }
 
+const PRODUCT_SOURCE_STAGE_LABELS: Record<string, string> = {
+  catalog_card_cta: '产品卡片咨询入口',
+  inquiry_form: '产品详情表单',
+  cta_click: '产品详情 CTA',
+}
+
+function productLeadSourceLabel(raw: string) {
+  const id = part(raw, 1)
+  const stage = part(raw, 2)
+  const stageLabel = PRODUCT_SOURCE_STAGE_LABELS[stage] ?? '产品详情询盘'
+
+  return id ? `${stageLabel}: ${id}` : stageLabel
+}
+
 export function getLeadSourceType(source: string | null | undefined): LeadSourceType {
   const raw = cleanSource(source)
   if (raw.startsWith('product_detail:')) return 'product'
@@ -86,7 +100,7 @@ export function describeLeadSource(source: string | null | undefined): LeadSourc
       return {
         type,
         typeLabel,
-        label: id ? `产品详情询盘: ${id}` : '产品详情询盘',
+        label: productLeadSourceLabel(raw),
         href: id ? `/products/${id}` : '/products',
         raw,
       }
