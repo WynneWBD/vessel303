@@ -282,6 +282,192 @@ function buildContentSourcePriority(contracts: GovernanceContractStatus[]) {
     .slice(0, 6)
 }
 
+type ContentReleaseLedgerTone = 'danger' | 'warning' | 'safe' | 'protected'
+
+type ContentReleaseLedgerRow = {
+  contract: GovernanceContractStatus
+  tone: ContentReleaseLedgerTone
+  stage: string
+  signal: string
+  detail: string
+  metrics: string
+  score: number
+}
+
+function releaseLedgerTone(contract: GovernanceContractStatus): ContentReleaseLedgerTone {
+  if (contract.issueLevel === 'protected') return 'protected'
+  if (contract.issueLevel === 'warning') return 'danger'
+  if (contract.issueLevel === 'notice') return 'warning'
+  return 'safe'
+}
+
+function releaseLedgerToneClass(tone: ContentReleaseLedgerTone): string {
+  if (tone === 'danger') return 'bg-[#FDE9DF] text-[#B54318]'
+  if (tone === 'warning') return 'bg-[#FFF2E7] text-[#C85F24]'
+  if (tone === 'protected') return 'bg-[#F5F2ED] text-[#6B625B]'
+  return 'bg-emerald-50 text-emerald-700'
+}
+
+function releaseLedgerStage(contract: GovernanceContractStatus): string {
+  if (contract.issueLevel === 'protected') return '专项边界'
+  if (contract.issueLevel === 'warning') return '先补内容'
+  if (contract.issueLevel === 'notice') return '运营复核'
+  if (contract.metrics.draft + contract.metrics.draftModules > 0) return '草稿巡检'
+  return '常规巡检'
+}
+
+function releaseLedgerSignal(contract: GovernanceContractStatus): string {
+  if (contract.issueLevel === 'protected') return contract.protectedReason ?? '不在本页修改'
+  if (contract.issues.length > 0) return contract.issues[0]
+  if (contract.metrics.draft + contract.metrics.draftModules > 0) return '存在草稿或模块草稿'
+  return '当前无阻断项'
+}
+
+function buildContentReleaseLedgerRows(contracts: GovernanceContractStatus[]): ContentReleaseLedgerRow[] {
+  return [...contracts]
+    .map((contract) => {
+      const draftCount = contract.metrics.draft + contract.metrics.draftModules
+      const hiddenCount = contract.metrics.hidden + contract.metrics.hiddenModules
+      const contentWarnings = contract.metrics.contentWarnings.length
+      const score =
+        contractPriorityScore(contract) +
+        contract.issues.length * 10 +
+        contentWarnings * 5 +
+        contract.metrics.requiredMissing.length * 6 +
+        draftCount * 3 +
+        hiddenCount
+
+      return {
+        contract,
+        tone: releaseLedgerTone(contract),
+        stage: releaseLedgerStage(contract),
+        signal: releaseLedgerSignal(contract),
+        detail: contract.note,
+        metrics: `published ${contract.metrics.published} · 草稿 ${draftCount} · hidden ${hiddenCount} · 提示 ${contentWarnings}`,
+        score,
+      }
+    })
+    .sort((a, b) => b.score - a.score || a.contract.group.localeCompare(b.contract.group) || a.contract.title.localeCompare(b.contract.title))
+}
+
+function ContentReleaseLedger({ contracts }: { contracts: GovernanceContractStatus[] }) {
+  const rows = buildContentReleaseLedgerRows(contracts)
+  const dangerCount = rows.filter((row) => row.tone === 'danger').length
+  const reviewCount = rows.filter((row) => row.tone === 'warning').length
+  const protectedCount = rows.filter((row) => row.tone === 'protected').length
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-bold text-[#1E2C31]">
+            <ListChecks size={16} className="text-[#1889B6]" />
+            <span>页面发布治理台账</span>
+          </div>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            按页面合同逐行看来源、状态、草稿、隐藏、内容提示和处理入口；先处理 warning / notice，再进入前台复验。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full bg-[#FDE9DF] px-2.5 py-1 text-xs font-semibold text-[#B54318]">优先 {dangerCount}</span>
+          <span className="rounded-full bg-[#EAF6F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">复核 {reviewCount}</span>
+          <span className="rounded-full bg-[#F5F2ED] px-2.5 py-1 text-xs font-semibold text-[#6B625B]">受保护 {protectedCount}</span>
+        </div>
+      </div>
+
+      <div className="mt-4 hidden overflow-x-auto xl:block">
+        <table className="w-full min-w-[1080px] text-sm">
+          <thead>
+            <tr className="border-b border-[#E6EEEE] text-xs text-[#61767D]">
+              <th className="py-2 pr-4 text-left font-semibold">页面合同</th>
+              <th className="py-2 pr-4 text-left font-semibold">来源 / owner</th>
+              <th className="py-2 pr-4 text-left font-semibold">阶段</th>
+              <th className="py-2 pr-4 text-left font-semibold">处理信号</th>
+              <th className="py-2 pr-4 text-left font-semibold">指标</th>
+              <th className="py-2 pr-4 text-left font-semibold">最近更新</th>
+              <th className="py-2 text-left font-semibold">入口</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(({ contract, tone, stage, signal, metrics }) => (
+              <tr key={contract.key} className="border-b border-[#E6EEEE] last:border-0">
+                <td className="py-3 pr-4 align-top">
+                  <div className="flex items-start gap-2">
+                    {issueIcon(contract.issueLevel)}
+                    <div className="min-w-0">
+                      <p className="font-bold text-[#1E2C31]">{contract.title}</p>
+                      <p className="mt-1 max-w-[220px] truncate text-xs text-[#8A9EA4]">{contract.paths.join(' / ')}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="py-3 pr-4 align-top">
+                  <span className={`rounded-full px-2 py-1 text-xs font-semibold ${sourceClassName(contract.sourceType)}`}>
+                    {SOURCE_LABEL[contract.sourceType]}
+                  </span>
+                  <p className="mt-1 max-w-[240px] text-xs leading-5 text-[#61767D]">{contract.owner}</p>
+                </td>
+                <td className="py-3 pr-4 align-top">
+                  <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${releaseLedgerToneClass(tone)}`}>
+                    {stage}
+                  </span>
+                  <p className="mt-1 text-xs text-[#8A9EA4]">{levelLabel(contract.issueLevel)}</p>
+                </td>
+                <td className="max-w-[320px] py-3 pr-4 align-top text-xs leading-5 text-[#61767D]">
+                  <span className="font-semibold text-[#1E2C31]">{signal}</span>
+                  <span className="mt-1 block">{contract.note}</span>
+                </td>
+                <td className="py-3 pr-4 align-top text-xs leading-5 text-[#61767D]">{metrics}</td>
+                <td className="py-3 pr-4 align-top text-xs text-[#61767D]">{formatDateTime(contract.metrics.latestUpdatedAt)}</td>
+                <td className="py-3 align-top">
+                  <div className="flex flex-wrap gap-2">
+                    {contract.adminHref ? (
+                      <Link href={contract.adminHref} className="inline-flex h-8 items-center gap-1 rounded-md bg-[#1889B6] px-2.5 text-xs font-semibold text-white transition hover:bg-[#0F6F95]">
+                        后台 <ArrowRight size={12} />
+                      </Link>
+                    ) : null}
+                    <Link href={contract.previewHref} className="inline-flex h-8 items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]">
+                      前台 <Eye size={12} />
+                    </Link>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 xl:hidden">
+        {rows.map(({ contract, tone, stage, signal, metrics }) => (
+          <article key={contract.key} className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-[#1E2C31]">{contract.title}</p>
+                <p className="mt-1 text-xs text-[#61767D]">{SOURCE_LABEL[contract.sourceType]} · {contract.owner}</p>
+              </div>
+              <span className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${releaseLedgerToneClass(tone)}`}>
+                {stage}
+              </span>
+            </div>
+            <p className="mt-3 text-xs font-semibold text-[#1E2C31]">{signal}</p>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">{contract.note}</p>
+            <p className="mt-2 text-[11px] text-[#8A9EA4]">{metrics} · 最近 {formatDateTime(contract.metrics.latestUpdatedAt)}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {contract.adminHref ? (
+                <Link href={contract.adminHref} className="inline-flex h-8 items-center gap-1 rounded-md bg-[#1889B6] px-2.5 text-xs font-semibold text-white">
+                  后台 <ArrowRight size={12} />
+                </Link>
+              ) : null}
+              <Link href={contract.previewHref} className="inline-flex h-8 items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#1E2C31]">
+                前台 <Eye size={12} />
+              </Link>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function ContentSourceOperationsMatrix({ contracts }: { contracts: GovernanceContractStatus[] }) {
   const sourceRows = buildSourceOperationsRows(contracts)
   const priorityRows = buildContentSourcePriority(contracts)
@@ -632,6 +818,7 @@ export default async function AdminSitePagesPage() {
       </section>
 
       <GuardrailPanel />
+      <ContentReleaseLedger contracts={contracts} />
       <ContentSourceOperationsMatrix contracts={contracts} />
       <ContractMatrix contracts={contracts} />
     </AdminSectionShell>
