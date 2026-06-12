@@ -3,7 +3,19 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react';
+import {
+  ArrowRight,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  ClipboardList,
+  Layers3,
+  MessageSquare,
+  PackageCheck,
+  Ruler,
+  type LucideIcon,
+} from 'lucide-react';
 import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
@@ -29,6 +41,12 @@ interface Props {
 type DetailModule = NonNullable<CatalogProduct['detail_modules']>[number];
 type DetailModuleItem = NonNullable<DetailModule['items_cn']>[number];
 type SpecItem = NonNullable<CatalogProduct['specs_en']>[number];
+type DecisionMetric = {
+  label: string;
+  value: string;
+  detail?: string;
+  Icon: LucideIcon;
+};
 
 const TERM_FIELDS: Array<{
   zh: keyof CatalogCommercialTerms;
@@ -108,6 +126,182 @@ function localizedProductName(product: CatalogProduct, lang: 'en' | 'zh') {
 
 function localizedSpecRows(product: CatalogProduct, lang: 'en' | 'zh') {
   return (lang === 'en' ? product.specs_en : product.specs_cn) ?? [];
+}
+
+function fallbackLabel(lang: 'en' | 'zh', en: string, zh: string) {
+  return lang === 'en' ? en : zh;
+}
+
+function productTypeLabel(productType: CatalogProduct['productType'], lang: 'en' | 'zh') {
+  const labels: Record<CatalogProduct['productType'], { en: string; zh: string }> = {
+    compact: { en: 'Compact model', zh: '紧凑型' },
+    standard: { en: 'Standard model', zh: '标准型' },
+    luxury: { en: 'Flagship model', zh: '旗舰型' },
+  };
+  return lang === 'en' ? labels[productType].en : labels[productType].zh;
+}
+
+function productAreaLabel(product: CatalogProduct) {
+  return text(product.size) || (Number(product.area) > 0 ? `${product.area}㎡` : '');
+}
+
+function usableSpecs(specs: SpecItem[]) {
+  return specs.filter((item) => text(item.label) && text(item.value));
+}
+
+function ProductDecisionSummary({
+  product,
+  lang,
+  specs,
+  features,
+  termRows,
+  mediaCount,
+  price,
+  specsTitle,
+  inquiryTitle,
+  inquiryCta,
+}: {
+  product: CatalogProduct;
+  lang: 'en' | 'zh';
+  specs: SpecItem[];
+  features: string[];
+  termRows: string[];
+  mediaCount: number;
+  price: string;
+  specsTitle: string;
+  inquiryTitle: string;
+  inquiryCta: string;
+}) {
+  const specPreview = usableSpecs(specs).slice(0, 6);
+  const termPreview = termRows.slice(0, 3);
+  const metricRows: DecisionMetric[] = [
+    {
+      label: fallbackLabel(lang, 'Floor area', '面积'),
+      value: productAreaLabel(product),
+      detail: fallbackLabel(lang, 'Comparable model scale', '用于快速判断型号尺度'),
+      Icon: Ruler,
+    },
+    {
+      label: fallbackLabel(lang, 'Model system', '产品体系'),
+      value: [product.productSeries, product.gen].filter(Boolean).join(' '),
+      detail: fallbackLabel(lang, 'Series and generation', '系列与代际'),
+      Icon: Layers3,
+    },
+    {
+      label: fallbackLabel(lang, 'Configuration tier', '配置层级'),
+      value: productTypeLabel(product.productType, lang),
+      detail: fallbackLabel(lang, 'Catalog classification', '来自产品目录分类'),
+      Icon: PackageCheck,
+    },
+    {
+      label: fallbackLabel(lang, 'Media depth', '素材深度'),
+      value: mediaCount > 1
+        ? fallbackLabel(lang, `${mediaCount} images`, `${mediaCount} 张图片`)
+        : fallbackLabel(lang, 'Primary image', '主图'),
+      detail: fallbackLabel(lang, 'Gallery available for inspection', '用于首屏和图库查看'),
+      Icon: ClipboardList,
+    },
+  ].filter((item) => text(item.value));
+  const hasCommercialPanel = text(price) || termPreview.length > 0 || text(inquiryTitle);
+  if (metricRows.length === 0 && specPreview.length === 0 && features.length === 0 && !hasCommercialPanel) return null;
+
+  return (
+    <section className="border-b border-[#DADDE1] bg-white">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.9fr)_300px] lg:px-8">
+        <div className="border border-[#DADDE1] bg-[#F7F8F8] p-5">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#147C94]">
+            {fallbackLabel(lang, 'Product Snapshot', '产品速览')}
+          </p>
+          <h2 className="mt-2 text-2xl font-black leading-tight text-[#1F2A31]">
+            {fallbackLabel(lang, 'Evaluate the model before scrolling', '先判断型号，再进入详情')}
+          </h2>
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {metricRows.map((item) => (
+              <div key={item.label} className="min-h-[112px] border border-[#DADDE1] bg-white p-4">
+                <div className="flex items-center gap-2 text-[#147C94]">
+                  <item.Icon size={16} />
+                  <p className="text-[11px] font-black uppercase tracking-[0.14em]">{item.label}</p>
+                </div>
+                <p className="mt-3 text-lg font-black leading-tight text-[#1F2A31] break-words">{item.value}</p>
+                {item.detail ? <p className="mt-2 text-xs leading-5 text-[#65707A]">{item.detail}</p> : null}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="border border-[#DADDE1] bg-white p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#65707A]">
+                {fallbackLabel(lang, 'Technical check', '技术参数')}
+              </p>
+              <h2 className="mt-2 text-xl font-black text-[#1F2A31]">{specsTitle}</h2>
+            </div>
+            {specPreview.length > 0 ? (
+              <a
+                href="#product-specifications"
+                className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-sm border border-[#147C94]/35 px-3 text-xs font-black uppercase tracking-[0.12em] text-[#147C94] transition hover:border-[#147C94] hover:bg-[#F2F8F8]"
+              >
+                {fallbackLabel(lang, 'View all', '查看全部')}
+                <ArrowRight size={14} />
+              </a>
+            ) : null}
+          </div>
+          {specPreview.length > 0 ? (
+            <div className="mt-5 grid grid-cols-1 border-t border-[#DADDE1] sm:grid-cols-2">
+              {specPreview.map((item, index) => (
+                <div key={`${item.label}-${item.value}-${index}`} className="border-b border-[#DADDE1] px-3 py-3 sm:border-r">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#65707A]">{item.label}</p>
+                  <p className="mt-1 text-sm font-black leading-6 text-[#1F2A31]">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-5 text-sm leading-6 text-[#65707A]">
+              {fallbackLabel(lang, 'Technical parameters will appear here after the CMS fields are completed.', '补齐 CMS 技术参数后，这里会展示关键规格。')}
+            </p>
+          )}
+          {features.length > 0 ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {features.slice(0, 4).map((feature, index) => (
+                <span key={`${feature}-${index}`} className="rounded-full bg-[#EAF6F8] px-3 py-1 text-xs font-semibold text-[#147C94]">
+                  {feature}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        {hasCommercialPanel ? (
+          <aside className="border border-[#1F2A31] bg-[#1F2A31] p-5 text-white">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#8FD5E1]">
+              {fallbackLabel(lang, 'Inquiry path', '咨询入口')}
+            </p>
+            <h2 className="mt-2 text-xl font-black leading-tight text-white">{inquiryTitle}</h2>
+            {price ? <p className="mt-4 border-t border-white/15 pt-4 text-lg font-black text-[#F0B083]">{price}</p> : null}
+            {termPreview.length > 0 ? (
+              <div className="mt-4 space-y-2">
+                {termPreview.map((term, index) => (
+                  <p key={`${term}-${index}`} className="rounded-sm bg-white/8 px-3 py-2 text-xs font-semibold leading-5 text-white/85">
+                    {term}
+                  </p>
+                ))}
+              </div>
+            ) : null}
+            {inquiryCta ? (
+              <a
+                href="#product-inquiry"
+                className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-sm bg-[#E36F2C] px-4 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[#C85A1F]"
+              >
+                <MessageSquare size={15} />
+                {inquiryCta}
+              </a>
+            ) : null}
+          </aside>
+        ) : null}
+      </div>
+    </section>
+  );
 }
 
 function DetailModuleBlock({
@@ -412,20 +606,28 @@ export default function CatalogProductDetailContent({
   const modules = moduleMap(pageModules);
   const uiLabels = modules.get('ui-labels') ?? null;
   const inquiryModule = modules.get('inquiry-form') ?? null;
-  const priceEmptyLabel = itemLabel(itemById(uiLabels, 'price-empty'), lang);
+  const priceEmptyLabel = itemLabel(itemById(uiLabels, 'price-empty'), lang)
+    || fallbackLabel(lang, 'Price on request', '价格请咨询');
   const price = (lang === 'en' ? product.price_display_en : product.price_display_zh)
     || product.price_display_en
     || product.price_display_zh
     || priceEmptyLabel;
   const imageLabelPrefix = itemLabel(itemById(uiLabels, 'image-label-prefix'), lang);
-  const specsTitle = itemLabel(itemById(uiLabels, 'specs-title'), lang);
-  const descriptionTitle = itemLabel(itemById(uiLabels, 'description-title'), lang);
-  const downloadsTitle = itemLabel(itemById(uiLabels, 'downloads-title'), lang);
-  const keywordsTitle = itemLabel(itemById(uiLabels, 'keywords-title'), lang);
-  const relatedTitle = itemLabel(itemById(uiLabels, 'related-title'), lang);
-  const galleryTitle = itemLabel(itemById(uiLabels, 'gallery-title'), lang);
+  const specsTitle = itemLabel(itemById(uiLabels, 'specs-title'), lang)
+    || fallbackLabel(lang, 'Technical Parameters', '技术参数');
+  const descriptionTitle = itemLabel(itemById(uiLabels, 'description-title'), lang)
+    || fallbackLabel(lang, 'Model Overview', '型号概览');
+  const downloadsTitle = itemLabel(itemById(uiLabels, 'downloads-title'), lang)
+    || fallbackLabel(lang, 'Buyer Resources', '买家资料');
+  const keywordsTitle = itemLabel(itemById(uiLabels, 'keywords-title'), lang)
+    || fallbackLabel(lang, 'Search Keywords', '搜索关键词');
+  const relatedTitle = itemLabel(itemById(uiLabels, 'related-title'), lang)
+    || fallbackLabel(lang, 'More Models', '更多型号');
+  const galleryTitle = itemLabel(itemById(uiLabels, 'gallery-title'), lang)
+    || fallbackLabel(lang, 'Product Gallery', '产品图库');
   const heroInquiryCta = itemLabel(itemById(uiLabels, 'hero-inquiry-cta'), lang);
-  const allProductsLabel = itemLabel(itemById(uiLabels, 'all-products-label'), lang);
+  const allProductsLabel = itemLabel(itemById(uiLabels, 'all-products-label'), lang)
+    || fallbackLabel(lang, 'All Products', '全部产品');
   const inquiryLabels: FormLabels = {
     eyebrow: itemLabel(itemById(inquiryModule, 'form-eyebrow'), lang),
     name: itemLabel(itemById(inquiryModule, 'form-name'), lang),
@@ -671,6 +873,19 @@ export default function CatalogProductDetailContent({
           </div>
         </div>
       </section>
+
+      <ProductDecisionSummary
+        product={product}
+        lang={lang}
+        specs={specs}
+        features={features}
+        termRows={termRows}
+        mediaCount={media.length}
+        price={price}
+        specsTitle={specsTitle}
+        inquiryTitle={inquiryTitle}
+        inquiryCta={heroInquiryCta}
+      />
 
       {detailAnchors.length > 0 ? (
         <nav className="sticky top-16 z-20 border-b border-[#DADDE1] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
