@@ -695,6 +695,32 @@ function CaseInquiryConversionPanel({
   summary: CaseInquiryHealth
   casePathMetric: AnalyticsConversionMetric
 }) {
+  const closureLinks = [
+    {
+      label: 'B224 路径分析',
+      detail: '回看案例访问、动作、表单和弱案例队列',
+      href: '/admin/status/traffic#case-inquiry-path',
+      tone: casePathMetric.views > 0 ? 'blue' as const : 'gray' as const,
+    },
+    {
+      label: 'B223 线索承接',
+      detail: '看案例路径与 leads 漏斗质量桥接',
+      href: '/admin/status/leads#case-lead-path-bridge',
+      tone: casePathMetric.leads > 0 ? 'green' as const : casePathMetric.views > 0 ? 'orange' as const : 'gray' as const,
+    },
+    {
+      label: 'B222 案例线索',
+      detail: '进入 source_type=case 的线索队列',
+      href: '/admin/customers/leads?source_type=case',
+      tone: casePathMetric.leads > 0 ? 'green' as const : 'blue' as const,
+    },
+    {
+      label: '案例表单线索',
+      detail: '只看 case:inquiry_form 阶段',
+      href: '/admin/customers/leads?source_type=case&source_stage=case%3Ainquiry_form',
+      tone: casePathMetric.formSubmits > 0 ? 'green' as const : 'gray' as const,
+    },
+  ]
   const cards = [
     {
       label: '询盘可承接',
@@ -757,6 +783,13 @@ function CaseInquiryConversionPanel({
             <ArrowRight size={13} />
           </Link>
           <Link
+            href="/admin/status/leads#case-lead-path-bridge"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            线索承接
+            <ArrowRight size={13} />
+          </Link>
+          <Link
             href="/admin/content/projects"
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
           >
@@ -770,8 +803,33 @@ function CaseInquiryConversionPanel({
           <CaseInquiryConversionCard key={card.label} card={card} />
         ))}
       </div>
+      <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:grid-cols-4">
+        {closureLinks.map((item) => (
+          <Link
+            key={item.label}
+            href={item.href}
+            className="group rounded-md border border-[#D8E7E8] bg-white px-3 py-3 transition hover:border-[#1889B6] hover:bg-[#F7FAFA]"
+          >
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${caseInquiryToneClass(item.tone)}`}>
+              {item.label}
+            </span>
+            <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+            <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
+              进入闭环
+              <ArrowRight size={12} />
+            </span>
+          </Link>
+        ))}
+      </div>
     </section>
   )
+}
+
+function caseInquiryToneClass(tone: 'green' | 'orange' | 'gray' | 'blue') {
+  if (tone === 'green') return 'bg-emerald-50 text-emerald-700'
+  if (tone === 'orange') return 'bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'blue') return 'bg-[#EAF6F8] text-[#1889B6]'
+  return 'bg-[#F0F2F2] text-[#61767D]'
 }
 
 function CaseInquiryConversionCard({
