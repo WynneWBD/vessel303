@@ -189,6 +189,15 @@ export function formatBytes(n: number): string {
   return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`
 }
 
+function getSiteFileStatus(): Pick<SiteMetrics, 'sitemapOk' | 'robotsOk'> {
+  const robotsOk = existsSync(join(process.cwd(), 'public', 'robots.txt'))
+  const sitemapOk =
+    existsSync(join(process.cwd(), 'public', 'sitemap.xml')) ||
+    existsSync(join(process.cwd(), 'src', 'app', 'sitemap.ts'))
+
+  return { sitemapOk, robotsOk }
+}
+
 export function sumContent(content: ContentMetrics) {
   return {
     total: content.products.total + content.projects.total + content.news.total,
@@ -542,14 +551,14 @@ export async function loadSiteMetrics(): Promise<SiteMetrics> {
     safeLoad('seo metrics', loadSeoMetrics, EMPTY_SEO),
     safeLoad('config checks', loadConfigChecks, []),
   ])
+  const siteFiles = getSiteFileStatus()
 
   return {
     pages,
     media,
     seo,
     configChecks,
-    sitemapOk: true,
-    robotsOk: true,
+    ...siteFiles,
   }
 }
 
@@ -844,8 +853,7 @@ export async function loadStatusOverview(): Promise<StatusOverview> {
       media: EMPTY_MEDIA,
       seo: EMPTY_SEO,
       configChecks: [],
-      sitemapOk: true,
-      robotsOk: true,
+      ...getSiteFileStatus(),
     }),
     safeLoad('activity items', () => loadActivityItems(8), []),
   ])

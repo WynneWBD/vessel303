@@ -28,12 +28,30 @@ type SiteHealthRow = {
   actionLabel: string
 }
 
+type SiteOperationTone = 'critical' | 'warning' | 'review' | 'restricted' | 'ready'
+
+type SiteOperationRow = {
+  key: string
+  priority: string
+  stage: string
+  title: string
+  owner: string
+  value: string
+  evidence: string
+  impact: string
+  href: string
+  actionLabel: string
+  tone: SiteOperationTone
+  Icon: typeof STATUS_ICONS.AlertCircle
+}
+
 export default async function AdminStatusSitePage() {
   const { role, email } = await getStatusAccess()
   const overview = await loadStatusOverview()
   const site = overview.site
   const configIssues = site.configChecks.filter((item) => !item.ok).length
   const healthRows = buildSiteHealthRows(site, configIssues, role)
+  const operationRows = buildSiteOperationRows(site, configIssues, role)
 
   return (
     <StatusPageShell
@@ -87,6 +105,7 @@ export default async function AdminStatusSitePage() {
         </div>
 
         <section className="space-y-4">
+          <SiteOperationLedger rows={operationRows} />
           <SiteHealthMatrix rows={healthRows} />
         </section>
 
@@ -223,6 +242,219 @@ function buildSiteHealthRows(site: SiteMetrics, configIssues: number, role: Admi
       actionLabel: role === 'admin' ? '站点设置' : '查看网站',
     },
   ]
+}
+
+function siteOperationToneClassName(tone: SiteOperationTone): string {
+  if (tone === 'critical') return 'border-l-[#E36F2C] bg-[#FFF6EF]'
+  if (tone === 'warning') return 'border-l-[#1889B6] bg-[#F7FAFA]'
+  if (tone === 'review') return 'border-l-[#7C65D1] bg-[#F8F7FD]'
+  if (tone === 'restricted') return 'border-l-[#8A9EA4] bg-[#F5F2ED]'
+  return 'border-l-emerald-500 bg-emerald-50'
+}
+
+function siteOperationBadgeClassName(tone: SiteOperationTone): string {
+  if (tone === 'critical') return 'bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'warning') return 'bg-[#EAF6F8] text-[#1889B6]'
+  if (tone === 'review') return 'bg-[#F0EEFB] text-[#6B58C5]'
+  if (tone === 'restricted') return 'bg-white text-[#61767D]'
+  return 'bg-emerald-100 text-emerald-800'
+}
+
+function siteOperationLabel(tone: SiteOperationTone): string {
+  if (tone === 'critical') return '优先处理'
+  if (tone === 'warning') return '复核'
+  if (tone === 'review') return '人工复验'
+  if (tone === 'restricted') return '受限可见'
+  return '正常'
+}
+
+function buildSiteOperationRows(site: SiteMetrics, configIssues: number, role: AdminRole): SiteOperationRow[] {
+  const filesOk = site.sitemapOk && site.robotsOk
+  const pageDraftsOpen = site.pages.total > 0
+  const seoOpen = site.seo.missing > 0
+  const mediaWarn = site.media.bytes > 800 * 1024 * 1024
+  const configOpen = role === 'admin' && configIssues > 0
+
+  const rows: SiteOperationRow[] = [
+    {
+      key: 'seo-release',
+      priority: seoOpen ? 'P0' : 'P3',
+      stage: '搜索展示',
+      title: '已发布内容 SEO 缺项',
+      owner: '网站管理 / SEO',
+      value: `${formatNumber(site.seo.missing)} 缺项`,
+      evidence: `产品 ${formatNumber(site.seo.productsMissing)} / 新闻 ${formatNumber(site.seo.newsMissing)} / 案例 ${formatNumber(site.seo.projectsMissing)}。`,
+      impact: seoOpen ? '会影响搜索摘要、索引提交前抽检和外部展示质量。' : '已发布内容当前没有 SEO 或展示字段缺项。',
+      href: '/admin/site/seo',
+      actionLabel: seoOpen ? '处理 SEO' : '查看 SEO',
+      tone: seoOpen ? 'critical' : 'ready',
+      Icon: STATUS_ICONS.SearchCheck,
+    },
+    {
+      key: 'page-draft-release',
+      priority: pageDraftsOpen ? 'P1' : 'P3',
+      stage: '发布收口',
+      title: '页面模块 / 结构草稿',
+      owner: '网站管理 / 可视化编辑',
+      value: `${formatNumber(site.pages.total)} 草稿`,
+      evidence: `模块草稿 ${formatNumber(site.pages.moduleDrafts)} / 结构草稿 ${formatNumber(site.pages.structureDrafts)}。`,
+      impact: pageDraftsOpen ? '草稿未确认会造成后台编辑状态和线上页面预期不一致。' : '页面草稿已收口。',
+      href: '/admin/site/visual',
+      actionLabel: pageDraftsOpen ? '处理草稿' : '查看编辑器',
+      tone: pageDraftsOpen ? 'warning' : 'ready',
+      Icon: STATUS_ICONS.LayoutTemplate,
+    },
+    {
+      key: 'site-file-release',
+      priority: filesOk ? 'P3' : 'P0',
+      stage: '收录基础',
+      title: 'Sitemap / Robots',
+      owner: '网站管理 / SEO',
+      value: filesOk ? '正常' : '需检查',
+      evidence: `sitemap ${site.sitemapOk ? '可用' : '异常'} / robots ${site.robotsOk ? '可用' : '异常'}。`,
+      impact: filesOk ? '公开抓取边界和 sitemap 入口具备基础条件。' : '会影响搜索引擎抓取边界和 sitemap 提交。',
+      href: '/admin/site/seo',
+      actionLabel: '查看收录',
+      tone: filesOk ? 'ready' : 'critical',
+      Icon: STATUS_ICONS.Globe2,
+    },
+    {
+      key: 'media-governance',
+      priority: mediaWarn ? 'P1' : 'P3',
+      stage: '素材容量',
+      title: '媒体素材容量和上传上限',
+      owner: '网站管理 / 媒体库',
+      value: formatBytes(site.media.bytes),
+      evidence: `${formatNumber(site.media.count)} 个素材；单图上限 ${formatNumber(site.media.maxUploadMb)} MB。`,
+      impact: mediaWarn ? '媒体容量偏高，后续会影响素材管理和页面加载治理。' : '媒体容量处于当前预警线内。',
+      href: '/admin/site/media',
+      actionLabel: '管理素材',
+      tone: mediaWarn ? 'warning' : 'ready',
+      Icon: STATUS_ICONS.Package,
+    },
+    {
+      key: 'config-governance',
+      priority: role === 'admin' ? (configOpen ? 'P1' : 'P3') : 'P2',
+      stage: '基础配置',
+      title: role === 'admin' ? '发信 / 存储 / 联系入口配置' : '敏感配置详情',
+      owner: role === 'admin' ? '系统设置 / 网站信息' : '系统设置 / 权限受限',
+      value: role === 'admin' ? `${formatNumber(configIssues)} 异常` : '受限',
+      evidence:
+        role === 'admin'
+          ? `${formatNumber(site.configChecks.length)} 项配置检查；异常 ${formatNumber(configIssues)} 项。`
+          : 'operator 可查看运营统计，不展示发信、存储等敏感配置详情。',
+      impact: configOpen ? '配置异常会影响联系入口、上传或通知等运营闭环。' : '配置详情按角色边界展示。',
+      href: role === 'admin' ? '/admin/site/settings' : '/admin/site',
+      actionLabel: role === 'admin' ? '站点设置' : '查看网站',
+      tone: role === 'admin' ? (configOpen ? 'warning' : 'ready') : 'restricted',
+      Icon: STATUS_ICONS.Settings,
+    },
+    {
+      key: 'release-smoke',
+      priority: 'P2',
+      stage: '上线复验',
+      title: '公开入口 smoke',
+      owner: '数据中心 / 只读复验',
+      value: '人工',
+      evidence: '每批发布后固定复验首页、/global、/sitemap.xml、/robots.txt 和后台登录保护。',
+      impact: '本页不自动抓取外部线上状态，只把上线后复验动作纳入运营队列。',
+      href: '/global',
+      actionLabel: '复验 Global',
+      tone: 'review',
+      Icon: STATUS_ICONS.ShieldCheck,
+    },
+  ]
+
+  const order: Record<SiteOperationTone, number> = {
+    critical: 0,
+    warning: 1,
+    review: 2,
+    restricted: 3,
+    ready: 4,
+  }
+
+  return rows.sort((a, b) => order[a.tone] - order[b.tone] || a.priority.localeCompare(b.priority))
+}
+
+function SiteOperationLedger({ rows }: { rows: SiteOperationRow[] }) {
+  const openCount = rows.filter((row) => row.tone === 'critical' || row.tone === 'warning').length
+  const reviewCount = rows.filter((row) => row.tone === 'review' || row.tone === 'restricted').length
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#D8E7E8] p-5 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
+            <STATUS_ICONS.ListChecks size={15} />
+            Site Operations Ledger
+          </div>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">站点体检处理队列</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把页面草稿、SEO、站点文件、媒体、配置和上线 smoke 放进同一张运营台账，按影响优先级处理；这里只读聚合，不保存、不发布、不改 sitemap / robots。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className={`inline-flex w-fit rounded-md px-3 py-2 text-xs font-bold ${openCount > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
+            {openCount > 0 ? `${formatNumber(openCount)} 项需处理` : '无阻塞项'}
+          </span>
+          <span className="inline-flex w-fit rounded-md bg-[#F0EEFB] px-3 py-2 text-xs font-bold text-[#6B58C5]">
+            {formatNumber(reviewCount)} 项复验 / 受限
+          </span>
+        </div>
+      </div>
+
+      <div className="hidden grid-cols-[0.55fr_0.85fr_minmax(0,1.15fr)_0.8fr_minmax(0,1.65fr)_0.75fr] border-b border-[#D8E7E8] bg-[#F7FAFA] px-5 py-2 text-xs font-semibold text-[#61767D] xl:grid">
+        <span>优先级</span>
+        <span>阶段</span>
+        <span>事项</span>
+        <span>当前值</span>
+        <span>证据 / 影响</span>
+        <span>入口</span>
+      </div>
+
+      <div className="divide-y divide-[#D8E7E8]">
+        {rows.map((row) => {
+          const Icon = row.Icon
+          return (
+            <Link
+              key={row.key}
+              href={row.href}
+              className={`group grid grid-cols-1 gap-3 border-l-4 px-5 py-4 transition hover:bg-[#F7FAFA] xl:grid-cols-[0.55fr_0.85fr_minmax(0,1.15fr)_0.8fr_minmax(0,1.65fr)_0.75fr] xl:items-center ${siteOperationToneClassName(row.tone)}`}
+            >
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-bold ${siteOperationBadgeClassName(row.tone)}`}>
+                  {row.priority}
+                </span>
+                <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ${siteOperationBadgeClassName(row.tone)}`}>
+                  {siteOperationLabel(row.tone)}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white text-[#1889B6]">
+                  <Icon size={17} />
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-[#1E2C31]">{row.stage}</p>
+                  <p className="text-xs font-semibold text-[#8A9EA4]">{row.owner}</p>
+                </div>
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-[#1E2C31]">{row.title}</p>
+              </div>
+              <p className="text-lg font-bold text-[#1E2C31]">{row.value}</p>
+              <div className="space-y-1 text-xs leading-5 text-[#61767D]">
+                <p>{row.evidence}</p>
+                <p className="font-semibold text-[#1E2C31]">{row.impact}</p>
+              </div>
+              <span className="inline-flex min-h-8 w-fit items-center justify-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition group-hover:border-[#E36F2C]/50 group-hover:text-[#E36F2C]">
+                {row.actionLabel}
+              </span>
+            </Link>
+          )
+        })}
+      </div>
+    </section>
+  )
 }
 
 function SiteHealthMatrix({ rows }: { rows: SiteHealthRow[] }) {
