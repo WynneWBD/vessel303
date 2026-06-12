@@ -105,6 +105,8 @@ type ProductSummary = {
   deleted: number
 }
 
+type ProductIssueSummary = Record<Exclude<ProductIssue, ''>, number>
+
 type ProductListRow = {
   id: string
   product_series: string
@@ -205,6 +207,19 @@ const EMPTY_SUMMARY: ProductSummary = {
   deleted: 0,
 }
 
+const EMPTY_ISSUE_SUMMARY: ProductIssueSummary = {
+  media: 0,
+  content: 0,
+  category: 0,
+  attributes: 0,
+  seo: 0,
+  price: 0,
+  commercial: 0,
+  keywords: 0,
+  related: 0,
+  buyer_resources: 0,
+}
+
 const EMPTY_OPTIONS: ProductOptions = {
   series: [],
   productTypes: [],
@@ -235,7 +250,9 @@ const PRODUCT_ISSUE_BUCKETS: ProductIssueBucket[] = [
   { issue: 'category', label: '分类缺口', detail: '未绑定产品分类' },
   { issue: 'attributes', label: '属性缺口', detail: '缺少可筛选属性' },
   { issue: 'seo', label: 'SEO 缺口', detail: '标题或描述缺失' },
+  { issue: 'price', label: '价格展示', detail: '缺少中英文价格展示口径' },
   { issue: 'commercial', label: '商务条款', detail: '中英文商务条款不完整' },
+  { issue: 'keywords', label: '关键词', detail: '缺少搜索和 SEO 关键词' },
   { issue: 'related', label: '关联产品', detail: '缺少相关产品推荐' },
   { issue: 'buyer_resources', label: '买家资料', detail: '缺少下载或资源链接' },
 ]
@@ -935,6 +952,41 @@ async function getProductSummary(): Promise<ProductSummary> {
   }
 }
 
+async function getProductIssueSummary(): Promise<ProductIssueSummary> {
+  if (!(await tableExists('public.product_catalog'))) return EMPTY_ISSUE_SUMMARY
+  await ensureProductCatalogSchema()
+
+  const res = await pool.query<Record<Exclude<ProductIssue, ''>, string>>(
+    `SELECT
+       COUNT(*) FILTER (WHERE ${PRODUCT_MISSING_MEDIA_SQL_ALIASED})::text AS media,
+       COUNT(*) FILTER (WHERE ${PRODUCT_MISSING_CONTENT_SQL_ALIASED})::text AS content,
+       COUNT(*) FILTER (WHERE pc.category_id IS NULL)::text AS category,
+       COUNT(*) FILTER (WHERE ${PRODUCT_MISSING_ATTRIBUTES_SQL_ALIASED})::text AS attributes,
+       COUNT(*) FILTER (WHERE ${PRODUCT_MISSING_SEO_SQL_ALIASED})::text AS seo,
+       COUNT(*) FILTER (WHERE ${PRODUCT_MISSING_PRICE_SQL_ALIASED})::text AS price,
+       COUNT(*) FILTER (WHERE ${PRODUCT_MISSING_COMMERCIAL_SQL_ALIASED})::text AS commercial,
+       COUNT(*) FILTER (WHERE ${PRODUCT_MISSING_KEYWORDS_SQL_ALIASED})::text AS keywords,
+       COUNT(*) FILTER (WHERE ${PRODUCT_MISSING_RELATED_SQL_ALIASED})::text AS related,
+       COUNT(*) FILTER (WHERE ${PRODUCT_MISSING_BUYER_RESOURCES_SQL_ALIASED})::text AS buyer_resources
+     FROM product_catalog pc
+     WHERE pc.deleted_at IS NULL`,
+  )
+  const row = res.rows[0]
+
+  return {
+    media: parseCount(row?.media),
+    content: parseCount(row?.content),
+    category: parseCount(row?.category),
+    attributes: parseCount(row?.attributes),
+    seo: parseCount(row?.seo),
+    price: parseCount(row?.price),
+    commercial: parseCount(row?.commercial),
+    keywords: parseCount(row?.keywords),
+    related: parseCount(row?.related),
+    buyer_resources: parseCount(row?.buyer_resources),
+  }
+}
+
 async function getProductOptions(): Promise<ProductOptions> {
   if (!(await tableExists('public.product_catalog'))) return EMPTY_OPTIONS
   await ensureProductOperationsSchema()
@@ -1314,18 +1366,21 @@ function ControlStat({ label, value, detail }: { label: string; value: string; d
 
 function ProductOperationsMatrix({
   summary,
+  issueSummary,
   rows,
   filters,
 }: {
   summary: ProductSummary
+  issueSummary: ProductIssueSummary
   rows: ProductListRow[]
   filters: FilterState
 }) {
   const pageIssueStats = PRODUCT_ISSUE_BUCKETS.map((bucket) => {
-    const count = rows.filter((product) => productHasIssue(bucket.issue, getProductIssues(product))).length
+    const pageCount = rows.filter((product) => productHasIssue(bucket.issue, getProductIssues(product))).length
     return {
       ...bucket,
-      count,
+      count: issueSummary[bucket.issue],
+      pageCount,
       href: createHref(filters, { view: 'incomplete', issue: bucket.issue }),
     }
   })
@@ -1342,7 +1397,7 @@ function ProductOperationsMatrix({
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Operations Matrix</p>
             <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品运营处理矩阵</h2>
             <p className="mt-1 text-sm leading-6 text-[#61767D]">
-              先看发布、草稿和缺口，再按当前筛选页的缺项类型进入下钻处理。
+              先看全库发布、草稿和缺口，再按缺项队列进入下钻；队列数量来自全库只读统计，本页命中用于快速判断当前筛选结果。
             </p>
           </div>
           <Link
@@ -1361,7 +1416,7 @@ function ProductOperationsMatrix({
           <MatrixKpi label="当前页样本" value={formatNumber(rows.length)} detail={`每页最多 ${formatNumber(PAGE_SIZE)} 条`} tone="blue" />
         </div>
 
-        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-5">
           {pageIssueStats.map((bucket) => (
             <Link
               key={bucket.issue}
@@ -1372,6 +1427,9 @@ function ProductOperationsMatrix({
                 <span className="min-w-0">
                   <span className="block text-sm font-bold text-[#1E2C31]">{bucket.label}</span>
                   <span className="mt-1 block text-xs leading-5 text-[#61767D]">{bucket.detail}</span>
+                  <span className="mt-2 block text-[11px] font-semibold text-[#8A9EA4]">
+                    本页命中 {formatNumber(bucket.pageCount)}
+                  </span>
                 </span>
                 <span className={`rounded-md px-2 py-1 text-xs font-bold ${
                   bucket.count > 0 ? 'bg-[#FFF2E7] text-[#E36F2C]' : 'bg-emerald-50 text-emerald-700'
@@ -1977,8 +2035,9 @@ export default async function AdminContentProductsListPage({ searchParams }: Pag
   }
 
   const filters = parseFilters(await searchParams)
-  const [summary, options, list] = await Promise.all([
+  const [summary, issueSummary, options, list] = await Promise.all([
     safeLoad('product summary', getProductSummary, EMPTY_SUMMARY),
+    safeLoad('product issue summary', getProductIssueSummary, EMPTY_ISSUE_SUMMARY),
     safeLoad('product options', getProductOptions, EMPTY_OPTIONS),
     safeLoad('product list', () => getProducts(filters), { rows: [], total: 0 }),
   ])
@@ -2011,7 +2070,12 @@ export default async function AdminContentProductsListPage({ searchParams }: Pag
           total={list.total}
           rowsCount={list.rows.length}
         />
-        <ProductOperationsMatrix summary={summary} rows={list.rows} filters={filters} />
+        <ProductOperationsMatrix
+          summary={summary}
+          issueSummary={issueSummary}
+          rows={list.rows}
+          filters={filters}
+        />
         <FilterPanel filters={filters} options={options} />
         <ProductList
           rows={list.rows}
