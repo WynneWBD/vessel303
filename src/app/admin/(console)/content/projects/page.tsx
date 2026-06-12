@@ -542,7 +542,7 @@ function CaseConversionPanel({ stats }: { stats: ProjectStats }) {
       title: '发布转化弱',
       value: weakCount,
       detail: '优先补素材、叙事、项目事实或标签',
-      href: '/admin/content/projects/list?status=published&view=incomplete',
+      href: '/admin/content/projects/list?view=case-conversion-weak',
       Icon: CircleDashed,
       tone: 'orange' as const,
     },

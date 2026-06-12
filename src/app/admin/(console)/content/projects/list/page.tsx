@@ -33,6 +33,7 @@ import {
   Pencil,
   Plus,
   Search,
+  SearchCheck,
   Tags,
   type LucideIcon,
 } from 'lucide-react'
@@ -45,7 +46,7 @@ const PAGE_SIZE = 50
 
 type AdminRole = 'admin' | 'operator'
 type ProjectStatus = 'draft' | 'published'
-type ProjectView = '' | 'incomplete' | 'map-ready' | 'missing-coordinates' | 'unpublished-with-coordinates'
+type ProjectView = '' | 'incomplete' | 'case-conversion-weak' | 'map-ready' | 'missing-coordinates' | 'unpublished-with-coordinates'
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -64,6 +65,7 @@ type ProjectSummary = {
   draft: number
   recent: number
   incomplete: number
+  caseConversionWeak: number
   mapReady: number
   missingCoordinates: number
 }
@@ -149,6 +151,7 @@ const EMPTY_SUMMARY: ProjectSummary = {
   draft: 0,
   recent: 0,
   incomplete: 0,
+  caseConversionWeak: 0,
   mapReady: 0,
   missingCoordinates: 0,
 }
@@ -240,6 +243,7 @@ function normalizeStatus(value: string | undefined): ProjectStatus | '' {
 function normalizeView(value: string | undefined): ProjectView {
   if (
     value === 'incomplete' ||
+    value === 'case-conversion-weak' ||
     value === 'map-ready' ||
     value === 'missing-coordinates' ||
     value === 'unpublished-with-coordinates'
@@ -454,6 +458,7 @@ function createHref(filters: FilterState, patch: Partial<FilterState & { clearSe
 
 function getProjectViewLabel(view: ProjectView): string {
   if (view === 'incomplete') return '待补内容'
+  if (view === 'case-conversion-weak') return '发布转化弱'
   if (view === 'map-ready') return '可入 Global'
   if (view === 'missing-coordinates') return '缺坐标'
   if (view === 'unpublished-with-coordinates') return '有坐标待发布'
@@ -501,6 +506,8 @@ function buildWhere(filters: FilterState): { where: string; params: unknown[] } 
 
   if (filters.view === 'incomplete') {
     conditions.push(PROJECT_INCOMPLETE_SQL)
+  } else if (filters.view === 'case-conversion-weak') {
+    conditions.push(`status = 'published' AND ${PROJECT_INCOMPLETE_SQL}`)
   } else if (filters.view === 'map-ready') {
     conditions.push(`status = 'published' AND latitude IS NOT NULL AND longitude IS NOT NULL`)
   } else if (filters.view === 'missing-coordinates') {
@@ -548,6 +555,7 @@ async function getProjectSummary(): Promise<ProjectSummary> {
     draft: string
     recent: string
     incomplete: string
+    caseConversionWeak: string
     mapReady: string
     missingCoordinates: string
   }>(
@@ -557,6 +565,9 @@ async function getProjectSummary(): Promise<ProjectSummary> {
        COUNT(*) FILTER (WHERE status = 'draft')::text AS draft,
        COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days')::text AS recent,
        COUNT(*) FILTER (WHERE ${PROJECT_INCOMPLETE_SQL})::text AS "incomplete",
+       COUNT(*) FILTER (
+         WHERE status = 'published' AND ${PROJECT_INCOMPLETE_SQL}
+       )::text AS "caseConversionWeak",
        COUNT(*) FILTER (
          WHERE status = 'published' AND latitude IS NOT NULL AND longitude IS NOT NULL
        )::text AS "mapReady",
@@ -571,6 +582,7 @@ async function getProjectSummary(): Promise<ProjectSummary> {
     draft: parseCount(row?.draft),
     recent: parseCount(row?.recent),
     incomplete: parseCount(row?.incomplete),
+    caseConversionWeak: parseCount(row?.caseConversionWeak),
     mapReady: parseCount(row?.mapReady),
     missingCoordinates: parseCount(row?.missingCoordinates),
   }
@@ -683,6 +695,7 @@ function getSideNavGroups(summary: ProjectSummary): AdminSideNavGroup[] {
         { key: 'project-list', label: '项目列表', href: '/admin/content/projects/list', Icon: ListChecks },
         { key: 'drafts', label: '草稿内容', href: '/admin/content/projects/list?status=draft', badge: summary.draft, Icon: FileText },
         { key: 'todo', label: '待补内容', href: '/admin/content/projects/list?view=incomplete', badge: summary.incomplete, Icon: CircleDashed },
+        { key: 'case-conversion-weak', label: '发布转化弱', href: '/admin/content/projects/list?view=case-conversion-weak', badge: summary.caseConversionWeak, Icon: SearchCheck },
         { key: 'missing-coordinates', label: '缺坐标', href: '/admin/content/projects/list?view=missing-coordinates', badge: summary.missingCoordinates, Icon: MapPinned },
       ],
     },
@@ -749,6 +762,12 @@ function StatusTabs({ filters, summary }: { filters: FilterState; summary: Proje
       count: summary.incomplete,
     },
     {
+      label: '转化弱',
+      href: createHref(filters, { status: '', view: 'case-conversion-weak' }),
+      active: filters.view === 'case-conversion-weak',
+      count: summary.caseConversionWeak,
+    },
+    {
       label: '可入 Global',
       href: createHref(filters, { status: '', view: 'map-ready' }),
       active: filters.view === 'map-ready',
@@ -799,6 +818,12 @@ function ProjectListControlStrip({
       href: createHref(filters, { status: '', view: 'incomplete' }),
       count: summary.incomplete,
       active: filters.view === 'incomplete',
+    },
+    {
+      label: '发布转化弱',
+      href: createHref(filters, { status: '', view: 'case-conversion-weak' }),
+      count: summary.caseConversionWeak,
+      active: filters.view === 'case-conversion-weak',
     },
     {
       label: '可入 Global',
