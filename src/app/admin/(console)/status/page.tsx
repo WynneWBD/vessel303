@@ -4,24 +4,25 @@ import {
   formatNumber,
   loadStatusOverview,
   sumContent,
+  type ContentMetric,
 } from '@/lib/admin-status-metrics'
 import {
   formatAnalyticsPercent,
   loadSiteAnalyticsDashboard,
   sourceTypeLabel,
+  type AnalyticsAllTimeMetric,
   type AnalyticsBehaviorStep,
   type AnalyticsComparisonMetric,
   type AnalyticsConversionMetric,
   type AnalyticsDeltaMetric,
   type AnalyticsPeriodMetric,
   type AnalyticsRankRow,
-  type SiteAnalyticsDashboard,
   type AnalyticsTrendRow,
   type AnalyticsWindowMetric,
+  type SiteAnalyticsDashboard,
 } from '@/lib/site-analytics'
 import { AdminPageHero } from '@/components/admin/AdminUI'
 import {
-  ActionCard,
   ActivityList,
   buildStatusBadges,
   SectionTitle,
@@ -35,12 +36,34 @@ export const dynamic = 'force-dynamic'
 
 export const metadata = { title: '运营数据中心 - VESSEL' }
 
+type SharedTrafficMetric = {
+  pageViews: number
+  visitors: number
+  ctaClicks?: number
+  contactRedirects?: number
+  formSubmits: number
+  leads: number
+  testEvents?: number
+  testLeads?: number
+  conversionRate?: number
+}
+
+type LedgerRow = {
+  key: string
+  label: string
+  note: string
+  metric: SharedTrafficMetric
+  href: string
+  dateLabel?: string
+}
+
 export default async function AdminStatusPage() {
   const { role, email } = await getStatusAccess()
   const [overview, analytics] = await Promise.all([
     loadStatusOverview(),
     loadSiteAnalyticsDashboard(),
   ])
+
   const contentTotals = sumContent(overview.content)
   const today = analytics.periods.find((item) => item.key === 'today') ?? analytics.periods[0]
   const yesterday = analytics.periods.find((item) => item.key === 'yesterday') ?? analytics.periods[1] ?? today
@@ -48,12 +71,12 @@ export default async function AdminStatusPage() {
   const thirtyDays = analytics.windows.find((item) => item.days === 30) ?? analytics.windows[1] ?? sevenDays
   const todayComparison = analytics.comparisons.find((item) => item.key === 'today')
   const thirtyComparison = analytics.comparisons.find((item) => item.key === '30')
-  const thirtyDayActions = metricActions(thirtyDays)
   const siteIssues =
     overview.site.pages.total +
     overview.site.seo.missing +
     (overview.site.media.bytes > 800 * 1024 * 1024 ? 1 : 0) +
     (role === 'admin' ? overview.site.configChecks.filter((item) => !item.ok).length : 0)
+  const queueTotal = overview.leads.new + contentTotals.issues + siteIssues
 
   return (
     <StatusPageShell
@@ -62,650 +85,182 @@ export default async function AdminStatusPage() {
       activeItem="overview"
       badges={buildStatusBadges(overview, role)}
     >
-      <AdminPageHero
-        kicker="Analytics / Operations"
-        title="运营数据中心"
-        description="先看访问、转化、内容缺口、线索漏斗和站点健康；统计只读，不写业务数据。"
-        actions={
-          <>
-            <StatusPill ok={analytics.available} label={analytics.available ? '第一方事件可用' : '事件表未就绪'} />
-            <StatusPill ok label={`排除测试 ${formatNumber(thirtyDays.testEvents)} 事件 / ${formatNumber(thirtyDays.testLeads)} 线索`} />
-            <StatusPill ok label="不接第三方 API" />
-            <StatusPill ok label="不触碰 /global" />
-          </>
-        }
-      >
-        <OverviewHeroConsole
-          sevenDays={sevenDays}
-          thirtyDays={thirtyDays}
-          contentIssues={contentTotals.issues}
-          siteIssues={siteIssues}
-          newLeads={overview.leads.new}
+      <section className="space-y-6">
+        <AdminPageHero
+          kicker="Analytics / Operations"
+          title="运营数据中心"
+          description="按专业后台的数据分析流程组织：先选站点和时间，再看汇总台账、趋势、行为路径、转化入口和处理队列。统计只读，不写业务数据。"
+          actions={
+            <>
+              <StatusPill ok={analytics.available} label={analytics.available ? '第一方事件可用' : '事件表未就绪'} />
+              <StatusPill ok label={`排除测试 ${formatNumber(thirtyDays.testEvents)} 事件 / ${formatNumber(thirtyDays.testLeads)} 线索`} />
+              <StatusPill ok label="不接第三方 API" />
+              <StatusPill ok label="不触碰 /global" />
+            </>
+          }
+        >
+          <ExecutiveStrip
+            today={today}
+            thirtyDays={thirtyDays}
+            queueTotal={queueTotal}
+            contentIssues={contentTotals.issues}
+            siteIssues={siteIssues}
+            newLeads={overview.leads.new}
+          />
+        </AdminPageHero>
+
+        <AnalysisControlStrip
+          allTime={analytics.allTime}
+          bestDay={analytics.bestDay}
+          activeRange="30"
         />
-      </AdminPageHero>
 
-      <OperationsPulseBoard
-        today={today}
-        yesterday={yesterday}
-        sevenDays={sevenDays}
-        thirtyDays={thirtyDays}
-        todayComparison={todayComparison}
-        thirtyComparison={thirtyComparison}
-        newLeads={overview.leads.new}
-        contentIssues={contentTotals.issues}
-        siteIssues={siteIssues}
-        pageDrafts={overview.site.pages.total}
-      />
-
-      <AnalyticsCommandWorkbench
-        analytics={analytics}
-        today={today}
-        yesterday={yesterday}
-        sevenDays={sevenDays}
-        thirtyDays={thirtyDays}
-        newLeads={overview.leads.new}
-        contentIssues={contentTotals.issues}
-        siteIssues={siteIssues}
-        pageDrafts={overview.site.pages.total}
-      />
-
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-8">
-          <section className="space-y-4">
-            <SectionTitle
-              title="数据分析总览"
-              detail="按 300 后台的数据分析心智组织：先选站点和时间，再看访问汇总、趋势、行为路径、入口页面和转化处理。"
+        <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="space-y-6">
+            <TrafficLedger
+              today={today}
+              yesterday={yesterday}
+              sevenDays={sevenDays}
+              thirtyDays={thirtyDays}
+              allTime={analytics.allTime}
+              bestDay={analytics.bestDay}
             />
-            <AnalysisToolbar activeRange="30" />
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-              <div className="space-y-4">
-                <WindowSummaryTable today={today} yesterday={yesterday} sevenDays={sevenDays} thirtyDays={thirtyDays} />
 
-                <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-                  <TrendPreview rows={analytics.dailyTrend} />
-                  <BehaviorFlowPreview
-                    behaviorSteps={analytics.behaviorSteps}
-                    topPages={analytics.topPages}
-                    landingPages={analytics.landingPages}
-                    sourceTypes={analytics.sourceTypes}
-                    windowMetric={thirtyDays}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  <AnalysisModuleCard
-                    title="网站访问统计"
-                    value={`${formatNumber(thirtyDays.pageViews)} PV`}
-                    detail="PV、UV、Top Pages、来源入口和趋势。"
-                    href="/admin/status/traffic?range=30"
-                    tone="blue"
-                  />
-                  <AnalysisModuleCard
-                    title="落地页跳出分析"
-                    value={`${formatNumber(analytics.landingPages.length)} 页`}
-                    detail="入口页访问与后续动作，优先识别高访问低动作页面。"
-                    href="/admin/status/traffic#landing-analysis"
-                    tone="orange"
-                  />
-                  <AnalysisModuleCard
-                    title="访问行为分析"
-                    value={formatNumber(thirtyDayActions)}
-                    detail="CTA 点击、联系跳转、表单成功按路径聚合。"
-                    href="/admin/status/traffic#behavior-analysis"
-                    tone="green"
-                  />
-                  <AnalysisModuleCard
-                    title="线索转化分析"
-                    value={formatAnalyticsPercent(thirtyDays.conversionRate)}
-                    detail="真实线索 / 页面访问，排除测试线索。"
-                    href="/admin/site/conversion"
-                    tone="green"
-                  />
-                  <AnalysisModuleCard
-                    title="Google收录分析"
-                    value={`${formatNumber(overview.site.seo.missing)} 缺项`}
-                    detail="先从 SEO 字段和站点地图状态进入，不接第三方 API。"
-                    href="/admin/site/seo"
-                    tone="blue"
-                  />
-                  <AnalysisModuleCard
-                    title="运营待处理"
-                    value={formatNumber(contentTotals.issues + siteIssues + overview.leads.new)}
-                    detail="内容缺项、站点问题和新线索统一排优先级。"
-                    href="/admin/status/content"
-                    tone="orange"
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-base font-bold text-[#1E2C31]">30 天入口概览</h2>
-                    <p className="mt-1 text-xs leading-5 text-[#61767D]">只展示路径、来源和动作数量，不展示表单隐私字段。</p>
-                  </div>
-                  <Link href="/admin/status/traffic?range=30" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
-                    详细分析
-                  </Link>
-                </div>
-                <div className="mt-4 space-y-4">
-                  <MiniRankList title="Top Pages" rows={analytics.topPages} empty="暂无页面访问事件。" />
-                  <MiniRankList title="来源类型" rows={analytics.sourceTypes} empty="暂无 CTA / 表单来源数据。" formatLabel={sourceTypeLabel} />
-                  <MiniRankList title="落地页动作" rows={analytics.landingPages} empty="暂无落地页事件。" />
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-4">
-            <SectionTitle title="核心工作台" detail="所有入口都回到现有业务页面处理，数据中心只做判断和分流。" />
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <ActionCard
-                title="处理内容缺口"
-                detail={`当前 ${formatNumber(contentTotals.issues)} 个内容项需要补齐关键字段。`}
-                href="/admin/status/content"
-                Icon={STATUS_ICONS.FileText}
-                primary
-              />
-              <ActionCard
-                title="跟进新线索"
-                detail={`新线索 ${formatNumber(overview.leads.new)}，跟进中 ${formatNumber(overview.leads.contacting)}。`}
-                href="/admin/customers/leads?status=new"
-                Icon={STATUS_ICONS.Inbox}
-              />
-              <ActionCard
-                title="检查站点健康"
-                detail="页面草稿、SEO、sitemap、robots 和媒体空间集中查看。"
-                href="/admin/status/site"
-                Icon={STATUS_ICONS.Globe2}
-              />
-              <ActionCard
-                title="查看近期变化"
-                detail="按更新时间聚合内容、线索、媒体和页面草稿。"
-                href="/admin/status/activity"
-                Icon={STATUS_ICONS.ListChecks}
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+              <TrendPanel rows={analytics.dailyTrend} />
+              <BehaviorPanel
+                steps={analytics.behaviorSteps}
+                topPages={analytics.topPages}
+                landingPages={analytics.landingPages}
+                sourceTypes={analytics.sourceTypes}
+                thirtyDays={thirtyDays}
               />
             </div>
-          </section>
 
-          <section className="space-y-4">
-            <SectionTitle title="内容变化" detail="按现有产品、项目案例、新闻表只读统计。" />
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-              {Object.values(overview.content).map((item) => (
-                <Link
-                  key={item.key}
-                  href={item.href}
-                  className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60"
-                >
-                  <span className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-semibold text-[#1E2C31]">{item.label}</span>
-                    <span className="text-xs font-semibold text-[#1889B6]">进入管理</span>
-                  </span>
-                  <span className="mt-5 grid grid-cols-3 gap-3">
-                    <SmallStat label="总量" value={item.total} />
-                    <SmallStat label="草稿" value={item.draft} />
-                    <SmallStat label="缺项" value={item.issues} />
-                  </span>
-                </Link>
-              ))}
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+              <ConversionPathTable conversionPaths={analytics.conversionPaths} />
+              <RankWorkspace analytics={analytics} />
             </div>
-          </section>
 
-          <section className="space-y-4">
-            <SectionTitle title="近期变化" detail="只读聚合最近内容和运营动作，不替代完整审计日志。" />
-            <ActivityList items={overview.activity} />
-          </section>
+            <ContentLedger
+              products={overview.content.products}
+              projects={overview.content.projects}
+              news={overview.content.news}
+            />
+
+            <section className="space-y-4">
+              <SectionTitle title="近期变化" detail="只读聚合最近内容和运营动作，不替代完整操作日志。" />
+              <ActivityList items={overview.activity} />
+            </section>
+          </div>
+
+          <aside className="space-y-6 2xl:sticky 2xl:top-24 2xl:self-start">
+            <PriorityQueue
+              newLeads={overview.leads.new}
+              contactingLeads={overview.leads.contacting}
+              contentIssues={contentTotals.issues}
+              siteIssues={siteIssues}
+              pageDrafts={overview.site.pages.total}
+              thirtyDays={thirtyDays}
+              todayComparison={todayComparison}
+              thirtyComparison={thirtyComparison}
+            />
+            <ModuleEntryPanel analytics={analytics} contentIssues={contentTotals.issues} siteIssues={siteIssues} newLeads={overview.leads.new} />
+          </aside>
         </div>
-
-        <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-          <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-            <div className="border-b border-[#E6EEEE] px-5 py-4">
-              <h2 className="text-lg font-bold text-[#1E2C31]">今日优先级</h2>
-              <p className="mt-1 text-xs text-[#61767D]">按影响运营效率的顺序排列。</p>
-            </div>
-            <div className="divide-y divide-[#E6EEEE]">
-              <PriorityRow
-                ok={overview.leads.new === 0}
-                title="新线索"
-                detail={overview.leads.new > 0 ? '优先进入线索列表处理' : '暂无新线索'}
-                count={overview.leads.new}
-                href="/admin/customers/leads?status=new"
-              />
-              <PriorityRow
-                ok={contentTotals.issues === 0}
-                title="内容缺项"
-                detail={contentTotals.issues > 0 ? '优先补齐影响展示和 SEO 的字段' : '内容关键字段状态正常'}
-                count={contentTotals.issues}
-                href="/admin/status/content"
-              />
-              <PriorityRow
-                ok={overview.site.pages.total === 0}
-                title="页面草稿"
-                detail={overview.site.pages.total > 0 ? '进入可视化编辑器确认草稿' : '暂无页面草稿'}
-                count={overview.site.pages.total}
-                href="/admin/site/visual"
-              />
-              <PriorityRow
-                ok={thirtyDays.leads > 0 || thirtyDays.pageViews === 0}
-                title="访问转化"
-                detail={thirtyDays.pageViews > 0 ? '查看访问、入口和线索转化是否匹配' : '暂无访问事件'}
-                count={thirtyDays.leads}
-                href="/admin/status/traffic"
-              />
-            </div>
-          </section>
-        </aside>
-      </div>
+      </section>
     </StatusPageShell>
   )
 }
 
-function OverviewHeroConsole({
-  sevenDays,
-  thirtyDays,
-  contentIssues,
-  siteIssues,
-  newLeads,
-}: {
-  sevenDays: AnalyticsWindowMetric
-  thirtyDays: AnalyticsWindowMetric
-  contentIssues: number
-  siteIssues: number
-  newLeads: number
-}) {
-  const sevenDayActions = metricActions(sevenDays)
-  const thirtyDayActions = metricActions(thirtyDays)
-  const pendingTotal = contentIssues + siteIssues + newLeads
-  const rows = [
-    {
-      metric: '页面访问',
-      seven: formatNumber(sevenDays.pageViews),
-      thirty: formatNumber(thirtyDays.pageViews),
-      detail: 'PV',
-      href: '/admin/status/traffic?range=30',
-    },
-    {
-      metric: '匿名访客',
-      seven: formatNumber(sevenDays.visitors),
-      thirty: formatNumber(thirtyDays.visitors),
-      detail: 'visitor hash',
-      href: '/admin/status/traffic?range=30',
-    },
-    {
-      metric: '转化动作',
-      seven: formatNumber(sevenDayActions),
-      thirty: formatNumber(thirtyDayActions),
-      detail: `CTA ${formatNumber(thirtyDays.ctaClicks)} / 表单 ${formatNumber(thirtyDays.formSubmits)}`,
-      href: '/admin/status/traffic#behavior-analysis',
-    },
-    {
-      metric: '真实线索',
-      seven: formatNumber(sevenDays.leads),
-      thirty: formatNumber(thirtyDays.leads),
-      detail: `30 天转化率 ${formatAnalyticsPercent(thirtyDays.conversionRate)}`,
-      href: '/admin/status/leads',
-    },
-    {
-      metric: '运营待处理',
-      seven: formatNumber(newLeads),
-      thirty: formatNumber(pendingTotal),
-      detail: `内容 ${formatNumber(contentIssues)} / 站点 ${formatNumber(siteIssues)} / 新线索 ${formatNumber(newLeads)}`,
-      href: pendingTotal > 0 ? '/admin/status/content' : '/admin/status/activity',
-    },
-  ]
-  const queue = [
-    { label: '新线索', value: newLeads, href: '/admin/customers/leads?status=new' },
-    { label: '内容缺项', value: contentIssues, href: '/admin/status/content' },
-    { label: '站点问题', value: siteIssues, href: '/admin/status/site' },
-  ]
-
-  return (
-    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
-        <div>
-          <h2 className="text-sm font-bold text-[#1E2C31]">运营总览表</h2>
-          <p className="mt-1 text-xs text-[#61767D]">把访问、转化、线索和待处理事项放进同一张表，减少首屏卡片跳读。</p>
-        </div>
-        <Link href="/admin/status/traffic?range=30" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
-          进入详细数据分析
-        </Link>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[820px] text-sm">
-          <thead>
-            <tr className="border-b border-[#E6EEEE] bg-white text-[#61767D]">
-              <th className="px-4 py-3 text-left font-medium">运营指标</th>
-              <th className="px-4 py-3 text-right font-medium">近 7 天</th>
-              <th className="px-4 py-3 text-right font-medium">近 30 天 / 当前队列</th>
-              <th className="px-4 py-3 text-left font-medium">判断口径</th>
-              <th className="px-4 py-3 text-right font-medium">入口</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.metric} className="border-b border-[#E6EEEE] last:border-0">
-                <td className="px-4 py-3 font-semibold text-[#1E2C31]">{row.metric}</td>
-                <td className="px-4 py-3 text-right font-bold text-[#1E2C31]">{row.seven}</td>
-                <td className="px-4 py-3 text-right font-bold text-[#1889B6]">{row.thirty}</td>
-                <td className="px-4 py-3 text-[#61767D]">{row.detail}</td>
-                <td className="px-4 py-3 text-right">
-                  <Link href={row.href} className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
-                    查看
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] border-t border-[#E6EEEE] md:grid-cols-3 md:divide-x md:divide-y-0">
-        {queue.map((item) => (
-          <Link key={item.label} href={item.href} className="flex items-center justify-between gap-3 px-4 py-3 transition hover:bg-[#F7FAFA]">
-            <span className="text-xs font-semibold text-[#61767D]">{item.label}</span>
-            <span className={`text-sm font-black ${item.value > 0 ? 'text-[#E36F2C]' : 'text-emerald-700'}`}>{formatNumber(item.value)}</span>
-          </Link>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function AnalyticsCommandWorkbench({
-  analytics,
+function ExecutiveStrip({
   today,
-  yesterday,
-  sevenDays,
   thirtyDays,
-  newLeads,
+  queueTotal,
   contentIssues,
   siteIssues,
-  pageDrafts,
+  newLeads,
 }: {
-  analytics: SiteAnalyticsDashboard
   today: AnalyticsPeriodMetric
-  yesterday: AnalyticsPeriodMetric
-  sevenDays: AnalyticsWindowMetric
   thirtyDays: AnalyticsWindowMetric
-  newLeads: number
+  queueTotal: number
   contentIssues: number
   siteIssues: number
-  pageDrafts: number
+  newLeads: number
 }) {
-  const bestDay = getBestTrafficDay(analytics.dailyTrend)
-  const topPage = analytics.topPages[0]
-  const topLandingPage = analytics.landingPages[0]
-  const quietLandingPage = analytics.landingPages.find((row) => row.value >= 10 && (row.secondary ?? 0) === 0)
-  const topSource = analytics.sourceTypes[0]
-  const topConversionPath = getTopConversionPath(analytics.conversionPaths)
-  const queueTotal = newLeads + contentIssues + siteIssues + pageDrafts
-  const timeRows = [
-    { label: '今日', value: today.pageViews, visitors: today.visitors, actions: metricActions(today), leads: today.leads, rate: today.conversionRate },
-    { label: '昨日', value: yesterday.pageViews, visitors: yesterday.visitors, actions: metricActions(yesterday), leads: yesterday.leads, rate: yesterday.conversionRate },
-    { label: '近 7 天', value: sevenDays.pageViews, visitors: sevenDays.visitors, actions: metricActions(sevenDays), leads: sevenDays.leads, rate: sevenDays.conversionRate },
-    { label: '近 30 天', value: thirtyDays.pageViews, visitors: thirtyDays.visitors, actions: metricActions(thirtyDays), leads: thirtyDays.leads, rate: thirtyDays.conversionRate },
-  ]
-  const funnelRows = [
+  const cells = [
     {
-      label: '入口访问',
-      value: thirtyDays.pageViews,
-      detail: topPage ? `Top page ${topPage.label}` : '暂无访问页面',
-      href: '/admin/status/traffic?range=30#trend-analysis',
+      label: '今日 PV',
+      value: formatNumber(today.pageViews),
+      detail: `${formatNumber(today.visitors)} 访客 / ${formatNumber(metricActions(today))} 动作`,
+      href: '/admin/status/traffic?range=today',
     },
     {
-      label: '有效访客',
-      value: thirtyDays.visitors,
-      detail: '匿名 hash 统计，不保存 IP',
+      label: '30 天 PV',
+      value: formatNumber(thirtyDays.pageViews),
+      detail: `${formatNumber(thirtyDays.visitors)} 访客 / ${formatAnalyticsPercent(thirtyDays.conversionRate)} 转化`,
       href: '/admin/status/traffic?range=30',
-    },
-    {
-      label: '转化动作',
-      value: metricActions(thirtyDays),
-      detail: `CTA ${formatNumber(thirtyDays.ctaClicks)} / 表单 ${formatNumber(thirtyDays.formSubmits)}`,
-      href: '/admin/status/traffic#behavior-analysis',
     },
     {
       label: '真实线索',
-      value: thirtyDays.leads,
-      detail: `访问转化率 ${formatAnalyticsPercent(thirtyDays.conversionRate)}`,
+      value: formatNumber(thirtyDays.leads),
+      detail: `表单成功 ${formatNumber(thirtyDays.formSubmits)} / 测试线索 ${formatNumber(thirtyDays.testLeads)}`,
       href: '/admin/site/conversion',
     },
     {
-      label: '处理队列',
-      value: queueTotal,
+      label: '运营待处理',
+      value: formatNumber(queueTotal),
       detail: `线索 ${formatNumber(newLeads)} / 内容 ${formatNumber(contentIssues)} / 站点 ${formatNumber(siteIssues)}`,
       href: queueTotal > 0 ? '/admin/status/content' : '/admin/status/activity',
     },
   ]
-  const signalRows = [
-    {
-      signal: '高访问页面',
-      value: topPage ? `${topPage.label} / ${formatNumber(topPage.value)} PV` : '暂无访问',
-      status: topPage ? '可下钻' : '等待数据',
-      detail: topPage ? `${formatNumber(topPage.secondary ?? 0)} 个匿名访客` : '第一方事件表没有可展示样本。',
-      href: '/admin/status/traffic?range=30#behavior-analysis',
-      tone: topPage ? 'blue' : 'gray',
-    },
-    {
-      signal: '高访问低动作',
-      value: quietLandingPage ? `${quietLandingPage.label} / ${formatNumber(quietLandingPage.value)} PV` : '未发现',
-      status: quietLandingPage ? '优先检查' : '正常',
-      detail: quietLandingPage
-        ? '该落地页当前没有后续动作，建议核对 CTA、首屏和内容匹配。'
-        : topLandingPage
-          ? `当前入口页已有动作样本：${topLandingPage.label}`
-          : '暂无落地页样本。',
-      href: '/admin/status/traffic#landing-analysis',
-      tone: quietLandingPage ? 'orange' : 'green',
-    },
-    {
-      signal: '线索承接',
-      value: `${formatNumber(newLeads)} 新线索`,
-      status: newLeads > 0 ? '立即处理' : '正常',
-      detail: topConversionPath
-        ? `当前最高转化入口：${topConversionPath.label}`
-        : '暂无可排序的转化路径样本。',
-      href: '/admin/customers/leads?status=new',
-      tone: newLeads > 0 ? 'orange' : 'green',
-    },
-    {
-      signal: '内容与站点缺口',
-      value: `${formatNumber(contentIssues + siteIssues + pageDrafts)} 项`,
-      status: contentIssues + siteIssues + pageDrafts > 0 ? '排队处理' : '正常',
-      detail: `内容 ${formatNumber(contentIssues)} / 站点 ${formatNumber(siteIssues)} / 页面草稿 ${formatNumber(pageDrafts)}`,
-      href: '/admin/status/content',
-      tone: contentIssues + siteIssues + pageDrafts > 0 ? 'orange' : 'green',
-    },
-  ]
 
   return (
-    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
-        <div className="min-w-0">
-          <h2 className="text-base font-bold text-[#1E2C31]">分析指挥台</h2>
-          <p className="mt-1 text-xs leading-5 text-[#61767D]">
-            英文站、访问口径、转化动作和处理队列集中在同一屏；只读统计，不写业务数据。
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 font-semibold text-[#1E2C31]">
-            www.vessel303.com
-          </span>
-          <span className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-[#61767D]">
-            主口径：近 30 天
-          </span>
-          <Link href="/admin/status/traffic?range=30" className="inline-flex h-8 items-center rounded-md bg-[#1889B6] px-3 font-semibold text-white hover:bg-[#14799F]">
-            详细数据分析
-          </Link>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-0 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
-        <div className="border-b border-[#E6EEEE] xl:border-r xl:border-b-0">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-sm">
-              <thead>
-                <tr className="border-b border-[#E6EEEE] bg-white text-[#61767D]">
-                  <th className="px-5 py-3 text-left font-medium">时间口径</th>
-                  <th className="px-4 py-3 text-right font-medium">PV</th>
-                  <th className="px-4 py-3 text-right font-medium">访客</th>
-                  <th className="px-4 py-3 text-right font-medium">动作</th>
-                  <th className="px-4 py-3 text-right font-medium">线索</th>
-                  <th className="px-5 py-3 text-right font-medium">转化率</th>
-                </tr>
-              </thead>
-              <tbody>
-                {timeRows.map((row) => (
-                  <tr key={row.label} className="border-b border-[#E6EEEE] last:border-0">
-                    <td className="px-5 py-3 font-semibold text-[#1E2C31]">{row.label}</td>
-                    <td className="px-4 py-3 text-right font-bold text-[#1E2C31]">{formatNumber(row.value)}</td>
-                    <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.visitors)}</td>
-                    <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.actions)}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-[#E36F2C]">{formatNumber(row.leads)}</td>
-                    <td className="px-5 py-3 text-right font-semibold text-[#1889B6]">{formatAnalyticsPercent(row.rate)}</td>
-                  </tr>
-                ))}
-                <tr className="bg-[#FBFDFD]">
-                  <td className="px-5 py-3 font-semibold text-[#1E2C31]">近 30 天最高日</td>
-                  <td className="px-4 py-3 text-right font-bold text-[#1E2C31]">{bestDay ? formatNumber(bestDay.pageViews) : '--'}</td>
-                  <td className="px-4 py-3 text-right text-[#61767D]">{bestDay ? formatNumber(bestDay.visitors) : '--'}</td>
-                  <td className="px-4 py-3 text-right text-[#61767D]">{bestDay ? formatNumber(bestDay.actions) : '--'}</td>
-                  <td className="px-4 py-3 text-right font-semibold text-[#E36F2C]">{bestDay ? formatNumber(bestDay.leads) : '--'}</td>
-                  <td className="px-5 py-3 text-right text-xs font-semibold text-[#61767D]">{bestDay ? formatTrendDate(bestDay.date) : '暂无趋势'}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] border-t border-[#E6EEEE] md:grid-cols-5 md:divide-x md:divide-y-0">
-            {funnelRows.map((row) => (
-              <Link key={row.label} href={row.href} className="min-h-28 p-4 transition hover:bg-[#F7FAFA]">
-                <span className="block text-xs font-semibold text-[#61767D]">{row.label}</span>
-                <span className="mt-2 block text-2xl font-black text-[#1E2C31]">{formatNumber(row.value)}</span>
-                <span className="mt-2 block text-xs leading-5 text-[#61767D]">{row.detail}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div className="p-5">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-1">
-            <SignalMiniCard
-              label="主要来源"
-              value={topSource ? `${sourceTypeLabel(topSource.key)} / ${formatNumber(topSource.value)}` : '暂无来源'}
-              detail="按 CTA、联系跳转和表单 source type 聚合。"
-            />
-            <SignalMiniCard
-              label="最高转化入口"
-              value={topConversionPath ? topConversionPath.label : '暂无转化路径'}
-              detail={topConversionPath ? `动作 ${formatNumber(topConversionPath.metric.ctaClicks)} / 线索 ${formatNumber(topConversionPath.metric.leads)}` : '等待更多事件样本。'}
-            />
-          </div>
-          <div className="mt-4 overflow-hidden rounded-md border border-[#E6EEEE]">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
-                  <th className="px-3 py-2 text-left font-medium">运营信号</th>
-                  <th className="px-3 py-2 text-left font-medium">状态</th>
-                  <th className="px-3 py-2 text-right font-medium">处理</th>
-                </tr>
-              </thead>
-              <tbody>
-                {signalRows.map((row) => (
-                  <tr key={row.signal} className="border-b border-[#E6EEEE] last:border-0">
-                    <td className="px-3 py-3">
-                      <div className="font-semibold text-[#1E2C31]">{row.signal}</div>
-                      <div className="mt-1 text-xs text-[#61767D]">{row.value}</div>
-                    </td>
-                    <td className="px-3 py-3">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-bold ${signalToneClass(row.tone)}`}>
-                        {row.status}
-                      </span>
-                      <div className="mt-1 text-xs leading-5 text-[#61767D]">{row.detail}</div>
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      <Link href={row.href} className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
-                        进入
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function SignalMiniCard({ label, value, detail }: { label: string; value: string; detail: string }) {
-  return (
-    <div className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] p-3">
-      <div className="text-xs font-semibold text-[#61767D]">{label}</div>
-      <div className="mt-1 truncate text-sm font-bold text-[#1E2C31]">{value}</div>
-      <div className="mt-1 text-xs leading-5 text-[#61767D]">{detail}</div>
+    <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] overflow-hidden rounded-md border border-[#D8E7E8] md:grid-cols-4 md:divide-x md:divide-y-0">
+      {cells.map((cell) => (
+        <Link key={cell.label} href={cell.href} className="bg-[#FBFDFD] px-4 py-3 transition hover:bg-[#F3F8F9]">
+          <span className="block text-xs font-semibold text-[#61767D]">{cell.label}</span>
+          <span className="mt-1 block text-2xl font-black text-[#1E2C31]">{cell.value}</span>
+          <span className="mt-1 block truncate text-xs text-[#61767D]">{cell.detail}</span>
+        </Link>
+      ))}
     </div>
   )
 }
 
-function getBestTrafficDay(rows: AnalyticsTrendRow[]) {
-  if (rows.length === 0) return null
-  return rows.reduce((best, row) => {
-    if (row.pageViews > best.pageViews) return row
-    if (row.pageViews === best.pageViews && row.actions > best.actions) return row
-    return best
-  }, rows[0])
-}
-
-function getTopConversionPath(conversionPaths: Record<string, AnalyticsConversionMetric>) {
-  const rows = CONVERSION_PATHS
-    .map((item) => ({
-      key: item.key,
-      label: item.area,
-      metric: conversionPaths[item.key] ?? {
-        views: 0,
-        ctaClicks: 0,
-        formSubmits: 0,
-        leads: 0,
-        conversionRate: 0,
-      },
-    }))
-    .sort((a, b) => conversionMetricScore(b.metric) - conversionMetricScore(a.metric))
-  return rows.find((row) => conversionMetricScore(row.metric) > 0)
-}
-
-function conversionMetricScore(metric: AnalyticsConversionMetric) {
-  return metric.leads * 1000 + metric.formSubmits * 100 + metric.ctaClicks + metric.views * 0.01
-}
-
-function signalToneClass(tone: string) {
-  if (tone === 'orange') return 'bg-[#FFF2E7] text-[#E36F2C]'
-  if (tone === 'green') return 'bg-emerald-50 text-emerald-700'
-  if (tone === 'blue') return 'bg-[#EAF6F8] text-[#1889B6]'
-  return 'bg-[#F0F2F2] text-[#61767D]'
-}
-
-function AnalysisToolbar({ activeRange }: { activeRange: 'today' | 'yesterday' | '7' | '30' }) {
+function AnalysisControlStrip({
+  allTime,
+  bestDay,
+  activeRange,
+}: {
+  allTime: AnalyticsAllTimeMetric
+  bestDay: AnalyticsTrendRow | null
+  activeRange: 'today' | 'yesterday' | '7' | '30'
+}) {
   const ranges = [
     { key: 'today', label: '今天' },
     { key: 'yesterday', label: '昨天' },
     { key: '7', label: '最近 7 天' },
     { key: '30', label: '最近 30 天' },
   ] as const
+  const historyWindow =
+    allTime.firstEventAt && allTime.lastEventAt
+      ? `${formatDateTime(allTime.firstEventAt)} - ${formatDateTime(allTime.lastEventAt)}`
+      : '暂无历史事件'
 
   return (
-    <div className="rounded-md border border-[#D8E7E8] bg-white p-3 shadow-sm">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex h-9 min-w-60 items-center rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 text-sm font-medium text-[#1E2C31]">
-            英文站 www.vessel303.com
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid grid-cols-1 border-b border-[#E6EEEE] text-sm xl:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="flex flex-wrap items-center gap-2 px-4 py-3">
+          <span className="inline-flex h-9 min-w-56 items-center border border-[#D8E7E8] bg-[#FBFDFD] px-3 font-semibold text-[#1E2C31]">
+            英文站 vessel303.com
           </span>
           <span className="inline-flex overflow-hidden rounded-md border border-[#D8E7E8] bg-white">
             {ranges.map((item, index) => (
               <Link
                 key={item.key}
                 href={`/admin/status/traffic?range=${item.key}`}
-                className={`inline-flex h-9 items-center px-3 text-sm font-semibold ${
+                className={`inline-flex h-9 items-center px-3 text-xs font-semibold md:text-sm ${
                   index > 0 ? 'border-l border-[#D8E7E8]' : ''
                 } ${
                   activeRange === item.key
@@ -717,131 +272,555 @@ function AnalysisToolbar({ activeRange }: { activeRange: 'today' | 'yesterday' |
               </Link>
             ))}
           </span>
-          <span className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 text-sm text-[#61767D]">
-            指标：浏览次数(PV) + 转化动作
+          <span className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 text-xs font-semibold text-[#61767D] md:text-sm">
+            指标：PV / 访客 / 动作 / 线索
           </span>
         </div>
-        <Link href="/admin/status/traffic?range=30" className="text-sm font-semibold text-[#1889B6] hover:text-[#E36F2C]">
-          进入网站访问统计
-        </Link>
-      </div>
-    </div>
-  )
-}
-
-function OperationsPulseBoard({
-  today,
-  yesterday,
-  sevenDays,
-  thirtyDays,
-  todayComparison,
-  thirtyComparison,
-  newLeads,
-  contentIssues,
-  siteIssues,
-  pageDrafts,
-}: {
-  today: AnalyticsPeriodMetric
-  yesterday: AnalyticsPeriodMetric
-  sevenDays: AnalyticsWindowMetric
-  thirtyDays: AnalyticsWindowMetric
-  todayComparison?: AnalyticsComparisonMetric
-  thirtyComparison?: AnalyticsComparisonMetric
-  newLeads: number
-  contentIssues: number
-  siteIssues: number
-  pageDrafts: number
-}) {
-  const rows = [
-    { label: '今日', metric: today, href: '/admin/status/traffic?range=today', note: '实时' },
-    { label: '昨日', metric: yesterday, href: '/admin/status/traffic?range=yesterday', note: '对照' },
-    { label: '近 7 天', metric: sevenDays, href: '/admin/status/traffic?range=7', note: '短期' },
-    { label: '近 30 天', metric: thirtyDays, href: '/admin/status/traffic?range=30', note: '主口径' },
-  ]
-
-  const queue = [
-    { label: '新线索', value: newLeads, href: '/admin/customers/leads?status=new' },
-    { label: '内容缺项', value: contentIssues, href: '/admin/status/content' },
-    { label: '站点问题', value: siteIssues, href: '/admin/status/site' },
-    { label: '页面草稿', value: pageDrafts, href: '/admin/site/visual' },
-  ]
-
-  return (
-    <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-        <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
-          <div>
-            <h2 className="text-sm font-bold text-[#1E2C31]">运营日报看板</h2>
-            <p className="mt-1 text-xs text-[#61767D]">把 300 后台常用的时间口径、访问、动作、线索和转化率压到一张表里。</p>
-          </div>
-          <Link href="/admin/status/traffic?range=30" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
-            进入详细数据分析
-          </Link>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[880px] text-sm">
-            <thead>
-              <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
-                <th className="px-4 py-3 text-left font-medium">口径</th>
-                <th className="px-4 py-3 text-right font-medium">PV</th>
-                <th className="px-4 py-3 text-right font-medium">访客</th>
-                <th className="px-4 py-3 text-right font-medium">转化动作</th>
-                <th className="px-4 py-3 text-right font-medium">表单</th>
-                <th className="px-4 py-3 text-right font-medium">真实线索</th>
-                <th className="px-4 py-3 text-right font-medium">访问转化率</th>
-                <th className="px-4 py-3 text-right font-medium">下钻</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.label} className="border-b border-[#E6EEEE] last:border-0">
-                  <td className="px-4 py-3">
-                    <div className="font-semibold text-[#1E2C31]">{row.label}</div>
-                    <div className="mt-1 text-xs text-[#8A9EA4]">{row.note}</div>
-                  </td>
-                  <td className="px-4 py-3 text-right font-semibold text-[#1E2C31]">{formatNumber(row.metric.pageViews)}</td>
-                  <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.visitors)}</td>
-                  <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(metricActions(row.metric))}</td>
-                  <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.formSubmits)}</td>
-                  <td className="px-4 py-3 text-right font-semibold text-[#E36F2C]">{formatNumber(row.metric.leads)}</td>
-                  <td className="px-4 py-3 text-right font-semibold text-[#1889B6]">{formatAnalyticsPercent(row.metric.conversionRate)}</td>
-                  <td className="px-4 py-3 text-right">
-                    <Link href={row.href} className="font-semibold text-[#1889B6] hover:text-[#E36F2C]">
-                      查看
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex items-center border-t border-[#E6EEEE] px-4 py-3 text-xs text-[#61767D] xl:border-t-0 xl:border-l">
+          数据约每小时聚合；当前页只读。
         </div>
       </div>
-
-      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-        <div className="border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3">
-          <h2 className="text-sm font-bold text-[#1E2C31]">今日变化与处理队列</h2>
-          <p className="mt-1 text-xs text-[#61767D]">先看变化，再处理会影响运营效率的事项。</p>
-        </div>
-        <div className="grid grid-cols-2 border-b border-[#E6EEEE]">
-          <PulseChangeCard title="今日 PV" metric={todayComparison?.pageViews} />
-          <PulseChangeCard title="今日线索" metric={todayComparison?.leads} />
-          <PulseChangeCard title="30 天 PV" metric={thirtyComparison?.pageViews} />
-          <PulseChangeCard title="30 天转化率" metric={thirtyComparison?.conversionRate} rate />
-        </div>
-        <div className="divide-y divide-[#E6EEEE]">
-          {queue.map((item) => (
-            <Link key={item.label} href={item.href} className="flex items-center justify-between gap-3 px-4 py-3 transition hover:bg-[#F7FAFA]">
-              <span className="text-sm font-semibold text-[#1E2C31]">{item.label}</span>
-              <span className={`text-sm font-bold ${item.value > 0 ? 'text-[#E36F2C]' : 'text-emerald-700'}`}>{formatNumber(item.value)}</span>
-            </Link>
-          ))}
-        </div>
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-4 md:divide-x md:divide-y-0">
+        <ToolbarStat label="历史窗口" value={historyWindow} />
+        <ToolbarStat label="历史累计 PV" value={formatNumber(allTime.pageViews)} />
+        <ToolbarStat label="历史真实线索" value={formatNumber(allTime.leads)} />
+        <ToolbarStat label="最高访问日" value={bestDay ? `${formatTrendDate(bestDay.date)} / ${formatNumber(bestDay.pageViews)} PV` : '暂无趋势'} />
       </div>
     </section>
   )
 }
 
-function PulseChangeCard({ title, metric, rate = false }: { title: string; metric?: AnalyticsDeltaMetric; rate?: boolean }) {
+function ToolbarStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 px-4 py-3">
+      <div className="text-xs font-semibold text-[#61767D]">{label}</div>
+      <div className="mt-1 truncate text-sm font-bold text-[#1E2C31]">{value}</div>
+    </div>
+  )
+}
+
+function TrafficLedger({
+  today,
+  yesterday,
+  sevenDays,
+  thirtyDays,
+  allTime,
+  bestDay,
+}: {
+  today: AnalyticsPeriodMetric
+  yesterday: AnalyticsPeriodMetric
+  sevenDays: AnalyticsWindowMetric
+  thirtyDays: AnalyticsWindowMetric
+  allTime: AnalyticsAllTimeMetric
+  bestDay: AnalyticsTrendRow | null
+}) {
+  const rows: LedgerRow[] = [
+    { key: 'today', label: '今天', note: '实时口径', metric: today, href: '/admin/status/traffic?range=today' },
+    { key: 'yesterday', label: '昨天', note: '昨日对照', metric: yesterday, href: '/admin/status/traffic?range=yesterday' },
+    { key: '7', label: '最近 7 天', note: '短期观察', metric: sevenDays, href: '/admin/status/traffic?range=7' },
+    { key: '30', label: '最近 30 天', note: '运营主口径', metric: thirtyDays, href: '/admin/status/traffic?range=30' },
+    { key: 'all', label: '历史累计', note: historyNote(allTime), metric: allTime, href: '/admin/status/traffic?range=30' },
+  ]
+  if (bestDay) {
+    rows.push({
+      key: 'best',
+      label: '历史最高日',
+      note: formatTrendDate(bestDay.date),
+      metric: {
+        pageViews: bestDay.pageViews,
+        visitors: bestDay.visitors,
+        formSubmits: bestDay.formSubmits,
+        leads: bestDay.leads,
+        ctaClicks: bestDay.actions,
+        contactRedirects: 0,
+        conversionRate: safeRate(bestDay.leads, bestDay.pageViews),
+      },
+      href: '/admin/status/traffic?range=30#trend-analysis',
+      dateLabel: bestDay.date,
+    })
+  }
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h2 className="text-sm font-bold text-[#1E2C31]">访问与转化台账</h2>
+          <p className="mt-1 text-xs text-[#61767D]">按 300 后台的常用口径把访问、动作、线索、转化率和测试排除放到同一张表。</p>
+        </div>
+        <Link href="/admin/status/traffic?range=30" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+          进入网站访问统计
+        </Link>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[960px] text-sm">
+          <thead>
+            <tr className="border-b border-[#E6EEEE] bg-white text-[#61767D]">
+              <th className="px-4 py-3 text-left font-medium">统计口径</th>
+              <th className="px-4 py-3 text-right font-medium">PV</th>
+              <th className="px-4 py-3 text-right font-medium">访客(UV)</th>
+              <th className="px-4 py-3 text-right font-medium">转化动作</th>
+              <th className="px-4 py-3 text-right font-medium">表单成功</th>
+              <th className="px-4 py-3 text-right font-medium">真实线索</th>
+              <th className="px-4 py-3 text-right font-medium">访问转化率</th>
+              <th className="px-4 py-3 text-right font-medium">已排除测试</th>
+              <th className="px-4 py-3 text-right font-medium">下钻</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.key} className="border-b border-[#E6EEEE] last:border-0">
+                <td className="px-4 py-3">
+                  <div className="font-semibold text-[#1E2C31]">{row.label}</div>
+                  <div className="mt-1 text-xs text-[#8A9EA4]">{row.note}</div>
+                </td>
+                <td className="px-4 py-3 text-right font-bold text-[#1E2C31]">{formatNumber(row.metric.pageViews)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.visitors)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(metricActions(row.metric))}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.formSubmits)}</td>
+                <td className="px-4 py-3 text-right font-semibold text-[#E36F2C]">{formatNumber(row.metric.leads)}</td>
+                <td className="px-4 py-3 text-right font-semibold text-[#1889B6]">{formatAnalyticsPercent(row.metric.conversionRate ?? 0)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">
+                  {formatNumber(row.metric.testEvents ?? 0)} / {formatNumber(row.metric.testLeads ?? 0)}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <Link href={row.href} className="font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+                    查看
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
+function TrendPanel({ rows }: { rows: AnalyticsTrendRow[] }) {
+  const displayRows = rows.slice(-14)
+  const maxViews = Math.max(1, ...displayRows.map((row) => row.pageViews))
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-bold text-[#1E2C31]">访问趋势</h2>
+          <p className="mt-1 text-xs text-[#61767D]">最近 {formatNumber(displayRows.length)} 天 PV、动作和线索对照。</p>
+        </div>
+        <Link href="/admin/status/traffic?range=30#trend-analysis" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+          查看趋势
+        </Link>
+      </div>
+      {displayRows.length === 0 ? (
+        <div className="mt-5 rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-4 text-sm text-[#61767D]">暂无可用趋势数据。</div>
+      ) : (
+        <>
+          <div className="mt-5 flex h-52 items-end gap-2 border-b border-[#E6EEEE] pb-3">
+            {displayRows.map((row) => {
+              const pvHeight = Math.max(8, Math.round((row.pageViews / maxViews) * 168))
+              const actionHeight = Math.max(4, Math.round((row.actions / maxViews) * 168))
+              const leadHeight = Math.max(row.leads > 0 ? 4 : 0, Math.round((row.leads / maxViews) * 168))
+              return (
+                <div key={row.date} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-2">
+                  <div className="flex h-44 w-full items-end justify-center gap-1">
+                    <span className="w-2 rounded-t bg-[#1889B6]" style={{ height: pvHeight }} title={`${formatNumber(row.pageViews)} PV`} />
+                    <span className="w-2 rounded-t bg-[#E36F2C]" style={{ height: actionHeight }} title={`${formatNumber(row.actions)} 动作`} />
+                    <span className="w-2 rounded-t bg-emerald-600" style={{ height: leadHeight }} title={`${formatNumber(row.leads)} 线索`} />
+                  </div>
+                  <span className="w-full truncate text-center text-[11px] text-[#8A9EA4]">{formatTrendDate(row.date)}</span>
+                </div>
+              )
+            })}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-4 text-xs text-[#61767D]">
+            <LegendDot color="bg-[#1889B6]" label="PV" />
+            <LegendDot color="bg-[#E36F2C]" label="转化动作" />
+            <LegendDot color="bg-emerald-600" label="真实线索" />
+          </div>
+        </>
+      )}
+    </section>
+  )
+}
+
+function BehaviorPanel({
+  steps,
+  topPages,
+  landingPages,
+  sourceTypes,
+  thirtyDays,
+}: {
+  steps: AnalyticsBehaviorStep[]
+  topPages: AnalyticsRankRow[]
+  landingPages: AnalyticsRankRow[]
+  sourceTypes: AnalyticsRankRow[]
+  thirtyDays: AnalyticsWindowMetric
+}) {
+  const hasSteps = steps.some((step) => step.nodes.length > 0)
+  const actionRows = landingPages
+    .filter((row) => (row.secondary ?? 0) > 0)
+    .map((row) => ({ ...row, value: row.secondary ?? 0 }))
+  const conversionRows: AnalyticsRankRow[] = [
+    { key: 'leads', label: '真实线索', value: thirtyDays.leads },
+    { key: 'forms', label: '表单成功', value: thirtyDays.formSubmits },
+    { key: 'rate', label: '访问转化率', value: Math.round(thirtyDays.conversionRate * 10000) / 100 },
+  ]
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-bold text-[#1E2C31]">访问行为路径</h2>
+          <p className="mt-1 text-xs text-[#61767D]">入口、后续动作、来源类型和线索结果放在同屏判断。</p>
+        </div>
+        <Link href="/admin/status/traffic#behavior-analysis" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+          行为分析
+        </Link>
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {hasSteps
+          ? steps.slice(0, 4).map((step) => (
+              <FlowColumn
+                key={step.step}
+                title={step.label}
+                rows={step.nodes}
+                empty="暂无路径"
+                meta={`${formatNumber(step.visits)} 次 / ${formatAnalyticsPercent(step.retainedRate)}`}
+              />
+            ))
+          : (
+              <>
+                <FlowColumn title="入口页面" rows={topPages} empty="暂无入口" />
+                <FlowColumn title="后续动作" rows={actionRows} empty="暂无动作" />
+                <FlowColumn title="来源类型" rows={sourceTypes} empty="暂无来源" formatLabel={sourceTypeLabel} />
+                <FlowColumn title="线索结果" rows={conversionRows} empty="暂无线索" percentKey="rate" />
+              </>
+            )}
+      </div>
+    </section>
+  )
+}
+
+function ConversionPathTable({
+  conversionPaths,
+}: {
+  conversionPaths: Record<string, AnalyticsConversionMetric>
+}) {
+  const rows = CONVERSION_PATHS.map((item) => ({
+    key: item.key,
+    label: item.area,
+    href: item.adminHref,
+    metric: conversionPaths[item.key] ?? {
+      views: 0,
+      ctaClicks: 0,
+      formSubmits: 0,
+      leads: 0,
+      conversionRate: 0,
+    },
+  })).sort((a, b) => conversionScore(b.metric) - conversionScore(a.metric))
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h2 className="text-sm font-bold text-[#1E2C31]">线索转化路径</h2>
+          <p className="mt-1 text-xs text-[#61767D]">只统计现有公开路径的访问、动作、表单和真实线索。</p>
+        </div>
+        <Link href="/admin/site/conversion" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+          转化管理
+        </Link>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[720px] text-sm">
+          <thead>
+            <tr className="border-b border-[#E6EEEE] bg-white text-[#61767D]">
+              <th className="px-4 py-3 text-left font-medium">路径</th>
+              <th className="px-4 py-3 text-right font-medium">访问</th>
+              <th className="px-4 py-3 text-right font-medium">CTA</th>
+              <th className="px-4 py-3 text-right font-medium">表单</th>
+              <th className="px-4 py-3 text-right font-medium">线索</th>
+              <th className="px-4 py-3 text-right font-medium">转化率</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.slice(0, 6).map((row) => (
+              <tr key={row.key} className="border-b border-[#E6EEEE] last:border-0">
+                <td className="px-4 py-3">
+                  <Link href={row.href} className="font-semibold text-[#1E2C31] hover:text-[#1889B6]">
+                    {row.label}
+                  </Link>
+                </td>
+                <td className="px-4 py-3 text-right font-semibold text-[#1E2C31]">{formatNumber(row.metric.views)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.ctaClicks)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.formSubmits)}</td>
+                <td className="px-4 py-3 text-right font-semibold text-[#E36F2C]">{formatNumber(row.metric.leads)}</td>
+                <td className="px-4 py-3 text-right font-semibold text-[#1889B6]">{formatAnalyticsPercent(row.metric.conversionRate)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
+function RankWorkspace({ analytics }: { analytics: SiteAnalyticsDashboard }) {
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-bold text-[#1E2C31]">入口与来源排行</h2>
+          <p className="mt-1 text-xs text-[#61767D]">运营先看高访问页面、来源类型和高访问低动作入口。</p>
+        </div>
+        <Link href="/admin/status/traffic#landing-analysis" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+          落地页分析
+        </Link>
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <RankList title="Top Pages" rows={analytics.topPages} empty="暂无访问页面。" />
+        <RankList title="来源类型" rows={analytics.sourceTypes} empty="暂无来源事件。" formatLabel={sourceTypeLabel} />
+        <RankList title="落地页动作" rows={analytics.landingPages} empty="暂无落地页事件。" secondaryLabel="动作" />
+      </div>
+    </section>
+  )
+}
+
+function ContentLedger({
+  products,
+  projects,
+  news,
+}: {
+  products: ContentMetric
+  projects: ContentMetric
+  news: ContentMetric
+}) {
+  const rows = [products, projects, news]
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h2 className="text-sm font-bold text-[#1E2C31]">内容运营台账</h2>
+          <p className="mt-1 text-xs text-[#61767D]">产品、项目案例、新闻按发布状态、近期变化和缺项统一排查。</p>
+        </div>
+        <Link href="/admin/status/content" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+          内容统计
+        </Link>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[820px] text-sm">
+          <thead>
+            <tr className="border-b border-[#E6EEEE] bg-white text-[#61767D]">
+              <th className="px-4 py-3 text-left font-medium">内容类型</th>
+              <th className="px-4 py-3 text-right font-medium">总量</th>
+              <th className="px-4 py-3 text-right font-medium">已发布</th>
+              <th className="px-4 py-3 text-right font-medium">草稿</th>
+              <th className="px-4 py-3 text-right font-medium">30 天变化</th>
+              <th className="px-4 py-3 text-right font-medium">缺项</th>
+              <th className="px-4 py-3 text-right font-medium">处理</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.key} className="border-b border-[#E6EEEE] last:border-0">
+                <td className="px-4 py-3 font-semibold text-[#1E2C31]">{row.label}</td>
+                <td className="px-4 py-3 text-right font-semibold text-[#1E2C31]">{formatNumber(row.total)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.published)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.draft)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.recent30)}</td>
+                <td className={`px-4 py-3 text-right font-semibold ${row.issues > 0 ? 'text-[#E36F2C]' : 'text-emerald-700'}`}>
+                  {formatNumber(row.issues)}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <Link href={row.issues > 0 ? row.issueHref : row.href} className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+                    进入
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
+function PriorityQueue({
+  newLeads,
+  contactingLeads,
+  contentIssues,
+  siteIssues,
+  pageDrafts,
+  thirtyDays,
+  todayComparison,
+  thirtyComparison,
+}: {
+  newLeads: number
+  contactingLeads: number
+  contentIssues: number
+  siteIssues: number
+  pageDrafts: number
+  thirtyDays: AnalyticsWindowMetric
+  todayComparison?: AnalyticsComparisonMetric
+  thirtyComparison?: AnalyticsComparisonMetric
+}) {
+  const queue = [
+    {
+      label: '新线索',
+      value: newLeads,
+      detail: newLeads > 0 ? `跟进中 ${formatNumber(contactingLeads)}，优先进入线索列表处理。` : '暂无新线索。',
+      href: '/admin/customers/leads?status=new',
+      ok: newLeads === 0,
+    },
+    {
+      label: '内容缺项',
+      value: contentIssues,
+      detail: contentIssues > 0 ? '优先补齐会影响展示和 SEO 的字段。' : '内容关键字段状态正常。',
+      href: '/admin/status/content',
+      ok: contentIssues === 0,
+    },
+    {
+      label: '站点问题',
+      value: siteIssues,
+      detail: siteIssues > 0 ? `页面草稿 ${formatNumber(pageDrafts)}，同步检查 SEO / sitemap / 媒体。` : '站点健康项暂无待处理。',
+      href: '/admin/status/site',
+      ok: siteIssues === 0,
+    },
+    {
+      label: '访问转化',
+      value: thirtyDays.leads,
+      detail: thirtyDays.pageViews > 0 ? `30 天访问转化率 ${formatAnalyticsPercent(thirtyDays.conversionRate)}。` : '暂无访问事件。',
+      href: '/admin/status/traffic?range=30',
+      ok: thirtyDays.pageViews === 0 || thirtyDays.leads > 0,
+    },
+  ]
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4">
+        <h2 className="text-sm font-bold text-[#1E2C31]">今日优先级</h2>
+        <p className="mt-1 text-xs text-[#61767D]">按影响运营效率的顺序排列。</p>
+      </div>
+      <div className="grid grid-cols-2 border-b border-[#E6EEEE]">
+        <DeltaCell title="今日 PV" metric={todayComparison?.pageViews} />
+        <DeltaCell title="今日线索" metric={todayComparison?.leads} />
+        <DeltaCell title="30 天 PV" metric={thirtyComparison?.pageViews} />
+        <DeltaCell title="30 天转化率" metric={thirtyComparison?.conversionRate} rate />
+      </div>
+      <div className="divide-y divide-[#E6EEEE]">
+        {queue.map((item) => (
+          <QueueRow key={item.label} {...item} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function ModuleEntryPanel({
+  analytics,
+  contentIssues,
+  siteIssues,
+  newLeads,
+}: {
+  analytics: SiteAnalyticsDashboard
+  contentIssues: number
+  siteIssues: number
+  newLeads: number
+}) {
+  const modules = [
+    {
+      label: '网站访问统计',
+      value: `${formatNumber(analytics.allTime.pageViews)} PV`,
+      detail: '历史累计、最高日、趋势、Top Pages。',
+      href: '/admin/status/traffic?range=30',
+    },
+    {
+      label: '落地页跳出分析',
+      value: `${formatNumber(analytics.landingPages.length)} 页`,
+      detail: '识别高访问低动作入口页面。',
+      href: '/admin/status/traffic#landing-analysis',
+    },
+    {
+      label: '访问行为分析',
+      value: `${formatNumber(analytics.behaviorSteps.reduce((sum, step) => sum + step.visits, 0))} 次`,
+      detail: '入口、来源、动作和留存路径。',
+      href: '/admin/status/traffic#behavior-analysis',
+    },
+    {
+      label: '线索转化分析',
+      value: formatNumber(newLeads),
+      detail: '进入客户线索和转化路径处理。',
+      href: '/admin/site/conversion',
+    },
+    {
+      label: 'Google收录分析',
+      value: formatNumber(siteIssues),
+      detail: '从 SEO 字段和站点文件状态进入。',
+      href: '/admin/site/seo',
+    },
+    {
+      label: '内容统计',
+      value: formatNumber(contentIssues),
+      detail: '产品、案例、新闻缺项治理。',
+      href: '/admin/status/content',
+    },
+  ]
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+      <h2 className="text-sm font-bold text-[#1E2C31]">数据模块入口</h2>
+      <p className="mt-1 text-xs text-[#61767D]">按 300 后台常见分析路径保留清晰下钻。</p>
+      <div className="mt-4 grid grid-cols-1 gap-3">
+        {modules.map((module) => (
+          <Link key={module.label} href={module.href} className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] p-3 transition hover:border-[#1889B6]/60 hover:bg-white">
+            <span className="flex items-start justify-between gap-3">
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-[#1E2C31]">{module.label}</span>
+                <span className="mt-1 block text-xs leading-5 text-[#61767D]">{module.detail}</span>
+              </span>
+              <span className="shrink-0 text-sm font-black text-[#1889B6]">{module.value}</span>
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function QueueRow({
+  label,
+  value,
+  detail,
+  href,
+  ok,
+}: {
+  label: string
+  value: number
+  detail: string
+  href: string
+  ok: boolean
+}) {
+  return (
+    <Link href={href} className="flex gap-3 px-5 py-4 transition hover:bg-[#F7FAFA]">
+      <span
+        className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
+          ok ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FFF2E7] text-[#E36F2C]'
+        }`}
+      >
+        {ok ? <STATUS_ICONS.CheckCircle2 size={16} /> : <STATUS_ICONS.AlertCircle size={16} />}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center justify-between gap-3">
+          <span className="text-sm font-semibold text-[#1E2C31]">{label}</span>
+          <span className={`text-sm font-bold ${ok ? 'text-emerald-700' : 'text-[#E36F2C]'}`}>{formatNumber(value)}</span>
+        </span>
+        <span className="mt-1 block text-xs leading-5 text-[#61767D]">{detail}</span>
+      </span>
+    </Link>
+  )
+}
+
+function DeltaCell({ title, metric, rate = false }: { title: string; metric?: AnalyticsDeltaMetric; rate?: boolean }) {
   const tone = metric && metric.delta > 0 ? 'text-emerald-700' : metric && metric.delta < 0 ? 'text-[#E36F2C]' : 'text-[#61767D]'
   const value = metric ? (rate ? formatAnalyticsPercent(metric.current) : formatNumber(metric.current)) : '--'
   const delta = metric ? (rate ? formatRateDelta(metric) : formatNumberDelta(metric)) : '暂无对比'
@@ -851,183 +830,6 @@ function PulseChangeCard({ title, metric, rate = false }: { title: string; metri
       <div className="text-xs font-semibold text-[#61767D]">{title}</div>
       <div className="mt-2 text-xl font-black text-[#1E2C31]">{value}</div>
       <div className={`mt-1 text-xs font-bold ${tone}`}>{delta}</div>
-    </div>
-  )
-}
-
-function WindowSummaryTable({
-  today,
-  yesterday,
-  sevenDays,
-  thirtyDays,
-}: {
-  today: AnalyticsPeriodMetric
-  yesterday: AnalyticsPeriodMetric
-  sevenDays: AnalyticsWindowMetric
-  thirtyDays: AnalyticsWindowMetric
-}) {
-  const rows = [
-    { label: '今天', metric: today, note: '实时口径' },
-    { label: '昨天', metric: yesterday, note: '昨日对照' },
-    { label: '最近 7 天', metric: sevenDays, note: '短期观察' },
-    { label: '最近 30 天', metric: thirtyDays, note: '运营主口径' },
-  ]
-
-  return (
-    <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-      <div className="border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3">
-        <h2 className="text-sm font-bold text-[#1E2C31]">访问与转化汇总</h2>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-sm">
-          <thead>
-            <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
-              <th className="px-4 py-3 text-left font-medium">统计口径</th>
-              <th className="px-4 py-3 text-right font-medium">PV</th>
-              <th className="px-4 py-3 text-right font-medium">访客</th>
-              <th className="px-4 py-3 text-right font-medium">CTA</th>
-              <th className="px-4 py-3 text-right font-medium">联系跳转</th>
-              <th className="px-4 py-3 text-right font-medium">表单</th>
-              <th className="px-4 py-3 text-right font-medium">线索</th>
-              <th className="px-4 py-3 text-right font-medium">转化率</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.label} className="border-b border-[#E6EEEE] last:border-0">
-                <td className="px-4 py-3">
-                  <div className="font-semibold text-[#1E2C31]">{row.label}</div>
-                  <div className="mt-1 text-xs text-[#8A9EA4]">{row.note}</div>
-                </td>
-                <td className="px-4 py-3 text-right font-semibold text-[#1E2C31]">{formatNumber(row.metric.pageViews)}</td>
-                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.visitors)}</td>
-                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.ctaClicks)}</td>
-                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.contactRedirects)}</td>
-                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.formSubmits)}</td>
-                <td className="px-4 py-3 text-right font-semibold text-[#E36F2C]">{formatNumber(row.metric.leads)}</td>
-                <td className="px-4 py-3 text-right font-semibold text-[#1889B6]">{formatAnalyticsPercent(row.metric.conversionRate)}</td>
-              </tr>
-            ))}
-            <tr>
-              <td className="px-4 py-3">
-                <div className="font-semibold text-[#1E2C31]">已排除测试</div>
-                <div className="mt-1 text-xs text-[#8A9EA4]">不计入运营判断</div>
-              </td>
-              <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(thirtyDays.testEvents)}</td>
-              <td className="px-4 py-3 text-right text-[#8A9EA4]">--</td>
-              <td className="px-4 py-3 text-right text-[#8A9EA4]">--</td>
-              <td className="px-4 py-3 text-right text-[#8A9EA4]">--</td>
-              <td className="px-4 py-3 text-right text-[#8A9EA4]">--</td>
-              <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(thirtyDays.testLeads)}</td>
-              <td className="px-4 py-3 text-right text-[#8A9EA4]">--</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-function TrendPreview({ rows }: { rows: AnalyticsTrendRow[] }) {
-  const displayRows = rows.slice(-10)
-  if (displayRows.length === 0) {
-    return (
-      <div className="rounded-md border border-[#D8E7E8] bg-white p-5 text-sm text-[#61767D] shadow-sm">
-        暂无可用趋势数据。
-      </div>
-    )
-  }
-
-  const maxViews = Math.max(1, ...displayRows.map((row) => row.pageViews))
-
-  return (
-    <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-bold text-[#1E2C31]">访问趋势预览</h2>
-          <p className="mt-1 text-xs text-[#61767D]">最近 {formatNumber(displayRows.length)} 天 PV 与动作对照。</p>
-        </div>
-        <Link href="/admin/status/traffic?range=30#trend-analysis" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
-          查看趋势
-        </Link>
-      </div>
-      <div className="mt-5 flex h-48 items-end gap-2 border-b border-[#E6EEEE] pb-3">
-        {displayRows.map((row) => {
-          const height = Math.max(8, Math.round((row.pageViews / maxViews) * 150))
-          const actionHeight = Math.max(4, Math.round((row.actions / maxViews) * 150))
-          return (
-            <div key={row.date} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-2">
-              <div className="flex h-40 w-full items-end justify-center gap-1">
-                <span className="w-2 rounded-t bg-[#1889B6]" style={{ height }} title={`${formatNumber(row.pageViews)} PV`} />
-                <span className="w-2 rounded-t bg-[#E36F2C]" style={{ height: actionHeight }} title={`${formatNumber(row.actions)} 动作`} />
-              </div>
-              <span className="w-full truncate text-center text-[11px] text-[#8A9EA4]">{formatTrendDate(row.date)}</span>
-            </div>
-          )
-        })}
-      </div>
-      <div className="mt-3 flex flex-wrap gap-4 text-xs text-[#61767D]">
-        <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#1889B6]" />PV</span>
-        <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#E36F2C]" />转化动作</span>
-      </div>
-    </div>
-  )
-}
-
-function BehaviorFlowPreview({
-  behaviorSteps,
-  topPages,
-  landingPages,
-  sourceTypes,
-  windowMetric,
-}: {
-  behaviorSteps: AnalyticsBehaviorStep[]
-  topPages: AnalyticsRankRow[]
-  landingPages: AnalyticsRankRow[]
-  sourceTypes: AnalyticsRankRow[]
-  windowMetric: AnalyticsWindowMetric
-}) {
-  const hasBehaviorSteps = behaviorSteps.some((step) => step.nodes.length > 0)
-  const actionRows = landingPages
-    .filter((row) => (row.secondary ?? 0) > 0)
-    .map((row) => ({ ...row, value: row.secondary ?? 0 }))
-  const conversionRows: AnalyticsRankRow[] = [
-    { key: 'leads', label: '真实线索', value: windowMetric.leads },
-    { key: 'forms', label: '表单成功', value: windowMetric.formSubmits },
-    { key: 'rate', label: '访问转化率', value: Math.round(windowMetric.conversionRate * 10000) / 100 },
-  ]
-
-  return (
-    <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-bold text-[#1E2C31]">访问行为路径</h2>
-          <p className="mt-1 text-xs text-[#61767D]">入口页面、动作来源和线索结果放在同屏判断。</p>
-        </div>
-        <Link href="/admin/status/traffic#behavior-analysis" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
-          行为分析
-        </Link>
-      </div>
-      {hasBehaviorSteps ? (
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-5">
-          {behaviorSteps.map((step) => (
-            <FlowColumn
-              key={step.step}
-              title={step.label}
-              rows={step.nodes}
-              empty="暂无路径"
-              meta={`${formatNumber(step.visits)} 次 / ${formatAnalyticsPercent(step.retainedRate)}`}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
-          <FlowColumn title="入口页面" rows={topPages} empty="暂无入口" />
-          <FlowColumn title="后续动作" rows={actionRows} empty="暂无动作" />
-          <FlowColumn title="来源类型" rows={sourceTypes} empty="暂无来源" formatLabel={sourceTypeLabel} />
-          <FlowColumn title="线索结果" rows={conversionRows} empty="暂无线索" percentKey="rate" />
-        </div>
-      )}
     </div>
   )
 }
@@ -1073,40 +875,72 @@ function FlowColumn({
   )
 }
 
-function AnalysisModuleCard({
+function RankList({
   title,
-  value,
-  detail,
-  href,
-  tone,
+  rows,
+  empty,
+  formatLabel,
+  secondaryLabel,
 }: {
   title: string
-  value: number | string
-  detail: string
-  href: string
-  tone: 'blue' | 'green' | 'orange'
+  rows: AnalyticsRankRow[]
+  empty: string
+  formatLabel?: (value: string) => string
+  secondaryLabel?: string
 }) {
-  const toneClass =
-    tone === 'orange'
-      ? 'border-l-[#E36F2C]'
-      : tone === 'green'
-        ? 'border-l-emerald-500'
-        : 'border-l-[#1889B6]'
+  const displayRows = rows.slice(0, 5)
 
   return (
-    <Link
-      href={href}
-      className={`rounded-md border border-l-4 border-[#D8E7E8] ${toneClass} bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60`}
-    >
-      <span className="block text-sm font-bold text-[#1E2C31]">{title}</span>
-      <span className="mt-3 block text-2xl font-black text-[#1E2C31]">{typeof value === 'number' ? formatNumber(value) : value}</span>
-      <span className="mt-2 block text-xs leading-5 text-[#61767D]">{detail}</span>
-    </Link>
+    <div className="min-w-0">
+      <h3 className="text-xs font-semibold text-[#61767D]">{title}</h3>
+      <div className="mt-2 divide-y divide-[#E6EEEE] rounded-md border border-[#E6EEEE] bg-[#F7FAFA]">
+        {displayRows.length === 0 ? (
+          <div className="p-3 text-xs text-[#8A9EA4]">{empty}</div>
+        ) : (
+          displayRows.map((row) => (
+            <div key={row.key} className="flex items-start justify-between gap-3 px-3 py-2">
+              <span className="min-w-0">
+                <span className="block truncate text-xs font-semibold text-[#1E2C31]">
+                  {formatLabel ? formatLabel(row.key) : row.label}
+                </span>
+                {row.secondary !== undefined ? (
+                  <span className="mt-0.5 block text-[11px] text-[#8A9EA4]">{secondaryLabel ?? '访客'} {formatNumber(row.secondary)}</span>
+                ) : null}
+              </span>
+              <span className="shrink-0 text-xs font-bold text-[#1889B6]">{formatNumber(row.value)}</span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
   )
 }
 
-function metricActions(metric: AnalyticsPeriodMetric | AnalyticsWindowMetric) {
-  return metric.ctaClicks + metric.contactRedirects + metric.formSubmits
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={`h-2 w-2 rounded-full ${color}`} />
+      {label}
+    </span>
+  )
+}
+
+function metricActions(metric: SharedTrafficMetric) {
+  return (metric.ctaClicks ?? 0) + (metric.contactRedirects ?? 0) + metric.formSubmits
+}
+
+function safeRate(numerator: number, denominator: number) {
+  if (denominator <= 0) return 0
+  return numerator / denominator
+}
+
+function conversionScore(metric: AnalyticsConversionMetric) {
+  return metric.leads * 1000 + metric.formSubmits * 100 + metric.ctaClicks + metric.views * 0.01
+}
+
+function historyNote(metric: AnalyticsAllTimeMetric) {
+  if (!metric.firstEventAt || !metric.lastEventAt) return '暂无历史事件'
+  return `${formatDateTime(metric.firstEventAt)} 起`
 }
 
 function formatNumberDelta(metric: AnalyticsDeltaMetric): string {
@@ -1129,76 +963,11 @@ function formatTrendDate(value: string) {
   })
 }
 
-function MiniRankList({
-  title,
-  rows,
-  empty,
-  formatLabel,
-}: {
-  title: string
-  rows: AnalyticsRankRow[]
-  empty: string
-  formatLabel?: (value: string) => string
-}) {
-  return (
-    <div>
-      <h3 className="text-xs font-semibold text-[#61767D]">{title}</h3>
-      {rows.length === 0 ? (
-        <p className="mt-2 rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-3 text-xs text-[#61767D]">{empty}</p>
-      ) : (
-        <div className="mt-2 divide-y divide-[#E6EEEE] rounded-md border border-[#E6EEEE] bg-[#F7FAFA]">
-          {rows.slice(0, 4).map((row) => (
-            <div key={row.key} className="flex items-center justify-between gap-3 px-3 py-2">
-              <span className="min-w-0 truncate text-xs font-medium text-[#1E2C31]">
-                {formatLabel ? formatLabel(row.key) : row.label}
-              </span>
-              <span className="shrink-0 text-xs font-bold text-[#1889B6]">{formatNumber(row.value)}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function SmallStat({ label, value }: { label: string; value: number }) {
-  return (
-    <span className="rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-3">
-      <span className="block text-xs text-[#61767D]">{label}</span>
-      <span className="mt-1 block text-xl font-bold text-[#1E2C31]">{formatNumber(value)}</span>
-    </span>
-  )
-}
-
-function PriorityRow({
-  ok,
-  title,
-  detail,
-  count,
-  href,
-}: {
-  ok: boolean
-  title: string
-  detail: string
-  count: number
-  href: string
-}) {
-  return (
-    <Link href={href} className="flex gap-3 px-5 py-4 transition hover:bg-[#F7FAFA]">
-      <span
-        className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
-          ok ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FFF2E7] text-[#E36F2C]'
-        }`}
-      >
-        {ok ? <STATUS_ICONS.CheckCircle2 size={16} /> : <STATUS_ICONS.AlertCircle size={16} />}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center justify-between gap-3">
-          <span className="text-sm font-semibold text-[#1E2C31]">{title}</span>
-          <span className="text-sm font-bold text-[#E36F2C]">{formatNumber(count)}</span>
-        </span>
-        <span className="mt-1 block text-xs leading-5 text-[#61767D]">{detail}</span>
-      </span>
-    </Link>
-  )
+function formatDateTime(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+  })
 }
