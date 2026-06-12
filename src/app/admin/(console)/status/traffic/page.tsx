@@ -51,6 +51,18 @@ type TrendDisplayRow = {
   formSubmits: number
   leads: number
 }
+type TrafficLedgerTone = 'blocker' | 'review' | 'watch' | 'ready'
+type TrafficLedgerRow = {
+  key: string
+  stage: string
+  priority: string
+  item: string
+  value: string
+  evidence: string
+  nextAction: string
+  href: string
+  tone: TrafficLedgerTone
+}
 
 export default async function AdminStatusTrafficPage({ searchParams }: PageProps) {
   const sp = searchParams ? await searchParams : {}
@@ -110,6 +122,14 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
         />
 
         <ComparisonStrip comparison={activeComparison} />
+
+        <TrafficOperationsLedger
+          analytics={analytics}
+          activeMetric={activeMetric}
+          activeRange={activeRange}
+          trendRows={trendRows}
+          comparison={activeComparison}
+        />
 
         <TrafficDrilldownWorkbench
           analytics={analytics}
@@ -665,6 +685,250 @@ function ComparisonStrip({ comparison }: { comparison?: AnalyticsComparisonMetri
       </div>
     </section>
   )
+}
+
+function TrafficOperationsLedger({
+  analytics,
+  activeMetric,
+  activeRange,
+  trendRows,
+  comparison,
+}: {
+  analytics: SiteAnalyticsDashboard
+  activeMetric: TrafficMetric
+  activeRange: TrafficRange
+  trendRows: TrendDisplayRow[]
+  comparison?: AnalyticsComparisonMetric
+}) {
+  const rows = buildTrafficOperationsRows(analytics, activeMetric, activeRange, trendRows, comparison)
+  const blockerCount = rows.filter((row) => row.tone === 'blocker').length
+  const reviewCount = rows.filter((row) => row.tone === 'review').length
+  const watchCount = rows.filter((row) => row.tone === 'watch').length
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-[#1E2C31]">访问分析处理台账</h2>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">
+            按 300 后台常用分析顺序，把访问量、趋势、落地页、行为路径、来源归因和线索转化转成可下钻清单；本页只读，不写业务数据。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs">
+          <span className="rounded-full bg-[#FFF2E7] px-2.5 py-1 font-semibold text-[#E36F2C]">阻塞 {blockerCount}</span>
+          <span className="rounded-full bg-[#EAF6F8] px-2.5 py-1 font-semibold text-[#1889B6]">复核 {reviewCount}</span>
+          <span className="rounded-full bg-[#FFF9EA] px-2.5 py-1 font-semibold text-[#9A6A00]">观察 {watchCount}</span>
+          <span className="rounded-full bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-700">口径 {rangeLabel(activeRange)}</span>
+        </div>
+      </div>
+
+      <div className="hidden overflow-x-auto xl:block">
+        <table className="w-full min-w-[1080px] text-sm">
+          <thead>
+            <tr className="border-b border-[#E6EEEE] bg-white text-[#61767D]">
+              <th className="px-5 py-3 text-left font-medium">阶段</th>
+              <th className="px-4 py-3 text-left font-medium">处理事项</th>
+              <th className="px-4 py-3 text-left font-medium">当前值</th>
+              <th className="px-4 py-3 text-left font-medium">证据 / 影响</th>
+              <th className="px-4 py-3 text-left font-medium">优先级</th>
+              <th className="px-5 py-3 text-right font-medium">下钻入口</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.key} className="border-b border-[#E6EEEE] last:border-0">
+                <td className="px-5 py-3 font-semibold text-[#1E2C31]">{row.stage}</td>
+                <td className="max-w-[250px] px-4 py-3">
+                  <div className="truncate font-semibold text-[#1E2C31]" title={row.item}>{row.item}</div>
+                </td>
+                <td className="max-w-[220px] px-4 py-3">
+                  <div className="truncate font-semibold text-[#1889B6]" title={row.value}>{row.value}</div>
+                </td>
+                <td className="max-w-[360px] px-4 py-3">
+                  <div className="truncate text-[#61767D]" title={row.evidence}>{row.evidence}</div>
+                </td>
+                <td className="px-4 py-3">
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${trafficLedgerBadgeClass(row.tone)}`}>
+                    {row.priority}
+                  </span>
+                </td>
+                <td className="px-5 py-3 text-right">
+                  <Link href={row.href} className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+                    {row.nextAction}
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] xl:hidden">
+        {rows.map((row) => (
+          <Link key={row.key} href={row.href} className="block p-5 transition hover:bg-[#F7FAFA]">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-[#8A9EA4]">{row.stage}</div>
+                <div className="mt-1 truncate text-base font-bold text-[#1E2C31]" title={row.item}>{row.item}</div>
+              </div>
+              <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${trafficLedgerBadgeClass(row.tone)}`}>
+                {row.priority}
+              </span>
+            </div>
+            <div className="mt-3 text-sm font-semibold text-[#1889B6]">{row.value}</div>
+            <div className="mt-2 text-xs leading-5 text-[#61767D]">{row.evidence}</div>
+            <div className="mt-3 text-xs font-semibold text-[#1889B6]">{row.nextAction}</div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function buildTrafficOperationsRows(
+  analytics: SiteAnalyticsDashboard,
+  activeMetric: TrafficMetric,
+  activeRange: TrafficRange,
+  trendRows: TrendDisplayRow[],
+  comparison?: AnalyticsComparisonMetric,
+): TrafficLedgerRow[] {
+  const actionTotal = metricActions(activeMetric)
+  const quietLandingPage = analytics.landingPages.find((row) => row.value >= 20 && (row.secondary ?? 0) === 0)
+  const entryStep = analytics.behaviorSteps.find((step) => step.step === 1)
+  const secondStep = analytics.behaviorSteps.find((step) => step.step === 2)
+  const sourceTotal = analytics.sourceTypes.reduce((sum, row) => sum + row.value, 0)
+  const otherSource = analytics.sourceTypes.find((row) => row.key === 'other')?.value ?? 0
+  const otherShare = sourceTotal > 0 ? otherSource / sourceTotal : 0
+  const topPage = analytics.topPages[0]
+  const topReferrer = analytics.topReferrers[0]
+  const topSource = analytics.sourceTypes[0]
+  const latestTrend = trendRows[trendRows.length - 1]
+  const previousTrend = trendRows[trendRows.length - 2]
+  const trendDelta = latestTrend && previousTrend ? latestTrend.pageViews - previousTrend.pageViews : 0
+  const trendTone: TrafficLedgerTone =
+    comparison && comparison.pageViews.delta < 0
+      ? 'watch'
+      : trendDelta > Math.max(30, (previousTrend?.pageViews ?? 0) * 1.5)
+        ? 'review'
+        : 'ready'
+  const behaviorTone: TrafficLedgerTone =
+    (entryStep?.visits ?? 0) >= 20 && (secondStep?.retainedRate ?? 0) < 0.2
+      ? 'review'
+      : (entryStep?.visits ?? 0) > 0
+        ? 'ready'
+        : 'watch'
+  const sourceTone: TrafficLedgerTone =
+    sourceTotal === 0 && actionTotal > 0
+      ? 'review'
+      : otherShare > 0.5
+        ? 'review'
+        : otherShare > 0.3
+          ? 'watch'
+          : 'ready'
+  const conversionTone: TrafficLedgerTone =
+    activeMetric.pageViews >= 100 && activeMetric.leads === 0
+      ? 'blocker'
+      : activeMetric.pageViews >= 100 && activeMetric.conversionRate < 0.005
+        ? 'review'
+        : activeMetric.pageViews > 0
+          ? 'ready'
+          : 'watch'
+
+  return [
+    {
+      key: 'traffic-sample',
+      stage: '访问样本',
+      priority: activeMetric.pageViews > 0 ? '正常' : '观察',
+      item: `${rangeLabel(activeRange)}访问基础`,
+      value: `${formatNumber(activeMetric.pageViews)} PV / ${formatNumber(activeMetric.visitors)} UV`,
+      evidence: `已排除测试 ${formatNumber(activeMetric.testEvents)} 事件 / ${formatNumber(activeMetric.testLeads)} 线索。`,
+      nextAction: '看趋势',
+      href: '#trend-analysis',
+      tone: activeMetric.pageViews > 0 ? 'ready' : 'watch',
+    },
+    {
+      key: 'trend-movement',
+      stage: '趋势变化',
+      priority: trendTone === 'review' ? '复核' : trendTone === 'watch' ? '观察' : '正常',
+      item: comparison ? `${comparison.label} 对比 ${comparison.previousLabel}` : '趋势样本',
+      value: comparison ? formatNumberDelta(comparison.pageViews) : latestTrend ? `${formatNumber(latestTrend.pageViews)} PV` : '暂无趋势',
+      evidence: latestTrend
+        ? `末点 ${latestTrend.label}：${formatNumber(latestTrend.pageViews)} PV，较上一点 ${trendDelta >= 0 ? '+' : ''}${formatNumber(trendDelta)}。`
+        : '暂无趋势点，等待 site_events 样本。',
+      nextAction: '看趋势表',
+      href: '#trend-analysis',
+      tone: trendTone,
+    },
+    {
+      key: 'landing-action-gap',
+      stage: '落地页',
+      priority: quietLandingPage ? '复核' : '正常',
+      item: quietLandingPage ? '高访问低动作页' : '落地页动作覆盖',
+      value: quietLandingPage?.label ?? `${formatNumber(analytics.landingPages.length)} 个落地页`,
+      evidence: quietLandingPage
+        ? `${formatNumber(quietLandingPage.value)} 次访问，CTA / 联系 / 表单动作 ${formatNumber(quietLandingPage.secondary ?? 0)}。`
+        : '当前 Top landing pages 未出现明显高访问 0 动作样本。',
+      nextAction: '看落地页',
+      href: '#landing-analysis',
+      tone: quietLandingPage ? 'review' : 'ready',
+    },
+    {
+      key: 'behavior-retention',
+      stage: '行为路径',
+      priority: behaviorTone === 'review' ? '复核' : behaviorTone === 'watch' ? '观察' : '正常',
+      item: '入口到第二步留存',
+      value: secondStep ? formatAnalyticsPercent(secondStep.retainedRate) : '暂无路径',
+      evidence: entryStep
+        ? `入口 ${formatNumber(entryStep.visits)} 次，第二步 ${formatNumber(secondStep?.visits ?? 0)} 次；只读匿名 session / visitor 聚合。`
+        : '暂无足够 page_view 路径样本。',
+      nextAction: '看行为路径',
+      href: '#behavior-analysis',
+      tone: behaviorTone,
+    },
+    {
+      key: 'source-attribution',
+      stage: '来源归因',
+      priority: sourceTone === 'review' ? '复核' : sourceTone === 'watch' ? '观察' : '正常',
+      item: topReferrer?.label ?? (topSource ? sourceTypeLabel(topSource.key) : '来源样本不足'),
+      value: sourceTotal > 0 ? `${formatAnalyticsPercent(otherShare)} other` : '暂无来源动作',
+      evidence:
+        sourceTotal > 0
+          ? `动作来源 ${formatNumber(sourceTotal)} 次，other ${formatNumber(otherSource)} 次。`
+          : '暂无 CTA / 联系 / 表单来源事件。',
+      nextAction: '看来源',
+      href: '#behavior-analysis',
+      tone: sourceTone,
+    },
+    {
+      key: 'conversion-handoff',
+      stage: '线索转化',
+      priority: conversionTone === 'blocker' ? '阻塞' : conversionTone === 'review' ? '复核' : conversionTone === 'watch' ? '观察' : '正常',
+      item: '访问到真实线索',
+      value: `${formatNumber(activeMetric.leads)} 线索 / ${formatAnalyticsPercent(activeMetric.conversionRate)}`,
+      evidence: `${formatNumber(activeMetric.pageViews)} PV，${formatNumber(actionTotal)} 个 CTA / 联系 / 表单动作。`,
+      nextAction: '看转化页',
+      href: '/admin/site/conversion',
+      tone: conversionTone,
+    },
+    {
+      key: 'analytics-boundary',
+      stage: '数据边界',
+      priority: analytics.available ? '正常' : '观察',
+      item: '第一方事件口径',
+      value: analytics.available ? 'site_events 可读' : '事件表未就绪',
+      evidence: `Top page：${topPage?.label ?? '暂无'}；本页不读取 GA / Search Console / Vercel Analytics API。`,
+      nextAction: '看接入状态',
+      href: '/admin/site/seo',
+      tone: analytics.available ? 'ready' : 'watch',
+    },
+  ]
+}
+
+function trafficLedgerBadgeClass(tone: TrafficLedgerTone) {
+  if (tone === 'blocker') return 'bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'review') return 'bg-[#EAF6F8] text-[#1889B6]'
+  if (tone === 'watch') return 'bg-[#FFF9EA] text-[#9A6A00]'
+  return 'bg-emerald-50 text-emerald-700'
 }
 
 function TrafficDrilldownWorkbench({
