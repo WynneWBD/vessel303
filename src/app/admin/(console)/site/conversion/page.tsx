@@ -275,6 +275,14 @@ export default async function AdminSiteConversionPage() {
           totalLeads={totalLeads}
           excludedTestLeads={excludedTestLeads}
         />
+        <ConversionPathFlow
+          orderedPaths={orderedPaths}
+          pathAnalytics={pathAnalytics}
+          totalViews={totalViews}
+          totalActions={totalActions}
+          totalForms={totalForms}
+          totalLeads={totalLeads}
+        />
         <section className="grid grid-cols-1 gap-4 md:grid-cols-4">
           <StatCard label="已进入线索" value={capturedCount} detail="表单会写入 leads 并可在 2.0 处理" />
           <StatCard label="部分追踪" value={partialCount} detail="主要是 CTA 来源参数或外部承接" />
@@ -451,6 +459,190 @@ function ControlStat({ label, value, detail }: { label: string; value: string; d
       <div className="text-xs font-semibold text-[#61767D]">{label}</div>
       <div className="mt-1 truncate text-sm font-bold text-[#1E2C31]">{value}</div>
       {detail ? <div className="mt-1 text-[11px] text-[#8A9EA4]">{detail}</div> : null}
+    </div>
+  )
+}
+
+function ConversionPathFlow({
+  orderedPaths,
+  pathAnalytics,
+  totalViews,
+  totalActions,
+  totalForms,
+  totalLeads,
+}: {
+  orderedPaths: ConversionPathItem[]
+  pathAnalytics: Record<string, AnalyticsConversionMetric>
+  totalViews: number
+  totalActions: number
+  totalForms: number
+  totalLeads: number
+}) {
+  const entranceRows = [...orderedPaths]
+    .map((item) => ({ item, metric: getMetric(pathAnalytics, item.key) }))
+    .sort((a, b) => b.metric.views - a.metric.views)
+    .slice(0, 5)
+  const actionRows = [...orderedPaths]
+    .map((item) => ({ item, metric: getMetric(pathAnalytics, item.key), actions: getMetric(pathAnalytics, item.key).ctaClicks + getMetric(pathAnalytics, item.key).formSubmits }))
+    .filter((row) => row.actions > 0)
+    .sort((a, b) => b.actions - a.actions)
+    .slice(0, 5)
+  const leadRows = [...orderedPaths]
+    .map((item) => ({ item, metric: getMetric(pathAnalytics, item.key) }))
+    .filter((row) => row.metric.formSubmits > 0 || row.metric.leads > 0)
+    .sort((a, b) => b.metric.leads + b.metric.formSubmits - (a.metric.leads + a.metric.formSubmits))
+    .slice(0, 5)
+  const attentionRows = orderedPaths
+    .map((item) => ({ item, metric: getMetric(pathAnalytics, item.key), priority: getConversionPriority(item, getMetric(pathAnalytics, item.key)) }))
+    .filter((row) => row.priority.tone !== 'ready')
+    .slice(0, 5)
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-[#1E2C31]">访问行为转化路径流</h2>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">
+            对齐 300 后台“入口 - 行为 - 线索 - 处理”的阅读顺序；只读聚合现有事件和线索，不新增埋点或写入。
+          </p>
+        </div>
+        <Link href="/admin/status/traffic?range=30" className="inline-flex h-8 w-fit items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] hover:border-[#1889B6]/60">
+          查看访问统计
+        </Link>
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] lg:grid-cols-4 lg:divide-x lg:divide-y-0">
+        <ConversionFlowColumn
+          title="1. 访问入口"
+          detail="按 30 天 PV 排序，看流量先落到哪里。"
+          value={totalViews}
+          valueLabel="PV"
+          Icon={BarChart3}
+          rows={entranceRows.map(({ item, metric }) => ({
+            key: item.key,
+            label: item.area,
+            value: metric.views,
+            detail: totalViews > 0 ? formatAnalyticsPercent(metric.views / totalViews) : '0%',
+            href: item.frontendHref,
+          }))}
+          emptyText="暂无访问样本"
+        />
+        <ConversionFlowColumn
+          title="2. 行为动作"
+          detail="CTA、跳转和表单动作合并看。"
+          value={totalActions + totalForms}
+          valueLabel="动作"
+          Icon={MousePointerClick}
+          rows={actionRows.map(({ item, metric, actions }) => ({
+            key: item.key,
+            label: item.area,
+            value: actions,
+            detail: `${metric.ctaClicks} CTA / ${metric.formSubmits} 表单`,
+            href: item.frontendHref,
+          }))}
+          emptyText="暂无动作样本"
+          tone="orange"
+        />
+        <ConversionFlowColumn
+          title="3. 表单 / 线索"
+          detail="看真实提交和已排除测试后的线索量。"
+          value={totalLeads}
+          valueLabel="线索"
+          Icon={TrendingUp}
+          rows={leadRows.map(({ item, metric }) => ({
+            key: item.key,
+            label: item.area,
+            value: metric.leads,
+            detail: `${metric.formSubmits} 表单 / ${formatAnalyticsPercent(metric.conversionRate)}`,
+            href: leadSourceHref(conversionPathSourceType(item.key)),
+          }))}
+          emptyText="暂无线索样本"
+          tone="green"
+        />
+        <ConversionFlowColumn
+          title="4. 处理队列"
+          detail="优先看待复核、部分追踪和外部承接。"
+          value={attentionRows.length}
+          valueLabel="待处理"
+          Icon={ListChecks}
+          rows={attentionRows.map(({ item, priority }) => ({
+            key: item.key,
+            label: item.area,
+            value: priority.score,
+            detail: priority.label,
+            href: item.adminHref,
+          }))}
+          emptyText="暂无高优先级缺口"
+          tone="blue"
+        />
+      </div>
+    </section>
+  )
+}
+
+function ConversionFlowColumn({
+  title,
+  detail,
+  value,
+  valueLabel,
+  Icon,
+  rows,
+  emptyText,
+  tone = 'teal',
+}: {
+  title: string
+  detail: string
+  value: number
+  valueLabel: string
+  Icon: LucideIcon
+  rows: Array<{ key: string; label: string; value: number; detail: string; href: string }>
+  emptyText: string
+  tone?: 'teal' | 'orange' | 'blue' | 'green'
+}) {
+  const toneClass =
+    tone === 'orange'
+      ? 'bg-[#FFF2E7] text-[#E36F2C]'
+      : tone === 'blue'
+        ? 'bg-blue-50 text-blue-700'
+        : tone === 'green'
+          ? 'bg-emerald-50 text-emerald-700'
+          : 'bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <div className="min-w-0 p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-sm font-bold text-[#1E2C31]">{title}</h3>
+          <p className="mt-1 min-h-10 text-xs leading-5 text-[#61767D]">{detail}</p>
+        </div>
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${toneClass}`}>
+          <Icon size={17} />
+        </span>
+      </div>
+      <div className="mt-4 flex items-end gap-2">
+        <span className="text-3xl font-bold text-[#1E2C31]">{value.toLocaleString('zh-CN')}</span>
+        <span className="pb-1 text-xs font-semibold text-[#61767D]">{valueLabel}</span>
+      </div>
+      <div className="mt-4 space-y-2">
+        {rows.length > 0 ? (
+          rows.map((row) => (
+            <Link
+              key={row.key}
+              href={row.href}
+              className="flex min-h-12 items-center justify-between gap-3 rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2 text-xs transition hover:border-[#1889B6]/50 hover:bg-white"
+            >
+              <span className="min-w-0">
+                <span className="block truncate font-semibold text-[#1E2C31]">{row.label}</span>
+                <span className="mt-1 block truncate text-[#8A9EA4]">{row.detail}</span>
+              </span>
+              <span className="shrink-0 font-bold text-[#1889B6]">{row.value.toLocaleString('zh-CN')}</span>
+            </Link>
+          ))
+        ) : (
+          <div className="flex min-h-12 items-center rounded-md border border-dashed border-[#D8E7E8] px-3 text-xs font-semibold text-[#8A9EA4]">
+            {emptyText}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
