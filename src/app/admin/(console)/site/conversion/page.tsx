@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { AdminMetricCard, AdminPageHero } from '@/components/admin/AdminUI'
 import { CONVERSION_PATHS, type ConversionPathItem, type ConversionPathStatus } from '@/lib/admin-conversion-paths'
+import { pool } from '@/lib/db'
 import { getLeadSourceTypeLabel, type LeadSourceType } from '@/lib/lead-source'
 import {
   summarizeLeadsBySourceStageStatus,
@@ -11,6 +12,7 @@ import {
   type LeadSourceStageStatusSummary,
   type LeadSourceStatusSummary,
 } from '@/lib/leads-db'
+import { MIN_PROJECT_CASE_DESCRIPTION_CHARS } from '@/lib/project-case-readiness'
 import {
   formatAnalyticsPercent,
   loadConversionPathAnalytics,
@@ -75,12 +77,48 @@ type ConversionHandoffItem = {
   tone: ConversionHandoffTone
 }
 
+type CaseInquiryConversionSummary = {
+  total: number
+  published: number
+  ready: number
+  weak: number
+  draft: number
+}
+
 const EMPTY_METRIC: AnalyticsConversionMetric = {
   views: 0,
   ctaClicks: 0,
   formSubmits: 0,
   leads: 0,
   conversionRate: 0,
+}
+
+const EMPTY_CASE_INQUIRY_CONVERSION_SUMMARY: CaseInquiryConversionSummary = {
+  total: 0,
+  published: 0,
+  ready: 0,
+  weak: 0,
+  draft: 0,
+}
+
+const CASE_INQUIRY_CONTENT_READY_SQL = `(
+  NULLIF(BTRIM(COALESCE(cover_image_url, '')), '') IS NOT NULL
+  AND jsonb_array_length(COALESCE(images, '[]'::jsonb)) > 0
+  AND NULLIF(BTRIM(COALESCE(description_zh, '')), '') IS NOT NULL
+  AND NULLIF(BTRIM(COALESCE(description_en, '')), '') IS NOT NULL
+  AND LENGTH(BTRIM(COALESCE(description_zh, ''))) >= ${MIN_PROJECT_CASE_DESCRIPTION_CHARS}
+  AND LENGTH(BTRIM(COALESCE(description_en, ''))) >= ${MIN_PROJECT_CASE_DESCRIPTION_CHARS}
+  AND NULLIF(BTRIM(COALESCE(project_type_zh, '')), '') IS NOT NULL
+  AND NULLIF(BTRIM(COALESCE(project_type_en, '')), '') IS NOT NULL
+  AND NULLIF(BTRIM(COALESCE(area_display, '')), '') IS NOT NULL
+  AND NULLIF(BTRIM(COALESCE(units_display, '')), '') IS NOT NULL
+  AND NULLIF(BTRIM(COALESCE(products, '')), '') IS NOT NULL
+  AND jsonb_array_length(COALESCE(tags_zh, '[]'::jsonb)) > 0
+  AND jsonb_array_length(COALESCE(tags_en, '[]'::jsonb)) > 0
+)`
+
+function parseCount(value: string | undefined): number {
+  return parseInt(value ?? '0', 10)
 }
 
 function priorityClass(tone: ConversionPriorityTone) {
@@ -331,6 +369,50 @@ async function loadLeadSourceStageStatusSummarySafe(): Promise<LeadSourceStageSt
   }
 }
 
+async function tableExists(tableName: string): Promise<boolean> {
+  const res = await pool.query<{ table_name: string | null }>('SELECT to_regclass($1) AS table_name', [tableName])
+  return Boolean(res.rows[0]?.table_name)
+}
+
+async function loadCaseInquiryConversionSummarySafe(): Promise<CaseInquiryConversionSummary> {
+  try {
+    if (!(await tableExists('public.project_cases'))) return EMPTY_CASE_INQUIRY_CONVERSION_SUMMARY
+
+    const res = await pool.query<{
+      total: string
+      published: string
+      ready: string
+      weak: string
+      draft: string
+    }>(
+      `SELECT
+         COUNT(*)::text AS total,
+         COUNT(*) FILTER (WHERE status = 'published')::text AS published,
+         COUNT(*) FILTER (
+           WHERE status = 'published' AND ${CASE_INQUIRY_CONTENT_READY_SQL}
+         )::text AS ready,
+         COUNT(*) FILTER (
+           WHERE status = 'published' AND NOT ${CASE_INQUIRY_CONTENT_READY_SQL}
+         )::text AS weak,
+         COUNT(*) FILTER (WHERE status = 'draft')::text AS draft
+       FROM project_cases
+       WHERE deleted_at IS NULL`,
+    )
+    const row = res.rows[0]
+
+    return {
+      total: parseCount(row?.total),
+      published: parseCount(row?.published),
+      ready: parseCount(row?.ready),
+      weak: parseCount(row?.weak),
+      draft: parseCount(row?.draft),
+    }
+  } catch (err) {
+    console.error('[admin-site-conversion] case inquiry conversion summary failed', err)
+    return EMPTY_CASE_INQUIRY_CONVERSION_SUMMARY
+  }
+}
+
 export default async function AdminSiteConversionPage() {
   const session = await auth()
   if (!session?.user) {
@@ -345,11 +427,12 @@ export default async function AdminSiteConversionPage() {
   const capturedCount = CONVERSION_PATHS.filter((item) => item.status === 'lead').length
   const partialCount = CONVERSION_PATHS.filter((item) => item.status === 'partial').length
   const externalCount = CONVERSION_PATHS.filter((item) => item.status === 'external').length
-  const [pathAnalytics, dashboard, leadSourceSummary, sourceStageSummary] = await Promise.all([
+  const [pathAnalytics, dashboard, leadSourceSummary, sourceStageSummary, caseInquirySummary] = await Promise.all([
     loadConversionPathAnalytics(30),
     loadSiteAnalyticsDashboard(),
     loadLeadSourceStatusSummarySafe(),
     loadLeadSourceStageStatusSummarySafe(),
+    loadCaseInquiryConversionSummarySafe(),
   ])
   const thirtyDays = dashboard.windows.find((item) => item.days === 30) ?? dashboard.windows[1] ?? dashboard.windows[0]
   const totalViews = thirtyDays?.pageViews ?? 0
@@ -393,6 +476,7 @@ export default async function AdminSiteConversionPage() {
           totalLeads={totalLeads}
           excludedTestLeads={excludedTestLeads}
         />
+        <CaseInquiryConversionPanel summary={caseInquirySummary} />
         <ConversionPathFlow
           orderedPaths={orderedPaths}
           pathAnalytics={pathAnalytics}
@@ -681,6 +765,107 @@ function ControlStat({ label, value, detail }: { label: string; value: string; d
       <div className="mt-1 truncate text-sm font-bold text-[#1E2C31]">{value}</div>
       {detail ? <div className="mt-1 text-[11px] text-[#8A9EA4]">{detail}</div> : null}
     </div>
+  )
+}
+
+function CaseInquiryConversionPanel({ summary }: { summary: CaseInquiryConversionSummary }) {
+  const cards = [
+    {
+      label: '询盘可承接',
+      value: summary.ready,
+      detail: '已发布且素材、叙事、项目事实和标签完整',
+      href: '/admin/content/projects/list?status=published',
+      Icon: CheckCircle2,
+      tone: 'green' as const,
+    },
+    {
+      label: '发布转化弱',
+      value: summary.weak,
+      detail: '已发布但素材、叙事、项目事实或标签待补',
+      href: '/admin/content/projects/list?view=case-conversion-weak',
+      Icon: AlertTriangle,
+      tone: 'orange' as const,
+    },
+    {
+      label: '草稿待承接',
+      value: summary.draft,
+      detail: '草稿阶段不会进入前台案例咨询锚点',
+      href: '/admin/content/projects/list?status=draft',
+      Icon: FileText,
+      tone: 'gray' as const,
+    },
+    {
+      label: '前台案例入口',
+      value: summary.published,
+      detail: '已发布案例进入 /cases 与详情页咨询路径',
+      href: '/cases',
+      Icon: ExternalLink,
+      tone: 'blue' as const,
+    },
+  ]
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Case Inquiry Conversion</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例询盘承接</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把项目案例内容质量和前台询盘入口放进转化中心；本面板只读聚合项目案例数据，不改变发布或线索写入流程。
+          </p>
+        </div>
+        <Link
+          href="/admin/content/projects"
+          className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+        >
+          进入项目总览
+          <ArrowRight size={13} />
+        </Link>
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+        {cards.map((card) => (
+          <CaseInquiryConversionCard key={card.label} card={card} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function CaseInquiryConversionCard({
+  card,
+}: {
+  card: {
+    label: string
+    value: number
+    detail: string
+    href: string
+    Icon: LucideIcon
+    tone: 'green' | 'orange' | 'gray' | 'blue'
+  }
+}) {
+  const Icon = card.Icon
+  const toneClass =
+    card.tone === 'green'
+      ? 'bg-emerald-50 text-emerald-700'
+      : card.tone === 'orange'
+        ? 'bg-[#FFF2E7] text-[#E36F2C]'
+        : card.tone === 'blue'
+          ? 'bg-[#EAF6F8] text-[#1889B6]'
+          : 'bg-[#F0F2F2] text-[#61767D]'
+
+  return (
+    <Link href={card.href} className="group block px-5 py-5 transition hover:bg-[#F7FAFA]">
+      <span className={`flex h-10 w-10 items-center justify-center rounded-md ${toneClass}`}>
+        <Icon size={18} />
+      </span>
+      <span className="mt-5 block text-sm font-semibold text-[#61767D]">{card.label}</span>
+      <span className="mt-1 block text-3xl font-bold text-[#1E2C31]">{card.value.toLocaleString('zh-CN')}</span>
+      <span className="mt-2 block min-h-10 text-xs leading-5 text-[#61767D]">{card.detail}</span>
+      <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] opacity-80 transition group-hover:opacity-100">
+        下钻查看
+        <ArrowRight size={13} />
+      </span>
+    </Link>
   )
 }
 
