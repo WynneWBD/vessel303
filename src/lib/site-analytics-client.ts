@@ -70,7 +70,7 @@ function getCurrentSource(fallback: string | null = null) {
 export function sourceFromHref(href: string | null | undefined) {
   if (!href) return null
   try {
-    const url = new URL(href, window.location.origin)
+    const url = new URL(href, window.location.href)
     const source = url.searchParams.get('source')
     if (source) return source
     if (url.pathname === '/contact' || url.pathname.endsWith('/contact.html')) return 'website_contact'

@@ -291,6 +291,7 @@ function ProductDecisionSummary({
             {inquiryCta ? (
               <a
                 href="#product-inquiry"
+                data-analytics-cta="true"
                 className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-sm bg-[#E36F2C] px-4 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[#C85A1F]"
               >
                 <MessageSquare size={15} />
@@ -822,6 +823,7 @@ export default function CatalogProductDetailContent({
               {heroInquiryCta && inquiryTitle ? (
                 <a
                   href="#product-inquiry"
+                  data-analytics-cta="true"
                   className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-sm bg-[#147C94] px-5 py-3 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:bg-[#0F6477]"
                 >
                   {heroInquiryCta}
@@ -908,11 +910,22 @@ export default function CatalogProductDetailContent({
                     ? 'inline-flex min-h-10 shrink-0 items-center justify-center rounded-sm bg-[#E36F2C] px-4 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[#C85A1F]'
                     : 'inline-flex min-h-10 shrink-0 items-center justify-center rounded-sm border border-[#147C94]/35 bg-[#EAF6F8] px-4 text-xs font-black uppercase tracking-[0.12em] text-[#147C94] transition hover:border-[#147C94] hover:bg-white';
                   return isInternalHref(action.href) ? (
-                    <Link prefetch={false} key={action.href} href={action.href} className={className}>
+                    <Link
+                      prefetch={false}
+                      key={action.href}
+                      href={action.href}
+                      data-analytics-cta={action.tone === 'primary' ? 'true' : undefined}
+                      className={className}
+                    >
                       {action.label}
                     </Link>
                   ) : (
-                    <a key={action.href} href={action.href} className={className}>
+                    <a
+                      key={action.href}
+                      href={action.href}
+                      data-analytics-cta={action.tone === 'primary' ? 'true' : undefined}
+                      className={className}
+                    >
                       {action.label}
                     </a>
                   );

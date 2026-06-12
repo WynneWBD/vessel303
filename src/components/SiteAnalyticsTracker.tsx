@@ -9,7 +9,7 @@ function isTrackedCta(anchor: HTMLAnchorElement) {
   const label = anchor.textContent?.trim() ?? ''
   if (anchor.dataset.analyticsCta === 'true') return true
   if (href.includes('/contact') || href.includes('contact.html')) return true
-  if (/inquiry|inquire|contact|consult|request|quote|purchase|book|download/i.test(label)) return true
+  if (/inquiry|inquire|contact|consult|request|quote|purchase|book|download|询盘|咨询|联系|采购|报价|预订|下载/i.test(label)) return true
   return false
 }
 
