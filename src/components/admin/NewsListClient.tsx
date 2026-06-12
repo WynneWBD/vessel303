@@ -370,7 +370,7 @@ function NewsReleaseLedger({
   const reviewCount = rows.filter((row) => row.tone === 'medium').length
 
   return (
-    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+    <section id="news-release-ledger" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-[#D8E7E8] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Release Ledger</p>
@@ -776,7 +776,7 @@ export default function NewsListClient({
                 key={label}
                 type="button"
                 disabled
-                title={selectedCount > 0 ? 'B3-10 仍不开放高风险批量写入' : '先选择新闻；B3-10 仍只保留低风险批量转分类'}
+                title={selectedCount > 0 ? '高风险批量写入仍未开放' : '先选择新闻；当前只保留低风险批量转分类'}
                 className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#9AA9AD] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <Icon size={13} />

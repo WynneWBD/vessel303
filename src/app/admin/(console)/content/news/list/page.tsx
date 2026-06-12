@@ -365,7 +365,7 @@ function NewsListControlStrip({
     },
     {
       label: '缺 SEO',
-      href: '/admin/content/news#b3-3-plan',
+      href: '/admin/content/news#news-operations-hub',
       count: stats.missingSeo,
       active: false,
     },
@@ -456,6 +456,106 @@ function NewsListControlStrip({
   )
 }
 
+function NewsListGovernancePanel({
+  filters,
+  categories,
+  stats,
+  issueSummary,
+  total,
+  rowsCount,
+}: {
+  filters: NewsFilterState
+  categories: NewsCategoryOption[]
+  stats: NewsStats
+  issueSummary: NewsIssueSummary
+  total: number
+  rowsCount: number
+}) {
+  const chips = buildActiveFilterChips(filters, categories)
+  const activeFilterLabel = chips.length > 0
+    ? chips.map((chip) => `${chip.label}:${chip.value}`).join(' / ')
+    : '全部新闻'
+  const contentIssueCount = issueSummary.cover
+    + issueSummary.body
+    + issueSummary.excerpt
+    + issueSummary.category
+    + issueSummary.seo
+  const cards = [
+    {
+      label: '当前列表视图',
+      value: formatNumber(total),
+      detail: `${activeFilterLabel}；本页 ${formatNumber(rowsCount)} 条`,
+      href: '#news-list-table',
+      action: '进入列表',
+    },
+    {
+      label: '批量转分类',
+      value: formatNumber(categories.length),
+      detail: '仅保留低风险分类归档，高风险批量写入继续关闭',
+      href: '#news-list-table',
+      action: '选择新闻',
+    },
+    {
+      label: '缺口优先级',
+      value: formatNumber(contentIssueCount),
+      detail: `封面 ${formatNumber(issueSummary.cover)} · 正文 ${formatNumber(issueSummary.body)} · SEO ${formatNumber(issueSummary.seo)}`,
+      href: '#news-list-priority',
+      action: '查看矩阵',
+    },
+    {
+      label: '发布台账',
+      value: formatNumber(rowsCount),
+      detail: '按封面、正文、语言、SEO、分类和排期排序',
+      href: '#news-release-ledger',
+      action: '查看台账',
+    },
+    {
+      label: '运营总览',
+      value: formatPercent(stats.published, stats.total),
+      detail: `${formatNumber(stats.published)} 已发布，${formatNumber(stats.incomplete)} 条待补`,
+      href: '/admin/content/news#news-operations-hub',
+      action: '回到总览',
+    },
+  ]
+
+  return (
+    <section id="news-list-governance" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="border-l-4 border-[#E36F2C] px-4 py-4">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">List Governance</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻列表治理闭环</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            将筛选视图、批量转分类、缺口优先级、发布台账和运营总览收在同一入口，方便运营按列表完成“发现问题、筛选处理、编辑复核、回到总览”的闭环。
+          </p>
+        </div>
+        <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-4 py-4 lg:border-l lg:border-t-0">
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#8A9EA4]">Safety Boundary</p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-[#1E2C31]">
+            批量发布、批量删除、批量定时仍关闭；当前页只承接筛选、分类归档和单篇复核。
+          </p>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-2 xl:grid-cols-5">
+        {cards.map((card) => (
+          <Link
+            key={card.label}
+            href={card.href}
+            className="group min-h-[132px] border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-[#F7FAFA] md:border-r xl:border-b-0 last:border-r-0"
+          >
+            <span className="block text-xs font-semibold text-[#61767D]">{card.label}</span>
+            <span className="mt-2 block truncate text-2xl font-bold text-[#1E2C31]">{card.value}</span>
+            <span className="mt-2 block min-h-10 text-xs leading-5 text-[#61767D]">{card.detail}</span>
+            <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6]">
+              {card.action}
+              <ArrowRight size={13} className="transition group-hover:translate-x-0.5" />
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function NewsControlStat({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
     <div className="border-r border-[#E6EEEE] px-4 py-4 last:border-r-0">
@@ -515,7 +615,7 @@ function NewsOperationsMatrix({
       detail: '搜索标题或描述缺失',
       count: issueSummary.seo,
       pageCount: countPageIssue(rows, (issues) => issues.includes('缺 SEO')),
-      href: '/admin/content/news#b3-3-plan',
+      href: '/admin/content/news#news-operations-hub',
     },
     {
       key: 'scheduled',
@@ -528,7 +628,7 @@ function NewsOperationsMatrix({
   ]
 
   return (
-    <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <section id="news-list-priority" className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
@@ -736,6 +836,14 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
         )}
       />
       <div className="space-y-6">
+        <NewsListGovernancePanel
+          filters={filters}
+          categories={categories}
+          stats={stats}
+          issueSummary={issueSummary}
+          total={total}
+          rowsCount={rows.length}
+        />
         <NewsListControlStrip
           filters={filters}
           categories={categories}
@@ -744,7 +852,7 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
           rowsCount={rows.length}
         />
         <NewsOperationsMatrix stats={stats} issueSummary={issueSummary} rows={rows} />
-        <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+        <section id="news-list-table" className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
           <NewsListClient
             initialRows={rows}
             initialTotal={total}
