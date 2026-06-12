@@ -8,15 +8,20 @@ import { toast } from 'sonner'
 import {
   AlertCircle,
   ArrowLeft,
+  BarChart3,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
   ExternalLink,
   ListChecks,
+  Package,
   Plus,
   Save,
   Send,
+  Sparkles,
   Trash2,
+  UsersRound,
+  type LucideIcon,
 } from 'lucide-react'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import MediaImagePicker, { MediaGalleryPicker } from '@/components/admin/MediaImagePicker'
@@ -115,19 +120,27 @@ type ReleaseIssueRoute = {
   severity: ProductReleaseIssueSeverity
   detail: string
 }
+type ProductFormClosureLink = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  tone: 'ready' | 'warning' | 'neutral'
+  Icon: LucideIcon
+}
 
 const commercialTermFields: Array<{
   zh: keyof CatalogCommercialTerms
   en: keyof CatalogCommercialTerms
   label: string
 }> = [
-  { zh: 'delivery_method_zh', en: 'delivery_method_en', label: 'Delivery Method' },
-  { zh: 'shipping_location_zh', en: 'shipping_location_en', label: 'Shipping Location' },
-  { zh: 'payment_terms_zh', en: 'payment_terms_en', label: 'Payment Terms' },
-  { zh: 'delivery_time_zh', en: 'delivery_time_en', label: 'Delivery Time' },
-  { zh: 'electrical_standard_zh', en: 'electrical_standard_en', label: 'Electrical & Plumbing' },
-  { zh: 'warranty_support_zh', en: 'warranty_support_en', label: 'Warranty Support' },
-  { zh: 'moq_zh', en: 'moq_en', label: 'MOQ' },
+  { zh: 'delivery_method_zh', en: 'delivery_method_en', label: '交付方式' },
+  { zh: 'shipping_location_zh', en: 'shipping_location_en', label: '发货 / 交付地点' },
+  { zh: 'payment_terms_zh', en: 'payment_terms_en', label: '付款条件' },
+  { zh: 'delivery_time_zh', en: 'delivery_time_en', label: '交付周期' },
+  { zh: 'electrical_standard_zh', en: 'electrical_standard_en', label: '水电标准' },
+  { zh: 'warranty_support_zh', en: 'warranty_support_en', label: '质保支持' },
+  { zh: 'moq_zh', en: 'moq_en', label: '起订量' },
 ]
 
 const detailModuleTypeOptions: { type: CatalogDetailModuleType; label: string; optionLabel: string }[] = [
@@ -859,13 +872,13 @@ function buildProductFormProgress({
     },
     {
       id: 'commercial',
-      title: 'Business Terms',
+      title: '商务条款',
       detail: '价格展示、交付、付款、售后条款',
       issueCount: commercialIssueCount,
     },
     {
       id: 'relations',
-      title: 'Keywords / Related',
+      title: '关键词 / 关联产品',
       detail: '关键词和相关产品推荐',
       issueCount: countMissing([
         splitLines(form.keywords_zh).length > 0 || splitLines(form.keywords_en).length > 0,
@@ -1290,6 +1303,52 @@ function ProductReleaseIssueLedger({ issues }: { issues: ProductReleaseIssue[] }
   )
 }
 
+function closureToneClass(tone: ProductFormClosureLink['tone']) {
+  if (tone === 'ready') return 'border-emerald-100 bg-emerald-50 text-emerald-700'
+  if (tone === 'warning') return 'border-[#F2C6A7] bg-[#FFF2E7] text-[#E36F2C]'
+  return 'border-[#D8E7E8] bg-white text-[#61767D]'
+}
+
+function ProductFormClosurePanel({ links }: { links: ProductFormClosureLink[] }) {
+  return (
+    <div className="mt-4 rounded-md border border-[#D8E7E8] bg-white p-3">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h4 className="text-sm font-bold text-[#1E2C31]">经营闭环入口</h4>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">
+            对齐 B234 发布复核台，把表单内检查接回内容、路径、SEO 和线索；这里只读跳转，不改变保存或发布规则。
+          </p>
+        </div>
+        <span className="w-fit rounded-full border border-[#D8E7E8] bg-[#F7FAFA] px-2.5 py-1 text-xs font-semibold text-[#61767D]">
+          只读导航
+        </span>
+      </div>
+      <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+        {links.map((item) => (
+          <Link
+            key={item.label}
+            href={item.href}
+            className="group flex min-h-24 items-start gap-3 rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 py-3 transition hover:border-[#1889B6]/55 hover:bg-[#F0F7F8]"
+          >
+            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${closureToneClass(item.tone)}`}>
+              <item.Icon size={17} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="flex items-start justify-between gap-2">
+                <span className="text-xs font-bold text-[#1E2C31]">{item.label}</span>
+                <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${closureToneClass(item.tone)}`}>
+                  {item.value}
+                </span>
+              </span>
+              <span className="mt-1 block text-[11px] leading-4 text-[#61767D]">{item.detail}</span>
+            </span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function ProductForm({
   mode,
   product,
@@ -1353,6 +1412,51 @@ export default function ProductForm({
   const hasUnsavedChanges = useMemo(() => JSON.stringify(form) !== JSON.stringify(savedForm), [form, savedForm])
   const showPreviewLink = mode === 'edit' && (previewPolicy === 'always' || form.status === 'published')
   const isCurrentlyPublished = form.status === 'published'
+  const hasSeoIssue = completeness.issues.includes('缺 SEO')
+  const productFormClosureLinks: ProductFormClosureLink[] = [
+    {
+      label: '单品经营闭环',
+      value: mode === 'edit' ? 'B234' : '保存后',
+      detail: mode === 'edit'
+        ? '回到当前产品的内容、路径、SEO 与线索入口。'
+        : '新产品保存后会生成单品经营闭环入口。',
+      href: mode === 'edit' && form.id ? `/admin/content/products/${form.id}/edit#product-edit-closure` : '#publish-check',
+      tone: mode === 'edit' ? 'ready' : 'neutral',
+      Icon: ListChecks,
+    },
+    {
+      label: '产品内容闭环',
+      value: 'B233',
+      detail: '查看产品总览里的内容缺口、SEO 待补和路径承接。',
+      href: '/admin/content/products#content-closure',
+      tone: 'neutral',
+      Icon: Package,
+    },
+    {
+      label: '产品路径分析',
+      value: 'B232',
+      detail: '查看产品访问、动作、表单和真实线索表现。',
+      href: '/admin/status/traffic#product-conversion-path',
+      tone: 'neutral',
+      Icon: BarChart3,
+    },
+    {
+      label: 'SEO 修复闭环',
+      value: hasSeoIssue ? '待补' : '已补齐',
+      detail: '从站点 SEO 中心回看产品 SEO 与转化修复闭环。',
+      href: '/admin/site/seo#seo-conversion-closure',
+      tone: hasSeoIssue ? 'warning' : 'ready',
+      Icon: Sparkles,
+    },
+    {
+      label: '产品线索队列',
+      value: 'B228',
+      detail: '进入 source_type=product 队列核对产品来源线索。',
+      href: '/admin/customers/leads?source_type=product',
+      tone: 'neutral',
+      Icon: UsersRound,
+    },
+  ]
   const selectedAttributeIds = useMemo(() => new Set(form.attribute_option_ids), [form.attribute_option_ids])
   const selectedMarkIds = useMemo(() => new Set(form.mark_ids), [form.mark_ids])
   const selectedShowcaseIds = useMemo(() => new Set(form.showcase_ids), [form.showcase_ids])
@@ -1868,22 +1972,22 @@ export default function ProductForm({
 
         <FormSection
           id="commercial"
-          title="300 Business Terms"
-          description="Aligns with 300 product detail pricing and business terms. Display and inquiry only; no orders or payment."
+          title="300 式商务条款"
+          description="对齐 300 产品详情里的价格展示和商务条款；只用于展示和询盘，不涉及订单、支付或价格规则。"
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Field label="Price display ZH">
+            <Field label="价格展示（中文）">
               <Input
                 value={form.price_display_zh}
                 onChange={(e) => patch('price_display_zh', e.target.value)}
                 placeholder="EXW/CNY 296,000"
               />
             </Field>
-            <Field label="Price display EN">
+            <Field label="价格展示（英文）">
               <Input
                 value={form.price_display_en}
                 onChange={(e) => patch('price_display_en', e.target.value)}
-                placeholder="Example: EXW/CNY 296,000"
+                placeholder="例如：EXW/CNY 296,000"
               />
             </Field>
           </div>
@@ -1895,12 +1999,12 @@ export default function ProductForm({
                   <Input
                     value={String(form.commercial_terms[field.zh] ?? '')}
                     onChange={(e) => patchCommercialTerm(field.zh, e.target.value)}
-                    placeholder="Chinese"
+                    placeholder="中文条款"
                   />
                   <Input
                     value={String(form.commercial_terms[field.en] ?? '')}
                     onChange={(e) => patchCommercialTerm(field.en, e.target.value)}
-                    placeholder="English"
+                    placeholder="英文条款"
                   />
                 </div>
               </div>
@@ -1910,30 +2014,30 @@ export default function ProductForm({
 
         <FormSection
           id="relations"
-          title="Keywords / Related Products"
-          description="Aligns with the 300 Key words and Related Products areas for the public detail page and admin checks."
+          title="关键词 / 关联产品"
+          description="对齐 300 的关键词和关联产品区域，用于公开详情页、后台检查和后续搜索运营。"
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Field label="Keywords ZH" hint="One per line; commas are also supported.">
+            <Field label="关键词（中文）" hint="一行一个；也支持用逗号分隔。">
               <Textarea value={form.keywords_zh} onChange={(e) => patch('keywords_zh', e.target.value)} />
             </Field>
-            <Field label="Keywords EN">
+            <Field label="关键词（英文）">
               <Textarea value={form.keywords_en} onChange={(e) => patch('keywords_en', e.target.value)} />
             </Field>
           </div>
           <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-4">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-[#1E2C31]">Related products</h3>
-                <p className="text-xs text-[#61767D]">The public page only shows published related products.</p>
+                <h3 className="text-sm font-semibold text-[#1E2C31]">关联产品</h3>
+                <p className="text-xs text-[#61767D]">公开页只展示已发布的关联产品。</p>
               </div>
               <span className="text-xs font-semibold text-[#1889B6]">
-                Selected {form.related_product_ids.length}
+                已选 {form.related_product_ids.length}
               </span>
             </div>
             <div className="mt-3 grid max-h-80 grid-cols-1 gap-2 overflow-auto pr-1 md:grid-cols-2">
               {relatedProductOptions.length === 0 ? (
-                <p className="text-xs text-[#61767D]">No product options yet.</p>
+                <p className="text-xs text-[#61767D]">暂无可选产品。</p>
               ) : (
                 relatedProductOptions
                   .filter((item) => item.id !== form.id)
@@ -2687,6 +2791,7 @@ export default function ProductForm({
               <p className="mt-2 text-xs leading-relaxed text-[#61767D]">
                 只做运营提示，不阻止保存或发布。发布前请人工确认图片、中英文内容、分类、属性、SEO、详情模块和前台页面绑定关系。
               </p>
+              <ProductFormClosurePanel links={productFormClosureLinks} />
               <ProductReleaseIssueLedger issues={releaseIssues} />
             </div>
           </div>
