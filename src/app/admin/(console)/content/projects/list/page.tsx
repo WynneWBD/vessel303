@@ -131,6 +131,12 @@ type ProjectPriorityItem = {
   score: number
 }
 
+type ProjectConversionReadiness = {
+  label: string
+  detail: string
+  className: string
+}
+
 type ActiveFilterChip = {
   label: string
   value: string
@@ -309,6 +315,68 @@ function getProjectPriorityLabel(project: ProjectListRow, issues: string[]): str
   if (issues.includes('缺中文简介') || issues.includes('缺英文简介') || issues.includes('详情叙事偏短')) return '补案例叙事'
   if (issues.some((issue) => ['缺项目类型', '缺项目面积', '缺舱数', '缺产品型号'].includes(issue))) return '补项目事实'
   return '补运营字段'
+}
+
+function hasCaseConversionContentRisk(issues: string[]): boolean {
+  return issues.some((issue) => [
+    '缺封面',
+    '缺图库',
+    '缺中文简介',
+    '缺英文简介',
+    '详情叙事偏短',
+    '缺项目类型',
+    '缺项目面积',
+    '缺舱数',
+    '缺产品型号',
+    '缺标签',
+  ].includes(issue))
+}
+
+function isCaseConversionReady(project: ProjectListRow, issues: string[]): boolean {
+  return project.status === 'published' && !hasCaseConversionContentRisk(issues)
+}
+
+function getCaseConversionReadiness(project: ProjectListRow, issues: string[]): ProjectConversionReadiness {
+  if (project.status !== 'published') {
+    return {
+      label: '草稿未上线',
+      detail: '发布后才进入前台案例咨询路径',
+      className: 'border-[#E6EEEE] bg-[#F7FAFA] text-[#8A9EA4]',
+    }
+  }
+  if (issues.includes('缺封面') || issues.includes('缺图库')) {
+    return {
+      label: '先补素材',
+      detail: '封面或图库缺口会削弱案例信任',
+      className: 'border-orange-200 bg-orange-50 text-orange-700',
+    }
+  }
+  if (issues.includes('缺中文简介') || issues.includes('缺英文简介') || issues.includes('详情叙事偏短')) {
+    return {
+      label: '先补叙事',
+      detail: '中英文案例背景不足，咨询上下文弱',
+      className: 'border-orange-200 bg-orange-50 text-orange-700',
+    }
+  }
+  if (issues.some((issue) => ['缺项目类型', '缺项目面积', '缺舱数', '缺产品型号'].includes(issue))) {
+    return {
+      label: '补项目事实',
+      detail: '类型、面积、舱数或产品信息待补',
+      className: 'border-[#D8E7E8] bg-[#EAF4FF] text-[#3078C8]',
+    }
+  }
+  if (issues.includes('缺标签')) {
+    return {
+      label: '补检索标签',
+      detail: '标签不足会影响后台筛选和内容归因',
+      className: 'border-[#D8E7E8] bg-[#EAF4FF] text-[#3078C8]',
+    }
+  }
+  return {
+    label: '可承接询盘',
+    detail: '前台案例页与咨询锚点可核查',
+    className: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  }
 }
 
 function buildProjectPriorityItems(rows: ProjectListRow[]): ProjectPriorityItem[] {
@@ -871,6 +939,10 @@ function ProjectOperationsMatrix({
   const mapReadyRate = formatPercent(summary.mapReady, summary.total)
   const pageReadyCount = pageIssueEntries.filter((entry) => entry.issues.length === 0).length
   const pagePublishedRiskCount = pageIssueEntries.filter((entry) => entry.project.status === 'published' && entry.issues.length > 0).length
+  const pageCaseInquiryReadyCount = pageIssueEntries.filter((entry) => isCaseConversionReady(entry.project, entry.issues)).length
+  const pagePublishedConversionRiskCount = pageIssueEntries.filter((entry) => (
+    entry.project.status === 'published' && hasCaseConversionContentRisk(entry.issues)
+  )).length
   const pageMapReadyCount = pageIssueEntries.filter((entry) => entry.project.status === 'published' && hasCoordinates(entry.project)).length
   const pageCoordinatePendingCount = pageIssueEntries.filter((entry) => entry.project.status !== 'published' && hasCoordinates(entry.project)).length
 
@@ -953,6 +1025,18 @@ function ProjectOperationsMatrix({
             value={formatNumber(pagePublishedRiskCount)}
             detail="已发布但仍需回补"
             tone={pagePublishedRiskCount > 0 ? 'orange' : 'green'}
+          />
+          <ProjectReadinessMiniStat
+            label="询盘可承接"
+            value={formatNumber(pageCaseInquiryReadyCount)}
+            detail="已发布且内容可支撑咨询"
+            tone={pageCaseInquiryReadyCount > 0 ? 'green' : 'gray'}
+          />
+          <ProjectReadinessMiniStat
+            label="发布转化弱"
+            value={formatNumber(pagePublishedConversionRiskCount)}
+            detail="素材、叙事或事实待补"
+            tone={pagePublishedConversionRiskCount > 0 ? 'orange' : 'green'}
           />
           <ProjectReadinessMiniStat
             label="可入 Global"
@@ -1143,16 +1227,17 @@ function ProjectList({
       </div>
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="min-w-[1160px] w-full border-collapse text-left text-sm">
+          <table className="min-w-[1340px] w-full border-collapse text-left text-sm">
             <thead className="bg-[#F7FAFA] text-xs font-semibold text-[#61767D]">
               <tr>
-                <th className="w-[34%] border-b border-[#D8E7E8] px-4 py-3">项目案例</th>
-                <th className="w-[13%] border-b border-[#D8E7E8] px-4 py-3">状态</th>
-                <th className="w-[19%] border-b border-[#D8E7E8] px-4 py-3">位置与类型</th>
-                <th className="w-[17%] border-b border-[#D8E7E8] px-4 py-3">待补项</th>
-                <th className="w-[11%] border-b border-[#D8E7E8] px-4 py-3">Global</th>
-                <th className="w-[10%] border-b border-[#D8E7E8] px-4 py-3">更新时间</th>
-                <th className="w-[12%] border-b border-[#D8E7E8] px-4 py-3 text-right">操作</th>
+                <th className="w-[28%] border-b border-[#D8E7E8] px-4 py-3">项目案例</th>
+                <th className="w-[10%] border-b border-[#D8E7E8] px-4 py-3">状态</th>
+                <th className="w-[16%] border-b border-[#D8E7E8] px-4 py-3">位置与类型</th>
+                <th className="w-[15%] border-b border-[#D8E7E8] px-4 py-3">待补项</th>
+                <th className="w-[13%] border-b border-[#D8E7E8] px-4 py-3">转化承接</th>
+                <th className="w-[9%] border-b border-[#D8E7E8] px-4 py-3">Global</th>
+                <th className="w-[8%] border-b border-[#D8E7E8] px-4 py-3">更新时间</th>
+                <th className="w-[10%] border-b border-[#D8E7E8] px-4 py-3 text-right">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E6EEEE]">
@@ -1175,8 +1260,10 @@ function ProjectRow({ project }: { project: ProjectListRow }) {
   const hiddenIssueCount = Math.max(0, issues.length - visibleIssues.length)
   const published = project.status === 'published'
   const globalStatus = getGlobalStatus(project)
+  const conversionStatus = getCaseConversionReadiness(project, issues)
   const imageCount = Array.isArray(project.images) ? project.images.length : 0
   const detailHref = `/cases/${project.id}`
+  const caseInquiryHref = `${detailHref}#case-inquiry`
 
   return (
     <tr className="align-top transition hover:bg-[#F7FAFA]">
@@ -1250,6 +1337,27 @@ function ProjectRow({ project }: { project: ProjectListRow }) {
             <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-500">
               还有 {hiddenIssueCount} 项
             </span>
+          )}
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-col items-start gap-2">
+          <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${conversionStatus.className}`}>
+            {conversionStatus.label}
+          </span>
+          <span className="text-[11px] leading-5 text-[#8A9EA4]">{conversionStatus.detail}</span>
+          {published ? (
+            <Link
+              href={caseInquiryHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] hover:text-[#0F6F95]"
+            >
+              案例咨询
+              <ExternalLink size={12} />
+            </Link>
+          ) : (
+            <span className="text-[11px] font-semibold text-[#9AA9AD]">待发布</span>
           )}
         </div>
       </td>
