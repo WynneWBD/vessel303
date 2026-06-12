@@ -4,7 +4,6 @@ import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { AdminMetricCard, AdminPageHero } from '@/components/admin/AdminUI'
 import { CONVERSION_PATHS, type ConversionPathItem, type ConversionPathStatus } from '@/lib/admin-conversion-paths'
-import { pool } from '@/lib/db'
 import { getLeadSourceTypeLabel, type LeadSourceType } from '@/lib/lead-source'
 import {
   summarizeLeadsBySourceStageStatus,
@@ -12,7 +11,7 @@ import {
   type LeadSourceStageStatusSummary,
   type LeadSourceStatusSummary,
 } from '@/lib/leads-db'
-import { MIN_PROJECT_CASE_DESCRIPTION_CHARS } from '@/lib/project-case-readiness'
+import { loadCaseInquiryHealth, type CaseInquiryHealth } from '@/lib/project-case-inquiry-health'
 import {
   formatAnalyticsPercent,
   loadConversionPathAnalytics,
@@ -77,48 +76,12 @@ type ConversionHandoffItem = {
   tone: ConversionHandoffTone
 }
 
-type CaseInquiryConversionSummary = {
-  total: number
-  published: number
-  ready: number
-  weak: number
-  draft: number
-}
-
 const EMPTY_METRIC: AnalyticsConversionMetric = {
   views: 0,
   ctaClicks: 0,
   formSubmits: 0,
   leads: 0,
   conversionRate: 0,
-}
-
-const EMPTY_CASE_INQUIRY_CONVERSION_SUMMARY: CaseInquiryConversionSummary = {
-  total: 0,
-  published: 0,
-  ready: 0,
-  weak: 0,
-  draft: 0,
-}
-
-const CASE_INQUIRY_CONTENT_READY_SQL = `(
-  NULLIF(BTRIM(COALESCE(cover_image_url, '')), '') IS NOT NULL
-  AND jsonb_array_length(COALESCE(images, '[]'::jsonb)) > 0
-  AND NULLIF(BTRIM(COALESCE(description_zh, '')), '') IS NOT NULL
-  AND NULLIF(BTRIM(COALESCE(description_en, '')), '') IS NOT NULL
-  AND LENGTH(BTRIM(COALESCE(description_zh, ''))) >= ${MIN_PROJECT_CASE_DESCRIPTION_CHARS}
-  AND LENGTH(BTRIM(COALESCE(description_en, ''))) >= ${MIN_PROJECT_CASE_DESCRIPTION_CHARS}
-  AND NULLIF(BTRIM(COALESCE(project_type_zh, '')), '') IS NOT NULL
-  AND NULLIF(BTRIM(COALESCE(project_type_en, '')), '') IS NOT NULL
-  AND NULLIF(BTRIM(COALESCE(area_display, '')), '') IS NOT NULL
-  AND NULLIF(BTRIM(COALESCE(units_display, '')), '') IS NOT NULL
-  AND NULLIF(BTRIM(COALESCE(products, '')), '') IS NOT NULL
-  AND jsonb_array_length(COALESCE(tags_zh, '[]'::jsonb)) > 0
-  AND jsonb_array_length(COALESCE(tags_en, '[]'::jsonb)) > 0
-)`
-
-function parseCount(value: string | undefined): number {
-  return parseInt(value ?? '0', 10)
 }
 
 function priorityClass(tone: ConversionPriorityTone) {
@@ -369,50 +332,6 @@ async function loadLeadSourceStageStatusSummarySafe(): Promise<LeadSourceStageSt
   }
 }
 
-async function tableExists(tableName: string): Promise<boolean> {
-  const res = await pool.query<{ table_name: string | null }>('SELECT to_regclass($1) AS table_name', [tableName])
-  return Boolean(res.rows[0]?.table_name)
-}
-
-async function loadCaseInquiryConversionSummarySafe(): Promise<CaseInquiryConversionSummary> {
-  try {
-    if (!(await tableExists('public.project_cases'))) return EMPTY_CASE_INQUIRY_CONVERSION_SUMMARY
-
-    const res = await pool.query<{
-      total: string
-      published: string
-      ready: string
-      weak: string
-      draft: string
-    }>(
-      `SELECT
-         COUNT(*)::text AS total,
-         COUNT(*) FILTER (WHERE status = 'published')::text AS published,
-         COUNT(*) FILTER (
-           WHERE status = 'published' AND ${CASE_INQUIRY_CONTENT_READY_SQL}
-         )::text AS ready,
-         COUNT(*) FILTER (
-           WHERE status = 'published' AND NOT ${CASE_INQUIRY_CONTENT_READY_SQL}
-         )::text AS weak,
-         COUNT(*) FILTER (WHERE status = 'draft')::text AS draft
-       FROM project_cases
-       WHERE deleted_at IS NULL`,
-    )
-    const row = res.rows[0]
-
-    return {
-      total: parseCount(row?.total),
-      published: parseCount(row?.published),
-      ready: parseCount(row?.ready),
-      weak: parseCount(row?.weak),
-      draft: parseCount(row?.draft),
-    }
-  } catch (err) {
-    console.error('[admin-site-conversion] case inquiry conversion summary failed', err)
-    return EMPTY_CASE_INQUIRY_CONVERSION_SUMMARY
-  }
-}
-
 export default async function AdminSiteConversionPage() {
   const session = await auth()
   if (!session?.user) {
@@ -432,7 +351,7 @@ export default async function AdminSiteConversionPage() {
     loadSiteAnalyticsDashboard(),
     loadLeadSourceStatusSummarySafe(),
     loadLeadSourceStageStatusSummarySafe(),
-    loadCaseInquiryConversionSummarySafe(),
+    loadCaseInquiryHealth(),
   ])
   const thirtyDays = dashboard.windows.find((item) => item.days === 30) ?? dashboard.windows[1] ?? dashboard.windows[0]
   const totalViews = thirtyDays?.pageViews ?? 0
@@ -442,6 +361,7 @@ export default async function AdminSiteConversionPage() {
   const totalActions = Object.values(pathAnalytics).reduce((sum, metric) => sum + metric.ctaClicks, 0)
   const totalForms = Object.values(pathAnalytics).reduce((sum, metric) => sum + metric.formSubmits, 0)
   const healthRows = buildConversionHealthRows(pathAnalytics)
+  const casePathMetric = getMetric(pathAnalytics, 'cases')
 
   return (
     <AdminSectionShell
@@ -476,7 +396,7 @@ export default async function AdminSiteConversionPage() {
           totalLeads={totalLeads}
           excludedTestLeads={excludedTestLeads}
         />
-        <CaseInquiryConversionPanel summary={caseInquirySummary} />
+        <CaseInquiryConversionPanel summary={caseInquirySummary} casePathMetric={casePathMetric} />
         <ConversionPathFlow
           orderedPaths={orderedPaths}
           pathAnalytics={pathAnalytics}
@@ -768,7 +688,13 @@ function ControlStat({ label, value, detail }: { label: string; value: string; d
   )
 }
 
-function CaseInquiryConversionPanel({ summary }: { summary: CaseInquiryConversionSummary }) {
+function CaseInquiryConversionPanel({
+  summary,
+  casePathMetric,
+}: {
+  summary: CaseInquiryHealth
+  casePathMetric: AnalyticsConversionMetric
+}) {
   const cards = [
     {
       label: '询盘可承接',
@@ -785,6 +711,14 @@ function CaseInquiryConversionPanel({ summary }: { summary: CaseInquiryConversio
       href: '/admin/content/projects/list?view=case-conversion-weak',
       Icon: AlertTriangle,
       tone: 'orange' as const,
+    },
+    {
+      label: '案例路径样本',
+      value: casePathMetric.views,
+      detail: `路径动作 ${casePathMetric.ctaClicks} / 表单 ${casePathMetric.formSubmits} / 线索 ${casePathMetric.leads}`,
+      href: '/admin/status/traffic#case-inquiry-path',
+      Icon: BarChart3,
+      tone: casePathMetric.leads > 0 ? 'green' as const : casePathMetric.views > 0 ? 'orange' as const : 'gray' as const,
     },
     {
       label: '草稿待承接',
@@ -814,15 +748,24 @@ function CaseInquiryConversionPanel({ summary }: { summary: CaseInquiryConversio
             把项目案例内容质量和前台询盘入口放进转化中心；本面板只读聚合项目案例数据，不改变发布或线索写入流程。
           </p>
         </div>
-        <Link
-          href="/admin/content/projects"
-          className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
-        >
-          进入项目总览
-          <ArrowRight size={13} />
-        </Link>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Link
+            href="/admin/status/traffic#case-inquiry-path"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            看路径分析
+            <ArrowRight size={13} />
+          </Link>
+          <Link
+            href="/admin/content/projects"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            进入项目总览
+            <ArrowRight size={13} />
+          </Link>
+        </div>
       </div>
-      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-5">
         {cards.map((card) => (
           <CaseInquiryConversionCard key={card.label} card={card} />
         ))}
