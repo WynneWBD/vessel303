@@ -83,7 +83,7 @@ const COPY: Record<ProductOperationKind, {
   brands: {
     title: '当前品牌',
     createTitle: '新增品牌',
-    description: '对照 300 的品牌管理，用于维护产品品牌归属和品牌展示信息。',
+    description: '对照 300.cn 后台的品牌管理，用于维护产品品牌归属和品牌展示信息。',
     empty: '暂无品牌',
   },
   filters: {
