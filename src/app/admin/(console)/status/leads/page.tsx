@@ -6,6 +6,7 @@ import {
   type LeadSourceStageStatusSummary,
   type LeadSourceStatusSummary,
 } from '@/lib/leads-db'
+import { formatAnalyticsPercent, loadConversionPathAnalytics, type AnalyticsConversionMetric } from '@/lib/site-analytics'
 import {
   ActionCard,
   buildStatusBadges,
@@ -27,6 +28,14 @@ const FUNNEL_STEPS = [
   { key: 'won', label: '已成交', href: '/admin/customers/leads?status=won' },
   { key: 'lost', label: '已关闭', href: '/admin/customers/leads?status=lost' },
 ] as const
+
+const EMPTY_CASE_PATH_METRIC: AnalyticsConversionMetric = {
+  views: 0,
+  ctaClicks: 0,
+  formSubmits: 0,
+  leads: 0,
+  conversionRate: 0,
+}
 
 type FunnelStepKey = (typeof FUNNEL_STEPS)[number]['key']
 
@@ -96,7 +105,7 @@ type LeadSourceStageRow = {
 
 export default async function AdminStatusLeadsPage() {
   const { role, email } = await getStatusAccess()
-  const [overview, sourceStatusSummary, sourceStageStatusSummary] = await Promise.all([
+  const [overview, sourceStatusSummary, sourceStageStatusSummary, pathAnalytics] = await Promise.all([
     loadStatusOverview(),
     safeLoad(
       'lead source status summary',
@@ -108,9 +117,15 @@ export default async function AdminStatusLeadsPage() {
       () => summarizeLeadsBySourceStageStatus(),
       [] as LeadSourceStageStatusSummary[],
     ),
+    safeLoad<Record<string, AnalyticsConversionMetric>>(
+      'case path analytics',
+      () => loadConversionPathAnalytics(30),
+      {},
+    ),
   ])
   const leads = overview.leads
   const wonRate = leads.total > 0 ? Math.round((leads.won / leads.total) * 100) : 0
+  const casePathMetric = pathAnalytics.cases ?? EMPTY_CASE_PATH_METRIC
 
   return (
     <StatusPageShell
@@ -167,6 +182,12 @@ export default async function AdminStatusLeadsPage() {
         <LeadResponseOperationsLedger leads={leads} />
 
         <LeadSourceQualityMatrix sourceStatusSummary={sourceStatusSummary} />
+
+        <CaseLeadPathBridge
+          sourceStatusSummary={sourceStatusSummary}
+          sourceStageStatusSummary={sourceStageStatusSummary}
+          casePathMetric={casePathMetric}
+        />
 
         <LeadSourceStageMatrix sourceStageStatusSummary={sourceStageStatusSummary} />
 
@@ -548,6 +569,127 @@ function LeadSourceQualityMatrix({ sourceStatusSummary }: { sourceStatusSummary:
             </table>
           </div>
         )}
+      </div>
+    </section>
+  )
+}
+
+function CaseLeadPathBridge({
+  sourceStatusSummary,
+  sourceStageStatusSummary,
+  casePathMetric,
+}: {
+  sourceStatusSummary: LeadSourceStatusSummary[]
+  sourceStageStatusSummary: LeadSourceStageStatusSummary[]
+  casePathMetric: AnalyticsConversionMetric
+}) {
+  const caseSource = sourceStatusSummary.find((source) => source.type === 'case')
+  const caseStages = sourceStageStatusSummary.filter((stage) => stage.type === 'case')
+  const inquiryForm = sourceStageStatusSummary.find((stage) => stage.key === 'case:inquiry_form')
+  const ctaClick = sourceStageStatusSummary.find((stage) => stage.key === 'case:cta_click')
+  const caseTotal = caseSource?.total ?? 0
+  const caseActive = caseSource ? caseSource.new + caseSource.contacting + caseSource.quoted : 0
+  const caseWonRate = percent(caseSource?.won ?? 0, caseTotal)
+  const bridgeRows = [
+    {
+      key: 'case-leads',
+      label: '案例来源线索',
+      value: caseTotal,
+      detail: `活跃 ${formatNumber(caseActive)} / 成交占比 ${caseWonRate}%`,
+      status: caseActive > 0 ? '需处理' : caseTotal > 0 ? '可复盘' : '观察中',
+      tone: caseActive > 0 ? 'orange' : caseTotal > 0 ? 'blue' : 'gray',
+      href: '/admin/customers/leads?source_type=case',
+      actionLabel: '查看案例线索',
+    },
+    {
+      key: 'case-inquiry-form',
+      label: '案例表单阶段',
+      value: inquiryForm?.total ?? 0,
+      detail: `新线索 ${formatNumber(inquiryForm?.new ?? 0)} / 活跃 ${formatNumber((inquiryForm?.new ?? 0) + (inquiryForm?.contacting ?? 0) + (inquiryForm?.quoted ?? 0))}`,
+      status: inquiryForm && inquiryForm.total > 0 ? '有样本' : '观察中',
+      tone: inquiryForm && inquiryForm.new + inquiryForm.contacting + inquiryForm.quoted > 0 ? 'orange' : inquiryForm && inquiryForm.total > 0 ? 'blue' : 'gray',
+      href: '/admin/customers/leads?source_type=case&source_stage=case%3Ainquiry_form',
+      actionLabel: '看表单线索',
+    },
+    {
+      key: 'case-cta-click',
+      label: '案例 CTA 阶段',
+      value: ctaClick?.total ?? 0,
+      detail: `新线索 ${formatNumber(ctaClick?.new ?? 0)} / 活跃 ${formatNumber((ctaClick?.new ?? 0) + (ctaClick?.contacting ?? 0) + (ctaClick?.quoted ?? 0))}`,
+      status: ctaClick && ctaClick.total > 0 ? '有样本' : '观察中',
+      tone: ctaClick && ctaClick.new + ctaClick.contacting + ctaClick.quoted > 0 ? 'orange' : ctaClick && ctaClick.total > 0 ? 'blue' : 'gray',
+      href: '/admin/customers/leads?source_type=case&source_stage=case%3Acta_click',
+      actionLabel: '看 CTA 线索',
+    },
+  ] as const
+
+  return (
+    <section className="space-y-4" id="case-lead-path-bridge">
+      <SectionTitle
+        title="B223 案例路径与线索承接"
+        detail="把案例路径访问、路径动作、表单成功和 leads 表里的案例来源线索放到同一个只读数据中心视角；处理仍回到客户线索页。"
+      />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
+          <FunnelSummary label="案例路径访问" value={casePathMetric.views} detail="近 30 天访问样本" warn={casePathMetric.views > 0 && casePathMetric.leads === 0} />
+          <FunnelSummary label="路径动作" value={casePathMetric.ctaClicks} detail={`表单成功 ${formatNumber(casePathMetric.formSubmits)}`} warn={casePathMetric.ctaClicks > 0 && casePathMetric.formSubmits === 0} />
+          <FunnelSummary label="路径线索" value={casePathMetric.leads} detail={`转化 ${formatAnalyticsPercent(casePathMetric.conversionRate)}`} warn={casePathMetric.views > 0 && casePathMetric.leads === 0} />
+          <FunnelSummary label="案例来源阶段" value={caseStages.length} detail={`leads 表案例线索 ${formatNumber(caseTotal)} 条`} warn={caseActive > 0} />
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-xs text-[#61767D]">
+                <th className="min-w-44 px-5 py-3 text-left font-semibold">承接对象</th>
+                <th className="px-4 py-3 text-right font-semibold">线索</th>
+                <th className="min-w-72 px-4 py-3 text-left font-semibold">当前证据</th>
+                <th className="min-w-32 px-4 py-3 text-left font-semibold">判断</th>
+                <th className="min-w-36 px-5 py-3 text-right font-semibold">入口</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E6EEEE]">
+              {bridgeRows.map((row) => (
+                <tr key={row.key} className="align-top transition hover:bg-[#FBFDFD]">
+                  <td className="px-5 py-4">
+                    <Link href={row.href} className="font-semibold text-[#1E2C31] hover:text-[#1889B6]">
+                      {row.label}
+                    </Link>
+                    <p className="mt-1 text-xs text-[#8A9EA4]">只读下钻，不直接改状态</p>
+                  </td>
+                  <td className="px-4 py-4 text-right text-lg font-bold text-[#1E2C31]">{formatNumber(row.value)}</td>
+                  <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">{row.detail}</td>
+                  <td className="px-4 py-4">
+                    <FunnelStatusBadge label={row.status} tone={row.tone} />
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <Link
+                      href={row.href}
+                      className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#E36F2C]/50 hover:text-[#E36F2C]"
+                    >
+                      {row.actionLabel}
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="flex flex-wrap gap-2 border-t border-[#E6EEEE] px-5 py-4">
+          <Link
+            href="/admin/status/traffic#case-inquiry-path"
+            className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+          >
+            看案例路径分析
+          </Link>
+          <Link
+            href="/admin/customers/leads?source_type=case&attention=active"
+            className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+          >
+            处理活跃案例线索
+          </Link>
+        </div>
       </div>
     </section>
   )
