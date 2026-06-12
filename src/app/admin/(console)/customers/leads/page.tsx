@@ -27,6 +27,7 @@ import {
   Inbox,
   ListChecks,
   MessageSquareText,
+  Package,
   SearchCheck,
   Settings,
   type LucideIcon,
@@ -100,6 +101,14 @@ const EMPTY_SOURCE_STATUS_SUMMARY: LeadSourceStatusSummary[] = []
 const EMPTY_SOURCE_STAGE_STATUS_SUMMARY: LeadSourceStageStatusSummary[] = []
 
 const EMPTY_CASE_PATH_METRIC: AnalyticsConversionMetric = {
+  views: 0,
+  ctaClicks: 0,
+  formSubmits: 0,
+  leads: 0,
+  conversionRate: 0,
+}
+
+const EMPTY_PRODUCT_PATH_METRIC: AnalyticsConversionMetric = {
   views: 0,
   ctaClicks: 0,
   formSubmits: 0,
@@ -261,6 +270,7 @@ function LeadsQueueConsole({
   filters,
   sourceStatusSummary,
   sourceStageStatusSummary,
+  productPathMetric,
   casePathMetric,
 }: {
   summary: LeadDashboardSummary
@@ -269,12 +279,18 @@ function LeadsQueueConsole({
   filters: LeadFilterState
   sourceStatusSummary: LeadSourceStatusSummary[]
   sourceStageStatusSummary: LeadSourceStageStatusSummary[]
+  productPathMetric: AnalyticsConversionMetric
   casePathMetric: AnalyticsConversionMetric
 }) {
   const activeFilterChips = buildActiveFilterChips(filters)
   const currentRows = result.leads.length
   const topSource = sourceStatusSummary[0]
   const sourceNewTotal = sourceStatusSummary.reduce((total, source) => total + source.new, 0)
+  const productSource = sourceStatusSummary.find((source) => source.type === 'product')
+  const productTotal = productSource?.total ?? 0
+  const productActive = productSource ? productSource.new + productSource.contacting + productSource.quoted : 0
+  const productTopStage = sourceStageStatusSummary.find((source) => source.type === 'product')
+  const productInquiryForm = sourceStageStatusSummary.find((source) => source.key === 'product:inquiry_form')
   const caseSource = sourceStatusSummary.find((source) => source.type === 'case')
   const caseTotal = caseSource?.total ?? 0
   const caseActive = caseSource ? caseSource.new + caseSource.contacting + caseSource.quoted : 0
@@ -348,6 +364,25 @@ function LeadsQueueConsole({
       ],
     },
     {
+      title: '产品线索承接',
+      detail: productTopStage
+        ? `主要阶段 ${productTopStage.label}: ${formatNumber(productTopStage.total)} 条；对照产品路径访问、表单和 SEO 待补。`
+        : '产品路径还没有形成线索样本；先从产品路径分析、产品来源筛选和 SEO 待补确认。',
+      metric: `${formatNumber(productActive)} 活跃`,
+      signal: productPathMetric.leads > 0
+        ? `${formatNumber(productPathMetric.leads)} 路径线索`
+        : `${formatAnalyticsPercent(productPathMetric.conversionRate)} 转化`,
+      href: createLeadsHref(filters, { source_type: 'product', source_stage: 'all', status: 'all', page: 1 }),
+      Icon: Package,
+      tone: productActive > 0 ? 'orange' : productTotal > 0 ? 'blue' : productPathMetric.views > 0 ? 'orange' : 'gray',
+      actions: [
+        { label: '产品线索', href: createLeadsHref(filters, { source_type: 'product', source_stage: 'all', status: 'all', page: 1 }), primary: productActive > 0 },
+        { label: '产品表单', href: createLeadsHref(filters, { source_type: 'product', source_stage: 'product:inquiry_form', status: 'all', page: 1 }), primary: Boolean(productInquiryForm?.new) },
+        { label: 'SEO 待补', href: '/admin/content/products/list?view=incomplete&issue=seo' },
+        { label: '转化路径', href: '/admin/site/conversion#conversion-ledger' },
+      ],
+    },
+    {
       title: '案例线索承接',
       detail: caseTopStage
         ? `主要阶段 ${caseTopStage.label}: ${formatNumber(caseTopStage.total)} 条；对照 30 天案例路径访问与表单。`
@@ -401,12 +436,13 @@ function LeadsQueueConsole({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 border-b border-[#D8E7E8] md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-1 border-b border-[#D8E7E8] md:grid-cols-3 xl:grid-cols-7">
         <LeadControlStat label="总线索" value={`${formatNumber(operationsSummary.total)} 条`} />
         <LeadControlStat label="今日新增" value={`${formatNumber(operationsSummary.newToday)} 条`} tone={operationsSummary.newToday > 0 ? 'orange' : 'green'} />
         <LeadControlStat label="活跃商机" value={`${formatNumber(operationsSummary.active)} 条`} />
         <LeadControlStat label="超时队列" value={`${formatNumber(operationsSummary.overdue)} 条`} tone={operationsSummary.overdue > 0 ? 'orange' : 'green'} />
         <LeadControlStat label="今日更新" value={`${formatNumber(operationsSummary.updatedToday)} 条`} />
+        <LeadControlStat label="产品线索" value={`${formatNumber(productTotal)} 条`} tone={productActive > 0 ? 'orange' : productTotal > 0 ? 'blue' : 'gray'} />
         <LeadControlStat label="案例线索" value={`${formatNumber(caseTotal)} 条`} tone={caseActive > 0 ? 'orange' : caseTotal > 0 ? 'blue' : 'gray'} />
       </div>
 
@@ -628,6 +664,7 @@ export default async function AdminCustomerLeadsPage({
   ])
 
   const adminRole: AdminRole = role
+  const productPathMetric = pathAnalytics.products ?? EMPTY_PRODUCT_PATH_METRIC
   const casePathMetric = pathAnalytics.cases ?? EMPTY_CASE_PATH_METRIC
   const leadFilters: LeadFilterState = {
     ...filters,
@@ -652,6 +689,7 @@ export default async function AdminCustomerLeadsPage({
         filters={leadFilters}
         sourceStatusSummary={sourceStatusSummary}
         sourceStageStatusSummary={sourceStageStatusSummary}
+        productPathMetric={productPathMetric}
         casePathMetric={casePathMetric}
       />
       <LeadsClient
