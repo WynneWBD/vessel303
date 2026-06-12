@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
+import { ArrowRight, Filter, Search, SlidersHorizontal, X } from 'lucide-react';
 import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
@@ -27,7 +28,7 @@ type DirectoryFilters = {
   page: number;
 };
 
-type DirectoryCategory = Pick<ProductCategoryRow, 'id' | 'title_zh' | 'title_en'>;
+type DirectoryCategory = Pick<ProductCategoryRow, 'id' | 'title_zh' | 'title_en' | 'product_count'>;
 
 interface Props {
   products: CatalogProduct[];
@@ -64,6 +65,44 @@ function displayHref(href: string | null | undefined) {
 function productPrice(product: CatalogProduct, lang: 'en' | 'zh') {
   const price = lang === 'en' ? product.price_display_en : product.price_display_zh;
   return price || product.price_display_en || product.price_display_zh || '';
+}
+
+function fallbackCopy(lang: 'en' | 'zh', en: string, zh: string) {
+  return lang === 'zh' ? zh : en;
+}
+
+function formatAreaNumber(value: number | null | undefined) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) return '';
+  return Number.isInteger(numeric) ? String(numeric) : numeric.toFixed(1).replace(/\.0$/, '');
+}
+
+function productAreaLabel(product: CatalogProduct) {
+  const value = formatAreaNumber(product.area);
+  return value ? `${value} sqm` : product.size;
+}
+
+function areaRangeLabel(products: CatalogProduct[]) {
+  const areas = products.map((product) => Number(product.area)).filter((area) => Number.isFinite(area) && area > 0);
+  if (areas.length === 0) return '';
+  const min = Math.min(...areas);
+  const max = Math.max(...areas);
+  return min === max ? `${formatAreaNumber(min)} sqm` : `${formatAreaNumber(min)}-${formatAreaNumber(max)} sqm`;
+}
+
+function productTypeLabel(productType: CatalogProduct['productType'], lang: 'en' | 'zh') {
+  const labels: Record<CatalogProduct['productType'], { en: string; zh: string }> = {
+    compact: { en: 'Compact', zh: '紧凑型' },
+    standard: { en: 'Standard', zh: '标准型' },
+    luxury: { en: 'Flagship', zh: '旗舰型' },
+  };
+  const label = labels[productType];
+  return label ? fallbackCopy(lang, label.en, label.zh) : '';
+}
+
+function formatCount(value: number | null | undefined) {
+  const count = Number(value ?? 0);
+  return Number.isFinite(count) && count > 0 ? String(count) : '';
 }
 
 function localizedText(en: string | null | undefined, zh: string | null | undefined, lang: 'en' | 'zh') {
@@ -128,6 +167,7 @@ function Sidebar({
   filters,
   contactModule,
   uiLabels,
+  totalProducts,
   contactHeadingTag = 'h2',
 }: {
   categories: DirectoryCategory[];
@@ -135,6 +175,7 @@ function Sidebar({
   filters: DirectoryFilters;
   contactModule: PublicPageModule | null;
   uiLabels: Record<string, string>;
+  totalProducts: number;
   contactHeadingTag?: 'h2' | 'p';
 }) {
   const { lang } = useLanguage();
@@ -155,11 +196,14 @@ function Sidebar({
         <div className="divide-y divide-[#ECEFF1]">
           <Link prefetch={false}
             href={buildHref(filters, { category: '', page: 1 })}
-            className={`block px-4 py-2.5 text-sm transition ${
+            className={`flex items-center justify-between gap-3 px-4 py-2.5 text-sm transition ${
               !filters.category ? 'bg-[#EAF4F6] font-semibold text-[#147C94]' : 'text-[#5C6670] hover:bg-[#F7FAFA]'
             }`}
           >
-            {uiLabels.allProducts}
+            <span className="min-w-0 flex-1 truncate">{uiLabels.allProducts}</span>
+            <span className="shrink-0 rounded-sm bg-[#EEF3F5] px-2 py-0.5 text-[11px] font-bold text-[#53616B]">
+              {totalProducts}
+            </span>
           </Link>
           {categories.map((category) => {
             const categoryLabel = localizedText(category.title_en, category.title_zh, lang);
@@ -168,13 +212,18 @@ function Sidebar({
               <Link prefetch={false}
                 key={category.id}
                 href={buildHref(filters, { category: String(category.id), page: 1 })}
-                className={`block px-4 py-2.5 text-sm transition ${
+                className={`flex items-center justify-between gap-3 px-4 py-2.5 text-sm transition ${
                   filters.category === String(category.id)
                     ? 'bg-[#EAF4F6] font-semibold text-[#147C94]'
                     : 'text-[#5C6670] hover:bg-[#F7FAFA]'
                 }`}
               >
-                {categoryLabel}
+                <span className="min-w-0 flex-1 truncate">{categoryLabel}</span>
+                {formatCount(category.product_count) ? (
+                  <span className="shrink-0 rounded-sm bg-[#EEF3F5] px-2 py-0.5 text-[11px] font-bold text-[#53616B]">
+                    {formatCount(category.product_count)}
+                  </span>
+                ) : null}
               </Link>
             );
           })}
@@ -203,13 +252,18 @@ function Sidebar({
                 <Link prefetch={false}
                   key={option.id}
                   href={buildHref(filters, { attribute: String(option.id), page: 1 })}
-                  className={`block px-4 py-2.5 text-sm transition ${
+                  className={`flex items-center justify-between gap-3 px-4 py-2.5 text-sm transition ${
                     filters.attribute === String(option.id)
                       ? 'bg-[#FFF4EC] font-semibold text-[#C65F22]'
                       : 'text-[#5C6670] hover:bg-[#F7FAFA]'
                   }`}
                 >
-                  {option.displayLabel}
+                  <span className="min-w-0 flex-1 truncate">{option.displayLabel}</span>
+                  {formatCount(option.product_count) ? (
+                    <span className="shrink-0 rounded-sm bg-[#F8F0EA] px-2 py-0.5 text-[11px] font-bold text-[#9A4C1B]">
+                      {formatCount(option.product_count)}
+                    </span>
+                  ) : null}
                 </Link>
               ))}
             </div>
@@ -255,6 +309,7 @@ function ProductCard({
   const name = lang === 'en' ? product.name_en : product.name_cn;
   const badge = lang === 'en' ? product.badge_en : product.badge_cn;
   const tags = lang === 'en' ? product.tags_en : product.tags_cn;
+  const features = lang === 'en' ? product.features_en : product.features_cn;
   const category = categoryTitle(
     categories.find((item) => item.id === product.category_id),
     lang,
@@ -266,10 +321,14 @@ function ProductCard({
   const displayPrice = productPrice(product, lang) || uiLabels.priceEmpty;
   const metaItems = [
     category,
-    product.size,
     [product.productSeries, product.gen].filter(Boolean).join(' / '),
     ...attributeLabels,
   ].filter(Boolean);
+  const decisionSpecs = [
+    { label: fallbackCopy(lang, 'Area', '面积'), value: productAreaLabel(product) },
+    { label: fallbackCopy(lang, 'Type', '类型'), value: productTypeLabel(product.productType, lang) },
+    { label: fallbackCopy(lang, 'Series', '系列'), value: [product.productSeries, product.gen].filter(Boolean).join(' ') },
+  ].filter((item) => item.value);
 
   return (
     <article className="group flex min-h-full flex-col border border-[#DADDE1] bg-white transition hover:-translate-y-0.5 hover:border-[#147C94]/60 hover:shadow-[0_18px_46px_rgba(24,44,54,0.13)]">
@@ -308,6 +367,16 @@ function ProductCard({
             ))}
           </div>
         ) : null}
+        {decisionSpecs.length > 0 ? (
+          <div className="mt-3 grid grid-cols-3 border border-[#E5E9EC] bg-[#F8FAFA]">
+            {decisionSpecs.map((item) => (
+              <div key={item.label} className="min-w-0 border-r border-[#E5E9EC] px-2 py-2 last:border-r-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#8A9299]">{item.label}</p>
+                <p className="mt-1 truncate text-xs font-black text-[#1F2A31]">{item.value}</p>
+              </div>
+            ))}
+          </div>
+        ) : null}
         <div className="mt-2 flex flex-wrap gap-1.5">
           {tags.slice(0, 2).map((tag) => (
             <span key={tag} className="border border-[#DADDE1] px-2 py-0.5 text-[11px] text-[#65707A]">
@@ -315,6 +384,16 @@ function ProductCard({
             </span>
           ))}
         </div>
+        {features.length > 0 ? (
+          <ul className="mt-3 space-y-1 border-t border-[#ECEFF1] pt-3">
+            {features.slice(0, 3).map((feature) => (
+              <li key={feature} className="flex gap-2 text-xs leading-5 text-[#53616B]">
+                <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 bg-[#147C94]" />
+                <span className="min-w-0">{feature}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         <div className="mt-3 border-t border-[#ECEFF1] pt-3">
           {displayPrice ? (
             <span className="min-w-0 truncate text-sm font-semibold text-[#C65F22]">{displayPrice}</span>
@@ -354,14 +433,17 @@ function SeriesSummary({
 }) {
   const series = Array.from(
     products.reduce((map, product) => {
-      const current = map.get(product.productSeries) ?? { count: 0, image: '', href: '' };
+      const area = Number(product.area);
+      const current = map.get(product.productSeries) ?? { count: 0, image: '', href: '', minArea: area, maxArea: area };
       map.set(product.productSeries, {
         count: current.count + 1,
         image: current.image || product.image,
         href: current.href || buildHref({ q: product.productSeries, category: '', attribute: '', page: 1 }, {}),
+        minArea: Number.isFinite(area) && area > 0 ? Math.min(current.minArea, area) : current.minArea,
+        maxArea: Number.isFinite(area) && area > 0 ? Math.max(current.maxArea, area) : current.maxArea,
       });
       return map;
-    }, new Map<string, { count: number; image: string; href: string }>()),
+    }, new Map<string, { count: number; image: string; href: string; minArea: number; maxArea: number }>()),
   ).sort(([a], [b]) => a.localeCompare(b));
 
   if (series.length === 0 || !uiLabels.seriesHeading) return null;
@@ -391,7 +473,14 @@ function SeriesSummary({
             ) : null}
             <span className="absolute inset-0 bg-gradient-to-t from-[#111820]/82 via-[#111820]/18 to-transparent" />
             <span className="relative mt-auto flex w-full items-end justify-between gap-3 p-3 text-white">
-              <span className="text-base font-black">{code}</span>
+              <span className="min-w-0">
+                <span className="block text-base font-black">{code}</span>
+                <span className="mt-1 block text-[11px] font-semibold text-white/75">
+                  {item.minArea === item.maxArea
+                    ? `${formatAreaNumber(item.minArea)} sqm`
+                    : `${formatAreaNumber(item.minArea)}-${formatAreaNumber(item.maxArea)} sqm`}
+                </span>
+              </span>
               {uiLabels.seriesCountSuffix ? (
                 <span className="shrink-0 bg-white/12 px-2 py-1 text-[11px] font-semibold backdrop-blur">
                   {item.count} {uiLabels.seriesCountSuffix}
@@ -405,6 +494,163 @@ function SeriesSummary({
         ))}
       </div>
     </div>
+  );
+}
+
+function CatalogCommandPanel({
+  products,
+  filteredProducts,
+  filters,
+  activeFilters,
+  categories,
+  attributeTemplates,
+  uiLabels,
+  inquiryHref,
+}: {
+  products: CatalogProduct[];
+  filteredProducts: CatalogProduct[];
+  filters: DirectoryFilters;
+  activeFilters: Array<{ key: string; label: string; value: string }>;
+  categories: DirectoryCategory[];
+  attributeTemplates: ProductAttributeTemplateWithOptions[];
+  uiLabels: Record<string, string>;
+  inquiryHref: string;
+}) {
+  const { lang } = useLanguage();
+  const scopeProducts = filteredProducts.length > 0 ? filteredProducts : products;
+  const seriesCount = new Set(scopeProducts.map((product) => product.productSeries).filter(Boolean)).size;
+  const areaRange = areaRangeLabel(scopeProducts);
+  const activeRoute = activeFilters.length > 0
+    ? activeFilters.map((item) => `${item.label}: ${item.value}`).join(' / ')
+    : fallbackCopy(lang, 'All published models', '全部已发布型号');
+  const quickCategoryFilters = categories
+    .filter((category) => Number(category.product_count ?? 0) > 0)
+    .slice(0, 3)
+    .map((category) => ({
+      key: `category-${category.id}`,
+      label: localizedText(category.title_en, category.title_zh, lang),
+      count: category.product_count ?? 0,
+      href: buildHref(filters, { category: String(category.id), page: 1 }),
+      tone: 'category',
+    }));
+  const quickAttributeFilters = attributeTemplates
+    .flatMap((template) =>
+      template.options.map((option) => ({
+        key: `option-${option.id}`,
+        label: localizedText(option.label_en, option.label_zh, lang),
+        count: option.product_count ?? 0,
+        href: buildHref(filters, { attribute: String(option.id), page: 1 }),
+        tone: 'attribute',
+      })),
+    )
+    .filter((item) => item.label && item.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6);
+  const quickFilters = [...quickCategoryFilters, ...quickAttributeFilters].slice(0, 8);
+  const stats = [
+    {
+      label: fallbackCopy(lang, 'Published models', '已发布型号'),
+      value: formatCount(products.length) || '0',
+      detail: fallbackCopy(lang, 'Live catalog', '公开目录'),
+    },
+    {
+      label: uiLabels.matchingProducts || fallbackCopy(lang, 'Matching now', '当前匹配'),
+      value: formatCount(filteredProducts.length) || '0',
+      detail: activeFilters.length > 0 ? fallbackCopy(lang, 'After filters', '筛选后') : fallbackCopy(lang, 'No filter applied', '未筛选'),
+    },
+    {
+      label: fallbackCopy(lang, 'Series', '系列'),
+      value: formatCount(seriesCount) || '0',
+      detail: fallbackCopy(lang, 'Visible in this scope', '当前范围'),
+    },
+    {
+      label: fallbackCopy(lang, 'Area range', '面积区间'),
+      value: areaRange || '-',
+      detail: fallbackCopy(lang, 'For model sizing', '用于选型'),
+    },
+  ];
+
+  return (
+    <section className="mb-4 border border-[#C7CDD2] bg-white">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.72fr)_minmax(320px,0.28fr)]">
+        <div className="border-b border-[#DADDE1] p-4 lg:border-b-0 lg:border-r">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-[#147C94]">
+                <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
+                {fallbackCopy(lang, 'Catalog control', '目录控制台')}
+              </p>
+              <h2 className="mt-2 text-xl font-black leading-tight text-[#1F2A31] sm:text-2xl">
+                {fallbackCopy(lang, 'Filter first, compare fast, then open the model.', '先筛选，再比较，再进入型号详情。')}
+              </h2>
+            </div>
+            <div className="max-w-md border border-[#E5E9EC] bg-[#F7F8F8] px-3 py-2 text-xs leading-5 text-[#65707A]">
+              <span className="font-bold text-[#1F2A31]">{fallbackCopy(lang, 'Current route', '当前路径')}</span>
+              <span className="mx-2 text-[#B8C0C6]">/</span>
+              <span>{activeRoute}</span>
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2 xl:grid-cols-4">
+            {stats.map((stat) => (
+              <div key={stat.label} className="border border-[#E5E9EC] bg-[#F8FAFA] p-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#65707A]">{stat.label}</p>
+                <p className="mt-2 text-2xl font-black text-[#1F2A31]">{stat.value}</p>
+                <p className="mt-1 text-[11px] leading-4 text-[#7A858E]">{stat.detail}</p>
+              </div>
+            ))}
+          </div>
+          {quickFilters.length > 0 ? (
+            <div className="mt-4">
+              <p className="mb-2 inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-[#65707A]">
+                <Filter className="h-3.5 w-3.5" aria-hidden="true" />
+                {fallbackCopy(lang, 'High-signal filters', '高频筛选')}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {quickFilters.map((item) => (
+                  <Link
+                    prefetch={false}
+                    key={item.key}
+                    href={item.href}
+                    className={`inline-flex min-h-8 items-center gap-2 border px-3 text-xs font-bold transition ${
+                      item.tone === 'category'
+                        ? 'border-[#147C94]/25 bg-[#EAF4F6] text-[#147C94] hover:border-[#147C94]'
+                        : 'border-[#E36F2C]/25 bg-[#FFF4EC] text-[#B4551D] hover:border-[#E36F2C]'
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    <span className="rounded-sm bg-white/80 px-1.5 py-0.5 text-[10px] text-[#53616B]">{item.count}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+        <div className="flex flex-col justify-between gap-4 bg-[#1F2A31] p-4 text-white">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#8FD5E1]">
+              {fallbackCopy(lang, 'Buyer route', '采购路径')}
+            </p>
+            <p className="mt-3 text-sm leading-6 text-white/70">
+              {fallbackCopy(
+                lang,
+                'Use filters to narrow the catalog, open the strongest model, then submit one inquiry from the matched product.',
+                '用筛选缩小目录范围，打开最匹配型号，再从匹配产品提交询盘。',
+              )}
+            </p>
+          </div>
+          {uiLabels.inquiryCta && inquiryHref ? (
+            <Link
+              prefetch={false}
+              href={inquiryHref}
+              className="inline-flex min-h-10 items-center justify-center gap-2 bg-[#E36F2C] px-4 text-xs font-black uppercase tracking-[0.1em] text-white transition hover:bg-[#C85A1F]"
+            >
+              <span>{uiLabels.inquiryCta}</span>
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          ) : null}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -658,19 +904,32 @@ export default function ProductsPageContent({
       <section className="bg-[#F7F8F8] py-2">
         <div className="mx-auto max-w-[1500px] px-4 sm:px-6 lg:px-8">
           <CatalogHighlights items={catalogHighlights} />
+          <CatalogCommandPanel
+            products={products}
+            filteredProducts={filteredProducts}
+            filters={filters}
+            activeFilters={activeFilters}
+            categories={categories}
+            attributeTemplates={attributeTemplates}
+            uiLabels={uiLabels}
+            inquiryHref={inquiryHref}
+          />
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
             <div className="lg:hidden">
               <details className="border border-[#DADDE1] bg-white">
-                <summary className="flex min-h-12 cursor-pointer items-center px-4 text-sm font-bold text-[#1F2A31]">{uiLabels.filters}</summary>
+                <summary className="flex min-h-12 cursor-pointer items-center gap-2 px-4 text-sm font-bold text-[#1F2A31]">
+                  <Filter className="h-4 w-4" aria-hidden="true" />
+                  <span>{uiLabels.filters}</span>
+                </summary>
                 <div className="border-t border-[#DADDE1] p-4">
-                  <Sidebar categories={categories} attributeTemplates={attributeTemplates} filters={filters} contactModule={contactModule} uiLabels={uiLabels} contactHeadingTag="p" />
+                  <Sidebar categories={categories} attributeTemplates={attributeTemplates} filters={filters} contactModule={contactModule} uiLabels={uiLabels} totalProducts={products.length} contactHeadingTag="p" />
                 </div>
               </details>
             </div>
 
             <div className="hidden lg:block lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1">
-              <Sidebar categories={categories} attributeTemplates={attributeTemplates} filters={filters} contactModule={contactModule} uiLabels={uiLabels} />
+              <Sidebar categories={categories} attributeTemplates={attributeTemplates} filters={filters} contactModule={contactModule} uiLabels={uiLabels} totalProducts={products.length} />
             </div>
 
             <div className="flex min-w-0 flex-col">
@@ -686,8 +945,9 @@ export default function ProductsPageContent({
                   placeholder={uiLabels.searchPlaceholder}
                   className="min-h-9 flex-1 border border-[#DADDE1] px-3 text-sm outline-none focus:border-[#147C94]"
                 />
-                <button className="min-h-9 bg-[#147C94] px-4 text-sm font-bold uppercase tracking-[0.08em] text-white hover:bg-[#0E6479]">
-                  {uiLabels.searchButton}
+                <button type="submit" className="inline-flex min-h-9 items-center justify-center gap-2 bg-[#147C94] px-4 text-sm font-bold uppercase tracking-[0.08em] text-white hover:bg-[#0E6479]">
+                  <Search className="h-4 w-4" aria-hidden="true" />
+                  <span>{uiLabels.searchButton}</span>
                 </button>
                 {(filters.q || filters.category || filters.attribute) ? (
                   <Link prefetch={false}
@@ -720,7 +980,7 @@ export default function ProductsPageContent({
                     >
                       <span className="text-[#65707A]">{item.label}</span>
                       <span>{item.value}</span>
-                      <span className="ml-1 text-[#147C94]" aria-hidden="true">x</span>
+                      <X className="ml-1 h-3 w-3 text-[#147C94]" aria-hidden="true" />
                     </Link>
                   ))}
                   {uiLabels.clearFilter ? (
