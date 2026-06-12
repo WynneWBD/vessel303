@@ -48,6 +48,7 @@ type ProjectStats = {
   missingTags: number
   missingCoordinates: number
   unpublishedWithCoordinates: number
+  caseInquiryReady: number
 }
 
 type ProjectStatsRow = Record<keyof ProjectStats, string>
@@ -85,6 +86,7 @@ const EMPTY_PROJECT_STATS: ProjectStats = {
   missingTags: 0,
   missingCoordinates: 0,
   unpublishedWithCoordinates: 0,
+  caseInquiryReady: 0,
 }
 
 function formatNumber(value: number): string {
@@ -145,11 +147,27 @@ async function getProjectStats(): Promise<ProjectStats> {
             OR jsonb_array_length(COALESCE(tags_en, '[]'::jsonb)) = 0
        )::text AS "missingTags",
        COUNT(*) FILTER (WHERE latitude IS NULL OR longitude IS NULL)::text AS "missingCoordinates",
-       COUNT(*) FILTER (
-         WHERE status <> 'published' AND latitude IS NOT NULL AND longitude IS NOT NULL
-       )::text AS "unpublishedWithCoordinates"
-     FROM project_cases
-     WHERE deleted_at IS NULL`,
+        COUNT(*) FILTER (
+          WHERE status <> 'published' AND latitude IS NOT NULL AND longitude IS NOT NULL
+        )::text AS "unpublishedWithCoordinates",
+        COUNT(*) FILTER (
+          WHERE status = 'published'
+            AND NULLIF(BTRIM(COALESCE(cover_image_url, '')), '') IS NOT NULL
+            AND jsonb_array_length(COALESCE(images, '[]'::jsonb)) > 0
+            AND NULLIF(BTRIM(COALESCE(description_zh, '')), '') IS NOT NULL
+            AND NULLIF(BTRIM(COALESCE(description_en, '')), '') IS NOT NULL
+            AND LENGTH(BTRIM(COALESCE(description_zh, ''))) >= ${MIN_PROJECT_CASE_DESCRIPTION_CHARS}
+            AND LENGTH(BTRIM(COALESCE(description_en, ''))) >= ${MIN_PROJECT_CASE_DESCRIPTION_CHARS}
+            AND NULLIF(BTRIM(COALESCE(project_type_zh, '')), '') IS NOT NULL
+            AND NULLIF(BTRIM(COALESCE(project_type_en, '')), '') IS NOT NULL
+            AND NULLIF(BTRIM(COALESCE(area_display, '')), '') IS NOT NULL
+            AND NULLIF(BTRIM(COALESCE(units_display, '')), '') IS NOT NULL
+            AND NULLIF(BTRIM(COALESCE(products, '')), '') IS NOT NULL
+            AND jsonb_array_length(COALESCE(tags_zh, '[]'::jsonb)) > 0
+            AND jsonb_array_length(COALESCE(tags_en, '[]'::jsonb)) > 0
+        )::text AS "caseInquiryReady"
+      FROM project_cases
+      WHERE deleted_at IS NULL`,
   )
   const row = res.rows[0]
 
@@ -170,6 +188,7 @@ async function getProjectStats(): Promise<ProjectStats> {
     missingTags: parseCount(row?.missingTags),
     missingCoordinates: parseCount(row?.missingCoordinates),
     unpublishedWithCoordinates: parseCount(row?.unpublishedWithCoordinates),
+    caseInquiryReady: parseCount(row?.caseInquiryReady),
   }
 }
 
@@ -188,6 +207,10 @@ function getTodoCount(stats: ProjectStats): number {
   ].filter((count) => count > 0).length
 }
 
+function getCaseInquiryWeakCount(stats: ProjectStats): number {
+  return Math.max(0, stats.published - stats.caseInquiryReady)
+}
+
 function getSideNavGroups(stats: ProjectStats): AdminSideNavGroup[] {
   return [
     {
@@ -199,6 +222,7 @@ function getSideNavGroups(stats: ProjectStats): AdminSideNavGroup[] {
         { key: 'news', label: '新闻资讯', href: '/admin/content/news', Icon: Newspaper },
         { key: 'drafts', label: '草稿内容', href: '#drafts', badge: stats.draft, Icon: FileText },
         { key: 'todo', label: '待补内容', href: '#todo', badge: getTodoCount(stats), Icon: CircleDashed },
+        { key: 'case-conversion', label: '咨询承接', href: '#case-conversion', badge: getCaseInquiryWeakCount(stats), Icon: ClipboardCheck },
         { key: 'checks', label: '发布前检查', href: '#checks', Icon: SearchCheck },
       ],
     },
@@ -344,7 +368,7 @@ function Hero({ stats }: { stats: ProjectStats }) {
         <HeroMetric title="项目总数" value={stats.total} detail={`已发布 ${formatNumber(stats.published)}`} />
         <HeroMetric title="草稿项目" value={stats.draft} detail="等待补齐或发布" tone="orange" />
         <HeroMetric title="近 30 天新增" value={stats.recent} detail="按创建时间统计" tone="green" />
-        <HeroMetric title="待补类型" value={getTodoCount(stats)} detail="只做提醒，不阻止发布" tone="blue" />
+        <HeroMetric title="询盘可承接" value={stats.caseInquiryReady} detail={`发布转化弱 ${formatNumber(getCaseInquiryWeakCount(stats))}`} tone="blue" />
       </div>
     </section>
   )
@@ -500,6 +524,120 @@ function TodoStat({ entry }: { entry: TodoEntry }) {
       </p>
       <p className="mt-2 text-xs leading-5 text-[#61767D]">{entry.detail}</p>
     </div>
+  )
+}
+
+function CaseConversionPanel({ stats }: { stats: ProjectStats }) {
+  const weakCount = getCaseInquiryWeakCount(stats)
+  const lanes = [
+    {
+      title: '已发布可承接',
+      value: stats.caseInquiryReady,
+      detail: '前台案例详情与咨询锚点可作为询盘入口核查',
+      href: '/admin/content/projects/list?status=published',
+      Icon: CheckCircle2,
+      tone: 'green' as const,
+    },
+    {
+      title: '发布转化弱',
+      value: weakCount,
+      detail: '优先补素材、叙事、项目事实或标签',
+      href: '/admin/content/projects/list?status=published&view=incomplete',
+      Icon: CircleDashed,
+      tone: 'orange' as const,
+    },
+    {
+      title: '草稿待承接',
+      value: stats.draft,
+      detail: '草稿阶段没有前台案例咨询锚点',
+      href: '/admin/content/projects/list?status=draft',
+      Icon: FileText,
+      tone: 'neutral' as const,
+    },
+  ]
+  const chain = [
+    { label: '创建前计划', detail: '新建页先规划案例身份、证明素材、咨询上下文和发布影响。', href: '/admin/content/projects/new#case-inquiry-plan' },
+    { label: '编辑中补齐', detail: '编辑页和表单右侧摘要会提示素材、叙事与项目事实缺口。', href: '/admin/content/projects/list?view=incomplete' },
+    { label: '发布后核查', detail: '发布后从列表打开 /cases/[id]#case-inquiry 检查前台承接。', href: '/admin/content/projects/list?status=published' },
+  ]
+
+  return (
+    <section id="case-conversion" className="scroll-mt-24 space-y-4">
+      <SectionTitle
+        title="案例咨询承接"
+        detail="把新建、编辑、列表和前台询盘锚点放到同一个运营视角，先看哪些已能承接询盘，哪些发布后仍需要补内容。"
+      />
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {lanes.map((lane) => (
+            <CaseConversionMetric key={lane.title} lane={lane} />
+          ))}
+        </div>
+        <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
+              <ClipboardCheck size={18} />
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-[#1E2C31]">承接链路</h3>
+              <p className="mt-1 text-xs leading-5 text-[#61767D]">从创建质量到发布后核查，不新增保存限制。</p>
+            </div>
+          </div>
+          <div className="mt-4 space-y-3">
+            {chain.map((item, index) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="flex gap-3 rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-3 transition hover:border-[#1889B6]/45 hover:bg-white"
+              >
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-[#1889B6]">
+                  {index + 1}
+                </span>
+                <span>
+                  <span className="block text-xs font-semibold text-[#1E2C31]">{item.label}</span>
+                  <span className="mt-1 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function CaseConversionMetric({
+  lane,
+}: {
+  lane: {
+    title: string
+    value: number
+    detail: string
+    href: string
+    Icon: LucideIcon
+    tone: 'green' | 'orange' | 'neutral'
+  }
+}) {
+  const Icon = lane.Icon
+  const toneClass =
+    lane.tone === 'green'
+      ? 'bg-[#E7F7F4] text-[#159477]'
+      : lane.tone === 'orange'
+        ? 'bg-[#FFF2E7] text-[#E36F2C]'
+        : 'bg-[#F0F2F2] text-[#61767D]'
+
+  return (
+    <Link href={lane.href} className="group rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/55 hover:shadow-md">
+      <div className="flex items-start justify-between gap-3">
+        <span className={`flex h-10 w-10 items-center justify-center rounded-md ${toneClass}`}>
+          <Icon size={18} />
+        </span>
+        <ArrowRight size={16} className="mt-2 text-[#B6C6CA] transition group-hover:text-[#1889B6]" />
+      </div>
+      <p className="mt-5 text-sm font-semibold text-[#61767D]">{lane.title}</p>
+      <p className="mt-1 text-3xl font-bold text-[#1E2C31]">{formatNumber(lane.value)}</p>
+      <p className="mt-2 text-xs leading-5 text-[#61767D]">{lane.detail}</p>
+    </Link>
   )
 }
 
@@ -680,6 +818,7 @@ export default async function AdminContentProjectsPage() {
       <Hero stats={stats} />
       <div className="space-y-8">
         <StatusGrid stats={stats} />
+        <CaseConversionPanel stats={stats} />
         <TodoPanel stats={stats} />
         <GlobalStatusPanel stats={stats} />
         <ActionPanel />
