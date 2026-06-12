@@ -306,6 +306,7 @@ export default function CasesPageContent({
   const resetLabel = zh ? '重置' : 'Reset'
   const emptyLabel = zh ? '当前筛选暂无案例' : 'No cases match the selected filters.'
   const openCaseLabel = zh ? '查看案例' : 'Open case'
+  const caseInquiryLabel = zh ? '案例咨询' : 'Case inquiry'
   const [activeType, setActiveType] = useState(ALL_FILTER)
   const [activeTag, setActiveTag] = useState(ALL_FILTER)
   const typeOptions = useMemo(
@@ -471,53 +472,62 @@ export default function CasesPageContent({
                 { label: itemLabel(itemById(detailLabelsModule, 'fact-area'), lang), value: item.area_display },
               ].filter((fact) => fact.label && fact.value)
               const featured = index === 0
+              const caseHref = `/cases/${item.id}`
+              const caseInquiryHref = `${caseHref}#case-inquiry`
 
               return (
-                <Link prefetch={false}
+                <article
                   key={item.id}
-                  href={`/cases/${item.id}`}
                   className={`group flex min-h-full flex-col overflow-hidden border border-[#E5DED4] bg-white transition-all duration-300 hover:-translate-y-0.5 hover:border-[#E36F2C]/35 hover:shadow-[0_24px_60px_rgba(44,42,40,0.10)] ${featured ? 'xl:col-span-2' : ''}`}
                 >
                   {item.cover_image_url ? (
-                    <div className={`relative overflow-hidden bg-[#E5DED4] ${featured ? 'aspect-[16/9] md:aspect-[21/10]' : 'aspect-[4/3]'}`}>
-                      <ProtectedImage
-                        src={item.cover_image_url}
-                        alt={name}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                        sizes={featured ? '(max-width: 1280px) 100vw, 58vw' : '(max-width: 768px) 100vw, 32vw'}
-                      />
-                      <span className="absolute inset-0 bg-gradient-to-t from-[#16110D]/80 via-[#16110D]/16 to-transparent" />
-                      <div className="absolute left-4 top-4 flex items-center gap-2">
-                        <span className="bg-white/92 px-2.5 py-1 text-[11px] font-black text-[#2C2A28]">
-                          {String(index + 1).padStart(2, '0')}
-                        </span>
-                        {type ? (
-                          <span className="bg-[#E36F2C] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white">
-                            {type}
+                    <Link prefetch={false} href={caseHref} className="block">
+                      <div className={`relative overflow-hidden bg-[#E5DED4] ${featured ? 'aspect-[16/9] md:aspect-[21/10]' : 'aspect-[4/3]'}`}>
+                        <ProtectedImage
+                          src={item.cover_image_url}
+                          alt={name}
+                          fill
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                          sizes={featured ? '(max-width: 1280px) 100vw, 58vw' : '(max-width: 768px) 100vw, 32vw'}
+                        />
+                        <span className="absolute inset-0 bg-gradient-to-t from-[#16110D]/80 via-[#16110D]/16 to-transparent" />
+                        <div className="absolute left-4 top-4 flex items-center gap-2">
+                          <span className="bg-white/92 px-2.5 py-1 text-[11px] font-black text-[#2C2A28]">
+                            {String(index + 1).padStart(2, '0')}
                           </span>
+                          {type ? (
+                            <span
+                              className="bg-[#E36F2C] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white"
+                            >
+                              {type}
+                            </span>
+                          ) : null}
+                        </div>
+                        {tags.length > 0 ? (
+                          <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-2">
+                            {tags.slice(0, featured ? 4 : 2).map((tag) => (
+                              <span
+                                key={tag}
+                                className="border border-white/25 bg-white/14 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-white backdrop-blur"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
                         ) : null}
                       </div>
-                      {tags.length > 0 ? (
-                        <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-2">
-                          {tags.slice(0, featured ? 4 : 2).map((tag) => (
-                            <span
-                              key={tag}
-                              className="border border-white/25 bg-white/14 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-white backdrop-blur"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
+                    </Link>
                   ) : (
-                    <div className={`bg-[#E5DED4] ${featured ? 'aspect-[16/9] md:aspect-[21/10]' : 'aspect-[4/3]'}`} />
+                    <Link prefetch={false} href={caseHref} className={`block bg-[#E5DED4] ${featured ? 'aspect-[16/9] md:aspect-[21/10]' : 'aspect-[4/3]'}`} />
                   )}
 
                   <div className="flex flex-1 flex-col p-5 sm:p-6">
                     {name ? (
-                      <h2 className={`${featured ? 'text-2xl sm:text-3xl' : 'text-xl'} font-black leading-tight text-[#2C2A28]`}>{name}</h2>
+                      <h2 className={`${featured ? 'text-2xl sm:text-3xl' : 'text-xl'} font-black leading-tight text-[#2C2A28]`}>
+                        <Link prefetch={false} href={caseHref} className="transition-colors hover:text-[#E36F2C]">
+                          {name}
+                        </Link>
+                      </h2>
                     ) : null}
                     {location ? (
                       <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#8A8580]">
@@ -537,12 +547,26 @@ export default function CasesPageContent({
                         ))}
                       </div>
                     ) : null}
-                    <span className="mt-auto inline-flex items-center justify-end gap-2 pt-6 text-xs font-black uppercase tracking-[0.14em] text-[#E36F2C] transition-transform duration-300 group-hover:translate-x-1">
-                      {openCaseLabel}
-                      <ArrowRight size={18} strokeWidth={2.4} aria-hidden="true" />
-                    </span>
+                    <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-6">
+                      <Link
+                        prefetch={false}
+                        href={caseHref}
+                        className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[#E36F2C] transition-transform duration-300 hover:translate-x-1"
+                      >
+                        {openCaseLabel}
+                        <ArrowRight size={18} strokeWidth={2.4} aria-hidden="true" />
+                      </Link>
+                      <Link
+                        prefetch={false}
+                        href={caseInquiryHref}
+                        data-analytics-cta="true"
+                        className="inline-flex min-h-10 items-center justify-center border border-[#2C2A28] bg-[#2C2A28] px-3 text-xs font-black uppercase tracking-[0.12em] text-white transition-colors hover:border-[#E36F2C] hover:bg-[#E36F2C]"
+                      >
+                        {caseInquiryLabel}
+                      </Link>
+                    </div>
                   </div>
-                </Link>
+                </article>
               )
             })}
           </div>
