@@ -16,6 +16,7 @@ export const metadata = { title: '内容统计 - 运营数据中心 - VESSEL' }
 
 type ContentTotals = ReturnType<typeof sumContent>
 type ContentDecisionTone = 'orange' | 'blue' | 'green'
+type ContentReleaseTone = 'critical' | 'warning' | 'review' | 'ready'
 
 type ContentDecision = {
   label: string
@@ -23,6 +24,21 @@ type ContentDecision = {
   tone: ContentDecisionTone
   href: string
   actionLabel: string
+}
+
+type ContentReleaseRow = {
+  key: string
+  priority: string
+  stage: string
+  title: string
+  owner: string
+  value: string
+  evidence: string
+  impact: string
+  href: string
+  actionLabel: string
+  tone: ContentReleaseTone
+  Icon: typeof STATUS_ICONS.AlertCircle
 }
 
 export default async function AdminStatusContentPage() {
@@ -79,6 +95,7 @@ export default async function AdminStatusContentPage() {
         </div>
 
         <section className="space-y-4">
+          <ContentReleaseLedger items={contentItems} totals={totals} />
           <ContentOperationsMatrix items={contentItems} totals={totals} />
         </section>
 
@@ -120,6 +137,238 @@ export default async function AdminStatusContentPage() {
       </section>
     </StatusPageShell>
   )
+}
+
+function buildContentReleaseRows(items: ContentMetric[], totals: ContentTotals): ContentReleaseRow[] {
+  const issueItems = [...items].filter((item) => item.issues > 0).sort((a, b) => b.issues - a.issues)
+  const draftItems = [...items].filter((item) => item.draft > 0).sort((a, b) => b.draft - a.draft)
+  const staleItems = items.filter((item) => item.total > 0 && item.recent30 === 0)
+  const product = items.find((item) => item.key === 'products')
+  const project = items.find((item) => item.key === 'projects')
+  const news = items.find((item) => item.key === 'news')
+  const issueTarget = issueItems[0]
+  const draftTarget = draftItems[0]
+
+  const issueEvidence =
+    issueItems.length > 0
+      ? issueItems.map((item) => `${item.label} ${formatNumber(item.issues)}`).join(' / ')
+      : '产品、项目、新闻关键展示字段暂无显性缺口'
+  const draftEvidence =
+    draftItems.length > 0
+      ? draftItems.map((item) => `${item.label} ${formatNumber(item.draft)}`).join(' / ')
+      : '暂无草稿积压'
+  const staleEvidence =
+    staleItems.length > 0
+      ? staleItems.map((item) => `${item.label} 30 天无更新`).join(' / ')
+      : `近 30 天有 ${formatNumber(totals.recent30)} 条内容变化`
+
+  return [
+    {
+      key: 'field-gaps',
+      priority: totals.issues > 0 ? 'P0' : 'OK',
+      stage: '字段缺项',
+      title: '已发布 / 待发布内容关键字段',
+      owner: '内容管理 / 全部',
+      value: totals.issues > 0 ? `${formatNumber(totals.issues)} 个缺项` : '无缺项',
+      evidence: issueEvidence,
+      impact: '影响前台展示、SEO 摘要、案例地图和询盘转化判断。',
+      href: issueTarget?.issueHref ?? '/admin/status/content',
+      actionLabel: totals.issues > 0 ? '处理最高缺项' : '查看内容状态',
+      tone: totals.issues > 0 ? 'critical' : 'ready',
+      Icon: STATUS_ICONS.AlertCircle,
+    },
+    {
+      key: 'draft-queue',
+      priority: totals.draft > 0 ? 'P1' : 'OK',
+      stage: '发布排期',
+      title: '草稿待收口',
+      owner: '内容运营',
+      value: totals.draft > 0 ? `${formatNumber(totals.draft)} 个草稿` : '无草稿积压',
+      evidence: draftEvidence,
+      impact: '决定是否进入发布、继续补素材，或保持内部草稿。',
+      href: draftTarget?.draftHref ?? '/admin/content',
+      actionLabel: totals.draft > 0 ? '查看草稿队列' : '进入内容管理',
+      tone: totals.draft > 0 ? 'warning' : 'ready',
+      Icon: STATUS_ICONS.Newspaper,
+    },
+    {
+      key: 'freshness',
+      priority: staleItems.length > 0 ? 'P2' : 'OK',
+      stage: '内容新鲜度',
+      title: '30 天更新覆盖',
+      owner: '运营复盘',
+      value: staleItems.length > 0 ? `${formatNumber(staleItems.length)} 类无更新` : `${formatNumber(totals.recent30)} 条变化`,
+      evidence: staleEvidence,
+      impact: '用于判断产品、案例、新闻是否需要补充新素材或新证明点。',
+      href: '/admin/content',
+      actionLabel: '查看内容入口',
+      tone: staleItems.length > 0 ? 'review' : 'ready',
+      Icon: STATUS_ICONS.ListChecks,
+    },
+    {
+      key: 'product-release',
+      priority: product && product.issues > 0 ? 'P1' : 'P3',
+      stage: '产品目录',
+      title: '产品页展示完整度',
+      owner: '产品内容',
+      value: product ? `${formatNumber(product.published)} 已发布 / ${formatNumber(product.issues)} 缺项` : '无产品数据',
+      evidence: product
+        ? `草稿 ${formatNumber(product.draft)} / 近 30 天变化 ${formatNumber(product.recent30)}`
+        : '产品表暂无可读数据',
+      impact: '产品图片、图库、中英文名称和 SEO 字段直接影响询盘前的判断效率。',
+      href: product?.issues ? product.issueHref : product?.href ?? '/admin/content/products',
+      actionLabel: product?.issues ? '处理产品缺项' : '进入产品管理',
+      tone: product && product.issues > 0 ? 'warning' : 'review',
+      Icon: STATUS_ICONS.Package,
+    },
+    {
+      key: 'project-release',
+      priority: project && project.issues > 0 ? 'P1' : 'P3',
+      stage: '项目案例',
+      title: '案例证明链完整度',
+      owner: '案例内容',
+      value: project ? `${formatNumber(project.published)} 已发布 / ${formatNumber(project.issues)} 缺项` : '无案例数据',
+      evidence: project
+        ? `草稿 ${formatNumber(project.draft)} / 近 30 天变化 ${formatNumber(project.recent30)}`
+        : '案例表暂无可读数据',
+      impact: '案例封面、图库、坐标和产品型号会影响海外客户对交付能力的判断。',
+      href: project?.issues ? project.issueHref : project?.href ?? '/admin/content/projects',
+      actionLabel: project?.issues ? '处理案例缺项' : '进入案例管理',
+      tone: project && project.issues > 0 ? 'warning' : 'review',
+      Icon: STATUS_ICONS.Globe2,
+    },
+    {
+      key: 'news-release',
+      priority: news && (news.issues > 0 || news.draft > 0) ? 'P2' : 'P3',
+      stage: '新闻内容',
+      title: '新闻发布与 SEO 摘要',
+      owner: '内容运营',
+      value: news ? `${formatNumber(news.published)} 已发布 / ${formatNumber(news.draft)} 草稿` : '无新闻数据',
+      evidence: news
+        ? `缺项 ${formatNumber(news.issues)} / 近 30 天变化 ${formatNumber(news.recent30)}`
+        : '新闻表暂无可读数据',
+      impact: '新闻内容是品牌动态和搜索补充信号，优先避免草稿长期停留。',
+      href: news?.issues ? news.issueHref : news?.draft ? news.draftHref : news?.href ?? '/admin/content/news',
+      actionLabel: news?.issues ? '处理新闻缺项' : news?.draft ? '查看新闻草稿' : '进入新闻管理',
+      tone: news && (news.issues > 0 || news.draft > 0) ? 'review' : 'ready',
+      Icon: STATUS_ICONS.FileText,
+    },
+    {
+      key: 'public-smoke',
+      priority: 'P3',
+      stage: '发布后复验',
+      title: '前台内容入口 smoke',
+      owner: '05 验收',
+      value: '人工复验',
+      evidence: '发布后检查 /products、/cases、/news 与重点详情页；本页只读，不发布内容。',
+      impact: '避免后台状态正常但前台列表、详情或 CTA 链路没有正确呈现。',
+      href: '/products',
+      actionLabel: '打开产品前台',
+      tone: 'review',
+      Icon: STATUS_ICONS.SearchCheck,
+    },
+  ]
+}
+
+function ContentReleaseLedger({
+  items,
+  totals,
+}: {
+  items: ContentMetric[]
+  totals: ContentTotals
+}) {
+  const rows = buildContentReleaseRows(items, totals)
+
+  return (
+    <div>
+      <SectionTitle
+        title="内容发布处理台账"
+        detail="按 300 后台的运营心智，把内容缺项、草稿、更新覆盖和发布后复验集中成可执行队列；本页不写入、不发布、不删除。"
+      />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
+          <MatrixSummary label="最高优先级" value={totals.issues > 0 ? 'P0' : totals.draft > 0 ? 'P1' : 'OK'} detail="按缺项、草稿、更新覆盖排序" warn={totals.issues > 0} />
+          <MatrixSummary label="待处理缺项" value={totals.issues} detail="产品 / 项目 / 新闻关键字段" warn={totals.issues > 0} />
+          <MatrixSummary label="待收口草稿" value={totals.draft} detail="进入发布排期前先确认素材" warn={totals.draft > 0} />
+          <MatrixSummary label="复验入口" value="3+" detail="产品、案例、新闻与重点详情页" />
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-xs text-[#61767D]">
+                <th className="min-w-32 px-5 py-3 text-left font-semibold">优先级</th>
+                <th className="min-w-72 px-4 py-3 text-left font-semibold">处理事项</th>
+                <th className="min-w-64 px-4 py-3 text-left font-semibold">证据</th>
+                <th className="min-w-64 px-4 py-3 text-left font-semibold">运营影响</th>
+                <th className="min-w-32 px-5 py-3 text-right font-semibold">入口</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E6EEEE]">
+              {rows.map((row) => {
+                const Icon = row.Icon
+
+                return (
+                  <tr key={row.key} className="align-top transition hover:bg-[#FBFDFD]">
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${contentReleaseBadgeClassName(row.tone)}`}>
+                        {row.priority}
+                      </span>
+                      <p className="mt-2 text-xs font-semibold text-[#61767D]">{row.stage}</p>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex gap-3">
+                        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${contentReleaseToneClassName(row.tone)}`}>
+                          <Icon size={17} />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block font-semibold text-[#1E2C31]">{row.title}</span>
+                          <span className="mt-1 block text-xs leading-5 text-[#61767D]">{row.owner}</span>
+                          <span className="mt-2 inline-flex rounded-full bg-[#F0F7F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
+                            {contentReleaseLabel(row.tone)} · {row.value}
+                          </span>
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">{row.evidence}</td>
+                    <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">{row.impact}</td>
+                    <td className="px-5 py-4 text-right">
+                      <Link
+                        href={row.href}
+                        className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#E36F2C]/50 hover:text-[#E36F2C]"
+                      >
+                        {row.actionLabel}
+                      </Link>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function contentReleaseToneClassName(tone: ContentReleaseTone): string {
+  if (tone === 'critical') return 'bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'warning') return 'bg-[#FFF6EF] text-[#C75F18]'
+  if (tone === 'review') return 'bg-[#EAF6F8] text-[#1889B6]'
+  return 'bg-emerald-50 text-emerald-700'
+}
+
+function contentReleaseBadgeClassName(tone: ContentReleaseTone): string {
+  if (tone === 'critical') return 'border-[#E36F2C]/35 bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'warning') return 'border-[#E36F2C]/25 bg-[#FFF6EF] text-[#C75F18]'
+  if (tone === 'review') return 'border-[#1889B6]/20 bg-[#EAF6F8] text-[#1889B6]'
+  return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+}
+
+function contentReleaseLabel(tone: ContentReleaseTone): string {
+  if (tone === 'critical') return '立即处理'
+  if (tone === 'warning') return '优先处理'
+  if (tone === 'review') return '复盘确认'
+  return '状态正常'
 }
 
 function getContentDecision(item: ContentMetric): ContentDecision {
