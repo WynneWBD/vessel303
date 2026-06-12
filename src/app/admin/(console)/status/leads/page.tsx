@@ -37,6 +37,14 @@ const EMPTY_CASE_PATH_METRIC: AnalyticsConversionMetric = {
   conversionRate: 0,
 }
 
+const EMPTY_PRODUCT_PATH_METRIC: AnalyticsConversionMetric = {
+  views: 0,
+  ctaClicks: 0,
+  formSubmits: 0,
+  leads: 0,
+  conversionRate: 0,
+}
+
 type FunnelStepKey = (typeof FUNNEL_STEPS)[number]['key']
 
 type FunnelMatrixRow = {
@@ -118,13 +126,14 @@ export default async function AdminStatusLeadsPage() {
       [] as LeadSourceStageStatusSummary[],
     ),
     safeLoad<Record<string, AnalyticsConversionMetric>>(
-      'case path analytics',
+      'conversion path analytics',
       () => loadConversionPathAnalytics(30),
       {},
     ),
   ])
   const leads = overview.leads
   const wonRate = leads.total > 0 ? Math.round((leads.won / leads.total) * 100) : 0
+  const productPathMetric = pathAnalytics.products ?? EMPTY_PRODUCT_PATH_METRIC
   const casePathMetric = pathAnalytics.cases ?? EMPTY_CASE_PATH_METRIC
 
   return (
@@ -182,6 +191,12 @@ export default async function AdminStatusLeadsPage() {
         <LeadResponseOperationsLedger leads={leads} />
 
         <LeadSourceQualityMatrix sourceStatusSummary={sourceStatusSummary} />
+
+        <ProductLeadPathBridge
+          sourceStatusSummary={sourceStatusSummary}
+          sourceStageStatusSummary={sourceStageStatusSummary}
+          productPathMetric={productPathMetric}
+        />
 
         <CaseLeadPathBridge
           sourceStatusSummary={sourceStatusSummary}
@@ -569,6 +584,144 @@ function LeadSourceQualityMatrix({ sourceStatusSummary }: { sourceStatusSummary:
             </table>
           </div>
         )}
+      </div>
+    </section>
+  )
+}
+
+function ProductLeadPathBridge({
+  sourceStatusSummary,
+  sourceStageStatusSummary,
+  productPathMetric,
+}: {
+  sourceStatusSummary: LeadSourceStatusSummary[]
+  sourceStageStatusSummary: LeadSourceStageStatusSummary[]
+  productPathMetric: AnalyticsConversionMetric
+}) {
+  const productSource = sourceStatusSummary.find((source) => source.type === 'product')
+  const productStages = sourceStageStatusSummary.filter((stage) => stage.type === 'product')
+  const inquiryForm = sourceStageStatusSummary.find((stage) => stage.key === 'product:inquiry_form')
+  const ctaClick = sourceStageStatusSummary.find((stage) => stage.key === 'product:cta_click')
+  const catalogCardCta = sourceStageStatusSummary.find((stage) => stage.key === 'product:catalog_card_cta')
+  const productTotal = productSource?.total ?? 0
+  const productActive = productSource ? productSource.new + productSource.contacting + productSource.quoted : 0
+  const productWonRate = percent(productSource?.won ?? 0, productTotal)
+  const bridgeRows = [
+    {
+      key: 'product-leads',
+      label: '产品来源线索',
+      value: productTotal,
+      detail: `活跃 ${formatNumber(productActive)} / 成交占比 ${productWonRate}%`,
+      status: productActive > 0 ? '需处理' : productTotal > 0 ? '可复盘' : '观察中',
+      tone: productActive > 0 ? 'orange' : productTotal > 0 ? 'blue' : 'gray',
+      href: '/admin/customers/leads?source_type=product',
+      actionLabel: '查看产品线索',
+    },
+    {
+      key: 'product-inquiry-form',
+      label: '产品表单阶段',
+      value: inquiryForm?.total ?? 0,
+      detail: `新线索 ${formatNumber(inquiryForm?.new ?? 0)} / 活跃 ${formatNumber((inquiryForm?.new ?? 0) + (inquiryForm?.contacting ?? 0) + (inquiryForm?.quoted ?? 0))}`,
+      status: inquiryForm && inquiryForm.total > 0 ? '有样本' : '观察中',
+      tone: inquiryForm && inquiryForm.new + inquiryForm.contacting + inquiryForm.quoted > 0 ? 'orange' : inquiryForm && inquiryForm.total > 0 ? 'blue' : 'gray',
+      href: '/admin/customers/leads?source_type=product&source_stage=product%3Ainquiry_form',
+      actionLabel: '看表单线索',
+    },
+    {
+      key: 'product-cta-click',
+      label: '产品详情 CTA',
+      value: ctaClick?.total ?? 0,
+      detail: `新线索 ${formatNumber(ctaClick?.new ?? 0)} / 活跃 ${formatNumber((ctaClick?.new ?? 0) + (ctaClick?.contacting ?? 0) + (ctaClick?.quoted ?? 0))}`,
+      status: ctaClick && ctaClick.total > 0 ? '有样本' : '观察中',
+      tone: ctaClick && ctaClick.new + ctaClick.contacting + ctaClick.quoted > 0 ? 'orange' : ctaClick && ctaClick.total > 0 ? 'blue' : 'gray',
+      href: '/admin/customers/leads?source_type=product&source_stage=product%3Acta_click',
+      actionLabel: '看 CTA 线索',
+    },
+    {
+      key: 'product-catalog-card',
+      label: '产品卡片 CTA',
+      value: catalogCardCta?.total ?? 0,
+      detail: `新线索 ${formatNumber(catalogCardCta?.new ?? 0)} / 活跃 ${formatNumber((catalogCardCta?.new ?? 0) + (catalogCardCta?.contacting ?? 0) + (catalogCardCta?.quoted ?? 0))}`,
+      status: catalogCardCta && catalogCardCta.total > 0 ? '有样本' : '观察中',
+      tone: catalogCardCta && catalogCardCta.new + catalogCardCta.contacting + catalogCardCta.quoted > 0 ? 'orange' : catalogCardCta && catalogCardCta.total > 0 ? 'blue' : 'gray',
+      href: '/admin/customers/leads?source_type=product&source_stage=product%3Acatalog_card_cta',
+      actionLabel: '看卡片线索',
+    },
+  ] as const
+
+  return (
+    <section className="space-y-4" id="product-lead-path-bridge">
+      <SectionTitle
+        title="B229 产品路径与线索承接"
+        detail="把产品路径访问、路径动作、表单成功和 leads 表里的产品来源线索放到同一个只读数据中心视角；处理仍回到客户线索页。"
+      />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
+          <FunnelSummary label="产品路径访问" value={productPathMetric.views} detail="近 30 天访问样本" warn={productPathMetric.views > 0 && productPathMetric.leads === 0} />
+          <FunnelSummary label="路径动作" value={productPathMetric.ctaClicks} detail={`表单成功 ${formatNumber(productPathMetric.formSubmits)}`} warn={productPathMetric.ctaClicks > 0 && productPathMetric.formSubmits === 0} />
+          <FunnelSummary label="路径线索" value={productPathMetric.leads} detail={`转化 ${formatAnalyticsPercent(productPathMetric.conversionRate)}`} warn={productPathMetric.views > 0 && productPathMetric.leads === 0} />
+          <FunnelSummary label="产品来源阶段" value={productStages.length} detail={`leads 表产品线索 ${formatNumber(productTotal)} 条`} warn={productActive > 0} />
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-xs text-[#61767D]">
+                <th className="min-w-44 px-5 py-3 text-left font-semibold">承接对象</th>
+                <th className="px-4 py-3 text-right font-semibold">线索</th>
+                <th className="min-w-72 px-4 py-3 text-left font-semibold">当前证据</th>
+                <th className="min-w-32 px-4 py-3 text-left font-semibold">判断</th>
+                <th className="min-w-36 px-5 py-3 text-right font-semibold">入口</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E6EEEE]">
+              {bridgeRows.map((row) => (
+                <tr key={row.key} className="align-top transition hover:bg-[#FBFDFD]">
+                  <td className="px-5 py-4">
+                    <Link href={row.href} className="font-semibold text-[#1E2C31] hover:text-[#1889B6]">
+                      {row.label}
+                    </Link>
+                    <p className="mt-1 text-xs text-[#8A9EA4]">只读下钻，不直接改状态</p>
+                  </td>
+                  <td className="px-4 py-4 text-right text-lg font-bold text-[#1E2C31]">{formatNumber(row.value)}</td>
+                  <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">{row.detail}</td>
+                  <td className="px-4 py-4">
+                    <FunnelStatusBadge label={row.status} tone={row.tone} />
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <Link
+                      href={row.href}
+                      className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#E36F2C]/50 hover:text-[#E36F2C]"
+                    >
+                      {row.actionLabel}
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="flex flex-wrap gap-2 border-t border-[#E6EEEE] px-5 py-4">
+          <Link
+            href="/admin/site/conversion#conversion-ledger"
+            className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+          >
+            看产品路径总表
+          </Link>
+          <Link
+            href="/admin/customers/leads?source_type=product&attention=active"
+            className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+          >
+            处理活跃产品线索
+          </Link>
+          <Link
+            href="/admin/content/products/list?view=incomplete&issue=seo"
+            className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+          >
+            处理产品 SEO 待补
+          </Link>
+        </div>
       </div>
     </section>
   )
