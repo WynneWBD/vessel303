@@ -5,12 +5,18 @@ import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/Ad
 import { AdminMetricCard, AdminPageHero } from '@/components/admin/AdminUI'
 import { CONVERSION_PATHS, type ConversionPathItem, type ConversionPathStatus } from '@/lib/admin-conversion-paths'
 import { getLeadSourceTypeLabel, type LeadSourceType } from '@/lib/lead-source'
-import { summarizeLeadsBySourceStatus, type LeadSourceStatusSummary } from '@/lib/leads-db'
+import {
+  summarizeLeadsBySourceStageStatus,
+  summarizeLeadsBySourceStatus,
+  type LeadSourceStageStatusSummary,
+  type LeadSourceStatusSummary,
+} from '@/lib/leads-db'
 import {
   formatAnalyticsPercent,
   loadConversionPathAnalytics,
   loadSiteAnalyticsDashboard,
   type AnalyticsConversionMetric,
+  type AnalyticsSourceStageRow,
 } from '@/lib/site-analytics'
 import {
   AlertTriangle,
@@ -316,6 +322,15 @@ async function loadLeadSourceStatusSummarySafe(): Promise<LeadSourceStatusSummar
   }
 }
 
+async function loadLeadSourceStageStatusSummarySafe(): Promise<LeadSourceStageStatusSummary[]> {
+  try {
+    return await summarizeLeadsBySourceStageStatus()
+  } catch (err) {
+    console.error('[admin-site-conversion] lead source stage summary failed', err)
+    return []
+  }
+}
+
 export default async function AdminSiteConversionPage() {
   const session = await auth()
   if (!session?.user) {
@@ -330,10 +345,11 @@ export default async function AdminSiteConversionPage() {
   const capturedCount = CONVERSION_PATHS.filter((item) => item.status === 'lead').length
   const partialCount = CONVERSION_PATHS.filter((item) => item.status === 'partial').length
   const externalCount = CONVERSION_PATHS.filter((item) => item.status === 'external').length
-  const [pathAnalytics, dashboard, leadSourceSummary] = await Promise.all([
+  const [pathAnalytics, dashboard, leadSourceSummary, sourceStageSummary] = await Promise.all([
     loadConversionPathAnalytics(30),
     loadSiteAnalyticsDashboard(),
     loadLeadSourceStatusSummarySafe(),
+    loadLeadSourceStageStatusSummarySafe(),
   ])
   const thirtyDays = dashboard.windows.find((item) => item.days === 30) ?? dashboard.windows[1] ?? dashboard.windows[0]
   const totalViews = thirtyDays?.pageViews ?? 0
@@ -412,6 +428,11 @@ export default async function AdminSiteConversionPage() {
         <LeadSourceMatrix
           leadSourceSummary={leadSourceSummary}
           pathAnalytics={pathAnalytics}
+        />
+
+        <ProductStageConversionMatrix
+          productSourceStages={dashboard.productSourceStages}
+          sourceStageSummary={sourceStageSummary}
         />
 
         <ConversionFunnelMatrix
@@ -948,6 +969,130 @@ function LeadSourceMatrix({
   )
 }
 
+function ProductStageConversionMatrix({
+  productSourceStages,
+  sourceStageSummary,
+}: {
+  productSourceStages: AnalyticsSourceStageRow[]
+  sourceStageSummary: LeadSourceStageStatusSummary[]
+}) {
+  const actionMap = new Map(productSourceStages.map((row) => [row.key, row]))
+  const productLeadStages = sourceStageSummary.filter((row) => row.type === 'product')
+  const leadMap = new Map(productLeadStages.map((row) => [row.key, row]))
+  const keys = Array.from(new Set([...actionMap.keys(), ...leadMap.keys()]))
+  const actionTotal = productSourceStages.reduce((sum, row) => sum + row.value, 0)
+  const rows = keys
+    .map((key) => {
+      const action = actionMap.get(key)
+      const lead = leadMap.get(key)
+      const active = (lead?.new ?? 0) + (lead?.contacting ?? 0) + (lead?.quoted ?? 0)
+      const tone: ConversionPriorityTone =
+        (action?.value ?? 0) > 0 && (lead?.total ?? 0) === 0
+          ? 'warning'
+          : active > 0
+            ? 'warning'
+            : (lead?.total ?? 0) > 0
+              ? 'ready'
+              : 'muted'
+      const judgement =
+        (action?.value ?? 0) > 0 && (lead?.total ?? 0) === 0
+          ? '动作无线索'
+          : active > 0
+            ? '待处理线索'
+            : (lead?.total ?? 0) > 0
+              ? '已有承接'
+              : '等待样本'
+
+      return {
+        key,
+        label: action?.label ?? lead?.label ?? key,
+        href: lead?.href ?? action?.href ?? leadSourceStageHref(key),
+        actions: action?.value ?? 0,
+        actionShare: actionTotal > 0 ? (action?.value ?? 0) / actionTotal : 0,
+        total: lead?.total ?? 0,
+        active,
+        new: lead?.new ?? 0,
+        contacting: lead?.contacting ?? 0,
+        quoted: lead?.quoted ?? 0,
+        won: lead?.won ?? 0,
+        lost: lead?.lost ?? 0,
+        judgement,
+        tone,
+      }
+    })
+    .sort((a, b) => {
+      if (b.active !== a.active) return b.active - a.active
+      if (b.actions !== a.actions) return b.actions - a.actions
+      return b.total - a.total
+    })
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-[#1E2C31]">B204 产品阶段承接矩阵</h2>
+          <p className="mt-1 text-xs text-[#61767D]">
+            把访问统计里的产品阶段动作和线索库里的产品阶段状态放在同一张表，判断哪类入口需要优先跟进或核对 source。
+          </p>
+        </div>
+        <Link href="/admin/status/traffic?range=30" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+          查看访问统计
+        </Link>
+      </div>
+
+      {rows.length === 0 ? (
+        <div className="p-5 text-sm text-[#61767D]">暂无产品阶段动作或产品阶段线索样本。</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1120px] text-sm">
+            <thead>
+              <tr className="border-b border-[#E6EEEE] bg-white text-[#61767D]">
+                <th className="px-5 py-3 text-left font-medium">产品阶段</th>
+                <th className="px-4 py-3 text-right font-medium">30 天动作</th>
+                <th className="px-4 py-3 text-right font-medium">动作占比</th>
+                <th className="px-4 py-3 text-right font-medium">阶段线索</th>
+                <th className="px-4 py-3 text-right font-medium">新 / 跟进 / 报价</th>
+                <th className="px-4 py-3 text-right font-medium">成交 / 关闭</th>
+                <th className="px-4 py-3 text-left font-medium">判断</th>
+                <th className="px-5 py-3 text-right font-medium">处理</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.key} className="border-b border-[#E6EEEE] last:border-0">
+                  <td className="px-5 py-4">
+                    <div className="font-semibold text-[#1E2C31]">{row.label}</div>
+                    <div className="mt-1 font-mono text-[11px] text-[#8A9EA4]">{row.key}</div>
+                  </td>
+                  <td className="px-4 py-4 text-right font-bold text-[#1889B6]">{row.actions.toLocaleString('zh-CN')}</td>
+                  <td className="px-4 py-4 text-right text-[#61767D]">{formatAnalyticsPercent(row.actionShare)}</td>
+                  <td className="px-4 py-4 text-right font-bold text-[#1E2C31]">{row.total.toLocaleString('zh-CN')}</td>
+                  <td className="px-4 py-4 text-right text-[#61767D]">
+                    {row.new.toLocaleString('zh-CN')} / {row.contacting.toLocaleString('zh-CN')} / {row.quoted.toLocaleString('zh-CN')}
+                  </td>
+                  <td className="px-4 py-4 text-right text-[#61767D]">
+                    {row.won.toLocaleString('zh-CN')} / {row.lost.toLocaleString('zh-CN')}
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className={`inline-flex rounded-full border px-2 py-1 text-xs font-semibold ${priorityClass(row.tone)}`}>
+                      {row.judgement}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <Link href={row.href} className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+                      查看阶段线索
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  )
+}
+
 function ConversionPathLedger({
   orderedPaths,
   pathAnalytics,
@@ -1413,6 +1558,13 @@ function leadSourceHref(type: ConversionLeadSourceType, status?: string) {
   const params = new URLSearchParams()
   params.set('source_type', type)
   if (status) params.set('status', status)
+  return `/admin/customers/leads?${params.toString()}`
+}
+
+function leadSourceStageHref(stage: string) {
+  const params = new URLSearchParams()
+  params.set('source_type', 'product')
+  params.set('source_stage', stage)
   return `/admin/customers/leads?${params.toString()}`
 }
 
