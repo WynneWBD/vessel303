@@ -15,6 +15,7 @@ import {
   getProjectCaseReadinessIssues,
   getProjectCaseReadinessLevel,
 } from '@/lib/project-case-readiness'
+import { formatAnalyticsPercent, loadConversionPathAnalytics, type AnalyticsConversionMetric } from '@/lib/site-analytics'
 import {
   Archive,
   ArrowRight,
@@ -163,6 +164,14 @@ const EMPTY_ISSUE_SUMMARY: ProjectIssueSummary = {
   tags: 0,
   coordinates: 0,
   pendingGlobal: 0,
+}
+
+const EMPTY_CASE_PATH_METRIC: AnalyticsConversionMetric = {
+  views: 0,
+  ctaClicks: 0,
+  formSubmits: 0,
+  leads: 0,
+  conversionRate: 0,
 }
 
 const PROJECT_INCOMPLETE_SQL = `(
@@ -787,11 +796,13 @@ function StatusTabs({ filters, summary }: { filters: FilterState; summary: Proje
 function ProjectListControlStrip({
   filters,
   summary,
+  casePathMetric,
   total,
   rowsCount,
 }: {
   filters: FilterState
   summary: ProjectSummary
+  casePathMetric: AnalyticsConversionMetric
   total: number
   rowsCount: number
 }) {
@@ -824,6 +835,12 @@ function ProjectListControlStrip({
       href: createHref(filters, { status: '', view: 'case-conversion-weak' }),
       count: summary.caseConversionWeak,
       active: filters.view === 'case-conversion-weak',
+    },
+    {
+      label: '案例路径分析',
+      href: '/admin/status/traffic#case-inquiry-path',
+      count: null,
+      active: false,
     },
     {
       label: '可入 Global',
@@ -866,10 +883,15 @@ function ProjectListControlStrip({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 border-t border-[#E6EEEE] bg-[#FBFDFD] lg:border-l lg:border-t-0">
+        <div className="grid grid-cols-2 border-t border-[#E6EEEE] bg-[#FBFDFD] sm:grid-cols-4 lg:border-l lg:border-t-0">
           <ProjectControlStat label="结果总量" value={formatNumber(total)} detail={`第 ${formatNumber(filters.page)} / ${formatNumber(pageCount)} 页`} />
           <ProjectControlStat label="当前区间" value={`${formatNumber(firstRowNumber)}-${formatNumber(lastRowNumber)}`} detail={`每页 ${formatNumber(PAGE_SIZE)} 条`} />
           <ProjectControlStat label="入图率" value={formatPercent(summary.mapReady, summary.total)} detail={`${formatNumber(summary.mapReady)} 可入 Global`} />
+          <ProjectControlStat
+            label="案例路径"
+            value={formatNumber(casePathMetric.views)}
+            detail={`动作 ${formatNumber(casePathMetric.ctaClicks)} / 线索 ${formatNumber(casePathMetric.leads)}`}
+          />
         </div>
       </div>
 
@@ -939,11 +961,13 @@ function ProjectOperationsMatrix({
   issueSummary,
   rows,
   filters,
+  casePathMetric,
 }: {
   summary: ProjectSummary
   issueSummary: ProjectIssueSummary
   rows: ProjectListRow[]
   filters: FilterState
+  casePathMetric: AnalyticsConversionMetric
 }) {
   const pageIssueEntries = rows.map((project) => ({
     project,
@@ -970,6 +994,7 @@ function ProjectOperationsMatrix({
   )).length
   const pageMapReadyCount = pageIssueEntries.filter((entry) => entry.project.status === 'published' && hasCoordinates(entry.project)).length
   const pageCoordinatePendingCount = pageIssueEntries.filter((entry) => entry.project.status !== 'published' && hasCoordinates(entry.project)).length
+  const casePathTone = casePathMetric.leads > 0 ? 'green' : casePathMetric.views > 0 ? 'orange' : 'gray'
 
   return (
     <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -1075,6 +1100,49 @@ function ProjectOperationsMatrix({
             detail="已有坐标但仍是草稿"
             tone={pageCoordinatePendingCount > 0 ? 'orange' : 'green'}
           />
+        </div>
+        <div className="border-b border-[#E6EEEE] px-4 py-4">
+          <Link
+            href="/admin/status/traffic#case-inquiry-path"
+            className="group block rounded-md border border-[#D8E7E8] bg-[#FBFDFD] p-3 transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            <span className="flex items-start justify-between gap-3">
+              <span className="min-w-0">
+                <span className="block text-sm font-bold text-[#1E2C31]">案例路径样本</span>
+                <span className="mt-1 block text-xs leading-5 text-[#61767D]">
+                  30 天访问 {formatNumber(casePathMetric.views)}，动作 {formatNumber(casePathMetric.ctaClicks)}，线索 {formatNumber(casePathMetric.leads)}
+                </span>
+              </span>
+              <span className={`shrink-0 rounded-md px-2 py-1 text-xs font-bold ${
+                casePathTone === 'green'
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : casePathTone === 'orange'
+                    ? 'bg-[#FFF2E7] text-[#E36F2C]'
+                    : 'bg-[#F0F7F8] text-[#61767D]'
+              }`}>
+                {formatAnalyticsPercent(casePathMetric.conversionRate)}
+              </span>
+            </span>
+            <span className="mt-3 flex flex-wrap gap-2">
+              <span className="inline-flex min-h-7 items-center rounded-md border border-[#D8E7E8] bg-white px-2 text-[11px] font-semibold text-[#61767D]">
+                表单 {formatNumber(casePathMetric.formSubmits)}
+              </span>
+              <span className="inline-flex min-h-7 items-center rounded-md border border-[#D8E7E8] bg-white px-2 text-[11px] font-semibold text-[#61767D]">
+                转化 {formatAnalyticsPercent(casePathMetric.conversionRate)}
+              </span>
+              <span className="inline-flex min-h-7 items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-2 text-[11px] font-semibold text-[#1889B6] transition group-hover:border-[#1889B6]">
+                看路径分析
+                <ArrowRight size={12} />
+              </span>
+            </span>
+          </Link>
+          <Link
+            href={createHref(filters, { status: '', view: 'case-conversion-weak' })}
+            className="mt-2 inline-flex min-h-8 w-full items-center justify-between gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 py-1.5 text-xs font-semibold text-[#61767D] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
+          >
+            <span>处理发布转化弱</span>
+            <span className="rounded bg-[#FFF2E7] px-1.5 py-0.5 text-[11px] text-[#E36F2C]">{formatNumber(summary.caseConversionWeak)}</span>
+          </Link>
         </div>
         {priorityItems.length > 0 ? (
           <div className="divide-y divide-[#E6EEEE]">
@@ -1523,12 +1591,14 @@ export default async function AdminContentProjectsListPage({ searchParams }: Pag
   }
 
   const filters = parseFilters(await searchParams)
-  const [summary, issueSummary, list] = await Promise.all([
+  const [summary, issueSummary, list, pathAnalytics] = await Promise.all([
     safeLoad('project summary', getProjectSummary, EMPTY_SUMMARY),
     safeLoad('project issue summary', getProjectIssueSummary, EMPTY_ISSUE_SUMMARY),
     safeLoad('project list', () => getProjects(filters), { rows: [], total: 0 }),
+    safeLoad<Record<string, AnalyticsConversionMetric>>('case path analytics', () => loadConversionPathAnalytics(30), {}),
   ])
   const adminRole: AdminRole = role
+  const casePathMetric = pathAnalytics.cases ?? EMPTY_CASE_PATH_METRIC
 
   return (
     <AdminSectionShell
@@ -1553,10 +1623,17 @@ export default async function AdminContentProjectsListPage({ searchParams }: Pag
         <ProjectListControlStrip
           filters={filters}
           summary={summary}
+          casePathMetric={casePathMetric}
           total={list.total}
           rowsCount={list.rows.length}
         />
-        <ProjectOperationsMatrix summary={summary} issueSummary={issueSummary} rows={list.rows} filters={filters} />
+        <ProjectOperationsMatrix
+          summary={summary}
+          issueSummary={issueSummary}
+          rows={list.rows}
+          filters={filters}
+          casePathMetric={casePathMetric}
+        />
         <FilterPanel filters={filters} />
         <ProjectList rows={list.rows} total={list.total} filters={filters} />
       </div>
