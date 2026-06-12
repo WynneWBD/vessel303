@@ -13,6 +13,7 @@ import {
   type AnalyticsBehaviorStep,
   type AnalyticsComparisonMetric,
   type AnalyticsDeltaMetric,
+  type AnalyticsAllTimeMetric,
   type AnalyticsHourlyTrendRow,
   type AnalyticsPeriodMetric,
   type AnalyticsWindowMetric,
@@ -40,6 +41,7 @@ type PageProps = {
 
 type TrafficRange = 'today' | 'yesterday' | '7' | '30'
 type TrafficMetric = AnalyticsPeriodMetric | AnalyticsWindowMetric
+type TrafficAggregateMetric = TrafficMetric | AnalyticsAllTimeMetric
 type TrendDisplayRow = {
   key: string
   label: string
@@ -87,7 +89,11 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
           </div>
         </AdminPageHero>
 
-        <TrafficControlBar activeRange={activeRange} />
+        <TrafficControlBar
+          activeRange={activeRange}
+          allTime={analytics.allTime}
+          bestDay={analytics.bestDay}
+        />
 
         <TrafficAnalysisConsole
           analytics={analytics}
@@ -96,6 +102,8 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
           yesterday={yesterday}
           sevenDays={sevenDays}
           thirtyDays={thirtyDays}
+          allTime={analytics.allTime}
+          bestDay={analytics.bestDay}
           activeRange={activeRange}
           activeMetric={activeMetric}
           readiness={`${readiness.readyCount}/${readiness.items.length}`}
@@ -184,27 +192,48 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
   )
 }
 
-function TrafficControlBar({ activeRange }: { activeRange: TrafficRange }) {
+function TrafficControlBar({
+  activeRange,
+  allTime,
+  bestDay,
+}: {
+  activeRange: TrafficRange
+  allTime: AnalyticsAllTimeMetric
+  bestDay: AnalyticsTrendRow | null
+}) {
   const ranges: Array<{ key: TrafficRange; label: string }> = [
     { key: 'today', label: '今天' },
     { key: 'yesterday', label: '昨天' },
     { key: '7', label: '最近 7 天' },
     { key: '30', label: '最近 30 天' },
   ]
+  const historyWindow =
+    allTime.firstEventAt && allTime.lastEventAt
+      ? `${formatEventDate(allTime.firstEventAt)} - ${formatEventDate(allTime.lastEventAt)}`
+      : '暂无历史事件'
 
   return (
-    <div className="rounded-md border border-[#D8E7E8] bg-white p-3 shadow-sm">
-      <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex h-9 min-w-60 items-center rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 text-sm font-medium text-[#1E2C31]">
-            英文站 en.303vessel.cn / vessel303.com
+    <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid grid-cols-1 border-b border-[#E6EEEE] text-sm xl:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="flex flex-wrap items-center gap-2 px-4 py-3">
+          <span className="inline-flex h-8 items-center border border-[#D8E7E8] bg-[#FBFDFD] px-3 font-semibold text-[#1E2C31]">
+            英文站 vessel303.com
           </span>
-          <span className="inline-flex overflow-hidden rounded-md border border-[#D8E7E8] bg-white">
+          <span className="inline-flex h-8 items-center border border-[#D8E7E8] bg-white px-3 text-[#61767D]">
+            数据源：第一方 site_events
+          </span>
+          <span className="inline-flex h-8 items-center border border-[#D8E7E8] bg-white px-3 text-[#61767D]">
+            历史窗口：{historyWindow}
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 border-t border-[#E6EEEE] px-4 py-3 xl:border-l xl:border-t-0">
+          <span className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8A9EA4]">Range</span>
+          <span className="inline-flex overflow-hidden border border-[#D8E7E8] bg-white">
             {ranges.map((item, index) => (
               <Link
                 key={item.key}
                 href={`/admin/status/traffic?range=${item.key}`}
-                className={`inline-flex h-9 items-center px-3 text-sm font-semibold ${
+                className={`inline-flex h-8 items-center px-3 text-xs font-semibold ${
                   index > 0 ? 'border-l border-[#D8E7E8]' : ''
                 } ${
                   activeRange === item.key
@@ -216,15 +245,28 @@ function TrafficControlBar({ activeRange }: { activeRange: TrafficRange }) {
               </Link>
             ))}
           </span>
-          <span className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 text-sm text-[#61767D]">
-            指标：浏览次数(PV)
-          </span>
-          <span className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 text-sm text-[#61767D]">
-            + 转化动作
-          </span>
         </div>
-        <span className="text-xs text-[#8A9EA4]">页面打开时实时读取第一方事件；测试数据不计入运营口径。</span>
       </div>
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-4 md:divide-x md:divide-y-0">
+        <ToolbarStat label="当前指标" value="PV / UV / Actions / Leads" detail="测试事件已排除" />
+        <ToolbarStat label="历史累计 PV" value={formatNumber(allTime.pageViews)} detail={`${formatNumber(allTime.visitors)} 匿名访客`} />
+        <ToolbarStat
+          label="历史最高日"
+          value={bestDay ? formatTrendDate(bestDay.date) : '暂无'}
+          detail={bestDay ? `${formatNumber(bestDay.pageViews)} PV / ${formatNumber(bestDay.actions)} 动作` : '等待事件样本'}
+        />
+        <ToolbarStat label="更新频率" value="实时读取" detail="页面打开时聚合" />
+      </div>
+    </div>
+  )
+}
+
+function ToolbarStat({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <div className="px-4 py-3">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8A9EA4]">{label}</div>
+      <div className="mt-1 truncate text-sm font-black text-[#1E2C31]" title={value}>{value}</div>
+      <div className="mt-1 truncate text-xs text-[#61767D]" title={detail}>{detail}</div>
     </div>
   )
 }
@@ -236,6 +278,8 @@ function TrafficAnalysisConsole({
   yesterday,
   sevenDays,
   thirtyDays,
+  allTime,
+  bestDay,
   activeRange,
   activeMetric,
   readiness,
@@ -246,6 +290,8 @@ function TrafficAnalysisConsole({
   yesterday: AnalyticsPeriodMetric
   sevenDays: AnalyticsWindowMetric
   thirtyDays: AnalyticsWindowMetric
+  allTime: AnalyticsAllTimeMetric
+  bestDay: AnalyticsTrendRow | null
   activeRange: TrafficRange
   activeMetric: TrafficMetric
   readiness: string
@@ -279,9 +325,11 @@ function TrafficAnalysisConsole({
             yesterday={yesterday}
             sevenDays={sevenDays}
             thirtyDays={thirtyDays}
+            allTime={allTime}
+            bestDay={bestDay}
             activeRange={activeRange}
           />
-          <TrafficModeNav
+          <TrafficModuleStrip
             pageViews={activeMetric.pageViews}
             landingPages={analytics.landingPages.length}
             actions={actions}
@@ -436,7 +484,7 @@ function TrafficRankMiniSection({
   )
 }
 
-function TrafficModeNav({
+function TrafficModuleStrip({
   pageViews,
   landingPages,
   actions,
@@ -458,17 +506,20 @@ function TrafficModeNav({
   ]
 
   return (
-    <section className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-5 md:divide-x md:divide-y-0">
       {items.map((item) => (
         <Link
           key={item.title}
           href={item.href}
-          className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60"
+          className="min-h-24 px-4 py-3 transition hover:bg-[#F7FAFA]"
         >
-          <span className="block text-xs font-semibold text-[#1889B6]">{item.title}</span>
-          <span className="mt-3 block text-2xl font-black text-[#1E2C31]">{item.value}</span>
+          <span className="block truncate text-xs font-semibold text-[#1889B6]">{item.title}</span>
+          <span className="mt-3 block truncate text-xl font-black text-[#1E2C31]">{item.value}</span>
+          <span className="mt-2 block text-[11px] text-[#8A9EA4]">进入下钻</span>
         </Link>
       ))}
+      </div>
     </section>
   )
 }
@@ -478,19 +529,46 @@ function TrafficSummaryTable({
   yesterday,
   sevenDays,
   thirtyDays,
+  allTime,
+  bestDay,
   activeRange,
 }: {
   today: AnalyticsPeriodMetric
   yesterday: AnalyticsPeriodMetric
   sevenDays: AnalyticsWindowMetric
   thirtyDays: AnalyticsWindowMetric
+  allTime: AnalyticsAllTimeMetric
+  bestDay: AnalyticsTrendRow | null
   activeRange: TrafficRange
 }) {
-  const rows = [
-    { label: '今天', metric: today, active: activeRange === 'today' },
-    { label: '昨天', metric: yesterday, active: activeRange === 'yesterday' },
-    { label: '最近 7 天', metric: sevenDays, active: activeRange === '7' },
-    { label: '最近 30 天', metric: thirtyDays, active: activeRange === '30' },
+  const rows: Array<{
+    label: string
+    note: string
+    pageViews: number
+    visitors: number
+    actions: number
+    formSubmits: number
+    leads: number
+    conversionRate: number
+    excluded: string
+    active?: boolean
+  }> = [
+    summaryTableRow('今天', '实时口径', today, activeRange === 'today'),
+    summaryTableRow('昨天', '昨日对照', yesterday, activeRange === 'yesterday'),
+    summaryTableRow('最近 7 天', '短期观察', sevenDays, activeRange === '7'),
+    summaryTableRow('最近 30 天', '运营主口径', thirtyDays, activeRange === '30'),
+    summaryTableRow('历史累计', allTime.firstEventAt ? 'site_events 全量' : '暂无历史事件', allTime),
+    {
+      label: '历史最高日',
+      note: bestDay ? formatTrendDate(bestDay.date) : '暂无历史样本',
+      pageViews: bestDay?.pageViews ?? 0,
+      visitors: bestDay?.visitors ?? 0,
+      actions: bestDay?.actions ?? 0,
+      formSubmits: bestDay?.formSubmits ?? 0,
+      leads: bestDay?.leads ?? 0,
+      conversionRate: bestDay && bestDay.pageViews > 0 ? bestDay.leads / bestDay.pageViews : 0,
+      excluded: '--',
+    },
   ]
 
   return (
@@ -505,8 +583,7 @@ function TrafficSummaryTable({
               <th className="px-4 py-3 text-left font-medium">口径</th>
               <th className="px-4 py-3 text-right font-medium">PV</th>
               <th className="px-4 py-3 text-right font-medium">访客(UV)</th>
-              <th className="px-4 py-3 text-right font-medium">CTA</th>
-              <th className="px-4 py-3 text-right font-medium">联系跳转</th>
+              <th className="px-4 py-3 text-right font-medium">转化动作</th>
               <th className="px-4 py-3 text-right font-medium">表单成功</th>
               <th className="px-4 py-3 text-right font-medium">真实线索</th>
               <th className="px-4 py-3 text-right font-medium">访问转化率</th>
@@ -516,16 +593,18 @@ function TrafficSummaryTable({
           <tbody>
             {rows.map((row) => (
               <tr key={row.label} className={`border-b border-[#E6EEEE] last:border-0 ${row.active ? 'bg-[#F0F7F8]' : ''}`}>
-                <td className="px-4 py-3 font-semibold text-[#1E2C31]">{row.label}</td>
-                <td className="px-4 py-3 text-right font-semibold text-[#1E2C31]">{formatNumber(row.metric.pageViews)}</td>
-                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.visitors)}</td>
-                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.ctaClicks)}</td>
-                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.contactRedirects)}</td>
-                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.metric.formSubmits)}</td>
-                <td className="px-4 py-3 text-right font-semibold text-[#E36F2C]">{formatNumber(row.metric.leads)}</td>
-                <td className="px-4 py-3 text-right font-semibold text-[#1889B6]">{formatAnalyticsPercent(row.metric.conversionRate)}</td>
+                <td className="px-4 py-3">
+                  <div className="font-semibold text-[#1E2C31]">{row.label}</div>
+                  <div className="mt-1 text-xs text-[#8A9EA4]">{row.note}</div>
+                </td>
+                <td className="px-4 py-3 text-right font-semibold text-[#1E2C31]">{formatNumber(row.pageViews)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.visitors)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.actions)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(row.formSubmits)}</td>
+                <td className="px-4 py-3 text-right font-semibold text-[#E36F2C]">{formatNumber(row.leads)}</td>
+                <td className="px-4 py-3 text-right font-semibold text-[#1889B6]">{formatAnalyticsPercent(row.conversionRate)}</td>
                 <td className="px-4 py-3 text-right text-[#61767D]">
-                  {formatNumber(row.metric.testEvents)} / {formatNumber(row.metric.testLeads)}
+                  {row.excluded}
                 </td>
               </tr>
             ))}
@@ -534,6 +613,21 @@ function TrafficSummaryTable({
       </div>
     </div>
   )
+}
+
+function summaryTableRow(label: string, note: string, metric: TrafficAggregateMetric, active = false) {
+  return {
+    label,
+    note,
+    pageViews: metric.pageViews,
+    visitors: metric.visitors,
+    actions: metricActions(metric),
+    formSubmits: metric.formSubmits,
+    leads: metric.leads,
+    conversionRate: metric.conversionRate,
+    excluded: `${formatNumber(metric.testEvents)} / ${formatNumber(metric.testLeads)}`,
+    active,
+  }
 }
 
 function ComparisonStrip({ comparison }: { comparison?: AnalyticsComparisonMetric }) {
@@ -1283,6 +1377,10 @@ function getActiveMetric(
   if (range === 'yesterday') return yesterday
   if (range === '7') return sevenDays
   return thirtyDays
+}
+
+function metricActions(metric: Pick<TrafficAggregateMetric, 'ctaClicks' | 'contactRedirects' | 'formSubmits'>) {
+  return metric.ctaClicks + metric.contactRedirects + metric.formSubmits
 }
 
 function buildTrendRows(

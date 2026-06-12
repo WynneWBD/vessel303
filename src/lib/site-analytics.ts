@@ -38,6 +38,21 @@ export type AnalyticsWindowMetric = {
   conversionRate: number
 }
 
+export type AnalyticsAllTimeMetric = {
+  label: string
+  pageViews: number
+  visitors: number
+  ctaClicks: number
+  contactRedirects: number
+  formSubmits: number
+  leads: number
+  testEvents: number
+  testLeads: number
+  conversionRate: number
+  firstEventAt: string | null
+  lastEventAt: string | null
+}
+
 export type AnalyticsPeriodKey = 'today' | 'yesterday'
 
 export type AnalyticsPeriodMetric = {
@@ -118,6 +133,8 @@ export type SiteAnalyticsDashboard = {
   available: boolean
   periods: AnalyticsPeriodMetric[]
   windows: AnalyticsWindowMetric[]
+  allTime: AnalyticsAllTimeMetric
+  bestDay: AnalyticsTrendRow | null
   hourlyTrend: AnalyticsHourlyTrendRow[]
   yesterdayHourlyTrend: AnalyticsHourlyTrendRow[]
   dailyTrend: AnalyticsTrendRow[]
@@ -143,6 +160,21 @@ const EMPTY_CONVERSION_METRIC: AnalyticsConversionMetric = {
   formSubmits: 0,
   leads: 0,
   conversionRate: 0,
+}
+
+const EMPTY_ALL_TIME_METRIC: AnalyticsAllTimeMetric = {
+  label: '历史累计',
+  pageViews: 0,
+  visitors: 0,
+  ctaClicks: 0,
+  contactRedirects: 0,
+  formSubmits: 0,
+  leads: 0,
+  testEvents: 0,
+  testLeads: 0,
+  conversionRate: 0,
+  firstEventAt: null,
+  lastEventAt: null,
 }
 
 export const EMPTY_ANALYTICS_DASHBOARD: SiteAnalyticsDashboard = {
@@ -187,6 +219,8 @@ export const EMPTY_ANALYTICS_DASHBOARD: SiteAnalyticsDashboard = {
     testLeads: 0,
     conversionRate: 0,
   })),
+  allTime: EMPTY_ALL_TIME_METRIC,
+  bestDay: null,
   hourlyTrend: [],
   yesterdayHourlyTrend: [],
   dailyTrend: [],
@@ -471,6 +505,116 @@ async function loadLeadCount(days: number, offsetDays = 0) {
   }
 }
 
+async function loadLeadAllTimeCount() {
+  if (!(await tableExists('public.leads'))) return { leads: 0, testLeads: 0 }
+  const res = await pool.query<{ count: string; test_count: string }>(
+    `SELECT COUNT(*) FILTER (WHERE ${REAL_LEAD_CONDITION})::text AS count,
+            COUNT(*) FILTER (WHERE ${TEST_LEAD_CONDITION})::text AS test_count
+     FROM leads`,
+  )
+  return {
+    leads: toInt(res.rows[0]?.count),
+    testLeads: toInt(res.rows[0]?.test_count),
+  }
+}
+
+async function loadLeadCountForDate(date: string) {
+  if (!(await tableExists('public.leads'))) return 0
+  const res = await pool.query<{ count: string }>(
+    `SELECT COUNT(*) FILTER (WHERE ${REAL_LEAD_CONDITION})::text AS count
+     FROM leads
+     WHERE created_at >= $1::date
+       AND created_at < $1::date + INTERVAL '1 day'`,
+    [date],
+  )
+  return toInt(res.rows[0]?.count)
+}
+
+async function loadAllTimeMetric(): Promise<AnalyticsAllTimeMetric> {
+  const [eventRes, leadRes] = await Promise.all([
+    pool.query<{
+      page_views: string
+      visitors: string
+      cta_clicks: string
+      contact_redirects: string
+      form_submits: string
+      test_events: string
+      first_event_at: string | null
+      last_event_at: string | null
+    }>(
+      `SELECT
+         COUNT(*) FILTER (WHERE event_name = 'page_view' AND ${REAL_EVENT_CONDITION})::text AS page_views,
+         COUNT(DISTINCT visitor_id_hash) FILTER (WHERE event_name = 'page_view' AND visitor_id_hash IS NOT NULL AND ${REAL_EVENT_CONDITION})::text AS visitors,
+         COUNT(*) FILTER (WHERE event_name = 'cta_click' AND ${REAL_EVENT_CONDITION})::text AS cta_clicks,
+         COUNT(*) FILTER (WHERE event_name = 'contact_redirect' AND ${REAL_EVENT_CONDITION})::text AS contact_redirects,
+         COUNT(*) FILTER (WHERE event_name = 'form_submit_success' AND ${REAL_EVENT_CONDITION})::text AS form_submits,
+         COUNT(*) FILTER (WHERE ${TEST_EVENT_CONDITION})::text AS test_events,
+         MIN(created_at)::text AS first_event_at,
+         MAX(created_at)::text AS last_event_at
+       FROM site_events`,
+    ),
+    loadLeadAllTimeCount(),
+  ])
+
+  const row = eventRes.rows[0]
+  const pageViews = toInt(row?.page_views)
+  return {
+    label: '历史累计',
+    pageViews,
+    visitors: toInt(row?.visitors),
+    ctaClicks: toInt(row?.cta_clicks),
+    contactRedirects: toInt(row?.contact_redirects),
+    formSubmits: toInt(row?.form_submits),
+    leads: leadRes.leads,
+    testEvents: toInt(row?.test_events),
+    testLeads: leadRes.testLeads,
+    conversionRate: pageViews > 0 ? leadRes.leads / pageViews : 0,
+    firstEventAt: row?.first_event_at ?? null,
+    lastEventAt: row?.last_event_at ?? null,
+  }
+}
+
+async function loadBestDayMetric(): Promise<AnalyticsTrendRow | null> {
+  const res = await pool.query<{
+    date: string
+    page_views: string
+    visitors: string
+    actions: string
+    form_submits: string
+  }>(
+    `SELECT
+       created_at::date::text AS date,
+       COUNT(*) FILTER (WHERE event_name = 'page_view' AND ${REAL_EVENT_CONDITION})::text AS page_views,
+       COUNT(DISTINCT visitor_id_hash) FILTER (
+         WHERE event_name = 'page_view'
+           AND visitor_id_hash IS NOT NULL
+           AND ${REAL_EVENT_CONDITION}
+       )::text AS visitors,
+       COUNT(*) FILTER (
+         WHERE event_name IN ('cta_click', 'contact_redirect', 'form_submit_success')
+           AND ${REAL_EVENT_CONDITION}
+       )::text AS actions,
+       COUNT(*) FILTER (WHERE event_name = 'form_submit_success' AND ${REAL_EVENT_CONDITION})::text AS form_submits
+     FROM site_events
+     GROUP BY created_at::date
+     HAVING COUNT(*) FILTER (WHERE event_name = 'page_view' AND ${REAL_EVENT_CONDITION}) > 0
+     ORDER BY COUNT(*) FILTER (WHERE event_name = 'page_view' AND ${REAL_EVENT_CONDITION}) DESC,
+              created_at::date DESC
+     LIMIT 1`,
+  )
+  const row = res.rows[0]
+  if (!row) return null
+  const leads = await loadLeadCountForDate(row.date)
+  return {
+    date: row.date,
+    pageViews: toInt(row.page_views),
+    visitors: toInt(row.visitors),
+    actions: toInt(row.actions),
+    formSubmits: toInt(row.form_submits),
+    leads,
+  }
+}
+
 type ComparisonMetricSource = Pick<
   AnalyticsWindowMetric,
   'pageViews' | 'visitors' | 'ctaClicks' | 'contactRedirects' | 'formSubmits' | 'leads' | 'conversionRate'
@@ -718,6 +862,8 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
       previousDay,
       windows,
       previousWindows,
+      allTime,
+      bestDay,
       hourlyTrend,
       yesterdayHourlyTrend,
       dailyTrend,
@@ -734,6 +880,8 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
         loadRelativeDayMetric('前一日', 2),
         Promise.all([loadWindowMetric(7), loadWindowMetric(30)]),
         Promise.all([loadWindowMetric(7, 7), loadWindowMetric(30, 30)]),
+        loadAllTimeMetric(),
+        loadBestDayMetric(),
         loadHourlyTrend(0),
         loadHourlyTrend(1),
         loadDailyTrend(30),
@@ -831,6 +979,8 @@ export async function loadSiteAnalyticsDashboard(): Promise<SiteAnalyticsDashboa
       available: true,
       periods,
       windows,
+      allTime,
+      bestDay,
       hourlyTrend,
       yesterdayHourlyTrend,
       dailyTrend,
