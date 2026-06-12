@@ -198,7 +198,7 @@ export default function ProductCategoryManagerClient({
       <div>
         <h2 className="text-xl font-bold text-[#1E2C31]">当前分类</h2>
         <p className="mt-1 text-sm text-[#61767D]">
-          来自 product_categories 表；支持新增、编辑、排序和显示 / 隐藏，不做物理删除。
+          来自产品分类数据；支持新增、编辑、排序和显示 / 隐藏，不做物理删除。
         </p>
       </div>
 
