@@ -73,6 +73,93 @@ type ProjectFormSectionProgress = {
   done: boolean
   issueCount: number
 }
+type ProjectReleaseIssueSeverity = 'high' | 'medium' | 'global'
+type ProjectReleaseIssue = {
+  label: string
+  sectionId: string
+  sectionTitle: string
+  severity: ProjectReleaseIssueSeverity
+  detail: string
+}
+
+type ProjectReleaseIssueRoute = {
+  sectionId: string
+  severity: ProjectReleaseIssueSeverity
+  detail: string
+}
+
+const projectReleaseIssueRoutes: Record<string, ProjectReleaseIssueRoute> = {
+  缺封面: {
+    sectionId: 'media',
+    severity: 'high',
+    detail: '封面图影响案例列表和详情页首屏，发布前应优先补齐。',
+  },
+  缺图库: {
+    sectionId: 'media',
+    severity: 'high',
+    detail: '案例图库为空会削弱项目证明力，优先补核心外观、现场和交付图。',
+  },
+  缺中文简介: {
+    sectionId: 'content',
+    severity: 'medium',
+    detail: '中文简介用于后台核对和中文默认展示，建议同步补齐。',
+  },
+  缺英文简介: {
+    sectionId: 'content',
+    severity: 'high',
+    detail: '英文简介面向海外客户，正式发布前应优先补齐。',
+  },
+  详情叙事偏短: {
+    sectionId: 'content',
+    severity: 'medium',
+    detail: '案例叙事过短会降低项目背景、交付过程和证明材料的说服力。',
+  },
+  缺标签: {
+    sectionId: 'content',
+    severity: 'medium',
+    detail: '标签影响案例列表扫描、后台筛选和后续内容归档。',
+  },
+  缺项目类型: {
+    sectionId: 'basic',
+    severity: 'high',
+    detail: '项目类型缺失会影响案例归类、客户识别和后台治理。',
+  },
+  缺项目面积: {
+    sectionId: 'params',
+    severity: 'medium',
+    detail: '项目面积用于表达项目规模，建议发布前补齐可确认口径。',
+  },
+  缺舱数: {
+    sectionId: 'params',
+    severity: 'medium',
+    detail: '舱数用于表达交付规模和项目密度，建议补齐。',
+  },
+  缺产品型号: {
+    sectionId: 'params',
+    severity: 'high',
+    detail: '产品型号连接案例和产品中心，缺失会削弱转化路径。',
+  },
+  坐标需成对: {
+    sectionId: 'global',
+    severity: 'global',
+    detail: '经纬度必须同时填写；否则保存会被现有校验阻止。',
+  },
+  缺坐标: {
+    sectionId: 'global',
+    severity: 'global',
+    detail: '坐标只影响 /global 入图，不代表正式案例内容不可维护。',
+  },
+  坐标需检查: {
+    sectionId: 'global',
+    severity: 'global',
+    detail: '经纬度范围异常时无法进入 /global 地图点位。',
+  },
+  有坐标待发布: {
+    sectionId: 'publish-check',
+    severity: 'global',
+    detail: '坐标已具备，项目发布后才会进入 /global 地图展示。',
+  },
+}
 
 const emptyState: FormState = {
   id: '',
@@ -265,6 +352,43 @@ function buildProjectFormProgress({
   }))
 }
 
+function getProjectReleaseIssueRoute(issue: string): ProjectReleaseIssueRoute {
+  return projectReleaseIssueRoutes[issue] ?? {
+    sectionId: 'publish-check',
+    severity: 'medium',
+    detail: '未登记缺项，请在发布检查中人工复核。',
+  }
+}
+
+function buildProjectReleaseIssues(
+  issues: string[],
+  sectionProgress: ProjectFormSectionProgress[],
+): ProjectReleaseIssue[] {
+  return issues.map((issue) => {
+    const route = getProjectReleaseIssueRoute(issue)
+    const section = sectionProgress.find((item) => item.id === route.sectionId)
+    return {
+      label: issue,
+      sectionId: route.sectionId,
+      sectionTitle: section?.title ?? '发布检查',
+      severity: route.severity,
+      detail: route.detail,
+    }
+  })
+}
+
+function projectReleaseIssueSeverityClass(severity: ProjectReleaseIssueSeverity) {
+  if (severity === 'high') return 'border-[#F2C6A7] bg-[#FFF2E7] text-[#E36F2C]'
+  if (severity === 'global') return 'border-[#D8E7E8] bg-[#EAF6F8] text-[#1889B6]'
+  return 'border-[#D8E7E8] bg-[#F0F2F2] text-[#61767D]'
+}
+
+function projectReleaseIssueSeverityLabel(severity: ProjectReleaseIssueSeverity) {
+  if (severity === 'high') return '优先处理'
+  if (severity === 'global') return '入图提醒'
+  return '建议补齐'
+}
+
 function parseOptionalNumber(value: string) {
   const trimmed = value.trim()
   if (!trimmed) return null
@@ -417,6 +541,7 @@ function ProjectFormSidebar({
   coordinatesValid,
   hasCompleteCoordinates,
   imageCount,
+  releaseIssues,
   previewHref,
   previewLabel,
   showPreviewLink,
@@ -432,6 +557,7 @@ function ProjectFormSidebar({
   coordinatesValid: boolean
   hasCompleteCoordinates: boolean
   imageCount: number
+  releaseIssues: ProjectReleaseIssue[]
   previewHref: string
   previewLabel: string
   showPreviewLink: boolean
@@ -491,6 +617,7 @@ function ProjectFormSidebar({
         tone="warning"
       >
         {children}
+        <ProjectReleaseIssueLedger issues={releaseIssues} />
 
         <div className="rounded-lg border border-[#D8E7E8] bg-white p-4">
           <div className="flex items-start justify-between gap-3">
@@ -737,6 +864,64 @@ function ProjectFormSidebar({
   )
 }
 
+function ProjectReleaseIssueLedger({ issues }: { issues: ProjectReleaseIssue[] }) {
+  const highCount = issues.filter((issue) => issue.severity === 'high').length
+  const globalCount = issues.filter((issue) => issue.severity === 'global').length
+
+  return (
+    <div className="rounded-lg border border-[#D8E7E8] bg-white p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-bold text-[#1E2C31]">发布问题台账</h3>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">
+            把缺项映射到具体编辑区，区分正式案例内容和 Global 入图影响。
+          </p>
+        </div>
+        <Badge className={highCount > 0 ? 'border-[#F2C6A7] bg-[#FFF7F0] text-[#E36F2C] text-xs' : 'border-emerald-200 bg-emerald-50 text-emerald-700 text-xs'}>
+          {issues.length} 项
+        </Badge>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] font-semibold">
+        <div className="rounded-md bg-[#F0F2F2] px-2 py-1.5 text-center text-[#61767D]">缺项 {issues.length}</div>
+        <div className="rounded-md bg-[#FFF2E7] px-2 py-1.5 text-center text-[#E36F2C]">优先 {highCount}</div>
+        <div className="rounded-md bg-[#EAF6F8] px-2 py-1.5 text-center text-[#1889B6]">入图 {globalCount}</div>
+      </div>
+
+      {issues.length === 0 ? (
+        <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs font-medium text-emerald-700">
+          当前没有发布缺项，可进入人工复核和前台预览。
+        </div>
+      ) : (
+        <div className="mt-3 divide-y divide-[#E6EEEE] overflow-hidden rounded-md border border-[#D8E7E8]">
+          {issues.map((issue) => (
+            <div key={`${issue.sectionId}-${issue.label}`} className="bg-white p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`inline-flex rounded-full border px-2 py-1 text-[11px] font-semibold ${projectReleaseIssueSeverityClass(issue.severity)}`}
+                >
+                  {projectReleaseIssueSeverityLabel(issue.severity)}
+                </span>
+                <span className="rounded-full bg-[#F0F2F2] px-2 py-1 text-[11px] font-semibold text-[#61767D]">
+                  {issue.sectionTitle}
+                </span>
+              </div>
+              <p className="mt-2 text-sm font-bold text-[#1E2C31]">{issue.label}</p>
+              <p className="mt-1 text-xs leading-5 text-[#61767D]">{issue.detail}</p>
+              <a
+                href={`#${issue.sectionId}`}
+                className="mt-2 inline-flex h-8 items-center justify-center rounded-md border border-[#1889B6]/30 bg-[#F0F7F8] px-3 text-xs font-bold text-[#1889B6] hover:border-[#1889B6]/70"
+              >
+                处理
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function ProjectForm({
   mode,
   project,
@@ -802,6 +987,7 @@ export default function ProjectForm({
     hasCompleteCoordinates,
   })
   const completedSectionCount = sectionProgress.filter((section) => section.done).length
+  const releaseIssues = buildProjectReleaseIssues(completeness.issues, sectionProgress)
   const hasUnsavedChanges = useMemo(() => JSON.stringify(form) !== JSON.stringify(savedForm), [form, savedForm])
   const savedProjectId = project?.id ?? savedForm.id
   const savedProjectPublished = mode === 'edit' && savedForm.status === 'published' && hasText(savedProjectId)
@@ -1174,6 +1360,7 @@ export default function ProjectForm({
           coordinatesValid={coordinatesValid}
           hasCompleteCoordinates={hasCompleteCoordinates}
           imageCount={imageUrls.length}
+          releaseIssues={releaseIssues}
           previewHref={previewHref}
           previewLabel={previewLabel}
           showPreviewLink={showPreviewLink}
