@@ -56,6 +56,19 @@ type ConversionPriority = {
   Icon: LucideIcon
 }
 
+type ConversionHandoffTone = 'orange' | 'blue' | 'green' | 'gray'
+
+type ConversionHandoffItem = {
+  title: string
+  owner: string
+  status: string
+  detail: string
+  href: string
+  action: string
+  Icon: LucideIcon
+  tone: ConversionHandoffTone
+}
+
 const EMPTY_METRIC: AnalyticsConversionMetric = {
   views: 0,
   ctaClicks: 0,
@@ -191,6 +204,86 @@ function buildConversionHealthRows(pathAnalytics: Record<string, AnalyticsConver
   })
 }
 
+function buildConversionHandoffItems({
+  orderedPaths,
+  pathAnalytics,
+  leadSourceSummary,
+  totalViews,
+  totalActions,
+  totalForms,
+  totalLeads,
+}: {
+  orderedPaths: ConversionPathItem[]
+  pathAnalytics: Record<string, AnalyticsConversionMetric>
+  leadSourceSummary: LeadSourceStatusSummary[]
+  totalViews: number
+  totalActions: number
+  totalForms: number
+  totalLeads: number
+}): ConversionHandoffItem[] {
+  const attentionCount = orderedPaths.filter((item) => {
+    const priority = getConversionPriority(item, getMetric(pathAnalytics, item.key))
+    return priority.tone === 'critical' || priority.tone === 'warning'
+  }).length
+  const noActionCount = orderedPaths.filter((item) => {
+    const metric = getMetric(pathAnalytics, item.key)
+    return metric.views > 0 && metric.ctaClicks + metric.formSubmits + metric.leads === 0
+  }).length
+  const nonFullCaptureCount = orderedPaths.filter((item) => item.status !== 'lead').length
+  const activeLeadCount = leadSourceSummary.reduce(
+    (sum, item) => sum + item.new + item.contacting + item.quoted,
+    0,
+  )
+  const actionTotal = totalActions + totalForms
+
+  return [
+    {
+      title: '优先处理转化缺口',
+      owner: '01_public_site_conversion / 07_growth_analytics_seo',
+      status: attentionCount > 0 ? `${attentionCount} 条待处理` : '暂无高优先级缺口',
+      detail: attentionCount > 0
+        ? '先看待复核、部分追踪、外部承接，以及有访问但没有动作的入口。'
+        : '当前入口按 30 天数据没有高优先级缺口，继续观察访问与线索变化。',
+      href: '#conversion-ledger',
+      action: '查看路径总表',
+      Icon: ListChecks,
+      tone: attentionCount > 0 ? 'orange' : 'green',
+    },
+    {
+      title: '线索来源处理',
+      owner: '03_admin_operations_center / 11_operator_customer_experience',
+      status: activeLeadCount > 0 ? `${activeLeadCount} 条进行中` : `${totalLeads} 条真实线索`,
+      detail: '把来源类型和线索状态放在同一张表，运营可以直接进入新线索、跟进中和报价中的来源队列。',
+      href: '/admin/customers/leads',
+      action: '进入线索列表',
+      Icon: TrendingUp,
+      tone: activeLeadCount > 0 ? 'orange' : 'blue',
+    },
+    {
+      title: '事件口径复核',
+      owner: '07_growth_analytics_seo / 05_backend_api_data',
+      status: actionTotal > 0 ? `${actionTotal} 次动作` : `${totalViews} 次访问`,
+      detail: noActionCount > 0
+        ? `${noActionCount} 条路径有访问但无动作，优先核对 CTA 位置、source 规则和事件记录。`
+        : '事件、表单和线索口径已有样本，可回到访问统计看时间趋势。',
+      href: '/admin/status/traffic?range=30',
+      action: '查看访问统计',
+      Icon: BarChart3,
+      tone: noActionCount > 0 ? 'orange' : 'blue',
+    },
+    {
+      title: '内容入口回填',
+      owner: '02_content_cms_workflow / 03_admin_operations_center',
+      status: nonFullCaptureCount > 0 ? `${nonFullCaptureCount} 条非完整链路` : '全部进入线索链路',
+      detail: '部分追踪或外部承接不是直接错误，但需要确认是否继续保留，避免旧站或外部入口吞掉新站线索。',
+      href: '/admin/content',
+      action: '查看内容入口',
+      Icon: FileText,
+      tone: nonFullCaptureCount > 0 ? 'orange' : 'gray',
+    },
+  ]
+}
+
 function getSideNav(): AdminSideNavGroup[] {
   return [
     {
@@ -266,6 +359,15 @@ export default async function AdminSiteConversionPage() {
           kicker="Conversion Operations"
           title="转化路径运营台"
           description="按访问、CTA、表单、线索和追踪完整度判断先处理哪条前台入口；本页只做只读诊断，不保存配置。"
+        />
+        <ConversionHandoffStrip
+          orderedPaths={orderedPaths}
+          pathAnalytics={pathAnalytics}
+          leadSourceSummary={leadSourceSummary}
+          totalViews={totalViews}
+          totalActions={totalActions}
+          totalForms={totalForms}
+          totalLeads={totalLeads}
         />
         <ConversionControlStrip
           dashboard={dashboard}
@@ -392,6 +494,104 @@ export default async function AdminSiteConversionPage() {
         </section>
       </div>
     </AdminSectionShell>
+  )
+}
+
+function handoffToneClass(tone: ConversionHandoffTone): string {
+  if (tone === 'orange') return 'border-l-[#E36F2C] bg-[#FFF7F0]'
+  if (tone === 'green') return 'border-l-emerald-500 bg-emerald-50/70'
+  if (tone === 'gray') return 'border-l-[#8A9EA4] bg-[#F7FAFA]'
+  return 'border-l-[#1889B6] bg-white'
+}
+
+function handoffIconClass(tone: ConversionHandoffTone): string {
+  if (tone === 'orange') return 'bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'green') return 'bg-emerald-50 text-emerald-700'
+  if (tone === 'gray') return 'bg-[#F0F2F2] text-[#61767D]'
+  return 'bg-[#EAF6F8] text-[#1889B6]'
+}
+
+function ConversionHandoffStrip({
+  orderedPaths,
+  pathAnalytics,
+  leadSourceSummary,
+  totalViews,
+  totalActions,
+  totalForms,
+  totalLeads,
+}: {
+  orderedPaths: ConversionPathItem[]
+  pathAnalytics: Record<string, AnalyticsConversionMetric>
+  leadSourceSummary: LeadSourceStatusSummary[]
+  totalViews: number
+  totalActions: number
+  totalForms: number
+  totalLeads: number
+}) {
+  const items = buildConversionHandoffItems({
+    orderedPaths,
+    pathAnalytics,
+    leadSourceSummary,
+    totalViews,
+    totalActions,
+    totalForms,
+    totalLeads,
+  })
+  const alertCount = items.filter((item) => item.tone === 'orange').length
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
+            <Route size={15} />
+            B196 Handoff
+          </div>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">转化运营交接条</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            先把路径缺口、线索处理、事件口径和内容入口分给对应角色，再进入下方详细表格复核。
+          </p>
+        </div>
+        <span className={`inline-flex w-fit rounded-md px-3 py-2 text-xs font-bold ${alertCount > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
+          {alertCount > 0 ? `${alertCount} 项需优先处理` : '暂无阻塞项'}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 p-5 xl:grid-cols-4">
+        {items.map((item) => (
+          <ConversionHandoffCard key={item.title} item={item} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function ConversionHandoffCard({ item }: { item: ConversionHandoffItem }) {
+  const Icon = item.Icon
+
+  return (
+    <Link
+      href={item.href}
+      className={`group flex min-h-52 flex-col justify-between rounded-md border border-l-4 border-[#D8E7E8] p-4 transition hover:-translate-y-0.5 hover:border-[#1889B6]/60 hover:shadow-sm ${handoffToneClass(item.tone)}`}
+    >
+      <span>
+        <span className="flex items-start justify-between gap-3">
+          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${handoffIconClass(item.tone)}`}>
+            <Icon size={18} />
+          </span>
+          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${handoffIconClass(item.tone)}`}>
+            {item.status}
+          </span>
+        </span>
+        <span className="mt-4 block text-sm font-bold text-[#1E2C31]">{item.title}</span>
+        <span className="mt-1 block text-xs font-semibold text-[#8A9EA4]">{item.owner}</span>
+        <span className="mt-3 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+      </span>
+      <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6] group-hover:text-[#0F6F95]">
+        {item.action}
+        <ArrowRight size={14} />
+      </span>
+    </Link>
   )
 }
 
@@ -774,7 +974,7 @@ function ConversionPathLedger({
   })
 
   return (
-    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+    <section id="conversion-ledger" className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <h2 className="text-lg font-bold text-[#1E2C31]">转化路径口径总表</h2>
