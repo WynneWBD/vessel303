@@ -6,6 +6,7 @@ import {
   formatNumber,
   type AnalyticsReadinessItem,
 } from '@/lib/admin-status-metrics'
+import { loadCaseInquiryHealth, type CaseInquiryHealth } from '@/lib/project-case-inquiry-health'
 import {
   formatAnalyticsPercent,
   loadSiteAnalyticsDashboard,
@@ -68,9 +69,12 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
   const sp = searchParams ? await searchParams : {}
   const activeRange = normalizeRange(sp.range)
   const { role, email } = await getStatusAccess()
-  const overview = await loadStatusOverview()
   const readiness = loadAnalyticsReadinessMetrics()
-  const analytics = await loadSiteAnalyticsDashboard()
+  const [overview, analytics, caseInquiryHealth] = await Promise.all([
+    loadStatusOverview(),
+    loadSiteAnalyticsDashboard(),
+    loadCaseInquiryHealth(),
+  ])
   const today = analytics.periods.find((item) => item.key === 'today') ?? analytics.periods[0]
   const yesterday = analytics.periods.find((item) => item.key === 'yesterday') ?? analytics.periods[1] ?? today
   const sevenDays = analytics.windows.find((item) => item.days === 7) ?? analytics.windows[0]
@@ -119,6 +123,7 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
           activeRange={activeRange}
           activeMetric={activeMetric}
           readiness={`${readiness.readyCount}/${readiness.items.length}`}
+          caseInquiryHealth={caseInquiryHealth}
         />
 
         <ComparisonStrip comparison={activeComparison} />
@@ -140,6 +145,8 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
         <TrafficRouteMatrix analytics={analytics} activeMetric={activeMetric} />
 
         <TrafficSourceStagePanel analytics={analytics} />
+
+        <CaseInquiryTrafficPanel analytics={analytics} health={caseInquiryHealth} />
 
         <section id="trend-analysis" className="space-y-4">
           <SectionTitle title={activeRange === 'today' ? '今日小时趋势' : activeRange === 'yesterday' ? '昨日小时趋势' : '访问趋势'} detail="聚合 PV、访客、转化动作、表单成功和真实线索，先看趋势再看排行。" />
@@ -305,6 +312,7 @@ function TrafficAnalysisConsole({
   activeRange,
   activeMetric,
   readiness,
+  caseInquiryHealth,
 }: {
   analytics: SiteAnalyticsDashboard
   trendRows: TrendDisplayRow[]
@@ -317,6 +325,7 @@ function TrafficAnalysisConsole({
   activeRange: TrafficRange
   activeMetric: TrafficMetric
   readiness: string
+  caseInquiryHealth: CaseInquiryHealth
 }) {
   const actions = activeMetric.ctaClicks + activeMetric.contactRedirects + activeMetric.formSubmits
 
@@ -357,6 +366,8 @@ function TrafficAnalysisConsole({
             actions={actions}
             leads={activeMetric.leads}
             readiness={readiness}
+            casePathActions={analytics.conversionPaths.cases?.ctaClicks ?? 0}
+            weakCases={caseInquiryHealth.weak}
           />
         </div>
 
@@ -512,24 +523,29 @@ function TrafficModuleStrip({
   actions,
   leads,
   readiness,
+  casePathActions,
+  weakCases,
 }: {
   pageViews: number
   landingPages: number
   actions: number
   leads: number
   readiness: string
+  casePathActions: number
+  weakCases: number
 }) {
   const items = [
     { title: '网站访问统计', value: `${formatNumber(pageViews)} PV`, href: '#trend-analysis' },
     { title: '落地页跳出分析', value: `${formatNumber(landingPages)} 页`, href: '#landing-analysis' },
     { title: '访问行为分析', value: `${formatNumber(actions)} 次`, href: '#behavior-analysis' },
     { title: '线索转化分析', value: `${formatNumber(leads)} 条`, href: '/admin/site/conversion' },
+    { title: '案例询盘路径', value: `${formatNumber(casePathActions)} 动作`, href: '#case-inquiry-path' },
     { title: 'Google收录分析', value: readiness, href: '/admin/site/seo' },
   ]
 
   return (
     <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-5 md:divide-x md:divide-y-0">
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-3 md:divide-x md:divide-y-0 2xl:grid-cols-6">
       {items.map((item) => (
         <Link
           key={item.title}
@@ -538,7 +554,7 @@ function TrafficModuleStrip({
         >
           <span className="block truncate text-xs font-semibold text-[#1889B6]">{item.title}</span>
           <span className="mt-3 block truncate text-xl font-black text-[#1E2C31]">{item.value}</span>
-          <span className="mt-2 block text-[11px] text-[#8A9EA4]">进入下钻</span>
+          <span className="mt-2 block text-[11px] text-[#8A9EA4]">{item.title === '案例询盘路径' ? `弱案例 ${formatNumber(weakCases)}` : '进入下钻'}</span>
         </Link>
       ))}
       </div>
@@ -1260,6 +1276,103 @@ function TrafficSourceStagePanel({ analytics }: { analytics: SiteAnalyticsDashbo
           </table>
         </div>
       )}
+    </section>
+  )
+}
+
+function CaseInquiryTrafficPanel({
+  analytics,
+  health,
+}: {
+  analytics: SiteAnalyticsDashboard
+  health: CaseInquiryHealth
+}) {
+  const metric = analytics.conversionPaths.cases ?? {
+    views: 0,
+    ctaClicks: 0,
+    formSubmits: 0,
+    leads: 0,
+    conversionRate: 0,
+  }
+  const readyRate = health.published > 0 ? health.ready / health.published : 0
+  const hasPathActions = metric.ctaClicks > 0
+  const rows = [
+    {
+      label: '案例访问',
+      value: `${formatNumber(metric.views)} PV`,
+      detail: '近 30 天 /cases 与案例详情访问',
+      href: '#behavior-analysis',
+      tone: metric.views > 0 ? 'blue' : 'gray',
+    },
+    {
+      label: '路径动作',
+      value: formatNumber(metric.ctaClicks),
+      detail: `CTA / 联系 / 表单动作合计，表单成功 ${formatNumber(metric.formSubmits)}。`,
+      href: '#behavior-analysis',
+      tone: hasPathActions ? 'green' : metric.views > 0 ? 'orange' : 'gray',
+    },
+    {
+      label: '真实线索',
+      value: formatNumber(metric.leads),
+      detail: `案例路径访问转化率 ${formatAnalyticsPercent(metric.conversionRate)}。`,
+      href: '/admin/site/conversion',
+      tone: metric.leads > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
+    },
+    {
+      label: '内容承接',
+      value: `${formatNumber(health.weak)} 弱`,
+      detail: `已发布 ${formatNumber(health.published)}，可承接率 ${formatAnalyticsPercent(readyRate)}。`,
+      href: '/admin/content/projects/list?view=case-conversion-weak',
+      tone: health.weak > 0 ? 'orange' : 'green',
+    },
+  ] satisfies Array<{
+    label: string
+    value: string
+    detail: string
+    href: string
+    tone: 'blue' | 'green' | 'orange' | 'gray'
+  }>
+
+  const decision =
+    health.weak > 0 && metric.views > 0
+      ? '优先补齐发布转化弱案例，再复盘案例详情 CTA 和表单成功。'
+      : metric.views > 0 && metric.leads === 0
+        ? '案例已有访问但暂无真实线索，优先复核详情页 CTA、表单和内容证明链。'
+        : metric.leads > 0
+          ? '案例路径已有线索样本，继续观察来源、表单和内容承接质量。'
+          : '案例路径暂无访问样本，先等待事件或从前台入口复验。'
+
+  return (
+    <section id="case-inquiry-path" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-[#1E2C31]">案例询盘路径分析</h2>
+          <p className="mt-1 text-xs text-[#61767D]">
+            把案例访问、路径动作、表单成功、真实线索和弱案例队列放在同屏；本区只读，不写线索、不发布内容。
+          </p>
+        </div>
+        <span className="rounded-full bg-[#EAF6F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
+          30 天案例路径
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+        {rows.map((row) => (
+          <Link key={row.label} href={row.href} className="block min-w-0 p-5 transition hover:bg-[#F7FAFA]">
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${trafficMatrixToneClass(row.tone)}`}>
+              {row.label}
+            </span>
+            <span className="mt-3 block truncate text-2xl font-black text-[#1E2C31]" title={row.value}>
+              {row.value}
+            </span>
+            <span className="mt-2 block text-xs leading-5 text-[#61767D]">{row.detail}</span>
+          </Link>
+        ))}
+      </div>
+
+      <div className="border-t border-[#E6EEEE] px-5 py-4 text-sm font-semibold text-[#1E2C31]">
+        运营判断：{decision}
+      </div>
     </section>
   )
 }
