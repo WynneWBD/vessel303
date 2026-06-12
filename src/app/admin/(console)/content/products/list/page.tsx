@@ -239,9 +239,9 @@ const PRODUCT_ISSUE_OPTIONS: { value: ProductIssue; label: string }[] = [
   { value: 'seo', label: '缺 SEO' },
   { value: 'price', label: '缺价格展示' },
   { value: 'commercial', label: '商务条款中英文不完整' },
-  { value: 'keywords', label: 'Missing keywords' },
-  { value: 'related', label: 'Missing related products' },
-  { value: 'buyer_resources', label: 'Missing buyer resources' },
+  { value: 'keywords', label: '缺关键词' },
+  { value: 'related', label: '缺关联产品' },
+  { value: 'buyer_resources', label: '缺买家资料' },
 ]
 
 const PRODUCT_ISSUE_BUCKETS: ProductIssueBucket[] = [
@@ -257,7 +257,8 @@ const PRODUCT_ISSUE_BUCKETS: ProductIssueBucket[] = [
   { issue: 'buyer_resources', label: '买家资料', detail: '缺少下载或资源链接' },
 ]
 
-const PRIORITY_ISSUES = ['缺封面', '缺图库', '未分类', '缺 SEO']
+const PRIORITY_ISSUES = ['缺封面', '缺图库', '未分类', '缺 SEO', '缺关键词', '缺关联产品', '缺买家资料']
+const CONVERSION_RISK_ISSUES = ['缺 SEO', '缺价格展示', '缺中英文商务条款', '缺中文商务条款', '缺英文商务条款', '缺关键词', '缺关联产品', '缺买家资料']
 const COMMERCIAL_TERM_ZH_KEYS = COMMERCIAL_TERM_FIELD_PAIRS.map((field) => field.zh)
 const COMMERCIAL_TERM_EN_KEYS = COMMERCIAL_TERM_FIELD_PAIRS.map((field) => field.en)
 
@@ -505,8 +506,8 @@ function hasBuyerResourceLinks(value: unknown[] | null | undefined): boolean {
 function commercialTermsIssueLabel(terms: Record<string, string> | null | undefined): string | null {
   const missing = getMissingCommercialTermLanguages(terms)
   if (missing.length === 0) return null
-  if (missing.length === 2) return 'Missing business terms'
-  return missing[0] === 'zh' ? '缺中文商务条款' : 'Missing English business terms'
+  if (missing.length === 2) return '缺中英文商务条款'
+  return missing[0] === 'zh' ? '缺中文商务条款' : '缺英文商务条款'
 }
 
 function parseCount(value: string | undefined): number {
@@ -542,9 +543,9 @@ function getProductIssues(product: ProductListRow): string[] {
   if (Number(product.attribute_option_count ?? 0) === 0) issues.push('缺产品属性')
   if (!hasText(product.price_display_zh) && !hasText(product.price_display_en)) issues.push('缺价格展示')
   if (commercialIssue) issues.push(commercialIssue)
-  if (!hasItems(product.keywords_zh) && !hasItems(product.keywords_en)) issues.push('Missing keywords')
-  if (!hasItems(product.related_product_ids)) issues.push('Missing related products')
-  if (!hasBuyerResourceLinks(product.detail_modules)) issues.push('Missing buyer resources')
+  if (!hasItems(product.keywords_zh) && !hasItems(product.keywords_en)) issues.push('缺关键词')
+  if (!hasItems(product.related_product_ids)) issues.push('缺关联产品')
+  if (!hasBuyerResourceLinks(product.detail_modules)) issues.push('缺买家资料')
   if (
     !hasText(product.seo_title_zh)
     || !hasText(product.seo_title_en)
@@ -611,10 +612,10 @@ function productHasIssue(issue: ProductIssueBucket['issue'], issues: string[]): 
   if (issue === 'category') return issues.includes('未分类')
   if (issue === 'attributes') return issues.includes('缺产品属性')
   if (issue === 'seo') return issues.includes('缺 SEO')
-  if (issue === 'commercial') return issues.some((item) => item.includes('business terms') || item.includes('商务条款'))
-  if (issue === 'keywords') return issues.includes('Missing keywords')
-  if (issue === 'related') return issues.includes('Missing related products')
-  if (issue === 'buyer_resources') return issues.includes('Missing buyer resources')
+  if (issue === 'commercial') return issues.some((item) => item.includes('商务条款'))
+  if (issue === 'keywords') return issues.includes('缺关键词')
+  if (issue === 'related') return issues.includes('缺关联产品')
+  if (issue === 'buyer_resources') return issues.includes('缺买家资料')
   return false
 }
 
@@ -626,7 +627,7 @@ function getProductPriorityScore(product: ProductListRow, issues: string[]): num
   if (issues.includes('缺 SEO')) score += 16
   if (issues.includes('精品页绑定缺 CMS 基础字段')) score += 14
   if (issues.includes('缺详情模块')) score += 12
-  if (issues.includes('Missing buyer resources')) score += 8
+  if (issues.includes('缺买家资料')) score += 8
   score += Math.min(10, Math.max(0, issues.length - 1) * 2)
   return score
 }
@@ -637,6 +638,9 @@ function getPriorityLabel(issues: string[]): string {
   if (issues.includes('缺 SEO')) return '补 SEO'
   if (issues.includes('精品页绑定缺 CMS 基础字段')) return '补精品页基础字段'
   if (issues.includes('缺详情模块')) return '补详情模块'
+  if (issues.includes('缺买家资料')) return '补买家资料'
+  if (issues.includes('缺关键词')) return '补关键词'
+  if (issues.includes('缺关联产品')) return '补关联推荐'
   return '补运营字段'
 }
 
@@ -1279,7 +1283,7 @@ function ProductListControlStrip({
     <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px]">
         <div className="border-l-4 border-[#1889B6] px-4 py-4">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">List Console</p>
+          <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">列表控制台</p>
           <div className="mt-2 flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
             <div className="min-w-0">
               <h2 className="text-lg font-bold text-[#1E2C31]">当前产品视图</h2>
@@ -1306,7 +1310,7 @@ function ProductListControlStrip({
       <div className="border-t border-[#E6EEEE] px-4 py-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#8A9EA4]">Active Filters</p>
+            <p className="text-xs font-bold tracking-[0.08em] text-[#8A9EA4]">当前筛选</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {chips.length > 0 ? (
                 chips.map((chip) => (
@@ -1375,8 +1379,12 @@ function ProductOperationsMatrix({
   rows: ProductListRow[]
   filters: FilterState
 }) {
+  const pageIssueEntries = rows.map((product) => ({
+    product,
+    issues: getProductIssues(product),
+  }))
   const pageIssueStats = PRODUCT_ISSUE_BUCKETS.map((bucket) => {
-    const pageCount = rows.filter((product) => productHasIssue(bucket.issue, getProductIssues(product))).length
+    const pageCount = pageIssueEntries.filter((entry) => productHasIssue(bucket.issue, entry.issues)).length
     return {
       ...bucket,
       count: issueSummary[bucket.issue],
@@ -1388,13 +1396,19 @@ function ProductOperationsMatrix({
   const incompleteRate = formatPercent(summary.incomplete, summary.total)
   const publishedRate = formatPercent(summary.published, summary.total)
   const draftRate = formatPercent(summary.draft, summary.total)
+  const pageReadyCount = pageIssueEntries.filter((entry) => entry.issues.length === 0).length
+  const pagePublishedRiskCount = pageIssueEntries.filter((entry) => entry.product.status === 'published' && entry.issues.length > 0).length
+  const pageDraftCount = pageIssueEntries.filter((entry) => entry.product.status === 'draft').length
+  const pageConversionRiskCount = pageIssueEntries.filter((entry) => (
+    entry.issues.some((issue) => CONVERSION_RISK_ISSUES.includes(issue))
+  )).length
 
   return (
     <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Operations Matrix</p>
+            <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">运营矩阵</p>
             <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品运营处理矩阵</h2>
             <p className="mt-1 text-sm leading-6 text-[#61767D]">
               先看全库发布、草稿和缺口，再按缺项队列进入下钻；队列数量来自全库只读统计，本页命中用于快速判断当前筛选结果。
@@ -1457,6 +1471,32 @@ function ProductOperationsMatrix({
               <p className="mt-1 text-xs text-[#61767D]">按素材、分类、SEO、详情模块和草稿状态排序。</p>
             </div>
           </div>
+        </div>
+        <div className="grid grid-cols-2 border-b border-[#E6EEEE] bg-[#FBFDFD]">
+          <ReadinessMiniStat
+            label="本页完整"
+            value={formatNumber(pageReadyCount)}
+            detail={`${formatPercent(pageReadyCount, rows.length)} 完整率`}
+            tone="green"
+          />
+          <ReadinessMiniStat
+            label="发布中有缺项"
+            value={formatNumber(pagePublishedRiskCount)}
+            detail="已发布但仍需回补"
+            tone={pagePublishedRiskCount > 0 ? 'orange' : 'green'}
+          />
+          <ReadinessMiniStat
+            label="草稿待排期"
+            value={formatNumber(pageDraftCount)}
+            detail="先补关键字段再发布"
+            tone={pageDraftCount > 0 ? 'orange' : 'gray'}
+          />
+          <ReadinessMiniStat
+            label="SEO 与转化风险"
+            value={formatNumber(pageConversionRiskCount)}
+            detail="关键词、资源或商务口径缺失"
+            tone={pageConversionRiskCount > 0 ? 'orange' : 'green'}
+          />
         </div>
         {priorityItems.length > 0 ? (
           <div className="divide-y divide-[#E6EEEE]">
@@ -1529,6 +1569,35 @@ function MatrixKpi({
       <p className="text-xs font-semibold text-[#61767D]">{label}</p>
       <p className={`mt-1 text-2xl font-bold ${toneClass}`}>{value}</p>
       <p className="mt-1 text-xs text-[#8A9EA4]">{detail}</p>
+    </div>
+  )
+}
+
+function ReadinessMiniStat({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string
+  value: string
+  detail: string
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+}) {
+  const toneClass =
+    tone === 'green'
+      ? 'text-emerald-700'
+      : tone === 'orange'
+        ? 'text-[#E36F2C]'
+        : tone === 'gray'
+          ? 'text-[#61767D]'
+          : 'text-[#1889B6]'
+
+  return (
+    <div className="border-t border-[#E6EEEE] px-4 py-3 odd:border-r">
+      <p className="truncate text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-1 text-xl font-bold ${toneClass}`}>{value}</p>
+      <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#8A9EA4]">{detail}</p>
     </div>
   )
 }
