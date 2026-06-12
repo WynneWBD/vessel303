@@ -10,6 +10,7 @@ import ProductEditorConsole, {
 import ProductForm from '@/components/admin/ProductForm'
 import { defaultSiteSettings, normalizeMediaMaxUploadMb } from '@/lib/admin-settings-db'
 import { pool } from '@/lib/db'
+import { getMissingCommercialTermLanguages } from '@/lib/product-commercial-terms'
 import {
   ensureProductCatalogSchema,
   listCatalogProducts,
@@ -29,6 +30,7 @@ import {
 import { getCatalogProductRouteInfo } from '@/lib/product-public-routes'
 import type {
   CatalogDetailModule,
+  CatalogDetailModuleItem,
   CatalogSpecItem,
   ProductSeriesCode,
 } from '@/lib/products'
@@ -108,6 +110,18 @@ type EditSection = {
   title: string
   detail: string
   href: string
+  Icon: LucideIcon
+}
+
+type ProductReadinessTone = 'ready' | 'warning' | 'neutral'
+
+type ProductReadinessItem = {
+  key: string
+  title: string
+  detail: string
+  meta: string
+  href: string
+  tone: ProductReadinessTone
   Icon: LucideIcon
 }
 
@@ -335,6 +349,190 @@ function productSeoComplete(product: CatalogProductRow): boolean {
   )
 }
 
+function hasArrayItems<T>(value: T[] | null | undefined): boolean {
+  return Array.isArray(value) && value.length > 0
+}
+
+function compactIssueList(values: Array<string | null | undefined | false>): string[] {
+  return values.filter((value): value is string => typeof value === 'string' && value.length > 0)
+}
+
+function formatIssueSummary(issues: string[], readyText: string): string {
+  return issues.length > 0 ? `待补：${issues.join('、')}` : readyText
+}
+
+function getVisibleDetailModules(product: CatalogProductRow): CatalogDetailModule[] {
+  return (product.detail_modules ?? []).filter((module) => module.is_visible !== false)
+}
+
+function isBuyerResourceModule(module: CatalogDetailModule): boolean {
+  const marker = [
+    module.id,
+    module.title_en,
+    module.title_cn,
+  ].map((value) => (value ?? '').trim().toLowerCase()).join(' ')
+  return /buyer|download|resource|material/.test(marker)
+}
+
+function hasLinkedModuleItem(items: CatalogDetailModuleItem[] | undefined = []): boolean {
+  return items.some((item) => hasText(item.href))
+}
+
+function hasBuyerResourceLinks(product: CatalogProductRow): boolean {
+  return getVisibleDetailModules(product).some((module) => (
+    isBuyerResourceModule(module)
+    && (hasLinkedModuleItem(module.items_cn) || hasLinkedModuleItem(module.items_en))
+  ))
+}
+
+function getCommercialIssueLabel(product: CatalogProductRow): string | null {
+  const missing = getMissingCommercialTermLanguages(product.commercial_terms)
+  if (missing.length === 0) return null
+  if (missing.length === 2) return '缺商务条款'
+  return missing[0] === 'zh' ? '缺中文商务条款' : '缺英文商务条款'
+}
+
+function getProductReleaseIssues(product: CatalogProductRow): string[] {
+  const issues = compactIssueList([
+    !hasText(product.image) && '缺封面',
+    !hasArrayItems(product.gallery) && '缺详情图库',
+    !hasText(product.description_cn) && '缺中文简介',
+    !hasText(product.description_en) && '缺英文简介',
+    (!hasArrayItems(product.tags_cn) || !hasArrayItems(product.tags_en)) && '缺标签',
+    (!hasArrayItems(product.features_cn) || !hasArrayItems(product.features_en)) && '缺亮点',
+    !product.category_id && '未分类',
+    !hasArrayItems(product.attribute_option_ids) && '缺产品属性',
+    (!hasText(product.price_display_zh) && !hasText(product.price_display_en)) && '缺价格展示',
+    getCommercialIssueLabel(product),
+    (!hasArrayItems(product.keywords_zh) && !hasArrayItems(product.keywords_en)) && '缺关键词',
+    !hasArrayItems(product.related_product_ids) && '缺相关产品',
+    !productSeoComplete(product) && '缺 SEO',
+    getVisibleDetailModules(product).length === 0 && '缺详情模块',
+    !hasBuyerResourceLinks(product) && '缺买家资料链接',
+  ])
+
+  if (
+    hasText(product.detailSlug)
+    && (
+      !hasText(product.image)
+      || !hasText(product.description_cn)
+      || !hasText(product.description_en)
+      || !hasArrayItems(product.tags_cn)
+      || !hasArrayItems(product.tags_en)
+      || !hasArrayItems(product.features_cn)
+      || !hasArrayItems(product.features_en)
+    )
+  ) {
+    issues.push('精品页绑定缺 CMS 基础字段')
+  }
+
+  return issues
+}
+
+function isPriorityReadinessIssue(issue: string): boolean {
+  return ['缺封面', '缺详情图库', '未分类', '缺 SEO', '缺买家资料链接'].includes(issue)
+}
+
+function buildProductReadinessItems(product: CatalogProductRow, maxUploadMb: number): ProductReadinessItem[] {
+  const published = product.status === 'published'
+  const routeInfo = getCatalogProductRouteInfo(product)
+  const galleryCount = product.gallery?.length ?? 0
+  const visibleDetailModuleCount = getVisibleDetailModules(product).length
+  const attributeCount = product.attribute_option_ids?.length ?? 0
+  const mediaIssues = compactIssueList([
+    !hasText(product.image) && '封面',
+    galleryCount === 0 && '详情图库',
+  ])
+  const contentIssues = compactIssueList([
+    !hasText(product.description_cn) && '中文简介',
+    !hasText(product.description_en) && '英文简介',
+    (!hasArrayItems(product.tags_cn) || !hasArrayItems(product.tags_en)) && '中英文标签',
+    (!hasArrayItems(product.features_cn) || !hasArrayItems(product.features_en)) && '中英文亮点',
+  ])
+  const taxonomyIssues = compactIssueList([
+    !product.category_id && '产品分类',
+    attributeCount === 0 && '筛选属性',
+  ])
+  const commerceIssues = compactIssueList([
+    (!hasText(product.price_display_zh) && !hasText(product.price_display_en)) && '价格展示',
+    getCommercialIssueLabel(product),
+    (!hasArrayItems(product.keywords_zh) && !hasArrayItems(product.keywords_en)) && '关键词',
+    !hasArrayItems(product.related_product_ids) && '相关产品',
+  ])
+  const detailIssues = compactIssueList([
+    visibleDetailModuleCount === 0 && '详情模块',
+    !hasBuyerResourceLinks(product) && '买家资料链接',
+  ])
+
+  return [
+    {
+      key: 'impact',
+      title: published ? '已发布影响' : '草稿安全区',
+      detail: published
+        ? '保存后会直接影响公开产品页，先完成复核再提交。'
+        : '当前不会公开展示，发布仍需表单内确认。',
+      meta: published ? routeInfo.publicHref : 'Draft only',
+      href: published ? routeInfo.publicHref : '#publish-check',
+      tone: published ? 'warning' : 'ready',
+      Icon: published ? AlertTriangle : CheckCircle2,
+    },
+    {
+      key: 'media',
+      title: '媒体素材',
+      detail: formatIssueSummary(mediaIssues, '封面和详情图库已具备'),
+      meta: `${galleryCount} 张图库 / 上传上限 ${maxUploadMb} MB`,
+      href: '#media',
+      tone: mediaIssues.length > 0 ? 'warning' : 'ready',
+      Icon: ImageIcon,
+    },
+    {
+      key: 'content',
+      title: '双语内容',
+      detail: formatIssueSummary(contentIssues, '简介、标签和亮点已具备'),
+      meta: `${product.tags_cn?.length ?? 0}/${product.tags_en?.length ?? 0} 标签`,
+      href: '#content',
+      tone: contentIssues.length > 0 ? 'warning' : 'ready',
+      Icon: FileText,
+    },
+    {
+      key: 'taxonomy',
+      title: '分类属性',
+      detail: formatIssueSummary(taxonomyIssues, '分类和筛选属性已具备'),
+      meta: `category ${product.category_id ?? '-'} / attributes ${attributeCount}`,
+      href: '#attributes',
+      tone: taxonomyIssues.length > 0 ? 'warning' : 'ready',
+      Icon: SlidersHorizontal,
+    },
+    {
+      key: 'seo',
+      title: 'SEO 字段',
+      detail: productSeoComplete(product) ? '中英文标题和摘要已具备' : '待补：中英文 SEO 标题或摘要',
+      meta: productSeoComplete(product) ? 'Search ready' : 'SEO incomplete',
+      href: '#seo',
+      tone: productSeoComplete(product) ? 'ready' : 'warning',
+      Icon: SearchCheck,
+    },
+    {
+      key: 'commerce',
+      title: '商务与关联',
+      detail: formatIssueSummary(commerceIssues, '价格、商务条款、关键词和相关产品已具备'),
+      meta: `${product.related_product_ids?.length ?? 0} related / ${product.keywords_zh?.length ?? 0} zh keywords`,
+      href: '#commercial',
+      tone: commerceIssues.length > 0 ? 'warning' : 'ready',
+      Icon: Tags,
+    },
+    {
+      key: 'details',
+      title: '详情模块',
+      detail: formatIssueSummary(detailIssues, '详情模块和买家资料链接已具备'),
+      meta: `${visibleDetailModuleCount} visible modules`,
+      href: '#details',
+      tone: detailIssues.length > 0 ? 'warning' : 'ready',
+      Icon: Layers3,
+    },
+  ]
+}
+
 function getSideNavGroups(product: CatalogProductRow): AdminSideNavGroup[] {
   return [
     {
@@ -423,6 +621,117 @@ function InfoCard({
         {value}
       </p>
     </div>
+  )
+}
+
+function readinessToneClass(tone: ProductReadinessTone): string {
+  if (tone === 'ready') return 'border-emerald-100 bg-emerald-50 text-emerald-700'
+  if (tone === 'warning') return 'border-[#F2C6A7] bg-[#FFF2E7] text-[#E36F2C]'
+  return 'border-[#D8E7E8] bg-[#F7FAFA] text-[#61767D]'
+}
+
+function readinessCellClass(tone: ProductReadinessTone): string {
+  if (tone === 'ready') return 'hover:bg-emerald-50/55'
+  if (tone === 'warning') return 'hover:bg-[#FFF2E7]/65'
+  return 'hover:bg-[#F7FAFA]'
+}
+
+function ProductPublishReadinessPanel({
+  product,
+  maxUploadMb,
+}: {
+  product: CatalogProductRow
+  maxUploadMb: number
+}) {
+  const readinessItems = buildProductReadinessItems(product, maxUploadMb)
+  const releaseIssues = getProductReleaseIssues(product)
+  const priorityIssues = releaseIssues.filter(isPriorityReadinessIssue)
+  const readyCount = readinessItems.filter((item) => item.tone === 'ready').length
+  const visibleIssues = releaseIssues.slice(0, 8)
+  const hiddenIssueCount = Math.max(0, releaseIssues.length - visibleIssues.length)
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid grid-cols-1 border-b border-[#D8E7E8] lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="p-5">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">Publish Readiness</p>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">发布影响复核台</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
+            进入长表单前先复核公开影响、素材、双语内容、分类属性、SEO、商务信息和详情模块；这里只做运营提示，不新增保存或发布限制。
+          </p>
+        </div>
+        <div className="grid grid-cols-3 border-t border-[#D8E7E8] bg-[#F7FAFA] lg:border-l lg:border-t-0">
+          <div className="border-r border-[#D8E7E8] p-4">
+            <p className="text-xs font-semibold text-[#61767D]">通过项</p>
+            <p className="mt-2 text-2xl font-bold text-[#1E2C31]">{readyCount}</p>
+          </div>
+          <div className="border-r border-[#D8E7E8] p-4">
+            <p className="text-xs font-semibold text-[#61767D]">总缺项</p>
+            <p className="mt-2 text-2xl font-bold text-[#E36F2C]">{releaseIssues.length}</p>
+          </div>
+          <div className="p-4">
+            <p className="text-xs font-semibold text-[#61767D]">优先项</p>
+            <p className="mt-2 text-2xl font-bold text-[#E36F2C]">{priorityIssues.length}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-b border-[#D8E7E8] md:grid-cols-2 xl:grid-cols-4">
+        {readinessItems.map((item) => (
+          <Link
+            key={item.key}
+            href={item.href}
+            className={`min-h-[148px] border-b border-r border-[#E6EEEE] p-4 transition last:border-r-0 xl:border-b-0 ${readinessCellClass(item.tone)}`}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <span className={`inline-flex h-9 w-9 items-center justify-center rounded-md border ${readinessToneClass(item.tone)}`}>
+                <item.Icon size={17} />
+              </span>
+              <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${readinessToneClass(item.tone)}`}>
+                {item.tone === 'ready' ? 'Ready' : item.tone === 'warning' ? '待处理' : 'Info'}
+              </span>
+            </div>
+            <h3 className="mt-3 text-sm font-bold text-[#1E2C31]">{item.title}</h3>
+            <p className="mt-2 min-h-[40px] text-xs leading-5 text-[#61767D]">{item.detail}</p>
+            <p className="mt-3 truncate text-[11px] font-semibold text-[#1889B6]">{item.meta}</p>
+          </Link>
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-3 bg-[#F7FAFA] px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p className="text-sm font-bold text-[#1E2C31]">发布问题队列</p>
+          <p className="mt-1 text-xs text-[#61767D]">优先处理高影响缺项，再进入表单内发布检查做最终确认。</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {visibleIssues.length > 0 ? (
+            <>
+              {visibleIssues.map((issue) => (
+                <span
+                  key={issue}
+                  className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                    isPriorityReadinessIssue(issue)
+                      ? 'border-[#F2C6A7] bg-[#FFF2E7] text-[#E36F2C]'
+                      : 'border-[#D8E7E8] bg-white text-[#61767D]'
+                  }`}
+                >
+                  {issue}
+                </span>
+              ))}
+              {hiddenIssueCount > 0 ? (
+                <span className="rounded-full border border-[#D8E7E8] bg-white px-2.5 py-1 text-xs font-semibold text-[#61767D]">
+                  +{hiddenIssueCount}
+                </span>
+              ) : null}
+            </>
+          ) : (
+            <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+              当前没有发布缺项
+            </span>
+          )}
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -595,6 +904,7 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
         metrics={consoleMetrics}
         signals={consoleSignals}
       />
+      <ProductPublishReadinessPanel product={product} maxUploadMb={maxUploadMb} />
       <EditSectionGrid />
       <RiskNotice product={product} />
       <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm md:p-5">
