@@ -126,16 +126,15 @@ export default async function AdminStatusPage() {
               bestDay={analytics.bestDay}
             />
 
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-              <TrendPanel rows={analytics.dailyTrend} />
-              <BehaviorPanel
-                steps={analytics.behaviorSteps}
-                topPages={analytics.topPages}
-                landingPages={analytics.landingPages}
-                sourceTypes={analytics.sourceTypes}
-                thirtyDays={thirtyDays}
-              />
-            </div>
+            <TrendPanel rows={analytics.dailyTrend} />
+
+            <BehaviorPanel
+              steps={analytics.behaviorSteps}
+              topPages={analytics.topPages}
+              landingPages={analytics.landingPages}
+              sourceTypes={analytics.sourceTypes}
+              thirtyDays={thirtyDays}
+            />
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
               <ConversionPathTable conversionPaths={analytics.conversionPaths} />
@@ -465,39 +464,119 @@ function BehaviorPanel({
     { key: 'forms', label: '表单成功', value: thirtyDays.formSubmits },
     { key: 'rate', label: '访问转化率', value: Math.round(thirtyDays.conversionRate * 10000) / 100 },
   ]
+  const diagnostics = [
+    {
+      label: '首要入口',
+      value: topPages[0]?.label ?? '暂无入口',
+      detail: topPages[0]
+        ? `${formatNumber(topPages[0].value)} PV / ${formatNumber(topPages[0].secondary ?? 0)} 访客`
+        : '等待访问事件进入统计。',
+    },
+    {
+      label: '动作入口',
+      value: actionRows[0]?.label ?? '暂无动作',
+      detail: actionRows[0]
+        ? `${formatNumber(actionRows[0].value)} 次动作 / ${formatNumber(landingPages.find((row) => row.key === actionRows[0]?.key)?.value ?? 0)} 次访问`
+        : 'CTA、联系跳转或表单成功后出现。',
+    },
+    {
+      label: '主要来源',
+      value: sourceTypes[0] ? sourceTypeLabel(sourceTypes[0].key) : '暂无来源',
+      detail: sourceTypes[0] ? `${formatNumber(sourceTypes[0].value)} 次转化动作` : '等待来源类型事件进入统计。',
+    },
+    {
+      label: '线索结果',
+      value: `${formatNumber(thirtyDays.leads)} 条`,
+      detail: `${formatNumber(thirtyDays.formSubmits)} 次表单成功 / ${formatAnalyticsPercent(thirtyDays.conversionRate)} 转化率`,
+    },
+  ]
 
   return (
-    <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+    <section id="behavior-flow" className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">访问行为路径</h2>
-          <p className="mt-1 text-xs text-[#61767D]">入口、后续动作、来源类型和线索结果放在同屏判断。</p>
+          <p className="mt-1 text-xs text-[#61767D]">按 300 后台常见路径心智，把入口页面、行为步骤、留存率和转化诊断放在同屏判断。</p>
         </div>
         <Link href="/admin/status/traffic#behavior-analysis" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
           行为分析
         </Link>
       </div>
-      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {hasSteps
-          ? steps.slice(0, 4).map((step) => (
-              <FlowColumn
-                key={step.step}
-                title={step.label}
-                rows={step.nodes}
-                empty="暂无路径"
-                meta={`${formatNumber(step.visits)} 次 / ${formatAnalyticsPercent(step.retainedRate)}`}
-              />
-            ))
-          : (
-              <>
-                <FlowColumn title="入口页面" rows={topPages} empty="暂无入口" />
-                <FlowColumn title="后续动作" rows={actionRows} empty="暂无动作" />
-                <FlowColumn title="来源类型" rows={sourceTypes} empty="暂无来源" formatLabel={sourceTypeLabel} />
-                <FlowColumn title="线索结果" rows={conversionRows} empty="暂无线索" percentKey="rate" />
-              </>
-            )}
+
+      {hasSteps ? (
+        <BehaviorFlowMap steps={steps} />
+      ) : (
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <FlowColumn title="入口页面" rows={topPages} empty="暂无入口" />
+          <FlowColumn title="后续动作" rows={actionRows} empty="暂无动作" />
+          <FlowColumn title="来源类型" rows={sourceTypes} empty="暂无来源" formatLabel={sourceTypeLabel} />
+          <FlowColumn title="线索结果" rows={conversionRows} empty="暂无线索" percentKey="rate" />
+        </div>
+      )}
+
+      <div className="mt-4 grid grid-cols-1 divide-y divide-[#E6EEEE] rounded-md border border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4 md:divide-x md:divide-y-0">
+        {diagnostics.map((item) => (
+          <div key={item.label} className="min-w-0 px-4 py-3">
+            <div className="text-[11px] font-bold text-[#8A9EA4]">{item.label}</div>
+            <div className="mt-1 truncate text-sm font-bold text-[#1E2C31]">{item.value}</div>
+            <div className="mt-1 truncate text-xs text-[#61767D]">{item.detail}</div>
+          </div>
+        ))}
       </div>
     </section>
+  )
+}
+
+function BehaviorFlowMap({ steps }: { steps: AnalyticsBehaviorStep[] }) {
+  const visibleSteps = steps.slice(0, 5)
+  const maxNodeValue = Math.max(1, ...visibleSteps.flatMap((step) => step.nodes.map((node) => node.value)))
+
+  return (
+    <div className="mt-4 overflow-x-auto rounded-md border border-[#D8E7E8] bg-[#F7FAFA]">
+      <div className="grid min-w-[1080px] grid-cols-5 gap-3 p-4">
+        {visibleSteps.map((step, index) => (
+          <div key={step.step} className="relative min-w-0">
+            {index > 0 ? <span className="absolute -left-3 top-16 h-px w-3 bg-[#C9DCDF]" /> : null}
+            <div className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+              <div className="border-b border-[#E6EEEE] px-3 py-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-bold text-[#1E2C31]">{step.label}</span>
+                  <span className="rounded bg-[#E8F6FA] px-2 py-0.5 text-[11px] font-bold text-[#1889B6]">
+                    {formatAnalyticsPercent(step.retainedRate)}
+                  </span>
+                </div>
+                <div className="mt-1 text-[11px] text-[#61767D]">{formatNumber(step.visits)} 次访问</div>
+              </div>
+              <div className="space-y-2 px-3 py-3">
+                {step.nodes.length === 0 ? (
+                  <div className="rounded border border-dashed border-[#D8E7E8] px-3 py-4 text-xs text-[#8A9EA4]">暂无路径节点</div>
+                ) : (
+                  step.nodes.slice(0, 6).map((node) => {
+                    const width = Math.max(8, Math.round((node.value / maxNodeValue) * 100))
+                    const share = step.visits > 0 ? node.value / step.visits : 0
+
+                    return (
+                      <div key={`${step.step}-${node.key}`} className="rounded border border-[#E6EEEE] bg-[#FBFDFD] p-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="min-w-0 truncate text-xs font-semibold text-[#1E2C31]" title={node.label}>
+                            {node.label}
+                          </span>
+                          <span className="shrink-0 text-xs font-bold text-[#1889B6]">{formatNumber(node.value)}</span>
+                        </div>
+                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#E6EEEE]">
+                          <span className="block h-full rounded-full bg-[#1889B6]" style={{ width: `${width}%` }} />
+                        </div>
+                        <div className="mt-1 text-[11px] text-[#8A9EA4]">{formatAnalyticsPercent(share)} / 本步</div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
