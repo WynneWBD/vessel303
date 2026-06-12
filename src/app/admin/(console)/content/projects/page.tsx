@@ -4,9 +4,11 @@ import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { pool } from '@/lib/db'
 import { MIN_PROJECT_CASE_DESCRIPTION_CHARS } from '@/lib/project-case-readiness'
+import { formatAnalyticsPercent, loadConversionPathAnalytics, type AnalyticsConversionMetric } from '@/lib/site-analytics'
 import {
   Archive,
   ArrowRight,
+  BarChart3,
   CheckCircle2,
   CircleDashed,
   ClipboardCheck,
@@ -87,6 +89,14 @@ const EMPTY_PROJECT_STATS: ProjectStats = {
   missingCoordinates: 0,
   unpublishedWithCoordinates: 0,
   caseInquiryReady: 0,
+}
+
+const EMPTY_CASE_PATH_METRIC: AnalyticsConversionMetric = {
+  views: 0,
+  ctaClicks: 0,
+  formSubmits: 0,
+  leads: 0,
+  conversionRate: 0,
 }
 
 function formatNumber(value: number): string {
@@ -230,6 +240,7 @@ function getSideNavGroups(stats: ProjectStats): AdminSideNavGroup[] {
       title: '项目展示',
       items: [
         { key: 'project-list', label: '项目列表', href: '/admin/content/projects/list', Icon: ListChecks },
+        { key: 'case-path', label: '案例路径分析', href: '/admin/status/traffic#case-inquiry-path', Icon: BarChart3 },
         { key: 'case-create', label: '新增项目', href: '/admin/content/projects/new', Icon: Plus },
         { key: 'cases-front', label: '查看案例列表', href: '/cases', Icon: ExternalLink },
         { key: 'global-map', label: '查看 Global 地图', href: '/global', Icon: Globe2 },
@@ -527,7 +538,13 @@ function TodoStat({ entry }: { entry: TodoEntry }) {
   )
 }
 
-function CaseConversionPanel({ stats }: { stats: ProjectStats }) {
+function CaseConversionPanel({
+  stats,
+  casePathMetric,
+}: {
+  stats: ProjectStats
+  casePathMetric: AnalyticsConversionMetric
+}) {
   const weakCount = getCaseInquiryWeakCount(stats)
   const lanes = [
     {
@@ -547,6 +564,14 @@ function CaseConversionPanel({ stats }: { stats: ProjectStats }) {
       tone: 'orange' as const,
     },
     {
+      title: '案例路径样本',
+      value: casePathMetric.views,
+      detail: `30 天动作 ${formatNumber(casePathMetric.ctaClicks)} / 线索 ${formatNumber(casePathMetric.leads)} / 转化 ${formatAnalyticsPercent(casePathMetric.conversionRate)}`,
+      href: '/admin/status/traffic#case-inquiry-path',
+      Icon: BarChart3,
+      tone: casePathMetric.leads > 0 ? 'green' as const : casePathMetric.views > 0 ? 'orange' as const : 'blue' as const,
+    },
+    {
       title: '草稿待承接',
       value: stats.draft,
       detail: '草稿阶段没有前台案例咨询锚点',
@@ -559,6 +584,7 @@ function CaseConversionPanel({ stats }: { stats: ProjectStats }) {
     { label: '创建前计划', detail: '新建页先规划案例身份、证明素材、咨询上下文和发布影响。', href: '/admin/content/projects/new#case-inquiry-plan' },
     { label: '编辑中补齐', detail: '编辑页和表单右侧摘要会提示素材、叙事与项目事实缺口。', href: '/admin/content/projects/list?view=incomplete' },
     { label: '发布后核查', detail: '发布后从列表打开 /cases/[id]#case-inquiry 检查前台承接。', href: '/admin/content/projects/list?status=published' },
+    { label: '路径数据复盘', detail: '从访问统计查看案例访问、动作、表单成功、线索与弱案例队列。', href: '/admin/status/traffic#case-inquiry-path' },
   ]
 
   return (
@@ -568,7 +594,7 @@ function CaseConversionPanel({ stats }: { stats: ProjectStats }) {
         detail="把新建、编辑、列表和前台询盘锚点放到同一个运营视角，先看哪些已能承接询盘，哪些发布后仍需要补内容。"
       />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-4">
           {lanes.map((lane) => (
             <CaseConversionMetric key={lane.title} lane={lane} />
           ))}
@@ -615,7 +641,7 @@ function CaseConversionMetric({
     detail: string
     href: string
     Icon: LucideIcon
-    tone: 'green' | 'orange' | 'neutral'
+    tone: 'green' | 'orange' | 'neutral' | 'blue'
   }
 }) {
   const Icon = lane.Icon
@@ -624,7 +650,9 @@ function CaseConversionMetric({
       ? 'bg-[#E7F7F4] text-[#159477]'
       : lane.tone === 'orange'
         ? 'bg-[#FFF2E7] text-[#E36F2C]'
-        : 'bg-[#F0F2F2] text-[#61767D]'
+        : lane.tone === 'blue'
+          ? 'bg-[#EAF6F8] text-[#1889B6]'
+          : 'bg-[#F0F2F2] text-[#61767D]'
 
   return (
     <Link href={lane.href} className="group rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/55 hover:shadow-md">
@@ -802,7 +830,11 @@ export default async function AdminContentProjectsPage() {
     redirect('/admin/login?error=unauthorized')
   }
 
-  const stats = await safeLoad('project stats', getProjectStats, EMPTY_PROJECT_STATS)
+  const [stats, pathAnalytics] = await Promise.all([
+    safeLoad('project stats', getProjectStats, EMPTY_PROJECT_STATS),
+    safeLoad<Record<string, AnalyticsConversionMetric>>('case path analytics', () => loadConversionPathAnalytics(30), {}),
+  ])
+  const casePathMetric = pathAnalytics.cases ?? EMPTY_CASE_PATH_METRIC
   const adminRole: AdminRole = role
 
   return (
@@ -818,7 +850,7 @@ export default async function AdminContentProjectsPage() {
       <Hero stats={stats} />
       <div className="space-y-8">
         <StatusGrid stats={stats} />
-        <CaseConversionPanel stats={stats} />
+        <CaseConversionPanel stats={stats} casePathMetric={casePathMetric} />
         <TodoPanel stats={stats} />
         <GlobalStatusPanel stats={stats} />
         <ActionPanel />
