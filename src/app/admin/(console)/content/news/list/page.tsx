@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminPageHero } from '@/components/admin/AdminUI'
 import NewsListClient from '@/components/admin/NewsListClient'
+import { pool } from '@/lib/db'
 import { listNews, listNewsCategories, type NewsCategoryRow, type NewsRow, type NewsStatus } from '@/lib/news-db'
 import {
   EMPTY_NEWS_STATS,
@@ -46,11 +47,43 @@ type NewsPriorityItem = {
   score: number
 }
 
+type NewsIssueSummary = {
+  cover: number
+  body: number
+  excerpt: number
+  category: number
+  seo: number
+  scheduled: number
+}
+
 type ActiveFilterChip = {
   label: string
   value: string
   href: string
 }
+
+const EMPTY_NEWS_ISSUE_SUMMARY: NewsIssueSummary = {
+  cover: 0,
+  body: 0,
+  excerpt: 0,
+  category: 0,
+  seo: 0,
+  scheduled: 0,
+}
+
+const EMPTY_NEWS_CONTENT_SQL = `(
+  {column} IS NULL
+  OR {column} IN (
+    '{}'::jsonb,
+    '[]'::jsonb,
+    'null'::jsonb,
+    '{"type":"doc","content":[]}'::jsonb
+  )
+)`
+
+const MISSING_ZH_CONTENT_SQL = EMPTY_NEWS_CONTENT_SQL.replaceAll('{column}', 'content_zh')
+const MISSING_EN_CONTENT_SQL = EMPTY_NEWS_CONTENT_SQL.replaceAll('{column}', 'content_en')
+const ACTIVE_NEWS_SQL = 'deleted_at IS NULL'
 
 function firstParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value
@@ -68,6 +101,10 @@ function formatNumber(value: number) {
 function formatPercent(value: number, total: number) {
   if (total <= 0) return '0%'
   return `${Math.round((value / total) * 100)}%`
+}
+
+function parseCount(value: string | undefined) {
+  return parseInt(value ?? '0', 10)
 }
 
 function createHref(filters: NewsFilterState, patch: Partial<NewsFilterState & { clearSearch: boolean }>) {
@@ -234,6 +271,55 @@ function countPageIssue(rows: NewsRow[], predicate: (issues: string[], item: New
   return rows.filter((item) => predicate(getNewsIssues(item), item)).length
 }
 
+async function getNewsIssueSummary(): Promise<NewsIssueSummary> {
+  const res = await pool.query<Record<keyof NewsIssueSummary, string>>(
+    `SELECT
+       COUNT(*) FILTER (
+         WHERE ${ACTIVE_NEWS_SQL}
+           AND NULLIF(BTRIM(COALESCE(cover_image_url, '')), '') IS NULL
+       )::text AS cover,
+       COUNT(*) FILTER (
+         WHERE ${ACTIVE_NEWS_SQL}
+           AND (${MISSING_ZH_CONTENT_SQL} OR ${MISSING_EN_CONTENT_SQL})
+       )::text AS body,
+       COUNT(*) FILTER (
+         WHERE ${ACTIVE_NEWS_SQL}
+           AND (
+             NULLIF(BTRIM(COALESCE(excerpt_zh, '')), '') IS NULL
+             OR NULLIF(BTRIM(COALESCE(excerpt_en, '')), '') IS NULL
+           )
+       )::text AS excerpt,
+       COUNT(*) FILTER (
+         WHERE ${ACTIVE_NEWS_SQL}
+           AND category_id IS NULL
+       )::text AS category,
+       COUNT(*) FILTER (
+         WHERE ${ACTIVE_NEWS_SQL}
+           AND (
+             NULLIF(BTRIM(COALESCE(seo_title_zh, '')), '') IS NULL
+             OR NULLIF(BTRIM(COALESCE(seo_title_en, '')), '') IS NULL
+             OR NULLIF(BTRIM(COALESCE(seo_description_zh, '')), '') IS NULL
+             OR NULLIF(BTRIM(COALESCE(seo_description_en, '')), '') IS NULL
+           )
+       )::text AS seo,
+       COUNT(*) FILTER (
+         WHERE ${ACTIVE_NEWS_SQL}
+           AND status = 'draft'
+           AND scheduled_at IS NOT NULL
+       )::text AS scheduled
+     FROM news`,
+  )
+  const row = res.rows[0]
+  return {
+    cover: parseCount(row?.cover),
+    body: parseCount(row?.body),
+    excerpt: parseCount(row?.excerpt),
+    category: parseCount(row?.category),
+    seo: parseCount(row?.seo),
+    scheduled: parseCount(row?.scheduled),
+  }
+}
+
 function NewsListControlStrip({
   filters,
   categories,
@@ -380,49 +466,63 @@ function NewsControlStat({ label, value, detail }: { label: string; value: strin
   )
 }
 
-function NewsOperationsMatrix({ stats, rows }: { stats: NewsStats; rows: NewsRow[] }) {
+function NewsOperationsMatrix({
+  stats,
+  issueSummary,
+  rows,
+}: {
+  stats: NewsStats
+  issueSummary: NewsIssueSummary
+  rows: NewsRow[]
+}) {
   const priorityItems = buildNewsPriorityItems(rows)
   const signals = [
     {
       key: 'cover',
       label: '封面缺口',
       detail: '影响列表和详情首屏展示',
-      count: countPageIssue(rows, (issues) => issues.includes('缺封面')),
+      count: issueSummary.cover,
+      pageCount: countPageIssue(rows, (issues) => issues.includes('缺封面')),
       href: '/admin/content/news#todo',
     },
     {
       key: 'body',
       label: '正文缺口',
       detail: '中英文正文缺失',
-      count: countPageIssue(rows, (issues) => issues.includes('缺中文正文') || issues.includes('缺英文正文')),
+      count: issueSummary.body,
+      pageCount: countPageIssue(rows, (issues) => issues.includes('缺中文正文') || issues.includes('缺英文正文')),
       href: '/admin/content/news#todo',
     },
     {
       key: 'excerpt',
       label: '摘要缺口',
       detail: '中英文摘要缺失',
-      count: countPageIssue(rows, (issues) => issues.includes('缺中文摘要') || issues.includes('缺英文摘要')),
+      count: issueSummary.excerpt,
+      pageCount: countPageIssue(rows, (issues) => issues.includes('缺中文摘要') || issues.includes('缺英文摘要')),
       href: '/admin/content/news#todo',
     },
     {
       key: 'category',
       label: '分类缺口',
       detail: '未绑定新闻分类',
-      count: countPageIssue(rows, (issues) => issues.includes('未分类')),
+      count: issueSummary.category,
+      pageCount: countPageIssue(rows, (issues) => issues.includes('未分类')),
       href: '/admin/content/news/categories',
     },
     {
       key: 'seo',
       label: 'SEO 缺口',
       detail: '搜索标题或描述缺失',
-      count: countPageIssue(rows, (issues) => issues.includes('缺 SEO')),
+      count: issueSummary.seo,
+      pageCount: countPageIssue(rows, (issues) => issues.includes('缺 SEO')),
       href: '/admin/content/news#b3-3-plan',
     },
     {
       key: 'scheduled',
       label: '定时排期',
       detail: '草稿但已有 scheduled_at',
-      count: rows.filter(isScheduledNews).length,
+      count: issueSummary.scheduled,
+      pageCount: rows.filter(isScheduledNews).length,
       href: '/admin/content/news/list?schedule=scheduled',
     },
   ]
@@ -435,7 +535,7 @@ function NewsOperationsMatrix({ stats, rows }: { stats: NewsStats; rows: NewsRow
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">News Operations</p>
             <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻内容运营矩阵</h2>
             <p className="mt-1 text-sm leading-6 text-[#61767D]">
-              先扫发布、草稿、排期和内容缺口，再进入列表筛选、分类治理或单篇编辑。
+              主数字按全库统计，先扫发布、草稿、排期和内容缺口，再进入列表筛选、分类治理或单篇编辑。
             </p>
           </div>
           <Link
@@ -465,6 +565,9 @@ function NewsOperationsMatrix({ stats, rows }: { stats: NewsStats; rows: NewsRow
                 <span className="min-w-0">
                   <span className="block text-sm font-bold text-[#1E2C31]">{signal.label}</span>
                   <span className="mt-1 block text-xs leading-5 text-[#61767D]">{signal.detail}</span>
+                  <span className="mt-1 block text-[11px] leading-5 text-[#8A9EA4]">
+                    本页命中 {formatNumber(signal.pageCount)}
+                  </span>
                 </span>
                 <span className={`rounded-md px-2 py-1 text-xs font-bold ${
                   signal.count > 0 ? 'bg-[#FFF2E7] text-[#E36F2C]' : 'bg-emerald-50 text-emerald-700'
@@ -594,7 +697,7 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
     page,
   }
 
-  const [{ rows, total }, categories, stats] = await Promise.all([
+  const [{ rows, total }, categories, stats, issueSummary] = await Promise.all([
     listNews({
       status,
       search,
@@ -608,6 +711,7 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
     })),
     listNewsCategories().catch(() => []),
     safeLoad('news stats', () => getNewsStats(), EMPTY_NEWS_STATS),
+    safeLoad('news issue summary', () => getNewsIssueSummary(), EMPTY_NEWS_ISSUE_SUMMARY),
   ])
 
   return (
@@ -639,7 +743,7 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
           total={total}
           rowsCount={rows.length}
         />
-        <NewsOperationsMatrix stats={stats} rows={rows} />
+        <NewsOperationsMatrix stats={stats} issueSummary={issueSummary} rows={rows} />
         <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
           <NewsListClient
             initialRows={rows}
