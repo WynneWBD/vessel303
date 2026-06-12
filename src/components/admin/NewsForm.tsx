@@ -27,10 +27,12 @@ type NewsCategoryOption = Pick<
   'id' | 'slug' | 'title_zh' | 'title_en' | 'news_count'
 >
 
+type NewsBasePath = '/admin/news' | '/admin/content/news'
+
 interface Props {
   initialData?: NewsRow
   mode: 'create' | 'edit'
-  basePath?: '/admin/news' | '/admin/content/news'
+  basePath?: NewsBasePath
   initialCategories?: NewsCategoryOption[]
 }
 
@@ -464,7 +466,7 @@ function NewsReleaseIssueLedger({ issues }: { issues: NewsReleaseIssue[] }) {
   const reviewCount = issues.filter((issue) => issue.tone === 'medium').length
 
   return (
-    <section className="mt-4 overflow-hidden rounded-md border border-[#D8E7E8] bg-white">
+    <section id="news-edit-release-ledger" className="mt-4 overflow-hidden rounded-md border border-[#D8E7E8] bg-white">
       <div className="flex flex-col gap-3 border-b border-[#D8E7E8] px-4 py-3 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Release Ledger</p>
@@ -555,6 +557,7 @@ function NewsFormSidebar({
   categoryLabel,
   previewHref,
   previewLabel,
+  basePath,
 }: {
   sectionProgress: NewsFormSectionProgress[]
   completedSectionCount: number
@@ -566,6 +569,7 @@ function NewsFormSidebar({
   categoryLabel: string
   previewHref: string
   previewLabel: string
+  basePath: NewsBasePath
 }) {
   const issueCount = completeness.issues.length
   const completionPercent = sectionProgress.length > 0
@@ -614,6 +618,31 @@ function NewsFormSidebar({
       issueCount: groupIssueCount,
     }
   })
+  const workflowLinks = basePath === '/admin/content/news'
+    ? [
+        {
+          label: '列表治理',
+          detail: '回到筛选、批量转分类和缺口矩阵',
+          href: '/admin/content/news/list#news-list-governance',
+        },
+        {
+          label: '发布台账',
+          detail: '回到列表页发布处理队列',
+          href: '/admin/content/news/list#news-release-ledger',
+        },
+        {
+          label: '运营总览',
+          detail: '查看新闻全局发布与待补状态',
+          href: '/admin/content/news#news-operations-hub',
+        },
+      ]
+    : [
+        {
+          label: '新闻列表',
+          detail: '返回旧版新闻列表',
+          href: basePath,
+        },
+      ]
 
   return (
     <aside className="space-y-4 xl:sticky xl:top-36 xl:self-start">
@@ -741,7 +770,7 @@ function NewsFormSidebar({
       <section className="rounded-lg border border-[#E5DED4] bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-sm font-bold text-[#2C2A28]">新闻发布矩阵</h3>
-          <span className="text-xs font-semibold text-[#8A8580]">300 式核对</span>
+          <span className="text-xs font-semibold text-[#8A8580]">运营核对</span>
         </div>
         <div className="mt-3 grid grid-cols-1 gap-2">
           {readinessGroups.map((group) => (
@@ -763,6 +792,26 @@ function NewsFormSidebar({
                 </span>
               </div>
             </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-[#E5DED4] bg-white p-4 shadow-sm">
+        <h3 className="text-sm font-bold text-[#2C2A28]">运营回路</h3>
+        <p className="mt-1 text-xs leading-5 text-[#6B6560]">处理完单篇字段后，回到列表和总览继续排队治理。</p>
+        <div className="mt-3 space-y-2">
+          {workflowLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="flex items-center justify-between gap-3 rounded-md border border-[#E5DED4] px-3 py-2.5 hover:border-[#E36F2C]/60 hover:bg-[#FFF7F0]"
+            >
+              <span className="min-w-0">
+                <span className="block text-xs font-bold text-[#2C2A28]">{link.label}</span>
+                <span className="mt-0.5 block text-[11px] leading-4 text-[#6B6560]">{link.detail}</span>
+              </span>
+              <ExternalLink size={13} className="shrink-0 text-[#8A8580]" />
+            </Link>
           ))}
         </div>
       </section>
@@ -1166,11 +1215,11 @@ export default function NewsForm({
             <div>
               <label className="text-sm font-medium text-[#2C2A28]">所属分类</label>
               <p className="mt-1 text-xs leading-5 text-[#6B6560]">
-                B3-5 已接入真实分类字段；保存草稿、保存更新和发布前保存都会同步所属分类。
+                分类字段已接入保存流程；保存草稿、保存更新和发布前保存都会同步所属分类。
               </p>
             </div>
             <Badge className="border-[#D8E7E8] bg-[#F7FAFA] text-xs text-[#61767D]">
-              已启用保存
+              分类已启用
             </Badge>
           </div>
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
@@ -1209,11 +1258,11 @@ export default function NewsForm({
             <div>
               <label className="text-sm font-medium text-[#2C2A28]">定时发布</label>
               <p className="mt-1 text-xs leading-5 text-[#6B6560]">
-                B3-10 先保存单篇新闻的计划发布时间，并在列表里形成定时队列；自动执行器后续单独上线。
+                计划发布时间会先保存到单篇新闻，并在列表里形成定时队列；自动执行器后续单独上线。
               </p>
             </div>
             <Badge className="border-sky-200 bg-sky-50 text-xs text-sky-700">
-              B3-10
+              定时草稿
             </Badge>
           </div>
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
@@ -1248,11 +1297,11 @@ export default function NewsForm({
             <div>
               <label className="text-sm font-medium text-[#2C2A28]">SEO 字段</label>
               <p className="mt-1 text-xs leading-5 text-[#6B6560]">
-                B3-11 先接入单篇新闻的搜索标题和描述；留空时前台继续使用新闻标题和摘要作为兜底。
+                单篇新闻可维护搜索标题和描述；留空时前台继续使用新闻标题和摘要作为兜底。
               </p>
             </div>
             <Badge className="border-violet-200 bg-violet-50 text-xs text-violet-700">
-              B3-11
+              SEO 已启用
             </Badge>
           </div>
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -1396,6 +1445,7 @@ export default function NewsForm({
           categoryLabel={categoryLabel}
           previewHref={previewHref}
           previewLabel={previewLabel}
+          basePath={basePath}
         />
       </div>
 
