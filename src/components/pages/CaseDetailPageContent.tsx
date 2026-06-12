@@ -139,6 +139,7 @@ function CaseDecisionSummary({
             ) : null}
             <a
               href={inquiryHref}
+              data-analytics-cta="true"
               className="inline-flex min-h-10 items-center gap-2 border border-[#E36F2C] bg-[#E36F2C] px-3 text-xs font-black uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#C75D22]"
             >
               {inquiryLabel}
@@ -314,7 +315,7 @@ export default function CaseDetailPageContent({
             {(inquiryLabels.submit || galleryTitle) ? (
               <div className="mt-7 flex flex-wrap gap-3">
                 {inquiryLabels.submit ? (
-                  <a href="#case-inquiry" className="inline-flex min-h-12 items-center justify-center border border-white bg-white px-5 text-sm font-bold uppercase tracking-[0.12em] text-[#201B17] transition hover:bg-[#E36F2C] hover:text-white">
+                  <a href="#case-inquiry" data-analytics-cta="true" className="inline-flex min-h-12 items-center justify-center border border-white bg-white px-5 text-sm font-bold uppercase tracking-[0.12em] text-[#201B17] transition hover:bg-[#E36F2C] hover:text-white">
                     {inquiryLabels.submit}
                   </a>
                 ) : null}
