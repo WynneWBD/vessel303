@@ -40,6 +40,7 @@ export const metadata = { title: '网站信息 - VESSEL' }
 
 type AdminRole = 'admin' | 'operator'
 type ReadinessState = 'active' | 'partial' | 'planned' | 'hold'
+type SettingsGovernanceTone = 'warning' | 'review' | 'safe' | 'hold'
 
 type SettingSnapshot = {
   tableReady: boolean
@@ -65,6 +66,18 @@ type SearchItem = {
   status: string
   state: ReadinessState
   detail: string
+  Icon: LucideIcon
+}
+
+type SettingsGovernanceRow = {
+  key: string
+  title: string
+  owner: string
+  stage: string
+  signal: string
+  coverage: string
+  tone: SettingsGovernanceTone
+  href?: string
   Icon: LucideIcon
 }
 
@@ -293,6 +306,82 @@ function getSearchItems(): SearchItem[] {
   ]
 }
 
+function settingsGovernanceToneClass(tone: SettingsGovernanceTone): string {
+  if (tone === 'warning') return 'border-l-[#E36F2C] bg-[#FFF7EF]'
+  if (tone === 'review') return 'border-l-[#1889B6] bg-[#F3FBFC]'
+  if (tone === 'hold') return 'border-l-[#6B625B] bg-[#F5F2ED]'
+  return 'border-l-emerald-600 bg-emerald-50/60'
+}
+
+function settingsGovernanceBadgeClass(tone: SettingsGovernanceTone): string {
+  if (tone === 'warning') return 'bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'review') return 'bg-[#EAF6F8] text-[#1889B6]'
+  if (tone === 'hold') return 'bg-[#F5F2ED] text-[#6B625B]'
+  return 'bg-emerald-50 text-emerald-700'
+}
+
+function buildSettingsGovernanceRows(snapshot: SettingSnapshot, searchItems: SearchItem[]): SettingsGovernanceRow[] {
+  const infoRows = SITE_INFO_ITEMS.map((item) => {
+    const present = item.keys.filter((key) => snapshot.presentKeys.has(key)).length
+    const missing = item.keys.filter((key) => !snapshot.presentKeys.has(key))
+    const complete = present === item.keys.length
+
+    let tone: SettingsGovernanceTone = 'safe'
+    let stage = stateLabel(item.state)
+    let signal = item.detail
+
+    if (item.state === 'hold') {
+      tone = 'hold'
+      stage = '专项暂缓'
+    } else if (!complete && item.state === 'active') {
+      tone = 'warning'
+      stage = '字段缺口'
+      signal = `缺少字段：${missing.join(', ')}`
+    } else if (item.state === 'planned' || item.state === 'partial') {
+      tone = 'review'
+    }
+
+    return {
+      key: `info:${item.title}`,
+      title: item.title,
+      owner: item.owner,
+      stage,
+      signal,
+      coverage: `${present}/${item.keys.length} 字段`,
+      tone,
+      href: item.href,
+      Icon: item.Icon,
+    }
+  })
+
+  const searchRows = searchItems.map((item) => {
+    let tone: SettingsGovernanceTone = 'safe'
+    if (item.state === 'hold') tone = 'hold'
+    else if (item.state === 'planned' || item.state === 'partial') tone = 'review'
+
+    return {
+      key: `search:${item.title}`,
+      title: item.title,
+      owner: '搜索 / 三方代码边界',
+      stage: stateLabel(item.state),
+      signal: item.detail,
+      coverage: item.status,
+      tone,
+      Icon: item.Icon,
+    }
+  })
+
+  const score = (row: SettingsGovernanceRow) => {
+    if (row.tone === 'warning') return 400
+    if (row.tone === 'review') return 300
+    if (row.tone === 'hold') return 200
+    return 100
+  }
+
+  return [...infoRows, ...searchRows]
+    .sort((a, b) => score(b) - score(a) || a.title.localeCompare(b.title))
+}
+
 function SectionTitle({ title, detail }: { title: string; detail?: string }) {
   return (
     <div>
@@ -421,6 +510,124 @@ function AlignmentPanel() {
   )
 }
 
+function SettingsGovernanceLedger({
+  snapshot,
+  searchItems,
+}: {
+  snapshot: SettingSnapshot
+  searchItems: SearchItem[]
+}) {
+  const rows = buildSettingsGovernanceRows(snapshot, searchItems)
+  const reviewCount = rows.filter((row) => row.tone === 'review').length
+  const warningCount = rows.filter((row) => row.tone === 'warning').length
+  const holdCount = rows.filter((row) => row.tone === 'hold').length
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-[#1E2C31]">网站信息治理台账</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把网站信息、搜索、三方代码和受保护配置统一排成处理清单；运营先看接管阶段和字段覆盖，再进入来源页。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs font-semibold">
+          <span className="rounded-full bg-[#FFF2E7] px-3 py-1 text-[#E36F2C]">优先 {warningCount}</span>
+          <span className="rounded-full bg-[#EAF6F8] px-3 py-1 text-[#1889B6]">复核 {reviewCount}</span>
+          <span className="rounded-full bg-[#F5F2ED] px-3 py-1 text-[#6B625B]">暂缓 {holdCount}</span>
+        </div>
+      </div>
+
+      <div className="hidden overflow-x-auto xl:block">
+        <table className="min-w-full divide-y divide-[#E6EEEE] text-left text-sm">
+          <thead className="bg-[#F7FAFA] text-xs font-bold uppercase tracking-wide text-[#8A9EA4]">
+            <tr>
+              <th className="px-5 py-3">项目 / owner</th>
+              <th className="px-4 py-3">阶段</th>
+              <th className="px-4 py-3">处理信号</th>
+              <th className="px-4 py-3">字段 / 状态</th>
+              <th className="px-5 py-3 text-right">入口</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#E6EEEE]">
+            {rows.map((row) => {
+              const Icon = row.Icon
+              return (
+                <tr key={row.key} className={`border-l-4 ${settingsGovernanceToneClass(row.tone)}`}>
+                  <td className="px-5 py-4">
+                    <div className="flex min-w-0 items-start gap-3">
+                      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-white text-[#1889B6]">
+                        <Icon size={15} />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-bold text-[#1E2C31]">{row.title}</p>
+                        <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{row.owner}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className={`rounded-full px-2 py-1 text-xs font-bold ${settingsGovernanceBadgeClass(row.tone)}`}>
+                      {row.stage}
+                    </span>
+                  </td>
+                  <td className="max-w-2xl px-4 py-4 text-sm leading-6 text-[#61767D]">{row.signal}</td>
+                  <td className="px-4 py-4 text-xs font-semibold text-[#61767D]">{row.coverage}</td>
+                  <td className="px-5 py-4 text-right">
+                    {row.href ? (
+                      <Link
+                        href={row.href}
+                        className="inline-flex h-8 items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]"
+                      >
+                        查看来源
+                        <ArrowRight size={13} />
+                      </Link>
+                    ) : (
+                      <span className="text-xs font-semibold text-[#8A9EA4]">只读状态</span>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 p-4 xl:hidden">
+        {rows.map((row) => {
+          const Icon = row.Icon
+          return (
+            <article key={row.key} className={`rounded-md border border-[#D8E7E8] border-l-4 p-4 ${settingsGovernanceToneClass(row.tone)}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-white text-[#1889B6]">
+                    <Icon size={15} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-bold text-[#1E2C31]">{row.title}</p>
+                    <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{row.owner}</p>
+                  </div>
+                </div>
+                <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-bold ${settingsGovernanceBadgeClass(row.tone)}`}>
+                  {row.stage}
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-[#61767D]">{row.signal}</p>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-[#61767D]">
+                <span className="rounded-md bg-white px-2 py-1">{row.coverage}</span>
+                {row.href ? (
+                  <Link href={row.href} className="rounded-md bg-white px-2 py-1 text-[#1889B6]">
+                    查看来源
+                  </Link>
+                ) : null}
+              </div>
+            </article>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 function GuardrailPanel() {
   const guardrails = [
     '不开放第三方 HTML / JS 代码粘贴保存，避免注入和线上事故。',
@@ -510,6 +717,8 @@ export default async function AdminSiteSettingsPage() {
       </AdminPageHero>
 
       <AlignmentPanel />
+
+      <SettingsGovernanceLedger snapshot={snapshot} searchItems={searchItems} />
 
       <section className="space-y-4">
         <SectionTitle title="网站信息接管" detail="字段是否存在只做状态展示；真实保存仍走 admin-only 站点设置页。" />
