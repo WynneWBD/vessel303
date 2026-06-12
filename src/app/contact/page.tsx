@@ -5,6 +5,14 @@ import { getPublishedPageModule, listPublishedPageModules } from '@/lib/page-mod
 
 export const revalidate = 300
 
+type ContactPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
+}
+
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value
+}
+
 export async function generateMetadata() {
   const heroModule = await getPublishedPageModule('contact', 'hero').catch((err) => {
     console.error('Failed to load contact metadata module:', err)
@@ -19,7 +27,9 @@ export async function generateMetadata() {
   })
 }
 
-export default async function ContactPage() {
+export default async function ContactPage({ searchParams }: ContactPageProps) {
+  const sp = await searchParams
+  const source = firstParam(sp?.source)?.trim().slice(0, 160) || null
   const [pageModules, faqRows] = await Promise.all([
     listPublishedPageModules('contact').catch((err) => {
       console.error('Failed to load contact page modules:', err)
@@ -41,5 +51,5 @@ export default async function ContactPage() {
       answer_en: item.body_en || item.summary_en || item.title_en,
     }))
 
-  return <ContactPageContent pageModules={pageModules} purchaseFaqItems={purchaseFaqItems} />
+  return <ContactPageContent pageModules={pageModules} purchaseFaqItems={purchaseFaqItems} initialSource={source} />
 }

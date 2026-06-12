@@ -88,8 +88,20 @@ function buildMessage(form: FormState, source: string, labels: FormLabels) {
 function resolveSubmitSource(source: string) {
   if (typeof window === 'undefined') return source
   const urlSource = new URLSearchParams(window.location.search).get('source')
-  if (!urlSource || source.includes(urlSource)) return source
-  return `${source}:${urlSource.replace(/[^a-zA-Z0-9:_-]/g, '_')}`
+  if (!urlSource) return source
+  const normalizedUrlSource = urlSource.replace(/[^a-zA-Z0-9:_-]/g, '_').slice(0, 160)
+  const compactUrlSource = urlSource
+    .replace(/[^a-zA-Z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 160)
+  if (
+    source.includes(urlSource) ||
+    source.includes(normalizedUrlSource) ||
+    source.includes(compactUrlSource)
+  ) {
+    return source
+  }
+  return `${source}:${normalizedUrlSource}`
 }
 
 export default function ConversionInquiryForm({

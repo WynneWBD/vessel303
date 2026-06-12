@@ -29,6 +29,7 @@ type Props = {
     answer_zh: string
     answer_en: string
   }>
+  initialSource?: string | null
 }
 
 function formLabelsFromModule(pageModule: PublicPageModule | null, lang: 'en' | 'zh'): FormLabels {
@@ -54,6 +55,61 @@ function sourceFromUrl(value: string | null) {
   return buildLeadSource('contact', 'main', 'inquiry_form', value)
 }
 
+function sanitizeSource(value: string | null) {
+  const clean = String(value ?? '').trim()
+  if (!clean) return null
+  return clean.slice(0, 160)
+}
+
+function sourceContext(value: string | null, lang: 'en' | 'zh') {
+  const source = sanitizeSource(value)
+  if (!source) return null
+  const zh = lang === 'zh'
+  const lower = source.toLowerCase()
+
+  if (lower.startsWith('news')) {
+    return {
+      title: zh ? '来自新闻动态' : 'From a news update',
+      detail: zh
+        ? '如果这条动态与你的项目相关，可以在表单里补充产品、场景或采购时间。'
+        : 'If the update is relevant, add product, scenario, or timing context in the form.',
+      href: '/news',
+      hrefLabel: zh ? '返回新闻' : 'Back to news',
+    }
+  }
+
+  if (lower.startsWith('product') || lower.includes('products')) {
+    return {
+      title: zh ? '来自产品路径' : 'From a product path',
+      detail: zh
+        ? '团队会结合你查看的产品路径判断型号、配置和数量需求。'
+        : 'The team can use the product path to discuss model, configuration, and quantity needs.',
+      href: '/products',
+      hrefLabel: zh ? '返回产品' : 'Back to products',
+    }
+  }
+
+  if (lower.startsWith('case') || lower.includes('cases')) {
+    return {
+      title: zh ? '来自项目案例' : 'From a project case',
+      detail: zh
+        ? '可以补充项目所在地、场地类型、预计规模和交付时间。'
+        : 'Add location, site type, approximate scale, and delivery timing if available.',
+      href: '/cases',
+      hrefLabel: zh ? '返回案例' : 'Back to cases',
+    }
+  }
+
+  return {
+    title: zh ? '来自站内咨询入口' : 'From a site inquiry path',
+    detail: zh
+      ? '团队会参考本次访问路径，更快理解你的咨询背景。'
+      : 'The team can use this context to understand your inquiry path faster.',
+    href: '/products',
+    hrefLabel: zh ? '查看产品' : 'View products',
+  }
+}
+
 function isDirectContactHref(href: string | undefined) {
   return Boolean(
     href?.startsWith('mailto:') ||
@@ -62,7 +118,7 @@ function isDirectContactHref(href: string | undefined) {
   )
 }
 
-export default function ContactPageContent({ pageModules, purchaseFaqItems }: Props) {
+export default function ContactPageContent({ pageModules, purchaseFaqItems, initialSource = null }: Props) {
   const { lang } = useLanguage()
   const modules = moduleMap(pageModules)
   const heroModule = modules.get('hero') ?? null
@@ -70,7 +126,8 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems }: Pr
   const formModule = modules.get('form') ?? null
   const backupModule = modules.get('backup') ?? null
   const faqPanelModule = modules.get('faq-panel') ?? null
-  const source = sourceFromUrl(null)
+  const source = sourceFromUrl(initialSource)
+  const context = sourceContext(initialSource, lang)
 
   const heroTitle = moduleTitle(heroModule, lang)
   const heroDescription = moduleDescription(heroModule, lang)
@@ -258,6 +315,22 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems }: Pr
                 </div>
               ) : null}
               <div className={hasSupportPanel ? 'lg:sticky lg:top-24' : undefined}>
+                {context ? (
+                  <div className="mb-4 border border-[#DADDE1] bg-white p-4 shadow-sm">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#147C94]">
+                      {lang === 'zh' ? '咨询来源' : 'Inquiry context'}
+                    </p>
+                    <h2 className="mt-2 text-base font-black text-[#1F2A31]">{context.title}</h2>
+                    <p className="mt-2 text-sm leading-6 text-[#5C6670]">{context.detail}</p>
+                    <Link
+                      href={context.href}
+                      prefetch={false}
+                      className="mt-3 inline-flex min-h-9 items-center border border-[#DADDE1] px-3 text-xs font-bold text-[#1F2A31] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
+                    >
+                      {context.hrefLabel}
+                    </Link>
+                  </div>
+                ) : null}
                 <ConversionInquiryForm
                   source={source}
                   inquiryType={formInquiryType}
