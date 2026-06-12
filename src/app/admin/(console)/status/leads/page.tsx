@@ -36,6 +36,23 @@ type FunnelMatrixRow = {
   actionLabel: string
 }
 
+type LeadResponseTone = 'critical' | 'warning' | 'review' | 'ready'
+
+type LeadResponseRow = {
+  key: string
+  priority: string
+  stage: string
+  title: string
+  owner: string
+  metric: string
+  evidence: string
+  impact: string
+  href: string
+  actionLabel: string
+  tone: LeadResponseTone
+  Icon: typeof STATUS_ICONS.AlertCircle
+}
+
 export default async function AdminStatusLeadsPage() {
   const { role, email } = await getStatusAccess()
   const overview = await loadStatusOverview()
@@ -93,6 +110,8 @@ export default async function AdminStatusLeadsPage() {
         </div>
 
         <LeadFunnelOperationsMatrix leads={leads} />
+
+        <LeadResponseOperationsLedger leads={leads} />
 
         <section className="space-y-4">
           <SectionTitle title="漏斗状态" detail="按现有后台筛选入口处理，不在数据中心直接改状态。" />
@@ -154,6 +173,205 @@ export default async function AdminStatusLeadsPage() {
 function percent(part: number, total: number) {
   if (total <= 0) return 0
   return Math.round((part / total) * 100)
+}
+
+function buildLeadResponseRows(leads: LeadMetrics): LeadResponseRow[] {
+  const activePipeline = leads.new + leads.contacting + leads.quoted
+  const closed = leads.won + leads.lost
+  const closeRate = percent(closed, leads.total)
+  const wonRate = percent(leads.won, leads.total)
+
+  return [
+    {
+      key: 'first-response',
+      priority: leads.new > 0 ? 'P0' : 'OK',
+      stage: '首次响应',
+      title: '新线索待处理',
+      owner: '客户与线索',
+      metric: `${formatNumber(leads.new)} 条`,
+      evidence: `近 7 天新增 ${formatNumber(leads.recent7)} 条 / 近 30 天新增 ${formatNumber(leads.recent30)} 条`,
+      impact: '新询盘进入后台后应先确认需求、来源和负责人，避免第一响应断点。',
+      href: '/admin/customers/leads?status=new',
+      actionLabel: '处理新线索',
+      tone: leads.new > 0 ? 'critical' : 'ready',
+      Icon: STATUS_ICONS.Inbox,
+    },
+    {
+      key: 'stale-followup',
+      priority: leads.staleFollowups > 0 ? 'P0' : 'OK',
+      stage: '跟进断点',
+      title: '超 7 天未更新',
+      owner: '销售跟进',
+      metric: `${formatNumber(leads.staleFollowups)} 条`,
+      evidence: `覆盖新线索与跟进中线索；当前跟进中 ${formatNumber(leads.contacting)} 条`,
+      impact: '先处理超时队列，再看普通跟进，减少高意向线索沉没。',
+      href: '/admin/customers/leads?attention=overdue',
+      actionLabel: '查看超时队列',
+      tone: leads.staleFollowups > 0 ? 'critical' : 'ready',
+      Icon: STATUS_ICONS.AlertCircle,
+    },
+    {
+      key: 'active-pipeline',
+      priority: activePipeline > 0 ? 'P1' : 'OK',
+      stage: '活跃商机',
+      title: '活跃漏斗推进',
+      owner: '运营负责人',
+      metric: `${formatNumber(activePipeline)} 条`,
+      evidence: `新线索 ${formatNumber(leads.new)} / 跟进中 ${formatNumber(leads.contacting)} / 已报价 ${formatNumber(leads.quoted)}`,
+      impact: '把未收口线索集中成推进池，按状态进入客户线索页处理。',
+      href: '/admin/customers/leads?attention=active',
+      actionLabel: '查看活跃商机',
+      tone: activePipeline > 0 ? 'warning' : 'ready',
+      Icon: STATUS_ICONS.ListChecks,
+    },
+    {
+      key: 'quoted-review',
+      priority: leads.quoted > 0 ? 'P2' : 'OK',
+      stage: '报价回访',
+      title: '已报价线索复盘',
+      owner: '销售跟进',
+      metric: `${formatNumber(leads.quoted)} 条`,
+      evidence: `成交 ${formatNumber(leads.won)} / 关闭 ${formatNumber(leads.lost)} / 成交占比 ${wonRate}%`,
+      impact: '报价后应复核客户反馈、预算、交付窗口和下一次动作。',
+      href: '/admin/customers/leads?status=quoted',
+      actionLabel: '查看已报价',
+      tone: leads.quoted > 0 ? 'review' : 'ready',
+      Icon: STATUS_ICONS.BarChart3,
+    },
+    {
+      key: 'source-conversion',
+      priority: leads.recent30 > 0 ? 'P2' : 'P3',
+      stage: '来源复盘',
+      title: '近 30 天线索来源',
+      owner: '增长分析',
+      metric: `${formatNumber(leads.recent30)} 条`,
+      evidence: `近 7 天 ${formatNumber(leads.recent7)} 条；需结合转化路径页看入口质量`,
+      impact: '数据中心只看总量不够，应从来源、入口页和表单路径判断转化质量。',
+      href: '/admin/site/conversion',
+      actionLabel: '查看转化路径',
+      tone: leads.recent30 > 0 ? 'review' : 'ready',
+      Icon: STATUS_ICONS.BarChart3,
+    },
+    {
+      key: 'closed-archive',
+      priority: closed > 0 ? 'P3' : 'OK',
+      stage: '结果归档',
+      title: '成交与关闭沉淀',
+      owner: '运营复盘',
+      metric: `${formatNumber(closed)} 条`,
+      evidence: `已成交 ${formatNumber(leads.won)} / 已关闭 ${formatNumber(leads.lost)} / 收口率 ${closeRate}%`,
+      impact: '保留成交与关闭原因，用于复盘询盘质量，不在数据中心删除历史线索。',
+      href: '/admin/customers/leads?status=won',
+      actionLabel: '查看成交归档',
+      tone: closed > 0 ? 'review' : 'ready',
+      Icon: STATUS_ICONS.ListChecks,
+    },
+    {
+      key: 'operation-boundary',
+      priority: 'HOLD',
+      stage: '操作边界',
+      title: '状态更新仍在客户线索页完成',
+      owner: '系统边界',
+      metric: '只读',
+      evidence: '本页只聚合 leads 指标和跳转入口，不直接保存状态、备注、负责人或删除线索。',
+      impact: '避免数据中心变成第二套 CRM；所有写入继续走现有客户线索处理流程。',
+      href: '/admin/customers/leads',
+      actionLabel: '进入线索列表',
+      tone: 'review',
+      Icon: STATUS_ICONS.ListChecks,
+    },
+  ]
+}
+
+function LeadResponseOperationsLedger({ leads }: { leads: LeadMetrics }) {
+  const rows = buildLeadResponseRows(leads)
+  const blockingRows = rows.filter((row) => row.tone === 'critical')
+  const reviewRows = rows.filter((row) => row.tone === 'warning' || row.tone === 'review')
+  const activePipeline = leads.new + leads.contacting + leads.quoted
+
+  return (
+    <section className="space-y-4">
+      <SectionTitle
+        title="线索响应处理台账"
+        detail="先处理首次响应、跟进断点和活跃商机，再进入客户线索页更新状态；本页只读，不直接写入线索数据。"
+      />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
+          <FunnelSummary label="阻塞项" value={blockingRows.length} detail="新线索或超时跟进" warn={blockingRows.length > 0} />
+          <FunnelSummary label="待复盘项" value={reviewRows.length} detail="活跃商机、报价、来源、归档" warn={reviewRows.length > 0} />
+          <FunnelSummary label="活跃漏斗" value={activePipeline} detail="新线索 + 跟进中 + 已报价" warn={activePipeline > 0} />
+          <FunnelSummary label="近 30 天新增" value={leads.recent30} detail={`近 7 天 ${formatNumber(leads.recent7)} 条`} />
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-xs text-[#61767D]">
+                <th className="min-w-32 px-5 py-3 text-left font-semibold">优先级</th>
+                <th className="min-w-72 px-4 py-3 text-left font-semibold">处理事项</th>
+                <th className="min-w-40 px-4 py-3 text-left font-semibold">当前值</th>
+                <th className="min-w-80 px-4 py-3 text-left font-semibold">证据 / 影响</th>
+                <th className="min-w-32 px-5 py-3 text-right font-semibold">入口</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E6EEEE]">
+              {rows.map((row) => {
+                const Icon = row.Icon
+
+                return (
+                  <tr key={row.key} className="align-top transition hover:bg-[#FBFDFD]">
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${leadResponseBadgeClass(row.tone)}`}>
+                        {row.priority}
+                      </span>
+                      <p className="mt-2 text-xs font-semibold text-[#61767D]">{row.stage}</p>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex gap-3">
+                        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${leadResponseToneClass(row.tone)}`}>
+                          <Icon size={17} />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block font-semibold text-[#1E2C31]">{row.title}</span>
+                          <span className="mt-1 block text-xs leading-5 text-[#61767D]">{row.owner}</span>
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">{row.metric}</td>
+                    <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">
+                      <span className="block font-semibold text-[#1E2C31]">{row.evidence}</span>
+                      <span className="mt-1 block">{row.impact}</span>
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <Link
+                        href={row.href}
+                        className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#E36F2C]/50 hover:text-[#E36F2C]"
+                      >
+                        {row.actionLabel}
+                      </Link>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function leadResponseToneClass(tone: LeadResponseTone): string {
+  if (tone === 'critical') return 'bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'warning') return 'bg-[#FFF6EF] text-[#C75F18]'
+  if (tone === 'review') return 'bg-[#EAF6F8] text-[#1889B6]'
+  return 'bg-emerald-50 text-emerald-700'
+}
+
+function leadResponseBadgeClass(tone: LeadResponseTone): string {
+  if (tone === 'critical') return 'border-[#E36F2C]/35 bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'warning') return 'border-[#E36F2C]/25 bg-[#FFF6EF] text-[#C75F18]'
+  if (tone === 'review') return 'border-[#1889B6]/20 bg-[#EAF6F8] text-[#1889B6]'
+  return 'border-emerald-200 bg-emerald-50 text-emerald-700'
 }
 
 function buildFunnelMatrixRows(leads: LeadMetrics): FunnelMatrixRow[] {
