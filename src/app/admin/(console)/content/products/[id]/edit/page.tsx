@@ -37,6 +37,7 @@ import type {
 import {
   AlertTriangle,
   ArrowLeft,
+  BarChart3,
   CheckCircle2,
   FileText,
   ImageIcon,
@@ -47,7 +48,9 @@ import {
   SearchCheck,
   Settings2,
   SlidersHorizontal,
+  Sparkles,
   Tags,
+  UsersRound,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -125,6 +128,16 @@ type ProductReadinessItem = {
   Icon: LucideIcon
 }
 
+type ProductEditClosureEntry = {
+  key: string
+  label: string
+  value: string
+  detail: string
+  href: string
+  tone: ProductReadinessTone
+  Icon: LucideIcon
+}
+
 const EDIT_SECTIONS: EditSection[] = [
   {
     key: 'basic',
@@ -142,15 +155,15 @@ const EDIT_SECTIONS: EditSection[] = [
   },
   {
     key: 'commercial',
-    title: 'Business Terms',
-    detail: 'Price display and 300-style trade terms',
+    title: '商务条款',
+    detail: '价格展示、300 风格贸易条款',
     href: '#commercial',
     Icon: FileText,
   },
   {
     key: 'relations',
-    title: 'Keywords / Related',
-    detail: 'Keywords and related product picks',
+    title: '关键词 / 关联产品',
+    detail: '搜索关键词和关联推荐产品',
     href: '#relations',
     Icon: Tags,
   },
@@ -471,7 +484,7 @@ function buildProductReadinessItems(product: CatalogProductRow, maxUploadMb: num
       detail: published
         ? '保存后会直接影响公开产品页，先完成复核再提交。'
         : '当前不会公开展示，发布仍需表单内确认。',
-      meta: published ? routeInfo.publicHref : 'Draft only',
+      meta: published ? routeInfo.publicHref : '仅草稿',
       href: published ? routeInfo.publicHref : '#publish-check',
       tone: published ? 'warning' : 'ready',
       Icon: published ? AlertTriangle : CheckCircle2,
@@ -498,7 +511,7 @@ function buildProductReadinessItems(product: CatalogProductRow, maxUploadMb: num
       key: 'taxonomy',
       title: '分类属性',
       detail: formatIssueSummary(taxonomyIssues, '分类和筛选属性已具备'),
-      meta: `category ${product.category_id ?? '-'} / attributes ${attributeCount}`,
+      meta: `分类 ${product.category_id ?? '-'} / 属性 ${attributeCount}`,
       href: '#attributes',
       tone: taxonomyIssues.length > 0 ? 'warning' : 'ready',
       Icon: SlidersHorizontal,
@@ -507,7 +520,7 @@ function buildProductReadinessItems(product: CatalogProductRow, maxUploadMb: num
       key: 'seo',
       title: 'SEO 字段',
       detail: productSeoComplete(product) ? '中英文标题和摘要已具备' : '待补：中英文 SEO 标题或摘要',
-      meta: productSeoComplete(product) ? 'Search ready' : 'SEO incomplete',
+      meta: productSeoComplete(product) ? '搜索字段完整' : 'SEO 待补',
       href: '#seo',
       tone: productSeoComplete(product) ? 'ready' : 'warning',
       Icon: SearchCheck,
@@ -516,7 +529,7 @@ function buildProductReadinessItems(product: CatalogProductRow, maxUploadMb: num
       key: 'commerce',
       title: '商务与关联',
       detail: formatIssueSummary(commerceIssues, '价格、商务条款、关键词和相关产品已具备'),
-      meta: `${product.related_product_ids?.length ?? 0} related / ${product.keywords_zh?.length ?? 0} zh keywords`,
+      meta: `${product.related_product_ids?.length ?? 0} 个关联 / ${product.keywords_zh?.length ?? 0} 个中文关键词`,
       href: '#commercial',
       tone: commerceIssues.length > 0 ? 'warning' : 'ready',
       Icon: Tags,
@@ -525,7 +538,7 @@ function buildProductReadinessItems(product: CatalogProductRow, maxUploadMb: num
       key: 'details',
       title: '详情模块',
       detail: formatIssueSummary(detailIssues, '详情模块和买家资料链接已具备'),
-      meta: `${visibleDetailModuleCount} visible modules`,
+      meta: `${visibleDetailModuleCount} 个可见模块`,
       href: '#details',
       tone: detailIssues.length > 0 ? 'warning' : 'ready',
       Icon: Layers3,
@@ -556,6 +569,7 @@ function getSideNavGroups(product: CatalogProductRow): AdminSideNavGroup[] {
     {
       title: '产品治理',
       items: [
+        { key: 'product-edit-closure', label: '经营闭环', href: '#product-edit-closure', Icon: BarChart3 },
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
         { key: 'publish-flow', label: '发布审核', planned: true, Icon: SearchCheck },
@@ -654,7 +668,7 @@ function ProductPublishReadinessPanel({
     <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="grid grid-cols-1 border-b border-[#D8E7E8] lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="p-5">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">Publish Readiness</p>
+          <p className="text-xs font-bold text-[#1889B6]">发布复核</p>
           <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">发布影响复核台</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
             进入长表单前先复核公开影响、素材、双语内容、分类属性、SEO、商务信息和详情模块；这里只做运营提示，不新增保存或发布限制。
@@ -688,7 +702,7 @@ function ProductPublishReadinessPanel({
                 <item.Icon size={17} />
               </span>
               <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${readinessToneClass(item.tone)}`}>
-                {item.tone === 'ready' ? 'Ready' : item.tone === 'warning' ? '待处理' : 'Info'}
+                {item.tone === 'ready' ? '已完成' : item.tone === 'warning' ? '待处理' : '提示'}
               </span>
             </div>
             <h3 className="mt-3 text-sm font-bold text-[#1E2C31]">{item.title}</h3>
@@ -732,6 +746,115 @@ function ProductPublishReadinessPanel({
         </div>
       </div>
     </section>
+  )
+}
+
+function buildProductEditClosureEntries(product: CatalogProductRow): ProductEditClosureEntry[] {
+  const seoComplete = productSeoComplete(product)
+
+  return [
+    {
+      key: 'content-closure',
+      label: '内容闭环总览',
+      value: 'B233',
+      detail: '回到产品管理首页查看内容缺口、SEO 待补和路径承接。',
+      href: '/admin/content/products#content-closure',
+      tone: 'neutral',
+      Icon: Package,
+    },
+    {
+      key: 'product-path',
+      label: '产品路径分析',
+      value: 'B232',
+      detail: '查看产品路径访问、动作、表单和真实线索表现。',
+      href: '/admin/status/traffic#product-conversion-path',
+      tone: 'neutral',
+      Icon: BarChart3,
+    },
+    {
+      key: 'seo-closure',
+      label: 'SEO 修复闭环',
+      value: seoComplete ? '已补齐' : '待补',
+      detail: '从站点 SEO 中心回看产品 SEO 与转化修复闭环。',
+      href: '/admin/site/seo#seo-conversion-closure',
+      tone: seoComplete ? 'ready' : 'warning',
+      Icon: Sparkles,
+    },
+    {
+      key: 'product-leads',
+      label: '产品线索队列',
+      value: 'B228',
+      detail: '进入 source_type=product 队列核对产品来源线索。',
+      href: '/admin/customers/leads?source_type=product',
+      tone: 'neutral',
+      Icon: UsersRound,
+    },
+  ]
+}
+
+function ProductEditClosurePanel({ product }: { product: CatalogProductRow }) {
+  const routeInfo = getCatalogProductRouteInfo(product)
+  const releaseIssues = getProductReleaseIssues(product)
+  const closureEntries = buildProductEditClosureEntries(product)
+  const published = product.status === 'published'
+  const publicRoute = published ? routeInfo.publicHref : '草稿未公开展示'
+
+  return (
+    <section id="product-edit-closure" className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <p className="text-xs font-bold text-[#1889B6]">B234 单品经营闭环</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">当前产品的内容、路径、SEO 与线索入口</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
+            把单个产品编辑动作接回 B233 产品内容闭环、B232 路径分析、B230 SEO 修复和 B228 产品线索；这里只做只读导航，不新增保存、发布或线索状态规则。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <AdminActionLink href="/admin/content/products/list?view=incomplete&issue=seo" Icon={Sparkles} label="SEO 待补列表" />
+          <AdminActionLink href="/admin/content/products#content-closure" Icon={Package} label="产品闭环总览" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+        {closureEntries.map((entry) => (
+          <ProductEditClosureCard key={entry.key} entry={entry} />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] bg-[#F7FAFA] p-4 md:grid-cols-3">
+        <ClosureInfoCell label="当前状态" value={published ? '已发布' : '草稿'} detail={published ? '保存会影响公开产品页' : '发布前不会公开展示'} />
+        <ClosureInfoCell label="官方路由" value={publicRoute} detail={published ? routeInfo.publicLabel : '等待发布后公开'} />
+        <ClosureInfoCell label="发布缺项" value={`${releaseIssues.length}`} detail={releaseIssues.length > 0 ? releaseIssues.slice(0, 3).join('、') : '当前没有发布缺项'} />
+      </div>
+    </section>
+  )
+}
+
+function ProductEditClosureCard({ entry }: { entry: ProductEditClosureEntry }) {
+  return (
+    <Link href={entry.href} className="group block min-h-[184px] p-5 transition hover:bg-[#F7FAFA]">
+      <div className="flex items-start justify-between gap-3">
+        <span className={`flex h-10 w-10 items-center justify-center rounded-md border ${readinessToneClass(entry.tone)}`}>
+          <entry.Icon size={18} />
+        </span>
+        <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${readinessToneClass(entry.tone)}`}>
+          {entry.tone === 'warning' ? '待处理' : entry.tone === 'ready' ? '已完成' : '只读入口'}
+        </span>
+      </div>
+      <p className="mt-4 text-sm font-semibold text-[#61767D]">{entry.label}</p>
+      <p className="mt-1 text-2xl font-bold text-[#1E2C31]">{entry.value}</p>
+      <p className="mt-2 text-xs leading-5 text-[#61767D]">{entry.detail}</p>
+    </Link>
+  )
+}
+
+function ClosureInfoCell({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <div className="min-w-0 rounded-md border border-[#E6EEEE] bg-white px-4 py-3">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className="mt-1 truncate text-sm font-bold text-[#1E2C31]" title={value}>{value}</p>
+      <p className="mt-1 truncate text-xs text-[#8A9EA4]" title={detail}>{detail}</p>
+    </div>
   )
 }
 
@@ -862,13 +985,13 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
       label: product.status === 'published' ? '保存会更新前台' : '当前仍是草稿',
       detail: product.status === 'published'
         ? `官方路由 ${routeInfo.publicHref} 已公开，保存前需要复核图片、SEO、详情和商务条款。`
-        : '草稿产品保存后不会公开展示，发布仍需 ProductForm 的确认弹窗。',
+        : '草稿产品保存后不会公开展示，发布仍需表单确认弹窗。',
       tone: product.status === 'published' ? 'warning' : 'ready',
       href: product.status === 'published' ? routeInfo.publicHref : '#publish-check',
     },
     {
       label: product.category_id ? '分类已绑定' : '缺产品分类',
-      detail: product.category_id ? `category_id ${product.category_id}` : '分类缺失会影响产品列表筛选和内容治理。',
+      detail: product.category_id ? `分类 ID ${product.category_id}` : '分类缺失会影响产品列表筛选和内容治理。',
       tone: product.category_id ? 'ready' : 'warning',
       href: '#attributes',
     },
@@ -905,6 +1028,7 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
         signals={consoleSignals}
       />
       <ProductPublishReadinessPanel product={product} maxUploadMb={maxUploadMb} />
+      <ProductEditClosurePanel product={product} />
       <EditSectionGrid />
       <RiskNotice product={product} />
       <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm md:p-5">
