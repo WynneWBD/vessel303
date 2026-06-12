@@ -88,6 +88,29 @@ type ProjectReleaseIssueRoute = {
   detail: string
 }
 
+type CaseInquiryReadinessGroup = {
+  key: string
+  title: string
+  detail: string
+  href: string
+  done: boolean
+  issueCount: number
+  external?: boolean
+}
+
+const CASE_INQUIRY_ISSUE_LABELS = new Set([
+  '缺封面',
+  '缺图库',
+  '缺中文简介',
+  '缺英文简介',
+  '详情叙事偏短',
+  '缺标签',
+  '缺项目类型',
+  '缺项目面积',
+  '缺舱数',
+  '缺产品型号',
+])
+
 const projectReleaseIssueRoutes: Record<string, ProjectReleaseIssueRoute> = {
   缺封面: {
     sectionId: 'media',
@@ -377,6 +400,62 @@ function buildProjectReleaseIssues(
   })
 }
 
+function isCaseInquiryIssue(issue: ProjectReleaseIssue): boolean {
+  return CASE_INQUIRY_ISSUE_LABELS.has(issue.label)
+}
+
+function countCaseInquiryIssues(issues: ProjectReleaseIssue[], labels: string[]) {
+  return issues.filter((issue) => labels.includes(issue.label)).length
+}
+
+function buildCaseInquiryReadinessGroups(
+  issues: ProjectReleaseIssue[],
+  status: ProjectCaseStatus,
+  caseInquiryHref: string | null,
+): CaseInquiryReadinessGroup[] {
+  const mediaCount = countCaseInquiryIssues(issues, ['缺封面', '缺图库'])
+  const storyCount = countCaseInquiryIssues(issues, ['缺中文简介', '缺英文简介', '详情叙事偏短', '缺标签'])
+  const factsCount = countCaseInquiryIssues(issues, ['缺项目类型', '缺项目面积', '缺舱数', '缺产品型号'])
+  const typeMissing = issues.some((issue) => issue.label === '缺项目类型')
+  const activeInquiryHref = status === 'published' ? caseInquiryHref : null
+
+  return [
+    {
+      key: 'media',
+      title: '素材',
+      detail: '封面和图库',
+      href: '#media',
+      done: mediaCount === 0,
+      issueCount: mediaCount,
+    },
+    {
+      key: 'story',
+      title: '叙事',
+      detail: '简介、长度和标签',
+      href: '#content',
+      done: storyCount === 0,
+      issueCount: storyCount,
+    },
+    {
+      key: 'facts',
+      title: '事实',
+      detail: '类型、面积、舱数、产品',
+      href: typeMissing ? '#basic' : '#params',
+      done: factsCount === 0,
+      issueCount: factsCount,
+    },
+    {
+      key: 'path',
+      title: '入口',
+      detail: status === 'published' ? '前台咨询锚点' : '发布后才公开',
+      href: activeInquiryHref ?? '#publish-check',
+      done: Boolean(activeInquiryHref),
+      issueCount: activeInquiryHref ? 0 : 1,
+      external: Boolean(activeInquiryHref),
+    },
+  ]
+}
+
 function projectReleaseIssueSeverityClass(severity: ProjectReleaseIssueSeverity) {
   if (severity === 'high') return 'border-[#F2C6A7] bg-[#FFF2E7] text-[#E36F2C]'
   if (severity === 'global') return 'border-[#D8E7E8] bg-[#EAF6F8] text-[#1889B6]'
@@ -546,6 +625,7 @@ function ProjectFormSidebar({
   previewLabel,
   showPreviewLink,
   globalHref,
+  caseInquiryHref,
   children,
 }: {
   sectionProgress: ProjectFormSectionProgress[]
@@ -562,6 +642,7 @@ function ProjectFormSidebar({
   previewLabel: string
   showPreviewLink: boolean
   globalHref: string | null
+  caseInquiryHref: string | null
   children: ReactNode
 }) {
   const issueCount = completeness.issues.length
@@ -692,6 +773,13 @@ function ProjectFormSidebar({
             </div>
           )}
         </div>
+
+        <CaseInquiryReadinessCard
+          releaseIssues={releaseIssues}
+          status={status}
+          caseInquiryHref={caseInquiryHref}
+          hasUnsavedChanges={hasUnsavedChanges}
+        />
 
         <div className="rounded-lg border border-[#D8E7E8] bg-white p-4">
           <div className="flex items-center justify-between gap-3">
@@ -864,6 +952,84 @@ function ProjectFormSidebar({
   )
 }
 
+function CaseInquiryReadinessCard({
+  releaseIssues,
+  status,
+  caseInquiryHref,
+  hasUnsavedChanges,
+}: {
+  releaseIssues: ProjectReleaseIssue[]
+  status: ProjectCaseStatus
+  caseInquiryHref: string | null
+  hasUnsavedChanges: boolean
+}) {
+  const caseIssues = releaseIssues.filter(isCaseInquiryIssue)
+  const groups = buildCaseInquiryReadinessGroups(caseIssues, status, caseInquiryHref)
+  const ready = status === 'published' && caseIssues.length === 0 && Boolean(caseInquiryHref)
+  const nextIssue = caseIssues[0] ?? null
+  const actionHref = ready ? caseInquiryHref : nextIssue ? `#${nextIssue.sectionId}` : '#publish-check'
+  const actionLabel = ready ? '核查咨询入口' : nextIssue ? `先处理：${nextIssue.label}` : '检查发布状态'
+
+  return (
+    <div className="rounded-lg border border-[#D8E7E8] bg-white p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-bold text-[#1E2C31]">案例咨询承接</h3>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">
+            按当前表单实时判断素材、叙事、项目事实和咨询入口路径。
+          </p>
+        </div>
+        <Badge className={ready ? 'border-emerald-200 bg-emerald-50 text-emerald-700 text-xs' : 'border-[#F2C6A7] bg-[#FFF7F0] text-[#E36F2C] text-xs'}>
+          {ready ? '可承接' : status === 'published' ? `${caseIssues.length} 项待补` : '待发布'}
+        </Badge>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {groups.map((group) => (
+          <Link
+            key={group.key}
+            href={group.href}
+            target={group.external ? '_blank' : undefined}
+            rel={group.external ? 'noopener noreferrer' : undefined}
+            className={`rounded-md border px-3 py-2.5 transition ${
+              group.done
+                ? 'border-emerald-100 bg-emerald-50/70 hover:border-emerald-200'
+                : 'border-[#F2C6A7] bg-[#FFF7F0] hover:border-[#E36F2C]/45'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-bold text-[#1E2C31]">{group.title}</span>
+              <span className={group.done ? 'text-emerald-700' : 'text-[#E36F2C]'}>
+                {group.done ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+              </span>
+            </div>
+            <p className="mt-1 text-[11px] leading-4 text-[#61767D]">{group.detail}</p>
+            {!group.done ? (
+              <p className="mt-1 text-[11px] font-semibold text-[#E36F2C]">{group.issueCount} 项</p>
+            ) : null}
+          </Link>
+        ))}
+      </div>
+
+      {hasUnsavedChanges ? (
+        <p className="mt-3 rounded-md border border-[#F2C6A7] bg-[#FFF7F0] px-3 py-2 text-[11px] leading-5 text-[#8A3F16]">
+          当前判断包含未保存修改；保存后才会影响前台案例页和咨询入口。
+        </p>
+      ) : null}
+
+      <Link
+        href={actionHref ?? '#publish-check'}
+        target={ready ? '_blank' : undefined}
+        rel={ready ? 'noopener noreferrer' : undefined}
+        className="mt-3 flex items-center justify-between gap-3 rounded-md border border-[#1889B6]/25 bg-[#F0F7F8] px-3 py-2.5 text-xs font-bold text-[#1889B6] hover:border-[#1889B6]/60"
+      >
+        <span>{actionLabel}</span>
+        {ready ? <ExternalLink size={13} /> : <span>查看</span>}
+      </Link>
+    </div>
+  )
+}
+
 function ProjectReleaseIssueLedger({ issues }: { issues: ProjectReleaseIssue[] }) {
   const highCount = issues.filter((issue) => issue.severity === 'high').length
   const globalCount = issues.filter((issue) => issue.severity === 'global').length
@@ -993,6 +1159,7 @@ export default function ProjectForm({
   const savedProjectPublished = mode === 'edit' && savedForm.status === 'published' && hasText(savedProjectId)
   const previewHref = savedProjectPublished ? `/cases/${savedProjectId}` : '/cases'
   const previewLabel = savedProjectPublished ? '预览案例' : '查看案例列表'
+  const caseInquiryHref = savedProjectPublished ? `/cases/${savedProjectId}#case-inquiry` : null
   const globalHref = mode === 'edit' && coordinatesValid && project?.id ? `/global?camp=${project.id}` : null
 
   useUnsavedChangesWarning(hasUnsavedChanges)
@@ -1365,6 +1532,7 @@ export default function ProjectForm({
           previewLabel={previewLabel}
           showPreviewLink={showPreviewLink}
           globalHref={globalHref}
+          caseInquiryHref={caseInquiryHref}
         >
           <Field label="状态">
             <Select value={form.status} onChange={(e) => patch('status', e.target.value as ProjectCaseStatus)}>
