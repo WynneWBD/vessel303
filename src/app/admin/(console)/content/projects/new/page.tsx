@@ -10,6 +10,8 @@ import ProjectForm from '@/components/admin/ProjectForm'
 import {
   AlertTriangle,
   ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
   FileText,
   ImageIcon,
   Layers3,
@@ -30,6 +32,14 @@ export const metadata = { title: '新建项目案例 - VESSEL' }
 type AdminRole = 'admin' | 'operator'
 
 type EditSection = {
+  key: string
+  title: string
+  detail: string
+  href: string
+  Icon: LucideIcon
+}
+
+type CaseInquiryCreationCheckpoint = {
   key: string
   title: string
   detail: string
@@ -82,6 +92,37 @@ const EDIT_SECTIONS: EditSection[] = [
   },
 ]
 
+const CASE_INQUIRY_CREATION_CHECKPOINTS: CaseInquiryCreationCheckpoint[] = [
+  {
+    key: 'identity',
+    title: '先定案例身份',
+    detail: '名称、位置、类型和案例 ID 决定保存后的编辑入口与公开路径。',
+    href: '#basic',
+    Icon: Pencil,
+  },
+  {
+    key: 'proof',
+    title: '先补证明素材',
+    detail: '封面和图库会进入列表、详情首屏和咨询前信任判断。',
+    href: '#media',
+    Icon: ImageIcon,
+  },
+  {
+    key: 'context',
+    title: '再补咨询上下文',
+    detail: '简介、标签、面积、舱数和产品型号会影响销售理解来源需求。',
+    href: '#content',
+    Icon: FileText,
+  },
+  {
+    key: 'publish',
+    title: '最后复核发布影响',
+    detail: '草稿没有 `/cases/{id}#case-inquiry`；发布后才进入前台咨询路径。',
+    href: '#publish-check',
+    Icon: SearchCheck,
+  },
+]
+
 function getSideNavGroups(): AdminSideNavGroup[] {
   return [
     {
@@ -105,6 +146,7 @@ function getSideNavGroups(): AdminSideNavGroup[] {
     {
       title: '后续规划',
       items: [
+        { key: 'case-inquiry-plan', label: '案例咨询承接', href: '#case-inquiry-plan', Icon: SearchCheck },
         { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },
       ],
     },
@@ -193,6 +235,73 @@ function RiskNotice() {
   )
 }
 
+function CaseInquiryCreationPlan() {
+  return (
+    <section id="case-inquiry-plan" className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm md:p-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#1889B6]">Case Inquiry Creation Plan</p>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">创建前的案例咨询承接</h2>
+          <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
+            对齐编辑页和表单侧栏的“案例咨询承接”判断：新建阶段先保证保存后能进入正确编辑路径，再补齐发布后支撑 `/cases/[id]#case-inquiry` 的内容。这里不新增保存限制。
+          </p>
+        </div>
+        <span className="inline-flex w-fit rounded-full border border-[#F2C6A7] bg-[#FFF7F0] px-3 py-1 text-xs font-bold text-[#E36F2C]">
+          草稿阶段无前台咨询锚点
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {CASE_INQUIRY_CREATION_CHECKPOINTS.map((checkpoint, index) => (
+          <Link
+            key={checkpoint.key}
+            href={checkpoint.href}
+            className="min-h-36 rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-4 transition hover:-translate-y-0.5 hover:border-[#1889B6]/55 hover:shadow-md"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-white text-[#1889B6]">
+                <checkpoint.Icon size={17} />
+              </span>
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[#61767D]">
+                {index + 1}
+              </span>
+            </div>
+            <h3 className="mt-3 text-sm font-bold text-[#1E2C31]">{checkpoint.title}</h3>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">{checkpoint.detail}</p>
+            <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6]">
+              定位 <ArrowRight size={12} />
+            </span>
+          </Link>
+        ))}
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="rounded-md border border-emerald-100 bg-emerald-50/70 p-3">
+          <div className="flex items-center gap-2 text-xs font-bold text-emerald-700">
+            <CheckCircle2 size={14} />
+            保存后
+          </div>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">进入新版项目编辑页，由 B210 的只读面板继续核查已保存数据。</p>
+        </div>
+        <div className="rounded-md border border-emerald-100 bg-emerald-50/70 p-3">
+          <div className="flex items-center gap-2 text-xs font-bold text-emerald-700">
+            <CheckCircle2 size={14} />
+            表单中
+          </div>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">由 B211 的右侧摘要按当前未保存输入实时判断咨询承接。</p>
+        </div>
+        <div className="rounded-md border border-[#F2C6A7] bg-[#FFF7F0] p-3">
+          <div className="flex items-center gap-2 text-xs font-bold text-[#E36F2C]">
+            <AlertTriangle size={14} />
+            发布前
+          </div>
+          <p className="mt-1 text-xs leading-5 text-[#8A3F16]">只有保存并发布后，前台才会出现可核查的案例详情和咨询锚点。</p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default async function AdminContentProjectNewPage() {
   const session = await auth()
   if (!session?.user) {
@@ -230,6 +339,12 @@ export default async function AdminContentProjectNewPage() {
       detail: '创建草稿不会影响 /cases 和 /global。',
       tone: 'ready',
     },
+    {
+      label: '咨询承接',
+      value: '待发布',
+      detail: '保存并发布后才会出现案例咨询锚点。',
+      tone: 'warning',
+    },
   ]
   const consoleSignals: ProductEditorSignal[] = [
     {
@@ -256,6 +371,12 @@ export default async function AdminContentProjectNewPage() {
       tone: 'ready',
       href: '#basic',
     },
+    {
+      label: '案例咨询从创建质量开始',
+      detail: '素材、叙事和项目事实会决定发布后的 /cases/[id]#case-inquiry 承接质量。',
+      tone: 'warning',
+      href: '#case-inquiry-plan',
+    },
   ]
 
   return (
@@ -271,11 +392,12 @@ export default async function AdminContentProjectNewPage() {
       <Hero />
       <ProductEditorConsole
         title="新建项目案例任务台"
-        description="先确认项目案例的创建边界、编辑顺序、图片保存和 Global 入图规则，再进入长表单填写。"
+        description="先确认项目案例的创建边界、编辑顺序、图片保存、案例咨询承接和 Global 入图规则，再进入长表单填写。"
         sections={EDIT_SECTIONS}
         metrics={consoleMetrics}
         signals={consoleSignals}
       />
+      <CaseInquiryCreationPlan />
       <EditSectionGrid />
       <RiskNotice />
       <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm md:p-5">
