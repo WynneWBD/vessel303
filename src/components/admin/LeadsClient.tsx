@@ -48,13 +48,14 @@ import {
 } from '@/components/ui/sheet'
 import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog'
 import AdminPagination from '@/components/admin/AdminPagination'
-import type { Lead, LeadSourceStatusSummary, LeadStatus } from '@/lib/leads-db'
+import type { Lead, LeadOperationsSummary, LeadSourceStatusSummary, LeadStatus } from '@/lib/leads-db'
 import { describeLeadSource, LEAD_SOURCE_TYPE_OPTIONS } from '@/lib/lead-source'
 
 type Filters = {
   status: string
   inquiry_type: string
   source_type: string
+  attention: string
   country: string
   search: string
 }
@@ -83,8 +84,19 @@ const INQUIRY_OPTIONS = [
   { value: 'C-individual', label: 'C-个人' },
 ]
 
+const ATTENTION_OPTIONS = [
+  { value: 'all', label: '重点:全部' },
+  { value: 'active', label: '活跃商机' },
+  { value: 'unassigned', label: '未分配' },
+  { value: 'overdue', label: '超时队列' },
+]
+
 const STATUS_LABEL: Record<string, string> = Object.fromEntries(
   STATUS_OPTIONS.map((o) => [o.value, o.label]),
+)
+
+const ATTENTION_LABEL: Record<string, string> = Object.fromEntries(
+  ATTENTION_OPTIONS.map((o) => [o.value, o.label.replace('重点:', '')]),
 )
 
 type LeadPriorityTone = 'critical' | 'warning' | 'active' | 'success' | 'muted'
@@ -305,6 +317,7 @@ export default function LeadsClient({
   allowTestLeadCreation,
   allowDelete = false,
   summary,
+  operationsSummary,
   sourceStatusSummary = [],
 }: {
   initialLeads: Lead[]
@@ -315,6 +328,7 @@ export default function LeadsClient({
   allowTestLeadCreation: boolean
   allowDelete?: boolean
   summary?: LeadDashboardSummary
+  operationsSummary: LeadOperationsSummary
   sourceStatusSummary?: LeadSourceStatusSummary[]
 }) {
   const router = useRouter()
@@ -333,6 +347,7 @@ export default function LeadsClient({
     filters.status !== 'all' ||
     filters.inquiry_type !== 'all' ||
     filters.source_type !== 'all' ||
+    filters.attention !== 'all' ||
     filters.country.trim().length > 0 ||
     filters.search.trim().length > 0
   const visibleStart = total === 0 ? 0 : (page - 1) * limit + 1
@@ -340,7 +355,7 @@ export default function LeadsClient({
   const visibleRange = total === 0 ? '0' : `${visibleStart}-${visibleEnd}`
 
   const resetFilters = () => {
-    setFilters({ status: 'all', inquiry_type: 'all', source_type: 'all', country: '', search: '' })
+    setFilters({ status: 'all', inquiry_type: 'all', source_type: 'all', attention: 'all', country: '', search: '' })
     setPage(1)
   }
 
@@ -354,6 +369,7 @@ export default function LeadsClient({
     if (f.status && f.status !== 'all') sp.set('status', f.status)
     if (f.inquiry_type && f.inquiry_type !== 'all') sp.set('inquiry_type', f.inquiry_type)
     if (f.source_type && f.source_type !== 'all') sp.set('source_type', f.source_type)
+    if (f.attention && f.attention !== 'all') sp.set('attention', f.attention)
     if (f.country) sp.set('country', f.country)
     if (f.search) sp.set('search', f.search)
     if (paging) {
@@ -507,16 +523,17 @@ export default function LeadsClient({
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+      <section className="rounded-md border border-[#D8E7E8] bg-white px-4 py-3 shadow-sm">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <p className="text-xs font-semibold tracking-[0.22em] text-[#1889B6] uppercase">Lead Operations</p>
-            <h1 className="mt-2 text-2xl font-bold text-[#1E2C31]">线索处理台</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-              按优先级处理官网表单、案例询盘和 Media Kit 申请；本页只更新线索跟进状态和备注，不扩展订单、支付或会员价格体系。
+            <p className="text-xs font-semibold tracking-[0.18em] text-[#1889B6] uppercase">Lead Workbench</p>
+            <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">线索处理台账</h2>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">
+              当前匹配 {total.toLocaleString('zh-CN')} 条；重点队列为 {ATTENTION_LABEL[filters.attention] ?? filters.attention}；
+              近 7 天新增 {operationsSummary.new7d.toLocaleString('zh-CN')} 条，近 30 天新增 {operationsSummary.new30d.toLocaleString('zh-CN')} 条。
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {allowTestLeadCreation ? (
               <Button variant="outline" size="sm" onClick={() => setNewOpen(true)}>
                 <Plus size={16} />
@@ -529,7 +546,6 @@ export default function LeadsClient({
             </Button>
           </div>
         </div>
-        {summary && <LeadSummaryGrid summary={summary} />}
       </section>
 
       <LeadOperationsDesk
@@ -537,6 +553,7 @@ export default function LeadsClient({
         summary={summary}
         total={total}
         loading={loading}
+        operationsSummary={operationsSummary}
         onSelect={handleSelect}
       />
 
@@ -571,7 +588,7 @@ export default function LeadsClient({
             </Button>
           ) : null}
         </div>
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
           <Select
             value={filters.status}
             onChange={(e) => updateFilters({ status: e.target.value })}
@@ -604,6 +621,16 @@ export default function LeadsClient({
               </option>
             ))}
           </Select>
+          <Select
+            value={filters.attention}
+            onChange={(e) => updateFilters({ attention: e.target.value })}
+          >
+            {ATTENTION_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
           <Input
             placeholder="国家"
             value={filters.country}
@@ -631,16 +658,16 @@ export default function LeadsClient({
           </span>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[1240px] table-fixed text-sm">
             <thead>
-              <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
-                <th className="text-left font-medium px-4 py-3">优先级</th>
-                <th className="text-left font-medium px-4 py-3">客户</th>
-                <th className="text-left font-medium px-4 py-3">状态</th>
-                <th className="text-left font-medium px-4 py-3">来源路径</th>
-                <th className="text-left font-medium px-4 py-3">需求摘要</th>
-                <th className="text-left font-medium px-4 py-3">缺项 / 更新</th>
-                <th className="text-left font-medium px-4 py-3">操作</th>
+              <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-xs text-[#61767D]">
+                <th className="w-[180px] px-4 py-3 text-left font-semibold">优先级</th>
+                <th className="w-[260px] px-4 py-3 text-left font-semibold">客户</th>
+                <th className="w-[150px] px-4 py-3 text-left font-semibold">状态</th>
+                <th className="w-[230px] px-4 py-3 text-left font-semibold">来源路径</th>
+                <th className="w-[260px] px-4 py-3 text-left font-semibold">需求摘要</th>
+                <th className="w-[210px] px-4 py-3 text-left font-semibold">缺项 / 更新</th>
+                <th className="w-[90px] px-4 py-3 text-left font-semibold">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -819,12 +846,14 @@ function LeadOperationsDesk({
   summary,
   total,
   loading,
+  operationsSummary,
   onSelect,
 }: {
   leads: Lead[]
   summary?: LeadDashboardSummary
   total: number
   loading: boolean
+  operationsSummary: LeadOperationsSummary
   onSelect: (lead: Lead) => void
 }) {
   const ranked = leads
@@ -841,7 +870,7 @@ function LeadOperationsDesk({
     (lead) => isActiveLeadStatus(lead.status) && !lead.assigned_to?.trim(),
   ).length
   const sourceBreakdown = buildSourceBreakdown(leads).slice(0, 4)
-  const activePipeline = summary ? summary.new + summary.contacting + summary.quoted : 0
+  const activePipeline = summary ? summary.new + summary.contacting + summary.quoted : operationsSummary.active
 
   return (
     <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -913,8 +942,8 @@ function LeadOperationsDesk({
         <div className="grid grid-cols-2 gap-3 p-5">
           <LeadDeskMetric label="活跃漏斗" value={activePipeline} detail="新线索+跟进+报价" Icon={ListChecks} />
           <LeadDeskMetric label="当前匹配" value={total} detail="筛选后的总数" Icon={MessageSquareText} />
-          <LeadDeskMetric label="P0 新线索" value={pageP0} detail="当前页需先处理" Icon={AlertTriangle} tone="orange" />
-          <LeadDeskMetric label="未分配" value={pageUnassigned} detail="当前页活跃线索" Icon={UserRoundCheck} tone="blue" />
+          <LeadDeskMetric label="超时队列" value={operationsSummary.overdue} detail={`当前页 P0 ${pageP0} 条`} Icon={AlertTriangle} tone="orange" />
+          <LeadDeskMetric label="未分配" value={operationsSummary.unassignedActive} detail={`当前页 ${pageUnassigned} 条`} Icon={UserRoundCheck} tone="blue" />
         </div>
         <div className="border-t border-[#E6EEEE] px-5 py-4">
           <div className="flex items-center justify-between gap-3">
@@ -1127,35 +1156,6 @@ function LeadDeskMetric({
         </span>
       </div>
       <p className="mt-1 text-[11px] leading-4 text-[#8A9EA4]">{detail}</p>
-    </div>
-  )
-}
-
-function LeadSummaryGrid({ summary }: { summary: LeadDashboardSummary }) {
-  const items = [
-    { label: '全部线索', value: summary.total, detail: '当前未删除线索', Icon: Mail, tone: 'bg-[#F0F7F8] text-[#1889B6]' },
-    { label: '新线索', value: summary.new, detail: '需要优先跟进', Icon: Inbox, tone: 'bg-[#FFF2E7] text-[#E36F2C]' },
-    { label: '跟进中', value: summary.contacting, detail: '正在沟通', Icon: Clock3, tone: 'bg-sky-50 text-sky-700' },
-    { label: '已报价', value: summary.quoted, detail: '等待客户反馈', Icon: FileText, tone: 'bg-blue-50 text-blue-700' },
-    { label: '已成交', value: summary.won, detail: '成交线索', Icon: BadgeCheck, tone: 'bg-emerald-50 text-emerald-700' },
-  ]
-
-  return (
-    <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-      {items.map(({ label, value, detail, Icon, tone }) => (
-        <div key={label} className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-[#61767D]">{label}</p>
-              <p className="mt-3 text-3xl font-bold text-[#1E2C31]">{value.toLocaleString('zh-CN')}</p>
-              <p className="mt-1 text-xs text-[#8A9EA4]">{detail}</p>
-            </div>
-            <span className={`flex h-9 w-9 items-center justify-center rounded-md ${tone}`}>
-              <Icon size={17} />
-            </span>
-          </div>
-        </div>
-      ))}
     </div>
   )
 }

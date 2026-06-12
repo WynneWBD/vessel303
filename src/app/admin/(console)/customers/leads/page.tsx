@@ -4,9 +4,11 @@ import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/Ad
 import LeadsClient, { type LeadDashboardSummary } from '@/components/admin/LeadsClient'
 import {
   countLeadsByStatus,
+  getLeadOperationsSummary,
   listLeads,
   summarizeLeadsBySourceStatus,
   type Lead,
+  type LeadOperationsSummary,
   type LeadSourceStatusSummary,
   type LeadStatus,
 } from '@/lib/leads-db'
@@ -39,6 +41,7 @@ type LeadFilterState = {
   status: string
   inquiry_type: string
   source_type: string
+  attention: string
   country: string
   search: string
   page: number
@@ -88,16 +91,23 @@ const EMPTY_SUMMARY: LeadDashboardSummary = {
 
 const EMPTY_SOURCE_STATUS_SUMMARY: LeadSourceStatusSummary[] = []
 
+const EMPTY_OPERATIONS_SUMMARY: LeadOperationsSummary = {
+  total: 0,
+  active: 0,
+  unassignedActive: 0,
+  overdue: 0,
+  newToday: 0,
+  new7d: 0,
+  new30d: 0,
+  updatedToday: 0,
+}
+
 function buildLeadsPath(status?: LeadStatus) {
   return status ? `/admin/customers/leads?status=${status}` : '/admin/customers/leads'
 }
 
 function formatNumber(value: number): string {
   return value.toLocaleString('zh-CN')
-}
-
-function formatPercent(value: number): string {
-  return `${Math.round(value * 100)}%`
 }
 
 function statusLabel(value: string): string {
@@ -140,6 +150,16 @@ function sourceTypeLabel(value: string): string {
   return labels[value] ?? value
 }
 
+function attentionLabel(value: string): string {
+  const labels: Record<string, string> = {
+    all: '全部重点',
+    active: '活跃商机',
+    unassigned: '未分配',
+    overdue: '超时队列',
+  }
+  return labels[value] ?? value
+}
+
 function createLeadsHref(filters: LeadFilterState, patch: Partial<LeadFilterState> = {}): string {
   const next = { ...filters, ...patch }
   const params = new URLSearchParams()
@@ -149,6 +169,7 @@ function createLeadsHref(filters: LeadFilterState, patch: Partial<LeadFilterStat
   if (next.status && next.status !== 'all') params.set('status', next.status)
   if (next.inquiry_type && next.inquiry_type !== 'all') params.set('inquiry_type', next.inquiry_type)
   if (next.source_type && next.source_type !== 'all') params.set('source_type', next.source_type)
+  if (next.attention && next.attention !== 'all') params.set('attention', next.attention)
   if (next.country.trim()) params.set('country', next.country.trim())
   if (next.search.trim()) params.set('search', next.search.trim())
   if (page > 1) params.set('page', String(page))
@@ -168,6 +189,9 @@ function buildActiveFilterChips(filters: LeadFilterState): ActiveFilterChip[] {
   }
   if (filters.source_type !== 'all') {
     chips.push({ label: '来源', value: sourceTypeLabel(filters.source_type), href: createLeadsHref(filters, { source_type: 'all', page: 1 }) })
+  }
+  if (filters.attention !== 'all') {
+    chips.push({ label: '重点', value: attentionLabel(filters.attention), href: createLeadsHref(filters, { attention: 'all', page: 1 }) })
   }
   if (filters.country.trim()) {
     chips.push({ label: '国家', value: filters.country.trim(), href: createLeadsHref(filters, { country: '', page: 1 }) })
@@ -197,18 +221,18 @@ function leadConsoleSignalClass(tone: LeadConsoleTone): string {
 
 function LeadsQueueConsole({
   summary,
+  operationsSummary,
   result,
   filters,
   sourceStatusSummary,
 }: {
   summary: LeadDashboardSummary
+  operationsSummary: LeadOperationsSummary
   result: LeadsResult
   filters: LeadFilterState
   sourceStatusSummary: LeadSourceStatusSummary[]
 }) {
   const activeFilterChips = buildActiveFilterChips(filters)
-  const activePipeline = summary.new + summary.contacting + summary.quoted
-  const closeRate = summary.total > 0 ? summary.won / summary.total : 0
   const currentRows = result.leads.length
   const topSource = sourceStatusSummary[0]
   const sourceNewTotal = sourceStatusSummary.reduce((total, source) => total + source.new, 0)
@@ -216,6 +240,7 @@ function LeadsQueueConsole({
     status: 'all',
     inquiry_type: 'all',
     source_type: 'all',
+    attention: 'all',
     country: '',
     search: '',
     page: 1,
@@ -227,26 +252,26 @@ function LeadsQueueConsole({
       title: '首次响应队列',
       detail: '新线索优先进入首次响应，确认需求、来源和负责人。',
       metric: `${formatNumber(summary.new)} 条`,
-      signal: summary.new > 0 ? 'P0 待处理' : '已清空',
+      signal: operationsSummary.overdue > 0 ? `${formatNumber(operationsSummary.overdue)} 超时` : '未超时',
       href: buildLeadsPath('new'),
       Icon: Inbox,
-      tone: summary.new > 0 ? 'orange' : 'green',
+      tone: operationsSummary.overdue > 0 || summary.new > 0 ? 'orange' : 'green',
       actions: [
-        { label: '新线索', href: buildLeadsPath('new'), primary: summary.new > 0 },
-        { label: '全部线索', href: buildLeadsPath() },
+        { label: '超时队列', href: '/admin/customers/leads?attention=overdue', primary: operationsSummary.overdue > 0 },
+        { label: '新线索', href: buildLeadsPath('new') },
       ],
     },
     {
       title: '跟进与报价',
       detail: '跟进中与已报价线索构成当前活跃商机池，先看更新断点再推进。',
-      metric: `${formatNumber(summary.contacting + summary.quoted)} 条`,
-      signal: `${formatNumber(summary.quoted)} 已报价`,
+      metric: `${formatNumber(operationsSummary.active)} 条`,
+      signal: `${formatNumber(operationsSummary.unassignedActive)} 未分配`,
       href: buildLeadsPath('contacting'),
       Icon: MessageSquareText,
-      tone: summary.contacting + summary.quoted > 0 ? 'blue' : 'gray',
+      tone: operationsSummary.unassignedActive > 0 ? 'orange' : operationsSummary.active > 0 ? 'blue' : 'gray',
       actions: [
-        { label: '跟进中', href: buildLeadsPath('contacting'), primary: summary.contacting > 0 },
-        { label: '已报价', href: buildLeadsPath('quoted') },
+        { label: '未分配', href: '/admin/customers/leads?attention=unassigned', primary: operationsSummary.unassignedActive > 0 },
+        { label: '活跃商机', href: '/admin/customers/leads?attention=active' },
       ],
     },
     {
@@ -314,11 +339,11 @@ function LeadsQueueConsole({
       </div>
 
       <div className="grid grid-cols-1 border-b border-[#D8E7E8] md:grid-cols-5">
-        <LeadControlStat label="总线索" value={`${formatNumber(summary.total)} 条`} />
-        <LeadControlStat label="新线索" value={`${formatNumber(summary.new)} 条`} tone={summary.new > 0 ? 'orange' : 'green'} />
-        <LeadControlStat label="活跃池" value={`${formatNumber(activePipeline)} 条`} />
-        <LeadControlStat label="已成交" value={`${formatNumber(summary.won)} 条`} tone="green" />
-        <LeadControlStat label="成交占比" value={formatPercent(closeRate)} />
+        <LeadControlStat label="总线索" value={`${formatNumber(operationsSummary.total)} 条`} />
+        <LeadControlStat label="今日新增" value={`${formatNumber(operationsSummary.newToday)} 条`} tone={operationsSummary.newToday > 0 ? 'orange' : 'green'} />
+        <LeadControlStat label="活跃商机" value={`${formatNumber(operationsSummary.active)} 条`} />
+        <LeadControlStat label="超时队列" value={`${formatNumber(operationsSummary.overdue)} 条`} tone={operationsSummary.overdue > 0 ? 'orange' : 'green'} />
+        <LeadControlStat label="今日更新" value={`${formatNumber(operationsSummary.updatedToday)} 条`} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 p-5 xl:grid-cols-4">
@@ -423,8 +448,8 @@ function getCustomerSideNav(summary: LeadDashboardSummary): AdminSideNavGroup[] 
       title: '待处理',
       items: [
         { key: 'todo', label: '新线索待跟进', href: buildLeadsPath('new'), badge: summary.new, Icon: ListChecks },
-        { key: 'recent7', label: '近 7 天新增', href: '/admin/customers', Icon: Clock3 },
-        { key: 'recent30', label: '近 30 天新增', href: '/admin/customers', Icon: SearchCheck },
+        { key: 'overdue', label: '超时队列', href: '/admin/customers/leads?attention=overdue', Icon: Clock3 },
+        { key: 'unassigned', label: '未分配线索', href: '/admin/customers/leads?attention=unassigned', Icon: SearchCheck },
       ],
     },
     {
@@ -497,14 +522,16 @@ export default async function AdminCustomerLeadsPage({
     status: getStr('status') ?? 'all',
     inquiry_type: getStr('inquiry_type') ?? 'all',
     source_type: getStr('source_type') ?? 'all',
+    attention: getStr('attention') ?? 'all',
     country: getStr('country') ?? '',
     search: getStr('search') ?? '',
   }
   const page = Math.max(1, Number(getStr('page') ?? 1) || 1)
   const limit = Math.min(100, Math.max(20, Number(getStr('limit') ?? 50) || 50))
 
-  const [summary, result, sourceStatusSummary] = await Promise.all([
+  const [summary, operationsSummary, result, sourceStatusSummary] = await Promise.all([
     safeLoad('lead summary', () => getLeadSummary(), EMPTY_SUMMARY),
+    safeLoad('lead operations summary', () => getLeadOperationsSummary(), EMPTY_OPERATIONS_SUMMARY),
     safeLoad(
       'lead list',
       () =>
@@ -512,6 +539,7 @@ export default async function AdminCustomerLeadsPage({
           status: filters.status,
           inquiry_type: filters.inquiry_type,
           source_type: filters.source_type,
+          attention: filters.attention,
           country: filters.country || undefined,
           search: filters.search || undefined,
           page,
@@ -545,6 +573,7 @@ export default async function AdminCustomerLeadsPage({
     >
       <LeadsQueueConsole
         summary={summary}
+        operationsSummary={operationsSummary}
         result={result}
         filters={leadFilters}
         sourceStatusSummary={sourceStatusSummary}
@@ -558,6 +587,7 @@ export default async function AdminCustomerLeadsPage({
         allowTestLeadCreation={process.env.NODE_ENV !== 'production'}
         allowDelete={false}
         summary={summary}
+        operationsSummary={operationsSummary}
         sourceStatusSummary={sourceStatusSummary}
       />
     </AdminSectionShell>

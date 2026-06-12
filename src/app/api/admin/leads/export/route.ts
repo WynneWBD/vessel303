@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
     status: sp.get('status') ?? undefined,
     inquiry_type: sp.get('inquiry_type') ?? undefined,
     source_type: sp.get('source_type') ?? undefined,
+    attention: sp.get('attention') ?? undefined,
     country: sp.get('country') ?? undefined,
     search: sp.get('search') ?? undefined,
   })
