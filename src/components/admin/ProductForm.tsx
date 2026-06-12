@@ -101,6 +101,20 @@ type ProductFormSectionProgress = {
   done: boolean
   issueCount: number
 }
+type ProductReleaseIssueSeverity = 'high' | 'medium'
+type ProductReleaseIssue = {
+  label: string
+  sectionId: string
+  sectionTitle: string
+  severity: ProductReleaseIssueSeverity
+  detail: string
+}
+
+type ReleaseIssueRoute = {
+  sectionId: string
+  severity: ProductReleaseIssueSeverity
+  detail: string
+}
 
 const commercialTermFields: Array<{
   zh: keyof CatalogCommercialTerms
@@ -125,6 +139,83 @@ const detailModuleTypeOptions: { type: CatalogDetailModuleType; label: string; o
 ]
 
 const priorityProductIssues = ['缺封面', '缺详情图库', '未分类', '缺 SEO', '缺买家资料链接']
+const releaseIssueRoutes: Record<string, ReleaseIssueRoute> = {
+  缺封面: {
+    sectionId: 'media',
+    severity: 'high',
+    detail: '发布前必须补封面图，否则列表和详情页首屏会缺主视觉。',
+  },
+  缺详情图库: {
+    sectionId: 'media',
+    severity: 'high',
+    detail: '详情图库为空会削弱产品页说服力，优先补齐核心外观和空间图。',
+  },
+  缺中文简介: {
+    sectionId: 'content',
+    severity: 'medium',
+    detail: '中文简介用于后台核对和中文默认内容，建议同步补齐。',
+  },
+  缺英文简介: {
+    sectionId: 'content',
+    severity: 'high',
+    detail: '英文简介面向海外客户，公开发布前应优先补齐。',
+  },
+  缺标签: {
+    sectionId: 'content',
+    severity: 'medium',
+    detail: '标签影响卡片扫描效率和产品定位表达。',
+  },
+  缺亮点: {
+    sectionId: 'content',
+    severity: 'high',
+    detail: '亮点是产品页的核心销售信息，发布前建议补齐中英文。',
+  },
+  未分类: {
+    sectionId: 'attributes',
+    severity: 'high',
+    detail: '分类缺失会影响产品列表筛选、后台治理和内容归档。',
+  },
+  缺产品属性: {
+    sectionId: 'attributes',
+    severity: 'high',
+    detail: '属性缺失会降低筛选、对比和后台批量治理效率。',
+  },
+  缺价格展示: {
+    sectionId: 'commercial',
+    severity: 'medium',
+    detail: '价格展示为空时前台应有明确展示策略，不能误导客户。',
+  },
+  缺关键词: {
+    sectionId: 'relations',
+    severity: 'medium',
+    detail: '关键词用于内容检索和后续 SEO 运营，不影响保存但影响治理。',
+  },
+  缺相关产品: {
+    sectionId: 'relations',
+    severity: 'medium',
+    detail: '相关产品为空会降低详情页继续浏览和询盘转化机会。',
+  },
+  '缺 SEO': {
+    sectionId: 'seo',
+    severity: 'high',
+    detail: 'SEO title / description 缺失会影响搜索展示和分享摘要。',
+  },
+  缺详情模块: {
+    sectionId: 'details',
+    severity: 'high',
+    detail: '详情模块为空时产品页缺少结构化说明，不建议直接发布。',
+  },
+  缺买家资料链接: {
+    sectionId: 'details',
+    severity: 'high',
+    detail: '买家资料链接承接海外 B2B 询盘前的信息下载需求。',
+  },
+  '精品页绑定缺 CMS 基础字段': {
+    sectionId: 'basic',
+    severity: 'high',
+    detail: '固定精品页也需要 CMS 基础字段支撑后台治理和备用详情页。',
+  },
+}
 
 const emptyState: FormState = {
   id: '',
@@ -328,6 +419,48 @@ function sortProductIssues(issues: string[]) {
     if (bIndex === -1) return -1
     return aIndex - bIndex
   })
+}
+
+function getReleaseIssueRoute(issue: string): ReleaseIssueRoute {
+  if (issue.includes('商务条款')) {
+    return {
+      sectionId: 'commercial',
+      severity: 'high',
+      detail: '商务条款缺失会影响海外 B2B 客户判断交付、付款和售后边界。',
+    }
+  }
+
+  return releaseIssueRoutes[issue] ?? {
+    sectionId: 'publish-check',
+    severity: 'medium',
+    detail: '未登记缺项，请在发布检查中人工复核。',
+  }
+}
+
+function buildProductReleaseIssues(
+  issues: string[],
+  sectionProgress: ProductFormSectionProgress[],
+): ProductReleaseIssue[] {
+  return issues.map((issue) => {
+    const route = getReleaseIssueRoute(issue)
+    const section = sectionProgress.find((item) => item.id === route.sectionId)
+    return {
+      label: issue,
+      sectionId: route.sectionId,
+      sectionTitle: section?.title ?? '发布检查',
+      severity: route.severity,
+      detail: route.detail,
+    }
+  })
+}
+
+function releaseIssueSeverityClass(severity: ProductReleaseIssueSeverity) {
+  if (severity === 'high') return 'border-[#F2C6A7] bg-[#FFF2E7] text-[#E36F2C]'
+  return 'border-[#D8E7E8] bg-[#EAF6F8] text-[#1889B6]'
+}
+
+function releaseIssueSeverityLabel(severity: ProductReleaseIssueSeverity) {
+  return severity === 'high' ? '优先处理' : '建议补齐'
 }
 
 function completenessBadgeClass(level: CompletenessLevel) {
@@ -1098,6 +1231,65 @@ function ProductFormSidebar({
   )
 }
 
+function ProductReleaseIssueLedger({ issues }: { issues: ProductReleaseIssue[] }) {
+  const highCount = issues.filter((issue) => issue.severity === 'high').length
+
+  return (
+    <div className="mt-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h4 className="text-sm font-bold text-[#1E2C31]">发布问题台账</h4>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">
+            按缺项映射到具体编辑分区，点击“处理”可直接跳转。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs font-semibold">
+          <span className="rounded-full bg-[#F0F2F2] px-2.5 py-1 text-[#61767D]">缺项 {issues.length}</span>
+          <span className="rounded-full bg-[#FFF2E7] px-2.5 py-1 text-[#E36F2C]">优先 {highCount}</span>
+        </div>
+      </div>
+
+      {issues.length === 0 ? (
+        <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-medium text-emerald-700">
+          当前没有发布缺项，可进入人工复核和前台预览。
+        </div>
+      ) : (
+        <div className="mt-3 overflow-hidden rounded-md border border-[#D8E7E8] bg-white">
+          {issues.map((issue) => (
+            <div
+              key={`${issue.sectionId}-${issue.label}`}
+              className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] px-4 py-3 last:border-b-0 lg:grid-cols-[120px_minmax(0,1fr)_140px]"
+            >
+              <div>
+                <span
+                  className={`inline-flex rounded-full border px-2 py-1 text-[11px] font-semibold ${releaseIssueSeverityClass(issue.severity)}`}
+                >
+                  {releaseIssueSeverityLabel(issue.severity)}
+                </span>
+              </div>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-bold text-[#1E2C31]">{issue.label}</p>
+                  <span className="rounded-full bg-[#F0F2F2] px-2 py-0.5 text-[11px] font-semibold text-[#61767D]">
+                    {issue.sectionTitle}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs leading-5 text-[#61767D]">{issue.detail}</p>
+              </div>
+              <a
+                href={`#${issue.sectionId}`}
+                className="inline-flex h-8 w-fit items-center justify-center rounded-md border border-[#1889B6]/30 bg-[#F0F7F8] px-3 text-xs font-bold text-[#1889B6] hover:border-[#1889B6]/70"
+              >
+                处理
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function ProductForm({
   mode,
   product,
@@ -1157,11 +1349,7 @@ export default function ProductForm({
     completeness,
   })
   const completedSectionCount = sectionProgress.filter((section) => section.done).length
-  const visibleCompletenessIssues = completeness.issues.slice(0, 3)
-  const hiddenCompletenessIssueCount = Math.max(
-    0,
-    completeness.issues.length - visibleCompletenessIssues.length,
-  )
+  const releaseIssues = buildProductReleaseIssues(completeness.issues, sectionProgress)
   const hasUnsavedChanges = useMemo(() => JSON.stringify(form) !== JSON.stringify(savedForm), [form, savedForm])
   const showPreviewLink = mode === 'edit' && (previewPolicy === 'always' || form.status === 'published')
   const isCurrentlyPublished = form.status === 'published'
@@ -2499,25 +2687,7 @@ export default function ProductForm({
               <p className="mt-2 text-xs leading-relaxed text-[#61767D]">
                 只做运营提示，不阻止保存或发布。发布前请人工确认图片、中英文内容、分类、属性、SEO、详情模块和前台页面绑定关系。
               </p>
-              {visibleCompletenessIssues.length > 0 ? (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {visibleCompletenessIssues.map((issue) => (
-                    <span
-                      key={issue}
-                      className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-600"
-                    >
-                      {issue}
-                    </span>
-                  ))}
-                  {hiddenCompletenessIssueCount > 0 ? (
-                    <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-500">
-                      还有 {hiddenCompletenessIssueCount} 项
-                    </span>
-                  ) : null}
-                </div>
-              ) : (
-                <p className="mt-3 text-xs text-emerald-700">当前基础内容完整。</p>
-              )}
+              <ProductReleaseIssueLedger issues={releaseIssues} />
             </div>
           </div>
         </FormSection>
