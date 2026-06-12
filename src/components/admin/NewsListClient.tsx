@@ -51,6 +51,36 @@ type Filters = { status: string; search: string; category: string; schedule: str
 type NewsCategoryOption = Pick<NewsCategoryRow, 'id' | 'slug' | 'title_zh' | 'title_en' | 'news_count'>
 type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
 
+type NewsBasePath = '/admin/news' | '/admin/content/news'
+type ReleaseTone = 'high' | 'medium' | 'safe'
+
+type NewsReleaseSignals = {
+  missingCover: boolean
+  missingZhTitle: boolean
+  missingEnTitle: boolean
+  missingZhExcerpt: boolean
+  missingEnExcerpt: boolean
+  missingZhContent: boolean
+  missingEnContent: boolean
+  missingCategory: boolean
+  missingSeoTitleZh: boolean
+  missingSeoTitleEn: boolean
+  missingSeoDescriptionZh: boolean
+  missingSeoDescriptionEn: boolean
+}
+
+type NewsReleaseLedgerRow = {
+  item: NewsItem
+  stage: string
+  issue: string
+  detail: string
+  coverage: string
+  actionLabel: string
+  anchor: string
+  tone: ReleaseTone
+  score: number
+}
+
 const LIMIT = 20
 const TABLE_GRID_COLUMNS = '36px 60px minmax(260px,1.25fr) minmax(170px,0.85fr) 118px 92px 150px 120px'
 const STATUS_QUICK_FILTERS: Array<{ label: string; status: Filters['status']; schedule?: Filters['schedule'] }> = [
@@ -143,6 +173,316 @@ function completenessBadgeClass(level: CompletenessLevel) {
   if (level === '完整') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
   if (level === '待补素材') return 'border-orange-200 bg-orange-50 text-orange-700'
   return 'border-zinc-200 bg-zinc-50 text-zinc-600'
+}
+
+function getNewsReleaseSignals(item: NewsItem): NewsReleaseSignals {
+  return {
+    missingCover: !hasText(item.cover_image_url),
+    missingZhTitle: !hasText(item.title_zh),
+    missingEnTitle: !hasText(item.title_en),
+    missingZhExcerpt: !hasText(item.excerpt_zh),
+    missingEnExcerpt: !hasText(item.excerpt_en),
+    missingZhContent: !hasRichTextContent(item.content_zh),
+    missingEnContent: !hasRichTextContent(item.content_en),
+    missingCategory: !item.category_id,
+    missingSeoTitleZh: !hasText(item.seo_title_zh),
+    missingSeoTitleEn: !hasText(item.seo_title_en),
+    missingSeoDescriptionZh: !hasText(item.seo_description_zh),
+    missingSeoDescriptionEn: !hasText(item.seo_description_en),
+  }
+}
+
+function countTrue(values: boolean[]): number {
+  return values.filter(Boolean).length
+}
+
+function buildCoverageText(signals: NewsReleaseSignals): string {
+  const contentDone = 6 - countTrue([
+    signals.missingZhTitle,
+    signals.missingEnTitle,
+    signals.missingZhExcerpt,
+    signals.missingEnExcerpt,
+    signals.missingZhContent,
+    signals.missingEnContent,
+  ])
+  const seoDone = 4 - countTrue([
+    signals.missingSeoTitleZh,
+    signals.missingSeoTitleEn,
+    signals.missingSeoDescriptionZh,
+    signals.missingSeoDescriptionEn,
+  ])
+  const mediaDone = signals.missingCover ? 0 : 1
+  return `内容 ${contentDone}/6 · SEO ${seoDone}/4 · 封面 ${mediaDone}/1`
+}
+
+function buildNewsReleaseLedgerRow(item: NewsItem): NewsReleaseLedgerRow {
+  const signals = getNewsReleaseSignals(item)
+  const missingBody = signals.missingZhContent || signals.missingEnContent
+  const missingIntro = (
+    signals.missingZhTitle
+    || signals.missingEnTitle
+    || signals.missingZhExcerpt
+    || signals.missingEnExcerpt
+  )
+  const missingSeo = (
+    signals.missingSeoTitleZh
+    || signals.missingSeoTitleEn
+    || signals.missingSeoDescriptionZh
+    || signals.missingSeoDescriptionEn
+  )
+
+  if (signals.missingCover) {
+    return {
+      item,
+      stage: '素材缺口',
+      issue: '缺封面图',
+      detail: '先补封面；否则新闻列表、详情首屏和社媒分享都缺少视觉锚点。',
+      coverage: buildCoverageText(signals),
+      actionLabel: '处理封面',
+      anchor: '#media',
+      tone: 'high',
+      score: 100,
+    }
+  }
+
+  if (missingBody) {
+    return {
+      item,
+      stage: '正文缺口',
+      issue: '中英文正文不完整',
+      detail: '补齐正文后再做发布复核，避免公开页只有标题和摘要。',
+      coverage: buildCoverageText(signals),
+      actionLabel: '补正文',
+      anchor: '#content',
+      tone: 'high',
+      score: 88,
+    }
+  }
+
+  if (missingIntro) {
+    return {
+      item,
+      stage: '语言缺口',
+      issue: '标题或摘要不完整',
+      detail: '补齐中英文标题和摘要，保证列表、详情和 SEO 摘要口径一致。',
+      coverage: buildCoverageText(signals),
+      actionLabel: '补字段',
+      anchor: '#content',
+      tone: 'medium',
+      score: 74,
+    }
+  }
+
+  if (missingSeo) {
+    return {
+      item,
+      stage: 'SEO 缺口',
+      issue: '搜索标题或描述不完整',
+      detail: '补齐 SEO title / description，再进入发布检查。',
+      coverage: buildCoverageText(signals),
+      actionLabel: '补 SEO',
+      anchor: '#seo',
+      tone: 'medium',
+      score: 66,
+    }
+  }
+
+  if (signals.missingCategory) {
+    return {
+      item,
+      stage: '分类缺口',
+      issue: '未绑定新闻分类',
+      detail: '绑定分类，方便前台筛选、内容归档和后台批量治理。',
+      coverage: buildCoverageText(signals),
+      actionLabel: '设分类',
+      anchor: '#taxonomy',
+      tone: 'medium',
+      score: 56,
+    }
+  }
+
+  if (isScheduled(item)) {
+    return {
+      item,
+      stage: '排期复核',
+      issue: '已设置定时发布',
+      detail: '发布前复核发布时间、标题、摘要和 SEO 字段。',
+      coverage: buildCoverageText(signals),
+      actionLabel: '查排期',
+      anchor: '#schedule',
+      tone: 'medium',
+      score: 48,
+    }
+  }
+
+  if (item.status === 'draft') {
+    return {
+      item,
+      stage: '发布前',
+      issue: '草稿待发布',
+      detail: '基础字段已齐，进入发布检查确认是否公开。',
+      coverage: buildCoverageText(signals),
+      actionLabel: '发布检查',
+      anchor: '#publish-check',
+      tone: 'safe',
+      score: 34,
+    }
+  }
+
+  return {
+    item,
+    stage: '已发布',
+    issue: '基础字段完整',
+    detail: '当前新闻可继续保持线上展示；如有调整，先走编辑页复核。',
+    coverage: buildCoverageText(signals),
+    actionLabel: '查看编辑',
+    anchor: '#publish-check',
+    tone: 'safe',
+    score: 16,
+  }
+}
+
+function buildNewsReleaseLedgerRows(rows: NewsItem[]): NewsReleaseLedgerRow[] {
+  return rows
+    .map(buildNewsReleaseLedgerRow)
+    .sort((a, b) => b.score - a.score || new Date(b.item.updated_at).getTime() - new Date(a.item.updated_at).getTime())
+    .slice(0, 8)
+}
+
+function releaseToneClass(tone: ReleaseTone): string {
+  if (tone === 'high') return 'border-[#F2C6A7] bg-[#FFF7F0] text-[#E36F2C]'
+  if (tone === 'medium') return 'border-[#D8E7E8] bg-[#F7FAFA] text-[#1889B6]'
+  return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+}
+
+function newsEditHref(basePath: NewsBasePath, item: NewsItem, anchor: string): string {
+  return `${basePath}/${item.id}/edit${anchor}`
+}
+
+function NewsReleaseLedger({
+  rows,
+  basePath,
+}: {
+  rows: NewsReleaseLedgerRow[]
+  basePath: NewsBasePath
+}) {
+  const highCount = rows.filter((row) => row.tone === 'high').length
+  const reviewCount = rows.filter((row) => row.tone === 'medium').length
+
+  return (
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#D8E7E8] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Release Ledger</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">当前页发布处理台账</h2>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-[#61767D]">
+            按封面、正文、语言、SEO、分类和排期缺口排序，先处理会影响公开展示与搜索收录的新闻。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className={`inline-flex min-h-7 items-center rounded-md border px-2.5 text-[11px] font-semibold ${releaseToneClass(highCount > 0 ? 'high' : 'safe')}`}>
+            优先 {highCount}
+          </span>
+          <span className={`inline-flex min-h-7 items-center rounded-md border px-2.5 text-[11px] font-semibold ${releaseToneClass(reviewCount > 0 ? 'medium' : 'safe')}`}>
+            复核 {reviewCount}
+          </span>
+          <span className="inline-flex min-h-7 items-center rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-2.5 text-[11px] font-semibold text-[#61767D]">
+            当前页 {rows.length} 条
+          </span>
+        </div>
+      </div>
+
+      {rows.length > 0 ? (
+        <>
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full min-w-[820px] border-collapse text-left text-xs">
+              <thead className="bg-[#F7FAFA] text-[11px] uppercase tracking-[0.08em] text-[#61767D]">
+                <tr>
+                  <th className="border-b border-[#D8E7E8] px-4 py-3 font-bold">阶段</th>
+                  <th className="border-b border-[#D8E7E8] px-4 py-3 font-bold">新闻</th>
+                  <th className="border-b border-[#D8E7E8] px-4 py-3 font-bold">处理信号</th>
+                  <th className="border-b border-[#D8E7E8] px-4 py-3 font-bold">覆盖度</th>
+                  <th className="border-b border-[#D8E7E8] px-4 py-3 font-bold">状态</th>
+                  <th className="border-b border-[#D8E7E8] px-4 py-3 text-right font-bold">入口</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.item.id} className="border-b border-[#D8E7E8] last:border-b-0 hover:bg-[#F7FAFA]">
+                    <td className="px-4 py-3 align-top">
+                      <span className={`inline-flex min-h-7 items-center rounded-md border px-2.5 text-[11px] font-bold ${releaseToneClass(row.tone)}`}>
+                        {row.stage}
+                      </span>
+                    </td>
+                    <td className="max-w-[260px] px-4 py-3 align-top">
+                      <div className="truncate text-sm font-bold text-[#1E2C31]" title={row.item.title_zh || row.item.title_en || row.item.slug}>
+                        {row.item.title_zh || row.item.title_en || row.item.slug}
+                      </div>
+                      <div className="mt-1 truncate font-mono text-[11px] text-[#8A9EA4]">/news/{row.item.slug}</div>
+                    </td>
+                    <td className="max-w-[280px] px-4 py-3 align-top">
+                      <div className="text-sm font-semibold text-[#1E2C31]">{row.issue}</div>
+                      <div className="mt-1 text-[11px] leading-4 text-[#61767D]">{row.detail}</div>
+                    </td>
+                    <td className="px-4 py-3 align-top text-xs font-semibold text-[#61767D]">
+                      {row.coverage}
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <span className={`inline-flex min-h-7 items-center rounded-md border px-2.5 text-[11px] font-semibold ${
+                        row.item.status === 'published'
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                          : isScheduled(row.item)
+                            ? 'border-sky-200 bg-sky-50 text-sky-700'
+                            : 'border-[#F2C6A7] bg-[#FFF7F0] text-[#E36F2C]'
+                      }`}>
+                        {row.item.status === 'published' ? '已发布' : isScheduled(row.item) ? '定时' : '草稿'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right align-top">
+                      <Link
+                        href={newsEditHref(basePath, row.item, row.anchor)}
+                        className="inline-flex min-h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-bold text-[#1889B6] hover:border-[#1889B6] hover:bg-[#EAF6F8]"
+                      >
+                        {row.actionLabel}
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="grid gap-3 p-4 md:hidden">
+            {rows.map((row) => (
+              <Link
+                key={row.item.id}
+                href={newsEditHref(basePath, row.item, row.anchor)}
+                className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <span className={`inline-flex min-h-7 items-center rounded-md border px-2.5 text-[11px] font-bold ${releaseToneClass(row.tone)}`}>
+                    {row.stage}
+                  </span>
+                  <span className="text-[11px] font-bold text-[#1889B6]">{row.actionLabel}</span>
+                </div>
+                <div className="mt-2 truncate text-sm font-bold text-[#1E2C31]">
+                  {row.item.title_zh || row.item.title_en || row.item.slug}
+                </div>
+                <div className="mt-1 text-xs text-[#61767D]">{row.issue}</div>
+                <div className="mt-2 text-[11px] text-[#61767D]">{row.coverage}</div>
+              </Link>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="p-4">
+          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs font-medium text-emerald-700">
+            当前页没有需要处理的新闻。
+          </div>
+        </div>
+      )}
+    </section>
+  )
 }
 
 export default function NewsListClient({
@@ -316,6 +656,7 @@ export default function NewsListClient({
 
   const pendingBatchCategory = initialCategories.find((category) => String(category.id) === pendingBatchCategoryId)
   const totalPages = Math.max(1, Math.ceil(total / LIMIT))
+  const releaseLedgerRows = buildNewsReleaseLedgerRows(rows)
 
   return (
     <div className="flex flex-col gap-5">
@@ -445,6 +786,8 @@ export default function NewsListClient({
           </div>
         </div>
       </div>
+
+      <NewsReleaseLedger rows={releaseLedgerRows} basePath={basePath} />
 
       {/* Table */}
       {rows.length === 0 && !loading ? (
