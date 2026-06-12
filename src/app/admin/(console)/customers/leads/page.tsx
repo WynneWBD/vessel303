@@ -7,14 +7,17 @@ import {
   getLeadOperationsSummary,
   getLeadSlaSummary,
   listLeads,
+  summarizeLeadsBySourceStageStatus,
   summarizeLeadsBySourceStatus,
   type Lead,
   type LeadOperationsSummary,
   type LeadSlaSummary,
+  type LeadSourceStageStatusSummary,
   type LeadSourceStatusSummary,
   type LeadStatus,
 } from '@/lib/leads-db'
 import { getLeadSourceStageLabel } from '@/lib/lead-source'
+import { formatAnalyticsPercent, loadConversionPathAnalytics, type AnalyticsConversionMetric } from '@/lib/site-analytics'
 import {
   ArrowRight,
   BadgeCheck,
@@ -94,6 +97,15 @@ const EMPTY_SUMMARY: LeadDashboardSummary = {
 }
 
 const EMPTY_SOURCE_STATUS_SUMMARY: LeadSourceStatusSummary[] = []
+const EMPTY_SOURCE_STAGE_STATUS_SUMMARY: LeadSourceStageStatusSummary[] = []
+
+const EMPTY_CASE_PATH_METRIC: AnalyticsConversionMetric = {
+  views: 0,
+  ctaClicks: 0,
+  formSubmits: 0,
+  leads: 0,
+  conversionRate: 0,
+}
 
 const EMPTY_OPERATIONS_SUMMARY: LeadOperationsSummary = {
   total: 0,
@@ -248,17 +260,26 @@ function LeadsQueueConsole({
   result,
   filters,
   sourceStatusSummary,
+  sourceStageStatusSummary,
+  casePathMetric,
 }: {
   summary: LeadDashboardSummary
   operationsSummary: LeadOperationsSummary
   result: LeadsResult
   filters: LeadFilterState
   sourceStatusSummary: LeadSourceStatusSummary[]
+  sourceStageStatusSummary: LeadSourceStageStatusSummary[]
+  casePathMetric: AnalyticsConversionMetric
 }) {
   const activeFilterChips = buildActiveFilterChips(filters)
   const currentRows = result.leads.length
   const topSource = sourceStatusSummary[0]
   const sourceNewTotal = sourceStatusSummary.reduce((total, source) => total + source.new, 0)
+  const caseSource = sourceStatusSummary.find((source) => source.type === 'case')
+  const caseTotal = caseSource?.total ?? 0
+  const caseActive = caseSource ? caseSource.new + caseSource.contacting + caseSource.quoted : 0
+  const caseTopStage = sourceStageStatusSummary.find((source) => source.type === 'case')
+  const caseInquiryForm = sourceStageStatusSummary.find((source) => source.key === 'case:inquiry_form')
   const clearHref = createLeadsHref({
     status: 'all',
     inquiry_type: 'all',
@@ -326,6 +347,24 @@ function LeadsQueueConsole({
         { label: '转化路径', href: '/admin/site/conversion' },
       ],
     },
+    {
+      title: '案例线索承接',
+      detail: caseTopStage
+        ? `主要阶段 ${caseTopStage.label}: ${formatNumber(caseTopStage.total)} 条；对照 30 天案例路径访问与表单。`
+        : '案例路径还没有形成线索样本；先从案例路径分析和案例来源筛选确认。',
+      metric: `${formatNumber(caseActive)} 活跃`,
+      signal: casePathMetric.leads > 0
+        ? `${formatNumber(casePathMetric.leads)} 路径线索`
+        : `${formatAnalyticsPercent(casePathMetric.conversionRate)} 转化`,
+      href: createLeadsHref(filters, { source_type: 'case', source_stage: 'all', status: 'all', page: 1 }),
+      Icon: BadgeCheck,
+      tone: caseActive > 0 ? 'orange' : caseTotal > 0 ? 'blue' : 'gray',
+      actions: [
+        { label: '案例线索', href: createLeadsHref(filters, { source_type: 'case', source_stage: 'all', status: 'all', page: 1 }), primary: caseActive > 0 },
+        { label: '案例表单', href: createLeadsHref(filters, { source_type: 'case', source_stage: 'case:inquiry_form', status: 'all', page: 1 }), primary: Boolean(caseInquiryForm?.new) },
+        { label: '路径分析', href: '/admin/status/traffic#case-inquiry-path' },
+      ],
+    },
   ]
 
   return (
@@ -362,15 +401,16 @@ function LeadsQueueConsole({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 border-b border-[#D8E7E8] md:grid-cols-5">
+      <div className="grid grid-cols-1 border-b border-[#D8E7E8] md:grid-cols-3 xl:grid-cols-6">
         <LeadControlStat label="总线索" value={`${formatNumber(operationsSummary.total)} 条`} />
         <LeadControlStat label="今日新增" value={`${formatNumber(operationsSummary.newToday)} 条`} tone={operationsSummary.newToday > 0 ? 'orange' : 'green'} />
         <LeadControlStat label="活跃商机" value={`${formatNumber(operationsSummary.active)} 条`} />
         <LeadControlStat label="超时队列" value={`${formatNumber(operationsSummary.overdue)} 条`} tone={operationsSummary.overdue > 0 ? 'orange' : 'green'} />
         <LeadControlStat label="今日更新" value={`${formatNumber(operationsSummary.updatedToday)} 条`} />
+        <LeadControlStat label="案例线索" value={`${formatNumber(caseTotal)} 条`} tone={caseActive > 0 ? 'orange' : caseTotal > 0 ? 'blue' : 'gray'} />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 p-5 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 p-5 lg:grid-cols-2 2xl:grid-cols-5">
         {rows.map((row) => (
           <LeadConsoleRowView key={row.title} row={row} />
         ))}
@@ -554,7 +594,7 @@ export default async function AdminCustomerLeadsPage({
   const page = Math.max(1, Number(getStr('page') ?? 1) || 1)
   const limit = Math.min(100, Math.max(20, Number(getStr('limit') ?? 50) || 50))
 
-  const [summary, operationsSummary, slaSummary, result, sourceStatusSummary] = await Promise.all([
+  const [summary, operationsSummary, slaSummary, result, sourceStatusSummary, sourceStageStatusSummary, pathAnalytics] = await Promise.all([
     safeLoad('lead summary', () => getLeadSummary(), EMPTY_SUMMARY),
     safeLoad('lead operations summary', () => getLeadOperationsSummary(), EMPTY_OPERATIONS_SUMMARY),
     safeLoad('lead sla summary', () => getLeadSlaSummary(), EMPTY_SLA_SUMMARY),
@@ -579,9 +619,16 @@ export default async function AdminCustomerLeadsPage({
       () => summarizeLeadsBySourceStatus(),
       EMPTY_SOURCE_STATUS_SUMMARY,
     ),
+    safeLoad(
+      'lead source stage status summary',
+      () => summarizeLeadsBySourceStageStatus(),
+      EMPTY_SOURCE_STAGE_STATUS_SUMMARY,
+    ),
+    safeLoad<Record<string, AnalyticsConversionMetric>>('case path analytics', () => loadConversionPathAnalytics(30), {}),
   ])
 
   const adminRole: AdminRole = role
+  const casePathMetric = pathAnalytics.cases ?? EMPTY_CASE_PATH_METRIC
   const leadFilters: LeadFilterState = {
     ...filters,
     page,
@@ -604,6 +651,8 @@ export default async function AdminCustomerLeadsPage({
         result={result}
         filters={leadFilters}
         sourceStatusSummary={sourceStatusSummary}
+        sourceStageStatusSummary={sourceStageStatusSummary}
+        casePathMetric={casePathMetric}
       />
       <LeadsClient
         initialLeads={result.leads}
