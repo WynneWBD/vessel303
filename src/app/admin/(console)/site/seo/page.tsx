@@ -1023,42 +1023,98 @@ function MetricPill({
   )
 }
 
-function SeoPriorityPanel({ items }: { items: SeoPriorityItem[] }) {
+function seoActionLabel(item: SeoPriorityItem): string {
+  if (!item.href) return '记录边界'
+  if (item.title.includes('产品')) return '处理产品'
+  if (item.title.includes('新闻')) return '处理新闻'
+  if (item.title.includes('案例')) return '处理案例'
+  if (item.title === 'Search Console') return '查看清单'
+  return '查看'
+}
+
+function seoStageLabel(item: SeoPriorityItem): string {
+  if (item.tone === 'critical') return '内容字段'
+  if (item.tone === 'warning') return '收录接入'
+  if (item.tone === 'protected') return '保护边界'
+  return '已就绪'
+}
+
+function SeoActionLedger({ items }: { items: SeoPriorityItem[] }) {
+  const activeCount = items.filter((item) => item.tone === 'critical' || item.tone === 'warning').length
+
   return (
-    <section className="space-y-4">
-      <SectionTitle
-        title="SEO 处理优先级"
-        detail="先处理会影响搜索展示和收录基础的项目，再回到来源后台补字段；本页只做只读排序和跳转。"
-      />
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-4">
-        {items.slice(0, 8).map((item) => {
+    <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#D8E7E8] p-5 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
+            <ListChecks size={15} />
+            Action Ledger
+          </div>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">SEO 处理台账</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把内容 SEO、收录基础和保护边界放在一张表里，按影响级别下钻到来源后台；这里只读排序，不批量写入。
+          </p>
+        </div>
+        <span className={`inline-flex w-fit rounded-md px-3 py-2 text-xs font-bold ${activeCount > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
+          {activeCount > 0 ? `${formatNumber(activeCount)} 项待处理` : '暂无高优先级'}
+        </span>
+      </div>
+
+      <div className="hidden grid-cols-[0.85fr_1.1fr_0.7fr_minmax(0,1.8fr)_0.65fr] border-b border-[#D8E7E8] bg-[#F7FAFA] px-5 py-2 text-xs font-semibold text-[#61767D] xl:grid">
+        <span>阶段</span>
+        <span>事项</span>
+        <span>数量</span>
+        <span>处理说明</span>
+        <span>入口</span>
+      </div>
+
+      <div className="divide-y divide-[#D8E7E8]">
+        {items.map((item) => {
           const Icon = item.Icon
           const content = (
             <>
-              <div className="flex items-start justify-between gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white text-[#1889B6]">
-                  <Icon size={18} />
+              <div className="flex items-center gap-3">
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${readinessToneClassName(item.tone)}`}>
+                  <Icon size={17} />
                 </span>
-                <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${priorityBadgeClassName(item.tone)}`}>
-                  {typeof item.count === 'number' ? `${formatNumber(item.count)} 项` : item.count}
-                </span>
+                <div className="min-w-0">
+                  <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ${priorityBadgeClassName(item.tone)}`}>
+                    {seoStageLabel(item)}
+                  </span>
+                  <p className="mt-1 text-[11px] font-semibold text-[#8A9EA4] xl:hidden">
+                    {typeof item.count === 'number' ? `${formatNumber(item.count)} 项` : item.count}
+                  </p>
+                </div>
               </div>
-              <h3 className="mt-4 text-base font-bold text-[#1E2C31]">{item.title}</h3>
-              <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{item.owner}</p>
-              <p className="mt-3 text-sm leading-6 text-[#61767D]">{item.detail}</p>
-              {item.href ? (
-                <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
-                  去处理
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-[#1E2C31]">{item.title}</p>
+                <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{item.owner}</p>
+              </div>
+              <div className="text-sm font-bold text-[#1E2C31]">
+                {typeof item.count === 'number' ? formatNumber(item.count) : item.count}
+              </div>
+              <p className="text-xs leading-5 text-[#61767D]">{item.detail}</p>
+              <span className="inline-flex min-h-8 w-fit items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1E2C31] group-hover:border-[#1889B6] group-hover:text-[#1889B6]">
+                {seoActionLabel(item)}
+                {item.href ? (
                   <ArrowRight size={14} />
-                </span>
-              ) : null}
+                ) : (
+                  <ShieldCheck size={14} />
+                )}
+              </span>
             </>
           )
-          const className = `rounded-md border border-l-4 border-[#D8E7E8] p-4 shadow-sm transition ${priorityToneClassName(item.tone)}`
+          const rowClassName = `grid grid-cols-1 gap-3 border-l-4 px-5 py-4 transition xl:grid-cols-[0.85fr_1.1fr_0.7fr_minmax(0,1.8fr)_0.65fr] xl:items-center ${priorityToneClassName(item.tone)}`
 
-          if (!item.href) return <div key={`${item.owner}-${item.title}`} className={className}>{content}</div>
+          if (!item.href) {
+            return (
+              <div key={`${item.owner}-${item.title}`} className={rowClassName}>
+                {content}
+              </div>
+            )
+          }
           return (
-            <Link key={`${item.owner}-${item.title}`} href={item.href} className={`${className} hover:-translate-y-0.5 hover:border-[#1889B6]/60`}>
+            <Link key={`${item.owner}-${item.title}`} href={item.href} className={`group ${rowClassName} hover:bg-[#F7FAFA]`}>
               {content}
             </Link>
           )
@@ -1242,7 +1298,7 @@ export default async function AdminSiteSeoPage() {
         priorityItems={priorityItems}
       />
 
-      <SeoPriorityPanel items={priorityItems} />
+      <SeoActionLedger items={priorityItems} />
 
       <IndexFoundationPanel items={indexFoundationItems} />
 
