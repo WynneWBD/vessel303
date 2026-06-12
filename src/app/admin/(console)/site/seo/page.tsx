@@ -75,6 +75,18 @@ type SeoPriorityItem = {
   tone: SeoPriorityTone
 }
 
+type SeoSubmissionStatus = 'ready' | 'manual' | 'blocked' | 'protected'
+
+type SeoSubmissionItem = {
+  stage: string
+  title: string
+  evidence: string
+  action: string
+  href?: string
+  Icon: LucideIcon
+  status: SeoSubmissionStatus
+}
+
 const EMPTY_CONTENT_SUMMARY: ContentSeoSummary = {
   total: 0,
   published: 0,
@@ -1039,6 +1051,93 @@ function seoStageLabel(item: SeoPriorityItem): string {
   return '已就绪'
 }
 
+function submissionStatusLabel(status: SeoSubmissionStatus): string {
+  if (status === 'ready') return '可复验'
+  if (status === 'manual') return '待人工提交'
+  if (status === 'protected') return '保护边界'
+  return '待补齐'
+}
+
+function submissionStatusClassName(status: SeoSubmissionStatus): string {
+  if (status === 'ready') return 'bg-emerald-50 text-emerald-700'
+  if (status === 'manual') return 'bg-[#EAF6F8] text-[#1889B6]'
+  if (status === 'protected') return 'bg-[#F5F2ED] text-[#6B625B]'
+  return 'bg-[#FFF2E7] text-[#E36F2C]'
+}
+
+function buildSeoSubmissionItems({
+  products,
+  news,
+  projects,
+  indexFoundationItems,
+}: {
+  products: ContentSeoSummary
+  news: ContentSeoSummary
+  projects: ContentSeoSummary
+  indexFoundationItems: IndexFoundationItem[]
+}): SeoSubmissionItem[] {
+  const foundationByTitle = new Map(indexFoundationItems.map((item) => [item.title, item]))
+  const robots = foundationByTitle.get('Robots')
+  const sitemap = foundationByTitle.get('Sitemap')
+  const searchConsole = foundationByTitle.get('Search Console')
+  const missingTotal = products.missing + news.missing + projects.missing
+
+  return [
+    {
+      stage: '抓取边界',
+      title: 'Robots 公开 / 后台边界',
+      evidence: robots?.detail ?? '未读取到 robots 检查结果。',
+      action: robots?.status === 'ready'
+        ? '提交前复验 /robots.txt，确认后台和接口仍禁止抓取。'
+        : '先补齐 robots.txt，再进入 sitemap 提交流程。',
+      href: '/robots.txt',
+      Icon: ShieldCheck,
+      status: robots?.status === 'ready' ? 'ready' : 'blocked',
+    },
+    {
+      stage: '索引清单',
+      title: '动态 sitemap 输出',
+      evidence: sitemap?.detail ?? '未读取到 sitemap 检查结果。',
+      action: sitemap?.status === 'ready'
+        ? '提交前复验 /sitemap.xml，抽查公开路径和详情页是否存在。'
+        : '先恢复 sitemap 输出，再进入 Search Console。',
+      href: '/sitemap.xml',
+      Icon: ListChecks,
+      status: sitemap?.status === 'ready' ? 'ready' : 'blocked',
+    },
+    {
+      stage: '站点验证',
+      title: 'Search Console URL 前缀',
+      evidence: searchConsole?.detail ?? '未读取到 Search Console 检查结果。',
+      action: searchConsole?.status === 'ready'
+        ? '由人工在 Google Search Console 验证 URL 前缀并提交 sitemap。'
+        : '先在 Vercel 环境变量配置 Meta token，重新部署后再验证。',
+      Icon: SearchCheck,
+      status: searchConsole?.status === 'ready' ? 'manual' : 'blocked',
+    },
+    {
+      stage: '内容门槛',
+      title: '详情页 SEO 缺项',
+      evidence: `${formatNumber(products.missing)} 个产品、${formatNumber(news.missing)} 篇新闻、${formatNumber(projects.missing)} 个案例仍需复核。`,
+      action: missingTotal > 0
+        ? '先回内容后台补齐会影响搜索摘要的缺项，再提交重点详情页。'
+        : '内容侧已具备提交前抽检条件。',
+      href: missingTotal > 0 ? '/admin/content/products/list?view=incomplete&issue=seo' : '/admin/content/products/list',
+      Icon: FileText,
+      status: missingTotal > 0 ? 'blocked' : 'ready',
+    },
+    {
+      stage: '保护边界',
+      title: 'Global 地图只读纳入',
+      evidence: '只确认 /global 是否可访问和是否出现在 sitemap 边界，不修改 MapLibre、MapTiler 或 /api/map。',
+      action: '继续按保护项复验，不把地图底层纳入 SEO 批量改造。',
+      href: '/global',
+      Icon: LockKeyhole,
+      status: 'protected',
+    },
+  ]
+}
+
 function SeoActionLedger({ items }: { items: SeoPriorityItem[] }) {
   const activeCount = items.filter((item) => item.tone === 'critical' || item.tone === 'warning').length
 
@@ -1115,6 +1214,90 @@ function SeoActionLedger({ items }: { items: SeoPriorityItem[] }) {
           }
           return (
             <Link key={`${item.owner}-${item.title}`} href={item.href} className={`group ${rowClassName} hover:bg-[#F7FAFA]`}>
+              {content}
+            </Link>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+function SeoSubmissionLedger({ items }: { items: SeoSubmissionItem[] }) {
+  const blockedCount = items.filter((item) => item.status === 'blocked').length
+  const manualCount = items.filter((item) => item.status === 'manual').length
+
+  return (
+    <section id="submission-readiness" className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#D8E7E8] p-5 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
+            <SearchCheck size={15} />
+            Submission Readiness
+          </div>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">索引提交前复核台账</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把 300 后台常见的“网站地图、Robots、站点验证、内容缺项、保护边界”收成提交前清单；这里只做证据和下一步，不调用 Google API、不自动提交。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className={`inline-flex w-fit rounded-md px-3 py-2 text-xs font-bold ${blockedCount > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
+            {blockedCount > 0 ? `${formatNumber(blockedCount)} 项阻塞` : '无阻塞'}
+          </span>
+          <span className="inline-flex w-fit rounded-md bg-[#EAF6F8] px-3 py-2 text-xs font-bold text-[#1889B6]">
+            {manualCount > 0 ? `${formatNumber(manualCount)} 项待人工` : '无需人工提交'}
+          </span>
+        </div>
+      </div>
+
+      <div className="hidden grid-cols-[0.8fr_1.05fr_minmax(0,1.8fr)_minmax(0,1.55fr)_0.75fr] border-b border-[#D8E7E8] bg-[#F7FAFA] px-5 py-2 text-xs font-semibold text-[#61767D] xl:grid">
+        <span>阶段</span>
+        <span>复核项</span>
+        <span>当前证据</span>
+        <span>下一步</span>
+        <span>状态</span>
+      </div>
+
+      <div className="divide-y divide-[#D8E7E8]">
+        {items.map((item) => {
+          const Icon = item.Icon
+          const content = (
+            <>
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
+                  <Icon size={17} />
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-[#1E2C31]">{item.stage}</p>
+                  <span className={`mt-1 inline-flex rounded-full px-2 py-1 text-[11px] font-semibold xl:hidden ${submissionStatusClassName(item.status)}`}>
+                    {submissionStatusLabel(item.status)}
+                  </span>
+                </div>
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-[#1E2C31]">{item.title}</p>
+                <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{item.href ? '可打开复验' : '只读记录'}</p>
+              </div>
+              <p className="text-xs leading-5 text-[#61767D]">{item.evidence}</p>
+              <p className="text-xs leading-5 text-[#1E2C31]">{item.action}</p>
+              <span className={`inline-flex min-h-8 w-fit items-center gap-1 rounded-md px-3 text-xs font-semibold ${submissionStatusClassName(item.status)}`}>
+                {submissionStatusLabel(item.status)}
+                {item.href ? <ArrowRight size={14} /> : <ShieldCheck size={14} />}
+              </span>
+            </>
+          )
+          const rowClassName = "grid grid-cols-1 gap-3 px-5 py-4 transition xl:grid-cols-[0.8fr_1.05fr_minmax(0,1.8fr)_minmax(0,1.55fr)_0.75fr] xl:items-center"
+
+          if (!item.href) {
+            return (
+              <div key={`${item.stage}-${item.title}`} className={rowClassName}>
+                {content}
+              </div>
+            )
+          }
+
+          return (
+            <Link key={`${item.stage}-${item.title}`} href={item.href} className={`group ${rowClassName} hover:bg-[#F7FAFA]`}>
               {content}
             </Link>
           )
@@ -1250,6 +1433,7 @@ export default async function AdminSiteSeoPage() {
   const sideNavGroups = getSeoSideNav(adminRole === 'admin')
   const indexFoundationItems = loadIndexFoundationItems()
   const priorityItems = buildSeoPriorityItems({ products, news, projects, indexFoundationItems })
+  const submissionItems = buildSeoSubmissionItems({ products, news, projects, indexFoundationItems })
 
   return (
     <AdminSectionShell
@@ -1299,6 +1483,8 @@ export default async function AdminSiteSeoPage() {
       />
 
       <SeoActionLedger items={priorityItems} />
+
+      <SeoSubmissionLedger items={submissionItems} />
 
       <IndexFoundationPanel items={indexFoundationItems} />
 
