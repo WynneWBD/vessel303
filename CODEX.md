@@ -8,9 +8,9 @@
 
 - 官网：`https://www.vessel303.com`
 - 代码仓库：`C:\Users\Wynne\Desktop\vessel303\repo-git`
-- 当前循环：B204 已完成并上线；下一轮从 B205 继续按 00-11 工作流推进。
-- 最近功能批次：B204 / `c195daa feat(admin): add product stage conversion matrix`
-- 最近生产验证 deployment：`dpl_DnyHanDFR2gS7ZnEbS6go91eciMB`
+- 当前循环：B205 已完成并上线；下一轮从 B206 继续按 00-11 工作流推进。
+- 最近功能批次：B205 / `6aa127a feat(analytics): attribute product detail inquiry ctas`
+- 最近生产验证 deployment：`dpl_8kuAhmdhhXQhwsdde2rphk3Di4ne`
 - 当前精确状态以 `00_项目总控入口/vessel303_当前总控handoff.md` 和 `vercel inspect https://www.vessel303.com` 为准。
 - 当前目标：前台对齐 `en.303vessel.cn` 的生产官网能力，后台对齐 `300.cn 后台` 的运营效率和数据分析心智。
 
