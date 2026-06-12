@@ -265,6 +265,285 @@ type NewsFormSectionProgress = {
   issueCount: number
 }
 
+type NewsReleaseIssueTone = 'high' | 'medium' | 'safe'
+
+type NewsReleaseIssue = {
+  id: string
+  stage: string
+  issue: string
+  detail: string
+  sectionId: string
+  actionLabel: string
+  tone: NewsReleaseIssueTone
+  rank: number
+}
+
+type NewsReleaseIssueInput = {
+  slug: string
+  titleZh: string
+  titleEn: string
+  excerptZh: string
+  excerptEn: string
+  contentZh: JSONContent
+  contentEn: JSONContent
+  coverImageUrl: string | null
+  categoryId: string
+  scheduledAt: string
+  seoTitleZh: string
+  seoTitleEn: string
+  seoDescriptionZh: string
+  seoDescriptionEn: string
+  currentStatus: NewsStatus
+  hasUnsavedChanges: boolean
+}
+
+function newsIssueToneClass(tone: NewsReleaseIssueTone) {
+  if (tone === 'high') return 'border-[#F2C6A7] bg-[#FFF7F0] text-[#E36F2C]'
+  if (tone === 'medium') return 'border-[#D8E7E8] bg-[#F7FAFA] text-[#1889B6]'
+  return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+}
+
+function buildNewsReleaseIssues(input: NewsReleaseIssueInput): NewsReleaseIssue[] {
+  const issues: NewsReleaseIssue[] = []
+  const missingContent = [
+    !hasText(input.titleZh),
+    !hasText(input.titleEn),
+    !hasText(input.excerptZh),
+    !hasText(input.excerptEn),
+    !hasRichTextContent(input.contentZh),
+    !hasRichTextContent(input.contentEn),
+  ].filter(Boolean).length
+  const missingSeo = [
+    !hasText(input.seoTitleZh),
+    !hasText(input.seoTitleEn),
+    !hasText(input.seoDescriptionZh),
+    !hasText(input.seoDescriptionEn),
+  ].filter(Boolean).length
+  const invalidSchedule = Boolean(input.scheduledAt) && !isScheduledAtValue(input.scheduledAt)
+
+  if (input.currentStatus === 'published' && input.hasUnsavedChanges) {
+    issues.push({
+      id: 'published-unsaved',
+      stage: '发布风险',
+      issue: '已发布新闻存在未保存变更',
+      detail: '当前前台仍展示上一次保存版本；先确认修改内容，再保存更新或取消变更。',
+      sectionId: 'publish-check',
+      actionLabel: '复核状态',
+      tone: 'high',
+      rank: 110,
+    })
+  }
+
+  if (!normalizeSlug(input.slug)) {
+    issues.push({
+      id: 'missing-slug',
+      stage: '基础缺口',
+      issue: 'Slug 缺失',
+      detail: '补齐 URL 路径，否则保存与前台链接都无法稳定定位这篇新闻。',
+      sectionId: 'basic',
+      actionLabel: '补 Slug',
+      tone: 'high',
+      rank: 100,
+    })
+  }
+
+  if (!hasText(input.coverImageUrl)) {
+    issues.push({
+      id: 'missing-cover',
+      stage: '素材缺口',
+      issue: '缺封面图',
+      detail: '先补封面；否则新闻列表、详情首屏和社媒分享都缺少视觉锚点。',
+      sectionId: 'media',
+      actionLabel: '处理封面',
+      tone: 'high',
+      rank: 92,
+    })
+  }
+
+  if (!hasRichTextContent(input.contentZh) || !hasRichTextContent(input.contentEn)) {
+    issues.push({
+      id: 'missing-body',
+      stage: '正文缺口',
+      issue: '中英文正文不完整',
+      detail: '补齐正文后再发布，避免公开页只有标题、摘要或空白正文。',
+      sectionId: 'content',
+      actionLabel: '补正文',
+      tone: 'high',
+      rank: 84,
+    })
+  }
+
+  if (
+    !hasText(input.titleZh)
+    || !hasText(input.titleEn)
+    || !hasText(input.excerptZh)
+    || !hasText(input.excerptEn)
+  ) {
+    issues.push({
+      id: 'missing-intro',
+      stage: '语言缺口',
+      issue: '标题或摘要不完整',
+      detail: `当前内容字段还有 ${missingContent} 项缺口；补齐后列表、详情和 SEO 摘要口径才一致。`,
+      sectionId: 'content',
+      actionLabel: '补字段',
+      tone: missingContent >= 3 ? 'high' : 'medium',
+      rank: 76,
+    })
+  }
+
+  if (!input.categoryId) {
+    issues.push({
+      id: 'missing-category',
+      stage: '分类缺口',
+      issue: '未绑定新闻分类',
+      detail: '绑定分类，方便前台归档、后台筛选和后续内容治理。',
+      sectionId: 'taxonomy',
+      actionLabel: '设分类',
+      tone: 'medium',
+      rank: 66,
+    })
+  }
+
+  if (missingSeo > 0) {
+    issues.push({
+      id: 'missing-seo',
+      stage: 'SEO 缺口',
+      issue: '搜索标题或描述不完整',
+      detail: `SEO 四项还有 ${missingSeo} 项缺口；补齐后再进入发布检查。`,
+      sectionId: 'seo',
+      actionLabel: '补 SEO',
+      tone: 'medium',
+      rank: 58,
+    })
+  }
+
+  if (invalidSchedule) {
+    issues.push({
+      id: 'invalid-schedule',
+      stage: '排期错误',
+      issue: '定时发布格式无效',
+      detail: '格式必须为 YYYY-MM-DDTHH:mm，例如 2026-06-30T09:30。',
+      sectionId: 'schedule',
+      actionLabel: '修排期',
+      tone: 'high',
+      rank: 52,
+    })
+  } else if (input.currentStatus !== 'published' && hasText(input.scheduledAt)) {
+    issues.push({
+      id: 'scheduled-review',
+      stage: '排期复核',
+      issue: '已设置定时发布',
+      detail: '发布前复核时间、标题、摘要和 SEO，确认是否继续保持草稿排期。',
+      sectionId: 'schedule',
+      actionLabel: '查排期',
+      tone: 'medium',
+      rank: 36,
+    })
+  }
+
+  if (issues.length === 0) {
+    return [{
+      id: 'ready',
+      stage: input.currentStatus === 'published' ? '已发布' : '发布前',
+      issue: input.currentStatus === 'published' ? '当前字段完整' : '可进入人工发布复核',
+      detail: input.currentStatus === 'published'
+        ? '继续保持线上展示；如需调整，先保存更新再复核前台页面。'
+        : '基础字段已齐，发布前最后确认标题、封面、正文、SEO 和分类。',
+      sectionId: 'publish-check',
+      actionLabel: input.currentStatus === 'published' ? '查看状态' : '发布复核',
+      tone: 'safe',
+      rank: 0,
+    }]
+  }
+
+  return issues.sort((a, b) => b.rank - a.rank)
+}
+
+function NewsReleaseIssueLedger({ issues }: { issues: NewsReleaseIssue[] }) {
+  const highCount = issues.filter((issue) => issue.tone === 'high').length
+  const reviewCount = issues.filter((issue) => issue.tone === 'medium').length
+
+  return (
+    <section className="mt-4 overflow-hidden rounded-md border border-[#D8E7E8] bg-white">
+      <div className="flex flex-col gap-3 border-b border-[#D8E7E8] px-4 py-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Release Ledger</p>
+          <h3 className="mt-1 text-base font-bold text-[#1E2C31]">新闻发布问题台账</h3>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className={`inline-flex min-h-7 items-center rounded-md border px-2.5 text-[11px] font-semibold ${newsIssueToneClass(highCount > 0 ? 'high' : 'safe')}`}>
+            优先 {highCount}
+          </span>
+          <span className={`inline-flex min-h-7 items-center rounded-md border px-2.5 text-[11px] font-semibold ${newsIssueToneClass(reviewCount > 0 ? 'medium' : 'safe')}`}>
+            复核 {reviewCount}
+          </span>
+          <span className="inline-flex min-h-7 items-center rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-2.5 text-[11px] font-semibold text-[#61767D]">
+            共 {issues.length} 项
+          </span>
+        </div>
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-full min-w-[760px] border-collapse text-left text-xs">
+          <thead className="bg-[#F7FAFA] text-[11px] uppercase tracking-[0.08em] text-[#61767D]">
+            <tr>
+              <th className="border-b border-[#D8E7E8] px-4 py-3 font-bold">阶段</th>
+              <th className="border-b border-[#D8E7E8] px-4 py-3 font-bold">问题</th>
+              <th className="border-b border-[#D8E7E8] px-4 py-3 font-bold">处理说明</th>
+              <th className="border-b border-[#D8E7E8] px-4 py-3 text-right font-bold">入口</th>
+            </tr>
+          </thead>
+          <tbody>
+            {issues.map((issue) => (
+              <tr key={issue.id} className="border-b border-[#D8E7E8] last:border-b-0 hover:bg-[#F7FAFA]">
+                <td className="px-4 py-3 align-top">
+                  <span className={`inline-flex min-h-7 items-center rounded-md border px-2.5 text-[11px] font-bold ${newsIssueToneClass(issue.tone)}`}>
+                    {issue.stage}
+                  </span>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  <div className="text-sm font-bold text-[#1E2C31]">{issue.issue}</div>
+                  <div className="mt-1 font-mono text-[11px] text-[#8A9EA4]">#{issue.sectionId}</div>
+                </td>
+                <td className="max-w-[360px] px-4 py-3 align-top text-[11px] leading-4 text-[#61767D]">
+                  {issue.detail}
+                </td>
+                <td className="px-4 py-3 text-right align-top">
+                  <a
+                    href={`#${issue.sectionId}`}
+                    className="inline-flex min-h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-bold text-[#1889B6] hover:border-[#1889B6] hover:bg-[#EAF6F8]"
+                  >
+                    {issue.actionLabel}
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="grid gap-3 p-4 md:hidden">
+        {issues.map((issue) => (
+          <a
+            key={issue.id}
+            href={`#${issue.sectionId}`}
+            className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <span className={`inline-flex min-h-7 items-center rounded-md border px-2.5 text-[11px] font-bold ${newsIssueToneClass(issue.tone)}`}>
+                {issue.stage}
+              </span>
+              <span className="text-[11px] font-bold text-[#1889B6]">{issue.actionLabel}</span>
+            </div>
+            <div className="mt-2 text-sm font-bold text-[#1E2C31]">{issue.issue}</div>
+            <div className="mt-1 text-[11px] leading-4 text-[#61767D]">{issue.detail}</div>
+          </a>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function NewsFormSidebar({
   sectionProgress,
   completedSectionCount,
@@ -632,11 +911,6 @@ export default function NewsForm({
     seoDescriptionZh,
     seoDescriptionEn,
   })
-  const visibleCompletenessIssues = completeness.issues.slice(0, 3)
-  const hiddenCompletenessIssueCount = Math.max(
-    0,
-    completeness.issues.length - visibleCompletenessIssues.length,
-  )
   const currentSnapshot = useMemo(
     () => JSON.stringify({ ...formBody, status: currentStatus }),
     [currentStatus, formBody],
@@ -794,6 +1068,24 @@ export default function NewsForm({
     seoDescriptionEn,
     completeness,
   })
+  const releaseIssues = buildNewsReleaseIssues({
+    slug,
+    titleZh,
+    titleEn,
+    excerptZh,
+    excerptEn,
+    contentZh,
+    contentEn,
+    coverImageUrl,
+    categoryId,
+    scheduledAt,
+    seoTitleZh,
+    seoTitleEn,
+    seoDescriptionZh,
+    seoDescriptionEn,
+    currentStatus,
+    hasUnsavedChanges,
+  })
   const completedSectionCount = sectionProgress.filter((section) => section.done).length
   const currentCategory = categories.find((category) => String(category.id) === categoryId)
   const categoryLabel = currentCategory?.title_zh ?? '未分类'
@@ -852,25 +1144,7 @@ export default function NewsForm({
           <p className="mt-2 text-xs leading-relaxed text-[#6B6560]">
             只做运营提示，不新增保存或发布限制。
           </p>
-          {visibleCompletenessIssues.length > 0 ? (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {visibleCompletenessIssues.map((issue) => (
-                <span
-                  key={issue}
-                  className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-600"
-                >
-                  {issue}
-                </span>
-              ))}
-              {hiddenCompletenessIssueCount > 0 ? (
-                <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-500">
-                  还有 {hiddenCompletenessIssueCount} 项
-                </span>
-              ) : null}
-            </div>
-          ) : (
-            <p className="mt-3 text-xs text-emerald-700">当前基础内容完整。</p>
-          )}
+          <NewsReleaseIssueLedger issues={releaseIssues} />
         </div>
 
         {/* Slug */}
