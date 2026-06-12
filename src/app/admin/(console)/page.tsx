@@ -10,7 +10,7 @@ import {
   AdminSectionTitle,
 } from '@/components/admin/AdminUI'
 import { pool } from '@/lib/db'
-import { countLeadsByStatus } from '@/lib/leads-db'
+import { countLeadsByStatus, getLeadSlaSummary, type LeadSlaSummary } from '@/lib/leads-db'
 import { countNewsByStatus } from '@/lib/news-db'
 import { countUploads, sumStorageSize } from '@/lib/uploads-db'
 import { getUserSummary, type UserSummary } from '@/lib/users-db'
@@ -92,6 +92,17 @@ type ControlLane = {
   tone: 'blue' | 'green' | 'orange' | 'gray'
 }
 
+type OperationsLoopStep = {
+  title: string
+  kicker: string
+  metric: string
+  signal: string
+  detail: string
+  href: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange'
+}
+
 type ContentWorkbenchRow = {
   title: string
   detail: string
@@ -118,6 +129,21 @@ const EMPTY_LEAD_SUMMARY: LeadSummary = {
   quoted: 0,
   won: 0,
   lost: 0,
+}
+
+const EMPTY_SLA_SUMMARY: LeadSlaSummary = {
+  firstResponseOpen: 0,
+  firstResponseOverdue: 0,
+  firstResponseToday: 0,
+  contactingOpen: 0,
+  contactingStalled: 0,
+  quotedOpen: 0,
+  quotedStalled: 0,
+  unassignedActive: 0,
+  activeMissingPhone: 0,
+  activeMissingCompany: 0,
+  won30d: 0,
+  lost30d: 0,
 }
 
 const EMPTY_RECENT_SUMMARY: RecentContentSummary = {
@@ -657,6 +683,155 @@ function CommandCard({
         </span>
       </span>
     </Link>
+  )
+}
+
+function OperationsLoopPanel({
+  leadSummary,
+  slaSummary,
+  pageDraftCount,
+  productIssueCount,
+  mediaIssueCount,
+}: {
+  leadSummary: LeadSummary
+  slaSummary: LeadSlaSummary
+  pageDraftCount: number
+  productIssueCount: number
+  mediaIssueCount: number
+}) {
+  const stalledLeads = slaSummary.contactingStalled + slaSummary.quotedStalled
+  const activeLeadCount = leadSummary.new + slaSummary.contactingOpen + slaSummary.quotedOpen
+  const contentRiskCount = pageDraftCount + productIssueCount + mediaIssueCount
+  const assignmentRiskCount = slaSummary.unassignedActive + stalledLeads
+
+  const steps: OperationsLoopStep[] = [
+    {
+      kicker: '01 Traffic',
+      title: '访问诊断',
+      metric: '只读',
+      signal: '入口 / 路径',
+      detail: '先看 30 天访问、落地页、来源和行为，不把后台统计当业务事实写回。',
+      href: '/admin/status/traffic',
+      Icon: BarChart3,
+      tone: 'blue',
+    },
+    {
+      kicker: '02 Conversion',
+      title: '转化路径',
+      metric: formatNumber(activeLeadCount),
+      signal: '活跃链路',
+      detail: '核对入口、CTA、表单和 source 匹配，判断真实询盘是否接上内容。',
+      href: '/admin/site/conversion',
+      Icon: LayoutTemplate,
+      tone: 'blue',
+    },
+    {
+      kicker: '03 Lead SLA',
+      title: '线索响应',
+      metric: formatNumber(slaSummary.firstResponseOverdue),
+      signal: '超 24h',
+      detail: `新线索 ${formatNumber(slaSummary.firstResponseOpen)}，今日新增 ${formatNumber(slaSummary.firstResponseToday)}。`,
+      href: '/admin/customers/leads?attention=overdue',
+      Icon: Inbox,
+      tone: slaSummary.firstResponseOverdue > 0 ? 'orange' : 'green',
+    },
+    {
+      kicker: '04 Assignment',
+      title: '分配跟进',
+      metric: formatNumber(assignmentRiskCount),
+      signal: '待推进',
+      detail: `未分配 ${formatNumber(slaSummary.unassignedActive)}，停滞 ${formatNumber(stalledLeads)}。`,
+      href: '/admin/customers/leads?attention=active',
+      Icon: Users,
+      tone: assignmentRiskCount > 0 ? 'orange' : 'green',
+    },
+    {
+      kicker: '05 Content',
+      title: '内容补齐',
+      metric: formatNumber(contentRiskCount),
+      signal: '影响展示',
+      detail: `产品缺项 ${formatNumber(productIssueCount)}，页面草稿 ${formatNumber(pageDraftCount)}，素材风险 ${formatNumber(mediaIssueCount)}。`,
+      href: contentRiskCount > 0 ? '/admin/content/products/list?view=incomplete' : '/admin/site/visual',
+      Icon: Package,
+      tone: contentRiskCount > 0 ? 'orange' : 'green',
+    },
+  ]
+
+  const guardrails = [
+    { label: 'analytics', value: '一方只读' },
+    { label: 'leads', value: 'SLA 聚合' },
+    { label: 'conversion', value: 'source 对照' },
+    { label: 'content', value: 'published 驱动' },
+  ]
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#E5EEF0] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">
+            Operations Loop
+          </p>
+          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">运营闭环作战台</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            首页先给出从访问、转化、线索 SLA、分配跟进到内容补齐的处理顺序，减少在多个后台页面之间来回猜入口。
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+          {guardrails.map((item) => (
+            <span
+              key={item.label}
+              className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-2"
+            >
+              <span className="block font-semibold text-[#1889B6]">{item.label}</span>
+              <span className="mt-1 block text-[#61767D]">{item.value}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E5EEF0] lg:grid-cols-5 lg:divide-x lg:divide-y-0">
+        {steps.map((step) => {
+          const Icon = step.Icon
+          const toneClass =
+            step.tone === 'orange'
+              ? 'bg-[#FFF2E7] text-[#E36F2C]'
+              : step.tone === 'green'
+                ? 'bg-emerald-50 text-emerald-700'
+                : 'bg-[#EAF6F8] text-[#1889B6]'
+
+          return (
+            <Link
+              key={step.title}
+              href={step.href}
+              className="group flex min-h-52 flex-col justify-between gap-4 px-4 py-4 transition hover:bg-[#F7FAFA]"
+            >
+              <span>
+                <span className="flex items-center justify-between gap-3">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#8AA0A6]">
+                    {step.kicker}
+                  </span>
+                  <span className={`flex h-9 w-9 items-center justify-center rounded-md ${toneClass}`}>
+                    <Icon size={17} />
+                  </span>
+                </span>
+                <span className="mt-4 block text-sm font-bold text-[#1E2C31]">{step.title}</span>
+                <span className="mt-3 flex items-end justify-between gap-3">
+                  <span className="text-2xl font-black leading-none text-[#1E2C31]">
+                    {step.metric}
+                  </span>
+                  <span className="text-xs font-semibold text-[#61767D]">{step.signal}</span>
+                </span>
+                <span className="mt-3 block text-xs leading-5 text-[#61767D]">{step.detail}</span>
+              </span>
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#E36F2C]">
+                进入处理
+                <ArrowRight size={13} className="transition group-hover:translate-x-0.5" />
+              </span>
+            </Link>
+          )
+        })}
+      </div>
+    </section>
   )
 }
 
@@ -1372,6 +1547,7 @@ export default async function AdminConsolePage() {
 
   const [
     leadSummary,
+    slaSummary,
     newsSummary,
     productSummary,
     projectSummary,
@@ -1384,6 +1560,7 @@ export default async function AdminConsolePage() {
     mediaIssueCount,
   ] = await Promise.all([
     safeLoad('lead summary', () => getLeadSummary(), EMPTY_LEAD_SUMMARY),
+    safeLoad('lead sla summary', () => getLeadSlaSummary(), EMPTY_SLA_SUMMARY),
     safeLoad('count news', () => countNewsByStatus(), EMPTY_STATUS_SUMMARY),
     safeLoad('count products', () => countCatalogProductsByStatus(), EMPTY_STATUS_SUMMARY),
     safeLoad('count projects', () => countProjectCasesByStatus(), EMPTY_STATUS_SUMMARY),
@@ -1439,6 +1616,13 @@ export default async function AdminConsolePage() {
             configIssues={configIssues}
             isAdmin={isAdmin}
             todos={todos}
+          />
+          <OperationsLoopPanel
+            leadSummary={leadSummary}
+            slaSummary={slaSummary}
+            pageDraftCount={pageDraftCount}
+            productIssueCount={productIssueCount}
+            mediaIssueCount={mediaIssueCount}
           />
           <OperationsCommandPanel
             leadSummary={leadSummary}
