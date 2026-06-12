@@ -34,6 +34,7 @@ import {
   type ProductShowcaseRow,
 } from '@/lib/product-operations-db'
 import { getCatalogProductRouteInfo } from '@/lib/product-public-routes'
+import { formatAnalyticsPercent, loadConversionPathAnalytics, type AnalyticsConversionMetric } from '@/lib/site-analytics'
 import {
   Archive,
   ArrowRight,
@@ -218,6 +219,14 @@ const EMPTY_ISSUE_SUMMARY: ProductIssueSummary = {
   keywords: 0,
   related: 0,
   buyer_resources: 0,
+}
+
+const EMPTY_PRODUCT_PATH_METRIC: AnalyticsConversionMetric = {
+  views: 0,
+  ctaClicks: 0,
+  formSubmits: 0,
+  leads: 0,
+  conversionRate: 0,
 }
 
 const EMPTY_OPTIONS: ProductOptions = {
@@ -1232,12 +1241,16 @@ function ProductListControlStrip({
   filters,
   options,
   summary,
+  issueSummary,
+  productPathMetric,
   total,
   rowsCount,
 }: {
   filters: FilterState
   options: ProductOptions
   summary: ProductSummary
+  issueSummary: ProductIssueSummary
+  productPathMetric: AnalyticsConversionMetric
   total: number
   rowsCount: number
 }) {
@@ -1274,8 +1287,14 @@ function ProductListControlStrip({
     {
       label: '缺 SEO',
       href: createHref(filters, { status: '', view: 'incomplete', issue: 'seo' }),
-      count: null,
+      count: issueSummary.seo,
       active: filters.issue === 'seo',
+    },
+    {
+      label: '产品路径',
+      href: '/admin/site/conversion',
+      count: null,
+      active: false,
     },
   ]
 
@@ -1300,10 +1319,11 @@ function ProductListControlStrip({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 border-t border-[#E6EEEE] bg-[#FBFDFD] lg:border-l lg:border-t-0">
+        <div className="grid grid-cols-2 border-t border-[#E6EEEE] bg-[#FBFDFD] sm:grid-cols-4 lg:border-l lg:border-t-0">
           <ControlStat label="结果总量" value={formatNumber(total)} detail={`第 ${formatNumber(filters.page)} / ${formatNumber(pageCount)} 页`} />
           <ControlStat label="当前区间" value={`${formatNumber(firstRowNumber)}-${formatNumber(lastRowNumber)}`} detail={`每页 ${formatNumber(PAGE_SIZE)} 条`} />
           <ControlStat label="发布率" value={formatPercent(summary.published, summary.total)} detail={`${formatNumber(summary.published)} 已发布`} />
+          <ControlStat label="产品路径" value={formatNumber(productPathMetric.views)} detail={`线索 ${formatNumber(productPathMetric.leads)} / ${formatAnalyticsPercent(productPathMetric.conversionRate)}`} />
         </div>
       </div>
 
@@ -1332,7 +1352,7 @@ function ProductListControlStrip({
             </div>
           </div>
 
-          <div className="grid min-w-full grid-cols-2 gap-2 sm:grid-cols-3 lg:min-w-[480px]">
+          <div className="grid min-w-full grid-cols-2 gap-2 sm:grid-cols-3 lg:min-w-[560px] xl:grid-cols-4">
             {quickLinks.map((link) => (
               <Link
                 key={link.label}
@@ -1373,11 +1393,13 @@ function ProductOperationsMatrix({
   issueSummary,
   rows,
   filters,
+  productPathMetric,
 }: {
   summary: ProductSummary
   issueSummary: ProductIssueSummary
   rows: ProductListRow[]
   filters: FilterState
+  productPathMetric: AnalyticsConversionMetric
 }) {
   const pageIssueEntries = rows.map((product) => ({
     product,
@@ -1402,6 +1424,7 @@ function ProductOperationsMatrix({
   const pageConversionRiskCount = pageIssueEntries.filter((entry) => (
     entry.issues.some((issue) => CONVERSION_RISK_ISSUES.includes(issue))
   )).length
+  const productPathTone = productPathMetric.leads > 0 ? 'green' : productPathMetric.views > 0 ? 'orange' : 'gray'
 
   return (
     <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -1497,6 +1520,58 @@ function ProductOperationsMatrix({
             detail="关键词、资源或商务口径缺失"
             tone={pageConversionRiskCount > 0 ? 'orange' : 'green'}
           />
+        </div>
+        <div className="border-b border-[#E6EEEE] px-4 py-4">
+          <Link
+            href="/admin/site/seo#seo-conversion-closure"
+            className="group block rounded-md border border-[#D8E7E8] bg-[#FBFDFD] p-3 transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            <span className="flex items-start justify-between gap-3">
+              <span className="min-w-0">
+                <span className="block text-sm font-bold text-[#1E2C31]">产品 SEO 转化闭环</span>
+                <span className="mt-1 block text-xs leading-5 text-[#61767D]">
+                  30 天产品路径访问 {formatNumber(productPathMetric.views)}，动作 {formatNumber(productPathMetric.ctaClicks)}，线索 {formatNumber(productPathMetric.leads)}
+                </span>
+              </span>
+              <span className={`shrink-0 rounded-md px-2 py-1 text-xs font-bold ${
+                productPathTone === 'green'
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : productPathTone === 'orange'
+                    ? 'bg-[#FFF2E7] text-[#E36F2C]'
+                    : 'bg-[#F0F7F8] text-[#61767D]'
+              }`}>
+                {formatAnalyticsPercent(productPathMetric.conversionRate)}
+              </span>
+            </span>
+            <span className="mt-3 flex flex-wrap gap-2">
+              <span className="inline-flex min-h-7 items-center rounded-md border border-[#D8E7E8] bg-white px-2 text-[11px] font-semibold text-[#61767D]">
+                缺 SEO {formatNumber(issueSummary.seo)}
+              </span>
+              <span className="inline-flex min-h-7 items-center rounded-md border border-[#D8E7E8] bg-white px-2 text-[11px] font-semibold text-[#61767D]">
+                表单 {formatNumber(productPathMetric.formSubmits)}
+              </span>
+              <span className="inline-flex min-h-7 items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-2 text-[11px] font-semibold text-[#1889B6] transition group-hover:border-[#1889B6]">
+                看 SEO 闭环
+                <ArrowRight size={12} />
+              </span>
+            </span>
+          </Link>
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <Link
+              href={createHref(filters, { status: '', view: 'incomplete', issue: 'seo' })}
+              className="inline-flex min-h-8 items-center justify-between gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 py-1.5 text-xs font-semibold text-[#61767D] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
+            >
+              <span>处理产品 SEO</span>
+              <span className="rounded bg-[#FFF2E7] px-1.5 py-0.5 text-[11px] text-[#E36F2C]">{formatNumber(issueSummary.seo)}</span>
+            </Link>
+            <Link
+              href="/admin/customers/leads?source_type=product"
+              className="inline-flex min-h-8 items-center justify-between gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 py-1.5 text-xs font-semibold text-[#61767D] transition hover:border-[#1889B6] hover:text-[#1889B6]"
+            >
+              <span>产品线索队列</span>
+              <ArrowRight size={12} />
+            </Link>
+          </div>
         </div>
         {priorityItems.length > 0 ? (
           <div className="divide-y divide-[#E6EEEE]">
@@ -2104,13 +2179,15 @@ export default async function AdminContentProductsListPage({ searchParams }: Pag
   }
 
   const filters = parseFilters(await searchParams)
-  const [summary, issueSummary, options, list] = await Promise.all([
+  const [summary, issueSummary, options, list, pathAnalytics] = await Promise.all([
     safeLoad('product summary', getProductSummary, EMPTY_SUMMARY),
     safeLoad('product issue summary', getProductIssueSummary, EMPTY_ISSUE_SUMMARY),
     safeLoad('product options', getProductOptions, EMPTY_OPTIONS),
     safeLoad('product list', () => getProducts(filters), { rows: [], total: 0 }),
+    safeLoad<Record<string, AnalyticsConversionMetric>>('product path analytics', () => loadConversionPathAnalytics(30), {}),
   ])
   const adminRole: AdminRole = role
+  const productPathMetric = pathAnalytics.products ?? EMPTY_PRODUCT_PATH_METRIC
 
   return (
     <AdminSectionShell
@@ -2136,6 +2213,8 @@ export default async function AdminContentProductsListPage({ searchParams }: Pag
           filters={filters}
           options={options}
           summary={summary}
+          issueSummary={issueSummary}
+          productPathMetric={productPathMetric}
           total={list.total}
           rowsCount={list.rows.length}
         />
@@ -2144,6 +2223,7 @@ export default async function AdminContentProductsListPage({ searchParams }: Pag
           issueSummary={issueSummary}
           rows={list.rows}
           filters={filters}
+          productPathMetric={productPathMetric}
         />
         <FilterPanel filters={filters} options={options} />
         <ProductList
