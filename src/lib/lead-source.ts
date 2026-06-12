@@ -19,6 +19,15 @@ export type LeadSourceDescriptor = {
   raw: string
 }
 
+export type LeadSourceStageDescriptor = {
+  key: string
+  type: Exclude<LeadSourceType, 'all'>
+  typeLabel: string
+  label: string
+  rawStage: string
+  href: string
+}
+
 export const LEAD_SOURCE_TYPE_OPTIONS: Array<{ value: LeadSourceType; label: string }> = [
   { value: 'all', label: '来源:全部' },
   { value: 'product', label: '产品询盘' },
@@ -57,8 +66,14 @@ function part(raw: string, index: number) {
   return raw.split(':')[index]?.trim() || ''
 }
 
-const PRODUCT_SOURCE_STAGE_LABELS: Record<string, string> = {
+const PRODUCT_SOURCE_ENTRY_LABELS: Record<string, string> = {
   catalog_card_cta: '产品卡片咨询入口',
+  inquiry_form: '产品详情表单',
+  cta_click: '产品详情 CTA',
+}
+
+const PRODUCT_SOURCE_STAGE_LABELS: Record<string, string> = {
+  catalog_card_cta: '产品卡片 CTA',
   inquiry_form: '产品详情表单',
   cta_click: '产品详情 CTA',
 }
@@ -66,9 +81,44 @@ const PRODUCT_SOURCE_STAGE_LABELS: Record<string, string> = {
 function productLeadSourceLabel(raw: string) {
   const id = part(raw, 1)
   const stage = part(raw, 2)
-  const stageLabel = PRODUCT_SOURCE_STAGE_LABELS[stage] ?? '产品详情询盘'
+  const stageLabel = PRODUCT_SOURCE_ENTRY_LABELS[stage] ?? '产品详情询盘'
 
   return id ? `${stageLabel}: ${id}` : stageLabel
+}
+
+function leadSourceTypeHref(type: Exclude<LeadSourceType, 'all'>) {
+  return type === 'other'
+    ? '/admin/customers/leads?source_type=other'
+    : `/admin/customers/leads?source_type=${type}`
+}
+
+export function describeLeadSourceStage(source: string | null | undefined): LeadSourceStageDescriptor {
+  const raw = cleanSource(source)
+  const type = getLeadSourceType(raw)
+  const safeType: Exclude<LeadSourceType, 'all'> = type === 'all' ? 'other' : type
+  const typeLabel = getLeadSourceTypeLabel(safeType)
+
+  if (safeType === 'product') {
+    const rawStage = part(raw, 2) || 'unknown'
+    const knownStage = PRODUCT_SOURCE_STAGE_LABELS[rawStage] ? rawStage : 'unknown'
+    return {
+      key: `product:${knownStage}`,
+      type: safeType,
+      typeLabel,
+      label: PRODUCT_SOURCE_STAGE_LABELS[rawStage] ?? '产品详情询盘',
+      rawStage,
+      href: leadSourceTypeHref(safeType),
+    }
+  }
+
+  return {
+    key: safeType,
+    type: safeType,
+    typeLabel,
+    label: typeLabel,
+    rawStage: safeType,
+    href: leadSourceTypeHref(safeType),
+  }
 }
 
 export function getLeadSourceType(source: string | null | undefined): LeadSourceType {

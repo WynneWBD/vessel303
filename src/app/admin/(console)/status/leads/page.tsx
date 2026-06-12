@@ -1,6 +1,11 @@
 import Link from 'next/link'
 import { formatNumber, loadStatusOverview, safeLoad, type LeadMetrics } from '@/lib/admin-status-metrics'
-import { summarizeLeadsBySourceStatus, type LeadSourceStatusSummary } from '@/lib/leads-db'
+import {
+  summarizeLeadsBySourceStageStatus,
+  summarizeLeadsBySourceStatus,
+  type LeadSourceStageStatusSummary,
+  type LeadSourceStatusSummary,
+} from '@/lib/leads-db'
 import {
   ActionCard,
   buildStatusBadges,
@@ -70,14 +75,38 @@ type LeadSourceQualityRow = {
   actionLabel: string
 }
 
+type LeadSourceStageRow = {
+  key: string
+  type: LeadSourceStageStatusSummary['type']
+  typeLabel: string
+  label: string
+  rawStage: string
+  total: number
+  active: number
+  activeRate: number
+  won: number
+  lost: number
+  wonRate: number
+  status: string
+  statusTone: FunnelMatrixRow['statusTone']
+  detail: string
+  href: string
+  actionLabel: string
+}
+
 export default async function AdminStatusLeadsPage() {
   const { role, email } = await getStatusAccess()
-  const [overview, sourceStatusSummary] = await Promise.all([
+  const [overview, sourceStatusSummary, sourceStageStatusSummary] = await Promise.all([
     loadStatusOverview(),
     safeLoad(
       'lead source status summary',
       () => summarizeLeadsBySourceStatus(),
       [] as LeadSourceStatusSummary[],
+    ),
+    safeLoad(
+      'lead source stage status summary',
+      () => summarizeLeadsBySourceStageStatus(),
+      [] as LeadSourceStageStatusSummary[],
     ),
   ])
   const leads = overview.leads
@@ -138,6 +167,8 @@ export default async function AdminStatusLeadsPage() {
         <LeadResponseOperationsLedger leads={leads} />
 
         <LeadSourceQualityMatrix sourceStatusSummary={sourceStatusSummary} />
+
+        <LeadSourceStageMatrix sourceStageStatusSummary={sourceStageStatusSummary} />
 
         <section className="space-y-4">
           <SectionTitle title="漏斗状态" detail="按现有后台筛选入口处理，不在数据中心直接改状态。" />
@@ -484,6 +515,154 @@ function LeadSourceQualityMatrix({ sourceStatusSummary }: { sourceStatusSummary:
                         {row.label}
                       </Link>
                       <p className="mt-1 text-xs text-[#8A9EA4]">source_type={row.type}</p>
+                    </td>
+                    <td className="px-4 py-4 text-right text-lg font-bold text-[#1E2C31]">{formatNumber(row.total)}</td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center justify-between gap-3 text-xs">
+                        <span className="font-semibold text-[#61767D]">{formatNumber(row.active)} 条</span>
+                        <span className="font-bold text-[#1E2C31]">{row.activeRate}%</span>
+                      </div>
+                      <div className="mt-1 h-2 overflow-hidden rounded-full bg-[#E6EEEE]">
+                        <span className="block h-full rounded-full bg-[#E36F2C]" style={{ width: `${row.activeRate}%` }} />
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">
+                      <span className="block font-semibold text-[#1E2C31]">成交 {formatNumber(row.won)} / 关闭 {formatNumber(row.lost)}</span>
+                      <span className="mt-1 block">成交占比 {row.wonRate}%</span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <FunnelStatusBadge label={row.status} tone={row.statusTone} />
+                    </td>
+                    <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">{row.detail}</td>
+                    <td className="px-5 py-4 text-right">
+                      <Link
+                        href={row.href}
+                        className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#E36F2C]/50 hover:text-[#E36F2C]"
+                      >
+                        {row.actionLabel}
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function buildLeadSourceStageRows(sourceStageStatusSummary: LeadSourceStageStatusSummary[]): LeadSourceStageRow[] {
+  return sourceStageStatusSummary
+    .map((stage) => {
+      const active = stage.new + stage.contacting + stage.quoted
+      const closed = stage.won + stage.lost
+      const activeRate = percent(active, stage.total)
+      const wonRate = percent(stage.won, stage.total)
+      const statusTone: FunnelMatrixRow['statusTone'] =
+        active > 0 ? 'orange' : stage.won > 0 ? 'green' : closed > 0 ? 'blue' : 'gray'
+      const detail =
+        stage.type === 'product'
+          ? active > 0
+            ? `该产品来源阶段还有 ${formatNumber(active)} 条未收口线索，先进入产品线索列表处理。`
+            : stage.won > 0
+              ? `该产品来源阶段已有成交样本，可复盘页面 CTA 和后续跟进质量。`
+              : closed > 0
+                ? '该产品来源阶段线索已收口，适合复盘关闭原因和客户匹配度。'
+                : '该产品来源阶段暂无足够样本，继续观察公开站咨询入口。'
+          : active > 0
+            ? `该来源阶段还有 ${formatNumber(active)} 条活跃线索，先进入现有线索流程处理。`
+            : '该来源阶段当前无活跃积压，可作为入口质量观察项。'
+
+      return {
+        key: stage.key,
+        type: stage.type,
+        typeLabel: stage.typeLabel,
+        label: stage.label,
+        rawStage: stage.rawStage,
+        total: stage.total,
+        active,
+        activeRate,
+        won: stage.won,
+        lost: stage.lost,
+        wonRate,
+        status: active > 0 ? '需处理' : stage.won > 0 ? '有成交' : closed > 0 ? '已收口' : '观察中',
+        statusTone,
+        detail,
+        href: stage.href,
+        actionLabel: active > 0 ? '处理该类线索' : '查看该类线索',
+      }
+    })
+    .sort((a, b) => {
+      if (b.active !== a.active) return b.active - a.active
+      if (b.total !== a.total) return b.total - a.total
+      return b.won - a.won
+    })
+}
+
+function LeadSourceStageMatrix({
+  sourceStageStatusSummary,
+}: {
+  sourceStageStatusSummary: LeadSourceStageStatusSummary[]
+}) {
+  const rows = buildLeadSourceStageRows(sourceStageStatusSummary)
+  const total = rows.reduce((sum, row) => sum + row.total, 0)
+  const active = rows.reduce((sum, row) => sum + row.active, 0)
+  const productStages = rows.filter((row) => row.type === 'product').length
+  const topStage = rows[0]
+
+  return (
+    <section className="space-y-4" id="source-stage-quality">
+      <SectionTitle
+        title="B201 来源阶段矩阵"
+        detail="在来源类型之上继续拆出产品卡片 CTA、产品详情表单、产品详情 CTA 等阶段；本页只读，处理动作仍回到客户线索页。"
+      />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
+          <FunnelSummary label="来源阶段" value={rows.length} detail="按 source 阶段聚合" />
+          <FunnelSummary label="产品阶段" value={productStages} detail="产品卡片 / 详情表单 / 详情 CTA" />
+          <FunnelSummary label="活跃阶段线索" value={active} detail={`全部阶段线索 ${formatNumber(total)} 条`} warn={active > 0} />
+          <FunnelSummary label="Top 阶段" value={topStage ? topStage.label : '-'} detail={topStage ? `${formatNumber(topStage.total)} 条线索` : '暂无阶段样本'} />
+        </div>
+
+        {rows.length === 0 ? (
+          <div className="flex items-center gap-3 px-5 py-6">
+            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[#F0F7F8] text-[#1889B6]">
+              <STATUS_ICONS.BarChart3 size={18} />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-[#1E2C31]">暂无来源阶段数据</p>
+              <p className="mt-1 text-xs text-[#61767D]">公开站表单产生线索后，这里会按 source 阶段显示入口表现。</p>
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-xs text-[#61767D]">
+                  <th className="min-w-44 px-5 py-3 text-left font-semibold">来源阶段</th>
+                  <th className="min-w-32 px-4 py-3 text-left font-semibold">来源类型</th>
+                  <th className="px-4 py-3 text-right font-semibold">全部</th>
+                  <th className="min-w-48 px-4 py-3 text-left font-semibold">活跃漏斗</th>
+                  <th className="min-w-44 px-4 py-3 text-left font-semibold">成交 / 关闭</th>
+                  <th className="min-w-32 px-4 py-3 text-left font-semibold">判断</th>
+                  <th className="min-w-72 px-4 py-3 text-left font-semibold">运营说明</th>
+                  <th className="min-w-32 px-5 py-3 text-right font-semibold">入口</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E6EEEE]">
+                {rows.map((row) => (
+                  <tr key={row.key} className="align-top transition hover:bg-[#FBFDFD]">
+                    <td className="px-5 py-4">
+                      <Link href={row.href} className="font-semibold text-[#1E2C31] hover:text-[#1889B6]">
+                        {row.label}
+                      </Link>
+                      <p className="mt-1 text-xs text-[#8A9EA4]">stage={row.rawStage}</p>
+                    </td>
+                    <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">
+                      <span className="block font-semibold text-[#1E2C31]">{row.typeLabel}</span>
+                      <span className="mt-1 block">source_type={row.type}</span>
                     </td>
                     <td className="px-4 py-4 text-right text-lg font-bold text-[#1E2C31]">{formatNumber(row.total)}</td>
                     <td className="px-4 py-4">

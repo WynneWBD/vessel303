@@ -1,5 +1,6 @@
 import { pool } from '@/lib/db'
 import {
+  describeLeadSourceStage,
   getLeadSourceType,
   getLeadSourceTypeLabel,
   getLeadSourceWherePatterns,
@@ -43,6 +44,21 @@ export type ListLeadsFilter = {
 export type LeadSourceStatusSummary = {
   type: Exclude<LeadSourceType, 'all'>
   label: string
+  total: number
+  new: number
+  contacting: number
+  quoted: number
+  won: number
+  lost: number
+}
+
+export type LeadSourceStageStatusSummary = {
+  key: string
+  type: Exclude<LeadSourceType, 'all'>
+  typeLabel: string
+  label: string
+  rawStage: string
+  href: string
   total: number
   new: number
   contacting: number
@@ -274,6 +290,57 @@ export async function summarizeLeadsBySourceStatus(): Promise<LeadSourceStatusSu
   return Array.from(initial.values())
     .filter((item) => item.total > 0)
     .sort((a, b) => b.total - a.total)
+}
+
+export async function summarizeLeadsBySourceStageStatus(): Promise<LeadSourceStageStatusSummary[]> {
+  const rows = new Map<string, LeadSourceStageStatusSummary>()
+
+  const res = await pool.query<{
+    source: string | null
+    status: LeadStatus
+    count: string
+  }>(
+    `SELECT source, status, COUNT(*)::text AS count
+       FROM leads
+      WHERE deleted_at IS NULL
+      GROUP BY source, status`,
+  )
+
+  for (const row of res.rows) {
+    if (!LEAD_STATUSES.includes(row.status)) continue
+
+    const stage = describeLeadSourceStage(row.source)
+    const count = parseInt(row.count ?? '0', 10)
+    const safeCount = Number.isFinite(count) ? count : 0
+    const current = rows.get(stage.key) ?? {
+      key: stage.key,
+      type: stage.type,
+      typeLabel: stage.typeLabel,
+      label: stage.label,
+      rawStage: stage.rawStage,
+      href: stage.href,
+      total: 0,
+      new: 0,
+      contacting: 0,
+      quoted: 0,
+      won: 0,
+      lost: 0,
+    }
+
+    current[row.status] += safeCount
+    current.total += safeCount
+    rows.set(stage.key, current)
+  }
+
+  return Array.from(rows.values())
+    .filter((item) => item.total > 0)
+    .sort((a, b) => {
+      const activeA = a.new + a.contacting + a.quoted
+      const activeB = b.new + b.contacting + b.quoted
+      if (activeB !== activeA) return activeB - activeA
+      if (b.total !== a.total) return b.total - a.total
+      return b.won - a.won
+    })
 }
 
 export async function getLeadOperationsSummary(): Promise<LeadOperationsSummary> {
