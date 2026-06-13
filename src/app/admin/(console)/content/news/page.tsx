@@ -72,6 +72,16 @@ type PublicNewsBridgeItem = {
   tone: 'blue' | 'green' | 'orange' | 'neutral'
 }
 
+type NewsSourceLeadOptimizationItem = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  cta: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange' | 'neutral'
+}
+
 function getStatusEntries(stats: NewsStats): StatusEntry[] {
   return [
     {
@@ -306,6 +316,155 @@ function OperationsHub({ stats }: { stats: NewsStats }) {
 
       <SourceContractBoard contracts={sourceContracts} />
     </section>
+  )
+}
+
+function NewsSourceLeadOptimizationDesk({ stats }: { stats: NewsStats }) {
+  const openContentIssues = stats.incomplete + stats.missingSeo
+  const items: NewsSourceLeadOptimizationItem[] = [
+    {
+      label: '流量异常分诊',
+      value: 'B293',
+      detail: '从新闻访问、新闻来源动作和新闻路径线索判断是否有“有访问无线索”或“有动作无线索”。',
+      href: '/admin/status/traffic#traffic-to-lead-exception-desk',
+      cta: '看流量分诊',
+      Icon: SearchCheck,
+      tone: openContentIssues > 0 ? 'orange' : 'blue',
+    },
+    {
+      label: '来源线索处理',
+      value: 'B292',
+      detail: '进入来源线索质量处理台，按 source_type=news 回看新闻来源线索、活跃状态和阶段下钻。',
+      href: '/admin/status/leads#source-lead-quality-workdesk',
+      cta: '看线索处理',
+      Icon: Link2,
+      tone: 'blue',
+    },
+    {
+      label: '转化复盘',
+      value: 'B291',
+      detail: '把新闻 SEO、前台新闻发现、内容处理、来源质量和新闻线索队列放到转化中心复盘。',
+      href: '/admin/site/conversion#seo-to-lead-conversion-review',
+      cta: '看转化复盘',
+      Icon: ListChecks,
+      tone: 'green',
+    },
+    {
+      label: '新闻线索队列',
+      value: 'source_type=news',
+      detail: '直接进入客户线索页的新闻来源队列；本页只做入口，不改变线索状态。',
+      href: '/admin/customers/leads?source_type=news',
+      cta: '打开线索队列',
+      Icon: Link2,
+      tone: 'orange',
+    },
+    {
+      label: '内容待补',
+      value: formatNumber(stats.incomplete),
+      detail: '缺标题、封面、摘要或正文的新闻会影响公开阅读和来源转化判断。',
+      href: '#todo',
+      cta: '处理待补内容',
+      Icon: FileText,
+      tone: stats.incomplete > 0 ? 'orange' : 'green',
+    },
+    {
+      label: 'SEO 待补',
+      value: formatNumber(stats.missingSeo),
+      detail: '搜索标题或描述待补时，优先从新闻列表进入单篇编辑页补齐。',
+      href: '/admin/content/news/list#news-source-seo-list-bridge',
+      cta: '回到列表桥',
+      Icon: SearchCheck,
+      tone: stats.missingSeo > 0 ? 'orange' : 'green',
+    },
+  ]
+
+  return (
+    <section id="news-source-lead-optimization-desk" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B294 NEWS SOURCE LEAD OPTIMIZATION</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻内容到来源线索优化台</h2>
+          <p className="mt-1 text-sm leading-6 text-[#61767D]">
+            把 B293 流量分诊、B292 来源线索处理、B291 SEO 到线索转化复盘和新闻内容待补集中到一屏；先补公开内容和 SEO，再回看新闻阅读、Contact source 和 source_type=news 线索承接。本区只读，不新增保存、发布、删除或线索写入能力。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <PrimaryAction href="/admin/status/traffic#traffic-to-lead-exception-desk" Icon={SearchCheck} label="B293 流量分诊" primary />
+          <PrimaryAction href="/admin/status/leads#source-lead-quality-workdesk" Icon={Link2} label="B292 线索处理" />
+          <PrimaryAction href="/admin/site/conversion#seo-to-lead-conversion-review" Icon={ListChecks} label="B291 转化复盘" />
+          <PrimaryAction href="/admin/customers/leads?source_type=news" Icon={Link2} label="新闻线索" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
+        <NewsOptimizationStat label="已发布新闻" value={formatNumber(stats.published)} detail="公开 /news 可见样本" />
+        <NewsOptimizationStat label="内容待补" value={formatNumber(stats.incomplete)} detail="影响阅读承接" warn={stats.incomplete > 0} />
+        <NewsOptimizationStat label="SEO 待补" value={formatNumber(stats.missingSeo)} detail="影响搜索和预览" warn={stats.missingSeo > 0} />
+        <NewsOptimizationStat label="来源合同" value="news:*" detail="Contact -> source_type=news" />
+      </div>
+
+      <div className="grid grid-cols-1 gap-0 bg-white md:grid-cols-2 xl:grid-cols-3">
+        {items.map((item) => (
+          <NewsSourceLeadOptimizationLink key={item.label} item={item} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function NewsOptimizationStat({
+  label,
+  value,
+  detail,
+  warn = false,
+}: {
+  label: string
+  value: string
+  detail: string
+  warn?: boolean
+}) {
+  return (
+    <div className="min-w-0 border-b border-[#E6EEEE] px-4 py-3 md:border-b-0 md:border-r md:last:border-r-0">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-1 truncate text-2xl font-bold ${warn ? 'text-[#E36F2C]' : 'text-[#1E2C31]'}`} title={value}>{value}</p>
+      <p className="mt-1 text-xs leading-5 text-[#61767D]">{detail}</p>
+    </div>
+  )
+}
+
+function NewsSourceLeadOptimizationLink({ item }: { item: NewsSourceLeadOptimizationItem }) {
+  const Icon = item.Icon
+  const accent =
+    item.tone === 'orange'
+      ? 'border-[#F4C7A6] bg-[#FFF2E7] text-[#C85F24]'
+      : item.tone === 'green'
+        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+        : item.tone === 'neutral'
+          ? 'border-[#D8E7E8] bg-[#F7FAFA] text-[#61767D]'
+          : 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <Link
+      href={item.href}
+      className="group min-h-40 border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-[#FBFDFD] md:odd:border-r xl:border-r xl:[&:nth-child(3n)]:border-r-0"
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-xs font-bold text-[#1E2C31]">{item.label}</span>
+          <span className={`mt-2 inline-flex min-h-7 max-w-full items-center rounded-md border px-2.5 text-[11px] font-bold ${accent}`}>
+            <span className="truncate">{item.value}</span>
+          </span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block min-h-12 text-xs leading-5 text-[#61767D]">{item.detail}</span>
+      <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
+        {item.cta}
+        <ArrowRight size={13} />
+      </span>
+    </Link>
   )
 }
 
@@ -722,6 +881,7 @@ export default async function AdminContentNewsPage() {
     >
       <Hero stats={stats} />
       <OperationsHub stats={stats} />
+      <NewsSourceLeadOptimizationDesk stats={stats} />
       <PublicNewsBridge stats={stats} />
       <StatusGrid stats={stats} />
       <TodoPanel stats={stats} />
