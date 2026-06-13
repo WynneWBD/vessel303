@@ -62,6 +62,16 @@ type SourceContractItem = {
   tone: 'blue' | 'green' | 'orange' | 'neutral'
 }
 
+type PublicNewsBridgeItem = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  cta: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange' | 'neutral'
+}
+
 function getStatusEntries(stats: NewsStats): StatusEntry[] {
   return [
     {
@@ -352,6 +362,112 @@ function SourceContractLink({ contract }: { contract: SourceContractItem }) {
   )
 }
 
+function PublicNewsBridge({ stats }: { stats: NewsStats }) {
+  const items: PublicNewsBridgeItem[] = [
+    {
+      label: '新闻发现',
+      value: 'B285',
+      detail: '公开 /news 已有关键词搜索、分类筛选、结果计数和空状态，运营可直接确认前台新闻发现路径。',
+      href: '/news#news-discovery-console',
+      cta: '查看前台发现',
+      Icon: SearchCheck,
+      tone: 'blue',
+    },
+    {
+      label: '详情续航',
+      value: 'B286',
+      detail: '新闻详情页已接继续阅读和返回发现路径；先从已发布列表确认可公开样本，再做详情验收。',
+      href: '/admin/content/news/list?status=published',
+      cta: '查已发布样本',
+      Icon: Newspaper,
+      tone: stats.published > 0 ? 'green' : 'orange',
+    },
+    {
+      label: '列表桥',
+      value: 'B283',
+      detail: '后台列表已把内容缺项、SEO、分类和 source_type=news 线索回看合到同一个操作面。',
+      href: '/admin/content/news/list#news-source-seo-list-bridge',
+      cta: '回到列表桥',
+      Icon: ListChecks,
+      tone: 'green',
+    },
+    {
+      label: '来源质量',
+      value: 'B282',
+      detail: '从新闻阅读来源回看线索质量，避免只看访问量不看可跟进价值。',
+      href: '/admin/status/leads#source-seo-lead-quality',
+      cta: '查看质量桥',
+      Icon: Link2,
+      tone: 'blue',
+    },
+  ]
+
+  return (
+    <section id="news-public-discovery-bridge" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-l-4 border-[#20B486] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold tracking-[0.08em] text-[#159477]">PUBLIC NEWS BRIDGE</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">公开新闻发现与阅读桥</h2>
+          <p className="mt-1 text-sm leading-6 text-[#61767D]">
+            对齐 en.303vessel.cn Blog 的分类、搜索、列表摘要和详情浏览链路，把 B285 前台发现、B286 详情续航、B283 后台列表桥和 B282 来源质量桥放到同一个后台入口里。本区只做只读跳转和运营说明，不改变发布、删除、定时或线索写入规则。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <PrimaryAction href="/news#news-discovery-console" Icon={SearchCheck} label="前台发现" primary />
+          <PrimaryAction href="/admin/content/news/list?status=published" Icon={Newspaper} label="已发布样本" />
+          <PrimaryAction href="/admin/content/news/list#news-source-seo-list-bridge" Icon={ListChecks} label="列表桥" />
+        </div>
+      </div>
+      <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-4 py-4">
+        <p className="text-xs leading-5 text-[#61767D]">
+          当前后台统计：已发布 {formatNumber(stats.published)} 条，待补内容 {formatNumber(stats.incomplete)} 条，缺 SEO 字段 {formatNumber(stats.missingSeo)} 条。优先补齐可公开样本，再回看新闻发现、详情续航和新闻来源线索质量。
+        </p>
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {items.map((item) => (
+            <PublicNewsBridgeLink key={item.label} item={item} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function PublicNewsBridgeLink({ item }: { item: PublicNewsBridgeItem }) {
+  const Icon = item.Icon
+  const accent =
+    item.tone === 'orange'
+      ? 'border-[#F4C7A6] bg-[#FFF2E7] text-[#C85F24]'
+      : item.tone === 'green'
+        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+        : item.tone === 'neutral'
+          ? 'border-[#D8E7E8] bg-[#F7FAFA] text-[#61767D]'
+          : 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <Link
+      href={item.href}
+      className="group min-h-36 rounded-md border border-[#D8E7E8] bg-white p-4 transition hover:-translate-y-0.5 hover:border-[#1889B6]/60"
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-xs font-bold text-[#1E2C31]">{item.label}</span>
+          <span className={`mt-2 inline-flex min-h-7 items-center rounded-md border px-2.5 text-[11px] font-bold ${accent}`}>
+            {item.value}
+          </span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block min-h-14 text-xs leading-5 text-[#61767D]">{item.detail}</span>
+      <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
+        {item.cta}
+        <ArrowRight size={13} />
+      </span>
+    </Link>
+  )
+}
+
 function OperationsHubLink({ card }: { card: OperationsHubCard }) {
   const Icon = card.Icon
   const toneClass =
@@ -566,7 +682,7 @@ function OperationBoundary() {
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">本轮已收口</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
-            新闻运营总览、状态筛选、待补提醒、分类治理、回收安全、定时复核和 SEO 治理入口。
+            新闻运营总览、公开发现与详情续航回接、状态筛选、待补提醒、分类治理、回收安全、定时复核和 SEO 治理入口。
           </p>
         </div>
         <div>
@@ -606,6 +722,7 @@ export default async function AdminContentNewsPage() {
     >
       <Hero stats={stats} />
       <OperationsHub stats={stats} />
+      <PublicNewsBridge stats={stats} />
       <StatusGrid stats={stats} />
       <TodoPanel stats={stats} />
       <OperationRoadmap stats={stats} />
