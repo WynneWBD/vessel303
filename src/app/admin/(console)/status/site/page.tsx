@@ -117,6 +117,7 @@ export default async function AdminStatusSitePage() {
               <SeoBox label="新闻 SEO" value={site.seo.newsMissing} href="/admin/content/news/list" />
               <SeoBox label="案例展示字段" value={site.seo.projectsMissing} href="/admin/content/projects/list?view=incomplete" />
             </div>
+            <SourceSeoReleaseBridge seo={site.seo} />
           </section>
 
           <aside className="space-y-4">
@@ -527,6 +528,91 @@ function SeoBox({ label, value, href }: { label: string; value: number; href: st
         {formatNumber(value)}
       </span>
       <span className="mt-2 block text-xs text-[#61767D]">{value > 0 ? '进入对应后台补齐' : '当前无缺项'}</span>
+    </Link>
+  )
+}
+
+function SourceSeoReleaseBridge({ seo }: { seo: SiteMetrics['seo'] }) {
+  const rows = [
+    {
+      key: 'product',
+      label: '产品来源 SEO',
+      sourceType: 'product',
+      missing: seo.productsMissing,
+      href: '/admin/content/products/list?view=incomplete&issue=seo',
+      leadHref: '/admin/customers/leads?source_type=product',
+      detail: '产品 SEO 待补会影响目录和详情页搜索摘要，处理后回到来源健康台账复盘访问和线索。',
+    },
+    {
+      key: 'case',
+      label: '案例来源 SEO',
+      sourceType: 'case',
+      missing: seo.projectsMissing,
+      href: '/admin/content/projects/list?view=incomplete',
+      leadHref: '/admin/customers/leads?source_type=case',
+      detail: '案例展示字段不足会削弱项目证明链，处理后回看案例来源访问、动作和线索承接。',
+    },
+    {
+      key: 'news',
+      label: '新闻来源 SEO',
+      sourceType: 'news',
+      missing: seo.newsMissing,
+      href: '/admin/content/news/list',
+      leadHref: '/admin/customers/leads?source_type=news',
+      detail: '新闻 SEO 待补会影响内容入口质量，处理后回看 news 来源动作和 Contact 线索归因。',
+    },
+  ]
+  const openRows = rows.filter((row) => row.missing > 0).length
+
+  return (
+    <section id="source-seo-release-bridge" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B281 Source SEO Bridge</p>
+          <h2 className="mt-1 text-sm font-bold text-[#1E2C31]">来源与 SEO 接力处理</h2>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">
+            从站点健康页接到 B280 数据中心健康台账，再回到内容、SEO 和来源线索队列；本区只读，不保存、不发布。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <StatusPill ok={openRows === 0} label={openRows > 0 ? `${formatNumber(openRows)} 类待补` : '来源 SEO 正常'} />
+          <BridgeLink href="/admin/status#source-seo-health" label="B280 健康台账" />
+          <BridgeLink href="/admin/site#source-seo-control" label="B279 总控" />
+        </div>
+      </div>
+
+      <div className="divide-y divide-[#E6EEEE]">
+        {rows.map((row) => (
+          <div key={row.key} className="grid grid-cols-1 gap-3 px-4 py-4 text-sm lg:grid-cols-[180px_100px_minmax(0,1fr)_230px] lg:items-center">
+            <div>
+              <Link href={row.href} className="font-bold text-[#1E2C31] hover:text-[#1889B6]">
+                {row.label}
+              </Link>
+              <p className="mt-1 text-xs text-[#8A9EA4]">source_type={row.sourceType}</p>
+            </div>
+            <div className={`text-lg font-black ${row.missing > 0 ? 'text-[#E36F2C]' : 'text-emerald-700'}`}>
+              {formatNumber(row.missing)}
+            </div>
+            <p className="text-xs leading-5 text-[#61767D]">{row.detail}</p>
+            <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
+              <BridgeLink href={row.href} label="处理内容" />
+              <BridgeLink href={row.leadHref} label="看线索" />
+              <BridgeLink href="/admin/site/seo#seo-conversion-closure" label="SEO 闭环" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function BridgeLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#61767D] transition hover:border-[#1889B6] hover:text-[#1889B6]"
+    >
+      {label}
     </Link>
   )
 }
