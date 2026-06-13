@@ -668,6 +668,9 @@ function ConversionControlStrip({
           <span className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 text-xs font-semibold text-[#61767D] md:text-sm">
             数据源：site_events + leads
           </span>
+          <span className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 text-xs font-semibold text-[#61767D] md:text-sm">
+            Contact 承接来源已按原入口归类
+          </span>
         </div>
         <div className="flex items-center border-t border-[#E6EEEE] px-4 py-3 text-xs text-[#61767D] xl:border-t-0 xl:border-l">
           只读分析，不保存配置，不改线索状态。
@@ -1407,7 +1410,7 @@ function SourceStageConversionMatrix({
         <div>
           <h2 className="text-lg font-bold text-[#1E2C31]">B207 公开站来源阶段承接矩阵</h2>
           <p className="mt-1 text-xs text-[#61767D]">
-            把访问统计里的产品与案例阶段动作和线索库里的来源阶段状态放在同一张表，判断哪类入口需要优先跟进或核对 source。
+            把访问统计里的产品与案例阶段动作和线索库里的来源阶段状态放在同一张表；Contact 承接型来源也按原产品/案例入口归类，判断哪类入口需要优先跟进或核对 source。
           </p>
         </div>
         <Link href="/admin/status/traffic?range=30" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
@@ -1938,7 +1941,11 @@ function leadSourceHref(type: ConversionLeadSourceType, status?: string) {
 
 function leadSourceStageHref(stage: string) {
   const params = new URLSearchParams()
-  params.set('source_type', 'product')
+  if (stage.startsWith('case:')) {
+    params.set('source_type', 'case')
+  } else if (stage.startsWith('product:')) {
+    params.set('source_type', 'product')
+  }
   params.set('source_stage', stage)
   return `/admin/customers/leads?${params.toString()}`
 }
