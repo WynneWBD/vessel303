@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { formatBytes, formatNumber, loadStatusOverview, type SiteMetrics } from '@/lib/admin-status-metrics'
+import { formatBytes, formatNumber, loadStatusOverview, sumContent, type SiteMetrics } from '@/lib/admin-status-metrics'
 import {
   ActionCard,
   type AdminRole,
@@ -45,10 +45,22 @@ type SiteOperationRow = {
   Icon: typeof STATUS_ICONS.AlertCircle
 }
 
+type ReleasePreflightItem = {
+  key: string
+  title: string
+  value: string
+  detail: string
+  href: string
+  actionLabel: string
+  tone: SiteOperationTone
+  Icon: typeof STATUS_ICONS.AlertCircle
+}
+
 export default async function AdminStatusSitePage() {
   const { role, email } = await getStatusAccess()
   const overview = await loadStatusOverview()
   const site = overview.site
+  const contentTotals = sumContent(overview.content)
   const configIssues = site.configChecks.filter((item) => !item.ok).length
   const healthRows = buildSiteHealthRows(site, configIssues, role)
   const operationRows = buildSiteOperationRows(site, configIssues, role)
@@ -105,6 +117,13 @@ export default async function AdminStatusSitePage() {
         </div>
 
         <section className="space-y-4">
+          <SiteReleasePreflightBridge
+            site={site}
+            contentIssues={contentTotals.issues}
+            contentDrafts={contentTotals.draft}
+            configIssues={configIssues}
+            role={role}
+          />
           <SiteOperationLedger rows={operationRows} />
           <SiteHealthMatrix rows={healthRows} />
         </section>
@@ -176,6 +195,162 @@ export default async function AdminStatusSitePage() {
         </section>
       </section>
     </StatusPageShell>
+  )
+}
+
+function SiteReleasePreflightBridge({
+  site,
+  contentIssues,
+  contentDrafts,
+  configIssues,
+  role,
+}: {
+  site: SiteMetrics
+  contentIssues: number
+  contentDrafts: number
+  configIssues: number
+  role: AdminRole
+}) {
+  const filesOk = site.sitemapOk && site.robotsOk
+  const configBlocked = role === 'admin' && configIssues > 0
+  const openCount =
+    (contentIssues > 0 ? 1 : 0) +
+    (contentDrafts > 0 ? 1 : 0) +
+    (site.seo.missing > 0 ? 1 : 0) +
+    (!filesOk ? 1 : 0) +
+    (configBlocked ? 1 : 0)
+  const items: ReleasePreflightItem[] = [
+    {
+      key: 'content-health',
+      title: '内容健康',
+      value: `${formatNumber(contentIssues)} 缺项`,
+      detail: `B288 内容健康已汇总产品、案例、新闻公开发现链路；草稿 ${formatNumber(contentDrafts)} 个。`,
+      href: '/admin/status/content#public-discovery-health',
+      actionLabel: contentIssues > 0 || contentDrafts > 0 ? '复核内容健康' : '查看内容健康',
+      tone: contentIssues > 0 ? 'critical' : contentDrafts > 0 ? 'warning' : 'ready',
+      Icon: STATUS_ICONS.FileText,
+    },
+    {
+      key: 'source-seo',
+      title: '来源与 SEO',
+      value: `${formatNumber(site.seo.missing)} 待补`,
+      detail: `产品 ${formatNumber(site.seo.productsMissing)} / 案例 ${formatNumber(site.seo.projectsMissing)} / 新闻 ${formatNumber(site.seo.newsMissing)}。`,
+      href: '/admin/status#source-seo-health',
+      actionLabel: site.seo.missing > 0 ? '处理来源 SEO' : '查看来源台账',
+      tone: site.seo.missing > 0 ? 'critical' : 'ready',
+      Icon: STATUS_ICONS.SearchCheck,
+    },
+    {
+      key: 'site-foundation',
+      title: '站点基础',
+      value: filesOk ? '正常' : '需检查',
+      detail: `sitemap ${site.sitemapOk ? '可用' : '异常'} / robots ${site.robotsOk ? '可用' : '异常'}；页面草稿 ${formatNumber(site.pages.total)} 个。`,
+      href: '/admin/site/seo',
+      actionLabel: filesOk ? '查看收录设置' : '检查站点文件',
+      tone: filesOk && site.pages.total === 0 ? 'ready' : site.pages.total > 0 ? 'warning' : 'critical',
+      Icon: STATUS_ICONS.Globe2,
+    },
+    {
+      key: 'config-boundary',
+      title: role === 'admin' ? '配置边界' : '配置可见性',
+      value: role === 'admin' ? `${formatNumber(configIssues)} 异常` : '受限',
+      detail:
+        role === 'admin'
+          ? `站点设置共有 ${formatNumber(site.configChecks.length)} 项配置检查；只读展示，不暴露密钥。`
+          : 'operator 只看运营健康，不显示发信、存储等敏感配置详情。',
+      href: role === 'admin' ? '/admin/site/settings' : '/admin/status/site',
+      actionLabel: role === 'admin' ? '查看站点设置' : '留在健康页',
+      tone: role === 'admin' ? (configIssues > 0 ? 'warning' : 'ready') : 'restricted',
+      Icon: STATUS_ICONS.Settings,
+    },
+    {
+      key: 'public-smoke',
+      title: '前台 smoke',
+      value: '6 入口',
+      detail: '发布后固定复验首页、产品、案例、新闻、sitemap 和 robots；后台保护由未登录跳转确认。',
+      href: '/',
+      actionLabel: '打开首页',
+      tone: 'review',
+      Icon: STATUS_ICONS.ShieldCheck,
+    },
+  ]
+
+  return (
+    <section id="site-release-preflight-bridge" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B289 Release Preflight</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">站点发布前复核桥</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把 B288 内容健康、B280/B282 来源 SEO 健康、站点文件、页面草稿、敏感配置可见性和前台 smoke 入口放到同一张发布前清单；本区只读，不保存、不发布、不改 sitemap / robots，也不展示任何密钥。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className={`inline-flex min-h-9 items-center rounded-md px-3 text-xs font-bold ${openCount > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
+            {openCount > 0 ? `${formatNumber(openCount)} 项需复核` : '发布前状态正常'}
+          </span>
+          <BridgeLink href="/admin/status/content#public-discovery-health" label="内容健康" />
+          <BridgeLink href="/admin/status/leads#source-seo-lead-quality" label="来源质量" />
+          <BridgeLink href="/admin/site/seo" label="SEO 设置" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-2 xl:grid-cols-5">
+        {items.map((item) => (
+          <ReleasePreflightCard key={item.key} item={item} />
+        ))}
+      </div>
+
+      <div className="border-t border-[#E6EEEE] bg-white px-5 py-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <p className="text-xs leading-5 text-[#61767D]">
+            手动 smoke 固定入口：`/`、`/products`、`/cases`、`/news`、`/sitemap.xml`、`/robots.txt`；后台页以未登录 302 到 `/admin/login` 作为保护验证。
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <BridgeLink href="/products" label="产品" />
+            <BridgeLink href="/cases" label="案例" />
+            <BridgeLink href="/news" label="新闻" />
+            <BridgeLink href="/sitemap.xml" label="sitemap" />
+            <BridgeLink href="/robots.txt" label="robots" />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function ReleasePreflightCard({ item }: { item: ReleasePreflightItem }) {
+  const Icon = item.Icon
+  const accent =
+    item.tone === 'critical'
+      ? 'text-[#E36F2C]'
+      : item.tone === 'warning'
+        ? 'text-[#1889B6]'
+        : item.tone === 'review'
+          ? 'text-[#6B58C5]'
+          : item.tone === 'restricted'
+            ? 'text-[#61767D]'
+            : 'text-emerald-700'
+
+  return (
+    <Link
+      href={item.href}
+      className="group min-h-48 border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-white md:odd:border-r xl:border-b-0 xl:border-r xl:last:border-r-0"
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-xs font-bold tracking-[0.08em] text-[#8A9EA4]">{item.title}</span>
+          <span className={`mt-2 block text-2xl font-bold ${accent}`}>{item.value}</span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block min-h-16 text-xs leading-5 text-[#61767D]">{item.detail}</span>
+      <span className="mt-3 inline-flex min-h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition group-hover:border-[#E36F2C]/50 group-hover:text-[#E36F2C]">
+        {item.actionLabel}
+      </span>
+    </Link>
   )
 }
 
