@@ -993,7 +993,13 @@ function NewsConversionHandoffPanel({
   const newsActive = newsSource ? newsSource.new + newsSource.contacting + newsSource.quoted : 0
   const closureLinks = [
     {
-      label: 'B255 来源面板',
+      label: '线索状态桥',
+      detail: '复盘新闻路径、来源动作和线索状态',
+      href: '/admin/status/leads#news-lead-path-bridge',
+      tone: newsActive > 0 ? 'orange' as const : newsTotal > 0 ? 'blue' as const : 'gray' as const,
+    },
+    {
+      label: '来源面板',
       detail: '回看新闻访问、来源动作和内容承接',
       href: '/admin/status/traffic#news-source-handoff',
       tone: newsPathMetric.views > 0 ? 'blue' as const : 'gray' as const,
@@ -1061,7 +1067,7 @@ function NewsConversionHandoffPanel({
   ]
   const decision =
     newsPathMetric.views > 0 && newsPathMetric.ctaClicks === 0
-      ? '新闻已有访问但暂无来源动作，优先回到 B255 来源面板复核新闻 CTA 和 Contact source 参数。'
+      ? '新闻已有访问但暂无来源动作，优先回到新闻来源面板复核新闻 CTA 和 Contact source 参数。'
       : newsPathMetric.ctaClicks > 0 && newsTotal === 0
         ? '新闻已有来源动作但线索库暂无 news 来源样本，继续观察 Contact 表单提交与来源归因。'
         : newsTotal > 0
@@ -1075,10 +1081,17 @@ function NewsConversionHandoffPanel({
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">News Source Handoff</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻来源承接</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把 B255 新闻来源面板回连到转化中心；本面板只读聚合新闻路径和 news 来源线索，不改变新闻发布、Contact 表单或线索状态。
+            把新闻来源面板、线索状态桥和新闻线索队列回连到转化中心；本面板只读聚合新闻路径和 news 来源线索，不改变新闻发布、Contact 表单或线索状态。
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
+          <Link
+            href="/admin/status/leads#news-lead-path-bridge"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            状态桥
+            <ArrowRight size={13} />
+          </Link>
           <Link
             href="/admin/status/traffic#news-source-handoff"
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
@@ -1110,7 +1123,7 @@ function NewsConversionHandoffPanel({
       <div className="border-t border-[#E6EEEE] px-5 py-4 text-sm font-semibold text-[#1E2C31]">
         运营判断：{decision}
       </div>
-      <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:grid-cols-5">
         {closureLinks.map((item) => (
           <Link
             key={item.label}
