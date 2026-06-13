@@ -17,6 +17,7 @@ import {
   Filter,
   ImageIcon,
   Layers3,
+  Link2,
   ListChecks,
   Package,
   Plus,
@@ -686,6 +687,40 @@ function TodoStat({ entry }: { entry: TodoEntry }) {
 
 function ProductContentClosurePanel({ stats }: { stats: ProductStats }) {
   const entries = getProductClosureEntries(stats)
+  const sourceContracts: ProductClosureEntry[] = [
+    {
+      label: '来源合同总览',
+      value: 'product:*',
+      detail: '回到产品列表查看卡片 CTA、详情 CTA、询盘表单和线索筛选约定。',
+      href: '/admin/content/products/list#product-source-contract',
+      Icon: Link2,
+      tone: 'blue',
+    },
+    {
+      label: '卡片 CTA',
+      value: 'catalog_card',
+      detail: '公开产品列表卡片咨询入口，回到产品来源阶段复盘。',
+      href: '/admin/customers/leads?source_type=product&source_stage=product%3Acatalog_card_cta',
+      Icon: Package,
+      tone: 'green',
+    },
+    {
+      label: '详情 CTA',
+      value: 'detail_cta',
+      detail: '产品详情页 Learn More / Appointment 动作，回到产品线索阶段。',
+      href: '/admin/customers/leads?source_type=product&source_stage=product%3Acta_click',
+      Icon: SearchCheck,
+      tone: 'orange',
+    },
+    {
+      label: '表单承接',
+      value: 'inquiry_form',
+      detail: '产品询盘表单进入 leads 后，用 source_stage 精确区分样本。',
+      href: '/admin/customers/leads?source_type=product&source_stage=product%3Ainquiry_form',
+      Icon: ListChecks,
+      tone: 'neutral',
+    },
+  ]
 
   return (
     <section id="content-closure" className="scroll-mt-24 space-y-4">
@@ -704,12 +739,63 @@ function ProductContentClosurePanel({ stats }: { stats: ProductStats }) {
           <ProductClosureCard key={entry.label} entry={entry} />
         ))}
       </div>
+      <ProductSourceContractStrip entries={sourceContracts} />
       <div className="grid grid-cols-1 gap-3 rounded-md border border-[#D8E7E8] bg-white p-4 text-sm shadow-sm md:grid-cols-3">
         <ClosureSnapshot label="已发布产品" value={stats.published} detail="前台产品页可见内容" />
         <ClosureSnapshot label="待补类型" value={getTodoCount(stats)} detail="影响内容完整度的字段组" />
         <ClosureSnapshot label="SEO 待补" value={stats.missingSeo} detail="搜索标题或摘要未补齐" />
       </div>
     </section>
+  )
+}
+
+function ProductSourceContractStrip({ entries }: { entries: ProductClosureEntry[] }) {
+  return (
+    <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1889B6]">Source Contract</p>
+          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">产品来源承接合同</h3>
+        </div>
+        <p className="max-w-3xl text-xs leading-5 text-[#61767D]">
+          对齐公开产品页的 Learn More / Appointment 心智，把产品卡片、详情 CTA、询盘表单和 source_type=product 线索队列放到同一条只读运营路径。
+        </p>
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+        {entries.map((entry) => (
+          <ProductSourceContractLink key={entry.label} entry={entry} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ProductSourceContractLink({ entry }: { entry: ProductClosureEntry }) {
+  const Icon = entry.Icon
+  const toneClass =
+    entry.tone === 'orange'
+      ? 'border-[#F4C7A6] bg-[#FFF2E7] text-[#C85F24]'
+      : entry.tone === 'green'
+        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+        : entry.tone === 'neutral'
+          ? 'border-[#D8E7E8] bg-[#F7FAFA] text-[#61767D]'
+          : 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <Link href={entry.href} className="group min-h-[132px] px-4 py-4 transition hover:bg-[#F7FAFA]">
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-sm font-bold text-[#1E2C31]">{entry.label}</span>
+          <span className={`mt-2 inline-flex min-h-7 max-w-full items-center rounded-md border px-2.5 text-[11px] font-bold ${toneClass}`}>
+            <span className="truncate">{entry.value}</span>
+          </span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block text-xs leading-5 text-[#61767D]">{entry.detail}</span>
+    </Link>
   )
 }
 
