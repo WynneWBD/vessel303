@@ -364,6 +364,7 @@ function getSideNavGroups(project: ProjectCaseRow): AdminSideNavGroup[] {
       items: [
         { key: 'project-new', label: '新增项目', href: '/admin/content/projects/new', Icon: FileText },
         { key: 'case-edit-inquiry', label: '询盘复核台', href: '#case-edit-inquiry-conversion-review-desk', Icon: ListChecks },
+        { key: 'case-backfill-bridge', label: '补位复核桥', href: '#case-edit-backfill-conversion-bridge', Icon: BarChart3 },
         { key: 'case-conversion', label: '案例咨询承接', href: '#case-conversion', Icon: SearchCheck },
         { key: 'form-sections', label: '表单分区优化', planned: true, Icon: SearchCheck },
         { key: 'case-detail', label: '查看案例详情页', href: `/cases/${project.id}`, Icon: ExternalLink },
@@ -1139,6 +1140,178 @@ function CaseEditInquiryConversionReviewDesk({
   )
 }
 
+function CaseEditBackfillConversionBridge({
+  project,
+  readiness,
+}: {
+  project: ProjectCaseRow
+  readiness: ProjectEditorReadiness
+}) {
+  const conversionIssues = getCaseConversionIssues(readiness)
+  const published = project.status === 'published'
+  const validCoords = coordinatesValid(project)
+  const inquiryHref = `/cases/${project.id}#case-inquiry`
+  const nextIssue = conversionIssues[0] ?? readiness.nextIssue
+  const mediaIssues = conversionIssues.filter((issue) => ['cover', 'gallery'].includes(issue.key))
+  const storyIssues = conversionIssues.filter((issue) => ['description-zh', 'description-en', 'story-depth', 'tags'].includes(issue.key))
+  const factIssues = conversionIssues.filter((issue) => ['project-type', 'area', 'units', 'products'].includes(issue.key))
+  const readyForReview = published && conversionIssues.length === 0
+  const decision = conversionIssues.length > 0
+    ? `当前单篇仍有 ${conversionIssues.length} 个会削弱案例询盘判断的内容缺口，先按 B308 内容补位口径处理，再回 B307 复盘路径和跟进质量。`
+    : published
+      ? '当前单篇内容补位检查已通过，可回 B307 做转化复盘，并人工核查前台咨询锚点。'
+      : '当前单篇仍是草稿，先完成发布检查；发布后再进入 B307 转化复盘和前台咨询锚点核查。'
+  const reviewItems: CaseEditInquiryReviewItem[] = [
+    {
+      label: 'B308 内容补位',
+      value: conversionIssues.length > 0 ? `${conversionIssues.length} 项缺口` : '已回补',
+      detail: '从列表补位执行队列回到当前单篇，按素材、叙事、事实和标签处理内容缺口。',
+      href: '/admin/content/projects/list?view=case-conversion-weak#case-conversion-content-backfill-desk',
+      cta: '回补位队列',
+      Icon: ListChecks,
+      tone: conversionIssues.length > 0 ? 'orange' : 'green',
+    },
+    {
+      label: 'B307 转化复盘',
+      value: readyForReview ? '可复盘' : published ? '待补后复盘' : '待发布',
+      detail: '回到案例跟进质量到转化复盘桥，复看路径动作、案例来源线索和跟进质量。',
+      href: '/admin/site/conversion#case-followup-conversion-review-bridge',
+      cta: '回转化复盘',
+      Icon: BarChart3,
+      tone: readyForReview ? 'green' : published ? 'orange' : 'gray',
+    },
+    {
+      label: 'B303 案例总控',
+      value: published ? '已发布' : '草稿',
+      detail: '回到案例内容到询盘转化总控台，确认当前案例在整体案例池中的承接位置。',
+      href: '/admin/content/projects#case-content-inquiry-command-center',
+      cta: '回案例总控',
+      Icon: MapPinned,
+      tone: published ? 'blue' : 'gray',
+    },
+    {
+      label: '当前编辑复核',
+      value: nextIssue?.label ?? '无内容缺口',
+      detail: nextIssue
+        ? `优先定位到 ${nextIssue.label}，处理后再复核案例咨询承接。`
+        : '当前没有内容型询盘缺口，可进入咨询承接合同或前台锚点核查。',
+      href: nextIssue?.href ?? '#case-conversion',
+      cta: nextIssue ? '定位缺口' : '看承接合同',
+      Icon: SearchCheck,
+      tone: nextIssue ? 'orange' : 'green',
+    },
+  ]
+  const backfillItems: CaseEditInquiryReviewItem[] = [
+    {
+      label: '素材补位',
+      value: mediaIssues.length > 0 ? `${mediaIssues.length} 项` : 'OK',
+      detail: mediaIssues.length > 0 ? mediaIssues.map((issue) => issue.label).join(' / ') : '封面和图库满足当前入口级检查。',
+      href: mediaIssues[0]?.href ?? '#media',
+      cta: '定位素材',
+      Icon: ImageIcon,
+      tone: mediaIssues.length > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '叙事补位',
+      value: storyIssues.length > 0 ? `${storyIssues.length} 项` : 'OK',
+      detail: storyIssues.length > 0 ? storyIssues.map((issue) => issue.label).join(' / ') : '中英文简介、叙事长度和标签满足当前入口级检查。',
+      href: storyIssues[0]?.href ?? '#content',
+      cta: '定位叙事',
+      Icon: FileText,
+      tone: storyIssues.length > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '事实补位',
+      value: factIssues.length > 0 ? `${factIssues.length} 项` : 'OK',
+      detail: factIssues.length > 0 ? factIssues.map((issue) => issue.label).join(' / ') : '项目类型、面积、舱数和产品型号满足当前入口级检查。',
+      href: factIssues[0]?.href ?? '#params',
+      cta: '定位事实',
+      Icon: Settings2,
+      tone: factIssues.length > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '前台复核',
+      value: published ? '#case-inquiry' : '待发布',
+      detail: published ? '可打开前台案例详情页咨询锚点做人工核查。' : '草稿不会进入公开案例页，先看发布检查。',
+      href: published ? inquiryHref : '#publish-check',
+      cta: published ? '看前台锚点' : '看发布检查',
+      Icon: ExternalLink,
+      tone: published ? 'blue' : 'gray',
+      external: published,
+    },
+    {
+      label: '线索回看',
+      value: 'source_type=case',
+      detail: '当前单篇不写线索状态，只回到案例来源线索队列做人工对照。',
+      href: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
+      cta: '看案例线索',
+      Icon: CheckCircle2,
+      tone: 'blue',
+    },
+    {
+      label: 'Global 边界',
+      value: validCoords ? '坐标有效' : '不入图',
+      detail: validCoords ? '坐标仅影响 Global 点位展示，不替代案例详情页复核。' : 'Global 坐标缺口不阻断案例内容补位，但需单独复核。',
+      href: validCoords && published ? `/global?camp=${project.id}` : '#global',
+      cta: validCoords && published ? '看 Global' : '看坐标区',
+      Icon: MapPinned,
+      tone: validCoords ? 'blue' : 'gray',
+      external: validCoords && published,
+    },
+  ]
+
+  return (
+    <section id="case-edit-backfill-conversion-bridge" className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid grid-cols-1 border-l-4 border-[#E36F2C] lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="px-4 py-4">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">B309 Case Backfill Review</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">单篇案例补位到转化复核桥</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把 B308 内容补位执行队列、B307 转化复盘、B303 案例总控和当前单篇编辑复核台收进同一个只读桥；本区只做定位和下钻，不自动保存、不发布、不改线索状态。
+          </p>
+        </div>
+        <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] p-4 lg:border-l lg:border-t-0">
+          <p className="text-xs font-bold text-[#61767D]">补位判断</p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-[#1E2C31]">{decision}</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <CaseSourceSnapshot label="内容缺口" value={String(conversionIssues.length)} detail="素材 / 叙事 / 事实" />
+            <CaseSourceSnapshot label="发布状态" value={published ? '已发布' : '草稿'} detail={published ? '公开案例可核查' : '发布后进入咨询路径'} />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-2 xl:grid-cols-4">
+        {reviewItems.map((item) => (
+          <CaseEditInquiryReviewLink key={item.label} item={item} />
+        ))}
+      </div>
+
+      <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-4 py-4">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Backfill Checklist</p>
+            <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">当前单篇补位检查口径</h3>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">只按当前编辑页已有 readiness 结果下钻，不新增数据库写入或发布动作。</p>
+          </div>
+          <Link
+            href={nextIssue?.href ?? '#case-conversion'}
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-bold text-[#E36F2C] transition hover:border-[#E36F2C]/60 hover:bg-[#FFF2E7]"
+          >
+            {nextIssue ? `先处理：${nextIssue.label}` : '进入咨询承接'}
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-2 xl:grid-cols-3">
+        {backfillItems.map((item) => (
+          <CaseEditInquiryReviewLink key={item.label} item={item} compact />
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function CaseEditInquiryReviewLink({ item, compact = false }: { item: CaseEditInquiryReviewItem; compact?: boolean }) {
   const Icon = item.Icon
 
@@ -1512,6 +1685,7 @@ export default async function AdminContentProjectEditPage({ params }: PageProps)
         signals={consoleSignals}
       />
       <CaseEditInquiryConversionReviewDesk project={project} readiness={editorReadiness} />
+      <CaseEditBackfillConversionBridge project={project} readiness={editorReadiness} />
       <CaseConversionPanel project={project} readiness={editorReadiness} />
       <EditSectionGrid />
       <ProjectReadinessPanel readiness={editorReadiness} />
