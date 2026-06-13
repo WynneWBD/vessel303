@@ -7,20 +7,28 @@ import ProductEditorConsole, {
   type ProductEditorSignal,
 } from '@/components/admin/ProductEditorConsole'
 import ProjectForm from '@/components/admin/ProjectForm'
+import { pool } from '@/lib/db'
+import { MIN_PROJECT_CASE_DESCRIPTION_CHARS } from '@/lib/project-case-readiness'
+import { formatAnalyticsPercent, loadConversionPathAnalytics, type AnalyticsConversionMetric } from '@/lib/site-analytics'
 import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
+  BarChart3,
   CheckCircle2,
+  ClipboardCheck,
+  ExternalLink,
   FileText,
   ImageIcon,
   Layers3,
+  Link2,
   ListChecks,
   MapPinned,
   Pencil,
   Plus,
   SearchCheck,
   Settings2,
+  ShieldCheck,
   Tags,
   type LucideIcon,
 } from 'lucide-react'
@@ -46,6 +54,61 @@ type CaseInquiryCreationCheckpoint = {
   href: string
   Icon: LucideIcon
 }
+
+type ProjectCreationStats = {
+  total: number
+  published: number
+  draft: number
+  recent: number
+  contentGap: number
+  caseInquiryReady: number
+}
+
+type ProjectCreationStatsRow = Record<keyof ProjectCreationStats, string>
+
+type CaseCreationPreflightItem = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  cta: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+  external?: boolean
+}
+
+const EMPTY_PROJECT_CREATION_STATS: ProjectCreationStats = {
+  total: 0,
+  published: 0,
+  draft: 0,
+  recent: 0,
+  contentGap: 0,
+  caseInquiryReady: 0,
+}
+
+const EMPTY_CASE_PATH_METRIC: AnalyticsConversionMetric = {
+  views: 0,
+  ctaClicks: 0,
+  formSubmits: 0,
+  leads: 0,
+  conversionRate: 0,
+}
+
+const PROJECT_CREATION_CONTENT_GAP_SQL = `(
+  NULLIF(BTRIM(COALESCE(cover_image_url, '')), '') IS NULL
+  OR jsonb_array_length(COALESCE(images, '[]'::jsonb)) = 0
+  OR NULLIF(BTRIM(COALESCE(description_zh, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(description_en, '')), '') IS NULL
+  OR LENGTH(BTRIM(COALESCE(description_zh, ''))) < ${MIN_PROJECT_CASE_DESCRIPTION_CHARS}
+  OR LENGTH(BTRIM(COALESCE(description_en, ''))) < ${MIN_PROJECT_CASE_DESCRIPTION_CHARS}
+  OR NULLIF(BTRIM(COALESCE(project_type_zh, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(project_type_en, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(area_display, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(units_display, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(products, '')), '') IS NULL
+  OR jsonb_array_length(COALESCE(tags_zh, '[]'::jsonb)) = 0
+  OR jsonb_array_length(COALESCE(tags_en, '[]'::jsonb)) = 0
+)`
 
 const EDIT_SECTIONS: EditSection[] = [
   {
@@ -146,11 +209,67 @@ function getSideNavGroups(): AdminSideNavGroup[] {
     {
       title: '后续规划',
       items: [
+        { key: 'case-creation-preflight', label: '创建预检台', href: '#case-creation-inquiry-preflight-desk', Icon: ClipboardCheck },
         { key: 'case-inquiry-plan', label: '案例咨询承接', href: '#case-inquiry-plan', Icon: SearchCheck },
         { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },
       ],
     },
   ]
+}
+
+function formatNumber(value: number): string {
+  return value.toLocaleString('zh-CN')
+}
+
+function parseCount(value: string | undefined): number {
+  return parseInt(value ?? '0', 10)
+}
+
+function getCaseInquiryWeakCount(stats: ProjectCreationStats): number {
+  return Math.max(0, stats.published - stats.caseInquiryReady)
+}
+
+async function tableExists(tableName: string): Promise<boolean> {
+  const res = await pool.query<{ table_name: string | null }>('SELECT to_regclass($1) AS table_name', [tableName])
+  return Boolean(res.rows[0]?.table_name)
+}
+
+async function safeLoad<T>(label: string, loader: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await loader()
+  } catch (err) {
+    console.error(`[admin-content-project-new] ${label} failed`, err)
+    return fallback
+  }
+}
+
+async function getProjectCreationStats(): Promise<ProjectCreationStats> {
+  if (!(await tableExists('public.project_cases'))) return EMPTY_PROJECT_CREATION_STATS
+
+  const res = await pool.query<ProjectCreationStatsRow>(
+    `SELECT
+       COUNT(*)::text AS total,
+       COUNT(*) FILTER (WHERE status = 'published')::text AS published,
+       COUNT(*) FILTER (WHERE status = 'draft')::text AS draft,
+       COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days')::text AS recent,
+       COUNT(*) FILTER (WHERE ${PROJECT_CREATION_CONTENT_GAP_SQL})::text AS "contentGap",
+       COUNT(*) FILTER (
+         WHERE status = 'published'
+           AND NOT ${PROJECT_CREATION_CONTENT_GAP_SQL}
+       )::text AS "caseInquiryReady"
+     FROM project_cases
+     WHERE deleted_at IS NULL`,
+  )
+  const row = res.rows[0]
+
+  return {
+    total: parseCount(row?.total),
+    published: parseCount(row?.published),
+    draft: parseCount(row?.draft),
+    recent: parseCount(row?.recent),
+    contentGap: parseCount(row?.contentGap),
+    caseInquiryReady: parseCount(row?.caseInquiryReady),
+  }
 }
 
 function Hero() {
@@ -302,6 +421,225 @@ function CaseInquiryCreationPlan() {
   )
 }
 
+function CaseCreationInquiryPreflightDesk({
+  stats,
+  casePathMetric,
+}: {
+  stats: ProjectCreationStats
+  casePathMetric: AnalyticsConversionMetric
+}) {
+  const weakCount = getCaseInquiryWeakCount(stats)
+  const creationRiskSignals = stats.contentGap + weakCount
+  const items: CaseCreationPreflightItem[] = [
+    {
+      label: '案例运营总览',
+      value: `${formatNumber(stats.total)} 个案例`,
+      detail: '创建前先看当前案例池、草稿和发布弱项，避免新草稿继续积累同类缺口。',
+      href: '/admin/content/projects#case-conversion',
+      cta: '看运营总览',
+      Icon: MapPinned,
+      tone: 'blue',
+    },
+    {
+      label: 'B300 列表队列',
+      value: `${formatNumber(weakCount)} 个弱项`,
+      detail: '保存后新案例会回到列表队列，按发布转化弱、内容待补和 Global 状态继续复核。',
+      href: '/admin/content/projects/list#case-list-inquiry-conversion-queue',
+      cta: '看列表队列',
+      Icon: ListChecks,
+      tone: weakCount > 0 ? 'orange' : 'green',
+    },
+    {
+      label: 'B301 编辑复核',
+      value: '保存后进入',
+      detail: '新草稿保存后进入单篇编辑页，再用询盘复核台核查素材、叙事、事实和前台路径。',
+      href: '/admin/content/projects/list?view=case-conversion-weak',
+      cta: '从列表进入编辑',
+      Icon: Pencil,
+      tone: 'green',
+    },
+    {
+      label: '前台案例路径',
+      value: '/cases',
+      detail: '发布前先确认新案例将进入案例列表与详情页，不把 Global 点位当成案例详情。',
+      href: '/cases',
+      cta: '看前台案例',
+      Icon: ExternalLink,
+      tone: 'blue',
+      external: true,
+    },
+    {
+      label: '案例线索队列',
+      value: 'source_type=case',
+      detail: '发布后的案例咨询表单回到客户线索台；本区只做入口串联，不写线索状态。',
+      href: '/admin/customers/leads?source_type=case',
+      cta: '看案例线索',
+      Icon: Link2,
+      tone: 'orange',
+    },
+    {
+      label: '路径数据复盘',
+      value: formatAnalyticsPercent(casePathMetric.conversionRate),
+      detail: `近 30 天访问 ${formatNumber(casePathMetric.views)}，动作 ${formatNumber(casePathMetric.ctaClicks)}，线索 ${formatNumber(casePathMetric.leads)}。`,
+      href: '/admin/status/traffic#case-inquiry-path',
+      cta: '看路径分析',
+      Icon: BarChart3,
+      tone: casePathMetric.leads > 0 ? 'green' : casePathMetric.views > 0 ? 'orange' : 'blue',
+    },
+    {
+      label: '创建安全边界',
+      value: '只读预检',
+      detail: '预检台不新增保存、发布、删除、Global 点位、认证、价格或线索写入规则。',
+      href: '#basic',
+      cta: '进入基础信息',
+      Icon: ShieldCheck,
+      tone: 'gray',
+    },
+  ]
+
+  return (
+    <section id="case-creation-inquiry-preflight-desk" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="border-l-4 border-[#1889B6] px-4 py-4">
+          <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">B302 CASE CREATION INQUIRY PREFLIGHT</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例创建到询盘转化预检台</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把新建案例、B301 编辑复核、B300 列表队列、前台 `/cases`、`source_type=case` 线索和 30 天路径数据放到创建前同屏预检；先确认案例身份、证明素材、咨询上下文和发布影响，再保存草稿。本区只读，不改变 ProjectForm 保存和发布逻辑。
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <CaseCreationPreflightAction href="/admin/content/projects/list#case-list-inquiry-conversion-queue" Icon={ListChecks} label="B300 列表队列" primary />
+            <CaseCreationPreflightAction href="/admin/content/projects#case-conversion" Icon={ClipboardCheck} label="案例承接总览" />
+            <CaseCreationPreflightAction href="/admin/status/traffic#case-inquiry-path" Icon={BarChart3} label="路径分析" />
+            <CaseCreationPreflightAction href="/admin/customers/leads?source_type=case" Icon={Link2} label="案例线索" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 border-t border-[#E6EEEE] bg-[#FBFDFD] lg:border-l lg:border-t-0">
+          <CaseCreationPreflightStat label="默认状态" value="草稿" detail="不会直接公开" />
+          <CaseCreationPreflightStat label="现有草稿" value={formatNumber(stats.draft)} detail={`近 30 天新增 ${formatNumber(stats.recent)}`} warn={stats.draft > 0} />
+          <CaseCreationPreflightStat label="内容待补" value={formatNumber(stats.contentGap)} detail="已有案例缺口参考" warn={stats.contentGap > 0} />
+          <CaseCreationPreflightStat label="路径线索" value={formatNumber(casePathMetric.leads)} detail={`转化 ${formatAnalyticsPercent(casePathMetric.conversionRate)}`} warn={casePathMetric.views > 0 && casePathMetric.leads === 0} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-4">
+        <CaseCreationPathSnapshot label="已发布案例" value={formatNumber(stats.published)} detail={`可承接 ${formatNumber(stats.caseInquiryReady)}`} />
+        <CaseCreationPathSnapshot label="发布转化弱" value={formatNumber(weakCount)} detail="列表弱案例队列" warn={weakCount > 0} />
+        <CaseCreationPathSnapshot label="案例路径访问" value={formatNumber(casePathMetric.views)} detail="近 30 天访问样本" />
+        <CaseCreationPathSnapshot label="创建风险信号" value={formatNumber(creationRiskSignals)} detail="内容缺口 + 弱案例" warn={creationRiskSignals > 0} />
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-2 xl:grid-cols-4">
+        {items.map((item) => (
+          <CaseCreationPreflightCard key={item.label} item={item} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function CaseCreationPreflightAction({
+  href,
+  Icon,
+  label,
+  primary = false,
+}: {
+  href: string
+  Icon: LucideIcon
+  label: string
+  primary?: boolean
+}) {
+  return (
+    <Link
+      href={href}
+      className={`inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-xs font-bold transition ${
+        primary
+          ? 'bg-[#E36F2C] text-white shadow-sm hover:bg-[#C95E22]'
+          : 'border border-[#D8E7E8] bg-white text-[#1E2C31] hover:border-[#1889B6]/55 hover:text-[#1889B6]'
+      }`}
+    >
+      <Icon size={15} />
+      {label}
+    </Link>
+  )
+}
+
+function CaseCreationPreflightStat({
+  label,
+  value,
+  detail,
+  warn = false,
+}: {
+  label: string
+  value: string
+  detail: string
+  warn?: boolean
+}) {
+  return (
+    <div className="min-w-0 border-b border-[#E6EEEE] px-4 py-3 even:border-l">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-1 truncate text-2xl font-bold ${warn ? 'text-[#E36F2C]' : 'text-[#1E2C31]'}`} title={value}>{value}</p>
+      <p className="mt-1 truncate text-xs text-[#8A9EA4]" title={detail}>{detail}</p>
+    </div>
+  )
+}
+
+function CaseCreationPathSnapshot({
+  label,
+  value,
+  detail,
+  warn = false,
+}: {
+  label: string
+  value: string
+  detail: string
+  warn?: boolean
+}) {
+  return (
+    <div className="border-b border-[#E6EEEE] px-4 py-3 md:border-r md:last:border-r-0">
+      <p className="text-[11px] font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-1 text-xl font-bold ${warn ? 'text-[#E36F2C]' : 'text-[#1E2C31]'}`}>{value}</p>
+      <p className="mt-1 text-xs leading-5 text-[#61767D]">{detail}</p>
+    </div>
+  )
+}
+
+function caseCreationPreflightToneClass(tone: CaseCreationPreflightItem['tone']) {
+  if (tone === 'green') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  if (tone === 'orange') return 'border-[#F4C7A6] bg-[#FFF2E7] text-[#C85F24]'
+  if (tone === 'gray') return 'border-[#D8E7E8] bg-[#F7FAFA] text-[#61767D]'
+  return 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
+}
+
+function CaseCreationPreflightCard({ item }: { item: CaseCreationPreflightItem }) {
+  const Icon = item.Icon
+
+  return (
+    <Link
+      href={item.href}
+      target={item.external ? '_blank' : undefined}
+      rel={item.external ? 'noopener noreferrer' : undefined}
+      className="group min-h-[166px] border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-[#FBFDFD] md:border-r xl:border-b-0 last:border-r-0"
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-xs font-bold text-[#1E2C31]">{item.label}</span>
+          <span className={`mt-2 inline-flex min-h-7 max-w-full items-center rounded-md border px-2.5 text-[11px] font-bold ${caseCreationPreflightToneClass(item.tone)}`}>
+            <span className="truncate">{item.value}</span>
+          </span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block min-h-12 text-xs leading-5 text-[#61767D]">{item.detail}</span>
+      <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6] group-hover:text-[#E36F2C]">
+        {item.cta}
+        {item.external ? <ExternalLink size={12} /> : <ArrowRight size={13} />}
+      </span>
+    </Link>
+  )
+}
+
 export default async function AdminContentProjectNewPage() {
   const session = await auth()
   if (!session?.user) {
@@ -313,6 +651,11 @@ export default async function AdminContentProjectNewPage() {
     redirect('/admin/login?error=unauthorized')
   }
 
+  const [stats, pathAnalytics] = await Promise.all([
+    safeLoad('project creation stats', getProjectCreationStats, EMPTY_PROJECT_CREATION_STATS),
+    safeLoad<Record<string, AnalyticsConversionMetric>>('case path analytics', () => loadConversionPathAnalytics(30), {}),
+  ])
+  const casePathMetric = pathAnalytics.cases ?? EMPTY_CASE_PATH_METRIC
   const adminRole: AdminRole = role
   const consoleMetrics: ProductEditorMetric[] = [
     {
@@ -335,15 +678,15 @@ export default async function AdminContentProjectNewPage() {
     },
     {
       label: '公开案例',
-      value: '未公开',
-      detail: '创建草稿不会影响 /cases 和 /global。',
+      value: formatNumber(stats.published),
+      detail: `当前已发布案例；可承接询盘 ${formatNumber(stats.caseInquiryReady)}。`,
       tone: 'ready',
     },
     {
       label: '咨询承接',
-      value: '待发布',
-      detail: '保存并发布后才会出现案例咨询锚点。',
-      tone: 'warning',
+      value: formatNumber(getCaseInquiryWeakCount(stats)),
+      detail: '发布转化弱案例会进入 B300 列表处理队列。',
+      tone: getCaseInquiryWeakCount(stats) > 0 ? 'warning' : 'ready',
     },
   ]
   const consoleSignals: ProductEditorSignal[] = [
@@ -373,9 +716,9 @@ export default async function AdminContentProjectNewPage() {
     },
     {
       label: '案例咨询从创建质量开始',
-      detail: '素材、叙事和项目事实会决定发布后的 /cases/[id]#case-inquiry 承接质量。',
+      detail: '先从 B302 预检台看案例池缺口、列表队列、线索和路径数据，再进入表单填写。',
       tone: 'warning',
-      href: '#case-inquiry-plan',
+      href: '#case-creation-inquiry-preflight-desk',
     },
   ]
 
@@ -397,6 +740,7 @@ export default async function AdminContentProjectNewPage() {
         metrics={consoleMetrics}
         signals={consoleSignals}
       />
+      <CaseCreationInquiryPreflightDesk stats={stats} casePathMetric={casePathMetric} />
       <CaseInquiryCreationPlan />
       <EditSectionGrid />
       <RiskNotice />
