@@ -100,6 +100,14 @@ const EMPTY_SUMMARY: LeadDashboardSummary = {
 const EMPTY_SOURCE_STATUS_SUMMARY: LeadSourceStatusSummary[] = []
 const EMPTY_SOURCE_STAGE_STATUS_SUMMARY: LeadSourceStageStatusSummary[] = []
 
+const EMPTY_NEWS_PATH_METRIC: AnalyticsConversionMetric = {
+  views: 0,
+  ctaClicks: 0,
+  formSubmits: 0,
+  leads: 0,
+  conversionRate: 0,
+}
+
 const EMPTY_CASE_PATH_METRIC: AnalyticsConversionMetric = {
   views: 0,
   ctaClicks: 0,
@@ -271,6 +279,7 @@ function LeadsQueueConsole({
   filters,
   sourceStatusSummary,
   sourceStageStatusSummary,
+  newsPathMetric,
   productPathMetric,
   casePathMetric,
 }: {
@@ -280,6 +289,7 @@ function LeadsQueueConsole({
   filters: LeadFilterState
   sourceStatusSummary: LeadSourceStatusSummary[]
   sourceStageStatusSummary: LeadSourceStageStatusSummary[]
+  newsPathMetric: AnalyticsConversionMetric
   productPathMetric: AnalyticsConversionMetric
   casePathMetric: AnalyticsConversionMetric
 }) {
@@ -370,17 +380,20 @@ function LeadsQueueConsole({
     {
       title: '新闻来源承接',
       detail: newsSource
-        ? `新闻列表或详情 CTA 已进入线索台账；当前新线索 ${formatNumber(newsSource.new)} 条，先回看内容主题和下一步产品/案例路径。`
-        : '新闻列表和详情 CTA 会通过 Contact 写入来源；有样本后可直接筛选新闻线索并回看内容转化。',
+        ? `新闻列表或详情 CTA 已进入线索台账；当前新线索 ${formatNumber(newsSource.new)} 条，可回到线索状态桥复盘新闻路径、来源动作和后续产品/案例路径。`
+        : '新闻列表和详情 CTA 会通过 Contact 写入来源；有样本后可从线索状态桥、新闻来源面板和内容运营页回看内容转化。',
       metric: `${formatNumber(newsActive)} 活跃`,
-      signal: `${formatNumber(newsTotal)} 总线索`,
+      signal: newsPathMetric.leads > 0
+        ? `${formatNumber(newsPathMetric.leads)} 路径线索`
+        : `${formatAnalyticsPercent(newsPathMetric.conversionRate)} 转化`,
       href: createLeadsHref(filters, { source_type: 'news', source_stage: 'all', status: 'all', page: 1 }),
       Icon: FileText,
-      tone: newsActive > 0 ? 'orange' : newsTotal > 0 ? 'blue' : 'gray',
+      tone: newsActive > 0 ? 'orange' : newsTotal > 0 ? 'blue' : newsPathMetric.views > 0 ? 'orange' : 'gray',
       actions: [
         { label: '新闻线索', href: createLeadsHref(filters, { source_type: 'news', source_stage: 'all', status: 'all', page: 1 }), primary: newsActive > 0 },
-        { label: '新闻列表', href: '/admin/content/news/list#news-list-governance' },
-        { label: '公开新闻', href: '/news' },
+        { label: '状态桥', href: '/admin/status/leads#news-lead-path-bridge', primary: newsActive === 0 && newsTotal > 0 },
+        { label: '来源面板', href: '/admin/status/traffic#news-source-handoff' },
+        { label: '新闻运营', href: '/admin/content/news#news-operations-hub' },
       ],
     },
     {
@@ -685,6 +698,7 @@ export default async function AdminCustomerLeadsPage({
   ])
 
   const adminRole: AdminRole = role
+  const newsPathMetric = pathAnalytics.news ?? EMPTY_NEWS_PATH_METRIC
   const productPathMetric = pathAnalytics.products ?? EMPTY_PRODUCT_PATH_METRIC
   const casePathMetric = pathAnalytics.cases ?? EMPTY_CASE_PATH_METRIC
   const leadFilters: LeadFilterState = {
@@ -710,6 +724,7 @@ export default async function AdminCustomerLeadsPage({
         filters={leadFilters}
         sourceStatusSummary={sourceStatusSummary}
         sourceStageStatusSummary={sourceStageStatusSummary}
+        newsPathMetric={newsPathMetric}
         productPathMetric={productPathMetric}
         casePathMetric={casePathMetric}
       />
