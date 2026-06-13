@@ -156,6 +156,9 @@ function ProductDecisionSummary({
   features,
   termRows,
   mediaCount,
+  factCount,
+  relatedCount,
+  resourceCount,
   price,
   specsTitle,
   inquiryTitle,
@@ -167,13 +170,19 @@ function ProductDecisionSummary({
   features: string[];
   termRows: string[];
   mediaCount: number;
+  factCount: number;
+  relatedCount: number;
+  resourceCount: number;
   price: string;
   specsTitle: string;
   inquiryTitle: string;
   inquiryCta: string;
 }) {
-  const specPreview = usableSpecs(specs).slice(0, 6);
+  const usableSpecRows = usableSpecs(specs);
+  const specPreview = usableSpecRows.slice(0, 6);
   const termPreview = termRows.slice(0, 3);
+  const inquiryHref = inquiryTitle ? '#product-inquiry' : '/contact';
+  const fitSignalCount = features.length + factCount;
   const metricRows: DecisionMetric[] = [
     {
       label: fallbackLabel(lang, 'Floor area', '面积'),
@@ -203,6 +212,44 @@ function ProductDecisionSummary({
     },
   ].filter((item) => text(item.value));
   const hasCommercialPanel = text(price) || termPreview.length > 0 || text(inquiryTitle);
+  const bridgeRows = [
+    {
+      label: fallbackLabel(lang, 'Media proof', 'Media proof'),
+      value: mediaCount > 1 ? `${mediaCount} ${fallbackLabel(lang, 'images', 'images')}` : fallbackLabel(lang, 'Primary image', 'Primary image'),
+      detail: fallbackLabel(lang, 'Inspect the visual payload before asking for a quote.', 'Inspect the visual payload before asking for a quote.'),
+      href: mediaCount > 1 ? '#product-gallery' : inquiryHref,
+    },
+    {
+      label: fallbackLabel(lang, 'Specification proof', 'Specification proof'),
+      value: usableSpecRows.length > 0 ? `${usableSpecRows.length} ${fallbackLabel(lang, 'specs', 'specs')}` : fallbackLabel(lang, 'Specs pending', 'Specs pending'),
+      detail: fallbackLabel(lang, 'Confirm model scale, system and delivery fit.', 'Confirm model scale, system and delivery fit.'),
+      href: usableSpecRows.length > 0 ? '#product-specifications' : inquiryHref,
+    },
+    {
+      label: fallbackLabel(lang, 'Fit signals', 'Fit signals'),
+      value: fitSignalCount > 0 ? `${fitSignalCount} ${fallbackLabel(lang, 'signals', 'signals')}` : fallbackLabel(lang, 'Fit pending', 'Fit pending'),
+      detail: fallbackLabel(lang, 'Use tags, features and category facts to qualify the model.', 'Use tags, features and category facts to qualify the model.'),
+      href: features.length > 0 ? '#product-description' : inquiryHref,
+    },
+    {
+      label: fallbackLabel(lang, 'Buyer resources', 'Buyer resources'),
+      value: resourceCount > 0 ? `${resourceCount} ${fallbackLabel(lang, 'modules', 'modules')}` : fallbackLabel(lang, 'No resource module', 'No resource module'),
+      detail: fallbackLabel(lang, 'Check files, buyer notes or supporting modules when available.', 'Check files, buyer notes or supporting modules when available.'),
+      href: resourceCount > 0 ? '#buyer-resources' : inquiryHref,
+    },
+    {
+      label: fallbackLabel(lang, 'Related options', 'Related options'),
+      value: relatedCount > 0 ? `${relatedCount} ${fallbackLabel(lang, 'models', 'models')}` : fallbackLabel(lang, 'Single model route', 'Single model route'),
+      detail: fallbackLabel(lang, 'Compare nearby models before sending the request.', 'Compare nearby models before sending the request.'),
+      href: relatedCount > 0 ? '#related-products' : inquiryHref,
+    },
+    {
+      label: fallbackLabel(lang, 'Inquiry handoff', 'Inquiry handoff'),
+      value: fallbackLabel(lang, 'Source ready', 'Source ready'),
+      detail: fallbackLabel(lang, 'The product inquiry keeps this model as the lead source.', 'The product inquiry keeps this model as the lead source.'),
+      href: inquiryHref,
+    },
+  ];
   if (metricRows.length === 0 && specPreview.length === 0 && features.length === 0 && !hasCommercialPanel) return null;
 
   return (
@@ -300,6 +347,47 @@ function ProductDecisionSummary({
             ) : null}
           </aside>
         ) : null}
+        <div className="border border-[#DADDE1] bg-[#F7F8F8] p-4 lg:col-span-3" data-product-proof-inquiry-bridge="true">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#147C94]">
+                {fallbackLabel(lang, 'Proof-to-inquiry bridge', 'Proof-to-inquiry bridge')}
+              </p>
+              <h2 className="mt-2 text-xl font-black leading-tight text-[#1F2A31]">
+                {fallbackLabel(lang, 'Review proof, compare fit, then send the model inquiry.', 'Review proof, compare fit, then send the model inquiry.')}
+              </h2>
+            </div>
+            {inquiryCta ? (
+              <a
+                href={inquiryHref}
+                data-analytics-cta="true"
+                className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 bg-[#E36F2C] px-4 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[#C85A1F]"
+              >
+                {inquiryCta}
+                <ArrowRight size={14} />
+              </a>
+            ) : null}
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-6">
+            {bridgeRows.map((item) => (
+              <a
+                key={item.label}
+                href={item.href}
+                className="group flex min-h-[132px] flex-col justify-between border border-[#DADDE1] bg-white p-3 transition hover:border-[#147C94]/60 hover:bg-[#F2F8F8]"
+              >
+                <span>
+                  <span className="block text-[10px] font-black uppercase tracking-[0.12em] text-[#65707A]">{item.label}</span>
+                  <span className="mt-2 block text-base font-black leading-tight text-[#1F2A31]">{item.value}</span>
+                  <span className="mt-2 block text-xs leading-5 text-[#65707A]">{item.detail}</span>
+                </span>
+                <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-[0.12em] text-[#147C94]">
+                  {fallbackLabel(lang, 'Open', 'Open')}
+                  <ArrowRight size={13} className="transition group-hover:translate-x-0.5" />
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -883,6 +971,9 @@ export default function CatalogProductDetailContent({
         features={features}
         termRows={termRows}
         mediaCount={media.length}
+        factCount={facts.length}
+        relatedCount={relatedProducts.length}
+        resourceCount={resourceModules.length}
         price={price}
         specsTitle={specsTitle}
         inquiryTitle={inquiryTitle}
