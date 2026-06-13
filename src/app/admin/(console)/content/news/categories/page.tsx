@@ -19,7 +19,9 @@ import {
   CheckCircle2,
   Database,
   FileText,
+  Link2,
   ListChecks,
+  Newspaper,
   SearchCheck,
   Tags,
   type LucideIcon,
@@ -65,6 +67,16 @@ type CategorySummary = {
 }
 
 type CategoryGovernanceCard = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  cta: string
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+  Icon: LucideIcon
+}
+
+type CategorySourceConversionItem = {
   label: string
   value: string
   detail: string
@@ -295,6 +307,154 @@ function CategoryGovernanceLink({ card }: { card: CategoryGovernanceCard }) {
   )
 }
 
+function CategorySourceConversionDesk({ summary }: { summary: CategorySummary }) {
+  const taxonomySignals = summary.uncategorizedNews + summary.missingSeo + summary.incomplete
+  const items: CategorySourceConversionItem[] = [
+    {
+      label: '新闻列表队列',
+      value: 'B295',
+      detail: '从新闻列表来源转化处理队列进入当前筛选、分类缺口、SEO 缺口和线索承接复核。',
+      href: '/admin/content/news/list#news-list-source-conversion-queue',
+      cta: '看列表队列',
+      tone: 'blue',
+      Icon: ListChecks,
+    },
+    {
+      label: '新闻优化台',
+      value: 'B294',
+      detail: '回到新闻内容到来源线索优化台，统一看内容待补、SEO 待补和 source_type=news。',
+      href: '/admin/content/news#news-source-lead-optimization-desk',
+      cta: '看优化台',
+      tone: 'green',
+      Icon: Newspaper,
+    },
+    {
+      label: '流量异常分诊',
+      value: 'B293',
+      detail: '分类和 SEO 补齐后，回看新闻访问路径是否仍出现有访问无线索的异常。',
+      href: '/admin/status/traffic#traffic-to-lead-exception-desk',
+      cta: '看流量',
+      tone: taxonomySignals > 0 ? 'orange' : 'blue',
+      Icon: SearchCheck,
+    },
+    {
+      label: '来源线索处理',
+      value: 'B292',
+      detail: '按新闻来源线索质量处理台复核 source_type=news 的活跃状态、阶段和运营跟进。',
+      href: '/admin/status/leads#source-lead-quality-workdesk',
+      cta: '看线索处理',
+      tone: 'blue',
+      Icon: Link2,
+    },
+    {
+      label: '转化复盘',
+      value: 'B291',
+      detail: '把分类、内容、SEO 和新闻来源线索放回 SEO 到线索转化复盘里判断获客承接。',
+      href: '/admin/site/conversion#seo-to-lead-conversion-review',
+      cta: '看转化复盘',
+      tone: 'green',
+      Icon: CheckCircle2,
+    },
+    {
+      label: '新闻线索队列',
+      value: 'source_type=news',
+      detail: '直接进入新闻来源线索队列；本页只做入口，不改变客户线索或分类数据。',
+      href: '/admin/customers/leads?source_type=news',
+      cta: '打开线索',
+      tone: 'gray',
+      Icon: Link2,
+    },
+  ]
+
+  return (
+    <section id="news-category-source-conversion-desk" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="border-l-4 border-[#E36F2C] px-4 py-4">
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B296 NEWS CATEGORY SOURCE CONVERSION</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻分类到来源转化治理台</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把新闻分类管理、B295 新闻列表处理队列、B294 新闻优化台、B293 流量分诊、B292 来源线索处理和 B291 转化复盘连成一条只读治理链；先补未分类、内容和 SEO，再回看新闻来源线索承接。本区不新增保存、发布、隐藏、删除或线索写入能力。
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <PrimaryAction href="/admin/content/news/list#news-list-source-conversion-queue" Icon={ListChecks} label="B295 列表队列" primary />
+            <PrimaryAction href="/admin/content/news#news-source-lead-optimization-desk" Icon={Newspaper} label="B294 优化台" />
+            <PrimaryAction href="/admin/status/leads#source-lead-quality-workdesk" Icon={Link2} label="B292 线索处理" />
+            <PrimaryAction href="/admin/customers/leads?source_type=news" Icon={Link2} label="新闻线索" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 border-t border-[#E6EEEE] bg-[#FBFDFD] lg:border-l lg:border-t-0">
+          <CategorySourceStat label="可见分类" value={formatNumber(summary.visibleCategories)} detail={`隐藏 ${formatNumber(summary.hiddenCategories)}`} />
+          <CategorySourceStat label="未分类新闻" value={formatNumber(summary.uncategorizedNews)} detail={`已归类 ${formatNumber(summary.assignedNews)}`} warn={summary.uncategorizedNews > 0} />
+          <CategorySourceStat label="内容待补" value={formatNumber(summary.incomplete)} detail="影响分类阅读承接" warn={summary.incomplete > 0} />
+          <CategorySourceStat label="SEO 待补" value={formatNumber(summary.missingSeo)} detail="影响搜索和来源判断" warn={summary.missingSeo > 0} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-2 xl:grid-cols-3">
+        {items.map((item) => (
+          <CategorySourceConversionCard key={item.label} item={item} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function CategorySourceStat({
+  label,
+  value,
+  detail,
+  warn = false,
+}: {
+  label: string
+  value: string
+  detail: string
+  warn?: boolean
+}) {
+  return (
+    <div className="min-w-0 border-b border-[#E6EEEE] px-4 py-3 even:border-l">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-1 truncate text-2xl font-bold ${warn ? 'text-[#E36F2C]' : 'text-[#1E2C31]'}`} title={value}>{value}</p>
+      <p className="mt-1 truncate text-xs text-[#8A9EA4]" title={detail}>{detail}</p>
+    </div>
+  )
+}
+
+function CategorySourceConversionCard({ item }: { item: CategorySourceConversionItem }) {
+  const Icon = item.Icon
+  const toneClass =
+    item.tone === 'green'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+      : item.tone === 'orange'
+        ? 'border-[#F4C7A6] bg-[#FFF2E7] text-[#C85F24]'
+        : item.tone === 'gray'
+          ? 'border-[#D8E7E8] bg-[#F7FAFA] text-[#61767D]'
+          : 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <Link
+      href={item.href}
+      className="group min-h-[168px] border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-[#FBFDFD] md:odd:border-r xl:border-r"
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-xs font-bold text-[#1E2C31]">{item.label}</span>
+          <span className={`mt-2 inline-flex min-h-7 max-w-full items-center rounded-md border px-2.5 text-[11px] font-bold ${toneClass}`}>
+            <span className="truncate">{item.value}</span>
+          </span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block min-h-12 text-xs leading-5 text-[#61767D]">{item.detail}</span>
+      <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6] group-hover:text-[#E36F2C]">
+        {item.cta}
+        <ArrowRight size={13} />
+      </span>
+    </Link>
+  )
+}
+
 function ReferencePanel() {
   return (
     <section className="space-y-4">
@@ -478,6 +638,7 @@ export default async function AdminContentNewsCategoriesPage() {
     >
       <Hero summary={summary} />
       <CategoryGovernancePanel summary={summary} />
+      <CategorySourceConversionDesk summary={summary} />
       <ReferencePanel />
       <div id="news-category-manager" className="scroll-mt-24">
         <NewsCategoryManagerClient initialCategories={categories} />
