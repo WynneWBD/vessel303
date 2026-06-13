@@ -200,6 +200,15 @@ type ProductPriorityItem = {
   score: number
 }
 
+type ProductProofBackflowItem = {
+  product: ProductListRow
+  issues: string[]
+  proofGaps: string[]
+  readiness: number
+  previewHref: string
+  editHref: string
+}
+
 type ProductSourceContract = {
   label: string
   value: string
@@ -679,6 +688,75 @@ function buildProductPriorityItems(rows: ProductListRow[]): ProductPriorityItem[
       return new Date(b.product.updated_at).getTime() - new Date(a.product.updated_at).getTime()
     })
     .slice(0, 6)
+}
+
+function getProductProofBackflowGaps(product: ProductListRow, issues: string[]): string[] {
+  const gaps = new Set<string>()
+
+  if (issues.includes('缺封面') || issues.includes('缺图库')) {
+    gaps.add('媒体证明')
+  }
+  if (
+    issues.some((issue) => [
+      '缺中文简介',
+      '缺英文简介',
+      '缺亮点',
+      '缺详情模块',
+      '精品页绑定缺 CMS 基础字段',
+    ].includes(issue))
+  ) {
+    gaps.add('详情证明')
+  }
+  if (issues.includes('未分类') || issues.includes('缺产品属性') || issues.includes('缺标签')) {
+    gaps.add('适配字段')
+  }
+  if (issues.includes('缺 SEO') || issues.includes('缺关键词')) {
+    gaps.add('搜索入口')
+  }
+  if (
+    issues.includes('缺价格展示')
+    || issues.some((issue) => issue.includes('商务条款'))
+    || issues.includes('缺关联产品')
+    || issues.includes('缺买家资料')
+  ) {
+    gaps.add('询盘交接')
+  }
+  if (product.status === 'draft') {
+    gaps.add('发布状态')
+  }
+
+  return [...gaps]
+}
+
+function getProductProofBackflowReadiness(product: ProductListRow, issues: string[], proofGaps: string[]): number {
+  const issuePenalty = Math.min(54, issues.length * 6)
+  const gapPenalty = Math.min(32, proofGaps.length * 8)
+  const statusPenalty = product.status === 'draft' ? 10 : 0
+  return Math.max(0, Math.min(100, 100 - issuePenalty - gapPenalty - statusPenalty))
+}
+
+function buildProductProofBackflowItems(rows: ProductListRow[]): ProductProofBackflowItem[] {
+  return rows
+    .map((product) => {
+      const issues = getProductIssues(product)
+      const proofGaps = getProductProofBackflowGaps(product, issues)
+      return {
+        product,
+        issues,
+        proofGaps,
+        readiness: getProductProofBackflowReadiness(product, issues, proofGaps),
+        previewHref: productPreviewHref(product),
+        editHref: `/admin/content/products/${product.id}/edit`,
+      }
+    })
+    .filter((item) => item.proofGaps.length > 0)
+    .sort((a, b) => {
+      if (a.product.status !== b.product.status) return a.product.status === 'published' ? -1 : 1
+      if (a.readiness !== b.readiness) return a.readiness - b.readiness
+      if (b.proofGaps.length !== a.proofGaps.length) return b.proofGaps.length - a.proofGaps.length
+      return new Date(b.product.updated_at).getTime() - new Date(a.product.updated_at).getTime()
+    })
+    .slice(0, 5)
 }
 
 function getIssueCondition(issue: ProductIssue): string | null {
@@ -1628,6 +1706,228 @@ function ProductOperationsMatrix({
   )
 }
 
+function ProductFitProofBackflowPanel({
+  rows,
+  filters,
+  productPathMetric,
+}: {
+  rows: ProductListRow[]
+  filters: FilterState
+  productPathMetric: AnalyticsConversionMetric
+}) {
+  const pageBackflowEntries = rows.map((product) => {
+    const issues = getProductIssues(product)
+    const proofGaps = getProductProofBackflowGaps(product, issues)
+    return { product, issues, proofGaps }
+  })
+  const readyCount = pageBackflowEntries.filter((entry) => entry.issues.length === 0).length
+  const backflowGapCount = pageBackflowEntries.filter((entry) => entry.proofGaps.length > 0).length
+  const fitGapCount = pageBackflowEntries.filter((entry) => entry.proofGaps.includes('适配字段')).length
+  const inquiryGapCount = pageBackflowEntries.filter((entry) => entry.proofGaps.includes('询盘交接')).length
+  const backflowItems = buildProductProofBackflowItems(rows)
+  const routeCards: Array<{
+    label: string
+    detail: string
+    href: string
+    action: string
+    Icon: LucideIcon
+    external?: boolean
+  }> = [
+    {
+      label: '前台产品目录',
+      detail: '核对 B315 场景筛选、产品卡片和询盘入口是否能承接当前后台字段。',
+      href: '/products',
+      action: '打开前台',
+      Icon: Package,
+      external: true,
+    },
+    {
+      label: '适配字段筛查',
+      detail: '优先补分类、产品属性和标签，让客户能按场景、规格和系列判断适配度。',
+      href: createHref(filters, { view: 'incomplete', issue: 'attributes' }),
+      action: '筛选缺口',
+      Icon: SearchCheck,
+    },
+    {
+      label: '买家资料缺口',
+      detail: '把详情页证明、下载资料、关联产品和商务口径补齐到询盘前一步。',
+      href: createHref(filters, { view: 'incomplete', issue: 'buyer_resources' }),
+      action: '查看待补',
+      Icon: FileText,
+    },
+    {
+      label: '产品线索队列',
+      detail: '从产品来源线索反查内容质量，确认前台路径是否真的带来采购咨询。',
+      href: '/admin/customers/leads?source_type=product',
+      action: '看线索',
+      Icon: ListChecks,
+    },
+  ]
+
+  return (
+    <section
+      id="product-fit-proof-backflow"
+      data-product-fit-proof-backflow="true"
+      className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
+      <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">Frontstage Feedback</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品适配-详情证明-询盘回流队列</h2>
+          <p className="mt-1 text-sm leading-6 text-[#61767D]">
+            把 B315/B316 的前台路径回流到后台只读检查：先看适配字段，再看详情证明，最后确认询盘交接。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/products"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            <ExternalLink size={13} />
+            前台目录
+          </Link>
+          <Link
+            href="/admin/customers/leads?source_type=product"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-[#1889B6] px-3 text-xs font-semibold text-white transition hover:bg-[#0F6F93]"
+          >
+            产品线索
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
+        <MatrixKpi
+          label="当前页完整"
+          value={formatNumber(readyCount)}
+          detail={`${formatPercent(readyCount, rows.length)} 完整率`}
+          tone="green"
+        />
+        <MatrixKpi
+          label="回流缺口"
+          value={formatNumber(backflowGapCount)}
+          detail="适配、证明或询盘承接待补"
+          tone={backflowGapCount > 0 ? 'orange' : 'green'}
+        />
+        <MatrixKpi
+          label="适配字段缺口"
+          value={formatNumber(fitGapCount)}
+          detail="分类、属性或标签不足"
+          tone={fitGapCount > 0 ? 'orange' : 'green'}
+        />
+        <MatrixKpi
+          label="30 天产品线索"
+          value={formatNumber(productPathMetric.leads)}
+          detail={`${formatNumber(productPathMetric.views)} 访问 / ${formatNumber(productPathMetric.formSubmits)} 表单`}
+          tone={productPathMetric.leads > 0 ? 'green' : productPathMetric.views > 0 ? 'orange' : 'gray'}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 p-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {routeCards.map((card) => (
+            <Link
+              key={card.label}
+              href={card.href}
+              target={card.external ? '_blank' : undefined}
+              rel={card.external ? 'noreferrer' : undefined}
+              className="group flex min-h-[136px] flex-col justify-between rounded-md border border-[#D8E7E8] bg-[#FBFDFD] p-4 transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+            >
+              <span className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white text-[#1889B6] ring-1 ring-[#D8E7E8]">
+                  <card.Icon size={17} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-[#1E2C31]">{card.label}</span>
+                  <span className="mt-1 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
+                </span>
+              </span>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
+                {card.action}
+                {card.external ? <ExternalLink size={12} /> : <ArrowRight size={12} />}
+              </span>
+            </Link>
+          ))}
+        </div>
+
+        <aside className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white">
+          <div className="border-b border-[#E6EEEE] px-4 py-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold text-[#1E2C31]">本页回流优先队列</h3>
+                <p className="mt-1 text-xs leading-5 text-[#61767D]">
+                  已发布缺口优先；只提供预览、筛选和编辑入口，不自动保存内容。
+                </p>
+              </div>
+              <span className="shrink-0 rounded-md bg-[#FFF2E7] px-2 py-1 text-xs font-bold text-[#E36F2C]">
+                询盘缺口 {formatNumber(inquiryGapCount)}
+              </span>
+            </div>
+          </div>
+          {backflowItems.length > 0 ? (
+            <div className="divide-y divide-[#E6EEEE]">
+              {backflowItems.map((item) => (
+                <div key={item.product.id} className="px-4 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-[#1E2C31]">
+                        {item.product.name_cn || item.product.name_en || item.product.id}
+                      </p>
+                      <p className="mt-1 truncate text-xs text-[#61767D]">{item.product.id}</p>
+                    </div>
+                    <span className={`shrink-0 rounded-md px-2 py-1 text-xs font-bold ${
+                      item.readiness >= 80
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : item.readiness >= 55
+                          ? 'bg-[#FFF2E7] text-[#E36F2C]'
+                          : 'bg-red-50 text-red-700'
+                    }`}>
+                      {item.readiness}%
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {item.proofGaps.map((gap) => (
+                      <span key={gap} className="rounded-full border border-[#D8E7E8] bg-[#FBFDFD] px-2 py-0.5 text-[11px] font-semibold text-[#61767D]">
+                        {gap}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Link
+                      href={item.previewHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+                    >
+                      <ExternalLink size={12} />
+                      预览
+                    </Link>
+                    <Link
+                      href={item.editHref}
+                      className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#61767D] transition hover:border-[#1889B6] hover:text-[#1889B6]"
+                    >
+                      <Pencil size={12} />
+                      编辑
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="px-4 py-8 text-center">
+              <CheckCircle2 className="mx-auto text-emerald-600" size={28} />
+              <p className="mt-3 text-sm font-bold text-[#1E2C31]">当前页没有回流缺口</p>
+              <p className="mt-1 text-xs leading-5 text-[#61767D]">可以切换筛选条件继续检查其他产品。</p>
+            </div>
+          )}
+        </aside>
+      </div>
+    </section>
+  )
+}
+
 function ProductSourceContractPanel({
   issueSummary,
   productPathMetric,
@@ -2543,6 +2843,11 @@ export default async function AdminContentProductsListPage({ searchParams }: Pag
         <ProductOperationsMatrix
           summary={summary}
           issueSummary={issueSummary}
+          rows={list.rows}
+          filters={filters}
+          productPathMetric={productPathMetric}
+        />
+        <ProductFitProofBackflowPanel
           rows={list.rows}
           filters={filters}
           productPathMetric={productPathMetric}
