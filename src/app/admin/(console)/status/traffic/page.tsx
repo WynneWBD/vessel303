@@ -146,6 +146,8 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
 
         <TrafficSourceStagePanel analytics={analytics} />
 
+        <NewsTrafficPanel analytics={analytics} />
+
         <ProductTrafficPanel analytics={analytics} />
 
         <CaseInquiryTrafficPanel analytics={analytics} health={caseInquiryHealth} />
@@ -1333,6 +1335,152 @@ function sourceStageTrafficRoute(key: string): { label: string; detail: string; 
   }
 }
 
+function NewsTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) {
+  const metric = analytics.conversionPaths.news ?? {
+    views: 0,
+    ctaClicks: 0,
+    formSubmits: 0,
+    leads: 0,
+    conversionRate: 0,
+  }
+  const sourceActions = analytics.sourceTypes.find((row) => row.key === 'news')?.value ?? 0
+  const topNewsPage = analytics.topPages.find((row) => isNewsPath(row.key))
+  const quietNewsLanding = analytics.landingPages.find((row) => isNewsPath(row.key) && row.value > 0 && (row.secondary ?? 0) === 0)
+  const hasNewsSignal = metric.views > 0 || sourceActions > 0 || metric.leads > 0
+  const rows = [
+    {
+      label: '新闻访问',
+      value: `${formatNumber(metric.views)} PV`,
+      detail: topNewsPage
+        ? `最高新闻页 ${topNewsPage.label}，${formatNumber(topNewsPage.value)} PV。`
+        : '近 30 天 /news 与新闻详情访问。',
+      href: '#behavior-analysis',
+      tone: metric.views > 0 ? 'blue' : 'gray',
+    },
+    {
+      label: '来源动作',
+      value: formatNumber(sourceActions),
+      detail: `source_type=news 的 CTA / 联系 / 表单动作；路径动作合计 ${formatNumber(metric.ctaClicks)}。`,
+      href: '/admin/customers/leads?source_type=news',
+      tone: sourceActions > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
+    },
+    {
+      label: '真实线索',
+      value: formatNumber(metric.leads),
+      detail: `新闻来源访问转化率 ${formatAnalyticsPercent(metric.conversionRate)}。`,
+      href: '/admin/customers/leads?source_type=news',
+      tone: metric.leads > 0 ? 'green' : sourceActions > 0 ? 'orange' : 'gray',
+    },
+    {
+      label: '内容承接',
+      value: quietNewsLanding ? '待复核' : hasNewsSignal ? '可观察' : '待样本',
+      detail: quietNewsLanding
+        ? `${quietNewsLanding.label} 有访问但暂无后续动作。`
+        : '回到新闻运营总览，检查发布、分类、SEO 和内容待补。',
+      href: '/admin/content/news#news-operations-hub',
+      tone: quietNewsLanding ? 'orange' : hasNewsSignal ? 'blue' : 'gray',
+    },
+  ] satisfies Array<{
+    label: string
+    value: string
+    detail: string
+    href: string
+    tone: 'blue' | 'green' | 'orange' | 'gray'
+  }>
+
+  const decision =
+    metric.views > 0 && sourceActions === 0
+      ? '新闻已有阅读样本但暂无新闻来源动作，优先复核新闻列表和详情页 CTA 是否把 source 带到 Contact。'
+      : sourceActions > 0 && metric.leads === 0
+        ? '新闻已产生来源动作但暂无真实线索，继续观察 Contact 表单提交和后台线索来源归因。'
+        : metric.leads > 0
+          ? '新闻来源已有真实线索样本，可继续复盘高阅读新闻与后续产品/案例承接。'
+          : '新闻来源暂无足够样本，先保持公开新闻入口和后台内容运营链路可下钻。'
+  const closureLinks = [
+    {
+      label: '新闻线索队列',
+      detail: '只看 source_type=news 的线索承接',
+      href: '/admin/customers/leads?source_type=news',
+      tone: metric.leads > 0 ? 'green' as const : sourceActions > 0 ? 'orange' as const : 'blue' as const,
+    },
+    {
+      label: '公开新闻入口',
+      detail: '查看前台新闻列表和公开阅读路径',
+      href: '/news',
+      tone: metric.views > 0 ? 'green' as const : 'blue' as const,
+    },
+    {
+      label: '新闻运营总览',
+      detail: '回到发布、分类、SEO 和待补内容',
+      href: '/admin/content/news#news-operations-hub',
+      tone: quietNewsLanding ? 'orange' as const : 'blue' as const,
+    },
+    {
+      label: '转化台账',
+      detail: '和其他公开路径统一看承接状态',
+      href: '/admin/site/conversion',
+      tone: hasNewsSignal ? 'green' as const : 'gray' as const,
+    },
+  ] satisfies Array<{
+    label: string
+    detail: string
+    href: string
+    tone: 'blue' | 'green' | 'orange' | 'gray'
+  }>
+
+  return (
+    <section id="news-source-handoff" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-[#1E2C31]">新闻来源承接分析</h2>
+          <p className="mt-1 text-xs text-[#61767D]">
+            把 B250 新闻阅读路径、B251 Contact source 承接和 B252 news 来源线索归因放在同屏；本区只读，不写新闻、不写线索。
+          </p>
+        </div>
+        <span className="rounded-full bg-[#EAF6F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
+          30 天新闻来源
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+        {rows.map((row) => (
+          <Link key={row.label} href={row.href} className="block min-w-0 p-5 transition hover:bg-[#F7FAFA]">
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${trafficMatrixToneClass(row.tone)}`}>
+              {row.label}
+            </span>
+            <span className="mt-3 block truncate text-2xl font-black text-[#1E2C31]" title={row.value}>
+              {row.value}
+            </span>
+            <span className="mt-2 block text-xs leading-5 text-[#61767D]">{row.detail}</span>
+          </Link>
+        ))}
+      </div>
+
+      <div className="border-t border-[#E6EEEE] px-5 py-4 text-sm font-semibold text-[#1E2C31]">
+        运营判断：{decision}
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:grid-cols-4">
+        {closureLinks.map((item) => (
+          <Link
+            key={item.label}
+            href={item.href}
+            className="group rounded-md border border-[#D8E7E8] bg-white px-3 py-3 transition hover:border-[#1889B6] hover:bg-[#F7FAFA]"
+          >
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${trafficMatrixToneClass(item.tone)}`}>
+              {item.label}
+            </span>
+            <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+            <span className="mt-2 inline-flex text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
+              进入闭环
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function ProductTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) {
   const metric = analytics.conversionPaths.products ?? {
     views: 0,
@@ -1621,6 +1769,10 @@ function trafficMatrixToneClass(tone: 'blue' | 'green' | 'orange' | 'gray') {
   if (tone === 'green') return 'bg-emerald-50 text-emerald-700'
   if (tone === 'blue') return 'bg-[#EAF6F8] text-[#1889B6]'
   return 'bg-[#F0F2F2] text-[#61767D]'
+}
+
+function isNewsPath(path: string) {
+  return path === '/news' || path.startsWith('/news/')
 }
 
 function SnapshotMetric({ label, value, detail }: { label: string; value: number; detail: string }) {
