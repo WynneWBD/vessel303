@@ -148,6 +148,17 @@ type ProductEditSourceContract = {
   tone: ProductReadinessTone
 }
 
+type ProductEditBackflowStep = {
+  key: string
+  label: string
+  detail: string
+  meta: string
+  href: string
+  tone: ProductReadinessTone
+  issues: string[]
+  Icon: LucideIcon
+}
+
 const EDIT_SECTIONS: EditSection[] = [
   {
     key: 'basic',
@@ -556,6 +567,105 @@ function buildProductReadinessItems(product: CatalogProductRow, maxUploadMb: num
   ]
 }
 
+function buildProductEditBackflowSteps(product: CatalogProductRow): ProductEditBackflowStep[] {
+  const visibleDetailModuleCount = getVisibleDetailModules(product).length
+  const mediaIssues = compactIssueList([
+    !hasText(product.image) && '缺封面',
+    !hasArrayItems(product.gallery) && '缺详情图库',
+  ])
+  const fitIssues = compactIssueList([
+    !product.category_id && '未分类',
+    !hasArrayItems(product.attribute_option_ids) && '缺产品属性',
+    (!hasArrayItems(product.tags_cn) || !hasArrayItems(product.tags_en)) && '缺标签',
+  ])
+  const detailIssues = compactIssueList([
+    !hasText(product.description_cn) && '缺中文简介',
+    !hasText(product.description_en) && '缺英文简介',
+    (!hasArrayItems(product.features_cn) || !hasArrayItems(product.features_en)) && '缺亮点',
+    visibleDetailModuleCount === 0 && '缺详情模块',
+  ])
+  const searchIssues = compactIssueList([
+    !productSeoComplete(product) && '缺 SEO',
+    (!hasArrayItems(product.keywords_zh) && !hasArrayItems(product.keywords_en)) && '缺关键词',
+  ])
+  const inquiryIssues = compactIssueList([
+    (!hasText(product.price_display_zh) && !hasText(product.price_display_en)) && '缺价格展示',
+    getCommercialIssueLabel(product),
+    !hasArrayItems(product.related_product_ids) && '缺相关产品',
+    !hasBuyerResourceLinks(product) && '缺买家资料链接',
+  ])
+  const releaseIssues = getProductReleaseIssues(product)
+  const publishIssues = compactIssueList([
+    product.status === 'draft' && '草稿待发布检查',
+    product.status === 'published' && releaseIssues.length > 0 && '已发布仍有缺口',
+  ])
+
+  return [
+    {
+      key: 'fit-fields',
+      label: '适配字段',
+      detail: '先补分类、产品属性和标签，让客户在前台能按场景、规格和系列筛选出合适产品。',
+      meta: `分类 ${product.category_id ?? '-'} / 属性 ${product.attribute_option_ids?.length ?? 0}`,
+      href: '#attributes',
+      tone: fitIssues.length > 0 ? 'warning' : 'ready',
+      issues: fitIssues,
+      Icon: SlidersHorizontal,
+    },
+    {
+      key: 'media-proof',
+      label: '媒体证明',
+      detail: '封面和详情图库决定客户第一眼能否确认产品真实质感和可交付状态。',
+      meta: `${product.gallery?.length ?? 0} 张图库`,
+      href: '#media',
+      tone: mediaIssues.length > 0 ? 'warning' : 'ready',
+      issues: mediaIssues,
+      Icon: ImageIcon,
+    },
+    {
+      key: 'detail-proof',
+      label: '详情证明',
+      detail: '简介、亮点和详情模块承接 B316 产品详情证明桥，补足客户提交询盘前的判断证据。',
+      meta: `${visibleDetailModuleCount} 个可见详情模块`,
+      href: '#details',
+      tone: detailIssues.length > 0 ? 'warning' : 'ready',
+      issues: detailIssues,
+      Icon: Layers3,
+    },
+    {
+      key: 'search-entry',
+      label: '搜索入口',
+      detail: 'SEO 标题、摘要和关键词决定产品能否被搜索、推荐和后台内容治理正确识别。',
+      meta: productSeoComplete(product) ? 'SEO 完整' : 'SEO 待补',
+      href: '#seo',
+      tone: searchIssues.length > 0 ? 'warning' : 'ready',
+      issues: searchIssues,
+      Icon: SearchCheck,
+    },
+    {
+      key: 'inquiry-handoff',
+      label: '询盘交接',
+      detail: '价格展示、商务条款、相关产品和买家资料链接决定客户从详情证明进入咨询时是否顺畅。',
+      meta: `${product.related_product_ids?.length ?? 0} 个相关产品`,
+      href: '#commercial',
+      tone: inquiryIssues.length > 0 ? 'warning' : 'ready',
+      issues: inquiryIssues,
+      Icon: ListChecks,
+    },
+    {
+      key: 'publish-check',
+      label: '发布检查',
+      detail: product.status === 'published'
+        ? '已发布产品保存后会影响前台，先按上方缺口处理再提交。'
+        : '草稿产品发布前仍需要在表单底部完成最终确认。',
+      meta: `${releaseIssues.length} 个发布缺项`,
+      href: '#publish-check',
+      tone: publishIssues.length > 0 ? 'warning' : 'ready',
+      issues: publishIssues,
+      Icon: CheckCircle2,
+    },
+  ]
+}
+
 function getSideNavGroups(product: CatalogProductRow): AdminSideNavGroup[] {
   return [
     {
@@ -579,6 +689,7 @@ function getSideNavGroups(product: CatalogProductRow): AdminSideNavGroup[] {
     {
       title: '产品治理',
       items: [
+        { key: 'product-edit-backflow-guide', label: '回流处理', href: '#product-edit-backflow-guide', Icon: ListChecks },
         { key: 'product-edit-closure', label: '经营闭环', href: '#product-edit-closure', Icon: BarChart3 },
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
@@ -756,6 +867,113 @@ function ProductPublishReadinessPanel({
         </div>
       </div>
     </section>
+  )
+}
+
+function ProductEditBackflowGuidePanel({ product }: { product: CatalogProductRow }) {
+  const steps = buildProductEditBackflowSteps(product)
+  const warningSteps = steps.filter((step) => step.tone === 'warning')
+  const readySteps = steps.length - warningSteps.length
+  const routeInfo = getCatalogProductRouteInfo(product)
+  const published = product.status === 'published'
+
+  return (
+    <section
+      id="product-edit-backflow-guide"
+      data-product-edit-backflow-guide="true"
+      className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
+      <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold text-[#1889B6]">B318 回流处理指引</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">从产品列表回流到单篇编辑</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
+            承接 B317 的产品适配-详情证明-询盘回流队列，把当前产品拆成六个只读处理步骤；这里不新增保存、发布或线索状态规则。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <AdminActionLink href="/admin/content/products/list#product-fit-proof-backflow" Icon={ListChecks} label="回流队列" />
+          <AdminActionLink href="/admin/customers/leads?source_type=product" Icon={UsersRound} label="产品线索" />
+          {published ? (
+            <AdminActionLink href={routeInfo.publicHref} Icon={CheckCircle2} label="前台预览" external />
+          ) : null}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
+        <BackflowInfoCell label="完成步骤" value={`${readySteps}/${steps.length}`} detail="按当前字段只读判断" tone={warningSteps.length > 0 ? 'warning' : 'ready'} />
+        <BackflowInfoCell label="待处理步骤" value={`${warningSteps.length}`} detail={warningSteps.length > 0 ? warningSteps.map((step) => step.label).join('、') : '当前没有待处理步骤'} tone={warningSteps.length > 0 ? 'warning' : 'ready'} />
+        <BackflowInfoCell label="公开状态" value={published ? '已发布' : '草稿'} detail={published ? routeInfo.publicHref : '发布前不会公开展示'} tone={published ? 'warning' : 'neutral'} />
+        <BackflowInfoCell label="回流来源" value="B317" detail="后台产品列表只读队列" tone="neutral" />
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-3">
+        {steps.map((step) => (
+          <Link
+            key={step.key}
+            href={step.href}
+            className={`group min-h-[190px] p-5 transition ${step.tone === 'warning' ? 'hover:bg-[#FFF2E7]/55' : 'hover:bg-emerald-50/45'}`}
+          >
+            <span className="flex items-start justify-between gap-3">
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border ${readinessToneClass(step.tone)}`}>
+                <step.Icon size={18} />
+              </span>
+              <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${readinessToneClass(step.tone)}`}>
+                {step.tone === 'warning' ? '待处理' : '已具备'}
+              </span>
+            </span>
+            <h3 className="mt-4 text-sm font-bold text-[#1E2C31]">{step.label}</h3>
+            <p className="mt-2 min-h-[44px] text-xs leading-5 text-[#61767D]">{step.detail}</p>
+            <p className="mt-3 truncate text-[11px] font-semibold text-[#1889B6]" title={step.meta}>{step.meta}</p>
+            <span className="mt-3 flex flex-wrap gap-1.5">
+              {step.issues.length > 0 ? (
+                step.issues.slice(0, 3).map((issue) => (
+                  <span key={issue} className="rounded-full border border-[#F2C6A7] bg-[#FFF2E7] px-2 py-0.5 text-[11px] font-semibold text-[#E36F2C]">
+                    {issue}
+                  </span>
+                ))
+              ) : (
+                <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                  当前完整
+                </span>
+              )}
+              {step.issues.length > 3 ? (
+                <span className="rounded-full border border-[#D8E7E8] bg-white px-2 py-0.5 text-[11px] font-semibold text-[#61767D]">
+                  +{step.issues.length - 3}
+                </span>
+              ) : null}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function BackflowInfoCell({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string
+  value: string
+  detail: string
+  tone: ProductReadinessTone
+}) {
+  const valueClass =
+    tone === 'ready'
+      ? 'text-emerald-700'
+      : tone === 'warning'
+        ? 'text-[#E36F2C]'
+        : 'text-[#1E2C31]'
+
+  return (
+    <div className="border-b border-[#E6EEEE] px-4 py-3 md:border-b-0 md:border-r last:border-r-0">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-1 truncate text-xl font-bold ${valueClass}`} title={value}>{value}</p>
+      <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#8A9EA4]" title={detail}>{detail}</p>
+    </div>
   )
 }
 
@@ -1116,6 +1334,7 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
         signals={consoleSignals}
       />
       <ProductPublishReadinessPanel product={product} maxUploadMb={maxUploadMb} />
+      <ProductEditBackflowGuidePanel product={product} />
       <ProductEditClosurePanel product={product} />
       <EditSectionGrid />
       <RiskNotice product={product} />
