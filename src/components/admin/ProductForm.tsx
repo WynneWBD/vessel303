@@ -128,6 +128,9 @@ type ProductFormClosureLink = {
   tone: 'ready' | 'warning' | 'neutral'
   Icon: LucideIcon
 }
+type ProductPublishApprovalItem = ProductFormClosureLink & {
+  key: string
+}
 
 const commercialTermFields: Array<{
   zh: keyof CatalogCommercialTerms
@@ -1343,6 +1346,174 @@ function ProductFormClosurePanel({ links }: { links: ProductFormClosureLink[] })
               <span className="mt-1 block text-[11px] leading-4 text-[#61767D]">{item.detail}</span>
             </span>
           </Link>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ProductPublishApprovalSummary({
+  mode,
+  form,
+  sectionProgress,
+  releaseIssues,
+  hasUnsavedChanges,
+}: {
+  mode: 'create' | 'edit'
+  form: FormState
+  sectionProgress: ProductFormSectionProgress[]
+  releaseIssues: ProductReleaseIssue[]
+  hasUnsavedChanges: boolean
+}) {
+  const highIssueCount = releaseIssues.filter((issue) => issue.severity === 'high').length
+  const completedSectionCount = sectionProgress.filter((section) => section.done).length
+  const firstIssueHref = releaseIssues[0] ? `#${releaseIssues[0].sectionId}` : '#publish-check'
+  const inquiryIssueCount = releaseIssues.filter((issue) => (
+    issue.label === '缺价格展示'
+    || issue.label === '缺相关产品'
+    || issue.label === '缺买家资料链接'
+    || issue.label.includes('商务条款')
+  )).length
+  const operationOwnershipReady =
+    Boolean(form.category_id)
+    && Boolean(form.brand_id)
+    && form.attribute_option_ids.length > 0
+    && form.mark_ids.length > 0
+  const productId = normalizeId(form.id)
+  const editReadinessHref = mode === 'edit' && productId
+    ? `/admin/content/products/${productId}/edit#product-recovery-publish-readiness-desk`
+    : '#publish-check'
+  const draftQueueHref = productId
+    ? `/admin/content/products/list?search=${encodeURIComponent(productId)}#product-draft-recovery-readiness-desk`
+    : '/admin/content/products/list#product-draft-recovery-readiness-desk'
+  const approvalItems: ProductPublishApprovalItem[] = [
+    {
+      key: 'release-state',
+      label: '发布状态',
+      value: form.status === 'published' ? '已发布' : '草稿',
+      detail: form.status === 'published'
+        ? '本次保存会影响公开产品页，提交前先确认缺项和预览。'
+        : '保存当前内容只保留草稿，保存并发布前必须人工确认。',
+      href: '#publish-check',
+      tone: form.status === 'published' ? 'warning' : 'neutral',
+      Icon: Send,
+    },
+    {
+      key: 'unsaved-changes',
+      label: '未保存变更',
+      value: hasUnsavedChanges ? '有变更' : '已同步',
+      detail: hasUnsavedChanges ? '当前表单与最近保存版本不同，离开前需要保存或放弃。' : '当前表单与最近保存版本一致。',
+      href: '#publish-check',
+      tone: hasUnsavedChanges ? 'warning' : 'ready',
+      Icon: hasUnsavedChanges ? AlertCircle : CheckCircle2,
+    },
+    {
+      key: 'release-issues',
+      label: '发布缺项',
+      value: `${releaseIssues.length} 项`,
+      detail: highIssueCount > 0 ? `${highIssueCount} 项优先处理，发布前先跳转对应分区补齐。` : '没有高优先发布缺项，可进入人工复核。',
+      href: firstIssueHref,
+      tone: releaseIssues.length > 0 ? 'warning' : 'ready',
+      Icon: ListChecks,
+    },
+    {
+      key: 'operation-ownership',
+      label: '运营归属',
+      value: `${form.category_id ? 1 : 0}/${form.brand_id ? 1 : 0}/${form.mark_ids.length}`,
+      detail: '依次核对分类、品牌、筛选属性和运营标记，承接 B337/B336 的发布前治理。',
+      href: '#attributes',
+      tone: operationOwnershipReady ? 'ready' : 'warning',
+      Icon: Package,
+    },
+    {
+      key: 'inquiry-handoff',
+      label: '询盘交接',
+      value: `${inquiryIssueCount} 缺口`,
+      detail: inquiryIssueCount > 0 ? '价格展示、商务条款、相关产品或买家资料仍需补齐。' : '商务口径、关联产品和买家资料关键项已通过。',
+      href: inquiryIssueCount > 0 ? firstIssueHref : '/admin/customers/leads?source_type=product',
+      tone: inquiryIssueCount > 0 ? 'warning' : 'ready',
+      Icon: UsersRound,
+    },
+  ]
+  const approvalLinks = [
+    {
+      label: 'B337 单品检查',
+      href: editReadinessHref,
+      detail: mode === 'edit' ? '回到恢复后发布前检查台' : '保存后进入单品检查台',
+    },
+    {
+      label: 'B336 草稿队列',
+      href: draftQueueHref,
+      detail: '回产品列表定位草稿补齐上下文',
+    },
+    {
+      label: '发布问题台账',
+      href: firstIssueHref,
+      detail: releaseIssues.length > 0 ? '跳到首个缺项分区' : '进入发布检查区',
+    },
+  ]
+
+  return (
+    <div
+      id="product-form-publish-approval-summary"
+      data-product-form-publish-approval="true"
+      className="mt-4 overflow-hidden rounded-md border border-[#D8E7E8] bg-white"
+    >
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#E36F2C]">B338 Approval Summary</p>
+          <h4 className="mt-1 text-sm font-bold text-[#1E2C31]">发布确认前审批摘要</h4>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-[#61767D]">
+            对齐 B337 恢复后发布前检查台，把保存状态、发布缺项、运营归属和询盘交接压缩到最终确认前；这里只读提示，不改变保存或发布规则。
+          </p>
+        </div>
+        <span className={`w-fit rounded-full border px-2.5 py-1 text-xs font-semibold ${
+          releaseIssues.length > 0 || hasUnsavedChanges
+            ? 'border-[#F2C6A7] bg-[#FFF2E7] text-[#E36F2C]'
+            : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+        }`}>
+          {completedSectionCount}/{sectionProgress.length} 分区通过
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-5">
+        {approvalItems.map((item) => (
+          <a
+            key={item.key}
+            href={item.href}
+            className="group min-h-[148px] px-4 py-4 transition hover:bg-[#F7FAFA]"
+          >
+            <span className="flex items-start justify-between gap-3">
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${closureToneClass(item.tone)}`}>
+                <item.Icon size={16} />
+              </span>
+              <span className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${closureToneClass(item.tone)}`}>
+                {item.value}
+              </span>
+            </span>
+            <span className="mt-3 block text-sm font-bold text-[#1E2C31]">{item.label}</span>
+            <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+            <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
+              查看
+              <ArrowLeft className="rotate-180" size={13} />
+            </span>
+          </a>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-2 border-t border-[#E6EEEE] bg-[#FBFDFD] p-3 md:grid-cols-3">
+        {approvalLinks.map((link) => (
+          <a
+            key={link.label}
+            href={link.href}
+            className="flex min-h-12 items-center justify-between gap-3 rounded-md border border-[#D8E7E8] bg-white px-3 py-2 text-xs transition hover:border-[#1889B6]/60 hover:bg-[#F0F7F8]"
+          >
+            <span className="min-w-0">
+              <span className="block truncate font-bold text-[#1E2C31]">{link.label}</span>
+              <span className="mt-0.5 block truncate text-[11px] text-[#61767D]">{link.detail}</span>
+            </span>
+            <ArrowLeft className="shrink-0 rotate-180 text-[#1889B6]" size={13} />
+          </a>
         ))}
       </div>
     </div>
@@ -2791,6 +2962,13 @@ export default function ProductForm({
               <p className="mt-2 text-xs leading-relaxed text-[#61767D]">
                 只做运营提示，不阻止保存或发布。发布前请人工确认图片、中英文内容、分类、属性、SEO、详情模块和前台页面绑定关系。
               </p>
+              <ProductPublishApprovalSummary
+                mode={mode}
+                form={form}
+                sectionProgress={sectionProgress}
+                releaseIssues={releaseIssues}
+                hasUnsavedChanges={hasUnsavedChanges}
+              />
               <ProductFormClosurePanel links={productFormClosureLinks} />
               <ProductReleaseIssueLedger issues={releaseIssues} />
             </div>
