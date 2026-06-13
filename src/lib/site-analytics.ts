@@ -1,7 +1,12 @@
 import { createHash } from 'node:crypto'
 import { pool } from '@/lib/db'
 import { CONVERSION_PATHS } from '@/lib/admin-conversion-paths'
-import { describeLeadSourceStage, getLeadSourceType, type LeadSourceType } from '@/lib/lead-source'
+import {
+  describeLeadSourceStage,
+  getLeadSourceType,
+  getLeadSourceWherePatterns,
+  type LeadSourceType,
+} from '@/lib/lead-source'
 
 export type SiteAnalyticsEventName =
   | 'page_view'
@@ -861,15 +866,20 @@ async function loadRankRows(
 }
 
 async function loadSourceStageActionRows(days = 30): Promise<AnalyticsSourceStageRow[]> {
+  const sourcePatterns = [
+    ...getLeadSourceWherePatterns('product'),
+    ...getLeadSourceWherePatterns('case'),
+  ]
+  const sourceClauses = sourcePatterns.map((_, index) => `source ILIKE $${index + 2}`).join(' OR ')
   const res = await pool.query<{ source: string | null; value: string }>(
     `SELECT source, COUNT(*)::text AS value
      FROM site_events
      WHERE event_name IN ('cta_click', 'contact_redirect', 'form_submit_success')
        AND ${REAL_EVENT_CONDITION}
        AND created_at >= NOW() - ($1::int * INTERVAL '1 day')
-       AND (source ILIKE 'product_detail:%' OR source ILIKE 'case_detail:%')
+       AND (${sourceClauses})
      GROUP BY source`,
-    [days],
+    [days, ...sourcePatterns],
   )
   const grouped = new Map<string, AnalyticsSourceStageRow>()
 

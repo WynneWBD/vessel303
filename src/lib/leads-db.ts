@@ -4,6 +4,7 @@ import {
   getLeadSourceStageExcludeWherePatterns,
   getLeadSourceStageWherePatterns,
   getLeadSourceType,
+  getLeadSourceTypeExcludeWherePatterns,
   getLeadSourceTypeLabel,
   getLeadSourceWherePatterns,
   LEAD_SOURCE_TYPE_OPTIONS,
@@ -132,18 +133,30 @@ function buildWhere(filter: ListLeadsFilter) {
   }
   if (filter.source_type && filter.source_type !== 'all') {
     const patterns = getLeadSourceWherePatterns(filter.source_type)
+    const excludePatterns = getLeadSourceTypeExcludeWherePatterns(filter.source_type)
     if (filter.source_type === 'other') {
       const clauses = patterns.map((pattern) => {
         params.push(pattern)
         return `source NOT ILIKE $${params.length}`
       })
-      conds.push(`(source IS NULL OR (${clauses.join(' AND ')}))`)
+      conds.push(`(source IS NOT NULL AND (${clauses.join(' AND ')}))`)
     } else if (patterns.length > 0) {
       const clauses = patterns.map((pattern) => {
         params.push(pattern)
         return `source ILIKE $${params.length}`
       })
-      conds.push(`(${clauses.join(' OR ')})`)
+      const includeSql =
+        filter.source_type === 'contact'
+          ? `(source IS NULL OR ${clauses.join(' OR ')})`
+          : `(${clauses.join(' OR ')})`
+      conds.push(includeSql)
+      if (excludePatterns.length > 0) {
+        const excludeClauses = excludePatterns.map((pattern) => {
+          params.push(pattern)
+          return `source NOT ILIKE $${params.length}`
+        })
+        conds.push(`(source IS NULL OR (${excludeClauses.join(' AND ')}))`)
+      }
     }
   }
   if (filter.source_stage && filter.source_stage !== 'all') {

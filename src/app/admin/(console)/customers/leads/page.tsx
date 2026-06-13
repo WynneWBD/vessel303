@@ -180,6 +180,7 @@ function sourceTypeLabel(value: string): string {
     case: '案例',
     contact: '联系',
     faq: 'FAQ',
+    news: '新闻',
     'media-kit': 'Media Kit',
     scenario: '场景',
     innovation: '技术专题',
@@ -296,6 +297,9 @@ function LeadsQueueConsole({
   const caseActive = caseSource ? caseSource.new + caseSource.contacting + caseSource.quoted : 0
   const caseTopStage = sourceStageStatusSummary.find((source) => source.type === 'case')
   const caseInquiryForm = sourceStageStatusSummary.find((source) => source.key === 'case:inquiry_form')
+  const newsSource = sourceStatusSummary.find((source) => source.type === 'news')
+  const newsTotal = newsSource?.total ?? 0
+  const newsActive = newsSource ? newsSource.new + newsSource.contacting + newsSource.quoted : 0
   const clearHref = createLeadsHref({
     status: 'all',
     inquiry_type: 'all',
@@ -361,6 +365,22 @@ function LeadsQueueConsole({
       actions: [
         { label: '来源矩阵', href: '/admin/customers/leads', primary: true },
         { label: '转化路径', href: '/admin/site/conversion' },
+      ],
+    },
+    {
+      title: '新闻来源承接',
+      detail: newsSource
+        ? `新闻列表或详情 CTA 已进入线索台账；当前新线索 ${formatNumber(newsSource.new)} 条，先回看内容主题和下一步产品/案例路径。`
+        : '新闻列表和详情 CTA 会通过 Contact 写入来源；有样本后可直接筛选新闻线索并回看内容转化。',
+      metric: `${formatNumber(newsActive)} 活跃`,
+      signal: `${formatNumber(newsTotal)} 总线索`,
+      href: createLeadsHref(filters, { source_type: 'news', source_stage: 'all', status: 'all', page: 1 }),
+      Icon: FileText,
+      tone: newsActive > 0 ? 'orange' : newsTotal > 0 ? 'blue' : 'gray',
+      actions: [
+        { label: '新闻线索', href: createLeadsHref(filters, { source_type: 'news', source_stage: 'all', status: 'all', page: 1 }), primary: newsActive > 0 },
+        { label: '新闻列表', href: '/admin/content/news/list#news-list-governance' },
+        { label: '公开新闻', href: '/news' },
       ],
     },
     {
@@ -436,12 +456,13 @@ function LeadsQueueConsole({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 border-b border-[#D8E7E8] md:grid-cols-3 xl:grid-cols-7">
+      <div className="grid grid-cols-1 border-b border-[#D8E7E8] md:grid-cols-3 xl:grid-cols-8">
         <LeadControlStat label="总线索" value={`${formatNumber(operationsSummary.total)} 条`} />
         <LeadControlStat label="今日新增" value={`${formatNumber(operationsSummary.newToday)} 条`} tone={operationsSummary.newToday > 0 ? 'orange' : 'green'} />
         <LeadControlStat label="活跃商机" value={`${formatNumber(operationsSummary.active)} 条`} />
         <LeadControlStat label="超时队列" value={`${formatNumber(operationsSummary.overdue)} 条`} tone={operationsSummary.overdue > 0 ? 'orange' : 'green'} />
         <LeadControlStat label="今日更新" value={`${formatNumber(operationsSummary.updatedToday)} 条`} />
+        <LeadControlStat label="新闻线索" value={`${formatNumber(newsTotal)} 条`} tone={newsActive > 0 ? 'orange' : newsTotal > 0 ? 'blue' : 'gray'} />
         <LeadControlStat label="产品线索" value={`${formatNumber(productTotal)} 条`} tone={productActive > 0 ? 'orange' : productTotal > 0 ? 'blue' : 'gray'} />
         <LeadControlStat label="案例线索" value={`${formatNumber(caseTotal)} 条`} tone={caseActive > 0 ? 'orange' : caseTotal > 0 ? 'blue' : 'gray'} />
       </div>

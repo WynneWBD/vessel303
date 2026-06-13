@@ -46,10 +46,12 @@ export const LEAD_SOURCE_STAGE_OPTIONS = [
   { value: 'all', label: '阶段:全部' },
   { value: 'product:catalog_card_cta', label: '产品卡片 CTA' },
   { value: 'product:inquiry_form', label: '产品详情表单' },
+  { value: 'product:inquiry_cta', label: '产品 Contact CTA' },
   { value: 'product:cta_click', label: '产品详情 CTA' },
   { value: 'product:unknown', label: '产品详情询盘' },
   { value: 'case:cta_click', label: '案例详情 CTA' },
   { value: 'case:inquiry_form', label: '案例咨询表单' },
+  { value: 'case:inquiry_cta', label: '案例 Contact CTA' },
   { value: 'case:unknown', label: '案例详情咨询' },
 ] as const
 
@@ -62,19 +64,34 @@ const STAGE_LABELS = Object.fromEntries(
 ) as Record<string, string>
 
 const SOURCE_PATTERNS: Record<Exclude<LeadSourceType, 'all' | 'other'>, string[]> = {
-  product: ['product_detail:%'],
-  case: ['case_detail:%'],
-  'media-kit': ['media_kit:%', 'media-kit:%'],
-  faq: ['faq:%'],
-  scenario: ['scenario:%'],
-  innovation: ['innovation:%'],
-  news: ['news:%'],
+  product: ['product_detail:%', 'product:%', 'contact:%:product_detail:%', 'contact:%:product:%'],
+  case: ['case_detail:%', 'case:%', 'contact:%:case_detail:%', 'contact:%:case:%'],
+  'media-kit': ['media_kit:%', 'media-kit:%', 'contact:%:media_kit:%', 'contact:%:media-kit:%'],
+  faq: ['faq:%', 'contact:%:faq:%'],
+  scenario: ['scenario:%', 'contact:%:scenario:%'],
+  innovation: ['innovation:%', 'contact:%:innovation:%'],
+  news: ['news:%', 'contact:%:news:%'],
   contact: ['website_contact%', 'contact:%'],
   'admin-test': ['admin_test%'],
 }
 
+const CONTACT_EMBEDDED_SOURCE_PATTERNS = Object.entries(SOURCE_PATTERNS)
+  .filter(([type]) => type !== 'contact' && type !== 'admin-test')
+  .flatMap(([, patterns]) => patterns.filter((pattern) => pattern.startsWith('contact:')))
+
 function cleanSource(source: string | null | undefined) {
   return source?.trim() || 'website_contact'
+}
+
+function embeddedContactSource(raw: string) {
+  const parts = raw.split(':')
+  if (parts[0] !== 'contact' || parts.length < 4) return null
+  if (parts[2] !== 'inquiry_form') return null
+  return parts.slice(3).join(':').trim() || null
+}
+
+function sourceForClassification(raw: string) {
+  return embeddedContactSource(raw) ?? raw
 }
 
 function part(raw: string, index: number) {
@@ -84,34 +101,40 @@ function part(raw: string, index: number) {
 const PRODUCT_SOURCE_ENTRY_LABELS: Record<string, string> = {
   catalog_card_cta: '产品卡片咨询入口',
   inquiry_form: '产品详情表单',
+  inquiry_cta: '产品 Contact CTA',
   cta_click: '产品详情 CTA',
 }
 
 const PRODUCT_SOURCE_STAGE_LABELS: Record<string, string> = {
   catalog_card_cta: '产品卡片 CTA',
   inquiry_form: '产品详情表单',
+  inquiry_cta: '产品 Contact CTA',
   cta_click: '产品详情 CTA',
 }
 
 const PRODUCT_SOURCE_STAGE_PATTERNS: Record<string, string[]> = {
-  catalog_card_cta: ['product_detail:%:catalog_card_cta'],
-  inquiry_form: ['product_detail:%:inquiry_form'],
-  cta_click: ['product_detail:%:cta_click'],
+  catalog_card_cta: ['product_detail:%:catalog_card_cta', 'contact:%:product_detail:%:catalog_card_cta'],
+  inquiry_form: ['product_detail:%:inquiry_form', 'contact:%:product_detail:%:inquiry_form'],
+  inquiry_cta: ['product:%:inquiry_cta', 'contact:%:product:%:inquiry_cta'],
+  cta_click: ['product_detail:%:cta_click', 'contact:%:product_detail:%:cta_click'],
 }
 
 const CASE_SOURCE_ENTRY_LABELS: Record<string, string> = {
   inquiry_form: '案例咨询表单',
+  inquiry_cta: '案例 Contact CTA',
   cta_click: '案例详情 CTA',
 }
 
 const CASE_SOURCE_STAGE_LABELS: Record<string, string> = {
   inquiry_form: '案例咨询表单',
+  inquiry_cta: '案例 Contact CTA',
   cta_click: '案例详情 CTA',
 }
 
 const CASE_SOURCE_STAGE_PATTERNS: Record<string, string[]> = {
-  inquiry_form: ['case_detail:%:inquiry_form'],
-  cta_click: ['case_detail:%:cta_click'],
+  inquiry_form: ['case_detail:%:inquiry_form', 'contact:%:case_detail:%:inquiry_form'],
+  inquiry_cta: ['case:%:inquiry_cta', 'contact:%:case:%:inquiry_cta'],
+  cta_click: ['case_detail:%:cta_click', 'contact:%:case_detail:%:cta_click'],
 }
 
 function productLeadSourceLabel(raw: string) {
@@ -128,6 +151,20 @@ function caseLeadSourceLabel(raw: string) {
   const stageLabel = CASE_SOURCE_ENTRY_LABELS[stage] ?? '案例详情咨询'
 
   return id ? `${stageLabel}: ${id}` : stageLabel
+}
+
+function newsLeadSourceLabel(raw: string) {
+  const slug = part(raw, 1)
+  const stage = part(raw, 2)
+  const stageLabel =
+    stage === 'detail_cta'
+      ? '新闻详情 Contact CTA'
+      : stage === 'inquiry_cta'
+        ? '新闻列表 Contact CTA'
+        : '新闻页联系入口'
+
+  if (!slug || slug === 'list') return stageLabel
+  return `${stageLabel}: ${slug}`
 }
 
 function adminLeadsHref(params: Record<string, string | null | undefined>) {
@@ -148,12 +185,13 @@ function leadSourceTypeHref(type: Exclude<LeadSourceType, 'all'>, sourceStage?: 
 
 export function describeLeadSourceStage(source: string | null | undefined): LeadSourceStageDescriptor {
   const raw = cleanSource(source)
-  const type = getLeadSourceType(raw)
+  const originRaw = sourceForClassification(raw)
+  const type = getLeadSourceType(originRaw)
   const safeType: Exclude<LeadSourceType, 'all'> = type === 'all' ? 'other' : type
   const typeLabel = getLeadSourceTypeLabel(safeType)
 
   if (safeType === 'product') {
-    const rawStage = part(raw, 2) || 'unknown'
+    const rawStage = part(originRaw, 2) || 'unknown'
     const knownStage = PRODUCT_SOURCE_STAGE_LABELS[rawStage] ? rawStage : 'unknown'
     const sourceStage = `product:${knownStage}`
     return {
@@ -167,7 +205,7 @@ export function describeLeadSourceStage(source: string | null | undefined): Lead
   }
 
   if (safeType === 'case') {
-    const rawStage = part(raw, 2) || 'unknown'
+    const rawStage = part(originRaw, 2) || 'unknown'
     const knownStage = CASE_SOURCE_STAGE_LABELS[rawStage] ? rawStage : 'unknown'
     const sourceStage = `case:${knownStage}`
     return {
@@ -192,15 +230,16 @@ export function describeLeadSourceStage(source: string | null | undefined): Lead
 
 export function getLeadSourceType(source: string | null | undefined): LeadSourceType {
   const raw = cleanSource(source)
-  if (raw.startsWith('product_detail:')) return 'product'
-  if (raw.startsWith('case_detail:')) return 'case'
-  if (raw.startsWith('media_kit:') || raw.startsWith('media-kit:')) return 'media-kit'
-  if (raw.startsWith('faq:')) return 'faq'
-  if (raw.startsWith('scenario:')) return 'scenario'
-  if (raw.startsWith('innovation:')) return 'innovation'
-  if (raw.startsWith('news:')) return 'news'
-  if (raw.startsWith('admin_test')) return 'admin-test'
-  if (raw.startsWith('website_contact') || raw.startsWith('contact:')) return 'contact'
+  const originRaw = sourceForClassification(raw)
+  if (originRaw.startsWith('product_detail:') || originRaw.startsWith('product:')) return 'product'
+  if (originRaw.startsWith('case_detail:') || originRaw.startsWith('case:')) return 'case'
+  if (originRaw.startsWith('media_kit:') || originRaw.startsWith('media-kit:')) return 'media-kit'
+  if (originRaw.startsWith('faq:')) return 'faq'
+  if (originRaw.startsWith('scenario:')) return 'scenario'
+  if (originRaw.startsWith('innovation:')) return 'innovation'
+  if (originRaw.startsWith('news:')) return 'news'
+  if (originRaw.startsWith('admin_test')) return 'admin-test'
+  if (originRaw.startsWith('website_contact') || originRaw.startsWith('contact:')) return 'contact'
   return 'other'
 }
 
@@ -214,32 +253,33 @@ export function getLeadSourceStageLabel(stage: string | null | undefined) {
 
 export function describeLeadSource(source: string | null | undefined): LeadSourceDescriptor {
   const raw = cleanSource(source)
-  const type = getLeadSourceType(raw)
+  const originRaw = sourceForClassification(raw)
+  const type = getLeadSourceType(originRaw)
   const typeLabel = getLeadSourceTypeLabel(type)
 
   switch (type) {
     case 'product': {
-      const id = part(raw, 1)
+      const id = part(originRaw, 1)
       return {
         type,
         typeLabel,
-        label: productLeadSourceLabel(raw),
+        label: productLeadSourceLabel(originRaw),
         href: id ? `/products/${id}` : '/products',
         raw,
       }
     }
     case 'case': {
-      const id = part(raw, 1)
+      const id = part(originRaw, 1)
       return {
         type,
         typeLabel,
-        label: caseLeadSourceLabel(raw),
+        label: caseLeadSourceLabel(originRaw),
         href: id ? `/cases/${id}` : '/cases',
         raw,
       }
     }
     case 'media-kit': {
-      const useCase = part(raw, 1)
+      const useCase = part(originRaw, 1)
       return {
         type,
         typeLabel,
@@ -251,7 +291,7 @@ export function describeLeadSource(source: string | null | undefined): LeadSourc
     case 'faq':
       return { type, typeLabel, label: 'FAQ 页面咨询', href: '/faq', raw }
     case 'scenario': {
-      const slug = part(raw, 1)
+      const slug = part(originRaw, 1)
       return {
         type,
         typeLabel,
@@ -261,7 +301,7 @@ export function describeLeadSource(source: string | null | undefined): LeadSourc
       }
     }
     case 'innovation': {
-      const slug = part(raw, 1)
+      const slug = part(originRaw, 1)
       return {
         type,
         typeLabel,
@@ -271,12 +311,12 @@ export function describeLeadSource(source: string | null | undefined): LeadSourc
       }
     }
     case 'news': {
-      const slug = part(raw, 1)
+      const slug = part(originRaw, 1)
       return {
         type,
         typeLabel,
-        label: slug ? `新闻页联系入口: ${slug}` : '新闻页联系入口',
-        href: slug ? `/news/${slug}` : '/news',
+        label: newsLeadSourceLabel(originRaw),
+        href: slug && slug !== 'list' ? `/news/${slug}` : '/news',
         raw,
       }
     }
@@ -297,10 +337,15 @@ export function getLeadSourceWherePatterns(type: string | null | undefined) {
   return SOURCE_PATTERNS[type as keyof typeof SOURCE_PATTERNS] ?? []
 }
 
+export function getLeadSourceTypeExcludeWherePatterns(type: string | null | undefined) {
+  if (type === 'contact') return CONTACT_EMBEDDED_SOURCE_PATTERNS
+  return []
+}
+
 export function getLeadSourceStageWherePatterns(stage: string | null | undefined) {
   if (!stage || stage === 'all') return []
-  if (stage === 'product:unknown') return ['product_detail:%']
-  if (stage === 'case:unknown') return ['case_detail:%']
+  if (stage === 'product:unknown') return ['product_detail:%', 'product:%', 'contact:%:product_detail:%', 'contact:%:product:%']
+  if (stage === 'case:unknown') return ['case_detail:%', 'case:%', 'contact:%:case_detail:%', 'contact:%:case:%']
 
   const rawStage = stage.startsWith('product:') ? stage.split(':')[1] : ''
   if (rawStage) return PRODUCT_SOURCE_STAGE_PATTERNS[rawStage] ?? []
