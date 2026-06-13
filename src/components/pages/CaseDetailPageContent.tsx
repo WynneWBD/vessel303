@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowRight, CheckCircle2, Images, MapPin } from 'lucide-react'
+import { ArrowRight, CheckCircle2, Images, MapPin, MessageSquareText } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ProtectedImage from '@/components/ProtectedImage'
@@ -30,6 +30,13 @@ function localizedList(zh: boolean, zhValues: string[], enValues: string[]) {
 
 function fallbackLabel(value: string, fallback: string) {
   return value || fallback
+}
+
+function splitProducts(value: string | null | undefined) {
+  return text(value)
+    .split(/[·,，、/|]+/)
+    .map((item) => item.trim())
+    .filter(Boolean)
 }
 
 function ProjectImage({ src, alt, className }: { src: string | null | undefined; alt: string; className: string }) {
@@ -196,6 +203,98 @@ function CaseDecisionSummary({
   )
 }
 
+function CaseInquiryProofBridge({
+  title,
+  subtitle,
+  proofPoints,
+  metrics,
+  galleryHref,
+  inquiryHref,
+  relatedHref,
+  galleryLabel,
+  inquiryLabel,
+  relatedLabel,
+  hasGallery,
+  hasRelated,
+  zh,
+}: {
+  title: string
+  subtitle: string
+  proofPoints: string[]
+  metrics: Array<{ label: string; value: string; detail: string }>
+  galleryHref: string
+  inquiryHref: string
+  relatedHref: string
+  galleryLabel: string
+  inquiryLabel: string
+  relatedLabel: string
+  hasGallery: boolean
+  hasRelated: boolean
+  zh: boolean
+}) {
+  return (
+    <section id="case-inquiry-proof-bridge" className="border-b border-[#E5DED4] bg-white py-10 lg:py-12">
+      <div className="mx-auto grid max-w-7xl gap-5 px-4 sm:px-6 lg:grid-cols-[minmax(0,0.74fr)_minmax(320px,0.26fr)] lg:px-8">
+        <div className="border-l-4 border-[#1889B6] bg-[#FAF7F2] px-4 py-4 sm:px-5">
+          <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[#1889B6]">
+            <MessageSquareText size={15} strokeWidth={2.4} aria-hidden="true" />
+            {zh ? '询盘前证明链' : 'Pre-inquiry proof chain'}
+          </p>
+          <h2 className="mt-2 text-2xl font-black leading-tight text-[#2C2A28] sm:text-3xl">{title}</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-[#6B6560]">{subtitle}</p>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            {proofPoints.map((point, index) => (
+              <div key={point} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 border border-[#D8E7E8] bg-white px-3 py-3">
+                <span className="flex h-8 w-8 items-center justify-center bg-[#EAF6F8] text-xs font-black text-[#1889B6]">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <span className="text-sm font-bold leading-6 text-[#2C2A28]">{point}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {hasGallery ? (
+              <a
+                href={galleryHref}
+                className="inline-flex min-h-10 items-center gap-2 border border-[#D8E7E8] bg-white px-3 text-xs font-black uppercase tracking-[0.12em] text-[#2C2A28] transition-colors hover:border-[#1889B6] hover:text-[#1889B6]"
+              >
+                <Images size={15} strokeWidth={2.4} aria-hidden="true" />
+                {galleryLabel}
+              </a>
+            ) : null}
+            {hasRelated ? (
+              <a
+                href={relatedHref}
+                className="inline-flex min-h-10 items-center gap-2 border border-[#D8E7E8] bg-white px-3 text-xs font-black uppercase tracking-[0.12em] text-[#2C2A28] transition-colors hover:border-[#1889B6] hover:text-[#1889B6]"
+              >
+                {relatedLabel}
+              </a>
+            ) : null}
+            <a
+              href={inquiryHref}
+              data-analytics-cta="true"
+              className="inline-flex min-h-10 items-center gap-2 border border-[#E36F2C] bg-[#E36F2C] px-3 text-xs font-black uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#C75D22]"
+            >
+              {inquiryLabel}
+              <ArrowRight size={15} strokeWidth={2.4} aria-hidden="true" />
+            </a>
+          </div>
+        </div>
+
+        <aside className="grid grid-cols-2 gap-3 lg:grid-cols-1">
+          {metrics.map((metric) => (
+            <div key={metric.label} className="min-w-0 border border-[#E5DED4] bg-[#FAF7F2] px-4 py-3">
+              <p className="truncate text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]" title={metric.label}>{metric.label}</p>
+              <p className="mt-2 text-2xl font-black leading-none text-[#2C2A28]">{metric.value}</p>
+              <p className="mt-2 text-xs leading-5 text-[#6B6560]">{metric.detail}</p>
+            </div>
+          ))}
+        </aside>
+      </div>
+    </section>
+  )
+}
+
 export default function CaseDetailPageContent({
   project,
   relatedCases = [],
@@ -233,6 +332,7 @@ export default function CaseDetailPageContent({
     { label: unitsLabel, value: project.units_display },
     { label: productsLabel, value: project.products },
   ].map((fact) => ({ ...fact, value: text(fact.value) })).filter((fact) => Boolean(fact.value))
+  const products = splitProducts(project.products)
   const proofTitle = fallbackLabel(itemLabel(itemById(detailLabels, 'proof-title'), lang), zh ? '项目证据' : 'Project proof')
   const galleryTitle = fallbackLabel(itemLabel(itemById(detailLabels, 'gallery-title'), lang), zh ? '项目图库' : 'Project gallery')
   const relatedTitle = fallbackLabel(itemLabel(itemById(detailLabels, 'related-title'), lang), zh ? '相关案例' : 'Related cases')
@@ -274,6 +374,33 @@ export default function CaseDetailPageContent({
     { label: investmentLabel, value: project.investment_display },
     { label: zh ? '图库素材' : 'Gallery assets', value: gallery.length > 0 ? String(gallery.length) : '' },
   ].map((fact) => ({ ...fact, value: text(fact.value) })).filter((fact) => Boolean(fact.value))
+  const inquiryProofMetrics = [
+    {
+      label: zh ? '图库证据' : 'Gallery proof',
+      value: gallery.length > 0 ? String(gallery.length) : '0',
+      detail: zh ? '封面与现场图片' : 'Cover and site images',
+    },
+    {
+      label: zh ? '项目事实' : 'Project facts',
+      value: `${facts.length}/6`,
+      detail: zh ? '地点、类型、面积、规模等' : 'Location, type, area, scale, and more',
+    },
+    {
+      label: zh ? '产品引用' : 'Product references',
+      value: products.length > 0 ? String(products.length) : '0',
+      detail: zh ? '关联 VESSEL 型号/系列' : 'Linked VESSEL models or series',
+    },
+    {
+      label: zh ? '相关案例' : 'Related cases',
+      value: String(relatedCases.length),
+      detail: zh ? '继续横向比较项目类型' : 'Compare adjacent project types',
+    },
+  ]
+  const inquiryProofPoints = [
+    zh ? '先用图库和项目事实确认交付可信度。' : 'Use gallery and project facts to confirm delivery credibility.',
+    zh ? '再用产品引用判断型号、规模和场景适配。' : 'Use product references to judge model, scale, and scenario fit.',
+    zh ? '最后带着明确项目背景进入案例咨询。' : 'Enter the inquiry with a clear project context.',
+  ]
 
   if (!name) return null
 
@@ -326,6 +453,18 @@ export default function CaseDetailPageContent({
                 ) : null}
               </div>
             ) : null}
+            <div className="mt-5 grid max-w-2xl grid-cols-3 gap-2">
+              {[
+                { label: zh ? '图库' : 'Gallery', value: gallery.length },
+                { label: zh ? '事实' : 'Facts', value: facts.length },
+                { label: zh ? '产品' : 'Products', value: products.length },
+              ].map((item) => (
+                <div key={item.label} className="border border-white/16 bg-white/10 px-3 py-2 backdrop-blur">
+                  <p className="truncate text-[10px] font-bold uppercase tracking-[0.14em] text-white/58">{item.label}</p>
+                  <p className="mt-1 text-xl font-black leading-none text-white">{item.value}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
           <aside className="flex min-w-0 flex-col justify-end gap-3">
@@ -445,6 +584,26 @@ export default function CaseDetailPageContent({
       ) : null}
 
       {inquiryTitle ? (
+        <CaseInquiryProofBridge
+          title={zh ? '提交前再次核对项目证据、产品引用和相似案例。' : 'Review proof, product references, and adjacent cases before inquiry.'}
+          subtitle={zh
+            ? '这一段把详情页已有证据收束到询盘前，帮助采购方带着明确项目背景进入表单。'
+            : 'This bridge condenses existing case proof before the form so buyers enter with a clear project context.'}
+          proofPoints={inquiryProofPoints}
+          metrics={inquiryProofMetrics}
+          galleryHref="#case-gallery"
+          inquiryHref="#case-inquiry"
+          relatedHref="#case-related"
+          galleryLabel={galleryTitle}
+          inquiryLabel={inquiryLabels.submit || (zh ? '提交案例咨询' : 'Submit Case Inquiry')}
+          relatedLabel={relatedTitle}
+          hasGallery={gallery.length > 1}
+          hasRelated={relatedCases.length > 0}
+          zh={zh}
+        />
+      ) : null}
+
+      {inquiryTitle ? (
         <section id="case-inquiry" className="border-t border-[#E5DED4] bg-[#F5F2ED] py-14">
           <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
             <ConversionInquiryForm
@@ -462,7 +621,7 @@ export default function CaseDetailPageContent({
       ) : null}
 
       {relatedCases.length > 0 ? (
-        <section className="border-t border-[#E5DED4] bg-[#F5F2ED] py-16">
+        <section id="case-related" className="border-t border-[#E5DED4] bg-[#F5F2ED] py-16">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {relatedTitle ? <h2 className="mb-6 text-2xl font-black tracking-wide text-[#2C2A28]">{relatedTitle}</h2> : null}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
