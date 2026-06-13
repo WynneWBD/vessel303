@@ -93,6 +93,17 @@ type B195QueueItem = {
   tone: B195QueueTone
 }
 
+type SourceSeoControlItem = {
+  title: string
+  scope: string
+  status: string
+  detail: string
+  href: string
+  Icon: LucideIcon
+  tone: B195QueueTone
+  actions: Array<{ label: string; href: string }>
+}
+
 const STORAGE_WARNING_BYTES = 800 * 1024 * 1024
 
 const SITE_DOMAINS: SiteDomain[] = [
@@ -231,6 +242,7 @@ function getSiteSideNav({
       items: [
         { key: 'overview', label: '网站概览', href: '/admin/site', Icon: LayoutTemplate },
         { key: 'conversion', label: '转化路径', href: '/admin/site/conversion', Icon: Link2 },
+        { key: 'source-seo', label: '来源与 SEO', href: '#source-seo-control', Icon: SearchCheck },
         { key: 'pages', label: '页面清单', href: '/admin/site/pages', Icon: ListChecks },
         { key: 'navigation', label: '导航管理', href: '/admin/site/navigation', Icon: Navigation },
         { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },
@@ -732,6 +744,124 @@ function B195QueueCard({ item }: { item: B195QueueItem }) {
   )
 }
 
+function SourceSeoControlPanel() {
+  const items: SourceSeoControlItem[] = [
+    {
+      title: '来源合同总览',
+      scope: 'B277',
+      status: '产品 / 案例 / 新闻',
+      detail: '把公开站三条主要获客来源集中成一张总账，先核对入口、source_type、阶段线索和路径复盘是否接上。',
+      href: '/admin/site/conversion#source-contract-portfolio',
+      Icon: Link2,
+      tone: 'blue',
+      actions: [
+        { label: '总览', href: '/admin/site/conversion#source-contract-portfolio' },
+        { label: '产品队列', href: '/admin/customers/leads?source_type=product' },
+        { label: '案例队列', href: '/admin/customers/leads?source_type=case' },
+        { label: '新闻队列', href: '/admin/customers/leads?source_type=news' },
+      ],
+    },
+    {
+      title: 'SEO 修复闭环',
+      scope: 'B278',
+      status: '内容缺口优先',
+      detail: '从 SEO 待补回到来源合同总览，避免只补标题描述却没有检查对应线索和访问路径质量。',
+      href: '/admin/site/seo#seo-conversion-closure',
+      Icon: SearchCheck,
+      tone: 'orange',
+      actions: [
+        { label: '修复闭环', href: '/admin/site/seo#seo-conversion-closure' },
+        { label: 'SEO 检查', href: '/admin/site/seo' },
+        { label: '访问统计', href: '/admin/status/traffic' },
+      ],
+    },
+    {
+      title: '内容承接工作台',
+      scope: 'CMS',
+      status: '运营入口',
+      detail: '产品、案例、新闻先在内容工作台补齐公开页承接，再回到线索队列验证是否形成可处理的商机来源。',
+      href: '/admin/content',
+      Icon: ListChecks,
+      tone: 'green',
+      actions: [
+        { label: '产品', href: '/admin/content/products/list#product-source-contract' },
+        { label: '案例', href: '/admin/content/projects/list#case-source-contract' },
+        { label: '新闻', href: '/admin/content/news#news-operations-hub' },
+      ],
+    },
+  ]
+
+  return (
+    <section id="source-seo-control" className="scroll-mt-24 space-y-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <AdminSectionTitle
+          title="B279 来源与 SEO 总控"
+          detail="把 B277 来源合同和 B278 SEO 修复提升到网站管理首页，运营先看来源承接，再看搜索缺口和线索队列。"
+        />
+        <Link
+          href="/admin/site/conversion#source-contract-portfolio"
+          className="inline-flex h-10 w-fit items-center gap-2 rounded-md border border-[#1889B6]/25 bg-[#EAF6F8] px-3 text-xs font-bold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-white"
+        >
+          看来源总账
+          <ArrowRight size={14} />
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
+        {items.map((item) => (
+          <SourceSeoControlCard key={item.title} item={item} />
+        ))}
+      </div>
+
+      <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-4 py-3 text-xs leading-5 text-[#61767D]">
+        <span className="font-bold text-[#1E2C31]">处理顺序：</span>
+        内容页承接是否完整 → SEO 是否可被搜索理解 → `source_type` 线索是否进入队列 → 访问路径是否能复盘。
+      </div>
+    </section>
+  )
+}
+
+function SourceSeoControlCard({ item }: { item: SourceSeoControlItem }) {
+  const Icon = item.Icon
+
+  return (
+    <div className={`flex min-h-56 flex-col justify-between rounded-md border border-l-4 border-[#D8E7E8] p-4 shadow-sm ${queueToneClass(item.tone)}`}>
+      <div>
+        <div className="flex items-start justify-between gap-3">
+          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${queueIconClass(item.tone)}`}>
+            <Icon size={18} />
+          </span>
+          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${queueIconClass(item.tone)}`}>
+            {item.scope}
+          </span>
+        </div>
+        <h3 className="mt-4 text-base font-bold text-[#1E2C31]">{item.title}</h3>
+        <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{item.status}</p>
+        <p className="mt-3 text-sm leading-6 text-[#61767D]">{item.detail}</p>
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-2">
+        <Link
+          href={item.href}
+          className="inline-flex h-8 items-center gap-1 rounded-md border border-[#1889B6]/25 bg-white px-2.5 text-xs font-bold text-[#1889B6] transition hover:border-[#1889B6]"
+        >
+          主入口
+          <ArrowRight size={13} />
+        </Link>
+        {item.actions.map((action) => (
+          <Link
+            key={`${item.title}-${action.label}`}
+            href={action.href}
+            className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#61767D] transition hover:border-[#1889B6] hover:text-[#1889B6]"
+          >
+            {action.label}
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function AppGrid({ role }: { role: AdminRole }) {
   const visibleApps = SITE_APPS.filter((app) => !app.adminOnly || role === 'admin')
 
@@ -1009,6 +1139,7 @@ export default async function AdminSitePage() {
             configIssues={configIssues}
             isAdmin={isAdmin}
           />
+          <SourceSeoControlPanel />
           <B195PriorityQueue
             pageDraftCount={pageDraftCount}
             uploadBytes={uploadBytes}
