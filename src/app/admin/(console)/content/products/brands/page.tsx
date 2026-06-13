@@ -52,6 +52,7 @@ type BrandSummary = {
   hiddenBrands: number
   emptyBrands: number
   brandsWithLogo: number
+  visibleBrandsWithLogo: number
   assignedProducts: number
   showcases: number
   visibleShowcases: number
@@ -99,6 +100,7 @@ function getSideNavGroups(summary: {
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', badge: summary.attributes, Icon: SlidersHorizontal },
         { key: 'marks', label: '标记管理', href: '/admin/content/products/marks', badge: summary.marks, Icon: Tags },
         { key: 'brands', label: '品牌管理', href: '/admin/content/products/brands', badge: summary.brands, Icon: Package },
+        { key: 'brand-readiness', label: '品牌承接', href: '#product-brand-readiness-desk', Icon: SearchCheck },
         { key: 'filters', label: '筛选管理', href: '/admin/content/products/filters', badge: summary.filters, Icon: Filter },
         { key: 'showcases', label: '橱窗管理', href: '/admin/content/products/showcases', badge: summary.showcases, Icon: ListChecks },
         { key: 'batch-governance', label: '批量治理', href: '/admin/content/products/list#product-batch-governance', Icon: ListChecks },
@@ -151,6 +153,7 @@ export default async function AdminContentProductBrandsPage() {
     hiddenBrands: brands.filter((brand) => brand.status === 'hidden').length,
     emptyBrands: brands.filter((brand) => Number(brand.product_count ?? 0) === 0).length,
     brandsWithLogo: brands.filter((brand) => Boolean(brand.logo_url?.trim())).length,
+    visibleBrandsWithLogo: brands.filter((brand) => brand.status === 'visible' && Boolean(brand.logo_url?.trim())).length,
     assignedProducts: brands.reduce((sum, brand) => sum + Number(brand.product_count ?? 0), 0),
     showcases: showcases.length,
     visibleShowcases: showcases.filter((showcase) => showcase.status === 'visible').length,
@@ -187,6 +190,8 @@ export default async function AdminContentProductBrandsPage() {
       </section>
 
       <BrandGovernancePanel summary={summary} />
+
+      <ProductBrandReadinessPanel summary={summary} />
 
       <div id="brand-manager" className="scroll-mt-24">
         <ProductOperationManagerClient kind="brands" initialItems={brands} />
@@ -273,6 +278,174 @@ function BrandGovernancePanel({ summary }: { summary: BrandSummary }) {
   )
 }
 
+function ProductBrandReadinessPanel({ summary }: { summary: BrandSummary }) {
+  const readinessChecks = [
+    summary.visibleBrands > 0,
+    summary.assignedProducts > 0,
+    summary.emptyBrands === 0,
+    summary.visibleBrandsWithLogo > 0,
+    summary.visibleMarks > 0,
+  ]
+  const readinessScore = readinessChecks.filter(Boolean).length
+  const missingLogo = Math.max(summary.visibleBrands - summary.visibleBrandsWithLogo, 0)
+
+  const handoffCards: BrandGovernanceCard[] = [
+    {
+      label: 'B332 标记承接',
+      value: formatNumber(summary.visibleMarks),
+      detail: '品牌先确定产品归属，标记再补运营分层，避免同一批产品在后台被多套口径重复治理。',
+      href: '/admin/content/products/marks#product-mark-readiness-desk',
+      cta: '查看标记承接',
+      tone: summary.visibleMarks > 0 ? 'green' : 'orange',
+      Icon: Tags,
+    },
+    {
+      label: 'B331 橱窗承接',
+      value: formatNumber(summary.visibleShowcases),
+      detail: '主推品牌下的重点产品需要能进入橱窗推荐，公开目录才有清晰的客户发现路径。',
+      href: '/admin/content/products/showcases#product-showcase-readiness-desk',
+      cta: '查看橱窗承接',
+      tone: summary.visibleShowcases > 0 ? 'green' : 'orange',
+      Icon: ListChecks,
+    },
+    {
+      label: '批量归属入口',
+      value: formatNumber(summary.products),
+      detail: '从产品列表按分类、状态、属性和筛选结果批量检查品牌归属，品牌页负责最终复核。',
+      href: '/admin/content/products/list#product-batch-governance',
+      cta: '打开批量治理',
+      tone: summary.products > 0 ? 'blue' : 'gray',
+      Icon: Package,
+    },
+    {
+      label: '前台目录核对',
+      value: `${readinessScore}/5`,
+      detail: '品牌归属、Logo、标记和橱窗一起决定客户在公开产品目录中是否能快速建立信任。',
+      href: '/products',
+      cta: '查看产品目录',
+      tone: readinessScore >= 4 ? 'green' : 'orange',
+      Icon: SearchCheck,
+    },
+  ]
+
+  const workflowSteps = [
+    {
+      label: '01 先补品牌身份',
+      detail: '优先确认可见品牌、Logo 和空品牌状态，避免公开展示或运营筛选出现无效品牌。',
+      href: '#brand-manager',
+      cta: missingLogo > 0 ? '补 Logo' : '复核品牌',
+      primary: missingLogo > 0 || summary.emptyBrands > 0,
+    },
+    {
+      label: '02 回列表批量归属',
+      detail: '在产品列表按目录筛选和状态批量检查品牌归属，减少单品编辑的重复往返。',
+      href: '/admin/content/products/list#product-batch-governance',
+      cta: '进入列表',
+      primary: summary.assignedProducts === 0,
+    },
+    {
+      label: '03 与标记分层对齐',
+      detail: '把同品牌产品和运营标记放在同一口径下复核，保证推荐、筛选和内部归类一致。',
+      href: '/admin/content/products/marks#product-mark-readiness-desk',
+      cta: '对齐标记',
+      primary: summary.visibleMarks === 0,
+    },
+    {
+      label: '04 回公开目录验收',
+      detail: '从客户视角核对产品目录能否看懂品牌背书、主推产品和后续询盘路径。',
+      href: '/products',
+      cta: '打开目录',
+      primary: false,
+    },
+  ]
+
+  return (
+    <section
+      id="product-brand-readiness-desk"
+      data-product-brand-readiness="true"
+      className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]">
+        <div className="border-b border-[#E6EEEE] p-4 lg:border-b-0 lg:border-r">
+          <p className="text-xs font-bold uppercase text-[#1889B6]">B333 Brand Readiness</p>
+          <h2 className="mt-2 text-lg font-bold text-[#1E2C31]">品牌归属到公开目录推荐承接</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
+            把 B332 产品标记承接、B331 橱窗重点款、产品列表批量治理、品牌 Logo 和公开产品目录核对串成同一条只读运营路径；本区不保存品牌、不批量归属、不发布产品。
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <BrandReadinessMetric
+              label="可见品牌"
+              value={formatNumber(summary.visibleBrands)}
+              detail={`总品牌 ${formatNumber(summary.brands)}`}
+              tone={summary.visibleBrands > 0 ? 'green' : 'orange'}
+            />
+            <BrandReadinessMetric
+              label="归属产品"
+              value={formatNumber(summary.assignedProducts)}
+              detail={`产品总数 ${formatNumber(summary.products)}`}
+              tone={summary.assignedProducts > 0 ? 'green' : 'orange'}
+            />
+            <BrandReadinessMetric
+              label="空品牌"
+              value={formatNumber(summary.emptyBrands)}
+              detail={summary.emptyBrands > 0 ? '需要运营判断' : '当前无空品牌'}
+              tone={summary.emptyBrands > 0 ? 'orange' : 'green'}
+            />
+            <BrandReadinessMetric
+              label="Logo 素材"
+              value={formatNumber(summary.visibleBrandsWithLogo)}
+              detail={missingLogo > 0 ? `缺 ${formatNumber(missingLogo)} 个` : '可见品牌已覆盖'}
+              tone={missingLogo > 0 ? 'orange' : 'green'}
+            />
+            <BrandReadinessMetric
+              label="承接得分"
+              value={`${readinessScore}/5`}
+              detail={readinessScore >= 4 ? '可进入目录复核' : '先补运营底座'}
+              tone={readinessScore >= 4 ? 'green' : 'orange'}
+            />
+          </div>
+        </div>
+
+        <div className="bg-[#FBFDFD] p-4">
+          <p className="text-xs font-bold uppercase text-[#1889B6]">Operator Path</p>
+          <div className="mt-3 space-y-2">
+            {workflowSteps.map((step) => (
+              <Link
+                key={step.label}
+                href={step.href}
+                className={`group flex min-h-[82px] items-start justify-between gap-3 rounded-md border px-3 py-3 transition ${
+                  step.primary
+                    ? 'border-[#E36F2C]/45 bg-[#FFF7F1] hover:border-[#E36F2C]'
+                    : 'border-[#D8E7E8] bg-white hover:border-[#1889B6]'
+                }`}
+              >
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-[#1E2C31]">{step.label}</span>
+                  <span className="mt-1 block text-xs leading-5 text-[#61767D]">{step.detail}</span>
+                </span>
+                <span
+                  className={`mt-0.5 inline-flex h-8 shrink-0 items-center gap-1 rounded-md px-2 text-xs font-semibold ${
+                    step.primary ? 'bg-[#E36F2C] text-white' : 'bg-[#E7F7F8] text-[#1889B6]'
+                  }`}
+                >
+                  {step.cta}
+                  <ArrowRight size={12} />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-white md:grid-cols-2 xl:grid-cols-4">
+        {handoffCards.map((card) => (
+          <BrandGovernanceLink key={card.label} card={card} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function BrandGovernanceLink({ card }: { card: BrandGovernanceCard }) {
   const Icon = card.Icon
   const toneClass =
@@ -304,6 +477,35 @@ function BrandGovernanceLink({ card }: { card: BrandGovernanceCard }) {
         <ArrowRight size={13} />
       </span>
     </Link>
+  )
+}
+
+function BrandReadinessMetric({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string
+  value: string
+  detail: string
+  tone: 'green' | 'orange' | 'blue' | 'gray'
+}) {
+  const toneClass =
+    tone === 'green'
+      ? 'text-emerald-700'
+      : tone === 'orange'
+        ? 'text-[#E36F2C]'
+        : tone === 'gray'
+          ? 'text-[#61767D]'
+          : 'text-[#1889B6]'
+
+  return (
+    <div className="min-h-[104px] rounded-md border border-[#D8E7E8] bg-[#FBFDFD] p-3">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-2 text-xl font-bold ${toneClass}`}>{value}</p>
+      <p className="mt-1 text-xs leading-5 text-[#8A9EA4]">{detail}</p>
+    </div>
   )
 }
 
