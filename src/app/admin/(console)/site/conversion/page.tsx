@@ -92,6 +92,22 @@ type SourceContractPortfolioRow = {
   Icon: LucideIcon
 }
 
+type SeoToLeadReviewRow = {
+  key: 'product' | 'case' | 'news'
+  title: string
+  routeLabel: string
+  detail: string
+  seoHref: string
+  publicHref: string
+  contentHref: string
+  qualityHref: string
+  leadHref: string
+  metric: AnalyticsConversionMetric
+  leadTotal: number
+  activeLeads: number
+  Icon: LucideIcon
+}
+
 const EMPTY_METRIC: AnalyticsConversionMetric = {
   views: 0,
   ctaClicks: 0,
@@ -406,6 +422,12 @@ export default async function AdminSiteConversionPage() {
           totalForms={totalForms}
           totalLeads={totalLeads}
         />
+        <SeoToLeadConversionReviewPanel
+          productPathMetric={productPathMetric}
+          casePathMetric={casePathMetric}
+          newsPathMetric={newsPathMetric}
+          leadSourceSummary={leadSourceSummary}
+        />
         <ConversionControlStrip
           dashboard={dashboard}
           totalViews={totalViews}
@@ -647,6 +669,207 @@ function ConversionHandoffCard({ item }: { item: ConversionHandoffItem }) {
         {item.action}
         <ArrowRight size={14} />
       </span>
+    </Link>
+  )
+}
+
+function SeoToLeadConversionReviewPanel({
+  productPathMetric,
+  casePathMetric,
+  newsPathMetric,
+  leadSourceSummary,
+}: {
+  productPathMetric: AnalyticsConversionMetric
+  casePathMetric: AnalyticsConversionMetric
+  newsPathMetric: AnalyticsConversionMetric
+  leadSourceSummary: LeadSourceStatusSummary[]
+}) {
+  const rowFor = ({
+    key,
+    title,
+    routeLabel,
+    detail,
+    seoHref,
+    publicHref,
+    contentHref,
+    qualityHref,
+    leadHref,
+    metric,
+    Icon,
+  }: Omit<SeoToLeadReviewRow, 'leadTotal' | 'activeLeads'>): SeoToLeadReviewRow => {
+    const source = leadSourceSummary.find((item) => item.type === key)
+    const activeLeads = source ? source.new + source.contacting + source.quoted : 0
+
+    return {
+      key,
+      title,
+      routeLabel,
+      detail,
+      seoHref,
+      publicHref,
+      contentHref,
+      qualityHref,
+      leadHref,
+      metric,
+      leadTotal: source?.total ?? 0,
+      activeLeads,
+      Icon,
+    }
+  }
+  const rows: SeoToLeadReviewRow[] = [
+    rowFor({
+      key: 'product',
+      title: '产品 SEO 到产品线索',
+      routeLabel: 'Products / Product Details / Contact',
+      detail: '先补产品详情 SEO 标题、描述和公开入口，再回看产品线索队列是否有真实来源承接。',
+      seoHref: '/admin/site/seo#seo-operations-command-bridge',
+      publicHref: '/products',
+      contentHref: '/admin/content/products/list?view=incomplete&issue=seo',
+      qualityHref: '/admin/status/leads#source-seo-lead-quality',
+      leadHref: '/admin/customers/leads?source_type=product',
+      metric: productPathMetric,
+      Icon: LayoutTemplate,
+    }),
+    rowFor({
+      key: 'case',
+      title: '案例 SEO 到案例询盘',
+      routeLabel: 'Cases / Case Details / Inquiry',
+      detail: '先补案例描述、封面和展示字段，再回看案例路径样本与 source_type=case 线索承接。',
+      seoHref: '/admin/site/seo#seo-operations-command-bridge',
+      publicHref: '/cases',
+      contentHref: '/admin/content/projects/list?view=incomplete',
+      qualityHref: '/admin/status/leads#source-seo-lead-quality',
+      leadHref: '/admin/customers/leads?source_type=case',
+      metric: casePathMetric,
+      Icon: Route,
+    }),
+    rowFor({
+      key: 'news',
+      title: '新闻 SEO 到新闻来源',
+      routeLabel: 'News / Article / Contact',
+      detail: '先补新闻 SEO 标题、描述、摘要和正文，再回看新闻阅读入口与 source_type=news 线索队列。',
+      seoHref: '/admin/site/seo#seo-operations-command-bridge',
+      publicHref: '/news#news-discovery-console',
+      contentHref: '/admin/content/news#news-public-discovery-bridge',
+      qualityHref: '/admin/status/leads#source-seo-lead-quality',
+      leadHref: '/admin/customers/leads?source_type=news',
+      metric: newsPathMetric,
+      Icon: FileText,
+    }),
+  ]
+  const reviewActions = rows.reduce((sum, row) => sum + row.metric.ctaClicks + row.metric.formSubmits, 0)
+  const reviewLeads = rows.reduce((sum, row) => sum + row.leadTotal, 0)
+  const activeLeads = rows.reduce((sum, row) => sum + row.activeLeads, 0)
+
+  return (
+    <section id="seo-to-lead-conversion-review" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">B291 SEO To Lead Review</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">SEO 到线索转化复盘</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把 B290 SEO 操作台、B289 发布前复核、B282 来源线索质量和产品 / 案例 / 新闻转化路径放到同一个只读复盘入口；本区不改 SEO 字段、不改线索状态、不改发布流程。
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <SeoToLeadReviewAction href="/admin/site/seo#seo-operations-command-bridge" label="SEO 操作台" />
+          <SeoToLeadReviewAction href="/admin/status/site#site-release-preflight-bridge" label="发布前复核" />
+          <SeoToLeadReviewAction href="/admin/status/leads#source-seo-lead-quality" label="来源质量" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
+        <SourceContractPortfolioStat label="SEO 接力路径" value={rows.length} detail="产品 / 案例 / 新闻" />
+        <SourceContractPortfolioStat label="路径动作" value={reviewActions} detail="CTA + 表单动作" />
+        <SourceContractPortfolioStat label="来源线索" value={reviewLeads} detail={`活跃 ${activeLeads.toLocaleString('zh-CN')}`} />
+        <SourceContractPortfolioStat label="复盘入口" value={3} detail="SEO / 发布 / 来源质量" />
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] xl:grid-cols-3 xl:divide-x xl:divide-y-0">
+        {rows.map((row) => (
+          <SeoToLeadReviewCard key={row.key} row={row} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function SeoToLeadReviewCard({ row }: { row: SeoToLeadReviewRow }) {
+  const Icon = row.Icon
+  const actionCount = row.metric.ctaClicks + row.metric.formSubmits
+  const statusLabel = row.leadTotal > 0
+    ? '已有来源线索'
+    : actionCount > 0
+      ? '有动作待承接'
+      : row.metric.views > 0
+        ? '有访问待推动'
+        : '待积累样本'
+  const toneClass = row.leadTotal > 0
+    ? 'bg-emerald-50 text-emerald-700'
+    : actionCount > 0 || row.metric.views > 0
+      ? 'bg-[#FFF2E7] text-[#E36F2C]'
+      : 'bg-[#F0F2F2] text-[#61767D]'
+
+  return (
+    <div className="px-5 py-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-[#1E2C31]">{row.title}</p>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">{row.routeLabel}</p>
+        </div>
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${toneClass}`}>
+          <Icon size={18} />
+        </span>
+      </div>
+
+      <p className="mt-4 text-xs leading-5 text-[#61767D]">{row.detail}</p>
+
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <SourceContractMiniStat label="访问" value={row.metric.views} />
+        <SourceContractMiniStat label="动作" value={actionCount} />
+        <SourceContractMiniStat label="线索" value={row.leadTotal} />
+        <SourceContractMiniStat label="活跃" value={row.activeLeads} />
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${toneClass}`}>
+          {statusLabel}
+        </span>
+        <span className="font-mono text-[11px] text-[#8A9EA4]">source_type={row.key}</span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <SeoToLeadReviewAction href={row.seoHref} label="补 SEO" compact />
+        <SeoToLeadReviewAction href={row.publicHref} label="看前台" compact external />
+        <SeoToLeadReviewAction href={row.contentHref} label="内容处理" compact />
+        <SeoToLeadReviewAction href={row.qualityHref} label="来源质量" compact />
+        <SeoToLeadReviewAction href={row.leadHref} label="线索队列" compact />
+      </div>
+    </div>
+  )
+}
+
+function SeoToLeadReviewAction({
+  href,
+  label,
+  compact = false,
+  external = false,
+}: {
+  href: string
+  label: string
+  compact?: boolean
+  external?: boolean
+}) {
+  const Icon = external ? ExternalLink : ArrowRight
+
+  return (
+    <Link
+      href={href}
+      target={external ? '_blank' : undefined}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8] ${compact ? 'min-h-9 px-2 py-1' : 'h-9 px-3'}`}
+    >
+      {label}
+      <Icon size={12} />
     </Link>
   )
 }
