@@ -171,6 +171,7 @@ function getSideNavGroups(): AdminSideNavGroup[] {
       items: [
         { key: 'new-product-closure', label: '新建预检', href: '#new-product-closure', Icon: BarChart3 },
         { key: 'new-product-lead-feedback', label: '线索反馈准备', href: '#new-product-lead-feedback-desk', Icon: ListChecks },
+        { key: 'new-product-draft-approval', label: '草稿审批准备', href: '#new-product-draft-approval-desk', Icon: SearchCheck },
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
         { key: 'publish-flow', label: '发布审核', planned: true, Icon: SearchCheck },
@@ -576,6 +577,168 @@ function NewProductLeadFeedbackPrepPanel({
   )
 }
 
+function NewProductDraftApprovalPrepPanel({
+  categories,
+  attributeTemplates,
+  relatedProductCount,
+  maxUploadMb,
+}: {
+  categories: number
+  attributeTemplates: number
+  relatedProductCount: number
+  maxUploadMb: number
+}) {
+  const taxonomyReady = categories > 0 && attributeTemplates > 0
+  const mediaReady = maxUploadMb > 0
+  const relatedReady = relatedProductCount > 0
+  const readyCount = [taxonomyReady, mediaReady, relatedReady].filter(Boolean).length
+  const approvalCards: NewProductClosureItem[] = [
+    {
+      label: 'B338 发布审批摘要',
+      value: '表单底部',
+      detail: '填写后在发布检查区核对保存状态、发布缺项、运营归属和询盘交接。',
+      href: '#publish-check',
+      Icon: SearchCheck,
+      tone: 'neutral',
+    },
+    {
+      label: 'B337 单品检查',
+      value: '保存后',
+      detail: '草稿保存后进入单品编辑页，再做恢复后发布前检查和人工确认。',
+      href: '#publish-check',
+      Icon: Pencil,
+      tone: 'neutral',
+    },
+    {
+      label: 'B328 线索反馈准备',
+      value: '已前置',
+      detail: '先把 product 来源线索问题转成 SEO、商务条款、资料和关联推荐准备项。',
+      href: '#new-product-lead-feedback-desk',
+      Icon: ListChecks,
+      tone: 'ready',
+    },
+    {
+      label: 'B336 草稿补齐队列',
+      value: '保存后',
+      detail: '保存为草稿后回到产品列表，进入草稿恢复和补齐队列继续治理。',
+      href: '/admin/content/products/list?status=draft#product-draft-recovery-readiness-desk',
+      Icon: Package,
+      tone: 'neutral',
+    },
+  ]
+  const gateCards: NewProductClosureItem[] = [
+    {
+      label: '分类属性底座',
+      value: taxonomyReady ? '可进入' : '先补齐',
+      detail: taxonomyReady ? '分类和属性模板已可承接新产品筛选。' : '缺分类或属性模板时，保存后会增加运营补齐成本。',
+      href: taxonomyReady ? '#attributes' : '/admin/content/products/attributes',
+      Icon: SlidersHorizontal,
+      tone: taxonomyReady ? 'ready' : 'warning',
+    },
+    {
+      label: '素材上传环境',
+      value: `${maxUploadMb} MB`,
+      detail: mediaReady ? '媒体上传上限可用，先准备封面、图库和素材来源。' : '媒体上传上限异常，先检查媒体设置。',
+      href: '#media',
+      Icon: ImageIcon,
+      tone: mediaReady ? 'ready' : 'warning',
+    },
+    {
+      label: '关联推荐承接',
+      value: relatedProductCount.toString(),
+      detail: relatedReady ? '已有相关产品池，可在保存前规划详情页继续浏览入口。' : '关联产品池不足，保存后需要补推荐链路。',
+      href: relatedReady ? '#relations' : '/admin/content/products/list?status=published',
+      Icon: Tags,
+      tone: relatedReady ? 'ready' : 'neutral',
+    },
+    {
+      label: '发布影响边界',
+      value: '草稿',
+      detail: '新建保存默认草稿；发布仍需要人工点击发布相关动作，不在本区自动触发。',
+      href: '#publish-check',
+      Icon: FileText,
+      tone: 'ready',
+    },
+  ]
+
+  return (
+    <section
+      id="new-product-draft-approval-desk"
+      data-new-product-draft-approval="true"
+      className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
+      <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p className="text-xs font-bold text-[#E36F2C]">B339 新建产品草稿审批准备</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">保存草稿前先对齐审批、补齐和回跳路径</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
+            承接 B338 发布审批摘要、B337 单品检查、B336 草稿补齐和 B328 线索反馈准备；这里只做只读路径提示，不保存产品、不发布产品、不更新线索。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <AdminActionLink href="#publish-check" Icon={SearchCheck} label="发布检查" />
+          <AdminActionLink href="/admin/content/products/list?status=draft#product-draft-recovery-readiness-desk" Icon={Package} label="草稿队列" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-b border-[#E6EEEE] bg-[#F7FAFA] md:grid-cols-4">
+        <NewProductFeedbackInfoCell label="准备通过" value={`${readyCount}/3`} detail="分类属性、媒体、关联池" tone={readyCount === 3 ? 'ready' : readyCount > 0 ? 'neutral' : 'warning'} />
+        <NewProductFeedbackInfoCell label="新建状态" value="草稿" detail="保存前不公开展示" tone="ready" />
+        <NewProductFeedbackInfoCell label="审批承接" value="B338" detail="表单底部只读摘要" tone="neutral" />
+        <NewProductFeedbackInfoCell label="补齐承接" value="B336" detail="保存后回列表治理" tone="neutral" />
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] lg:grid-cols-[minmax(0,1fr)_420px] lg:divide-x lg:divide-y-0">
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+          {approvalCards.map((card) => (
+            <Link key={card.label} href={card.href} className="block min-h-[160px] p-4 transition hover:bg-[#F7FAFA]">
+              <span className="flex items-start justify-between gap-3">
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${closureToneClass(card.tone)}`}>
+                  <card.Icon size={17} />
+                </span>
+                <span className={`max-w-[104px] truncate rounded-full border px-2.5 py-1 text-[11px] font-semibold ${closureToneClass(card.tone)}`} title={card.value}>
+                  {card.value}
+                </span>
+              </span>
+              <span className="mt-3 block text-sm font-bold text-[#1E2C31]">{card.label}</span>
+              <span className="mt-2 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
+            </Link>
+          ))}
+        </div>
+
+        <aside className="bg-[#FBFDFD]">
+          <div className="border-b border-[#E6EEEE] px-5 py-4">
+            <h3 className="text-sm font-bold text-[#1E2C31]">保存前审批门槛</h3>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">
+              先确认底座可用，再进入长表单保存草稿，减少保存后的反复补齐。
+            </p>
+          </div>
+          <div className="divide-y divide-[#E6EEEE]">
+            {gateCards.map((card) => (
+              <Link key={card.label} href={card.href} className="block px-5 py-4 transition hover:bg-[#F0F7F8]">
+                <span className="flex gap-3">
+                  <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${closureToneClass(card.tone)}`}>
+                    <card.Icon size={15} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="truncate text-sm font-bold text-[#1E2C31]">{card.label}</span>
+                      <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${closureToneClass(card.tone)}`}>
+                        {card.value}
+                      </span>
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </aside>
+      </div>
+    </section>
+  )
+}
+
 function NewProductFeedbackInfoCell({
   label,
   value,
@@ -766,6 +929,12 @@ export default async function AdminContentProductNewPage() {
         maxUploadMb={maxUploadMb}
       />
       <NewProductLeadFeedbackPrepPanel
+        categories={categories.length}
+        attributeTemplates={attributeTemplates.length}
+        relatedProductCount={relatedProducts.rows.length}
+        maxUploadMb={maxUploadMb}
+      />
+      <NewProductDraftApprovalPrepPanel
         categories={categories.length}
         attributeTemplates={attributeTemplates.length}
         relatedProductCount={relatedProducts.rows.length}
