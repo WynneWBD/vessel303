@@ -8,9 +8,9 @@
 
 - 官网：`https://www.vessel303.com`
 - 代码仓库：`C:\Users\Wynne\Desktop\vessel303\repo-git`
-- 当前循环：B296 已完成并上线；下一轮从 B297 继续按 00-11 工作流推进。
-- 最近功能批次：B296 / `dc75f33 feat(admin): add news category source conversion desk`
-- 最近功能生产验证 deployment：`dpl_9eMeE6JtvzaVA1LY7Vy8hNqQ1sPg`
+- 当前循环：B297 已完成并上线；下一轮从 B298 继续按 00-11 工作流推进。
+- 最近功能批次：B297 / `36cba5c feat(admin): add news recycle source safety desk`
+- 最近功能生产验证 deployment：`dpl_4NKMZwLmVvaHTB6DACGLPkaccnEp`
 - 当前精确状态以 `00_项目总控入口/vessel303_当前总控handoff.md` 和 `vercel inspect https://www.vessel303.com` 为准。
 - 当前目标：前台对齐 `en.303vessel.cn` 的生产官网能力，后台对齐 `300.cn 后台` 的运营效率和数据分析心智。
 - 当前对照边界：`en.303vessel.cn` 当前由 `openresty` 响应，公开产品/案例路径只读 smoke 返回 403，后台路径返回 404；本仓库部署 smoke 以 `https://www.vessel303.com` / Vercel alias 为准。
