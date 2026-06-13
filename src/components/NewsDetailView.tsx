@@ -21,10 +21,17 @@ type NewsData = {
   published_at: string | Date | null
 }
 
+type NewsRelatedItem = NewsData & {
+  id?: number
+}
+
 interface Props {
   news: NewsData
   htmlZh: string
   htmlEn: string
+  relatedNews?: NewsRelatedItem[]
+  previousNews?: NewsRelatedItem | null
+  nextNews?: NewsRelatedItem | null
 }
 
 function formatNewsDate(value: string | Date | null, lang: 'zh' | 'en'): string {
@@ -37,7 +44,22 @@ function formatNewsDate(value: string | Date | null, lang: 'zh' | 'en'): string 
   }
 }
 
-export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
+function displayNewsTitle(item: NewsRelatedItem, lang: 'zh' | 'en') {
+  return lang === 'zh' ? item.title_zh || item.title_en : item.title_en || item.title_zh
+}
+
+function displayNewsExcerpt(item: NewsRelatedItem, lang: 'zh' | 'en') {
+  return lang === 'zh' ? item.excerpt_zh || item.excerpt_en : item.excerpt_en || item.excerpt_zh
+}
+
+export default function NewsDetailView({
+  news,
+  htmlZh,
+  htmlEn,
+  relatedNews = [],
+  previousNews = null,
+  nextNews = null,
+}: Props) {
   const { lang } = useLanguage()
   const title = lang === 'zh' ? news.title_zh || news.title_en : news.title_en || news.title_zh
   const excerpt = lang === 'zh' ? news.excerpt_zh || news.excerpt_en : news.excerpt_en || news.excerpt_zh
@@ -65,6 +87,22 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
       detail: zh ? '团队按这篇动态跟进采购背景。' : 'Let the team follow up from this article context.',
     },
   ]
+  const readingLinks = [
+    nextNews
+      ? {
+          key: 'next',
+          label: zh ? '更新一篇' : 'Newer update',
+          item: nextNews,
+        }
+      : null,
+    previousNews
+      ? {
+          key: 'previous',
+          label: zh ? '上一篇' : 'Older update',
+          item: previousNews,
+        }
+      : null,
+  ].filter((item): item is { key: string; label: string; item: NewsRelatedItem } => Boolean(item))
 
   if (!title) return null
 
@@ -137,6 +175,114 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
           </div>
         </section>
       ) : null}
+
+      <section id="news-reading-continuity" className="pb-8">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="overflow-hidden rounded-md border border-[#E5DED4] bg-white shadow-sm">
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_260px]">
+              <div className="border-l-4 border-[#1889B6] px-4 py-5 sm:px-5">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1889B6]">
+                  {zh ? '继续阅读' : 'Continue reading'}
+                </p>
+                <h2 className="mt-2 text-xl font-bold text-[#2C2A28]">
+                  {zh ? '从这篇动态继续浏览新闻与相关主题' : 'Keep browsing updates and related topics'}
+                </h2>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-[#6B6560]">
+                  {zh
+                    ? '对照 en.303 新闻详情的上一篇、下一篇和相关新闻结构，保留本站的新闻发现、产品、案例和咨询路径。'
+                    : 'Mirror the en.303 article flow with newer, older, and related updates while keeping product, case, and inquiry paths close.'}
+                </p>
+              </div>
+              <div className="border-t border-[#E5DED4] bg-[#FBF8F3] px-4 py-4 lg:border-l lg:border-t-0">
+                <p className="text-xs font-semibold text-[#8A8580]">{zh ? '阅读路径' : 'Reading path'}</p>
+                <p className="mt-1 text-2xl font-bold text-[#2C2A28]">
+                  {(readingLinks.length + relatedNews.length).toLocaleString(zh ? 'zh-CN' : 'en-US')}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-[#6B6560]">
+                  {zh ? '可继续打开的新闻入口' : 'News entries available from here'}
+                </p>
+              </div>
+            </div>
+
+            {readingLinks.length > 0 ? (
+              <div className="grid grid-cols-1 border-t border-[#E5DED4] md:grid-cols-2">
+                {readingLinks.map((link) => {
+                  const itemTitle = displayNewsTitle(link.item, lang)
+                  const itemDate = formatNewsDate(link.item.published_at, lang)
+                  return (
+                    <Link
+                      key={link.key}
+                      href={`/news/${link.item.slug}`}
+                      prefetch={false}
+                      className="group min-h-[112px] border-b border-[#E5DED4] px-4 py-4 transition hover:bg-[#FFF7F0] md:border-b-0 md:border-r last:border-r-0"
+                    >
+                      <span className="block text-xs font-bold uppercase tracking-[0.12em] text-[#1889B6]">{link.label}</span>
+                      <span className="mt-2 line-clamp-2 block text-sm font-bold leading-5 text-[#2C2A28] transition group-hover:text-[#E36F2C]">
+                        {itemTitle}
+                      </span>
+                      {itemDate ? <span className="mt-2 block text-xs text-[#8A8580]">{itemDate}</span> : null}
+                    </Link>
+                  )
+                })}
+              </div>
+            ) : null}
+
+            {relatedNews.length > 0 ? (
+              <div className="border-t border-[#E5DED4] px-4 py-5 sm:px-5">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <h3 className="text-base font-bold text-[#2C2A28]">{zh ? '相关新闻' : 'Related news'}</h3>
+                  <Link
+                    href="/news#news-discovery-console"
+                    prefetch={false}
+                    className="text-xs font-bold text-[#1889B6] transition hover:text-[#E36F2C]"
+                  >
+                    {zh ? '回到新闻发现' : 'Back to discovery'}
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                  {relatedNews.map((item) => {
+                    const itemTitle = displayNewsTitle(item, lang)
+                    const itemExcerpt = displayNewsExcerpt(item, lang)
+                    const itemDate = formatNewsDate(item.published_at, lang)
+
+                    return (
+                      <Link
+                        key={item.slug}
+                        href={`/news/${item.slug}`}
+                        prefetch={false}
+                        className="group overflow-hidden rounded-md border border-[#E5DED4] bg-[#FAF7F2] transition hover:border-[#E36F2C]/50 hover:bg-white"
+                      >
+                        {item.cover_image_url ? (
+                          <div className="relative h-28 overflow-hidden bg-[#EFE8DE]">
+                            <ProtectedImage
+                              src={item.cover_image_url}
+                              alt={itemTitle}
+                              fill
+                              className="object-cover transition duration-500 group-hover:scale-105"
+                              sizes="(max-width: 768px) 100vw, 33vw"
+                            />
+                          </div>
+                        ) : null}
+                        <span className="block p-3">
+                          {itemDate ? <span className="block text-[11px] text-[#8A8580]">{itemDate}</span> : null}
+                          <span className="mt-1 line-clamp-2 block text-sm font-bold leading-5 text-[#2C2A28] transition group-hover:text-[#E36F2C]">
+                            {itemTitle}
+                          </span>
+                          {itemExcerpt ? (
+                            <span className="mt-2 line-clamp-2 block text-xs leading-5 text-[#6B6560]">
+                              {itemExcerpt}
+                            </span>
+                          ) : null}
+                        </span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </section>
 
       <section className="pb-16">
         <div className="mx-auto max-w-5xl px-4 sm:px-6">

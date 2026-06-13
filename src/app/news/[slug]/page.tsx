@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { getNewsBySlug, listPublishedNews } from '@/lib/news-db'
+import { getNewsBySlug, listPublishedNews, type NewsListItem } from '@/lib/news-db'
 import { generateHTML } from '@tiptap/html'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
@@ -115,10 +115,31 @@ export default async function NewsSlugPage({
   const news = await getNewsBySlug(slug).catch(() => null)
   if (!news || isLikelyTestNews(news)) notFound()
 
+  const { rows: publishedRows } = await listPublishedNews({ limit: 50, offset: 0 }).catch((err) => {
+    console.error('[news/detail] related news unavailable', err)
+    return { rows: [] as NewsListItem[], total: 0 }
+  })
+  const readableRows = publishedRows.filter((item) => !isLikelyTestNews(item))
+  const currentIndex = readableRows.findIndex((item) => item.slug === news.slug)
+  const nextReadable = currentIndex > 0 ? readableRows[currentIndex - 1] : null
+  const previousReadable = currentIndex >= 0 && currentIndex < readableRows.length - 1
+    ? readableRows[currentIndex + 1]
+    : null
+  const relatedRows = readableRows
+    .filter((item) => item.slug !== news.slug)
+    .filter((item) => !news.category_slug || item.category_slug === news.category_slug)
+    .slice(0, 3)
+  const fallbackRelatedRows = relatedRows.length > 0
+    ? relatedRows
+    : readableRows.filter((item) => item.slug !== news.slug).slice(0, 3)
+
   const htmlZh = toHTML(news.content_zh)
   const htmlEn = toHTML(news.content_en)
   const imageVariants = await getUploadVariantsByUrls([
     news.cover_image_url,
+    previousReadable?.cover_image_url,
+    nextReadable?.cover_image_url,
+    ...fallbackRelatedRows.map((item) => item.cover_image_url),
     ...extractImageSrcsFromHtml(htmlZh),
     ...extractImageSrcsFromHtml(htmlEn),
   ]).catch((err) => {
@@ -129,8 +150,23 @@ export default async function NewsSlugPage({
     ...news,
     cover_image_url: mapUploadImageUrl(news.cover_image_url, imageVariants, 'detail') || news.cover_image_url,
   }
+  const mapListItem = (item: NewsListItem | null) => item
+    ? {
+        ...item,
+        cover_image_url: mapUploadImageUrl(item.cover_image_url, imageVariants, 'card') || item.cover_image_url,
+      }
+    : null
   const displayHtmlZh = replaceImageSrcsInHtml(htmlZh, imageVariants, 'detail')
   const displayHtmlEn = replaceImageSrcsInHtml(htmlEn, imageVariants, 'detail')
 
-  return <NewsDetailView news={displayNews} htmlZh={displayHtmlZh} htmlEn={displayHtmlEn} />
+  return (
+    <NewsDetailView
+      news={displayNews}
+      htmlZh={displayHtmlZh}
+      htmlEn={displayHtmlEn}
+      relatedNews={fallbackRelatedRows.map((item) => mapListItem(item)).filter((item): item is NewsListItem => Boolean(item))}
+      previousNews={mapListItem(previousReadable)}
+      nextNews={mapListItem(nextReadable)}
+    />
+  )
 }
