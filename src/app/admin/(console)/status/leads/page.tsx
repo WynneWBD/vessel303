@@ -262,6 +262,13 @@ export default async function AdminStatusLeadsPage() {
           seo={overview.site.seo}
         />
 
+        <ProductLeadQualityFollowupDesk
+          leads={leads}
+          sourceStatusSummary={sourceStatusSummary}
+          sourceStageStatusSummary={sourceStageStatusSummary}
+          productPathMetric={productPathMetric}
+        />
+
         <CaseLeadQualityFollowupDesk
           leads={leads}
           sourceStatusSummary={sourceStatusSummary}
@@ -800,6 +807,249 @@ function SourceLeadQualityWorkdeskCard({ row }: { row: SourceLeadQualityWorkdesk
         <SourceWorkdeskAction href={row.releaseHref} label="发布复核" />
       </div>
     </div>
+  )
+}
+
+function ProductLeadQualityFollowupDesk({
+  leads,
+  sourceStatusSummary,
+  sourceStageStatusSummary,
+  productPathMetric,
+}: {
+  leads: LeadMetrics
+  sourceStatusSummary: LeadSourceStatusSummary[]
+  sourceStageStatusSummary: LeadSourceStageStatusSummary[]
+  productPathMetric: AnalyticsConversionMetric
+}) {
+  const productSource = sourceStatusSummary.find((source) => source.type === 'product')
+  const productStages = sourceStageStatusSummary.filter((stage) => stage.type === 'product')
+  const inquiryForm = sourceStageStatusSummary.find((stage) => stage.key === 'product:inquiry_form')
+  const ctaClick = sourceStageStatusSummary.find((stage) => stage.key === 'product:cta_click')
+  const catalogCardCta = sourceStageStatusSummary.find((stage) => stage.key === 'product:catalog_card_cta')
+  const productTotal = productSource?.total ?? 0
+  const productActive = productSource ? productSource.new + productSource.contacting + productSource.quoted : 0
+  const productWonRate = percent(productSource?.won ?? 0, productTotal)
+  const inquiryActive = inquiryForm ? inquiryForm.new + inquiryForm.contacting + inquiryForm.quoted : 0
+  const ctaActive = ctaClick ? ctaClick.new + ctaClick.contacting + ctaClick.quoted : 0
+  const catalogActive = catalogCardCta ? catalogCardCta.new + catalogCardCta.contacting + catalogCardCta.quoted : 0
+  const pathActionCount = pathActions(productPathMetric)
+  const actionGap = pathActionCount > 0 && productTotal === 0
+  const trafficGap = productPathMetric.views > 0 && productTotal === 0
+  const followupRisk = leads.staleFollowups > 0 && productActive > 0
+  const priority =
+    productActive > 0
+      ? 'P0 活跃产品线索'
+      : inquiryActive > 0
+        ? 'P0 表单阶段待处理'
+        : followupRisk
+          ? 'P1 跟进断点核对'
+          : actionGap
+            ? 'P1 动作无线索'
+            : trafficGap
+              ? 'P1 访问无线索'
+              : productTotal > 0
+                ? 'P2 来源复盘'
+                : 'P3 等待样本'
+  const priorityTone: FunnelMatrixRow['statusTone'] =
+    productActive > 0 || inquiryActive > 0 || followupRisk || actionGap || trafficGap
+      ? 'orange'
+      : productSource && productSource.won > 0
+        ? 'green'
+        : productTotal > 0 || productPathMetric.views > 0
+          ? 'blue'
+          : 'gray'
+  const decision =
+    productActive > 0
+      ? `产品来源还有 ${formatNumber(productActive)} 条活跃线索，先进入 product 活跃队列处理，再回到 B324/B323 复盘产品路径和生命周期来源。`
+      : inquiryActive > 0
+        ? `product:inquiry_form 还有 ${formatNumber(inquiryActive)} 条活跃线索，优先看产品表单阶段，避免高意向询盘沉没。`
+        : followupRisk
+          ? `全站存在 ${formatNumber(leads.staleFollowups)} 条超时跟进，先用 product + overdue 过滤核对产品线索是否受影响。`
+          : actionGap
+            ? `产品路径已有 ${formatNumber(pathActionCount)} 次动作但 leads 暂无 product 来源样本，先查 B322 流量质量和 B324 线索归因。`
+            : trafficGap
+              ? `产品路径已有 ${formatNumber(productPathMetric.views)} 次访问但暂无 product 来源线索，优先核对 CTA、表单成功和来源参数。`
+              : productTotal > 0
+                ? `已有 ${formatNumber(productTotal)} 条产品来源线索，成交占比 ${productWonRate}%，适合复盘产品内容、SEO 和跟进质量。`
+                : '当前产品来源样本不足，保留 B324、B323、B322 和产品线索队列入口等待新样本。'
+  const cards = [
+    {
+      key: 'product-source',
+      label: '产品来源线索',
+      value: productTotal,
+      detail: `阶段 ${formatNumber(productStages.length)} / 新 ${formatNumber(productSource?.new ?? 0)} / 活跃 ${formatNumber(productActive)} / 成交 ${formatNumber(productSource?.won ?? 0)}`,
+      href: '/admin/customers/leads?source_type=product',
+      tone: productActive > 0 ? 'orange' : productTotal > 0 ? 'blue' : 'gray',
+    },
+    {
+      key: 'product-inquiry',
+      label: '产品表单阶段',
+      value: inquiryForm?.total ?? 0,
+      detail: `product:inquiry_form 活跃 ${formatNumber(inquiryActive)} / 新 ${formatNumber(inquiryForm?.new ?? 0)}`,
+      href: '/admin/customers/leads?source_type=product&source_stage=product%3Ainquiry_form',
+      tone: inquiryActive > 0 ? 'orange' : inquiryForm && inquiryForm.total > 0 ? 'blue' : 'gray',
+    },
+    {
+      key: 'product-overdue',
+      label: '跟进断点核对',
+      value: leads.staleFollowups,
+      detail: '显示全站超时数；入口带 source_type=product + overdue 过滤核对。',
+      href: '/admin/customers/leads?source_type=product&attention=overdue',
+      tone: followupRisk ? 'orange' : leads.staleFollowups > 0 ? 'blue' : 'green',
+    },
+    {
+      key: 'product-path',
+      label: 'B322 流量质量',
+      value: productPathMetric.views,
+      detail: `路径动作 ${formatNumber(pathActionCount)} / 路径线索 ${formatNumber(productPathMetric.leads)}`,
+      href: '/admin/status/traffic#product-path-quality-review-desk',
+      tone: actionGap || trafficGap ? 'orange' : productPathMetric.views > 0 ? 'blue' : 'gray',
+    },
+  ] satisfies Array<{
+    key: string
+    label: string
+    value: number
+    detail: string
+    href: string
+    tone: FunnelMatrixRow['statusTone']
+  }>
+  const stageRows = [
+    inquiryForm
+      ? {
+          key: inquiryForm.key,
+          label: inquiryForm.label,
+          value: inquiryForm.total,
+          detail: `新 ${formatNumber(inquiryForm.new)} / 跟进 ${formatNumber(inquiryForm.contacting)} / 报价 ${formatNumber(inquiryForm.quoted)}`,
+          href: inquiryForm.href,
+          tone: inquiryActive > 0 ? 'orange' : inquiryForm.won > 0 ? 'green' : 'blue',
+        }
+      : null,
+    ctaClick
+      ? {
+          key: ctaClick.key,
+          label: ctaClick.label,
+          value: ctaClick.total,
+          detail: `新 ${formatNumber(ctaClick.new)} / 跟进 ${formatNumber(ctaClick.contacting)} / 报价 ${formatNumber(ctaClick.quoted)}`,
+          href: ctaClick.href,
+          tone: ctaActive > 0 ? 'orange' : ctaClick.won > 0 ? 'green' : 'blue',
+        }
+      : null,
+    catalogCardCta
+      ? {
+          key: catalogCardCta.key,
+          label: catalogCardCta.label,
+          value: catalogCardCta.total,
+          detail: `新 ${formatNumber(catalogCardCta.new)} / 跟进 ${formatNumber(catalogCardCta.contacting)} / 报价 ${formatNumber(catalogCardCta.quoted)}`,
+          href: catalogCardCta.href,
+          tone: catalogActive > 0 ? 'orange' : catalogCardCta.won > 0 ? 'green' : 'blue',
+        }
+      : null,
+  ].filter((row): row is {
+    key: string
+    label: string
+    value: number
+    detail: string
+    href: string
+    tone: FunnelMatrixRow['statusTone']
+  } => Boolean(row))
+  const followupLinks = [
+    {
+      label: 'product 活跃队列',
+      href: '/admin/customers/leads?source_type=product&attention=active',
+      primary: productActive > 0,
+    },
+    {
+      label: 'product 超时核对',
+      href: '/admin/customers/leads?source_type=product&attention=overdue',
+      primary: followupRisk,
+    },
+    {
+      label: 'product 表单阶段',
+      href: '/admin/customers/leads?source_type=product&source_stage=product%3Ainquiry_form',
+      primary: inquiryActive > 0,
+    },
+    {
+      label: 'B324 线索复盘',
+      href: '/admin/customers/leads?source_type=product#product-lead-ops-review-desk',
+      primary: productActive > 0,
+    },
+    {
+      label: 'B323 转化复盘',
+      href: '/admin/site/conversion#product-lifecycle-conversion-bridge',
+      primary: false,
+    },
+    {
+      label: 'B322 流量质量',
+      href: '/admin/status/traffic#product-path-quality-review-desk',
+      primary: actionGap || trafficGap,
+    },
+    {
+      label: 'B320 产品总控',
+      href: '/admin/content/products#product-lifecycle',
+      primary: false,
+    },
+  ]
+
+  return (
+    <section className="space-y-4" id="product-lead-quality-followup-desk" data-product-lead-quality-followup="true">
+      <SectionTitle
+        title="B325 产品线索质量到跟进分诊台"
+        detail="把 B324 产品线索运营复盘、B323 产品生命周期转化、B322 产品流量质量、product 来源队列、product:inquiry_form 阶段和跟进断点入口放到同屏；只读诊断，不直接更新线索状态。"
+      />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Product Lead Follow-up Triage</p>
+            <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品来源线索处理顺序</h2>
+            <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+              先看 product 来源活跃线索和表单阶段，再核对全站超时跟进风险，最后回到 B324 线索复盘、B323 转化复盘、B322 流量质量和 B320 产品总控；本区只生成处理顺序和入口，不保存备注、不改负责人、不改状态。
+            </p>
+          </div>
+          <FunnelStatusBadge label={priority} tone={priorityTone} />
+        </div>
+
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+          {cards.map((card) => (
+            <Link key={card.key} href={card.href} className="block min-w-0 p-5 transition hover:bg-[#F7FAFA]">
+              <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${funnelToneClass(card.tone)}`}>
+                {card.label}
+              </span>
+              <span className="mt-3 block text-2xl font-black text-[#1E2C31]">{formatNumber(card.value)}</span>
+              <span className="mt-2 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
+            </Link>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 border-t border-[#E6EEEE] xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.72fr)]">
+          <div className="px-5 py-4">
+            <p className="text-sm font-semibold text-[#1E2C31]">运营判断</p>
+            <p className="mt-2 text-sm leading-6 text-[#61767D]">{decision}</p>
+            <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-3">
+              {stageRows.map((row) => (
+                <Link key={row.key} href={row.href} className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-3 transition hover:border-[#1889B6]">
+                  <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${funnelToneClass(row.tone)}`}>
+                    {row.label}
+                  </span>
+                  <span className="mt-2 block text-lg font-black text-[#1E2C31]">{formatNumber(row.value)}</span>
+                  <span className="mt-1 block text-xs leading-5 text-[#61767D]">{row.detail}</span>
+                </Link>
+              ))}
+              {stageRows.length === 0 ? (
+                <div className="rounded-md border border-dashed border-[#D8E7E8] bg-[#FBFDFD] px-3 py-4 text-xs text-[#8A9EA4] md:col-span-3">
+                  暂无 product 来源阶段样本，先保留 B324/B323/B322 和 product 队列入口等待新线索。
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:border-l xl:border-t-0">
+            {followupLinks.map((item) => (
+              <SourceWorkdeskAction key={item.label} href={item.href} label={item.label} primary={item.primary} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
   )
 }
 
