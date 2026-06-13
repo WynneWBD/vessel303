@@ -210,6 +210,7 @@ function getSideNavGroups(): AdminSideNavGroup[] {
       title: '后续规划',
       items: [
         { key: 'case-creation-preflight', label: '创建预检台', href: '#case-creation-inquiry-preflight-desk', Icon: ClipboardCheck },
+        { key: 'case-creation-backfill', label: '补位预检桥', href: '#case-creation-backfill-preflight-bridge', Icon: BarChart3 },
         { key: 'case-inquiry-plan', label: '案例咨询承接', href: '#case-inquiry-plan', Icon: SearchCheck },
         { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },
       ],
@@ -537,6 +538,180 @@ function CaseCreationInquiryPreflightDesk({
   )
 }
 
+function CaseCreationBackfillPreflightBridge({
+  stats,
+  casePathMetric,
+}: {
+  stats: ProjectCreationStats
+  casePathMetric: AnalyticsConversionMetric
+}) {
+  const weakCount = getCaseInquiryWeakCount(stats)
+  const pathActions = casePathMetric.ctaClicks + casePathMetric.formSubmits
+  const backfillSignals = stats.contentGap + weakCount
+  const readyRate = stats.published > 0 ? stats.caseInquiryReady / stats.published : 0
+  const decision: Pick<CaseCreationPreflightItem, 'value' | 'detail' | 'tone'> =
+    backfillSignals > 0
+      ? {
+          value: `${formatNumber(backfillSignals)} 个信号`,
+          detail: '先按 B308/B309 的补位标准检查素材、双语叙事、参数和询盘锚点，再保存新案例。',
+          tone: 'orange',
+        }
+      : casePathMetric.views > 0 && casePathMetric.leads === 0
+        ? {
+            value: '有访问无询盘',
+            detail: '创建前补足证明素材和行动入口，避免新案例复制已有路径的转化断点。',
+            tone: 'orange',
+          }
+        : casePathMetric.leads > 0
+          ? {
+              value: '沿用有效密度',
+              detail: '已有案例路径产生线索，新案例应对齐当前高质量案例的信息密度和复核顺序。',
+              tone: 'green',
+            }
+          : {
+              value: '按基线创建',
+              detail: '暂无明显补位或路径信号，仍按 B302 的创建预检顺序完成基础、素材、内容和发布检查。',
+              tone: 'blue',
+            }
+  const bridgeItems: CaseCreationPreflightItem[] = [
+    {
+      label: 'B309 单篇复核',
+      value: '保存后进入',
+      detail: '新案例保存后从列表进入单篇编辑页，用补位复核桥核对前台预览、内容缺口和线索路径。',
+      href: '/admin/content/projects/list?view=case-conversion-weak#case-conversion-content-backfill-desk',
+      cta: '从列表进入',
+      Icon: Pencil,
+      tone: 'blue',
+    },
+    {
+      label: 'B308 内容补位',
+      value: `${formatNumber(stats.contentGap)} 个待补`,
+      detail: '创建前参考已有待补字段，避免新草稿缺封面、图库、双语简介、参数或标签。',
+      href: '/admin/content/projects/list#case-conversion-content-backfill-desk',
+      cta: '看补位队列',
+      Icon: ListChecks,
+      tone: stats.contentGap > 0 ? 'orange' : 'green',
+    },
+    {
+      label: 'B303 案例总控',
+      value: `${formatAnalyticsPercent(readyRate)} 可承接`,
+      detail: `已发布 ${formatNumber(stats.published)}，其中 ${formatNumber(stats.caseInquiryReady)} 个达到询盘承接基线。`,
+      href: '/admin/content/projects#case-content-inquiry-command-center',
+      cta: '看案例总控',
+      Icon: ClipboardCheck,
+      tone: weakCount > 0 ? 'orange' : 'green',
+    },
+    {
+      label: 'B302 创建预检',
+      value: '当前页',
+      detail: '回到创建预检台核查案例身份、证明素材、咨询上下文和发布影响。',
+      href: '#case-creation-inquiry-preflight-desk',
+      cta: '回到预检台',
+      Icon: SearchCheck,
+      tone: 'blue',
+    },
+    {
+      label: '路径动作复盘',
+      value: `${formatNumber(pathActions)} 次动作`,
+      detail: `近 30 天访问 ${formatNumber(casePathMetric.views)}，线索 ${formatNumber(casePathMetric.leads)}，转化 ${formatAnalyticsPercent(casePathMetric.conversionRate)}。`,
+      href: '/admin/status/traffic#case-inquiry-path',
+      cta: '看路径分析',
+      Icon: BarChart3,
+      tone: casePathMetric.leads > 0 ? 'green' : casePathMetric.views > 0 ? 'orange' : 'blue',
+    },
+    {
+      label: '创建边界',
+      value: '只读桥接',
+      detail: '本区只提供复核顺序和入口，不新增自动保存、发布、上传、线索状态或权限规则。',
+      href: '#basic',
+      cta: '进入表单',
+      Icon: ShieldCheck,
+      tone: 'gray',
+    },
+  ]
+  const backfillChecks: CaseCreationPreflightItem[] = [
+    {
+      label: '素材先行',
+      value: '封面 + 图库',
+      detail: '先补可展示的封面和图库，保证列表、详情和询盘前判断有足够证明材料。',
+      href: '#media',
+      cta: '去素材区',
+      Icon: ImageIcon,
+      tone: 'blue',
+    },
+    {
+      label: '叙事先行',
+      value: '双语简介',
+      detail: '中文和英文简介都要讲清使用场景、项目背景和 VESSEL 方案价值。',
+      href: '#content',
+      cta: '去内容区',
+      Icon: FileText,
+      tone: 'green',
+    },
+    {
+      label: '事实先行',
+      value: '参数完整',
+      detail: '面积、数量、产品型号、项目类型和标签要完整，减少运营二次追问。',
+      href: '#params',
+      cta: '去参数区',
+      Icon: Settings2,
+      tone: 'green',
+    },
+    {
+      label: '发布后复盘',
+      value: '/cases 路径',
+      detail: '发布后再从案例列表、详情页、询盘锚点和线索来源复核转化闭环。',
+      href: '#publish-check',
+      cta: '去发布检查',
+      Icon: ExternalLink,
+      tone: 'orange',
+    },
+  ]
+
+  return (
+    <section id="case-creation-backfill-preflight-bridge" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="border-l-4 border-[#E36F2C] px-4 py-4">
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B310 CREATION BACKFILL BRIDGE</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例创建到补位复核预检桥</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把当前新建页和 B309 单篇复核、B308 内容补位、B303 案例总控、B302 创建预检放到同一条只读链路里；创建前先看已有案例池的补位缺口和路径表现，保存后再回到列表与单篇复核继续闭环。本区不保存、不发布、不上传、不写线索状态。
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <CaseCreationPreflightAction href="/admin/content/projects/list#case-conversion-content-backfill-desk" Icon={ListChecks} label="B308 补位队列" primary />
+            <CaseCreationPreflightAction href="/admin/content/projects#case-content-inquiry-command-center" Icon={ClipboardCheck} label="B303 案例总控" />
+            <CaseCreationPreflightAction href="/admin/content/projects/list?view=case-conversion-weak#case-conversion-content-backfill-desk" Icon={Pencil} label="B309 单篇入口" />
+            <CaseCreationPreflightAction href="#case-creation-inquiry-preflight-desk" Icon={SearchCheck} label="B302 创建预检" />
+          </div>
+        </div>
+        <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-4 py-4 lg:border-l lg:border-t-0">
+          <div className={`inline-flex max-w-full items-center rounded-md border px-2.5 py-1 text-[11px] font-bold ${caseCreationPreflightToneClass(decision.tone)}`}>
+            <span className="truncate">{decision.value}</span>
+          </div>
+          <h3 className="mt-3 text-sm font-bold text-[#1E2C31]">创建前判断</h3>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">{decision.detail}</p>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <CaseCreationPathSnapshot label="补位信号" value={formatNumber(backfillSignals)} detail="内容缺口 + 弱案例" warn={backfillSignals > 0} />
+            <CaseCreationPathSnapshot label="路径动作" value={formatNumber(pathActions)} detail="CTA + 表单提交" warn={casePathMetric.views > 0 && casePathMetric.leads === 0} />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-2 xl:grid-cols-3">
+        {bridgeItems.map((item) => (
+          <CaseCreationPreflightCard key={item.label} item={item} />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
+        {backfillChecks.map((item) => (
+          <CaseCreationPreflightCard key={item.label} item={item} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function CaseCreationPreflightAction({
   href,
   Icon,
@@ -741,6 +916,7 @@ export default async function AdminContentProjectNewPage() {
         signals={consoleSignals}
       />
       <CaseCreationInquiryPreflightDesk stats={stats} casePathMetric={casePathMetric} />
+      <CaseCreationBackfillPreflightBridge stats={stats} casePathMetric={casePathMetric} />
       <CaseInquiryCreationPlan />
       <EditSectionGrid />
       <RiskNotice />
