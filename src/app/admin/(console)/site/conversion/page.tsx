@@ -363,6 +363,7 @@ export default async function AdminSiteConversionPage() {
   const healthRows = buildConversionHealthRows(pathAnalytics)
   const productPathMetric = getMetric(pathAnalytics, 'products')
   const casePathMetric = getMetric(pathAnalytics, 'cases')
+  const newsPathMetric = getMetric(pathAnalytics, 'news')
 
   return (
     <AdminSectionShell
@@ -403,6 +404,7 @@ export default async function AdminSiteConversionPage() {
           sourceStageSummary={sourceStageSummary}
         />
         <CaseInquiryConversionPanel summary={caseInquirySummary} casePathMetric={casePathMetric} />
+        <NewsConversionHandoffPanel newsPathMetric={newsPathMetric} leadSourceSummary={leadSourceSummary} />
         <ConversionPathFlow
           orderedPaths={orderedPaths}
           pathAnalytics={pathAnalytics}
@@ -956,6 +958,157 @@ function ProductConversionClosurePanel({
         {cards.map((card) => (
           <ProductConversionClosureCard key={card.label} card={card} />
         ))}
+      </div>
+      <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:grid-cols-4">
+        {closureLinks.map((item) => (
+          <Link
+            key={item.label}
+            href={item.href}
+            className="group rounded-md border border-[#D8E7E8] bg-white px-3 py-3 transition hover:border-[#1889B6] hover:bg-[#F7FAFA]"
+          >
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${caseInquiryToneClass(item.tone)}`}>
+              {item.label}
+            </span>
+            <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+            <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
+              进入闭环
+              <ArrowRight size={12} />
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function NewsConversionHandoffPanel({
+  newsPathMetric,
+  leadSourceSummary,
+}: {
+  newsPathMetric: AnalyticsConversionMetric
+  leadSourceSummary: LeadSourceStatusSummary[]
+}) {
+  const newsSource = leadSourceSummary.find((source) => source.type === 'news')
+  const newsTotal = newsSource?.total ?? 0
+  const newsActive = newsSource ? newsSource.new + newsSource.contacting + newsSource.quoted : 0
+  const closureLinks = [
+    {
+      label: 'B255 来源面板',
+      detail: '回看新闻访问、来源动作和内容承接',
+      href: '/admin/status/traffic#news-source-handoff',
+      tone: newsPathMetric.views > 0 ? 'blue' as const : 'gray' as const,
+    },
+    {
+      label: '新闻线索队列',
+      detail: '进入 source_type=news 的线索承接',
+      href: '/admin/customers/leads?source_type=news',
+      tone: newsActive > 0 ? 'orange' as const : newsTotal > 0 ? 'blue' as const : 'gray' as const,
+    },
+    {
+      label: '新闻运营总览',
+      detail: '回到发布、分类、SEO 和待补内容',
+      href: '/admin/content/news#news-operations-hub',
+      tone: 'blue' as const,
+    },
+    {
+      label: '公开新闻入口',
+      detail: '查看前台 /news 阅读与 Contact 承接路径',
+      href: '/news',
+      tone: newsPathMetric.views > 0 ? 'green' as const : 'blue' as const,
+    },
+  ]
+  const cards = [
+    {
+      label: '新闻路径样本',
+      value: newsPathMetric.views,
+      detail: `动作 ${newsPathMetric.ctaClicks} / 表单 ${newsPathMetric.formSubmits} / 线索 ${newsPathMetric.leads}`,
+      href: '/admin/status/traffic#news-source-handoff',
+      Icon: BarChart3,
+      tone: newsPathMetric.leads > 0 ? 'green' as const : newsPathMetric.views > 0 ? 'orange' as const : 'gray' as const,
+    },
+    {
+      label: '新闻来源线索',
+      value: newsTotal,
+      detail: `活跃 ${newsActive} / 新 ${newsSource?.new ?? 0} / 报价 ${newsSource?.quoted ?? 0}`,
+      href: '/admin/customers/leads?source_type=news',
+      Icon: ListChecks,
+      tone: newsActive > 0 ? 'orange' as const : newsTotal > 0 ? 'blue' as const : 'gray' as const,
+    },
+    {
+      label: '新闻来源动作',
+      value: newsPathMetric.ctaClicks,
+      detail: '新闻阅读到 Contact 的 CTA、联系跳转和表单成功动作合计。',
+      href: '/admin/status/traffic#news-source-handoff',
+      Icon: MousePointerClick,
+      tone: newsPathMetric.ctaClicks > 0 ? 'green' as const : newsPathMetric.views > 0 ? 'orange' as const : 'gray' as const,
+    },
+    {
+      label: '内容运营入口',
+      value: 'News',
+      detail: '回到新闻发布、分类治理、SEO 待补和列表运营。',
+      href: '/admin/content/news#news-operations-hub',
+      Icon: FileText,
+      tone: 'blue' as const,
+    },
+    {
+      label: '前台新闻入口',
+      value: '/news',
+      detail: '新闻详情不嵌入表单，通过 Contact source 承接线索归因。',
+      href: '/news',
+      Icon: ExternalLink,
+      tone: 'blue' as const,
+    },
+  ]
+  const decision =
+    newsPathMetric.views > 0 && newsPathMetric.ctaClicks === 0
+      ? '新闻已有访问但暂无来源动作，优先回到 B255 来源面板复核新闻 CTA 和 Contact source 参数。'
+      : newsPathMetric.ctaClicks > 0 && newsTotal === 0
+        ? '新闻已有来源动作但线索库暂无 news 来源样本，继续观察 Contact 表单提交与来源归因。'
+        : newsTotal > 0
+          ? '新闻来源已有线索样本，可结合新闻运营总览复盘高阅读内容和后续产品/案例承接。'
+          : '新闻来源暂无足够样本，先保持新闻运营入口、公开入口和线索队列可下钻。'
+
+  return (
+    <section id="news-conversion-handoff" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">News Source Handoff</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻来源承接</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把 B255 新闻来源面板回连到转化中心；本面板只读聚合新闻路径和 news 来源线索，不改变新闻发布、Contact 表单或线索状态。
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Link
+            href="/admin/status/traffic#news-source-handoff"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            看新闻来源
+            <ArrowRight size={13} />
+          </Link>
+          <Link
+            href="/admin/customers/leads?source_type=news"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            新闻线索
+            <ArrowRight size={13} />
+          </Link>
+          <Link
+            href="/admin/content/news#news-operations-hub"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            新闻运营
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-5">
+        {cards.map((card) => (
+          <ProductConversionClosureCard key={card.label} card={card} />
+        ))}
+      </div>
+      <div className="border-t border-[#E6EEEE] px-5 py-4 text-sm font-semibold text-[#1E2C31]">
+        运营判断：{decision}
       </div>
       <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:grid-cols-4">
         {closureLinks.map((item) => (
