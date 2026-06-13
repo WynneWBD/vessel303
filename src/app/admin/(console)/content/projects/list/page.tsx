@@ -155,6 +155,16 @@ type CaseSourceContract = {
   tone: 'blue' | 'green' | 'orange' | 'neutral'
 }
 
+type CaseInquiryQueueItem = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  cta: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+}
+
 const EMPTY_SUMMARY: ProjectSummary = {
   total: 0,
   published: 0,
@@ -1099,6 +1109,254 @@ function CaseSourceContractLink({ contract }: { contract: CaseSourceContract }) 
   )
 }
 
+function caseInquiryQueueToneClass(tone: CaseInquiryQueueItem['tone']): string {
+  if (tone === 'green') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  if (tone === 'orange') return 'border-[#F4C7A6] bg-[#FFF2E7] text-[#C85F24]'
+  if (tone === 'gray') return 'border-[#D8E7E8] bg-[#F7FAFA] text-[#61767D]'
+  return 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
+}
+
+function CaseListInquiryConversionQueue({
+  filters,
+  summary,
+  issueSummary,
+  rows,
+  casePathMetric,
+}: {
+  filters: FilterState
+  summary: ProjectSummary
+  issueSummary: ProjectIssueSummary
+  rows: ProjectListRow[]
+  casePathMetric: AnalyticsConversionMetric
+}) {
+  const pageIssueEntries = rows.map((project) => ({
+    project,
+    issues: getProjectIssues(project),
+  }))
+  const pagePublishedCount = pageIssueEntries.filter((entry) => entry.project.status === 'published').length
+  const pageWeakCount = pageIssueEntries.filter((entry) => (
+    entry.project.status === 'published' && hasCaseConversionContentRisk(entry.issues)
+  )).length
+  const pageReadyCount = pageIssueEntries.filter((entry) => isCaseConversionReady(entry.project, entry.issues)).length
+  const pageDraftCount = pageIssueEntries.filter((entry) => entry.project.status !== 'published').length
+  const priorityItems = buildProjectPriorityItems(rows).slice(0, 4)
+  const contentGapTotal = issueSummary.media + issueSummary.story + issueSummary.facts + issueSummary.tags
+  const currentViewLabel = filters.view ? getProjectViewLabel(filters.view) : filters.status ? (filters.status === 'published' ? '已发布' : '草稿') : '全部案例'
+  const queueItems: CaseInquiryQueueItem[] = [
+    {
+      label: '发布案例池',
+      value: formatNumber(summary.published),
+      detail: `当前页 ${formatNumber(pagePublishedCount)} 个已发布，先确认可支撑 /cases 到询盘的公开样本。`,
+      href: createHref(filters, { status: 'published', view: '' }),
+      cta: '筛选已发布',
+      Icon: CheckCircle2,
+      tone: summary.published > 0 ? 'green' : 'gray',
+    },
+    {
+      label: '转化弱队列',
+      value: formatNumber(summary.caseConversionWeak),
+      detail: `当前页命中 ${formatNumber(pageWeakCount)} 个发布中缺口；优先补素材、叙事、事实和标签。`,
+      href: createHref(filters, { status: '', view: 'case-conversion-weak' }),
+      cta: '处理弱项',
+      Icon: SearchCheck,
+      tone: summary.caseConversionWeak > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '案例询盘线索',
+      value: formatNumber(casePathMetric.leads),
+      detail: `30 天动作 ${formatNumber(casePathMetric.ctaClicks)}，表单 ${formatNumber(casePathMetric.formSubmits)}；线索归到 source_type=case。`,
+      href: '/admin/customers/leads?source_type=case',
+      cta: '看案例线索',
+      Icon: ListChecks,
+      tone: casePathMetric.leads > 0 ? 'green' : casePathMetric.ctaClicks > 0 ? 'orange' : 'blue',
+    },
+    {
+      label: '路径转化率',
+      value: formatAnalyticsPercent(casePathMetric.conversionRate),
+      detail: `30 天访问 ${formatNumber(casePathMetric.views)}；回到流量页复看 /cases、详情页和询盘路径。`,
+      href: '/admin/status/traffic#case-inquiry-path',
+      cta: '看路径分析',
+      Icon: BarChart3,
+      tone: casePathMetric.leads > 0 ? 'green' : casePathMetric.views > 0 ? 'orange' : 'gray',
+    },
+  ]
+  const handoffItems: CaseInquiryQueueItem[] = [
+    {
+      label: '当前视图',
+      value: currentViewLabel,
+      detail: `当前页 ${formatNumber(rows.length)} 条，草稿 ${formatNumber(pageDraftCount)} 条，可承接询盘 ${formatNumber(pageReadyCount)} 条。`,
+      href: '/admin/content/projects/list',
+      cta: '回全部',
+      Icon: Filter,
+      tone: filters.view || filters.status || filters.search ? 'blue' : 'gray',
+    },
+    {
+      label: '内容缺口',
+      value: formatNumber(contentGapTotal),
+      detail: `素材 ${formatNumber(issueSummary.media)}，叙事 ${formatNumber(issueSummary.story)}，事实 ${formatNumber(issueSummary.facts)}，标签 ${formatNumber(issueSummary.tags)}。`,
+      href: createHref(filters, { status: '', view: 'incomplete' }),
+      cta: '看待补内容',
+      Icon: CircleDashed,
+      tone: contentGapTotal > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '前台路径',
+      value: '/cases',
+      detail: '公开案例列表和案例详情页是询盘入口；本区只下钻查看，不改前台路由。',
+      href: '/cases',
+      cta: '看前台',
+      Icon: ExternalLink,
+      tone: 'blue',
+    },
+    {
+      label: '阶段归因',
+      value: 'case:*',
+      detail: '按 case:cta_click 与 case:inquiry_form 区分动作和表单，不写线索状态。',
+      href: '/admin/customers/leads?source_type=case&source_stage=case%3Ainquiry_form',
+      cta: '看表单阶段',
+      Icon: Tags,
+      tone: 'blue',
+    },
+    {
+      label: 'Global 联动',
+      value: formatNumber(summary.mapReady),
+      detail: `已发布且有坐标 ${formatNumber(summary.mapReady)} 个；缺坐标 ${formatNumber(summary.missingCoordinates)} 个。`,
+      href: createHref(filters, { status: '', view: 'map-ready' }),
+      cta: '看入图案例',
+      Icon: MapPinned,
+      tone: summary.missingCoordinates > 0 ? 'orange' : summary.mapReady > 0 ? 'green' : 'gray',
+    },
+    {
+      label: '编辑队列',
+      value: priorityItems[0]?.label ?? '无高优先级',
+      detail: priorityItems[0]
+        ? `${priorityItems[0].project.name_zh || priorityItems[0].project.name_en || priorityItems[0].project.id} 需要 ${priorityItems[0].label}。`
+        : '当前页没有高优先级缺口，可继续切换筛选范围。',
+      href: priorityItems[0] ? `/admin/content/projects/${priorityItems[0].project.id}/edit` : '/admin/content/projects/list',
+      cta: priorityItems[0] ? '编辑优先项' : '回列表',
+      Icon: Pencil,
+      tone: priorityItems[0] ? 'orange' : 'green',
+    },
+  ]
+
+  return (
+    <section id="case-list-inquiry-conversion-queue" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid grid-cols-1 border-l-4 border-[#E36F2C] lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="px-4 py-4">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">B300 Case Inquiry Queue</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例列表到询盘转化处理队列</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把案例列表筛选、已发布案例池、发布转化弱项、`/cases` 前台路径、`source_type=case` 线索和 30 天路径转化数据集中到同屏处理。这里是只读队列，不改案例保存、发布、Global 点位或线索状态。
+          </p>
+        </div>
+        <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] p-4 lg:border-l lg:border-t-0">
+          <p className="text-xs font-bold text-[#61767D]">当前判断</p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-[#1E2C31]">
+            {summary.caseConversionWeak > 0
+              ? `先处理 ${formatNumber(summary.caseConversionWeak)} 个发布转化弱案例，再回看询盘线索。`
+              : '发布案例没有内容型转化弱项，可继续复看路径样本和线索承接。'}
+          </p>
+          <Link
+            href={summary.caseConversionWeak > 0 ? createHref(filters, { status: '', view: 'case-conversion-weak' }) : '/admin/customers/leads?source_type=case'}
+            className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[#1889B6] px-3 text-xs font-bold text-white transition hover:bg-[#137A9F]"
+          >
+            {summary.caseConversionWeak > 0 ? '进入转化弱队列' : '查看案例线索'}
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-2 xl:grid-cols-4">
+        {queueItems.map((item) => (
+          <CaseInquiryQueueLink key={item.label} item={item} />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-2 xl:grid-cols-3">
+        {handoffItems.map((item) => (
+          <CaseInquiryQueueLink key={item.label} item={item} compact />
+        ))}
+      </div>
+
+      {priorityItems.length > 0 ? (
+        <div className="border-t border-[#E6EEEE]">
+          <div className="flex items-center justify-between gap-3 px-4 py-3">
+            <div>
+              <h3 className="text-sm font-bold text-[#1E2C31]">本页优先编辑样本</h3>
+              <p className="mt-1 text-xs text-[#61767D]">按素材、坐标、叙事和项目事实缺口排序，只跳转到现有编辑页。</p>
+            </div>
+            <Link
+              href={createHref(filters, { status: '', view: 'case-conversion-weak' })}
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-bold text-[#E36F2C] transition hover:border-[#E36F2C]/60 hover:bg-[#FFF2E7]"
+            >
+              转化弱
+              <ArrowRight size={12} />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+            {priorityItems.map((item) => (
+              <Link
+                key={item.project.id}
+                href={`/admin/content/projects/${item.project.id}/edit`}
+                className="group min-h-[132px] px-4 py-4 transition hover:bg-[#F7FAFA]"
+              >
+                <span className="flex items-start justify-between gap-3">
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-bold text-[#1E2C31]">{item.project.name_zh || item.project.name_en || item.project.id}</span>
+                    <span className="mt-1 block truncate text-xs text-[#61767D]">{item.project.country || '未标记国家'} · {item.project.location_zh || item.project.location_en || '未标记位置'}</span>
+                  </span>
+                  <span className="shrink-0 rounded-md bg-[#FFF2E7] px-2 py-1 text-xs font-bold text-[#E36F2C]">{item.label}</span>
+                </span>
+                <span className="mt-3 flex flex-wrap gap-1.5">
+                  {item.issues.slice(0, 3).map((issue) => (
+                    <span key={issue} className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-600">
+                      {issue}
+                    </span>
+                  ))}
+                </span>
+                <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6]">
+                  编辑案例
+                  <ArrowRight size={12} className="transition group-hover:translate-x-0.5" />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  )
+}
+
+function CaseInquiryQueueLink({ item, compact = false }: { item: CaseInquiryQueueItem; compact?: boolean }) {
+  const Icon = item.Icon
+
+  return (
+    <Link
+      href={item.href}
+      className={`group border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-white md:border-r xl:border-b-0 last:border-r-0 ${
+        compact ? 'min-h-[128px]' : 'min-h-[164px]'
+      }`}
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-sm font-bold text-[#1E2C31]">{item.label}</span>
+          <span className={`mt-2 inline-flex min-h-7 max-w-full items-center rounded-md border px-2.5 text-[11px] font-bold ${caseInquiryQueueToneClass(item.tone)}`}>
+            <span className="truncate">{item.value}</span>
+          </span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+      <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6]">
+        {item.cta}
+        <ArrowRight size={12} className="transition group-hover:translate-x-0.5" />
+      </span>
+    </Link>
+  )
+}
+
 function ProjectOperationsMatrix({
   summary,
   issueSummary,
@@ -1773,6 +2031,13 @@ export default async function AdminContentProjectsListPage({ searchParams }: Pag
         <CaseSourceContractPanel
           filters={filters}
           summary={summary}
+          casePathMetric={casePathMetric}
+        />
+        <CaseListInquiryConversionQueue
+          filters={filters}
+          summary={summary}
+          issueSummary={issueSummary}
+          rows={list.rows}
           casePathMetric={casePathMetric}
         />
         <ProjectOperationsMatrix
