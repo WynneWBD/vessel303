@@ -76,6 +76,22 @@ type ConversionHandoffItem = {
   tone: ConversionHandoffTone
 }
 
+type SourceContractPortfolioRow = {
+  key: 'product' | 'case' | 'news'
+  title: string
+  routeLabel: string
+  sourceRule: string
+  stageRule: string
+  metric: AnalyticsConversionMetric
+  leadTotal: number
+  activeLeads: number
+  stageKinds: number
+  contentHref: string
+  leadHref: string
+  pathHref: string
+  Icon: LucideIcon
+}
+
 const EMPTY_METRIC: AnalyticsConversionMetric = {
   views: 0,
   ctaClicks: 0,
@@ -398,6 +414,13 @@ export default async function AdminSiteConversionPage() {
           totalLeads={totalLeads}
           excludedTestLeads={excludedTestLeads}
         />
+        <SourceContractPortfolioPanel
+          productPathMetric={productPathMetric}
+          casePathMetric={casePathMetric}
+          newsPathMetric={newsPathMetric}
+          leadSourceSummary={leadSourceSummary}
+          sourceStageSummary={sourceStageSummary}
+        />
         <ProductConversionClosurePanel
           productPathMetric={productPathMetric}
           leadSourceSummary={leadSourceSummary}
@@ -696,6 +719,225 @@ function ControlStat({ label, value, detail }: { label: string; value: string; d
       <div className="mt-1 truncate text-sm font-bold text-[#1E2C31]">{value}</div>
       {detail ? <div className="mt-1 text-[11px] text-[#8A9EA4]">{detail}</div> : null}
     </div>
+  )
+}
+
+function SourceContractPortfolioPanel({
+  productPathMetric,
+  casePathMetric,
+  newsPathMetric,
+  leadSourceSummary,
+  sourceStageSummary,
+}: {
+  productPathMetric: AnalyticsConversionMetric
+  casePathMetric: AnalyticsConversionMetric
+  newsPathMetric: AnalyticsConversionMetric
+  leadSourceSummary: LeadSourceStatusSummary[]
+  sourceStageSummary: LeadSourceStageStatusSummary[]
+}) {
+  const rowFor = ({
+    key,
+    title,
+    routeLabel,
+    sourceRule,
+    stageRule,
+    metric,
+    contentHref,
+    leadHref,
+    pathHref,
+    Icon,
+  }: Omit<SourceContractPortfolioRow, 'leadTotal' | 'activeLeads' | 'stageKinds'>): SourceContractPortfolioRow => {
+    const source = leadSourceSummary.find((item) => item.type === key)
+    const activeLeads = source ? source.new + source.contacting + source.quoted : 0
+    const stageKinds = sourceStageSummary.filter((item) => item.type === key).length
+
+    return {
+      key,
+      title,
+      routeLabel,
+      sourceRule,
+      stageRule,
+      metric,
+      leadTotal: source?.total ?? 0,
+      activeLeads,
+      stageKinds,
+      contentHref,
+      leadHref,
+      pathHref,
+      Icon,
+    }
+  }
+  const rows: SourceContractPortfolioRow[] = [
+    rowFor({
+      key: 'product',
+      title: '产品来源合同',
+      routeLabel: 'Products / Learn More / Appointment',
+      sourceRule: 'source_type=product',
+      stageRule: 'catalog_card_cta / cta_click / inquiry_form',
+      metric: productPathMetric,
+      contentHref: '/admin/content/products/list#product-source-contract',
+      leadHref: '/admin/customers/leads?source_type=product',
+      pathHref: '/admin/status/leads#product-lead-path-bridge',
+      Icon: LayoutTemplate,
+    }),
+    rowFor({
+      key: 'case',
+      title: '案例来源合同',
+      routeLabel: 'Projects / Cases / #case-inquiry',
+      sourceRule: 'source_type=case',
+      stageRule: 'case:cta_click / case:inquiry_form',
+      metric: casePathMetric,
+      contentHref: '/admin/content/projects/list#case-source-contract',
+      leadHref: '/admin/customers/leads?source_type=case',
+      pathHref: '/admin/status/traffic#case-inquiry-path',
+      Icon: Route,
+    }),
+    rowFor({
+      key: 'news',
+      title: '新闻来源合同',
+      routeLabel: 'Blog / View Details / Contact',
+      sourceRule: 'source_type=news',
+      stageRule: 'news:*:contact_cta',
+      metric: newsPathMetric,
+      contentHref: '/admin/content/news#news-operations-hub',
+      leadHref: '/admin/customers/leads?source_type=news',
+      pathHref: '/admin/status/traffic#news-source-handoff',
+      Icon: FileText,
+    }),
+  ]
+  const totalContractViews = rows.reduce((sum, row) => sum + row.metric.views, 0)
+  const totalContractActions = rows.reduce((sum, row) => sum + row.metric.ctaClicks + row.metric.formSubmits, 0)
+  const totalContractLeads = rows.reduce((sum, row) => sum + row.leadTotal, 0)
+  const activeContractLeads = rows.reduce((sum, row) => sum + row.activeLeads, 0)
+
+  return (
+    <section id="source-contract-portfolio" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B277 Source Contract Portfolio</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">来源合同总览</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把公开站 Products / Projects / Blog 三条主要获客路径合并成一张运营总账：看入口访问、动作、线索、阶段数量和内容维护入口；本面板只读，不新增埋点、表单或线索状态规则。
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Link
+            href="/admin/customers/leads"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            全部线索
+            <ArrowRight size={13} />
+          </Link>
+          <Link
+            href="#conversion-ledger"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            路径总账
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
+        <SourceContractPortfolioStat label="合同路径访问" value={totalContractViews} detail="产品 / 案例 / 新闻 30 天样本" />
+        <SourceContractPortfolioStat label="合同路径动作" value={totalContractActions} detail="CTA + 表单动作" />
+        <SourceContractPortfolioStat label="合同来源线索" value={totalContractLeads} detail={`活跃 ${activeContractLeads.toLocaleString('zh-CN')}`} />
+        <SourceContractPortfolioStat label="合同阶段种类" value={rows.reduce((sum, row) => sum + row.stageKinds, 0)} detail="source_stage 已归类数量" />
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] xl:grid-cols-3 xl:divide-x xl:divide-y-0">
+        {rows.map((row) => (
+          <SourceContractPortfolioCard key={row.key} row={row} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function SourceContractPortfolioStat({ label, value, detail }: { label: string; value: number; detail: string }) {
+  return (
+    <div className="px-4 py-3">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className="mt-1 text-2xl font-bold text-[#1E2C31]">{value.toLocaleString('zh-CN')}</p>
+      <p className="mt-1 text-xs leading-5 text-[#61767D]">{detail}</p>
+    </div>
+  )
+}
+
+function SourceContractPortfolioCard({ row }: { row: SourceContractPortfolioRow }) {
+  const Icon = row.Icon
+  const actionCount = row.metric.ctaClicks + row.metric.formSubmits
+  const tone = row.leadTotal > 0
+    ? 'green'
+    : row.metric.views > 0 && actionCount === 0
+      ? 'orange'
+      : row.metric.views > 0
+        ? 'blue'
+        : 'gray'
+  const toneClass =
+    tone === 'green'
+      ? 'bg-emerald-50 text-emerald-700'
+      : tone === 'orange'
+        ? 'bg-[#FFF2E7] text-[#E36F2C]'
+        : tone === 'blue'
+          ? 'bg-[#EAF6F8] text-[#1889B6]'
+          : 'bg-[#F0F2F2] text-[#61767D]'
+
+  return (
+    <div className="px-5 py-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-[#1E2C31]">{row.title}</p>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">{row.routeLabel}</p>
+        </div>
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${toneClass}`}>
+          <Icon size={18} />
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <SourceContractMiniStat label="访问" value={row.metric.views} />
+        <SourceContractMiniStat label="动作" value={actionCount} />
+        <SourceContractMiniStat label="线索" value={row.leadTotal} />
+        <SourceContractMiniStat label="活跃" value={row.activeLeads} />
+      </div>
+
+      <div className="mt-4 space-y-2">
+        <p className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2 font-mono text-[11px] leading-5 text-[#1E2C31]">
+          {row.sourceRule}
+        </p>
+        <p className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2 font-mono text-[11px] leading-5 text-[#61767D]">
+          {row.stageRule}
+        </p>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <SourceContractAction href={row.contentHref} label="内容入口" />
+        <SourceContractAction href={row.leadHref} label="线索队列" />
+        <SourceContractAction href={row.pathHref} label="路径复盘" />
+      </div>
+    </div>
+  )
+}
+
+function SourceContractMiniStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2">
+      <p className="text-[11px] font-semibold text-[#61767D]">{label}</p>
+      <p className="mt-1 text-lg font-bold text-[#1E2C31]">{value.toLocaleString('zh-CN')}</p>
+    </div>
+  )
+}
+
+function SourceContractAction({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-2 py-1 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+    >
+      {label}
+      <ArrowRight size={12} />
+    </Link>
   )
 }
 
