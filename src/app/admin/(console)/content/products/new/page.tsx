@@ -170,6 +170,7 @@ function getSideNavGroups(): AdminSideNavGroup[] {
       title: '产品治理',
       items: [
         { key: 'new-product-closure', label: '新建预检', href: '#new-product-closure', Icon: BarChart3 },
+        { key: 'new-product-lead-feedback', label: '线索反馈准备', href: '#new-product-lead-feedback-desk', Icon: ListChecks },
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
         { key: 'publish-flow', label: '发布审核', planned: true, Icon: SearchCheck },
@@ -371,6 +372,232 @@ function NewProductPreflightPanel({
   )
 }
 
+function NewProductLeadFeedbackPrepPanel({
+  categories,
+  attributeTemplates,
+  relatedProductCount,
+  maxUploadMb,
+}: {
+  categories: number
+  attributeTemplates: number
+  relatedProductCount: number
+  maxUploadMb: number
+}) {
+  const taxonomyReady = categories > 0 && attributeTemplates > 0
+  const mediaReady = maxUploadMb > 0
+  const relatedReady = relatedProductCount > 0
+  const readyCount = [taxonomyReady, mediaReady, relatedReady].filter(Boolean).length
+  const feedbackCards: NewProductClosureItem[] = [
+    {
+      label: 'B327 单品检查',
+      value: '保存后',
+      detail: '产品保存为草稿后，回到单品编辑页检查发布缺项、询盘交接和前台路径。',
+      href: '#publish-check',
+      Icon: Pencil,
+      tone: 'neutral',
+    },
+    {
+      label: 'B326 内容回流',
+      value: '列表队列',
+      detail: '先看产品列表的内容回流优先级，把线索反馈转成 SEO、商务和资料补齐顺序。',
+      href: '/admin/content/products/list#product-content-lead-feedback-desk',
+      Icon: Package,
+      tone: 'neutral',
+    },
+    {
+      label: 'B325 跟进分诊',
+      value: '线索质量',
+      detail: '从产品线索质量、表单阶段和跟进断点判断新产品需要补哪些买家判断材料。',
+      href: '/admin/status/leads#product-lead-quality-followup-desk',
+      Icon: ListChecks,
+      tone: 'neutral',
+    },
+    {
+      label: 'B324 线索复盘',
+      value: 'product',
+      detail: '进入 product 来源线索队列，对照客户问题、CTA 来源和运营跟进状态。',
+      href: '/admin/customers/leads?source_type=product#product-lead-ops-review-desk',
+      Icon: BarChart3,
+      tone: 'neutral',
+    },
+  ]
+  const prepCards: NewProductClosureItem[] = [
+    {
+      label: '分类与属性底座',
+      value: `${categories}/${attributeTemplates}`,
+      detail: taxonomyReady ? '分类和属性模板已可用，可进入产品属性区填写。' : '先补分类或属性模板，再创建可筛选的产品内容。',
+      href: taxonomyReady ? '#attributes' : '/admin/content/products/attributes',
+      Icon: SlidersHorizontal,
+      tone: taxonomyReady ? 'ready' : 'warning',
+    },
+    {
+      label: '媒体上传环境',
+      value: `${maxUploadMb} MB`,
+      detail: mediaReady ? '上传上限可用；先准备封面、图库和可追溯素材来源。' : '媒体上传上限异常，先检查媒体设置后再录入图片。',
+      href: '#media',
+      Icon: ImageIcon,
+      tone: mediaReady ? 'ready' : 'warning',
+    },
+    {
+      label: '关联推荐池',
+      value: relatedProductCount.toString(),
+      detail: relatedReady ? '已有相关产品可做详情页继续浏览入口。' : '暂无相关产品池，新产品保存后需要补关联推荐。',
+      href: relatedReady ? '#relations' : '/admin/content/products/list?status=published',
+      Icon: Tags,
+      tone: relatedReady ? 'ready' : 'neutral',
+    },
+  ]
+  const workflow = [
+    {
+      label: '01 看线索反馈',
+      detail: '先读 B325/B324，确认 product 来源线索卡在跟进、表单、CTA 还是内容证明。',
+      href: '/admin/status/leads#product-lead-quality-followup-desk',
+      Icon: ListChecks,
+      primary: false,
+    },
+    {
+      label: '02 定内容缺口',
+      detail: '回 B326 看现有产品的内容回流队列，把缺口转成新产品的 SEO、商务和资料清单。',
+      href: '/admin/content/products/list#product-content-lead-feedback-desk',
+      Icon: Package,
+      primary: false,
+    },
+    {
+      label: '03 准备新建资料',
+      detail: `按 B319 先准备分类属性、媒体、详情证明和询盘交接；当前准备底座 ${readyCount}/3。`,
+      href: '#new-product-closure',
+      Icon: Layers3,
+      primary: readyCount < 3,
+    },
+    {
+      label: '04 填表保存草稿',
+      detail: '进入基础信息、SEO、商务、图片、详情和发布检查；保存后再回单品编辑页复盘。',
+      href: '#basic',
+      Icon: Pencil,
+      primary: false,
+    },
+  ]
+
+  return (
+    <section
+      id="new-product-lead-feedback-desk"
+      data-new-product-lead-feedback="true"
+      className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
+      <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p className="text-xs font-bold text-[#E36F2C]">B328 新建产品线索反馈与内容准备</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">创建前先把线索反馈转成内容准备清单</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
+            把 B327 单品检查、B326 内容回流、B325 跟进分诊和 B324 产品线索复盘前置到新建产品前；本区只做只读准备路径，不保存产品、不发布产品、不更新线索。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <AdminActionLink href="/admin/content/products/list#product-content-lead-feedback-desk" Icon={Package} label="B326 回流" />
+          <AdminActionLink href="/admin/status/leads#product-lead-quality-followup-desk" Icon={ListChecks} label="B325 分诊" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-b border-[#E6EEEE] bg-[#F7FAFA] md:grid-cols-4">
+        <NewProductFeedbackInfoCell label="准备底座" value={`${readyCount}/3`} detail="分类属性、媒体、关联池" tone={readyCount === 3 ? 'ready' : readyCount > 0 ? 'neutral' : 'warning'} />
+        <NewProductFeedbackInfoCell label="线索来源" value="product" detail="B325/B324 只读复盘" tone="neutral" />
+        <NewProductFeedbackInfoCell label="内容回流" value="B326" detail="列表优先级队列" tone="neutral" />
+        <NewProductFeedbackInfoCell label="保存影响" value="草稿" detail="未保存前不会公开展示" tone="ready" />
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] lg:grid-cols-[minmax(0,1fr)_420px] lg:divide-x lg:divide-y-0">
+        <div>
+          <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+            {feedbackCards.map((card) => (
+              <Link key={card.label} href={card.href} className="block min-h-[154px] p-4 transition hover:bg-[#F7FAFA]">
+                <span className="flex items-start justify-between gap-3">
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${closureToneClass(card.tone)}`}>
+                    <card.Icon size={17} />
+                  </span>
+                  <span className={`max-w-[104px] truncate rounded-full border px-2.5 py-1 text-[11px] font-semibold ${closureToneClass(card.tone)}`} title={card.value}>
+                    {card.value}
+                  </span>
+                </span>
+                <span className="mt-3 block text-sm font-bold text-[#1E2C31]">{card.label}</span>
+                <span className="mt-2 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
+              </Link>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] bg-[#F7FAFA] p-4 md:grid-cols-3">
+            {prepCards.map((card) => (
+              <Link key={card.label} href={card.href} className="rounded-md border border-[#D8E7E8] bg-white p-4 transition hover:border-[#1889B6] hover:bg-[#F0F7F8]">
+                <span className="flex items-start justify-between gap-3">
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${closureToneClass(card.tone)}`}>
+                    <card.Icon size={16} />
+                  </span>
+                  <span className={`max-w-[96px] truncate rounded-full border px-2.5 py-1 text-[11px] font-semibold ${closureToneClass(card.tone)}`} title={card.value}>
+                    {card.value}
+                  </span>
+                </span>
+                <span className="mt-3 block text-sm font-bold text-[#1E2C31]">{card.label}</span>
+                <span className="mt-2 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <aside className="bg-[#FBFDFD]">
+          <div className="border-b border-[#E6EEEE] px-5 py-4">
+            <h3 className="text-sm font-bold text-[#1E2C31]">新建前动作顺序</h3>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">
+              先读线索反馈，再看内容回流，最后进入表单保存草稿。
+            </p>
+          </div>
+          <div className="divide-y divide-[#E6EEEE]">
+            {workflow.map((step) => {
+              const Icon = step.Icon
+              return (
+                <Link
+                  key={step.label}
+                  href={step.href}
+                  className={`block px-5 py-4 transition ${step.primary ? 'bg-[#FFF7F0] hover:bg-[#FFF2E7]' : 'hover:bg-[#F0F7F8]'}`}
+                >
+                  <span className="flex gap-3">
+                    <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${step.primary ? 'bg-[#E36F2C] text-white' : 'bg-white text-[#1889B6]'}`}>
+                      <Icon size={15} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-bold text-[#1E2C31]">{step.label}</span>
+                      <span className="mt-1 block text-xs leading-5 text-[#61767D]">{step.detail}</span>
+                    </span>
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+        </aside>
+      </div>
+    </section>
+  )
+}
+
+function NewProductFeedbackInfoCell({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string
+  value: string
+  detail: string
+  tone: NewProductClosureItem['tone']
+}) {
+  return (
+    <div className="border-b border-r border-[#E6EEEE] p-4 last:border-r-0 md:border-b-0">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-2 text-xl font-bold ${tone === 'warning' ? 'text-[#E36F2C]' : tone === 'ready' ? 'text-emerald-700' : 'text-[#1E2C31]'}`}>
+        {value}
+      </p>
+      <p className="mt-1 truncate text-xs text-[#61767D]" title={detail}>{detail}</p>
+    </div>
+  )
+}
+
 function InfoCard({ title, value }: { title: string; value: string }) {
   return (
     <div className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
@@ -533,6 +760,12 @@ export default async function AdminContentProductNewPage() {
         signals={consoleSignals}
       />
       <NewProductPreflightPanel
+        categories={categories.length}
+        attributeTemplates={attributeTemplates.length}
+        relatedProductCount={relatedProducts.rows.length}
+        maxUploadMb={maxUploadMb}
+      />
+      <NewProductLeadFeedbackPrepPanel
         categories={categories.length}
         attributeTemplates={attributeTemplates.length}
         relatedProductCount={relatedProducts.rows.length}
