@@ -691,6 +691,7 @@ function getSideNavGroups(product: CatalogProductRow): AdminSideNavGroup[] {
       items: [
         { key: 'product-edit-backflow-guide', label: '回流处理', href: '#product-edit-backflow-guide', Icon: ListChecks },
         { key: 'product-edit-closure', label: '经营闭环', href: '#product-edit-closure', Icon: BarChart3 },
+        { key: 'product-edit-lead-feedback', label: '线索回流', href: '#product-edit-lead-feedback-desk', Icon: UsersRound },
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
         { key: 'publish-flow', label: '发布审核', planned: true, Icon: SearchCheck },
@@ -1094,6 +1095,183 @@ function ProductEditClosurePanel({ product }: { product: CatalogProductRow }) {
   )
 }
 
+function ProductEditLeadFeedbackDesk({ product }: { product: CatalogProductRow }) {
+  const routeInfo = getCatalogProductRouteInfo(product)
+  const releaseIssues = getProductReleaseIssues(product)
+  const backflowSteps = buildProductEditBackflowSteps(product)
+  const warningSteps = backflowSteps.filter((step) => step.tone === 'warning')
+  const published = product.status === 'published'
+  const productSearchHref = `/admin/content/products/list?search=${encodeURIComponent(product.id)}#product-content-lead-feedback-desk`
+  const firstWarningHref = warningSteps[0]?.href ?? '#publish-check'
+  const leadHandoffIssues = compactIssueList([
+    (!hasText(product.price_display_zh) && !hasText(product.price_display_en)) && '价格展示',
+    getCommercialIssueLabel(product),
+    !hasArrayItems(product.related_product_ids) && '相关产品',
+    !hasBuyerResourceLinks(product) && '买家资料链接',
+  ])
+  const leadFeedbackDecision =
+    published && releaseIssues.length > 0
+      ? `当前产品已发布且还有 ${releaseIssues.length} 个发布缺项，先处理本页缺口，再回 B326 产品内容回流队列复盘。`
+      : leadHandoffIssues.length > 0
+        ? `当前产品还有 ${leadHandoffIssues.length} 个询盘交接缺口，优先补商务口径、关联产品和买家资料链接。`
+        : !published
+          ? '当前产品仍是草稿，先按 B327 检查补齐内容，再进入表单底部发布检查。'
+          : '当前产品主要字段已具备，可通过 B325/B324 观察产品线索反馈，再决定是否继续优化内容。'
+  const feedbackCards = [
+    {
+      key: 'b326-content-feedback',
+      label: 'B326 内容回流',
+      value: releaseIssues.length > 0 ? `${releaseIssues.length} 缺项` : '可复盘',
+      detail: '回到产品列表的内容回流优先级，用当前产品 ID 定位队列。',
+      href: productSearchHref,
+      Icon: Package,
+      tone: releaseIssues.length > 0 ? 'warning' : 'ready',
+    },
+    {
+      key: 'b325-followup-triage',
+      label: 'B325 跟进分诊',
+      value: '质量复盘',
+      detail: '从产品线索质量、表单阶段和跟进断点判断当前产品是否需要补内容。',
+      href: '/admin/status/leads#product-lead-quality-followup-desk',
+      Icon: ListChecks,
+      tone: 'neutral',
+    },
+    {
+      key: 'b324-lead-review',
+      label: 'B324 线索复盘',
+      value: 'product',
+      detail: '进入 product 来源线索队列，查看产品表单、详情 CTA 和卡片 CTA 反馈。',
+      href: '/admin/customers/leads?source_type=product#product-lead-ops-review-desk',
+      Icon: UsersRound,
+      tone: 'neutral',
+    },
+    {
+      key: 'b323-conversion-bridge',
+      label: 'B323 转化桥',
+      value: published ? '已公开' : '草稿',
+      detail: '把产品生命周期、转化路径和产品线索状态放到同一张复盘表。',
+      href: '/admin/site/conversion#product-lifecycle-conversion-bridge',
+      Icon: BarChart3,
+      tone: published ? 'ready' : 'warning',
+    },
+  ] satisfies ProductEditClosureEntry[]
+  const workflow = [
+    {
+      label: '01 看线索反馈',
+      detail: '先打开 B325/B324，确认产品来源线索是否卡在跟进、表单或 CTA 阶段。',
+      href: '/admin/status/leads#product-lead-quality-followup-desk',
+      Icon: UsersRound,
+      primary: false,
+    },
+    {
+      label: '02 补当前缺口',
+      detail: warningSteps.length > 0
+        ? `当前先处理 ${warningSteps[0]?.label}：${warningSteps[0]?.issues.slice(0, 3).join('、') || '待补字段'}。`
+        : '当前回流步骤没有明显缺口，可进入发布检查或前台预览。',
+      href: firstWarningHref,
+      Icon: Pencil,
+      primary: warningSteps.length > 0,
+    },
+    {
+      label: '03 回列表复盘',
+      detail: '回到 B326 产品内容回流优先级，和同页产品一起比较处理顺序。',
+      href: productSearchHref,
+      Icon: Layers3,
+      primary: releaseIssues.length > 0,
+    },
+    {
+      label: '04 前台确认',
+      detail: published ? routeInfo.publicHref : '草稿未公开，发布前只能做字段检查。',
+      href: published ? routeInfo.publicHref : '#publish-check',
+      Icon: published ? CheckCircle2 : SearchCheck,
+      primary: false,
+      external: published,
+    },
+  ]
+
+  return (
+    <section
+      id="product-edit-lead-feedback-desk"
+      data-product-edit-lead-feedback="true"
+      className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
+      <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p className="text-xs font-bold text-[#E36F2C]">B327 单品线索回流检查</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">当前产品的线索反馈、内容缺口与发布前回流</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
+            把 B326 产品内容回流、B325 跟进分诊、B324 产品线索复盘和 B323 转化桥沉到当前产品；本区只做只读判断和跳转，不保存产品、不发布产品、不更新线索。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <AdminActionLink href={productSearchHref} Icon={Package} label="B326 回流" />
+          <AdminActionLink href="/admin/status/leads#product-lead-quality-followup-desk" Icon={ListChecks} label="B325 分诊" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-b border-[#E6EEEE] bg-[#F7FAFA] md:grid-cols-4">
+        <BackflowInfoCell label="公开状态" value={published ? '已发布' : '草稿'} detail={published ? routeInfo.publicHref : '发布前不会公开展示'} tone={published ? 'warning' : 'neutral'} />
+        <BackflowInfoCell label="发布缺项" value={`${releaseIssues.length}`} detail={releaseIssues.length > 0 ? releaseIssues.slice(0, 3).join('、') : '当前没有发布缺项'} tone={releaseIssues.length > 0 ? 'warning' : 'ready'} />
+        <BackflowInfoCell label="询盘交接缺口" value={`${leadHandoffIssues.length}`} detail={leadHandoffIssues.length > 0 ? leadHandoffIssues.join('、') : '询盘交接字段已具备'} tone={leadHandoffIssues.length > 0 ? 'warning' : 'ready'} />
+        <BackflowInfoCell label="回流步骤待处理" value={`${warningSteps.length}`} detail={warningSteps.length > 0 ? warningSteps.map((step) => step.label).slice(0, 3).join('、') : '回流步骤均已具备'} tone={warningSteps.length > 0 ? 'warning' : 'ready'} />
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] lg:grid-cols-[minmax(0,1fr)_420px] lg:divide-x lg:divide-y-0">
+        <div>
+          <div className="border-b border-[#E6EEEE] px-5 py-4">
+            <p className="text-sm font-bold text-[#1E2C31]">处理判断</p>
+            <p className="mt-2 text-sm leading-6 text-[#61767D]">{leadFeedbackDecision}</p>
+          </div>
+          <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+            {feedbackCards.map((entry) => (
+              <ProductEditClosureCard key={entry.key} entry={entry} />
+            ))}
+          </div>
+        </div>
+
+        <aside className="bg-[#FBFDFD]">
+          <div className="border-b border-[#E6EEEE] px-5 py-4">
+            <h3 className="text-sm font-bold text-[#1E2C31]">单品回流动作顺序</h3>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">
+              先读线索反馈，再补当前产品字段，最后回到列表队列和前台路径复盘。
+            </p>
+          </div>
+          <div className="divide-y divide-[#E6EEEE]">
+            {workflow.map((step) => {
+              const Icon = step.Icon
+              return (
+                <Link
+                  key={step.label}
+                  href={step.href}
+                  target={step.external ? '_blank' : undefined}
+                  rel={step.external ? 'noreferrer' : undefined}
+                  className="group block px-5 py-4 transition hover:bg-white"
+                >
+                  <span className="flex items-start gap-3">
+                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${
+                      step.primary ? readinessToneClass('warning') : readinessToneClass('neutral')
+                    }`}>
+                      <Icon size={16} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-bold text-[#1E2C31]">{step.label}</span>
+                      <span className="mt-1 block text-xs leading-5 text-[#61767D]">{step.detail}</span>
+                      <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
+                        打开
+                        <ArrowLeft className="rotate-180" size={13} />
+                      </span>
+                    </span>
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+        </aside>
+      </div>
+    </section>
+  )
+}
+
 function ProductEditSourceContractStrip({ contracts }: { contracts: ProductEditSourceContract[] }) {
   return (
     <div className="border-t border-[#E6EEEE] bg-white">
@@ -1336,6 +1514,7 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
       <ProductPublishReadinessPanel product={product} maxUploadMb={maxUploadMb} />
       <ProductEditBackflowGuidePanel product={product} />
       <ProductEditClosurePanel product={product} />
+      <ProductEditLeadFeedbackDesk product={product} />
       <EditSectionGrid />
       <RiskNotice product={product} />
       <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm md:p-5">
