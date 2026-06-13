@@ -26,6 +26,7 @@ import {
   ExternalLink,
   FileText,
   ImageIcon,
+  Link2,
   ListChecks,
   SearchCheck,
   Tags,
@@ -110,6 +111,13 @@ const READINESS_GROUPS: Omit<NewsEditorReadinessGroup, 'issueCount' | 'done'>[] 
     href: '#publish-check',
     Icon: CalendarClock,
   },
+]
+
+const NEWS_SOURCE_HANDOFF_LINKS = [
+  { label: '状态桥', href: '/admin/status/leads#news-lead-path-bridge' },
+  { label: '来源面板', href: '/admin/status/traffic#news-source-handoff' },
+  { label: '转化承接', href: '/admin/site/conversion#news-conversion-handoff' },
+  { label: '新闻线索', href: '/admin/customers/leads?source_type=news' },
 ]
 
 function parseId(raw: string): number | null {
@@ -303,7 +311,7 @@ function NewsReadinessPanel({ readiness }: { readiness: NewsEditorReadiness }) {
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#1889B6]">Publish Readiness</p>
           <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">新闻发布就绪路线图</h2>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-            先把列表页发现的缺项落到单篇编辑处理路径：内容、分类排期、SEO、封面和发布影响分开判断。这里是只读运营提示，不新增保存或发布限制。
+            先把列表页发现的缺项落到单篇编辑处理路径：内容、分类排期、SEO、封面、发布影响和来源承接分开判断。这里是只读运营提示，不新增保存或发布限制。
           </p>
         </div>
         <div className="grid grid-cols-3 overflow-hidden rounded-md border border-[#D8E7E8] bg-[#F7FAFA] text-center text-xs">
@@ -408,6 +416,24 @@ function NewsReadinessPanel({ readiness }: { readiness: NewsEditorReadiness }) {
             {readiness.nextIssue ? `先处理：${readiness.nextIssue.label}` : '进入表单复核'}
             <ArrowRight size={13} />
           </Link>
+          <div className="mt-4 border-t border-[#D8E7E8] pt-4">
+            <h4 className="text-sm font-bold text-[#1E2C31]">来源承接复核</h4>
+            <p className="mt-2 text-xs leading-5 text-[#61767D]">
+              保存或发布前，可从新闻来源链路复看访问、状态桥、转化承接和 `source_type=news` 线索队列；本区只做只读下钻。
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {NEWS_SOURCE_HANDOFF_LINKS.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="inline-flex min-h-9 items-center justify-between gap-2 rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-bold text-[#1889B6] transition hover:border-[#1889B6]"
+                >
+                  {link.label}
+                  <ArrowRight size={12} />
+                </Link>
+              ))}
+            </div>
+          </div>
         </aside>
       </div>
     </section>
@@ -522,6 +548,13 @@ export default async function AdminContentNewsEditPage({ params }: PageProps) {
       detail: '中英文搜索标题和描述决定搜索结果口径。',
       tone: seoReady ? 'ready' : 'warning',
       href: '#seo',
+    },
+    {
+      label: '来源承接已回连',
+      detail: '状态桥、来源面板、转化承接和新闻线索队列可用于复看新闻获客影响；这里不写线索状态。',
+      tone: 'neutral',
+      href: '/admin/status/leads#news-lead-path-bridge',
+      Icon: Link2,
     },
   ]
 
