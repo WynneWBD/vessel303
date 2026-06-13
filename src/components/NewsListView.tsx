@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -7,6 +8,7 @@ import ProtectedImage from '@/components/ProtectedImage'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { buildContactHref } from '@/lib/site-links'
 import { format, parseISO } from 'date-fns'
+import { Search, X } from 'lucide-react'
 import {
   itemById,
   itemLabel,
@@ -40,6 +42,10 @@ function formatNewsDate(value: string | Date | null, lang: 'zh' | 'en'): string 
   }
 }
 
+function categoryKey(item: NewsItem) {
+  return item.category_slug || item.category_title_en || item.category_title_zh || 'uncategorized'
+}
+
 export default function NewsListView({
   rows,
   pageModules,
@@ -48,6 +54,8 @@ export default function NewsListView({
   pageModules: PublicPageModule[]
 }) {
   const { lang } = useLanguage()
+  const [query, setQuery] = useState('')
+  const [activeCategory, setActiveCategory] = useState('all')
   const modules = moduleMap(pageModules)
   const heroModule = modules.get('hero') ?? null
   const uiModule = modules.get('ui') ?? null
@@ -62,6 +70,39 @@ export default function NewsListView({
       .map((item) => (zh ? item.category_title_zh || item.category_title_en : item.category_title_en || item.category_title_zh))
       .filter((value): value is string => Boolean(value?.trim())),
   ))
+  const categoryOptions = useMemo(() => {
+    const map = new Map<string, string>()
+    rows.forEach((item) => {
+      const label = zh
+        ? item.category_title_zh || item.category_title_en
+        : item.category_title_en || item.category_title_zh
+      if (label?.trim()) map.set(categoryKey(item), label.trim())
+    })
+    return Array.from(map.entries()).map(([key, label]) => ({ key, label }))
+  }, [rows, zh])
+  const filteredRows = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase()
+    return rows.filter((item) => {
+      const matchesCategory = activeCategory === 'all' || categoryKey(item) === activeCategory
+      if (!matchesCategory) return false
+      if (!normalizedQuery) return true
+
+      const haystack = [
+        item.title_zh,
+        item.title_en,
+        item.excerpt_zh,
+        item.excerpt_en,
+        item.category_title_zh,
+        item.category_title_en,
+      ].join(' ').toLowerCase()
+      return haystack.includes(normalizedQuery)
+    })
+  }, [activeCategory, query, rows])
+  const hasActiveDiscovery = activeCategory !== 'all' || query.trim().length > 0
+  const resetDiscovery = () => {
+    setQuery('')
+    setActiveCategory('all')
+  }
   const latestDate = rows[0]?.published_at ? formatNewsDate(rows[0].published_at, lang) : ''
   const contactHref = buildContactHref('news:list:contact_cta')
   const conversionStats = [
@@ -176,8 +217,87 @@ export default function NewsListView({
         </div>
 
         {rows.length > 0 ? (
+          <section id="news-discovery-console" className="mb-6 overflow-hidden rounded-md border border-[#E5DED4] bg-white shadow-sm">
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_260px]">
+              <div className="border-l-4 border-[#1889B6] px-4 py-4 sm:px-5">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1889B6]">
+                  {zh ? '新闻发现' : 'News discovery'}
+                </p>
+                <h2 className="mt-2 text-lg font-bold text-[#2C2A28]">
+                  {zh ? '按关键词和分类快速定位内容' : 'Find updates by keyword and category'}
+                </h2>
+                <p className="mt-1 max-w-3xl text-sm leading-6 text-[#6B6560]">
+                  {zh
+                    ? '对照 en.303 Blog 的阅读方式，先筛选主题，再进入详情或提交咨询。'
+                    : 'Mirror the en.303 Blog reading flow: filter the topic first, then open the article or start an inquiry.'}
+                </p>
+              </div>
+              <div className="border-t border-[#E5DED4] bg-[#FBF8F3] px-4 py-4 lg:border-l lg:border-t-0">
+                <p className="text-xs font-semibold text-[#8A8580]">{zh ? '当前结果' : 'Current result'}</p>
+                <p className="mt-1 text-2xl font-bold text-[#2C2A28]">
+                  {filteredRows.length.toLocaleString(zh ? 'zh-CN' : 'en-US')}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-[#6B6560]">
+                  {zh ? `共 ${rows.length.toLocaleString('zh-CN')} 条公开动态` : `From ${rows.length.toLocaleString('en-US')} public updates`}
+                </p>
+              </div>
+            </div>
+            <div className="border-t border-[#E5DED4] px-4 py-4 sm:px-5">
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)_auto] lg:items-start">
+                <label className="relative block">
+                  <span className="sr-only">{zh ? '搜索新闻' : 'Search news'}</span>
+                  <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8A8580]" />
+                  <input
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder={zh ? '搜索标题、摘要或分类' : 'Search title, summary, or category'}
+                    className="min-h-11 w-full rounded-md border border-[#E5DED4] bg-[#FAF7F2] pl-10 pr-3 text-sm outline-none transition placeholder:text-[#9B9288] focus:border-[#1889B6] focus:bg-white"
+                  />
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveCategory('all')}
+                    className={`min-h-10 rounded-md border px-3 text-xs font-bold transition ${
+                      activeCategory === 'all'
+                        ? 'border-[#1889B6] bg-[#EAF6F8] text-[#1889B6]'
+                        : 'border-[#E5DED4] bg-[#FAF7F2] text-[#6B6560] hover:border-[#1889B6] hover:text-[#1889B6]'
+                    }`}
+                  >
+                    {zh ? '全部' : 'All'}
+                  </button>
+                  {categoryOptions.map((category) => (
+                    <button
+                      key={category.key}
+                      type="button"
+                      onClick={() => setActiveCategory(category.key)}
+                      className={`min-h-10 rounded-md border px-3 text-xs font-bold transition ${
+                        activeCategory === category.key
+                          ? 'border-[#1889B6] bg-[#EAF6F8] text-[#1889B6]'
+                          : 'border-[#E5DED4] bg-[#FAF7F2] text-[#6B6560] hover:border-[#1889B6] hover:text-[#1889B6]'
+                      }`}
+                    >
+                      {category.label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={resetDiscovery}
+                  disabled={!hasActiveDiscovery}
+                  className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-md border border-[#E5DED4] bg-white px-3 text-xs font-bold text-[#6B6560] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-[#E5DED4] disabled:hover:text-[#6B6560]"
+                >
+                  <X size={14} />
+                  {zh ? '重置' : 'Reset'}
+                </button>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {filteredRows.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {rows.map((item) => {
+            {filteredRows.map((item) => {
               const title = lang === 'zh' ? item.title_zh : item.title_en
               const excerpt = lang === 'zh' ? item.excerpt_zh : item.excerpt_en
               const category = zh ? item.category_title_zh || item.category_title_en : item.category_title_en || item.category_title_zh
@@ -238,6 +358,20 @@ export default function NewsListView({
                 </Link>
               )
             })}
+          </div>
+        ) : rows.length > 0 ? (
+          <div className="rounded-md border border-dashed border-[#E5DED4] bg-white px-5 py-12 text-center">
+            <h2 className="text-lg font-bold text-[#2C2A28]">{zh ? '没有匹配的新闻' : 'No matching updates'}</h2>
+            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[#6B6560]">
+              {zh ? '可以清空搜索和分类，或直接查看产品、案例与咨询入口。' : 'Clear the search and category filters, or continue to products, cases, and inquiry.'}
+            </p>
+            <button
+              type="button"
+              onClick={resetDiscovery}
+              className="mt-5 inline-flex min-h-10 items-center rounded-md border border-[#E5DED4] bg-[#FAF7F2] px-4 text-sm font-semibold text-[#2C2A28] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
+            >
+              {zh ? '清空筛选' : 'Clear filters'}
+            </button>
           </div>
         ) : (
           <div className="rounded-md border border-dashed border-[#E5DED4] bg-white px-5 py-12 text-center">
