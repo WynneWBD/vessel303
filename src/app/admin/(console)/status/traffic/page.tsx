@@ -1234,35 +1234,52 @@ function TrafficSourceStagePanel({ analytics }: { analytics: SiteAnalyticsDashbo
         <div>
           <h2 className="text-lg font-bold text-[#1E2C31]">B207 公开站来源阶段复盘</h2>
           <p className="mt-1 text-xs text-[#61767D]">
-            按近 30 天产品与案例 CTA、联系跳转和表单成功事件聚合来源阶段；下钻到对应线索列表，不写入业务数据。
+            按近 30 天产品与案例 CTA、联系跳转和表单成功事件聚合来源阶段；Contact 承接型来源按原入口归类，不写入业务数据。
           </p>
         </div>
-        <span className="rounded-full bg-[#EAF6F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
-          来源阶段动作 {formatNumber(total)}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-[#EAF6F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
+            来源阶段动作 {formatNumber(total)}
+          </span>
+          <Link href="/admin/site/conversion" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+            查看转化台账
+          </Link>
+        </div>
       </div>
 
       {rows.length === 0 ? (
         <div className="p-5 text-sm text-[#61767D]">暂无近 30 天公开站来源阶段事件。</div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px] text-sm">
+          <table className="w-full min-w-[1060px] text-sm">
             <thead>
               <tr className="border-b border-[#E6EEEE] bg-white text-[#61767D]">
                 <th className="px-5 py-3 text-left font-medium">来源阶段</th>
+                <th className="px-4 py-3 text-left font-medium">归因口径</th>
                 <th className="px-4 py-3 text-right font-medium">动作数</th>
                 <th className="px-4 py-3 text-right font-medium">阶段占比</th>
                 <th className="px-4 py-3 text-left font-medium">运营判断</th>
-                <th className="px-5 py-3 text-right font-medium">线索下钻</th>
+                <th className="px-4 py-3 text-right font-medium">线索下钻</th>
+                <th className="px-5 py-3 text-right font-medium">转化台账</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((row) => {
                 const share = total > 0 ? row.value / total : 0
                 const isTop = row.key === topRow?.key
+                const route = sourceStageTrafficRoute(row.key)
                 return (
                   <tr key={row.key} className="border-b border-[#E6EEEE] last:border-0">
-                    <td className="px-5 py-3 font-semibold text-[#1E2C31]">{row.label}</td>
+                    <td className="px-5 py-3">
+                      <div className="font-semibold text-[#1E2C31]">{row.label}</div>
+                      <div className="mt-1 font-mono text-[11px] text-[#8A9EA4]">{row.key}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${trafficMatrixToneClass(route.tone)}`}>
+                        {route.label}
+                      </span>
+                      <div className="mt-1 text-[11px] leading-5 text-[#61767D]">{route.detail}</div>
+                    </td>
                     <td className="px-4 py-3 text-right font-bold text-[#1889B6]">{formatNumber(row.value)}</td>
                     <td className="px-4 py-3 text-right text-[#61767D]">{formatAnalyticsPercent(share)}</td>
                     <td className="px-4 py-3">
@@ -1270,9 +1287,15 @@ function TrafficSourceStagePanel({ analytics }: { analytics: SiteAnalyticsDashbo
                         {isTop ? '优先复盘' : '保持观察'}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-right">
+                    <td className="px-4 py-3 text-right">
                       <Link href={row.href} className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
-                        查看线索
+                        查看阶段线索
+                      </Link>
+                      <div className="mt-1 text-[11px] text-[#8A9EA4]">已带 source_stage</div>
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <Link href="/admin/site/conversion" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+                        看承接矩阵
                       </Link>
                     </td>
                   </tr>
@@ -1284,6 +1307,30 @@ function TrafficSourceStagePanel({ analytics }: { analytics: SiteAnalyticsDashbo
       )}
     </section>
   )
+}
+
+function sourceStageTrafficRoute(key: string): { label: string; detail: string; tone: 'blue' | 'green' | 'orange' | 'gray' } {
+  if (key.startsWith('case:')) {
+    return {
+      label: '案例入口',
+      detail: '案例详情与 Contact 承接来源合并看案例询盘效率。',
+      tone: 'green',
+    }
+  }
+
+  if (key.startsWith('product:')) {
+    return {
+      label: '产品入口',
+      detail: '产品详情与 Contact 承接来源合并看产品询盘效率。',
+      tone: 'blue',
+    }
+  }
+
+  return {
+    label: '其他入口',
+    detail: '保留来源阶段，等待更多样本后再拆分。',
+    tone: 'gray',
+  }
 }
 
 function ProductTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) {
