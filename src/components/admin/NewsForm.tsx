@@ -626,9 +626,9 @@ function NewsFormSidebar({
           href: '/admin/content/news/list#news-list-governance',
         },
         {
-          label: '发布台账',
-          detail: '回到列表页发布处理队列',
-          href: '/admin/content/news/list#news-release-ledger',
+          label: '来源 SEO 桥',
+          detail: '回到列表页 SEO、发布回看和新闻线索处理桥',
+          href: '/admin/content/news/list#news-source-seo-list-bridge',
         },
         {
           label: '运营总览',

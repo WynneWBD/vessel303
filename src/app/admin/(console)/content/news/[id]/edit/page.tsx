@@ -115,6 +115,9 @@ const READINESS_GROUPS: Omit<NewsEditorReadinessGroup, 'issueCount' | 'done'>[] 
 
 const NEWS_SOURCE_HANDOFF_LINKS = [
   { label: '状态桥', href: '/admin/status/leads#news-lead-path-bridge' },
+  { label: '质量桥', href: '/admin/status/leads#source-seo-lead-quality' },
+  { label: '发布桥', href: '/admin/status/site#source-seo-release-bridge' },
+  { label: '列表桥', href: '/admin/content/news/list#news-source-seo-list-bridge' },
   { label: '来源面板', href: '/admin/status/traffic#news-source-handoff' },
   { label: '转化承接', href: '/admin/site/conversion#news-conversion-handoff' },
   { label: '新闻线索', href: '/admin/customers/leads?source_type=news' },
@@ -419,7 +422,7 @@ function NewsReadinessPanel({ readiness }: { readiness: NewsEditorReadiness }) {
           <div className="mt-4 border-t border-[#D8E7E8] pt-4">
             <h4 className="text-sm font-bold text-[#1E2C31]">来源承接复核</h4>
             <p className="mt-2 text-xs leading-5 text-[#61767D]">
-              保存或发布前，可从新闻来源链路复看访问、状态桥、转化承接和 `source_type=news` 线索队列；本区只做只读下钻。
+              保存或发布前，可从新闻来源链路复看访问、质量桥、发布桥、列表桥、转化承接和 `source_type=news` 线索队列；本区只做只读下钻。
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               {NEWS_SOURCE_HANDOFF_LINKS.map((link) => (
@@ -435,6 +438,118 @@ function NewsReadinessPanel({ readiness }: { readiness: NewsEditorReadiness }) {
             </div>
           </div>
         </aside>
+      </div>
+    </section>
+  )
+}
+
+function NewsEditorSourceSeoPanel({
+  news,
+  readiness,
+  seoReady,
+  categoryReady,
+}: {
+  news: NewsRow
+  readiness: NewsEditorReadiness
+  seoReady: boolean
+  categoryReady: boolean
+}) {
+  const publicHref = hasText(news.slug) ? `/news/${news.slug}` : '#basic'
+  const publicLabel = news.status === 'published' ? '已公开' : news.scheduled_at ? '定时草稿' : '草稿'
+  const bridgeItems = [
+    {
+      label: '公开路径',
+      value: publicLabel,
+      detail: hasText(news.slug)
+        ? `新闻详情路径：/news/${news.slug}`
+        : '缺 Slug，先补基础信息再形成稳定详情路径。',
+      href: publicHref,
+      action: news.status === 'published' ? '看前台' : '复核路径',
+      tone: news.status === 'published' ? 'blue' : 'orange',
+      Icon: ExternalLink,
+    },
+    {
+      label: 'SEO 与分类',
+      value: seoReady && categoryReady ? 'Ready' : '待补',
+      detail: `${seoReady ? 'SEO 已补齐' : 'SEO 仍有缺口'}；${categoryReady ? '分类已绑定' : '分类未绑定'}。`,
+      href: seoReady && categoryReady ? '/admin/content/news/list#news-source-seo-list-bridge' : '#seo',
+      action: seoReady && categoryReady ? '回列表桥' : '补字段',
+      tone: seoReady && categoryReady ? 'green' : 'orange',
+      Icon: SearchCheck,
+    },
+    {
+      label: '来源质量',
+      value: 'B282',
+      detail: '用来源线索质量桥复看新闻入口的访问、动作、线索和活跃漏斗。',
+      href: '/admin/status/leads#source-seo-lead-quality',
+      action: '看质量桥',
+      tone: 'blue',
+      Icon: Link2,
+    },
+    {
+      label: '单篇队列',
+      value: readiness.requiredIssueCount > 0 ? `${readiness.requiredIssueCount} 项` : '可复核',
+      detail: readiness.nextIssue
+        ? `下一步：${readiness.nextIssue.label}。处理完再回 B283 列表桥。`
+        : '正式缺项已归零，可回列表桥和发布桥做只读复核。',
+      href: readiness.nextIssue?.href ?? '/admin/content/news/list#news-source-seo-list-bridge',
+      action: readiness.nextIssue ? '继续处理' : '回列表桥',
+      tone: readiness.requiredIssueCount > 0 ? 'orange' : 'green',
+      Icon: ListChecks,
+    },
+  ] as const
+
+  return (
+    <section id="news-edit-source-seo-bridge" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B284 News Edit Bridge</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">单篇新闻来源 SEO 复核桥</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把当前新闻的公开路径、SEO 分类状态、B282 来源质量桥和 B283 列表处理桥放到编辑页上方，编辑完成后能直接回到列表和线索复盘。
+          </p>
+        </div>
+        <Link
+          href="/admin/content/news/list#news-source-seo-list-bridge"
+          className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#EAF6F8]"
+        >
+          回到 B283 列表桥
+          <ArrowRight size={13} />
+        </Link>
+      </div>
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-2 xl:grid-cols-4">
+        {bridgeItems.map((item) => {
+          const Icon = item.Icon
+          const toneClass =
+            item.tone === 'green'
+              ? 'bg-emerald-50 text-emerald-700'
+              : item.tone === 'orange'
+                ? 'bg-[#FFF2E7] text-[#E36F2C]'
+                : 'bg-[#EAF6F8] text-[#1889B6]'
+
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className="group flex min-h-[156px] flex-col justify-between border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-[#F7FAFA] md:border-r xl:border-b-0 last:border-r-0"
+            >
+              <span>
+                <span className="flex items-start justify-between gap-3">
+                  <span className="text-xs font-semibold text-[#61767D]">{item.label}</span>
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${toneClass}`}>
+                    <Icon size={16} />
+                  </span>
+                </span>
+                <span className="mt-2 block truncate text-xl font-bold text-[#1E2C31]">{item.value}</span>
+                <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+              </span>
+              <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6]">
+                {item.action}
+                <ArrowRight size={13} className="transition group-hover:translate-x-0.5" />
+              </span>
+            </Link>
+          )
+        })}
       </div>
     </section>
   )
@@ -551,10 +666,17 @@ export default async function AdminContentNewsEditPage({ params }: PageProps) {
     },
     {
       label: '来源承接已回连',
-      detail: '状态桥、来源面板、转化承接和新闻线索队列可用于复看新闻获客影响；这里不写线索状态。',
+      detail: '质量桥、发布桥、列表桥、来源面板、转化承接和新闻线索队列可用于复看新闻获客影响；这里不写线索状态。',
       tone: 'neutral',
-      href: '/admin/status/leads#news-lead-path-bridge',
+      href: '/admin/status/leads#source-seo-lead-quality',
       Icon: Link2,
+    },
+    {
+      label: 'B283 列表桥已回连',
+      detail: '单篇编辑完成后，可回到新闻列表的 SEO、内容缺项、发布回看和新闻线索处理桥。',
+      tone: 'neutral',
+      href: '/admin/content/news/list#news-source-seo-list-bridge',
+      Icon: ListChecks,
     },
   ]
 
@@ -572,6 +694,12 @@ export default async function AdminContentNewsEditPage({ params }: PageProps) {
         sections={NEWS_EDIT_SECTIONS}
         metrics={editorMetrics}
         signals={editorSignals}
+      />
+      <NewsEditorSourceSeoPanel
+        news={news}
+        readiness={editorReadiness}
+        seoReady={seoReady}
+        categoryReady={categoryReady}
       />
       <NewsReadinessPanel readiness={editorReadiness} />
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-[220px_minmax(0,1fr)]">
