@@ -1,5 +1,12 @@
 import Link from 'next/link'
-import { formatNumber, loadStatusOverview, safeLoad, type LeadMetrics } from '@/lib/admin-status-metrics'
+import {
+  formatNumber,
+  loadStatusOverview,
+  safeLoad,
+  type ContentMetric,
+  type LeadMetrics,
+  type SeoMetrics,
+} from '@/lib/admin-status-metrics'
 import {
   summarizeLeadsBySourceStageStatus,
   summarizeLeadsBySourceStatus,
@@ -119,6 +126,24 @@ type LeadSourceStageRow = {
   actionLabel: string
 }
 
+type SourceSeoLeadQualityRow = {
+  key: 'product' | 'case' | 'news'
+  label: string
+  sourceType: string
+  metric: AnalyticsConversionMetric
+  total: number
+  active: number
+  won: number
+  seoMissing: number
+  contentIssues: number
+  status: string
+  statusTone: FunnelMatrixRow['statusTone']
+  detail: string
+  leadHref: string
+  contentHref: string
+  seoHref: string
+}
+
 export default async function AdminStatusLeadsPage() {
   const { role, email } = await getStatusAccess()
   const [overview, sourceStatusSummary, sourceStageStatusSummary, pathAnalytics] = await Promise.all([
@@ -201,6 +226,17 @@ export default async function AdminStatusLeadsPage() {
 
         <LeadSourceQualityMatrix sourceStatusSummary={sourceStatusSummary} />
 
+        <SourceSeoLeadQualityBridge
+          sourceStatusSummary={sourceStatusSummary}
+          productPathMetric={productPathMetric}
+          casePathMetric={casePathMetric}
+          newsPathMetric={newsPathMetric}
+          products={overview.content.products}
+          projects={overview.content.projects}
+          news={overview.content.news}
+          seo={overview.site.seo}
+        />
+
         <ProductLeadPathBridge
           sourceStatusSummary={sourceStatusSummary}
           sourceStageStatusSummary={sourceStageStatusSummary}
@@ -274,6 +310,122 @@ export default async function AdminStatusLeadsPage() {
         </section>
       </section>
     </StatusPageShell>
+  )
+}
+
+function SourceSeoLeadQualityBridge({
+  sourceStatusSummary,
+  productPathMetric,
+  casePathMetric,
+  newsPathMetric,
+  products,
+  projects,
+  news,
+  seo,
+}: {
+  sourceStatusSummary: LeadSourceStatusSummary[]
+  productPathMetric: AnalyticsConversionMetric
+  casePathMetric: AnalyticsConversionMetric
+  newsPathMetric: AnalyticsConversionMetric
+  products: ContentMetric
+  projects: ContentMetric
+  news: ContentMetric
+  seo: SeoMetrics
+}) {
+  const rows = buildSourceSeoLeadQualityRows({
+    sourceStatusSummary,
+    productPathMetric,
+    casePathMetric,
+    newsPathMetric,
+    products,
+    projects,
+    news,
+    seo,
+  })
+  const activeTotal = rows.reduce((sum, row) => sum + row.active, 0)
+  const seoOpenTotal = rows.reduce((sum, row) => sum + row.seoMissing, 0)
+  const contentOpenTotal = rows.reduce((sum, row) => sum + row.contentIssues, 0)
+  const trafficWithoutLead = rows.filter((row) => row.metric.views > 0 && row.total === 0).length
+
+  return (
+    <section className="space-y-4" id="source-seo-lead-quality">
+      <SectionTitle
+        title="B282 来源线索与 SEO 质量桥"
+        detail="把 B280/B281 的来源与 SEO 健康结论接到线索质量矩阵：先判断来源线索是否积压，再看 SEO 和内容承接是否阻断后续转化。"
+      />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
+          <FunnelSummary label="活跃来源线索" value={activeTotal} detail="产品 + 案例 + 新闻" warn={activeTotal > 0} />
+          <FunnelSummary label="SEO 待补" value={seoOpenTotal} detail="三类来源 SEO 缺项" warn={seoOpenTotal > 0} />
+          <FunnelSummary label="内容缺项" value={contentOpenTotal} detail="内容承接缺项" warn={contentOpenTotal > 0} />
+          <FunnelSummary label="有访问无线索" value={trafficWithoutLead} detail="30 天路径样本" warn={trafficWithoutLead > 0} />
+        </div>
+
+        <div className="flex flex-wrap gap-2 border-b border-[#E6EEEE] px-5 py-4">
+          <SourceSeoBridgeLink href="/admin/status#source-seo-health" label="B280 健康台账" />
+          <SourceSeoBridgeLink href="/admin/status/site#source-seo-release-bridge" label="B281 站点接力" />
+          <SourceSeoBridgeLink href="/admin/site#source-seo-control" label="B279 网站总控" />
+          <SourceSeoBridgeLink href="/admin/site/conversion#source-contract-portfolio" label="来源合同总览" />
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-xs text-[#61767D]">
+                <th className="min-w-44 px-5 py-3 text-left font-semibold">来源合同</th>
+                <th className="px-4 py-3 text-right font-semibold">访问</th>
+                <th className="px-4 py-3 text-right font-semibold">动作</th>
+                <th className="px-4 py-3 text-right font-semibold">线索</th>
+                <th className="min-w-44 px-4 py-3 text-left font-semibold">活跃 / 成交</th>
+                <th className="min-w-40 px-4 py-3 text-left font-semibold">SEO / 内容</th>
+                <th className="min-w-32 px-4 py-3 text-left font-semibold">判断</th>
+                <th className="min-w-72 px-4 py-3 text-left font-semibold">运营说明</th>
+                <th className="min-w-44 px-5 py-3 text-right font-semibold">入口</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E6EEEE]">
+              {rows.map((row) => (
+                <tr key={row.key} className="align-top transition hover:bg-[#FBFDFD]">
+                  <td className="px-5 py-4">
+                    <Link href={row.leadHref} className="font-semibold text-[#1E2C31] hover:text-[#1889B6]">
+                      {row.label}
+                    </Link>
+                    <p className="mt-1 text-xs text-[#8A9EA4]">source_type={row.sourceType}</p>
+                  </td>
+                  <td className="px-4 py-4 text-right font-semibold text-[#1E2C31]">{formatNumber(row.metric.views)}</td>
+                  <td className="px-4 py-4 text-right text-[#61767D]">{formatNumber(pathActions(row.metric))}</td>
+                  <td className="px-4 py-4 text-right font-semibold text-[#E36F2C]">{formatNumber(row.total)}</td>
+                  <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">
+                    <span className="block font-semibold text-[#1E2C31]">活跃 {formatNumber(row.active)} / 成交 {formatNumber(row.won)}</span>
+                    <span className="mt-1 block">路径线索 {formatNumber(row.metric.leads)} / 转化 {formatAnalyticsPercent(row.metric.conversionRate)}</span>
+                  </td>
+                  <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">
+                    <span className={row.seoMissing > 0 ? 'font-semibold text-[#E36F2C]' : 'font-semibold text-emerald-700'}>
+                      SEO {formatNumber(row.seoMissing)}
+                    </span>
+                    <span className="mx-1 text-[#C9D7DA]">/</span>
+                    <span className={row.contentIssues > 0 ? 'font-semibold text-[#E36F2C]' : 'font-semibold text-emerald-700'}>
+                      内容 {formatNumber(row.contentIssues)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <FunnelStatusBadge label={row.status} tone={row.statusTone} />
+                  </td>
+                  <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">{row.detail}</td>
+                  <td className="px-5 py-4 text-right">
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <SourceSeoBridgeLink href={row.leadHref} label="线索" />
+                      <SourceSeoBridgeLink href={row.seoHref} label="SEO" />
+                      <SourceSeoBridgeLink href={row.contentHref} label="内容" />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -510,6 +662,145 @@ function buildLeadSourceQualityRows(sourceStatusSummary: LeadSourceStatusSummary
       if (b.total !== a.total) return b.total - a.total
       return b.won - a.won
     })
+}
+
+function buildSourceSeoLeadQualityRows({
+  sourceStatusSummary,
+  productPathMetric,
+  casePathMetric,
+  newsPathMetric,
+  products,
+  projects,
+  news,
+  seo,
+}: {
+  sourceStatusSummary: LeadSourceStatusSummary[]
+  productPathMetric: AnalyticsConversionMetric
+  casePathMetric: AnalyticsConversionMetric
+  newsPathMetric: AnalyticsConversionMetric
+  products: ContentMetric
+  projects: ContentMetric
+  news: ContentMetric
+  seo: SeoMetrics
+}): SourceSeoLeadQualityRow[] {
+  const productSource = sourceStatusSummary.find((source) => source.type === 'product')
+  const caseSource = sourceStatusSummary.find((source) => source.type === 'case')
+  const newsSource = sourceStatusSummary.find((source) => source.type === 'news')
+
+  return [
+    buildSourceSeoLeadQualityRow({
+      key: 'product',
+      label: '产品来源质量',
+      sourceType: 'product',
+      source: productSource,
+      metric: productPathMetric,
+      seoMissing: seo.productsMissing,
+      contentIssues: products.issues,
+      leadHref: '/admin/customers/leads?source_type=product',
+      contentHref: '/admin/content/products/list#product-source-contract',
+      seoHref: '/admin/content/products/list?view=incomplete&issue=seo',
+    }),
+    buildSourceSeoLeadQualityRow({
+      key: 'case',
+      label: '案例来源质量',
+      sourceType: 'case',
+      source: caseSource,
+      metric: casePathMetric,
+      seoMissing: seo.projectsMissing,
+      contentIssues: projects.issues,
+      leadHref: '/admin/customers/leads?source_type=case',
+      contentHref: '/admin/content/projects/list#case-source-contract',
+      seoHref: '/admin/content/projects/list?view=incomplete',
+    }),
+    buildSourceSeoLeadQualityRow({
+      key: 'news',
+      label: '新闻来源质量',
+      sourceType: 'news',
+      source: newsSource,
+      metric: newsPathMetric,
+      seoMissing: seo.newsMissing,
+      contentIssues: news.issues,
+      leadHref: '/admin/customers/leads?source_type=news',
+      contentHref: '/admin/content/news#news-operations-hub',
+      seoHref: '/admin/content/news/list',
+    }),
+  ]
+}
+
+function buildSourceSeoLeadQualityRow({
+  key,
+  label,
+  sourceType,
+  source,
+  metric,
+  seoMissing,
+  contentIssues,
+  leadHref,
+  contentHref,
+  seoHref,
+}: {
+  key: SourceSeoLeadQualityRow['key']
+  label: string
+  sourceType: string
+  source?: LeadSourceStatusSummary
+  metric: AnalyticsConversionMetric
+  seoMissing: number
+  contentIssues: number
+  leadHref: string
+  contentHref: string
+  seoHref: string
+}): SourceSeoLeadQualityRow {
+  const total = source?.total ?? 0
+  const active = source ? source.new + source.contacting + source.quoted : 0
+  const won = source?.won ?? 0
+  const hasOpenContent = seoMissing + contentIssues > 0
+  const hasTrafficGap = metric.views > 0 && total === 0
+  const status =
+    active > 0
+      ? '先处理线索'
+      : hasOpenContent
+        ? '先补承接'
+        : hasTrafficGap
+          ? '有访问无线索'
+          : total > 0
+            ? '可复盘'
+            : '观察中'
+  const statusTone: FunnelMatrixRow['statusTone'] =
+    active > 0 || hasOpenContent || hasTrafficGap
+      ? 'orange'
+      : won > 0
+        ? 'green'
+        : total > 0 || metric.views > 0
+          ? 'blue'
+          : 'gray'
+  const detail =
+    active > 0
+      ? `还有 ${formatNumber(active)} 条活跃线索，先进入客户线索页处理，再回看 SEO 和内容承接。`
+      : hasOpenContent
+        ? `当前 SEO/内容还有 ${formatNumber(seoMissing + contentIssues)} 个待补项，先补公开页承接，再观察线索质量。`
+        : hasTrafficGap
+          ? `近 30 天已有 ${formatNumber(metric.views)} 次访问但暂无来源线索，优先复核 CTA、表单和来源归因。`
+          : total > 0
+            ? `已有 ${formatNumber(total)} 条来源线索，可结合成交 ${formatNumber(won)} 条复盘入口质量。`
+            : '当前来源样本不足，保持内容、SEO、线索三条入口可下钻观察。'
+
+  return {
+    key,
+    label,
+    sourceType,
+    metric,
+    total,
+    active,
+    won,
+    seoMissing,
+    contentIssues,
+    status,
+    statusTone,
+    detail,
+    leadHref,
+    contentHref,
+    seoHref,
+  }
 }
 
 function LeadSourceQualityMatrix({ sourceStatusSummary }: { sourceStatusSummary: LeadSourceStatusSummary[] }) {
@@ -1216,6 +1507,21 @@ function leadResponseBadgeClass(tone: LeadResponseTone): string {
   if (tone === 'warning') return 'border-[#E36F2C]/25 bg-[#FFF6EF] text-[#C75F18]'
   if (tone === 'review') return 'border-[#1889B6]/20 bg-[#EAF6F8] text-[#1889B6]'
   return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+}
+
+function pathActions(metric: AnalyticsConversionMetric) {
+  return metric.ctaClicks + metric.formSubmits
+}
+
+function SourceSeoBridgeLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#1889B6] transition hover:border-[#E36F2C]/50 hover:text-[#E36F2C]"
+    >
+      {label}
+    </Link>
+  )
 }
 
 function buildFunnelMatrixRows(leads: LeadMetrics): FunnelMatrixRow[] {
