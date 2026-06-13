@@ -2,7 +2,21 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, BarChart3, Filter, Globe2, Layers3, MapPin, RotateCcw, Search, ShieldCheck } from 'lucide-react'
+import {
+  ArrowRight,
+  BarChart3,
+  CheckCircle2,
+  Filter,
+  Globe2,
+  ImageIcon,
+  Layers3,
+  MapPin,
+  MessageSquareText,
+  Package,
+  RotateCcw,
+  Search,
+  ShieldCheck,
+} from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ProtectedImage from '@/components/ProtectedImage'
@@ -55,6 +69,10 @@ function splitProducts(value: string | null | undefined) {
     .filter(Boolean)
 }
 
+function hasText(value: string | null | undefined) {
+  return cleanText(value).length > 0
+}
+
 function uniqueProductCount(projects: ProjectCaseRow[]) {
   const productSet = new Set<string>()
   for (const project of projects) {
@@ -72,6 +90,36 @@ function uniqueLocationCount(projects: ProjectCaseRow[], zh: boolean) {
     if (location) locationSet.add(location.toLowerCase())
   }
   return locationSet.size
+}
+
+function caseProofProfile(project: ProjectCaseRow) {
+  const imageCount = [project.cover_image_url, ...project.images].filter(Boolean).length
+  const products = splitProducts(project.products)
+  const factCount = [
+    project.project_type_en || project.project_type_zh,
+    project.location_en || project.location_zh,
+    project.area_display,
+    project.units_display,
+    project.products,
+  ].filter((item) => hasText(item)).length
+  const hasNarrative = hasText(project.description_en) || hasText(project.description_zh)
+  const hasInquiryContext = hasNarrative && products.length > 0 && factCount >= 4
+  const proofScore = imageCount + factCount + (hasNarrative ? 1 : 0)
+
+  return {
+    imageCount,
+    productsCount: products.length,
+    factCount,
+    hasNarrative,
+    hasInquiryContext,
+    proofScore,
+  }
+}
+
+function caseProofTone(profile: ReturnType<typeof caseProofProfile>) {
+  if (profile.hasInquiryContext && profile.imageCount > 0) return 'ready'
+  if (profile.hasInquiryContext || profile.imageCount > 0) return 'review'
+  return 'basic'
 }
 
 function tagOptionsForCase(project: ProjectCaseRow, zh: boolean) {
@@ -283,6 +331,137 @@ function CaseCommandPanel({
   )
 }
 
+function CaseProofPathPanel({
+  cases,
+  filteredCases,
+  zh,
+}: {
+  cases: ProjectCaseRow[]
+  filteredCases: ProjectCaseRow[]
+  zh: boolean
+}) {
+  const profiles = filteredCases.map(caseProofProfile)
+  const proofReadyCount = profiles.filter((profile) => profile.hasInquiryContext && profile.imageCount > 0).length
+  const galleryCount = profiles.reduce((sum, profile) => sum + profile.imageCount, 0)
+  const productCount = uniqueProductCount(filteredCases)
+  const strongestCase = filteredCases
+    .map((project) => ({ project, profile: caseProofProfile(project) }))
+    .sort((a, b) => b.profile.proofScore - a.profile.proofScore || a.project.sort_order - b.project.sort_order)[0]?.project
+  const strongestCaseHref = strongestCase ? `/cases/${strongestCase.id}` : '/contact'
+  const strongestInquiryHref = strongestCase ? `/cases/${strongestCase.id}#case-inquiry` : '/contact'
+  const statItems = [
+    {
+      label: zh ? '当前案例' : 'Visible cases',
+      value: filteredCases.length,
+      detail: zh ? `全部公开 ${cases.length}` : `All public ${cases.length}`,
+      Icon: ShieldCheck,
+    },
+    {
+      label: zh ? '证明完整' : 'Proof-ready',
+      value: proofReadyCount,
+      detail: zh ? '有图像、叙事、参数和产品引用' : 'Image, narrative, facts, and product reference',
+      Icon: CheckCircle2,
+    },
+    {
+      label: zh ? '图片证据' : 'Image proof',
+      value: galleryCount,
+      detail: zh ? '封面与图库合计' : 'Cover and gallery assets',
+      Icon: ImageIcon,
+    },
+    {
+      label: zh ? '产品引用' : 'Product references',
+      value: productCount,
+      detail: zh ? '可回到产品判断适配' : 'Connects proof to product fit',
+      Icon: Package,
+    },
+  ]
+  const routeSteps = [
+    {
+      label: zh ? '场景' : 'Scenario',
+      detail: zh ? '类型、地点、标签先判断项目相似度。' : 'Type, location, and tags establish project fit.',
+    },
+    {
+      label: zh ? '证据' : 'Proof',
+      detail: zh ? '图片、参数、产品型号支撑交付可信度。' : 'Images, facts, and models support delivery trust.',
+    },
+    {
+      label: zh ? '咨询' : 'Inquiry',
+      detail: zh ? '详情页保留案例咨询锚点，进入可追踪线索路径。' : 'Detail pages keep the inquiry anchor in the traceable lead path.',
+    },
+  ]
+
+  return (
+    <section className="mb-5 overflow-hidden border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="border-l-4 border-[#1889B6] px-4 py-4 sm:px-5">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#1889B6]">
+            {zh ? '案例证明密度' : 'Case Proof Density'}
+          </p>
+          <h2 className="mt-2 text-2xl font-black leading-tight text-[#2C2A28] sm:text-3xl">
+            {zh ? '把项目证据、产品引用和询盘入口放在同一条客户判断路径上。' : 'Keep project proof, product references, and inquiry entry in one buyer path.'}
+          </h2>
+          <p className="mt-3 max-w-4xl text-sm leading-6 text-[#6B6560]">
+            {zh
+              ? '案例列表先承担第一轮信任建立：快速看到图像证据、项目事实、使用产品和下一步咨询入口。'
+              : 'The case list carries the first trust pass: visual proof, project facts, product references, and the next inquiry route.'}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link
+              prefetch={false}
+              href={strongestCaseHref}
+              className="inline-flex min-h-10 items-center justify-center gap-2 border border-[#E36F2C] bg-[#E36F2C] px-3 text-xs font-black uppercase tracking-[0.12em] text-white transition-colors hover:border-[#C95E22] hover:bg-[#C95E22]"
+            >
+              {zh ? '查看高证据案例' : 'Open proof-rich case'}
+              <ArrowRight size={15} strokeWidth={2.4} aria-hidden="true" />
+            </Link>
+            <Link
+              prefetch={false}
+              href={strongestInquiryHref}
+              data-analytics-cta="true"
+              className="inline-flex min-h-10 items-center justify-center gap-2 border border-[#2C2A28] bg-[#2C2A28] px-3 text-xs font-black uppercase tracking-[0.12em] text-white transition-colors hover:border-[#1889B6] hover:bg-[#1889B6]"
+            >
+              <MessageSquareText size={15} strokeWidth={2.4} aria-hidden="true" />
+              {zh ? '进入案例咨询' : 'Start case inquiry'}
+            </Link>
+          </div>
+        </div>
+
+        <aside className="border-t border-[#E6EEEE] bg-[#F7FAFA] px-4 py-4 sm:px-5 lg:border-l lg:border-t-0">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#2C2A28]">
+            {zh ? '客户侧判断顺序' : 'Buyer decision path'}
+          </p>
+          <div className="mt-3 space-y-2">
+            {routeSteps.map((step, index) => (
+              <div key={step.label} className="grid grid-cols-[28px_minmax(0,1fr)] gap-3 rounded-none border border-[#D8E7E8] bg-white px-3 py-3">
+                <span className="flex h-7 w-7 items-center justify-center bg-[#EAF6F8] text-xs font-black text-[#1889B6]">
+                  {index + 1}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-xs font-black uppercase tracking-[0.12em] text-[#2C2A28]">{step.label}</span>
+                  <span className="mt-1 block text-xs leading-5 text-[#6B6560]">{step.detail}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </aside>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-2 xl:grid-cols-4">
+        {statItems.map(({ label, value, detail, Icon }) => (
+          <div key={label} className="min-w-0 border-b border-[#E6EEEE] px-4 py-4 md:border-r xl:border-b-0 xl:last:border-r-0">
+            <div className="flex items-center justify-between gap-3">
+              <p className="truncate text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]" title={label}>{label}</p>
+              <Icon size={16} strokeWidth={2.4} className="shrink-0 text-[#1889B6]" aria-hidden="true" />
+            </div>
+            <p className="mt-2 text-3xl font-black leading-none text-[#2C2A28]">{value}</p>
+            <p className="mt-2 text-xs leading-5 text-[#6B6560]">{detail}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 export default function CasesPageContent({
   cases,
   pageModules,
@@ -371,6 +550,12 @@ export default function CasesPageContent({
               setActiveType(ALL_FILTER)
               setActiveTag(ALL_FILTER)
             }}
+            zh={zh}
+          />
+
+          <CaseProofPathPanel
+            cases={cases}
+            filteredCases={filteredCases}
             zh={zh}
           />
 
@@ -463,6 +648,20 @@ export default function CasesPageContent({
               const type = localizedText(zh, item.project_type_zh, item.project_type_en)
               const desc = localizedText(zh, item.description_zh, item.description_en)
               const tags = localizedList(zh, item.tags_zh, item.tags_en)
+              const proofProfile = caseProofProfile(item)
+              const proofTone = caseProofTone(proofProfile)
+              const proofToneClass =
+                proofTone === 'ready'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : proofTone === 'review'
+                    ? 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
+                    : 'border-[#E5DED4] bg-[#FAF7F2] text-[#8A8580]'
+              const proofLabel =
+                proofTone === 'ready'
+                  ? (zh ? '证明完整' : 'Proof-ready')
+                  : proofTone === 'review'
+                    ? (zh ? '重点复核' : 'Review proof')
+                    : (zh ? '基础展示' : 'Basic proof')
               const facts = [
                 { label: itemLabel(itemById(detailLabelsModule, 'fact-type'), lang), value: type },
                 { label: itemLabel(itemById(detailLabelsModule, 'fact-location'), lang), value: location },
@@ -503,6 +702,11 @@ export default function CasesPageContent({
                             </span>
                           ) : null}
                         </div>
+                        <div className="absolute right-4 top-4 flex max-w-[45%] flex-wrap justify-end gap-2">
+                          <span className="bg-[#1889B6] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-white">
+                            {zh ? `${proofProfile.imageCount} 张图` : `${proofProfile.imageCount} photos`}
+                          </span>
+                        </div>
                         {tags.length > 0 ? (
                           <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-2">
                             {tags.slice(0, featured ? 4 : 2).map((tag) => (
@@ -537,6 +741,24 @@ export default function CasesPageContent({
                     {desc ? (
                       <p className={`mt-4 text-sm leading-6 text-[#6B6560] ${featured ? 'line-clamp-3' : 'line-clamp-2'}`}>{desc}</p>
                     ) : null}
+                    <div className="mt-5 grid grid-cols-2 gap-2 border-t border-[#E5DED4] pt-4 sm:grid-cols-4">
+                      <div className={`col-span-2 min-w-0 border px-3 py-2 sm:col-span-1 ${proofToneClass}`}>
+                        <span className="block truncate text-[10px] font-black uppercase tracking-[0.12em]" title={proofLabel}>{proofLabel}</span>
+                        <span className="mt-1 block text-sm font-black leading-5">{proofProfile.proofScore}</span>
+                      </div>
+                      <div className="min-w-0 border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-2 text-[#2C2A28]">
+                        <span className="block truncate text-[10px] font-black uppercase tracking-[0.12em] text-[#8A8580]">{zh ? '图库' : 'Gallery'}</span>
+                        <span className="mt-1 block text-sm font-black leading-5">{proofProfile.imageCount}</span>
+                      </div>
+                      <div className="min-w-0 border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-2 text-[#2C2A28]">
+                        <span className="block truncate text-[10px] font-black uppercase tracking-[0.12em] text-[#8A8580]">{zh ? '事实' : 'Facts'}</span>
+                        <span className="mt-1 block text-sm font-black leading-5">{proofProfile.factCount}/5</span>
+                      </div>
+                      <div className="min-w-0 border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-2 text-[#2C2A28]">
+                        <span className="block truncate text-[10px] font-black uppercase tracking-[0.12em] text-[#8A8580]">{zh ? '产品' : 'Products'}</span>
+                        <span className="mt-1 block text-sm font-black leading-5">{proofProfile.productsCount}</span>
+                      </div>
+                    </div>
                     {facts.length > 0 ? (
                       <div className={`mt-6 grid gap-2 border-t border-[#E5DED4] pt-5 ${featured ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
                         {facts.slice(0, featured ? 6 : 4).map((fact, factIndex) => (
