@@ -251,6 +251,7 @@ function getSeoSideNav(isAdmin: boolean): AdminSideNavGroup[] {
       title: '内容入口',
       items: [
         { key: 'products', label: '产品管理', href: '/admin/content/products', Icon: Package },
+        { key: 'product-seo-lifecycle', label: '产品 SEO 生命周期', href: '#product-seo-lifecycle-bridge', Icon: SearchCheck },
         { key: 'projects', label: '项目案例', href: '/admin/content/projects', Icon: MapPinned },
         { key: 'news', label: '新闻资讯', href: '/admin/content/news', Icon: Newspaper },
         { key: 'media', label: '图片素材', href: '/admin/site/media', Icon: ImageIcon },
@@ -1038,6 +1039,108 @@ function SeoConversionRepairPanel({
             看新闻线索队列
           </Link>
         </div>
+      </div>
+    </section>
+  )
+}
+
+function ProductSeoLifecycleBridge({ products }: { products: ContentSeoSummary }) {
+  const hasMissing = products.missing > 0
+  const items = [
+    {
+      title: '产品生命周期总控',
+      value: 'B320',
+      detail: '从产品内容总览回看新建预检、列表回流、单篇编辑、公开目录和产品线索。',
+      href: '/admin/content/products#product-lifecycle',
+      Icon: Package,
+      tone: 'blue' as const,
+    },
+    {
+      title: '产品 SEO 待补',
+      value: formatNumber(products.missing),
+      detail: `已发布产品 ${formatNumber(products.published)} 个；先补标题和描述，再回看路径质量。`,
+      href: products.href,
+      Icon: SearchCheck,
+      tone: hasMissing ? 'orange' as const : 'green' as const,
+    },
+    {
+      title: '公开产品目录',
+      value: '/products',
+      detail: '核对前台产品适配筛选、详情证明桥和询盘入口是否能承接 SEO 流量。',
+      href: '/products',
+      Icon: ExternalLink,
+      tone: 'blue' as const,
+    },
+    {
+      title: '产品路径分析',
+      value: 'Traffic',
+      detail: '从 SEO 修复回看产品访问、动作、表单和真实线索表现。',
+      href: '/admin/status/traffic#product-conversion-path',
+      Icon: ListChecks,
+      tone: 'blue' as const,
+    },
+    {
+      title: '产品线索复盘',
+      value: 'Leads',
+      detail: '查看 source_type=product 队列，确认搜索入口是否带来可跟进咨询。',
+      href: '/admin/customers/leads?source_type=product',
+      Icon: Link2,
+      tone: 'blue' as const,
+    },
+  ]
+
+  return (
+    <section
+      id="product-seo-lifecycle-bridge"
+      data-product-seo-lifecycle-bridge="true"
+      className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
+      <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B321 Product SEO Lifecycle</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品生命周期 SEO 修复入口</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把 B320 产品生命周期总控、B315/B316 公开产品路径、产品 SEO 待补和产品线索复盘放到 SEO 页顶部；本区只读串联，不批量写入 TDK、不提交 sitemap、不调用 Google API。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <CommandBridgeLink href="/admin/content/products#product-lifecycle" label="产品生命周期" primary />
+          <CommandBridgeLink href={products.href} label="产品 SEO 待补" primary={hasMissing} />
+          <CommandBridgeLink href="/admin/customers/leads?source_type=product" label="产品线索" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-2 xl:grid-cols-5">
+        {items.map((item) => {
+          const Icon = item.Icon
+          const toneClass =
+            item.tone === 'green'
+              ? 'text-emerald-700'
+              : item.tone === 'orange'
+                ? 'text-[#E36F2C]'
+                : 'text-[#1889B6]'
+
+          return (
+            <Link
+              key={item.title}
+              href={item.href}
+              className="group min-h-44 border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-white md:odd:border-r xl:border-b-0 xl:border-r xl:last:border-r-0"
+            >
+              <span className="flex items-start justify-between gap-3">
+                <span className="min-w-0">
+                  <span className="block text-xs font-bold tracking-[0.08em] text-[#8A9EA4]">{item.title}</span>
+                  <span className={`mt-2 block truncate text-2xl font-bold ${toneClass}`}>{item.value}</span>
+                </span>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+                  <Icon size={16} />
+                </span>
+              </span>
+              <span className="mt-3 block min-h-16 text-xs leading-5 text-[#61767D]">{item.detail}</span>
+              <span className="mt-3 inline-flex min-h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition group-hover:border-[#E36F2C]/50 group-hover:text-[#E36F2C]">
+                进入处理
+              </span>
+            </Link>
+          )
+        })}
       </div>
     </section>
   )
@@ -1841,6 +1944,8 @@ export default async function AdminSiteSeoPage() {
         projects={projects}
         indexFoundationItems={indexFoundationItems}
       />
+
+      <ProductSeoLifecycleBridge products={products} />
 
       <SeoReadinessOverviewTable
         products={products}
