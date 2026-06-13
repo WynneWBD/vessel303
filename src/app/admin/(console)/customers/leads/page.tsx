@@ -70,6 +70,13 @@ type LeadConsoleAction = {
   primary?: boolean
 }
 
+type LeadSourceContract = {
+  label: string
+  value: string
+  href: string
+  tone: LeadConsoleTone
+}
+
 type LeadConsoleRow = {
   title: string
   detail: string
@@ -79,6 +86,7 @@ type LeadConsoleRow = {
   Icon: LucideIcon
   tone: LeadConsoleTone
   actions: LeadConsoleAction[]
+  contracts?: LeadSourceContract[]
 }
 
 const EMPTY_LEADS_RESULT: LeadsResult = {
@@ -395,6 +403,26 @@ function LeadsQueueConsole({
         { label: '来源面板', href: '/admin/status/traffic#news-source-handoff' },
         { label: '新闻运营', href: '/admin/content/news#news-operations-hub' },
       ],
+      contracts: [
+        {
+          label: '来源命名',
+          value: 'news:*',
+          href: '/admin/status/traffic#news-source-handoff',
+          tone: 'blue',
+        },
+        {
+          label: 'Contact 承接',
+          value: 'Contact',
+          href: '/contact?source=news:list:contact_cta',
+          tone: 'green',
+        },
+        {
+          label: '线索筛选',
+          value: 'source_type=news',
+          href: createLeadsHref(filters, { source_type: 'news', source_stage: 'all', status: 'all', page: 1 }),
+          tone: newsActive > 0 ? 'orange' : newsTotal > 0 ? 'blue' : 'gray',
+        },
+      ],
     },
     {
       title: '产品线索承接',
@@ -554,6 +582,24 @@ function LeadConsoleRowView({ row }: { row: LeadConsoleRow }) {
           </a>
         ))}
       </div>
+
+      {row.contracts && row.contracts.length > 0 ? (
+        <div className="mt-4 border-t border-[#D8E7E8] pt-3">
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#8A9EA4]">Source Contract</div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {row.contracts.map((contract) => (
+              <a
+                key={contract.label}
+                href={contract.href}
+                className={`inline-flex min-h-7 items-center gap-1 rounded-md px-2.5 text-[11px] font-semibold ${leadConsoleSignalClass(contract.tone)}`}
+              >
+                <span>{contract.label}</span>
+                <span className="text-current/70">{contract.value}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </article>
   )
 }
