@@ -332,6 +332,19 @@ function ProductCard({
     [product.productSeries, product.gen].filter(Boolean).join(' / '),
     ...attributeLabels,
   ].filter(Boolean);
+  const fitFieldCount = [
+    category,
+    productAreaLabel(product),
+    product.productSeries,
+    product.gen,
+    ...attributeLabels,
+  ].filter(Boolean).length;
+  const proofPointCount = tags.length + features.length + (product.image ? 1 : 0);
+  const adaptationSignals = [
+    { label: fallbackCopy(lang, 'Fit fields', 'Fit fields'), value: formatCount(fitFieldCount) || '0' },
+    { label: fallbackCopy(lang, 'Proof points', 'Proof points'), value: formatCount(proofPointCount) || '0' },
+    { label: fallbackCopy(lang, 'Inquiry source', 'Inquiry source'), value: product.id ? 'Ready' : '-' },
+  ];
   const decisionSpecs = [
     { label: fallbackCopy(lang, 'Area', '面积'), value: productAreaLabel(product) },
     { label: fallbackCopy(lang, 'Type', '类型'), value: productTypeLabel(product.productType, lang) },
@@ -385,6 +398,14 @@ function ProductCard({
             ))}
           </div>
         ) : null}
+        <div className="mt-2 grid grid-cols-3 border border-[#E5E9EC] bg-white">
+          {adaptationSignals.map((item) => (
+            <div key={item.label} className="min-w-0 border-r border-[#E5E9EC] px-2 py-2 last:border-r-0">
+              <p className="truncate text-[10px] font-bold uppercase tracking-[0.1em] text-[#8A9299]">{item.label}</p>
+              <p className="mt-1 truncate text-xs font-black text-[#147C94]">{item.value}</p>
+            </div>
+          ))}
+        </div>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {tags.slice(0, 2).map((tag) => (
             <span key={tag} className="border border-[#DADDE1] px-2 py-0.5 text-[11px] text-[#65707A]">
@@ -529,6 +550,9 @@ function CatalogCommandPanel({
   const scopeProducts = filteredProducts.length > 0 ? filteredProducts : products;
   const seriesCount = new Set(scopeProducts.map((product) => product.productSeries).filter(Boolean)).size;
   const areaRange = areaRangeLabel(scopeProducts);
+  const leadProduct = scopeProducts[0] ?? null;
+  const leadProductName = leadProduct ? localizedText(leadProduct.name_en, leadProduct.name_cn, lang) : '';
+  const leadProductHref = leadProduct ? productHref(leadProduct) : '';
   const activeRoute = activeFilters.length > 0
     ? activeFilters.map((item) => `${item.label}: ${item.value}`).join(' / ')
     : fallbackCopy(lang, 'All published models', '全部已发布型号');
@@ -578,9 +602,32 @@ function CatalogCommandPanel({
       detail: fallbackCopy(lang, 'For model sizing', '用于选型'),
     },
   ];
+  const decisionLane = [
+    {
+      label: '01',
+      title: fallbackCopy(lang, 'Scope by scenario', 'Scope by scenario'),
+      body: activeFilters.length > 0
+        ? activeRoute
+        : fallbackCopy(lang, 'Start with category, configuration or area filters.', 'Start with category, configuration or area filters.'),
+    },
+    {
+      label: '02',
+      title: fallbackCopy(lang, 'Verify fit evidence', 'Verify fit evidence'),
+      body: [
+        seriesCount ? `${seriesCount} ${fallbackCopy(lang, 'series', 'series')}` : '',
+        areaRange || '',
+        `${filteredProducts.length} ${fallbackCopy(lang, 'matched models', 'matched models')}`,
+      ].filter(Boolean).join(' / '),
+    },
+    {
+      label: '03',
+      title: fallbackCopy(lang, 'Inquire from a matched model', 'Inquire from a matched model'),
+      body: leadProductName || fallbackCopy(lang, 'Open product detail before sending the request.', 'Open product detail before sending the request.'),
+    },
+  ];
 
   return (
-    <section className="mb-4 border border-[#C7CDD2] bg-white">
+    <section className="mb-4 border border-[#C7CDD2] bg-white" data-products-adaptation-panel="true">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.72fr)_minmax(320px,0.28fr)]">
         <div className="border-b border-[#DADDE1] p-4 lg:border-b-0 lg:border-r">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -646,7 +693,32 @@ function CatalogCommandPanel({
                 '用筛选缩小目录范围，打开最匹配型号，再从匹配产品提交询盘。',
               )}
             </p>
+            <div className="mt-4 space-y-2">
+              {decisionLane.map((item) => (
+                <div key={item.label} className="border border-white/10 bg-white/[0.04] p-3">
+                  <div className="flex items-start gap-3">
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center bg-[#8FD5E1] text-[10px] font-black text-[#1F2A31]">
+                      {item.label}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-xs font-black uppercase tracking-[0.1em] text-white">{item.title}</span>
+                      <span className="mt-1 block text-xs leading-5 text-white/60">{item.body}</span>
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
+          {leadProductName && leadProductHref ? (
+            <Link
+              prefetch={false}
+              href={leadProductHref}
+              className="inline-flex min-h-10 items-center justify-center gap-2 border border-white/20 px-4 text-xs font-black uppercase tracking-[0.1em] text-white transition hover:border-[#8FD5E1] hover:bg-white/10"
+            >
+              <span>{fallbackCopy(lang, 'Open top match', 'Open top match')}</span>
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          ) : null}
           {uiLabels.inquiryCta && inquiryHref ? (
             <Link
               prefetch={false}
