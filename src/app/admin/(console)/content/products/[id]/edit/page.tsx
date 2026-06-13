@@ -26,6 +26,7 @@ import {
   listProductBrands,
   listProductMarks,
   listProductShowcases,
+  type ProductOperationAssignments,
 } from '@/lib/product-operations-db'
 import { getCatalogProductRouteInfo } from '@/lib/product-public-routes'
 import type {
@@ -158,6 +159,19 @@ type ProductEditBackflowStep = {
   issues: string[]
   Icon: LucideIcon
 }
+
+type ProductRecoveryPublishStep = {
+  key: string
+  label: string
+  value: string
+  detail: string
+  href: string
+  tone: ProductReadinessTone
+  issues: string[]
+  Icon: LucideIcon
+}
+
+type ProductEditProduct = CatalogProductRow & ProductOperationAssignments
 
 const EDIT_SECTIONS: EditSection[] = [
   {
@@ -300,7 +314,7 @@ function rowToProduct(row: ProductDbRow): CatalogProductRow {
   }
 }
 
-async function getProductReadOnly(id: string): Promise<CatalogProductRow | null> {
+async function getProductReadOnly(id: string): Promise<ProductEditProduct | null> {
   if (!(await tableExists('public.product_catalog'))) return null
   await ensureProductCatalogSchema()
 
@@ -666,6 +680,93 @@ function buildProductEditBackflowSteps(product: CatalogProductRow): ProductEditB
   ]
 }
 
+function buildProductRecoveryPublishSteps(product: ProductEditProduct): ProductRecoveryPublishStep[] {
+  const routeInfo = getCatalogProductRouteInfo(product)
+  const published = product.status === 'published'
+  const visibleDetailModuleCount = getVisibleDetailModules(product).length
+  const releaseIssues = getProductReleaseIssues(product)
+  const taxonomyIssues = compactIssueList([
+    !product.category_id && '未分类',
+    !product.brand_id && '缺品牌',
+    !hasArrayItems(product.attribute_option_ids) && '缺产品属性',
+    !hasArrayItems(product.mark_ids) && '缺运营标记',
+  ])
+  const mediaContentIssues = compactIssueList([
+    !hasText(product.image) && '缺封面',
+    !hasArrayItems(product.gallery) && '缺详情图库',
+    !hasText(product.description_cn) && '缺中文简介',
+    !hasText(product.description_en) && '缺英文简介',
+    visibleDetailModuleCount === 0 && '缺详情模块',
+  ])
+  const searchInquiryIssues = compactIssueList([
+    !productSeoComplete(product) && '缺 SEO',
+    (!hasArrayItems(product.keywords_zh) && !hasArrayItems(product.keywords_en)) && '缺关键词',
+    (!hasText(product.price_display_zh) && !hasText(product.price_display_en)) && '缺价格展示',
+    getCommercialIssueLabel(product),
+    !hasArrayItems(product.related_product_ids) && '缺相关产品',
+    !hasBuyerResourceLinks(product) && '缺买家资料链接',
+  ])
+  const statusIssues = compactIssueList([
+    !published && '草稿待人工发布确认',
+    published && releaseIssues.length > 0 && '已发布仍有缺口',
+  ])
+
+  return [
+    {
+      key: 'source-status',
+      label: '来源与状态',
+      value: published ? '已公开' : '草稿',
+      detail: published
+        ? '已发布产品保存会影响公开页，继续按缺口复核后再改。'
+        : '从 B336 草稿队列进入后，先确认来源、状态和发布前人工检查。',
+      href: published ? routeInfo.publicHref : '#publish-check',
+      tone: statusIssues.length > 0 ? 'warning' : 'ready',
+      issues: statusIssues,
+      Icon: published ? CheckCircle2 : SearchCheck,
+    },
+    {
+      key: 'taxonomy-brand-mark',
+      label: '分类 / 品牌 / 标记',
+      value: `${product.category_id ? 1 : 0}/${product.brand_id ? 1 : 0}/${product.mark_ids.length}`,
+      detail: '恢复或新建草稿先绑定分类、品牌、筛选属性和运营标记，避免前台目录与后台队列断层。',
+      href: '#attributes',
+      tone: taxonomyIssues.length > 0 ? 'warning' : 'ready',
+      issues: taxonomyIssues,
+      Icon: Tags,
+    },
+    {
+      key: 'media-detail-proof',
+      label: '素材与详情证明',
+      value: `${product.gallery?.length ?? 0} 图 / ${visibleDetailModuleCount} 模块`,
+      detail: '确认封面、图库、双语简介和详情模块能支撑前台产品详情页。',
+      href: '#media',
+      tone: mediaContentIssues.length > 0 ? 'warning' : 'ready',
+      issues: mediaContentIssues,
+      Icon: ImageIcon,
+    },
+    {
+      key: 'search-inquiry-handoff',
+      label: '搜索与询盘交接',
+      value: `${searchInquiryIssues.length} 缺口`,
+      detail: '发布前核对 SEO、关键词、商务口径、关联产品和买家资料，保证客户能从详情进入咨询。',
+      href: '#seo',
+      tone: searchInquiryIssues.length > 0 ? 'warning' : 'ready',
+      issues: searchInquiryIssues,
+      Icon: ListChecks,
+    },
+    {
+      key: 'manual-publish-check',
+      label: '发布前人工确认',
+      value: `${releaseIssues.length} 发布缺项`,
+      detail: '最后回到表单底部发布检查，不自动保存、不自动发布、不恢复产品。',
+      href: '#publish-check',
+      tone: releaseIssues.length > 0 || !published ? 'warning' : 'ready',
+      issues: releaseIssues.slice(0, 8),
+      Icon: AlertTriangle,
+    },
+  ]
+}
+
 function getSideNavGroups(product: CatalogProductRow): AdminSideNavGroup[] {
   return [
     {
@@ -692,6 +793,7 @@ function getSideNavGroups(product: CatalogProductRow): AdminSideNavGroup[] {
         { key: 'product-edit-backflow-guide', label: '回流处理', href: '#product-edit-backflow-guide', Icon: ListChecks },
         { key: 'product-edit-closure', label: '经营闭环', href: '#product-edit-closure', Icon: BarChart3 },
         { key: 'product-edit-lead-feedback', label: '线索回流', href: '#product-edit-lead-feedback-desk', Icon: UsersRound },
+        { key: 'product-recovery-publish-readiness', label: '恢复发布检查', href: '#product-recovery-publish-readiness-desk', Icon: SearchCheck },
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
         { key: 'publish-flow', label: '发布审核', planned: true, Icon: SearchCheck },
@@ -1272,6 +1374,174 @@ function ProductEditLeadFeedbackDesk({ product }: { product: CatalogProductRow }
   )
 }
 
+function ProductRecoveryPublishReadinessDesk({ product }: { product: ProductEditProduct }) {
+  const routeInfo = getCatalogProductRouteInfo(product)
+  const steps = buildProductRecoveryPublishSteps(product)
+  const warningSteps = steps.filter((step) => step.tone === 'warning')
+  const readySteps = steps.length - warningSteps.length
+  const published = product.status === 'published'
+  const productDraftQueueHref = `/admin/content/products/list?search=${encodeURIComponent(product.id)}#product-draft-recovery-readiness-desk`
+  const recoverySignal =
+    !published && warningSteps.length > 0
+      ? `当前产品仍是草稿，发布前还有 ${warningSteps.length} 个检查组待补；先回 B336 队列确认来源，再按本页锚点补字段。`
+      : published && warningSteps.length > 0
+        ? `当前产品已发布但仍有 ${warningSteps.length} 个检查组待补；保存前先处理缺口，避免直接影响公开页。`
+        : published
+          ? '当前产品已发布且关键检查组已通过，可继续用 B325/B324 观察产品线索反馈。'
+          : '当前草稿关键检查组已通过，最后仍需在表单底部发布检查中人工确认。'
+  const supportLinks = [
+    {
+      label: 'B336 草稿队列',
+      detail: '回到产品列表的恢复后草稿补齐队列，用当前产品 ID 定位处理上下文。',
+      href: productDraftQueueHref,
+      Icon: ListChecks,
+      tone: !published ? 'warning' : 'neutral',
+    },
+    {
+      label: 'B335 恢复保护',
+      detail: '只读核对回收站恢复保护台，确认不会在本页执行恢复或永久删除。',
+      href: '/admin/content/products/recycle#product-recycle-protection-desk',
+      Icon: AlertTriangle,
+      tone: 'neutral',
+    },
+    {
+      label: 'B334 分类治理',
+      detail: '分类缺失时回到分类治理台，再回编辑页绑定分类和属性。',
+      href: '/admin/content/products/categories#product-category-readiness-desk',
+      Icon: Layers3,
+      tone: product.category_id ? 'ready' : 'warning',
+    },
+    {
+      label: 'B333 / B332 运营归属',
+      detail: '品牌或标记缺失时先看品牌、标记治理台，保证运营分组可接管。',
+      href: product.brand_id ? '/admin/content/products/marks#product-mark-readiness-desk' : '/admin/content/products/brands#product-brand-readiness-desk',
+      Icon: Tags,
+      tone: product.brand_id && product.mark_ids.length > 0 ? 'ready' : 'warning',
+    },
+  ] satisfies Array<{
+    label: string
+    detail: string
+    href: string
+    Icon: LucideIcon
+    tone: ProductReadinessTone
+  }>
+
+  return (
+    <section
+      id="product-recovery-publish-readiness-desk"
+      data-product-recovery-publish-readiness="true"
+      className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
+      <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold text-[#E36F2C]">B337 Recovery Publish Gate</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">恢复后发布前检查台</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
+            把 B336 草稿补齐队列落到当前产品编辑页：只读核对来源状态、分类品牌标记、素材详情、搜索询盘和发布前人工确认；本区不保存、不发布、不恢复产品。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <AdminActionLink href={productDraftQueueHref} Icon={ListChecks} label="B336 队列" />
+          <AdminActionLink href="/admin/content/products/recycle#product-recycle-protection-desk" Icon={AlertTriangle} label="B335 保护" />
+          {published ? (
+            <AdminActionLink href={routeInfo.publicHref} Icon={CheckCircle2} label="前台预览" external />
+          ) : null}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
+        <BackflowInfoCell label="检查通过" value={`${readySteps}/${steps.length}`} detail="按当前保存字段只读判断" tone={warningSteps.length > 0 ? 'warning' : 'ready'} />
+        <BackflowInfoCell label="待处理组" value={`${warningSteps.length}`} detail={warningSteps.length > 0 ? warningSteps.map((step) => step.label).join('、') : '关键检查组已通过'} tone={warningSteps.length > 0 ? 'warning' : 'ready'} />
+        <BackflowInfoCell label="品牌 / 标记" value={`${product.brand_id ? 1 : 0}/${product.mark_ids.length}`} detail="品牌绑定 / 运营标记数量" tone={product.brand_id && product.mark_ids.length > 0 ? 'ready' : 'warning'} />
+        <BackflowInfoCell label="橱窗归属" value={`${product.showcase_ids.length}`} detail="当前产品所在推荐橱窗数量" tone={product.showcase_ids.length > 0 ? 'ready' : 'neutral'} />
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] xl:grid-cols-[minmax(0,1fr)_420px] xl:divide-x xl:divide-y-0">
+        <div>
+          <div className="border-b border-[#E6EEEE] px-5 py-4">
+            <p className="text-sm font-bold text-[#1E2C31]">发布前判断</p>
+            <p className="mt-2 text-sm leading-6 text-[#61767D]">{recoverySignal}</p>
+          </div>
+          <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 2xl:grid-cols-5">
+            {steps.map((step) => (
+              <Link
+                key={step.key}
+                href={step.href}
+                className={`group min-h-[188px] px-5 py-4 transition ${step.tone === 'warning' ? 'hover:bg-[#FFF2E7]/55' : 'hover:bg-emerald-50/45'}`}
+              >
+                <span className="flex items-start justify-between gap-3">
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border ${readinessToneClass(step.tone)}`}>
+                    <step.Icon size={18} />
+                  </span>
+                  <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${readinessToneClass(step.tone)}`}>
+                    {step.tone === 'warning' ? '待处理' : step.tone === 'ready' ? '已具备' : '只读'}
+                  </span>
+                </span>
+                <h3 className="mt-4 text-sm font-bold text-[#1E2C31]">{step.label}</h3>
+                <p className="mt-1 text-xl font-bold text-[#1E2C31]">{step.value}</p>
+                <p className="mt-2 min-h-[44px] text-xs leading-5 text-[#61767D]">{step.detail}</p>
+                <span className="mt-3 flex flex-wrap gap-1.5">
+                  {step.issues.length > 0 ? (
+                    step.issues.slice(0, 3).map((issue) => (
+                      <span key={issue} className="rounded-full border border-[#F2C6A7] bg-[#FFF2E7] px-2 py-0.5 text-[11px] font-semibold text-[#E36F2C]">
+                        {issue}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                      当前完整
+                    </span>
+                  )}
+                  {step.issues.length > 3 ? (
+                    <span className="rounded-full border border-[#D8E7E8] bg-white px-2 py-0.5 text-[11px] font-semibold text-[#61767D]">
+                      +{step.issues.length - 3}
+                    </span>
+                  ) : null}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <aside className="bg-[#FBFDFD]">
+          <div className="border-b border-[#E6EEEE] px-5 py-4">
+            <h3 className="text-sm font-bold text-[#1E2C31]">跨台承接入口</h3>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">
+              按恢复保护、草稿队列、分类治理、品牌标记治理的顺序回查；这里只跳转，不提交任何表单。
+            </p>
+          </div>
+          <div className="divide-y divide-[#E6EEEE]">
+            {supportLinks.map((link) => {
+              const Icon = link.Icon
+              return (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="group block px-5 py-4 transition hover:bg-white"
+                >
+                  <span className="flex items-start gap-3">
+                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${readinessToneClass(link.tone)}`}>
+                      <Icon size={16} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-bold text-[#1E2C31]">{link.label}</span>
+                      <span className="mt-1 block text-xs leading-5 text-[#61767D]">{link.detail}</span>
+                      <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
+                        打开
+                        <ArrowLeft className="rotate-180" size={13} />
+                      </span>
+                    </span>
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+        </aside>
+      </div>
+    </section>
+  )
+}
+
 function ProductEditSourceContractStrip({ contracts }: { contracts: ProductEditSourceContract[] }) {
   return (
     <div className="border-t border-[#E6EEEE] bg-white">
@@ -1515,6 +1785,7 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
       <ProductEditBackflowGuidePanel product={product} />
       <ProductEditClosurePanel product={product} />
       <ProductEditLeadFeedbackDesk product={product} />
+      <ProductRecoveryPublishReadinessDesk product={product} />
       <EditSectionGrid />
       <RiskNotice product={product} />
       <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm md:p-5">
