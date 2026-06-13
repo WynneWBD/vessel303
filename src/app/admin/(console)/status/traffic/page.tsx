@@ -1398,6 +1398,12 @@ function NewsTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) 
           : '新闻来源暂无足够样本，先保持公开新闻入口和后台内容运营链路可下钻。'
   const closureLinks = [
     {
+      label: '线索状态桥',
+      detail: '复盘新闻路径、来源动作和线索状态',
+      href: '/admin/status/leads#news-lead-path-bridge',
+      tone: metric.leads > 0 ? 'green' as const : hasNewsSignal ? 'blue' as const : 'gray' as const,
+    },
+    {
       label: '新闻线索队列',
       detail: '只看 source_type=news 的线索承接',
       href: '/admin/customers/leads?source_type=news',
@@ -1418,7 +1424,7 @@ function NewsTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) 
     {
       label: '转化台账',
       detail: '和其他公开路径统一看承接状态',
-      href: '/admin/site/conversion',
+      href: '/admin/site/conversion#news-conversion-handoff',
       tone: hasNewsSignal ? 'green' as const : 'gray' as const,
     },
   ] satisfies Array<{
@@ -1460,7 +1466,7 @@ function NewsTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) 
         运营判断：{decision}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:grid-cols-5">
         {closureLinks.map((item) => (
           <Link
             key={item.label}
