@@ -53,6 +53,15 @@ type OperationsHubCard = {
   Icon: LucideIcon
 }
 
+type SourceContractItem = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange' | 'neutral'
+}
+
 function getStatusEntries(stats: NewsStats): StatusEntry[] {
   return [
     {
@@ -224,6 +233,40 @@ function OperationsHub({ stats }: { stats: NewsStats }) {
       Icon: Link2,
     },
   ]
+  const sourceContracts: SourceContractItem[] = [
+    {
+      label: '来源命名',
+      value: 'news:*',
+      detail: '新闻列表、详情和 CTA 统一落到新闻来源命名，便于流量面板聚合。',
+      href: '/admin/status/traffic#news-source-handoff',
+      Icon: SearchCheck,
+      tone: 'blue',
+    },
+    {
+      label: 'Contact 承接',
+      value: 'Contact',
+      detail: '公开站新闻 CTA 先回到 Contact 表单，不新增第二套提交入口。',
+      href: '/contact?source=news:list:contact_cta',
+      Icon: Link2,
+      tone: 'green',
+    },
+    {
+      label: '线索筛选',
+      value: 'source_type=news',
+      detail: '进入客户线索台时直接筛选新闻来源，方便运营处理和复盘。',
+      href: '/admin/customers/leads?source_type=news',
+      Icon: ListChecks,
+      tone: 'orange',
+    },
+    {
+      label: '复盘路径',
+      value: '状态桥',
+      detail: '回看新闻访问、转化承接和线索状态，形成内容获客闭环。',
+      href: '/admin/status/leads#news-lead-path-bridge',
+      Icon: Link2,
+      tone: 'blue',
+    },
+  ]
 
   return (
     <section id="news-operations-hub" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
@@ -250,7 +293,62 @@ function OperationsHub({ stats }: { stats: NewsStats }) {
           <OperationsHubLink key={card.label} card={card} />
         ))}
       </div>
+
+      <SourceContractBoard contracts={sourceContracts} />
     </section>
+  )
+}
+
+function SourceContractBoard({ contracts }: { contracts: SourceContractItem[] }) {
+  return (
+    <div className="border-t border-[#E6EEEE] bg-white px-4 py-4">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1889B6]">Source Contract</p>
+          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">新闻来源承接合同</h3>
+        </div>
+        <p className="max-w-3xl text-xs leading-5 text-[#61767D]">
+          和线索队列保持同一套约定：公开站新闻入口用 news:* 命名，经 Contact 写入线索，再用 source_type=news 回到客户线索和状态桥复盘。
+        </p>
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {contracts.map((contract) => (
+          <SourceContractLink key={contract.label} contract={contract} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function SourceContractLink({ contract }: { contract: SourceContractItem }) {
+  const Icon = contract.Icon
+  const toneClass =
+    contract.tone === 'green'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+      : contract.tone === 'orange'
+        ? 'border-[#F4C7A6] bg-[#FFF2E7] text-[#C85F24]'
+        : contract.tone === 'neutral'
+          ? 'border-[#D8E7E8] bg-[#F7FAFA] text-[#61767D]'
+          : 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <Link
+      href={contract.href}
+      className="group min-h-28 rounded-md border border-[#D8E7E8] bg-[#FBFDFD] p-3 transition hover:border-[#1889B6]/60 hover:bg-white"
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-xs font-bold text-[#1E2C31]">{contract.label}</span>
+          <span className={`mt-2 inline-flex min-h-7 items-center rounded-md border px-2.5 text-[11px] font-bold ${toneClass}`}>
+            {contract.value}
+          </span>
+        </span>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={15} />
+        </span>
+      </span>
+      <span className="mt-3 block text-xs leading-5 text-[#61767D]">{contract.detail}</span>
+    </Link>
   )
 }
 
