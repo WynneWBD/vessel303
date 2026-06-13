@@ -9,10 +9,16 @@ import {
   listProductCategories,
 } from '@/lib/product-catalog-db'
 import {
+  listProductBrands,
+  listProductFilterGroups,
+  listProductMarks,
+} from '@/lib/product-operations-db'
+import {
   Archive,
   ArrowLeft,
   ArrowRight,
   FileText,
+  Filter,
   Layers3,
   ListChecks,
   Package,
@@ -38,7 +44,14 @@ type CategorySummary = {
   visibleCategories: number
   hiddenCategories: number
   emptyCategories: number
+  visibleEmptyCategories: number
   assignedProducts: number
+  brands: number
+  visibleBrands: number
+  marks: number
+  visibleMarks: number
+  filters: number
+  visibleFilters: number
 }
 
 type CategoryGovernanceCard = {
@@ -59,10 +72,18 @@ function getSideNavGroups({
   total,
   draft,
   deleted,
+  categories,
+  brands,
+  marks,
+  filters,
 }: {
   total: number
   draft: number
   deleted: number
+  categories: number
+  brands: number
+  marks: number
+  filters: number
 }): AdminSideNavGroup[] {
   return [
     {
@@ -72,8 +93,12 @@ function getSideNavGroups({
         { key: 'products', label: '产品管理', href: '/admin/content/products', badge: total, Icon: Package },
         { key: 'product-list', label: '产品列表', href: '/admin/content/products/list', Icon: ListChecks },
         { key: 'drafts', label: '草稿内容', href: '/admin/content/products/list?status=draft', badge: draft, Icon: FileText },
-        { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
+        { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', badge: categories, Icon: Tags },
+        { key: 'category-readiness', label: '分类承接', href: '#product-category-readiness-desk', Icon: SearchCheck },
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
+        { key: 'brands', label: '品牌管理', href: '/admin/content/products/brands', badge: brands, Icon: Package },
+        { key: 'marks', label: '标记管理', href: '/admin/content/products/marks', badge: marks, Icon: Tags },
+        { key: 'filters', label: '筛选管理', href: '/admin/content/products/filters', badge: filters, Icon: Filter },
         { key: 'batch-governance', label: '批量治理', href: '/admin/content/products/list#product-batch-governance', Icon: ListChecks },
         { key: 'recycle', label: '产品回收站', href: '/admin/content/products/recycle', badge: deleted, Icon: Archive },
       ],
@@ -128,11 +153,23 @@ export default async function AdminContentProductCategoriesPage() {
     redirect('/admin/login?error=unauthorized')
   }
 
-  const [counts, deleted, categories] = await Promise.all([
+  const [counts, deleted, categories, brands, marks, filters] = await Promise.all([
     countCatalogProductsByStatus().catch(() => ({ total: 0, draft: 0, published: 0 })),
     countDeletedCatalogProducts().catch(() => 0),
     listProductCategories({ includeHidden: true }).catch((err) => {
       console.error('[admin-content-product-categories] load categories failed', err)
+      return []
+    }),
+    listProductBrands({ includeHidden: true }).catch((err) => {
+      console.error('[admin-content-product-categories] load brands failed', err)
+      return []
+    }),
+    listProductMarks({ includeHidden: true }).catch((err) => {
+      console.error('[admin-content-product-categories] load marks failed', err)
+      return []
+    }),
+    listProductFilterGroups({ includeHidden: true }).catch((err) => {
+      console.error('[admin-content-product-categories] load filters failed', err)
       return []
     }),
   ])
@@ -147,7 +184,14 @@ export default async function AdminContentProductCategoriesPage() {
     visibleCategories: categories.filter((category) => category.status === 'visible').length,
     hiddenCategories: categories.filter((category) => category.status === 'hidden').length,
     emptyCategories: categories.filter((category) => Number(category.product_count ?? 0) === 0).length,
+    visibleEmptyCategories: categories.filter((category) => category.status === 'visible' && Number(category.product_count ?? 0) === 0).length,
     assignedProducts: categories.reduce((sum, category) => sum + Number(category.product_count ?? 0), 0),
+    brands: brands.length,
+    visibleBrands: brands.filter((brand) => brand.status === 'visible').length,
+    marks: marks.length,
+    visibleMarks: marks.filter((mark) => mark.status === 'visible').length,
+    filters: filters.length,
+    visibleFilters: filters.filter((group) => group.status === 'visible').length,
   }
 
   return (
@@ -157,11 +201,20 @@ export default async function AdminContentProductCategoriesPage() {
       email={session.user.email}
       title="产品分类"
       description="维护产品分类、排序和显示状态。"
-      sideNavGroups={getSideNavGroups({ total: counts.total, draft: counts.draft, deleted })}
+      sideNavGroups={getSideNavGroups({
+        total: counts.total,
+        draft: counts.draft,
+        deleted,
+        categories: summary.categories,
+        brands: summary.brands,
+        marks: summary.marks,
+        filters: summary.filters,
+      })}
       activeItem="taxonomy"
     >
       <Hero summary={summary} />
       <CategoryGovernancePanel summary={summary} />
+      <ProductCategoryReadinessPanel summary={summary} />
       <div id="category-manager" className="scroll-mt-24">
         <ProductCategoryManagerClient initialCategories={categories} />
       </div>
@@ -246,6 +299,187 @@ function CategoryGovernancePanel({ summary }: { summary: CategorySummary }) {
   )
 }
 
+function ProductCategoryReadinessPanel({ summary }: { summary: CategorySummary }) {
+  const readinessChecks = [
+    summary.visibleCategories > 0,
+    summary.assignedProducts > 0,
+    summary.visibleEmptyCategories === 0,
+    summary.visibleBrands > 0,
+    summary.visibleMarks > 0,
+    summary.visibleFilters > 0,
+  ]
+  const readinessScore = readinessChecks.filter(Boolean).length
+
+  const handoffCards: CategoryGovernanceCard[] = [
+    {
+      label: 'B333 品牌承接',
+      value: formatNumber(summary.visibleBrands),
+      detail: '分类先决定客户从哪个目录进入，品牌再提供产品归属和信任背书。',
+      href: '/admin/content/products/brands#product-brand-readiness-desk',
+      cta: '查看品牌承接',
+      tone: summary.visibleBrands > 0 ? 'green' : 'orange',
+      Icon: Package,
+    },
+    {
+      label: 'B332 标记承接',
+      value: formatNumber(summary.visibleMarks),
+      detail: '分类解决目录入口，标记补运营分层，避免推荐和内部归类使用两套口径。',
+      href: '/admin/content/products/marks#product-mark-readiness-desk',
+      cta: '查看标记承接',
+      tone: summary.visibleMarks > 0 ? 'green' : 'orange',
+      Icon: Tags,
+    },
+    {
+      label: 'B330 筛选承接',
+      value: formatNumber(summary.visibleFilters),
+      detail: '分类和筛选组一起决定公开产品目录的第一层导航和第二层缩小范围。',
+      href: '/admin/content/products/filters#product-filter-readiness-desk',
+      cta: '查看筛选承接',
+      tone: summary.visibleFilters > 0 ? 'green' : 'orange',
+      Icon: Filter,
+    },
+    {
+      label: '公开目录核对',
+      value: `${readinessScore}/6`,
+      detail: '从客户视角复核目录入口、分类产品、品牌背书、运营标记和筛选条件是否一致。',
+      href: '/products',
+      cta: '查看产品目录',
+      tone: readinessScore >= 5 ? 'green' : 'orange',
+      Icon: SearchCheck,
+    },
+  ]
+
+  const workflowSteps = [
+    {
+      label: '01 先确认分类底座',
+      detail: '复核可见分类、空分类和分类绑定产品，保证公开目录入口不是空壳。',
+      href: '#category-manager',
+      cta: summary.visibleEmptyCategories > 0 ? '处理空分类' : '复核分类',
+      primary: summary.visibleEmptyCategories > 0,
+    },
+    {
+      label: '02 回列表处理未分类',
+      detail: '从产品列表筛出未分类产品，再用批量分类工具统一归类，减少单品往返编辑。',
+      href: '/admin/content/products/list?view=incomplete&issue=category',
+      cta: '查看缺口',
+      primary: summary.assignedProducts < summary.products,
+    },
+    {
+      label: '03 对齐品牌与标记',
+      detail: '把同一批分类产品继续接到品牌归属和运营标记，保证后台治理口径一致。',
+      href: '/admin/content/products/brands#product-brand-readiness-desk',
+      cta: '对齐品牌',
+      primary: summary.visibleBrands === 0 || summary.visibleMarks === 0,
+    },
+    {
+      label: '04 对齐公开筛选',
+      detail: '用筛选组承接分类后的产品发现路径，避免客户只有目录入口却无法继续缩小范围。',
+      href: '/admin/content/products/filters#product-filter-readiness-desk',
+      cta: '对齐筛选',
+      primary: summary.visibleFilters === 0,
+    },
+    {
+      label: '05 回公开目录验收',
+      detail: '从 `/products` 验证客户能否顺着分类、筛选和产品详情完成询盘路径。',
+      href: '/products',
+      cta: '打开目录',
+      primary: false,
+    },
+  ]
+
+  return (
+    <section
+      id="product-category-readiness-desk"
+      data-product-category-readiness="true"
+      className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]">
+        <div className="border-b border-[#E6EEEE] p-4 lg:border-b-0 lg:border-r">
+          <p className="text-xs font-bold uppercase text-[#1889B6]">B334 Category Readiness</p>
+          <h2 className="mt-2 text-lg font-bold text-[#1E2C31]">分类治理到公开产品发现承接</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
+            把 B333 品牌承接、B332 标记承接、B330 筛选承接、产品列表批量分类和公开目录核对串成同一条只读运营路径；本区不保存分类、不批量转移、不发布产品。
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
+            <CategoryReadinessMetric
+              label="可见分类"
+              value={formatNumber(summary.visibleCategories)}
+              detail={`总分类 ${formatNumber(summary.categories)}`}
+              tone={summary.visibleCategories > 0 ? 'green' : 'orange'}
+            />
+            <CategoryReadinessMetric
+              label="分类产品"
+              value={formatNumber(summary.assignedProducts)}
+              detail={`产品总数 ${formatNumber(summary.products)}`}
+              tone={summary.assignedProducts > 0 ? 'green' : 'orange'}
+            />
+            <CategoryReadinessMetric
+              label="空可见分类"
+              value={formatNumber(summary.visibleEmptyCategories)}
+              detail={summary.visibleEmptyCategories > 0 ? '需要运营判断' : '当前无空壳入口'}
+              tone={summary.visibleEmptyCategories > 0 ? 'orange' : 'green'}
+            />
+            <CategoryReadinessMetric
+              label="品牌承接"
+              value={formatNumber(summary.visibleBrands)}
+              detail={`品牌总数 ${formatNumber(summary.brands)}`}
+              tone={summary.visibleBrands > 0 ? 'green' : 'orange'}
+            />
+            <CategoryReadinessMetric
+              label="标记/筛选"
+              value={`${formatNumber(summary.visibleMarks)}/${formatNumber(summary.visibleFilters)}`}
+              detail="运营分层 / 公开筛选"
+              tone={summary.visibleMarks > 0 && summary.visibleFilters > 0 ? 'green' : 'orange'}
+            />
+            <CategoryReadinessMetric
+              label="承接得分"
+              value={`${readinessScore}/6`}
+              detail={readinessScore >= 5 ? '可进入目录复核' : '先补治理底座'}
+              tone={readinessScore >= 5 ? 'green' : 'orange'}
+            />
+          </div>
+        </div>
+
+        <div className="bg-[#FBFDFD] p-4">
+          <p className="text-xs font-bold uppercase text-[#1889B6]">Operator Path</p>
+          <div className="mt-3 space-y-2">
+            {workflowSteps.map((step) => (
+              <Link
+                key={step.label}
+                href={step.href}
+                className={`group flex min-h-[82px] items-start justify-between gap-3 rounded-md border px-3 py-3 transition ${
+                  step.primary
+                    ? 'border-[#E36F2C]/45 bg-[#FFF7F1] hover:border-[#E36F2C]'
+                    : 'border-[#D8E7E8] bg-white hover:border-[#1889B6]'
+                }`}
+              >
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-[#1E2C31]">{step.label}</span>
+                  <span className="mt-1 block text-xs leading-5 text-[#61767D]">{step.detail}</span>
+                </span>
+                <span
+                  className={`mt-0.5 inline-flex h-8 shrink-0 items-center gap-1 rounded-md px-2 text-xs font-semibold ${
+                    step.primary ? 'bg-[#E36F2C] text-white' : 'bg-[#E7F7F8] text-[#1889B6]'
+                  }`}
+                >
+                  {step.cta}
+                  <ArrowRight size={12} />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-white md:grid-cols-2 xl:grid-cols-4">
+        {handoffCards.map((card) => (
+          <CategoryGovernanceLink key={card.label} card={card} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function CategoryGovernanceLink({ card }: { card: CategoryGovernanceCard }) {
   const Icon = card.Icon
   const toneClass =
@@ -277,6 +511,35 @@ function CategoryGovernanceLink({ card }: { card: CategoryGovernanceCard }) {
         <ArrowRight size={13} />
       </span>
     </Link>
+  )
+}
+
+function CategoryReadinessMetric({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string
+  value: string
+  detail: string
+  tone: 'green' | 'orange' | 'blue' | 'gray'
+}) {
+  const toneClass =
+    tone === 'green'
+      ? 'text-emerald-700'
+      : tone === 'orange'
+        ? 'text-[#E36F2C]'
+        : tone === 'gray'
+          ? 'text-[#61767D]'
+          : 'text-[#1889B6]'
+
+  return (
+    <div className="min-h-[104px] rounded-md border border-[#D8E7E8] bg-[#FBFDFD] p-3">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-2 text-xl font-bold ${toneClass}`}>{value}</p>
+      <p className="mt-1 text-xs leading-5 text-[#8A9EA4]">{detail}</p>
+    </div>
   )
 }
 
