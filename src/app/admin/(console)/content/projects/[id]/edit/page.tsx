@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
+  BarChart3,
   CheckCircle2,
   ExternalLink,
   FileText,
@@ -123,6 +124,16 @@ type CaseConversionCheckpoint = {
   detail: string
   href: string
   done: boolean
+  external?: boolean
+}
+
+type CaseSourceContract = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange' | 'neutral'
   external?: boolean
 }
 
@@ -749,6 +760,41 @@ function CaseConversionPanel({
   const inquiryHref = `/cases/${project.id}#case-inquiry`
   const ready = published && conversionIssues.length === 0
   const nextIssue = conversionIssues[0] ?? null
+  const sourceContracts: CaseSourceContract[] = [
+    {
+      label: '当前详情 CTA',
+      value: 'case:cta_click',
+      detail: published ? '打开当前案例详情页咨询锚点，核查公开咨询动作。' : '草稿发布后才会生成公开案例详情咨询路径。',
+      href: published ? inquiryHref : '#publish-check',
+      Icon: ExternalLink,
+      tone: 'blue',
+      external: published,
+    },
+    {
+      label: '表单承接',
+      value: 'case:inquiry_form',
+      detail: '案例询盘表单进入 leads 后，用 source_stage 精确区分表单样本。',
+      href: '/admin/customers/leads?source_type=case&source_stage=case%3Ainquiry_form',
+      Icon: ListChecks,
+      tone: 'green',
+    },
+    {
+      label: '线索筛选',
+      value: 'source_type=case',
+      detail: '客户线索台按案例来源筛选，处理仍回到现有线索流程。',
+      href: '/admin/customers/leads?source_type=case',
+      Icon: SearchCheck,
+      tone: 'orange',
+    },
+    {
+      label: '路径分析',
+      value: '/cases -> leads',
+      detail: '回到案例路径分析，查看访问、动作、表单和线索样本。',
+      href: '/admin/status/traffic#case-inquiry-path',
+      Icon: BarChart3,
+      tone: 'neutral',
+    },
+  ]
   const status = !published
     ? {
         label: '草稿未上线',
@@ -797,6 +843,13 @@ function CaseConversionPanel({
         </div>
       </div>
 
+      <CaseSourceContractStrip
+        project={project}
+        entries={sourceContracts}
+        issueCount={conversionIssues.length}
+        published={published}
+      />
+
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
         {checkpoints.map((checkpoint) => (
           <Link
@@ -821,6 +874,87 @@ function CaseConversionPanel({
         ))}
       </div>
     </section>
+  )
+}
+
+function CaseSourceContractStrip({
+  project,
+  entries,
+  issueCount,
+  published,
+}: {
+  project: ProjectCaseRow
+  entries: CaseSourceContract[]
+  issueCount: number
+  published: boolean
+}) {
+  return (
+    <div className="mt-4 overflow-hidden rounded-md border border-[#D8E7E8] bg-white">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1889B6]">Source Contract</p>
+          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">当前案例来源承接合同</h3>
+        </div>
+        <p className="max-w-3xl text-xs leading-5 text-[#61767D]">
+          把当前案例编辑、公开详情咨询、case 来源线索队列和路径分析接成同一条只读路径；这里不新增保存、发布、Global 点位或线索状态规则。
+        </p>
+      </div>
+      <div className="grid grid-cols-1 border-b border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
+        <CaseSourceSnapshot label="当前案例" value={project.id} detail={project.name_en || project.name_zh || '未填写名称'} />
+        <CaseSourceSnapshot label="发布状态" value={published ? '已发布' : '草稿'} detail={published ? '公开详情可核查' : '发布后才有公开咨询路径'} />
+        <CaseSourceSnapshot label="转化缺口" value={String(issueCount)} detail={issueCount > 0 ? '素材、叙事或事实待补' : '当前承接检查通过'} />
+        <CaseSourceSnapshot label="咨询锚点" value={published ? '#case-inquiry' : '待发布'} detail="/cases/[id] 详情页承接" />
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+        {entries.map((entry) => (
+          <CaseSourceContractLink key={entry.label} entry={entry} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function CaseSourceSnapshot({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <div className="min-w-0 px-4 py-3">
+      <p className="text-[11px] font-semibold text-[#61767D]">{label}</p>
+      <p className="mt-1 truncate text-lg font-bold text-[#1E2C31]">{value}</p>
+      <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#61767D]">{detail}</p>
+    </div>
+  )
+}
+
+function CaseSourceContractLink({ entry }: { entry: CaseSourceContract }) {
+  const Icon = entry.Icon
+  const toneClass =
+    entry.tone === 'green'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+      : entry.tone === 'orange'
+        ? 'border-[#F4C7A6] bg-[#FFF2E7] text-[#C85F24]'
+        : entry.tone === 'neutral'
+          ? 'border-[#D8E7E8] bg-[#F7FAFA] text-[#61767D]'
+          : 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <Link
+      href={entry.href}
+      target={entry.external ? '_blank' : undefined}
+      rel={entry.external ? 'noopener noreferrer' : undefined}
+      className="group min-h-[132px] px-4 py-4 transition hover:bg-[#F7FAFA]"
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-sm font-bold text-[#1E2C31]">{entry.label}</span>
+          <span className={`mt-2 inline-flex min-h-7 max-w-full items-center rounded-md border px-2.5 text-[11px] font-bold ${toneClass}`}>
+            <span className="truncate">{entry.value}</span>
+          </span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block text-xs leading-5 text-[#61767D]">{entry.detail}</span>
+    </Link>
   )
 }
 
