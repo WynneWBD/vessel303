@@ -71,6 +71,15 @@ type TodoEntry = {
   Icon: LucideIcon
 }
 
+type CaseSourceContract = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange' | 'neutral'
+}
+
 const EMPTY_PROJECT_STATS: ProjectStats = {
   total: 0,
   published: 0,
@@ -586,6 +595,40 @@ function CaseConversionPanel({
     { label: '发布后核查', detail: '发布后从列表打开 /cases/[id]#case-inquiry 检查前台承接。', href: '/admin/content/projects/list?status=published' },
     { label: '路径数据复盘', detail: '从访问统计查看案例访问、动作、表单成功、线索与弱案例队列。', href: '/admin/status/traffic#case-inquiry-path' },
   ]
+  const sourceContracts: CaseSourceContract[] = [
+    {
+      label: '详情 CTA',
+      value: 'case:cta_click',
+      detail: '公开案例详情页咨询动作，回到案例来源阶段复盘。',
+      href: '/admin/customers/leads?source_type=case&source_stage=case%3Acta_click',
+      Icon: ExternalLink,
+      tone: 'blue',
+    },
+    {
+      label: '表单承接',
+      value: 'case:inquiry_form',
+      detail: '案例询盘表单进入 leads 后，用 source_stage 精确区分表单样本。',
+      href: '/admin/customers/leads?source_type=case&source_stage=case%3Ainquiry_form',
+      Icon: ListChecks,
+      tone: 'green',
+    },
+    {
+      label: '线索筛选',
+      value: 'source_type=case',
+      detail: '客户线索台按案例来源筛选，处理仍回到现有线索流程。',
+      href: '/admin/customers/leads?source_type=case',
+      Icon: ClipboardCheck,
+      tone: 'orange',
+    },
+    {
+      label: '路径分析',
+      value: '/cases -> leads',
+      detail: '从访问、动作、表单和线索样本回看案例承接质量。',
+      href: '/admin/status/traffic#case-inquiry-path',
+      Icon: BarChart3,
+      tone: 'neutral',
+    },
+  ]
 
   return (
     <section id="case-conversion" className="scroll-mt-24 space-y-4">
@@ -628,7 +671,86 @@ function CaseConversionPanel({
           </div>
         </div>
       </div>
+      <CaseSourceContractStrip
+        entries={sourceContracts}
+        casePathMetric={casePathMetric}
+        weakCount={weakCount}
+      />
     </section>
+  )
+}
+
+function CaseSourceContractStrip({
+  entries,
+  casePathMetric,
+  weakCount,
+}: {
+  entries: CaseSourceContract[]
+  casePathMetric: AnalyticsConversionMetric
+  weakCount: number
+}) {
+  return (
+    <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1889B6]">Source Contract</p>
+          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">案例来源承接合同</h3>
+        </div>
+        <p className="max-w-3xl text-xs leading-5 text-[#61767D]">
+          对齐公开 Projects / cases 访问路径，把案例详情 CTA、询盘表单、source_type=case 线索队列和路径分析放到同一条只读运营路径。
+        </p>
+      </div>
+      <div className="grid grid-cols-1 border-b border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
+        <CaseSourceSnapshot label="案例路径访问" value={formatNumber(casePathMetric.views)} detail="近 30 天访问样本" />
+        <CaseSourceSnapshot label="案例路径动作" value={formatNumber(casePathMetric.ctaClicks)} detail={`表单 ${formatNumber(casePathMetric.formSubmits)}`} />
+        <CaseSourceSnapshot label="案例路径线索" value={formatNumber(casePathMetric.leads)} detail={formatAnalyticsPercent(casePathMetric.conversionRate)} />
+        <CaseSourceSnapshot label="发布转化弱" value={formatNumber(weakCount)} detail="列表弱案例队列" />
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+        {entries.map((entry) => (
+          <CaseSourceContractLink key={entry.label} entry={entry} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function CaseSourceSnapshot({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <div className="px-4 py-3">
+      <p className="text-[11px] font-semibold text-[#61767D]">{label}</p>
+      <p className="mt-1 text-xl font-bold text-[#1E2C31]">{value}</p>
+      <p className="mt-1 text-xs leading-5 text-[#61767D]">{detail}</p>
+    </div>
+  )
+}
+
+function CaseSourceContractLink({ entry }: { entry: CaseSourceContract }) {
+  const Icon = entry.Icon
+  const toneClass =
+    entry.tone === 'green'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+      : entry.tone === 'orange'
+        ? 'border-[#F4C7A6] bg-[#FFF2E7] text-[#C85F24]'
+        : entry.tone === 'neutral'
+          ? 'border-[#D8E7E8] bg-[#F7FAFA] text-[#61767D]'
+          : 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <Link href={entry.href} className="group min-h-[132px] px-4 py-4 transition hover:bg-[#F7FAFA]">
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-sm font-bold text-[#1E2C31]">{entry.label}</span>
+          <span className={`mt-2 inline-flex min-h-7 max-w-full items-center rounded-md border px-2.5 text-[11px] font-bold ${toneClass}`}>
+            <span className="truncate">{entry.value}</span>
+          </span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block text-xs leading-5 text-[#61767D]">{entry.detail}</span>
+    </Link>
   )
 }
 
