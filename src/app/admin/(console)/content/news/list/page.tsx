@@ -62,6 +62,15 @@ type ActiveFilterChip = {
   href: string
 }
 
+type NewsSourceSeoBridgeItem = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  action: string
+  tone: 'blue' | 'green' | 'orange'
+}
+
 const EMPTY_NEWS_ISSUE_SUMMARY: NewsIssueSummary = {
   cover: 0,
   body: 0,
@@ -370,6 +379,12 @@ function NewsListControlStrip({
       active: false,
     },
     {
+      label: '来源 SEO',
+      href: '/admin/status/leads#source-seo-lead-quality',
+      count: null,
+      active: false,
+    },
+    {
       label: '分类管理',
       href: '/admin/content/news/categories',
       count: categories.length,
@@ -506,15 +521,15 @@ function NewsListGovernancePanel({
       label: '发布台账',
       value: formatNumber(rowsCount),
       detail: '按封面、正文、语言、SEO、分类和排期排序',
-      href: '#news-release-ledger',
+      href: '#news-list-table',
       action: '查看台账',
     },
     {
       label: '来源承接',
-      value: '4 入口',
-      detail: '状态桥、来源面板、转化承接和新闻线索队列已回连',
-      href: '/admin/status/leads#news-lead-path-bridge',
-      action: '打开状态桥',
+      value: '6 入口',
+      detail: '状态桥、质量桥、发布桥、来源面板、转化承接和新闻线索已回连',
+      href: '/admin/status/leads#source-seo-lead-quality',
+      action: '看质量桥',
     },
     {
       label: '运营总览',
@@ -526,9 +541,45 @@ function NewsListGovernancePanel({
   ]
   const sourceHandoffLinks = [
     { label: '状态桥', href: '/admin/status/leads#news-lead-path-bridge' },
+    { label: '质量桥', href: '/admin/status/leads#source-seo-lead-quality' },
+    { label: '发布桥', href: '/admin/status/site#source-seo-release-bridge' },
     { label: '来源面板', href: '/admin/status/traffic#news-source-handoff' },
     { label: '转化承接', href: '/admin/site/conversion#news-conversion-handoff' },
     { label: '新闻线索', href: '/admin/customers/leads?source_type=news' },
+  ]
+  const sourceSeoBridgeCards: NewsSourceSeoBridgeItem[] = [
+    {
+      label: 'B283 处理焦点',
+      value: contentIssueCount > 0 ? `${formatNumber(contentIssueCount)} 待补` : '已归零',
+      detail: '把新闻列表缺项、SEO 待补和当前筛选样本放到同一处理入口。',
+      href: '#news-list-priority',
+      action: '查看优先级',
+      tone: contentIssueCount > 0 ? 'orange' : 'green',
+    },
+    {
+      label: 'SEO 来源质量',
+      value: formatNumber(issueSummary.seo),
+      detail: '新闻 SEO 缺口直连 B282 来源线索质量桥，方便复核内容补齐后是否带来有效询盘。',
+      href: '/admin/status/leads#source-seo-lead-quality',
+      action: '看质量桥',
+      tone: issueSummary.seo > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '发布回看',
+      value: formatNumber(rowsCount),
+      detail: '当前列表样本可回看 B281 发布桥，确认发布后的 SEO、来源和线索路径。',
+      href: '/admin/status/site#source-seo-release-bridge',
+      action: '看发布桥',
+      tone: 'blue',
+    },
+    {
+      label: '新闻线索',
+      value: 'news',
+      detail: '用 source_type=news 进入线索队列，对照 en.303 新闻入口的访问和转化承接。',
+      href: '/admin/customers/leads?source_type=news',
+      action: '看线索',
+      tone: 'blue',
+    },
   ]
 
   return (
@@ -577,7 +628,58 @@ function NewsListGovernancePanel({
           </Link>
         ))}
       </div>
+      <div id="news-source-seo-list-bridge" className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-4 py-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B283 Source SEO Bridge</p>
+            <h3 className="mt-1 text-base font-bold text-[#1E2C31]">新闻 SEO 与来源处理桥</h3>
+            <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+              对照 en.303 新闻页的分类、搜索、摘要、详情和联系入口，把后台新闻列表的 SEO 缺口、内容缺项、发布回看和新闻线索队列合并成一条运营路径。
+            </p>
+          </div>
+          <Link
+            href="/admin/content/news#news-operations-hub"
+            className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#EAF6F8]"
+          >
+            回到新闻总览
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {sourceSeoBridgeCards.map((card) => (
+            <NewsSourceSeoBridgeCard key={card.label} card={card} />
+          ))}
+        </div>
+      </div>
     </section>
+  )
+}
+
+function NewsSourceSeoBridgeCard({ card }: { card: NewsSourceSeoBridgeItem }) {
+  const toneClass =
+    card.tone === 'green'
+      ? 'bg-emerald-50 text-emerald-700'
+      : card.tone === 'orange'
+        ? 'bg-[#FFF2E7] text-[#E36F2C]'
+        : 'bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <Link
+      href={card.href}
+      className="group flex min-h-[148px] flex-col justify-between rounded-md border border-[#D8E7E8] bg-white p-4 transition hover:border-[#1889B6] hover:shadow-sm"
+    >
+      <span>
+        <span className="block text-xs font-semibold text-[#61767D]">{card.label}</span>
+        <span className={`mt-2 inline-flex rounded-md px-2 py-1 text-lg font-bold ${toneClass}`}>
+          {card.value}
+        </span>
+        <span className="mt-3 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
+      </span>
+      <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6]">
+        {card.action}
+        <ArrowRight size={13} className="transition group-hover:translate-x-0.5" />
+      </span>
+    </Link>
   )
 }
 
