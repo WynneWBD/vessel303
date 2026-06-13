@@ -200,6 +200,15 @@ type ProductPriorityItem = {
   score: number
 }
 
+type ProductSourceContract = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+}
+
 const EMPTY_SUMMARY: ProductSummary = {
   total: 0,
   published: 0,
@@ -1619,6 +1628,137 @@ function ProductOperationsMatrix({
   )
 }
 
+function ProductSourceContractPanel({
+  issueSummary,
+  productPathMetric,
+  filters,
+}: {
+  issueSummary: ProductIssueSummary
+  productPathMetric: AnalyticsConversionMetric
+  filters: FilterState
+}) {
+  const sourceContracts: ProductSourceContract[] = [
+    {
+      label: '卡片 CTA',
+      value: 'product:catalog_card_cta',
+      detail: '公开产品列表卡片进入询盘路径，对应产品目录浏览后的快速咨询动作。',
+      href: '/admin/customers/leads?source_type=product&source_stage=product%3Acatalog_card_cta',
+      Icon: Package,
+      tone: 'blue',
+    },
+    {
+      label: '详情 CTA',
+      value: 'product:cta_click',
+      detail: '产品详情页 Learn More / Appointment 类动作统一回到产品来源阶段复盘。',
+      href: '/admin/customers/leads?source_type=product&source_stage=product%3Acta_click',
+      Icon: ExternalLink,
+      tone: 'green',
+    },
+    {
+      label: '表单承接',
+      value: 'product:inquiry_form',
+      detail: '产品询盘表单进入 leads 后，用 source_stage 精确区分表单样本。',
+      href: '/admin/customers/leads?source_type=product&source_stage=product%3Ainquiry_form',
+      Icon: ListChecks,
+      tone: 'orange',
+    },
+    {
+      label: '线索筛选',
+      value: 'source_type=product',
+      detail: '客户线索台按产品来源筛选，处理仍回到现有线索流程。',
+      href: '/admin/customers/leads?source_type=product',
+      Icon: BarChart3,
+      tone: 'blue',
+    },
+  ]
+
+  return (
+    <section id="product-source-contract" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">Source Contract</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品来源承接合同</h2>
+          <p className="mt-1 text-sm leading-6 text-[#61767D]">
+            把公开产品列表、产品详情、询盘表单、产品线索队列和转化复盘接成同一条只读路径；这里不新增表单、发布、价格或线索状态规则。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/status/traffic#product-conversion-path"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            <BarChart3 size={13} />
+            路径分析
+          </Link>
+          <Link
+            href="/admin/customers/leads?source_type=product"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            <ListChecks size={13} />
+            产品线索
+          </Link>
+          <Link
+            href={createHref(filters, { status: '', view: 'incomplete', issue: 'seo' })}
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#E36F2C] transition hover:border-[#E36F2C]/60 hover:bg-[#FFF2E7]"
+          >
+            <SearchCheck size={13} />
+            SEO 待补
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
+        <ControlStat label="产品路径访问" value={formatNumber(productPathMetric.views)} detail="近 30 天访问样本" />
+        <ControlStat label="产品路径动作" value={formatNumber(productPathMetric.ctaClicks)} detail={`表单 ${formatNumber(productPathMetric.formSubmits)}`} />
+        <ControlStat label="产品路径线索" value={formatNumber(productPathMetric.leads)} detail={formatAnalyticsPercent(productPathMetric.conversionRate)} />
+        <ControlStat label="SEO 待补" value={formatNumber(issueSummary.seo)} detail="标题、描述或关键词待补" />
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+        {sourceContracts.map((contract) => (
+          <ProductSourceContractLink key={contract.label} contract={contract} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function ProductSourceContractLink({ contract }: { contract: ProductSourceContract }) {
+  const Icon = contract.Icon
+  const toneClass =
+    contract.tone === 'green'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+      : contract.tone === 'orange'
+        ? 'border-[#F4C7A6] bg-[#FFF2E7] text-[#C85F24]'
+        : contract.tone === 'gray'
+          ? 'border-[#D8E7E8] bg-[#F7FAFA] text-[#61767D]'
+          : 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <Link
+      href={contract.href}
+      className="group min-h-[150px] px-4 py-4 transition hover:bg-[#F7FAFA]"
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-sm font-bold text-[#1E2C31]">{contract.label}</span>
+          <span className={`mt-2 inline-flex min-h-7 max-w-full items-center rounded-md border px-2.5 text-[11px] font-bold ${toneClass}`}>
+            <span className="truncate">{contract.value}</span>
+          </span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block text-xs leading-5 text-[#61767D]">{contract.detail}</span>
+      <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
+        下钻
+        <ArrowRight size={13} />
+      </span>
+    </Link>
+  )
+}
+
 function ProductBatchGovernancePanel({
   summary,
   issueSummary,
@@ -2406,6 +2546,11 @@ export default async function AdminContentProductsListPage({ searchParams }: Pag
           rows={list.rows}
           filters={filters}
           productPathMetric={productPathMetric}
+        />
+        <ProductSourceContractPanel
+          issueSummary={issueSummary}
+          productPathMetric={productPathMetric}
+          filters={filters}
         />
         <ProductBatchGovernancePanel
           summary={summary}
