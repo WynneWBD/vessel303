@@ -510,12 +510,25 @@ function NewsListGovernancePanel({
       action: '查看台账',
     },
     {
+      label: '来源承接',
+      value: '4 入口',
+      detail: '状态桥、来源面板、转化承接和新闻线索队列已回连',
+      href: '/admin/status/leads#news-lead-path-bridge',
+      action: '打开状态桥',
+    },
+    {
       label: '运营总览',
       value: formatPercent(stats.published, stats.total),
       detail: `${formatNumber(stats.published)} 已发布，${formatNumber(stats.incomplete)} 条待补`,
       href: '/admin/content/news#news-operations-hub',
       action: '回到总览',
     },
+  ]
+  const sourceHandoffLinks = [
+    { label: '状态桥', href: '/admin/status/leads#news-lead-path-bridge' },
+    { label: '来源面板', href: '/admin/status/traffic#news-source-handoff' },
+    { label: '转化承接', href: '/admin/site/conversion#news-conversion-handoff' },
+    { label: '新闻线索', href: '/admin/customers/leads?source_type=news' },
   ]
 
   return (
@@ -525,17 +538,29 @@ function NewsListGovernancePanel({
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">List Governance</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻列表治理闭环</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            将筛选视图、批量转分类、缺口优先级、发布台账和运营总览收在同一入口，方便运营按列表完成“发现问题、筛选处理、编辑复核、回到总览”的闭环。
+            将筛选视图、批量转分类、缺口优先级、发布台账、来源承接和运营总览收在同一入口，方便运营按列表完成“发现问题、筛选处理、编辑复核、回看获客、回到总览”的闭环。
           </p>
         </div>
         <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-4 py-4 lg:border-l lg:border-t-0">
           <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#8A9EA4]">Safety Boundary</p>
           <p className="mt-2 text-sm font-semibold leading-6 text-[#1E2C31]">
-            批量发布、批量删除、批量定时仍关闭；当前页只承接筛选、分类归档和单篇复核。
+            批量发布、批量删除、批量定时仍关闭；当前页只承接筛选、分类归档、单篇复核和只读来源下钻。
           </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {sourceHandoffLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="inline-flex items-center gap-1 rounded border border-[#D8E7E8] bg-white px-2.5 py-1.5 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+              >
+                {link.label}
+                <ArrowRight size={12} />
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
-      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-2 xl:grid-cols-6">
         {cards.map((card) => (
           <Link
             key={card.label}
