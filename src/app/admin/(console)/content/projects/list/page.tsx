@@ -724,6 +724,7 @@ function getSideNavGroups(summary: ProjectSummary): AdminSideNavGroup[] {
         { key: 'drafts', label: '草稿内容', href: '/admin/content/projects/list?status=draft', badge: summary.draft, Icon: FileText },
         { key: 'todo', label: '待补内容', href: '/admin/content/projects/list?view=incomplete', badge: summary.incomplete, Icon: CircleDashed },
         { key: 'case-conversion-weak', label: '发布转化弱', href: '/admin/content/projects/list?view=case-conversion-weak', badge: summary.caseConversionWeak, Icon: SearchCheck },
+        { key: 'case-backfill', label: '转化补位', href: '/admin/content/projects/list#case-conversion-content-backfill-desk', badge: summary.caseConversionWeak, Icon: BarChart3 },
         { key: 'missing-coordinates', label: '缺坐标', href: '/admin/content/projects/list?view=missing-coordinates', badge: summary.missingCoordinates, Icon: MapPinned },
       ],
     },
@@ -1323,6 +1324,252 @@ function CaseListInquiryConversionQueue({
           </div>
         </div>
       ) : null}
+    </section>
+  )
+}
+
+function CaseConversionContentBackfillDesk({
+  filters,
+  summary,
+  issueSummary,
+  rows,
+  casePathMetric,
+}: {
+  filters: FilterState
+  summary: ProjectSummary
+  issueSummary: ProjectIssueSummary
+  rows: ProjectListRow[]
+  casePathMetric: AnalyticsConversionMetric
+}) {
+  const pageIssueEntries = rows.map((project) => ({
+    project,
+    issues: getProjectIssues(project),
+  }))
+  const pagePublishedCount = pageIssueEntries.filter((entry) => entry.project.status === 'published').length
+  const pageWeakEntries = pageIssueEntries.filter((entry) => (
+    entry.project.status === 'published' && hasCaseConversionContentRisk(entry.issues)
+  ))
+  const pageReadyCount = pageIssueEntries.filter((entry) => isCaseConversionReady(entry.project, entry.issues)).length
+  const pageDraftCount = pageIssueEntries.filter((entry) => entry.project.status !== 'published').length
+  const pathActions = casePathMetric.ctaClicks + casePathMetric.formSubmits
+  const contentGapTotal = issueSummary.media + issueSummary.story + issueSummary.facts + issueSummary.tags
+  const readyPublishedTotal = Math.max(0, summary.published - summary.caseConversionWeak)
+  const priorityItems = pageWeakEntries
+    .map((entry) => ({
+      project: entry.project,
+      issues: entry.issues,
+      label: getProjectPriorityLabel(entry.project, entry.issues),
+      score: getProjectPriorityScore(entry.project, entry.issues),
+    }))
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score
+      return new Date(b.project.updated_at).getTime() - new Date(a.project.updated_at).getTime()
+    })
+    .slice(0, 4)
+  const decision = summary.caseConversionWeak > 0 && casePathMetric.views > 0
+    ? `先把 ${formatNumber(summary.caseConversionWeak)} 个发布转化弱案例切回内容补位，再回 B307 复盘访问、动作、线索和跟进质量。`
+    : summary.caseConversionWeak > 0
+      ? `当前有 ${formatNumber(summary.caseConversionWeak)} 个发布转化弱案例，先从素材、叙事、项目事实和标签四类缺口补位。`
+      : casePathMetric.leads > 0
+        ? '案例来源已有线索且发布内容暂无内容型弱项，可从成交和跟进质量反推高价值案例。'
+        : '当前没有发布转化弱项，保持 B300 到 B307 的复盘入口可下钻，等待更多访问和线索样本。'
+  const reviewItems: CaseInquiryQueueItem[] = [
+    {
+      label: 'B307 转化复盘',
+      value: formatAnalyticsPercent(casePathMetric.conversionRate),
+      detail: `回到案例跟进质量到转化复盘桥，复看访问 ${formatNumber(casePathMetric.views)}、动作 ${formatNumber(pathActions)}、线索 ${formatNumber(casePathMetric.leads)}。`,
+      href: '/admin/site/conversion#case-followup-conversion-review-bridge',
+      cta: '回转化复盘',
+      Icon: BarChart3,
+      tone: casePathMetric.views > 0 ? 'blue' : 'gray',
+    },
+    {
+      label: 'B306 跟进分诊',
+      value: 'source_type=case',
+      detail: '查看案例来源线索的跟进优先级，确认活跃线索是否需要先处理。',
+      href: '/admin/status/leads#case-lead-quality-followup-desk',
+      cta: '看跟进分诊',
+      Icon: ListChecks,
+      tone: casePathMetric.leads > 0 ? 'blue' : 'gray',
+    },
+    {
+      label: 'B305 路径回流',
+      value: formatNumber(pathActions),
+      detail: `路径动作 ${formatNumber(pathActions)}，其中表单 ${formatNumber(casePathMetric.formSubmits)}；回看访问到线索回流缺口。`,
+      href: '/admin/status/traffic#case-path-lead-backflow-desk',
+      cta: '看路径回流',
+      Icon: ExternalLink,
+      tone: pathActions > 0 ? 'orange' : casePathMetric.views > 0 ? 'blue' : 'gray',
+    },
+    {
+      label: 'B304 线索回流',
+      value: formatNumber(casePathMetric.leads),
+      detail: '进入案例来源线索队列，核对内容缺口是否需要反向补到案例列表。',
+      href: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
+      cta: '看案例线索',
+      Icon: CheckCircle2,
+      tone: casePathMetric.leads > 0 ? 'green' : pathActions > 0 ? 'orange' : 'gray',
+    },
+    {
+      label: 'B303 案例总控',
+      value: formatNumber(summary.caseConversionWeak),
+      detail: `发布转化弱 ${formatNumber(summary.caseConversionWeak)}，可承接案例 ${formatNumber(readyPublishedTotal)}。`,
+      href: '/admin/content/projects#case-content-inquiry-command-center',
+      cta: '回案例总控',
+      Icon: MapPinned,
+      tone: summary.caseConversionWeak > 0 ? 'orange' : 'green',
+    },
+    {
+      label: 'B300 弱项队列',
+      value: formatNumber(pageWeakEntries.length),
+      detail: `当前页发布 ${formatNumber(pagePublishedCount)}，转化弱 ${formatNumber(pageWeakEntries.length)}，可承接 ${formatNumber(pageReadyCount)}，草稿 ${formatNumber(pageDraftCount)}。`,
+      href: createHref(filters, { status: '', view: 'case-conversion-weak' }),
+      cta: '筛选弱项',
+      Icon: SearchCheck,
+      tone: summary.caseConversionWeak > 0 ? 'orange' : 'green',
+    },
+  ]
+  const actionItems: CaseInquiryQueueItem[] = [
+    {
+      label: '素材补位',
+      value: formatNumber(issueSummary.media),
+      detail: '封面或图库缺口会先影响案例信任感，优先从发布转化弱视图进入编辑。',
+      href: createHref(filters, { status: '', view: 'case-conversion-weak' }),
+      cta: '处理素材',
+      Icon: ImageIcon,
+      tone: issueSummary.media > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '叙事补位',
+      value: formatNumber(issueSummary.story),
+      detail: '中英文简介缺失或详情偏短时，客户难判断项目背景和落地价值。',
+      href: createHref(filters, { status: '', view: 'case-conversion-weak' }),
+      cta: '处理叙事',
+      Icon: FileText,
+      tone: issueSummary.story > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '事实补位',
+      value: formatNumber(issueSummary.facts),
+      detail: '项目类型、面积、舱数或产品型号缺失时，询盘上下文会变弱。',
+      href: createHref(filters, { status: '', view: 'case-conversion-weak' }),
+      cta: '处理事实',
+      Icon: Package,
+      tone: issueSummary.facts > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '标签补位',
+      value: formatNumber(issueSummary.tags),
+      detail: '中英文标签缺口会削弱后台筛选、案例归因和后续内容运营。',
+      href: createHref(filters, { status: '', view: 'case-conversion-weak' }),
+      cta: '处理标签',
+      Icon: Tags,
+      tone: issueSummary.tags > 0 ? 'orange' : 'green',
+    },
+  ]
+
+  return (
+    <section id="case-conversion-content-backfill-desk" className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid grid-cols-1 border-l-4 border-[#E36F2C] xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="px-4 py-4">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">B308 Content Backfill Desk</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例转化复盘到内容补位执行队列</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把 B307 转化复盘、B306 跟进分诊、B305 路径回流、B304 线索回流、B303 案例总控和 B300 弱案例队列收回到内容补位执行层；本区只读聚合和下钻，不保存、不发布、不改线索状态。
+          </p>
+        </div>
+        <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] p-4 xl:border-l xl:border-t-0">
+          <p className="text-xs font-bold text-[#61767D]">执行判断</p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-[#1E2C31]">{decision}</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <CaseSourceSnapshot label="内容缺口" value={formatNumber(contentGapTotal)} detail="素材 / 叙事 / 事实 / 标签" />
+            <CaseSourceSnapshot label="路径动作" value={formatNumber(pathActions)} detail={`线索 ${formatNumber(casePathMetric.leads)}`} />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-2 xl:grid-cols-3">
+        {reviewItems.map((item) => (
+          <CaseInquiryQueueLink key={item.label} item={item} compact />
+        ))}
+      </div>
+
+      <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-4 py-4">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Backfill Actions</p>
+            <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">内容补位四类执行口径</h3>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">优先处理会影响案例询盘判断的信息缺口；所有入口只跳转到现有筛选或编辑页。</p>
+          </div>
+          <Link
+            href={createHref(filters, { status: '', view: 'case-conversion-weak' })}
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-bold text-[#E36F2C] transition hover:border-[#E36F2C]/60 hover:bg-[#FFF2E7]"
+          >
+            打开转化弱队列
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-2 xl:grid-cols-4">
+        {actionItems.map((item) => (
+          <CaseInquiryQueueLink key={item.label} item={item} compact />
+        ))}
+      </div>
+
+      <div className="border-t border-[#E6EEEE]">
+        <div className="flex flex-col gap-2 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-[#1E2C31]">本页内容补位优先样本</h3>
+            <p className="mt-1 text-xs text-[#61767D]">只展示当前页已发布且命中转化弱规则的案例；点击进入现有编辑页。</p>
+          </div>
+          <span className="inline-flex w-fit rounded-md bg-[#FFF2E7] px-2.5 py-1 text-xs font-bold text-[#E36F2C]">
+            本页 {formatNumber(priorityItems.length)} 个优先项
+          </span>
+        </div>
+
+        {priorityItems.length > 0 ? (
+          <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+            {priorityItems.map((item) => (
+              <Link
+                key={item.project.id}
+                href={`/admin/content/projects/${item.project.id}/edit#case-edit-inquiry-conversion-review-desk`}
+                className="group min-h-[150px] px-4 py-4 transition hover:bg-[#F7FAFA]"
+              >
+                <span className="flex items-start justify-between gap-3">
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-bold text-[#1E2C31]">{item.project.name_zh || item.project.name_en || item.project.id}</span>
+                    <span className="mt-1 block truncate text-xs text-[#61767D]">{item.project.country || '未标记国家'} · {item.project.location_zh || item.project.location_en || '未标记位置'}</span>
+                  </span>
+                  <span className="shrink-0 rounded-md bg-[#FFF2E7] px-2 py-1 text-xs font-bold text-[#E36F2C]">{item.label}</span>
+                </span>
+                <span className="mt-3 flex flex-wrap gap-1.5">
+                  {item.issues.slice(0, 3).map((issue) => (
+                    <span key={issue} className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-600">
+                      {issue}
+                    </span>
+                  ))}
+                  {item.issues.length > 3 ? (
+                    <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-500">
+                      +{item.issues.length - 3}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6]">
+                  进入编辑复核
+                  <ArrowRight size={12} className="transition group-hover:translate-x-0.5" />
+                </span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="px-4 py-8 text-center">
+            <CheckCircle2 className="mx-auto text-emerald-600" size={28} />
+            <p className="mt-3 text-sm font-bold text-[#1E2C31]">当前页没有发布转化弱案例</p>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">可切到“发布转化弱”视图或回到 B307 查看转化复盘。</p>
+          </div>
+        )}
+      </div>
     </section>
   )
 }
@@ -2034,6 +2281,13 @@ export default async function AdminContentProjectsListPage({ searchParams }: Pag
           casePathMetric={casePathMetric}
         />
         <CaseListInquiryConversionQueue
+          filters={filters}
+          summary={summary}
+          issueSummary={issueSummary}
+          rows={list.rows}
+          casePathMetric={casePathMetric}
+        />
+        <CaseConversionContentBackfillDesk
           filters={filters}
           summary={summary}
           issueSummary={issueSummary}
