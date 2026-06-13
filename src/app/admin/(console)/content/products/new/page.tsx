@@ -169,7 +169,7 @@ function getSideNavGroups(): AdminSideNavGroup[] {
     {
       title: '产品治理',
       items: [
-        { key: 'new-product-closure', label: '新建闭环', href: '#new-product-closure', Icon: BarChart3 },
+        { key: 'new-product-closure', label: '新建预检', href: '#new-product-closure', Icon: BarChart3 },
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
         { key: 'publish-flow', label: '发布审核', planned: true, Icon: SearchCheck },
@@ -262,15 +262,61 @@ function NewProductPreflightPanel({
       tone: relatedProductCount > 0 ? 'ready' : 'neutral',
     },
   ]
+  const prepLanes: NewProductClosureItem[] = [
+    {
+      label: '适配字段准备',
+      value: categories > 0 && attributeTemplates > 0 ? '可用' : '待配置',
+      detail: '先准备分类、属性、系列、面积和用途标签，避免保存后再反复补筛选字段。',
+      href: categories > 0 && attributeTemplates > 0 ? '#attributes' : '/admin/content/products/attributes',
+      Icon: SlidersHorizontal,
+      tone: categories > 0 && attributeTemplates > 0 ? 'ready' : 'warning',
+    },
+    {
+      label: '媒体证明准备',
+      value: `${maxUploadMb} MB`,
+      detail: '准备封面、图库和可追溯素材来源；上传仍走媒体库，表单只保存引用。',
+      href: '#media',
+      Icon: ImageIcon,
+      tone: maxUploadMb > 0 ? 'ready' : 'warning',
+    },
+    {
+      label: '详情证明准备',
+      value: '文案/模块',
+      detail: '创建前先备好中英文简介、亮点、规格、详情模块和买家资料结构。',
+      href: '#details',
+      Icon: Layers3,
+      tone: 'neutral',
+    },
+    {
+      label: '搜索入口准备',
+      value: 'SEO',
+      detail: '同步准备 SEO 标题、摘要、关键词和可搜索的产品命名，承接公开目录流量。',
+      href: '#seo',
+      Icon: SearchCheck,
+      tone: 'neutral',
+    },
+    {
+      label: '询盘交接准备',
+      value: relatedProductCount > 0 ? '有关联池' : '待补关联',
+      detail: '提前准备价格展示、商务条款、关联推荐和买家资料，保存后能接入产品线索队列。',
+      href: '#commercial',
+      Icon: ListChecks,
+      tone: relatedProductCount > 0 ? 'ready' : 'neutral',
+    },
+  ]
 
   return (
-    <section id="new-product-closure" className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+    <section
+      id="new-product-closure"
+      data-new-product-backflow-preflight="true"
+      className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
       <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <p className="text-xs font-bold text-[#1889B6]">B236 新建前运营闭环</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">创建产品前先确认内容、分类、媒体、SEO 和后续路径</h2>
+          <p className="text-xs font-bold text-[#1889B6]">B319 新建前回流预检</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">创建产品前先确认适配、证明、搜索和询盘资料</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-            对齐 en303 的产品分类、搜索、产品列表和联系入口心智，把新建前准备项放在同一屏；这里只读提示和跳转，不新增保存、发布或价格规则。
+            承接 B317/B318 的产品回流路径，把新建前准备项放在同一屏；这里只读提示和跳转，不新增保存、发布或价格规则。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -293,6 +339,33 @@ function NewProductPreflightPanel({
             <p className="mt-2 text-xs leading-5 text-[#61767D]">{item.detail}</p>
           </Link>
         ))}
+      </div>
+      <div className="border-t border-[#E6EEEE] bg-[#F7FAFA] px-5 py-4">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1889B6]">Creation Packet</p>
+            <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">创建前资料路径</h3>
+          </div>
+          <p className="max-w-3xl text-xs leading-5 text-[#61767D]">
+            先把前台会展示和客户会询问的内容准备好，再进入长表单保存草稿。
+          </p>
+        </div>
+        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+          {prepLanes.map((lane) => (
+            <Link key={lane.label} href={lane.href} className="group min-h-[128px] rounded-md border border-[#D8E7E8] bg-white p-3 transition hover:border-[#1889B6] hover:bg-[#F0F7F8]">
+              <span className="flex items-start justify-between gap-2">
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${closureToneClass(lane.tone)}`}>
+                  <lane.Icon size={15} />
+                </span>
+                <span className={`max-w-[96px] truncate rounded-full border px-2 py-0.5 text-[11px] font-semibold ${closureToneClass(lane.tone)}`} title={lane.value}>
+                  {lane.value}
+                </span>
+              </span>
+              <span className="mt-3 block text-sm font-bold text-[#1E2C31]">{lane.label}</span>
+              <span className="mt-1 line-clamp-3 text-xs leading-5 text-[#61767D]">{lane.detail}</span>
+            </Link>
+          ))}
+        </div>
       </div>
     </section>
   )
