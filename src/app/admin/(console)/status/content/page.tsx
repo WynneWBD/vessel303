@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { formatNumber, loadStatusOverview, sumContent, type ContentMetric } from '@/lib/admin-status-metrics'
+import { formatNumber, loadStatusOverview, sumContent, type ContentMetric, type SeoMetrics } from '@/lib/admin-status-metrics'
 import { loadCaseInquiryHealth, type CaseInquiryHealth } from '@/lib/project-case-inquiry-health'
 import {
   ActionCard,
@@ -40,6 +40,23 @@ type ContentReleaseRow = {
   actionLabel: string
   tone: ContentReleaseTone
   Icon: typeof STATUS_ICONS.AlertCircle
+}
+
+type PublicDiscoveryHealthItem = {
+  key: string
+  label: string
+  publicHref: string
+  contentHref: string
+  sourceHref: string
+  seoHref: string
+  published: number
+  draft: number
+  issues: number
+  seoMissing: number
+  recent30: number
+  detail: string
+  Icon: typeof STATUS_ICONS.AlertCircle
+  tone: 'orange' | 'blue' | 'green'
 }
 
 export default async function AdminStatusContentPage() {
@@ -100,6 +117,12 @@ export default async function AdminStatusContentPage() {
 
         <section className="space-y-4">
           <CaseInquiryHealthPanel health={caseInquiryHealth} />
+          <PublicDiscoveryHealthBoard
+            products={overview.content.products}
+            projects={overview.content.projects}
+            news={overview.content.news}
+            seo={overview.site.seo}
+          />
           <ContentReleaseLedger items={contentItems} totals={totals} />
           <ContentOperationsMatrix items={contentItems} totals={totals} />
         </section>
@@ -195,6 +218,151 @@ function CaseInquiryHealthPanel({ health }: { health: CaseInquiryHealth }) {
         />
       </div>
     </div>
+  )
+}
+
+function PublicDiscoveryHealthBoard({
+  products,
+  projects,
+  news,
+  seo,
+}: {
+  products: ContentMetric
+  projects: ContentMetric
+  news: ContentMetric
+  seo: SeoMetrics
+}) {
+  const items: PublicDiscoveryHealthItem[] = [
+    {
+      key: 'products',
+      label: '产品目录',
+      publicHref: '/products',
+      contentHref: products.issues > 0 ? products.issueHref : '/admin/content/products/list#product-source-contract',
+      sourceHref: '/admin/status/leads#source-seo-lead-quality',
+      seoHref: '/admin/content/products/list?view=incomplete&issue=seo',
+      published: products.published,
+      draft: products.draft,
+      issues: products.issues,
+      seoMissing: seo.productsMissing,
+      recent30: products.recent30,
+      detail: '对应公开 /products 与产品详情，优先保障图片、图库、中英文名称和 SEO 字段。',
+      Icon: STATUS_ICONS.Package,
+      tone: products.issues > 0 || seo.productsMissing > 0 ? 'orange' : products.recent30 === 0 ? 'blue' : 'green',
+    },
+    {
+      key: 'projects',
+      label: '项目案例',
+      publicHref: '/cases',
+      contentHref: projects.issues > 0 ? projects.issueHref : '/admin/content/projects/list#case-source-contract',
+      sourceHref: '/admin/status/leads#source-seo-lead-quality',
+      seoHref: '/admin/content/projects/list?view=incomplete',
+      published: projects.published,
+      draft: projects.draft,
+      issues: projects.issues,
+      seoMissing: seo.projectsMissing,
+      recent30: projects.recent30,
+      detail: '对应公开 /cases 与案例详情，优先补齐封面、图库、坐标、项目事实和咨询上下文。',
+      Icon: STATUS_ICONS.Globe2,
+      tone: projects.issues > 0 || seo.projectsMissing > 0 ? 'orange' : projects.recent30 === 0 ? 'blue' : 'green',
+    },
+    {
+      key: 'news',
+      label: '新闻发现',
+      publicHref: '/news#news-discovery-console',
+      contentHref: '/admin/content/news#news-public-discovery-bridge',
+      sourceHref: '/admin/status/leads#source-seo-lead-quality',
+      seoHref: news.issues > 0 ? news.issueHref : '/admin/content/news/list#news-source-seo-list-bridge',
+      published: news.published,
+      draft: news.draft,
+      issues: news.issues,
+      seoMissing: seo.newsMissing,
+      recent30: news.recent30,
+      detail: '对应公开 /news 发现和详情续航，优先补齐可公开样本、摘要正文、分类和 SEO 字段。',
+      Icon: STATUS_ICONS.Newspaper,
+      tone: news.issues > 0 || seo.newsMissing > 0 ? 'orange' : news.recent30 === 0 ? 'blue' : 'green',
+    },
+  ]
+  const seoContentMissing = seo.productsMissing + seo.projectsMissing + seo.newsMissing
+  const publicReadyCount = items.filter((item) => item.issues === 0 && item.seoMissing === 0 && item.published > 0).length
+
+  return (
+    <section id="public-discovery-health" className="scroll-mt-24 space-y-4">
+      <SectionTitle
+        title="公开发现与来源健康总览"
+        detail="把产品、案例、新闻三条公开内容线的前台入口、内容缺项、SEO 待补和来源复盘入口集中到内容健康页；本区只读，不发布、不保存、不改线索。"
+      />
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <MatrixSummary label="公开内容线" value={items.length} detail="产品、案例、新闻" />
+        <MatrixSummary label="可承接线路" value={`${publicReadyCount}/${items.length}`} detail="有已发布内容且无内容/SEO 缺项" />
+        <MatrixSummary label="内容缺项" value={products.issues + projects.issues + news.issues} detail="三类公开内容关键字段" warn={products.issues + projects.issues + news.issues > 0} />
+        <MatrixSummary label="SEO 待补" value={seoContentMissing} detail="产品、案例、新闻 SEO 字段" warn={seoContentMissing > 0} />
+      </div>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        {items.map((item) => (
+          <PublicDiscoveryHealthCard key={item.key} item={item} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function PublicDiscoveryHealthCard({ item }: { item: PublicDiscoveryHealthItem }) {
+  const Icon = item.Icon
+  const accent =
+    item.tone === 'orange'
+      ? 'bg-[#FFF2E7] text-[#E36F2C]'
+      : item.tone === 'blue'
+        ? 'bg-[#EAF6F8] text-[#1889B6]'
+        : 'bg-emerald-50 text-emerald-700'
+  const statusLabel =
+    item.issues > 0 || item.seoMissing > 0
+      ? '待补'
+      : item.published <= 0
+        ? '待发布'
+        : item.recent30 === 0
+          ? '待复盘'
+          : '健康'
+
+  return (
+    <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 gap-3">
+          <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${accent}`}>
+            <Icon size={20} />
+          </span>
+          <span className="min-w-0">
+            <h3 className="text-base font-bold text-[#1E2C31]">{item.label}</h3>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">{item.detail}</p>
+          </span>
+        </div>
+        <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${accent}`}>{statusLabel}</span>
+      </div>
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <SmallBox label="已发布" value={item.published} href={item.publicHref} />
+        <SmallBox label="草稿" value={item.draft} href={item.contentHref} warn={item.draft > 0} />
+        <SmallBox label="内容缺项" value={item.issues} href={item.contentHref} warn={item.issues > 0} />
+        <SmallBox label="SEO 待补" value={item.seoMissing} href={item.seoHref} warn={item.seoMissing > 0} />
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <PublicDiscoveryAction href={item.publicHref} label="前台入口" />
+        <PublicDiscoveryAction href={item.contentHref} label="内容处理" />
+        <PublicDiscoveryAction href={item.sourceHref} label="来源复盘" />
+      </div>
+      <p className="mt-4 rounded-md border border-[#E6EEEE] bg-[#F7FAFA] px-3 py-2 text-xs leading-5 text-[#61767D]">
+        近 30 天变化 {formatNumber(item.recent30)} 条；先补内容和 SEO，再回看前台发现与来源质量。
+      </p>
+    </div>
+  )
+}
+
+function PublicDiscoveryAction({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#E36F2C]/50 hover:text-[#E36F2C]"
+    >
+      {label}
+    </Link>
   )
 }
 
