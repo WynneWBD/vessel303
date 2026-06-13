@@ -87,6 +87,16 @@ type SeoSubmissionItem = {
   status: SeoSubmissionStatus
 }
 
+type SeoOperationsBridgeItem = {
+  title: string
+  value: string
+  detail: string
+  href: string
+  actionLabel: string
+  Icon: LucideIcon
+  tone: 'orange' | 'blue' | 'green' | 'gray'
+}
+
 const EMPTY_CONTENT_SUMMARY: ContentSeoSummary = {
   total: 0,
   published: 0,
@@ -1033,6 +1043,231 @@ function SeoConversionRepairPanel({
   )
 }
 
+function SeoOperationsCommandBridge({
+  products,
+  news,
+  projects,
+  indexFoundationItems,
+}: {
+  products: ContentSeoSummary
+  news: ContentSeoSummary
+  projects: ContentSeoSummary
+  indexFoundationItems: IndexFoundationItem[]
+}) {
+  const missingTotal = products.missing + news.missing + projects.missing
+  const foundationWaiting = indexFoundationItems.filter((item) => item.status === 'waiting').length
+  const commandItems: SeoOperationsBridgeItem[] = [
+    {
+      title: '发布前复核',
+      value: 'B289',
+      detail: `回到站点发布前复核桥，统一看内容健康、站点文件、配置边界和前台 smoke；当前收录基础待接入 ${formatNumber(foundationWaiting)} 项。`,
+      href: '/admin/status/site#site-release-preflight-bridge',
+      actionLabel: '打开复核桥',
+      Icon: ShieldCheck,
+      tone: foundationWaiting > 0 ? 'orange' : 'green',
+    },
+    {
+      title: 'SEO 修复闭环',
+      value: 'B278',
+      detail: `产品、案例、新闻合计 ${formatNumber(missingTotal)} 个 SEO 或派生字段待补；先处理内容，再回到来源和线索复盘。`,
+      href: '#seo-conversion-closure',
+      actionLabel: '查看修复闭环',
+      Icon: SearchCheck,
+      tone: missingTotal > 0 ? 'orange' : 'green',
+    },
+    {
+      title: '来源健康台账',
+      value: 'B280',
+      detail: '从 SEO 操作回到产品、案例、新闻来源健康总账，核对访问、动作、线索、SEO 待补和内容缺项。',
+      href: '/admin/status#source-seo-health',
+      actionLabel: '打开健康台账',
+      Icon: ListChecks,
+      tone: 'blue',
+    },
+    {
+      title: '来源线索质量',
+      value: 'B282',
+      detail: '复核 SEO 修复后的线索质量，避免只补搜索字段，不看可跟进线索、活跃线索和来源阶段。',
+      href: '/admin/status/leads#source-seo-lead-quality',
+      actionLabel: '查看质量桥',
+      Icon: Link2,
+      tone: 'blue',
+    },
+  ]
+  const contentItems: Array<{
+    label: string
+    summary: ContentSeoSummary
+    href: string
+    sourceHref: string
+    detail: string
+    Icon: LucideIcon
+  }> = [
+    {
+      label: '产品 SEO',
+      summary: products,
+      href: products.href,
+      sourceHref: '/admin/customers/leads?source_type=product',
+      detail: '先补产品详情 SEO 标题和描述，再回看产品线索队列。',
+      Icon: Package,
+    },
+    {
+      label: '案例派生',
+      summary: projects,
+      href: projects.href,
+      sourceHref: '/admin/customers/leads?source_type=case',
+      detail: '先补案例描述、封面和展示字段，再回看案例线索队列。',
+      Icon: MapPinned,
+    },
+    {
+      label: '新闻 SEO',
+      summary: news,
+      href: news.href,
+      sourceHref: '/admin/customers/leads?source_type=news',
+      detail: '先补新闻 SEO 标题、描述、摘要和正文，再回看新闻线索队列。',
+      Icon: Newspaper,
+    },
+  ]
+
+  return (
+    <section id="seo-operations-command-bridge" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B290 SEO Command Bridge</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">SEO 操作台接力入口</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把 B289 发布前复核、B278 SEO 修复闭环、B280 来源健康台账、B282 来源线索质量和三类内容待补集中在 SEO 页顶部；本区只读串联，不批量写入 TDK、不提交 sitemap、不调用 Google API。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <CommandBridgeLink href="/admin/status/site#site-release-preflight-bridge" label="发布前复核" primary />
+          <CommandBridgeLink href="/admin/status#source-seo-health" label="来源健康" />
+          <CommandBridgeLink href="/admin/status/leads#source-seo-lead-quality" label="线索质量" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-2 xl:grid-cols-4">
+        {commandItems.map((item) => (
+          <SeoOperationsBridgeCard key={item.title} item={item} />
+        ))}
+      </div>
+
+      <div className="border-t border-[#E6EEEE] bg-white px-5 py-4">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#1889B6]">Content Repair Queue</p>
+            <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">三类内容 SEO 待补队列</h3>
+          </div>
+          <p className="max-w-3xl text-xs leading-5 text-[#61767D]">
+            先回来源后台补字段，再回来源线索队列看质量；不要在网站管理里批量覆盖内容事实。
+          </p>
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-3">
+          {contentItems.map((item) => (
+            <SeoContentRepairQueueCard key={item.label} item={item} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function SeoOperationsBridgeCard({ item }: { item: SeoOperationsBridgeItem }) {
+  const Icon = item.Icon
+  const toneClass =
+    item.tone === 'orange'
+      ? 'text-[#E36F2C]'
+      : item.tone === 'green'
+        ? 'text-emerald-700'
+        : item.tone === 'gray'
+          ? 'text-[#61767D]'
+          : 'text-[#1889B6]'
+
+  return (
+    <Link
+      href={item.href}
+      className="group min-h-44 border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-white md:odd:border-r xl:border-b-0 xl:border-r xl:last:border-r-0"
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-xs font-bold tracking-[0.08em] text-[#8A9EA4]">{item.title}</span>
+          <span className={`mt-2 block text-2xl font-bold ${toneClass}`}>{item.value}</span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block min-h-16 text-xs leading-5 text-[#61767D]">{item.detail}</span>
+      <span className="mt-3 inline-flex min-h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition group-hover:border-[#E36F2C]/50 group-hover:text-[#E36F2C]">
+        {item.actionLabel}
+      </span>
+    </Link>
+  )
+}
+
+function SeoContentRepairQueueCard({
+  item,
+}: {
+  item: {
+    label: string
+    summary: ContentSeoSummary
+    href: string
+    sourceHref: string
+    detail: string
+    Icon: LucideIcon
+  }
+}) {
+  const Icon = item.Icon
+  const hasMissing = item.summary.missing > 0
+
+  return (
+    <div className={`rounded-md border p-4 ${hasMissing ? 'border-[#F1D0BD] bg-[#FFF8F2]' : 'border-[#D8E7E8] bg-[#F7FAFA]'}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 gap-3">
+          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${hasMissing ? 'bg-[#FFF2E7] text-[#E36F2C]' : 'bg-emerald-50 text-emerald-700'}`}>
+            <Icon size={18} />
+          </span>
+          <span className="min-w-0">
+            <h4 className="text-sm font-bold text-[#1E2C31]">{item.label}</h4>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">{item.detail}</p>
+          </span>
+        </div>
+        <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${hasMissing ? 'bg-[#FFF2E7] text-[#E36F2C]' : 'bg-emerald-50 text-emerald-700'}`}>
+          待补 {formatNumber(item.summary.missing)}
+        </span>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+        <span className="rounded-md border border-[#E6EEEE] bg-white px-3 py-2">
+          <span className="block text-[#61767D]">已发布</span>
+          <span className="mt-1 block text-lg font-bold text-[#1E2C31]">{formatNumber(item.summary.published)}</span>
+        </span>
+        <span className="rounded-md border border-[#E6EEEE] bg-white px-3 py-2">
+          <span className="block text-[#61767D]">来源表</span>
+          <span className="mt-1 block truncate text-xs font-bold text-[#1E2C31]">{item.summary.source}</span>
+        </span>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <CommandBridgeLink href={item.href} label="补 SEO" primary={hasMissing} />
+        <CommandBridgeLink href={item.sourceHref} label="看线索" />
+      </div>
+    </div>
+  )
+}
+
+function CommandBridgeLink({ href, label, primary = false }: { href: string; label: string; primary?: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={`inline-flex min-h-8 items-center rounded-md border px-3 text-xs font-semibold transition ${
+        primary
+          ? 'border-[#1889B6] bg-[#1889B6] text-white hover:bg-[#147396]'
+          : 'border-[#D8E7E8] bg-white text-[#1889B6] hover:border-[#1889B6]'
+      }`}
+    >
+      {label}
+    </Link>
+  )
+}
+
 function SummaryTile({
   title,
   value,
@@ -1599,6 +1834,13 @@ export default async function AdminSiteSeoPage() {
           <SummaryTile title="保护项" value={protectedCount} detail="Global 暂不纳入 B17 底层改动" tone="gray" Icon={LockKeyhole} />
         </div>
       </AdminPageHero>
+
+      <SeoOperationsCommandBridge
+        products={products}
+        news={news}
+        projects={projects}
+        indexFoundationItems={indexFoundationItems}
+      />
 
       <SeoReadinessOverviewTable
         products={products}
