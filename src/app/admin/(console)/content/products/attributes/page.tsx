@@ -73,6 +73,7 @@ function getSideNavGroups(summary: AttributeSummary): AdminSideNavGroup[] {
       items: [
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', badge: summary.templates, Icon: SlidersHorizontal },
+        { key: 'attribute-readiness', label: '筛选准备', href: '#attribute-filter-readiness-desk', Icon: SearchCheck },
         { key: 'batch-governance', label: '批量治理', href: '/admin/content/products/list#product-batch-governance', Icon: ListChecks },
         { key: 'recycle', label: '产品回收站', href: '/admin/content/products/recycle', badge: summary.deleted, Icon: Archive },
       ],
@@ -177,6 +178,7 @@ export default async function AdminContentProductAttributesPage() {
       </section>
 
       <AttributeGovernancePanel summary={summary} />
+      <AttributeFilterReadinessPanel summary={summary} />
 
       <div id="attribute-manager" className="scroll-mt-24">
         <ProductAttributeManagerClient initialTemplates={templates} />
@@ -262,6 +264,166 @@ function AttributeGovernancePanel({ summary }: { summary: AttributeSummary }) {
   )
 }
 
+function AttributeFilterReadinessPanel({ summary }: { summary: AttributeSummary }) {
+  const templateReady = summary.visibleTemplates > 0
+  const optionReady = summary.options > 0 && summary.emptyTemplates === 0
+  const hiddenRiskCount = summary.hiddenTemplates + summary.hiddenOptions
+  const publishReady = templateReady && optionReady
+  const readyScore = [templateReady, optionReady, hiddenRiskCount === 0].filter(Boolean).length
+  const cards: GovernanceCard[] = [
+    {
+      label: 'B328 新建准备',
+      value: `${readyScore}/3`,
+      detail: '回到新建产品前的线索反馈与内容准备区，把属性模板作为创建草稿前的筛选底座。',
+      href: '/admin/content/products/new#new-product-lead-feedback-desk',
+      cta: '打开新建准备',
+      tone: publishReady ? 'green' : 'orange',
+      Icon: Plus,
+    },
+    {
+      label: '缺属性产品',
+      value: '队列',
+      detail: '从产品列表筛出缺属性产品，先补影响公开筛选和买家判断的核心型号。',
+      href: '/admin/content/products/list?view=incomplete&issue=attributes',
+      cta: '查看产品缺口',
+      tone: 'blue',
+      Icon: SearchCheck,
+    },
+    {
+      label: '分类联动',
+      value: '分类',
+      detail: '分类解决目录入口，属性解决筛选维度；两者一起决定新产品能否被运营快速归档。',
+      href: '/admin/content/products/categories#category-governance',
+      cta: '打开分类闭环',
+      tone: 'blue',
+      Icon: Tags,
+    },
+    {
+      label: '筛选组承接',
+      value: 'filters',
+      detail: '属性模板稳定后再进入筛选管理，把模板组合成公开产品目录的筛选组。',
+      href: '/admin/content/products/filters',
+      cta: '打开筛选管理',
+      tone: templateReady ? 'green' : 'gray',
+      Icon: SlidersHorizontal,
+    },
+  ]
+  const workflow = [
+    {
+      label: '01 先确认可见模板',
+      detail: templateReady
+        ? `当前可见模板 ${formatNumber(summary.visibleTemplates)} 个，可作为新产品属性底座。`
+        : '还没有可见属性模板，先在下方管理器建立可被运营选择的模板。',
+      href: '#attribute-manager',
+      Icon: SlidersHorizontal,
+      primary: !templateReady,
+    },
+    {
+      label: '02 再补空模板选项',
+      detail: summary.emptyTemplates > 0
+        ? `当前有 ${formatNumber(summary.emptyTemplates)} 个空模板，容易让运营以为已有筛选但实际不可选。`
+        : '当前没有空模板风险，可以继续检查隐藏模板和隐藏选项。',
+      href: '#attribute-manager',
+      Icon: CircleDashed,
+      primary: summary.emptyTemplates > 0,
+    },
+    {
+      label: '03 回新建页填写属性',
+      detail: '新建产品时按 B328 顺序先看线索反馈，再进入产品属性区选择模板和选项。',
+      href: '/admin/content/products/new#attributes',
+      Icon: Plus,
+      primary: false,
+    },
+    {
+      label: '04 回列表处理缺口',
+      detail: '发布前回到产品列表缺属性队列，优先处理已发布或高转化产品。',
+      href: '/admin/content/products/list?view=incomplete&issue=attributes',
+      Icon: ListChecks,
+      primary: false,
+    },
+  ]
+
+  return (
+    <section
+      id="attribute-filter-readiness-desk"
+      data-attribute-filter-readiness="true"
+      className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
+      <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B329 Attribute Readiness</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">属性模板到新建产品筛选准备</h2>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-[#61767D]">
+            把 B328 新建产品准备、B326 内容回流、分类联动和筛选组承接放到同一张只读检查表；本区不保存模板、不改选项、不发布产品。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/content/products/new#new-product-lead-feedback-desk"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95D22]"
+          >
+            <Plus size={13} />
+            B328 新建准备
+          </Link>
+          <Link
+            href="/admin/content/products/list?view=incomplete&issue=attributes"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            <SearchCheck size={13} />
+            缺属性产品
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-b border-[#E6EEEE] bg-[#F7FAFA] md:grid-cols-4">
+        <AttributeReadinessMetric label="可见模板" value={summary.visibleTemplates} detail={`总模板 ${formatNumber(summary.templates)}`} tone={templateReady ? 'green' : 'orange'} />
+        <AttributeReadinessMetric label="属性选项" value={summary.options} detail={`空模板 ${formatNumber(summary.emptyTemplates)}`} tone={optionReady ? 'green' : 'orange'} />
+        <AttributeReadinessMetric label="隐藏风险" value={hiddenRiskCount} detail={`模板 ${formatNumber(summary.hiddenTemplates)} / 选项 ${formatNumber(summary.hiddenOptions)}`} tone={hiddenRiskCount > 0 ? 'orange' : 'green'} />
+        <AttributeReadinessMetric label="准备得分" value={readyScore} detail="模板/选项/可见性" tone={publishReady ? 'green' : 'orange'} />
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] lg:grid-cols-[minmax(0,1fr)_390px] lg:divide-x lg:divide-y-0">
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+          {cards.map((card) => (
+            <GovernanceLinkCard key={card.label} card={card} />
+          ))}
+        </div>
+
+        <aside className="bg-[#FBFDFD]">
+          <div className="border-b border-[#E6EEEE] px-5 py-4">
+            <h3 className="text-sm font-bold text-[#1E2C31]">属性准备动作顺序</h3>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">
+              先保证模板和选项可用，再回新建页和产品列表补齐具体产品。
+            </p>
+          </div>
+          <div className="divide-y divide-[#E6EEEE]">
+            {workflow.map((step) => {
+              const Icon = step.Icon
+              return (
+                <Link
+                  key={step.label}
+                  href={step.href}
+                  className={`block px-5 py-4 transition ${step.primary ? 'bg-[#FFF7F0] hover:bg-[#FFF2E7]' : 'hover:bg-[#F0F7F8]'}`}
+                >
+                  <span className="flex gap-3">
+                    <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${step.primary ? 'bg-[#E36F2C] text-white' : 'bg-white text-[#1889B6]'}`}>
+                      <Icon size={15} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-bold text-[#1E2C31]">{step.label}</span>
+                      <span className="mt-1 block text-xs leading-5 text-[#61767D]">{step.detail}</span>
+                    </span>
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+        </aside>
+      </div>
+    </section>
+  )
+}
+
 function GovernanceLinkCard({ card }: { card: GovernanceCard }) {
   const Icon = card.Icon
   const toneClass =
@@ -293,6 +455,28 @@ function GovernanceLinkCard({ card }: { card: GovernanceCard }) {
         <ArrowRight size={13} />
       </span>
     </Link>
+  )
+}
+
+function AttributeReadinessMetric({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string
+  value: number
+  detail: string
+  tone: 'green' | 'orange'
+}) {
+  return (
+    <div className="border-b border-r border-[#E6EEEE] p-4 last:border-r-0 md:border-b-0">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-2 text-2xl font-bold ${tone === 'green' ? 'text-emerald-700' : 'text-[#E36F2C]'}`}>
+        {formatNumber(value)}
+      </p>
+      <p className="mt-1 truncate text-xs text-[#8A9EA4]" title={detail}>{detail}</p>
+    </div>
   )
 }
 
