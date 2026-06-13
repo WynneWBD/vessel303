@@ -42,6 +42,7 @@ import {
   FileText,
   ImageIcon,
   Layers3,
+  Link2,
   ListChecks,
   Package,
   Pencil,
@@ -136,6 +137,15 @@ type ProductEditClosureEntry = {
   href: string
   tone: ProductReadinessTone
   Icon: LucideIcon
+}
+
+type ProductEditSourceContract = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  Icon: LucideIcon
+  tone: ProductReadinessTone
 }
 
 const EDIT_SECTIONS: EditSection[] = [
@@ -797,6 +807,40 @@ function ProductEditClosurePanel({ product }: { product: CatalogProductRow }) {
   const releaseIssues = getProductReleaseIssues(product)
   const closureEntries = buildProductEditClosureEntries(product)
   const published = product.status === 'published'
+  const sourceContracts: ProductEditSourceContract[] = [
+    {
+      label: '合同总览',
+      value: 'product:*',
+      detail: '回到产品列表查看产品来源阶段的完整承接约定。',
+      href: '/admin/content/products/list#product-source-contract',
+      Icon: Link2,
+      tone: 'neutral',
+    },
+    {
+      label: '卡片 CTA',
+      value: 'catalog_card',
+      detail: '公开产品列表卡片咨询入口，回到产品来源阶段复盘。',
+      href: '/admin/customers/leads?source_type=product&source_stage=product%3Acatalog_card_cta',
+      Icon: Package,
+      tone: 'neutral',
+    },
+    {
+      label: '详情 CTA',
+      value: 'detail_cta',
+      detail: '产品详情页 Learn More / Appointment 动作，回到产品线索阶段。',
+      href: '/admin/customers/leads?source_type=product&source_stage=product%3Acta_click',
+      Icon: SearchCheck,
+      tone: published ? 'ready' : 'warning',
+    },
+    {
+      label: '询盘表单',
+      value: 'inquiry_form',
+      detail: '产品询盘表单进入 leads 后，用 source_stage 区分表单样本。',
+      href: '/admin/customers/leads?source_type=product&source_stage=product%3Ainquiry_form',
+      Icon: ListChecks,
+      tone: 'neutral',
+    },
+  ]
   const publicRoute = published ? routeInfo.publicHref : '草稿未公开展示'
 
   return (
@@ -821,12 +865,56 @@ function ProductEditClosurePanel({ product }: { product: CatalogProductRow }) {
         ))}
       </div>
 
+      <ProductEditSourceContractStrip contracts={sourceContracts} />
+
       <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] bg-[#F7FAFA] p-4 md:grid-cols-3">
         <ClosureInfoCell label="当前状态" value={published ? '已发布' : '草稿'} detail={published ? '保存会影响公开产品页' : '发布前不会公开展示'} />
         <ClosureInfoCell label="官方路由" value={publicRoute} detail={published ? routeInfo.publicLabel : '等待发布后公开'} />
         <ClosureInfoCell label="发布缺项" value={`${releaseIssues.length}`} detail={releaseIssues.length > 0 ? releaseIssues.slice(0, 3).join('、') : '当前没有发布缺项'} />
       </div>
     </section>
+  )
+}
+
+function ProductEditSourceContractStrip({ contracts }: { contracts: ProductEditSourceContract[] }) {
+  return (
+    <div className="border-t border-[#E6EEEE] bg-white">
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1889B6]">Source Contract</p>
+          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">当前产品来源承接合同</h3>
+        </div>
+        <p className="max-w-3xl text-xs leading-5 text-[#61767D]">
+          对齐公开产品页的 Learn More / Appointment 路径，把单品编辑、公开详情、产品询盘和 source_type=product 线索队列放到同一条只读运营路径。
+        </p>
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+        {contracts.map((contract) => (
+          <ProductEditSourceContractLink key={contract.label} contract={contract} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ProductEditSourceContractLink({ contract }: { contract: ProductEditSourceContract }) {
+  const Icon = contract.Icon
+
+  return (
+    <Link href={contract.href} className="group min-h-[132px] px-5 py-4 transition hover:bg-[#F7FAFA]">
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-sm font-bold text-[#1E2C31]">{contract.label}</span>
+          <span className={`mt-2 inline-flex min-h-7 max-w-full items-center rounded-md border px-2.5 text-[11px] font-bold ${readinessToneClass(contract.tone)}`}>
+            <span className="truncate">{contract.value}</span>
+          </span>
+        </span>
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${readinessToneClass(contract.tone)}`}>
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block text-xs leading-5 text-[#61767D]">{contract.detail}</span>
+    </Link>
   )
 }
 
