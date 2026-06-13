@@ -94,6 +94,8 @@ type CasePathBackflowCard = {
 
 type CaseLoopTrafficCard = CasePathBackflowCard
 
+type ProductPathQualityCard = CasePathBackflowCard
+
 export default async function AdminStatusTrafficPage({ searchParams }: PageProps) {
   const sp = searchParams ? await searchParams : {}
   const activeRange = normalizeRange(sp.range)
@@ -166,6 +168,8 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
         />
 
         <TrafficToLeadExceptionDesk analytics={analytics} overview={overview} />
+
+        <ProductPathQualityReviewDesk analytics={analytics} overview={overview} />
 
         <CasePathLeadBackflowDesk analytics={analytics} health={caseInquiryHealth} />
 
@@ -515,6 +519,191 @@ function buildTrafficToLeadExceptionRows(
 
       return score(b) - score(a)
     })
+}
+
+function ProductPathQualityReviewDesk({
+  analytics,
+  overview,
+}: {
+  analytics: SiteAnalyticsDashboard
+  overview: Awaited<ReturnType<typeof loadStatusOverview>>
+}) {
+  const metric = analytics.conversionPaths.products ?? {
+    views: 0,
+    ctaClicks: 0,
+    formSubmits: 0,
+    leads: 0,
+    conversionRate: 0,
+  }
+  const productContent = overview.content.products
+  const seoMissing = overview.site.seo.productsMissing
+  const contentIssues = productContent.issues
+  const productStageTotal = analytics.sourceStageActions
+    .filter((row) => row.key.startsWith('product:'))
+    .reduce((sum, row) => sum + row.value, 0)
+  const productSourceActions = analytics.sourceTypes.find((row) => row.key === 'product')?.value ?? 0
+  const topProductPages = analytics.topPages
+    .filter((row) => isProductPath(row.key) || isProductPath(row.label))
+    .slice(0, 3)
+  const pathActions = metric.ctaClicks + metric.formSubmits
+  const trafficNoLead = metric.views > 0 && metric.leads === 0
+  const actionNoLead = pathActions > 0 && metric.leads === 0
+  const pathNoAction = metric.views > 0 && pathActions === 0
+  const qualitySignals = seoMissing + contentIssues + (trafficNoLead ? 1 : 0) + (actionNoLead ? 1 : 0) + (pathNoAction ? 1 : 0)
+  const contentReadyRate = productContent.total > 0 ? Math.max(0, (productContent.total - contentIssues) / productContent.total) : 0
+  const priority =
+    actionNoLead
+      ? 'P0 动作无线索'
+      : pathNoAction
+        ? 'P1 访问未动作'
+        : (seoMissing > 0 || contentIssues > 0) && metric.views > 0
+          ? 'P1 承接缺口'
+          : metric.leads > 0
+            ? 'P2 样本复盘'
+            : 'P3 等待样本'
+  const priorityTone: ProductPathQualityCard['tone'] =
+    actionNoLead || pathNoAction || ((seoMissing > 0 || contentIssues > 0) && metric.views > 0)
+      ? 'orange'
+      : metric.leads > 0
+        ? 'green'
+        : metric.views > 0 || productStageTotal > 0
+          ? 'blue'
+          : 'gray'
+  const decision =
+    actionNoLead
+      ? '产品路径已有动作但无线索，先回产品线索队列核对 source_type=product，再从 B321 SEO 生命周期和 B320 产品生命周期检查承接页。'
+      : pathNoAction
+        ? '产品路径有访问但动作不足，先查 /products 与详情页 CTA、参数和产品适配证明，再回 B317 队列补证明链。'
+        : seoMissing > 0 || contentIssues > 0
+          ? '产品路径仍有 SEO 或内容缺口，优先回 B320/B321 处理公开承接，再观察路径动作和线索质量。'
+          : metric.leads > 0
+            ? '产品路径已有线索样本，可以回 B320 总控复盘哪些产品带来动作、线索和后续跟进。'
+            : '产品路径样本不足，保留公开入口、生命周期、SEO 和线索入口，等待真实访问样本。'
+  const cards: ProductPathQualityCard[] = [
+    {
+      key: 'path',
+      label: '产品路径访问',
+      value: `${formatNumber(metric.views)} PV`,
+      detail: `路径动作 ${formatNumber(pathActions)}，产品来源阶段动作 ${formatNumber(productStageTotal)}。`,
+      href: '#product-conversion-path',
+      tone: metric.views > 0 ? 'blue' : 'gray',
+    },
+    {
+      key: 'leads',
+      label: '产品线索',
+      value: formatNumber(metric.leads),
+      detail: `source_type=product 动作 ${formatNumber(productSourceActions)}，转化率 ${formatAnalyticsPercent(metric.conversionRate)}。`,
+      href: '/admin/customers/leads?source_type=product',
+      tone: metric.leads > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
+    },
+    {
+      key: 'lifecycle',
+      label: 'B320 生命周期',
+      value: `${formatNumber(contentIssues)} 缺口`,
+      detail: `产品总数 ${formatNumber(productContent.total)}，已发布 ${formatNumber(productContent.published)}。`,
+      href: '/admin/content/products#product-lifecycle',
+      tone: contentIssues > 0 ? 'orange' : 'green',
+    },
+    {
+      key: 'seo',
+      label: 'B321 SEO 生命周期',
+      value: `${formatNumber(seoMissing)} 项`,
+      detail: '回到产品 SEO 生命周期桥，核对标题、摘要、路径和公开承接。',
+      href: '/admin/site/seo#product-seo-lifecycle-bridge',
+      tone: seoMissing > 0 ? 'orange' : 'green',
+    },
+    {
+      key: 'proof',
+      label: 'B317 证明回流',
+      value: `${formatNumber(qualitySignals)} 信号`,
+      detail: '把流量质量问题回到产品证明、媒体、详情和询盘交接队列。',
+      href: '/admin/content/products/list#product-fit-proof-backflow',
+      tone: qualitySignals > 0 ? 'orange' : 'green',
+    },
+    {
+      key: 'front',
+      label: '前台 /products',
+      value: topProductPages[0] ? `${formatNumber(topProductPages[0].value)} PV` : '只读入口',
+      detail: topProductPages[0] ? `当前最高产品页：${topProductPages[0].label}` : '公开产品列表与详情页只读复验入口。',
+      href: '/products',
+      tone: metric.views > 0 ? 'blue' : 'gray',
+    },
+  ]
+
+  return (
+    <section id="product-path-quality-review-desk" data-product-path-quality-review="true" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B322 Product Path Quality</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品路径到生命周期质量复盘台</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把 B321 产品 SEO 生命周期、B320 产品生命周期、B317 证明回流、前台 /products 和产品线索队列放到同一条只读复盘链路；运营用它判断问题来自访问不足、动作不足、SEO/内容承接还是线索回流。本区不写埋点、不改线索、不发布产品。
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <TrafficTriageAction href="/admin/content/products#product-lifecycle" label="B320 生命周期" primary />
+          <TrafficTriageAction href="/admin/site/seo#product-seo-lifecycle-bridge" label="B321 SEO" />
+          <TrafficTriageAction href="/admin/content/products/list#product-fit-proof-backflow" label="B317 回流队列" primary={qualitySignals > 0} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-6">
+        {cards.map((card) => (
+          <Link key={card.key} href={card.href} className="block min-w-0 p-5 transition hover:bg-[#F7FAFA]">
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${trafficMatrixToneClass(card.tone)}`}>
+              {card.label}
+            </span>
+            <span className="mt-3 block truncate text-2xl font-black text-[#1E2C31]" title={card.value}>
+              {card.value}
+            </span>
+            <span className="mt-2 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
+          </Link>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.7fr)]">
+        <div className="px-5 py-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${trafficMatrixToneClass(priorityTone)}`}>
+              {priority}
+            </span>
+            <span className="text-sm font-semibold text-[#1E2C31]">产品流量质量判断</span>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-[#61767D]">{decision}</p>
+          <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-3">
+            {topProductPages.length > 0 ? (
+              topProductPages.map((row) => (
+                <Link key={row.key} href={row.key} className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2 transition hover:border-[#1889B6]">
+                  <span className="block truncate text-xs font-bold text-[#1E2C31]" title={row.label}>{row.label}</span>
+                  <span className="mt-1 block text-lg font-black text-[#1889B6]">{formatNumber(row.value)}</span>
+                  <span className="mt-1 block text-[11px] text-[#8A9EA4]">产品页 PV</span>
+                </Link>
+              ))
+            ) : (
+              <div className="rounded-md border border-dashed border-[#D8E7E8] bg-[#FBFDFD] px-3 py-4 text-xs text-[#8A9EA4] md:col-span-3">
+                暂无产品 Top Pages 样本，先保留 /products、B320 和 B321 入口等待访问数据。
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:border-l xl:border-t-0">
+          <p className="text-sm font-bold text-[#1E2C31]">建议回看顺序</p>
+          <div className="mt-3 space-y-2 text-xs leading-5 text-[#61767D]">
+            <StatusLine ok={!actionNoLead} label="先看产品线索队列：确认 product 来源动作是否转成真实线索。" />
+            <StatusLine ok={contentReadyRate >= 0.8} label={`再看 B320 产品生命周期：内容可承接率 ${formatAnalyticsPercent(contentReadyRate)}。`} />
+            <StatusLine ok={seoMissing === 0} label={`最后看 B321 SEO 生命周期：待补 SEO ${formatNumber(seoMissing)} 项。`} />
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <TrafficTriageAction href="/admin/content/products/list?view=incomplete&issue=seo#product-fit-proof-backflow" label="B317 队列" compact primary={qualitySignals > 0} />
+            <TrafficTriageAction href="/admin/content/products/list" label="B318 编辑" compact />
+            <TrafficTriageAction href="/admin/content/products/new#new-product-backflow-preflight" label="B319 新建" compact />
+            <TrafficTriageAction href="/admin/site/conversion" label="转化复盘" compact />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
 }
 
 function CasePathLeadBackflowDesk({
@@ -2508,6 +2697,10 @@ function trafficMatrixToneClass(tone: 'blue' | 'green' | 'orange' | 'gray') {
 
 function isNewsPath(path: string) {
   return path === '/news' || path.startsWith('/news/')
+}
+
+function isProductPath(path: string) {
+  return path === '/products' || path.startsWith('/products/')
 }
 
 function isCasePath(path: string) {
