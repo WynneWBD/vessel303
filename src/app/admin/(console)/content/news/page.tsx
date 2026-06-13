@@ -21,6 +21,7 @@ import {
   CircleDashed,
   FileText,
   ImageIcon,
+  Link2,
   ListChecks,
   Newspaper,
   Plus,
@@ -213,6 +214,15 @@ function OperationsHub({ stats }: { stats: NewsStats }) {
       tone: stats.incomplete > 0 || stats.missingSeo > 0 ? 'orange' : 'green',
       Icon: SearchCheck,
     },
+    {
+      label: '来源承接',
+      value: '已回连',
+      detail: '新闻来源面板、转化中心新闻承接和 source_type=news 线索队列已串联，便于从内容运营回看获客效果。',
+      href: '/admin/site/conversion#news-conversion-handoff',
+      cta: '查看新闻承接',
+      tone: 'blue',
+      Icon: Link2,
+    },
   ]
 
   return (
@@ -222,16 +232,17 @@ function OperationsHub({ stats }: { stats: NewsStats }) {
           <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">运营总览</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻运营总览闭环</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            把新闻列表矩阵、分类治理、回收安全、定时复核和 SEO 待补集中到一屏；本区只做只读统计和入口串联，不新增保存、发布或删除能力。
+            把新闻列表矩阵、分类治理、回收安全、定时复核、SEO 待补和来源承接集中到一屏；本区只做只读统计和入口串联，不新增保存、发布或删除能力。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <PrimaryAction href="/admin/content/news/list" Icon={ListChecks} label="新闻列表" primary />
           <PrimaryAction href="/admin/content/news/categories#news-category-governance" Icon={Tags} label="分类治理" />
+          <PrimaryAction href="/admin/site/conversion#news-conversion-handoff" Icon={Link2} label="来源承接" />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-2 xl:grid-cols-6">
         {cards.map((card) => (
           <OperationsHubLink key={card.label} card={card} />
         ))}
