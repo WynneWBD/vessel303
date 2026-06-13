@@ -1065,11 +1065,37 @@ function NewsConversionHandoffPanel({
       tone: 'blue' as const,
     },
   ]
+  const sourceContracts = [
+    {
+      label: '来源命名',
+      value: 'news:*',
+      detail: '公开新闻列表和详情页统一使用 news:list:contact_cta / news:{slug}:contact_cta。',
+      href: '/news',
+      Icon: Route,
+      tone: 'blue' as const,
+    },
+    {
+      label: 'Contact 承接',
+      value: 'Contact',
+      detail: '新闻阅读页不嵌表单，统一带 source 参数进入 Contact 主表单。',
+      href: '/contact?source=news:list:contact_cta',
+      Icon: Link2,
+      tone: 'green' as const,
+    },
+    {
+      label: '后台筛选',
+      value: 'news leads',
+      detail: 'Contact 写入后归入 source_type=news，运营从新闻线索队列复核。',
+      href: '/admin/customers/leads?source_type=news',
+      Icon: ShieldCheck,
+      tone: newsTotal > 0 ? 'green' as const : 'blue' as const,
+    },
+  ]
   const decision =
     newsPathMetric.views > 0 && newsPathMetric.ctaClicks === 0
-      ? '新闻已有访问但暂无来源动作，优先回到新闻来源面板复核新闻 CTA 和 Contact source 参数。'
+      ? '新闻已有访问但暂无来源动作，优先回到新闻来源面板复核 news:*:contact_cta 是否带到 Contact。'
       : newsPathMetric.ctaClicks > 0 && newsTotal === 0
-        ? '新闻已有来源动作但线索库暂无 news 来源样本，继续观察 Contact 表单提交与来源归因。'
+        ? '新闻已有来源动作但线索库暂无 news 来源样本，继续观察 Contact 表单提交与 source_type=news 归因。'
         : newsTotal > 0
           ? '新闻来源已有线索样本，可结合新闻运营总览复盘高阅读内容和后续产品/案例承接。'
           : '新闻来源暂无足够样本，先保持新闻运营入口、公开入口和线索队列可下钻。'
@@ -1081,7 +1107,7 @@ function NewsConversionHandoffPanel({
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">News Source Handoff</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻来源承接</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把新闻来源面板、线索状态桥和新闻线索队列回连到转化中心；本面板只读聚合新闻路径和 news 来源线索，不改变新闻发布、Contact 表单或线索状态。
+            把新闻来源面板、线索状态桥和新闻线索队列回连到转化中心；本面板只读聚合新闻路径和 news 来源线索，并复核 news:*:contact_cta 到 Contact 主表单的承接合同，不改变新闻发布、Contact 表单或线索状态。
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
@@ -1122,6 +1148,20 @@ function NewsConversionHandoffPanel({
       </div>
       <div className="border-t border-[#E6EEEE] px-5 py-4 text-sm font-semibold text-[#1E2C31]">
         运营判断：{decision}
+      </div>
+      <div className="border-t border-[#E6EEEE] bg-[#FBFDFD]">
+        <div className="px-5 py-4">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B265 Source Contract</p>
+          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">新闻 Contact 来源合同</h3>
+          <p className="mt-1 max-w-4xl text-xs leading-5 text-[#61767D]">
+            对齐公开新闻页的 Blog / View Details / Contact 阅读路径：运营在这里确认来源命名、Contact 承接和后台新闻线索筛选是否在同一条链路内。
+          </p>
+        </div>
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] border-t border-[#E6EEEE] md:grid-cols-3 md:divide-x md:divide-y-0">
+          {sourceContracts.map((card) => (
+            <ProductConversionClosureCard key={card.label} card={card} />
+          ))}
+        </div>
       </div>
       <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:grid-cols-5">
         {closureLinks.map((item) => (
