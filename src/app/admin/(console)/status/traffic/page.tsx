@@ -1390,12 +1390,41 @@ function NewsTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) 
 
   const decision =
     metric.views > 0 && sourceActions === 0
-      ? '新闻已有阅读样本但暂无新闻来源动作，优先复核新闻列表和详情页 CTA 是否把 source 带到 Contact。'
+      ? '新闻已有阅读样本但暂无新闻来源动作，优先复核 news:*:contact_cta 是否带到 Contact。'
       : sourceActions > 0 && metric.leads === 0
-        ? '新闻已产生来源动作但暂无真实线索，继续观察 Contact 表单提交和后台线索来源归因。'
+        ? '新闻已产生来源动作但暂无真实线索，继续观察 Contact 表单提交和 source_type=news 归因。'
         : metric.leads > 0
           ? '新闻来源已有真实线索样本，可继续复盘高阅读新闻与后续产品/案例承接。'
           : '新闻来源暂无足够样本，先保持公开新闻入口和后台内容运营链路可下钻。'
+  const sourceContracts = [
+    {
+      label: '来源命名',
+      value: 'news:*',
+      detail: '公开新闻列表和详情页统一使用 news:list:contact_cta / news:{slug}:contact_cta。',
+      href: '/news',
+      tone: 'blue' as const,
+    },
+    {
+      label: 'Contact 承接',
+      value: 'Contact',
+      detail: '新闻阅读页带 source 参数进入 Contact 主表单，保持文章轻量阅读。',
+      href: '/contact?source=news:list:contact_cta',
+      tone: 'green' as const,
+    },
+    {
+      label: '后台筛选',
+      value: 'source_type=news',
+      detail: 'Contact 写入后进入新闻来源线索队列，便于运营按来源复盘。',
+      href: '/admin/customers/leads?source_type=news',
+      tone: metric.leads > 0 ? 'green' as const : sourceActions > 0 ? 'orange' as const : 'blue' as const,
+    },
+  ] satisfies Array<{
+    label: string
+    value: string
+    detail: string
+    href: string
+    tone: 'blue' | 'green' | 'orange' | 'gray'
+  }>
   const closureLinks = [
     {
       label: '线索状态桥',
@@ -1464,6 +1493,32 @@ function NewsTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) 
 
       <div className="border-t border-[#E6EEEE] px-5 py-4 text-sm font-semibold text-[#1E2C31]">
         运营判断：{decision}
+      </div>
+
+      <div className="border-t border-[#E6EEEE] bg-[#FBFDFD]">
+        <div className="px-5 py-4">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">News Contact Source Contract</p>
+          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">新闻 Contact 来源合同</h3>
+          <p className="mt-1 max-w-4xl text-xs leading-5 text-[#61767D]">
+            对齐 300 后台式“入口 - 行为 - 线索 - 处理”阅读顺序，把公开新闻访问、Contact source 和新闻线索筛选收在同一块流量面板里。
+          </p>
+        </div>
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] border-t border-[#E6EEEE] md:grid-cols-3 md:divide-x md:divide-y-0">
+          {sourceContracts.map((item) => (
+            <Link key={item.label} href={item.href} className="group block min-w-0 p-5 transition hover:bg-white">
+              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${trafficMatrixToneClass(item.tone)}`}>
+                {item.label}
+              </span>
+              <span className="mt-3 block truncate text-xl font-black text-[#1E2C31]" title={item.value}>
+                {item.value}
+              </span>
+              <span className="mt-2 block min-h-10 text-xs leading-5 text-[#61767D]">{item.detail}</span>
+              <span className="mt-3 inline-flex text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
+                下钻核对
+              </span>
+            </Link>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:grid-cols-5">
