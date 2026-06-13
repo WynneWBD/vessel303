@@ -144,6 +144,19 @@ type SourceSeoLeadQualityRow = {
   seoHref: string
 }
 
+type SourceLeadQualityWorkdeskRow = SourceSeoLeadQualityRow & {
+  priority: string
+  priorityTone: FunnelMatrixRow['statusTone']
+  stageCount: number
+  newCount: number
+  quotedCount: number
+  nextAction: string
+  queueHref: string
+  stageHref: string
+  conversionHref: string
+  releaseHref: string
+}
+
 export default async function AdminStatusLeadsPage() {
   const { role, email } = await getStatusAccess()
   const [overview, sourceStatusSummary, sourceStageStatusSummary, pathAnalytics] = await Promise.all([
@@ -228,6 +241,18 @@ export default async function AdminStatusLeadsPage() {
 
         <SourceSeoLeadQualityBridge
           sourceStatusSummary={sourceStatusSummary}
+          productPathMetric={productPathMetric}
+          casePathMetric={casePathMetric}
+          newsPathMetric={newsPathMetric}
+          products={overview.content.products}
+          projects={overview.content.projects}
+          news={overview.content.news}
+          seo={overview.site.seo}
+        />
+
+        <SourceLeadQualityWorkdesk
+          sourceStatusSummary={sourceStatusSummary}
+          sourceStageStatusSummary={sourceStageStatusSummary}
           productPathMetric={productPathMetric}
           casePathMetric={casePathMetric}
           newsPathMetric={newsPathMetric}
@@ -426,6 +451,159 @@ function SourceSeoLeadQualityBridge({
         </div>
       </div>
     </section>
+  )
+}
+
+function SourceLeadQualityWorkdesk({
+  sourceStatusSummary,
+  sourceStageStatusSummary,
+  productPathMetric,
+  casePathMetric,
+  newsPathMetric,
+  products,
+  projects,
+  news,
+  seo,
+}: {
+  sourceStatusSummary: LeadSourceStatusSummary[]
+  sourceStageStatusSummary: LeadSourceStageStatusSummary[]
+  productPathMetric: AnalyticsConversionMetric
+  casePathMetric: AnalyticsConversionMetric
+  newsPathMetric: AnalyticsConversionMetric
+  products: ContentMetric
+  projects: ContentMetric
+  news: ContentMetric
+  seo: SeoMetrics
+}) {
+  const rows = buildSourceLeadQualityWorkdeskRows({
+    sourceStatusSummary,
+    sourceStageStatusSummary,
+    productPathMetric,
+    casePathMetric,
+    newsPathMetric,
+    products,
+    projects,
+    news,
+    seo,
+  })
+  const activeTotal = rows.reduce((sum, row) => sum + row.active, 0)
+  const newTotal = rows.reduce((sum, row) => sum + row.newCount, 0)
+  const openQualityTotal = rows.reduce((sum, row) => sum + row.seoMissing + row.contentIssues, 0)
+  const trafficWithoutLead = rows.filter((row) => row.metric.views > 0 && row.total === 0).length
+
+  return (
+    <section className="space-y-4" id="source-lead-quality-workdesk">
+      <SectionTitle
+        title="B292 来源线索质量处理台"
+        detail="把 B291 SEO 到线索转化复盘、B282 来源质量、三类来源线索队列和发布前复核放到同一个只读处理入口；这里不改线索状态、不写数据库。"
+      />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">Lead Source Quality Desk</p>
+            <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">来源线索处理顺序</h2>
+            <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+              先处理产品 / 案例 / 新闻的活跃线索，再补 SEO 和内容承接，最后回到 B291 转化复盘看访问、动作和线索是否闭环。
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <SourceSeoBridgeLink href="/admin/site/conversion#seo-to-lead-conversion-review" label="B291 转化复盘" />
+            <SourceSeoBridgeLink href="#source-seo-lead-quality" label="B282 来源质量" />
+            <SourceSeoBridgeLink href="/admin/status/site#site-release-preflight-bridge" label="发布前复核" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] px-5 py-4 md:grid-cols-4">
+          <FunnelSummary label="活跃来源线索" value={activeTotal} detail={`新线索 ${formatNumber(newTotal)} 条`} warn={activeTotal > 0} />
+          <FunnelSummary label="SEO/内容待补" value={openQualityTotal} detail="三类来源公开承接缺口" warn={openQualityTotal > 0} />
+          <FunnelSummary label="有访问无线索" value={trafficWithoutLead} detail="30 天路径样本" warn={trafficWithoutLead > 0} />
+          <FunnelSummary label="来源阶段" value={rows.reduce((sum, row) => sum + row.stageCount, 0)} detail="产品 / 案例 / 新闻阶段" />
+        </div>
+
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] xl:grid-cols-3 xl:divide-x xl:divide-y-0">
+          {rows.map((row) => (
+            <SourceLeadQualityWorkdeskCard key={row.key} row={row} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function SourceLeadQualityWorkdeskCard({ row }: { row: SourceLeadQualityWorkdeskRow }) {
+  return (
+    <div className="flex min-h-96 flex-col justify-between px-5 py-5">
+      <div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-[#1E2C31]">{row.label}</p>
+            <p className="mt-1 text-xs text-[#8A9EA4]">source_type={row.sourceType}</p>
+          </div>
+          <FunnelStatusBadge label={row.priority} tone={row.priorityTone} />
+        </div>
+
+        <p className="mt-4 min-h-12 text-xs leading-5 text-[#61767D]">{row.nextAction}</p>
+
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <SourceWorkdeskMetric label="新/活跃" value={`${formatNumber(row.newCount)} / ${formatNumber(row.active)}`} warn={row.active > 0} />
+          <SourceWorkdeskMetric label="访问/动作" value={`${formatNumber(row.metric.views)} / ${formatNumber(pathActions(row.metric))}`} warn={row.metric.views > 0 && row.total === 0} />
+          <SourceWorkdeskMetric label="线索/成交" value={`${formatNumber(row.total)} / ${formatNumber(row.won)}`} />
+          <SourceWorkdeskMetric label="SEO/内容" value={`${formatNumber(row.seoMissing)} / ${formatNumber(row.contentIssues)}`} warn={row.seoMissing + row.contentIssues > 0} />
+        </div>
+
+        <div className="mt-4 rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2 text-xs leading-5 text-[#61767D]">
+          <span className="font-semibold text-[#1E2C31]">阶段 {formatNumber(row.stageCount)}</span>
+          <span className="mx-1 text-[#C9D7DA]">/</span>
+          <span>报价 {formatNumber(row.quotedCount)}</span>
+          <span className="mx-1 text-[#C9D7DA]">/</span>
+          <span>路径转化 {formatAnalyticsPercent(row.metric.conversionRate)}</span>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <SourceWorkdeskAction href={row.queueHref} label="处理线索" primary={row.active > 0} />
+        <SourceWorkdeskAction href={row.conversionHref} label="转化复盘" />
+        <SourceWorkdeskAction href={row.stageHref} label="阶段明细" />
+        <SourceWorkdeskAction href={row.seoHref} label="SEO/内容" primary={row.seoMissing + row.contentIssues > 0} />
+        <SourceWorkdeskAction href={row.releaseHref} label="发布复核" />
+      </div>
+    </div>
+  )
+}
+
+function SourceWorkdeskMetric({
+  label,
+  value,
+  warn = false,
+}: {
+  label: string
+  value: string
+  warn?: boolean
+}) {
+  return (
+    <div className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2">
+      <p className="text-[11px] font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-1 text-lg font-bold ${warn ? 'text-[#E36F2C]' : 'text-[#1E2C31]'}`}>{value}</p>
+    </div>
+  )
+}
+
+function SourceWorkdeskAction({
+  href,
+  label,
+  primary = false,
+}: {
+  href: string
+  label: string
+  primary?: boolean
+}) {
+  return (
+    <Link
+      href={href}
+      className={`inline-flex min-h-9 items-center justify-center rounded-md border px-2 py-1 text-xs font-semibold transition ${primary ? 'border-[#E36F2C]/50 bg-[#FFF2E7] text-[#E36F2C] hover:border-[#E36F2C]' : 'border-[#D8E7E8] bg-white text-[#1889B6] hover:border-[#1889B6]'}`}
+    >
+      {label}
+    </Link>
   )
 }
 
@@ -801,6 +979,105 @@ function buildSourceSeoLeadQualityRow({
     contentHref,
     seoHref,
   }
+}
+
+function buildSourceLeadQualityWorkdeskRows({
+  sourceStatusSummary,
+  sourceStageStatusSummary,
+  productPathMetric,
+  casePathMetric,
+  newsPathMetric,
+  products,
+  projects,
+  news,
+  seo,
+}: {
+  sourceStatusSummary: LeadSourceStatusSummary[]
+  sourceStageStatusSummary: LeadSourceStageStatusSummary[]
+  productPathMetric: AnalyticsConversionMetric
+  casePathMetric: AnalyticsConversionMetric
+  newsPathMetric: AnalyticsConversionMetric
+  products: ContentMetric
+  projects: ContentMetric
+  news: ContentMetric
+  seo: SeoMetrics
+}): SourceLeadQualityWorkdeskRow[] {
+  const baseRows = buildSourceSeoLeadQualityRows({
+    sourceStatusSummary,
+    productPathMetric,
+    casePathMetric,
+    newsPathMetric,
+    products,
+    projects,
+    news,
+    seo,
+  })
+
+  return baseRows
+    .map((row) => {
+      const source = sourceStatusSummary.find((item) => item.type === row.key)
+      const stageCount = sourceStageStatusSummary.filter((item) => item.type === row.key).length
+      const newCount = source?.new ?? 0
+      const quotedCount = source?.quoted ?? 0
+      const openQuality = row.seoMissing + row.contentIssues
+      const hasTrafficGap = row.metric.views > 0 && row.total === 0
+      const priority =
+        row.active > 0
+          ? 'P0 处理线索'
+          : openQuality > 0
+            ? 'P1 补承接'
+            : hasTrafficGap
+              ? 'P1 查归因'
+              : row.total > 0
+                ? 'P2 复盘质量'
+                : 'P3 观察'
+      const priorityTone: FunnelMatrixRow['statusTone'] =
+        row.active > 0 || openQuality > 0 || hasTrafficGap
+          ? 'orange'
+          : row.won > 0
+            ? 'green'
+            : row.total > 0 || row.metric.views > 0
+              ? 'blue'
+              : 'gray'
+      const nextAction =
+        row.active > 0
+          ? `先进入 ${row.label} 的活跃线索队列，处理 ${formatNumber(row.active)} 条未收口线索，再回看 SEO 和内容承接。`
+          : openQuality > 0
+            ? `先补 ${formatNumber(openQuality)} 个 SEO/内容承接缺口，避免公开入口有访问但无法沉淀高质量线索。`
+            : hasTrafficGap
+              ? `近 30 天有 ${formatNumber(row.metric.views)} 次访问但无线索，优先核对 CTA、source 参数和 Contact 归因。`
+              : row.total > 0
+                ? `已有 ${formatNumber(row.total)} 条来源线索，适合回到 B291 复盘访问、动作、线索和成交质量。`
+                : '当前样本不足，保持线索队列、内容入口和 B291 转化复盘可快速下钻。'
+      const stageHref =
+        row.key === 'product'
+          ? '#product-lead-path-bridge'
+          : row.key === 'case'
+            ? '#case-lead-path-bridge'
+            : '#news-lead-path-bridge'
+
+      return {
+        ...row,
+        priority,
+        priorityTone,
+        stageCount,
+        newCount,
+        quotedCount,
+        nextAction,
+        queueHref: row.active > 0 ? `/admin/customers/leads?source_type=${row.key}&attention=active` : row.leadHref,
+        stageHref,
+        conversionHref: '/admin/site/conversion#seo-to-lead-conversion-review',
+        releaseHref: '/admin/status/site#site-release-preflight-bridge',
+      }
+    })
+    .sort((a, b) => {
+      if (b.active !== a.active) return b.active - a.active
+      const bOpenQuality = b.seoMissing + b.contentIssues
+      const aOpenQuality = a.seoMissing + a.contentIssues
+      if (bOpenQuality !== aOpenQuality) return bOpenQuality - aOpenQuality
+      if (b.metric.views !== a.metric.views) return b.metric.views - a.metric.views
+      return b.total - a.total
+    })
 }
 
 function LeadSourceQualityMatrix({ sourceStatusSummary }: { sourceStatusSummary: LeadSourceStatusSummary[] }) {
