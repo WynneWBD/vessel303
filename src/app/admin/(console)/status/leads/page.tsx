@@ -915,12 +915,41 @@ function NewsLeadPathBridge({
       actionLabel: '看转化承接',
     },
   ] as const
+  const sourceContracts = [
+    {
+      label: '来源命名',
+      value: 'news:*',
+      detail: '公开新闻列表和详情页统一使用 news:list:contact_cta / news:{slug}:contact_cta。',
+      href: '/admin/status/traffic#news-source-handoff',
+      tone: 'blue' as const,
+    },
+    {
+      label: 'Contact 承接',
+      value: 'Contact',
+      detail: '新闻阅读页带 source 参数进入 Contact 主表单，再由线索库归因。',
+      href: '/contact?source=news:list:contact_cta',
+      tone: 'green' as const,
+    },
+    {
+      label: '线索筛选',
+      value: 'source_type=news',
+      detail: '运营在客户线索页按新闻来源筛选，处理动作仍回到线索队列。',
+      href: '/admin/customers/leads?source_type=news',
+      tone: newsActive > 0 ? 'orange' as const : newsTotal > 0 ? 'blue' as const : 'gray' as const,
+    },
+  ] satisfies Array<{
+    label: string
+    value: string
+    detail: string
+    href: string
+    tone: 'orange' | 'blue' | 'green' | 'gray'
+  }>
 
   return (
     <section className="space-y-4" id="news-lead-path-bridge">
       <SectionTitle
         title="新闻来源与线索承接"
-        detail="把新闻路径访问、新闻来源动作和 leads 表里的 news 来源线索放到同一个只读数据中心视角；处理仍回到客户线索页。"
+        detail="把新闻路径访问、新闻来源动作、Contact source 合同和 leads 表里的 news 来源线索放到同一个只读数据中心视角；处理仍回到客户线索页。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
@@ -928,6 +957,30 @@ function NewsLeadPathBridge({
           <FunnelSummary label="来源动作" value={newsPathMetric.ctaClicks} detail={`表单成功 ${formatNumber(newsPathMetric.formSubmits)}`} warn={newsPathMetric.ctaClicks > 0 && newsTotal === 0} />
           <FunnelSummary label="路径线索" value={newsPathMetric.leads} detail={`转化 ${formatAnalyticsPercent(newsPathMetric.conversionRate)}`} warn={newsPathMetric.views > 0 && newsPathMetric.leads === 0} />
           <FunnelSummary label="新闻来源线索" value={newsTotal} detail={`活跃 ${formatNumber(newsActive)} 条`} warn={newsActive > 0} />
+        </div>
+
+        <div className="border-b border-[#E6EEEE] bg-[#FBFDFD]">
+          <div className="px-5 py-4">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">News Contact Source Contract</p>
+            <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">新闻 Contact 来源合同</h3>
+            <p className="mt-1 max-w-4xl text-xs leading-5 text-[#61767D]">
+              对齐流量面板和转化中心的同一条链路：公开新闻阅读进入 Contact，Contact 写入后归入新闻来源线索队列；本区只读，不改线索状态。
+            </p>
+          </div>
+          <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] border-t border-[#E6EEEE] md:grid-cols-3 md:divide-x md:divide-y-0">
+            {sourceContracts.map((item) => (
+              <Link key={item.label} href={item.href} className="group block min-w-0 p-5 transition hover:bg-white">
+                <FunnelStatusBadge label={item.label} tone={item.tone} />
+                <span className="mt-3 block truncate text-xl font-black text-[#1E2C31]" title={item.value}>
+                  {item.value}
+                </span>
+                <span className="mt-2 block min-h-10 text-xs leading-5 text-[#61767D]">{item.detail}</span>
+                <span className="mt-3 inline-flex text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
+                  下钻核对
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
 
         <div className="overflow-x-auto">
