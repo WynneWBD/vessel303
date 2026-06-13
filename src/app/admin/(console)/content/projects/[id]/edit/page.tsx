@@ -137,6 +137,17 @@ type CaseSourceContract = {
   external?: boolean
 }
 
+type CaseEditInquiryReviewItem = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  cta: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+  external?: boolean
+}
+
 const CASE_CONVERSION_ISSUE_KEYS = new Set([
   'cover',
   'gallery',
@@ -352,6 +363,7 @@ function getSideNavGroups(project: ProjectCaseRow): AdminSideNavGroup[] {
       title: '后续规划',
       items: [
         { key: 'project-new', label: '新增项目', href: '/admin/content/projects/new', Icon: FileText },
+        { key: 'case-edit-inquiry', label: '询盘复核台', href: '#case-edit-inquiry-conversion-review-desk', Icon: ListChecks },
         { key: 'case-conversion', label: '案例咨询承接', href: '#case-conversion', Icon: SearchCheck },
         { key: 'form-sections', label: '表单分区优化', planned: true, Icon: SearchCheck },
         { key: 'case-detail', label: '查看案例详情页', href: `/cases/${project.id}`, Icon: ExternalLink },
@@ -958,6 +970,207 @@ function CaseSourceContractLink({ entry }: { entry: CaseSourceContract }) {
   )
 }
 
+function caseEditInquiryToneClass(tone: CaseEditInquiryReviewItem['tone']): string {
+  if (tone === 'green') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  if (tone === 'orange') return 'border-[#F4C7A6] bg-[#FFF2E7] text-[#C85F24]'
+  if (tone === 'gray') return 'border-[#D8E7E8] bg-[#F7FAFA] text-[#61767D]'
+  return 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
+}
+
+function CaseEditInquiryConversionReviewDesk({
+  project,
+  readiness,
+}: {
+  project: ProjectCaseRow
+  readiness: ProjectEditorReadiness
+}) {
+  const conversionIssues = getCaseConversionIssues(readiness)
+  const published = project.status === 'published'
+  const validCoords = coordinatesValid(project)
+  const globalStatus = getGlobalStatus(project)
+  const nextIssue = conversionIssues[0] ?? readiness.nextIssue
+  const inquiryHref = `/cases/${project.id}#case-inquiry`
+  const publicHref = `/cases/${project.id}`
+  const topItems: CaseEditInquiryReviewItem[] = [
+    {
+      label: '当前编辑影响',
+      value: published ? '已发布' : '草稿',
+      detail: published
+        ? '保存会影响公开案例详情页和案例咨询前上下文。'
+        : '草稿不会进入公开案例页，发布后才进入询盘路径。',
+      href: published ? publicHref : '#publish-check',
+      cta: published ? '看前台案例' : '看发布检查',
+      Icon: ExternalLink,
+      tone: published ? 'orange' : 'gray',
+      external: published,
+    },
+    {
+      label: '询盘缺口',
+      value: String(conversionIssues.length),
+      detail: conversionIssues.length > 0
+        ? `素材、叙事或项目事实仍有缺口，优先处理：${nextIssue?.label ?? '表单字段'}。`
+        : '素材、叙事和项目事实已通过当前入口级检查。',
+      href: nextIssue?.href ?? '#case-conversion',
+      cta: conversionIssues.length > 0 ? '处理缺口' : '看承接合同',
+      Icon: SearchCheck,
+      tone: conversionIssues.length > 0 ? 'orange' : 'green',
+    },
+    {
+      label: 'B300 列表队列',
+      value: '已回连',
+      detail: '编辑完成后回到案例列表到询盘转化处理队列，继续按发布转化弱、前台路径和线索承接复盘。',
+      href: '/admin/content/projects/list#case-list-inquiry-conversion-queue',
+      cta: '回列表队列',
+      Icon: ListChecks,
+      tone: 'blue',
+    },
+    {
+      label: '线索承接',
+      value: 'source_type=case',
+      detail: '案例询盘仍回到现有客户线索台处理，本区只提供筛选入口，不写线索状态。',
+      href: '/admin/customers/leads?source_type=case',
+      cta: '看案例线索',
+      Icon: BarChart3,
+      tone: 'blue',
+    },
+  ]
+  const handoffItems: CaseEditInquiryReviewItem[] = [
+    {
+      label: '详情咨询锚点',
+      value: published ? '#case-inquiry' : '待发布',
+      detail: published ? '公开案例详情页可人工核查咨询锚点。' : '草稿发布后才有公开咨询锚点。',
+      href: published ? inquiryHref : '#publish-check',
+      cta: published ? '核查锚点' : '看发布检查',
+      Icon: ExternalLink,
+      tone: published ? 'green' : 'gray',
+      external: published,
+    },
+    {
+      label: '表单阶段',
+      value: 'case:inquiry_form',
+      detail: '只看案例询盘表单阶段样本，便于从单篇编辑回看真实表单承接。',
+      href: '/admin/customers/leads?source_type=case&source_stage=case%3Ainquiry_form',
+      cta: '看表单阶段',
+      Icon: FileText,
+      tone: 'blue',
+    },
+    {
+      label: '路径分析',
+      value: '/cases -> leads',
+      detail: '回到流量页复看案例访问、动作、表单和真实线索样本。',
+      href: '/admin/status/traffic#case-inquiry-path',
+      cta: '看路径分析',
+      Icon: BarChart3,
+      tone: 'blue',
+    },
+    {
+      label: 'Global 状态',
+      value: globalStatus.label,
+      detail: validCoords ? '坐标有效；是否公开入图仍取决于发布状态。' : globalStatus.detail,
+      href: validCoords && published ? `/global?camp=${project.id}` : '#global',
+      cta: validCoords && published ? '看 Global' : '看坐标区',
+      Icon: MapPinned,
+      tone: validCoords ? (published ? 'green' : 'blue') : 'orange',
+      external: validCoords && published,
+    },
+    {
+      label: '发布转化弱',
+      value: conversionIssues.length > 0 ? '命中' : '未命中',
+      detail: '把单篇缺口回流到 B300 的发布转化弱筛选队列。',
+      href: '/admin/content/projects/list?view=case-conversion-weak#case-list-inquiry-conversion-queue',
+      cta: '看弱项队列',
+      Icon: AlertTriangle,
+      tone: conversionIssues.length > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '保存边界',
+      value: '只读',
+      detail: '本台只做编辑前复核导航，不拦截保存，不触发发布，不修改案例或线索数据。',
+      href: '#project-form',
+      cta: '进入原表单',
+      Icon: CheckCircle2,
+      tone: 'gray',
+    },
+  ]
+
+  return (
+    <section id="case-edit-inquiry-conversion-review-desk" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid grid-cols-1 border-l-4 border-[#E36F2C] lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="px-4 py-4">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">B301 Case Edit Inquiry Review</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例编辑到询盘转化复核台</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把当前单篇案例编辑、B300 列表处理队列、`/cases/[id]` 前台路径、内容缺口、Global 状态、`source_type=case` 线索和路径分析放到同屏复核。这里不改变保存、发布、Global 点位、表单提交或线索状态。
+          </p>
+        </div>
+        <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] p-4 lg:border-l lg:border-t-0">
+          <p className="text-xs font-bold text-[#61767D]">当前判断</p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-[#1E2C31]">
+            {conversionIssues.length > 0
+              ? `先处理 ${conversionIssues.length} 项会影响询盘判断的内容缺口，再回 B300 列表队列。`
+              : published
+                ? '当前案例可进入前台咨询锚点人工复核，并回看案例线索。'
+                : '当前案例仍是草稿，先完成发布检查再核查公开咨询路径。'}
+          </p>
+          <Link
+            href={nextIssue?.href ?? (published ? inquiryHref : '#publish-check')}
+            target={!nextIssue && published ? '_blank' : undefined}
+            rel={!nextIssue && published ? 'noopener noreferrer' : undefined}
+            className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[#1889B6] px-3 text-xs font-bold text-white transition hover:bg-[#137A9F]"
+          >
+            {nextIssue ? `先处理：${nextIssue.label}` : published ? '核查前台咨询' : '检查发布状态'}
+            {nextIssue || !published ? <ArrowRight size={13} /> : <ExternalLink size={13} />}
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-2 xl:grid-cols-4">
+        {topItems.map((item) => (
+          <CaseEditInquiryReviewLink key={item.label} item={item} />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-2 xl:grid-cols-3">
+        {handoffItems.map((item) => (
+          <CaseEditInquiryReviewLink key={item.label} item={item} compact />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function CaseEditInquiryReviewLink({ item, compact = false }: { item: CaseEditInquiryReviewItem; compact?: boolean }) {
+  const Icon = item.Icon
+
+  return (
+    <Link
+      href={item.href}
+      target={item.external ? '_blank' : undefined}
+      rel={item.external ? 'noopener noreferrer' : undefined}
+      className={`group border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-white md:border-r xl:border-b-0 last:border-r-0 ${
+        compact ? 'min-h-[128px]' : 'min-h-[164px]'
+      }`}
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-sm font-bold text-[#1E2C31]">{item.label}</span>
+          <span className={`mt-2 inline-flex min-h-7 max-w-full items-center rounded-md border px-2.5 text-[11px] font-bold ${caseEditInquiryToneClass(item.tone)}`}>
+            <span className="truncate">{item.value}</span>
+          </span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+      <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6]">
+        {item.cta}
+        {item.external ? <ExternalLink size={12} /> : <ArrowRight size={12} className="transition group-hover:translate-x-0.5" />}
+      </span>
+    </Link>
+  )
+}
+
 function EditSectionGrid() {
   return (
     <section className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -1298,6 +1511,7 @@ export default async function AdminContentProjectEditPage({ params }: PageProps)
         metrics={consoleMetrics}
         signals={consoleSignals}
       />
+      <CaseEditInquiryConversionReviewDesk project={project} readiness={editorReadiness} />
       <CaseConversionPanel project={project} readiness={editorReadiness} />
       <EditSectionGrid />
       <ProjectReadinessPanel readiness={editorReadiness} />
