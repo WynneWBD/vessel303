@@ -65,6 +65,24 @@ type TrafficLedgerRow = {
   tone: TrafficLedgerTone
 }
 
+type TrafficToLeadExceptionRow = {
+  key: 'product' | 'case' | 'news'
+  label: string
+  routeLabel: string
+  metric: AnalyticsConversionMetric
+  sourceActions: number
+  seoMissing: number
+  contentIssues: number
+  priority: string
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+  diagnosis: string
+  leadHref: string
+  pathHref: string
+  workdeskHref: string
+  conversionHref: string
+  contentHref: string
+}
+
 export default async function AdminStatusTrafficPage({ searchParams }: PageProps) {
   const sp = searchParams ? await searchParams : {}
   const activeRange = normalizeRange(sp.range)
@@ -135,6 +153,8 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
           trendRows={trendRows}
           comparison={activeComparison}
         />
+
+        <TrafficToLeadExceptionDesk analytics={analytics} overview={overview} />
 
         <TrafficDrilldownWorkbench
           analytics={analytics}
@@ -223,6 +243,263 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
       </section>
     </StatusPageShell>
   )
+}
+
+function TrafficToLeadExceptionDesk({
+  analytics,
+  overview,
+}: {
+  analytics: SiteAnalyticsDashboard
+  overview: Awaited<ReturnType<typeof loadStatusOverview>>
+}) {
+  const rows = buildTrafficToLeadExceptionRows(analytics, overview)
+  const totalViews = rows.reduce((sum, row) => sum + row.metric.views, 0)
+  const totalActions = rows.reduce((sum, row) => sum + row.metric.ctaClicks, 0)
+  const totalLeads = rows.reduce((sum, row) => sum + row.metric.leads, 0)
+  const exceptionCount = rows.filter((row) => row.tone === 'orange').length
+
+  return (
+    <section id="traffic-to-lead-exception-desk" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">B293 Traffic To Lead Triage</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">流量到线索异常分诊台</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把 B292 来源线索质量处理台、B291 转化复盘和产品 / 案例 / 新闻路径访问动作放到同一屏；先找有访问无线索、有动作无线索和 SEO/内容承接缺口。
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <TrafficTriageAction href="/admin/status/leads#source-lead-quality-workdesk" label="B292 线索处理" />
+          <TrafficTriageAction href="/admin/site/conversion#seo-to-lead-conversion-review" label="B291 转化复盘" />
+          <TrafficTriageAction href="/admin/site/seo#seo-operations-command-bridge" label="SEO 操作台" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
+        <TrafficTriageStat label="三类路径访问" value={totalViews} detail="产品 / 案例 / 新闻" />
+        <TrafficTriageStat label="路径动作" value={totalActions} detail="CTA + 联系 + 表单" />
+        <TrafficTriageStat label="路径线索" value={totalLeads} detail="30 天真实线索" />
+        <TrafficTriageStat label="异常路径" value={exceptionCount} detail="需分诊处理" warn={exceptionCount > 0} />
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] xl:grid-cols-3 xl:divide-x xl:divide-y-0">
+        {rows.map((row) => (
+          <TrafficToLeadExceptionCard key={row.key} row={row} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function TrafficToLeadExceptionCard({ row }: { row: TrafficToLeadExceptionRow }) {
+  const openQuality = row.seoMissing + row.contentIssues
+
+  return (
+    <div className="flex min-h-80 flex-col justify-between px-5 py-5">
+      <div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-[#1E2C31]">{row.label}</p>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">{row.routeLabel}</p>
+          </div>
+          <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${trafficMatrixToneClass(row.tone)}`}>
+            {row.priority}
+          </span>
+        </div>
+
+        <p className="mt-4 min-h-12 text-xs leading-5 text-[#61767D]">{row.diagnosis}</p>
+
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <TrafficTriageMini label="访问" value={row.metric.views} warn={row.metric.views > 0 && row.metric.leads === 0} />
+          <TrafficTriageMini label="动作" value={row.metric.ctaClicks} warn={row.metric.ctaClicks > 0 && row.metric.leads === 0} />
+          <TrafficTriageMini label="线索" value={row.metric.leads} />
+          <TrafficTriageMini label="SEO/内容" value={openQuality} warn={openQuality > 0} />
+        </div>
+
+        <div className="mt-4 rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2 text-xs leading-5 text-[#61767D]">
+          <span className="font-semibold text-[#1E2C31]">source 动作 {formatNumber(row.sourceActions)}</span>
+          <span className="mx-1 text-[#C9D7DA]">/</span>
+          <span>转化 {formatAnalyticsPercent(row.metric.conversionRate)}</span>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <TrafficTriageAction href={row.workdeskHref} label="线索处理" primary={row.tone === 'orange'} compact />
+        <TrafficTriageAction href={row.conversionHref} label="转化复盘" compact />
+        <TrafficTriageAction href={row.pathHref} label="路径分析" compact />
+        <TrafficTriageAction href={row.leadHref} label="线索队列" compact />
+        <TrafficTriageAction href={row.contentHref} label="内容/SEO" primary={openQuality > 0} compact />
+      </div>
+    </div>
+  )
+}
+
+function TrafficTriageStat({
+  label,
+  value,
+  detail,
+  warn = false,
+}: {
+  label: string
+  value: number
+  detail: string
+  warn?: boolean
+}) {
+  return (
+    <div className="px-4 py-3">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-1 text-2xl font-bold ${warn ? 'text-[#E36F2C]' : 'text-[#1E2C31]'}`}>{formatNumber(value)}</p>
+      <p className="mt-1 text-xs leading-5 text-[#61767D]">{detail}</p>
+    </div>
+  )
+}
+
+function TrafficTriageMini({
+  label,
+  value,
+  warn = false,
+}: {
+  label: string
+  value: number
+  warn?: boolean
+}) {
+  return (
+    <div className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2">
+      <p className="text-[11px] font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-1 text-lg font-bold ${warn ? 'text-[#E36F2C]' : 'text-[#1E2C31]'}`}>{formatNumber(value)}</p>
+    </div>
+  )
+}
+
+function TrafficTriageAction({
+  href,
+  label,
+  primary = false,
+  compact = false,
+}: {
+  href: string
+  label: string
+  primary?: boolean
+  compact?: boolean
+}) {
+  return (
+    <Link
+      href={href}
+      className={`inline-flex items-center justify-center rounded-md border text-xs font-semibold transition ${compact ? 'min-h-9 px-2 py-1' : 'h-9 px-3'} ${primary ? 'border-[#E36F2C]/50 bg-[#FFF2E7] text-[#E36F2C] hover:border-[#E36F2C]' : 'border-[#D8E7E8] bg-white text-[#1889B6] hover:border-[#1889B6]'}`}
+    >
+      {label}
+    </Link>
+  )
+}
+
+function buildTrafficToLeadExceptionRows(
+  analytics: SiteAnalyticsDashboard,
+  overview: Awaited<ReturnType<typeof loadStatusOverview>>,
+): TrafficToLeadExceptionRow[] {
+  const emptyMetric: AnalyticsConversionMetric = {
+    views: 0,
+    ctaClicks: 0,
+    formSubmits: 0,
+    leads: 0,
+    conversionRate: 0,
+  }
+  const sourceActionsFor = (key: TrafficToLeadExceptionRow['key']) =>
+    analytics.sourceTypes.find((row) => row.key === key)?.value ?? 0
+  const rows: Array<Omit<TrafficToLeadExceptionRow, 'priority' | 'tone' | 'diagnosis' | 'sourceActions'>> = [
+    {
+      key: 'product',
+      label: '产品流量到产品线索',
+      routeLabel: '/products 与产品详情',
+      metric: analytics.conversionPaths.products ?? emptyMetric,
+      seoMissing: overview.site.seo.productsMissing,
+      contentIssues: overview.content.products.issues,
+      leadHref: '/admin/customers/leads?source_type=product',
+      pathHref: '#product-conversion-path',
+      workdeskHref: '/admin/status/leads#source-lead-quality-workdesk',
+      conversionHref: '/admin/site/conversion#seo-to-lead-conversion-review',
+      contentHref: '/admin/content/products/list?view=incomplete&issue=seo',
+    },
+    {
+      key: 'case',
+      label: '案例流量到案例询盘',
+      routeLabel: '/cases 与案例详情',
+      metric: analytics.conversionPaths.cases ?? emptyMetric,
+      seoMissing: overview.site.seo.projectsMissing,
+      contentIssues: overview.content.projects.issues,
+      leadHref: '/admin/customers/leads?source_type=case',
+      pathHref: '#case-inquiry-path',
+      workdeskHref: '/admin/status/leads#source-lead-quality-workdesk',
+      conversionHref: '/admin/site/conversion#seo-to-lead-conversion-review',
+      contentHref: '/admin/content/projects/list?view=case-conversion-weak',
+    },
+    {
+      key: 'news',
+      label: '新闻流量到新闻来源',
+      routeLabel: '/news 与新闻详情',
+      metric: analytics.conversionPaths.news ?? emptyMetric,
+      seoMissing: overview.site.seo.newsMissing,
+      contentIssues: overview.content.news.issues,
+      leadHref: '/admin/customers/leads?source_type=news',
+      pathHref: '#news-source-handoff',
+      workdeskHref: '/admin/status/leads#source-lead-quality-workdesk',
+      conversionHref: '/admin/site/conversion#seo-to-lead-conversion-review',
+      contentHref: '/admin/content/news#news-operations-hub',
+    },
+  ]
+
+  return rows
+    .map((row) => {
+      const openQuality = row.seoMissing + row.contentIssues
+      const hasActionGap = row.metric.ctaClicks > 0 && row.metric.leads === 0
+      const hasTrafficGap = row.metric.views > 0 && row.metric.leads === 0
+      const sourceActions = sourceActionsFor(row.key)
+      const priority =
+        hasActionGap
+          ? 'P0 动作无线索'
+          : hasTrafficGap
+            ? 'P1 访问无线索'
+            : openQuality > 0
+              ? 'P1 承接待补'
+              : row.metric.leads > 0
+                ? 'P2 复盘质量'
+                : 'P3 观察'
+      const tone: TrafficToLeadExceptionRow['tone'] =
+        hasActionGap || hasTrafficGap || openQuality > 0
+          ? 'orange'
+          : row.metric.leads > 0
+            ? 'green'
+            : row.metric.views > 0 || sourceActions > 0
+              ? 'blue'
+              : 'gray'
+      const diagnosis =
+        hasActionGap
+          ? `近 30 天已有 ${formatNumber(row.metric.ctaClicks)} 次路径动作但暂无线索，先查表单成功、source 参数和线索归因。`
+          : hasTrafficGap
+            ? `近 30 天已有 ${formatNumber(row.metric.views)} 次访问但暂无线索，先查 CTA 位置、移动端入口和 B292 线索处理台。`
+            : openQuality > 0
+              ? `SEO/内容还有 ${formatNumber(openQuality)} 个待补项，先补公开承接，再观察路径动作和线索质量。`
+              : row.metric.leads > 0
+                ? `已有 ${formatNumber(row.metric.leads)} 条路径线索，回到 B291/B292 复盘来源质量和后续跟进。`
+                : '当前访问、动作和线索样本不足，保持路径分析、转化复盘和线索队列可下钻。'
+
+      return {
+        ...row,
+        sourceActions,
+        priority,
+        tone,
+        diagnosis,
+      }
+    })
+    .sort((a, b) => {
+      const score = (row: TrafficToLeadExceptionRow) =>
+        (row.metric.ctaClicks > 0 && row.metric.leads === 0 ? 1000 : 0) +
+        (row.metric.views > 0 && row.metric.leads === 0 ? 500 : 0) +
+        (row.seoMissing + row.contentIssues) * 20 +
+        row.metric.views +
+        row.metric.ctaClicks * 3
+
+      return score(b) - score(a)
+    })
 }
 
 function TrafficControlBar({
