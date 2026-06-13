@@ -209,6 +209,14 @@ type ProductProofBackflowItem = {
   editHref: string
 }
 
+type ProductDraftRecoveryItem = {
+  product: ProductListRow
+  issues: string[]
+  recoveryGaps: string[]
+  readiness: number
+  editHref: string
+}
+
 type ProductSourceContract = {
   label: string
   value: string
@@ -754,6 +762,58 @@ function buildProductProofBackflowItems(rows: ProductListRow[]): ProductProofBac
       if (a.product.status !== b.product.status) return a.product.status === 'published' ? -1 : 1
       if (a.readiness !== b.readiness) return a.readiness - b.readiness
       if (b.proofGaps.length !== a.proofGaps.length) return b.proofGaps.length - a.proofGaps.length
+      return new Date(b.product.updated_at).getTime() - new Date(a.product.updated_at).getTime()
+    })
+    .slice(0, 5)
+}
+
+function getProductDraftRecoveryGaps(product: ProductListRow, issues: string[]): string[] {
+  const gaps = new Set<string>()
+
+  if (product.status === 'draft') gaps.add('草稿状态')
+  if (!product.category_id) gaps.add('分类待定')
+  if (!product.brand_id) gaps.add('品牌待定')
+  if (!hasItems(product.mark_labels_zh)) gaps.add('标记待定')
+  if (issues.includes('缺封面') || issues.includes('缺图库')) gaps.add('素材待补')
+  if (issues.includes('缺产品属性') || issues.includes('缺标签')) gaps.add('适配字段')
+  if (issues.includes('缺 SEO') || issues.includes('缺关键词')) gaps.add('搜索口径')
+  if (
+    issues.includes('缺关联产品')
+    || issues.includes('缺买家资料')
+    || issues.some((issue) => issue.includes('商务条款'))
+  ) {
+    gaps.add('询盘交接')
+  }
+
+  return [...gaps]
+}
+
+function getProductDraftRecoveryReadiness(product: ProductListRow, issues: string[], recoveryGaps: string[]): number {
+  const statusPenalty = product.status === 'draft' ? 12 : 0
+  const issuePenalty = Math.min(48, issues.length * 5)
+  const recoveryPenalty = Math.min(34, Math.max(0, recoveryGaps.length - 1) * 7)
+  const brandPenalty = product.brand_id ? 0 : 6
+  const markPenalty = hasItems(product.mark_labels_zh) ? 0 : 4
+  return Math.max(0, Math.min(100, 100 - statusPenalty - issuePenalty - recoveryPenalty - brandPenalty - markPenalty))
+}
+
+function buildProductDraftRecoveryItems(rows: ProductListRow[]): ProductDraftRecoveryItem[] {
+  return rows
+    .map((product) => {
+      const issues = getProductIssues(product)
+      const recoveryGaps = getProductDraftRecoveryGaps(product, issues)
+      return {
+        product,
+        issues,
+        recoveryGaps,
+        readiness: getProductDraftRecoveryReadiness(product, issues, recoveryGaps),
+        editHref: `/admin/content/products/${product.id}/edit`,
+      }
+    })
+    .filter((item) => item.product.status === 'draft')
+    .sort((a, b) => {
+      if (a.readiness !== b.readiness) return a.readiness - b.readiness
+      if (b.recoveryGaps.length !== a.recoveryGaps.length) return b.recoveryGaps.length - a.recoveryGaps.length
       return new Date(b.product.updated_at).getTime() - new Date(a.product.updated_at).getTime()
     })
     .slice(0, 5)
@@ -2181,6 +2241,277 @@ function ProductLeadContentFeedbackDesk({
   )
 }
 
+function ProductDraftRecoveryReadinessDesk({
+  summary,
+  issueSummary,
+  rows,
+  filters,
+}: {
+  summary: ProductSummary
+  issueSummary: ProductIssueSummary
+  rows: ProductListRow[]
+  filters: FilterState
+}) {
+  const pageEntries = rows.map((product) => {
+    const issues = getProductIssues(product)
+    const recoveryGaps = getProductDraftRecoveryGaps(product, issues)
+    return { product, issues, recoveryGaps }
+  })
+  const pageDraftEntries = pageEntries.filter((entry) => entry.product.status === 'draft')
+  const pageDraftContentGapCount = pageDraftEntries.filter((entry) => (
+    entry.issues.length > 0 || entry.recoveryGaps.some((gap) => gap !== '草稿状态')
+  )).length
+  const pageMissingBrandCount = pageDraftEntries.filter((entry) => !entry.product.brand_id).length
+  const pageMissingMarkCount = pageDraftEntries.filter((entry) => !hasItems(entry.product.mark_labels_zh)).length
+  const pageMissingCategoryCount = pageDraftEntries.filter((entry) => !entry.product.category_id).length
+  const draftRecoveryItems = buildProductDraftRecoveryItems(rows)
+  const draftRecoverySignal =
+    summary.deleted > 0 && summary.draft > 0
+      ? `回收站仍有 ${formatNumber(summary.deleted)} 个隔离产品，现有草稿 ${formatNumber(summary.draft)} 个；先从只读保护台确认来源，再在草稿列表补齐分类、品牌和标记。`
+      : summary.draft > 0
+        ? `当前有 ${formatNumber(summary.draft)} 个草稿，优先把分类、品牌、标记和前台搜索口径补齐，再进入发布前人工检查。`
+        : '当前没有草稿压力，本区保留回收站保护、分类、品牌和标记入口，等待后续恢复或新建草稿进入队列。'
+  const recoveryCards = [
+    {
+      label: 'B335 恢复保护',
+      value: `${formatNumber(summary.deleted)} 回收站`,
+      detail: '从回收站只读确认删除来源、恢复风险和隔离状态，不在本页执行恢复。',
+      href: '/admin/content/products/recycle#product-recycle-protection-desk',
+      Icon: Archive,
+      tone: summary.deleted > 0 ? 'orange' : 'green',
+    },
+    {
+      label: 'B334 分类治理',
+      value: `${formatNumber(issueSummary.category)} 未分类`,
+      detail: '恢复或新建草稿先回到分类治理台，避免前台目录和筛选入口断层。',
+      href: '/admin/content/products/categories#product-category-readiness-desk',
+      Icon: Layers3,
+      tone: issueSummary.category > 0 || pageMissingCategoryCount > 0 ? 'orange' : 'green',
+    },
+    {
+      label: 'B333 品牌承接',
+      value: `${formatNumber(pageMissingBrandCount)} 本页`,
+      detail: '草稿缺品牌时先核对品牌治理台，再回到编辑页绑定，避免品牌筛选空转。',
+      href: '/admin/content/products/brands#product-brand-readiness-desk',
+      Icon: Package,
+      tone: pageMissingBrandCount > 0 ? 'orange' : 'blue',
+    },
+    {
+      label: 'B332 标记承接',
+      value: `${formatNumber(pageMissingMarkCount)} 本页`,
+      detail: '草稿缺运营标记时先看标记治理台，保证精选、场景和运营分组可接管。',
+      href: '/admin/content/products/marks#product-mark-readiness-desk',
+      Icon: Tags,
+      tone: pageMissingMarkCount > 0 ? 'orange' : 'blue',
+    },
+  ] satisfies Array<{
+    label: string
+    value: string
+    detail: string
+    href: string
+    Icon: LucideIcon
+    tone: 'blue' | 'green' | 'orange'
+  }>
+
+  return (
+    <section
+      id="product-draft-recovery-readiness-desk"
+      data-product-draft-recovery-readiness="true"
+      className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
+      <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">B336 Draft Recovery</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">恢复后草稿补齐队列</h2>
+          <p className="mt-1 text-sm leading-6 text-[#61767D]">
+            把 B335 回收站保护后的草稿承接到产品列表，只读串联分类、品牌、标记、素材、SEO 和询盘交接缺口；本区不恢复、不保存、不发布产品。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={createHref(filters, { status: 'draft', view: '', issue: '' })}
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-[#1889B6] px-3 text-xs font-semibold text-white transition hover:bg-[#0F6F93]"
+          >
+            <FileText size={13} />
+            查看草稿
+          </Link>
+          <Link
+            href="/admin/content/products/recycle#product-recycle-protection-desk"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            <Archive size={13} />
+            恢复保护
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
+        <MatrixKpi
+          label="全库草稿"
+          value={formatNumber(summary.draft)}
+          detail="待补齐或待人工发布检查"
+          tone={summary.draft > 0 ? 'orange' : 'green'}
+        />
+        <MatrixKpi
+          label="本页草稿缺口"
+          value={formatNumber(pageDraftContentGapCount)}
+          detail={`${formatNumber(pageDraftEntries.length)} 个草稿样本`}
+          tone={pageDraftContentGapCount > 0 ? 'orange' : 'green'}
+        />
+        <MatrixKpi
+          label="本页分类缺口"
+          value={formatNumber(pageMissingCategoryCount)}
+          detail="恢复后先定目录归属"
+          tone={pageMissingCategoryCount > 0 ? 'orange' : 'green'}
+        />
+        <MatrixKpi
+          label="本页品牌/标记"
+          value={`${formatNumber(pageMissingBrandCount)}/${formatNumber(pageMissingMarkCount)}`}
+          detail="品牌缺口 / 标记缺口"
+          tone={pageMissingBrandCount + pageMissingMarkCount > 0 ? 'orange' : 'green'}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] lg:grid-cols-[minmax(0,1fr)_420px] lg:divide-x lg:divide-y-0">
+        <div>
+          <div className="border-b border-[#E6EEEE] px-4 py-4">
+            <p className="text-sm font-bold text-[#1E2C31]">补齐判断</p>
+            <p className="mt-2 text-sm leading-6 text-[#61767D]">{draftRecoverySignal}</p>
+          </div>
+          <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+            {recoveryCards.map((card) => {
+              const Icon = card.Icon
+              const toneClass =
+                card.tone === 'green'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : card.tone === 'orange'
+                    ? 'border-[#F4C7A6] bg-[#FFF2E7] text-[#C85F24]'
+                    : 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
+
+              return (
+                <Link
+                  key={card.label}
+                  href={card.href}
+                  className="group min-h-[158px] px-4 py-4 transition hover:bg-[#F7FAFA]"
+                >
+                  <span className="flex items-start justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="block text-sm font-bold text-[#1E2C31]">{card.label}</span>
+                      <span className={`mt-2 inline-flex max-w-full rounded-md border px-2.5 py-1 text-xs font-bold ${toneClass}`}>
+                        <span className="truncate">{card.value}</span>
+                      </span>
+                    </span>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+                      <Icon size={16} />
+                    </span>
+                  </span>
+                  <span className="mt-3 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
+                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
+                    打开
+                    <ArrowRight size={13} />
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+          <div className="grid grid-cols-1 gap-2 border-t border-[#E6EEEE] bg-[#FBFDFD] p-4 sm:grid-cols-3">
+            <Link
+              href={createHref(filters, { status: 'draft', view: 'incomplete', issue: 'category' })}
+              className="inline-flex min-h-9 items-center justify-between gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 py-1.5 text-xs font-semibold text-[#61767D] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
+            >
+              <span>草稿分类缺口</span>
+              <ArrowRight size={12} />
+            </Link>
+            <Link
+              href={createHref(filters, { status: 'draft', view: 'incomplete', issue: 'attributes' })}
+              className="inline-flex min-h-9 items-center justify-between gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 py-1.5 text-xs font-semibold text-[#61767D] transition hover:border-[#1889B6] hover:text-[#1889B6]"
+            >
+              <span>草稿属性缺口</span>
+              <ArrowRight size={12} />
+            </Link>
+            <Link
+              href={createHref(filters, { status: 'draft', view: 'incomplete', issue: 'seo' })}
+              className="inline-flex min-h-9 items-center justify-between gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 py-1.5 text-xs font-semibold text-[#61767D] transition hover:border-[#1889B6] hover:text-[#1889B6]"
+            >
+              <span>草稿 SEO 缺口</span>
+              <ArrowRight size={12} />
+            </Link>
+          </div>
+        </div>
+
+        <aside className="bg-[#FBFDFD]">
+          <div className="border-b border-[#E6EEEE] px-4 py-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold text-[#1E2C31]">本页草稿补齐优先队列</h3>
+                <p className="mt-1 text-xs leading-5 text-[#61767D]">
+                  按发布准备度从低到高排列，只给编辑页和筛选入口。
+                </p>
+              </div>
+              <span className="shrink-0 rounded-md bg-white px-2 py-1 text-xs font-bold text-[#E36F2C] ring-1 ring-[#F2C6A7]">
+                {formatNumber(draftRecoveryItems.length)}
+              </span>
+            </div>
+          </div>
+          {draftRecoveryItems.length > 0 ? (
+            <div className="divide-y divide-[#E6EEEE]">
+              {draftRecoveryItems.map((item) => (
+                <Link
+                  key={item.product.id}
+                  href={item.editHref}
+                  className="block px-4 py-3 transition hover:bg-white"
+                >
+                  <span className="flex items-start justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-bold text-[#1E2C31]">
+                        {item.product.name_cn || item.product.name_en || item.product.id}
+                      </span>
+                      <span className="mt-1 block truncate text-xs text-[#61767D]">
+                        {item.product.id} · 更新 {formatDate(item.product.updated_at)}
+                      </span>
+                    </span>
+                    <span className={`shrink-0 rounded-md px-2 py-1 text-xs font-bold ${
+                      item.readiness >= 80
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : item.readiness >= 55
+                          ? 'bg-[#FFF2E7] text-[#E36F2C]'
+                          : 'bg-red-50 text-red-700'
+                    }`}>
+                      {item.readiness}%
+                    </span>
+                  </span>
+                  <span className="mt-2 flex flex-wrap gap-1.5">
+                    {item.recoveryGaps.slice(0, 4).map((gap) => (
+                      <span key={gap} className="rounded-full border border-[#D8E7E8] bg-white px-2 py-0.5 text-[11px] font-semibold text-[#61767D]">
+                        {gap}
+                      </span>
+                    ))}
+                    {item.recoveryGaps.length > 4 ? (
+                      <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-500">
+                        +{item.recoveryGaps.length - 4}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
+                    打开编辑页补齐
+                    <ArrowRight size={13} />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="px-4 py-8 text-center">
+              <CheckCircle2 className="mx-auto text-emerald-600" size={28} />
+              <p className="mt-3 text-sm font-bold text-[#1E2C31]">当前页暂无草稿补齐项</p>
+              <p className="mt-1 text-xs leading-5 text-[#61767D]">可切到草稿筛选或回收站保护台继续检查。</p>
+            </div>
+          )}
+        </aside>
+      </div>
+    </section>
+  )
+}
+
 function ProductSourceContractPanel({
   issueSummary,
   productPathMetric,
@@ -3110,6 +3441,12 @@ export default async function AdminContentProductsListPage({ searchParams }: Pag
           filters={filters}
           issueSummary={issueSummary}
           productPathMetric={productPathMetric}
+        />
+        <ProductDraftRecoveryReadinessDesk
+          summary={summary}
+          issueSummary={issueSummary}
+          rows={list.rows}
+          filters={filters}
         />
         <ProductSourceContractPanel
           issueSummary={issueSummary}
