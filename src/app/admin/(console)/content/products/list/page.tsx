@@ -1928,6 +1928,259 @@ function ProductFitProofBackflowPanel({
   )
 }
 
+function ProductLeadContentFeedbackDesk({
+  rows,
+  filters,
+  issueSummary,
+  productPathMetric,
+}: {
+  rows: ProductListRow[]
+  filters: FilterState
+  issueSummary: ProductIssueSummary
+  productPathMetric: AnalyticsConversionMetric
+}) {
+  const pageEntries = rows.map((product) => {
+    const issues = getProductIssues(product)
+    const proofGaps = getProductProofBackflowGaps(product, issues)
+    return { product, issues, proofGaps }
+  })
+  const pageContentGapCount = pageEntries.filter((entry) => entry.issues.length > 0).length
+  const pagePublishedGapCount = pageEntries.filter((entry) => entry.product.status === 'published' && entry.issues.length > 0).length
+  const pageLeadHandoffGapCount = pageEntries.filter((entry) => entry.proofGaps.includes('询盘交接')).length
+  const contentBacklogCount =
+    issueSummary.seo
+    + issueSummary.commercial
+    + issueSummary.keywords
+    + issueSummary.related
+    + issueSummary.buyer_resources
+  const productActionCount = productPathMetric.ctaClicks + productPathMetric.formSubmits
+  const contentSignal =
+    productPathMetric.leads > 0
+      ? '已有产品线索，先用 B325/B324 看活跃队列和跟进风险，再回到本页补 SEO、买家资料、关联产品和商务条款。'
+      : productActionCount > 0
+        ? '产品路径已有动作但线索样本不足，优先用 B323/B322 复盘转化断点，同时补齐当前页内容缺口。'
+        : productPathMetric.views > 0
+          ? '产品路径有访问但缺少动作和线索，先看 B322 流量质量，再处理产品列表里的搜索入口和询盘交接缺口。'
+          : pageContentGapCount > 0
+            ? '当前页仍有内容缺口，先按本区队列补已发布产品和询盘交接字段，等待新的访问和线索样本。'
+            : '当前页暂无明显内容回流缺口，保留 B325/B324/B323/B322 入口用于新样本到来后的复盘。'
+  const priorityItems = buildProductProofBackflowItems(rows).slice(0, 4)
+  const actionCards = [
+    {
+      label: 'B325 跟进分诊',
+      value: `${formatNumber(productPathMetric.leads)} 线索`,
+      detail: '从产品线索质量、表单阶段和跟进断点回看内容应补什么。',
+      href: '/admin/status/leads#product-lead-quality-followup-desk',
+      Icon: ListChecks,
+      tone: productPathMetric.leads > 0 ? 'orange' : 'blue',
+    },
+    {
+      label: 'B324 线索复盘',
+      value: 'product 队列',
+      detail: '按 source_type=product 看产品线索、产品表单和 CTA 阶段。',
+      href: '/admin/customers/leads?source_type=product#product-lead-ops-review-desk',
+      Icon: BarChart3,
+      tone: productPathMetric.leads > 0 ? 'orange' : 'blue',
+    },
+    {
+      label: 'B323 转化桥',
+      value: `${formatNumber(productActionCount)} 动作`,
+      detail: '把产品生命周期、转化路径和线索状态放到同一张复盘表。',
+      href: '/admin/site/conversion#product-lifecycle-conversion-bridge',
+      Icon: Layers3,
+      tone: productActionCount > 0 ? 'orange' : 'gray',
+    },
+    {
+      label: '内容回流缺口',
+      value: `${formatNumber(contentBacklogCount)} 项`,
+      detail: '聚焦 SEO、商务条款、关键词、关联产品和买家资料。',
+      href: createHref(filters, { status: '', view: 'incomplete', issue: 'seo' }),
+      Icon: SearchCheck,
+      tone: contentBacklogCount > 0 ? 'orange' : 'green',
+    },
+  ] satisfies Array<{
+    label: string
+    value: string
+    detail: string
+    href: string
+    Icon: LucideIcon
+    tone: 'blue' | 'green' | 'orange' | 'gray'
+  }>
+
+  return (
+    <section
+      id="product-content-lead-feedback-desk"
+      data-product-content-lead-feedback="true"
+      className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
+      <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B326 Lead Feedback</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品线索到内容回流优先级</h2>
+          <p className="mt-1 text-sm leading-6 text-[#61767D]">
+            把 B325 跟进分诊、B324 产品线索复盘、B323 生命周期转化和 B322 流量质量回流到产品列表；本区只生成内容处理顺序和入口，不保存产品、不发布产品、不更新线索。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/status/leads#product-lead-quality-followup-desk"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95D22]"
+          >
+            <ListChecks size={13} />
+            B325 分诊
+          </Link>
+          <Link
+            href="/admin/site/conversion#product-lifecycle-conversion-bridge"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            <BarChart3 size={13} />
+            B323 转化
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
+        <MatrixKpi
+          label="产品路径线索"
+          value={formatNumber(productPathMetric.leads)}
+          detail={`${formatNumber(productPathMetric.views)} 访问 / ${formatNumber(productActionCount)} 动作`}
+          tone={productPathMetric.leads > 0 ? 'green' : productPathMetric.views > 0 ? 'orange' : 'gray'}
+        />
+        <MatrixKpi
+          label="当前页内容缺口"
+          value={formatNumber(pageContentGapCount)}
+          detail={`已发布缺口 ${formatNumber(pagePublishedGapCount)}`}
+          tone={pageContentGapCount > 0 ? 'orange' : 'green'}
+        />
+        <MatrixKpi
+          label="询盘交接缺口"
+          value={formatNumber(pageLeadHandoffGapCount)}
+          detail="商务口径、关联产品或买家资料"
+          tone={pageLeadHandoffGapCount > 0 ? 'orange' : 'green'}
+        />
+        <MatrixKpi
+          label="全库回流项"
+          value={formatNumber(contentBacklogCount)}
+          detail="SEO、关键词、资料与商务口径"
+          tone={contentBacklogCount > 0 ? 'orange' : 'green'}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] lg:grid-cols-[minmax(0,1fr)_420px] lg:divide-x lg:divide-y-0">
+        <div>
+          <div className="border-b border-[#E6EEEE] px-4 py-4">
+            <p className="text-sm font-bold text-[#1E2C31]">回流判断</p>
+            <p className="mt-2 text-sm leading-6 text-[#61767D]">{contentSignal}</p>
+          </div>
+          <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+            {actionCards.map((card) => {
+              const Icon = card.Icon
+              const toneClass =
+                card.tone === 'green'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : card.tone === 'orange'
+                    ? 'border-[#F4C7A6] bg-[#FFF2E7] text-[#C85F24]'
+                    : card.tone === 'gray'
+                      ? 'border-[#D8E7E8] bg-[#F7FAFA] text-[#61767D]'
+                      : 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
+
+              return (
+                <Link
+                  key={card.label}
+                  href={card.href}
+                  className="group min-h-[158px] px-4 py-4 transition hover:bg-[#F7FAFA]"
+                >
+                  <span className="flex items-start justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="block text-sm font-bold text-[#1E2C31]">{card.label}</span>
+                      <span className={`mt-2 inline-flex max-w-full rounded-md border px-2.5 py-1 text-xs font-bold ${toneClass}`}>
+                        <span className="truncate">{card.value}</span>
+                      </span>
+                    </span>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+                      <Icon size={16} />
+                    </span>
+                  </span>
+                  <span className="mt-3 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
+                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
+                    打开
+                    <ArrowRight size={13} />
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+
+        <aside className="bg-[#FBFDFD]">
+          <div className="border-b border-[#E6EEEE] px-4 py-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold text-[#1E2C31]">本页内容回流队列</h3>
+                <p className="mt-1 text-xs leading-5 text-[#61767D]">
+                  已发布且影响询盘承接的缺口优先；这里只给编辑和筛选入口。
+                </p>
+              </div>
+              <span className="shrink-0 rounded-md bg-white px-2 py-1 text-xs font-bold text-[#E36F2C] ring-1 ring-[#F2C6A7]">
+                {formatNumber(priorityItems.length)}
+              </span>
+            </div>
+          </div>
+          {priorityItems.length > 0 ? (
+            <div className="divide-y divide-[#E6EEEE]">
+              {priorityItems.map((item) => (
+                <Link
+                  key={item.product.id}
+                  href={item.editHref}
+                  className="block px-4 py-3 transition hover:bg-white"
+                >
+                  <span className="flex items-start justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-bold text-[#1E2C31]">
+                        {item.product.name_cn || item.product.name_en || item.product.id}
+                      </span>
+                      <span className="mt-1 block truncate text-xs text-[#61767D]">{item.product.id}</span>
+                    </span>
+                    <span className={`shrink-0 rounded-md px-2 py-1 text-xs font-bold ${
+                      item.product.status === 'published'
+                        ? 'bg-[#FFF2E7] text-[#E36F2C]'
+                        : 'bg-[#F0F7F8] text-[#1889B6]'
+                    }`}>
+                      {item.product.status === 'published' ? '已发布' : '草稿'}
+                    </span>
+                  </span>
+                  <span className="mt-2 flex flex-wrap gap-1.5">
+                    {item.proofGaps.slice(0, 3).map((gap) => (
+                      <span key={gap} className="rounded-full border border-[#D8E7E8] bg-white px-2 py-0.5 text-[11px] font-semibold text-[#61767D]">
+                        {gap}
+                      </span>
+                    ))}
+                    {item.proofGaps.length > 3 ? (
+                      <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-500">
+                        +{item.proofGaps.length - 3}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
+                    处理内容
+                    <ArrowRight size={13} />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="px-4 py-8 text-center">
+              <CheckCircle2 className="mx-auto text-emerald-600" size={28} />
+              <p className="mt-3 text-sm font-bold text-[#1E2C31]">当前页暂无内容回流缺口</p>
+              <p className="mt-1 text-xs leading-5 text-[#61767D]">可保留 B325/B324/B323 入口等待新的线索样本。</p>
+            </div>
+          )}
+        </aside>
+      </div>
+    </section>
+  )
+}
+
 function ProductSourceContractPanel({
   issueSummary,
   productPathMetric,
@@ -2850,6 +3103,12 @@ export default async function AdminContentProductsListPage({ searchParams }: Pag
         <ProductFitProofBackflowPanel
           rows={list.rows}
           filters={filters}
+          productPathMetric={productPathMetric}
+        />
+        <ProductLeadContentFeedbackDesk
+          rows={list.rows}
+          filters={filters}
+          issueSummary={issueSummary}
           productPathMetric={productPathMetric}
         />
         <ProductSourceContractPanel
