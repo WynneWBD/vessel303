@@ -83,6 +83,15 @@ type TrafficToLeadExceptionRow = {
   contentHref: string
 }
 
+type CasePathBackflowCard = {
+  key: string
+  label: string
+  value: string
+  detail: string
+  href: string
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+}
+
 export default async function AdminStatusTrafficPage({ searchParams }: PageProps) {
   const sp = searchParams ? await searchParams : {}
   const activeRange = normalizeRange(sp.range)
@@ -155,6 +164,8 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
         />
 
         <TrafficToLeadExceptionDesk analytics={analytics} overview={overview} />
+
+        <CasePathLeadBackflowDesk analytics={analytics} health={caseInquiryHealth} />
 
         <TrafficDrilldownWorkbench
           analytics={analytics}
@@ -500,6 +511,202 @@ function buildTrafficToLeadExceptionRows(
 
       return score(b) - score(a)
     })
+}
+
+function CasePathLeadBackflowDesk({
+  analytics,
+  health,
+}: {
+  analytics: SiteAnalyticsDashboard
+  health: CaseInquiryHealth
+}) {
+  const metric = analytics.conversionPaths.cases ?? {
+    views: 0,
+    ctaClicks: 0,
+    formSubmits: 0,
+    leads: 0,
+    conversionRate: 0,
+  }
+  const caseStageActions = analytics.sourceStageActions.filter((row) => row.key.startsWith('case:'))
+  const caseStageTotal = caseStageActions.reduce((sum, row) => sum + row.value, 0)
+  const inquiryFormActions = caseStageActions.find((row) => row.key === 'case:inquiry_form')?.value ?? 0
+  const topCasePage = analytics.topPages.find((row) => isCasePath(row.key) || isCasePath(row.label))
+  const readyRate = health.published > 0 ? health.ready / health.published : 0
+  const actionGap = metric.ctaClicks > 0 && metric.leads === 0
+  const trafficGap = metric.views > 0 && metric.ctaClicks === 0
+  const contentGap = health.weak > 0
+  const priority =
+    actionGap
+      ? 'P0 动作无线索'
+      : trafficGap
+        ? 'P1 访问未动作'
+        : contentGap && metric.views > 0
+          ? 'P1 内容承接'
+          : metric.leads > 0
+            ? 'P2 复盘样本'
+            : 'P3 等待样本'
+  const priorityTone: CasePathBackflowCard['tone'] =
+    actionGap || trafficGap || (contentGap && metric.views > 0)
+      ? 'orange'
+      : metric.leads > 0
+        ? 'green'
+        : metric.views > 0 || caseStageTotal > 0
+          ? 'blue'
+          : 'gray'
+  const decision =
+    actionGap
+      ? '案例路径已有动作但无线索，先从 B304 回流台核对 case 来源线索，再查 case:inquiry_form 和表单成功事件。'
+      : trafficGap
+        ? '案例页面已有访问但动作不足，优先复核 /cases 与详情页 CTA、移动端入口和案例证明链。'
+        : contentGap && metric.views > 0
+          ? '案例路径已有访问且仍有弱案例，先回到 B300 队列补齐发布承接，再观察路径动作。'
+          : metric.leads > 0
+            ? '案例路径已有真实线索样本，继续回到 B304 线索回流台和 B303 案例总控复盘内容来源。'
+            : '案例路径样本不足，保留前台入口、路径分析和线索回流入口，等待事件样本。'
+  const cards: CasePathBackflowCard[] = [
+    {
+      key: 'route',
+      label: '案例路径访问',
+      value: `${formatNumber(metric.views)} PV`,
+      detail: topCasePage
+        ? `最高案例页 ${topCasePage.label} / ${formatNumber(topCasePage.value)} PV。`
+        : '近 30 天 /cases 与案例详情访问。',
+      href: '#case-inquiry-path',
+      tone: metric.views > 0 ? 'blue' : 'gray',
+    },
+    {
+      key: 'stage',
+      label: '来源阶段动作',
+      value: formatNumber(caseStageTotal),
+      detail: `case:inquiry_form ${formatNumber(inquiryFormActions)}，路径动作 ${formatNumber(metric.ctaClicks)}。`,
+      href: '#case-source-stage-backflow',
+      tone: caseStageTotal > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
+    },
+    {
+      key: 'lead',
+      label: '案例线索回流',
+      value: formatNumber(metric.leads),
+      detail: `路径转化率 ${formatAnalyticsPercent(metric.conversionRate)}，回到 B304 线索回流台。`,
+      href: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
+      tone: metric.leads > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
+    },
+    {
+      key: 'content',
+      label: '内容承接缺口',
+      value: `${formatNumber(health.weak)} 弱`,
+      detail: `已发布 ${formatNumber(health.published)}，可承接率 ${formatAnalyticsPercent(readyRate)}。`,
+      href: '/admin/content/projects/list?view=case-conversion-weak#case-list-inquiry-conversion-queue',
+      tone: health.weak > 0 ? 'orange' : 'green',
+    },
+  ]
+  const workbenchLinks = [
+    {
+      label: 'B304 线索回流',
+      detail: '按 source_type=case 回看线索与内容缺口',
+      href: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
+      tone: metric.leads > 0 ? 'green' : 'blue',
+    },
+    {
+      label: 'B303 案例总控',
+      detail: '回到案例内容到询盘转化总控',
+      href: '/admin/content/projects#case-content-inquiry-command-center',
+      tone: 'blue',
+    },
+    {
+      label: 'B300 弱案例队列',
+      detail: `当前弱案例 ${formatNumber(health.weak)}`,
+      href: '/admin/content/projects/list?view=case-conversion-weak#case-list-inquiry-conversion-queue',
+      tone: health.weak > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '前台案例入口',
+      detail: '只读查看公开 /cases 承接路径',
+      href: '/cases',
+      tone: metric.views > 0 ? 'green' : 'gray',
+    },
+  ] satisfies Array<{
+    label: string
+    detail: string
+    href: string
+    tone: 'blue' | 'green' | 'orange' | 'gray'
+  }>
+
+  return (
+    <section id="case-path-lead-backflow-desk" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B305 Case Path Backflow</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例路径到线索回流诊断台</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把案例路径访问、来源阶段动作、B304 案例线索回流、B303 案例总控、B300 弱案例队列和前台 /cases 串成同屏只读链路；只做诊断和下钻，不写入埋点、不改线索状态、不发布内容。
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <TrafficTriageAction href="/admin/customers/leads?source_type=case#case-lead-content-backflow-desk" label="B304 回流台" primary={actionGap} />
+          <TrafficTriageAction href="/admin/content/projects#case-content-inquiry-command-center" label="B303 总控" />
+          <TrafficTriageAction href="/cases" label="前台 /cases" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+        {cards.map((card) => (
+          <Link key={card.key} href={card.href} className="block min-w-0 p-5 transition hover:bg-[#F7FAFA]">
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${trafficMatrixToneClass(card.tone)}`}>
+              {card.label}
+            </span>
+            <span className="mt-3 block truncate text-2xl font-black text-[#1E2C31]" title={card.value}>
+              {card.value}
+            </span>
+            <span className="mt-2 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
+          </Link>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.72fr)]">
+        <div className="px-5 py-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${trafficMatrixToneClass(priorityTone)}`}>
+              {priority}
+            </span>
+            <span className="text-sm font-semibold text-[#1E2C31]">运营判断</span>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-[#61767D]">{decision}</p>
+          <div id="case-source-stage-backflow" className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-3">
+            {caseStageActions.slice(0, 3).map((row) => (
+              <Link key={row.key} href={row.href} className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2 transition hover:border-[#1889B6]">
+                <span className="block truncate text-xs font-bold text-[#1E2C31]" title={row.label}>{row.label}</span>
+                <span className="mt-1 block text-lg font-black text-[#1889B6]">{formatNumber(row.value)}</span>
+                <span className="mt-1 block truncate font-mono text-[11px] text-[#8A9EA4]" title={row.key}>{row.key}</span>
+              </Link>
+            ))}
+            {caseStageActions.length === 0 ? (
+              <div className="rounded-md border border-dashed border-[#D8E7E8] bg-[#FBFDFD] px-3 py-4 text-xs text-[#8A9EA4] md:col-span-3">
+                暂无 case 来源阶段动作，保留入口等待事件样本。
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:border-l xl:border-t-0">
+          {workbenchLinks.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className="group rounded-md border border-[#D8E7E8] bg-white px-3 py-3 transition hover:border-[#1889B6] hover:bg-[#F7FAFA]"
+            >
+              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${trafficMatrixToneClass(item.tone)}`}>
+                {item.label}
+              </span>
+              <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+              <span className="mt-2 inline-flex text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
+                进入下钻
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
 }
 
 function TrafficControlBar({
@@ -2111,6 +2318,10 @@ function trafficMatrixToneClass(tone: 'blue' | 'green' | 'orange' | 'gray') {
 
 function isNewsPath(path: string) {
   return path === '/news' || path.startsWith('/news/')
+}
+
+function isCasePath(path: string) {
+  return path === '/cases' || path.startsWith('/cases/')
 }
 
 function SnapshotMetric({ label, value, detail }: { label: string; value: number; detail: string }) {

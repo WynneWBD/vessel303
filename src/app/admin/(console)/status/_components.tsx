@@ -107,6 +107,12 @@ export function getStatusSideNav(badges: StatusBadges): AdminSideNavGroup[] {
           Icon: ListChecks,
         },
         {
+          key: 'case-backflow',
+          label: '案例回流诊断',
+          href: '/admin/status/traffic#case-path-lead-backflow-desk',
+          Icon: PieChart,
+        },
+        {
           key: 'conversion',
           label: '线索转化分析',
           href: '/admin/site/conversion',
