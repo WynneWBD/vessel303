@@ -20,6 +20,7 @@ import {
   Link2,
   ListChecks,
   Package,
+  Pencil,
   Plus,
   SearchCheck,
   SlidersHorizontal,
@@ -278,6 +279,7 @@ function getSideNavGroups(stats: ProductStats): AdminSideNavGroup[] {
         { key: 'product-list', label: '产品列表', href: '/admin/content/products/list', Icon: ListChecks },
         { key: 'drafts', label: '草稿内容', href: '#drafts', badge: stats.draft, Icon: FileText },
         { key: 'content-closure', label: '产品闭环', href: '#content-closure', Icon: BarChart3 },
+        { key: 'product-lifecycle', label: '生命周期', href: '#product-lifecycle', Icon: ClipboardCheck },
         { key: 'todo', label: '待补内容', href: '#todo', badge: getTodoCount(stats), Icon: CircleDashed },
         { key: 'checks', label: '发布前检查', href: '#checks', Icon: SearchCheck },
       ],
@@ -498,6 +500,53 @@ function getProductClosureEntries(stats: ProductStats): ProductClosureEntry[] {
       href: '/admin/customers/leads?source_type=product',
       Icon: UsersRound,
       tone: 'neutral',
+    },
+  ]
+}
+
+function getProductLifecycleEntries(stats: ProductStats): ProductClosureEntry[] {
+  const todoCount = getTodoCount(stats)
+
+  return [
+    {
+      label: '新建预检',
+      value: 'B319',
+      detail: '创建前先准备适配字段、媒体证明、详情证明、搜索入口和询盘交接。',
+      href: '/admin/content/products/new#new-product-closure',
+      Icon: Plus,
+      tone: 'blue',
+    },
+    {
+      label: '列表回流队列',
+      value: formatNumber(todoCount),
+      detail: '从 B317 队列按适配、证明和询盘缺口筛选待处理产品。',
+      href: '/admin/content/products/list#product-fit-proof-backflow',
+      Icon: ListChecks,
+      tone: todoCount > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '单篇编辑处理',
+      value: 'B318',
+      detail: '从产品列表进入单篇编辑页，按六个只读步骤定位字段。',
+      href: '/admin/content/products/list?view=incomplete',
+      Icon: Pencil,
+      tone: 'neutral',
+    },
+    {
+      label: '公开产品目录',
+      value: formatNumber(stats.published),
+      detail: '核对公开 `/products` 的适配筛选、详情证明和询盘路径。',
+      href: '/products',
+      Icon: Package,
+      tone: stats.published > 0 ? 'green' : 'neutral',
+    },
+    {
+      label: '产品线索复盘',
+      value: 'source_type',
+      detail: '回到产品来源线索，确认内容准备是否带来真实咨询。',
+      href: '/admin/customers/leads?source_type=product',
+      Icon: UsersRound,
+      tone: 'blue',
     },
   ]
 }
@@ -740,12 +789,40 @@ function ProductContentClosurePanel({ stats }: { stats: ProductStats }) {
         ))}
       </div>
       <ProductSourceContractStrip entries={sourceContracts} />
+      <ProductLifecycleControlStrip stats={stats} />
       <div className="grid grid-cols-1 gap-3 rounded-md border border-[#D8E7E8] bg-white p-4 text-sm shadow-sm md:grid-cols-3">
         <ClosureSnapshot label="已发布产品" value={stats.published} detail="前台产品页可见内容" />
         <ClosureSnapshot label="待补类型" value={getTodoCount(stats)} detail="影响内容完整度的字段组" />
         <ClosureSnapshot label="SEO 待补" value={stats.missingSeo} detail="搜索标题或摘要未补齐" />
       </div>
     </section>
+  )
+}
+
+function ProductLifecycleControlStrip({ stats }: { stats: ProductStats }) {
+  const entries = getProductLifecycleEntries(stats)
+
+  return (
+    <div
+      id="product-lifecycle"
+      data-product-lifecycle-control="true"
+      className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1889B6]">Lifecycle Control</p>
+          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">产品生命周期总控入口</h3>
+        </div>
+        <p className="max-w-3xl text-xs leading-5 text-[#61767D]">
+          把 B319 新建预检、B317 列表回流、B318 单篇编辑、公开目录和产品线索复盘串成同一条只读运营链路。
+        </p>
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-5">
+        {entries.map((entry) => (
+          <ProductSourceContractLink key={entry.label} entry={entry} />
+        ))}
+      </div>
+    </div>
   )
 }
 
