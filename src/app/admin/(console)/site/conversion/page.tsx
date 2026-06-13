@@ -330,6 +330,7 @@ function getSideNav(): AdminSideNavGroup[] {
       items: [
         { key: 'overview', label: '网站概览', href: '/admin/site', Icon: LayoutTemplate },
         { key: 'conversion', label: '转化路径', href: '/admin/site/conversion', Icon: Link2 },
+        { key: 'case-followup-conversion', label: '案例跟进复盘', href: '/admin/site/conversion#case-followup-conversion-review-bridge', Icon: TrendingUp },
         { key: 'pages', label: '页面清单', href: '/admin/site/pages', Icon: ListChecks },
         { key: 'navigation', label: '导航管理', href: '/admin/site/navigation', Icon: Navigation },
         { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },
@@ -449,6 +450,12 @@ export default async function AdminSiteConversionPage() {
           sourceStageSummary={sourceStageSummary}
         />
         <CaseInquiryConversionPanel summary={caseInquirySummary} casePathMetric={casePathMetric} />
+        <CaseFollowupConversionReviewBridge
+          summary={caseInquirySummary}
+          casePathMetric={casePathMetric}
+          leadSourceSummary={leadSourceSummary}
+          sourceStageSummary={sourceStageSummary}
+        />
         <NewsConversionHandoffPanel newsPathMetric={newsPathMetric} leadSourceSummary={leadSourceSummary} />
         <ConversionPathFlow
           orderedPaths={orderedPaths}
@@ -1292,6 +1299,258 @@ function CaseInquiryConversionPanel({
             <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
             <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
               进入闭环
+              <ArrowRight size={12} />
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function CaseFollowupConversionReviewBridge({
+  summary,
+  casePathMetric,
+  leadSourceSummary,
+  sourceStageSummary,
+}: {
+  summary: CaseInquiryHealth
+  casePathMetric: AnalyticsConversionMetric
+  leadSourceSummary: LeadSourceStatusSummary[]
+  sourceStageSummary: LeadSourceStageStatusSummary[]
+}) {
+  const caseSource = leadSourceSummary.find((source) => source.type === 'case')
+  const inquiryForm = sourceStageSummary.find((stage) => stage.key === 'case:inquiry_form')
+  const ctaClick = sourceStageSummary.find((stage) => stage.key === 'case:cta_click')
+  const caseTotal = caseSource?.total ?? 0
+  const caseActive = caseSource ? caseSource.new + caseSource.contacting + caseSource.quoted : 0
+  const caseWon = caseSource?.won ?? 0
+  const caseActionCount = casePathMetric.ctaClicks + casePathMetric.formSubmits
+  const inquiryActive = inquiryForm ? inquiryForm.new + inquiryForm.contacting + inquiryForm.quoted : 0
+  const ctaActive = ctaClick ? ctaClick.new + ctaClick.contacting + ctaClick.quoted : 0
+  const readyRate = summary.published > 0 ? summary.ready / summary.published : 0
+  const caseWonRate = caseTotal > 0 ? caseWon / caseTotal : 0
+  const trafficNoLead = casePathMetric.views > 0 && caseTotal === 0
+  const actionNoLead = caseActionCount > 0 && caseTotal === 0
+  const weakContent = summary.weak > 0 && casePathMetric.views > 0
+
+  const priority = caseActive > 0
+    ? { label: 'P0 跟进质量', tone: 'orange' as const, Icon: AlertTriangle }
+    : inquiryActive > 0
+      ? { label: 'P0 表单阶段', tone: 'orange' as const, Icon: FileText }
+      : actionNoLead
+        ? { label: 'P1 动作无线索', tone: 'orange' as const, Icon: MousePointerClick }
+        : trafficNoLead
+          ? { label: 'P1 访问无线索', tone: 'orange' as const, Icon: BarChart3 }
+          : weakContent
+            ? { label: 'P1 内容补位', tone: 'orange' as const, Icon: Route }
+            : caseTotal > 0
+              ? { label: 'P2 转化复盘', tone: 'blue' as const, Icon: TrendingUp }
+              : { label: 'P3 等待样本', tone: 'gray' as const, Icon: ShieldCheck }
+  const PriorityIcon = priority.Icon
+  const decision = caseActive > 0
+    ? '案例来源仍有活跃线索，先回 B306 处理跟进质量，再回本区复盘路径、成交和内容补位。'
+    : inquiryActive > 0
+      ? 'case:inquiry_form 阶段仍有活跃线索，优先处理表单询盘，再复盘案例内容和路径来源。'
+      : actionNoLead
+        ? '案例路径已有动作但线索库暂无 case 来源样本，回 B305 / B304 核对 source 归因和表单写入。'
+        : trafficNoLead
+          ? '案例路径已有访问但暂无 case 来源线索，先检查公开案例 CTA、移动端入口和弱案例承接。'
+          : weakContent
+            ? '案例内容仍有转化弱项，优先回 B303 / B300 补齐素材、叙事、项目事实和标签。'
+            : caseTotal > 0
+              ? '案例来源已有线索样本，可把成交率、跟进状态和高访问案例放到同一轮复盘。'
+              : '案例路径和线索样本仍少，先保持 B303 到 B306 的下钻入口可用，等待更多真实访问。'
+  const cards = [
+    {
+      label: 'B306 跟进分诊',
+      value: caseActive,
+      detail: `新 ${caseSource?.new ?? 0} / 跟进 ${caseSource?.contacting ?? 0} / 报价 ${caseSource?.quoted ?? 0}`,
+      href: '/admin/status/leads#case-lead-quality-followup-desk',
+      Icon: ListChecks,
+      tone: caseActive > 0 ? 'orange' as const : caseTotal > 0 ? 'blue' as const : 'gray' as const,
+    },
+    {
+      label: 'B305 路径回流',
+      value: casePathMetric.views,
+      detail: `动作 ${caseActionCount} / 表单 ${casePathMetric.formSubmits} / 线索 ${casePathMetric.leads}`,
+      href: '/admin/status/traffic#case-path-lead-backflow-desk',
+      Icon: BarChart3,
+      tone: trafficNoLead || actionNoLead ? 'orange' as const : casePathMetric.views > 0 ? 'blue' as const : 'gray' as const,
+    },
+    {
+      label: 'B304 线索回流',
+      value: caseTotal,
+      detail: `成交 ${caseWon} / 成交率 ${formatAnalyticsPercent(caseWonRate)} / 关闭 ${caseSource?.lost ?? 0}`,
+      href: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
+      Icon: CheckCircle2,
+      tone: caseTotal > 0 ? 'green' as const : caseActionCount > 0 ? 'orange' as const : 'gray' as const,
+    },
+    {
+      label: 'B303 案例总控',
+      value: summary.weak,
+      detail: `已发布 ${summary.published} / 可承接 ${summary.ready} / 可承接率 ${formatAnalyticsPercent(readyRate)}`,
+      href: '/admin/content/projects#case-content-inquiry-command-center',
+      Icon: Route,
+      tone: summary.weak > 0 ? 'orange' as const : summary.ready > 0 ? 'green' as const : 'gray' as const,
+    },
+  ]
+  const stageRows = [
+    {
+      key: 'case:inquiry_form',
+      label: '案例表单阶段',
+      stage: inquiryForm,
+      actions: casePathMetric.formSubmits,
+      href: '/admin/customers/leads?source_type=case&source_stage=case%3Ainquiry_form',
+      Icon: FileText,
+    },
+    {
+      key: 'case:cta_click',
+      label: '案例 CTA 阶段',
+      stage: ctaClick,
+      actions: casePathMetric.ctaClicks,
+      href: '/admin/customers/leads?source_type=case&source_stage=case%3Acta_click',
+      Icon: MousePointerClick,
+    },
+  ]
+  const closureLinks = [
+    {
+      label: 'B306 跟进分诊',
+      detail: '查看案例来源活跃线索、状态和跟进优先级',
+      href: '/admin/status/leads#case-lead-quality-followup-desk',
+      tone: caseActive > 0 ? 'orange' as const : 'blue' as const,
+    },
+    {
+      label: 'B305 路径回流',
+      detail: '回看案例访问、动作、表单和线索回流缺口',
+      href: '/admin/status/traffic#case-path-lead-backflow-desk',
+      tone: casePathMetric.views > 0 ? 'blue' as const : 'gray' as const,
+    },
+    {
+      label: 'B304 线索回流',
+      detail: '进入案例来源线索队列，核对 source_type=case',
+      href: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
+      tone: caseTotal > 0 ? 'green' as const : 'gray' as const,
+    },
+    {
+      label: 'B303 案例总控',
+      detail: '回到案例内容、素材、标签和询盘承接总控',
+      href: '/admin/content/projects#case-content-inquiry-command-center',
+      tone: summary.weak > 0 ? 'orange' as const : 'blue' as const,
+    },
+    {
+      label: 'B300 弱案例队列',
+      detail: '只看转化弱案例的内容补位清单',
+      href: '/admin/content/projects/list?view=case-conversion-weak#case-list-inquiry-conversion-queue',
+      tone: summary.weak > 0 ? 'orange' as const : 'gray' as const,
+    },
+    {
+      label: '前台案例',
+      detail: '检查公开案例入口和访客能看到的询盘路径',
+      href: '/cases',
+      tone: 'blue' as const,
+    },
+  ]
+
+  return (
+    <section id="case-followup-conversion-review-bridge" className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">
+            <TrendingUp size={15} />
+            B307 Case Followup To Conversion Review
+          </div>
+          <h2 className="mt-2 text-lg font-bold text-[#1E2C31]">案例跟进质量到转化复盘桥</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把 B306 跟进分诊、B305 路径回流、B304 线索回流和 B303 案例总控合并到同一个只读复盘入口；本区只做判断和下钻，不改线索状态、不改发布内容、不写分析事件。
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <span className={`inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-xs font-bold ${caseInquiryToneClass(priority.tone)}`}>
+            <PriorityIcon size={14} />
+            {priority.label}
+          </span>
+          <SeoToLeadReviewAction href="/admin/status/leads#case-lead-quality-followup-desk" label="跟进分诊" />
+          <SeoToLeadReviewAction href="/admin/status/traffic#case-path-lead-backflow-desk" label="路径回流" />
+          <SeoToLeadReviewAction href="/admin/customers/leads?source_type=case#case-lead-content-backflow-desk" label="案例线索" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+        {cards.map((card) => (
+          <ProductConversionClosureCard key={card.label} card={card} />
+        ))}
+      </div>
+
+      <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4">
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Operator Decision</p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-[#1E2C31]">运营判断：{decision}</p>
+            <p className="mt-2 text-xs leading-5 text-[#61767D]">
+              当前案例路径样本：访问 {casePathMetric.views.toLocaleString('zh-CN')}，动作 {caseActionCount.toLocaleString('zh-CN')}，来源线索 {caseTotal.toLocaleString('zh-CN')}，活跃 {caseActive.toLocaleString('zh-CN')}，表单活跃 {inquiryActive.toLocaleString('zh-CN')}，CTA 活跃 {ctaActive.toLocaleString('zh-CN')}。
+            </p>
+          </div>
+          <div className="rounded-md border border-[#D8E7E8] bg-white px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#8A9EA4]">只读边界</p>
+            <p className="mt-2 text-xs leading-5 text-[#61767D]">
+              不保存内容、不改线索状态、不新增发布动作、不触碰价格、订单、会员、代理或国家版本规则。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] border-t border-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0">
+        {stageRows.map((row) => {
+          const active = row.stage ? row.stage.new + row.stage.contacting + row.stage.quoted : 0
+          const tone: 'green' | 'orange' | 'gray' | 'blue' = active > 0
+            ? 'orange'
+            : row.stage && row.stage.total > 0
+              ? 'green'
+              : row.actions > 0
+                ? 'orange'
+                : 'gray'
+          const Icon = row.Icon
+
+          return (
+            <Link key={row.key} href={row.href} className="group px-5 py-4 transition hover:bg-[#F7FAFA]">
+              <span className="flex items-start justify-between gap-3">
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-[#1E2C31]">{row.label}</span>
+                  <span className="mt-1 block font-mono text-[11px] text-[#8A9EA4]">{row.key}</span>
+                </span>
+                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${caseInquiryToneClass(tone)}`}>
+                  <Icon size={18} />
+                </span>
+              </span>
+              <span className="mt-4 grid grid-cols-2 gap-2">
+                <SourceContractMiniStat label="路径动作" value={row.actions} />
+                <SourceContractMiniStat label="阶段线索" value={row.stage?.total ?? 0} />
+                <SourceContractMiniStat label="活跃" value={active} />
+                <SourceContractMiniStat label="成交" value={row.stage?.won ?? 0} />
+              </span>
+              <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
+                查看阶段线索
+                <ArrowRight size={12} />
+              </span>
+            </Link>
+          )
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:grid-cols-6">
+        {closureLinks.map((item) => (
+          <Link
+            key={item.label}
+            href={item.href}
+            className="group rounded-md border border-[#D8E7E8] bg-white px-3 py-3 transition hover:border-[#1889B6] hover:bg-[#F7FAFA]"
+          >
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${caseInquiryToneClass(item.tone)}`}>
+              {item.label}
+            </span>
+            <span className="mt-2 block min-h-10 text-xs leading-5 text-[#61767D]">{item.detail}</span>
+            <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
+              进入复盘
               <ArrowRight size={12} />
             </span>
           </Link>
