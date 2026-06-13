@@ -8,9 +8,9 @@
 
 - 官网：`https://www.vessel303.com`
 - 代码仓库：`C:\Users\Wynne\Desktop\vessel303\repo-git`
-- 当前循环：B315 已完成并上线；下一轮从 B316 继续按 00-11 工作流推进。
-- 最近功能批次：B315 / `b8ec507 feat(public): add product fit inquiry path`
-- 最近功能生产验证 deployment：`dpl_2zGMJjh9VJgvrKgwK1MijkGeQh8Y`
+- 当前循环：B316 已完成并上线；下一轮从 B317 继续按 00-11 工作流推进。
+- 最近功能批次：B316 / `df0e8b2 feat(public): add product detail proof inquiry bridge`
+- 最近功能生产验证 deployment：`dpl_HeSHKE1Q1S93FBGjRGYLLVH5QCPe`
 - 当前精确状态以 `00_项目总控入口/vessel303_当前总控handoff.md` 和 `vercel inspect https://www.vessel303.com` 为准。
 - 当前目标：前台对齐 `en.303vessel.cn` 的生产官网能力，后台对齐 `300.cn 后台` 的运营效率和数据分析心智。
 - 当前对照边界：`en.303vessel.cn` 当前由 `openresty` 响应，公开产品/案例路径只读 smoke 返回 403，后台路径返回 404；本仓库部署 smoke 以 `https://www.vessel303.com` / Vercel alias 为准。
