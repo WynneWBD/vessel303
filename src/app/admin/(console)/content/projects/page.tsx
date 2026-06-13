@@ -80,6 +80,17 @@ type CaseSourceContract = {
   tone: 'blue' | 'green' | 'orange' | 'neutral'
 }
 
+type CaseContentCommandItem = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  cta: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange' | 'gray'
+  external?: boolean
+}
+
 const EMPTY_PROJECT_STATS: ProjectStats = {
   total: 0,
   published: 0,
@@ -230,6 +241,21 @@ function getCaseInquiryWeakCount(stats: ProjectStats): number {
   return Math.max(0, stats.published - stats.caseInquiryReady)
 }
 
+function getProjectContentGapSignalCount(stats: ProjectStats): number {
+  return [
+    stats.missingCover,
+    stats.missingGallery,
+    stats.missingCnDescription,
+    stats.missingEnDescription,
+    stats.shortDescription,
+    stats.missingProjectType,
+    stats.missingArea,
+    stats.missingUnits,
+    stats.missingProducts,
+    stats.missingTags,
+  ].reduce((sum, count) => sum + count, 0)
+}
+
 function getSideNavGroups(stats: ProjectStats): AdminSideNavGroup[] {
   return [
     {
@@ -241,6 +267,7 @@ function getSideNavGroups(stats: ProjectStats): AdminSideNavGroup[] {
         { key: 'news', label: '新闻资讯', href: '/admin/content/news', Icon: Newspaper },
         { key: 'drafts', label: '草稿内容', href: '#drafts', badge: stats.draft, Icon: FileText },
         { key: 'todo', label: '待补内容', href: '#todo', badge: getTodoCount(stats), Icon: CircleDashed },
+        { key: 'case-command', label: '询盘总控台', href: '#case-content-inquiry-command-center', badge: getCaseInquiryWeakCount(stats), Icon: ClipboardCheck },
         { key: 'case-conversion', label: '咨询承接', href: '#case-conversion', badge: getCaseInquiryWeakCount(stats), Icon: ClipboardCheck },
         { key: 'checks', label: '发布前检查', href: '#checks', Icon: SearchCheck },
       ],
@@ -544,6 +571,191 @@ function TodoStat({ entry }: { entry: TodoEntry }) {
       </p>
       <p className="mt-2 text-xs leading-5 text-[#61767D]">{entry.detail}</p>
     </div>
+  )
+}
+
+function CaseContentInquiryCommandCenter({
+  stats,
+  casePathMetric,
+}: {
+  stats: ProjectStats
+  casePathMetric: AnalyticsConversionMetric
+}) {
+  const weakCount = getCaseInquiryWeakCount(stats)
+  const contentGapSignals = getProjectContentGapSignalCount(stats)
+  const attentionSignals = stats.draft + weakCount + contentGapSignals
+  const items: CaseContentCommandItem[] = [
+    {
+      label: 'B302 创建预检',
+      value: stats.draft > 0 ? `${formatNumber(stats.draft)} 个草稿` : '创建前',
+      detail: '新建前先看案例池缺口、列表队列、线索和路径数据，避免新草稿继续带入同类弱项。',
+      href: '/admin/content/projects/new#case-creation-inquiry-preflight-desk',
+      cta: '进入创建预检',
+      Icon: Plus,
+      tone: stats.draft > 0 ? 'orange' : 'blue',
+    },
+    {
+      label: 'B301 编辑复核',
+      value: weakCount > 0 ? `${formatNumber(weakCount)} 个弱项` : '可抽检',
+      detail: '从列表进入单篇编辑页，用询盘复核台检查素材、双语叙事、项目事实和前台咨询锚点。',
+      href: '/admin/content/projects/list?view=case-conversion-weak',
+      cta: '进入编辑复核',
+      Icon: SearchCheck,
+      tone: weakCount > 0 ? 'orange' : 'green',
+    },
+    {
+      label: 'B300 列表队列',
+      value: `${formatNumber(stats.total)} 个案例`,
+      detail: '把全部、草稿、已发布、发布转化弱、Global 入图和内容缺口放回同一个列表处理面。',
+      href: '/admin/content/projects/list#case-list-inquiry-conversion-queue',
+      cta: '进入列表队列',
+      Icon: ListChecks,
+      tone: 'blue',
+    },
+    {
+      label: '前台案例路径',
+      value: '/cases',
+      detail: '从客户视角核查案例列表和详情页；Global 只做地图，不替代案例详情页。',
+      href: '/cases',
+      cta: '查看前台案例',
+      Icon: ExternalLink,
+      tone: 'blue',
+      external: true,
+    },
+    {
+      label: '案例线索队列',
+      value: 'source_type=case',
+      detail: '发布后的案例 CTA 和询盘表单回到客户线索台；这里不新增线索状态或处理规则。',
+      href: '/admin/customers/leads?source_type=case',
+      cta: '查看案例线索',
+      Icon: ClipboardCheck,
+      tone: 'orange',
+    },
+    {
+      label: '路径数据复盘',
+      value: formatAnalyticsPercent(casePathMetric.conversionRate),
+      detail: `近 30 天访问 ${formatNumber(casePathMetric.views)}，动作 ${formatNumber(casePathMetric.ctaClicks)}，线索 ${formatNumber(casePathMetric.leads)}。`,
+      href: '/admin/status/traffic#case-inquiry-path',
+      cta: '查看路径分析',
+      Icon: BarChart3,
+      tone: casePathMetric.leads > 0 ? 'green' : casePathMetric.views > 0 ? 'orange' : 'blue',
+    },
+  ]
+
+  return (
+    <section id="case-content-inquiry-command-center" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="border-l-4 border-[#E36F2C] px-5 py-5">
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B303 CASE CONTENT INQUIRY COMMAND</p>
+          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">案例内容到询盘转化总控台</h2>
+          <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把 B302 创建预检、B301 编辑复核、B300 列表队列、前台 `/cases`、`source_type=case` 线索和路径分析合成一个只读总控层；运营先从这里判断该新建、补内容、看前台还是回线索，不改变保存、发布、Global 点位或线索状态。
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <PrimaryAction href="/admin/content/projects/new#case-creation-inquiry-preflight-desk" Icon={Plus} label="B302 创建预检" primary />
+            <PrimaryAction href="/admin/content/projects/list#case-list-inquiry-conversion-queue" Icon={ListChecks} label="B300 列表队列" />
+            <PrimaryAction href="/admin/status/traffic#case-inquiry-path" Icon={BarChart3} label="路径分析" />
+            <PrimaryAction href="/admin/customers/leads?source_type=case" Icon={ClipboardCheck} label="案例线索" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 border-t border-[#E6EEEE] bg-[#FBFDFD] lg:border-l lg:border-t-0">
+          <CaseCommandStat label="案例总数" value={formatNumber(stats.total)} detail={`已发布 ${formatNumber(stats.published)}`} />
+          <CaseCommandStat label="草稿待承接" value={formatNumber(stats.draft)} detail="草稿无前台询盘" warn={stats.draft > 0} />
+          <CaseCommandStat label="内容缺口信号" value={formatNumber(contentGapSignals)} detail={`${formatNumber(getTodoCount(stats))} 类待补`} warn={contentGapSignals > 0} />
+          <CaseCommandStat label="30 天线索" value={formatNumber(casePathMetric.leads)} detail={`转化 ${formatAnalyticsPercent(casePathMetric.conversionRate)}`} warn={casePathMetric.views > 0 && casePathMetric.leads === 0} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-4">
+        <CaseCommandSnapshot label="可承接案例" value={formatNumber(stats.caseInquiryReady)} detail={`占已发布 ${stats.published > 0 ? Math.round((stats.caseInquiryReady / stats.published) * 100) : 0}%`} />
+        <CaseCommandSnapshot label="发布转化弱" value={formatNumber(weakCount)} detail="优先回列表处理" warn={weakCount > 0} />
+        <CaseCommandSnapshot label="路径动作" value={formatNumber(casePathMetric.ctaClicks)} detail={`表单 ${formatNumber(casePathMetric.formSubmits)}`} />
+        <CaseCommandSnapshot label="总控关注信号" value={formatNumber(attentionSignals)} detail="草稿 + 缺口 + 弱项" warn={attentionSignals > 0} />
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-2 xl:grid-cols-3">
+        {items.map((item) => (
+          <CaseCommandCard key={item.label} item={item} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function CaseCommandStat({
+  label,
+  value,
+  detail,
+  warn = false,
+}: {
+  label: string
+  value: string
+  detail: string
+  warn?: boolean
+}) {
+  return (
+    <div className="min-w-0 border-b border-[#E6EEEE] px-4 py-3 even:border-l">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-1 truncate text-2xl font-bold ${warn ? 'text-[#E36F2C]' : 'text-[#1E2C31]'}`} title={value}>{value}</p>
+      <p className="mt-1 truncate text-xs text-[#8A9EA4]" title={detail}>{detail}</p>
+    </div>
+  )
+}
+
+function CaseCommandSnapshot({
+  label,
+  value,
+  detail,
+  warn = false,
+}: {
+  label: string
+  value: string
+  detail: string
+  warn?: boolean
+}) {
+  return (
+    <div className="border-b border-[#E6EEEE] px-4 py-3 md:border-r md:last:border-r-0">
+      <p className="text-[11px] font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-1 text-xl font-bold ${warn ? 'text-[#E36F2C]' : 'text-[#1E2C31]'}`}>{value}</p>
+      <p className="mt-1 text-xs leading-5 text-[#61767D]">{detail}</p>
+    </div>
+  )
+}
+
+function caseCommandToneClass(tone: CaseContentCommandItem['tone']) {
+  if (tone === 'green') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  if (tone === 'orange') return 'border-[#F4C7A6] bg-[#FFF2E7] text-[#C85F24]'
+  if (tone === 'gray') return 'border-[#D8E7E8] bg-[#F7FAFA] text-[#61767D]'
+  return 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
+}
+
+function CaseCommandCard({ item }: { item: CaseContentCommandItem }) {
+  const Icon = item.Icon
+
+  return (
+    <Link
+      href={item.href}
+      target={item.external ? '_blank' : undefined}
+      rel={item.external ? 'noopener noreferrer' : undefined}
+      className="group min-h-[158px] border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-[#FBFDFD] md:odd:border-r xl:border-r xl:[&:nth-child(3n)]:border-r-0"
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-xs font-bold text-[#1E2C31]">{item.label}</span>
+          <span className={`mt-2 inline-flex min-h-7 max-w-full items-center rounded-md border px-2.5 text-[11px] font-bold ${caseCommandToneClass(item.tone)}`}>
+            <span className="truncate">{item.value}</span>
+          </span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block min-h-10 text-xs leading-5 text-[#61767D]">{item.detail}</span>
+      <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6] group-hover:text-[#E36F2C]">
+        {item.cta}
+        {item.external ? <ExternalLink size={12} /> : <ArrowRight size={13} />}
+      </span>
+    </Link>
   )
 }
 
@@ -972,6 +1184,7 @@ export default async function AdminContentProjectsPage() {
       <Hero stats={stats} />
       <div className="space-y-8">
         <StatusGrid stats={stats} />
+        <CaseContentInquiryCommandCenter stats={stats} casePathMetric={casePathMetric} />
         <CaseConversionPanel stats={stats} casePathMetric={casePathMetric} />
         <TodoPanel stats={stats} />
         <GlobalStatusPanel stats={stats} />
