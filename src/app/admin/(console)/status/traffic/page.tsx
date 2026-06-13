@@ -92,6 +92,8 @@ type CasePathBackflowCard = {
   tone: 'blue' | 'green' | 'orange' | 'gray'
 }
 
+type CaseLoopTrafficCard = CasePathBackflowCard
+
 export default async function AdminStatusTrafficPage({ searchParams }: PageProps) {
   const sp = searchParams ? await searchParams : {}
   const activeRange = normalizeRange(sp.range)
@@ -166,6 +168,8 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
         <TrafficToLeadExceptionDesk analytics={analytics} overview={overview} />
 
         <CasePathLeadBackflowDesk analytics={analytics} health={caseInquiryHealth} />
+
+        <CaseLoopTrafficQualityReviewDesk analytics={analytics} health={caseInquiryHealth} />
 
         <TrafficDrilldownWorkbench
           analytics={analytics}
@@ -709,6 +713,192 @@ function CasePathLeadBackflowDesk({
   )
 }
 
+function CaseLoopTrafficQualityReviewDesk({
+  analytics,
+  health,
+}: {
+  analytics: SiteAnalyticsDashboard
+  health: CaseInquiryHealth
+}) {
+  const metric = analytics.conversionPaths.cases ?? {
+    views: 0,
+    ctaClicks: 0,
+    formSubmits: 0,
+    leads: 0,
+    conversionRate: 0,
+  }
+  const caseStageActions = analytics.sourceStageActions.filter((row) => row.key.startsWith('case:'))
+  const caseStageTotal = caseStageActions.reduce((sum, row) => sum + row.value, 0)
+  const pathActions = metric.ctaClicks + metric.formSubmits
+  const readyRate = health.published > 0 ? health.ready / health.published : 0
+  const topCasePages = analytics.topPages
+    .filter((row) => isCasePath(row.key) || isCasePath(row.label))
+    .slice(0, 3)
+  const trafficNoLead = metric.views > 0 && metric.leads === 0
+  const actionNoLead = pathActions > 0 && metric.leads === 0
+  const pathNoAction = metric.views > 0 && pathActions === 0
+  const qualitySignals = health.weak + (trafficNoLead ? 1 : 0) + (actionNoLead ? 1 : 0)
+  const priority =
+    actionNoLead
+      ? 'P0 动作无线索'
+      : pathNoAction
+        ? 'P1 访问未动作'
+        : health.weak > 0 && metric.views > 0
+          ? 'P1 内容质量'
+          : metric.leads > 0
+            ? 'P2 样本复盘'
+            : 'P3 等待样本'
+  const priorityTone: CaseLoopTrafficCard['tone'] =
+    actionNoLead || pathNoAction || (health.weak > 0 && metric.views > 0)
+      ? 'orange'
+      : metric.leads > 0
+        ? 'green'
+        : metric.views > 0 || caseStageTotal > 0
+          ? 'blue'
+          : 'gray'
+  const decision =
+    actionNoLead
+      ? '案例路径已有动作但无线索，先回 B304 线索回流和 B307 转化复盘核对表单成功、source_type=case 与来源阶段。'
+      : pathNoAction
+        ? '案例路径有访问但动作不足，先从 B311 闭环总控回查内容证明链，再检查 /cases 与详情页 CTA 位置。'
+        : health.weak > 0 && metric.views > 0
+          ? '案例路径已有访问且仍有弱案例，先回 B308/B309 补齐内容，再继续看流量质量。'
+          : metric.leads > 0
+            ? '案例路径已有线索样本，可以回 B311 总控复盘哪些内容带来路径动作和真实线索。'
+            : '案例路径样本不足，保留公开入口、路径分析和内容总控入口，等待真实访问样本。'
+  const cards: CaseLoopTrafficCard[] = [
+    {
+      key: 'loop',
+      label: 'B311 闭环总控',
+      value: `${formatNumber(qualitySignals)} 信号`,
+      detail: `弱案例 ${formatNumber(health.weak)}，可承接率 ${formatAnalyticsPercent(readyRate)}。`,
+      href: '/admin/content/projects#case-creation-backfill-review-loop-center',
+      tone: qualitySignals > 0 ? 'orange' : 'green',
+    },
+    {
+      key: 'conversion',
+      label: 'B307 转化复盘',
+      value: formatAnalyticsPercent(metric.conversionRate),
+      detail: `路径动作 ${formatNumber(pathActions)}，真实线索 ${formatNumber(metric.leads)}。`,
+      href: '/admin/site/conversion#case-followup-conversion-review-bridge',
+      tone: metric.leads > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
+    },
+    {
+      key: 'backflow',
+      label: 'B305 路径回流',
+      value: `${formatNumber(metric.views)} PV`,
+      detail: '回到案例路径到线索回流诊断台，查看访问、动作、线索和弱案例。',
+      href: '#case-path-lead-backflow-desk',
+      tone: metric.views > 0 ? 'blue' : 'gray',
+    },
+    {
+      key: 'leads',
+      label: 'B304 线索回流',
+      value: formatNumber(metric.leads),
+      detail: '只读查看 source_type=case 线索队列，不改线索状态或负责人。',
+      href: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
+      tone: metric.leads > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
+    },
+    {
+      key: 'content',
+      label: 'B308 内容补位',
+      value: `${formatNumber(health.weak)} 弱`,
+      detail: '把流量质量问题回到内容补位队列和单篇复核，不在流量页改内容。',
+      href: '/admin/content/projects/list#case-conversion-content-backfill-desk',
+      tone: health.weak > 0 ? 'orange' : 'green',
+    },
+    {
+      key: 'front',
+      label: '前台 /cases',
+      value: topCasePages[0] ? `${formatNumber(topCasePages[0].value)} PV` : '只读入口',
+      detail: topCasePages[0] ? `当前最高案例页：${topCasePages[0].label}` : '公开案例列表与详情页只读复验入口。',
+      href: '/cases',
+      tone: metric.views > 0 ? 'blue' : 'gray',
+    },
+  ]
+
+  return (
+    <section id="case-loop-traffic-quality-review-desk" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">B312 Case Loop Traffic Quality</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例闭环到流量质量复盘台</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把 B311 闭环总控、B307 转化复盘、B305 案例路径回流、B304 案例线索回流和前台 /cases 放到同一条只读质量链路；运营用它判断流量问题来自访问不足、动作不足、线索回流还是内容承接。本区不写埋点、不改线索、不发布内容。
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <TrafficTriageAction href="/admin/content/projects#case-creation-backfill-review-loop-center" label="B311 闭环总控" primary />
+          <TrafficTriageAction href="/admin/site/conversion#case-followup-conversion-review-bridge" label="B307 转化复盘" />
+          <TrafficTriageAction href="/admin/customers/leads?source_type=case#case-lead-content-backflow-desk" label="B304 回流台" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-6">
+        {cards.map((card) => (
+          <Link key={card.key} href={card.href} className="block min-w-0 p-5 transition hover:bg-[#F7FAFA]">
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${trafficMatrixToneClass(card.tone)}`}>
+              {card.label}
+            </span>
+            <span className="mt-3 block truncate text-2xl font-black text-[#1E2C31]" title={card.value}>
+              {card.value}
+            </span>
+            <span className="mt-2 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
+          </Link>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.7fr)]">
+        <div className="px-5 py-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${trafficMatrixToneClass(priorityTone)}`}>
+              {priority}
+            </span>
+            <span className="text-sm font-semibold text-[#1E2C31]">流量质量判断</span>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-[#61767D]">{decision}</p>
+          <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-3">
+            {topCasePages.length > 0 ? (
+              topCasePages.map((row) => (
+                <Link key={row.key} href={row.key} className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2 transition hover:border-[#1889B6]">
+                  <span className="block truncate text-xs font-bold text-[#1E2C31]" title={row.label}>{row.label}</span>
+                  <span className="mt-1 block text-lg font-black text-[#1889B6]">{formatNumber(row.value)}</span>
+                  <span className="mt-1 block text-[11px] text-[#8A9EA4]">案例页 PV</span>
+                </Link>
+              ))
+            ) : (
+              <div className="rounded-md border border-dashed border-[#D8E7E8] bg-[#FBFDFD] px-3 py-4 text-xs text-[#8A9EA4] md:col-span-3">
+                暂无案例 Top Pages 样本，先保留 /cases、B305 和 B311 入口等待访问数据。
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:border-l xl:border-t-0">
+          {caseStageActions.slice(0, 4).map((row) => (
+            <Link
+              key={row.key}
+              href={row.href}
+              className="group rounded-md border border-[#D8E7E8] bg-white px-3 py-3 transition hover:border-[#1889B6] hover:bg-[#F7FAFA]"
+            >
+              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${trafficMatrixToneClass(row.value > 0 ? 'blue' : 'gray')}`}>
+                {row.label}
+              </span>
+              <span className="mt-2 block text-lg font-black text-[#1E2C31]">{formatNumber(row.value)}</span>
+              <span className="mt-1 block truncate font-mono text-[11px] text-[#8A9EA4]" title={row.key}>{row.key}</span>
+            </Link>
+          ))}
+          {caseStageActions.length === 0 ? (
+            <div className="rounded-md border border-dashed border-[#D8E7E8] bg-[#FBFDFD] px-3 py-4 text-xs text-[#8A9EA4] md:col-span-2">
+              暂无 case 来源阶段动作，暂不推断阶段质量。
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function TrafficControlBar({
   activeRange,
   allTime,
@@ -1031,7 +1221,7 @@ function TrafficModuleStrip({
     { title: '访问行为分析', value: `${formatNumber(actions)} 次`, href: '#behavior-analysis', detail: '进入下钻' },
     { title: '线索转化分析', value: `${formatNumber(leads)} 条`, href: '/admin/site/conversion', detail: '进入下钻' },
     { title: '产品路径分析', value: `${formatNumber(productPathActions)} 动作`, href: '#product-conversion-path', detail: '回连产品闭环' },
-    { title: '案例询盘路径', value: `${formatNumber(casePathActions)} 动作`, href: '#case-inquiry-path', detail: `弱案例 ${formatNumber(weakCases)}` },
+    { title: '案例询盘路径', value: `${formatNumber(casePathActions)} 动作`, href: '#case-loop-traffic-quality-review-desk', detail: `弱案例 ${formatNumber(weakCases)}` },
     { title: 'Google收录分析', value: readiness, href: '/admin/site/seo', detail: '进入下钻' },
   ]
 
