@@ -12,9 +12,11 @@ import {
   NewsConsoleShell,
   PrimaryAction,
   SectionTitle,
+  formatNumber,
   getNewsStats,
   safeLoad,
   type AdminRole,
+  type NewsStats,
 } from '../../_news-console'
 import Link from 'next/link'
 import {
@@ -28,7 +30,9 @@ import {
   ImageIcon,
   Link2,
   ListChecks,
+  Newspaper,
   SearchCheck,
+  ShieldCheck,
   Tags,
   type LucideIcon,
 } from 'lucide-react'
@@ -73,6 +77,18 @@ type NewsEditorReadiness = {
   completedGroups: number
   completionPercent: number
   nextIssue: NewsEditorReadinessIssue | null
+}
+
+type NewsEditSourceConversionTone = 'blue' | 'green' | 'orange' | 'gray'
+
+type NewsEditSourceConversionCheckpoint = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  cta: string
+  tone: NewsEditSourceConversionTone
+  Icon: LucideIcon
 }
 
 const READINESS_GROUPS: Omit<NewsEditorReadinessGroup, 'issueCount' | 'done'>[] = [
@@ -122,6 +138,13 @@ const NEWS_SOURCE_HANDOFF_LINKS = [
   { label: '转化承接', href: '/admin/site/conversion#news-conversion-handoff' },
   { label: '新闻线索', href: '/admin/customers/leads?source_type=news' },
 ]
+
+function sourceConversionToneClass(tone: NewsEditSourceConversionTone) {
+  if (tone === 'green') return 'border-emerald-100 bg-emerald-50 text-emerald-700'
+  if (tone === 'orange') return 'border-[#F2C6A7] bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'gray') return 'border-[#D8E7E8] bg-[#F0F2F2] text-[#61767D]'
+  return 'border-[#B7DDE4] bg-[#EAF6F8] text-[#1889B6]'
+}
 
 function parseId(raw: string): number | null {
   const id = parseInt(raw, 10)
@@ -443,6 +466,228 @@ function NewsReadinessPanel({ readiness }: { readiness: NewsEditorReadiness }) {
   )
 }
 
+function NewsEditSourceConversionReviewDesk({
+  news,
+  readiness,
+  stats,
+  categoriesCount,
+  seoReady,
+  categoryReady,
+}: {
+  news: NewsRow
+  readiness: NewsEditorReadiness
+  stats: NewsStats
+  categoriesCount: number
+  seoReady: boolean
+  categoryReady: boolean
+}) {
+  const routeReady = hasText(news.slug)
+  const publicHref = routeReady ? `/news/${news.slug}` : '#basic'
+  const statusLabel = news.status === 'published' ? '已发布' : news.scheduled_at ? '定时草稿' : '草稿'
+  const nextHref = readiness.nextIssue?.href ?? '#publish-check'
+  const checkpoints: NewsEditSourceConversionCheckpoint[] = [
+    {
+      label: '当前编辑影响',
+      value: statusLabel,
+      detail: routeReady
+        ? `当前公开路径候选：/news/${news.slug}。保存前先确认内容、SEO 和来源承接。`
+        : 'Slug 缺失时无法形成稳定新闻详情路径，先补基础信息。',
+      href: publicHref,
+      cta: news.status === 'published' ? '查看前台' : '复核基础',
+      tone: news.status === 'published' ? 'orange' : routeReady ? 'blue' : 'orange',
+      Icon: ExternalLink,
+    },
+    {
+      label: '单篇完成度',
+      value: `${readiness.completionPercent}%`,
+      detail: readiness.requiredIssueCount > 0
+        ? `仍有 ${readiness.requiredIssueCount} 项正式缺口，优先处理：${readiness.nextIssue?.label ?? '发布检查'}。`
+        : '正式缺口已归零，可进入表单内人工发布前复核。',
+      href: nextHref,
+      cta: readiness.requiredIssueCount > 0 ? '处理缺口' : '发布复核',
+      tone: readiness.requiredIssueCount > 0 ? 'orange' : 'green',
+      Icon: ListChecks,
+    },
+    {
+      label: '分类与 SEO',
+      value: seoReady && categoryReady ? 'Ready' : '待补',
+      detail: `${categoryReady ? '分类已绑定' : '分类未绑定'}；${seoReady ? 'SEO 已补齐' : 'SEO 仍有缺口'}。当前可见分类 ${formatNumber(categoriesCount)} 个。`,
+      href: seoReady && categoryReady ? '/admin/content/news/categories#news-category-source-conversion-desk' : '#seo',
+      cta: seoReady && categoryReady ? '看分类治理' : '补字段',
+      tone: seoReady && categoryReady ? 'green' : 'orange',
+      Icon: SearchCheck,
+    },
+    {
+      label: '全站待处理',
+      value: formatNumber(stats.incomplete),
+      detail: `新闻内容待补 ${formatNumber(stats.incomplete)} 篇，SEO 待补 ${formatNumber(stats.missingSeo)} 篇，回列表队列统一处理。`,
+      href: '/admin/content/news/list#news-list-source-conversion-queue',
+      cta: '回列表队列',
+      tone: stats.incomplete > 0 || stats.missingSeo > 0 ? 'blue' : 'green',
+      Icon: Newspaper,
+    },
+  ]
+  const workflowLinks: NewsEditSourceConversionCheckpoint[] = [
+    {
+      label: '创建预检',
+      value: 'B298',
+      detail: '回看新建新闻的分类、SEO、来源和发布前入口策略。',
+      href: '/admin/content/news/new#news-creation-source-preflight-desk',
+      cta: '看新建台',
+      tone: 'blue',
+      Icon: FileText,
+    },
+    {
+      label: '回收保护',
+      value: 'B297',
+      detail: '误删、恢复、草稿复核和来源承接的只读安全链。',
+      href: '/admin/content/news/recycle#news-recycle-source-safety-desk',
+      cta: '看回收台',
+      tone: 'gray',
+      Icon: ShieldCheck,
+    },
+    {
+      label: '分类治理',
+      value: 'B296',
+      detail: '检查分类归档、列表处理、新闻优化和线索队列承接。',
+      href: '/admin/content/news/categories#news-category-source-conversion-desk',
+      cta: '看分类台',
+      tone: 'blue',
+      Icon: Tags,
+    },
+    {
+      label: '列表队列',
+      value: 'B295',
+      detail: '把当前单篇复核结果回流到列表筛选和来源转化处理队列。',
+      href: '/admin/content/news/list#news-list-source-conversion-queue',
+      cta: '回列表',
+      tone: 'blue',
+      Icon: ListChecks,
+    },
+    {
+      label: '内容优化',
+      value: 'B294',
+      detail: '从新闻内容缺项、SEO 待补和来源线索角度复看整体优化。',
+      href: '/admin/content/news#news-source-lead-optimization-desk',
+      cta: '看优化台',
+      tone: 'blue',
+      Icon: Newspaper,
+    },
+    {
+      label: '流量分诊',
+      value: 'B293',
+      detail: '把新闻访问、来源动作和异常承接到流量分诊台。',
+      href: '/admin/status/traffic#traffic-to-lead-exception-desk',
+      cta: '看分诊',
+      tone: 'blue',
+      Icon: Link2,
+    },
+    {
+      label: '来源线索',
+      value: 'B292',
+      detail: '进入 `source_type=news` 的来源线索质量处理和运营复盘。',
+      href: '/admin/status/leads#source-lead-quality-workdesk',
+      cta: '看线索',
+      tone: 'blue',
+      Icon: Link2,
+    },
+    {
+      label: '保存边界',
+      value: '只读',
+      detail: '本台只做编辑前复核导航，不拦截保存，不触发发布，不修改线索状态。',
+      href: '#publish-check',
+      cta: '看发布检查',
+      tone: 'gray',
+      Icon: CheckCircle2,
+    },
+  ]
+
+  return (
+    <section id="news-edit-source-conversion-review-desk" className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm md:p-5">
+      <div className="grid grid-cols-1 gap-4 border-b border-[#E6EEEE] pb-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">B299 News Edit Source Conversion</p>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">新闻编辑到来源转化复核台</h2>
+          <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把单篇新闻编辑、B298 创建预检、B297 回收保护、B296 分类治理、B295 列表队列、B294 新闻优化、B293 流量分诊和 B292 来源线索接到同一个只读复核台。这里不改变保存、发布、恢复或删除逻辑。
+          </p>
+        </div>
+        <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3">
+          <p className="text-xs font-bold text-[#61767D]">编辑判断</p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-[#1E2C31]">
+            {readiness.nextIssue
+              ? `先处理「${readiness.nextIssue.label}」，再进入发布检查。`
+              : '正式缺口已归零，继续人工复核发布影响。'}
+          </p>
+          <Link
+            href={nextHref}
+            className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[#1889B6] px-3 text-xs font-bold text-white transition hover:bg-[#137A9F]"
+          >
+            {readiness.nextIssue ? '处理当前缺口' : '进入发布检查'}
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {checkpoints.map((item) => {
+          const Icon = item.Icon
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className="group flex min-h-40 flex-col justify-between rounded-md border border-[#D8E7E8] bg-[#FBFDFD] p-4 transition hover:-translate-y-0.5 hover:border-[#1889B6] hover:shadow-md"
+            >
+              <span>
+                <span className="flex items-start justify-between gap-3">
+                  <span className="text-xs font-semibold text-[#61767D]">{item.label}</span>
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${sourceConversionToneClass(item.tone)}`}>
+                    <Icon size={16} />
+                  </span>
+                </span>
+                <span className="mt-2 block truncate text-2xl font-bold text-[#1E2C31]">{item.value}</span>
+                <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+              </span>
+              <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6]">
+                {item.cta}
+                <ArrowRight size={13} className="transition group-hover:translate-x-0.5" />
+              </span>
+            </Link>
+          )
+        })}
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-4">
+        {workflowLinks.map((item) => {
+          const Icon = item.Icon
+          return (
+            <Link
+              key={`${item.value}-${item.label}`}
+              href={item.href}
+              className="group rounded-md border border-[#D8E7E8] bg-white p-3 transition hover:border-[#1889B6] hover:bg-[#F7FAFA]"
+            >
+              <span className="flex items-start justify-between gap-2">
+                <span>
+                  <span className="block text-xs font-bold text-[#1889B6]">{item.value}</span>
+                  <span className="mt-1 block text-sm font-bold text-[#1E2C31]">{item.label}</span>
+                </span>
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${sourceConversionToneClass(item.tone)}`}>
+                  <Icon size={15} />
+                </span>
+              </span>
+              <span className="mt-2 block min-h-10 text-xs leading-5 text-[#61767D]">{item.detail}</span>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6]">
+                {item.cta}
+                <ArrowRight size={12} className="transition group-hover:translate-x-0.5" />
+              </span>
+            </Link>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 function NewsEditorSourceSeoPanel({
   news,
   readiness,
@@ -694,6 +939,14 @@ export default async function AdminContentNewsEditPage({ params }: PageProps) {
         sections={NEWS_EDIT_SECTIONS}
         metrics={editorMetrics}
         signals={editorSignals}
+      />
+      <NewsEditSourceConversionReviewDesk
+        news={news}
+        readiness={editorReadiness}
+        stats={stats}
+        categoriesCount={categories.length}
+        seoReady={seoReady}
+        categoryReady={categoryReady}
       />
       <NewsEditorSourceSeoPanel
         news={news}
