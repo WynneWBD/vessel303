@@ -157,9 +157,11 @@ function newsLeadSourceLabel(raw: string) {
   const slug = part(raw, 1)
   const stage = part(raw, 2)
   const stageLabel =
-    stage === 'detail_cta'
-      ? '新闻详情 Contact CTA'
-      : stage === 'inquiry_cta'
+    stage === 'contact_cta'
+      ? '新闻 Contact CTA'
+      : stage === 'detail_cta'
+        ? '新闻详情 Contact CTA'
+        : stage === 'inquiry_cta'
         ? '新闻列表 Contact CTA'
         : '新闻页联系入口'
 

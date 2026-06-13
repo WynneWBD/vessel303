@@ -61,6 +61,12 @@ function sanitizeSource(value: string | null) {
   return clean.slice(0, 160)
 }
 
+function newsSourceHref(source: string) {
+  const slug = source.split(':')[1]?.trim() ?? ''
+  if (!slug || slug === 'list' || !/^[a-zA-Z0-9_-]+$/.test(slug)) return '/news'
+  return `/news/${slug}`
+}
+
 function sourceContext(value: string | null, lang: 'en' | 'zh') {
   const source = sanitizeSource(value)
   if (!source) return null
@@ -73,8 +79,10 @@ function sourceContext(value: string | null, lang: 'en' | 'zh') {
       detail: zh
         ? '如果这条动态与你的项目相关，可以在表单里补充产品、场景或采购时间。'
         : 'If the update is relevant, add product, scenario, or timing context in the form.',
-      href: '/news',
-      hrefLabel: zh ? '返回新闻' : 'Back to news',
+      href: newsSourceHref(source),
+      hrefLabel: newsSourceHref(source) === '/news'
+        ? (zh ? '返回新闻' : 'Back to news')
+        : (zh ? '返回这篇动态' : 'Back to this update'),
     }
   }
 

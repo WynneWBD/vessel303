@@ -47,7 +47,7 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
   const category = zh
     ? news.category_title_zh || news.category_title_en
     : news.category_title_en || news.category_title_zh
-  const contactHref = buildContactHref(`news:${news.slug}:detail_cta`)
+  const contactHref = buildContactHref(`news:${news.slug}:contact_cta`)
   const nextSteps = [
     {
       href: '/products',
@@ -62,7 +62,7 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
     {
       href: contactHref,
       label: zh ? '提交采购需求' : 'Start inquiry',
-      detail: zh ? '带着这篇新闻的上下文联系团队。' : 'Contact the team with this article as context.',
+      detail: zh ? '团队按这篇动态跟进采购背景。' : 'Let the team follow up from this article context.',
     },
   ]
 
@@ -95,6 +95,13 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
               </div>
               <h1 className="mt-3 text-3xl font-bold leading-tight text-white sm:text-4xl">{title}</h1>
               {excerpt ? <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#C9BEB4]">{excerpt}</p> : null}
+              <Link
+                href={contactHref}
+                prefetch={false}
+                className="mt-5 inline-flex min-h-10 items-center bg-[#E36F2C] px-4 text-sm font-bold text-white transition hover:bg-[#C85A1F]"
+              >
+                {zh ? '带着这篇动态咨询' : 'Inquire from this update'}
+              </Link>
             </div>
           </div>
         ) : (
@@ -109,6 +116,13 @@ export default function NewsDetailView({ news, htmlZh, htmlEn }: Props) {
             </div>
             <h1 className="mt-3 text-3xl font-bold leading-tight text-[#F5F2ED] sm:text-4xl">{title}</h1>
             {excerpt ? <p className="mt-4 text-base leading-relaxed text-[#C9BEB4]">{excerpt}</p> : null}
+            <Link
+              href={contactHref}
+              prefetch={false}
+              className="mt-5 inline-flex min-h-10 items-center bg-[#E36F2C] px-4 text-sm font-bold text-white transition hover:bg-[#C85A1F]"
+            >
+              {zh ? '带着这篇动态咨询' : 'Inquire from this update'}
+            </Link>
           </div>
         )}
       </section>

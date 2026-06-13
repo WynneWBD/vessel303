@@ -63,7 +63,7 @@ export default function NewsListView({
       .filter((value): value is string => Boolean(value?.trim())),
   ))
   const latestDate = rows[0]?.published_at ? formatNewsDate(rows[0].published_at, lang) : ''
-  const contactHref = buildContactHref('news:list:inquiry_cta')
+  const contactHref = buildContactHref('news:list:contact_cta')
   const conversionStats = [
     {
       label: zh ? '已发布动态' : 'Published updates',
@@ -95,7 +95,7 @@ export default function NewsListView({
     {
       href: contactHref,
       label: zh ? '提交需求' : 'Start inquiry',
-      detail: zh ? '带着新闻线索咨询团队' : 'Contact the team with this context',
+      detail: zh ? '团队按新闻阅读路径跟进' : 'Let the team follow up from the news path',
     },
   ]
 
