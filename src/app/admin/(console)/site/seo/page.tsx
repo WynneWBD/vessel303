@@ -899,9 +899,11 @@ function SeoOperationsMatrix({
 
 function SeoConversionRepairPanel({
   products,
+  news,
   projects,
 }: {
   products: ContentSeoSummary
+  news: ContentSeoSummary
   projects: ContentSeoSummary
 }) {
   const items = [
@@ -914,6 +916,14 @@ function SeoConversionRepairPanel({
       tone: products.missing > 0 ? 'orange' as const : 'green' as const,
     },
     {
+      title: '新闻 SEO 待补',
+      value: news.missing,
+      detail: `已发布新闻 ${formatNumber(news.published)} 篇；新闻标题与摘要影响 Blog 入口和 Contact 来源归因。`,
+      href: news.href,
+      Icon: Newspaper,
+      tone: news.missing > 0 ? 'orange' as const : 'green' as const,
+    },
+    {
       title: '案例派生待补',
       value: projects.missing,
       detail: `已发布案例 ${formatNumber(projects.published)} 个；描述和封面同时影响 SEO 摘要与询盘说服力。`,
@@ -922,10 +932,10 @@ function SeoConversionRepairPanel({
       tone: projects.missing > 0 ? 'orange' as const : 'green' as const,
     },
     {
-      title: '转化中心回看',
-      value: 'B225',
-      detail: '从 SEO 修复回看案例、产品和表单转化路径，不在本页写入内容。',
-      href: '/admin/site/conversion',
+      title: '来源合同总览',
+      value: 'B277',
+      detail: '从 SEO 修复回到产品、案例、新闻三条来源合同总账，核对入口、source_type 和阶段线索。',
+      href: '/admin/site/conversion#source-contract-portfolio',
       Icon: Link2,
       tone: 'blue' as const,
     },
@@ -950,11 +960,11 @@ function SeoConversionRepairPanel({
   return (
     <section className="space-y-4" id="seo-conversion-closure">
       <SectionTitle
-        title="B226 SEO 与转化修复闭环"
-        detail="把搜索增长、内容缺口和转化线索放在同一条运营链路里：先补可被搜索理解的内容，再回到转化与线索面板验证质量。"
+        title="B278 SEO 与来源合同修复闭环"
+        detail="把搜索增长、内容缺口和 B277 来源合同总览放在同一条运营链路里：先补可被搜索理解的内容，再回到转化与线索面板验证来源质量。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-5">
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-6">
           {items.map((item) => {
             const Icon = item.Icon
             const toneClass =
@@ -982,6 +992,12 @@ function SeoConversionRepairPanel({
         </div>
         <div className="flex flex-wrap gap-2 border-t border-[#E6EEEE] px-5 py-4">
           <Link
+            href="/admin/site/conversion#source-contract-portfolio"
+            className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+          >
+            看来源合同总览
+          </Link>
+          <Link
             href="/admin/status/leads#product-lead-path-bridge"
             className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
           >
@@ -1004,6 +1020,12 @@ function SeoConversionRepairPanel({
             className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
           >
             看案例线索队列
+          </Link>
+          <Link
+            href="/admin/customers/leads?source_type=news"
+            className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+          >
+            看新闻线索队列
           </Link>
         </div>
       </div>
@@ -1596,7 +1618,7 @@ export default async function AdminSiteSeoPage() {
         priorityItems={priorityItems}
       />
 
-      <SeoConversionRepairPanel products={products} projects={projects} />
+      <SeoConversionRepairPanel products={products} news={news} projects={projects} />
 
       <SeoActionLedger items={priorityItems} />
 
