@@ -262,6 +262,13 @@ export default async function AdminStatusLeadsPage() {
           seo={overview.site.seo}
         />
 
+        <CaseLeadQualityFollowupDesk
+          leads={leads}
+          sourceStatusSummary={sourceStatusSummary}
+          sourceStageStatusSummary={sourceStageStatusSummary}
+          casePathMetric={casePathMetric}
+        />
+
         <ProductLeadPathBridge
           sourceStatusSummary={sourceStatusSummary}
           sourceStageStatusSummary={sourceStageStatusSummary}
@@ -524,6 +531,231 @@ function SourceLeadQualityWorkdesk({
           {rows.map((row) => (
             <SourceLeadQualityWorkdeskCard key={row.key} row={row} />
           ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function CaseLeadQualityFollowupDesk({
+  leads,
+  sourceStatusSummary,
+  sourceStageStatusSummary,
+  casePathMetric,
+}: {
+  leads: LeadMetrics
+  sourceStatusSummary: LeadSourceStatusSummary[]
+  sourceStageStatusSummary: LeadSourceStageStatusSummary[]
+  casePathMetric: AnalyticsConversionMetric
+}) {
+  const caseSource = sourceStatusSummary.find((source) => source.type === 'case')
+  const caseStages = sourceStageStatusSummary.filter((stage) => stage.type === 'case')
+  const inquiryForm = sourceStageStatusSummary.find((stage) => stage.key === 'case:inquiry_form')
+  const ctaClick = sourceStageStatusSummary.find((stage) => stage.key === 'case:cta_click')
+  const caseTotal = caseSource?.total ?? 0
+  const caseActive = caseSource ? caseSource.new + caseSource.contacting + caseSource.quoted : 0
+  const caseWonRate = percent(caseSource?.won ?? 0, caseTotal)
+  const inquiryActive = inquiryForm ? inquiryForm.new + inquiryForm.contacting + inquiryForm.quoted : 0
+  const ctaActive = ctaClick ? ctaClick.new + ctaClick.contacting + ctaClick.quoted : 0
+  const actionGap = casePathMetric.ctaClicks > 0 && caseTotal === 0
+  const trafficGap = casePathMetric.views > 0 && caseTotal === 0
+  const followupRisk = leads.staleFollowups > 0 && caseActive > 0
+  const priority =
+    caseActive > 0
+      ? 'P0 活跃案例线索'
+      : inquiryActive > 0
+        ? 'P0 表单阶段待处理'
+        : followupRisk
+          ? 'P1 跟进断点核对'
+          : actionGap
+            ? 'P1 动作无线索'
+            : trafficGap
+              ? 'P1 访问无线索'
+              : caseTotal > 0
+                ? 'P2 来源复盘'
+                : 'P3 等待样本'
+  const priorityTone: FunnelMatrixRow['statusTone'] =
+    caseActive > 0 || inquiryActive > 0 || followupRisk || actionGap || trafficGap
+      ? 'orange'
+      : caseSource && caseSource.won > 0
+        ? 'green'
+        : caseTotal > 0 || casePathMetric.views > 0
+          ? 'blue'
+          : 'gray'
+  const decision =
+    caseActive > 0
+      ? `案例来源还有 ${formatNumber(caseActive)} 条活跃线索，先进入 case 活跃队列处理，再回到 B305/B304 复盘路径和内容来源。`
+      : inquiryActive > 0
+        ? `case:inquiry_form 还有 ${formatNumber(inquiryActive)} 条活跃线索，优先看表单阶段，避免高意向询盘沉没。`
+        : followupRisk
+          ? `全站存在 ${formatNumber(leads.staleFollowups)} 条超时跟进，先用 case + overdue 过滤核对案例线索是否受影响。`
+          : actionGap
+            ? `案例路径已有 ${formatNumber(casePathMetric.ctaClicks)} 次动作但 leads 暂无 case 来源样本，先查 B305 路径回流和 B304 线索归因。`
+            : trafficGap
+              ? `案例路径已有 ${formatNumber(casePathMetric.views)} 次访问但暂无 case 来源线索，优先核对 CTA、表单成功和来源参数。`
+              : caseTotal > 0
+                ? `已有 ${formatNumber(caseTotal)} 条案例来源线索，成交占比 ${caseWonRate}%，适合复盘案例内容与跟进质量。`
+                : '当前案例来源样本不足，保留路径回流、线索队列和表单阶段入口，等待新样本。'
+  const cards = [
+    {
+      key: 'case-source',
+      label: '案例来源线索',
+      value: caseTotal,
+      detail: `阶段 ${formatNumber(caseStages.length)} / 新 ${formatNumber(caseSource?.new ?? 0)} / 活跃 ${formatNumber(caseActive)} / 成交 ${formatNumber(caseSource?.won ?? 0)}`,
+      href: '/admin/customers/leads?source_type=case',
+      tone: caseActive > 0 ? 'orange' : caseTotal > 0 ? 'blue' : 'gray',
+    },
+    {
+      key: 'case-inquiry',
+      label: '案例表单阶段',
+      value: inquiryForm?.total ?? 0,
+      detail: `case:inquiry_form 活跃 ${formatNumber(inquiryActive)} / 新 ${formatNumber(inquiryForm?.new ?? 0)}`,
+      href: '/admin/customers/leads?source_type=case&source_stage=case%3Ainquiry_form',
+      tone: inquiryActive > 0 ? 'orange' : inquiryForm && inquiryForm.total > 0 ? 'blue' : 'gray',
+    },
+    {
+      key: 'case-overdue',
+      label: '跟进断点核对',
+      value: leads.staleFollowups,
+      detail: '显示全站超时数；入口带 source_type=case + overdue 过滤核对。',
+      href: '/admin/customers/leads?source_type=case&attention=overdue',
+      tone: followupRisk ? 'orange' : leads.staleFollowups > 0 ? 'blue' : 'green',
+    },
+    {
+      key: 'case-path',
+      label: 'B305 路径回流',
+      value: casePathMetric.views,
+      detail: `路径动作 ${formatNumber(casePathMetric.ctaClicks)} / 路径线索 ${formatNumber(casePathMetric.leads)}`,
+      href: '/admin/status/traffic#case-path-lead-backflow-desk',
+      tone: actionGap || trafficGap ? 'orange' : casePathMetric.views > 0 ? 'blue' : 'gray',
+    },
+  ] satisfies Array<{
+    key: string
+    label: string
+    value: number
+    detail: string
+    href: string
+    tone: FunnelMatrixRow['statusTone']
+  }>
+  const stageRows = [
+    inquiryForm
+      ? {
+          key: inquiryForm.key,
+          label: inquiryForm.label,
+          value: inquiryForm.total,
+          detail: `新 ${formatNumber(inquiryForm.new)} / 跟进 ${formatNumber(inquiryForm.contacting)} / 报价 ${formatNumber(inquiryForm.quoted)}`,
+          href: inquiryForm.href,
+          tone: inquiryActive > 0 ? 'orange' : inquiryForm.won > 0 ? 'green' : 'blue',
+        }
+      : null,
+    ctaClick
+      ? {
+          key: ctaClick.key,
+          label: ctaClick.label,
+          value: ctaClick.total,
+          detail: `新 ${formatNumber(ctaClick.new)} / 跟进 ${formatNumber(ctaClick.contacting)} / 报价 ${formatNumber(ctaClick.quoted)}`,
+          href: ctaClick.href,
+          tone: ctaActive > 0 ? 'orange' : ctaClick.won > 0 ? 'green' : 'blue',
+        }
+      : null,
+  ].filter((row): row is {
+    key: string
+    label: string
+    value: number
+    detail: string
+    href: string
+    tone: FunnelMatrixRow['statusTone']
+  } => Boolean(row))
+  const followupLinks = [
+    {
+      label: 'case 活跃队列',
+      href: '/admin/customers/leads?source_type=case&attention=active',
+      primary: caseActive > 0,
+    },
+    {
+      label: 'case 超时核对',
+      href: '/admin/customers/leads?source_type=case&attention=overdue',
+      primary: followupRisk,
+    },
+    {
+      label: 'case 表单阶段',
+      href: '/admin/customers/leads?source_type=case&source_stage=case%3Ainquiry_form',
+      primary: inquiryActive > 0,
+    },
+    {
+      label: 'B304 回流台',
+      href: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
+      primary: false,
+    },
+    {
+      label: 'B305 路径回流',
+      href: '/admin/status/traffic#case-path-lead-backflow-desk',
+      primary: actionGap || trafficGap,
+    },
+    {
+      label: 'B303 案例总控',
+      href: '/admin/content/projects#case-content-inquiry-command-center',
+      primary: false,
+    },
+  ]
+
+  return (
+    <section className="space-y-4" id="case-lead-quality-followup-desk">
+      <SectionTitle
+        title="B306 案例线索来源质量到跟进分诊台"
+        detail="把 B305 案例路径回流、B304 案例线索回流、case 来源队列、case:inquiry_form 阶段和跟进断点入口放到同屏；只读诊断，不直接更新线索状态。"
+      />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">Case Lead Follow-up Triage</p>
+            <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例来源线索处理顺序</h2>
+            <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+              先看 case 来源活跃线索和表单阶段，再核对全站超时跟进风险，最后回到路径回流和案例内容总控；本区只生成处理顺序和入口，不保存备注、不改负责人、不改状态。
+            </p>
+          </div>
+          <FunnelStatusBadge label={priority} tone={priorityTone} />
+        </div>
+
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+          {cards.map((card) => (
+            <Link key={card.key} href={card.href} className="block min-w-0 p-5 transition hover:bg-[#F7FAFA]">
+              <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${funnelToneClass(card.tone)}`}>
+                {card.label}
+              </span>
+              <span className="mt-3 block text-2xl font-black text-[#1E2C31]">{formatNumber(card.value)}</span>
+              <span className="mt-2 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
+            </Link>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 border-t border-[#E6EEEE] xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.72fr)]">
+          <div className="px-5 py-4">
+            <p className="text-sm font-semibold text-[#1E2C31]">运营判断</p>
+            <p className="mt-2 text-sm leading-6 text-[#61767D]">{decision}</p>
+            <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
+              {stageRows.map((row) => (
+                <Link key={row.key} href={row.href} className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-3 transition hover:border-[#1889B6]">
+                  <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${funnelToneClass(row.tone)}`}>
+                    {row.label}
+                  </span>
+                  <span className="mt-2 block text-lg font-black text-[#1E2C31]">{formatNumber(row.value)}</span>
+                  <span className="mt-1 block text-xs leading-5 text-[#61767D]">{row.detail}</span>
+                </Link>
+              ))}
+              {stageRows.length === 0 ? (
+                <div className="rounded-md border border-dashed border-[#D8E7E8] bg-[#FBFDFD] px-3 py-4 text-xs text-[#8A9EA4] md:col-span-2">
+                  暂无 case 来源阶段样本，先保留 B304/B305 和 case 队列入口等待新线索。
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:border-l xl:border-t-0">
+            {followupLinks.map((item) => (
+              <SourceWorkdeskAction key={item.label} href={item.href} label={item.label} primary={item.primary} />
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -1952,18 +2184,16 @@ function FunnelSummary({
 }
 
 function FunnelStatusBadge({ label, tone }: { label: string; tone: FunnelMatrixRow['statusTone'] }) {
-  const className =
-    tone === 'orange'
-      ? 'border-[#E36F2C]/25 bg-[#FFF2E7] text-[#E36F2C]'
-      : tone === 'blue'
-        ? 'border-[#1889B6]/20 bg-[#EAF6F8] text-[#1889B6]'
-        : tone === 'gray'
-          ? 'border-slate-200 bg-slate-50 text-slate-600'
-          : 'border-emerald-200 bg-emerald-50 text-emerald-700'
-
   return (
-    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${className}`}>
+    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${funnelToneClass(tone)}`}>
       {label}
     </span>
   )
+}
+
+function funnelToneClass(tone: FunnelMatrixRow['statusTone']) {
+  if (tone === 'orange') return 'border-[#E36F2C]/25 bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'blue') return 'border-[#1889B6]/20 bg-[#EAF6F8] text-[#1889B6]'
+  if (tone === 'gray') return 'border-slate-200 bg-slate-50 text-slate-600'
+  return 'border-emerald-200 bg-emerald-50 text-emerald-700'
 }

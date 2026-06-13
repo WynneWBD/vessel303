@@ -140,6 +140,12 @@ export function getStatusSideNav(badges: StatusBadges): AdminSideNavGroup[] {
           Icon: Inbox,
         },
         {
+          key: 'case-lead-followup',
+          label: '案例线索分诊',
+          href: '/admin/status/leads#case-lead-quality-followup-desk',
+          Icon: AlertCircle,
+        },
+        {
           key: 'site',
           label: '站点健康',
           href: '/admin/status/site',
