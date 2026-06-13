@@ -31,6 +31,7 @@ import {
   ListChecks,
   MapPinned,
   MessageSquareText,
+  MousePointerClick,
   Package,
   SearchCheck,
   Settings,
@@ -103,6 +104,8 @@ type CaseLeadBackflowItem = {
   tone: LeadConsoleTone
   external?: boolean
 }
+
+type ProductLeadOpsItem = CaseLeadBackflowItem
 
 const EMPTY_LEADS_RESULT: LeadsResult = {
   leads: [] as Lead[],
@@ -332,6 +335,7 @@ function LeadsQueueConsole({
   const productActive = productSource ? productSource.new + productSource.contacting + productSource.quoted : 0
   const productTopStage = sourceStageStatusSummary.find((source) => source.type === 'product')
   const productInquiryForm = sourceStageStatusSummary.find((source) => source.key === 'product:inquiry_form')
+  const productCtaClick = sourceStageStatusSummary.find((source) => source.key === 'product:cta_click')
   const caseSource = sourceStatusSummary.find((source) => source.type === 'case')
   const caseTotal = caseSource?.total ?? 0
   const caseActive = caseSource ? caseSource.new + caseSource.contacting + caseSource.quoted : 0
@@ -530,6 +534,19 @@ function LeadsQueueConsole({
         <LeadControlStat label="案例线索" value={`${formatNumber(caseTotal)} 条`} tone={caseActive > 0 ? 'orange' : caseTotal > 0 ? 'blue' : 'gray'} />
       </div>
 
+      <ProductLeadOpsReviewDesk
+        productTotal={productTotal}
+        productActive={productActive}
+        productNew={productSource?.new ?? 0}
+        productContacting={productSource?.contacting ?? 0}
+        productQuoted={productSource?.quoted ?? 0}
+        productTopStage={productTopStage}
+        productInquiryForm={productInquiryForm}
+        productCtaClick={productCtaClick}
+        productPathMetric={productPathMetric}
+        filters={filters}
+      />
+
       <CaseLeadContentBackflowDesk
         caseTotal={caseTotal}
         caseActive={caseActive}
@@ -546,6 +563,140 @@ function LeadsQueueConsole({
         {rows.map((row) => (
           <LeadConsoleRowView key={row.title} row={row} />
         ))}
+      </div>
+    </section>
+  )
+}
+
+function ProductLeadOpsReviewDesk({
+  productTotal,
+  productActive,
+  productNew,
+  productContacting,
+  productQuoted,
+  productTopStage,
+  productInquiryForm,
+  productCtaClick,
+  productPathMetric,
+  filters,
+}: {
+  productTotal: number
+  productActive: number
+  productNew: number
+  productContacting: number
+  productQuoted: number
+  productTopStage: LeadSourceStageStatusSummary | undefined
+  productInquiryForm: LeadSourceStageStatusSummary | undefined
+  productCtaClick: LeadSourceStageStatusSummary | undefined
+  productPathMetric: AnalyticsConversionMetric
+  filters: LeadFilterState
+}) {
+  const productAllHref = createLeadsHref(filters, { source_type: 'product', source_stage: 'all', status: 'all', page: 1 })
+  const productFormHref = createLeadsHref(filters, { source_type: 'product', source_stage: 'product:inquiry_form', status: 'all', page: 1 })
+  const productCtaHref = createLeadsHref(filters, { source_type: 'product', source_stage: 'product:cta_click', status: 'all', page: 1 })
+  const pathActions = productPathMetric.ctaClicks + productPathMetric.formSubmits
+  const noLeadSignal = productPathMetric.views > 0 && productPathMetric.leads === 0
+  const actionNoLeadSignal = pathActions > 0 && productTotal === 0
+  const items: ProductLeadOpsItem[] = [
+    {
+      label: '产品线索筛选',
+      value: `${formatNumber(productTotal)} 条`,
+      detail: `当前产品来源活跃 ${formatNumber(productActive)} 条，新线索 ${formatNumber(productNew)} 条。先从这里确认是否有待响应或待跟进样本。`,
+      href: productAllHref,
+      cta: '筛选产品线索',
+      Icon: ClipboardCheck,
+      tone: productActive > 0 ? 'orange' : productTotal > 0 ? 'blue' : 'gray',
+    },
+    {
+      label: '产品表单样本',
+      value: `${formatNumber(productInquiryForm?.total ?? 0)} 条`,
+      detail: productInquiryForm
+        ? `表单阶段新线索 ${formatNumber(productInquiryForm.new)} 条，跟进中 ${formatNumber(productInquiryForm.contacting)} 条。`
+        : '还没有 product:inquiry_form 样本；有样本后可精确回看产品详情表单质量。',
+      href: productFormHref,
+      cta: '查看表单线索',
+      Icon: ListChecks,
+      tone: (productInquiryForm?.new ?? 0) > 0 ? 'orange' : productInquiryForm ? 'blue' : 'gray',
+    },
+    {
+      label: '产品 CTA 样本',
+      value: `${formatNumber(productCtaClick?.total ?? 0)} 条`,
+      detail: productCtaClick
+        ? `CTA 阶段活跃 ${formatNumber(productCtaClick.new + productCtaClick.contacting + productCtaClick.quoted)} 条，报价 ${formatNumber(productCtaClick.quoted)} 条。`
+        : '还没有 product:cta_click 线索样本；有动作无线索时先核对 Contact 承接和 source_stage。',
+      href: productCtaHref,
+      cta: '查看 CTA 线索',
+      Icon: MousePointerClick,
+      tone: (productCtaClick?.new ?? 0) > 0 ? 'orange' : productCtaClick ? 'blue' : productPathMetric.ctaClicks > 0 ? 'orange' : 'gray',
+    },
+    {
+      label: 'B323 转化复盘',
+      value: '生命周期',
+      detail: '回到产品生命周期转化复盘桥，把线索状态、路径动作、SEO 生命周期和产品总控放在同一条判断链。',
+      href: '/admin/site/conversion#product-lifecycle-conversion-bridge',
+      cta: '回到 B323',
+      Icon: MapPinned,
+      tone: productActive > 0 || actionNoLeadSignal ? 'orange' : 'blue',
+    },
+    {
+      label: 'B322 流量质量',
+      value: formatAnalyticsPercent(productPathMetric.conversionRate),
+      detail: `近 30 天产品访问 ${formatNumber(productPathMetric.views)}，动作 ${formatNumber(pathActions)}，线索 ${formatNumber(productPathMetric.leads)}。`,
+      href: '/admin/status/traffic#product-path-quality-review-desk',
+      cta: '查看流量质量',
+      Icon: BarChart3,
+      tone: productPathMetric.leads > 0 ? 'green' : noLeadSignal ? 'orange' : 'blue',
+    },
+    {
+      label: 'B320 产品生命周期',
+      value: '内容回流',
+      detail: '线索少或咨询质量弱时，回到产品生命周期总控处理新建、编辑、SEO、证明和公开产品入口。',
+      href: '/admin/content/products#product-lifecycle',
+      cta: '回到产品总控',
+      Icon: Package,
+      tone: noLeadSignal || actionNoLeadSignal ? 'orange' : 'blue',
+    },
+  ]
+
+  return (
+    <section id="product-lead-ops-review-desk" data-product-lead-ops-review="true" className="border-b border-[#D8E7E8] bg-[#FBFDFD]">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="border-l-4 border-[#1889B6] px-5 py-5">
+          <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">B324 PRODUCT LEAD OPS REVIEW</p>
+          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">产品线索运营复盘工作台</h2>
+          <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把 `source_type=product` 线索、产品表单阶段、产品 CTA 阶段、B323 转化复盘、B322 流量质量和 B320 产品生命周期串成只读运营链；这里不更新线索状态、不新增客户写入，也不改变产品保存、发布或权限规则。
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <CaseBackflowAction href={productAllHref} Icon={ClipboardCheck} label="产品线索" primary={productActive > 0} />
+            <CaseBackflowAction href="/admin/site/conversion#product-lifecycle-conversion-bridge" Icon={MapPinned} label="B323 转化" />
+            <CaseBackflowAction href="/admin/status/traffic#product-path-quality-review-desk" Icon={BarChart3} label="B322 流量" />
+            <CaseBackflowAction href="/admin/content/products#product-lifecycle" Icon={Package} label="B320 生命周期" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 border-t border-[#E6EEEE] bg-white lg:border-l lg:border-t-0">
+          <CaseBackflowStat label="产品线索" value={formatNumber(productTotal)} detail={`活跃 ${formatNumber(productActive)}`} warn={productActive > 0} />
+          <CaseBackflowStat label="新线索" value={formatNumber(productNew)} detail="首次响应优先" warn={productNew > 0} />
+          <CaseBackflowStat label="跟进/报价" value={formatNumber(productContacting + productQuoted)} detail={`${formatNumber(productContacting)} 跟进 / ${formatNumber(productQuoted)} 报价`} warn={productContacting + productQuoted > 0} />
+          <CaseBackflowStat label="主要阶段" value={productTopStage?.label ?? '暂无样本'} detail={productTopStage ? `${formatNumber(productTopStage.total)} 条` : '等待产品来源'} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-3 xl:grid-cols-6">
+        {items.map((item) => (
+          <CaseBackflowCard key={item.label} item={item} />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-white md:grid-cols-4">
+        <CaseBackflowSnapshot label="当前活跃" value={formatNumber(productActive)} detail="new + contacting + quoted" warn={productActive > 0} />
+        <CaseBackflowSnapshot label="产品表单" value={formatNumber(productInquiryForm?.total ?? 0)} detail="product:inquiry_form" />
+        <CaseBackflowSnapshot label="路径访问" value={formatNumber(productPathMetric.views)} detail="近 30 天访问" />
+        <CaseBackflowSnapshot label="路径线索" value={formatNumber(productPathMetric.leads)} detail={`转化 ${formatAnalyticsPercent(productPathMetric.conversionRate)}`} warn={noLeadSignal} />
+      </div>
+
+      <div className="border-t border-[#E6EEEE] px-5 py-3 text-xs leading-5 text-[#61767D]">
+        安全边界：本工作台只做产品线索分诊和入口串联；真实跟进、状态更新、分配、导出和删除仍由下方现有线索处理台控制，且当前页面继续保持 `allowDelete={false}`。
       </div>
     </section>
   )
@@ -885,6 +1036,7 @@ function getCustomerSideNav(summary: LeadDashboardSummary): AdminSideNavGroup[] 
     {
       title: '待处理',
       items: [
+        { key: 'product-ops-review', label: '产品线索复盘', href: '#product-lead-ops-review-desk', Icon: Package },
         { key: 'case-backflow', label: '案例回流', href: '#case-lead-content-backflow-desk', Icon: BadgeCheck },
         { key: 'todo', label: '新线索待跟进', href: buildLeadsPath('new'), badge: summary.new, Icon: ListChecks },
         { key: 'overdue', label: '超时队列', href: '/admin/customers/leads?attention=overdue', Icon: Clock3 },
