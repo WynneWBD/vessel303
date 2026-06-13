@@ -45,6 +45,14 @@ const EMPTY_PRODUCT_PATH_METRIC: AnalyticsConversionMetric = {
   conversionRate: 0,
 }
 
+const EMPTY_NEWS_PATH_METRIC: AnalyticsConversionMetric = {
+  views: 0,
+  ctaClicks: 0,
+  formSubmits: 0,
+  leads: 0,
+  conversionRate: 0,
+}
+
 type FunnelStepKey = (typeof FUNNEL_STEPS)[number]['key']
 
 type FunnelMatrixRow = {
@@ -135,6 +143,7 @@ export default async function AdminStatusLeadsPage() {
   const wonRate = leads.total > 0 ? Math.round((leads.won / leads.total) * 100) : 0
   const productPathMetric = pathAnalytics.products ?? EMPTY_PRODUCT_PATH_METRIC
   const casePathMetric = pathAnalytics.cases ?? EMPTY_CASE_PATH_METRIC
+  const newsPathMetric = pathAnalytics.news ?? EMPTY_NEWS_PATH_METRIC
 
   return (
     <StatusPageShell
@@ -202,6 +211,11 @@ export default async function AdminStatusLeadsPage() {
           sourceStatusSummary={sourceStatusSummary}
           sourceStageStatusSummary={sourceStageStatusSummary}
           casePathMetric={casePathMetric}
+        />
+
+        <NewsLeadPathBridge
+          sourceStatusSummary={sourceStatusSummary}
+          newsPathMetric={newsPathMetric}
         />
 
         <LeadSourceStageMatrix sourceStageStatusSummary={sourceStageStatusSummary} />
@@ -841,6 +855,138 @@ function CaseLeadPathBridge({
             className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
           >
             处理活跃案例线索
+          </Link>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function NewsLeadPathBridge({
+  sourceStatusSummary,
+  newsPathMetric,
+}: {
+  sourceStatusSummary: LeadSourceStatusSummary[]
+  newsPathMetric: AnalyticsConversionMetric
+}) {
+  const newsSource = sourceStatusSummary.find((source) => source.type === 'news')
+  const newsTotal = newsSource?.total ?? 0
+  const newsActive = newsSource ? newsSource.new + newsSource.contacting + newsSource.quoted : 0
+  const newsWonRate = percent(newsSource?.won ?? 0, newsTotal)
+  const bridgeRows = [
+    {
+      key: 'news-leads',
+      label: '新闻来源线索',
+      value: newsTotal,
+      detail: `活跃 ${formatNumber(newsActive)} / 成交占比 ${newsWonRate}%`,
+      status: newsActive > 0 ? '需处理' : newsTotal > 0 ? '可复盘' : '观察中',
+      tone: newsActive > 0 ? 'orange' : newsTotal > 0 ? 'blue' : 'gray',
+      href: '/admin/customers/leads?source_type=news',
+      actionLabel: '查看新闻线索',
+    },
+    {
+      key: 'news-new-leads',
+      label: '新闻新线索',
+      value: newsSource?.new ?? 0,
+      detail: `跟进中 ${formatNumber(newsSource?.contacting ?? 0)} / 已报价 ${formatNumber(newsSource?.quoted ?? 0)}`,
+      status: (newsSource?.new ?? 0) > 0 ? '需首次响应' : '观察中',
+      tone: (newsSource?.new ?? 0) > 0 ? 'orange' : newsTotal > 0 ? 'blue' : 'gray',
+      href: '/admin/customers/leads?source_type=news&status=new',
+      actionLabel: '看新闻新线索',
+    },
+    {
+      key: 'news-source-actions',
+      label: '新闻来源动作',
+      value: newsPathMetric.ctaClicks,
+      detail: `新闻访问 ${formatNumber(newsPathMetric.views)} / 表单成功 ${formatNumber(newsPathMetric.formSubmits)}`,
+      status: newsPathMetric.ctaClicks > 0 ? '有样本' : newsPathMetric.views > 0 ? '待复核' : '观察中',
+      tone: newsPathMetric.ctaClicks > 0 ? 'blue' : newsPathMetric.views > 0 ? 'orange' : 'gray',
+      href: '/admin/status/traffic#news-source-handoff',
+      actionLabel: '看来源面板',
+    },
+    {
+      key: 'news-conversion',
+      label: '新闻转化承接',
+      value: newsPathMetric.leads,
+      detail: `路径转化 ${formatAnalyticsPercent(newsPathMetric.conversionRate)}；回到转化中心看新闻承接。`,
+      status: newsPathMetric.leads > 0 ? '有线索' : newsPathMetric.views > 0 ? '待观察' : '观察中',
+      tone: newsPathMetric.leads > 0 ? 'green' : newsPathMetric.views > 0 ? 'orange' : 'gray',
+      href: '/admin/site/conversion#news-conversion-handoff',
+      actionLabel: '看转化承接',
+    },
+  ] as const
+
+  return (
+    <section className="space-y-4" id="news-lead-path-bridge">
+      <SectionTitle
+        title="新闻来源与线索承接"
+        detail="把新闻路径访问、新闻来源动作和 leads 表里的 news 来源线索放到同一个只读数据中心视角；处理仍回到客户线索页。"
+      />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
+          <FunnelSummary label="新闻路径访问" value={newsPathMetric.views} detail="近 30 天访问样本" warn={newsPathMetric.views > 0 && newsPathMetric.ctaClicks === 0} />
+          <FunnelSummary label="来源动作" value={newsPathMetric.ctaClicks} detail={`表单成功 ${formatNumber(newsPathMetric.formSubmits)}`} warn={newsPathMetric.ctaClicks > 0 && newsTotal === 0} />
+          <FunnelSummary label="路径线索" value={newsPathMetric.leads} detail={`转化 ${formatAnalyticsPercent(newsPathMetric.conversionRate)}`} warn={newsPathMetric.views > 0 && newsPathMetric.leads === 0} />
+          <FunnelSummary label="新闻来源线索" value={newsTotal} detail={`活跃 ${formatNumber(newsActive)} 条`} warn={newsActive > 0} />
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-xs text-[#61767D]">
+                <th className="min-w-44 px-5 py-3 text-left font-semibold">承接对象</th>
+                <th className="px-4 py-3 text-right font-semibold">线索 / 动作</th>
+                <th className="min-w-72 px-4 py-3 text-left font-semibold">当前证据</th>
+                <th className="min-w-32 px-4 py-3 text-left font-semibold">判断</th>
+                <th className="min-w-36 px-5 py-3 text-right font-semibold">入口</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E6EEEE]">
+              {bridgeRows.map((row) => (
+                <tr key={row.key} className="align-top transition hover:bg-[#FBFDFD]">
+                  <td className="px-5 py-4">
+                    <Link href={row.href} className="font-semibold text-[#1E2C31] hover:text-[#1889B6]">
+                      {row.label}
+                    </Link>
+                    <p className="mt-1 text-xs text-[#8A9EA4]">只读下钻，不直接改状态</p>
+                  </td>
+                  <td className="px-4 py-4 text-right text-lg font-bold text-[#1E2C31]">{formatNumber(row.value)}</td>
+                  <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">{row.detail}</td>
+                  <td className="px-4 py-4">
+                    <FunnelStatusBadge label={row.status} tone={row.tone} />
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <Link
+                      href={row.href}
+                      className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#E36F2C]/50 hover:text-[#E36F2C]"
+                    >
+                      {row.actionLabel}
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="flex flex-wrap gap-2 border-t border-[#E6EEEE] px-5 py-4">
+          <Link
+            href="/admin/status/traffic#news-source-handoff"
+            className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+          >
+            看新闻来源面板
+          </Link>
+          <Link
+            href="/admin/site/conversion#news-conversion-handoff"
+            className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+          >
+            看新闻转化承接
+          </Link>
+          <Link
+            href="/admin/content/news#news-operations-hub"
+            className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
+          >
+            回到新闻运营
           </Link>
         </div>
       </div>
