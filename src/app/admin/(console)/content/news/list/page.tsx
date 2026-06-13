@@ -14,7 +14,20 @@ import {
   type AdminRole,
   type NewsStats,
 } from '../_news-console'
-import { Archive, ArrowRight, BarChart3, CheckCircle2, FileText, ListChecks, Plus, Tags } from 'lucide-react'
+import {
+  Archive,
+  ArrowRight,
+  BarChart3,
+  CheckCircle2,
+  FileText,
+  Link2,
+  ListChecks,
+  Newspaper,
+  Plus,
+  SearchCheck,
+  Tags,
+  type LucideIcon,
+} from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -69,6 +82,16 @@ type NewsSourceSeoBridgeItem = {
   href: string
   action: string
   tone: 'blue' | 'green' | 'orange'
+}
+
+type NewsListSourceConversionQueueItem = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  action: string
+  Icon: LucideIcon
+  tone: 'blue' | 'green' | 'orange' | 'neutral'
 }
 
 const EMPTY_NEWS_ISSUE_SUMMARY: NewsIssueSummary = {
@@ -683,6 +706,173 @@ function NewsSourceSeoBridgeCard({ card }: { card: NewsSourceSeoBridgeItem }) {
   )
 }
 
+function NewsListSourceConversionQueue({
+  filters,
+  categories,
+  stats,
+  issueSummary,
+  total,
+  rowsCount,
+}: {
+  filters: NewsFilterState
+  categories: NewsCategoryOption[]
+  stats: NewsStats
+  issueSummary: NewsIssueSummary
+  total: number
+  rowsCount: number
+}) {
+  const chips = buildActiveFilterChips(filters, categories)
+  const activeFilterLabel = chips.length > 0
+    ? chips.map((chip) => `${chip.label}:${chip.value}`).join(' / ')
+    : '全部新闻'
+  const contentBacklog = issueSummary.cover + issueSummary.body + issueSummary.excerpt + issueSummary.category
+  const openIssues = contentBacklog + issueSummary.seo
+  const items: NewsListSourceConversionQueueItem[] = [
+    {
+      label: '新闻优化台',
+      value: 'B294',
+      detail: '回到新闻内容到来源线索优化台，统一看内容待补、SEO 待补和新闻来源线索承接。',
+      href: '/admin/content/news#news-source-lead-optimization-desk',
+      action: '看优化台',
+      Icon: Newspaper,
+      tone: 'green',
+    },
+    {
+      label: '流量分诊',
+      value: 'B293',
+      detail: '从新闻列表处理完缺口后，回看访问路径、新闻动作和“有访问无线索”异常。',
+      href: '/admin/status/traffic#traffic-to-lead-exception-desk',
+      action: '看流量',
+      Icon: SearchCheck,
+      tone: openIssues > 0 ? 'orange' : 'blue',
+    },
+    {
+      label: '来源线索处理',
+      value: 'B292',
+      detail: '按 source_type=news 复核新闻来源线索、活跃度、阶段和运营跟进质量。',
+      href: '/admin/status/leads#source-lead-quality-workdesk',
+      action: '看线索处理',
+      Icon: Link2,
+      tone: 'blue',
+    },
+    {
+      label: '转化复盘',
+      value: 'B291',
+      detail: '把当前新闻列表筛选结果接入 SEO 到线索转化复盘，判断补内容后的获客承接。',
+      href: '/admin/site/conversion#seo-to-lead-conversion-review',
+      action: '看转化',
+      Icon: ListChecks,
+      tone: 'green',
+    },
+    {
+      label: '新闻线索队列',
+      value: 'source_type=news',
+      detail: '直接进入新闻来源线索队列；本页只做跳转，不改变线索状态或客户数据。',
+      href: '/admin/customers/leads?source_type=news',
+      action: '打开队列',
+      Icon: Link2,
+      tone: 'neutral',
+    },
+    {
+      label: '当前列表处理',
+      value: formatNumber(rowsCount),
+      detail: `${activeFilterLabel}；先处理本页高优先级内容和 SEO 缺口，再回看流量与线索。`,
+      href: '#news-list-table',
+      action: '处理列表',
+      Icon: FileText,
+      tone: openIssues > 0 ? 'orange' : 'green',
+    },
+  ]
+
+  return (
+    <section id="news-list-source-conversion-queue" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="border-l-4 border-[#E36F2C] px-4 py-4">
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B295 NEWS LIST SOURCE CONVERSION QUEUE</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻列表来源转化处理队列</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把当前新闻列表筛选、B294 新闻优化台、B293 流量分诊、B292 来源线索处理、B291 转化复盘和 `source_type=news` 线索队列接成一条处理链；先在列表补齐内容和 SEO，再回看新闻访问与线索承接。本区只读，不新增发布、删除、保存或线索写入能力。
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <PrimaryAction href="/admin/content/news#news-source-lead-optimization-desk" Icon={Newspaper} label="B294 优化台" primary />
+            <PrimaryAction href="/admin/status/traffic#traffic-to-lead-exception-desk" Icon={SearchCheck} label="B293 流量分诊" />
+            <PrimaryAction href="/admin/status/leads#source-lead-quality-workdesk" Icon={Link2} label="B292 线索处理" />
+            <PrimaryAction href="/admin/site/conversion#seo-to-lead-conversion-review" Icon={ListChecks} label="B291 转化复盘" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 border-t border-[#E6EEEE] bg-[#FBFDFD] lg:border-l lg:border-t-0">
+          <NewsQueueStat label="当前筛选" value={formatNumber(total)} detail={activeFilterLabel} />
+          <NewsQueueStat label="本页样本" value={formatNumber(rowsCount)} detail={`每页 ${formatNumber(LIMIT)} 条`} />
+          <NewsQueueStat label="内容待补" value={formatNumber(contentBacklog)} detail="封面/正文/摘要/分类" warn={contentBacklog > 0} />
+          <NewsQueueStat label="SEO 待补" value={formatNumber(issueSummary.seo)} detail={`${formatNumber(stats.missingSeo)} 条总览待补`} warn={issueSummary.seo > 0 || stats.missingSeo > 0} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-2 xl:grid-cols-3">
+        {items.map((item) => (
+          <NewsListSourceConversionCard key={item.label} item={item} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function NewsQueueStat({
+  label,
+  value,
+  detail,
+  warn = false,
+}: {
+  label: string
+  value: string
+  detail: string
+  warn?: boolean
+}) {
+  return (
+    <div className="min-w-0 border-b border-[#E6EEEE] px-4 py-3 even:border-l">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-1 truncate text-2xl font-bold ${warn ? 'text-[#E36F2C]' : 'text-[#1E2C31]'}`} title={value}>{value}</p>
+      <p className="mt-1 truncate text-xs text-[#8A9EA4]" title={detail}>{detail}</p>
+    </div>
+  )
+}
+
+function NewsListSourceConversionCard({ item }: { item: NewsListSourceConversionQueueItem }) {
+  const Icon = item.Icon
+  const toneClass =
+    item.tone === 'green'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+      : item.tone === 'orange'
+        ? 'border-[#F4C7A6] bg-[#FFF2E7] text-[#C85F24]'
+        : item.tone === 'neutral'
+          ? 'border-[#D8E7E8] bg-[#F7FAFA] text-[#61767D]'
+          : 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <Link
+      href={item.href}
+      className="group min-h-[168px] border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-[#FBFDFD] md:odd:border-r xl:border-r"
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-xs font-bold text-[#1E2C31]">{item.label}</span>
+          <span className={`mt-2 inline-flex min-h-7 max-w-full items-center rounded-md border px-2.5 text-[11px] font-bold ${toneClass}`}>
+            <span className="truncate">{item.value}</span>
+          </span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block min-h-12 text-xs leading-5 text-[#61767D]">{item.detail}</span>
+      <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6] group-hover:text-[#E36F2C]">
+        {item.action}
+        <ArrowRight size={13} />
+      </span>
+    </Link>
+  )
+}
+
 function NewsControlStat({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
     <div className="border-r border-[#E6EEEE] px-4 py-4 last:border-r-0">
@@ -964,6 +1154,14 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
       />
       <div className="space-y-6">
         <NewsListGovernancePanel
+          filters={filters}
+          categories={categories}
+          stats={stats}
+          issueSummary={issueSummary}
+          total={total}
+          rowsCount={rows.length}
+        />
+        <NewsListSourceConversionQueue
           filters={filters}
           categories={categories}
           stats={stats}
