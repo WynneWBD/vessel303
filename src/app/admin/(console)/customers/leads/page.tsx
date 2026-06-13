@@ -21,11 +21,15 @@ import { formatAnalyticsPercent, loadConversionPathAnalytics, type AnalyticsConv
 import {
   ArrowRight,
   BadgeCheck,
+  BarChart3,
   Clock3,
+  ClipboardCheck,
+  ExternalLink,
   FileText,
   Filter,
   Inbox,
   ListChecks,
+  MapPinned,
   MessageSquareText,
   Package,
   SearchCheck,
@@ -87,6 +91,17 @@ type LeadConsoleRow = {
   tone: LeadConsoleTone
   actions: LeadConsoleAction[]
   contracts?: LeadSourceContract[]
+}
+
+type CaseLeadBackflowItem = {
+  label: string
+  value: string
+  detail: string
+  href: string
+  cta: string
+  Icon: LucideIcon
+  tone: LeadConsoleTone
+  external?: boolean
 }
 
 const EMPTY_LEADS_RESULT: LeadsResult = {
@@ -278,6 +293,13 @@ function leadConsoleSignalClass(tone: LeadConsoleTone): string {
   if (tone === 'orange') return 'bg-[#FFF2E7] text-[#C85F24]'
   if (tone === 'gray') return 'bg-[#EEF3F4] text-[#61767D]'
   return 'bg-[#EAF6F8] text-[#1889B6]'
+}
+
+function leadConsoleBadgeClass(tone: LeadConsoleTone): string {
+  if (tone === 'green') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  if (tone === 'orange') return 'border-[#F4C7A6] bg-[#FFF2E7] text-[#C85F24]'
+  if (tone === 'gray') return 'border-[#D8E7E8] bg-[#F7FAFA] text-[#61767D]'
+  return 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
 }
 
 function LeadsQueueConsole({
@@ -508,12 +530,248 @@ function LeadsQueueConsole({
         <LeadControlStat label="案例线索" value={`${formatNumber(caseTotal)} 条`} tone={caseActive > 0 ? 'orange' : caseTotal > 0 ? 'blue' : 'gray'} />
       </div>
 
+      <CaseLeadContentBackflowDesk
+        caseTotal={caseTotal}
+        caseActive={caseActive}
+        caseNew={caseSource?.new ?? 0}
+        caseContacting={caseSource?.contacting ?? 0}
+        caseQuoted={caseSource?.quoted ?? 0}
+        caseTopStage={caseTopStage}
+        caseInquiryForm={caseInquiryForm}
+        casePathMetric={casePathMetric}
+        filters={filters}
+      />
+
       <div className="grid grid-cols-1 gap-4 p-5 lg:grid-cols-2 2xl:grid-cols-5">
         {rows.map((row) => (
           <LeadConsoleRowView key={row.title} row={row} />
         ))}
       </div>
     </section>
+  )
+}
+
+function CaseLeadContentBackflowDesk({
+  caseTotal,
+  caseActive,
+  caseNew,
+  caseContacting,
+  caseQuoted,
+  caseTopStage,
+  caseInquiryForm,
+  casePathMetric,
+  filters,
+}: {
+  caseTotal: number
+  caseActive: number
+  caseNew: number
+  caseContacting: number
+  caseQuoted: number
+  caseTopStage: LeadSourceStageStatusSummary | undefined
+  caseInquiryForm: LeadSourceStageStatusSummary | undefined
+  casePathMetric: AnalyticsConversionMetric
+  filters: LeadFilterState
+}) {
+  const caseAllHref = createLeadsHref(filters, { source_type: 'case', source_stage: 'all', status: 'all', page: 1 })
+  const caseFormHref = createLeadsHref(filters, { source_type: 'case', source_stage: 'case:inquiry_form', status: 'all', page: 1 })
+  const noLeadSignal = casePathMetric.views > 0 && casePathMetric.leads === 0
+  const items: CaseLeadBackflowItem[] = [
+    {
+      label: '案例线索筛选',
+      value: `${formatNumber(caseTotal)} 条`,
+      detail: `当前案例来源活跃 ${formatNumber(caseActive)} 条，新线索 ${formatNumber(caseNew)} 条。先从这里确认是否有待跟进样本。`,
+      href: caseAllHref,
+      cta: '筛选案例线索',
+      Icon: ClipboardCheck,
+      tone: caseActive > 0 ? 'orange' : caseTotal > 0 ? 'blue' : 'gray',
+    },
+    {
+      label: '案例表单样本',
+      value: `${formatNumber(caseInquiryForm?.total ?? 0)} 条`,
+      detail: caseInquiryForm
+        ? `表单阶段新线索 ${formatNumber(caseInquiryForm.new)} 条，跟进中 ${formatNumber(caseInquiryForm.contacting)} 条。`
+        : '还没有 case:inquiry_form 样本；有样本后可精确回看案例详情表单质量。',
+      href: caseFormHref,
+      cta: '查看表单线索',
+      Icon: ListChecks,
+      tone: (caseInquiryForm?.new ?? 0) > 0 ? 'orange' : caseInquiryForm ? 'blue' : 'gray',
+    },
+    {
+      label: 'B303 案例总控',
+      value: '内容回流',
+      detail: '把线索侧发现的问题回到案例总控台，判断是补内容、看前台、查路径还是回列表队列。',
+      href: '/admin/content/projects#case-content-inquiry-command-center',
+      cta: '回到案例总控',
+      Icon: MapPinned,
+      tone: 'blue',
+    },
+    {
+      label: 'B300 弱案例队列',
+      value: '发布弱项',
+      detail: '线索少或咨询质量弱时，回到案例列表处理发布转化弱、素材缺口和叙事缺口。',
+      href: '/admin/content/projects/list#case-list-inquiry-conversion-queue',
+      cta: '处理弱案例',
+      Icon: SearchCheck,
+      tone: noLeadSignal ? 'orange' : 'blue',
+    },
+    {
+      label: '路径数据复盘',
+      value: formatAnalyticsPercent(casePathMetric.conversionRate),
+      detail: `近 30 天案例访问 ${formatNumber(casePathMetric.views)}，动作 ${formatNumber(casePathMetric.ctaClicks)}，线索 ${formatNumber(casePathMetric.leads)}。`,
+      href: '/admin/status/traffic#case-inquiry-path',
+      cta: '查看路径分析',
+      Icon: BarChart3,
+      tone: casePathMetric.leads > 0 ? 'green' : noLeadSignal ? 'orange' : 'blue',
+    },
+    {
+      label: '前台案例核查',
+      value: '/cases',
+      detail: '从客户视角查看案例列表和详情页，不把 Global 地图点位当成案例详情页替代品。',
+      href: '/cases',
+      cta: '打开前台案例',
+      Icon: ExternalLink,
+      tone: 'blue',
+      external: true,
+    },
+  ]
+
+  return (
+    <section id="case-lead-content-backflow-desk" className="border-b border-[#D8E7E8] bg-[#FBFDFD]">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="border-l-4 border-[#E36F2C] px-5 py-5">
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B304 CASE LEAD CONTENT BACKFLOW</p>
+          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">案例线索到内容回流工作台</h2>
+          <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把 `source_type=case` 线索、案例表单阶段、B303 案例总控、B300 弱案例队列、路径分析和前台 `/cases` 串成只读回流链；这里不更新线索状态、不新增客户写入，也不改变案例保存、发布或权限规则。
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <CaseBackflowAction href={caseAllHref} Icon={ClipboardCheck} label="案例线索" primary={caseActive > 0} />
+            <CaseBackflowAction href="/admin/content/projects#case-content-inquiry-command-center" Icon={MapPinned} label="B303 总控" />
+            <CaseBackflowAction href="/admin/content/projects/list#case-list-inquiry-conversion-queue" Icon={ListChecks} label="B300 队列" />
+            <CaseBackflowAction href="/admin/status/traffic#case-inquiry-path" Icon={BarChart3} label="路径分析" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 border-t border-[#E6EEEE] bg-white lg:border-l lg:border-t-0">
+          <CaseBackflowStat label="案例线索" value={formatNumber(caseTotal)} detail={`活跃 ${formatNumber(caseActive)}`} warn={caseActive > 0} />
+          <CaseBackflowStat label="新线索" value={formatNumber(caseNew)} detail="首次响应优先" warn={caseNew > 0} />
+          <CaseBackflowStat label="跟进/报价" value={formatNumber(caseContacting + caseQuoted)} detail={`${formatNumber(caseContacting)} 跟进 / ${formatNumber(caseQuoted)} 报价`} warn={caseContacting + caseQuoted > 0} />
+          <CaseBackflowStat label="主要阶段" value={caseTopStage?.label ?? '暂无样本'} detail={caseTopStage ? `${formatNumber(caseTopStage.total)} 条` : '等待案例来源'} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-3 xl:grid-cols-6">
+        {items.map((item) => (
+          <CaseBackflowCard key={item.label} item={item} />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-white md:grid-cols-4">
+        <CaseBackflowSnapshot label="当前活跃" value={formatNumber(caseActive)} detail="new + contacting + quoted" warn={caseActive > 0} />
+        <CaseBackflowSnapshot label="案例表单" value={formatNumber(caseInquiryForm?.total ?? 0)} detail="case:inquiry_form" />
+        <CaseBackflowSnapshot label="路径访问" value={formatNumber(casePathMetric.views)} detail="近 30 天访问" />
+        <CaseBackflowSnapshot label="路径线索" value={formatNumber(casePathMetric.leads)} detail={`转化 ${formatAnalyticsPercent(casePathMetric.conversionRate)}`} warn={noLeadSignal} />
+      </div>
+
+      <div className="border-t border-[#E6EEEE] px-5 py-3 text-xs leading-5 text-[#61767D]">
+        安全边界：本工作台只做运营分诊和入口串联；真实跟进、状态更新、分配、导出和删除仍由下方现有线索处理台控制，且当前页面继续保持 `allowDelete={false}`。
+      </div>
+    </section>
+  )
+}
+
+function CaseBackflowAction({
+  href,
+  Icon,
+  label,
+  primary = false,
+}: {
+  href: string
+  Icon: LucideIcon
+  label: string
+  primary?: boolean
+}) {
+  return (
+    <a
+      href={href}
+      className={`inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-xs font-bold transition ${
+        primary
+          ? 'bg-[#1889B6] text-white shadow-sm hover:bg-[#0F6F95]'
+          : 'border border-[#D8E7E8] bg-white text-[#1E2C31] hover:border-[#1889B6]/55 hover:text-[#1889B6]'
+      }`}
+    >
+      <Icon size={15} />
+      {label}
+    </a>
+  )
+}
+
+function CaseBackflowStat({
+  label,
+  value,
+  detail,
+  warn = false,
+}: {
+  label: string
+  value: string
+  detail: string
+  warn?: boolean
+}) {
+  return (
+    <div className="min-w-0 border-b border-[#E6EEEE] px-4 py-3 even:border-l">
+      <p className="text-xs font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-1 truncate text-2xl font-bold ${warn ? 'text-[#E36F2C]' : 'text-[#1E2C31]'}`} title={value}>{value}</p>
+      <p className="mt-1 truncate text-xs text-[#8A9EA4]" title={detail}>{detail}</p>
+    </div>
+  )
+}
+
+function CaseBackflowSnapshot({
+  label,
+  value,
+  detail,
+  warn = false,
+}: {
+  label: string
+  value: string
+  detail: string
+  warn?: boolean
+}) {
+  return (
+    <div className="border-b border-[#E6EEEE] px-4 py-3 md:border-r md:last:border-r-0">
+      <p className="text-[11px] font-semibold text-[#61767D]">{label}</p>
+      <p className={`mt-1 text-xl font-bold ${warn ? 'text-[#E36F2C]' : 'text-[#1E2C31]'}`}>{value}</p>
+      <p className="mt-1 text-xs leading-5 text-[#61767D]">{detail}</p>
+    </div>
+  )
+}
+
+function CaseBackflowCard({ item }: { item: CaseLeadBackflowItem }) {
+  const Icon = item.Icon
+
+  return (
+    <a
+      href={item.href}
+      target={item.external ? '_blank' : undefined}
+      rel={item.external ? 'noopener noreferrer' : undefined}
+      className="group min-h-[160px] border-b border-[#E6EEEE] px-4 py-4 transition hover:bg-white md:border-r xl:border-b-0 xl:last:border-r-0"
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-xs font-bold text-[#1E2C31]">{item.label}</span>
+          <span className={`mt-2 inline-flex min-h-7 max-w-full items-center rounded-md border px-2.5 text-[11px] font-bold ${leadConsoleBadgeClass(item.tone)}`}>
+            <span className="truncate">{item.value}</span>
+          </span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6] transition group-hover:border-[#1889B6]">
+          <Icon size={16} />
+        </span>
+      </span>
+      <span className="mt-3 block min-h-12 text-xs leading-5 text-[#61767D]">{item.detail}</span>
+      <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6] group-hover:text-[#E36F2C]">
+        {item.cta}
+        {item.external ? <ExternalLink size={12} /> : <ArrowRight size={13} />}
+      </span>
+    </a>
   )
 }
 
@@ -627,6 +885,7 @@ function getCustomerSideNav(summary: LeadDashboardSummary): AdminSideNavGroup[] 
     {
       title: '待处理',
       items: [
+        { key: 'case-backflow', label: '案例回流', href: '#case-lead-content-backflow-desk', Icon: BadgeCheck },
         { key: 'todo', label: '新线索待跟进', href: buildLeadsPath('new'), badge: summary.new, Icon: ListChecks },
         { key: 'overdue', label: '超时队列', href: '/admin/customers/leads?attention=overdue', Icon: Clock3 },
         { key: 'unassigned', label: '未分配线索', href: '/admin/customers/leads?attention=unassigned', Icon: SearchCheck },
