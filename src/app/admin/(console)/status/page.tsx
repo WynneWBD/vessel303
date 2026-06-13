@@ -5,6 +5,7 @@ import {
   loadStatusOverview,
   sumContent,
   type ContentMetric,
+  type SeoMetrics,
 } from '@/lib/admin-status-metrics'
 import { loadCaseInquiryHealth, type CaseInquiryHealth } from '@/lib/project-case-inquiry-health'
 import {
@@ -56,6 +57,21 @@ type LedgerRow = {
   metric: SharedTrafficMetric
   href: string
   dateLabel?: string
+}
+
+type SourceSeoHealthRow = {
+  key: string
+  label: string
+  sourceType: string
+  metric: AnalyticsConversionMetric
+  seoMissing: number
+  contentIssues: number
+  contentHref: string
+  seoHref: string
+  leadHref: string
+  conversionHref: string
+  status: string
+  tone: 'green' | 'orange' | 'blue' | 'gray'
 }
 
 export default async function AdminStatusPage() {
@@ -139,6 +155,14 @@ export default async function AdminStatusPage() {
               thirtyDays={thirtyDays}
             />
 
+            <SourceSeoHealthLedger
+              analytics={analytics}
+              products={overview.content.products}
+              projects={overview.content.projects}
+              news={overview.content.news}
+              seo={overview.site.seo}
+            />
+
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
               <ConversionPathTable conversionPaths={analytics.conversionPaths} />
               <RankWorkspace analytics={analytics} />
@@ -179,6 +203,140 @@ export default async function AdminStatusPage() {
         </div>
       </section>
     </StatusPageShell>
+  )
+}
+
+function SourceSeoHealthLedger({
+  analytics,
+  products,
+  projects,
+  news,
+  seo,
+}: {
+  analytics: SiteAnalyticsDashboard
+  products: ContentMetric
+  projects: ContentMetric
+  news: ContentMetric
+  seo: SeoMetrics
+}) {
+  const rows = buildSourceSeoHealthRows({ analytics, products, projects, news, seo })
+  const totalViews = rows.reduce((sum, row) => sum + row.metric.views, 0)
+  const totalActions = rows.reduce((sum, row) => sum + sourceActions(row.metric), 0)
+  const totalLeads = rows.reduce((sum, row) => sum + row.metric.leads, 0)
+  const totalOpenItems = rows.reduce((sum, row) => sum + row.seoMissing + row.contentIssues, 0)
+
+  return (
+    <section id="source-seo-health" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h2 className="text-sm font-bold text-[#1E2C31]">B280 来源与 SEO 健康台账</h2>
+          <p className="mt-1 text-xs text-[#61767D]">
+            把 B279 来源总控接入数据中心：产品、案例、新闻同时看访问、动作、线索、SEO 缺项和内容承接缺项。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <StatusLink href="/admin/site#source-seo-control" label="站点总控" />
+          <StatusLink href="/admin/site/conversion#source-contract-portfolio" label="来源合同" />
+          <StatusLink href="/admin/site/seo#seo-conversion-closure" label="SEO 闭环" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 divide-x divide-y divide-[#E6EEEE] md:grid-cols-4 md:divide-y-0">
+        <SourceSeoStat label="来源访问" value={totalViews} detail="产品 + 案例 + 新闻" />
+        <SourceSeoStat label="来源动作" value={totalActions} detail="CTA / 联系 / 表单" />
+        <SourceSeoStat label="真实线索" value={totalLeads} detail="三类来源汇总" />
+        <SourceSeoStat label="待补项" value={totalOpenItems} detail="SEO + 内容承接" warn={totalOpenItems > 0} />
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[980px] text-sm">
+          <thead>
+            <tr className="border-y border-[#E6EEEE] bg-white text-[#61767D]">
+              <th className="px-4 py-3 text-left font-medium">来源合同</th>
+              <th className="px-4 py-3 text-right font-medium">访问</th>
+              <th className="px-4 py-3 text-right font-medium">动作</th>
+              <th className="px-4 py-3 text-right font-medium">线索</th>
+              <th className="px-4 py-3 text-right font-medium">转化率</th>
+              <th className="px-4 py-3 text-right font-medium">SEO 待补</th>
+              <th className="px-4 py-3 text-right font-medium">内容缺项</th>
+              <th className="px-4 py-3 text-left font-medium">状态</th>
+              <th className="px-4 py-3 text-right font-medium">下钻</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.key} className="border-b border-[#E6EEEE] last:border-0">
+                <td className="px-4 py-3">
+                  <Link href={row.conversionHref} className="font-semibold text-[#1E2C31] hover:text-[#1889B6]">
+                    {row.label}
+                  </Link>
+                  <div className="mt-1 text-xs text-[#8A9EA4]">source_type={row.sourceType}</div>
+                </td>
+                <td className="px-4 py-3 text-right font-semibold text-[#1E2C31]">{formatNumber(row.metric.views)}</td>
+                <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(sourceActions(row.metric))}</td>
+                <td className="px-4 py-3 text-right font-semibold text-[#E36F2C]">{formatNumber(row.metric.leads)}</td>
+                <td className="px-4 py-3 text-right font-semibold text-[#1889B6]">{formatAnalyticsPercent(row.metric.conversionRate)}</td>
+                <td className={`px-4 py-3 text-right font-semibold ${row.seoMissing > 0 ? 'text-[#E36F2C]' : 'text-emerald-700'}`}>
+                  {formatNumber(row.seoMissing)}
+                </td>
+                <td className={`px-4 py-3 text-right font-semibold ${row.contentIssues > 0 ? 'text-[#E36F2C]' : 'text-emerald-700'}`}>
+                  {formatNumber(row.contentIssues)}
+                </td>
+                <td className="px-4 py-3">
+                  <span className={`rounded-full px-2 py-1 text-xs font-bold ${sourceSeoToneClass(row.tone)}`}>
+                    {row.status}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <div className="flex justify-end gap-2">
+                    <Link href={row.leadHref} className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+                      线索
+                    </Link>
+                    <Link href={row.seoHref} className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+                      SEO
+                    </Link>
+                    <Link href={row.contentHref} className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+                      内容
+                    </Link>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
+function SourceSeoStat({
+  label,
+  value,
+  detail,
+  warn = false,
+}: {
+  label: string
+  value: number
+  detail: string
+  warn?: boolean
+}) {
+  return (
+    <div className="px-4 py-3">
+      <div className="text-xs font-semibold text-[#61767D]">{label}</div>
+      <div className={`mt-1 text-2xl font-black ${warn ? 'text-[#E36F2C]' : 'text-[#1E2C31]'}`}>{formatNumber(value)}</div>
+      <div className="mt-1 truncate text-xs text-[#61767D]">{detail}</div>
+    </div>
+  )
+}
+
+function StatusLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#61767D] transition hover:border-[#1889B6] hover:text-[#1889B6]"
+    >
+      {label}
+    </Link>
   )
 }
 
@@ -1041,6 +1199,90 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 
 function metricActions(metric: SharedTrafficMetric) {
   return (metric.ctaClicks ?? 0) + (metric.contactRedirects ?? 0) + metric.formSubmits
+}
+
+function sourceActions(metric: AnalyticsConversionMetric) {
+  return metric.ctaClicks + metric.formSubmits
+}
+
+function buildSourceSeoHealthRows({
+  analytics,
+  products,
+  projects,
+  news,
+  seo,
+}: {
+  analytics: SiteAnalyticsDashboard
+  products: ContentMetric
+  projects: ContentMetric
+  news: ContentMetric
+  seo: SeoMetrics
+}): SourceSeoHealthRow[] {
+  return [
+    {
+      key: 'products',
+      label: '产品来源合同',
+      sourceType: 'product',
+      metric: getConversionMetric(analytics, 'products'),
+      seoMissing: seo.productsMissing,
+      contentIssues: products.issues,
+      contentHref: '/admin/content/products/list#product-source-contract',
+      seoHref: '/admin/content/products/list?view=incomplete&issue=seo',
+      leadHref: '/admin/customers/leads?source_type=product',
+      conversionHref: '/admin/site/conversion#source-contract-portfolio',
+    },
+    {
+      key: 'cases',
+      label: '案例来源合同',
+      sourceType: 'case',
+      metric: getConversionMetric(analytics, 'cases'),
+      seoMissing: seo.projectsMissing,
+      contentIssues: projects.issues,
+      contentHref: '/admin/content/projects/list#case-source-contract',
+      seoHref: '/admin/content/projects/list?view=incomplete',
+      leadHref: '/admin/customers/leads?source_type=case',
+      conversionHref: '/admin/site/conversion#source-contract-portfolio',
+    },
+    {
+      key: 'news',
+      label: '新闻来源合同',
+      sourceType: 'news',
+      metric: getConversionMetric(analytics, 'news'),
+      seoMissing: seo.newsMissing,
+      contentIssues: news.issues,
+      contentHref: '/admin/content/news#news-operations-hub',
+      seoHref: '/admin/content/news/list',
+      leadHref: '/admin/customers/leads?source_type=news',
+      conversionHref: '/admin/site/conversion#source-contract-portfolio',
+    },
+  ].map((row) => {
+    const needsContent = row.seoMissing + row.contentIssues > 0
+    const hasTrafficGap = row.metric.views > 0 && row.metric.leads === 0
+    const hasLeads = row.metric.leads > 0
+
+    return {
+      ...row,
+      status: needsContent ? '待补内容' : hasTrafficGap ? '有访问待转化' : hasLeads ? '已有线索' : '待积累样本',
+      tone: needsContent || hasTrafficGap ? 'orange' : hasLeads ? 'green' : row.metric.views > 0 ? 'blue' : 'gray',
+    }
+  })
+}
+
+function getConversionMetric(analytics: SiteAnalyticsDashboard, key: string): AnalyticsConversionMetric {
+  return analytics.conversionPaths[key] ?? {
+    views: 0,
+    ctaClicks: 0,
+    formSubmits: 0,
+    leads: 0,
+    conversionRate: 0,
+  }
+}
+
+function sourceSeoToneClass(tone: SourceSeoHealthRow['tone']) {
+  if (tone === 'orange') return 'bg-[#FFF2E7] text-[#C85F24]'
+  if (tone === 'green') return 'bg-emerald-50 text-emerald-700'
+  if (tone === 'blue') return 'bg-[#EAF6F8] text-[#1889B6]'
+  return 'bg-[#F0F2F2] text-[#61767D]'
 }
 
 function safeRate(numerator: number, denominator: number) {
