@@ -534,6 +534,22 @@ function LeadsQueueConsole({
         <LeadControlStat label="案例线索" value={`${formatNumber(caseTotal)} 条`} tone={caseActive > 0 ? 'orange' : caseTotal > 0 ? 'blue' : 'gray'} />
       </div>
 
+      <ProductSourceLeadQueueHandoffDesk
+        productTotal={productTotal}
+        productActive={productActive}
+        productNew={productSource?.new ?? 0}
+        productContacting={productSource?.contacting ?? 0}
+        productQuoted={productSource?.quoted ?? 0}
+        productTopStage={productTopStage}
+        productInquiryForm={productInquiryForm}
+        productCtaClick={productCtaClick}
+        productPathMetric={productPathMetric}
+        operationsSummary={operationsSummary}
+        activeFilterChips={activeFilterChips}
+        result={result}
+        filters={filters}
+      />
+
       <ProductLeadOpsReviewDesk
         productTotal={productTotal}
         productActive={productActive}
@@ -563,6 +579,162 @@ function LeadsQueueConsole({
         {rows.map((row) => (
           <LeadConsoleRowView key={row.title} row={row} />
         ))}
+      </div>
+    </section>
+  )
+}
+
+function ProductSourceLeadQueueHandoffDesk({
+  productTotal,
+  productActive,
+  productNew,
+  productContacting,
+  productQuoted,
+  productTopStage,
+  productInquiryForm,
+  productCtaClick,
+  productPathMetric,
+  operationsSummary,
+  activeFilterChips,
+  result,
+  filters,
+}: {
+  productTotal: number
+  productActive: number
+  productNew: number
+  productContacting: number
+  productQuoted: number
+  productTopStage: LeadSourceStageStatusSummary | undefined
+  productInquiryForm: LeadSourceStageStatusSummary | undefined
+  productCtaClick: LeadSourceStageStatusSummary | undefined
+  productPathMetric: AnalyticsConversionMetric
+  operationsSummary: LeadOperationsSummary
+  activeFilterChips: ActiveFilterChip[]
+  result: LeadsResult
+  filters: LeadFilterState
+}) {
+  const productAllHref = createLeadsHref(filters, { source_type: 'product', source_stage: 'all', status: 'all', attention: 'all', page: 1 })
+  const productActiveHref = createLeadsHref(filters, { source_type: 'product', source_stage: 'all', status: 'all', attention: 'active', page: 1 })
+  const productOverdueHref = createLeadsHref(filters, { source_type: 'product', source_stage: 'all', status: 'all', attention: 'overdue', page: 1 })
+  const productFormHref = createLeadsHref(filters, { source_type: 'product', source_stage: 'product:inquiry_form', status: 'all', attention: 'all', page: 1 })
+  const productCtaHref = createLeadsHref(filters, { source_type: 'product', source_stage: 'product:cta_click', status: 'all', attention: 'all', page: 1 })
+  const currentProductHref = createLeadsHref(filters, { source_type: 'product', source_stage: 'all', page: 1 })
+  const pathActions = productPathMetric.ctaClicks + productPathMetric.formSubmits
+  const productFormActive = productInquiryForm ? productInquiryForm.new + productInquiryForm.contacting + productInquiryForm.quoted : 0
+  const productCtaActive = productCtaClick ? productCtaClick.new + productCtaClick.contacting + productCtaClick.quoted : 0
+  const currentProductView = filters.source_type === 'product'
+  const pathAttributionGap = pathActions > 0 && productTotal === 0
+  const followupRisk = productActive > 0 && operationsSummary.overdue > 0
+  const currentFilterSummary = activeFilterChips.length > 0
+    ? `${formatNumber(result.total)} filtered / ${formatNumber(result.leads.length)} on page`
+    : `${formatNumber(result.total)} all leads / ${formatNumber(result.leads.length)} on page`
+
+  const items: ProductLeadOpsItem[] = [
+    {
+      label: 'Product source queue',
+      value: `${formatNumber(productTotal)} leads`,
+      detail: `source_type=product consolidated view. Active product leads ${formatNumber(productActive)}, new ${formatNumber(productNew)}.`,
+      href: productAllHref,
+      cta: 'Open product source',
+      Icon: ClipboardCheck,
+      tone: productActive > 0 ? 'orange' : productTotal > 0 ? 'blue' : 'gray',
+    },
+    {
+      label: 'Active follow-up',
+      value: `${formatNumber(productActive)} active`,
+      detail: `new/contacting/quoted split: ${formatNumber(productNew)} / ${formatNumber(productContacting)} / ${formatNumber(productQuoted)}.`,
+      href: productActiveHref,
+      cta: 'Filter active leads',
+      Icon: Clock3,
+      tone: followupRisk || productActive > 0 ? 'orange' : 'green',
+    },
+    {
+      label: 'Product form stage',
+      value: `${formatNumber(productInquiryForm?.total ?? 0)} leads`,
+      detail: `product:inquiry_form active ${formatNumber(productFormActive)}. Use this to review product-detail form demand.`,
+      href: productFormHref,
+      cta: 'Open form leads',
+      Icon: ListChecks,
+      tone: productFormActive > 0 ? 'orange' : productInquiryForm ? 'blue' : 'gray',
+    },
+    {
+      label: 'Product CTA stage',
+      value: `${formatNumber(productCtaClick?.total ?? 0)} leads`,
+      detail: `product:cta_click active ${formatNumber(productCtaActive)}. Compare with product path clicks before changing content.`,
+      href: productCtaHref,
+      cta: 'Open CTA leads',
+      Icon: MousePointerClick,
+      tone: productCtaActive > 0 ? 'orange' : productCtaClick ? 'blue' : productPathMetric.ctaClicks > 0 ? 'orange' : 'gray',
+    },
+    {
+      label: 'B343 lead quality',
+      value: `${formatNumber(productPathMetric.leads)} path leads`,
+      detail: `Path actions ${formatNumber(pathActions)}, conversion ${formatAnalyticsPercent(productPathMetric.conversionRate)}. Escalate attribution gaps before changing lead records.`,
+      href: '/admin/status/leads#product-publish-lead-quality-handoff',
+      cta: 'Review B343',
+      Icon: UserRoundCheck,
+      tone: pathAttributionGap ? 'orange' : productPathMetric.leads > 0 ? 'green' : 'blue',
+    },
+    {
+      label: 'B342/B341 handoff',
+      value: productTopStage?.label ?? 'No stage yet',
+      detail: 'Traffic review and product publish queue remain the upstream read-only checks for weak product-source demand.',
+      href: '/admin/status/traffic#product-publish-path-review-handoff',
+      cta: 'Review path',
+      Icon: BarChart3,
+      tone: pathAttributionGap || productPathMetric.views > 0 ? 'orange' : 'blue',
+    },
+  ]
+
+  return (
+    <section
+      id="product-source-lead-queue-handoff"
+      data-product-source-lead-queue-handoff="true"
+      className="border-b border-[#D8E7E8] bg-[#F7FAFA]"
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="border-l-4 border-[#E36F2C] px-5 py-5">
+          <p className="text-xs font-bold uppercase text-[#C85F24]">B344 Product Source Queue Handoff</p>
+          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">产品来源线索处理队列承接</h2>
+          <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
+            将产品来源线索筛选、活跃/超时队列、产品表单、产品 CTA、B343 线索质量、B342 路径复盘和 B341 产品发布队列放在同一只读承接层。这里只提供判断入口和筛选链接，不写入线索状态、不分配负责人、不删除、不导出。
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <CaseBackflowAction href={productAllHref} Icon={ClipboardCheck} label="产品来源" primary={currentProductView || productActive > 0} />
+            <CaseBackflowAction href={productActiveHref} Icon={Clock3} label="活跃线索" primary={productActive > 0} />
+            <CaseBackflowAction href={productOverdueHref} Icon={UserRoundX} label="超时队列" primary={followupRisk} />
+            <CaseBackflowAction href="/admin/status/leads#product-publish-lead-quality-handoff" Icon={UserRoundCheck} label="B343 质量" />
+            <CaseBackflowAction href="/admin/status/traffic#product-publish-path-review-handoff" Icon={BarChart3} label="B342 路径" />
+            <CaseBackflowAction href="/admin/content/products/list#product-create-publish-queue-handoff" Icon={Package} label="B341 发布" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 border-t border-[#E6EEEE] bg-white lg:border-l lg:border-t-0">
+          <CaseBackflowStat label="当前筛选" value={currentProductView ? 'Product' : formatNumber(activeFilterChips.length)} detail={currentFilterSummary} warn={activeFilterChips.length > 0} />
+          <CaseBackflowStat label="产品来源" value={formatNumber(productTotal)} detail={`活跃 ${formatNumber(productActive)}`} warn={productActive > 0} />
+          <CaseBackflowStat label="表单/CTA" value={`${formatNumber(productInquiryForm?.total ?? 0)} / ${formatNumber(productCtaClick?.total ?? 0)}`} detail="inquiry_form / cta_click" warn={productFormActive + productCtaActive > 0} />
+          <CaseBackflowStat label="路径动作" value={formatNumber(pathActions)} detail={`线索 ${formatNumber(productPathMetric.leads)}`} warn={pathAttributionGap} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-3 xl:grid-cols-6">
+        {items.map((item) => (
+          <CaseBackflowCard key={item.label} item={item} />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-white md:grid-cols-4">
+        <CaseBackflowSnapshot label="当前产品视图" value={currentProductView ? '已聚焦' : '未聚焦'} detail={currentProductView ? 'source_type=product' : '可一键切到产品来源'} warn={!currentProductView && productActive > 0} />
+        <CaseBackflowSnapshot label="产品超时入口" value={followupRisk ? '需查看' : '正常'} detail="attention=overdue + source_type=product" warn={followupRisk} />
+        <CaseBackflowSnapshot label="归因缺口" value={pathAttributionGap ? '有动作无线索' : '未触发'} detail={`${formatNumber(pathActions)} actions / ${formatNumber(productTotal)} product leads`} warn={pathAttributionGap} />
+        <CaseBackflowSnapshot label="上游发布" value="B341" detail="产品创建与发布队列承接" />
+      </div>
+
+      <div className="flex flex-col gap-2 border-t border-[#E6EEEE] px-5 py-3 text-xs leading-5 text-[#61767D] sm:flex-row sm:items-center sm:justify-between">
+        <span>只读边界：本模块只生成筛选和回链，不改变线索、客户、产品、发布、权限或任何生产数据。</span>
+        <a href={currentProductHref} className="inline-flex items-center gap-1 font-semibold text-[#1889B6] hover:text-[#0F6F95]">
+          当前条件切到产品来源
+          <ArrowRight size={13} />
+        </a>
       </div>
     </section>
   )
@@ -1036,6 +1208,7 @@ function getCustomerSideNav(summary: LeadDashboardSummary): AdminSideNavGroup[] 
     {
       title: '待处理',
       items: [
+        { key: 'product-source-queue-handoff', label: '产品来源队列', href: '#product-source-lead-queue-handoff', Icon: ClipboardCheck },
         { key: 'product-ops-review', label: '产品线索复盘', href: '#product-lead-ops-review-desk', Icon: Package },
         { key: 'case-backflow', label: '案例回流', href: '#case-lead-content-backflow-desk', Icon: BadgeCheck },
         { key: 'todo', label: '新线索待跟进', href: buildLeadsPath('new'), badge: summary.new, Icon: ListChecks },
