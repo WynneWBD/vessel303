@@ -1308,6 +1308,7 @@ function getSideNavGroups(summary: ProductSummary): AdminSideNavGroup[] {
         { key: 'product-list', label: '产品列表', href: '/admin/content/products/list', Icon: ListChecks },
         { key: 'drafts', label: '草稿内容', href: '/admin/content/products/list?status=draft', badge: summary.draft, Icon: FileText },
         { key: 'todo', label: '待补内容', href: '/admin/content/products/list?view=incomplete', badge: summary.incomplete, Icon: CircleDashed },
+        { key: 'create-publish-handoff', label: '发布队列承接', href: '#product-create-publish-queue-handoff', Icon: ArrowRight },
         { key: 'checks', label: '发布前检查', planned: true, Icon: SearchCheck },
       ],
     },
@@ -1532,6 +1533,203 @@ function ControlStat({ label, value, detail }: { label: string; value: string; d
       <p className="mt-1 truncate text-xl font-bold text-[#1E2C31]">{value}</p>
       <p className="mt-1 truncate text-xs text-[#8A9EA4]">{detail}</p>
     </div>
+  )
+}
+
+function ProductCreatePublishQueueHandoffPanel({
+  summary,
+  issueSummary,
+  rows,
+  filters,
+  productPathMetric,
+}: {
+  summary: ProductSummary
+  issueSummary: ProductIssueSummary
+  rows: ProductListRow[]
+  filters: FilterState
+  productPathMetric: AnalyticsConversionMetric
+}) {
+  const pageEntries = rows.map((product) => ({
+    product,
+    issues: getProductIssues(product),
+  }))
+  const pageDraftCount = pageEntries.filter((entry) => entry.product.status === 'draft').length
+  const pagePublishedRiskCount = pageEntries.filter((entry) => entry.product.status === 'published' && entry.issues.length > 0).length
+  const pageIncompleteCount = pageEntries.filter((entry) => entry.issues.length > 0).length
+  const activeFilterCount = buildActiveFilterChips(filters, EMPTY_OPTIONS).length
+  const publishingGapCount = issueSummary.commercial + issueSummary.keywords + issueSummary.related + issueSummary.buyer_resources
+  const draftQueueHref = `${createHref(filters, { status: 'draft', view: 'incomplete', issue: '' })}#product-draft-recovery-readiness-desk`
+  const stages: ProductSourceContract[] = [
+    {
+      label: 'B340 总览流程',
+      value: 'overview',
+      detail: '先回产品管理总览确认新建、审批、单品检查、草稿补齐和公开复盘全链路。',
+      href: '/admin/content/products#product-create-publish-flow',
+      Icon: BarChart3,
+      tone: 'blue',
+    },
+    {
+      label: 'B339 新建草稿审批',
+      value: 'new',
+      detail: '新建前核对分类属性、媒体、关联推荐和发布影响边界。',
+      href: '/admin/content/products/new#new-product-draft-approval-desk',
+      Icon: Plus,
+      tone: 'green',
+    },
+    {
+      label: 'B338 表单发布审批',
+      value: 'form',
+      detail: '在产品表单发布检查区复核保存状态、发布缺项、运营归属和询盘交接。',
+      href: '/admin/content/products/new#publish-check',
+      Icon: SearchCheck,
+      tone: 'gray',
+    },
+    {
+      label: 'B336 草稿补齐队列',
+      value: formatNumber(summary.draft),
+      detail: '回到当前列表锁定草稿缺项，把补齐动作落到筛选和编辑入口。',
+      href: draftQueueHref,
+      Icon: FileText,
+      tone: summary.draft > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '公开目录复盘',
+      value: formatNumber(productPathMetric.views),
+      detail: '发布后回到公开产品目录和产品路径线索，确认转化承接是否闭环。',
+      href: '/products',
+      Icon: Package,
+      tone: productPathMetric.leads > 0 ? 'green' : productPathMetric.views > 0 ? 'orange' : 'gray',
+    },
+  ]
+  const queueCards = [
+    {
+      label: '当前筛选',
+      value: activeFilterCount > 0 ? `${formatNumber(activeFilterCount)} 项` : '全部',
+      detail: `本页 ${formatNumber(rows.length)} 条 / 命中筛选 ${formatNumber(pageIncompleteCount)} 条有缺项`,
+      href: '#product-batch-governance',
+      Icon: Filter,
+      tone: activeFilterCount > 0 ? 'blue' : 'gray',
+    },
+    {
+      label: '本页草稿',
+      value: formatNumber(pageDraftCount),
+      detail: '优先进入草稿补齐队列，再打开单品编辑页复核发布检查。',
+      href: draftQueueHref,
+      Icon: FileText,
+      tone: pageDraftCount > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '发布缺口',
+      value: formatNumber(publishingGapCount),
+      detail: '商务条款、关键词、关联产品和买家资料会影响询盘承接。',
+      href: createHref(filters, { status: '', view: 'incomplete', issue: 'commercial' }),
+      Icon: ListChecks,
+      tone: publishingGapCount > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '已发布风险',
+      value: formatNumber(pagePublishedRiskCount),
+      detail: '已发布但仍有缺项的本页产品，应先回编辑页补齐再复盘公开路径。',
+      href: createHref(filters, { status: 'published', view: 'incomplete', issue: '' }),
+      Icon: CheckCircle2,
+      tone: pagePublishedRiskCount > 0 ? 'orange' : 'green',
+    },
+  ] satisfies Array<{
+    label: string
+    value: string
+    detail: string
+    href: string
+    Icon: LucideIcon
+    tone: 'blue' | 'green' | 'orange' | 'gray'
+  }>
+
+  return (
+    <section
+      id="product-create-publish-queue-handoff"
+      data-product-create-publish-queue-handoff="true"
+      className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
+      <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold text-[#E36F2C]">B341 Queue Handoff</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新建到发布队列承接摘要</h2>
+          <p className="mt-1 text-sm leading-6 text-[#61767D]">
+            承接 B340 总览流程，把 B339 新建草稿审批、B338 表单发布审批、B336 草稿补齐和公开目录复盘落到产品列表筛选队列；本区只读，不保存、不发布、不批量更新。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/content/products#product-create-publish-flow"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95D22]"
+          >
+            <BarChart3 size={13} />
+            B340 总览
+          </Link>
+          <Link
+            href={draftQueueHref}
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+          >
+            <FileText size={13} />
+            草稿队列
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-2 xl:grid-cols-4">
+        <MatrixKpi label="全库草稿" value={formatNumber(summary.draft)} detail="待补齐或发布检查" tone={summary.draft > 0 ? 'orange' : 'green'} />
+        <MatrixKpi label="本页草稿" value={formatNumber(pageDraftCount)} detail={`${formatNumber(rows.length)} 条当前结果`} tone={pageDraftCount > 0 ? 'orange' : 'green'} />
+        <MatrixKpi label="发布缺口" value={formatNumber(publishingGapCount)} detail="商务/关键词/关联/资料" tone={publishingGapCount > 0 ? 'orange' : 'green'} />
+        <MatrixKpi label="产品路径线索" value={formatNumber(productPathMetric.leads)} detail={`${formatNumber(productPathMetric.views)} 访问 / ${formatAnalyticsPercent(productPathMetric.conversionRate)}`} tone={productPathMetric.leads > 0 ? 'green' : productPathMetric.views > 0 ? 'orange' : 'gray'} />
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] lg:grid-cols-[minmax(0,1fr)_360px] lg:divide-x lg:divide-y-0">
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-5">
+          {stages.map((stage) => (
+            <ProductSourceContractLink key={stage.label} contract={stage} />
+          ))}
+        </div>
+        <aside className="bg-[#FBFDFD]">
+          <div className="border-b border-[#E6EEEE] px-4 py-4">
+            <h3 className="text-sm font-bold text-[#1E2C31]">当前列表承接点</h3>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">
+              先切队列，再处理草稿、发布缺口和已发布风险。
+            </p>
+          </div>
+          <div className="divide-y divide-[#E6EEEE]">
+            {queueCards.map((card) => {
+              const Icon = card.Icon
+              const toneClass =
+                card.tone === 'green'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : card.tone === 'orange'
+                    ? 'border-[#F4C7A6] bg-[#FFF2E7] text-[#C85F24]'
+                    : card.tone === 'blue'
+                      ? 'border-[#B9DDE7] bg-[#EAF6F8] text-[#1889B6]'
+                      : 'border-[#D8E7E8] bg-white text-[#61767D]'
+
+              return (
+                <Link key={card.label} href={card.href} className="block px-4 py-3 transition hover:bg-white">
+                  <span className="flex items-start gap-3">
+                    <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${toneClass}`}>
+                      <Icon size={15} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="flex items-center justify-between gap-2">
+                        <span className="truncate text-sm font-bold text-[#1E2C31]">{card.label}</span>
+                        <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${toneClass}`}>
+                          {card.value}
+                        </span>
+                      </span>
+                      <span className="mt-1 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
+                    </span>
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+        </aside>
+      </div>
+    </section>
   )
 }
 
@@ -3423,6 +3621,13 @@ export default async function AdminContentProductsListPage({ searchParams }: Pag
           productPathMetric={productPathMetric}
           total={list.total}
           rowsCount={list.rows.length}
+        />
+        <ProductCreatePublishQueueHandoffPanel
+          summary={summary}
+          issueSummary={issueSummary}
+          rows={list.rows}
+          filters={filters}
+          productPathMetric={productPathMetric}
         />
         <ProductOperationsMatrix
           summary={summary}
