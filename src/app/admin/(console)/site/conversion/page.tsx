@@ -330,6 +330,7 @@ function getSideNav(): AdminSideNavGroup[] {
       items: [
         { key: 'overview', label: '网站概览', href: '/admin/site', Icon: LayoutTemplate },
         { key: 'conversion', label: '转化路径', href: '/admin/site/conversion', Icon: Link2 },
+        { key: 'product-source-conversion-followup', label: '产品来源复盘', href: '/admin/site/conversion#product-source-conversion-followup-handoff', Icon: CheckCircle2 },
         { key: 'product-lifecycle-conversion', label: '产品生命周期转化', href: '/admin/site/conversion#product-lifecycle-conversion-bridge', Icon: Route },
         { key: 'case-followup-conversion', label: '案例跟进复盘', href: '/admin/site/conversion#case-followup-conversion-review-bridge', Icon: TrendingUp },
         { key: 'pages', label: '页面清单', href: '/admin/site/pages', Icon: ListChecks },
@@ -442,6 +443,11 @@ export default async function AdminSiteConversionPage() {
           productPathMetric={productPathMetric}
           casePathMetric={casePathMetric}
           newsPathMetric={newsPathMetric}
+          leadSourceSummary={leadSourceSummary}
+          sourceStageSummary={sourceStageSummary}
+        />
+        <ProductSourceConversionFollowupHandoff
+          productPathMetric={productPathMetric}
           leadSourceSummary={leadSourceSummary}
           sourceStageSummary={sourceStageSummary}
         />
@@ -1561,6 +1567,197 @@ function CaseFollowupConversionReviewBridge({
             </span>
           </Link>
         ))}
+      </div>
+    </section>
+  )
+}
+
+function ProductSourceConversionFollowupHandoff({
+  productPathMetric,
+  leadSourceSummary,
+  sourceStageSummary,
+}: {
+  productPathMetric: AnalyticsConversionMetric
+  leadSourceSummary: LeadSourceStatusSummary[]
+  sourceStageSummary: LeadSourceStageStatusSummary[]
+}) {
+  const productSource = leadSourceSummary.find((source) => source.type === 'product')
+  const productStages = sourceStageSummary.filter((stage) => stage.type === 'product')
+  const inquiryForm = sourceStageSummary.find((stage) => stage.key === 'product:inquiry_form')
+  const ctaClick = sourceStageSummary.find((stage) => stage.key === 'product:cta_click')
+  const productTotal = productSource?.total ?? 0
+  const productNew = productSource?.new ?? 0
+  const productContacting = productSource?.contacting ?? 0
+  const productQuoted = productSource?.quoted ?? 0
+  const productActive = productNew + productContacting + productQuoted
+  const pathActions = productPathMetric.ctaClicks + productPathMetric.formSubmits
+  const formActive = inquiryForm ? inquiryForm.new + inquiryForm.contacting + inquiryForm.quoted : 0
+  const ctaActive = ctaClick ? ctaClick.new + ctaClick.contacting + ctaClick.quoted : 0
+  const stageActive = productStages.reduce((sum, stage) => sum + stage.new + stage.contacting + stage.quoted, 0)
+  const attributionGap = pathActions > 0 && productTotal === 0
+  const visitNoAction = productPathMetric.views > 0 && pathActions === 0
+  const followupPriority =
+    attributionGap
+      ? 'P0 动作无线索'
+      : productActive > 0
+        ? 'P1 活跃跟进'
+        : visitNoAction
+          ? 'P1 访问无动作'
+          : productTotal > 0 || productPathMetric.leads > 0
+            ? 'P2 样本复盘'
+            : 'P3 等待样本'
+  const followupTone: 'green' | 'orange' | 'gray' | 'blue' =
+    attributionGap || productActive > 0 || visitNoAction
+      ? 'orange'
+      : productTotal > 0 || productPathMetric.leads > 0
+        ? 'green'
+        : productPathMetric.views > 0 || pathActions > 0
+          ? 'blue'
+          : 'gray'
+  const decision =
+    attributionGap
+      ? '产品路径已有 CTA 或表单动作，但线索库还没有 product 来源样本。优先回 B344 产品来源队列和 B343 线索质量承接核对 source_type、source_stage 与表单成功事件。'
+      : productActive > 0
+        ? '产品来源已有活跃线索。先在 B344 队列确认 active/overdue，再回到本页判断这些线索对应的产品路径、SEO 入口和生命周期内容是否需要补强。'
+        : visitNoAction
+          ? '产品路径已有访问但动作不足。先回 B342 路径复盘看 CTA、表单和产品入口，再回 B341/B320 检查发布内容、证明素材和公开目录承接。'
+          : productTotal > 0 || productPathMetric.leads > 0
+            ? '产品来源已有样本，可继续用转化页追踪路径动作、表单阶段和后续跟进质量。'
+            : '产品来源暂时缺少足够样本，保持 B344 队列、B343 质量、B342 路径和 B341 发布入口可下钻，等待真实访问与询盘。'
+
+  const cards = [
+    {
+      label: 'B344 产品来源队列',
+      value: productTotal,
+      detail: `活跃 ${productActive.toLocaleString('zh-CN')} / 新 ${productNew.toLocaleString('zh-CN')} / 报价 ${productQuoted.toLocaleString('zh-CN')}`,
+      href: '/admin/customers/leads?source_type=product#product-source-lead-queue-handoff',
+      Icon: ListChecks,
+      tone: productActive > 0 ? 'orange' as const : productTotal > 0 ? 'green' as const : 'gray' as const,
+    },
+    {
+      label: 'B344 活跃/超时',
+      value: productActive,
+      detail: `跟进 ${productContacting.toLocaleString('zh-CN')} / 表单活跃 ${formActive.toLocaleString('zh-CN')} / CTA 活跃 ${ctaActive.toLocaleString('zh-CN')}`,
+      href: '/admin/customers/leads?source_type=product&attention=active#product-source-lead-queue-handoff',
+      Icon: CheckCircle2,
+      tone: productActive > 0 ? 'orange' as const : 'gray' as const,
+    },
+    {
+      label: 'B343 线索质量',
+      value: productPathMetric.leads,
+      detail: `路径线索 ${productPathMetric.leads.toLocaleString('zh-CN')}；用于核对发布路径到真实线索质量。`,
+      href: '/admin/status/leads#product-publish-lead-quality-handoff',
+      Icon: TrendingUp,
+      tone: attributionGap ? 'orange' as const : productPathMetric.leads > 0 ? 'green' as const : 'blue' as const,
+    },
+    {
+      label: 'B342 路径动作',
+      value: pathActions,
+      detail: `访问 ${productPathMetric.views.toLocaleString('zh-CN')} / CTA ${productPathMetric.ctaClicks.toLocaleString('zh-CN')} / 表单 ${productPathMetric.formSubmits.toLocaleString('zh-CN')}`,
+      href: '/admin/status/traffic#product-publish-path-review-handoff',
+      Icon: BarChart3,
+      tone: attributionGap || visitNoAction ? 'orange' as const : productPathMetric.views > 0 ? 'blue' as const : 'gray' as const,
+    },
+    {
+      label: 'B323 生命周期转化',
+      value: formatAnalyticsPercent(productPathMetric.conversionRate),
+      detail: `产品阶段 ${productStages.length.toLocaleString('zh-CN')} 类 / 阶段活跃 ${stageActive.toLocaleString('zh-CN')}`,
+      href: '#product-lifecycle-conversion-bridge',
+      Icon: Route,
+      tone: productPathMetric.leads > 0 || productTotal > 0 ? 'green' as const : productPathMetric.views > 0 ? 'orange' as const : 'blue' as const,
+    },
+    {
+      label: 'B341 发布队列',
+      value: 'Publish',
+      detail: '产品来源转化弱时回到新建、补齐、发布、SEO 和公开目录入口，不直接改线索数据。',
+      href: '/admin/content/products/list#product-create-publish-queue-handoff',
+      Icon: ShieldCheck,
+      tone: visitNoAction || attributionGap ? 'orange' as const : 'blue' as const,
+    },
+  ]
+
+  const followupLinks = [
+    {
+      label: 'B344 队列',
+      href: '/admin/customers/leads?source_type=product#product-source-lead-queue-handoff',
+      detail: '先看 product 来源线索、活跃/超时、表单和 CTA 阶段。',
+      tone: productActive > 0 ? 'orange' as const : 'blue' as const,
+    },
+    {
+      label: 'B343 质量',
+      href: '/admin/status/leads#product-publish-lead-quality-handoff',
+      detail: '再核对产品发布路径到线索质量承接，确认归因和跟进断点。',
+      tone: attributionGap ? 'orange' as const : 'blue' as const,
+    },
+    {
+      label: 'B342 路径',
+      href: '/admin/status/traffic#product-publish-path-review-handoff',
+      detail: '看产品路径访问、动作、表单、Top 产品页和 SEO 缺口。',
+      tone: attributionGap || visitNoAction ? 'orange' as const : 'blue' as const,
+    },
+    {
+      label: 'B341 发布',
+      href: '/admin/content/products/list#product-create-publish-queue-handoff',
+      detail: '内容、证明、SEO 或发布承接弱时回产品发布队列处理。',
+      tone: 'blue' as const,
+    },
+  ]
+
+  return (
+    <section
+      id="product-source-conversion-followup-handoff"
+      data-product-source-conversion-followup-handoff="true"
+      className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
+      <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase text-[#C85F24]">B345 Product Source Conversion Follow-up</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品来源线索到转化复盘承接</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            将 B344 产品来源线索队列、B343 线索质量、B342 路径复盘、B323 产品生命周期转化和 B341 发布队列收在一个只读判断层。这里不写入 analytics、不改 leads、不改负责人、不改线索状态，只帮助运营判断下一步该回队列、看质量、看路径还是补产品发布内容。
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <SeoToLeadReviewAction href="/admin/customers/leads?source_type=product#product-source-lead-queue-handoff" label="B344 队列" />
+          <SeoToLeadReviewAction href="/admin/status/leads#product-publish-lead-quality-handoff" label="B343 质量" />
+          <SeoToLeadReviewAction href="/admin/status/traffic#product-publish-path-review-handoff" label="B342 路径" />
+          <SeoToLeadReviewAction href="/admin/content/products/list#product-create-publish-queue-handoff" label="B341 发布" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-6">
+        {cards.map((card) => (
+          <ProductConversionClosureCard key={card.label} card={card} />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.78fr)]">
+        <div className="px-5 py-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${caseInquiryToneClass(followupTone)}`}>
+              {followupPriority}
+            </span>
+            <span className="text-sm font-semibold text-[#1E2C31]">产品来源转化判断</span>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-[#61767D]">{decision}</p>
+        </div>
+        <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 lg:border-l lg:border-t-0">
+          <p className="text-sm font-bold text-[#1E2C31]">只读复盘顺序</p>
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {followupLinks.map((item) => (
+              <Link key={item.label} href={item.href} className="group rounded-md border border-[#D8E7E8] bg-white px-3 py-3 transition hover:border-[#1889B6] hover:bg-[#F7FAFA]">
+                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${caseInquiryToneClass(item.tone)}`}>
+                  {item.label}
+                </span>
+                <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
+                <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
+                  进入复盘
+                  <ArrowRight size={12} />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   )
