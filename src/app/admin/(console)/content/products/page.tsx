@@ -280,6 +280,7 @@ function getSideNavGroups(stats: ProductStats): AdminSideNavGroup[] {
         { key: 'drafts', label: '草稿内容', href: '#drafts', badge: stats.draft, Icon: FileText },
         { key: 'content-closure', label: '产品闭环', href: '#content-closure', Icon: BarChart3 },
         { key: 'product-lifecycle', label: '生命周期', href: '#product-lifecycle', Icon: ClipboardCheck },
+        { key: 'create-publish-flow', label: '新建到发布', href: '#product-create-publish-flow', Icon: ArrowRight },
         { key: 'todo', label: '待补内容', href: '#todo', badge: getTodoCount(stats), Icon: CircleDashed },
         { key: 'checks', label: '发布前检查', href: '#checks', Icon: SearchCheck },
       ],
@@ -790,6 +791,7 @@ function ProductContentClosurePanel({ stats }: { stats: ProductStats }) {
       </div>
       <ProductSourceContractStrip entries={sourceContracts} />
       <ProductLifecycleControlStrip stats={stats} />
+      <ProductCreatePublishFlowPanel stats={stats} />
       <div className="grid grid-cols-1 gap-3 rounded-md border border-[#D8E7E8] bg-white p-4 text-sm shadow-sm md:grid-cols-3">
         <ClosureSnapshot label="已发布产品" value={stats.published} detail="前台产品页可见内容" />
         <ClosureSnapshot label="待补类型" value={getTodoCount(stats)} detail="影响内容完整度的字段组" />
@@ -820,6 +822,127 @@ function ProductLifecycleControlStrip({ stats }: { stats: ProductStats }) {
       <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-5">
         {entries.map((entry) => (
           <ProductSourceContractLink key={entry.label} entry={entry} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ProductCreatePublishFlowPanel({ stats }: { stats: ProductStats }) {
+  const todoCount = getTodoCount(stats)
+  const stages: ProductClosureEntry[] = [
+    {
+      label: '01 新建草稿审批',
+      value: 'B339',
+      detail: '先到新建页核对分类属性、媒体、关联推荐和发布影响边界，再保存草稿。',
+      href: '/admin/content/products/new#new-product-draft-approval-desk',
+      Icon: Plus,
+      tone: 'blue',
+    },
+    {
+      label: '02 表单发布审批',
+      value: 'B338',
+      detail: '进入表单发布检查区，核对保存状态、发布缺项、运营归属和询盘交接。',
+      href: '/admin/content/products/new#publish-check',
+      Icon: SearchCheck,
+      tone: 'green',
+    },
+    {
+      label: '03 单品发布检查',
+      value: 'B337',
+      detail: '保存后回到单品编辑页做恢复后发布前检查和人工确认。',
+      href: '/admin/content/products/list?status=draft',
+      Icon: Pencil,
+      tone: 'neutral',
+    },
+    {
+      label: '04 草稿补齐队列',
+      value: formatNumber(stats.draft),
+      detail: '回到产品列表定位草稿补齐队列，把缺项转成下一轮运营动作。',
+      href: '/admin/content/products/list?status=draft#product-draft-recovery-readiness-desk',
+      Icon: ListChecks,
+      tone: stats.draft > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '05 公开目录复盘',
+      value: formatNumber(stats.published),
+      detail: '发布后核对公开产品目录、详情页、CTA 和 product 来源线索。',
+      href: '/products',
+      Icon: Package,
+      tone: stats.published > 0 ? 'green' : 'neutral',
+    },
+  ]
+  const handoffCards: ProductClosureEntry[] = [
+    {
+      label: '待补类型',
+      value: formatNumber(todoCount),
+      detail: '如果待补类型仍存在，先走列表 incomplete 视图而不是直接发布。',
+      href: '/admin/content/products/list?view=incomplete',
+      Icon: CircleDashed,
+      tone: todoCount > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '草稿库存',
+      value: formatNumber(stats.draft),
+      detail: '草稿多时优先处理 B336 队列，减少发布前人工检查压力。',
+      href: '/admin/content/products/list?status=draft#product-draft-recovery-readiness-desk',
+      Icon: FileText,
+      tone: stats.draft > 0 ? 'orange' : 'green',
+    },
+    {
+      label: '运营底座',
+      value: `${formatNumber(stats.categories)}/${formatNumber(stats.attributes)}`,
+      detail: '分类和属性模板决定新建后能否进入公开目录筛选。',
+      href: '/admin/content/products/attributes',
+      Icon: SlidersHorizontal,
+      tone: stats.categories > 0 && stats.attributes > 0 ? 'green' : 'orange',
+    },
+  ]
+
+  return (
+    <div
+      id="product-create-publish-flow"
+      data-product-create-publish-flow="true"
+      className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
+      <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#E36F2C]">B340 Create To Publish</p>
+          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">新建到发布只读流程总览</h3>
+        </div>
+        <p className="max-w-3xl text-xs leading-5 text-[#61767D]">
+          把 B339 新建草稿审批、B338 表单发布审批、B337 单品检查、B336 草稿补齐和公开目录复盘压缩到总览页；这里只做路径提示，不保存、不发布、不更新产品。
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-5">
+        {stages.map((entry) => (
+          <ProductSourceContractLink key={entry.label} entry={entry} />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] bg-[#F7FAFA] p-4 md:grid-cols-3">
+        {handoffCards.map((entry) => (
+          <Link key={entry.label} href={entry.href} className="rounded-md border border-[#D8E7E8] bg-white p-4 transition hover:border-[#1889B6] hover:bg-[#F0F7F8]">
+            <span className="flex items-start justify-between gap-3">
+              <span className="min-w-0">
+                <span className="block text-sm font-bold text-[#1E2C31]">{entry.label}</span>
+                <span className="mt-1 block text-xs leading-5 text-[#61767D]">{entry.detail}</span>
+              </span>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#D8E7E8] bg-white text-[#1889B6]">
+                <entry.Icon size={16} />
+              </span>
+            </span>
+            <span className={`mt-3 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
+              entry.tone === 'orange'
+                ? 'border-[#F2C6A7] bg-[#FFF2E7] text-[#E36F2C]'
+                : entry.tone === 'green'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : 'border-[#D8E7E8] bg-[#FBFDFD] text-[#61767D]'
+            }`}>
+              {entry.value}
+            </span>
+          </Link>
         ))}
       </div>
     </div>
