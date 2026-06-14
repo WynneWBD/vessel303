@@ -169,6 +169,8 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
 
         <TrafficToLeadExceptionDesk analytics={analytics} overview={overview} />
 
+        <ProductPublishPathReviewHandoffDesk analytics={analytics} overview={overview} />
+
         <ProductPathQualityReviewDesk analytics={analytics} overview={overview} />
 
         <CasePathLeadBackflowDesk analytics={analytics} health={caseInquiryHealth} />
@@ -519,6 +521,181 @@ function buildTrafficToLeadExceptionRows(
 
       return score(b) - score(a)
     })
+}
+
+function ProductPublishPathReviewHandoffDesk({
+  analytics,
+  overview,
+}: {
+  analytics: SiteAnalyticsDashboard
+  overview: Awaited<ReturnType<typeof loadStatusOverview>>
+}) {
+  const metric = analytics.conversionPaths.products ?? {
+    views: 0,
+    ctaClicks: 0,
+    formSubmits: 0,
+    leads: 0,
+    conversionRate: 0,
+  }
+  const productContent = overview.content.products
+  const seoMissing = overview.site.seo.productsMissing
+  const contentGaps = productContent.issues + seoMissing
+  const pathActions = metric.ctaClicks + metric.formSubmits
+  const productStageActions = analytics.sourceStageActions
+    .filter((row) => row.key.startsWith('product:'))
+    .reduce((sum, row) => sum + row.value, 0)
+  const topProductPages = analytics.topPages
+    .filter((row) => isProductPath(row.key) || isProductPath(row.label))
+    .slice(0, 3)
+  const publishedRate = productContent.total > 0 ? productContent.published / productContent.total : 0
+  const needsPathReview = (metric.views > 0 && pathActions === 0) || (pathActions > 0 && metric.leads === 0)
+  const handoffTone: ProductPathQualityCard['tone'] =
+    needsPathReview || contentGaps > 0
+      ? 'orange'
+      : metric.leads > 0
+        ? 'green'
+        : metric.views > 0 || productStageActions > 0
+          ? 'blue'
+          : 'gray'
+  const handoffDecision =
+    pathActions > 0 && metric.leads === 0
+      ? '产品路径已有动作但暂无线索，先回产品线索队列核对 source_type=product，再回 B341 队列检查已发布产品的内容缺口。'
+      : metric.views > 0 && pathActions === 0
+        ? '产品路径已有访问但动作不足，先复盘公开目录、详情 CTA 和发布后筛选承接，再回 B341 队列补齐发布缺口。'
+        : contentGaps > 0
+          ? '产品内容或 SEO 仍有缺口，先回 B341 队列和产品列表筛选缺项，再观察路径动作和线索质量。'
+          : metric.leads > 0
+            ? '产品路径已有线索样本，可以回到 B341 队列和转化复盘确认哪些发布内容带来有效询盘。'
+            : '产品路径样本不足，先保留发布队列、公开目录和产品线索入口，等待真实访问样本。'
+  const cards: ProductPathQualityCard[] = [
+    {
+      key: 'queue',
+      label: 'B341 发布队列',
+      value: `${formatNumber(productContent.published)} 已发布`,
+      detail: `产品总数 ${formatNumber(productContent.total)}，发布占比 ${formatAnalyticsPercent(publishedRate)}。`,
+      href: '/admin/content/products/list#product-create-publish-queue-handoff',
+      tone: contentGaps > 0 ? 'orange' : 'green',
+    },
+    {
+      key: 'views',
+      label: '产品路径访问',
+      value: `${formatNumber(metric.views)} PV`,
+      detail: '近 30 天 /products 与产品详情页访问。',
+      href: '#product-conversion-path',
+      tone: metric.views > 0 ? 'blue' : 'gray',
+    },
+    {
+      key: 'actions',
+      label: '路径动作',
+      value: formatNumber(pathActions),
+      detail: `CTA ${formatNumber(metric.ctaClicks)}，表单成功 ${formatNumber(metric.formSubmits)}。`,
+      href: '#behavior-analysis',
+      tone: pathActions > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
+    },
+    {
+      key: 'leads',
+      label: '真实线索',
+      value: formatNumber(metric.leads),
+      detail: `产品路径转化率 ${formatAnalyticsPercent(metric.conversionRate)}。`,
+      href: '/admin/customers/leads?source_type=product',
+      tone: metric.leads > 0 ? 'green' : pathActions > 0 ? 'orange' : 'gray',
+    },
+    {
+      key: 'gaps',
+      label: '内容/SEO缺口',
+      value: formatNumber(contentGaps),
+      detail: `内容缺口 ${formatNumber(productContent.issues)}，SEO 待补 ${formatNumber(seoMissing)}。`,
+      href: '/admin/content/products/list?view=incomplete#product-create-publish-queue-handoff',
+      tone: contentGaps > 0 ? 'orange' : 'green',
+    },
+    {
+      key: 'public',
+      label: '公开目录复盘',
+      value: topProductPages[0] ? `${formatNumber(topProductPages[0].value)} PV` : '只读入口',
+      detail: topProductPages[0] ? `最高产品页：${topProductPages[0].label}` : '公开产品目录与详情页复验入口。',
+      href: '/products',
+      tone: metric.views > 0 ? 'blue' : 'gray',
+    },
+  ]
+
+  return (
+    <section
+      id="product-publish-path-review-handoff"
+      data-product-publish-path-review-handoff="true"
+      className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
+    >
+      <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p className="text-xs font-bold text-[#E36F2C]">B342 Product Publish Path Review</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品发布后路径复盘承接</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            承接 B341 新建到发布队列，把已发布产品、公开 /products 访问、路径动作、真实线索和内容缺口放到同一块复盘面板；本区只读，不写 analytics、不改线索、不保存或发布产品。
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <TrafficTriageAction href="/admin/content/products/list#product-create-publish-queue-handoff" label="B341 队列" primary={contentGaps > 0} />
+          <TrafficTriageAction href="/admin/customers/leads?source_type=product" label="产品线索" primary={metric.leads > 0} />
+          <TrafficTriageAction href="/admin/site/conversion#conversion-ledger" label="转化复盘" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-6">
+        {cards.map((card) => (
+          <Link key={card.key} href={card.href} className="block min-w-0 p-5 transition hover:bg-[#F7FAFA]">
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${trafficMatrixToneClass(card.tone)}`}>
+              {card.label}
+            </span>
+            <span className="mt-3 block truncate text-2xl font-black text-[#1E2C31]" title={card.value}>
+              {card.value}
+            </span>
+            <span className="mt-2 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
+          </Link>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="px-5 py-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${trafficMatrixToneClass(handoffTone)}`}>
+              {needsPathReview ? '需复盘' : metric.leads > 0 ? '有线索样本' : contentGaps > 0 ? '待补承接' : '观察'}
+            </span>
+            <span className="text-sm font-semibold text-[#1E2C31]">发布后路径判断</span>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-[#61767D]">{handoffDecision}</p>
+          <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-3">
+            {topProductPages.length > 0 ? (
+              topProductPages.map((row) => (
+                <Link key={row.key} href={row.key} className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2 transition hover:border-[#1889B6]">
+                  <span className="block truncate text-xs font-bold text-[#1E2C31]" title={row.label}>{row.label}</span>
+                  <span className="mt-1 block text-lg font-black text-[#1889B6]">{formatNumber(row.value)}</span>
+                  <span className="mt-1 block text-[11px] text-[#8A9EA4]">产品页 PV</span>
+                </Link>
+              ))
+            ) : (
+              <div className="rounded-md border border-dashed border-[#D8E7E8] bg-[#FBFDFD] px-3 py-4 text-xs text-[#8A9EA4] md:col-span-3">
+                暂无产品 Top Pages 样本，保留 B341 队列、公开目录和线索入口等待访问数据。
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:border-l xl:border-t-0">
+          <p className="text-sm font-bold text-[#1E2C31]">运营回看顺序</p>
+          <div className="mt-3 space-y-2 text-xs leading-5 text-[#61767D]">
+            <StatusLine ok={contentGaps === 0} label={`先回 B341 队列：内容/SEO 缺口 ${formatNumber(contentGaps)} 项。`} />
+            <StatusLine ok={pathActions > 0 || metric.views === 0} label={`再看公开路径动作：${formatNumber(pathActions)} 次。`} />
+            <StatusLine ok={metric.leads > 0 || pathActions === 0} label={`最后看产品线索：${formatNumber(metric.leads)} 条。`} />
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <TrafficTriageAction href="/admin/content/products/list#product-create-publish-queue-handoff" label="B341 队列" compact primary={contentGaps > 0} />
+            <TrafficTriageAction href="#product-conversion-path" label="路径分析" compact primary={needsPathReview} />
+            <TrafficTriageAction href="/admin/customers/leads?source_type=product" label="产品线索" compact />
+            <TrafficTriageAction href="/products" label="公开目录" compact />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
 }
 
 function ProductPathQualityReviewDesk({
