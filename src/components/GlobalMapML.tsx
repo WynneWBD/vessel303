@@ -366,23 +366,37 @@ export default function GlobalMapML({
     mapRef.current = map
 
     let disposed = false
-    const readyTimers: number[] = []
+    let basemapProbeFrame: number | null = null
     const markMapUsable = () => {
       if (disposed || mapReadySignaled.current) return
       mapReadySignaled.current = true
       setMapReady(true)
       onMapReadyRef.current?.()
     }
-    const scheduleMapUsable = (delay = 0) => {
-      const handle = window.setTimeout(markMapUsable, delay)
-      readyTimers.push(handle)
+    const hasRenderedBasemap = () => {
+      try {
+        return map
+          .queryRenderedFeatures()
+          .some((feature) => Boolean(feature.source && feature.source !== 'camps'))
+      } catch {
+        return false
+      }
+    }
+    const requestMapUsableProbe = () => {
+      if (disposed || mapReadySignaled.current || basemapProbeFrame !== null) return
+      basemapProbeFrame = window.requestAnimationFrame(() => {
+        basemapProbeFrame = null
+        if (disposed || mapReadySignaled.current) return
+        if (hasRenderedBasemap()) markMapUsable()
+      })
     }
 
-    // Stop blocking the screen as soon as the style is parsed. Waiting for the
-    // full load event can keep users on a blank loading screen while slow tiles
-    // are still streaming.
-    map.once('styledata', () => scheduleMapUsable(120))
-    map.once('idle', markMapUsable)
+    // Keep the static world-map preview visible until MapLibre reports a real
+    // rendered basemap. `styledata` / `idle` alone can fire on mobile WebViews
+    // while the canvas is still a white background with only HTML markers.
+    map.on('idle', requestMapUsableProbe)
+    map.on('render', requestMapUsableProbe)
+    map.on('sourcedata', requestMapUsableProbe)
 
     // Hover popup for regular camp name
     const hoverPopup = new Popup({
@@ -511,7 +525,6 @@ export default function GlobalMapML({
     }
 
     mountPrimaryHtmlMarkers()
-    scheduleMapUsable(900)
 
     // Surface maplibre's own error events to the console for debugging,
     // but never automatically promote them to a "失败" UI — individual
@@ -526,7 +539,6 @@ export default function GlobalMapML({
       // ── Language ──────────────────────────────────────────────────────
       map.setLanguage(isZhRef.current ? Language.CHINESE : Language.ENGLISH)
       applyTaiwanLabelOverride(map, isZhRef.current)
-      markMapUsable()
 
       // ── Regular camp GeoJSON ──────────────────────────────────────────
       const campFeatures: GeoJSON.Feature<GeoJSON.Point>[] = CAMPS.map((camp, i) => ({
@@ -601,6 +613,8 @@ export default function GlobalMapML({
         map.addControl(new NavigationControl({ showCompass: false }), 'top-left')
         map.addControl(new ScaleControl({ unit: 'metric' }), 'bottom-left')
       }
+
+      requestMapUsableProbe()
 
       // ── VESSEL HQ star ────────────────────────────────────────────────
       // Declared here, added to map AFTER showcase markers so it sits on top
@@ -737,7 +751,7 @@ export default function GlobalMapML({
 
     return () => {
       disposed = true
-      readyTimers.forEach((handle) => window.clearTimeout(handle))
+      if (basemapProbeFrame !== null) window.cancelAnimationFrame(basemapProbeFrame)
       ro.disconnect()
       map.remove()
       mapRef.current = null
