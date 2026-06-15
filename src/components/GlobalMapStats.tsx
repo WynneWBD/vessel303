@@ -13,7 +13,7 @@ export default function GlobalMapStats() {
 
   return (
     <div
-      className="flex flex-col md:flex-row md:items-center"
+      className="vessel-global-header"
       style={{
         position: 'fixed',
         top: 0,
@@ -25,10 +25,10 @@ export default function GlobalMapStats() {
       }}
     >
       {/* ── Row 1: Brand + desktop stats + lang switcher ── */}
-      <div className="flex items-center h-14 flex-1" style={{ padding: '0 24px' }}>
+      <div className="vessel-global-header__main">
 
         {/* Brand */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <div className="vessel-global-header__brand">
           <span
             onClick={() => window.history.back()}
             role="button"
@@ -45,7 +45,7 @@ export default function GlobalMapStats() {
           </span>
           <div style={{ width: 1, height: 20, background: 'rgba(138,133,128,0.4)' }} />
           <span
-            style={{ color: '#8A7D74', fontSize: 13, letterSpacing: '0.1em' }}
+            className="vessel-global-header__title"
           >
             {zh ? '全球营地部署' : 'Global Map'}
           </span>
@@ -53,7 +53,7 @@ export default function GlobalMapStats() {
 
         {/* Stats: desktop only, right-aligned between brand and lang switcher */}
         <div
-          className="hidden md:flex"
+          className="vessel-global-header__desktop-stats"
           style={{ alignItems: 'center', gap: 32, marginLeft: 'auto', marginRight: 24 }}
         >
           <div style={{ textAlign: 'center' }}>
@@ -86,7 +86,7 @@ export default function GlobalMapStats() {
 
         {/* Lang switcher: always visible; ml-auto on mobile pushes it right */}
         <div
-          className="ml-auto md:ml-0"
+          className="vessel-global-header__lang"
           style={{ display: 'flex', alignItems: 'center', border: '1px solid #E5DED4', overflow: 'hidden', flexShrink: 0 }}
         >
           <button
@@ -127,7 +127,7 @@ export default function GlobalMapStats() {
 
       {/* ── Row 2: mobile-only stats ── */}
       <div
-        className="flex md:hidden items-center justify-center gap-4 w-full h-9"
+        className="vessel-global-header__mobile-stats"
         style={{ borderTop: '1px solid #E5DED4', padding: '0 24px' }}
       >
         <div>
@@ -157,6 +157,103 @@ export default function GlobalMapStats() {
           </span>
         </div>
       </div>
+      <style>{`
+        .vessel-global-header {
+          display: flex;
+          flex-direction: column;
+          height: 92px;
+          font-family: -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+        }
+        .vessel-global-header__main {
+          display: flex;
+          align-items: center;
+          min-width: 0;
+          height: 56px;
+          padding: 0 16px;
+        }
+        .vessel-global-header__brand {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          min-width: 0;
+          flex-shrink: 1;
+        }
+        .vessel-global-header__title {
+          min-width: 0;
+          overflow: hidden;
+          color: #8A7D74;
+          font-size: 13px;
+          letter-spacing: 0.08em;
+          line-height: 1;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .vessel-global-header__desktop-stats {
+          display: none;
+        }
+        .vessel-global-header__lang {
+          margin-left: auto;
+        }
+        .vessel-global-header__mobile-stats {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          width: 100%;
+          height: 36px;
+          box-sizing: border-box;
+          overflow: hidden;
+          white-space: nowrap;
+        }
+        .vessel-global-header__mobile-stats > div {
+          min-width: 0;
+        }
+        @media (max-width: 380px) {
+          .vessel-global-header__main {
+            padding: 0 10px;
+          }
+          .vessel-global-header__brand {
+            gap: 8px;
+          }
+          .vessel-global-header__title {
+            max-width: 7.8em;
+            font-size: 12px;
+            letter-spacing: 0.04em;
+          }
+          .vessel-global-header__mobile-stats {
+            gap: 8px;
+            padding: 0 10px !important;
+          }
+        }
+        @media (min-width: 768px) {
+          .vessel-global-header {
+            flex-direction: row;
+            align-items: center;
+            height: 56px;
+          }
+          .vessel-global-header__main {
+            flex: 1 1 auto;
+            padding: 0 24px;
+          }
+          .vessel-global-header__brand {
+            gap: 12px;
+            flex-shrink: 0;
+          }
+          .vessel-global-header__title {
+            font-size: 13px;
+            letter-spacing: 0.1em;
+          }
+          .vessel-global-header__desktop-stats {
+            display: flex;
+          }
+          .vessel-global-header__lang {
+            margin-left: 0;
+          }
+          .vessel-global-header__mobile-stats {
+            display: none;
+          }
+        }
+      `}</style>
     </div>
   )
 }

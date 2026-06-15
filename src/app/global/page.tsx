@@ -24,7 +24,7 @@ export default async function GlobalPage() {
     })
 
   return (
-    <div style={{ overflow: 'hidden', height: '100vh', background: '#F5F2ED' }}>
+    <div className="vessel-global-page" style={{ overflow: 'hidden', height: '100vh', background: '#F5F2ED' }}>
       {/* Preload the style.json through our edge proxy so the browser starts
           fetching it in parallel with the map JS chunk, instead of waiting
           for maplibre-gl to finish parsing before requesting it. Saves one
@@ -40,7 +40,7 @@ export default async function GlobalPage() {
       />
       <GlobalMapStats />
       {/* mobile navbar = row1(56px) + row2(36px) = 92px; desktop = 56px */}
-      <div className="pt-[92px] md:pt-14" style={{ position: 'relative', height: '100vh' }}>
+      <div className="vessel-global-map-stage" style={{ position: 'relative', height: '100vh' }}>
         {/* GlobalMapView uses useSearchParams (for ?camp=… deep link),
             which requires a Suspense boundary for static prerender. The
             fallback is rendered into the SSR HTML, so users see the orange
@@ -50,6 +50,24 @@ export default async function GlobalPage() {
           <GlobalMapView cmsProjects={cmsProjects} />
         </Suspense>
       </div>
+      <style>{`
+        html,
+        body {
+          margin: 0;
+        }
+        .vessel-global-page {
+          --global-map-header-height: 92px;
+        }
+        .vessel-global-map-stage {
+          box-sizing: border-box;
+          padding-top: var(--global-map-header-height);
+        }
+        @media (min-width: 768px) {
+          .vessel-global-page {
+            --global-map-header-height: 56px;
+          }
+        }
+      `}</style>
     </div>
   )
 }

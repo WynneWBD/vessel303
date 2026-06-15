@@ -477,7 +477,7 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
     <div style={{
       position: 'relative',
       width: '100%',
-      height: 'calc(100vh - 56px)',
+      height: 'calc(100dvh - var(--global-map-header-height, 56px))',
       overflow: 'hidden',
       display: 'flex',
       background: '#F5F2ED',
