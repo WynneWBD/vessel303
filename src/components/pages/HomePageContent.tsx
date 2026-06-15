@@ -402,17 +402,15 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
   const { lang } = useLanguage();
   const items = useMemo(() => sortModuleItems(pageModule), [pageModule]);
   const visibleItems = items.filter((item) => item.is_visible);
-  const proofVisual = visibleItems.find((item) => item.image_url);
   const stats = visibleItems
+    .filter((item) => !item.image_url)
     .map((item) => ({
       id: item.id,
       val: localizedValue(item, lang, ''),
       label: localizedLabel(item, lang, ''),
     }))
     .filter((stat) => stat.val || stat.label);
-  const proofVisualAlt = proofVisual
-    ? [localizedValue(proofVisual, lang, ''), localizedLabel(proofVisual, lang, '')].filter(Boolean).join(' ')
-    : '';
+  const statColumnCount = Math.min(Math.max(stats.length, 1), 4);
 
   if (!pageModule || !pageModule.is_visible) return null;
   if (stats.length === 0) return null;
@@ -425,14 +423,14 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
       data-module-key="credentials"
     >
       <div className="mx-auto max-w-[1540px] px-5 sm:px-6 lg:px-10">
-        <div className={`${proofVisual?.image_url ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-stretch' : ''} border-x border-white/10`}>
-          <div className="grid grid-cols-2 sm:grid-cols-4">
+        <div className="border-x border-white/10">
+          <div className="grid" style={{ gridTemplateColumns: `repeat(${statColumnCount}, minmax(0, 1fr))` }}>
             {stats.map((s, index) => (
               <div
                 key={s.id}
                 className={`relative min-w-0 overflow-hidden border-white/10 bg-white/[0.035] px-2 py-1.5 text-left sm:px-3 sm:py-2.5 lg:py-3 ${
-                  index % 2 === 0 ? 'border-r' : ''
-                } ${index < 2 ? 'border-b sm:border-b-0' : ''} sm:border-r sm:last:border-r-0`}
+                  index < stats.length - 1 ? 'border-r' : ''
+                }`}
                 data-page-module-item={s.id}
                 aria-label={[s.val, s.label].filter(Boolean).join(' ')}
               >
@@ -453,27 +451,6 @@ function CredentialsBar({ pageModule }: { pageModule: HomePageModule | null }) {
               </div>
             ))}
           </div>
-          {proofVisual?.image_url ? (
-            <div
-              className="hidden border-t border-white/10 px-2 py-2 sm:block sm:px-3 lg:border-l lg:border-t-0"
-              data-page-module-item={proofVisual.id}
-            >
-              <div className="relative mx-auto h-[60px] w-full overflow-hidden bg-[#C7D6EA] sm:h-[88px] lg:h-full lg:min-h-[96px] lg:max-h-[118px]">
-                <Image
-                  src={proofVisual.image_url}
-                  alt={proofVisualAlt}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 360px"
-                  overrideSrc={buildNextImageFallbackSrc(proofVisual.image_url, 750)}
-                  className="object-contain p-1.5 sm:p-2"
-                  data-page-module-field="image_url"
-                />
-                <div className="absolute left-1.5 top-1.5 bg-[#14100E]/82 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-white/78 backdrop-blur-sm sm:left-2 sm:top-2 sm:px-2 sm:py-1 sm:text-[10px] sm:tracking-[0.14em]">
-                  {lang === 'zh' ? '可信证明' : 'Credential proof'}
-                </div>
-              </div>
-            </div>
-          ) : null}
         </div>
       </div>
     </section>
