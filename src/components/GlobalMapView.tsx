@@ -7,7 +7,6 @@ import { SHOWCASE_MARKERS, type ShowcaseMarker } from '@/data/showcaseMarkers'
 import type { ShowcaseProject } from '@/data/showcaseProjects'
 import MapSkeleton from './MapSkeleton'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { DEFAULT_CONTACT_URL, LEGACY_PRODUCTS_URL } from '@/lib/site-links'
 
 const GlobalMapDynamic = dynamic(() => import('./GlobalMapML'), {
   ssr: false,
@@ -51,9 +50,6 @@ function scheduleIdlePreload(work: () => void) {
 const ProjectDetailDynamic = dynamic(loadProjectDetailModule, {
   ssr: false,
 })
-
-const GLOBAL_LEGACY_CONTACT_HREF = DEFAULT_CONTACT_URL
-const GLOBAL_LEGACY_PRODUCTS_HREF = LEGACY_PRODUCTS_URL
 
 // Sync URL without triggering a Next router re-render — the map state owns
 // what's visible, the URL is just a shareable mirror.
@@ -150,227 +146,11 @@ function PanelLoadingPreview({
   )
 }
 
-function MapFallbackAccess({
-  markers,
-  lang,
-  onSelect,
-  onDismiss,
-}: {
-  markers: ShowcaseMarker[]
-  lang: string
-  onSelect: (marker: ShowcaseMarker) => void
-  onDismiss: () => void
-}) {
-  const zh = lang === 'zh'
-  const labels = {
-    eyebrow: zh ? '项目列表' : 'Project Access',
-    title: zh ? '如果地图仍在加载，可以先查看代表项目' : 'If the map is still loading, start with representative projects',
-    products: zh ? '查看产品' : 'View Products',
-    contact: zh ? '联系团队' : 'Contact Team',
-  }
-
-  return (
-    <aside
-      className="vessel-map-fallback"
-    >
-      <button
-        type="button"
-        className="vessel-map-fallback-close"
-        aria-label="Close project list"
-        onClick={onDismiss}
-      >
-        X
-      </button>
-      <p className="vessel-map-fallback-eyebrow">
-        {labels.eyebrow}
-      </p>
-      <h2 className="vessel-map-fallback-title">
-        {labels.title}
-      </h2>
-      <div className="vessel-map-fallback-list">
-        {markers.map((marker) => {
-          const name = marker.name[zh ? 'zh' : 'en'] ?? marker.name.en
-          return (
-            <button
-              type="button"
-              key={marker.id}
-              onClick={() => onSelect(marker)}
-              className="vessel-map-fallback-item"
-            >
-              {name}
-            </button>
-          )
-        })}
-      </div>
-      <div className="vessel-map-fallback-actions">
-        <a
-          href={GLOBAL_LEGACY_PRODUCTS_HREF}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="vessel-map-fallback-primary"
-        >
-          {labels.products}
-        </a>
-        <a
-          href={GLOBAL_LEGACY_CONTACT_HREF}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="vessel-map-fallback-secondary"
-        >
-          {labels.contact}
-        </a>
-      </div>
-      <style>{`
-        .vessel-map-fallback {
-          position: absolute;
-          left: 20px;
-          bottom: 20px;
-          z-index: 80;
-          width: min(360px, calc(100% - 40px));
-          background: rgba(36,31,27,0.92);
-          border: 1px solid rgba(227,111,44,0.25);
-          color: #F5F2ED;
-          padding: 16px;
-          box-shadow: 0 18px 50px rgba(0,0,0,0.28);
-        }
-        .vessel-map-fallback-close {
-          position: absolute;
-          top: 8px;
-          right: 8px;
-          width: 28px;
-          height: 28px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.16);
-          color: #F5F2ED;
-          cursor: pointer;
-          font-size: 12px;
-          font-weight: 800;
-          line-height: 1;
-        }
-        .vessel-map-fallback-close:hover {
-          background: rgba(227,111,44,0.22);
-          border-color: rgba(227,111,44,0.5);
-        }
-        .vessel-map-fallback-eyebrow {
-          margin: 0 36px 0 0;
-          color: #E36F2C;
-          font-size: 11px;
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
-          font-weight: 700;
-        }
-        .vessel-map-fallback-title {
-          margin: 8px 32px 12px 0;
-          font-size: 16px;
-          line-height: 1.35;
-          font-weight: 800;
-        }
-        .vessel-map-fallback-list {
-          display: grid;
-          gap: 7px;
-          margin-bottom: 12px;
-          max-height: 178px;
-          overflow: auto;
-        }
-        .vessel-map-fallback-item {
-          width: 100%;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.08);
-          color: #F5F2ED;
-          text-align: left;
-          padding: 8px 10px;
-          cursor: pointer;
-          font-size: 12px;
-          line-height: 1.35;
-        }
-        .vessel-map-fallback-actions {
-          display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
-        }
-        .vessel-map-fallback-actions a {
-          padding: 8px 12px;
-          font-size: 12px;
-          font-weight: 800;
-          text-decoration: none;
-        }
-        .vessel-map-fallback-primary {
-          background: #E36F2C;
-          color: #fff;
-        }
-        .vessel-map-fallback-secondary {
-          border: 1px solid rgba(245,242,237,0.35);
-          color: #F5F2ED;
-        }
-        @media (max-width: 640px) {
-          .vessel-map-fallback {
-            left: 10px;
-            right: 10px;
-            bottom: 10px;
-            width: auto;
-            max-height: 30vh;
-            overflow: auto;
-            padding: 12px;
-          }
-          .vessel-map-fallback-close {
-            top: 7px;
-            right: 7px;
-            width: 26px;
-            height: 26px;
-          }
-          .vessel-map-fallback-eyebrow {
-            font-size: 10px;
-            margin-right: 34px;
-          }
-          .vessel-map-fallback-title {
-            margin: 6px 32px 9px 0;
-            font-size: 13px;
-            line-height: 1.35;
-          }
-          .vessel-map-fallback-list {
-            gap: 6px;
-            max-height: 88px;
-            margin-bottom: 9px;
-          }
-          .vessel-map-fallback-item {
-            padding: 7px 8px;
-            font-size: 11px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          }
-          .vessel-map-fallback-actions {
-            gap: 8px;
-          }
-          .vessel-map-fallback-actions a {
-            padding: 7px 9px;
-            font-size: 11px;
-          }
-        }
-        @media (max-width: 420px) {
-          .vessel-map-fallback {
-            max-height: 26vh;
-          }
-          .vessel-map-fallback-item:nth-child(n+4) {
-            display: none;
-          }
-        }
-      `}</style>
-    </aside>
-  )
-}
-
 export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: ShowcaseProject[] }) {
   // selectedMarker drives panel-open + flyTo (slim, always-loaded);
   // selectedProject drives ProjectDetail content (lazy-loaded on first click).
   const [selectedMarker, setSelectedMarker] = useState<ShowcaseMarker | null>(null)
   const [selectedProject, setSelectedProject] = useState<ShowcaseProject | null>(null)
-  const [showFallbackAccess, setShowFallbackAccess] = useState(false)
-  const [fallbackDismissed, setFallbackDismissed] = useState(false)
-  const [mapUsable, setMapUsable] = useState(false)
   const [resetViewKey, setResetViewKey] = useState(0)
   const { lang } = useLanguage()
   const panelOpen = selectedMarker !== null
@@ -395,11 +175,6 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
       void loadProjectDetailModule()
       void loadShowcaseProjectsModule()
     })
-  }, [])
-
-  useEffect(() => {
-    const handle = window.setTimeout(() => setShowFallbackAccess(true), 4500)
-    return () => window.clearTimeout(handle)
   }, [])
 
   // Async-load the full ShowcaseProject for a given marker id. The idle
@@ -455,11 +230,6 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
     loadProjectDetails(marker.id, requestId)
   }, [loadProjectDetails])
 
-  const handleMapReady = useCallback(() => {
-    setMapUsable(true)
-    setShowFallbackAccess(false)
-  }, [])
-
   const handleClose = useCallback(() => {
     detailRequestId.current += 1
     setSelectedMarker(null)
@@ -493,22 +263,12 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
         <GlobalMapDynamic
           onShowcaseSelect={handleShowcaseSelect}
           onMapClick={handleClose}
-          onMapReady={handleMapReady}
           flyTarget={flyTarget}
           resetViewKey={resetViewKey}
           lang={lang}
           showcaseMarkers={showcaseMarkers}
         />
       </div>
-
-      {!panelOpen && showFallbackAccess && !fallbackDismissed && !mapUsable ? (
-        <MapFallbackAccess
-          markers={showcaseMarkers.slice(0, 5)}
-          lang={lang}
-          onSelect={handleShowcaseSelect}
-          onDismiss={() => setFallbackDismissed(true)}
-        />
-      ) : null}
 
       {/* ── Project Detail Panel — slides in from right, 70% width ── */}
       <div style={{

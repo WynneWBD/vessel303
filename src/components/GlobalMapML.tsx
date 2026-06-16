@@ -837,23 +837,20 @@ export default function GlobalMapML({
           transition: 'opacity 320ms ease-out',
         }}
       />
-      <div
-        aria-hidden={mapReady && !loadError}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: loadError ? 'rgba(245,242,237,0.9)' : 'transparent',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          opacity: mapReady && !loadError ? 0 : 1,
-          pointerEvents: previewMode || (mapReady && !loadError) ? 'none' : 'auto',
-          transition: 'opacity 400ms ease-out',
-          zIndex: 50,
-          padding: '0 24px',
-        }}
-      >
-        {loadError ? (
+      {loadError ? (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(245,242,237,0.9)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: previewMode ? 'none' : 'auto',
+            zIndex: 50,
+            padding: '0 24px',
+          }}
+        >
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, maxWidth: 360, textAlign: 'center' }}>
             <div style={{
               width: 44, height: 44, borderRadius: '50%',
@@ -885,32 +882,8 @@ export default function GlobalMapML({
               </button>
             )}
           </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                border: '2px solid rgba(227,111,44,0.25)',
-                borderTopColor: '#E36F2C',
-                borderRadius: '50%',
-                animation: 'vessel-map-spin 0.9s linear infinite',
-              }}
-            />
-            <div
-              style={{
-                color: '#8A7D74',
-                fontSize: 12,
-                letterSpacing: '0.15em',
-                fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",
-              }}
-            >
-              {zh ? '全球地图加载中' : 'LOADING GLOBAL MAP'}
-            </div>
-          </div>
-        )}
-        <style>{`@keyframes vessel-map-spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
+        </div>
+      ) : null}
     </div>
   )
 }
