@@ -35,7 +35,7 @@ interface Props {
   initialFilters: DirectoryFilters;
 }
 
-const PRODUCT_CARD_IMAGE_SIZES = '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px';
+const PRODUCT_CARD_IMAGE_SIZES = '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px';
 
 function buildHref(filters: DirectoryFilters, patch: Partial<DirectoryFilters>) {
   const next = { ...filters, ...patch };
@@ -59,6 +59,22 @@ function displayHref(href: string | null | undefined) {
 
 function fallbackCopy(lang: 'en' | 'zh', en: string, zh: string) {
   return lang === 'zh' ? zh : en;
+}
+
+function formatAreaNumber(value: number | null | undefined) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) return '';
+  return Number.isInteger(numeric) ? String(numeric) : numeric.toFixed(1).replace(/\.0$/, '');
+}
+
+function productAreaLabel(product: CatalogProduct) {
+  const area = formatAreaNumber(product.area);
+  return area ? `${area}m²` : product.size;
+}
+
+function productPrice(product: CatalogProduct, lang: 'en' | 'zh') {
+  const price = lang === 'en' ? product.price_display_en : product.price_display_zh;
+  return price || product.price_display_en || product.price_display_zh || '';
 }
 
 function formatCount(value: number | null | undefined) {
@@ -269,10 +285,14 @@ function ProductCard({ product }: { product: CatalogProduct }) {
   const { lang } = useLanguage();
   const name = localizedText(product.name_en, product.name_cn, lang) || product.id;
   const subtitle = [product.productSeries, product.gen].filter(Boolean).join(' ');
+  const area = productAreaLabel(product);
+  const price = productPrice(product, lang);
+  const seriesLabel = product.productSeries ? `${product.productSeries} ${product.gen}`.trim() : 'VESSEL';
+  const cardRegion = product.category_title_en || product.category_title_zh || product.productSeries || 'VESSEL';
 
   return (
-    <article className="group overflow-hidden rounded-[8px] bg-white p-5 shadow-[0_18px_46px_rgba(0,0,0,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_58px_rgba(0,0,0,0.14)]">
-      <Link prefetch={false} href={productHref(product)} className="relative block aspect-square overflow-hidden rounded-[2px] bg-[#E8E8E8]">
+    <article className="group overflow-hidden rounded-[8px] bg-white p-7 shadow-[0_18px_46px_rgba(0,0,0,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_58px_rgba(0,0,0,0.14)]">
+      <Link prefetch={false} href={productHref(product)} className="relative block aspect-square overflow-hidden border-[5px] border-[#E97936] bg-[#E8E8E8]">
         {product.image ? (
           <ProtectedImage
             src={product.image}
@@ -287,15 +307,35 @@ function ProductCard({ product }: { product: CatalogProduct }) {
             VESSEL
           </div>
         )}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/28 via-transparent to-black/28" />
+        <div className="absolute left-0 top-0 bg-[#E97936] px-4 py-2 text-[15px] font-black uppercase tracking-[0.03em] text-white">
+          {cardRegion}
+        </div>
+        {area ? (
+          <div className="absolute right-3 top-3 rounded-sm bg-white px-4 py-1 text-[18px] font-black leading-none text-[#E97936] shadow-sm">
+            {area}
+          </div>
+        ) : null}
+        <div className="absolute left-5 right-5 top-[36%] text-center text-[20px] font-black uppercase leading-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]">
+          {seriesLabel}
+        </div>
+        <div className="absolute bottom-0 right-0 min-w-[52%] rounded-tl-[48px] bg-[#E97936] px-5 py-3 text-right text-white">
+          <div className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-90">
+            {price ? fallbackCopy(lang, 'Starting from', '完整交付价') : fallbackCopy(lang, 'Model detail', '型号详情')}
+          </div>
+          <div className="mt-1 text-[20px] font-black leading-none">
+            {price || fallbackCopy(lang, 'Open', '查看')}
+          </div>
+        </div>
       </Link>
       <Link
         prefetch={false}
         href={productHref(product)}
-        className="mt-5 block min-h-[56px] text-[16px] font-medium leading-7 text-[#222] transition hover:text-[#E97936]"
+        className="mt-5 block min-h-[56px] text-center text-[17px] font-medium leading-7 text-[#222] transition hover:text-[#E97936]"
       >
         {name}
       </Link>
-      {subtitle ? <p className="mt-2 text-xs uppercase tracking-[0.12em] text-[#999]">{subtitle}</p> : null}
+      {subtitle ? <p className="mt-2 text-center text-xs uppercase tracking-[0.12em] text-[#999]">{subtitle}</p> : null}
     </article>
   );
 }
@@ -402,8 +442,8 @@ export default function ProductsPageContent({
 
   return (
     <section className="bg-[#F3F3F3] pb-16 pt-24 text-[#222] sm:pt-28">
-      <div className="mx-auto max-w-[1300px] px-4 sm:px-6 lg:px-8">
-        <div className="mb-10 text-sm text-[#333]">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-0">
+        <div className="mb-16 text-sm text-[#333]">
           <Link prefetch={false} href="/" className="hover:text-[#E97936]">Home</Link>
           <span className="mx-2 text-[#999]">/</span>
           <span>ALL Products 所有产品</span>
@@ -421,20 +461,20 @@ export default function ProductsPageContent({
           <div className="min-w-0">
             <div className="mb-8 flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
               <h1 className="text-[22px] font-bold tracking-normal text-[#222] sm:text-[26px]">
-                ALL Products 所有产品
+                Products
               </h1>
-              <form action="/products" className="flex w-full max-w-[480px] overflow-hidden rounded-[4px] bg-white shadow-sm">
+              <form action="/products" className="flex w-full max-w-[568px] overflow-hidden bg-white shadow-sm">
                 <input type="hidden" name="category" value={filters.category} />
                 <input type="hidden" name="attribute" value={filters.attribute} />
                 <input
                   name="q"
                   defaultValue={filters.q}
                   placeholder={uiLabels.searchPlaceholder}
-                  className="min-h-11 min-w-0 flex-1 px-4 text-sm text-[#333] outline-none placeholder:text-[#A7A7A7]"
+                  className="min-h-10 min-w-0 flex-1 border border-[#E2E2E2] border-r-0 px-4 text-center text-sm text-[#333] outline-none placeholder:text-[#A7A7A7]"
                 />
                 <button
                   type="submit"
-                  className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 bg-[#E97936] px-7 text-sm font-semibold text-white transition hover:bg-[#CA6228]"
+                  className="inline-flex min-h-10 w-[160px] shrink-0 items-center justify-center gap-2 bg-[#E97936] px-7 text-sm font-semibold text-white transition hover:bg-[#CA6228]"
                 >
                   <Search className="h-4 w-4" aria-hidden="true" />
                   <span>{uiLabels.searchButton}</span>
@@ -442,7 +482,7 @@ export default function ProductsPageContent({
               </form>
             </div>
 
-            <div className="mb-7 flex flex-wrap items-center justify-between gap-3 text-sm text-[#777]">
+            <div className="sr-only mb-7 flex flex-wrap items-center justify-between gap-3 text-sm text-[#777]">
               <span>
                 {uiLabels.matchingProducts}: {rangeStart}-{rangeEnd} {uiLabels.rangeOf} {total}
               </span>
@@ -493,7 +533,7 @@ export default function ProductsPageContent({
                 <p className="mt-2">{uiLabels.emptyStateBody}</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-x-8 gap-y-9 sm:grid-cols-2 xl:grid-cols-3">
                 {pageProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
