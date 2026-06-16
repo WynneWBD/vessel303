@@ -105,7 +105,7 @@ const patchSchema = z.object({
   gallery: z.array(z.string().min(1).max(500)).max(24).optional(),
   specs_cn: z.array(specItemSchema).max(24).optional(),
   specs_en: z.array(specItemSchema).max(24).optional(),
-  detail_modules: z.array(detailModuleSchema).max(16).optional(),
+  detail_modules: z.array(detailModuleSchema).max(24).optional(),
   isCustom: z.boolean().optional(),
   detailSlug: detailSlugSchema,
   price_display_zh: z.string().max(160).nullable().optional(),

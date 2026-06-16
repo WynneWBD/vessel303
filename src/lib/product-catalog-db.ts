@@ -314,7 +314,7 @@ const PUBLIC_LIST_COLUMNS = `
   '[]'::jsonb AS gallery,
   '[]'::jsonb AS specs_cn,
   '[]'::jsonb AS specs_en,
-  '[]'::jsonb AS detail_modules,
+  detail_modules,
   is_custom, detail_slug, category_id,
   price_display_zh, price_display_en,
   '{}'::jsonb AS commercial_terms,

@@ -20,6 +20,7 @@ import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
 import { hasInternalPublicCopy, publicText } from '@/lib/product-public-content';
+import { isProductCatalogCardModule } from '@/lib/product-card-settings';
 import {
   itemById,
   itemLabel,
@@ -679,6 +680,7 @@ export default function CatalogProductDetailContent({
   const media = useMemo(() => uniqueImages([product.image, ...(product.gallery ?? [])]), [product.gallery, product.image]);
   const activeImage = media[activeImageIndex] ?? media[0] ?? product.image;
   const visibleModules = (product.detail_modules ?? [])
+    .filter((module) => !isProductCatalogCardModule(module))
     .filter((module) => module.is_visible !== false)
     .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0));
   const resourceModules = visibleModules.filter(isBuyerResourceModule);

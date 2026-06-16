@@ -790,6 +790,15 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
       { id: 'inquiry-cta', label_zh: '询盘', label_en: 'Inquiry', is_visible: true, sort_order: 190 },
       { id: 'price-empty', label_zh: '询价', label_en: 'Inquire for pricing', is_visible: true, sort_order: 200 },
       { id: 'image-label-prefix', label_zh: '产品图片', label_en: 'Product image', is_visible: true, sort_order: 210 },
+      { id: 'catalog-title', label_zh: 'ALL Products 所有产品', label_en: 'ALL Products 所有产品', is_visible: true, sort_order: 220 },
+      { id: 'breadcrumb-label', label_zh: 'ALL Products 所有产品', label_en: 'ALL Products 所有产品', is_visible: true, sort_order: 230 },
+      { id: 'all-categories-label', label_zh: '全部产品', label_en: 'All categories', is_visible: true, sort_order: 240 },
+      { id: 'default-category-group', label_zh: 'Default Configuration 默认配置', label_en: 'Default Configuration 默认配置', is_visible: true, sort_order: 250 },
+      { id: 'search-visible', value_zh: 'true', value_en: 'true', label_zh: '显示搜索', label_en: 'Show search', is_visible: true, sort_order: 260 },
+      { id: 'sidebar-visible', value_zh: 'true', value_en: 'true', label_zh: '显示左栏分类', label_en: 'Show left categories', is_visible: true, sort_order: 270 },
+      { id: 'card-mode', value_zh: 'poster', value_en: 'poster', label_zh: '产品卡模式：poster / plain', label_en: 'Card mode: poster / plain', is_visible: true, sort_order: 280 },
+      { id: 'card-price-eyebrow', label_zh: '完整交付价', label_en: 'Starting from', is_visible: true, sort_order: 290 },
+      { id: 'card-price-empty', label_zh: '查看详情', label_en: 'Details', is_visible: true, sort_order: 300 },
     ],
     is_visible: true,
     sort_order: 40,
@@ -2259,9 +2268,26 @@ function normalizeItems(value: unknown): PageModuleItem[] {
 }
 
 function normalizeRow(row: DbPageModuleRow): PageModuleRow {
-  return {
+  const normalized = {
     ...row,
     items: normalizeItems(row.items),
+  }
+
+  if (normalized.page_key !== 'products' || normalized.module_key !== 'ui-labels') return normalized
+
+  const fallback = getDefaultPageModule(normalized.page_key, normalized.module_key)
+  if (!fallback) return normalized
+
+  const existingIds = new Set(normalized.items.map((item) => item.id))
+  const missingItems = fallback.items
+    .filter((item) => !existingIds.has(item.id))
+    .map((item) => ({ ...item }))
+
+  if (missingItems.length === 0) return normalized
+
+  return {
+    ...normalized,
+    items: [...normalized.items, ...missingItems].sort((a, b) => a.sort_order - b.sort_order),
   }
 }
 

@@ -31,6 +31,15 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { getMissingCommercialTermLanguages } from '@/lib/product-commercial-terms'
+import {
+  PRODUCT_CATALOG_CARD_MODULE_ID,
+  catalogCardFlag,
+  catalogCardItemValue,
+  findProductCatalogCardModule,
+  isProductCatalogCardModule,
+  upsertCatalogCardItem,
+  type CatalogCardItemKey,
+} from '@/lib/product-card-settings'
 import { getCatalogProductRouteInfo } from '@/lib/product-public-routes'
 import type {
   CatalogProductRow,
@@ -375,8 +384,9 @@ function getProductCompleteness(form: FormState, galleryUrls: string[]): {
 } {
   const issues: string[] = []
   const commercialIssue = commercialTermsIssueLabel(form.commercial_terms)
-  const visibleDetailModules = form.detail_modules.filter((module) => module.is_visible !== false)
-  const hasBuyerResources = hasBuyerResourceLinks(form.detail_modules)
+  const contentModules = form.detail_modules.filter((module) => !isProductCatalogCardModule(module))
+  const visibleDetailModules = contentModules.filter((module) => module.is_visible !== false)
+  const hasBuyerResources = hasBuyerResourceLinks(contentModules)
   const missingBaseForCuratedDetail = hasText(form.detailSlug) && (
     !hasText(form.image)
     || !hasText(form.description_cn)
@@ -772,6 +782,55 @@ function buildBuyerResourceModuleTemplate(product: FormState, sortOrder: number)
     images: [],
     is_visible: true,
     sort_order: sortOrder,
+  }
+}
+
+function buildCatalogCardModule(product: FormState): CatalogDetailModule {
+  return {
+    id: PRODUCT_CATALOG_CARD_MODULE_ID,
+    type: 'content',
+    title_cn: '',
+    title_en: '',
+    body_cn: '',
+    body_en: '',
+    items_cn: [
+      { title: 'showArea', body: 'true' },
+      { title: 'showRegion', body: 'true' },
+      { title: 'showPrice', body: 'true' },
+      { title: 'model', body: [product.productSeries, product.gen].filter(Boolean).join(' ') },
+    ].filter((item) => item.body),
+    items_en: [
+      { title: 'showArea', body: 'true' },
+      { title: 'showRegion', body: 'true' },
+      { title: 'showPrice', body: 'true' },
+      { title: 'model', body: [product.productSeries, product.gen].filter(Boolean).join(' ') },
+    ].filter((item) => item.body),
+    image_url: '',
+    images: [],
+    is_visible: true,
+    sort_order: 0,
+  }
+}
+
+function updateCatalogCardLanguageItem(
+  module: CatalogDetailModule,
+  key: CatalogCardItemKey,
+  lang: 'zh' | 'en',
+  value: string,
+) {
+  const field = lang === 'zh' ? 'items_cn' : 'items_en'
+  return {
+    ...module,
+    [field]: upsertCatalogCardItem(module[field], key, value),
+  }
+}
+
+function updateCatalogCardFlag(module: CatalogDetailModule, key: Extract<CatalogCardItemKey, 'showArea' | 'showRegion' | 'showPrice'>, value: boolean) {
+  const raw = value ? 'true' : 'false'
+  return {
+    ...module,
+    items_cn: upsertCatalogCardItem(module.items_cn, key, raw),
+    items_en: upsertCatalogCardItem(module.items_en, key, raw),
   }
 }
 
@@ -1568,13 +1627,18 @@ export default function ProductForm({
   const curatedPreviewHref = routeInfo.curatedHref
   const galleryUrls = useMemo(() => splitLines(form.gallery), [form.gallery])
   const normalizedDetailModules = useMemo(() => normalizeDetailModules(form.detail_modules), [form.detail_modules])
-  const hasBuyerResources = useMemo(() => hasBuyerResourceLinks(normalizedDetailModules), [normalizedDetailModules])
+  const contentDetailModules = useMemo(
+    () => normalizedDetailModules.filter((module) => !isProductCatalogCardModule(module)),
+    [normalizedDetailModules],
+  )
+  const catalogCardModule = useMemo(() => findProductCatalogCardModule(normalizedDetailModules), [normalizedDetailModules])
+  const hasBuyerResources = useMemo(() => hasBuyerResourceLinks(contentDetailModules), [contentDetailModules])
   const completeness = getProductCompleteness(form, galleryUrls)
-  const visibleDetailModuleCount = normalizedDetailModules.filter((module) => module.is_visible !== false).length
+  const visibleDetailModuleCount = contentDetailModules.filter((module) => module.is_visible !== false).length
   const sectionProgress = buildProductFormProgress({
     form,
     galleryUrls,
-    normalizedDetailModules,
+    normalizedDetailModules: contentDetailModules,
     hasBuyerResources,
     completeness,
   })
@@ -1646,6 +1710,42 @@ export default function ProductForm({
         module.id === id ? { ...module, ...patch } : module
       )),
     }))
+  }
+
+  const patchCatalogCardModule = (patch: Partial<CatalogDetailModule>) => {
+    setForm((prev) => {
+      const existing = findProductCatalogCardModule(prev.detail_modules)
+      const next = { ...(existing ?? buildCatalogCardModule(prev)), ...patch }
+      const detailModules = existing
+        ? prev.detail_modules.map((module) => (module.id === PRODUCT_CATALOG_CARD_MODULE_ID ? next : module))
+        : [next, ...prev.detail_modules]
+      return { ...prev, detail_modules: detailModules }
+    })
+  }
+
+  const patchCatalogCardText = (key: CatalogCardItemKey, lang: 'zh' | 'en', value: string) => {
+    setForm((prev) => {
+      const existing = findProductCatalogCardModule(prev.detail_modules)
+      const next = updateCatalogCardLanguageItem(existing ?? buildCatalogCardModule(prev), key, lang, value)
+      const detailModules = existing
+        ? prev.detail_modules.map((module) => (module.id === PRODUCT_CATALOG_CARD_MODULE_ID ? next : module))
+        : [next, ...prev.detail_modules]
+      return { ...prev, detail_modules: detailModules }
+    })
+  }
+
+  const patchCatalogCardDisplayFlag = (
+    key: Extract<CatalogCardItemKey, 'showArea' | 'showRegion' | 'showPrice'>,
+    value: boolean,
+  ) => {
+    setForm((prev) => {
+      const existing = findProductCatalogCardModule(prev.detail_modules)
+      const next = updateCatalogCardFlag(existing ?? buildCatalogCardModule(prev), key, value)
+      const detailModules = existing
+        ? prev.detail_modules.map((module) => (module.id === PRODUCT_CATALOG_CARD_MODULE_ID ? next : module))
+        : [next, ...prev.detail_modules]
+      return { ...prev, detail_modules: detailModules }
+    })
   }
 
   const toggleAttributeOption = (optionId: number, checked: boolean) => {
@@ -1726,7 +1826,7 @@ export default function ProductForm({
   }
 
   const addBuyerResourceModuleTemplate = () => {
-    if (normalizedDetailModules.some(isBuyerResourceModule)) {
+    if (contentDetailModules.some(isBuyerResourceModule)) {
       toast.info('已存在买家资料模块，请在列表项中补充真实链接')
       return
     }
@@ -1742,7 +1842,7 @@ export default function ProductForm({
   }
 
   const applyStandardDetailTemplates = () => {
-    const existing = new Set(form.detail_modules.map((module) => module.type))
+    const existing = new Set(contentDetailModules.map((module) => module.type))
     const types: CatalogDetailModuleType[] = ['highlights', 'scenarios', 'customization', 'faq']
     let nextSort = form.detail_modules.reduce((max, module) => Math.max(max, Number(module.sort_order) || 0), 0)
     const additions = types
@@ -2427,18 +2527,18 @@ export default function ProductForm({
         >
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,360px)_1fr] gap-5">
             <div className="space-y-4">
-              <Field label="封面图">
+              <Field label="普通封面图">
                 <MediaImagePicker
                   value={form.image || null}
                   maxUploadMb={maxUploadMb}
-                  title="选择产品封面图"
-                  description="从图片库选择产品封面，或直接上传新图。"
-                  emptyLabel="选择/上传封面图"
+                  title="选择产品普通封面图"
+                  description="用于普通产品卡、详情页主图和没有海报图时的兜底图。"
+                  emptyLabel="选择/上传普通封面图"
                   onChange={(url) => patch('image', url ?? '')}
                 />
               </Field>
 
-              <Field label="图片 URL">
+              <Field label="普通封面 URL">
                 <Input value={form.image} onChange={(e) => patch('image', e.target.value)} placeholder="/images/products/..." />
               </Field>
             </div>
@@ -2476,6 +2576,138 @@ export default function ProductForm({
                 placeholder="/images/products/example-01.jpg"
               />
             </Field>
+          </div>
+
+          <div className="mt-5 rounded-lg border border-[#D8E7E8] bg-[#F7FAFA] p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-[#1E2C31]">产品列表卡片视觉</h3>
+                <p className="mt-1 text-xs leading-relaxed text-[#61767D]">
+                  区分普通封面图和产品海报图；这些字段只影响产品列表卡片，不会作为详情页正文展示。
+                </p>
+              </div>
+              <Badge className="w-fit border-[#D8E7E8] bg-white text-[#1889B6] text-xs">
+                catalog-card
+              </Badge>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,360px)_1fr]">
+              <div className="space-y-4">
+                <Field label="产品海报图">
+                  <MediaImagePicker
+                    value={catalogCardModule?.image_url || null}
+                    maxUploadMb={maxUploadMb}
+                    title="选择产品海报图"
+                    description="用于橙色海报层产品卡。留空时自动使用普通封面图。"
+                    emptyLabel="选择/上传产品海报图"
+                    onChange={(url) => patchCatalogCardModule({ image_url: url ?? '' })}
+                  />
+                </Field>
+                <Field label="产品海报 URL">
+                  <Input
+                    value={catalogCardModule?.image_url ?? ''}
+                    onChange={(e) => patchCatalogCardModule({ image_url: e.target.value })}
+                    placeholder="/images/products/poster-..."
+                  />
+                </Field>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <Field label="国家/地区（中文）">
+                    <Input
+                      value={catalogCardModule?.title_cn ?? ''}
+                      onChange={(e) => patchCatalogCardModule({ title_cn: e.target.value })}
+                      placeholder="CHINA 中国"
+                    />
+                  </Field>
+                  <Field label="国家/地区（英文）">
+                    <Input
+                      value={catalogCardModule?.title_en ?? ''}
+                      onChange={(e) => patchCatalogCardModule({ title_en: e.target.value })}
+                      placeholder="KAZAKHSTAN"
+                    />
+                  </Field>
+                  <Field label="面积文案">
+                    <Input
+                      value={catalogCardItemValue(catalogCardModule, 'area', 'zh')}
+                      onChange={(e) => {
+                        patchCatalogCardText('area', 'zh', e.target.value)
+                        patchCatalogCardText('area', 'en', e.target.value)
+                      }}
+                      placeholder={form.size || '528m²'}
+                    />
+                  </Field>
+                  <Field label="型号/主标题（中文）">
+                    <Input
+                      value={catalogCardItemValue(catalogCardModule, 'model', 'zh')}
+                      onChange={(e) => patchCatalogCardText('model', 'zh', e.target.value)}
+                      placeholder={`${form.productSeries} ${form.gen}`.trim()}
+                    />
+                  </Field>
+                  <Field label="型号/主标题（英文）">
+                    <Input
+                      value={catalogCardItemValue(catalogCardModule, 'model', 'en')}
+                      onChange={(e) => patchCatalogCardText('model', 'en', e.target.value)}
+                      placeholder={`${form.productSeries} ${form.gen}`.trim()}
+                    />
+                  </Field>
+                  <Field label="价格文案（中文）">
+                    <Input
+                      value={catalogCardModule?.body_cn ?? ''}
+                      onChange={(e) => patchCatalogCardModule({ body_cn: e.target.value })}
+                      placeholder={form.price_display_zh || '完整交付价/询价'}
+                    />
+                  </Field>
+                  <Field label="价格文案（英文）">
+                    <Input
+                      value={catalogCardModule?.body_en ?? ''}
+                      onChange={(e) => patchCatalogCardModule({ body_en: e.target.value })}
+                      placeholder={form.price_display_en || 'Starting from / Inquire'}
+                    />
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <label className="flex items-center gap-3 rounded-md border border-[#D8E7E8] bg-white px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={catalogCardModule?.is_visible !== false}
+                      onChange={(e) => patchCatalogCardModule({ is_visible: e.target.checked })}
+                      className="h-4 w-4 accent-[#E36F2C]"
+                    />
+                    <span className="text-sm text-[#61767D]">显示橙色海报层</span>
+                  </label>
+                  <label className="flex items-center gap-3 rounded-md border border-[#D8E7E8] bg-white px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={catalogCardFlag(catalogCardModule, 'showArea', true)}
+                      onChange={(e) => patchCatalogCardDisplayFlag('showArea', e.target.checked)}
+                      className="h-4 w-4 accent-[#E36F2C]"
+                    />
+                    <span className="text-sm text-[#61767D]">显示面积</span>
+                  </label>
+                  <label className="flex items-center gap-3 rounded-md border border-[#D8E7E8] bg-white px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={catalogCardFlag(catalogCardModule, 'showRegion', true)}
+                      onChange={(e) => patchCatalogCardDisplayFlag('showRegion', e.target.checked)}
+                      className="h-4 w-4 accent-[#E36F2C]"
+                    />
+                    <span className="text-sm text-[#61767D]">显示国家/地区</span>
+                  </label>
+                  <label className="flex items-center gap-3 rounded-md border border-[#D8E7E8] bg-white px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={catalogCardFlag(catalogCardModule, 'showPrice', true)}
+                      onChange={(e) => patchCatalogCardDisplayFlag('showPrice', e.target.checked)}
+                      className="h-4 w-4 accent-[#E36F2C]"
+                    />
+                    <span className="text-sm text-[#61767D]">显示价格文案</span>
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
         </FormSection>
 
@@ -2557,9 +2789,9 @@ export default function ProductForm({
             </div>
           ) : null}
 
-          {normalizedDetailModules.length > 0 ? (
+          {contentDetailModules.length > 0 ? (
             <div className="space-y-4">
-              {normalizedDetailModules.map((module, index) => {
+              {contentDetailModules.map((module, index) => {
                 const moduleKey = module.id || `detail-module-${index + 1}`
                 const isCollapsed = collapsedDetailModules[moduleKey] === true
                 const moduleCompleteness = getDetailModuleCompleteness(module)

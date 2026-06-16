@@ -11,9 +11,16 @@ import {
   itemById,
   itemContent,
   itemLabel,
+  itemValue,
   moduleMap,
   type PublicPageModule,
+  type PublicPageModuleItem,
 } from '@/lib/page-module-client';
+import {
+  catalogCardFlag,
+  catalogCardItemValue,
+  findProductCatalogCardModule,
+} from '@/lib/product-card-settings';
 import type { ProductAttributeTemplateWithOptions, ProductCategoryRow } from '@/lib/product-catalog-db';
 import type { CatalogProduct } from '@/lib/products';
 
@@ -25,6 +32,14 @@ type DirectoryFilters = {
 };
 
 type DirectoryCategory = Pick<ProductCategoryRow, 'id' | 'title_zh' | 'title_en' | 'product_count'>;
+type ProductCardMode = 'poster' | 'plain';
+type ProductListLabels = {
+  sidebarTitle: string;
+  allCategories: string;
+  defaultCategoryGroup: string;
+  priceEmpty: string;
+  cardPriceEyebrow: string;
+};
 
 interface Props {
   products: CatalogProduct[];
@@ -77,6 +92,15 @@ function productPrice(product: CatalogProduct, lang: 'en' | 'zh') {
   return price || product.price_display_en || product.price_display_zh || '';
 }
 
+function cardPriceText(value: string) {
+  const normalized = value.trim().toLowerCase().replace(/\s+/g, ' ');
+  if (!normalized) return '';
+  if (['inquire for pricing', 'price on request', 'request quote', '询价', '价格请咨询', '请咨询'].includes(normalized)) {
+    return '';
+  }
+  return value;
+}
+
 function formatCount(value: number | null | undefined) {
   const count = Number(value ?? 0);
   return Number.isFinite(count) && count > 0 ? String(count) : '';
@@ -84,6 +108,35 @@ function formatCount(value: number | null | undefined) {
 
 function localizedText(en: string | null | undefined, zh: string | null | undefined, lang: 'en' | 'zh') {
   return (lang === 'en' ? en : zh)?.trim() || (lang === 'en' ? zh : en)?.trim() || '';
+}
+
+function rawItemById(pageModule: PublicPageModule | null | undefined, id: string) {
+  if (!pageModule || pageModule.is_visible === false || !Array.isArray(pageModule.items)) return null;
+  return pageModule.items.find((item) => item.id === id) ?? null;
+}
+
+function parseConfigFlag(value: string, fallback: boolean) {
+  const normalized = value.trim().toLowerCase().replace(/[\s_-]+/g, '');
+  if (!normalized) return fallback;
+  if (['0', 'false', 'off', 'no', 'hide', 'hidden', '否', '不显示', '隐藏'].includes(normalized)) return false;
+  if (['1', 'true', 'on', 'yes', 'show', 'visible', '是', '显示'].includes(normalized)) return true;
+  return fallback;
+}
+
+function configFlag(pageModule: PublicPageModule | null | undefined, id: string, lang: 'en' | 'zh', fallback: boolean) {
+  const item = rawItemById(pageModule, id);
+  if (!item) return fallback;
+  if (item.is_visible === false) return false;
+  return parseConfigFlag(itemValue(item, lang) || itemLabel(item, lang), fallback);
+}
+
+function cardModeFromConfig(item: PublicPageModuleItem | null, lang: 'en' | 'zh'): ProductCardMode {
+  const raw = item && item.is_visible !== false ? (itemValue(item, lang) || itemLabel(item, lang)) : '';
+  const normalized = raw.trim().toLowerCase();
+  if (['plain', 'normal', 'simple', '普通', '普通卡', '普通封面'].some((value) => normalized.includes(value))) {
+    return 'plain';
+  }
+  return 'poster';
 }
 
 function categoryTitle(category: DirectoryCategory | undefined, lang: 'en' | 'zh') {
@@ -169,12 +222,14 @@ function Sidebar({
   filters,
   contactModule,
   totalProducts,
+  labels,
 }: {
   categories: DirectoryCategory[];
   attributeTemplates: ProductAttributeTemplateWithOptions[];
   filters: DirectoryFilters;
   contactModule: PublicPageModule | null;
   totalProducts: number;
+  labels: ProductListLabels;
 }) {
   const { lang } = useLanguage();
   const headline = itemLabel(itemById(contactModule, 'headline'), lang);
@@ -188,18 +243,18 @@ function Sidebar({
     <aside className="space-y-8">
       <div className="overflow-hidden bg-white shadow-[0_16px_44px_rgba(0,0,0,0.08)]">
         <div className="bg-[#E97936] px-5 py-5 text-[22px] font-black leading-tight text-white">
-          Product Categories 产品分类
+          {labels.sidebarTitle}
         </div>
         <FilterRow
           href={buildHref(filters, { category: '', attribute: '', page: 1 })}
           active={!filters.category && !filters.attribute}
-          label="All categories"
+          label={labels.allCategories}
           count={totalProducts}
         />
         {categories.length > 0 ? (
           <details className="group border-t border-[#E9E9E9]" open={Boolean(filters.category)}>
             <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 bg-white px-4 text-[15px] text-[#222] transition hover:text-[#E97936] [&::-webkit-details-marker]:hidden">
-              <span>{fallbackCopy(lang, 'Default Configuration 默认配置', 'Default Configuration 默认配置')}</span>
+              <span>{labels.defaultCategoryGroup}</span>
               <span className="text-sm text-[#999] group-open:rotate-180">v</span>
             </summary>
             <div>
@@ -281,21 +336,55 @@ function Sidebar({
   );
 }
 
-function ProductCard({ product }: { product: CatalogProduct }) {
+function ProductCard({
+  product,
+  cardMode,
+  labels,
+}: {
+  product: CatalogProduct;
+  cardMode: ProductCardMode;
+  labels: Pick<ProductListLabels, 'priceEmpty' | 'cardPriceEyebrow'>;
+}) {
   const { lang } = useLanguage();
+  const cardModule = findProductCatalogCardModule(product.detail_modules);
   const name = localizedText(product.name_en, product.name_cn, lang) || product.id;
   const subtitle = [product.productSeries, product.gen].filter(Boolean).join(' ');
-  const area = productAreaLabel(product);
-  const price = productPrice(product, lang);
-  const seriesLabel = product.productSeries ? `${product.productSeries} ${product.gen}`.trim() : 'VESSEL';
-  const cardRegion = product.category_title_en || product.category_title_zh || product.productSeries || 'VESSEL';
+  const usePosterLayer = cardMode === 'poster' && cardModule?.is_visible !== false;
+  const showArea = catalogCardFlag(cardModule, 'showArea', true);
+  const showRegion = catalogCardFlag(cardModule, 'showRegion', true);
+  const showPrice = catalogCardFlag(cardModule, 'showPrice', true);
+  const area = showArea ? (catalogCardItemValue(cardModule, 'area', lang) || productAreaLabel(product)) : '';
+  const cardPriceOverride = cardPriceText((lang === 'en' ? cardModule?.body_en : cardModule?.body_cn)?.trim() || '');
+  const price = showPrice
+    ? (cardPriceOverride || cardPriceText(productPrice(product, lang)))
+    : '';
+  const seriesLabel = catalogCardItemValue(cardModule, 'model', lang)
+    || (product.productSeries ? `${product.productSeries} ${product.gen}`.trim() : 'VESSEL');
+  const cardRegion = showRegion
+    ? localizedText(cardModule?.title_en, cardModule?.title_cn, lang)
+      || product.category_title_en
+      || product.category_title_zh
+      || product.productSeries
+      || 'VESSEL'
+    : '';
+  const posterImage = cardModule?.image_url?.trim() || '';
+  const imageSrc = usePosterLayer ? (posterImage || product.image) : (product.image || posterImage);
+  const priceEyebrow = catalogCardItemValue(cardModule, 'priceEyebrow', lang)
+    || labels.cardPriceEyebrow
+    || fallbackCopy(lang, 'Starting from', '完整交付价');
 
   return (
     <article className="group overflow-hidden rounded-[8px] bg-white p-7 shadow-[0_18px_46px_rgba(0,0,0,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_58px_rgba(0,0,0,0.14)]">
-      <Link prefetch={false} href={productHref(product)} className="relative block aspect-square overflow-hidden border-[5px] border-[#E97936] bg-[#E8E8E8]">
-        {product.image ? (
+      <Link
+        prefetch={false}
+        href={productHref(product)}
+        className={`relative block aspect-square overflow-hidden bg-[#E8E8E8] ${
+          usePosterLayer ? 'border-[5px] border-[#E97936]' : 'border border-[#ECECEC]'
+        }`}
+      >
+        {imageSrc ? (
           <ProtectedImage
-            src={product.image}
+            src={imageSrc}
             alt={name}
             fill
             loading="lazy"
@@ -307,26 +396,46 @@ function ProductCard({ product }: { product: CatalogProduct }) {
             VESSEL
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/28 via-transparent to-black/28" />
-        <div className="absolute left-0 top-0 bg-[#E97936] px-4 py-2 text-[15px] font-black uppercase tracking-[0.03em] text-white">
-          {cardRegion}
-        </div>
-        {area ? (
-          <div className="absolute right-3 top-3 rounded-sm bg-white px-4 py-1 text-[18px] font-black leading-none text-[#E97936] shadow-sm">
-            {area}
+        {usePosterLayer ? (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-b from-black/28 via-transparent to-black/28" />
+            {cardRegion ? (
+              <div className="absolute left-0 top-0 max-w-[72%] bg-[#E97936] px-4 py-2 text-[15px] font-black uppercase leading-tight tracking-[0.03em] text-white">
+                {cardRegion}
+              </div>
+            ) : null}
+            {area ? (
+              <div className="absolute right-3 top-3 rounded-sm bg-white px-4 py-1 text-[18px] font-black leading-none text-[#E97936] shadow-sm">
+                {area}
+              </div>
+            ) : null}
+            <div className="absolute left-5 right-5 top-[36%] text-center text-[20px] font-black uppercase leading-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]">
+              {seriesLabel}
+            </div>
+            {showPrice ? (
+              <div className="absolute bottom-0 right-0 min-w-[52%] rounded-tl-[48px] bg-[#E97936] px-5 py-3 text-right text-white">
+                <div className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-90">
+                  {price ? priceEyebrow : fallbackCopy(lang, 'Model detail', '型号详情')}
+                </div>
+                <div className="mt-1 text-[20px] font-black leading-none">
+                  {price || labels.priceEmpty || fallbackCopy(lang, 'Open', '查看')}
+                </div>
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 via-black/12 to-transparent px-5 pb-5 pt-16">
+            <div className="text-[18px] font-black uppercase leading-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]">
+              {seriesLabel}
+            </div>
+            {[cardRegion, area].filter(Boolean).length > 0 ? (
+              <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-white/85">
+                {cardRegion ? <span>{cardRegion}</span> : null}
+                {area ? <span>{area}</span> : null}
+              </div>
+            ) : null}
           </div>
-        ) : null}
-        <div className="absolute left-5 right-5 top-[36%] text-center text-[20px] font-black uppercase leading-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]">
-          {seriesLabel}
-        </div>
-        <div className="absolute bottom-0 right-0 min-w-[52%] rounded-tl-[48px] bg-[#E97936] px-5 py-3 text-right text-white">
-          <div className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-90">
-            {price ? fallbackCopy(lang, 'Starting from', '完整交付价') : fallbackCopy(lang, 'Model detail', '型号详情')}
-          </div>
-          <div className="mt-1 text-[20px] font-black leading-none">
-            {price || fallbackCopy(lang, 'Open', '查看')}
-          </div>
-        </div>
+        )}
       </Link>
       <Link
         prefetch={false}
@@ -399,7 +508,15 @@ export default function ProductsPageContent({
   const contactModule = modules.get('contact-card') ?? null;
   const uiModule = modules.get('ui-labels') ?? null;
   const label = (id: string) => itemLabel(itemById(uiModule, id), lang);
+  const cardMode = cardModeFromConfig(rawItemById(uiModule, 'card-mode'), lang);
+  const showSearch = configFlag(uiModule, 'search-visible', lang, true);
+  const showSidebar = configFlag(uiModule, 'sidebar-visible', lang, true);
   const uiLabels = {
+    pageTitle: label('catalog-title') || label('all-products-label') || fallbackCopy(lang, 'ALL Products 所有产品', 'ALL Products 所有产品'),
+    breadcrumbLabel: label('breadcrumb-label') || label('all-products-label') || fallbackCopy(lang, 'ALL Products 所有产品', 'ALL Products 所有产品'),
+    sidebarTitle: label('category-heading') || fallbackCopy(lang, 'Product Categories 产品分类', 'Product Categories 产品分类'),
+    allCategories: label('all-categories-label') || label('all-products-label') || fallbackCopy(lang, 'All categories', '全部产品'),
+    defaultCategoryGroup: label('default-category-group') || fallbackCopy(lang, 'Default Configuration 默认配置', 'Default Configuration 默认配置'),
     searchPlaceholder: label('search-placeholder') || 'Please enter keyword / 请输入关键词',
     searchButton: label('search-button') || 'Search 搜索',
     resetButton: label('reset-button') || fallbackCopy(lang, 'Reset', '重置'),
@@ -413,6 +530,8 @@ export default function ProductsPageContent({
     clearFilter: label('clear-filter-label') || fallbackCopy(lang, 'Clear', '清除'),
     emptyState: label('empty-state') || fallbackCopy(lang, 'No products found', '暂无匹配产品'),
     emptyStateBody: label('empty-state-body') || fallbackCopy(lang, 'Try another keyword or category.', '请更换关键词或分类。'),
+    priceEmpty: label('card-price-empty') || fallbackCopy(lang, 'Details', '查看详情'),
+    cardPriceEyebrow: label('card-price-eyebrow') || fallbackCopy(lang, 'Starting from', '完整交付价'),
   };
   const rawFilters = initialFilters;
   const filteredProducts = useMemo(
@@ -446,40 +565,51 @@ export default function ProductsPageContent({
         <div className="mb-16 text-sm text-[#333]">
           <Link prefetch={false} href="/" className="hover:text-[#E97936]">Home</Link>
           <span className="mx-2 text-[#999]">/</span>
-          <span>ALL Products 所有产品</span>
+          <span>{uiLabels.breadcrumbLabel}</span>
         </div>
 
-        <div className="grid gap-10 lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-14">
-          <Sidebar
-            categories={categories}
-            attributeTemplates={attributeTemplates}
-            filters={filters}
-            contactModule={contactModule}
-            totalProducts={products.length}
-          />
+        <div className={`grid gap-10 lg:gap-14 ${showSidebar ? 'lg:grid-cols-[340px_minmax(0,1fr)]' : ''}`}>
+          {showSidebar ? (
+            <Sidebar
+              categories={categories}
+              attributeTemplates={attributeTemplates}
+              filters={filters}
+              contactModule={contactModule}
+              totalProducts={products.length}
+              labels={{
+                sidebarTitle: uiLabels.sidebarTitle,
+                allCategories: uiLabels.allCategories,
+                defaultCategoryGroup: uiLabels.defaultCategoryGroup,
+                priceEmpty: uiLabels.priceEmpty,
+                cardPriceEyebrow: uiLabels.cardPriceEyebrow,
+              }}
+            />
+          ) : null}
 
           <div className="min-w-0">
             <div className="mb-8 flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
               <h1 className="text-[22px] font-bold tracking-normal text-[#222] sm:text-[26px]">
-                Products
+                {uiLabels.pageTitle}
               </h1>
-              <form action="/products" className="flex w-full max-w-[568px] overflow-hidden bg-white shadow-sm">
-                <input type="hidden" name="category" value={filters.category} />
-                <input type="hidden" name="attribute" value={filters.attribute} />
-                <input
-                  name="q"
-                  defaultValue={filters.q}
-                  placeholder={uiLabels.searchPlaceholder}
-                  className="min-h-10 min-w-0 flex-1 border border-[#E2E2E2] border-r-0 px-4 text-center text-sm text-[#333] outline-none placeholder:text-[#A7A7A7]"
-                />
-                <button
-                  type="submit"
-                  className="inline-flex min-h-10 w-[160px] shrink-0 items-center justify-center gap-2 bg-[#E97936] px-7 text-sm font-semibold text-white transition hover:bg-[#CA6228]"
-                >
-                  <Search className="h-4 w-4" aria-hidden="true" />
-                  <span>{uiLabels.searchButton}</span>
-                </button>
-              </form>
+              {showSearch ? (
+                <form action="/products" className="flex w-full max-w-[568px] overflow-hidden bg-white shadow-sm">
+                  <input type="hidden" name="category" value={filters.category} />
+                  <input type="hidden" name="attribute" value={filters.attribute} />
+                  <input
+                    name="q"
+                    defaultValue={filters.q}
+                    placeholder={uiLabels.searchPlaceholder}
+                    className="min-h-10 min-w-0 flex-1 border border-[#E2E2E2] border-r-0 px-4 text-center text-sm text-[#333] outline-none placeholder:text-[#A7A7A7]"
+                  />
+                  <button
+                    type="submit"
+                    className="inline-flex min-h-10 w-[160px] shrink-0 items-center justify-center gap-2 bg-[#E97936] px-7 text-sm font-semibold text-white transition hover:bg-[#CA6228]"
+                  >
+                    <Search className="h-4 w-4" aria-hidden="true" />
+                    <span>{uiLabels.searchButton}</span>
+                  </button>
+                </form>
+              ) : null}
             </div>
 
             <div className="sr-only mb-7 flex flex-wrap items-center justify-between gap-3 text-sm text-[#777]">
@@ -535,7 +665,15 @@ export default function ProductsPageContent({
             ) : (
               <div className="grid grid-cols-1 gap-x-8 gap-y-9 sm:grid-cols-2 xl:grid-cols-3">
                 {pageProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    cardMode={cardMode}
+                    labels={{
+                      priceEmpty: uiLabels.priceEmpty,
+                      cardPriceEyebrow: uiLabels.cardPriceEyebrow,
+                    }}
+                  />
                 ))}
               </div>
             )}
