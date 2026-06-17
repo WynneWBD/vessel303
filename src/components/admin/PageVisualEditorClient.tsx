@@ -59,7 +59,7 @@ import type {
   PageStructureSnapshotRow,
 } from '@/lib/page-modules-db'
 
-type PageKey = 'home' | 'about'
+type PageKey = 'home' | 'about' | 'global'
 
 type PageMeta = {
   key: PageKey
@@ -105,6 +105,7 @@ type PreviewDevice = {
 const PAGES: PageMeta[] = [
   { key: 'home', label: 'Home', path: '/' },
   { key: 'about', label: 'About', path: '/about' },
+  { key: 'global', label: 'Global', path: '/global' },
 ]
 
 const PREVIEW_DEVICES: PreviewDevice[] = [
@@ -116,6 +117,7 @@ const PREVIEW_DEVICES: PreviewDevice[] = [
 const PAGE_LABELS = {
   home: '首页',
   about: 'About',
+  global: 'Global',
 } satisfies Record<PageKey, string>
 
 const EDITABLE_MODULE_IDS = [
@@ -140,6 +142,11 @@ const EDITABLE_MODULE_IDS = [
   'about:services',
   'about:partners',
   'about:recognition-awards',
+  'global:hero',
+  'global:header',
+  'global:map-labels',
+  'global:detail-labels',
+  'global:cta-labels',
 ]
 
 const EDITABLE_MODULE_ID_SET = new Set(EDITABLE_MODULE_IDS)
@@ -149,7 +156,7 @@ function moduleId(pageModule: Pick<PageModuleRow, 'page_key' | 'module_key'>) {
 }
 
 function isPageKey(value: string): value is PageKey {
-  return value === 'home' || value === 'about'
+  return value === 'home' || value === 'about' || value === 'global'
 }
 
 function pageLabel(pageKey: string) {
@@ -159,6 +166,7 @@ function pageLabel(pageKey: string) {
 const CATALOG_PAGE_LABELS = {
   home: 'Home',
   about: 'About',
+  global: 'Global',
   all: 'All',
 } satisfies Record<PageModuleCatalogPage, string>
 
@@ -1146,7 +1154,7 @@ function buildVisualReleaseLedgerRows({
   return [
     {
       id: 'release-ledger-safe',
-      page: 'Home / About',
+      page: 'Home / About / Global',
       module: '全部受控模块',
       stage: '发布复核',
       signal: '当前无待处理',
@@ -1524,7 +1532,7 @@ export default function PageVisualEditorClient({
   const [restoringSnapshotId, setRestoringSnapshotId] = useState<string | null>(null)
   const [structureDrafts, setStructureDrafts] = useState<PageStructureDraftRow[]>(initialStructureDrafts)
   const [structureSnapshots, setStructureSnapshots] = useState<Record<PageKey, PageStructureSnapshotRow[]>>(
-    initialStructureSnapshots ?? { home: [], about: [] },
+    initialStructureSnapshots ?? { home: [], about: [], global: [] },
   )
   const [structureBusy, setStructureBusy] = useState<string | null>(null)
   const [structurePublishConfirmOpen, setStructurePublishConfirmOpen] = useState(false)
@@ -2396,7 +2404,7 @@ export default function PageVisualEditorClient({
               页面模块运营台
             </h1>
             <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-              受控编辑 Home / About 的文字、链接、图片、模块显示状态和 Home 安全插入区结构草稿。保存草稿不影响前台，发布后才上线。
+              受控编辑 Home / About / Global 的文字、链接、图片、模块显示状态和 Home 安全插入区结构草稿。保存草稿不影响前台，发布后才上线。
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-1">
@@ -2504,7 +2512,7 @@ export default function PageVisualEditorClient({
         <VisualMetricCard
           title="结构草稿"
           value={structureDraftCount}
-          detail="Home / About 页面级结构草稿"
+          detail="Home / About / Global 页面级结构草稿"
           Icon={Layers3}
           tone={structureDraftCount > 0 ? 'orange' : 'gray'}
         />

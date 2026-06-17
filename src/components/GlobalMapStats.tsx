@@ -2,18 +2,24 @@
 
 import Image from 'next/image'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { buildGlobalCmsLabels, type GlobalPageModuleLike } from '@/lib/global-page-cms'
 
-const countries    = '30+'
-const campCount    = '300+'
-const totalDevices = '2000+'
-
-export default function GlobalMapStats() {
+export default function GlobalMapStats({ pageModules = [] }: { pageModules?: GlobalPageModuleLike[] }) {
   const { lang, setLang } = useLanguage()
-  const zh = lang === 'zh'
+  const labels = buildGlobalCmsLabels(pageModules, lang === 'zh' ? 'zh' : 'en')
+
+  const stats = [
+    { value: labels.countriesValue, label: labels.countriesLabel },
+    { value: labels.campsValue, label: labels.campsLabel },
+    { value: labels.devicesValue, label: labels.devicesLabel },
+  ]
 
   return (
     <div
       className="vessel-global-header"
+      data-page-module="global:header"
+      data-page-key="global"
+      data-module-key="header"
       style={{
         position: 'fixed',
         top: 0,
@@ -24,10 +30,7 @@ export default function GlobalMapStats() {
         borderBottom: '1px solid #E5DED4',
       }}
     >
-      {/* ── Row 1: Brand + desktop stats + lang switcher ── */}
       <div className="vessel-global-header__main">
-
-        {/* Brand */}
         <div className="vessel-global-header__brand">
           <span
             onClick={() => window.history.back()}
@@ -36,7 +39,7 @@ export default function GlobalMapStats() {
           >
             <Image
               src="/images/vessel-logo.png"
-              alt="VESSEL 微宿"
+              alt={labels.logoAlt}
               height={24}
               width={96}
               style={{ height: '24px', width: 'auto', objectFit: 'contain' }}
@@ -44,47 +47,28 @@ export default function GlobalMapStats() {
             />
           </span>
           <div style={{ width: 1, height: 20, background: 'rgba(138,133,128,0.4)' }} />
-          <span
-            className="vessel-global-header__title"
-          >
-            {zh ? '全球营地部署' : 'Global Map'}
-          </span>
+          <span className="vessel-global-header__title">{labels.headerTitle}</span>
         </div>
 
-        {/* Stats: desktop only, right-aligned between brand and lang switcher */}
         <div
           className="vessel-global-header__desktop-stats"
           style={{ alignItems: 'center', gap: 32, marginLeft: 'auto', marginRight: 24 }}
         >
-          <div style={{ textAlign: 'center' }}>
-            <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
-              {countries}
-            </span>
-            <span style={{ color: '#8A7D74', fontSize: 12, marginLeft: 4 }}>
-              {zh ? '国家/地区' : 'Countries'}
-            </span>
-          </div>
-          <div style={{ width: 1, height: 16, background: '#E5DED4' }} />
-          <div style={{ textAlign: 'center' }}>
-            <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
-              {campCount}
-            </span>
-            <span style={{ color: '#8A7D74', fontSize: 12, marginLeft: 4 }}>
-              {zh ? '个营地' : 'Camps'}
-            </span>
-          </div>
-          <div style={{ width: 1, height: 16, background: '#E5DED4' }} />
-          <div style={{ textAlign: 'center' }}>
-            <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
-              {totalDevices}
-            </span>
-            <span style={{ color: '#8A7D74', fontSize: 12, marginLeft: 4 }}>
-              {zh ? '台设备' : 'Devices'}
-            </span>
-          </div>
+          {stats.map((item, index) => (
+            <div key={item.label} style={{ display: 'contents' }}>
+              {index > 0 ? <div style={{ width: 1, height: 16, background: '#E5DED4' }} /> : null}
+              <div style={{ textAlign: 'center' }}>
+                <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 18, letterSpacing: '0.05em' }}>
+                  {item.value}
+                </span>
+                <span style={{ color: '#8A7D74', fontSize: 12, marginLeft: 4 }}>
+                  {item.label}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Lang switcher: always visible; ml-auto on mobile pushes it right */}
         <div
           className="vessel-global-header__lang"
           style={{ display: 'flex', alignItems: 'center', border: '1px solid #E5DED4', overflow: 'hidden', flexShrink: 0 }}
@@ -103,7 +87,7 @@ export default function GlobalMapStats() {
               transition: 'all 0.15s',
             }}
           >
-            EN
+            {labels.languageEn}
           </button>
           <div style={{ width: 1, height: 12, background: '#E5DED4' }} />
           <button
@@ -120,43 +104,30 @@ export default function GlobalMapStats() {
               transition: 'all 0.15s',
             }}
           >
-            中
+            {labels.languageZh}
           </button>
         </div>
       </div>
 
-      {/* ── Row 2: mobile-only stats ── */}
       <div
         className="vessel-global-header__mobile-stats"
         style={{ borderTop: '1px solid #E5DED4', padding: '0 24px' }}
       >
-        <div>
-          <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 14, letterSpacing: '0.05em' }}>
-            {countries}
-          </span>
-          <span style={{ color: '#8A7D74', fontSize: 11, marginLeft: 3 }}>
-            {zh ? '国家/地区' : 'Countries'}
-          </span>
-        </div>
-        <span style={{ color: '#C4B9AB', fontSize: 12 }}>·</span>
-        <div>
-          <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 14, letterSpacing: '0.05em' }}>
-            {campCount}
-          </span>
-          <span style={{ color: '#8A7D74', fontSize: 11, marginLeft: 3 }}>
-            {zh ? '个营地' : 'Camps'}
-          </span>
-        </div>
-        <span style={{ color: '#C4B9AB', fontSize: 12 }}>·</span>
-        <div>
-          <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 14, letterSpacing: '0.05em' }}>
-            {totalDevices}
-          </span>
-          <span style={{ color: '#8A7D74', fontSize: 11, marginLeft: 3 }}>
-            {zh ? '台设备' : 'Devices'}
-          </span>
-        </div>
+        {stats.map((item, index) => (
+          <div key={item.label} style={{ display: 'contents' }}>
+            {index > 0 ? <span style={{ color: '#C4B9AB', fontSize: 12 }}>/</span> : null}
+            <div>
+              <span style={{ color: '#E36F2C', fontWeight: 700, fontSize: 14, letterSpacing: '0.05em' }}>
+                {item.value}
+              </span>
+              <span style={{ color: '#8A7D74', fontSize: 11, marginLeft: 3 }}>
+                {item.label}
+              </span>
+            </div>
+          </div>
+        ))}
       </div>
+
       <style>{`
         .vessel-global-header {
           display: flex;

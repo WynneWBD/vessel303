@@ -3,25 +3,55 @@ import { Suspense } from 'react'
 import GlobalMapStats from '@/components/GlobalMapStats'
 import GlobalMapView from '@/components/GlobalMapView'
 import MapSkeleton from '@/components/MapSkeleton'
+import { buildGlobalCmsLabels } from '@/lib/global-page-cms'
 import { listPublishedProjectCases } from '@/lib/project-cases-db'
 import { projectCaseToShowcaseProject } from '@/lib/project-cases-global'
+import { listPublishedPageModules } from '@/lib/page-modules-db'
 import type { ShowcaseProject } from '@/data/showcaseProjects'
-
-export const metadata: Metadata = {
-  title: '全球营地部署 | VESSEL®',
-}
 
 export const dynamic = 'force-dynamic'
 
+async function loadGlobalPageModules() {
+  return listPublishedPageModules('global').catch((err) => {
+    console.warn('[global] page modules unavailable', err)
+    return []
+  })
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const pageModules = await loadGlobalPageModules()
+  const labels = buildGlobalCmsLabels(pageModules, 'en')
+
+  return {
+    title: labels.seoTitle,
+    description: labels.seoDescription,
+    openGraph: {
+      title: labels.seoTitle,
+      description: labels.seoDescription,
+      url: 'https://www.vessel303.com/global',
+      siteName: 'VESSEL',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: labels.seoTitle,
+      description: labels.seoDescription,
+    },
+  }
+}
+
 export default async function GlobalPage() {
-  const cmsProjects: ShowcaseProject[] = await listPublishedProjectCases()
-    .then((projects) => projects
-      .map(projectCaseToShowcaseProject)
-      .filter((project): project is ShowcaseProject => Boolean(project)))
-    .catch((err) => {
-      console.error('[global] project cases db unavailable', err)
-      return []
-    })
+  const [cmsProjects, pageModules] = await Promise.all([
+    listPublishedProjectCases()
+      .then((projects) => projects
+        .map(projectCaseToShowcaseProject)
+        .filter((project): project is ShowcaseProject => Boolean(project)))
+      .catch((err) => {
+        console.error('[global] project cases db unavailable', err)
+        return []
+      }),
+    loadGlobalPageModules(),
+  ])
 
   return (
     <div className="vessel-global-page" style={{ overflow: 'hidden', height: '100vh', background: '#F5F2ED' }}>
@@ -38,7 +68,7 @@ export default async function GlobalPage() {
         as="fetch"
         href="/api/map/maps/streets-v2-light/style.json"
       />
-      <GlobalMapStats />
+      <GlobalMapStats pageModules={pageModules} />
       {/* mobile navbar = row1(56px) + row2(36px) = 92px; desktop = 56px */}
       <div className="vessel-global-map-stage" style={{ position: 'relative', height: '100vh' }}>
         {/* GlobalMapView uses useSearchParams (for ?camp=… deep link),
@@ -46,8 +76,8 @@ export default async function GlobalPage() {
             fallback is rendered into the SSR HTML, so users see the orange
             spinner the moment the document arrives — no black flash while
             the map JS chunk is downloading. */}
-        <Suspense fallback={<MapSkeleton />}>
-          <GlobalMapView cmsProjects={cmsProjects} />
+        <Suspense fallback={<MapSkeleton pageModules={pageModules} />}>
+          <GlobalMapView cmsProjects={cmsProjects} pageModules={pageModules} />
         </Suspense>
       </div>
       <style>{`

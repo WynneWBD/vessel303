@@ -7,6 +7,7 @@ import { SHOWCASE_MARKERS, type ShowcaseMarker } from '@/data/showcaseMarkers'
 import type { ShowcaseProject } from '@/data/showcaseProjects'
 import MapSkeleton from './MapSkeleton'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { buildGlobalCmsLabels, type GlobalCmsLabels, type GlobalPageModuleLike } from '@/lib/global-page-cms'
 
 const GlobalMapDynamic = dynamic(() => import('./GlobalMapML'), {
   ssr: false,
@@ -51,8 +52,6 @@ const ProjectDetailDynamic = dynamic(loadProjectDetailModule, {
   ssr: false,
 })
 
-// Sync URL without triggering a Next router re-render — the map state owns
-// what's visible, the URL is just a shareable mirror.
 function setCampParam(id: string | null) {
   if (typeof window === 'undefined') return
   const url = new URL(window.location.href)
@@ -61,84 +60,108 @@ function setCampParam(id: string | null) {
   window.history.replaceState({}, '', url)
 }
 
-// Shown immediately after marker click so the user can see which camp is
-// opening while the full detail chunk/data finishes loading.
 function PanelLoadingPreview({
   marker,
   lang,
+  labels,
   onClose,
 }: {
   marker: ShowcaseMarker
   lang: string
+  labels: GlobalCmsLabels
   onClose: () => void
 }) {
   const zh = lang === 'zh'
   const markerName = marker.name[zh ? 'zh' : 'en'] ?? marker.name.en
   return (
-    <div style={{
-      height: '100%',
-      background: '#F5F2ED',
-      position: 'relative',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 28,
-    }}>
+    <div
+      data-page-module="global:map-labels"
+      data-page-key="global"
+      data-module-key="map-labels"
+      style={{
+        height: '100%',
+        background: '#F5F2ED',
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 28,
+      }}
+    >
       <button
         onClick={onClose}
-        aria-label={zh ? '关闭' : 'Close'}
+        aria-label={labels.closeLabel}
         style={{
-          position: 'absolute', top: 16, right: 16,
-          width: 36, height: 36,
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          width: 36,
+          height: 36,
           background: '#241F1B',
           border: '1px solid rgba(227,111,44,0.25)',
-          borderRadius: 4, color: '#F5F2ED',
-          cursor: 'pointer', fontSize: 20, lineHeight: 1,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          borderRadius: 4,
+          color: '#F5F2ED',
+          cursor: 'pointer',
+          fontSize: 20,
+          lineHeight: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
-        ×
+        x
       </button>
-      <div style={{
-        width: 'min(420px, 100%)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        gap: 14,
-      }}>
-        <div style={{
-          width: 28, height: 28,
-          border: '2px solid rgba(227,111,44,0.25)',
-          borderTopColor: '#E36F2C',
-          borderRadius: '50%',
-          animation: 'vessel-panel-spin 0.9s linear infinite',
-        }} />
-        <div style={{
-          color: '#E36F2C',
-          fontSize: 12,
-          letterSpacing: '0.15em',
-          textTransform: 'uppercase',
-          fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",
-        }}>
-          {zh ? '正在打开营地' : 'OPENING CAMP'}
+      <div
+        style={{
+          width: 'min(420px, 100%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          gap: 14,
+        }}
+      >
+        <div
+          style={{
+            width: 28,
+            height: 28,
+            border: '2px solid rgba(227,111,44,0.25)',
+            borderTopColor: '#E36F2C',
+            borderRadius: '50%',
+            animation: 'vessel-panel-spin 0.9s linear infinite',
+          }}
+        />
+        <div
+          style={{
+            color: '#E36F2C',
+            fontSize: 12,
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",
+          }}
+        >
+          {labels.panelOpeningLabel}
         </div>
-        <h2 style={{
-          color: '#241F1B',
-          fontSize: 24,
-          lineHeight: 1.25,
-          margin: 0,
-          fontFamily: "var(--font-heading), 'DM Sans', sans-serif",
-        }}>
+        <h2
+          style={{
+            color: '#241F1B',
+            fontSize: 24,
+            lineHeight: 1.25,
+            margin: 0,
+            fontFamily: "var(--font-heading), 'DM Sans', sans-serif",
+          }}
+        >
           {markerName}
         </h2>
-        <p style={{
-          color: '#8A7D74',
-          fontSize: 14,
-          lineHeight: 1.7,
-          margin: 0,
-          fontFamily: "var(--font-body), 'Inter', sans-serif",
-        }}>
-          {zh ? '详情正在加载，基础信息会优先显示。' : 'Project details are loading now.'}
+        <p
+          style={{
+            color: '#8A7D74',
+            fontSize: 14,
+            lineHeight: 1.7,
+            margin: 0,
+            fontFamily: "var(--font-body), 'Inter', sans-serif",
+          }}
+        >
+          {labels.panelLoadingBody}
         </p>
       </div>
       <style>{`@keyframes vessel-panel-spin { to { transform: rotate(360deg); } }`}</style>
@@ -146,13 +169,18 @@ function PanelLoadingPreview({
   )
 }
 
-export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: ShowcaseProject[] }) {
-  // selectedMarker drives panel-open + flyTo (slim, always-loaded);
-  // selectedProject drives ProjectDetail content (lazy-loaded on first click).
+export default function GlobalMapView({
+  cmsProjects = [],
+  pageModules = [],
+}: {
+  cmsProjects?: ShowcaseProject[]
+  pageModules?: GlobalPageModuleLike[]
+}) {
   const [selectedMarker, setSelectedMarker] = useState<ShowcaseMarker | null>(null)
   const [selectedProject, setSelectedProject] = useState<ShowcaseProject | null>(null)
   const [resetViewKey, setResetViewKey] = useState(0)
   const { lang } = useLanguage()
+  const labels = buildGlobalCmsLabels(pageModules, lang === 'zh' ? 'zh' : 'en')
   const panelOpen = selectedMarker !== null
   const detailRequestId = useRef(0)
   const mirroredUrlOnce = useRef(false)
@@ -177,9 +205,6 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
     })
   }, [])
 
-  // Async-load the full ShowcaseProject for a given marker id. The idle
-  // preloader warms this in the background; first-click still reuses the same
-  // promise if preloading has not finished yet.
   const loadProjectDetails = useCallback(async (markerId: string, requestId: number) => {
     const cmsProject = cmsProjectById.get(markerId)
     if (cmsProject) {
@@ -193,7 +218,6 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
     setSelectedProject(project)
   }, [cmsProjectById])
 
-  // ── Deep link: open ?camp=<id> on mount ────────────────────────────────
   const searchParams = useSearchParams()
   const hydratedOnce = useRef(false)
   useEffect(() => {
@@ -213,7 +237,6 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
     return () => cancelAnimationFrame(frame)
   }, [searchParams, loadProjectDetails, showcaseMarkers])
 
-  // Mirror state → URL
   useEffect(() => {
     if (!mirroredUrlOnce.current) {
       mirroredUrlOnce.current = true
@@ -226,7 +249,7 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
     const requestId = detailRequestId.current + 1
     detailRequestId.current = requestId
     setSelectedMarker(marker)
-    setSelectedProject(null)  // clear stale content while new details load
+    setSelectedProject(null)
     loadProjectDetails(marker.id, requestId)
   }, [loadProjectDetails])
 
@@ -234,32 +257,35 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
     detailRequestId.current += 1
     setSelectedMarker(null)
     setSelectedProject(null)
-    setResetViewKey(k => k + 1)
+    setResetViewKey((key) => key + 1)
   }, [])
 
-  // flyTarget in [lat, lng] for the map component
-  // marker.coordinates is [lng, lat] so we swap
   const flyTarget = selectedMarker
     ? [selectedMarker.coordinates[1], selectedMarker.coordinates[0]] as [number, number]
     : null
 
   return (
-    <div style={{
-      position: 'relative',
-      width: '100%',
-      height: 'calc(100dvh - var(--global-map-header-height, 56px))',
-      overflow: 'hidden',
-      display: 'flex',
-      background: '#F5F2ED',
-    }}>
-
-      {/* ── Map — shrinks to 30% when detail panel is open ── */}
-      <div style={{
-        flexShrink: 0,
-        width: panelOpen ? '30%' : '100%',
-        height: '100%',
-        transition: 'width 300ms ease-out',
-      }}>
+    <div
+      data-page-module="global:map-labels"
+      data-page-key="global"
+      data-module-key="map-labels"
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: 'calc(100dvh - var(--global-map-header-height, 56px))',
+        overflow: 'hidden',
+        display: 'flex',
+        background: '#F5F2ED',
+      }}
+    >
+      <div
+        style={{
+          flexShrink: 0,
+          width: panelOpen ? '30%' : '100%',
+          height: '100%',
+          transition: 'width 300ms ease-out',
+        }}
+      >
         <GlobalMapDynamic
           onShowcaseSelect={handleShowcaseSelect}
           onMapClick={handleClose}
@@ -267,28 +293,40 @@ export default function GlobalMapView({ cmsProjects = [] }: { cmsProjects?: Show
           resetViewKey={resetViewKey}
           lang={lang}
           showcaseMarkers={showcaseMarkers}
+          pageModules={pageModules}
         />
       </div>
 
-      {/* ── Project Detail Panel — slides in from right, 70% width ── */}
-      <div style={{
-        position: 'absolute',
-        top: 0, right: 0,
-        width: '70%', height: '100%',
-        transform: panelOpen ? 'translateX(0)' : 'translateX(100%)',
-        transition: 'transform 300ms ease-out',
-        zIndex: 100,
-        borderLeft: '1px solid #E5DED4',
-        background: '#F5F2ED',
-      }}>
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: '70%',
+          height: '100%',
+          transform: panelOpen ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 300ms ease-out',
+          zIndex: 100,
+          borderLeft: '1px solid #E5DED4',
+          background: '#F5F2ED',
+        }}
+      >
         {selectedProject ? (
           <ProjectDetailDynamic
             project={selectedProject}
             lang={lang}
+            pageModules={pageModules}
             onClose={handleClose}
           />
         ) : panelOpen ? (
-          selectedMarker && <PanelLoadingPreview marker={selectedMarker} lang={lang} onClose={handleClose} />
+          selectedMarker && (
+            <PanelLoadingPreview
+              marker={selectedMarker}
+              lang={lang}
+              labels={labels}
+              onClose={handleClose}
+            />
+          )
         ) : null}
       </div>
     </div>

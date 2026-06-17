@@ -44,6 +44,7 @@ type AdminRole = 'admin' | 'operator'
 const VISUAL_PAGE_META = [
   { key: 'home', label: 'Home', path: '/' },
   { key: 'about', label: 'About', path: '/about' },
+  { key: 'global', label: 'Global', path: '/global' },
 ] as const
 
 type VisualPageKey = (typeof VISUAL_PAGE_META)[number]['key']
@@ -70,6 +71,11 @@ const EDITABLE_VISUAL_MODULE_IDS = [
   'about:services',
   'about:partners',
   'about:recognition-awards',
+  'global:hero',
+  'global:header',
+  'global:map-labels',
+  'global:detail-labels',
+  'global:cta-labels',
 ]
 
 const EDITABLE_VISUAL_MODULE_ID_SET = new Set(EDITABLE_VISUAL_MODULE_IDS)
@@ -296,7 +302,7 @@ function VisualReleaseConsole({
             {publishQueue > 0 ? `${formatNumber(publishQueue)} 项待复核` : '当前无待发布'}
           </span>
           <span className="inline-flex min-h-8 items-center rounded-md bg-[#EAF6F8] px-3 text-xs font-semibold text-[#1889B6]">
-            Home / About
+            Home / About / Global
           </span>
         </div>
       </div>
@@ -468,7 +474,7 @@ export default async function SiteVisualEditorPage() {
   }
 
   const currentAdminRole: AdminRole = role
-  const [modules, settings, structureDrafts, homeStructureSnapshots, aboutStructureSnapshots] = await Promise.all([
+  const [modules, settings, structureDrafts, homeStructureSnapshots, aboutStructureSnapshots, globalStructureSnapshots] = await Promise.all([
     listPageModulesForVisualEditor().catch((err) => {
       console.error('[admin/site/visual] list failed', err)
       return listDefaultPageModules()
@@ -480,8 +486,13 @@ export default async function SiteVisualEditorPage() {
     }),
     listPageStructureSnapshots('home', 8).catch(() => []),
     listPageStructureSnapshots('about', 8).catch(() => []),
+    listPageStructureSnapshots('global', 8).catch(() => []),
   ])
-  const structureSnapshots = { home: homeStructureSnapshots, about: aboutStructureSnapshots }
+  const structureSnapshots = {
+    home: homeStructureSnapshots,
+    about: aboutStructureSnapshots,
+    global: globalStructureSnapshots,
+  }
   const maxUploadMb = normalizeMediaMaxUploadMb(settings.mediaMaxUploadMb)
 
   return (

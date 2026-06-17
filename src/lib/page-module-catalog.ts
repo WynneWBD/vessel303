@@ -1,4 +1,4 @@
-export type PageModuleCatalogPage = 'home' | 'about' | 'all'
+export type PageModuleCatalogPage = 'home' | 'about' | 'global' | 'all'
 
 export type PageModuleCatalogStatus = 'planned' | 'locked' | 'not_open'
 

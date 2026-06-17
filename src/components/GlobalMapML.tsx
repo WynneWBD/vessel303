@@ -14,6 +14,7 @@ import '@maptiler/sdk/dist/maptiler-sdk.css'
 import { CAMPS } from '@/data/camps'
 import { SHOWCASE_MARKERS, HQ_MARKER, type ShowcaseMarker } from '@/data/showcaseMarkers'
 import StaticGlobalMapPreview from './StaticGlobalMapPreview'
+import type { GlobalPageModuleLike } from '@/lib/global-page-cms'
 
 // The real MapTiler API key now lives on the edge proxy (see src/app/api/map/
 // [...path]/route.ts). Setting the SDK's apiKey to a placeholder stops it from
@@ -281,6 +282,7 @@ interface Props {
   resetViewKey?: number  // increment to fly back to global default view
   lang?: string
   showcaseMarkers?: ShowcaseMarker[]
+  pageModules?: GlobalPageModuleLike[]
   previewMode?: boolean
 }
 
@@ -292,6 +294,7 @@ export default function GlobalMapML({
   resetViewKey,
   lang,
   showcaseMarkers = SHOWCASE_MARKERS,
+  pageModules = [],
   previewMode = false,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -824,7 +827,7 @@ export default function GlobalMapML({
 
   return (
     <div style={{ position: 'relative', height: '100%', width: '100%', background: '#F5F2ED', pointerEvents: previewMode ? 'none' : 'auto' }}>
-      <StaticGlobalMapPreview />
+      <StaticGlobalMapPreview lang={zh ? 'zh' : 'en'} pageModules={pageModules} />
       <div
         ref={containerRef}
         style={{

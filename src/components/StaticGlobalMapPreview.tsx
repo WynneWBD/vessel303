@@ -1,10 +1,13 @@
 /* eslint-disable @next/next/no-img-element -- 14KB static fallback; avoid the image optimizer while MapLibre loads. */
 import type { CSSProperties } from 'react'
 import { HQ_MARKER, SHOWCASE_MARKERS } from '@/data/showcaseMarkers'
+import { buildGlobalCmsLabels, type GlobalCmsLang, type GlobalPageModuleLike } from '@/lib/global-page-cms'
 
 type Props = {
   showLoading?: boolean
   loadingLabel?: string
+  lang?: GlobalCmsLang
+  pageModules?: GlobalPageModuleLike[]
 }
 
 function clampPercent(value: number) {
@@ -21,8 +24,13 @@ function markerStyle(coordinates: [number, number]): CSSProperties {
 
 export default function StaticGlobalMapPreview({
   showLoading = false,
-  loadingLabel = 'LOADING GLOBAL MAP',
+  loadingLabel,
+  lang = 'en',
+  pageModules,
 }: Props) {
+  const labels = buildGlobalCmsLabels(pageModules, lang)
+  const resolvedLoadingLabel = loadingLabel ?? labels.loadingLabel
+
   return (
     <div className="vessel-static-global-map" aria-hidden="true">
       <div className="vessel-static-global-map__stage">
@@ -51,7 +59,7 @@ export default function StaticGlobalMapPreview({
       {showLoading ? (
         <div className="vessel-static-global-map__loading">
           <span className="vessel-static-global-map__spinner" />
-          <span className="vessel-static-global-map__loading-label">{loadingLabel}</span>
+          <span className="vessel-static-global-map__loading-label">{resolvedLoadingLabel}</span>
         </div>
       ) : null}
       <style>{`
