@@ -3072,13 +3072,20 @@ function normalizeItems(value: unknown): PageModuleItem[] {
   return items.sort((a, b) => a.sort_order - b.sort_order)
 }
 
+function shouldAppendMissingDefaultItems(row: PageModuleRow) {
+  return (
+    (row.page_key === 'products' && row.module_key === 'ui-labels') ||
+    (row.page_key === 'about' && row.module_key === 'services')
+  )
+}
+
 function normalizeRow(row: DbPageModuleRow): PageModuleRow {
   const normalized = {
     ...row,
     items: normalizeItems(row.items),
   }
 
-  if (normalized.page_key !== 'products' || normalized.module_key !== 'ui-labels') return normalized
+  if (!shouldAppendMissingDefaultItems(normalized)) return normalized
 
   const fallback = getDefaultPageModule(normalized.page_key, normalized.module_key)
   if (!fallback) return normalized
