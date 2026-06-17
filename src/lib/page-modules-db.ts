@@ -31,6 +31,7 @@ export const PAGE_MODULE_PAGE_KEYS = [
 
 export const PAGE_MODULE_PUBLIC_CACHE_TAG = 'page-module-public'
 const PAGE_MODULE_PUBLIC_CACHE_SECONDS = 300
+const PAGE_MODULE_DEFAULTS_CACHE_VERSION = '2026-06-17-b346-global-about-cta'
 
 export type PageModulePageKey = (typeof PAGE_MODULE_PAGE_KEYS)[number]
 
@@ -3746,7 +3747,7 @@ async function loadPublishedPageModules(pageKey?: string): Promise<PageModuleRow
 
 const listPublishedPageModulesCached = unstable_cache(
   async (pageKeyKey: string): Promise<PageModuleRow[]> => loadPublishedPageModules(pageKeyKey || undefined),
-  ['page-modules-public-list'],
+  ['page-modules-public-list', PAGE_MODULE_DEFAULTS_CACHE_VERSION],
   { revalidate: PAGE_MODULE_PUBLIC_CACHE_SECONDS, tags: [PAGE_MODULE_PUBLIC_CACHE_TAG] },
 )
 
@@ -3790,7 +3791,7 @@ async function loadPublishedPageModule(pageKey: string, moduleKey: string): Prom
 
 const getPublishedPageModuleCached = unstable_cache(
   async (pageKey: string, moduleKey: string): Promise<PageModuleRow | null> => loadPublishedPageModule(pageKey, moduleKey),
-  ['page-modules-public-one'],
+  ['page-modules-public-one', PAGE_MODULE_DEFAULTS_CACHE_VERSION],
   { revalidate: PAGE_MODULE_PUBLIC_CACHE_SECONDS, tags: [PAGE_MODULE_PUBLIC_CACHE_TAG] },
 )
 
