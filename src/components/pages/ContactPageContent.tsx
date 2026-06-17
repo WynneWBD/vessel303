@@ -67,54 +67,77 @@ function newsSourceHref(source: string) {
   return `/news/${slug}`
 }
 
-function sourceContext(value: string | null, lang: 'en' | 'zh') {
+function sourceContext(value: string | null, lang: 'en' | 'zh', pageModule: PublicPageModule | null) {
   const source = sanitizeSource(value)
   if (!source) return null
+  if (pageModule?.is_visible === false) return null
   const zh = lang === 'zh'
   const lower = source.toLowerCase()
 
   if (lower.startsWith('news')) {
+    const href = newsSourceHref(source)
+    const item = itemById(pageModule, 'context-news')
+    const detailLabelItem = itemById(pageModule, 'context-news-detail')
     return {
-      title: zh ? '来自新闻动态' : 'From a news update',
-      detail: zh
-        ? '如果这条动态与你的项目相关，可以在表单里补充产品、场景或采购时间。'
-        : 'If the update is relevant, add product, scenario, or timing context in the form.',
-      href: newsSourceHref(source),
-      hrefLabel: newsSourceHref(source) === '/news'
-        ? (zh ? '返回新闻' : 'Back to news')
-        : (zh ? '返回这篇动态' : 'Back to this update'),
+      itemId: 'context-news',
+      hrefLabelItemId: href === '/news' ? 'context-news' : 'context-news-detail',
+      title: itemLabel(item, lang) || (zh ? '来自新闻动态' : 'From a news update'),
+      detail: itemContent(item, lang) || (
+        zh
+          ? '如果这条动态与你的项目相关，可以在表单里补充产品、场景或采购时间。'
+          : 'If the update is relevant, add product, scenario, or timing context in the form.'
+      ),
+      href,
+      hrefLabel: href === '/news'
+        ? itemValue(item, lang) || (zh ? '返回新闻' : 'Back to news')
+        : itemValue(detailLabelItem, lang) || (zh ? '返回这篇动态' : 'Back to this update'),
     }
   }
 
   if (lower.startsWith('product') || lower.includes('products')) {
+    const item = itemById(pageModule, 'context-product')
     return {
-      title: zh ? '来自产品路径' : 'From a product path',
-      detail: zh
-        ? '团队会结合你查看的产品路径判断型号、配置和数量需求。'
-        : 'The team can use the product path to discuss model, configuration, and quantity needs.',
-      href: '/products',
-      hrefLabel: zh ? '返回产品' : 'Back to products',
+      itemId: 'context-product',
+      hrefLabelItemId: 'context-product',
+      title: itemLabel(item, lang) || (zh ? '来自产品路径' : 'From a product path'),
+      detail: itemContent(item, lang) || (
+        zh
+          ? '团队会结合你查看的产品路径判断型号、配置和数量需求。'
+          : 'The team can use the product path to discuss model, configuration, and quantity needs.'
+      ),
+      href: normalizeSiteHref(item?.href, '/products'),
+      hrefLabel: itemValue(item, lang) || (zh ? '返回产品' : 'Back to products'),
     }
   }
 
   if (lower.startsWith('case') || lower.includes('cases')) {
+    const item = itemById(pageModule, 'context-case')
     return {
-      title: zh ? '来自项目案例' : 'From a project case',
-      detail: zh
-        ? '可以补充项目所在地、场地类型、预计规模和交付时间。'
-        : 'Add location, site type, approximate scale, and delivery timing if available.',
-      href: '/cases',
-      hrefLabel: zh ? '返回案例' : 'Back to cases',
+      itemId: 'context-case',
+      hrefLabelItemId: 'context-case',
+      title: itemLabel(item, lang) || (zh ? '来自项目案例' : 'From a project case'),
+      detail: itemContent(item, lang) || (
+        zh
+          ? '可以补充项目所在地、场地类型、预计规模和交付时间。'
+          : 'Add location, site type, approximate scale, and delivery timing if available.'
+      ),
+      href: normalizeSiteHref(item?.href, '/cases'),
+      hrefLabel: itemValue(item, lang) || (zh ? '返回案例' : 'Back to cases'),
     }
   }
 
+  const item = itemById(pageModule, 'context-site')
   return {
-    title: zh ? '来自站内咨询入口' : 'From a site inquiry path',
-    detail: zh
-      ? '团队会参考本次访问路径，更快理解你的咨询背景。'
-      : 'The team can use this context to understand your inquiry path faster.',
-    href: '/products',
-    hrefLabel: zh ? '查看产品' : 'View products',
+    itemId: 'context-site',
+    hrefLabelItemId: 'context-site',
+    title: itemLabel(item, lang) || (zh ? '来自站内咨询入口' : 'From a site inquiry path'),
+    detail: itemContent(item, lang) || (
+      zh
+        ? '团队会参考本次访问路径，更快理解你的咨询背景。'
+        : 'The team can use this context to understand your inquiry path faster.'
+    ),
+    href: normalizeSiteHref(item?.href, '/products'),
+    hrefLabel: itemValue(item, lang) || (zh ? '查看产品' : 'View products'),
   }
 }
 
@@ -134,8 +157,10 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
   const formModule = modules.get('form') ?? null
   const backupModule = modules.get('backup') ?? null
   const faqPanelModule = modules.get('faq-panel') ?? null
+  const sourceContextModule = modules.get('source-context') ?? null
   const source = sourceFromUrl(initialSource)
-  const context = sourceContext(initialSource, lang)
+  const context = sourceContext(initialSource, lang, sourceContextModule)
+  const contextEyebrow = itemLabel(itemById(sourceContextModule, 'context-eyebrow'), lang) || (lang === 'zh' ? '咨询来源' : 'Inquiry context')
 
   const heroTitle = moduleTitle(heroModule, lang)
   const heroDescription = moduleDescription(heroModule, lang)
@@ -324,16 +349,39 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
               ) : null}
               <div className={hasSupportPanel ? 'lg:sticky lg:top-24' : undefined}>
                 {context ? (
-                  <div className="mb-4 border border-[#DADDE1] bg-white p-4 shadow-sm">
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#147C94]">
-                      {lang === 'zh' ? '咨询来源' : 'Inquiry context'}
+                  <div
+                    className="mb-4 border border-[#DADDE1] bg-white p-4 shadow-sm"
+                    data-page-module="contact:source-context"
+                    data-page-key="contact"
+                    data-module-key="source-context"
+                  >
+                    <p
+                      className="text-xs font-bold uppercase tracking-[0.16em] text-[#147C94]"
+                      data-page-module-item="context-eyebrow"
+                      data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                    >
+                      {contextEyebrow}
                     </p>
-                    <h2 className="mt-2 text-base font-black text-[#1F2A31]">{context.title}</h2>
-                    <p className="mt-2 text-sm leading-6 text-[#5C6670]">{context.detail}</p>
+                    <h2
+                      className="mt-2 text-base font-black text-[#1F2A31]"
+                      data-page-module-item={context.itemId}
+                      data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                    >
+                      {context.title}
+                    </h2>
+                    <p
+                      className="mt-2 text-sm leading-6 text-[#5C6670]"
+                      data-page-module-item={context.itemId}
+                      data-page-module-field={lang === 'zh' ? 'content_zh' : 'content_en'}
+                    >
+                      {context.detail}
+                    </p>
                     <Link
                       href={context.href}
                       prefetch={false}
                       className="mt-3 inline-flex min-h-9 items-center border border-[#DADDE1] px-3 text-xs font-bold text-[#1F2A31] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
+                      data-page-module-item={context.hrefLabelItemId}
+                      data-page-module-field={lang === 'zh' ? 'value_zh' : 'value_en'}
                     >
                       {context.hrefLabel}
                     </Link>
