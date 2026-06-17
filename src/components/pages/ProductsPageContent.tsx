@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { Search, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import ProtectedImage from '@/components/ProtectedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
@@ -12,7 +12,10 @@ import {
   itemContent,
   itemLabel,
   itemValue,
+  moduleDescription,
   moduleMap,
+  moduleTitle,
+  visibleItems,
   type PublicPageModule,
   type PublicPageModuleItem,
 } from '@/lib/page-module-client';
@@ -37,8 +40,14 @@ type ProductListLabels = {
   sidebarTitle: string;
   allCategories: string;
   defaultCategoryGroup: string;
+  attributeGroups: string[];
+  contactCardTitle: string;
   priceEmpty: string;
   cardPriceEyebrow: string;
+  modelDetail: string;
+  imagePlaceholder: string;
+  paginationPrevious: string;
+  paginationNext: string;
 };
 
 interface Props {
@@ -191,6 +200,236 @@ function productMatchesFilters(product: CatalogProduct, filters: DirectoryFilter
   return true;
 }
 
+function ProductsHero({
+  pageModule,
+  totalProducts,
+  totalLabel,
+  breadcrumbHome,
+  breadcrumbCurrent,
+}: {
+  pageModule: PublicPageModule | null;
+  totalProducts: number;
+  totalLabel: string;
+  breadcrumbHome: string;
+  breadcrumbCurrent: string;
+}) {
+  const { lang } = useLanguage();
+  if (!pageModule || pageModule.is_visible === false) return null;
+
+  const title = moduleTitle(pageModule, lang);
+  const description = moduleDescription(pageModule, lang);
+  const primaryCta = itemById(pageModule, 'primary-cta');
+  const secondaryCta = itemById(pageModule, 'secondary-cta');
+  const routeNote = itemById(pageModule, 'route-note');
+  const featuredLabel = itemLabel(itemById(pageModule, 'featured-label'), lang);
+  const heroImage = itemById(pageModule, 'hero-image');
+  const primaryLabel = itemLabel(primaryCta, lang);
+  const secondaryLabel = itemLabel(secondaryCta, lang);
+  const primaryHref = displayHref(primaryCta?.href);
+  const secondaryHref = displayHref(secondaryCta?.href);
+  const routeNoteLabel = itemLabel(routeNote, lang);
+  const routeNoteBody = itemContent(routeNote, lang);
+  const heroImageLabel = itemLabel(heroImage, lang);
+  const heroImageHref = displayHref(heroImage?.href);
+  const heroImageSrc = heroImage?.image_url?.trim() || '';
+  const hasHeroCopy = title || description || primaryLabel || secondaryLabel || routeNoteLabel || routeNoteBody || heroImageSrc;
+  if (!hasHeroCopy) return null;
+
+  const media = heroImageSrc ? (
+    <ProtectedImage
+      src={heroImageSrc}
+      alt={heroImageLabel || title}
+      fill
+      priority
+      className="object-cover"
+      sizes="(max-width: 1024px) 100vw, 640px"
+      data-page-module-item="hero-image"
+      data-page-module-field="image_url"
+    />
+  ) : (
+    <div className="flex h-full min-h-[280px] items-center justify-center bg-[#E7E7E7] text-sm font-bold uppercase text-[#888]">
+      {heroImageLabel || 'VESSEL'}
+    </div>
+  );
+
+  return (
+    <section
+      className="bg-white pt-24 text-[#222] sm:pt-28"
+      data-page-module="products:hero"
+      data-page-key="products"
+      data-module-key="hero"
+    >
+      <div className="mx-auto grid max-w-[1600px] gap-10 px-4 pb-12 sm:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(440px,0.7fr)] lg:px-0 lg:pb-16">
+        <div className="flex min-w-0 flex-col justify-center">
+          <div className="mb-8 text-sm text-[#555]">
+            <Link prefetch={false} href="/" className="hover:text-[#E97936]">
+              {breadcrumbHome}
+            </Link>
+            <span className="mx-2 text-[#B7B7B7]">/</span>
+            <span>{breadcrumbCurrent}</span>
+          </div>
+
+          {title ? (
+            <h1
+              className="max-w-[880px] break-words font-[family-name:var(--font-heading)] text-4xl font-black leading-tight tracking-normal text-[#1F1F1F] sm:text-5xl lg:text-[58px]"
+              data-page-module-field={`title_${lang}`}
+            >
+              {title}
+            </h1>
+          ) : null}
+
+          {description ? (
+            <p
+              className="mt-5 max-w-[760px] text-base leading-8 text-[#555] sm:text-lg"
+              data-page-module-field={`description_${lang}`}
+            >
+              {description}
+            </p>
+          ) : null}
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            {primaryLabel && primaryHref ? (
+              <Link
+                prefetch={false}
+                href={primaryHref}
+                className="inline-flex min-h-11 items-center justify-center rounded bg-[#E97936] px-6 text-sm font-bold text-white transition hover:bg-[#CA6228]"
+                data-page-module-item="primary-cta"
+                data-page-module-field={`label_${lang}`}
+              >
+                {primaryLabel}
+              </Link>
+            ) : null}
+            {secondaryLabel && secondaryHref ? (
+              <Link
+                prefetch={false}
+                href={secondaryHref}
+                className="inline-flex min-h-11 items-center justify-center rounded border border-[#D8D8D8] bg-white px-6 text-sm font-bold text-[#333] transition hover:border-[#E97936] hover:text-[#E97936]"
+                data-page-module-item="secondary-cta"
+                data-page-module-field={`label_${lang}`}
+              >
+                {secondaryLabel}
+              </Link>
+            ) : null}
+          </div>
+
+          {routeNoteLabel || routeNoteBody ? (
+            <div className="mt-8 border-l-4 border-[#E97936] pl-5 text-sm leading-7 text-[#5C5C5C]">
+              {routeNoteLabel ? (
+                <p
+                  className="font-bold uppercase tracking-[0.08em] text-[#E97936]"
+                  data-page-module-item="route-note"
+                  data-page-module-field={`label_${lang}`}
+                >
+                  {routeNoteLabel}
+                </p>
+              ) : null}
+              {routeNoteBody ? (
+                <p data-page-module-item="route-note" data-page-module-field={`content_${lang}`}>
+                  {routeNoteBody}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="relative min-h-[340px] overflow-hidden rounded-[8px] bg-[#E7E7E7] lg:min-h-[460px]">
+          {heroImageHref ? (
+            <Link prefetch={false} href={heroImageHref} className="absolute inset-0 block">
+              {media}
+            </Link>
+          ) : (
+            <div className="absolute inset-0">{media}</div>
+          )}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/58 to-transparent px-6 pb-6 pt-24 text-white">
+            {featuredLabel ? (
+              <p
+                className="text-xs font-bold uppercase tracking-[0.18em] text-white/75"
+                data-page-module-item="featured-label"
+                data-page-module-field={`label_${lang}`}
+              >
+                {featuredLabel}
+              </p>
+            ) : null}
+            {heroImageLabel ? (
+              <p
+                className="mt-2 text-2xl font-black uppercase leading-tight"
+                data-page-module-item="hero-image"
+                data-page-module-field={`label_${lang}`}
+              >
+                {heroImageLabel}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <div className="border-y border-[#EEEEEE] bg-[#FAFAFA]">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-8 gap-y-2 px-4 py-4 text-sm text-[#666] sm:px-6 lg:px-0">
+          <span className="font-semibold text-[#222]">{breadcrumbCurrent}</span>
+          <span>{totalLabel}: {totalProducts}</span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProductsHighlights({ pageModule }: { pageModule: PublicPageModule | null }) {
+  const { lang } = useLanguage();
+  const items = visibleItems(pageModule);
+  if (!pageModule || pageModule.is_visible === false || items.length === 0) return null;
+
+  return (
+    <section
+      className="bg-[#F3F3F3] pt-10 text-[#222]"
+      data-page-module="products:highlights"
+      data-page-key="products"
+      data-module-key="highlights"
+    >
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-0">
+        <div className="grid gap-4 md:grid-cols-3">
+          {items.map((item) => {
+            const value = itemValue(item, lang);
+            const label = itemLabel(item, lang);
+            const content = itemContent(item, lang);
+            if (!value && !label && !content) return null;
+            return (
+              <div key={item.id} className="border-l-4 border-[#E97936] bg-white px-5 py-5 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
+                {value ? (
+                  <p
+                    className="text-xs font-black uppercase tracking-[0.16em] text-[#E97936]"
+                    data-page-module-item={item.id}
+                    data-page-module-field={`value_${lang}`}
+                  >
+                    {value}
+                  </p>
+                ) : null}
+                {label ? (
+                  <h2
+                    className="mt-2 text-lg font-black leading-snug text-[#222]"
+                    data-page-module-item={item.id}
+                    data-page-module-field={`label_${lang}`}
+                  >
+                    {label}
+                  </h2>
+                ) : null}
+                {content ? (
+                  <p
+                    className="mt-2 text-sm leading-6 text-[#666]"
+                    data-page-module-item={item.id}
+                    data-page-module-field={`content_${lang}`}
+                  >
+                    {content}
+                  </p>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function FilterRow({
   href,
   active,
@@ -234,10 +473,11 @@ function Sidebar({
   const { lang } = useLanguage();
   const headline = itemLabel(itemById(contactModule, 'headline'), lang);
   const body = itemContent(itemById(contactModule, 'body'), lang);
+  const contactTitle = itemLabel(itemById(contactModule, 'eyebrow'), lang) || labels.contactCardTitle;
   const cta = itemById(contactModule, 'primary-cta');
   const ctaLabel = itemLabel(cta, lang);
   const ctaHref = displayHref(cta?.href);
-  const showContact = contactModule?.is_visible !== false && (headline || body || (ctaLabel && ctaHref));
+  const showContact = contactModule?.is_visible !== false && (contactTitle || headline || body || (ctaLabel && ctaHref));
 
   return (
     <aside className="space-y-8">
@@ -255,7 +495,7 @@ function Sidebar({
           <details className="group border-t border-[#E9E9E9]" open={Boolean(filters.category)}>
             <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 bg-white px-4 text-[15px] text-[#222] transition hover:text-[#E97936] [&::-webkit-details-marker]:hidden">
               <span>{labels.defaultCategoryGroup}</span>
-              <span className="text-sm text-[#999] group-open:rotate-180">v</span>
+              <ChevronDown className="h-4 w-4 shrink-0 text-[#999] transition group-open:rotate-180" aria-hidden="true" />
             </summary>
             <div>
               {categories.map((category) => {
@@ -284,19 +524,13 @@ function Sidebar({
             .filter((option) => option.displayLabel);
           if (!templateTitle && visibleOptions.length === 0) return null;
           const open = visibleOptions.some((option) => filters.attribute === String(option.id));
-          const fallbackTitle = index === 0
-            ? 'Product Configuration 热销配置'
-            : index === 1
-              ? 'Area 面积'
-              : index === 2
-                ? 'Country 国家'
-                : templateTitle;
+          const fallbackTitle = labels.attributeGroups[index] || templateTitle;
 
           return (
             <details key={template.id} className="group border-t border-[#E9E9E9]" open={open}>
               <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 bg-white px-4 text-[15px] text-[#222] transition hover:text-[#E97936] [&::-webkit-details-marker]:hidden">
                 <span>{templateTitle || fallbackTitle}</span>
-                <span className="text-sm text-[#999] group-open:rotate-180">v</span>
+                <ChevronDown className="h-4 w-4 shrink-0 text-[#999] transition group-open:rotate-180" aria-hidden="true" />
               </summary>
               <div>
                 {visibleOptions.map((option) => (
@@ -316,7 +550,11 @@ function Sidebar({
 
       {showContact ? (
         <div className="overflow-hidden bg-white shadow-[0_16px_44px_rgba(0,0,0,0.08)]">
-          <div className="bg-[#E97936] px-5 py-5 text-[22px] font-black text-white">Contact Us</div>
+          {contactTitle ? (
+            <div className="bg-[#E97936] px-5 py-5 text-[22px] font-black text-white">
+              {contactTitle}
+            </div>
+          ) : null}
           <div className="space-y-4 px-5 py-5 text-sm leading-6 text-[#555]">
             {headline ? <p className="font-semibold text-[#222]">{headline}</p> : null}
             {body ? <p>{body}</p> : null}
@@ -343,7 +581,7 @@ function ProductCard({
 }: {
   product: CatalogProduct;
   cardMode: ProductCardMode;
-  labels: Pick<ProductListLabels, 'priceEmpty' | 'cardPriceEyebrow'>;
+  labels: Pick<ProductListLabels, 'priceEmpty' | 'cardPriceEyebrow' | 'modelDetail' | 'imagePlaceholder'>;
 }) {
   const { lang } = useLanguage();
   const cardModule = findProductCatalogCardModule(product.detail_modules);
@@ -393,7 +631,7 @@ function ProductCard({
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-[#E8E8E8] text-sm font-semibold text-[#999]">
-            VESSEL
+            {labels.imagePlaceholder}
           </div>
         )}
         {usePosterLayer ? (
@@ -415,7 +653,7 @@ function ProductCard({
             {showPrice ? (
               <div className="absolute bottom-0 right-0 min-w-[52%] rounded-tl-[48px] bg-[#E97936] px-5 py-3 text-right text-white">
                 <div className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-90">
-                  {price ? priceEyebrow : fallbackCopy(lang, 'Model detail', '型号详情')}
+                  {price ? priceEyebrow : labels.modelDetail}
                 </div>
                 <div className="mt-1 text-[20px] font-black leading-none">
                   {price || labels.priceEmpty || fallbackCopy(lang, 'Open', '查看')}
@@ -453,10 +691,12 @@ function Pagination({
   filters,
   currentPage,
   totalPages,
+  labels,
 }: {
   filters: DirectoryFilters;
   currentPage: number;
   totalPages: number;
+  labels: Pick<ProductListLabels, 'paginationPrevious' | 'paginationNext'>;
 }) {
   if (totalPages <= 1) return null;
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1).slice(0, 8);
@@ -466,9 +706,10 @@ function Pagination({
       <Link
         prefetch={false}
         href={buildHref(filters, { page: Math.max(1, currentPage - 1) })}
+        aria-label={labels.paginationPrevious}
         className="flex h-10 min-w-10 items-center justify-center rounded bg-white px-3 text-sm font-semibold text-[#666] shadow-sm transition hover:bg-[#E97936] hover:text-white"
       >
-        &lt;
+        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
       </Link>
       {pages.map((page) => (
         <Link
@@ -487,9 +728,10 @@ function Pagination({
       <Link
         prefetch={false}
         href={buildHref(filters, { page: Math.min(totalPages, currentPage + 1) })}
+        aria-label={labels.paginationNext}
         className="flex h-10 min-w-10 items-center justify-center rounded bg-white px-3 text-sm font-semibold text-[#666] shadow-sm transition hover:bg-[#E97936] hover:text-white"
       >
-        &gt;
+        <ChevronRight className="h-4 w-4" aria-hidden="true" />
       </Link>
     </nav>
   );
@@ -505,18 +747,29 @@ export default function ProductsPageContent({
 }: Props) {
   const { lang } = useLanguage();
   const modules = moduleMap(pageModules);
+  const heroModule = modules.get('hero') ?? null;
+  const highlightsModule = modules.get('highlights') ?? null;
   const contactModule = modules.get('contact-card') ?? null;
   const uiModule = modules.get('ui-labels') ?? null;
   const label = (id: string) => itemLabel(itemById(uiModule, id), lang);
   const cardMode = cardModeFromConfig(rawItemById(uiModule, 'card-mode'), lang);
   const showSearch = configFlag(uiModule, 'search-visible', lang, true);
   const showSidebar = configFlag(uiModule, 'sidebar-visible', lang, true);
+  const heroBreadcrumbHome = itemLabel(itemById(heroModule, 'breadcrumb-home'), lang);
+  const heroBreadcrumbCurrent = itemLabel(itemById(heroModule, 'breadcrumb-current'), lang);
   const uiLabels = {
     pageTitle: label('catalog-title') || label('all-products-label') || fallbackCopy(lang, 'ALL Products 所有产品', 'ALL Products 所有产品'),
     breadcrumbLabel: label('breadcrumb-label') || label('all-products-label') || fallbackCopy(lang, 'ALL Products 所有产品', 'ALL Products 所有产品'),
+    breadcrumbHome: label('breadcrumb-home-label') || heroBreadcrumbHome || fallbackCopy(lang, 'Home', '首页'),
     sidebarTitle: label('category-heading') || fallbackCopy(lang, 'Product Categories 产品分类', 'Product Categories 产品分类'),
     allCategories: label('all-categories-label') || label('all-products-label') || fallbackCopy(lang, 'All categories', '全部产品'),
     defaultCategoryGroup: label('default-category-group') || fallbackCopy(lang, 'Default Configuration 默认配置', 'Default Configuration 默认配置'),
+    attributeGroups: [
+      label('attribute-group-01') || fallbackCopy(lang, 'Product Configuration 热销配置', 'Product Configuration 热销配置'),
+      label('attribute-group-02') || fallbackCopy(lang, 'Area 面积', 'Area 面积'),
+      label('attribute-group-03') || fallbackCopy(lang, 'Country 国家', 'Country 国家'),
+    ],
+    contactCardTitle: label('contact-card-title') || fallbackCopy(lang, 'Contact Us', '联系我们'),
     searchPlaceholder: label('search-placeholder') || 'Please enter keyword / 请输入关键词',
     searchButton: label('search-button') || 'Search 搜索',
     resetButton: label('reset-button') || fallbackCopy(lang, 'Reset', '重置'),
@@ -532,6 +785,10 @@ export default function ProductsPageContent({
     emptyStateBody: label('empty-state-body') || fallbackCopy(lang, 'Try another keyword or category.', '请更换关键词或分类。'),
     priceEmpty: label('card-price-empty') || fallbackCopy(lang, 'Details', '查看详情'),
     cardPriceEyebrow: label('card-price-eyebrow') || fallbackCopy(lang, 'Starting from', '完整交付价'),
+    modelDetail: label('model-detail-label') || fallbackCopy(lang, 'Model detail', '型号详情'),
+    imagePlaceholder: label('image-placeholder') || 'VESSEL',
+    paginationPrevious: label('pagination-previous') || fallbackCopy(lang, 'Previous page', '上一页'),
+    paginationNext: label('pagination-next') || fallbackCopy(lang, 'Next page', '下一页'),
   };
   const rawFilters = initialFilters;
   const filteredProducts = useMemo(
@@ -560,14 +817,18 @@ export default function ProductsPageContent({
   };
 
   return (
-    <section className="bg-[#F3F3F3] pb-16 pt-24 text-[#222] sm:pt-28">
-      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-0">
-        <div className="mb-16 text-sm text-[#333]">
-          <Link prefetch={false} href="/" className="hover:text-[#E97936]">Home</Link>
-          <span className="mx-2 text-[#999]">/</span>
-          <span>{uiLabels.breadcrumbLabel}</span>
-        </div>
+    <main className="bg-[#F3F3F3] text-[#222]">
+      <ProductsHero
+        pageModule={heroModule}
+        totalProducts={products.length}
+        totalLabel={uiLabels.catalogTotal}
+        breadcrumbHome={uiLabels.breadcrumbHome}
+        breadcrumbCurrent={heroBreadcrumbCurrent || uiLabels.breadcrumbLabel}
+      />
+      <ProductsHighlights pageModule={highlightsModule} />
 
+      <section className="pb-16 pt-10" data-page-module="products:catalog" data-page-key="products">
+        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-0">
         <div className={`grid gap-10 lg:gap-14 ${showSidebar ? 'lg:grid-cols-[340px_minmax(0,1fr)]' : ''}`}>
           {showSidebar ? (
             <Sidebar
@@ -580,8 +841,14 @@ export default function ProductsPageContent({
                 sidebarTitle: uiLabels.sidebarTitle,
                 allCategories: uiLabels.allCategories,
                 defaultCategoryGroup: uiLabels.defaultCategoryGroup,
+                attributeGroups: uiLabels.attributeGroups,
+                contactCardTitle: uiLabels.contactCardTitle,
                 priceEmpty: uiLabels.priceEmpty,
                 cardPriceEyebrow: uiLabels.cardPriceEyebrow,
+                modelDetail: uiLabels.modelDetail,
+                imagePlaceholder: uiLabels.imagePlaceholder,
+                paginationPrevious: uiLabels.paginationPrevious,
+                paginationNext: uiLabels.paginationNext,
               }}
             />
           ) : null}
@@ -672,16 +939,27 @@ export default function ProductsPageContent({
                     labels={{
                       priceEmpty: uiLabels.priceEmpty,
                       cardPriceEyebrow: uiLabels.cardPriceEyebrow,
+                      modelDetail: uiLabels.modelDetail,
+                      imagePlaceholder: uiLabels.imagePlaceholder,
                     }}
                   />
                 ))}
               </div>
             )}
 
-            <Pagination filters={filters} currentPage={currentPage} totalPages={totalPages} />
+            <Pagination
+              filters={filters}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              labels={{
+                paginationPrevious: uiLabels.paginationPrevious,
+                paginationNext: uiLabels.paginationNext,
+              }}
+            />
           </div>
         </div>
       </div>
-    </section>
+      </section>
+    </main>
   );
 }
