@@ -234,6 +234,45 @@ type DbPageStructureSnapshotRow = Omit<PageStructureSnapshotRow, 'modules' | 'su
   image_refs: unknown
 }
 
+function buildDefaultHomeTemplateModule({
+  moduleKey,
+  templateId,
+  sortOrder,
+  titleZh,
+  titleEn,
+  descriptionZh,
+  descriptionEn,
+  items,
+}: {
+  moduleKey: string
+  templateId: string
+  sortOrder: number
+  titleZh: string
+  titleEn: string
+  descriptionZh: string
+  descriptionEn: string
+  items: PageModuleItem[]
+}): PageModuleRow {
+  const template = getPageModuleTemplate(templateId)
+  if (!template) throw new Error(`Missing page module template: ${templateId}`)
+
+  return {
+    id: `home:${moduleKey}`,
+    page_key: 'home',
+    module_key: moduleKey,
+    module_type: template.moduleType,
+    title_zh: titleZh,
+    title_en: titleEn,
+    description_zh: descriptionZh,
+    description_en: descriptionEn,
+    items,
+    is_visible: true,
+    sort_order: sortOrder,
+    updated_at: '',
+    updated_by_email: null,
+  }
+}
+
 export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
   {
     id: 'home:hero',
@@ -380,6 +419,139 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     updated_at: '',
     updated_by_email: null,
   },
+  buildDefaultHomeTemplateModule({
+    moduleKey: 'large-product-cards',
+    templateId: 'large-product-cards',
+    sortOrder: 22,
+    titleZh: '首页产品入口',
+    titleEn: 'VESSEL Product Systems',
+    descriptionZh: '展示重点产品系列、产品入口和咨询入口。这个模块已接入前台，后台发布后会影响首页产品展示。',
+    descriptionEn: 'Controlled homepage product entries, catalog links, and inquiry paths.',
+    items: [
+      {
+        id: 'eyebrow',
+        label_zh: '产品入口',
+        label_en: 'Products',
+        is_visible: true,
+        sort_order: 10,
+      },
+      {
+        id: 'card-v9',
+        image_url: '/images/products/v9-gen6/main.jpg',
+        href: '/products/v9-gen6',
+        value_zh: '38 平方米旗舰长住度假舱',
+        value_en: '38 sqm flagship long-stay resort cabin',
+        label_zh: 'VESSEL V9 Gen6',
+        label_en: 'VESSEL V9 Gen6',
+        content_zh: '适合高端度假营地、长期旅居和复合型文旅项目。',
+        content_en: 'For premium resorts, long-stay hospitality, and mixed-use destination projects.',
+        is_visible: true,
+        sort_order: 20,
+      },
+      {
+        id: 'card-e7',
+        image_url: '/images/products/e7-gen6-flagship.jpg',
+        href: '/products/e7-gen6-flagship',
+        value_zh: '38.8 平方米旗舰舱',
+        value_en: '38.8 sqm flagship cabin',
+        label_zh: 'VESSEL E7 Gen6',
+        label_en: 'VESSEL E7 Gen6',
+        content_zh: '用于展示高端度假、接待和复合住宿场景的旗舰产品入口。',
+        content_en: 'Flagship entry for premium hospitality, reception, and accommodation scenarios.',
+        is_visible: true,
+        sort_order: 30,
+      },
+      {
+        id: 'primary-cta',
+        href: SITE_PRODUCTS_HREF,
+        label_zh: '查看产品目录',
+        label_en: 'View Product Catalog',
+        is_visible: true,
+        sort_order: 100,
+      },
+      {
+        id: 'secondary-cta',
+        href: `${SITE_CONTACT_HREF}?source=home:product_entry`,
+        label_zh: '提交产品需求',
+        label_en: 'Send Product Brief',
+        is_visible: true,
+        sort_order: 110,
+      },
+    ],
+  }),
+  buildDefaultHomeTemplateModule({
+    moduleKey: 'model-strip',
+    templateId: 'model-strip',
+    sortOrder: 28,
+    titleZh: '首页型号轮播',
+    titleEn: 'VESSEL Model Carousel',
+    descriptionZh: '展示核心型号入口、图片/视频和产品详情链接。',
+    descriptionEn: 'Model carousel with media, model copy, and product detail links.',
+    items: [
+      {
+        id: 'eyebrow',
+        label_zh: '型号系列',
+        label_en: 'Models',
+        is_visible: true,
+        sort_order: 10,
+      },
+      {
+        id: 'card-e3',
+        image_url: '/images/products/e3-gen6-standard.jpg',
+        href: '/products/e3-gen6-standard',
+        value_zh: '19 平方米紧凑型舱体',
+        value_en: '19 sqm compact cabin',
+        label_zh: 'VESSEL E3 Gen6',
+        label_en: 'VESSEL E3 Gen6',
+        content_zh: '适合轻量住宿、配套空间和小型营地部署。',
+        content_en: 'For compact stays, support spaces, and lightweight destination deployments.',
+        is_visible: true,
+        sort_order: 20,
+      },
+      {
+        id: 'card-v9',
+        image_url: '/images/products/v9-gen6/main.jpg',
+        href: '/products/v9-gen6',
+        value_zh: '38 平方米长住度假舱',
+        value_en: '38 sqm long-stay resort cabin',
+        label_zh: 'VESSEL V9 Gen6',
+        label_en: 'VESSEL V9 Gen6',
+        content_zh: '面向高端文旅营地和长期旅居项目。',
+        content_en: 'Designed for premium resorts and long-stay hospitality projects.',
+        is_visible: true,
+        sort_order: 30,
+      },
+      {
+        id: 'card-e6',
+        image_url: '/images/products/e6-gen6-standard.jpg',
+        href: '/products/e6-gen6-standard',
+        value_zh: '31 平方米度假住宿舱',
+        value_en: '31 sqm hospitality cabin',
+        label_zh: 'VESSEL E6 Gen6',
+        label_en: 'VESSEL E6 Gen6',
+        content_zh: '平衡舒适、效率和营地批量部署。',
+        content_en: 'Balancing comfort, operating efficiency, and repeatable deployment.',
+        is_visible: true,
+        sort_order: 40,
+      },
+      {
+        id: 'primary-cta',
+        href: SITE_PRODUCTS_HREF,
+        label_zh: '比较型号',
+        label_en: 'Compare Models',
+        is_visible: true,
+        sort_order: 100,
+      },
+      {
+        id: 'secondary-cta',
+        href: `${SITE_CONTACT_HREF}?source=home:model_strip`,
+        label_zh: '预约咨询',
+        label_en: 'Book Consultation',
+        is_visible: true,
+        sort_order: 110,
+      },
+    ],
+  }),
   {
     id: 'home:operating-proof',
     page_key: 'home',
@@ -474,11 +646,296 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
         sort_order: 100,
       },
     ],
-    is_visible: true,
+    is_visible: false,
     sort_order: 25,
     updated_at: '',
     updated_by_email: null,
   },
+  buildDefaultHomeTemplateModule({
+    moduleKey: 'innovation-story',
+    templateId: 'innovation-story',
+    sortOrder: 34,
+    titleZh: '首页核心卖点',
+    titleEn: 'VESSEL Innovation Story',
+    descriptionZh: '展示智能交互、能源系统和污水处理等核心卖点入口。',
+    descriptionEn: 'Editable homepage entries for smart interaction, energy systems, and wastewater treatment.',
+    items: [
+      {
+        id: 'eyebrow',
+        label_zh: '核心卖点',
+        label_en: 'Innovation',
+        is_visible: true,
+        sort_order: 10,
+      },
+      {
+        id: 'card-viie',
+        image_url: '/images/homepage/tech-viie.jpg',
+        href: '/innovation/viie',
+        label_zh: '智能交互',
+        label_en: 'Intelligent interaction',
+        content_zh: '用智能系统提升住宿、运营和远程管理体验。',
+        content_en: 'Smart systems for guest experience, operations, and remote management.',
+        is_visible: true,
+        sort_order: 20,
+      },
+      {
+        id: 'card-vipc',
+        image_url: '/images/homepage/tech-vipc.jpg',
+        href: '/innovation/vipc',
+        label_zh: '可再生能源系统',
+        label_en: 'Renewable energy systems',
+        content_zh: '支持不同项目条件下的能源方案表达。',
+        content_en: 'Energy solution storytelling for different project conditions.',
+        is_visible: true,
+        sort_order: 30,
+      },
+      {
+        id: 'card-vols',
+        image_url: '/images/homepage/tech-vols.jpg',
+        href: '/innovation/vols',
+        label_zh: '污水处理',
+        label_en: 'Wastewater treatment',
+        content_zh: '面向营地、市政和离网场景的配套能力入口。',
+        content_en: 'Support capability for resorts, public facilities, and off-grid sites.',
+        is_visible: true,
+        sort_order: 40,
+      },
+      {
+        id: 'primary-cta',
+        href: '/innovation/viie',
+        label_zh: '查看技术专题',
+        label_en: 'View Innovation',
+        is_visible: true,
+        sort_order: 100,
+      },
+    ],
+  }),
+  buildDefaultHomeTemplateModule({
+    moduleKey: 'scenario-tiles',
+    templateId: 'scenario-tiles',
+    sortOrder: 40,
+    titleZh: '首页场景入口',
+    titleEn: 'Explore VESSEL Application Scenarios',
+    descriptionZh: '展示文旅、商业和公共设施等应用场景入口。',
+    descriptionEn: 'Editable entry points for tourism, commercial, and public facility scenarios.',
+    items: [
+      {
+        id: 'eyebrow',
+        label_zh: '应用场景',
+        label_en: 'Scenarios',
+        is_visible: true,
+        sort_order: 10,
+      },
+      {
+        id: 'card-tourism',
+        image_url: '/images/homepage/scene-tourism.jpg',
+        href: '/scenarios/tourism',
+        label_zh: '文旅度假',
+        label_en: 'Vacation',
+        content_zh: '度假村、营地、景区和目的地住宿。',
+        content_en: 'Resorts, campsites, scenic destinations, and hospitality stays.',
+        is_visible: true,
+        sort_order: 20,
+      },
+      {
+        id: 'card-commercial',
+        image_url: '/images/homepage/scene-commercial.jpg',
+        href: '/scenarios/commercial',
+        label_zh: '商业空间',
+        label_en: 'Commercial Space',
+        content_zh: '接待、展示、服务中心和复合型商业空间。',
+        content_en: 'Reception, showroom, service center, and mixed-use commercial spaces.',
+        is_visible: true,
+        sort_order: 30,
+      },
+      {
+        id: 'card-public',
+        image_url: '/images/homepage/scene-public.jpg',
+        href: '/scenarios/public',
+        label_zh: '公共设施',
+        label_en: 'Public Facilities',
+        content_zh: '公共服务、临时配套和特殊场地部署。',
+        content_en: 'Public service, temporary support, and special-site deployment.',
+        is_visible: true,
+        sort_order: 40,
+      },
+      {
+        id: 'primary-cta',
+        href: '/scenarios/tourism',
+        label_zh: '查看应用场景',
+        label_en: 'View Scenarios',
+        is_visible: true,
+        sort_order: 100,
+      },
+    ],
+  }),
+  buildDefaultHomeTemplateModule({
+    moduleKey: 'project-proof',
+    templateId: 'project-proof',
+    sortOrder: 44,
+    titleZh: '首页项目入口',
+    titleEn: 'Project Proof',
+    descriptionZh: '展示项目案例入口，承接客户对真实交付、场地和运营结果的判断。',
+    descriptionEn: 'Editable project proof section for delivery, site context, and operating evidence.',
+    items: [
+      {
+        id: 'eyebrow',
+        label_zh: '项目案例',
+        label_en: 'Projects',
+        is_visible: true,
+        sort_order: 10,
+      },
+      {
+        id: 'card-astrobase',
+        image_url: '/images/projects/astrobase-mamison/exterior-01.png',
+        href: '/cases/astrobase-mamison',
+        value_zh: '海外项目',
+        value_en: 'Overseas project',
+        label_zh: 'Mamison Ski Resort',
+        label_en: 'Mamison Ski Resort',
+        content_zh: '用于展示海外度假项目中的产品落地和项目表达。',
+        content_en: 'A project entry for overseas resort deployment and destination storytelling.',
+        is_visible: true,
+        sort_order: 20,
+      },
+      {
+        id: 'card-usa',
+        image_url: '/images/projects/usa-mount-pleasant/exterior-01.jpg',
+        href: '/cases/usa-mount-pleasant',
+        value_zh: '北美项目',
+        value_en: 'North America project',
+        label_zh: 'Mount Pleasant Resort',
+        label_en: 'Mount Pleasant Resort',
+        content_zh: '用于承接海外场地、批量部署和采购咨询。',
+        content_en: 'Project proof for overseas sites, repeat deployment, and buyer inquiry paths.',
+        is_visible: true,
+        sort_order: 30,
+      },
+      {
+        id: 'card-japan',
+        image_url: '/images/projects/japan-setonohama/exterior-01.png',
+        href: '/cases/japan-setonohama',
+        value_zh: '日本项目',
+        value_en: 'Japan project',
+        label_zh: 'Setonohama Resort',
+        label_en: 'Setonohama Resort',
+        content_zh: '展示海滨度假场景和住宿体验表达。',
+        content_en: 'A coastal hospitality reference for destination accommodation.',
+        is_visible: true,
+        sort_order: 40,
+      },
+      {
+        id: 'primary-cta',
+        href: '/cases',
+        label_zh: '查看项目案例',
+        label_en: 'View Cases',
+        is_visible: true,
+        sort_order: 100,
+      },
+      {
+        id: 'secondary-cta',
+        href: `${SITE_CONTACT_HREF}?source=home:project_proof`,
+        label_zh: '提交项目需求',
+        label_en: 'Send Project Brief',
+        is_visible: true,
+        sort_order: 110,
+      },
+    ],
+  }),
+  buildDefaultHomeTemplateModule({
+    moduleKey: 'global-entry',
+    templateId: 'future-explorer',
+    sortOrder: 48,
+    titleZh: '首页 Global 入口',
+    titleEn: 'Global Deployment Entry',
+    descriptionZh: '展示全球交付入口，承接全球地图、海外项目和跨区域咨询路径。',
+    descriptionEn: 'Editable homepage entry for global deployment, overseas projects, and regional inquiries.',
+    items: [
+      {
+        id: 'eyebrow',
+        label_zh: '全球交付',
+        label_en: 'Global',
+        is_visible: true,
+        sort_order: 10,
+      },
+      {
+        id: 'card-global',
+        image_url: '/images/about/about_globalmap-01.jpg',
+        href: '/global',
+        value_zh: '全球项目网络',
+        value_en: 'Global project network',
+        label_zh: '查看 Global',
+        label_en: 'Open Global Map',
+        content_zh: '从首页进入 Global，查看全球部署和项目分布入口。',
+        content_en: 'Enter Global from the homepage to review deployment and project distribution.',
+        is_visible: true,
+        sort_order: 20,
+      },
+      {
+        id: 'card-cases',
+        image_url: '/images/homepage/region-americas.jpg',
+        href: '/cases',
+        value_zh: '项目案例',
+        value_en: 'Project cases',
+        label_zh: '海外项目参考',
+        label_en: 'Overseas References',
+        content_zh: '将全球入口与可验证项目案例连接起来。',
+        content_en: 'Connect global reach with published project references.',
+        is_visible: true,
+        sort_order: 30,
+      },
+      {
+        id: 'primary-cta',
+        href: '/global',
+        label_zh: '查看 Global',
+        label_en: 'View Global',
+        is_visible: true,
+        sort_order: 100,
+      },
+      {
+        id: 'secondary-cta',
+        href: `${SITE_CONTACT_HREF}?source=home:global_entry`,
+        label_zh: '咨询海外项目',
+        label_en: 'Discuss Overseas Project',
+        is_visible: true,
+        sort_order: 110,
+      },
+    ],
+  }),
+  buildDefaultHomeTemplateModule({
+    moduleKey: 'contact-cta',
+    templateId: 'contact-band',
+    sortOrder: 58,
+    titleZh: '准备规划您的 VESSEL 项目？',
+    titleEn: 'Planning a VESSEL project?',
+    descriptionZh: '告诉我们国家、场地类型、计划数量和时间表，团队会据此给出产品与项目适配建议。',
+    descriptionEn: 'Share country, site type, planned quantity, and timeline so the team can respond with product and project-fit guidance.',
+    items: [
+      {
+        id: 'eyebrow',
+        label_zh: '联系入口',
+        label_en: 'Contact',
+        is_visible: true,
+        sort_order: 10,
+      },
+      {
+        id: 'primary-cta',
+        href: `${SITE_CONTACT_HREF}?source=home:contact_cta`,
+        label_zh: '提交项目需求',
+        label_en: 'Send Inquiry',
+        is_visible: true,
+        sort_order: 20,
+      },
+      {
+        id: 'secondary-cta',
+        href: SITE_PRODUCTS_HREF,
+        label_zh: '查看产品目录',
+        label_en: 'View Products',
+        is_visible: true,
+        sort_order: 30,
+      },
+    ],
+  }),
   {
     id: 'home:technology',
     page_key: 'home',
@@ -2207,6 +2664,15 @@ const PAGE_STRUCTURE_SCHEMA_VERSION = 1
 const PAGE_MODULE_RENDERER_KEYS: Record<string, string> = {
   'home:hero': 'home.hero',
   'home:credentials': 'home.credentials',
+  'home:large-product-cards': 'home.visualSales',
+  'home:model-strip': 'home.visualSales',
+  'home:innovation-story': 'home.visualSales',
+  'home:scenario-tiles': 'home.visualSales',
+  'home:project-proof': 'home.salesGrid',
+  'home:future-explorer': 'home.visualSales',
+  'home:global-entry': 'home.visualSales',
+  'home:contact-cta': 'home.contactBand',
+  'home:operating-proof': 'home.operatingProof',
   'about:hero': 'about.hero',
   'about:stats': 'about.stats',
   'about:brand-story': 'about.brandStory',
@@ -2614,10 +3080,39 @@ export function getDefaultPageModule(pageKey: string, moduleKey: string): PageMo
   return DEFAULT_PAGE_MODULES.find((pageModule) => pageModule.page_key === pageKey && pageModule.module_key === moduleKey) ?? null
 }
 
+function clonePageModule(pageModule: PageModuleRow): PageModuleRow {
+  return {
+    ...pageModule,
+    items: pageModule.items.map((item) => ({ ...item })),
+  }
+}
+
+function sortPageModuleRows(rows: PageModuleRow[]) {
+  return rows.sort((a, b) => (
+    a.page_key.localeCompare(b.page_key) ||
+    a.sort_order - b.sort_order ||
+    a.module_key.localeCompare(b.module_key)
+  ))
+}
+
+function mergeWithDefaultPageModules(rows: PageModuleRow[], pageKey?: string): PageModuleRow[] {
+  const existingKeys = new Set(rows.map((row) => `${row.page_key}:${row.module_key}`))
+  const merged = rows.map(clonePageModule)
+
+  for (const pageModule of DEFAULT_PAGE_MODULES) {
+    if (pageKey && pageModule.page_key !== pageKey) continue
+    const key = `${pageModule.page_key}:${pageModule.module_key}`
+    if (existingKeys.has(key)) continue
+    merged.push(clonePageModule(pageModule))
+  }
+
+  return sortPageModuleRows(merged)
+}
+
 export function listDefaultPageModules(pageKey?: string): PageModuleRow[] {
   return DEFAULT_PAGE_MODULES
     .filter((pageModule) => !pageKey || pageModule.page_key === pageKey)
-    .map((pageModule) => ({ ...pageModule, items: pageModule.items.map((item) => ({ ...item })) }))
+    .map(clonePageModule)
     .sort((a, b) => a.page_key.localeCompare(b.page_key) || a.sort_order - b.sort_order)
 }
 
@@ -2837,7 +3332,7 @@ export async function listPageModules(pageKey?: string): Promise<PageModuleRow[]
     params,
   )
 
-  return res.rows.map(normalizeRow)
+  return mergeWithDefaultPageModules(res.rows.map(normalizeRow), pageKey)
 }
 
 export async function getPageModule(pageKey: string, moduleKey: string): Promise<PageModuleRow | null> {
@@ -2870,11 +3365,12 @@ export async function getPageModule(pageKey: string, moduleKey: string): Promise
 async function loadPublishedPageModules(pageKey?: string): Promise<PageModuleRow[]> {
   await ensurePageModulesSchema()
   const params: string[] = []
-  const where = ['pm.is_visible = TRUE']
+  const where: string[] = []
   if (pageKey) {
     params.push(pageKey)
     where.push(`pm.page_key = $${params.length}`)
   }
+  const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''
 
   const res = await pool.query<DbPageModuleRow>(
     `SELECT
@@ -2893,12 +3389,13 @@ async function loadPublishedPageModules(pageKey?: string): Promise<PageModuleRow
        u.email AS updated_by_email
      FROM page_modules pm
      LEFT JOIN users u ON u.id = pm.updated_by
-     WHERE ${where.join(' AND ')}
+     ${whereSql}
      ORDER BY pm.page_key ASC, pm.sort_order ASC`,
     params,
   )
 
-  return res.rows.map(normalizePublishedRow)
+  return mergeWithDefaultPageModules(res.rows.map(normalizePublishedRow), pageKey)
+    .filter((pageModule) => pageModule.is_visible)
 }
 
 const listPublishedPageModulesCached = unstable_cache(
@@ -2932,12 +3429,17 @@ async function loadPublishedPageModule(pageKey: string, moduleKey: string): Prom
      LEFT JOIN users u ON u.id = pm.updated_by
      WHERE pm.page_key = $1
        AND pm.module_key = $2
-       AND pm.is_visible = TRUE
      LIMIT 1`,
     [pageKey, moduleKey],
   )
 
-  return res.rows[0] ? normalizePublishedRow(res.rows[0]) : null
+  if (res.rows[0]) {
+    const pageModule = normalizePublishedRow(res.rows[0])
+    return pageModule.is_visible ? pageModule : null
+  }
+
+  const fallback = getDefaultPageModule(pageKey, moduleKey)
+  return fallback?.is_visible ? clonePageModule(fallback) : null
 }
 
 const getPublishedPageModuleCached = unstable_cache(

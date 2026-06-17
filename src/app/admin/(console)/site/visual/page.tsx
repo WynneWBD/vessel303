@@ -51,6 +51,15 @@ type VisualPageKey = (typeof VISUAL_PAGE_META)[number]['key']
 const EDITABLE_VISUAL_MODULE_IDS = [
   'home:hero',
   'home:credentials',
+  'home:large-product-cards',
+  'home:model-strip',
+  'home:innovation-story',
+  'home:scenario-tiles',
+  'home:project-proof',
+  'home:future-explorer',
+  'home:global-entry',
+  'home:contact-cta',
+  'home:operating-proof',
   'about:hero',
   'about:stats',
   'about:brand-story',
@@ -215,7 +224,7 @@ function VisualReleaseConsole({
   const rows: VisualConsoleRow[] = [
     {
       title: '页面编辑范围',
-      detail: '受控编辑 Home / About 的文字、链接、图片、显示状态和 Home 安全插入区。',
+      detail: '受控编辑 Home 整页与 About 的文字、链接、图片、显示状态、SEO 来源和 Home 安全插入区。',
       metric: `${formatNumber(editableModules.length)} 模块`,
       signal: `${formatNumber(hiddenModules)} 隐藏`,
       href: '#visual-editor',
@@ -279,7 +288,7 @@ function VisualReleaseConsole({
           </div>
           <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">视觉编辑运营工作台</h2>
           <p className="mt-1 max-w-4xl text-xs leading-5 text-[#61767D]">
-            先看页面范围、发布队列、结构草稿、快照和素材信号，再进入编辑器保存、预览和发布。
+            先看页面范围、发布队列、结构草稿、快照、SEO 来源和素材信号，再进入编辑器保存、预览和发布。
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
