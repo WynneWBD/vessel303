@@ -163,6 +163,7 @@ export default function Footer() {
   }, [initialSiteModules]);
 
   const modules = moduleMap(siteModules);
+  const uiLabels = modules.get('ui-labels') ?? null;
   const cta = modules.get('footer-cta') ?? null;
   const brand = modules.get('footer-brand') ?? null;
   const products = modules.get('footer-products') ?? null;
@@ -182,6 +183,7 @@ export default function Footer() {
   const brandTagline = brandTextItems.find((item) => item.id === 'tagline') ?? brandTextItems[0] ?? null;
   const brandContactItems = brandTextItems.filter((item) => item.id !== brandTagline?.id);
   const brandSocialItems = brandItems.filter(isFooterSocialItem);
+  const footerSocialLabel = itemLabel(itemById(uiLabels, 'footer-social-links'), lang) || 'VESSEL social links';
   const about = modules.get('footer-about') ?? null;
   const contactItems = visibleItems(contact);
   const showAboutLinks = Boolean(about && about.is_visible !== false);
@@ -281,7 +283,7 @@ export default function Footer() {
                 })}
               </div>
               {brandSocialItems.length > 0 ? (
-                <div className="mt-5 flex flex-wrap gap-3" aria-label="VESSEL social links">
+                <div className="mt-5 flex flex-wrap gap-3" aria-label={footerSocialLabel}>
                   {brandSocialItems.map((item) => (
                     <FooterSocialLink key={item.id} item={item} />
                   ))}

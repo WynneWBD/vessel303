@@ -31,7 +31,7 @@ export const PAGE_MODULE_PAGE_KEYS = [
 
 export const PAGE_MODULE_PUBLIC_CACHE_TAG = 'page-module-public'
 const PAGE_MODULE_PUBLIC_CACHE_SECONDS = 300
-const PAGE_MODULE_DEFAULTS_CACHE_VERSION = '2026-06-17-b346-global-about-contact-context'
+const PAGE_MODULE_DEFAULTS_CACHE_VERSION = '2026-06-17-b346-global-about-contact-shell-labels'
 
 export type PageModulePageKey = (typeof PAGE_MODULE_PAGE_KEYS)[number]
 
@@ -1991,6 +1991,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     items: [
       { id: 'menu-toggle', label_zh: '打开或关闭菜单', label_en: 'Toggle menu', is_visible: true, sort_order: 10 },
       { id: 'drawer-close', label_zh: '关闭', label_en: 'Close', is_visible: true, sort_order: 20 },
+      { id: 'footer-social-links', label_zh: 'VESSEL 社交媒体链接', label_en: 'VESSEL social links', is_visible: true, sort_order: 30 },
     ],
     is_visible: true,
     sort_order: 15,
@@ -3156,7 +3157,8 @@ function normalizeItems(value: unknown): PageModuleItem[] {
 function shouldAppendMissingDefaultItems(row: PageModuleRow) {
   return (
     (row.page_key === 'products' && row.module_key === 'ui-labels') ||
-    (row.page_key === 'about' && row.module_key === 'services')
+    (row.page_key === 'about' && row.module_key === 'services') ||
+    (row.page_key === 'site' && row.module_key === 'ui-labels')
   )
 }
 
