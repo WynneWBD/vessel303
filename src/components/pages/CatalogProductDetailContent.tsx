@@ -48,6 +48,63 @@ type DecisionMetric = {
   detail?: string;
   Icon: LucideIcon;
 };
+type ProductDetailLabels = {
+  priceEmpty: string;
+  specsTitle: string;
+  descriptionTitle: string;
+  downloadsTitle: string;
+  keywordsTitle: string;
+  relatedTitle: string;
+  galleryTitle: string;
+  heroInquiryCta: string;
+  allProducts: string;
+  imageLabel: string;
+  previousImage: string;
+  nextImage: string;
+  snapshotEyebrow: string;
+  snapshotTitle: string;
+  technicalCheck: string;
+  viewAll: string;
+  specsEmpty: string;
+  inquiryPath: string;
+  bridgeEyebrow: string;
+  bridgeTitle: string;
+  bridgeOpen: string;
+  floorArea: string;
+  floorAreaDetail: string;
+  modelSystem: string;
+  modelSystemDetail: string;
+  configurationTier: string;
+  configurationTierDetail: string;
+  mediaDepth: string;
+  mediaDepthDetail: string;
+  imagesUnit: string;
+  primaryImage: string;
+  mediaProof: string;
+  mediaProofDetail: string;
+  specificationProof: string;
+  specificationProofDetail: string;
+  specsUnit: string;
+  specsPending: string;
+  fitSignals: string;
+  fitSignalsDetail: string;
+  signalsUnit: string;
+  fitPending: string;
+  buyerResources: string;
+  buyerResourcesDetail: string;
+  resourceModulesUnit: string;
+  noResourceModule: string;
+  relatedOptions: string;
+  relatedOptionsDetail: string;
+  relatedModelsUnit: string;
+  singleModelRoute: string;
+  inquiryHandoff: string;
+  sourceReady: string;
+  inquiryHandoffDetail: string;
+  compactModel: string;
+  standardModel: string;
+  flagshipModel: string;
+};
 
 const TERM_FIELDS: Array<{
   zh: keyof CatalogCommercialTerms;
@@ -133,13 +190,91 @@ function fallbackLabel(lang: 'en' | 'zh', en: string, zh: string) {
   return lang === 'en' ? en : zh;
 }
 
-function productTypeLabel(productType: CatalogProduct['productType'], lang: 'en' | 'zh') {
-  const labels: Record<CatalogProduct['productType'], { en: string; zh: string }> = {
-    compact: { en: 'Compact model', zh: '紧凑型' },
-    standard: { en: 'Standard model', zh: '标准型' },
-    luxury: { en: 'Flagship model', zh: '旗舰型' },
+function labelFromModules(
+  detailLabels: PublicPageModule | null,
+  uiLabels: PublicPageModule | null,
+  id: string,
+  lang: 'en' | 'zh',
+  en: string,
+  zh: string,
+) {
+  return itemLabel(itemById(detailLabels, id), lang)
+    || itemLabel(itemById(uiLabels, id), lang)
+    || fallbackLabel(lang, en, zh);
+}
+
+function buildProductDetailLabels(
+  detailLabels: PublicPageModule | null,
+  uiLabels: PublicPageModule | null,
+  lang: 'en' | 'zh',
+): ProductDetailLabels {
+  const label = (id: string, en: string, zh: string) => labelFromModules(detailLabels, uiLabels, id, lang, en, zh);
+  return {
+    priceEmpty: label('price-empty', 'Price on request', '价格请咨询'),
+    specsTitle: label('specs-title', 'Technical Parameters', '技术参数'),
+    descriptionTitle: label('description-title', 'Model Overview', '型号概览'),
+    downloadsTitle: label('downloads-title', 'Buyer Resources', '买家资料'),
+    keywordsTitle: label('keywords-title', 'Search Keywords', '搜索关键词'),
+    relatedTitle: label('related-title', 'More Models', '更多型号'),
+    galleryTitle: label('gallery-title', 'Product Gallery', '产品图库'),
+    heroInquiryCta: label('hero-inquiry-cta', 'Send Inquiry', '提交咨询'),
+    allProducts: label('all-products-label', 'All Products', '全部产品'),
+    imageLabel: label('image-label-prefix', 'Product image', '产品图片'),
+    previousImage: label('previous-image', 'Previous image', '上一张图片'),
+    nextImage: label('next-image', 'Next image', '下一张图片'),
+    snapshotEyebrow: label('snapshot-eyebrow', 'Product Snapshot', '产品速览'),
+    snapshotTitle: label('snapshot-title', 'Evaluate the model before scrolling', '先判断型号，再进入详情'),
+    technicalCheck: label('technical-check', 'Technical check', '技术参数'),
+    viewAll: label('view-all', 'View all', '查看全部'),
+    specsEmpty: label('specs-empty', 'Technical parameters will appear here after the CMS fields are completed.', '补齐 CMS 技术参数后，这里会展示关键规格。'),
+    inquiryPath: label('inquiry-path', 'Inquiry path', '咨询入口'),
+    bridgeEyebrow: label('bridge-eyebrow', 'Proof-to-inquiry bridge', '证明到询盘路径'),
+    bridgeTitle: label('bridge-title', 'Review proof, compare fit, then send the model inquiry.', '先看证明、对比适配，再提交型号咨询。'),
+    bridgeOpen: label('bridge-open', 'Open', '打开'),
+    floorArea: label('metric-floor-area', 'Floor area', '面积'),
+    floorAreaDetail: label('metric-floor-area-detail', 'Comparable model scale', '用于快速判断型号尺度'),
+    modelSystem: label('metric-model-system', 'Model system', '产品体系'),
+    modelSystemDetail: label('metric-model-system-detail', 'Series and generation', '系列与代际'),
+    configurationTier: label('metric-configuration-tier', 'Configuration tier', '配置层级'),
+    configurationTierDetail: label('metric-configuration-tier-detail', 'Catalog classification', '来自产品目录分类'),
+    mediaDepth: label('metric-media-depth', 'Media depth', '素材深度'),
+    mediaDepthDetail: label('metric-media-depth-detail', 'Gallery available for inspection', '用于首屏和图库查看'),
+    imagesUnit: label('unit-images', 'images', '张图片'),
+    primaryImage: label('primary-image', 'Primary image', '主图'),
+    mediaProof: label('bridge-media-proof', 'Media proof', '素材证明'),
+    mediaProofDetail: label('bridge-media-proof-detail', 'Inspect the visual payload before asking for a quote.', '询价前先查看视觉资料。'),
+    specificationProof: label('bridge-specification-proof', 'Specification proof', '规格证明'),
+    specificationProofDetail: label('bridge-specification-proof-detail', 'Confirm model scale, system and delivery fit.', '确认型号尺度、体系和交付适配。'),
+    specsUnit: label('unit-specs', 'specs', '项参数'),
+    specsPending: label('specs-pending', 'Specs pending', '参数待补'),
+    fitSignals: label('bridge-fit-signals', 'Fit signals', '适配信号'),
+    fitSignalsDetail: label('bridge-fit-signals-detail', 'Use tags, features and category facts to qualify the model.', '用标签、卖点和分类信息判断型号适配。'),
+    signalsUnit: label('unit-signals', 'signals', '项信号'),
+    fitPending: label('fit-pending', 'Fit pending', '适配信息待补'),
+    buyerResources: label('bridge-buyer-resources', 'Buyer resources', '买家资料'),
+    buyerResourcesDetail: label('bridge-buyer-resources-detail', 'Check files, buyer notes or supporting modules when available.', '如有文件、买家说明或资料模块，可先查看。'),
+    resourceModulesUnit: label('unit-resource-modules', 'modules', '个模块'),
+    noResourceModule: label('no-resource-module', 'No resource module', '暂无资料模块'),
+    relatedOptions: label('bridge-related-options', 'Related options', '相关选择'),
+    relatedOptionsDetail: label('bridge-related-options-detail', 'Compare nearby models before sending the request.', '提交需求前可对比相近型号。'),
+    relatedModelsUnit: label('unit-related-models', 'models', '个型号'),
+    singleModelRoute: label('single-model-route', 'Single model route', '单型号路径'),
+    inquiryHandoff: label('bridge-inquiry-handoff', 'Inquiry handoff', '咨询交接'),
+    sourceReady: label('source-ready', 'Source ready', '来源已就绪'),
+    inquiryHandoffDetail: label('bridge-inquiry-handoff-detail', 'The product inquiry keeps this model as the lead source.', '产品咨询会保留当前型号来源。'),
+    compactModel: label('product-type-compact', 'Compact model', '紧凑型'),
+    standardModel: label('product-type-standard', 'Standard model', '标准型'),
+    flagshipModel: label('product-type-luxury', 'Flagship model', '旗舰型'),
   };
-  return lang === 'en' ? labels[productType].en : labels[productType].zh;
+}
+
+function productTypeLabel(productType: CatalogProduct['productType'], labels: ProductDetailLabels) {
+  const values: Record<CatalogProduct['productType'], string> = {
+    compact: labels.compactModel,
+    standard: labels.standardModel,
+    luxury: labels.flagshipModel,
+  };
+  return values[productType];
 }
 
 function productAreaLabel(product: CatalogProduct) {
@@ -152,7 +287,6 @@ function usableSpecs(specs: SpecItem[]) {
 
 function ProductDecisionSummary({
   product,
-  lang,
   specs,
   features,
   termRows,
@@ -164,9 +298,9 @@ function ProductDecisionSummary({
   specsTitle,
   inquiryTitle,
   inquiryCta,
+  labels,
 }: {
   product: CatalogProduct;
-  lang: 'en' | 'zh';
   specs: SpecItem[];
   features: string[];
   termRows: string[];
@@ -178,6 +312,7 @@ function ProductDecisionSummary({
   specsTitle: string;
   inquiryTitle: string;
   inquiryCta: string;
+  labels: ProductDetailLabels;
 }) {
   const usableSpecRows = usableSpecs(specs);
   const specPreview = usableSpecRows.slice(0, 6);
@@ -186,82 +321,87 @@ function ProductDecisionSummary({
   const fitSignalCount = features.length + factCount;
   const metricRows: DecisionMetric[] = [
     {
-      label: fallbackLabel(lang, 'Floor area', '面积'),
+      label: labels.floorArea,
       value: productAreaLabel(product),
-      detail: fallbackLabel(lang, 'Comparable model scale', '用于快速判断型号尺度'),
+      detail: labels.floorAreaDetail,
       Icon: Ruler,
     },
     {
-      label: fallbackLabel(lang, 'Model system', '产品体系'),
+      label: labels.modelSystem,
       value: [product.productSeries, product.gen].filter(Boolean).join(' '),
-      detail: fallbackLabel(lang, 'Series and generation', '系列与代际'),
+      detail: labels.modelSystemDetail,
       Icon: Layers3,
     },
     {
-      label: fallbackLabel(lang, 'Configuration tier', '配置层级'),
-      value: productTypeLabel(product.productType, lang),
-      detail: fallbackLabel(lang, 'Catalog classification', '来自产品目录分类'),
+      label: labels.configurationTier,
+      value: productTypeLabel(product.productType, labels),
+      detail: labels.configurationTierDetail,
       Icon: PackageCheck,
     },
     {
-      label: fallbackLabel(lang, 'Media depth', '素材深度'),
+      label: labels.mediaDepth,
       value: mediaCount > 1
-        ? fallbackLabel(lang, `${mediaCount} images`, `${mediaCount} 张图片`)
-        : fallbackLabel(lang, 'Primary image', '主图'),
-      detail: fallbackLabel(lang, 'Gallery available for inspection', '用于首屏和图库查看'),
+        ? `${mediaCount} ${labels.imagesUnit}`
+        : labels.primaryImage,
+      detail: labels.mediaDepthDetail,
       Icon: ClipboardList,
     },
   ].filter((item) => text(item.value));
   const hasCommercialPanel = text(price) || termPreview.length > 0 || text(inquiryTitle);
   const bridgeRows = [
     {
-      label: fallbackLabel(lang, 'Media proof', 'Media proof'),
-      value: mediaCount > 1 ? `${mediaCount} ${fallbackLabel(lang, 'images', 'images')}` : fallbackLabel(lang, 'Primary image', 'Primary image'),
-      detail: fallbackLabel(lang, 'Inspect the visual payload before asking for a quote.', 'Inspect the visual payload before asking for a quote.'),
+      label: labels.mediaProof,
+      value: mediaCount > 1 ? `${mediaCount} ${labels.imagesUnit}` : labels.primaryImage,
+      detail: labels.mediaProofDetail,
       href: mediaCount > 1 ? '#product-gallery' : inquiryHref,
     },
     {
-      label: fallbackLabel(lang, 'Specification proof', 'Specification proof'),
-      value: usableSpecRows.length > 0 ? `${usableSpecRows.length} ${fallbackLabel(lang, 'specs', 'specs')}` : fallbackLabel(lang, 'Specs pending', 'Specs pending'),
-      detail: fallbackLabel(lang, 'Confirm model scale, system and delivery fit.', 'Confirm model scale, system and delivery fit.'),
+      label: labels.specificationProof,
+      value: usableSpecRows.length > 0 ? `${usableSpecRows.length} ${labels.specsUnit}` : labels.specsPending,
+      detail: labels.specificationProofDetail,
       href: usableSpecRows.length > 0 ? '#product-specifications' : inquiryHref,
     },
     {
-      label: fallbackLabel(lang, 'Fit signals', 'Fit signals'),
-      value: fitSignalCount > 0 ? `${fitSignalCount} ${fallbackLabel(lang, 'signals', 'signals')}` : fallbackLabel(lang, 'Fit pending', 'Fit pending'),
-      detail: fallbackLabel(lang, 'Use tags, features and category facts to qualify the model.', 'Use tags, features and category facts to qualify the model.'),
+      label: labels.fitSignals,
+      value: fitSignalCount > 0 ? `${fitSignalCount} ${labels.signalsUnit}` : labels.fitPending,
+      detail: labels.fitSignalsDetail,
       href: features.length > 0 ? '#product-description' : inquiryHref,
     },
     {
-      label: fallbackLabel(lang, 'Buyer resources', 'Buyer resources'),
-      value: resourceCount > 0 ? `${resourceCount} ${fallbackLabel(lang, 'modules', 'modules')}` : fallbackLabel(lang, 'No resource module', 'No resource module'),
-      detail: fallbackLabel(lang, 'Check files, buyer notes or supporting modules when available.', 'Check files, buyer notes or supporting modules when available.'),
+      label: labels.buyerResources,
+      value: resourceCount > 0 ? `${resourceCount} ${labels.resourceModulesUnit}` : labels.noResourceModule,
+      detail: labels.buyerResourcesDetail,
       href: resourceCount > 0 ? '#buyer-resources' : inquiryHref,
     },
     {
-      label: fallbackLabel(lang, 'Related options', 'Related options'),
-      value: relatedCount > 0 ? `${relatedCount} ${fallbackLabel(lang, 'models', 'models')}` : fallbackLabel(lang, 'Single model route', 'Single model route'),
-      detail: fallbackLabel(lang, 'Compare nearby models before sending the request.', 'Compare nearby models before sending the request.'),
+      label: labels.relatedOptions,
+      value: relatedCount > 0 ? `${relatedCount} ${labels.relatedModelsUnit}` : labels.singleModelRoute,
+      detail: labels.relatedOptionsDetail,
       href: relatedCount > 0 ? '#related-products' : inquiryHref,
     },
     {
-      label: fallbackLabel(lang, 'Inquiry handoff', 'Inquiry handoff'),
-      value: fallbackLabel(lang, 'Source ready', 'Source ready'),
-      detail: fallbackLabel(lang, 'The product inquiry keeps this model as the lead source.', 'The product inquiry keeps this model as the lead source.'),
+      label: labels.inquiryHandoff,
+      value: labels.sourceReady,
+      detail: labels.inquiryHandoffDetail,
       href: inquiryHref,
     },
   ];
   if (metricRows.length === 0 && specPreview.length === 0 && features.length === 0 && !hasCommercialPanel) return null;
 
   return (
-    <section className="border-b border-[#DADDE1] bg-white">
+    <section
+      className="border-b border-[#DADDE1] bg-white"
+      data-page-module="products:detail-labels"
+      data-page-key="products"
+      data-module-key="detail-labels"
+    >
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.9fr)_300px] lg:px-8">
         <div className="border border-[#DADDE1] bg-[#F7F8F8] p-5">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#147C94]">
-            {fallbackLabel(lang, 'Product Snapshot', '产品速览')}
+            {labels.snapshotEyebrow}
           </p>
           <h2 className="mt-2 text-2xl font-black leading-tight text-[#1F2A31]">
-            {fallbackLabel(lang, 'Evaluate the model before scrolling', '先判断型号，再进入详情')}
+            {labels.snapshotTitle}
           </h2>
           <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {metricRows.map((item) => (
@@ -281,7 +421,7 @@ function ProductDecisionSummary({
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[#65707A]">
-                {fallbackLabel(lang, 'Technical check', '技术参数')}
+                {labels.technicalCheck}
               </p>
               <h2 className="mt-2 text-xl font-black text-[#1F2A31]">{specsTitle}</h2>
             </div>
@@ -290,7 +430,7 @@ function ProductDecisionSummary({
                 href="#product-specifications"
                 className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-sm border border-[#147C94]/35 px-3 text-xs font-black uppercase tracking-[0.12em] text-[#147C94] transition hover:border-[#147C94] hover:bg-[#F2F8F8]"
               >
-                {fallbackLabel(lang, 'View all', '查看全部')}
+                {labels.viewAll}
                 <ArrowRight size={14} />
               </a>
             ) : null}
@@ -306,7 +446,7 @@ function ProductDecisionSummary({
             </div>
           ) : (
             <p className="mt-5 text-sm leading-6 text-[#65707A]">
-              {fallbackLabel(lang, 'Technical parameters will appear here after the CMS fields are completed.', '补齐 CMS 技术参数后，这里会展示关键规格。')}
+              {labels.specsEmpty}
             </p>
           )}
           {features.length > 0 ? (
@@ -323,7 +463,7 @@ function ProductDecisionSummary({
         {hasCommercialPanel ? (
           <aside className="border border-[#1F2A31] bg-[#1F2A31] p-5 text-white">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-[#8FD5E1]">
-              {fallbackLabel(lang, 'Inquiry path', '咨询入口')}
+              {labels.inquiryPath}
             </p>
             <h2 className="mt-2 text-xl font-black leading-tight text-white">{inquiryTitle}</h2>
             {price ? <p className="mt-4 border-t border-white/15 pt-4 text-lg font-black text-[#F0B083]">{price}</p> : null}
@@ -352,10 +492,10 @@ function ProductDecisionSummary({
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[#147C94]">
-                {fallbackLabel(lang, 'Proof-to-inquiry bridge', 'Proof-to-inquiry bridge')}
+                {labels.bridgeEyebrow}
               </p>
               <h2 className="mt-2 text-xl font-black leading-tight text-[#1F2A31]">
-                {fallbackLabel(lang, 'Review proof, compare fit, then send the model inquiry.', 'Review proof, compare fit, then send the model inquiry.')}
+                {labels.bridgeTitle}
               </h2>
             </div>
             {inquiryCta ? (
@@ -382,7 +522,7 @@ function ProductDecisionSummary({
                   <span className="mt-2 block text-xs leading-5 text-[#65707A]">{item.detail}</span>
                 </span>
                 <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-[0.12em] text-[#147C94]">
-                  {fallbackLabel(lang, 'Open', 'Open')}
+                  {labels.bridgeOpen}
                   <ArrowRight size={13} className="transition group-hover:translate-x-0.5" />
                 </span>
               </a>
@@ -696,29 +836,22 @@ export default function CatalogProductDetailContent({
   ].map(text).filter(Boolean);
   const modules = moduleMap(pageModules);
   const uiLabels = modules.get('ui-labels') ?? null;
+  const detailLabelsModule = modules.get('detail-labels') ?? null;
   const inquiryModule = modules.get('inquiry-form') ?? null;
-  const priceEmptyLabel = itemLabel(itemById(uiLabels, 'price-empty'), lang)
-    || fallbackLabel(lang, 'Price on request', '价格请咨询');
+  const detailLabels = buildProductDetailLabels(detailLabelsModule, uiLabels, lang);
+  const priceEmptyLabel = detailLabels.priceEmpty;
   const price = (lang === 'en' ? product.price_display_en : product.price_display_zh)
     || product.price_display_en
     || product.price_display_zh
     || priceEmptyLabel;
-  const imageLabelPrefix = itemLabel(itemById(uiLabels, 'image-label-prefix'), lang);
-  const specsTitle = itemLabel(itemById(uiLabels, 'specs-title'), lang)
-    || fallbackLabel(lang, 'Technical Parameters', '技术参数');
-  const descriptionTitle = itemLabel(itemById(uiLabels, 'description-title'), lang)
-    || fallbackLabel(lang, 'Model Overview', '型号概览');
-  const downloadsTitle = itemLabel(itemById(uiLabels, 'downloads-title'), lang)
-    || fallbackLabel(lang, 'Buyer Resources', '买家资料');
-  const keywordsTitle = itemLabel(itemById(uiLabels, 'keywords-title'), lang)
-    || fallbackLabel(lang, 'Search Keywords', '搜索关键词');
-  const relatedTitle = itemLabel(itemById(uiLabels, 'related-title'), lang)
-    || fallbackLabel(lang, 'More Models', '更多型号');
-  const galleryTitle = itemLabel(itemById(uiLabels, 'gallery-title'), lang)
-    || fallbackLabel(lang, 'Product Gallery', '产品图库');
-  const heroInquiryCta = itemLabel(itemById(uiLabels, 'hero-inquiry-cta'), lang);
-  const allProductsLabel = itemLabel(itemById(uiLabels, 'all-products-label'), lang)
-    || fallbackLabel(lang, 'All Products', '全部产品');
+  const specsTitle = detailLabels.specsTitle;
+  const descriptionTitle = detailLabels.descriptionTitle;
+  const downloadsTitle = detailLabels.downloadsTitle;
+  const keywordsTitle = detailLabels.keywordsTitle;
+  const relatedTitle = detailLabels.relatedTitle;
+  const galleryTitle = detailLabels.galleryTitle;
+  const heroInquiryCta = detailLabels.heroInquiryCta;
+  const allProductsLabel = detailLabels.allProducts;
   const inquiryLabels: FormLabels = {
     eyebrow: itemLabel(itemById(inquiryModule, 'form-eyebrow'), lang),
     name: itemLabel(itemById(inquiryModule, 'form-name'), lang),
@@ -773,9 +906,9 @@ export default function CatalogProductDetailContent({
   const mobileThumbnailWindow = thumbnailWindow(media, activeImageIndex, HERO_MOBILE_THUMBNAILS);
   const canMovePreviousImage = activeImageIndex > 0;
   const canMoveNextImage = activeImageIndex < media.length - 1;
-  const previousImageLabel = imageLabelPrefix ? `${imageLabelPrefix} previous` : 'Previous image';
-  const nextImageLabel = imageLabelPrefix ? `${imageLabelPrefix} next` : 'Next image';
-  const selectImageLabel = (index: number) => imageLabelPrefix ? `${imageLabelPrefix} ${index + 1}` : `Image ${index + 1}`;
+  const previousImageLabel = detailLabels.previousImage;
+  const nextImageLabel = detailLabels.nextImage;
+  const selectImageLabel = (index: number) => `${detailLabels.imageLabel} ${index + 1}`;
   const goToPreviousImage = () => setActiveImageIndex((index) => Math.max(index - 1, 0));
   const goToNextImage = () => setActiveImageIndex((index) => Math.min(index + 1, media.length - 1));
   const heroGridClass = hasMediaRail
@@ -968,7 +1101,6 @@ export default function CatalogProductDetailContent({
 
       <ProductDecisionSummary
         product={product}
-        lang={lang}
         specs={specs}
         features={features}
         termRows={termRows}
@@ -980,6 +1112,7 @@ export default function CatalogProductDetailContent({
         specsTitle={specsTitle}
         inquiryTitle={inquiryTitle}
         inquiryCta={heroInquiryCta}
+        labels={detailLabels}
       />
 
       {detailAnchors.length > 0 ? (

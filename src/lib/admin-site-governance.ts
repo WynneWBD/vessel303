@@ -150,7 +150,7 @@ export const CONTENT_CONTRACTS: ContentContract[] = [
     adminHref: '/admin/content/products',
     previewHref: '/products',
     modulePageKey: 'products',
-    requiredModules: ['hero', 'highlights', 'contact-card', 'ui-labels', 'inquiry-form'],
+    requiredModules: ['hero', 'highlights', 'contact-card', 'ui-labels', 'detail-labels', 'inquiry-form'],
     cmsTable: 'product_catalog',
     signals: ['image', 'cta', 'seo', 'source', 'english', 'downloads'],
     displayRule: '列表和详情内容来自 published 产品；页面级 hero、提示和 CTA 来自 products 模块。',
