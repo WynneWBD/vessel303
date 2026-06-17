@@ -20,6 +20,7 @@ type Tech = 'viie' | 'vols' | 'vipc';
 
 type RemotePageModuleItem = {
   id?: string;
+  href?: string;
   image_url?: string;
   value_zh?: string;
   value_en?: string;
@@ -337,7 +338,9 @@ export default function AboutPageContent({
     .filter(Boolean);
   const showServices = visibleResolvedModule(dynamicModules, 'services');
   const serviceCards = hasModuleItemArray(servicesModule)
-    ? serviceModuleItems.map((item, index) => {
+    ? serviceModuleItems
+      .filter((item) => /^service-\d+$/i.test(item.id ?? ''))
+      .map((item, index) => {
         return {
           id: item.id ?? `service-${String(index + 1).padStart(2, '0')}`,
           n: localValue(item, zh, ''),
@@ -347,6 +350,16 @@ export default function AboutPageContent({
           desc_zh: item.content_zh || '',
         };
       }).filter((item) => item.n || item.en || item.zh || item.desc_en || item.desc_zh)
+    : [];
+  const serviceCtas = hasModuleItemArray(servicesModule)
+    ? serviceModuleItems
+        .filter((item) => typeof item.id === 'string' && item.id.startsWith('services-cta-'))
+        .map((item, index) => ({
+          id: item.id ?? `services-cta-${index + 1}`,
+          href: item.href || '#',
+          label: localText(item, zh, ''),
+        }))
+        .filter((item) => item.href && item.label)
     : [];
   const showPartners = visibleResolvedModule(dynamicModules, 'partners');
   const partnerImages = hasModuleItemArray(partnersModule)
@@ -1138,28 +1151,32 @@ export default function AboutPageContent({
               </Reveal>
             ))}
           </div>
+          {serviceCtas.length > 0 ? (
           <Reveal delay={180} className="mt-10">
             <div className="flex flex-wrap gap-3 border-t border-[#E5E0DA] pt-8">
-              <Link prefetch={false}
-                href="/products"
-                className="inline-flex min-h-11 items-center justify-center bg-[#241F1B] px-5 text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#E36F2C]"
-              >
-                {zh ? '查看产品' : 'View Products'}
-              </Link>
-              <Link prefetch={false}
-                href="/cases"
-                className="inline-flex min-h-11 items-center justify-center border border-[#241F1B]/20 px-5 text-sm font-bold uppercase tracking-[0.12em] text-[#241F1B] transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
-              >
-                {zh ? '项目案例' : 'Project Cases'}
-              </Link>
-              <Link prefetch={false}
-                href="/contact?source=about:inquiry_cta"
-                className="inline-flex min-h-11 items-center justify-center border border-[#E36F2C]/60 px-5 text-sm font-bold uppercase tracking-[0.12em] text-[#E36F2C] transition-colors hover:bg-[#E36F2C] hover:text-white"
-              >
-                {zh ? '发起咨询' : 'Start Inquiry'}
-              </Link>
+              {serviceCtas.map((cta, index) => {
+                const className = index === 0
+                  ? 'inline-flex min-h-11 items-center justify-center bg-[#241F1B] px-5 text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#E36F2C]'
+                  : cta.id.includes('contact')
+                  ? 'inline-flex min-h-11 items-center justify-center border border-[#E36F2C]/60 px-5 text-sm font-bold uppercase tracking-[0.12em] text-[#E36F2C] transition-colors hover:bg-[#E36F2C] hover:text-white'
+                  : 'inline-flex min-h-11 items-center justify-center border border-[#241F1B]/20 px-5 text-sm font-bold uppercase tracking-[0.12em] text-[#241F1B] transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]';
+
+                return (
+                  <Link
+                    key={cta.id}
+                    prefetch={false}
+                    href={cta.href}
+                    className={className}
+                    data-page-module-item={cta.id}
+                    data-page-module-field={zh ? 'label_zh' : 'label_en'}
+                  >
+                    {cta.label}
+                  </Link>
+                );
+              })}
             </div>
           </Reveal>
+          ) : null}
         </div>
       </section>
       ) : null}
