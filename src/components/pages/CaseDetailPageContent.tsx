@@ -28,8 +28,8 @@ function localizedList(zh: boolean, zhValues: string[], enValues: string[]) {
   return zhValues.length > 0 ? (zh ? zhValues : enValues.length > 0 ? enValues : zhValues) : enValues
 }
 
-function fallbackLabel(value: string, fallback: string) {
-  return value || fallback
+function moduleLabel(pageModule: PublicPageModule | null, id: string, lang: 'en' | 'zh', en: string, zh: string) {
+  return itemLabel(itemById(pageModule, id), lang) || (lang === 'zh' ? zh : en)
 }
 
 function splitProducts(value: string | null | undefined) {
@@ -89,11 +89,13 @@ function FactGrid({
 }
 
 function CaseDecisionSummary({
+  eyebrow,
   title,
   subtitle,
   snapshotTitle,
   proofTitle,
   actionTitle,
+  actionItems,
   snapshotFacts,
   proofFacts,
   galleryHref,
@@ -101,13 +103,14 @@ function CaseDecisionSummary({
   inquiryHref,
   inquiryLabel,
   hasGallery,
-  zh,
 }: {
+  eyebrow: string
   title: string
   subtitle: string
   snapshotTitle: string
   proofTitle: string
   actionTitle: string
+  actionItems: string[]
   snapshotFacts: Array<{ label: string; value: string }>
   proofFacts: Array<{ label: string; value: string }>
   galleryHref: string
@@ -115,21 +118,20 @@ function CaseDecisionSummary({
   inquiryHref: string
   inquiryLabel: string
   hasGallery: boolean
-  zh: boolean
 }) {
-  const actionItems = [
-    zh ? '先核对项目地点、类型、面积和舱体规模。' : 'Check location, project type, area, and unit scale first.',
-    zh ? '再查看产品引用、投资信息和图库证据。' : 'Then review product references, investment context, and gallery evidence.',
-    zh ? '最后带着项目背景进入案例咨询表单。' : 'Finally open the case inquiry with project context.',
-  ]
-
   return (
-    <section className="border-b border-[#E5DED4] bg-white py-8 lg:py-10" data-case-decision-summary="true">
+    <section
+      className="border-b border-[#E5DED4] bg-white py-8 lg:py-10"
+      data-case-decision-summary="true"
+      data-page-module="cases:detail-labels"
+      data-page-key="cases"
+      data-module-key="detail-labels"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-5 grid gap-3 lg:grid-cols-[minmax(0,0.72fr)_minmax(260px,0.28fr)] lg:items-end">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-[#1889B6]">
-              {zh ? '案例决策摘要' : 'Case decision summary'}
+              {eyebrow}
             </p>
             <h2 className="mt-2 text-2xl font-black leading-tight text-[#2C2A28] sm:text-3xl">{title}</h2>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-[#6B6560]">{subtitle}</p>
@@ -204,6 +206,7 @@ function CaseDecisionSummary({
 }
 
 function CaseInquiryProofBridge({
+  eyebrow,
   title,
   subtitle,
   proofPoints,
@@ -216,8 +219,8 @@ function CaseInquiryProofBridge({
   relatedLabel,
   hasGallery,
   hasRelated,
-  zh,
 }: {
+  eyebrow: string
   title: string
   subtitle: string
   proofPoints: string[]
@@ -230,15 +233,20 @@ function CaseInquiryProofBridge({
   relatedLabel: string
   hasGallery: boolean
   hasRelated: boolean
-  zh: boolean
 }) {
   return (
-    <section id="case-inquiry-proof-bridge" className="border-b border-[#E5DED4] bg-white py-10 lg:py-12">
+    <section
+      id="case-inquiry-proof-bridge"
+      className="border-b border-[#E5DED4] bg-white py-10 lg:py-12"
+      data-page-module="cases:detail-labels"
+      data-page-key="cases"
+      data-module-key="detail-labels"
+    >
       <div className="mx-auto grid max-w-7xl gap-5 px-4 sm:px-6 lg:grid-cols-[minmax(0,0.74fr)_minmax(320px,0.26fr)] lg:px-8">
         <div className="border-l-4 border-[#1889B6] bg-[#FAF7F2] px-4 py-4 sm:px-5">
           <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[#1889B6]">
             <MessageSquareText size={15} strokeWidth={2.4} aria-hidden="true" />
-            {zh ? '询盘前证明链' : 'Pre-inquiry proof chain'}
+            {eyebrow}
           </p>
           <h2 className="mt-2 text-2xl font-black leading-tight text-[#2C2A28] sm:text-3xl">{title}</h2>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-[#6B6560]">{subtitle}</p>
@@ -318,12 +326,40 @@ export default function CaseDetailPageContent({
   ].filter((image, index, images): image is string => Boolean(image) && images.indexOf(image) === index)
   const modules = moduleMap(pageModules)
   const detailLabels = modules.get('detail-labels') ?? null
-  const locationLabel = fallbackLabel(itemLabel(itemById(detailLabels, 'fact-location'), lang), zh ? '项目位置' : 'Location')
-  const typeLabel = fallbackLabel(itemLabel(itemById(detailLabels, 'fact-type'), lang), zh ? '项目类型' : 'Project Type')
-  const areaLabel = fallbackLabel(itemLabel(itemById(detailLabels, 'fact-area'), lang), zh ? '项目面积' : 'Project Area')
-  const investmentLabel = fallbackLabel(itemLabel(itemById(detailLabels, 'fact-investment'), lang), zh ? '投资规模' : 'Investment')
-  const unitsLabel = fallbackLabel(itemLabel(itemById(detailLabels, 'fact-units'), lang), zh ? '舱体数量' : 'Units')
-  const productsLabel = fallbackLabel(itemLabel(itemById(detailLabels, 'fact-products'), lang), zh ? '产品型号' : 'Products')
+  const label = (id: string, en: string, zhText: string) => moduleLabel(detailLabels, id, lang, en, zhText)
+  const locationLabel = label('fact-location', 'Location', '项目位置')
+  const typeLabel = label('fact-type', 'Project Type', '项目类型')
+  const areaLabel = label('fact-area', 'Project Area', '项目面积')
+  const investmentLabel = label('fact-investment', 'Investment', '投资规模')
+  const unitsLabel = label('fact-units', 'Units', '舱体数量')
+  const productsLabel = label('fact-products', 'Products', '产品型号')
+  const galleryStatLabel = label('gallery-title', 'Gallery', '图库')
+  const factsStatLabel = label('detail-facts', 'Facts', '事实')
+  const productsStatLabel = label('detail-products', 'Products', '产品')
+  const galleryAssetsLabel = label('detail-gallery-assets', 'Gallery assets', '图库素材')
+  const galleryProofLabel = label('detail-gallery-proof', 'Gallery proof', '图库证据')
+  const galleryProofDetail = label('detail-gallery-proof-detail', 'Cover and site images', '封面与现场图片')
+  const projectFactsLabel = label('detail-project-facts', 'Project facts', '项目事实')
+  const projectFactsDetail = label('detail-project-facts-detail', 'Location, type, area, scale, and more', '地点、类型、面积、规模等')
+  const productReferencesLabel = label('detail-product-references', 'Product references', '产品引用')
+  const productReferencesDetail = label('detail-product-references-detail', 'Linked VESSEL models or series', '关联 VESSEL 型号/系列')
+  const relatedCasesMetricDetail = label('detail-related-cases-detail', 'Compare adjacent project types', '继续横向比较项目类型')
+  const decisionEyebrow = label('detail-decision-eyebrow', 'Case decision summary', '案例决策摘要')
+  const decisionTitle = label('detail-decision-title', 'Validate project fit before opening gallery and inquiry.', '先完成项目适配判断，再进入图库和咨询。')
+  const decisionSubtitle = label('detail-decision-subtitle', 'The case detail page surfaces location, type, scale, product references, and inquiry path before the longer story sections.', '案例详情页先把地点、类型、规模、产品引用和询盘路径集中展示，减少用户在长页面里反复查找。')
+  const snapshotTitle = label('detail-snapshot-title', 'Project snapshot', '项目快照')
+  const deliveryProofTitle = label('detail-delivery-proof-title', 'Delivery proof', '交付证据')
+  const readingPathTitle = label('detail-reading-path-title', 'Reading path', '阅读路径')
+  const readingStep1 = label('detail-reading-step-1', 'Check location, project type, area, and unit scale first.', '先核对项目地点、类型、面积和舱体规模。')
+  const readingStep2 = label('detail-reading-step-2', 'Then review product references, investment context, and gallery evidence.', '再查看产品引用、投资信息和图库证据。')
+  const readingStep3 = label('detail-reading-step-3', 'Finally open the case inquiry with project context.', '最后带着项目背景进入案例咨询表单。')
+  const inquiryProofEyebrow = label('detail-inquiry-proof-eyebrow', 'Pre-inquiry proof chain', '询盘前证明链')
+  const inquiryProofTitle = label('detail-inquiry-proof-title', 'Review proof, product references, and adjacent cases before inquiry.', '提交前再次核对项目证据、产品引用和相似案例。')
+  const inquiryProofSubtitle = label('detail-inquiry-proof-subtitle', 'This bridge condenses existing case proof before the form so buyers enter with a clear project context.', '这一段把详情页已有证据收束到询盘前，帮助采购方带着明确项目背景进入表单。')
+  const inquiryProofPoint1 = label('detail-inquiry-proof-point-1', 'Use gallery and project facts to confirm delivery credibility.', '先用图库和项目事实确认交付可信度。')
+  const inquiryProofPoint2 = label('detail-inquiry-proof-point-2', 'Use product references to judge model, scale, and scenario fit.', '再用产品引用判断型号、规模和场景适配。')
+  const inquiryProofPoint3 = label('detail-inquiry-proof-point-3', 'Enter the inquiry with a clear project context.', '最后带着明确项目背景进入案例咨询。')
+  const submitCaseInquiryFallback = label('detail-submit-case-inquiry', 'Submit Case Inquiry', '提交案例咨询')
   const facts = [
     { label: locationLabel, value: location },
     { label: typeLabel, value: type },
@@ -333,9 +369,9 @@ export default function CaseDetailPageContent({
     { label: productsLabel, value: project.products },
   ].map((fact) => ({ ...fact, value: text(fact.value) })).filter((fact) => Boolean(fact.value))
   const products = splitProducts(project.products)
-  const proofTitle = fallbackLabel(itemLabel(itemById(detailLabels, 'proof-title'), lang), zh ? '项目证据' : 'Project proof')
-  const galleryTitle = fallbackLabel(itemLabel(itemById(detailLabels, 'gallery-title'), lang), zh ? '项目图库' : 'Project gallery')
-  const relatedTitle = fallbackLabel(itemLabel(itemById(detailLabels, 'related-title'), lang), zh ? '相关案例' : 'Related cases')
+  const proofTitle = label('proof-title', 'Project proof', '项目证据')
+  const galleryTitle = label('gallery-title', 'Project gallery', '项目图库')
+  const relatedTitle = label('related-title', 'Related cases', '相关案例')
   const inquiryModule = modules.get('inquiry-form') ?? null
   const inquiryTitle = moduleTitle(inquiryModule, lang)
   const inquiryType = itemLabel(itemById(inquiryModule, 'inquiry-type'), lang)
@@ -372,34 +408,34 @@ export default function CaseDetailPageContent({
   const proofFacts = [
     { label: productsLabel, value: project.products },
     { label: investmentLabel, value: project.investment_display },
-    { label: zh ? '图库素材' : 'Gallery assets', value: gallery.length > 0 ? String(gallery.length) : '' },
+    { label: galleryAssetsLabel, value: gallery.length > 0 ? String(gallery.length) : '' },
   ].map((fact) => ({ ...fact, value: text(fact.value) })).filter((fact) => Boolean(fact.value))
   const inquiryProofMetrics = [
     {
-      label: zh ? '图库证据' : 'Gallery proof',
+      label: galleryProofLabel,
       value: gallery.length > 0 ? String(gallery.length) : '0',
-      detail: zh ? '封面与现场图片' : 'Cover and site images',
+      detail: galleryProofDetail,
     },
     {
-      label: zh ? '项目事实' : 'Project facts',
+      label: projectFactsLabel,
       value: `${facts.length}/6`,
-      detail: zh ? '地点、类型、面积、规模等' : 'Location, type, area, scale, and more',
+      detail: projectFactsDetail,
     },
     {
-      label: zh ? '产品引用' : 'Product references',
+      label: productReferencesLabel,
       value: products.length > 0 ? String(products.length) : '0',
-      detail: zh ? '关联 VESSEL 型号/系列' : 'Linked VESSEL models or series',
+      detail: productReferencesDetail,
     },
     {
-      label: zh ? '相关案例' : 'Related cases',
+      label: relatedTitle,
       value: String(relatedCases.length),
-      detail: zh ? '继续横向比较项目类型' : 'Compare adjacent project types',
+      detail: relatedCasesMetricDetail,
     },
   ]
   const inquiryProofPoints = [
-    zh ? '先用图库和项目事实确认交付可信度。' : 'Use gallery and project facts to confirm delivery credibility.',
-    zh ? '再用产品引用判断型号、规模和场景适配。' : 'Use product references to judge model, scale, and scenario fit.',
-    zh ? '最后带着明确项目背景进入案例咨询。' : 'Enter the inquiry with a clear project context.',
+    inquiryProofPoint1,
+    inquiryProofPoint2,
+    inquiryProofPoint3,
   ]
 
   if (!name) return null
@@ -455,9 +491,9 @@ export default function CaseDetailPageContent({
             ) : null}
             <div className="mt-5 grid max-w-2xl grid-cols-3 gap-2">
               {[
-                { label: zh ? '图库' : 'Gallery', value: gallery.length },
-                { label: zh ? '事实' : 'Facts', value: facts.length },
-                { label: zh ? '产品' : 'Products', value: products.length },
+                { label: galleryStatLabel, value: gallery.length },
+                { label: factsStatLabel, value: facts.length },
+                { label: productsStatLabel, value: products.length },
               ].map((item) => (
                 <div key={item.label} className="border border-white/16 bg-white/10 px-3 py-2 backdrop-blur">
                   <p className="truncate text-[10px] font-bold uppercase tracking-[0.14em] text-white/58">{item.label}</p>
@@ -489,21 +525,20 @@ export default function CaseDetailPageContent({
 
       {(snapshotFacts.length > 0 || proofFacts.length > 0) ? (
         <CaseDecisionSummary
-          title={zh ? '先完成项目适配判断，再进入图库和咨询。' : 'Validate project fit before opening gallery and inquiry.'}
-          subtitle={zh
-            ? '案例详情页先把地点、类型、规模、产品引用和询盘路径集中展示，减少用户在长页面里反复查找。'
-            : 'The case detail page surfaces location, type, scale, product references, and inquiry path before the longer story sections.'}
-          snapshotTitle={zh ? '项目快照' : 'Project snapshot'}
-          proofTitle={zh ? '交付证据' : 'Delivery proof'}
-          actionTitle={zh ? '阅读路径' : 'Reading path'}
+          eyebrow={decisionEyebrow}
+          title={decisionTitle}
+          subtitle={decisionSubtitle}
+          snapshotTitle={snapshotTitle}
+          proofTitle={deliveryProofTitle}
+          actionTitle={readingPathTitle}
+          actionItems={[readingStep1, readingStep2, readingStep3]}
           snapshotFacts={snapshotFacts}
           proofFacts={proofFacts}
           galleryHref="#case-gallery"
           galleryLabel={galleryTitle}
           inquiryHref="#case-inquiry"
-          inquiryLabel={inquiryLabels.submit || (zh ? '提交案例咨询' : 'Submit Case Inquiry')}
+          inquiryLabel={inquiryLabels.submit || submitCaseInquiryFallback}
           hasGallery={gallery.length > 1}
-          zh={zh}
         />
       ) : null}
 
@@ -585,21 +620,19 @@ export default function CaseDetailPageContent({
 
       {inquiryTitle ? (
         <CaseInquiryProofBridge
-          title={zh ? '提交前再次核对项目证据、产品引用和相似案例。' : 'Review proof, product references, and adjacent cases before inquiry.'}
-          subtitle={zh
-            ? '这一段把详情页已有证据收束到询盘前，帮助采购方带着明确项目背景进入表单。'
-            : 'This bridge condenses existing case proof before the form so buyers enter with a clear project context.'}
+          eyebrow={inquiryProofEyebrow}
+          title={inquiryProofTitle}
+          subtitle={inquiryProofSubtitle}
           proofPoints={inquiryProofPoints}
           metrics={inquiryProofMetrics}
           galleryHref="#case-gallery"
           inquiryHref="#case-inquiry"
           relatedHref="#case-related"
           galleryLabel={galleryTitle}
-          inquiryLabel={inquiryLabels.submit || (zh ? '提交案例咨询' : 'Submit Case Inquiry')}
+          inquiryLabel={inquiryLabels.submit || submitCaseInquiryFallback}
           relatedLabel={relatedTitle}
           hasGallery={gallery.length > 1}
           hasRelated={relatedCases.length > 0}
-          zh={zh}
         />
       ) : null}
 

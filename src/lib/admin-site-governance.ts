@@ -168,7 +168,7 @@ export const CONTENT_CONTRACTS: ContentContract[] = [
     adminHref: '/admin/content/projects',
     previewHref: '/cases',
     modulePageKey: 'cases',
-    requiredModules: ['hero'],
+    requiredModules: ['hero', 'detail-labels', 'inquiry-form'],
     cmsTable: 'project_cases',
     signals: ['image', 'cta', 'seo', 'source', 'english', 'commercial-proof'],
     displayRule: '列表和详情内容来自 published 项目案例。',

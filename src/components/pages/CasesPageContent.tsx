@@ -38,6 +38,58 @@ type FilterOption = {
   label: string
   count?: number
 }
+type CaseListLabels = {
+  publishedCases: string
+  publishedCasesDetail: string
+  matchingNow: string
+  matchingNowDetail: string
+  productReferences: string
+  productReferencesDetail: string
+  projectLocations: string
+  projectLocationsDetail: string
+  caseControl: string
+  caseControlTitle: string
+  caseControlBody: string
+  reset: string
+  highSignalFilters: string
+  currentRoute: string
+  allPublishedCases: string
+  projectType: string
+  caseTags: string
+  locationProductNote: string
+  visibleCases: string
+  visibleCasesDetailPrefix: string
+  proofReady: string
+  proofReadyDetail: string
+  reviewProof: string
+  basicProof: string
+  imageProof: string
+  imageProofDetail: string
+  proofProductReferencesDetail: string
+  scenario: string
+  scenarioDetail: string
+  proof: string
+  proofDetail: string
+  inquiry: string
+  inquiryDetail: string
+  caseProofDensity: string
+  proofDensityTitle: string
+  proofDensityBody: string
+  openProofRichCase: string
+  startCaseInquiry: string
+  buyerDecisionPath: string
+  typeFilter: string
+  tagsFilter: string
+  allTypes: string
+  allTags: string
+  empty: string
+  openCase: string
+  caseInquiry: string
+  photosUnit: string
+  gallery: string
+  facts: string
+  products: string
+}
 
 function cleanText(value: string | null | undefined) {
   return value?.trim() ?? ''
@@ -60,6 +112,66 @@ function localizedText(zh: boolean, zhValue: string | null | undefined, enValue:
 
 function localizedList(zh: boolean, zhValues: string[], enValues: string[]) {
   return zhValues.length > 0 ? (zh ? zhValues : enValues.length > 0 ? enValues : zhValues) : enValues
+}
+
+function moduleLabel(pageModule: PublicPageModule | null, id: string, lang: 'en' | 'zh', en: string, zh: string) {
+  return itemLabel(itemById(pageModule, id), lang) || (lang === 'zh' ? zh : en)
+}
+
+function buildCaseListLabels(pageModule: PublicPageModule | null, lang: 'en' | 'zh'): CaseListLabels {
+  const label = (id: string, en: string, zh: string) => moduleLabel(pageModule, id, lang, en, zh)
+  return {
+    publishedCases: label('list-published-cases', 'Published cases', '已发布案例'),
+    publishedCasesDetail: label('list-published-cases-detail', 'Visible public case library', '来自公开项目案例库'),
+    matchingNow: label('list-matching-now', 'Matching now', '当前匹配'),
+    matchingNowDetail: label('list-matching-now-detail', 'Follows type and tag filters', '跟随当前类型和标签筛选'),
+    productReferences: label('list-product-references', 'Product references', '产品引用'),
+    productReferencesDetail: label('list-product-references-detail', 'Models or series in this scope', '当前范围内出现的型号/系列'),
+    projectLocations: label('list-project-locations', 'Project locations', '项目地点'),
+    projectLocationsDetail: label('list-project-locations-detail', 'Locations represented in this scope', '当前范围内的地点数量'),
+    caseControl: label('list-case-control', 'Case control', '案例控制台'),
+    caseControlTitle: label('list-case-control-title', 'Filter the scenario, verify proof, then open the project inquiry.', '先筛场景，再看证据，最后进入项目咨询。'),
+    caseControlBody: label('list-case-control-body', 'Use project type, tags, product references, and locations to narrow the library before opening a detailed case.', '按项目类型、标签、产品引用和地点快速缩小范围，列表页先完成第一轮项目适配判断。'),
+    reset: label('list-reset', 'Reset', '重置'),
+    highSignalFilters: label('list-high-signal-filters', 'High-signal filters', '高频筛选'),
+    currentRoute: label('list-current-route', 'Current route', '当前路径'),
+    allPublishedCases: label('list-all-published-cases', 'All published cases', '全部公开案例'),
+    projectType: label('fact-type', 'Project type', '项目类型'),
+    caseTags: label('list-case-tags', 'Case tags', '案例标签'),
+    locationProductNote: label('list-location-product-note', 'Locations and product references are derived from existing case fields.', '项目地点和产品引用只从现有案例字段读取。'),
+    visibleCases: label('list-visible-cases', 'Visible cases', '当前案例'),
+    visibleCasesDetailPrefix: label('list-visible-cases-detail-prefix', 'All public', '全部公开'),
+    proofReady: label('list-proof-ready', 'Proof-ready', '证明完整'),
+    proofReadyDetail: label('list-proof-ready-detail', 'Image, narrative, facts, and product reference', '有图像、叙事、参数和产品引用'),
+    reviewProof: label('list-review-proof', 'Review proof', '重点复核'),
+    basicProof: label('list-basic-proof', 'Basic proof', '基础展示'),
+    imageProof: label('list-image-proof', 'Image proof', '图片证据'),
+    imageProofDetail: label('list-image-proof-detail', 'Cover and gallery assets', '封面与图库合计'),
+    proofProductReferencesDetail: label('list-proof-product-references-detail', 'Connects proof to product fit', '可回到产品判断适配'),
+    scenario: label('list-scenario', 'Scenario', '场景'),
+    scenarioDetail: label('list-scenario-detail', 'Type, location, and tags establish project fit.', '类型、地点、标签先判断项目相似度。'),
+    proof: label('list-proof', 'Proof', '证据'),
+    proofDetail: label('list-proof-detail', 'Images, facts, and models support delivery trust.', '图片、参数、产品型号支撑交付可信度。'),
+    inquiry: label('list-inquiry', 'Inquiry', '咨询'),
+    inquiryDetail: label('list-inquiry-detail', 'Detail pages keep the inquiry anchor in the traceable lead path.', '详情页保留案例咨询锚点，进入可追踪线索路径。'),
+    caseProofDensity: label('list-proof-density', 'Case Proof Density', '案例证明密度'),
+    proofDensityTitle: label('list-proof-density-title', 'Keep project proof, product references, and inquiry entry in one buyer path.', '把项目证据、产品引用和询盘入口放在同一条客户判断路径上。'),
+    proofDensityBody: label('list-proof-density-body', 'The case list carries the first trust pass: visual proof, project facts, product references, and the next inquiry route.', '案例列表先承担第一轮信任建立：快速看到图像证据、项目事实、使用产品和下一步咨询入口。'),
+    openProofRichCase: label('list-open-proof-rich-case', 'Open proof-rich case', '查看高证据案例'),
+    startCaseInquiry: label('list-start-case-inquiry', 'Start case inquiry', '进入案例咨询'),
+    buyerDecisionPath: label('list-buyer-decision-path', 'Buyer decision path', '客户侧判断顺序'),
+    typeFilter: label('list-type-filter', 'Project Type', '项目类型'),
+    tagsFilter: label('list-tags-filter', 'Tags', '标签'),
+    allTypes: label('list-all-types', 'All Projects', '全部类型'),
+    allTags: label('list-all-tags', 'All Tags', '全部标签'),
+    empty: label('list-empty', 'No cases match the selected filters.', '当前筛选暂无案例'),
+    openCase: label('list-open-case', 'Open case', '查看案例'),
+    caseInquiry: label('list-case-inquiry', 'Case inquiry', '案例咨询'),
+    photosUnit: label('list-photos-unit', 'photos', '张图'),
+    gallery: label('gallery-title', 'Gallery', '图库'),
+    facts: label('list-facts', 'Facts', '事实'),
+    products: label('fact-products', 'Products', '产品'),
+  }
 }
 
 function splitProducts(value: string | null | undefined) {
@@ -175,6 +287,7 @@ function CaseCommandPanel({
   onTagChange,
   onReset,
   zh,
+  labels,
 }: {
   cases: ProjectCaseRow[]
   filteredCases: ProjectCaseRow[]
@@ -186,6 +299,7 @@ function CaseCommandPanel({
   onTagChange: (key: string) => void
   onReset: () => void
   zh: boolean
+  labels: CaseListLabels
 }) {
   const activeTypeLabel = typeOptions.find((option) => option.key === activeType)?.label
   const activeTagLabel = tagOptions.find((option) => option.key === activeTag)?.label
@@ -196,27 +310,27 @@ function CaseCommandPanel({
   const quickTags = tagOptions.slice(0, 6)
   const statItems = [
     {
-      label: zh ? '已发布案例' : 'Published cases',
+      label: labels.publishedCases,
       value: cases.length,
-      detail: zh ? '来自公开项目案例库' : 'Visible public case library',
+      detail: labels.publishedCasesDetail,
       Icon: ShieldCheck,
     },
     {
-      label: zh ? '当前匹配' : 'Matching now',
+      label: labels.matchingNow,
       value: filteredCases.length,
-      detail: zh ? '跟随当前类型和标签筛选' : 'Follows type and tag filters',
+      detail: labels.matchingNowDetail,
       Icon: Search,
     },
     {
-      label: zh ? '产品引用' : 'Product references',
+      label: labels.productReferences,
       value: productCount,
-      detail: zh ? '当前范围内出现的型号/系列' : 'Models or series in this scope',
+      detail: labels.productReferencesDetail,
       Icon: Layers3,
     },
     {
-      label: zh ? '项目地点' : 'Project locations',
+      label: labels.projectLocations,
       value: locationCount,
-      detail: zh ? '当前范围内的地点数量' : 'Locations represented in this scope',
+      detail: labels.projectLocationsDetail,
       Icon: MapPin,
     },
   ]
@@ -232,15 +346,13 @@ function CaseCommandPanel({
             <div className="min-w-0">
               <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[#1889B6]">
                 <BarChart3 size={15} strokeWidth={2.4} aria-hidden="true" />
-                {zh ? '案例控制台' : 'Case control'}
+                {labels.caseControl}
               </p>
               <h2 className="mt-2 text-2xl font-black leading-tight text-[#2C2A28] sm:text-3xl">
-                {zh ? '先筛场景，再看证据，最后进入项目咨询。' : 'Filter the scenario, verify proof, then open the project inquiry.'}
+                {labels.caseControlTitle}
               </h2>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-[#6B6560]">
-                {zh
-                  ? '按项目类型、标签、产品引用和地点快速缩小范围，列表页先完成第一轮项目适配判断。'
-                  : 'Use project type, tags, product references, and locations to narrow the library before opening a detailed case.'}
+                {labels.caseControlBody}
               </p>
             </div>
             {hasActiveFilter ? (
@@ -250,7 +362,7 @@ function CaseCommandPanel({
                 onClick={onReset}
               >
                 <RotateCcw size={14} strokeWidth={2.4} aria-hidden="true" />
-                {zh ? '重置' : 'Reset'}
+                {labels.reset}
               </button>
             ) : null}
           </div>
@@ -272,18 +384,18 @@ function CaseCommandPanel({
         <aside className="min-w-0 border border-[#E5DED4] bg-[#FAF7F2] p-4">
           <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[#2C2A28]">
             <Filter size={15} strokeWidth={2.4} aria-hidden="true" />
-            {zh ? '高频筛选' : 'High-signal filters'}
+            {labels.highSignalFilters}
           </p>
           <div className="mt-3 border border-[#E5DED4] bg-white px-3 py-2 text-xs leading-5 text-[#6B6560]">
-            <span className="font-black text-[#2C2A28]">{zh ? '当前路径' : 'Current route'}: </span>
+            <span className="font-black text-[#2C2A28]">{labels.currentRoute}: </span>
             {activeTypeLabel || activeTagLabel
               ? [activeTypeLabel, activeTagLabel].filter(Boolean).join(' / ')
-              : zh ? '全部公开案例' : 'All published cases'}
+              : labels.allPublishedCases}
           </div>
 
           {quickTypes.length > 0 ? (
             <div className="mt-4">
-              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]">{zh ? '项目类型' : 'Project type'}</p>
+              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]">{labels.projectType}</p>
               <div className="flex flex-wrap gap-2">
                 {quickTypes.map((option) => (
                   <button
@@ -302,7 +414,7 @@ function CaseCommandPanel({
 
           {quickTags.length > 0 ? (
             <div className="mt-4">
-              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]">{zh ? '案例标签' : 'Case tags'}</p>
+              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]">{labels.caseTags}</p>
               <div className="flex flex-wrap gap-2">
                 {quickTags.map((option) => (
                   <button
@@ -322,7 +434,7 @@ function CaseCommandPanel({
           <div className="mt-5 grid gap-2 border-t border-[#E5DED4] pt-4 text-xs leading-5 text-[#6B6560]">
             <p className="flex items-start gap-2">
               <Globe2 size={14} strokeWidth={2.4} className="mt-0.5 shrink-0 text-[#1889B6]" aria-hidden="true" />
-              <span>{zh ? '项目地点和产品引用只从现有案例字段读取。' : 'Locations and product references are derived from existing case fields.'}</span>
+              <span>{labels.locationProductNote}</span>
             </p>
           </div>
         </aside>
@@ -334,11 +446,11 @@ function CaseCommandPanel({
 function CaseProofPathPanel({
   cases,
   filteredCases,
-  zh,
+  labels,
 }: {
   cases: ProjectCaseRow[]
   filteredCases: ProjectCaseRow[]
-  zh: boolean
+  labels: CaseListLabels
 }) {
   const profiles = filteredCases.map(caseProofProfile)
   const proofReadyCount = profiles.filter((profile) => profile.hasInquiryContext && profile.imageCount > 0).length
@@ -351,42 +463,42 @@ function CaseProofPathPanel({
   const strongestInquiryHref = strongestCase ? `/cases/${strongestCase.id}#case-inquiry` : '/contact'
   const statItems = [
     {
-      label: zh ? '当前案例' : 'Visible cases',
+      label: labels.visibleCases,
       value: filteredCases.length,
-      detail: zh ? `全部公开 ${cases.length}` : `All public ${cases.length}`,
+      detail: `${labels.visibleCasesDetailPrefix} ${cases.length}`,
       Icon: ShieldCheck,
     },
     {
-      label: zh ? '证明完整' : 'Proof-ready',
+      label: labels.proofReady,
       value: proofReadyCount,
-      detail: zh ? '有图像、叙事、参数和产品引用' : 'Image, narrative, facts, and product reference',
+      detail: labels.proofReadyDetail,
       Icon: CheckCircle2,
     },
     {
-      label: zh ? '图片证据' : 'Image proof',
+      label: labels.imageProof,
       value: galleryCount,
-      detail: zh ? '封面与图库合计' : 'Cover and gallery assets',
+      detail: labels.imageProofDetail,
       Icon: ImageIcon,
     },
     {
-      label: zh ? '产品引用' : 'Product references',
+      label: labels.productReferences,
       value: productCount,
-      detail: zh ? '可回到产品判断适配' : 'Connects proof to product fit',
+      detail: labels.proofProductReferencesDetail,
       Icon: Package,
     },
   ]
   const routeSteps = [
     {
-      label: zh ? '场景' : 'Scenario',
-      detail: zh ? '类型、地点、标签先判断项目相似度。' : 'Type, location, and tags establish project fit.',
+      label: labels.scenario,
+      detail: labels.scenarioDetail,
     },
     {
-      label: zh ? '证据' : 'Proof',
-      detail: zh ? '图片、参数、产品型号支撑交付可信度。' : 'Images, facts, and models support delivery trust.',
+      label: labels.proof,
+      detail: labels.proofDetail,
     },
     {
-      label: zh ? '咨询' : 'Inquiry',
-      detail: zh ? '详情页保留案例咨询锚点，进入可追踪线索路径。' : 'Detail pages keep the inquiry anchor in the traceable lead path.',
+      label: labels.inquiry,
+      detail: labels.inquiryDetail,
     },
   ]
 
@@ -395,15 +507,13 @@ function CaseProofPathPanel({
       <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="border-l-4 border-[#1889B6] px-4 py-4 sm:px-5">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#1889B6]">
-            {zh ? '案例证明密度' : 'Case Proof Density'}
+            {labels.caseProofDensity}
           </p>
           <h2 className="mt-2 text-2xl font-black leading-tight text-[#2C2A28] sm:text-3xl">
-            {zh ? '把项目证据、产品引用和询盘入口放在同一条客户判断路径上。' : 'Keep project proof, product references, and inquiry entry in one buyer path.'}
+            {labels.proofDensityTitle}
           </h2>
           <p className="mt-3 max-w-4xl text-sm leading-6 text-[#6B6560]">
-            {zh
-              ? '案例列表先承担第一轮信任建立：快速看到图像证据、项目事实、使用产品和下一步咨询入口。'
-              : 'The case list carries the first trust pass: visual proof, project facts, product references, and the next inquiry route.'}
+            {labels.proofDensityBody}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Link
@@ -411,7 +521,7 @@ function CaseProofPathPanel({
               href={strongestCaseHref}
               className="inline-flex min-h-10 items-center justify-center gap-2 border border-[#E36F2C] bg-[#E36F2C] px-3 text-xs font-black uppercase tracking-[0.12em] text-white transition-colors hover:border-[#C95E22] hover:bg-[#C95E22]"
             >
-              {zh ? '查看高证据案例' : 'Open proof-rich case'}
+              {labels.openProofRichCase}
               <ArrowRight size={15} strokeWidth={2.4} aria-hidden="true" />
             </Link>
             <Link
@@ -421,14 +531,14 @@ function CaseProofPathPanel({
               className="inline-flex min-h-10 items-center justify-center gap-2 border border-[#2C2A28] bg-[#2C2A28] px-3 text-xs font-black uppercase tracking-[0.12em] text-white transition-colors hover:border-[#1889B6] hover:bg-[#1889B6]"
             >
               <MessageSquareText size={15} strokeWidth={2.4} aria-hidden="true" />
-              {zh ? '进入案例咨询' : 'Start case inquiry'}
+              {labels.startCaseInquiry}
             </Link>
           </div>
         </div>
 
         <aside className="border-t border-[#E6EEEE] bg-[#F7FAFA] px-4 py-4 sm:px-5 lg:border-l lg:border-t-0">
           <p className="text-xs font-black uppercase tracking-[0.16em] text-[#2C2A28]">
-            {zh ? '客户侧判断顺序' : 'Buyer decision path'}
+            {labels.buyerDecisionPath}
           </p>
           <div className="mt-3 space-y-2">
             {routeSteps.map((step, index) => (
@@ -474,18 +584,19 @@ export default function CasesPageContent({
   const modules = moduleMap(pageModules)
   const heroModule = modules.get('hero') ?? null
   const detailLabelsModule = modules.get('detail-labels') ?? null
+  const labels = buildCaseListLabels(detailLabelsModule, lang)
   const heroEyebrow = itemLabel(itemById(heroModule, 'eyebrow'), lang)
   const heroTitle = moduleTitle(heroModule, lang)
   const heroDescription = moduleDescription(heroModule, lang)
   const showHero = heroModule?.is_visible !== false && (heroEyebrow || heroTitle || heroDescription)
-  const typeFilterLabel = itemLabel(itemById(detailLabelsModule, 'fact-type'), lang) || (zh ? '项目类型' : 'Project Type')
-  const tagFilterLabel = zh ? '标签' : 'Tags'
-  const allTypeLabel = zh ? '全部类型' : 'All Projects'
-  const allTagLabel = zh ? '全部标签' : 'All Tags'
-  const resetLabel = zh ? '重置' : 'Reset'
-  const emptyLabel = zh ? '当前筛选暂无案例' : 'No cases match the selected filters.'
-  const openCaseLabel = zh ? '查看案例' : 'Open case'
-  const caseInquiryLabel = zh ? '案例咨询' : 'Case inquiry'
+  const typeFilterLabel = labels.typeFilter
+  const tagFilterLabel = labels.tagsFilter
+  const allTypeLabel = labels.allTypes
+  const allTagLabel = labels.allTags
+  const resetLabel = labels.reset
+  const emptyLabel = labels.empty
+  const openCaseLabel = labels.openCase
+  const caseInquiryLabel = labels.caseInquiry
   const [activeType, setActiveType] = useState(ALL_FILTER)
   const [activeTag, setActiveTag] = useState(ALL_FILTER)
   const typeOptions = useMemo(
@@ -514,7 +625,12 @@ export default function CasesPageContent({
       <Navbar />
 
       {showHero ? (
-        <section className="border-b border-[#E36F2C]/10 bg-[#241F1B] px-4 pb-14 pt-32 sm:px-6">
+        <section
+          className="border-b border-[#E36F2C]/10 bg-[#241F1B] px-4 pb-14 pt-32 sm:px-6"
+          data-page-module="cases:hero"
+          data-page-key="cases"
+          data-module-key="hero"
+        >
           <div className="mx-auto max-w-7xl">
             {heroEyebrow ? (
               <p className="mb-4 text-xs font-medium uppercase tracking-[0.3em] text-[#E36F2C]">
@@ -551,12 +667,13 @@ export default function CasesPageContent({
               setActiveTag(ALL_FILTER)
             }}
             zh={zh}
+            labels={labels}
           />
 
           <CaseProofPathPanel
             cases={cases}
             filteredCases={filteredCases}
-            zh={zh}
+            labels={labels}
           />
 
           {hasFilters ? (
@@ -658,10 +775,10 @@ export default function CasesPageContent({
                     : 'border-[#E5DED4] bg-[#FAF7F2] text-[#8A8580]'
               const proofLabel =
                 proofTone === 'ready'
-                  ? (zh ? '证明完整' : 'Proof-ready')
+                  ? labels.proofReady
                   : proofTone === 'review'
-                    ? (zh ? '重点复核' : 'Review proof')
-                    : (zh ? '基础展示' : 'Basic proof')
+                    ? labels.reviewProof
+                    : labels.basicProof
               const facts = [
                 { label: itemLabel(itemById(detailLabelsModule, 'fact-type'), lang), value: type },
                 { label: itemLabel(itemById(detailLabelsModule, 'fact-location'), lang), value: location },
@@ -704,7 +821,7 @@ export default function CasesPageContent({
                         </div>
                         <div className="absolute right-4 top-4 flex max-w-[45%] flex-wrap justify-end gap-2">
                           <span className="bg-[#1889B6] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-white">
-                            {zh ? `${proofProfile.imageCount} 张图` : `${proofProfile.imageCount} photos`}
+                            {proofProfile.imageCount} {labels.photosUnit}
                           </span>
                         </div>
                         {tags.length > 0 ? (
@@ -747,15 +864,15 @@ export default function CasesPageContent({
                         <span className="mt-1 block text-sm font-black leading-5">{proofProfile.proofScore}</span>
                       </div>
                       <div className="min-w-0 border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-2 text-[#2C2A28]">
-                        <span className="block truncate text-[10px] font-black uppercase tracking-[0.12em] text-[#8A8580]">{zh ? '图库' : 'Gallery'}</span>
+                        <span className="block truncate text-[10px] font-black uppercase tracking-[0.12em] text-[#8A8580]">{labels.gallery}</span>
                         <span className="mt-1 block text-sm font-black leading-5">{proofProfile.imageCount}</span>
                       </div>
                       <div className="min-w-0 border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-2 text-[#2C2A28]">
-                        <span className="block truncate text-[10px] font-black uppercase tracking-[0.12em] text-[#8A8580]">{zh ? '事实' : 'Facts'}</span>
+                        <span className="block truncate text-[10px] font-black uppercase tracking-[0.12em] text-[#8A8580]">{labels.facts}</span>
                         <span className="mt-1 block text-sm font-black leading-5">{proofProfile.factCount}/5</span>
                       </div>
                       <div className="min-w-0 border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-2 text-[#2C2A28]">
-                        <span className="block truncate text-[10px] font-black uppercase tracking-[0.12em] text-[#8A8580]">{zh ? '产品' : 'Products'}</span>
+                        <span className="block truncate text-[10px] font-black uppercase tracking-[0.12em] text-[#8A8580]">{labels.products}</span>
                         <span className="mt-1 block text-sm font-black leading-5">{proofProfile.productsCount}</span>
                       </div>
                     </div>
