@@ -770,7 +770,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     ],
   }),
   buildDefaultHomeTemplateModule({
-    moduleKey: 'project-proof',
+    moduleKey: 'project-entry',
     templateId: 'project-proof',
     sortOrder: 44,
     titleZh: '首页项目入口',
@@ -2668,6 +2668,7 @@ const PAGE_MODULE_RENDERER_KEYS: Record<string, string> = {
   'home:model-strip': 'home.visualSales',
   'home:innovation-story': 'home.visualSales',
   'home:scenario-tiles': 'home.visualSales',
+  'home:project-entry': 'home.salesGrid',
   'home:project-proof': 'home.salesGrid',
   'home:future-explorer': 'home.visualSales',
   'home:global-entry': 'home.visualSales',

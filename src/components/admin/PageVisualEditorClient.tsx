@@ -125,7 +125,7 @@ const EDITABLE_MODULE_IDS = [
   'home:model-strip',
   'home:innovation-story',
   'home:scenario-tiles',
-  'home:project-proof',
+  'home:project-entry',
   'home:future-explorer',
   'home:global-entry',
   'home:contact-cta',
