@@ -199,7 +199,12 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
       <Navbar />
       <main className="pt-16">
         {heroModule?.is_visible !== false && (heroTitle || heroDescription || heroEyebrow) ? (
-          <section className="relative overflow-hidden bg-[#241F1B] text-white">
+          <section
+            className="relative overflow-hidden bg-[#241F1B] text-white"
+            data-page-module="contact:hero"
+            data-page-key="contact"
+            data-module-key="hero"
+          >
             {heroPrimaryImage?.image_url ? (
               <Image
                 src={heroPrimaryImage.image_url}
@@ -209,23 +214,35 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                 sizes="100vw"
                 overrideSrc={buildNextImageFallbackSrc(heroPrimaryImage.image_url, 1920)}
                 className="absolute inset-0 h-full w-full object-cover"
+                data-page-module-item={heroPrimaryImage.id}
+                data-page-module-field="image_url"
               />
             ) : null}
             <div className="absolute inset-0 bg-gradient-to-r from-[#17120F] via-[#17120F]/85 to-[#17120F]/30" />
             <div className="relative mx-auto grid max-w-7xl gap-8 px-4 py-20 sm:py-24 lg:min-h-[560px] lg:grid-cols-[minmax(0,1fr)_380px] lg:items-end lg:py-16">
               <div className="max-w-4xl">
                 {heroEyebrow ? (
-                  <p className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-[#E36F2C]">
+                  <p
+                    className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-[#E36F2C]"
+                    data-page-module-item="eyebrow"
+                    data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                  >
                     {heroEyebrow}
                   </p>
                 ) : null}
                 {heroTitle ? (
-                  <h1 className="max-w-3xl text-4xl font-black leading-tight tracking-normal sm:text-6xl">
+                  <h1
+                    className="max-w-3xl text-4xl font-black leading-tight tracking-normal sm:text-6xl"
+                    data-page-module-field={lang === 'zh' ? 'title_zh' : 'title_en'}
+                  >
                     {heroTitle}
                   </h1>
                 ) : null}
                 {heroDescription ? (
-                  <p className="mt-5 max-w-2xl text-base leading-7 text-white/65 sm:text-lg">
+                  <p
+                    className="mt-5 max-w-2xl text-base leading-7 text-white/65 sm:text-lg"
+                    data-page-module-field={lang === 'zh' ? 'description_zh' : 'description_en'}
+                  >
                     {heroDescription}
                   </p>
                 ) : null}
@@ -234,6 +251,8 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                     <Link prefetch={false}
                       href={normalizeSiteHref(primaryCta.href)}
                       className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-6 py-3 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#C85A1F]"
+                      data-page-module-item="primary-cta"
+                      data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
                     >
                       {itemLabel(primaryCta, lang)}
                     </Link>
@@ -242,6 +261,8 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                     <Link prefetch={false}
                       href={normalizeSiteHref(secondaryCta.href, '/products')}
                       className="inline-flex min-h-11 items-center justify-center border border-white/25 px-6 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-white/80 transition hover:border-[#E36F2C] hover:text-[#E36F2C]"
+                      data-page-module-item="secondary-cta"
+                      data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
                     >
                       {itemLabel(secondaryCta, lang)}
                     </Link>
@@ -254,9 +275,9 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                       const content = itemContent(item, lang)
                       if (!value && !content) return null
                       return (
-                        <div key={item.id} className="border border-white/15 bg-black/20 p-4 backdrop-blur-sm">
-                          {value ? <div className="text-lg font-black text-white">{value}</div> : null}
-                          {content ? <div className="mt-1 text-xs leading-5 text-white/65">{content}</div> : null}
+                        <div key={item.id} className="border border-white/15 bg-black/20 p-4 backdrop-blur-sm" data-page-module-item={item.id}>
+                          {value ? <div className="text-lg font-black text-white" data-page-module-field={itemValue(item, lang) ? (lang === 'zh' ? 'value_zh' : 'value_en') : (lang === 'zh' ? 'label_zh' : 'label_en')}>{value}</div> : null}
+                          {content ? <div className="mt-1 text-xs leading-5 text-white/65" data-page-module-field={lang === 'zh' ? 'content_zh' : 'content_en'}>{content}</div> : null}
                         </div>
                       )
                     })}
@@ -265,7 +286,12 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
               </div>
 
               {channelsModule?.is_visible !== false && visibleItems(channelsModule).length > 0 ? (
-                <div className="border border-white/15 bg-[#14110F]/80 p-5 shadow-2xl backdrop-blur-md">
+                <div
+                  className="border border-white/15 bg-[#14110F]/80 p-5 shadow-2xl backdrop-blur-md"
+                  data-page-module="contact:channels"
+                  data-page-key="contact"
+                  data-module-key="channels"
+                >
                   <div className="space-y-3">
                     {visibleItems(channelsModule).map((item) => {
                       const label = itemLabel(item, lang)
@@ -273,14 +299,22 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                       if (!label && !content) return null
                       const body = (
                         <>
-                          {label ? <div className="text-sm font-bold text-white">{label}</div> : null}
-                          {content ? <div className="mt-1 text-sm leading-6 text-white/55">{content}</div> : null}
+                          {label ? (
+                            <div className="text-sm font-bold text-white" data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}>
+                              {label}
+                            </div>
+                          ) : null}
+                          {content ? (
+                            <div className="mt-1 text-sm leading-6 text-white/55" data-page-module-field={lang === 'zh' ? 'content_zh' : 'content_en'}>
+                              {content}
+                            </div>
+                          ) : null}
                         </>
                       )
                       return (
-                        <div key={item.id} className="border-b border-white/10 pb-3 last:border-0 last:pb-0">
+                        <div key={item.id} className="border-b border-white/10 pb-3 last:border-0 last:pb-0" data-page-module-item={item.id}>
                           {isDirectContactHref(item.href)
-                            ? <a href={item.href} className="block rounded-sm px-2 py-1 transition hover:bg-white/10 hover:text-[#E36F2C]">{body}</a>
+                            ? <a href={item.href} className="block rounded-sm px-2 py-1 transition hover:bg-white/10 hover:text-[#E36F2C]" data-page-module-field="href">{body}</a>
                             : body}
                         </div>
                       )
@@ -298,15 +332,26 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
               {hasSupportPanel ? (
                 <div className="space-y-5">
                   {hasFaqPanel ? (
-                    <div className="border border-[#DADDE1] bg-white p-5 sm:p-6">
+                    <div
+                      className="border border-[#DADDE1] bg-white p-5 sm:p-6"
+                      data-page-module="contact:faq-panel"
+                      data-page-key="contact"
+                      data-module-key="faq-panel"
+                    >
                       <div className="border-b border-[#E5E0DA] pb-5">
                         {faqPanelTitle ? (
-                          <h2 className="text-2xl font-black tracking-normal text-[#1F2A31] sm:text-3xl">
+                          <h2
+                            className="text-2xl font-black tracking-normal text-[#1F2A31] sm:text-3xl"
+                            data-page-module-field={lang === 'zh' ? 'title_zh' : 'title_en'}
+                          >
                             {faqPanelTitle}
                           </h2>
                         ) : null}
                         {faqPanelDescription ? (
-                          <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5C6670]">
+                          <p
+                            className="mt-3 max-w-2xl text-sm leading-7 text-[#5C6670]"
+                            data-page-module-field={lang === 'zh' ? 'description_zh' : 'description_en'}
+                          >
                             {faqPanelDescription}
                           </p>
                         ) : null}
@@ -330,15 +375,30 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                   ) : null}
 
                   {hasBackupContent ? (
-                    <div className="border border-[#DADDE1] bg-white p-5">
-                      {backupTitle ? <div className="text-sm font-bold text-[#1F2A31]">{backupTitle}</div> : null}
-                      {backupDescription ? <p className="mt-2 text-sm leading-6 text-[#5C6670]">{backupDescription}</p> : null}
+                    <div
+                      className="border border-[#DADDE1] bg-white p-5"
+                      data-page-module="contact:backup"
+                      data-page-key="contact"
+                      data-module-key="backup"
+                    >
+                      {backupTitle ? (
+                        <div className="text-sm font-bold text-[#1F2A31]" data-page-module-field={lang === 'zh' ? 'title_zh' : 'title_en'}>
+                          {backupTitle}
+                        </div>
+                      ) : null}
+                      {backupDescription ? (
+                        <p className="mt-2 text-sm leading-6 text-[#5C6670]" data-page-module-field={lang === 'zh' ? 'description_zh' : 'description_en'}>
+                          {backupDescription}
+                        </p>
+                      ) : null}
                       {backupLink?.href && itemLabel(backupLink, lang) ? (
                         <a
                           href={backupLink.href}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="mt-4 inline-flex text-sm font-bold text-[#E36F2C] hover:text-[#C85A1F]"
+                          data-page-module-item="legacy-contact"
+                          data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
                         >
                           {itemLabel(backupLink, lang)}
                         </a>
@@ -347,7 +407,12 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                   ) : null}
                 </div>
               ) : null}
-              <div className={hasSupportPanel ? 'lg:sticky lg:top-24' : undefined}>
+              <div
+                className={hasSupportPanel ? 'lg:sticky lg:top-24' : undefined}
+                data-page-module="contact:form"
+                data-page-key="contact"
+                data-module-key="form"
+              >
                 {context ? (
                   <div
                     className="mb-4 border border-[#DADDE1] bg-white p-4 shadow-sm"

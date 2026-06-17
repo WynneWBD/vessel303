@@ -18,10 +18,13 @@ export async function generateMetadata() {
     console.error('Failed to load contact metadata module:', err)
     return null
   })
+  const title = heroModule?.title_en || heroModule?.title_zh || ''
+  const description = heroModule?.description_en || heroModule?.description_zh || ''
+  if (!title || !description) return {}
 
   return buildPageMetadata({
-    title: heroModule?.title_en || '',
-    description: heroModule?.description_en || '',
+    title,
+    description,
     path: '/contact',
     image: heroModule?.items.find((item) => item.is_visible && item.image_url)?.image_url ?? null,
   })

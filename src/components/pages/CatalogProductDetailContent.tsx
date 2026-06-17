@@ -1250,7 +1250,13 @@ export default function CatalogProductDetailContent({
       ) : null}
 
       {inquiryTitle ? (
-        <section id="product-inquiry" className="border-t border-[#DADDE1] bg-[#F3F7F7] py-10">
+        <section
+          id="product-inquiry"
+          className="border-t border-[#DADDE1] bg-[#F3F7F7] py-10"
+          data-page-module="products:inquiry-form"
+          data-page-key="products"
+          data-module-key="inquiry-form"
+        >
           <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
             <ConversionInquiryForm
               source={`product_detail:${product.id}:inquiry_form`}

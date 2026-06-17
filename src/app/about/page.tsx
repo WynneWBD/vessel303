@@ -30,10 +30,16 @@ function cleanMetadataText(value: string | null | undefined) {
 export async function generateMetadata(): Promise<Metadata> {
   const heroModule = await loadAboutHeroModule()
   const title = cleanMetadataText(
-    itemById(heroModule?.items, 'about-hero-headline')?.label_en || heroModule?.title_en,
+    itemById(heroModule?.items, 'about-hero-headline')?.label_en ||
+      itemById(heroModule?.items, 'about-hero-headline')?.label_zh ||
+      heroModule?.title_en ||
+      heroModule?.title_zh,
   )
   const description = cleanMetadataText(
-    itemById(heroModule?.items, 'about-hero-subtitle')?.label_en || heroModule?.description_en,
+    itemById(heroModule?.items, 'about-hero-subtitle')?.label_en ||
+      itemById(heroModule?.items, 'about-hero-subtitle')?.label_zh ||
+      heroModule?.description_en ||
+      heroModule?.description_zh,
   )
   if (!title || !description) return {}
 

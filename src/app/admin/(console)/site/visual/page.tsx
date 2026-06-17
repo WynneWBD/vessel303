@@ -43,6 +43,10 @@ type AdminRole = 'admin' | 'operator'
 
 const VISUAL_PAGE_META = [
   { key: 'home', label: 'Home', path: '/' },
+  { key: 'products', label: 'Products', path: '/products' },
+  { key: 'cases', label: 'Cases', path: '/cases' },
+  { key: 'contact', label: 'Contact', path: '/contact' },
+  { key: 'site', label: 'Site Shell', path: '/' },
   { key: 'about', label: 'About', path: '/about' },
   { key: 'global', label: 'Global', path: '/global' },
 ] as const
@@ -61,6 +65,31 @@ const EDITABLE_VISUAL_MODULE_IDS = [
   'home:global-entry',
   'home:contact-cta',
   'home:operating-proof',
+  'products:hero',
+  'products:highlights',
+  'products:contact-card',
+  'products:ui-labels',
+  'products:detail-labels',
+  'products:inquiry-form',
+  'cases:hero',
+  'cases:detail-labels',
+  'cases:inquiry-form',
+  'contact:hero',
+  'contact:channels',
+  'contact:form',
+  'contact:source-context',
+  'contact:backup',
+  'contact:faq-panel',
+  'contact:email',
+  'site:navbar',
+  'site:ui-labels',
+  'site:footer-cta',
+  'site:footer-brand',
+  'site:footer-products',
+  'site:footer-company',
+  'site:footer-about',
+  'site:footer-contact',
+  'site:floating-contact',
   'about:hero',
   'about:stats',
   'about:brand-story',
@@ -230,7 +259,7 @@ function VisualReleaseConsole({
   const rows: VisualConsoleRow[] = [
     {
       title: '页面编辑范围',
-      detail: '受控编辑 Home 整页与 About 的文字、链接、图片、显示状态、SEO 来源和 Home 安全插入区。',
+      detail: '受控编辑 Home、Products、Cases、Contact、Site Shell、About、Global 的文字、链接、图片、条目顺序、显示状态、SEO 来源和 Home 安全插入区。',
       metric: `${formatNumber(editableModules.length)} 模块`,
       signal: `${formatNumber(hiddenModules)} 隐藏`,
       href: '#visual-editor',
@@ -253,7 +282,8 @@ function VisualReleaseConsole({
       actions: [
         { label: '预览复核', href: '#visual-editor', primary: publishQueue > 0 },
         { label: '首页前台', href: '/' },
-        { label: 'About 前台', href: '/about' },
+        { label: '产品前台', href: '/products' },
+        { label: '联系前台', href: '/contact' },
       ],
     },
     {
@@ -302,7 +332,7 @@ function VisualReleaseConsole({
             {publishQueue > 0 ? `${formatNumber(publishQueue)} 项待复核` : '当前无待发布'}
           </span>
           <span className="inline-flex min-h-8 items-center rounded-md bg-[#EAF6F8] px-3 text-xs font-semibold text-[#1889B6]">
-            Home / About / Global
+            Home / Products / Cases / Contact / Site Shell / About / Global
           </span>
         </div>
       </div>
@@ -474,7 +504,7 @@ export default async function SiteVisualEditorPage() {
   }
 
   const currentAdminRole: AdminRole = role
-  const [modules, settings, structureDrafts, homeStructureSnapshots, aboutStructureSnapshots, globalStructureSnapshots] = await Promise.all([
+  const [modules, settings, structureDrafts] = await Promise.all([
     listPageModulesForVisualEditor().catch((err) => {
       console.error('[admin/site/visual] list failed', err)
       return listDefaultPageModules()
@@ -484,15 +514,14 @@ export default async function SiteVisualEditorPage() {
       console.error('[admin/site/visual] structure drafts list failed', err)
       return []
     }),
-    listPageStructureSnapshots('home', 8).catch(() => []),
-    listPageStructureSnapshots('about', 8).catch(() => []),
-    listPageStructureSnapshots('global', 8).catch(() => []),
   ])
-  const structureSnapshots = {
-    home: homeStructureSnapshots,
-    about: aboutStructureSnapshots,
-    global: globalStructureSnapshots,
-  }
+  const structureSnapshotEntries = await Promise.all(
+    VISUAL_PAGE_META.map(async (page) => [
+      page.key,
+      await listPageStructureSnapshots(page.key, 8).catch(() => []),
+    ] as const),
+  )
+  const structureSnapshots = Object.fromEntries(structureSnapshotEntries) as Record<VisualPageKey, PageStructureSnapshotRow[]>
   const maxUploadMb = normalizeMediaMaxUploadMb(settings.mediaMaxUploadMb)
 
   return (

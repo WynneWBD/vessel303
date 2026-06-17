@@ -59,7 +59,7 @@ import type {
   PageStructureSnapshotRow,
 } from '@/lib/page-modules-db'
 
-type PageKey = 'home' | 'about' | 'global'
+type PageKey = 'home' | 'products' | 'cases' | 'contact' | 'site' | 'about' | 'global'
 
 type PageMeta = {
   key: PageKey
@@ -104,9 +104,22 @@ type PreviewDevice = {
 
 const PAGES: PageMeta[] = [
   { key: 'home', label: 'Home', path: '/' },
+  { key: 'products', label: 'Products', path: '/products' },
+  { key: 'cases', label: 'Cases', path: '/cases' },
+  { key: 'contact', label: 'Contact', path: '/contact' },
+  { key: 'site', label: 'Site Shell', path: '/' },
   { key: 'about', label: 'About', path: '/about' },
   { key: 'global', label: 'Global', path: '/global' },
 ]
+
+const PAGE_KEY_SET = new Set<PageKey>(PAGES.map((page) => page.key))
+
+function emptyStructureSnapshots(): Record<PageKey, PageStructureSnapshotRow[]> {
+  return PAGES.reduce((acc, page) => {
+    acc[page.key] = []
+    return acc
+  }, {} as Record<PageKey, PageStructureSnapshotRow[]>)
+}
 
 const PREVIEW_DEVICES: PreviewDevice[] = [
   { key: 'desktop', label: 'Desktop', width: null, icon: Monitor },
@@ -116,6 +129,10 @@ const PREVIEW_DEVICES: PreviewDevice[] = [
 
 const PAGE_LABELS = {
   home: '首页',
+  products: '产品中心',
+  cases: '项目案例',
+  contact: '联系入口',
+  site: '导航 / 页脚',
   about: 'About',
   global: 'Global',
 } satisfies Record<PageKey, string>
@@ -132,6 +149,31 @@ const EDITABLE_MODULE_IDS = [
   'home:global-entry',
   'home:contact-cta',
   'home:operating-proof',
+  'products:hero',
+  'products:highlights',
+  'products:contact-card',
+  'products:ui-labels',
+  'products:detail-labels',
+  'products:inquiry-form',
+  'cases:hero',
+  'cases:detail-labels',
+  'cases:inquiry-form',
+  'contact:hero',
+  'contact:channels',
+  'contact:form',
+  'contact:source-context',
+  'contact:backup',
+  'contact:faq-panel',
+  'contact:email',
+  'site:navbar',
+  'site:ui-labels',
+  'site:footer-cta',
+  'site:footer-brand',
+  'site:footer-products',
+  'site:footer-company',
+  'site:footer-about',
+  'site:footer-contact',
+  'site:floating-contact',
   'about:hero',
   'about:stats',
   'about:brand-story',
@@ -156,7 +198,7 @@ function moduleId(pageModule: Pick<PageModuleRow, 'page_key' | 'module_key'>) {
 }
 
 function isPageKey(value: string): value is PageKey {
-  return value === 'home' || value === 'about' || value === 'global'
+  return PAGE_KEY_SET.has(value as PageKey)
 }
 
 function pageLabel(pageKey: string) {
@@ -165,6 +207,10 @@ function pageLabel(pageKey: string) {
 
 const CATALOG_PAGE_LABELS = {
   home: 'Home',
+  products: 'Products',
+  cases: 'Cases',
+  contact: 'Contact',
+  site: 'Site Shell',
   about: 'About',
   global: 'Global',
   all: 'All',
@@ -327,18 +373,18 @@ function ModuleCatalogPanel({
             <span>模块库</span>
           </div>
           <p className="mt-1 max-w-4xl text-xs leading-5 text-[#8A8580]">
-            Home 只允许在受控安全插入区添加固定模板模块。About 暂不开放添加入口。
+            字段编辑覆盖 Home、Products、Cases、Contact、Site Shell、About、Global；模块新增当前只开放 Home 安全插入区。
           </p>
         </div>
         <span className="inline-flex w-fit rounded-full bg-[#F5F2ED] px-3 py-1 text-xs font-medium text-[#6B625B]">
-          Home 安全插入区
+          Home 结构新增受控
         </span>
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_320px]">
         <div>
           <p className="text-xs font-semibold text-[#2C2A28]">可新增模块候选</p>
-          <p className="mt-1 text-xs leading-5 text-[#8A8580]">本轮只开放固定模板到 Home 结构草稿；新增后不会立即影响普通前台。</p>
+          <p className="mt-1 text-xs leading-5 text-[#8A8580]">本轮只开放固定模板到 Home 结构草稿；其他页面先开放字段、条目、预览和发布。</p>
           <div className="mt-3 space-y-2">
             {PLANNED_PAGE_MODULE_CATALOG.map((item) => {
               const template = HOME_ADDABLE_PAGE_MODULE_TEMPLATES.find((entry) => entry.templateId === item.id)
@@ -532,6 +578,7 @@ function sortedItems(items: PageModuleItem[]) {
 
 function supportsRepeatedItems(pageModule: PageModuleRow) {
   return (
+    pageModule.module_type === 'navigation' ||
     pageModule.module_type === 'stats' ||
     pageModule.module_type === 'list' ||
     pageModule.module_type.includes('gallery') ||
@@ -561,12 +608,13 @@ function itemHasVisualMedia(item: PageModuleItem) {
   return Boolean(item.image_url?.trim() || item.video_url?.trim())
 }
 
-function isLinkItem(item: PageModuleItem) {
-  return Boolean(item.href) || item.id.includes('cta')
+function isLinkItem(pageModule: PageModuleRow, item: PageModuleItem) {
+  return pageModule.module_type === 'navigation' || Boolean(item.href) || item.id.includes('cta')
 }
 
 function showValueFields(pageModule: PageModuleRow, item: PageModuleItem) {
   return (
+    pageModule.module_type === 'navigation' ||
     pageModule.module_type === 'stats' ||
     isHomeCardItem(pageModule, item) ||
     Boolean(item.value_zh) ||
@@ -610,6 +658,20 @@ function buildPreviewSrc(path: string, version: number) {
   if (version) params.set('visualPreview', String(version))
   const joiner = path.includes('?') ? '&' : '?'
   return `${path}${joiner}${params.toString()}`
+}
+
+function previewPathForModule(defaultPath: string, pageModule: PageModuleRow | null | undefined) {
+  if (!pageModule) return defaultPath
+  if (pageModule.page_key === 'products' && ['detail-labels', 'inquiry-form'].includes(pageModule.module_key)) {
+    return '/products/v9-gen6'
+  }
+  if (pageModule.page_key === 'cases' && ['detail-labels', 'inquiry-form'].includes(pageModule.module_key)) {
+    return '/cases/astrobase-mamison'
+  }
+  if (pageModule.page_key === 'contact' && pageModule.module_key === 'source-context') {
+    return '/contact?source=products:list'
+  }
+  return defaultPath
 }
 
 function formatSnapshotTime(value: string) {
@@ -904,7 +966,7 @@ function buildPreflightIssues(pageModule: PageModuleRow | undefined): PreflightI
       })
     }
 
-    if (isLinkItem(item)) {
+    if (isLinkItem(pageModule, item)) {
       if (!item.href?.trim()) {
         issues.push({
           label: `链接为空：${readableItemTitle(item)}`,
@@ -918,6 +980,14 @@ function buildPreflightIssues(pageModule: PageModuleRow | undefined): PreflightI
           severity: 'warning',
         })
       }
+    }
+
+    if (pageModule.module_type === 'navigation' && pageModule.module_key === 'navbar' && !item.value_zh?.trim() && !item.value_en?.trim()) {
+      issues.push({
+        label: `导航分组为空：${readableItemTitle(item)}`,
+        detail: 'Navbar 条目需要填写 primary、model 或 action，否则前台导航不会显示这个条目。',
+        severity: 'warning',
+      })
     }
   }
 
@@ -987,7 +1057,7 @@ function buildVisualPriorityItems(
       const dirty = dirtyIds.has(id)
       const hasDraft = pageModule.has_draft === true
       const hidden = !pageModule.is_visible
-      const missingPreview = frameLoaded && locatedModules[id] !== true
+      const missingPreview = frameLoaded && Object.prototype.hasOwnProperty.call(locatedModules, id) && locatedModules[id] !== true
       const highImpactChanges = buildModuleChanges(pageModule, pageModule.live_state).filter(
         (change) => change.severity === 'high',
       ).length
@@ -1071,7 +1141,10 @@ function buildVisualReleaseLedgerRows({
       const dirty = dirtyIds.has(id)
       const hasDraft = pageModule.has_draft === true
       const hidden = !pageModule.is_visible
-      const missingPreview = frameLoaded && pageModule.page_key === currentPageKey && locatedModules[id] !== true
+      const missingPreview = frameLoaded &&
+        pageModule.page_key === currentPageKey &&
+        Object.prototype.hasOwnProperty.call(locatedModules, id) &&
+        locatedModules[id] !== true
       const highImpactChanges = buildModuleChanges(pageModule, pageModule.live_state).filter(
         (change) => change.severity === 'high',
       ).length
@@ -1154,7 +1227,7 @@ function buildVisualReleaseLedgerRows({
   return [
     {
       id: 'release-ledger-safe',
-      page: 'Home / About / Global',
+      page: 'Home / Products / Cases / Contact / Site Shell / About / Global',
       module: '全部受控模块',
       stage: '发布复核',
       signal: '当前无待处理',
@@ -1310,6 +1383,7 @@ function VisualMatrixCell({
 
 function VisualOperationsMatrix({
   currentPage,
+  currentPreviewPath,
   currentPageStats,
   currentModules,
   allModules,
@@ -1322,6 +1396,7 @@ function VisualOperationsMatrix({
   onSelectModule,
 }: {
   currentPage: PageMeta
+  currentPreviewPath: string
   currentPageStats: PageOperationsStats
   currentModules: PageModuleRow[]
   allModules: PageModuleRow[]
@@ -1334,9 +1409,7 @@ function VisualOperationsMatrix({
   onSelectModule: (pageModule: PageModuleRow) => void
 }) {
   const currentMedia = countVisualMedia(currentModules)
-  const allMedia = countVisualMedia(allModules)
   const currentLocated = countLocatedModules(currentModules, locatedModules, frameLoaded)
-  const totalLocated = countLocatedModules(allModules, locatedModules, frameLoaded)
   const priorityItems = buildVisualPriorityItems(allModules, dirtyIds, locatedModules, frameLoaded)
   const releaseLedgerRows = buildVisualReleaseLedgerRows({
     pageModules: allModules,
@@ -1373,7 +1446,7 @@ function VisualOperationsMatrix({
           </p>
         </div>
         <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1889B6]">
-          当前：{currentPage.label} · {currentPage.path}
+          当前：{currentPage.label} · {currentPreviewPath}
         </span>
       </div>
 
@@ -1386,8 +1459,8 @@ function VisualOperationsMatrix({
         />
         <VisualMatrixCell
           label="预览定位覆盖"
-          value={frameLoaded ? `${currentLocated.located}/${currentPageStats.moduleCount}` : '检测中'}
-          detail={frameLoaded ? `${currentLocated.missing} 个模块未在预览中定位` : '等待 iframe 加载后检测 DOM 标记'}
+          value={frameLoaded ? `${currentLocated.located}/${currentModules.length}` : '检测中'}
+          detail={frameLoaded ? `${currentLocated.missing} 个当前预览路由模块未定位` : '等待 iframe 加载后检测 DOM 标记'}
           tone={frameLoaded && currentLocated.missing === 0 ? 'green' : 'orange'}
         />
         <VisualMatrixCell
@@ -1421,10 +1494,10 @@ function VisualOperationsMatrix({
           tone={structureDrafts.length > 0 ? 'orange' : 'gray'}
         />
         <VisualMatrixCell
-          label="全站预览覆盖"
-          value={frameLoaded ? `${totalLocated.located}/${allModules.length}` : '检测中'}
-          detail={`${allMedia.images} 图 / ${allMedia.links} 链接；当前结构草稿 ${currentStructureDraft ? structureDraftStatusLabel(currentStructureDraft.draft_status) : '暂无'}`}
-          tone={frameLoaded && totalLocated.missing === 0 ? 'green' : 'orange'}
+          label="当前预览路由覆盖"
+          value={frameLoaded ? `${currentLocated.located}/${currentModules.length}` : '检测中'}
+          detail={`${currentMedia.images} 图 / ${currentMedia.links} 链接；当前结构草稿 ${currentStructureDraft ? structureDraftStatusLabel(currentStructureDraft.draft_status) : '暂无'}`}
+          tone={frameLoaded && currentLocated.missing === 0 ? 'green' : 'orange'}
         />
       </div>
 
@@ -1532,7 +1605,7 @@ export default function PageVisualEditorClient({
   const [restoringSnapshotId, setRestoringSnapshotId] = useState<string | null>(null)
   const [structureDrafts, setStructureDrafts] = useState<PageStructureDraftRow[]>(initialStructureDrafts)
   const [structureSnapshots, setStructureSnapshots] = useState<Record<PageKey, PageStructureSnapshotRow[]>>(
-    initialStructureSnapshots ?? { home: [], about: [], global: [] },
+    initialStructureSnapshots ?? emptyStructureSnapshots(),
   )
   const [structureBusy, setStructureBusy] = useState<string | null>(null)
   const [structurePublishConfirmOpen, setStructurePublishConfirmOpen] = useState(false)
@@ -1582,7 +1655,12 @@ export default function PageVisualEditorClient({
   const restoreSnapshotSummary = restoreSnapshot ? snapshotSummary(restoreSnapshot) : null
   const selectedLocated = active ? locatedModules[activeModuleId] === true : false
   const formEditorHref = active ? `/admin/pages?module=${activeModuleId}` : '/admin/pages'
-  const previewSrc = useMemo(() => buildPreviewSrc(currentPage.path, previewVersion), [currentPage.path, previewVersion])
+  const activePreviewPath = useMemo(() => previewPathForModule(currentPage.path, active), [active, currentPage.path])
+  const previewSrc = useMemo(() => buildPreviewSrc(activePreviewPath, previewVersion), [activePreviewPath, previewVersion])
+  const currentPreviewModules = useMemo(
+    () => currentModules.filter((pageModule) => previewPathForModule(currentPage.path, pageModule) === activePreviewPath),
+    [activePreviewPath, currentModules, currentPage.path],
+  )
   const currentPreviewDevice = PREVIEW_DEVICES.find((device) => device.key === previewDevice) ?? PREVIEW_DEVICES[0]
 
   const dirtyIds = useMemo(() => {
@@ -1646,13 +1724,13 @@ export default function PageVisualEditorClient({
     const doc = getIframeDocument(iframeRef.current)
     if (!doc) return
 
-    const next = currentModules.reduce<Record<string, boolean>>((acc, pageModule) => {
+    const next = currentPreviewModules.reduce<Record<string, boolean>>((acc, pageModule) => {
       acc[moduleId(pageModule)] = Boolean(doc.querySelector(moduleSelector(moduleId(pageModule))))
       return acc
     }, {})
 
     setLocatedModules((prev) => (sameRecord(prev, next) ? prev : next))
-  }, [currentModules])
+  }, [currentPreviewModules])
 
   const updateHighlight = useCallback(() => {
     const iframe = iframeRef.current
@@ -1757,8 +1835,14 @@ export default function PageVisualEditorClient({
       item.content_zh = ''
       item.content_en = ''
     }
-    if (isHomeCardModule) {
+    if (active.module_type === 'navigation' || isHomeCardModule) {
       item.href = ''
+      if (active.module_key === 'navbar') {
+        item.value_zh = 'primary'
+        item.value_en = 'primary'
+      }
+    }
+    if (isHomeCardModule) {
       item.video_url = ''
       item.video_poster_url = ''
     }
@@ -1810,10 +1894,18 @@ export default function PageVisualEditorClient({
 
   const handleSelectModule = (pageModule: PageModuleRow) => {
     const id = moduleId(pageModule)
+    const nextPreviewPath = previewPathForModule(currentPage.path, pageModule)
+    const switchingPreviewRoute = nextPreviewPath !== activePreviewPath
     setSelectedModuleId(id)
     setSelectedField({ itemId: null, field: null })
-    scrollModuleIntoView(id)
-    window.setTimeout(refreshFrameState, 0)
+    if (switchingPreviewRoute) {
+      setFrameLoaded(false)
+      setLocatedModules({})
+      setHighlightRect(null)
+    } else {
+      scrollModuleIntoView(id)
+      window.setTimeout(refreshFrameState, 0)
+    }
   }
 
   const handleSelectPage = (pageKey: PageKey) => {
@@ -2404,7 +2496,7 @@ export default function PageVisualEditorClient({
               页面模块运营台
             </h1>
             <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-              受控编辑 Home / About / Global 的文字、链接、图片、模块显示状态和 Home 安全插入区结构草稿。保存草稿不影响前台，发布后才上线。
+              受控编辑 Home / Products / Cases / Contact / Site Shell / About / Global 的文字、链接、图片、条目顺序、模块显示状态和 Home 安全插入区结构草稿。保存草稿不影响前台，发布后才上线。
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-1">
@@ -2443,7 +2535,7 @@ export default function PageVisualEditorClient({
               <VisualStatusItem
                 label="当前页面"
                 value={currentPage.label}
-                detail={`${currentPage.path} · ${currentPageStats.moduleCount} 个模块`}
+                detail={`${activePreviewPath} · ${currentPreviewModules.length}/${currentPageStats.moduleCount} 个当前预览模块`}
                 tone="gray"
               />
               <VisualStatusItem
@@ -2474,7 +2566,7 @@ export default function PageVisualEditorClient({
                 刷新预览
               </Button>
               <Link
-                href={currentPage.path}
+                href={activePreviewPath}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-sm font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/65 hover:text-[#1889B6]"
@@ -2512,7 +2604,7 @@ export default function PageVisualEditorClient({
         <VisualMetricCard
           title="结构草稿"
           value={structureDraftCount}
-          detail="Home / About / Global 页面级结构草稿"
+          detail="全站页面级结构草稿；新增结构仅 Home 开放"
           Icon={Layers3}
           tone={structureDraftCount > 0 ? 'orange' : 'gray'}
         />
@@ -2520,8 +2612,9 @@ export default function PageVisualEditorClient({
 
       <VisualOperationsMatrix
         currentPage={currentPage}
+        currentPreviewPath={activePreviewPath}
         currentPageStats={currentPageStats}
-        currentModules={currentModules}
+        currentModules={currentPreviewModules}
         allModules={modules}
         pageStats={pageStats}
         dirtyIds={dirtyIds}
@@ -2591,7 +2684,7 @@ export default function PageVisualEditorClient({
               <span>页面级结构草稿</span>
             </div>
             <p className="mt-1 max-w-4xl text-xs leading-5 text-[#8A8580]">
-              页面级结构草稿用于 Home 安全插入区的有限新增、排序、隐藏和恢复。About 与核心模块仍锁定；结构草稿用于安全预览和一次性发布。
+              页面级结构草稿用于页面结构预览、快照和一次性发布；当前只有 Home 安全插入区开放有限新增、排序、隐藏和恢复，其他页面保持固定结构。
             </p>
           </div>
           <span
@@ -2922,7 +3015,7 @@ export default function PageVisualEditorClient({
               <span>{currentPage.label} 草稿预览</span>
             </div>
             <div className="flex flex-wrap items-center justify-end gap-3">
-              <span className="text-xs text-[#8A8580]">{currentPage.path} · 仅后台可见</span>
+              <span className="text-xs text-[#8A8580]">{activePreviewPath} · 仅后台可见</span>
               <div className="flex rounded-md border border-[#E5DED4] bg-[#F8F6F2] p-1">
                 {PREVIEW_DEVICES.map((device) => {
                   const Icon = device.icon
@@ -2973,7 +3066,7 @@ export default function PageVisualEditorClient({
               }}
             >
               <iframe
-                key={`${selectedPage}-${previewVersion}-${previewDevice}`}
+                key={`${selectedPage}-${activePreviewPath}-${previewVersion}-${previewDevice}`}
                 ref={iframeRef}
                 src={previewSrc}
                 title={`${currentPage.label} page visual editor preview`}
@@ -3299,7 +3392,7 @@ export default function PageVisualEditorClient({
                 {activeItems.map((item, itemIndex) => {
                   const showImage = isImageItem(active, item)
                   const showVideo = isVideoItem(active, item)
-                  const showLink = isLinkItem(item)
+                  const showLink = isLinkItem(active, item)
                   const showValue = showValueFields(active, item)
                   const showContent = showContentFields(active, item)
                   const firstItem = itemIndex === 0

@@ -101,26 +101,31 @@ function FooterLinkList({ module }: { module: PublicPageModule | null }) {
   if (!module || module.is_visible === false || (!title && items.length === 0)) return null;
 
   return (
-    <div>
+    <div
+      data-page-module={`${module.page_key ?? 'site'}:${module.module_key}`}
+      data-page-key={module.page_key ?? 'site'}
+      data-module-key={module.module_key}
+    >
       {title ? (
-        <h4 className="mb-5 text-xs font-semibold uppercase tracking-[0.25em] text-white">{title}</h4>
+        <h4 className="mb-5 text-xs font-semibold uppercase tracking-[0.25em] text-white" data-page-module-field={lang === 'zh' ? 'title_zh' : 'title_en'}>{title}</h4>
       ) : null}
       <ul className="space-y-2.5">
         {items.map((item) => {
           const href = normalizeSiteHref(item.href, '');
           return (
-            <li key={item.id}>
+            <li key={item.id} data-page-module-item={item.id}>
               {isExternalActionHref(href) ? (
                 <a
                   href={href}
                   target={href.startsWith('http') ? '_blank' : undefined}
                   rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
                   className="group flex items-center gap-2 text-sm text-white/40 transition-colors hover:text-[#E36F2C]"
+                  data-page-module-field="href"
                 >
                   <span className="text-[#E36F2C]/30 transition-colors group-hover:text-[#E36F2C]">-</span>
-                  <span className="tracking-wider">{itemLabel(item, lang)}</span>
+                  <span className="tracking-wider" data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}>{itemLabel(item, lang)}</span>
                   {itemValue(item, lang) ? (
-                    <span className="text-xs text-white/20">{itemValue(item, lang)}</span>
+                    <span className="text-xs text-white/20" data-page-module-field={lang === 'zh' ? 'value_zh' : 'value_en'}>{itemValue(item, lang)}</span>
                   ) : null}
                 </a>
               ) : (
@@ -128,11 +133,12 @@ function FooterLinkList({ module }: { module: PublicPageModule | null }) {
                   href={href}
                   prefetch={false}
                   className="group flex items-center gap-2 text-sm text-white/40 transition-colors hover:text-[#E36F2C]"
+                  data-page-module-field="href"
                 >
                 <span className="text-[#E36F2C]/30 transition-colors group-hover:text-[#E36F2C]">-</span>
-                <span className="tracking-wider">{itemLabel(item, lang)}</span>
+                <span className="tracking-wider" data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}>{itemLabel(item, lang)}</span>
                 {itemValue(item, lang) ? (
-                  <span className="text-xs text-white/20">{itemValue(item, lang)}</span>
+                  <span className="text-xs text-white/20" data-page-module-field={lang === 'zh' ? 'value_zh' : 'value_en'}>{itemValue(item, lang)}</span>
                 ) : null}
                 </Link>
               )}
@@ -191,11 +197,16 @@ export default function Footer() {
   return (
     <footer id="contact" className="border-t border-[#E36F2C]/15 bg-[#241F1B]">
       {cta?.is_visible !== false && (ctaTitle || ctaDescription || ctaItems.length > 0) ? (
-        <div className="border-b border-[#E36F2C]/15 bg-[#E36F2C]/5 py-8">
+        <div
+          className="border-b border-[#E36F2C]/15 bg-[#E36F2C]/5 py-8"
+          data-page-module="site:footer-cta"
+          data-page-key="site"
+          data-module-key="footer-cta"
+        >
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:px-6 md:flex-row lg:px-8">
             <div>
-              {ctaTitle ? <div className="mb-1 text-lg font-bold tracking-wider text-white">{ctaTitle}</div> : null}
-              {ctaDescription ? <div className="text-sm tracking-wider text-white/40">{ctaDescription}</div> : null}
+              {ctaTitle ? <div className="mb-1 text-lg font-bold tracking-wider text-white" data-page-module-field={lang === 'zh' ? 'title_zh' : 'title_en'}>{ctaTitle}</div> : null}
+              {ctaDescription ? <div className="text-sm tracking-wider text-white/40" data-page-module-field={lang === 'zh' ? 'description_zh' : 'description_en'}>{ctaDescription}</div> : null}
             </div>
             {ctaItems.length > 0 ? (
               <div className="flex flex-wrap gap-3">
@@ -213,11 +224,13 @@ export default function Footer() {
                       target={href.startsWith('http') ? '_blank' : undefined}
                       rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
                       className={className}
+                      data-page-module-item={item.id}
+                      data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
                     >
                       {label}
                     </a>
                   ) : (
-                    <Link key={item.id} href={href} prefetch={false} className={className}>{label}</Link>
+                    <Link key={item.id} href={href} prefetch={false} className={className} data-page-module-item={item.id} data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}>{label}</Link>
                   );
                 })}
               </div>
@@ -229,7 +242,12 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-5">
           {brand?.is_visible !== false ? (
-            <div className="lg:col-span-2">
+            <div
+              className="lg:col-span-2"
+              data-page-module="site:footer-brand"
+              data-page-key="site"
+              data-module-key="footer-brand"
+            >
               <div className="mb-4">
                 {brandLogoSrc ? (
                   brandLogoHref ? (
@@ -241,6 +259,8 @@ export default function Footer() {
                         width={128}
                         style={{ height: '32px', width: 'auto', objectFit: 'contain', marginBottom: 4, filter: 'brightness(0) invert(1)' }}
                         unoptimized
+                        data-page-module-item="logo"
+                        data-page-module-field="image_url"
                       />
                     </Link>
                   ) : (
@@ -251,15 +271,23 @@ export default function Footer() {
                       width={128}
                       style={{ height: '32px', width: 'auto', objectFit: 'contain', marginBottom: 4, filter: 'brightness(0) invert(1)' }}
                       unoptimized
+                      data-page-module-item="logo"
+                      data-page-module-field="image_url"
                     />
                   )
                 ) : null}
                 {brandTagline ? (
-                  <div className="text-xs tracking-[0.3em] text-white/30">{itemLabel(brandTagline, lang)}</div>
+                  <div
+                    className="text-xs tracking-[0.3em] text-white/30"
+                    data-page-module-item={brandTagline.id}
+                    data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                  >
+                    {itemLabel(brandTagline, lang)}
+                  </div>
                 ) : null}
               </div>
               {brandDescription ? (
-                <p className="mb-5 max-w-xs text-xs leading-relaxed text-white/35">{brandDescription}</p>
+                <p className="mb-5 max-w-xs text-xs leading-relaxed text-white/35" data-page-module-field={lang === 'zh' ? 'description_zh' : 'description_en'}>{brandDescription}</p>
               ) : null}
               <div className="space-y-1 text-xs text-white/20">
                 {brandContactItems.map((item) => {
@@ -273,13 +301,15 @@ export default function Footer() {
                         href={href}
                         target={href.startsWith('http') ? '_blank' : undefined}
                         rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                        className="block hover:text-[#E36F2C]"
-                      >
+                          className="block hover:text-[#E36F2C]"
+                          data-page-module-item={item.id}
+                          data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                        >
                         {label}
                       </a>
                     );
                   }
-                  return <div key={item.id}>{label}</div>;
+                  return <div key={item.id} data-page-module-item={item.id} data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}>{label}</div>;
                 })}
               </div>
               {brandSocialItems.length > 0 ? (
@@ -297,9 +327,13 @@ export default function Footer() {
           {showAboutLinks ? <FooterLinkList module={about} /> : null}
 
           {!showAboutLinks && contact?.is_visible !== false ? (
-            <div>
+            <div
+              data-page-module="site:footer-contact"
+              data-page-key="site"
+              data-module-key="footer-contact"
+            >
               {moduleTitle(contact, lang) ? (
-                <h4 className="mb-5 text-xs font-semibold uppercase tracking-[0.25em] text-white">
+                <h4 className="mb-5 text-xs font-semibold uppercase tracking-[0.25em] text-white" data-page-module-field={lang === 'zh' ? 'title_zh' : 'title_en'}>
                   {moduleTitle(contact, lang)}
                 </h4>
               ) : null}
@@ -317,18 +351,19 @@ export default function Footer() {
                   );
 
                   return (
-                    <li key={item.id} className="text-xs leading-relaxed text-white/40">
+                    <li key={item.id} className="text-xs leading-relaxed text-white/40" data-page-module-item={item.id}>
                       {href && isExternalActionHref(href) ? (
                         <a
                           href={href}
                           target={href.startsWith('http') ? '_blank' : undefined}
                           rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
                           className="transition-colors hover:text-[#E36F2C]"
+                          data-page-module-field="href"
                         >
                           {body}
                         </a>
                       ) : href ? (
-                        <Link href={href} prefetch={false} className="transition-colors hover:text-[#E36F2C]">
+                        <Link href={href} prefetch={false} className="transition-colors hover:text-[#E36F2C]" data-page-module-field="href">
                           {body}
                         </Link>
                       ) : (

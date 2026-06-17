@@ -2,12 +2,29 @@ import type { Metadata } from 'next'
 import CasesPageContent from '@/components/pages/CasesPageContent'
 import { listPublishedProjectCases } from '@/lib/project-cases-db'
 import { getUploadVariantsByUrls, mapUploadImageUrl } from '@/lib/upload-image-variants'
-import { listPublishedPageModules } from '@/lib/page-modules-db'
+import { getPublishedPageModule, listPublishedPageModules } from '@/lib/page-modules-db'
 import { mapCaseStaticImageUrl } from '@/lib/case-static-image-variants'
+import { buildPageMetadata } from '@/lib/seo'
 
 export const revalidate = 300
 
-export const metadata: Metadata = {}
+export async function generateMetadata(): Promise<Metadata> {
+  const heroModule = await getPublishedPageModule('cases', 'hero').catch((err) => {
+    console.error('[cases/metadata] load page module failed', err)
+    return null
+  })
+
+  const title = heroModule?.title_en || heroModule?.title_zh || ''
+  const description = heroModule?.description_en || heroModule?.description_zh || ''
+  if (!title || !description) return {}
+
+  return buildPageMetadata({
+    title,
+    description,
+    path: '/cases',
+    image: heroModule?.items.find((item) => item.is_visible && item.image_url)?.image_url ?? null,
+  })
+}
 
 export default async function CasesPage() {
   const cases = await listPublishedProjectCases().catch((err) => {

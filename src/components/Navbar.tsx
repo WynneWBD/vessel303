@@ -120,6 +120,9 @@ export default function Navbar() {
           ? 'border-b border-white/10 bg-[#263647]/82 shadow-[0_14px_42px_rgba(15,23,42,0.22)] backdrop-blur-md'
           : 'bg-[#42576D]/26 backdrop-blur-[2px]'
       }`}
+      data-page-module="site:navbar"
+      data-page-key="site"
+      data-module-key="navbar"
     >
       <div className="relative mx-auto max-w-[1420px] px-5 sm:px-8 lg:px-10">
         <div className="flex h-16 items-center justify-between lg:h-[92px]">
@@ -165,6 +168,11 @@ export default function Navbar() {
             className="lg:hidden inline-flex min-h-11 min-w-11 items-center justify-center text-white/80 hover:text-white"
             onClick={() => setIsOpen(!isOpen)}
             aria-label={menuToggleLabel || undefined}
+            data-page-module="site:ui-labels"
+            data-page-key="site"
+            data-module-key="ui-labels"
+            data-page-module-item="menu-toggle"
+            data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isOpen ? (

@@ -549,20 +549,43 @@ function Sidebar({
       </div>
 
       {showContact ? (
-        <div className="overflow-hidden bg-white shadow-[0_16px_44px_rgba(0,0,0,0.08)]">
+        <div
+          className="overflow-hidden bg-white shadow-[0_16px_44px_rgba(0,0,0,0.08)]"
+          data-page-module="products:contact-card"
+          data-page-key="products"
+          data-module-key="contact-card"
+        >
           {contactTitle ? (
-            <div className="bg-[#E97936] px-5 py-5 text-[22px] font-black text-white">
+            <div
+              className="bg-[#E97936] px-5 py-5 text-[22px] font-black text-white"
+              data-page-module-item="eyebrow"
+              data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+            >
               {contactTitle}
             </div>
           ) : null}
           <div className="space-y-4 px-5 py-5 text-sm leading-6 text-[#555]">
-            {headline ? <p className="font-semibold text-[#222]">{headline}</p> : null}
-            {body ? <p>{body}</p> : null}
+            {headline ? (
+              <p
+                className="font-semibold text-[#222]"
+                data-page-module-item="headline"
+                data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+              >
+                {headline}
+              </p>
+            ) : null}
+            {body ? (
+              <p data-page-module-item="body" data-page-module-field={lang === 'zh' ? 'content_zh' : 'content_en'}>
+                {body}
+              </p>
+            ) : null}
             {ctaLabel && ctaHref ? (
               <Link
                 prefetch={false}
                 href={ctaHref}
                 className="inline-flex min-h-10 items-center justify-center bg-[#E97936] px-5 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#CA6228]"
+                data-page-module-item="primary-cta"
+                data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
               >
                 {ctaLabel}
               </Link>
@@ -854,8 +877,17 @@ export default function ProductsPageContent({
           ) : null}
 
           <div className="min-w-0">
-            <div className="mb-8 flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-              <h1 className="text-[22px] font-bold tracking-normal text-[#222] sm:text-[26px]">
+            <div
+              className="mb-8 flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between"
+              data-page-module="products:ui-labels"
+              data-page-key="products"
+              data-module-key="ui-labels"
+            >
+              <h1
+                className="text-[22px] font-bold tracking-normal text-[#222] sm:text-[26px]"
+                data-page-module-item="catalog-title"
+                data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+              >
                 {uiLabels.pageTitle}
               </h1>
               {showSearch ? (
@@ -867,10 +899,14 @@ export default function ProductsPageContent({
                     defaultValue={filters.q}
                     placeholder={uiLabels.searchPlaceholder}
                     className="min-h-10 min-w-0 flex-1 border border-[#E2E2E2] border-r-0 px-4 text-center text-sm text-[#333] outline-none placeholder:text-[#A7A7A7]"
+                    data-page-module-item="search-placeholder"
+                    data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
                   />
                   <button
                     type="submit"
                     className="inline-flex min-h-10 w-[160px] shrink-0 items-center justify-center gap-2 bg-[#E97936] px-7 text-sm font-semibold text-white transition hover:bg-[#CA6228]"
+                    data-page-module-item="search-button"
+                    data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
                   >
                     <Search className="h-4 w-4" aria-hidden="true" />
                     <span>{uiLabels.searchButton}</span>

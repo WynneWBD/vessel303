@@ -175,7 +175,13 @@ export default function FloatingContact() {
 
   return (
     <>
-      <div className="fixed right-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-end gap-2 lg:flex" data-floating-contact="desktop">
+      <div
+        className="fixed right-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-end gap-2 lg:flex"
+        data-floating-contact="desktop"
+        data-page-module="site:floating-contact"
+        data-page-key="site"
+        data-module-key="floating-contact"
+      >
         {items.map((item) => renderAction(item, 'desktop'))}
       </div>
       <div
@@ -183,6 +189,9 @@ export default function FloatingContact() {
           isHomePath && !showHomeMobileActions ? 'pointer-events-none translate-y-4 opacity-0' : 'translate-y-0 opacity-100'
         }`}
         data-floating-contact="mobile"
+        data-page-module="site:floating-contact"
+        data-page-key="site"
+        data-module-key="floating-contact"
       >
         {items.slice(0, 3).map((item) => renderAction(item, 'mobile'))}
       </div>

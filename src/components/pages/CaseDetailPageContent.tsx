@@ -637,7 +637,13 @@ export default function CaseDetailPageContent({
       ) : null}
 
       {inquiryTitle ? (
-        <section id="case-inquiry" className="border-t border-[#E5DED4] bg-[#F5F2ED] py-14">
+        <section
+          id="case-inquiry"
+          className="border-t border-[#E5DED4] bg-[#F5F2ED] py-14"
+          data-page-module="cases:inquiry-form"
+          data-page-key="cases"
+          data-module-key="inquiry-form"
+        >
           <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
             <ConversionInquiryForm
               source={`case_detail:${project.id}:inquiry_form`}
