@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
+  ArrowRight,
   CalendarClock,
   ExternalLink,
   Languages,
@@ -53,6 +54,14 @@ type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
 
 type NewsBasePath = '/admin/news' | '/admin/content/news'
 type ReleaseTone = 'high' | 'medium' | 'safe'
+
+type NewsRowNextAction = {
+  label: string
+  detail: string
+  href: string
+  tone: 'blue' | 'green' | 'orange'
+  external?: boolean
+}
 
 type NewsReleaseSignals = {
   missingCover: boolean
@@ -173,6 +182,99 @@ function completenessBadgeClass(level: CompletenessLevel) {
   if (level === '完整') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
   if (level === '待补素材') return 'border-orange-200 bg-orange-50 text-orange-700'
   return 'border-zinc-200 bg-zinc-50 text-zinc-600'
+}
+
+function newsRowNextActionClass(tone: NewsRowNextAction['tone']) {
+  if (tone === 'orange') return 'border-[#F2C6A7] bg-[#FFF7F0] text-[#B85D21] hover:border-[#E36F2C]/60 hover:text-[#E36F2C]'
+  if (tone === 'green') return 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-500'
+  return 'border-[#D8E7E8] bg-[#EAF6F8] text-[#1889B6] hover:border-[#1889B6]'
+}
+
+function getNewsRowNextAction(basePath: NewsBasePath, item: NewsItem, issues: string[]): NewsRowNextAction {
+  if (issues.includes('缺封面')) {
+    return {
+      label: '补封面',
+      detail: '先补列表和详情首图',
+      href: newsEditHref(basePath, item, '#media'),
+      tone: 'orange',
+    }
+  }
+
+  if (issues.includes('缺中文正文') || issues.includes('缺英文正文')) {
+    return {
+      label: '补正文',
+      detail: '完善中英文正文',
+      href: newsEditHref(basePath, item, '#content'),
+      tone: 'orange',
+    }
+  }
+
+  if (
+    issues.includes('缺中文标题')
+    || issues.includes('缺英文标题')
+    || issues.includes('缺中文摘要')
+    || issues.includes('缺英文摘要')
+  ) {
+    return {
+      label: '补标题摘要',
+      detail: '完善列表和详情口径',
+      href: newsEditHref(basePath, item, '#content'),
+      tone: 'orange',
+    }
+  }
+
+  if (issues.includes('缺 SEO')) {
+    return {
+      label: '补 SEO',
+      detail: '补搜索标题和描述',
+      href: newsEditHref(basePath, item, '#seo'),
+      tone: 'orange',
+    }
+  }
+
+  if (issues.includes('未分类')) {
+    return {
+      label: '设分类',
+      detail: '完善归档和筛选',
+      href: newsEditHref(basePath, item, '#taxonomy'),
+      tone: 'orange',
+    }
+  }
+
+  if (isScheduled(item)) {
+    return {
+      label: '检查排期',
+      detail: '复核定时发布时间',
+      href: newsEditHref(basePath, item, '#schedule'),
+      tone: 'blue',
+    }
+  }
+
+  if (issues.length > 0) {
+    return {
+      label: '处理缺项',
+      detail: '进入发布检查定位问题',
+      href: newsEditHref(basePath, item, '#publish-check'),
+      tone: 'orange',
+    }
+  }
+
+  if (item.status === 'draft') {
+    return {
+      label: '发布前复核',
+      detail: '基础完整，进入发布检查',
+      href: newsEditHref(basePath, item, '#publish-check'),
+      tone: 'blue',
+    }
+  }
+
+  return {
+    label: '复核新闻页',
+    detail: '基础完整，查看前台展示',
+    href: `/news/${item.slug}`,
+    tone: 'green',
+    external: true,
+  }
 }
 
 function getNewsReleaseSignals(item: NewsItem): NewsReleaseSignals {
@@ -828,6 +930,7 @@ export default function NewsListClient({
             const completeness = getNewsCompleteness(item)
             const visibleIssues = completeness.issues.slice(0, 3)
             const hiddenIssueCount = Math.max(0, completeness.issues.length - visibleIssues.length)
+            const nextAction = getNewsRowNextAction(basePath, item, completeness.issues)
 
             return (
             <div
@@ -872,7 +975,7 @@ export default function NewsListClient({
                 <p className="mt-1 truncate font-mono text-[11px] text-[#8A9EA4]">/news/{item.slug}</p>
               </div>
 
-              <div className="min-w-0">
+              <div className="min-w-0 space-y-2">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <Badge className={`${completenessBadgeClass(completeness.level)} text-[11px]`}>
                     {completeness.level}
@@ -897,6 +1000,18 @@ export default function NewsListClient({
                     </span>
                   ) : null}
                 </div>
+                <Link
+                  href={nextAction.href}
+                  target={nextAction.external ? '_blank' : undefined}
+                  rel={nextAction.external ? 'noopener noreferrer' : undefined}
+                  className={`inline-flex min-h-8 w-full items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition ${newsRowNextActionClass(nextAction.tone)}`}
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate">{nextAction.label}</span>
+                    <span className="mt-0.5 block truncate text-[11px] font-medium opacity-75">{nextAction.detail}</span>
+                  </span>
+                  <ArrowRight size={13} className="shrink-0" />
+                </Link>
               </div>
 
               <div>
