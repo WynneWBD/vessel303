@@ -932,7 +932,7 @@ function NewsOperationsMatrix({
       detail: '搜索标题或描述缺失',
       count: issueSummary.seo,
       pageCount: countPageIssue(rows, (issues) => issues.includes('缺 SEO')),
-      href: '/admin/content/news#news-operations-hub',
+      href: '/admin/content/news/list#news-source-seo-list-bridge',
     },
     {
       key: 'scheduled',

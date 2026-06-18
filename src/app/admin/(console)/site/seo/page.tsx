@@ -369,7 +369,7 @@ async function loadNewsSeoSummary(): Promise<ContentSeoSummary> {
     published: parseCount(row?.published),
     missing: parseCount(row?.missing),
     source: 'news SEO 字段',
-    href: '/admin/content/news/list',
+    href: '/admin/content/news/list#news-source-seo-list-bridge',
   }
 }
 
@@ -400,7 +400,7 @@ async function loadProjectSeoSummary(): Promise<ContentSeoSummary> {
     published: parseCount(row?.published),
     missing: parseCount(row?.missing),
     source: 'project_cases 派生 metadata',
-    href: '/admin/content/projects/list',
+    href: '/admin/content/projects/list?view=incomplete#case-conversion-content-backfill-desk',
   }
 }
 
