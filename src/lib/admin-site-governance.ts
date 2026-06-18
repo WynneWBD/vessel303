@@ -276,7 +276,7 @@ export const CONTENT_CONTRACTS: ContentContract[] = [
     adminHref: '/admin/content/display',
     previewHref: '/display',
     modulePageKey: 'display',
-    requiredModules: ['hero'],
+    requiredModules: ['hero', 'ui'],
     b9Kind: 'display_slide',
     signals: ['image', 'cta'],
     displayRule: '展示项来自 published display_slide 或产品橱窗配置。',

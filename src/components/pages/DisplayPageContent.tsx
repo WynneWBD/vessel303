@@ -6,6 +6,14 @@ import Link from 'next/link';
 import type { DisplaySlide } from '@/lib/display-slides';
 import { buildNextImageFallbackSrc } from '@/lib/image-optimization';
 import { buildContactHref, normalizeSiteHref, SITE_PRODUCTS_HREF } from '@/lib/site-links';
+import { useLanguage } from '@/contexts/LanguageContext';
+import {
+  itemById,
+  itemLabel,
+  moduleDescription,
+  moduleMap,
+  type PublicPageModule,
+} from '@/lib/page-module-client';
 
 type DisplayContentRow = DisplaySlide & {
   title_zh?: string;
@@ -20,6 +28,20 @@ type DisplayContentRow = DisplaySlide & {
 
 const INTERVAL = 5000;
 const DISPLAY_CONTACT_HREF = buildContactHref('display:showcase-contact');
+
+type DisplayCopy = {
+  brand: string;
+  products: string;
+  productsHref: string;
+  cases: string;
+  casesHref: string;
+  contact: string;
+  contactHref: string;
+  detailCta: string;
+  consultCta: string;
+  emptyState: string;
+  slideAriaPrefix: string;
+};
 
 function asText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
@@ -69,21 +91,21 @@ function normalizeDisplayContactHref(href: string | null | undefined) {
   return normalized === '/contact' ? DISPLAY_CONTACT_HREF : normalized;
 }
 
-function DisplayTopNav() {
+function DisplayTopNav({ copy }: { copy: DisplayCopy }) {
   return (
     <header className="absolute left-4 right-4 top-4 z-40 flex flex-wrap items-center justify-between gap-3 border border-white/12 bg-[#241F1B]/55 px-4 py-3 text-white shadow-2xl shadow-black/20 backdrop-blur md:left-6 md:right-6 md:px-5">
       <Link prefetch={false} href="/" className="text-sm font-black uppercase tracking-[0.24em] text-white">
-        VESSEL Display
+        {copy.brand}
       </Link>
       <nav aria-label="Display page navigation" className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
-        <Link prefetch={false} href={SITE_PRODUCTS_HREF} className="min-h-9 px-3 py-2 transition hover:text-white">
-          Products
+        <Link prefetch={false} href={copy.productsHref} className="min-h-9 px-3 py-2 transition hover:text-white">
+          {copy.products}
         </Link>
-        <Link prefetch={false} href="/cases" className="min-h-9 px-3 py-2 transition hover:text-white">
-          Cases
+        <Link prefetch={false} href={copy.casesHref} className="min-h-9 px-3 py-2 transition hover:text-white">
+          {copy.cases}
         </Link>
-        <Link prefetch={false} href={DISPLAY_CONTACT_HREF} className="min-h-9 bg-[#E36F2C] px-3 py-2 text-white transition hover:bg-[#C95E22]">
-          Contact
+        <Link prefetch={false} href={copy.contactHref} className="min-h-9 bg-[#E36F2C] px-3 py-2 text-white transition hover:bg-[#C95E22]">
+          {copy.contact}
         </Link>
       </nav>
     </header>
@@ -92,9 +114,12 @@ function DisplayTopNav() {
 
 export default function DisplayPageContent({
   initialSlides = [],
+  initialPageModules = [],
 }: {
   initialSlides?: DisplaySlide[];
+  initialPageModules?: PublicPageModule[];
 }) {
+  const { lang } = useLanguage();
   const [current, setCurrent] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -102,6 +127,28 @@ export default function DisplayPageContent({
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const slideCount = slides.length;
+  const modules = moduleMap(initialPageModules);
+  const heroModule = modules.get('hero') ?? null;
+  const uiModule = modules.get('ui') ?? null;
+  const navProducts = itemById(heroModule, 'nav-products');
+  const navCases = itemById(heroModule, 'nav-cases');
+  const navContact = itemById(heroModule, 'nav-contact');
+  const copy: DisplayCopy = {
+    brand: itemLabel(itemById(heroModule, 'nav-brand'), lang) || 'VESSEL Display',
+    products: itemLabel(navProducts, lang) || 'Products',
+    productsHref: normalizeSiteHref(navProducts?.href, SITE_PRODUCTS_HREF),
+    cases: itemLabel(navCases, lang) || 'Cases',
+    casesHref: normalizeSiteHref(navCases?.href, '/cases'),
+    contact: itemLabel(navContact, lang) || 'Contact',
+    contactHref: normalizeDisplayContactHref(navContact?.href),
+    detailCta: itemLabel(itemById(uiModule, 'detail-cta'), lang) || 'View Products',
+    consultCta: itemLabel(itemById(uiModule, 'consult-cta'), lang) || 'Start Inquiry',
+    emptyState:
+      itemLabel(itemById(uiModule, 'empty-state'), lang) ||
+      moduleDescription(heroModule, lang) ||
+      'No published display slides are available.',
+    slideAriaPrefix: itemLabel(itemById(uiModule, 'slide-aria-prefix'), lang) || 'Show',
+  };
 
   const goTo = useCallback((index: number) => {
     if (transitioning || slideCount === 0) return;
@@ -110,7 +157,7 @@ export default function DisplayPageContent({
       setCurrent(index);
       setTransitioning(false);
     }, 400);
-  }, [slideCount, transitioning]);
+  }, [setCurrent, setTransitioning, slideCount, transitioning]);
 
   const prev = useCallback(() => {
     if (slideCount === 0) return;
@@ -189,7 +236,10 @@ export default function DisplayPageContent({
   if (!slide) {
     return (
       <div className="relative min-h-screen bg-[#241F1B] text-white">
-        <DisplayTopNav />
+        <DisplayTopNav copy={copy} />
+        <div className="flex min-h-screen items-center justify-center px-6 text-center">
+          <p className="max-w-xl text-sm font-semibold uppercase tracking-[0.18em] text-white/65">{copy.emptyState}</p>
+        </div>
       </div>
     );
   }
@@ -197,9 +247,9 @@ export default function DisplayPageContent({
   const idx = String(current + 1).padStart(2, '0');
   const total = String(slideCount).padStart(2, '0');
   const detailHref = normalizeSiteHref(slide.detailHref, SITE_PRODUCTS_HREF);
-  const detailLabel = slide.detailLabel || 'View Products';
+  const detailLabel = slide.detailLabel || copy.detailCta;
   const consultHref = normalizeDisplayContactHref(slide.consultHref);
-  const consultLabel = slide.consultLabel || 'Start Inquiry';
+  const consultLabel = slide.consultLabel || copy.consultCta;
 
   return (
     <div
@@ -207,7 +257,7 @@ export default function DisplayPageContent({
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      <DisplayTopNav />
+      <DisplayTopNav copy={copy} />
 
       <div className="absolute inset-0 transition-opacity duration-700" style={{ opacity: transitioning ? 0 : 1 }}>
         <Image
@@ -276,7 +326,7 @@ export default function DisplayPageContent({
               <button
                 key={`${item.model}-${index}`}
                 type="button"
-                aria-label={`Show ${item.model}`}
+                aria-label={`${copy.slideAriaPrefix} ${item.model}`}
                 onClick={() => {
                   setPaused(true);
                   goTo(index);

@@ -10,6 +10,7 @@ export type PageModuleCatalogPage =
   | 'media-kit'
   | 'scenarios'
   | 'innovation'
+  | 'display'
   | 'news'
   | 'all'
 

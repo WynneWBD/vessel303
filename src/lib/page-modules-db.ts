@@ -31,7 +31,7 @@ export const PAGE_MODULE_PAGE_KEYS = [
 
 export const PAGE_MODULE_PUBLIC_CACHE_TAG = 'page-module-public'
 const PAGE_MODULE_PUBLIC_CACHE_SECONDS = 300
-const PAGE_MODULE_DEFAULTS_CACHE_VERSION = '2026-06-17-b346-global-about-contact-shell-labels'
+const PAGE_MODULE_DEFAULTS_CACHE_VERSION = '2026-06-18-b361-display-shell-labels'
 
 export type PageModulePageKey = (typeof PAGE_MODULE_PAGE_KEYS)[number]
 
@@ -1806,6 +1806,97 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
         label_en: 'Read more',
         is_visible: true,
         sort_order: 10,
+      },
+    ],
+    is_visible: true,
+    sort_order: 20,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'display:hero',
+    page_key: 'display',
+    module_key: 'hero',
+    module_type: 'fixed-content',
+    title_zh: 'VESSEL Product Display',
+    title_en: 'VESSEL Product Display',
+    description_zh: 'Full-screen product showcase for published VESSEL display slides.',
+    description_en: 'Full-screen product showcase for published VESSEL display slides.',
+    items: [
+      {
+        id: 'nav-brand',
+        label_zh: 'VESSEL Display',
+        label_en: 'VESSEL Display',
+        is_visible: true,
+        sort_order: 10,
+      },
+      {
+        id: 'nav-products',
+        href: SITE_PRODUCTS_HREF,
+        label_zh: 'Products',
+        label_en: 'Products',
+        is_visible: true,
+        sort_order: 20,
+      },
+      {
+        id: 'nav-cases',
+        href: '/cases',
+        label_zh: 'Cases',
+        label_en: 'Cases',
+        is_visible: true,
+        sort_order: 30,
+      },
+      {
+        id: 'nav-contact',
+        href: `${SITE_CONTACT_HREF}?source=display:showcase-contact`,
+        label_zh: 'Contact',
+        label_en: 'Contact',
+        is_visible: true,
+        sort_order: 40,
+      },
+    ],
+    is_visible: true,
+    sort_order: 10,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'display:ui',
+    page_key: 'display',
+    module_key: 'ui',
+    module_type: 'fixed-content',
+    title_zh: 'Display interface labels',
+    title_en: 'Display interface labels',
+    description_zh: 'Default buttons, empty state, and carousel labels used by the product display page.',
+    description_en: 'Default buttons, empty state, and carousel labels used by the product display page.',
+    items: [
+      {
+        id: 'detail-cta',
+        label_zh: 'View Products',
+        label_en: 'View Products',
+        is_visible: true,
+        sort_order: 10,
+      },
+      {
+        id: 'consult-cta',
+        label_zh: 'Start Inquiry',
+        label_en: 'Start Inquiry',
+        is_visible: true,
+        sort_order: 20,
+      },
+      {
+        id: 'empty-state',
+        label_zh: 'No published display slides are available.',
+        label_en: 'No published display slides are available.',
+        is_visible: true,
+        sort_order: 30,
+      },
+      {
+        id: 'slide-aria-prefix',
+        label_zh: 'Show',
+        label_en: 'Show',
+        is_visible: true,
+        sort_order: 40,
       },
     ],
     is_visible: true,
