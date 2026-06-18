@@ -60,7 +60,18 @@ import type {
   PageStructureSnapshotRow,
 } from '@/lib/page-modules-db'
 
-type PageKey = 'home' | 'products' | 'cases' | 'contact' | 'site' | 'about' | 'global'
+type PageKey =
+  | 'home'
+  | 'products'
+  | 'cases'
+  | 'contact'
+  | 'site'
+  | 'about'
+  | 'global'
+  | 'faq'
+  | 'media-kit'
+  | 'scenarios'
+  | 'innovation'
 
 type PageMeta = {
   key: PageKey
@@ -111,6 +122,10 @@ const PAGES: PageMeta[] = [
   { key: 'site', label: 'Site Shell', path: '/' },
   { key: 'about', label: 'About', path: '/about' },
   { key: 'global', label: 'Global', path: '/global' },
+  { key: 'faq', label: 'FAQ', path: '/faq' },
+  { key: 'media-kit', label: 'Media Kit', path: '/media-kit' },
+  { key: 'scenarios', label: 'Scenarios', path: '/scenarios/tourism' },
+  { key: 'innovation', label: 'Innovation', path: '/innovation/viie' },
 ]
 
 const PAGE_KEY_SET = new Set<PageKey>(PAGES.map((page) => page.key))
@@ -136,6 +151,10 @@ const PAGE_LABELS = {
   site: '导航 / 页脚',
   about: 'About',
   global: 'Global',
+  faq: 'FAQ',
+  'media-kit': 'Media Kit',
+  scenarios: 'Scenarios',
+  innovation: 'Innovation',
 } satisfies Record<PageKey, string>
 
 const EDITABLE_MODULE_IDS = [
@@ -190,6 +209,10 @@ const EDITABLE_MODULE_IDS = [
   'global:map-labels',
   'global:detail-labels',
   'global:cta-labels',
+  'faq:hero',
+  'media-kit:hero',
+  'scenarios:inquiry-form',
+  'innovation:inquiry-form',
 ]
 
 const EDITABLE_MODULE_ID_SET = new Set(EDITABLE_MODULE_IDS)
@@ -214,6 +237,10 @@ const CATALOG_PAGE_LABELS = {
   site: 'Site Shell',
   about: 'About',
   global: 'Global',
+  faq: 'FAQ',
+  'media-kit': 'Media Kit',
+  scenarios: 'Scenarios',
+  innovation: 'Innovation',
   all: 'All',
 } satisfies Record<PageModuleCatalogPage, string>
 
@@ -689,6 +716,12 @@ function previewPathForModule(defaultPath: string, pageModule: PageModuleRow | n
   }
   if (pageModule.page_key === 'contact' && pageModule.module_key === 'source-context') {
     return '/contact?source=products:list'
+  }
+  if (pageModule.page_key === 'scenarios') {
+    return '/scenarios/tourism'
+  }
+  if (pageModule.page_key === 'innovation') {
+    return '/innovation/viie'
   }
   return defaultPath
 }

@@ -1,4 +1,16 @@
-export type PageModuleCatalogPage = 'home' | 'products' | 'cases' | 'contact' | 'site' | 'about' | 'global' | 'all'
+export type PageModuleCatalogPage =
+  | 'home'
+  | 'products'
+  | 'cases'
+  | 'contact'
+  | 'site'
+  | 'about'
+  | 'global'
+  | 'faq'
+  | 'media-kit'
+  | 'scenarios'
+  | 'innovation'
+  | 'all'
 
 export type PageModuleCatalogStatus = 'planned' | 'locked' | 'not_open'
 

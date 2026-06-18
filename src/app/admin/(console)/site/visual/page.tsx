@@ -49,6 +49,10 @@ const VISUAL_PAGE_META = [
   { key: 'site', label: 'Site Shell', path: '/' },
   { key: 'about', label: 'About', path: '/about' },
   { key: 'global', label: 'Global', path: '/global' },
+  { key: 'faq', label: 'FAQ', path: '/faq' },
+  { key: 'media-kit', label: 'Media Kit', path: '/media-kit' },
+  { key: 'scenarios', label: 'Scenarios', path: '/scenarios/tourism' },
+  { key: 'innovation', label: 'Innovation', path: '/innovation/viie' },
 ] as const
 
 type VisualPageKey = (typeof VISUAL_PAGE_META)[number]['key']
@@ -105,6 +109,10 @@ const EDITABLE_VISUAL_MODULE_IDS = [
   'global:map-labels',
   'global:detail-labels',
   'global:cta-labels',
+  'faq:hero',
+  'media-kit:hero',
+  'scenarios:inquiry-form',
+  'innovation:inquiry-form',
 ]
 
 const EDITABLE_VISUAL_MODULE_ID_SET = new Set(EDITABLE_VISUAL_MODULE_IDS)

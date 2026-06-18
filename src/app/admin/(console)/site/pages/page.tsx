@@ -128,7 +128,14 @@ const SOURCE_LABEL: Record<GovernanceSourceType, string> = {
   protected: '受保护专项',
 }
 
-const VISUAL_EDITOR_PAGE_KEYS = new Set(['home', 'products', 'cases', 'contact', 'site', 'about', 'global'])
+const VISUAL_EDITOR_PAGE_KEYS = new Set(['home', 'products', 'cases', 'contact', 'site', 'about', 'global', 'faq', 'media-kit', 'scenarios', 'innovation'])
+
+const VISUAL_EDITOR_MODULE_KEYS_BY_PAGE: Partial<Record<string, string[]>> = {
+  faq: ['hero'],
+  'media-kit': ['hero'],
+  scenarios: ['inquiry-form'],
+  innovation: ['inquiry-form'],
+}
 
 function safeLoad<T>(label: string, loader: () => Promise<T>, fallback: T): Promise<T> {
   return loader().catch((err) => {
@@ -317,10 +324,11 @@ function visualEditorModuleHref(pageKey: string, moduleKey: string): string {
 }
 
 function contractVisualModuleHref(contract: GovernanceContractStatus): string | null {
-  if (contract.sourceType !== 'page_modules') return null
   const pageKey = contract.modulePageKey
-  const moduleKey = contract.metrics.requiredMissing[0] ?? contract.requiredModules?.[0]
+  const allowedModuleKeys = VISUAL_EDITOR_MODULE_KEYS_BY_PAGE[pageKey ?? ''] ?? contract.requiredModules ?? []
+  const moduleKey = contract.metrics.requiredMissing.find((key) => allowedModuleKeys.includes(key)) ?? allowedModuleKeys[0]
   if (!pageKey || !moduleKey || !VISUAL_EDITOR_PAGE_KEYS.has(pageKey)) return null
+  if (contract.sourceType !== 'page_modules' && contract.metrics.requiredMissing.length === 0) return null
   return visualEditorModuleHref(pageKey, moduleKey)
 }
 
