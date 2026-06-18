@@ -876,7 +876,7 @@ function ProductPathQualityReviewDesk({
             <TrafficTriageAction href="/admin/content/products/list?view=incomplete&issue=seo#product-fit-proof-backflow" label="B317 队列" compact primary={qualitySignals > 0} />
             <TrafficTriageAction href="/admin/content/products/list" label="B318 编辑" compact />
             <TrafficTriageAction href="/admin/content/products/new#new-product-backflow-preflight" label="B319 新建" compact />
-            <TrafficTriageAction href="/admin/site/conversion" label="转化复盘" compact />
+            <TrafficTriageAction href="/admin/site/conversion#product-lifecycle-conversion-bridge" label="转化复盘" compact />
           </div>
         </div>
       </div>
@@ -1586,7 +1586,7 @@ function TrafficModuleStrip({
     { title: '网站访问统计', value: `${formatNumber(pageViews)} PV`, href: '#trend-analysis', detail: '进入下钻' },
     { title: '落地页跳出分析', value: `${formatNumber(landingPages)} 页`, href: '#landing-analysis', detail: '进入下钻' },
     { title: '访问行为分析', value: `${formatNumber(actions)} 次`, href: '#behavior-analysis', detail: '进入下钻' },
-    { title: '线索转化分析', value: `${formatNumber(leads)} 条`, href: '/admin/site/conversion', detail: '进入下钻' },
+    { title: '线索转化分析', value: `${formatNumber(leads)} 条`, href: '/admin/site/conversion#conversion-ledger', detail: '进入下钻' },
     { title: '产品路径分析', value: `${formatNumber(productPathActions)} 动作`, href: '#product-conversion-path', detail: '回连产品闭环' },
     { title: '案例询盘路径', value: `${formatNumber(casePathActions)} 动作`, href: '#case-loop-traffic-quality-review-desk', detail: `弱案例 ${formatNumber(weakCases)}` },
     { title: 'Google收录分析', value: readiness, href: '/admin/site/seo', detail: '进入下钻' },
@@ -1974,7 +1974,7 @@ function buildTrafficOperationsRows(
       value: `${formatNumber(activeMetric.leads)} 线索 / ${formatAnalyticsPercent(activeMetric.conversionRate)}`,
       evidence: `${formatNumber(activeMetric.pageViews)} PV，${formatNumber(actionTotal)} 个 CTA / 联系 / 表单动作。`,
       nextAction: '看转化页',
-      href: '/admin/site/conversion',
+      href: '/admin/site/conversion#conversion-ledger',
       tone: conversionTone,
     },
     {
@@ -2050,7 +2050,7 @@ function TrafficDrilldownWorkbench({
       detail: topConversion
         ? `访问 ${formatNumber(topConversion.metric.views)} / 动作 ${formatNumber(topConversion.metric.ctaClicks)} / 线索 ${formatNumber(topConversion.metric.leads)}。`
         : '暂无路径级访问、动作或线索样本。',
-      href: '/admin/site/conversion',
+      href: conversionReviewHrefForKey(topConversion?.key),
       tone: topConversion ? 'green' : 'gray',
     },
   ] satisfies Array<{
@@ -2202,7 +2202,7 @@ function TrafficRouteMatrix({
       metric: `${formatNumber(activeMetric.leads)} 真实线索 / ${formatAnalyticsPercent(activeMetric.conversionRate)}`,
       judgement: activeMetric.leads > 0 ? '已有线索承接' : activeMetric.pageViews > 0 ? '访问未转化为线索' : '等待访问',
       action: '转化路径',
-      href: '/admin/site/conversion',
+      href: conversionReviewHrefForKey(topConversion?.key),
       tone: activeMetric.leads > 0 ? 'green' : activeMetric.pageViews > 0 ? 'orange' : 'gray',
     },
   ] satisfies Array<{
@@ -2284,7 +2284,7 @@ function TrafficSourceStagePanel({ analytics }: { analytics: SiteAnalyticsDashbo
           <span className="rounded-full bg-[#EAF6F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
             来源阶段动作 {formatNumber(total)}
           </span>
-          <Link href="/admin/site/conversion" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+          <Link href="/admin/site/conversion#conversion-ledger" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
             查看转化台账
           </Link>
         </div>
@@ -2337,7 +2337,7 @@ function TrafficSourceStagePanel({ analytics }: { analytics: SiteAnalyticsDashbo
                       <div className="mt-1 text-[11px] text-[#8A9EA4]">已带 source_stage</div>
                     </td>
                     <td className="px-5 py-3 text-right">
-                      <Link href="/admin/site/conversion" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
+                      <Link href={sourceStageConversionHref(row.key)} className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
                         看承接矩阵
                       </Link>
                     </td>
@@ -2374,6 +2374,13 @@ function sourceStageTrafficRoute(key: string): { label: string; detail: string; 
     detail: '保留来源阶段，等待更多样本后再拆分。',
     tone: 'gray',
   }
+}
+
+function sourceStageConversionHref(key: string): string {
+  if (key.startsWith('case:')) return '/admin/site/conversion#case-followup-conversion-review-bridge'
+  if (key.startsWith('product:')) return '/admin/site/conversion#product-lifecycle-conversion-bridge'
+  if (key.startsWith('news:')) return '/admin/site/conversion#news-conversion-handoff'
+  return '/admin/site/conversion#conversion-ledger'
 }
 
 function NewsTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) {
@@ -2639,7 +2646,7 @@ function ProductTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard 
     {
       label: 'B231 产品复盘',
       detail: '回到转化中心产品路径复盘',
-      href: '/admin/site/conversion',
+      href: '/admin/site/conversion#product-lifecycle-conversion-bridge',
       tone: 'blue' as const,
     },
     {
@@ -2918,6 +2925,13 @@ function getTopConversionPath(conversionPaths: Record<string, AnalyticsConversio
   })).sort((a, b) => conversionMetricScore(b.metric) - conversionMetricScore(a.metric))
 
   return rows.find((row) => conversionMetricScore(row.metric) > 0)
+}
+
+function conversionReviewHrefForKey(key?: string): string {
+  if (key === 'products') return '/admin/site/conversion#product-lifecycle-conversion-bridge'
+  if (key === 'cases') return '/admin/site/conversion#case-followup-conversion-review-bridge'
+  if (key === 'news') return '/admin/site/conversion#news-conversion-handoff'
+  return '/admin/site/conversion#conversion-ledger'
 }
 
 function conversionMetricScore(metric: AnalyticsConversionMetric) {
