@@ -1566,7 +1566,7 @@ function ProductListControlStrip({
     },
     {
       label: '产品路径',
-      href: '/admin/site/conversion',
+      href: '/admin/site/conversion#product-lifecycle-conversion-bridge',
       count: null,
       active: false,
     },

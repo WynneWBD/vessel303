@@ -582,7 +582,7 @@ function buildOperationalPriorityRows({
       actions: [
         { href: '/admin/status/traffic#traffic-to-lead-exception-desk', label: trafficActionGap ? '流量分诊' : '流量台账', primary: true },
         { href: '/admin/status/leads#source-lead-quality-workdesk', label: '线索质量' },
-        { href: '/admin/site/conversion', label: '转化设置' },
+        { href: '/admin/site/conversion#conversion-ledger', label: '转化总账' },
       ],
       tone: trafficActionGap ? 'warning' : trafficReview ? 'review' : 'ready',
     },
@@ -771,7 +771,7 @@ function ExecutiveStrip({
       label: '真实线索',
       value: formatNumber(thirtyDays.leads),
       detail: `表单成功 ${formatNumber(thirtyDays.formSubmits)} / 测试线索 ${formatNumber(thirtyDays.testLeads)}`,
-      href: '/admin/site/conversion',
+      href: '/admin/site/conversion#conversion-ledger',
     },
     {
       label: '运营待处理',
@@ -1410,7 +1410,7 @@ function ModuleEntryPanel({
       label: '线索转化分析',
       value: formatNumber(newLeads),
       detail: '进入客户线索和转化路径处理。',
-      href: '/admin/site/conversion',
+      href: '/admin/site/conversion#conversion-ledger',
     },
     {
       label: '案例转化健康',

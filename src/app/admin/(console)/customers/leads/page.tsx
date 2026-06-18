@@ -403,12 +403,12 @@ function LeadsQueueConsole({
         : '暂无来源分布；公开表单进线后会显示来源类型。',
       metric: `${formatNumber(sourceStatusSummary.length)} 类来源`,
       signal: `${formatNumber(sourceNewTotal)} 新线索`,
-      href: '/admin/site/conversion',
+      href: '/admin/site/conversion#conversion-ledger',
       Icon: SearchCheck,
       tone: sourceNewTotal > 0 ? 'orange' : 'green',
       actions: [
         { label: '来源矩阵', href: '/admin/customers/leads', primary: true },
-        { label: '转化路径', href: '/admin/site/conversion' },
+        { label: '转化总账', href: '/admin/site/conversion#conversion-ledger' },
       ],
     },
     {
