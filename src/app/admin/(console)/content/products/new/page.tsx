@@ -313,6 +313,7 @@ function NewProductPreflightPanel({
       data-new-product-backflow-preflight="true"
       className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm"
     >
+      <span id="new-product-backflow-preflight" className="block scroll-mt-24" aria-hidden="true" />
       <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <p className="text-xs font-bold text-[#1889B6]">B319 新建前回流预检</p>
