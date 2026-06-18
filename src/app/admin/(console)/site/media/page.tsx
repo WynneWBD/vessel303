@@ -275,10 +275,11 @@ function MediaOperationsConsole({
       detail: `内容引用 ${formatNumber(referenceSummary.contentRefs)} / 页面 ${formatNumber(referenceSummary.pageRefs)} / 草稿 ${formatNumber(referenceSummary.draftRefs)}`,
       metric: `${formatNumber(referenceSummary.unused)} / ${formatNumber(referenceSummary.sampled)}`,
       signal: referenceSummary.sampled > 0 ? `${referenceRate}% 已引用` : '等待采样',
-      href: createMediaHref(filters),
+      href: '#media-replacement-workbench',
       Icon: Layers,
       tone: referenceSummary.unused > 0 ? 'orange' : 'green',
       actions: [
+        { label: '替换工作台', href: '#media-replacement-workbench', primary: referenceSummary.unused > 0 || referenceSummary.draftRefs > 0 },
         { label: '风险素材', href: createMediaHref(filters, { view: 'issues', page: 1 }) },
         { label: '页面视觉', href: '/admin/site/visual' },
       ],
