@@ -149,7 +149,7 @@ const SITE_APPS: SiteApp[] = [
   {
     title: '管理图片',
     detail: '上传、查找图片，并查看图片被哪些内容引用。',
-    href: '/admin/site/media',
+    href: '/admin/site/media#media-replacement-workbench',
     Icon: ImageIcon,
   },
   {
@@ -451,7 +451,7 @@ function Hero({
       actions={
         <>
           <AdminActionLink href="/admin/site/visual" Icon={LayoutTemplate} label="编辑网站" primary />
-          <AdminActionLink href="/admin/site/media" Icon={ImageIcon} label="管理图片" />
+          <AdminActionLink href="/admin/site/media#media-replacement-workbench" Icon={ImageIcon} label="管理图片" />
           <AdminActionLink href="/" Icon={Eye} label="查看主站" />
         </>
       }
@@ -494,7 +494,7 @@ function Hero({
             title="图片素材"
             value={uploadCount}
             detail={uploadBytes ? formatBytes(uploadBytes) : '暂无占用'}
-            href="/admin/site/media"
+            href="/admin/site/media#media-replacement-workbench"
             Icon={ImageIcon}
             tone={uploadBytes > STORAGE_WARNING_BYTES ? 'orange' : 'green'}
           />
@@ -561,11 +561,11 @@ function SiteOperationsConsole({
       detail: '图片上传、引用关系、空间体量和派生图风险',
       metric: `${uploadCount.toLocaleString('zh-CN')} 记录`,
       signal: formatBytes(uploadBytes),
-      href: '/admin/site/media',
+      href: '/admin/site/media#media-replacement-workbench',
       Icon: ImageIcon,
       tone: uploadBytes > STORAGE_WARNING_BYTES ? 'orange' : 'blue',
       actions: [
-        { label: '素材库', href: '/admin/site/media' },
+        { label: '替换工作台', href: '/admin/site/media#media-replacement-workbench' },
         { label: '风险视图', href: '/admin/site/media?view=issues' },
       ],
     },
@@ -985,7 +985,7 @@ function TodoPanel({
     {
       title: '图片素材',
       detail: uploadBytes > STORAGE_WARNING_BYTES ? '空间使用偏高，建议整理素材' : '当前状态正常',
-      href: '/admin/site/media',
+      href: '/admin/site/media#media-replacement-workbench',
       ok: uploadBytes <= STORAGE_WARNING_BYTES,
     },
     {

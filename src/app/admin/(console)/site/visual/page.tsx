@@ -320,7 +320,7 @@ function VisualReleaseConsole({
       tone: staleStructureDrafts > 0 || activeStructureDrafts.length > 0 ? 'orange' : 'green',
       actions: [
         { label: '结构区', href: '#visual-editor', primary: activeStructureDrafts.length > 0 },
-        { label: '素材库', href: '/admin/site/media' },
+        { label: '替换工作台', href: '/admin/site/media#media-replacement-workbench' },
       ],
     },
     {
@@ -328,11 +328,11 @@ function VisualReleaseConsole({
       detail: `可见模块含 ${formatNumber(signals.images)} 图、${formatNumber(signals.videos)} 视频、${formatNumber(signals.links)} 链接；上传上限 ${maxUploadMb} MB。`,
       metric: `${formatNumber(signals.images + signals.videos)} 媒体`,
       signal: `${formatNumber(structureImageRefs)} 结构引用`,
-      href: '/admin/site/media',
+      href: '/admin/site/media#media-replacement-workbench',
       Icon: ImageIcon,
       tone: 'gray',
       actions: [
-        { label: '素材库', href: '/admin/site/media', primary: true },
+        { label: '替换工作台', href: '/admin/site/media#media-replacement-workbench', primary: true },
         { label: '风险素材', href: '/admin/site/media?view=issues' },
       ],
     },

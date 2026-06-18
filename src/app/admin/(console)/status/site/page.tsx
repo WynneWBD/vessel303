@@ -102,7 +102,7 @@ export default async function AdminStatusSitePage() {
             title="媒体风险"
             value={site.media.issueCount}
             detail={`${formatNumber(site.media.count)} 个素材 / ${formatBytes(site.media.bytes)} / 单图上限 ${formatNumber(site.media.maxUploadMb)} MB`}
-            href="/admin/site/media"
+            href={site.media.issueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media#media-replacement-workbench'}
             Icon={STATUS_ICONS.Package}
             tone={site.media.issueCount > 0 || site.media.bytes > 800 * 1024 * 1024 ? 'orange' : 'green'}
           />
@@ -188,7 +188,7 @@ export default async function AdminStatusSitePage() {
             <ActionCard
               title="管理媒体素材"
               detail={`${formatNumber(site.media.issueCount)} 个风险素材；查看素材数量、容量和上传配置。`}
-              href="/admin/site/media"
+              href={site.media.issueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media#media-replacement-workbench'}
               Icon={STATUS_ICONS.Package}
               primary={site.media.issueCount > 0}
             />
@@ -259,8 +259,8 @@ function SiteReleasePreflightBridge({
       title: '素材健康',
       value: site.media.issueCount > 0 ? `${formatNumber(site.media.issueCount)} 风险` : formatBytes(site.media.bytes),
       detail: `${formatNumber(site.media.count)} 个素材；${mediaStorageWarn ? '容量偏高' : '容量可控'}；单图上限 ${formatNumber(site.media.maxUploadMb)} MB。`,
-      href: '/admin/site/media?view=issues',
-      actionLabel: mediaBlocked ? '处理素材风险' : '查看媒体库',
+      href: mediaBlocked ? '/admin/site/media?view=issues' : '/admin/site/media#media-replacement-workbench',
+      actionLabel: mediaBlocked ? '处理素材风险' : '替换工作台',
       tone: site.media.issueCount > 0 ? 'warning' : mediaStorageWarn ? 'review' : 'ready',
       Icon: STATUS_ICONS.Package,
     },
@@ -407,8 +407,8 @@ function buildSiteHealthRows(site: SiteMetrics, configIssues: number, role: Admi
       detail: `${formatNumber(site.media.count)} 个素材；容量 ${formatBytes(site.media.bytes)}；单图上限 ${formatNumber(site.media.maxUploadMb)} MB`,
       ok: !mediaWarn,
       status: site.media.issueCount > 0 ? '风险素材' : mediaStorageWarn ? '容量偏高' : '可控',
-      href: site.media.issueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media',
-      actionLabel: '管理素材',
+      href: site.media.issueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media#media-replacement-workbench',
+      actionLabel: site.media.issueCount > 0 ? '处理风险' : '替换工作台',
     },
     {
       key: 'site-files',
@@ -526,8 +526,8 @@ function buildSiteOperationRows(site: SiteMetrics, configIssues: number, role: A
         : mediaStorageWarn
           ? '媒体容量偏高，后续会影响素材管理和页面加载治理。'
           : '媒体风险和容量处于当前预警线内。',
-      href: site.media.issueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media',
-      actionLabel: site.media.issueCount > 0 ? '处理风险' : '管理素材',
+      href: site.media.issueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media#media-replacement-workbench',
+      actionLabel: site.media.issueCount > 0 ? '处理风险' : '替换工作台',
       tone: mediaWarn ? 'warning' : 'ready',
       Icon: STATUS_ICONS.Package,
     },

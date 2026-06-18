@@ -518,10 +518,10 @@ function buildOperationalPriorityRows({
         : mediaStorageWarn
           ? '媒体容量接近预警线，需要后续治理素材体积。'
           : '媒体风险和容量当前处于预警线内。',
-      href: mediaIssueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media',
+      href: mediaIssueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media#media-replacement-workbench',
       actionLabel: mediaIssueCount > 0 ? '处理素材' : '查看媒体',
       actions: [
-        { href: mediaIssueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media', label: mediaIssueCount > 0 ? '风险素材' : '媒体库', primary: true },
+        { href: mediaIssueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media#media-replacement-workbench', label: mediaIssueCount > 0 ? '风险素材' : '替换工作台', primary: true },
         { href: '/admin/site/visual', label: '页面用图' },
         { href: '/admin/status/site', label: '站点健康' },
       ],

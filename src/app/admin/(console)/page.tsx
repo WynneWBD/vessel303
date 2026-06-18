@@ -161,7 +161,7 @@ const QUICK_ACTIONS: ActionItem[] = [
   { label: '发布项目', href: '/admin/content/projects/new', Icon: MapPinned },
   { label: '发布新闻', href: '/admin/content/news/new', Icon: Newspaper },
   { label: '处理线索', href: '/admin/customers/leads?status=new', Icon: Inbox },
-  { label: '管理图片', href: '/admin/site/media', Icon: ImageIcon },
+  { label: '管理图片', href: '/admin/site/media#media-replacement-workbench', Icon: ImageIcon },
 ]
 
 const RECENT_CONTENT_SQL = {
@@ -433,7 +433,7 @@ function buildTodos({
     {
       title: '媒体空间',
       detail: uploadBytes > STORAGE_WARNING_BYTES ? '建议检查素材' : '当前状态正常',
-      href: '/admin/site/media',
+      href: '/admin/site/media#media-replacement-workbench',
       ok: uploadBytes <= STORAGE_WARNING_BYTES,
     },
   ]
@@ -513,7 +513,7 @@ function Hero({
             title="媒体空间"
             value={formatBytes(uploadBytes)}
             detail={uploadBytes > STORAGE_WARNING_BYTES ? '建议检查素材' : '状态正常'}
-            href="/admin/site/media"
+            href="/admin/site/media#media-replacement-workbench"
             Icon={ImageIcon}
             tone={uploadBytes > STORAGE_WARNING_BYTES ? 'orange' : 'green'}
           />
@@ -1391,7 +1391,7 @@ function StatusPanel({
           title="图片与文件空间"
           value={formatBytes(uploadBytes)}
           detail={`${formatNumber(uploadCount)} 张图片记录`}
-          href="/admin/site/media"
+          href="/admin/site/media#media-replacement-workbench"
           Icon={ImageIcon}
         />
         <StatusLineCard
