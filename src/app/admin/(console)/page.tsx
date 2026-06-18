@@ -1113,7 +1113,7 @@ function ContentListWorkbench({
       tone: pageDraftCount > 0 ? 'orange' : 'green',
       actions: [
         { label: '视觉编辑', href: '/admin/site/visual' },
-        { label: '页面管理', href: '/admin/site/pages' },
+        { label: '页面管理', href: '/admin/site/pages#content-source-route-tree' },
         { label: '网站管理', href: '/admin/site' },
       ],
     },

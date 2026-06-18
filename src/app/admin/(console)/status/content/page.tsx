@@ -535,7 +535,7 @@ function buildContentNextActions(
       status: '内容调整或发布后，从站点页面台账逐个打开公开入口。',
       evidence: '产品、案例、新闻和重点详情页入口由站点页面台账统一承接。',
       acceptance: '前台页面返回 200；列表、详情、图片、按钮和来源链路可被用户正常使用。',
-      href: '/admin/site/pages',
+      href: '/admin/site/pages#content-source-route-tree',
       actionLabel: '查看复验入口',
       tone: 'review',
       Icon: STATUS_ICONS.CheckCircle2,

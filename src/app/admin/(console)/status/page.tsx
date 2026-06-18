@@ -540,7 +540,7 @@ function buildOperationalPriorityRows({
       actionLabel: pageDrafts > 0 ? '处理草稿' : '查看编辑器',
       actions: [
         { href: '/admin/site/visual', label: pageDrafts > 0 ? 'Visual Editor' : '编辑器', primary: true },
-        { href: '/admin/site/pages', label: '页面结构' },
+        { href: '/admin/site/pages#content-source-route-tree', label: '页面结构' },
         { href: '/admin/status/site', label: '发布健康' },
       ],
       tone: pageDrafts > 0 ? 'warning' : 'ready',

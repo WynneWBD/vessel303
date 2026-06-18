@@ -296,7 +296,7 @@ function buildNavigationPriorityItems(modules: PageModuleRow[], contract?: Gover
       key: 'contract',
       title: '内容合同质检',
       detail: contract.issues.slice(0, 2).join(' / '),
-      href: '/admin/site/pages',
+      href: '/admin/site/pages#content-source-route-tree',
       score: 120,
       Icon: AlertTriangle,
     })

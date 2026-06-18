@@ -137,7 +137,7 @@ const SITE_APPS: SiteApp[] = [
   {
     title: '页面清单',
     detail: '按页面查看可编辑范围、内容来源、草稿状态和前台入口。',
-    href: '/admin/site/pages',
+    href: '/admin/site/pages#content-source-route-tree',
     Icon: ListChecks,
   },
   {
@@ -552,7 +552,7 @@ function SiteOperationsConsole({
       tone: pageDraftCount > 0 ? 'orange' : 'green',
       actions: [
         { label: '可视化', href: '/admin/site/visual' },
-        { label: '页面清单', href: '/admin/site/pages' },
+        { label: '页面清单', href: '/admin/site/pages#content-source-route-tree' },
         { label: '前台首页', href: '/' },
       ],
     },
