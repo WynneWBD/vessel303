@@ -8,9 +8,9 @@
 
 - 官网：`https://www.vessel303.com`
 - 代码仓库：`C:\Users\Wynne\Desktop\vessel303\repo-git`
-- 当前循环：B386 `/admin/site/pages` 页面合同动作栏已完成并上线；按用户要求，本次小修后停下做审核总结。
-- 最近功能批次：B386 / `1bdcf0b feat(site): add page contract action bars`
-- 已记录生产验证：B386 / `dpl_3366oLDjn7cfkeo2V2ZXVRv3TW65`；最新 production deployment 以 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
+- 当前循环：B388 `/admin/status/activity` 已接通现有管理员操作日志入口；继续按 00 工作流小步优化后台运营能力。
+- 最近功能批次：B388 / `098a8ff feat(status): link admin audit log from activity center`
+- 已记录生产验证：B388 / `dpl_CNvwZBbSNbBZc7eHxFffTZZypKU5`；最新 production deployment 以 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
 - 当前精确状态以 `00_项目总控入口/vessel303_当前总控handoff.md` 和 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
 - 当前目标：前台对齐 `en.303vessel.cn` 的生产官网能力，后台对齐 `300.cn 后台` 的运营效率和数据分析心智。
 - 当前对照边界：`en.303vessel.cn` 当前由 `openresty` 响应，公开产品/案例路径只读 smoke 返回 403，后台路径返回 404；本仓库部署 smoke 以 `https://www.vessel303.com` / Vercel alias 为准。
