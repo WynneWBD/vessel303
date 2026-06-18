@@ -8,9 +8,7 @@ import {
 } from '@/lib/page-modules-db'
 import {
   B9_CONTENT_KINDS,
-  listB9ContentItems,
   type B9ContentKind,
-  type B9ContentItem,
 } from '@/lib/b9-content-db'
 
 export type GovernanceSourceType =
@@ -60,6 +58,7 @@ export type ContentContract = {
 export type SourceMetrics = {
   total: number
   published: number
+  contentPublished?: number
   draft: number
   hidden: number
   visibleModules: number
@@ -81,6 +80,7 @@ export type GovernanceContractStatus = ContentContract & {
 const EMPTY_METRICS: SourceMetrics = {
   total: 0,
   published: 0,
+  contentPublished: 0,
   draft: 0,
   hidden: 0,
   visibleModules: 0,
@@ -511,10 +511,41 @@ function moduleHasImage(modules: PageModuleRow[]) {
   )
 }
 
-function contentWarningsFromB9Rows(kind: B9ContentKind, rows: B9ContentItem[]): string[] {
+const B9_REQUIRED_PUBLIC_SLUGS: Partial<Record<B9ContentKind, string[]>> = {
+  scenario: ['tourism', 'commercial', 'public'],
+  innovation: ['viie', 'vipc', 'vols'],
+}
+
+type B9GovernanceWarningRow = {
+  slug: string
+  publicly_renderable: boolean
+  title_zh: string
+  title_en: string
+  summary_zh: string | null
+  summary_en: string | null
+  body_zh: string | null
+  body_en: string | null
+  cover_image_url: string | null
+  file_url: string | null
+  cta_label_zh: string | null
+  cta_label_en: string | null
+  cta_href: string | null
+}
+
+function contentWarningsFromB9Rows(kind: B9ContentKind, rows: B9GovernanceWarningRow[]): string[] {
   const warnings: string[] = []
   for (const row of rows) {
-    if (row.status !== 'published') continue
+    if (!row.publicly_renderable) {
+      warnings.push(`${kind}:${row.slug}: published content is not visible on the public page`)
+      continue
+    }
+    if (kind === 'display_slide' && !row.cover_image_url?.trim()) {
+      warnings.push(`${kind}:${row.slug}: missing display image`)
+      continue
+    }
+    if (kind === 'media_file' && !row.file_url?.trim()) {
+      warnings.push(`${kind}:${row.slug}: missing downloadable file`)
+    }
     warnings.push(
       ...collectEnglishFieldWarnings(`${kind}:${row.slug}`, [
         row.title_en,
@@ -574,23 +605,171 @@ async function loadPageModuleMetrics() {
   return { modules, byPage }
 }
 
+async function loadB9ContentWarnings(
+  kind: B9ContentKind,
+  hasCategoryTable: boolean,
+): Promise<string[]> {
+  const visibilityJoin = hasCategoryTable
+    ? `
+      LEFT JOIN site_content_categories c
+        ON c.id = i.category_id
+       AND c.kind = i.kind
+       AND c.deleted_at IS NULL
+      CROSS JOIN (
+        SELECT COUNT(*)::int AS visible_category_count
+        FROM site_content_categories
+        WHERE kind = $1 AND status = 'visible' AND deleted_at IS NULL
+      ) vc
+    `
+    : ''
+  const publiclyRenderableExpression = hasCategoryTable
+    ? `CASE
+        WHEN $1 <> 'faq' THEN TRUE
+        WHEN vc.visible_category_count = 0 THEN TRUE
+        WHEN c.status = 'visible' THEN TRUE
+        ELSE FALSE
+      END`
+    : 'TRUE'
+
+  const res = await pool.query<B9GovernanceWarningRow>(
+    `SELECT
+       i.slug,
+       ${publiclyRenderableExpression} AS publicly_renderable,
+       i.title_zh,
+       i.title_en,
+       i.summary_zh,
+       i.summary_en,
+       i.body_zh,
+       i.body_en,
+       i.cover_image_url,
+       i.file_url,
+       i.cta_label_zh,
+       i.cta_label_en,
+       i.cta_href
+     FROM site_content_items i
+     ${visibilityJoin}
+     WHERE i.kind = $1
+       AND i.deleted_at IS NULL
+       AND i.status = 'published'
+     ORDER BY i.updated_at DESC
+     LIMIT 80`,
+    [kind],
+  ).catch(() => ({ rows: [] }))
+
+  const warnings = new Set(contentWarningsFromB9Rows(kind, res.rows))
+  const requiredSlugs = B9_REQUIRED_PUBLIC_SLUGS[kind] ?? []
+  if (requiredSlugs.length > 0) {
+    const missingRes = await pool.query<{ slug: string }>(
+      `WITH required(slug) AS (
+         SELECT unnest($2::text[])
+       )
+       SELECT required.slug
+       FROM required
+       LEFT JOIN site_content_items i
+         ON i.kind = $1
+        AND i.slug = required.slug
+        AND i.deleted_at IS NULL
+        AND i.status = 'published'
+       WHERE i.id IS NULL
+       ORDER BY required.slug ASC`,
+      [kind, requiredSlugs],
+    ).catch(() => ({ rows: [] }))
+
+    for (const row of missingRes.rows) {
+      warnings.add(`${kind}:${row.slug}: fixed public slug is not published`)
+    }
+  }
+
+  return Array.from(warnings).slice(0, 12)
+}
+
+async function loadB9KindMetrics(
+  kind: B9ContentKind,
+  hasCategoryTable: boolean,
+): Promise<SourceMetrics> {
+  const visibilityJoin = hasCategoryTable
+    ? `
+      LEFT JOIN site_content_categories c
+        ON c.id = i.category_id
+       AND c.kind = i.kind
+       AND c.deleted_at IS NULL
+      CROSS JOIN (
+        SELECT COUNT(*)::int AS visible_category_count
+        FROM site_content_categories
+        WHERE kind = $1 AND status = 'visible' AND deleted_at IS NULL
+      ) vc
+    `
+    : ''
+  const publiclyRenderableCondition = hasCategoryTable
+    ? `(
+        $1 <> 'faq'
+        OR vc.visible_category_count = 0
+        OR c.status = 'visible'
+      )`
+    : 'TRUE'
+
+  const res = await pool.query<{
+    total: string
+    published: string
+    draft: string
+    hidden: string
+    image_count: string
+    cta_count: string
+    latest_updated_at: string | null
+  }>(
+    `SELECT
+       COUNT(*) FILTER (WHERE i.deleted_at IS NULL)::text AS total,
+       COUNT(*) FILTER (WHERE i.deleted_at IS NULL AND i.status = 'published')::text AS published,
+       COUNT(*) FILTER (WHERE i.deleted_at IS NULL AND i.status = 'draft')::text AS draft,
+       COUNT(*) FILTER (WHERE i.deleted_at IS NULL AND i.status = 'hidden')::text AS hidden,
+       COUNT(*) FILTER (
+         WHERE i.deleted_at IS NULL
+           AND i.status = 'published'
+           AND ${publiclyRenderableCondition}
+           AND NULLIF(BTRIM(COALESCE(i.cover_image_url, '')), '') IS NOT NULL
+       )::text AS image_count,
+       COUNT(*) FILTER (
+         WHERE i.deleted_at IS NULL
+           AND i.status = 'published'
+           AND ${publiclyRenderableCondition}
+           AND NULLIF(BTRIM(COALESCE(i.cta_href, '')), '') IS NOT NULL
+           AND (
+             NULLIF(BTRIM(COALESCE(i.cta_label_en, '')), '') IS NOT NULL
+             OR NULLIF(BTRIM(COALESCE(i.cta_label_zh, '')), '') IS NOT NULL
+           )
+       )::text AS cta_count,
+       MAX(i.updated_at)::text AS latest_updated_at
+     FROM site_content_items i
+     ${visibilityJoin}
+     WHERE i.kind = $1`,
+    [kind],
+  ).catch(() => ({ rows: [] }))
+
+  const row = res.rows[0]
+  const contentWarnings = await loadB9ContentWarnings(kind, hasCategoryTable)
+  return {
+    ...emptyMetrics(),
+    total: parseCount(row?.total),
+    published: parseCount(row?.published),
+    contentPublished: parseCount(row?.published),
+    draft: parseCount(row?.draft),
+    hidden: parseCount(row?.hidden),
+    hasImage: parseCount(row?.image_count) > 0,
+    hasCta: parseCount(row?.cta_count) > 0,
+    contentWarnings,
+    latestUpdatedAt: normalizeDate(row?.latest_updated_at),
+  }
+}
+
 async function loadB9Metrics() {
   const byKind = new Map<B9ContentKind, SourceMetrics>()
+  if (!(await tableExists('public.site_content_items').catch(() => false))) return byKind
+
+  const hasCategoryTable = await tableExists('public.site_content_categories').catch(() => false)
   await Promise.all(
     B9_CONTENT_KINDS.map(async (kind) => {
-      const data = await listB9ContentItems({ kind, status: 'all', limit: 100, offset: 0 }).catch(() => ({ rows: [] }))
-      const rows = data.rows
-      byKind.set(kind, {
-        ...emptyMetrics(),
-        total: rows.length,
-        published: rows.filter((row) => row.status === 'published').length,
-        draft: rows.filter((row) => row.status === 'draft').length,
-        hidden: rows.filter((row) => row.status === 'hidden').length,
-        hasCta: rows.some((row) => row.status === 'published' && Boolean(row.cta_href?.trim()) && Boolean((row.cta_label_en || row.cta_label_zh)?.trim())),
-        hasImage: rows.some((row) => row.status === 'published' && Boolean(row.cover_image_url?.trim())),
-        contentWarnings: contentWarningsFromB9Rows(kind, rows),
-        latestUpdatedAt: latestDate(rows.map((row) => row.updated_at)),
-      })
+      const metrics = await loadB9KindMetrics(kind, hasCategoryTable).catch(() => emptyMetrics())
+      byKind.set(kind, metrics)
     }),
   )
   return byKind
@@ -815,6 +994,7 @@ async function loadCmsMetrics(tableName: 'product_catalog' | 'project_cases' | '
     ...emptyMetrics(),
     total: parseCount(row?.total),
     published: parseCount(row?.published),
+    contentPublished: parseCount(row?.published),
     draft: parseCount(row?.draft),
     hidden: parseCount(row?.hidden),
     hasImage: parseCount(row?.image_count) > 0,
@@ -829,6 +1009,7 @@ function mergeMetrics(primary: SourceMetrics, secondary: SourceMetrics): SourceM
     ...primary,
     total: primary.total + secondary.total,
     published: primary.published + secondary.published,
+    contentPublished: (primary.contentPublished ?? 0) + (secondary.contentPublished ?? 0),
     draft: primary.draft + secondary.draft,
     hidden: primary.hidden + secondary.hidden,
     visibleModules: primary.visibleModules + secondary.visibleModules,
@@ -847,7 +1028,7 @@ function buildIssues(contract: ContentContract, metrics: SourceMetrics): string[
   if (contract.requiredModules?.length && metrics.requiredMissing.length > 0) {
     issues.push(`缺少已发布模块：${metrics.requiredMissing.join(' / ')}`)
   }
-  if ((contract.sourceType === 'product_cms' || contract.sourceType === 'project_cms' || contract.sourceType === 'news_cms' || contract.sourceType === 'b9_cms') && metrics.published === 0) {
+  if ((contract.sourceType === 'product_cms' || contract.sourceType === 'project_cms' || contract.sourceType === 'news_cms' || contract.sourceType === 'b9_cms') && (metrics.contentPublished ?? metrics.published) === 0) {
     issues.push('当前来源没有 published 内容')
   }
   if (contract.signals.includes('image') && !metrics.hasImage) issues.push('缺少可见图片')
