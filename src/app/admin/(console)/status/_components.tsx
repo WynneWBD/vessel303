@@ -185,7 +185,7 @@ export function getStatusSideNav(badges: StatusBadges): AdminSideNavGroup[] {
     {
       title: '后续治理',
       items: [
-        { key: 'audit-log', label: '完整操作日志', planned: true, adminOnly: true, Icon: ShieldCheck },
+        { key: 'audit-log', label: '完整操作日志', href: '/admin/settings#admin-logs', adminOnly: true, Icon: ShieldCheck },
       ],
     },
   ]

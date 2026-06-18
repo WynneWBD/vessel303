@@ -12,6 +12,7 @@ import {
   formatDateTime,
   MetricCard,
   SectionTitle,
+  type AdminRole,
   StatusPageShell,
   STATUS_ICONS,
 } from '../_components'
@@ -89,7 +90,7 @@ export default async function AdminStatusActivityPage() {
           <MetricCard title="页面 / 媒体" value={(counts.pages ?? 0) + (counts.media ?? 0)} detail="页面草稿和媒体素材变化。" href="/admin/site" Icon={STATUS_ICONS.LayoutTemplate} />
         </div>
 
-        <ActivityAuditLedger activity={activity} overview={overview} groups={groups} />
+        <ActivityAuditLedger activity={activity} overview={overview} groups={groups} role={role} />
 
         <ActivityOperationsMatrix groups={groups} priorityItems={priorityItems} total={activity.length} />
 
@@ -114,10 +115,12 @@ function buildActivityAuditRows({
   activity,
   overview,
   groups,
+  role,
 }: {
   activity: ActivityItem[]
   overview: StatusOverview
   groups: ActivitySourceGroup[]
+  role: AdminRole
 }): ActivityAuditRow[] {
   const contentTotals = sumContent(overview.content)
   const contentActivityCount =
@@ -128,6 +131,7 @@ function buildActivityAuditRows({
   const mediaActivityCount = countActivityBySource(activity, 'media')
   const pageActivityCount = countActivityBySource(activity, 'pages')
   const dominantGroup = groups[0]
+  const canOpenAdminLogs = role === 'admin'
 
   return [
     {
@@ -220,13 +224,17 @@ function buildActivityAuditRows({
       key: 'audit-boundary',
       priority: 'HOLD',
       stage: '审计边界',
-      title: '完整操作日志仍为后续治理',
+      title: canOpenAdminLogs ? '完整操作日志入口' : '完整操作日志需管理员查看',
       owner: '系统设置',
-      currentValue: '只读样本',
-      evidence: '本页聚合 created_at / updated_at，不记录新的后台操作行为。',
-      impact: '当前台账适合运营复盘；如需完整审计日志，需要单独设计服务端记录、权限和留存策略。',
-      href: '/admin/status/activity',
-      actionLabel: '查看当前样本',
+      currentValue: canOpenAdminLogs ? 'admin_logs' : '只读样本',
+      evidence: canOpenAdminLogs
+        ? '系统设置页已读取 admin_logs 最近管理员操作，本页仍不新增日志写入。'
+        : '本页聚合 created_at / updated_at；完整 admin_logs 仅 admin 可见。',
+      impact: canOpenAdminLogs
+        ? '近期变化用于运营复盘，管理员日志用于追踪后台保存、发布和配置变更。'
+        : 'operator 先用近期变化判断业务影响，涉及管理员日志时交由 admin 复核。',
+      href: canOpenAdminLogs ? '/admin/settings#admin-logs' : '/admin/status/activity',
+      actionLabel: canOpenAdminLogs ? '查看管理员日志' : '查看当前样本',
       tone: 'review',
       Icon: STATUS_ICONS.ShieldCheck,
     },
@@ -237,12 +245,14 @@ function ActivityAuditLedger({
   activity,
   overview,
   groups,
+  role,
 }: {
   activity: ActivityItem[]
   overview: StatusOverview
   groups: ActivitySourceGroup[]
+  role: AdminRole
 }) {
-  const rows = buildActivityAuditRows({ activity, overview, groups })
+  const rows = buildActivityAuditRows({ activity, overview, groups, role })
   const activeRows = rows.filter((row) => row.tone === 'critical' || row.tone === 'warning' || row.tone === 'review')
   const blockingRows = rows.filter((row) => row.tone === 'critical' || row.tone === 'warning')
 
@@ -250,7 +260,7 @@ function ActivityAuditLedger({
     <section className="space-y-4">
       <SectionTitle
         title="变更审计处理台账"
-        detail="把最近变化、线索、内容缺项、页面草稿、媒体资产和发布后 smoke 合并成只读审计队列；本页不写入新的操作日志。"
+        detail="把最近变化、线索、内容缺项、页面草稿、媒体资产和发布后 smoke 合并成只读审计队列；admin 可跳转到现有管理员操作日志。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
