@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { CONVERSION_PATHS } from '@/lib/admin-conversion-paths'
 import {
+  formatBytes,
   formatNumber,
   loadStatusOverview,
   sumContent,
@@ -74,6 +75,22 @@ type SourceSeoHealthRow = {
   tone: 'green' | 'orange' | 'blue' | 'gray'
 }
 
+type OperationalPriorityTone = 'critical' | 'warning' | 'review' | 'ready'
+
+type OperationalPriorityRow = {
+  key: string
+  priority: string
+  stage: string
+  title: string
+  owner: string
+  metric: string
+  evidence: string
+  impact: string
+  href: string
+  actionLabel: string
+  tone: OperationalPriorityTone
+}
+
 export default async function AdminStatusPage() {
   const { role, email } = await getStatusAccess()
   const [overview, analytics, caseInquiryHealth] = await Promise.all([
@@ -89,13 +106,34 @@ export default async function AdminStatusPage() {
   const thirtyDays = analytics.windows.find((item) => item.days === 30) ?? analytics.windows[1] ?? sevenDays
   const todayComparison = analytics.comparisons.find((item) => item.key === 'today')
   const thirtyComparison = analytics.comparisons.find((item) => item.key === '30')
+  const configIssues = role === 'admin' ? overview.site.configChecks.filter((item) => !item.ok).length : 0
+  const leadIssues = overview.leads.new + overview.leads.staleFollowups
   const siteIssues =
     overview.site.pages.total +
     overview.site.seo.missing +
     overview.site.media.issueCount +
     (overview.site.media.bytes > 800 * 1024 * 1024 ? 1 : 0) +
-    (role === 'admin' ? overview.site.configChecks.filter((item) => !item.ok).length : 0)
-  const queueTotal = overview.leads.new + contentTotals.issues + siteIssues + caseInquiryHealth.weak
+    configIssues
+  const queueTotal = leadIssues + contentTotals.issues + siteIssues + caseInquiryHealth.weak
+  const priorityRows = buildOperationalPriorityRows({
+    newLeads: overview.leads.new,
+    staleFollowups: overview.leads.staleFollowups,
+    contactingLeads: overview.leads.contacting,
+    productIssues: overview.content.products.issues,
+    projectIssues: overview.content.projects.issues,
+    newsIssues: overview.content.news.issues,
+    contentIssues: contentTotals.issues,
+    pageDrafts: overview.site.pages.total,
+    seoMissing: overview.site.seo.missing,
+    productsSeoMissing: overview.site.seo.productsMissing,
+    projectsSeoMissing: overview.site.seo.projectsMissing,
+    newsSeoMissing: overview.site.seo.newsMissing,
+    mediaIssueCount: overview.site.media.issueCount,
+    mediaBytes: overview.site.media.bytes,
+    configIssues,
+    caseInquiryHealth,
+    thirtyDays,
+  })
 
   return (
     <StatusPageShell
@@ -125,6 +163,7 @@ export default async function AdminStatusPage() {
             contentIssues={contentTotals.issues}
             siteIssues={siteIssues}
             newLeads={overview.leads.new}
+            staleFollowups={overview.leads.staleFollowups}
             caseConversionWeak={caseInquiryHealth.weak}
           />
         </AdminPageHero>
@@ -134,6 +173,8 @@ export default async function AdminStatusPage() {
           bestDay={analytics.bestDay}
           activeRange="30"
         />
+
+        <OperationalPriorityLedger rows={priorityRows} />
 
         <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1fr)_380px]">
           <div className="space-y-6">
@@ -341,6 +382,291 @@ function StatusLink({ href, label }: { href: string; label: string }) {
   )
 }
 
+function buildOperationalPriorityRows({
+  newLeads,
+  staleFollowups,
+  contactingLeads,
+  productIssues,
+  projectIssues,
+  newsIssues,
+  contentIssues,
+  pageDrafts,
+  seoMissing,
+  productsSeoMissing,
+  projectsSeoMissing,
+  newsSeoMissing,
+  mediaIssueCount,
+  mediaBytes,
+  configIssues,
+  caseInquiryHealth,
+  thirtyDays,
+}: {
+  newLeads: number
+  staleFollowups: number
+  contactingLeads: number
+  productIssues: number
+  projectIssues: number
+  newsIssues: number
+  contentIssues: number
+  pageDrafts: number
+  seoMissing: number
+  productsSeoMissing: number
+  projectsSeoMissing: number
+  newsSeoMissing: number
+  mediaIssueCount: number
+  mediaBytes: number
+  configIssues: number
+  caseInquiryHealth: CaseInquiryHealth
+  thirtyDays: AnalyticsWindowMetric
+}): OperationalPriorityRow[] {
+  const mediaStorageWarn = mediaBytes > 800 * 1024 * 1024
+  const trafficActions = metricActions(thirtyDays)
+  const trafficActionGap = thirtyDays.pageViews > 0 && trafficActions > 0 && thirtyDays.leads === 0
+  const trafficReview = thirtyDays.pageViews > 0 && thirtyDays.leads === 0
+  const rows: OperationalPriorityRow[] = [
+    {
+      key: 'new-leads',
+      priority: newLeads > 0 ? 'P0' : 'OK',
+      stage: '线索响应',
+      title: '新线索首次处理',
+      owner: '客户与线索',
+      metric: `${formatNumber(newLeads)} 条`,
+      evidence: `新线索 ${formatNumber(newLeads)}，跟进中 ${formatNumber(contactingLeads)}。`,
+      impact: newLeads > 0 ? '新询盘未处理会直接影响采购机会和响应速度。' : '当前没有等待首次处理的新线索。',
+      href: '/admin/customers/leads?status=new',
+      actionLabel: newLeads > 0 ? '处理新线索' : '查看线索',
+      tone: newLeads > 0 ? 'critical' : 'ready',
+    },
+    {
+      key: 'stale-followups',
+      priority: staleFollowups > 0 ? 'P0' : 'OK',
+      stage: '跟进断点',
+      title: '超 7 天未更新线索',
+      owner: '客户与线索',
+      metric: `${formatNumber(staleFollowups)} 条`,
+      evidence: `active 线索超过 7 天未更新 ${formatNumber(staleFollowups)} 条。`,
+      impact: staleFollowups > 0 ? '跟进断点会让询盘从可推进状态变成无人承接状态。' : '当前 active 线索没有超 7 天未更新断点。',
+      href: '/admin/status/leads#case-lead-quality-followup-desk',
+      actionLabel: staleFollowups > 0 ? '复核跟进' : '查看漏斗',
+      tone: staleFollowups > 0 ? 'critical' : 'ready',
+    },
+    {
+      key: 'source-seo',
+      priority: seoMissing > 0 ? 'P1' : 'OK',
+      stage: '来源 SEO',
+      title: '已发布内容 SEO 缺项',
+      owner: '网站管理 / SEO',
+      metric: `${formatNumber(seoMissing)} 项`,
+      evidence: `产品 ${formatNumber(productsSeoMissing)} / 案例 ${formatNumber(projectsSeoMissing)} / 新闻 ${formatNumber(newsSeoMissing)}。`,
+      impact: seoMissing > 0 ? 'SEO 缺项会影响搜索摘要、来源判断和内容到线索的闭环复盘。' : '已发布内容当前没有 SEO 缺项。',
+      href: '/admin/status#source-seo-health',
+      actionLabel: seoMissing > 0 ? '处理 SEO' : '查看来源',
+      tone: seoMissing > 0 ? 'warning' : 'ready',
+    },
+    {
+      key: 'content-health',
+      priority: contentIssues > 0 ? 'P1' : 'OK',
+      stage: '内容健康',
+      title: '产品 / 案例 / 新闻内容缺项',
+      owner: '内容管理',
+      metric: `${formatNumber(contentIssues)} 项`,
+      evidence: `产品 ${formatNumber(productIssues)} / 案例 ${formatNumber(projectIssues)} / 新闻 ${formatNumber(newsIssues)}。`,
+      impact: contentIssues > 0 ? '关键字段缺失会影响公开展示、搜索承接和列表筛选效率。' : '内容关键字段当前状态正常。',
+      href: '/admin/status/content#public-discovery-health',
+      actionLabel: contentIssues > 0 ? '补内容' : '查看内容',
+      tone: contentIssues > 0 ? 'warning' : 'ready',
+    },
+    {
+      key: 'media-risk',
+      priority: mediaIssueCount > 0 ? 'P1' : mediaStorageWarn ? 'P2' : 'OK',
+      stage: '素材健康',
+      title: '大图 / 缺派生图风险',
+      owner: '媒体库',
+      metric: mediaIssueCount > 0 ? `${formatNumber(mediaIssueCount)} 项` : formatBytes(mediaBytes),
+      evidence: `风险素材 ${formatNumber(mediaIssueCount)} 个；媒体容量 ${formatBytes(mediaBytes)}。`,
+      impact: mediaIssueCount > 0
+        ? '大原图或缺少前台派生图会影响页面加载和素材替换判断。'
+        : mediaStorageWarn
+          ? '媒体容量接近预警线，需要后续治理素材体积。'
+          : '媒体风险和容量当前处于预警线内。',
+      href: mediaIssueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media',
+      actionLabel: mediaIssueCount > 0 ? '处理素材' : '查看媒体',
+      tone: mediaIssueCount > 0 ? 'warning' : mediaStorageWarn ? 'review' : 'ready',
+    },
+    {
+      key: 'page-drafts',
+      priority: pageDrafts > 0 ? 'P1' : 'OK',
+      stage: '发布收口',
+      title: '页面模块 / 结构草稿',
+      owner: '网站管理 / Visual Editor',
+      metric: `${formatNumber(pageDrafts)} 个`,
+      evidence: `页面模块和结构草稿合计 ${formatNumber(pageDrafts)} 个。`,
+      impact: pageDrafts > 0 ? '草稿未确认会造成后台编辑状态和线上页面预期不一致。' : '页面草稿已收口。',
+      href: '/admin/site/visual',
+      actionLabel: pageDrafts > 0 ? '处理草稿' : '查看编辑器',
+      tone: pageDrafts > 0 ? 'warning' : 'ready',
+    },
+    {
+      key: 'case-conversion',
+      priority: caseInquiryHealth.weak > 0 ? 'P1' : 'OK',
+      stage: '案例转化',
+      title: '已发布案例询盘承接弱',
+      owner: '案例内容 / 转化',
+      metric: `${formatNumber(caseInquiryHealth.weak)} 个`,
+      evidence: `已发布 ${formatNumber(caseInquiryHealth.published)}，可承接 ${formatNumber(caseInquiryHealth.ready)}，待补 ${formatNumber(caseInquiryHealth.weak)}。`,
+      impact: caseInquiryHealth.weak > 0 ? '案例证明页缺少询盘承接要素，会削弱客户从案例到联系的路径。' : '已发布案例询盘承接关键字段正常。',
+      href: '/admin/content/projects/list?view=case-conversion-weak',
+      actionLabel: caseInquiryHealth.weak > 0 ? '处理案例' : '查看案例',
+      tone: caseInquiryHealth.weak > 0 ? 'warning' : 'ready',
+    },
+    {
+      key: 'traffic-to-lead',
+      priority: trafficActionGap ? 'P1' : trafficReview ? 'P2' : 'OK',
+      stage: '访问转化',
+      title: '有访问 / 动作但无线索',
+      owner: '数据中心 / 转化路径',
+      metric: `${formatNumber(thirtyDays.leads)} 线索`,
+      evidence: `30 天 PV ${formatNumber(thirtyDays.pageViews)}，动作 ${formatNumber(trafficActions)}，真实线索 ${formatNumber(thirtyDays.leads)}。`,
+      impact: trafficActionGap
+        ? '已有访问和动作但没有线索，需要分诊入口、CTA、表单和 source_type 承接。'
+        : trafficReview
+          ? '已有访问但线索样本不足，继续观察入口和落地页表现。'
+          : '访问到线索路径当前有可读样本或暂无访问样本。',
+      href: '/admin/status/traffic#traffic-to-lead-exception-desk',
+      actionLabel: trafficActionGap ? '分诊流量' : '查看流量',
+      tone: trafficActionGap ? 'warning' : trafficReview ? 'review' : 'ready',
+    },
+  ]
+
+  if (configIssues > 0) {
+    rows.push({
+      key: 'config-boundary',
+      priority: 'P1',
+      stage: '基础配置',
+      title: '站点配置异常',
+      owner: '网站设置',
+      metric: `${formatNumber(configIssues)} 项`,
+      evidence: `管理员可见配置检查异常 ${formatNumber(configIssues)} 项；不展示密钥内容。`,
+      impact: '配置异常可能影响发信、存储、联系入口或上传闭环。',
+      href: '/admin/site/settings',
+      actionLabel: '查看设置',
+      tone: 'warning',
+    })
+  }
+
+  const toneOrder: Record<OperationalPriorityTone, number> = {
+    critical: 0,
+    warning: 1,
+    review: 2,
+    ready: 3,
+  }
+  const priorityOrder: Record<string, number> = {
+    P0: 0,
+    P1: 1,
+    P2: 2,
+    P3: 3,
+    OK: 4,
+  }
+
+  return rows.sort((a, b) => toneOrder[a.tone] - toneOrder[b.tone] || priorityOrder[a.priority] - priorityOrder[b.priority])
+}
+
+function OperationalPriorityLedger({ rows }: { rows: OperationalPriorityRow[] }) {
+  const openRows = rows.filter((row) => row.tone === 'critical' || row.tone === 'warning')
+  const reviewRows = rows.filter((row) => row.tone === 'review')
+
+  return (
+    <section id="operations-priority-ledger" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B375 Operations Priority Ledger</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">运营优先级台账</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            把线索、内容、SEO、素材、页面草稿、案例转化和访问转化异常放进一张只读处理队列；运营从这里判断先做什么，再进入对应工作台。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className={`inline-flex min-h-9 items-center rounded-md px-3 text-xs font-bold ${openRows.length > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
+            {openRows.length > 0 ? `${formatNumber(openRows.length)} 个优先处理项` : '无优先阻塞项'}
+          </span>
+          <span className="inline-flex min-h-9 items-center rounded-md bg-[#F0EEFB] px-3 text-xs font-bold text-[#6B58C5]">
+            {formatNumber(reviewRows.length)} 个观察项
+          </span>
+          <StatusLink href="/admin/status/activity" label="近期变化" />
+          <StatusLink href="/admin/status/site" label="站点健康" />
+        </div>
+      </div>
+
+      <div className="hidden grid-cols-[0.55fr_0.85fr_minmax(0,1.1fr)_0.7fr_minmax(0,1.6fr)_0.72fr] border-b border-[#E6EEEE] bg-[#F7FAFA] px-4 py-2 text-xs font-semibold text-[#61767D] xl:grid">
+        <span>优先级</span>
+        <span>阶段 / owner</span>
+        <span>事项</span>
+        <span>当前值</span>
+        <span>证据 / 影响</span>
+        <span>处理入口</span>
+      </div>
+
+      <div className="divide-y divide-[#E6EEEE]">
+        {rows.map((row) => (
+          <OperationalPriorityRowView key={row.key} row={row} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function OperationalPriorityRowView({ row }: { row: OperationalPriorityRow }) {
+  return (
+    <Link
+      href={row.href}
+      className={`group grid grid-cols-1 gap-3 px-4 py-4 text-sm transition hover:bg-[#F7FAFA] xl:grid-cols-[0.55fr_0.85fr_minmax(0,1.1fr)_0.7fr_minmax(0,1.6fr)_0.72fr] xl:items-center ${operationalPriorityRowClass(row.tone)}`}
+    >
+      <div className="flex items-center gap-2">
+        <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-bold ${operationalPriorityBadgeClass(row.tone)}`}>
+          {row.priority}
+        </span>
+        <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ${operationalPriorityBadgeClass(row.tone)}`}>
+          {operationalPriorityLabel(row.tone)}
+        </span>
+      </div>
+      <div>
+        <p className="font-bold text-[#1E2C31]">{row.stage}</p>
+        <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{row.owner}</p>
+      </div>
+      <p className="font-bold text-[#1E2C31]">{row.title}</p>
+      <p className="text-lg font-black text-[#1E2C31]">{row.metric}</p>
+      <div className="space-y-1 text-xs leading-5 text-[#61767D]">
+        <p>{row.evidence}</p>
+        <p className="font-semibold text-[#1E2C31]">{row.impact}</p>
+      </div>
+      <span className="inline-flex min-h-8 w-fit items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition group-hover:border-[#E36F2C]/50 group-hover:text-[#E36F2C]">
+        {row.actionLabel}
+      </span>
+    </Link>
+  )
+}
+
+function operationalPriorityRowClass(tone: OperationalPriorityTone): string {
+  if (tone === 'critical') return 'border-l-4 border-l-[#E36F2C] bg-[#FFF7F0]'
+  if (tone === 'warning') return 'border-l-4 border-l-[#1889B6] bg-white'
+  if (tone === 'review') return 'border-l-4 border-l-[#7C65D1] bg-[#F8F7FD]'
+  return 'border-l-4 border-l-emerald-500 bg-white'
+}
+
+function operationalPriorityBadgeClass(tone: OperationalPriorityTone): string {
+  if (tone === 'critical') return 'bg-[#FFF2E7] text-[#C85F24]'
+  if (tone === 'warning') return 'bg-[#EAF6F8] text-[#1889B6]'
+  if (tone === 'review') return 'bg-[#F0EEFB] text-[#6B58C5]'
+  return 'bg-emerald-50 text-emerald-700'
+}
+
+function operationalPriorityLabel(tone: OperationalPriorityTone): string {
+  if (tone === 'critical') return '立即处理'
+  if (tone === 'warning') return '优先处理'
+  if (tone === 'review') return '观察'
+  return '正常'
+}
+
 function ExecutiveStrip({
   today,
   thirtyDays,
@@ -348,6 +674,7 @@ function ExecutiveStrip({
   contentIssues,
   siteIssues,
   newLeads,
+  staleFollowups,
   caseConversionWeak,
 }: {
   today: AnalyticsPeriodMetric
@@ -356,8 +683,10 @@ function ExecutiveStrip({
   contentIssues: number
   siteIssues: number
   newLeads: number
+  staleFollowups: number
   caseConversionWeak: number
 }) {
+  const leadIssues = newLeads + staleFollowups
   const cells = [
     {
       label: '今日 PV',
@@ -380,8 +709,8 @@ function ExecutiveStrip({
     {
       label: '运营待处理',
       value: formatNumber(queueTotal),
-      detail: `线索 ${formatNumber(newLeads)} / 内容 ${formatNumber(contentIssues)} / 案例 ${formatNumber(caseConversionWeak)} / 站点 ${formatNumber(siteIssues)}`,
-      href: caseConversionWeak > 0 ? '/admin/content/projects/list?view=case-conversion-weak' : queueTotal > 0 ? '/admin/status/content' : '/admin/status/activity',
+      detail: `线索 ${formatNumber(leadIssues)} / 内容 ${formatNumber(contentIssues)} / 案例 ${formatNumber(caseConversionWeak)} / 站点 ${formatNumber(siteIssues)}`,
+      href: leadIssues > 0 ? '/admin/status/leads' : caseConversionWeak > 0 ? '/admin/content/projects/list?view=case-conversion-weak' : queueTotal > 0 ? '/admin/status/content' : '/admin/status/activity',
     },
   ]
 
