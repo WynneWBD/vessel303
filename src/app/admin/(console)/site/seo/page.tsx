@@ -97,6 +97,18 @@ type SeoOperationsBridgeItem = {
   tone: 'orange' | 'blue' | 'green' | 'gray'
 }
 
+type SeoWorkflowStep = {
+  stage: string
+  title: string
+  owner: string
+  metric: string
+  detail: string
+  action: string
+  href?: string
+  Icon: LucideIcon
+  tone: SeoPriorityTone
+}
+
 const EMPTY_CONTENT_SUMMARY: ContentSeoSummary = {
   total: 0,
   published: 0,
@@ -1781,6 +1793,137 @@ function SeoSubmissionLedger({ items }: { items: SeoSubmissionItem[] }) {
   )
 }
 
+function buildSeoWorkflowSteps({
+  products,
+  news,
+  projects,
+  indexFoundationItems,
+  priorityItems,
+  submissionItems,
+}: {
+  products: ContentSeoSummary
+  news: ContentSeoSummary
+  projects: ContentSeoSummary
+  indexFoundationItems: IndexFoundationItem[]
+  priorityItems: SeoPriorityItem[]
+  submissionItems: SeoSubmissionItem[]
+}): SeoWorkflowStep[] {
+  const missingTotal = products.missing + news.missing + projects.missing
+  const foundationBlocked = submissionItems.filter((item) => item.status === 'blocked').length
+  const manualSubmit = submissionItems.filter((item) => item.status === 'manual').length
+  const readyFoundation = indexFoundationItems.filter((item) => item.status === 'ready').length
+  const activePriority = priorityItems.filter((item) => item.tone === 'critical' || item.tone === 'warning').length
+
+  return [
+    {
+      stage: '1. 内容补齐',
+      title: '先补详情页 TDK 缺口',
+      owner: '内容后台 / 产品、新闻、案例',
+      metric: `${formatNumber(missingTotal)} 项`,
+      detail: `${formatNumber(products.missing)} 个产品、${formatNumber(news.missing)} 篇新闻、${formatNumber(projects.missing)} 个案例需要先复核 SEO 字段或派生摘要。`,
+      action: missingTotal > 0 ? '进入产品 SEO 缺口筛选，先处理会影响搜索摘要的内容。' : '内容字段已具备提交前抽查条件。',
+      href: missingTotal > 0 ? '/admin/content/products/list?view=incomplete&issue=seo' : '/admin/site/seo#metadata-coverage',
+      Icon: FileText,
+      tone: missingTotal > 0 ? 'critical' : 'ready',
+    },
+    {
+      stage: '2. 抓取基础',
+      title: '复验 robots / sitemap / verification',
+      owner: '站点设置 / SEO 检查',
+      metric: `${formatNumber(readyFoundation)} / ${formatNumber(indexFoundationItems.length)}`,
+      detail: `提交前必须确认 robots、sitemap、站点验证和公开路径都处于可复验状态；当前阻塞 ${formatNumber(foundationBlocked)} 项。`,
+      action: foundationBlocked > 0 ? '先处理阻塞项，再进入人工提交。' : '打开 sitemap 和 robots 做最后抽查。',
+      href: '/admin/site/seo#submission-readiness',
+      Icon: SearchCheck,
+      tone: foundationBlocked > 0 ? 'warning' : 'ready',
+    },
+    {
+      stage: '3. 人工提交',
+      title: 'Search Console 提交与记录',
+      owner: '运营人工 / 不调用 Google API',
+      metric: `${formatNumber(manualSubmit)} 项`,
+      detail: '当前后台只生成提交前证据和操作路径，不自动登录 Google、不调用 Search Console API、不保存外部账号信息。',
+      action: manualSubmit > 0 ? '由运营人工提交 sitemap，并把复查口径留在本页台账。' : '当前无人工提交动作。',
+      href: '/admin/site/seo#submission-readiness',
+      Icon: ShieldCheck,
+      tone: manualSubmit > 0 ? 'warning' : 'ready',
+    },
+    {
+      stage: '4. 提交后复查',
+      title: '把收录问题回流到内容来源',
+      owner: 'SEO / 内容 / 页面模块',
+      metric: `${formatNumber(activePriority)} 项`,
+      detail: '提交后若出现未收录、摘要不对或重点页缺点击，按优先处理队列回到具体 owner，不在前台硬改模板。',
+      action: activePriority > 0 ? '按优先队列处理并复验前台路径。' : '维持常规周检。重点关注产品详情、案例详情和 Contact 转化路径。',
+      href: '/admin/site/seo#metadata-coverage',
+      Icon: ListChecks,
+      tone: activePriority > 0 ? 'warning' : 'ready',
+    },
+  ]
+}
+
+function SeoSubmissionWorkflowBoard({ steps }: { steps: SeoWorkflowStep[] }) {
+  const blockers = steps.filter((step) => step.tone === 'critical' || step.tone === 'warning').length
+
+  return (
+    <section id="seo-submit-review-workflow" className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-5 shadow-sm">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
+            <ListChecks size={15} />
+            Submit / Review Workflow
+          </div>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">SEO 提交与复查工作流</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            对齐 300.cn 后台的 SEO 操作顺序：先补内容字段，再复验抓取基础，由人工提交，最后把搜索问题回流到内容 owner。
+          </p>
+        </div>
+        <span className={`inline-flex w-fit rounded-md px-3 py-2 text-xs font-bold ${blockers > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
+          {blockers > 0 ? `${formatNumber(blockers)} 个步骤需处理` : '提交流程可复验'}
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-4">
+        {steps.map((step) => {
+          const Icon = step.Icon
+          const card = (
+            <article className="flex h-full flex-col rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm transition hover:border-[#1889B6]/60">
+              <div className="flex items-start justify-between gap-3">
+                <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${readinessToneClassName(step.tone)}`}>
+                  <Icon size={17} />
+                </span>
+                <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${priorityBadgeClassName(step.tone)}`}>
+                  {step.metric}
+                </span>
+              </div>
+              <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-[#1889B6]">{step.stage}</p>
+              <h3 className="mt-1 text-base font-bold text-[#1E2C31]">{step.title}</h3>
+              <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{step.owner}</p>
+              <p className="mt-3 flex-1 text-xs leading-5 text-[#61767D]">{step.detail}</p>
+              <p className="mt-3 text-xs font-semibold leading-5 text-[#1E2C31]">{step.action}</p>
+              {step.href ? (
+                <span className="mt-4 inline-flex h-8 w-fit items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6]">
+                  进入处理 <ArrowRight size={13} />
+                </span>
+              ) : null}
+            </article>
+          )
+
+          return step.href ? (
+            <Link key={step.stage} href={step.href} className="block h-full">
+              {card}
+            </Link>
+          ) : (
+            <div key={step.stage} className="h-full">
+              {card}
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 function StaticSeoCard({ page }: { page: StaticSeoPage }) {
   const Icon = page.Icon
   const content = (
@@ -1908,6 +2051,7 @@ export default async function AdminSiteSeoPage() {
   const indexFoundationItems = loadIndexFoundationItems()
   const priorityItems = buildSeoPriorityItems({ products, news, projects, indexFoundationItems })
   const submissionItems = buildSeoSubmissionItems({ products, news, projects, indexFoundationItems })
+  const workflowSteps = buildSeoWorkflowSteps({ products, news, projects, indexFoundationItems, priorityItems, submissionItems })
 
   return (
     <AdminSectionShell
@@ -1946,6 +2090,8 @@ export default async function AdminSiteSeoPage() {
       />
 
       <ProductSeoLifecycleBridge products={products} />
+
+      <SeoSubmissionWorkflowBoard steps={workflowSteps} />
 
       <SeoReadinessOverviewTable
         products={products}

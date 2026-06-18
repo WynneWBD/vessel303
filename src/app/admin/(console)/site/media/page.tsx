@@ -21,6 +21,7 @@ import {
   Filter,
   HardDrive,
   Image as ImageIcon,
+  ImageOff,
   Layers,
   LayoutTemplate,
   Link2,
@@ -69,6 +70,17 @@ type MediaConsoleRow = {
   Icon: LucideIcon
   tone: MediaConsoleTone
   actions: MediaConsoleAction[]
+}
+
+type MediaReplacementLane = {
+  stage: string
+  title: string
+  metric: string
+  detail: string
+  action: string
+  href: string
+  Icon: LucideIcon
+  tone: MediaConsoleTone
 }
 
 function formatNumber(value: number): string {
@@ -393,6 +405,127 @@ function MediaConsoleRowView({ row }: { row: MediaConsoleRow }) {
   )
 }
 
+function buildMediaReplacementLanes({
+  filters,
+  issueTotal,
+  referenceSummary,
+  maxUploadMb,
+}: {
+  filters: MediaFilterState
+  issueTotal: number
+  referenceSummary: MediaReferenceSummary
+  maxUploadMb: number
+}): MediaReplacementLane[] {
+  return [
+    {
+      stage: '1. 风险原图',
+      title: '先处理大图和缺变体',
+      metric: `${formatNumber(issueTotal)} 项`,
+      detail: `单文件上限 ${maxUploadMb} MB；前台建议优先使用 thumb / card / detail 派生图，避免直接引用大原图。`,
+      action: issueTotal > 0 ? '进入风险素材筛选，逐张确认是否需要重新生成派生图或替换引用。' : '当前没有命中的风险素材。',
+      href: createMediaHref(filters, { view: 'issues', page: 1 }),
+      Icon: AlertCircle,
+      tone: issueTotal > 0 ? 'orange' : 'green',
+    },
+    {
+      stage: '2. 未引用素材',
+      title: '识别可归档或待绑定素材',
+      metric: `${formatNumber(referenceSummary.unused)} / ${formatNumber(referenceSummary.sampled)}`,
+      detail: '按当前页抽样统计素材引用情况；未引用不等于可删除，只代表需要判断来源、用途和是否等待上架。',
+      action: referenceSummary.unused > 0 ? '从当前素材列表打开详情，确认来源和用途，再决定是否绑定到页面或保留。' : '当前抽样素材均有引用。',
+      href: createMediaHref(filters, { page: 1 }),
+      Icon: ImageOff,
+      tone: referenceSummary.unused > 0 ? 'orange' : 'green',
+    },
+    {
+      stage: '3. 草稿引用',
+      title: '先看草稿再发布',
+      metric: `${formatNumber(referenceSummary.draftRefs)} 处`,
+      detail: '草稿引用包含页面模块草稿、快照和结构草稿；发布前需要确认图片尺寸、替换路径和前台显示。',
+      action: referenceSummary.draftRefs > 0 ? '进入页面视觉编辑器，按模块预览确认草稿图片。' : '当前抽样未发现草稿引用。',
+      href: '/admin/site/visual',
+      Icon: LayoutTemplate,
+      tone: referenceSummary.draftRefs > 0 ? 'blue' : 'gray',
+    },
+    {
+      stage: '4. 线上引用',
+      title: '按内容 owner 回源替换',
+      metric: `${formatNumber(referenceSummary.contentRefs + referenceSummary.pageRefs)} 处`,
+      detail: `内容引用 ${formatNumber(referenceSummary.contentRefs)}，页面模块引用 ${formatNumber(referenceSummary.pageRefs)}；不要在素材库里猜前台位置。`,
+      action: referenceSummary.contentRefs + referenceSummary.pageRefs > 0
+        ? '从内容来源中心判断 owner，再进入产品、案例、新闻或页面模块替换。'
+        : '当前抽样未发现线上引用。',
+      href: '/admin/site/pages',
+      Icon: Link2,
+      tone: referenceSummary.contentRefs + referenceSummary.pageRefs > 0 ? 'blue' : 'gray',
+    },
+  ]
+}
+
+function MediaReplacementWorkbench({
+  filters,
+  issueTotal,
+  referenceSummary,
+  maxUploadMb,
+}: {
+  filters: MediaFilterState
+  issueTotal: number
+  referenceSummary: MediaReferenceSummary
+  maxUploadMb: number
+}) {
+  const lanes = buildMediaReplacementLanes({ filters, issueTotal, referenceSummary, maxUploadMb })
+  const activeLanes = lanes.filter((lane) => lane.tone === 'orange' || lane.tone === 'blue').length
+
+  return (
+    <section id="media-replacement-workbench" className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-5 shadow-sm">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
+            <Wrench size={15} />
+            Replacement Routing
+          </div>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">素材引用与替换工作台</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            对齐 300.cn 素材库的处理心智：先找风险原图，再判断未引用素材，发布前复核草稿引用，线上引用回到内容 owner 替换。
+          </p>
+        </div>
+        <span className={`inline-flex w-fit rounded-md px-3 py-2 text-xs font-bold ${activeLanes > 0 ? 'bg-[#EAF6F8] text-[#1889B6]' : 'bg-emerald-50 text-emerald-700'}`}>
+          {activeLanes > 0 ? `${formatNumber(activeLanes)} 条处理路线` : '暂无处理路线'}
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-4">
+        {lanes.map((lane) => {
+          const Icon = lane.Icon
+          return (
+            <a
+              key={lane.stage}
+              href={lane.href}
+              className={`flex h-full flex-col rounded-md border border-[#D8E7E8] border-l-4 bg-white p-4 shadow-sm transition hover:border-[#1889B6]/60 ${mediaConsoleToneClass(lane.tone)}`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${mediaConsoleSignalClass(lane.tone)}`}>
+                  <Icon size={17} />
+                </span>
+                <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${mediaConsoleSignalClass(lane.tone)}`}>
+                  {lane.metric}
+                </span>
+              </div>
+              <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-[#1889B6]">{lane.stage}</p>
+              <h3 className="mt-1 text-base font-bold text-[#1E2C31]">{lane.title}</h3>
+              <p className="mt-3 flex-1 text-xs leading-5 text-[#61767D]">{lane.detail}</p>
+              <p className="mt-3 text-xs font-semibold leading-5 text-[#1E2C31]">{lane.action}</p>
+              <span className="mt-4 inline-flex h-8 w-fit items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6]">
+                进入处理 <ArrowRight size={13} />
+              </span>
+            </a>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 function getSiteToolNav(uploadCount: number): AdminSideNavGroup[] {
   return [
     {
@@ -497,6 +630,12 @@ export default async function SiteMediaPage({
         issueTotal={issueResult.total}
         bytes={bytes}
         pageRows={uploads.length}
+        referenceSummary={referenceSummary}
+        maxUploadMb={maxUploadMb}
+      />
+      <MediaReplacementWorkbench
+        filters={mediaFilters}
+        issueTotal={issueResult.total}
         referenceSummary={referenceSummary}
         maxUploadMb={maxUploadMb}
       />

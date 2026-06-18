@@ -294,6 +294,14 @@ type ContentReleaseLedgerRow = {
   score: number
 }
 
+type ContentSourceTreeGroup = {
+  group: string
+  contracts: GovernanceContractStatus[]
+  issueCount: number
+  draftCount: number
+  publishedCount: number
+}
+
 function releaseLedgerTone(contract: GovernanceContractStatus): ContentReleaseLedgerTone {
   if (contract.issueLevel === 'protected') return 'protected'
   if (contract.issueLevel === 'warning') return 'danger'
@@ -348,6 +356,123 @@ function buildContentReleaseLedgerRows(contracts: GovernanceContractStatus[]): C
       }
     })
     .sort((a, b) => b.score - a.score || a.contract.group.localeCompare(b.contract.group) || a.contract.title.localeCompare(b.contract.title))
+}
+
+function buildContentSourceTreeGroups(contracts: GovernanceContractStatus[]): ContentSourceTreeGroup[] {
+  const groups = new Map<string, GovernanceContractStatus[]>()
+
+  for (const contract of contracts) {
+    const items = groups.get(contract.group) ?? []
+    items.push(contract)
+    groups.set(contract.group, items)
+  }
+
+  return Array.from(groups.entries())
+    .map(([group, groupContracts]) => ({
+      group,
+      contracts: [...groupContracts].sort((a, b) => contractPriorityScore(b) - contractPriorityScore(a) || a.title.localeCompare(b.title)),
+      issueCount: groupContracts.filter((contract) => contract.issueLevel === 'warning' || contract.issueLevel === 'notice').length,
+      draftCount: groupContracts.reduce((sum, contract) => sum + contract.metrics.draft + contract.metrics.draftModules, 0),
+      publishedCount: groupContracts.reduce((sum, contract) => sum + contract.metrics.published, 0),
+    }))
+    .sort((a, b) => b.issueCount - a.issueCount || a.group.localeCompare(b.group))
+}
+
+function ContentSourceRouteTree({ contracts }: { contracts: GovernanceContractStatus[] }) {
+  const groups = buildContentSourceTreeGroups(contracts)
+  const pageCount = contracts.reduce((sum, contract) => sum + contract.paths.length, 0)
+
+  return (
+    <section id="content-source-route-tree" className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-bold text-[#1E2C31]">
+            <GalleryHorizontalEnd size={16} className="text-[#1889B6]" />
+            <span>前台内容来源栏目树</span>
+          </div>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
+            按页面和栏目组织来源、路径、published、草稿、处理状态和编辑入口；运营从这里判断前台内容应该去哪个后台维护。
+          </p>
+        </div>
+        <span className="inline-flex w-fit rounded-full bg-[#F0F7F8] px-3 py-1 text-xs font-semibold text-[#1889B6]">
+          {contracts.length} 个来源合同 / {pageCount} 条前台路径
+        </span>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {groups.map((group) => (
+          <article key={group.group} className="overflow-hidden rounded-md border border-[#D8E7E8] bg-[#F7FAFA]">
+            <div className="flex flex-col gap-2 border-b border-[#D8E7E8] bg-white px-4 py-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 className="text-base font-bold text-[#1E2C31]">{group.group}</h3>
+                <p className="mt-1 text-xs text-[#61767D]">
+                  published {group.publishedCount} · 草稿 {group.draftCount} · 需关注 {group.issueCount}
+                </p>
+              </div>
+              <span className={`inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${group.issueCount > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
+                {group.issueCount > 0 ? '待处理' : '已闭合'}
+              </span>
+            </div>
+
+            <div className="divide-y divide-[#D8E7E8]">
+              {group.contracts.map((contract) => {
+                const Icon = PAGE_ICON[contract.key] ?? FileText
+                const draftCount = contract.metrics.draft + contract.metrics.draftModules
+                const hiddenCount = contract.metrics.hidden + contract.metrics.hiddenModules
+
+                return (
+                  <div key={contract.key} className="grid grid-cols-1 gap-3 bg-white px-4 py-4 xl:grid-cols-[1.25fr_1fr_1fr_1.15fr_0.85fr] xl:items-center">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
+                        <Icon size={17} />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-bold text-[#1E2C31]">{contract.title}</p>
+                          <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${levelClassName(contract.issueLevel)}`}>
+                            {levelLabel(contract.issueLevel)}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs leading-5 text-[#61767D]">{contract.paths.join(' / ')}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className={`rounded-full px-2 py-1 text-xs font-semibold ${sourceClassName(contract.sourceType)}`}>
+                        {SOURCE_LABEL[contract.sourceType]}
+                      </span>
+                      <p className="mt-1 text-xs leading-5 text-[#61767D]">{contract.contentSource}</p>
+                    </div>
+
+                    <div className="text-xs leading-5 text-[#61767D]">
+                      <p className="font-semibold text-[#1E2C31]">{contract.owner}</p>
+                      <p>published {contract.metrics.published} · 草稿 {draftCount} · hidden {hiddenCount}</p>
+                    </div>
+
+                    <div className="text-xs leading-5 text-[#61767D]">
+                      <p className="font-semibold text-[#1E2C31]">{releaseLedgerStage(contract)}</p>
+                      <p>{releaseLedgerSignal(contract)}</p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 xl:justify-end">
+                      {contract.adminHref ? (
+                        <Link href={contract.adminHref} className="inline-flex h-8 items-center gap-1 rounded-md bg-[#1889B6] px-2.5 text-xs font-semibold text-white transition hover:bg-[#0F6F95]">
+                          后台 <ArrowRight size={12} />
+                        </Link>
+                      ) : null}
+                      <Link href={contract.previewHref} className="inline-flex h-8 items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]">
+                        前台 <Eye size={12} />
+                      </Link>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
 }
 
 function ContentReleaseLedger({ contracts }: { contracts: GovernanceContractStatus[] }) {
@@ -818,6 +943,7 @@ export default async function AdminSitePagesPage() {
       </section>
 
       <GuardrailPanel />
+      <ContentSourceRouteTree contracts={contracts} />
       <ContentReleaseLedger contracts={contracts} />
       <ContentSourceOperationsMatrix contracts={contracts} />
       <ContractMatrix contracts={contracts} />
