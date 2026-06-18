@@ -8,6 +8,7 @@ import {
   AdminPageHero,
   AdminSectionTitle,
 } from '@/components/admin/AdminUI'
+import type { B9ContentKind } from '@/lib/b9-content-db'
 import { pool } from '@/lib/db'
 import {
   Archive,
@@ -73,7 +74,22 @@ type SecondaryContentDomain = {
   title: string
   detail: string
   href: string
+  previewHref: string
+  b9Kind: B9ContentKind
+  fixedSlugs?: string[]
   Icon: LucideIcon
+}
+
+type FixedContentSummary = {
+  domain: SecondaryContentDomain
+  total: number
+  draft: number
+  published: number
+  renderable: number
+  hidden: number
+  issues: string[]
+  tone: 'green' | 'orange' | 'blue'
+  unavailable?: boolean
 }
 
 type ContentWorkbenchRow = {
@@ -142,6 +158,8 @@ const SECONDARY_CONTENT_DOMAINS: SecondaryContentDomain[] = [
     title: 'FAQ',
     detail: '常见问题分类、排序、草稿、发布和隐藏。',
     href: '/admin/content/faq',
+    previewHref: '/faq',
+    b9Kind: 'faq',
     Icon: FileQuestion,
   },
   {
@@ -149,6 +167,8 @@ const SECONDARY_CONTENT_DOMAINS: SecondaryContentDomain[] = [
     title: '文件下载',
     detail: 'Media Kit 资源和申请线索入口。',
     href: '/admin/content/media-kit',
+    previewHref: '/media-kit',
+    b9Kind: 'media_file',
     Icon: FileArchive,
   },
   {
@@ -156,6 +176,9 @@ const SECONDARY_CONTENT_DOMAINS: SecondaryContentDomain[] = [
     title: '场景方案',
     detail: '固定场景页 tourism / commercial / public。',
     href: '/admin/content/scenarios',
+    previewHref: '/scenarios/tourism',
+    b9Kind: 'scenario',
+    fixedSlugs: ['tourism', 'commercial', 'public'],
     Icon: Presentation,
   },
   {
@@ -163,6 +186,8 @@ const SECONDARY_CONTENT_DOMAINS: SecondaryContentDomain[] = [
     title: 'Display 展示',
     detail: '展示页读取橱窗或后台配置内容。',
     href: '/admin/content/display',
+    previewHref: '/display',
+    b9Kind: 'display_slide',
     Icon: GalleryHorizontalEnd,
   },
   {
@@ -170,6 +195,9 @@ const SECONDARY_CONTENT_DOMAINS: SecondaryContentDomain[] = [
     title: '技术专题',
     detail: 'VI/IE、VIPC、VOLS 固定专题内容。',
     href: '/admin/content/innovation',
+    previewHref: '/innovation/viie',
+    b9Kind: 'innovation',
+    fixedSlugs: ['viie', 'vipc', 'vols'],
     Icon: Lightbulb,
   },
 ]
@@ -235,6 +263,140 @@ async function getContentSummary(): Promise<ContentDashboardSummary> {
     countContentSummary('news'),
   ])
   return { products, projects, news }
+}
+
+async function loadFixedContentSummary(domain: SecondaryContentDomain): Promise<FixedContentSummary> {
+  if (!(await tableExists('public.site_content_items'))) {
+    return unavailableFixedContentSummary(domain)
+  }
+
+  const hasCategoriesTable = await tableExists('public.site_content_categories')
+  const categoryJoin = hasCategoriesTable
+    ? `LEFT JOIN site_content_categories c
+         ON c.id = i.category_id
+        AND c.deleted_at IS NULL`
+    : ''
+  const visibleCategoryExistsSql = hasCategoriesTable
+    ? `EXISTS (
+         SELECT 1
+         FROM site_content_categories vc
+         WHERE vc.kind = $1
+           AND vc.deleted_at IS NULL
+           AND vc.status = 'visible'
+       )`
+    : 'FALSE'
+  const faqVisibleSql = hasCategoriesTable
+    ? `(
+         NOT ${visibleCategoryExistsSql}
+         OR (
+           c.slug IS NOT NULL
+           AND c.status = 'visible'
+         )
+       )`
+    : 'TRUE'
+  const renderableSql =
+    domain.b9Kind === 'faq'
+      ? `i.status = 'published' AND ${faqVisibleSql}`
+      : domain.b9Kind === 'display_slide'
+        ? `i.status = 'published' AND NULLIF(BTRIM(COALESCE(i.cover_image_url, '')), '') IS NOT NULL`
+        : `i.status = 'published'`
+
+  const fixedSlugs = domain.fixedSlugs ?? []
+  const res = await pool.query<{
+    total: string
+    draft: string
+    published: string
+    renderable: string
+    hidden: string
+    published_not_renderable: string
+    missing_fixed_slugs: string | null
+  }>(
+    `WITH fixed(slug) AS (
+       SELECT UNNEST($2::text[])
+     )
+     SELECT
+       COUNT(i.id)::text AS total,
+       COUNT(i.id) FILTER (WHERE i.status = 'draft')::text AS draft,
+       COUNT(i.id) FILTER (WHERE i.status = 'published')::text AS published,
+       COUNT(i.id) FILTER (WHERE ${renderableSql})::text AS renderable,
+       COUNT(i.id) FILTER (WHERE i.status = 'hidden')::text AS hidden,
+       COUNT(i.id) FILTER (WHERE i.status = 'published' AND NOT (${renderableSql}))::text AS published_not_renderable,
+       (
+         SELECT STRING_AGG(f.slug, ' / ' ORDER BY f.slug)
+         FROM fixed f
+         WHERE NOT EXISTS (
+           SELECT 1
+           FROM site_content_items fi
+           ${categoryJoin.replaceAll('i.', 'fi.')}
+           WHERE fi.kind = $1
+             AND fi.deleted_at IS NULL
+             AND fi.slug = f.slug
+             AND ${renderableSql.replaceAll('i.', 'fi.')}
+         )
+       ) AS missing_fixed_slugs
+     FROM site_content_items i
+     ${categoryJoin}
+     WHERE i.kind = $1
+       AND i.deleted_at IS NULL`,
+    [domain.b9Kind, fixedSlugs],
+  )
+  const row = res.rows[0]
+  const total = parseInt(row?.total ?? '0', 10)
+  const draft = parseInt(row?.draft ?? '0', 10)
+  const published = parseInt(row?.published ?? '0', 10)
+  const renderable = parseInt(row?.renderable ?? '0', 10)
+  const hidden = parseInt(row?.hidden ?? '0', 10)
+  const publishedButHidden = parseInt(row?.published_not_renderable ?? '0', 10)
+  const fixedMissing = (row?.missing_fixed_slugs ?? '')
+    .split(' / ')
+    .map((slug) => slug.trim())
+    .filter(Boolean)
+  const issues: string[] = []
+
+  if (renderable === 0) issues.push('前台可见内容为 0')
+  if (publishedButHidden > 0) issues.push(`${publishedButHidden} 条 published 缺前台必要字段`)
+  if (fixedMissing.length > 0) issues.push(`固定 slug 待发布：${fixedMissing.join(' / ')}`)
+  if (draft > 0) issues.push(`${draft} 条草稿待收口`)
+
+  return {
+    domain,
+    total,
+    draft,
+    published,
+    renderable,
+    hidden,
+    issues,
+    tone: renderable === 0 || publishedButHidden > 0 || fixedMissing.length > 0
+      ? 'orange'
+      : draft > 0
+        ? 'blue'
+        : 'green',
+  }
+}
+
+function unavailableFixedContentSummary(domain: SecondaryContentDomain): FixedContentSummary {
+  return {
+    domain,
+    total: 0,
+    draft: 0,
+    published: 0,
+    renderable: 0,
+    hidden: 0,
+    issues: ['数据暂不可读，入口仍可进入管理页'],
+    tone: 'blue',
+    unavailable: true,
+  }
+}
+
+async function getFixedContentSummaries(): Promise<FixedContentSummary[]> {
+  return Promise.all(
+    SECONDARY_CONTENT_DOMAINS.map((domain) => (
+      loadFixedContentSummary(domain).catch((err) => {
+        console.error(`[admin-content] fixed content summary failed: ${domain.key}`, err)
+        return unavailableFixedContentSummary(domain)
+      })
+    )),
+  )
 }
 
 async function countProjectsMissingCoordinates(): Promise<number> {
@@ -506,7 +668,13 @@ function ContentWorkbenchRowView({ row }: { row: ContentWorkbenchRow }) {
   )
 }
 
-function ContentDomainGrid({ summary }: { summary: ContentDashboardSummary }) {
+function ContentDomainGrid({
+  summary,
+  fixedContentSummaries,
+}: {
+  summary: ContentDashboardSummary
+  fixedContentSummaries: FixedContentSummary[]
+}) {
   return (
     <section id="drafts" className="scroll-mt-24 space-y-4">
       <AdminSectionTitle title="内容经营" detail="按内容域查看总量、草稿和近 30 天新增。" />
@@ -515,31 +683,76 @@ function ContentDomainGrid({ summary }: { summary: ContentDashboardSummary }) {
           <ContentDomainCard key={domain.key} domain={domain} summary={summary[domain.key]} />
         ))}
       </div>
-      <SecondaryContentGrid />
+      <FixedContentReadinessGrid summaries={fixedContentSummaries} />
     </section>
   )
 }
 
-function SecondaryContentGrid() {
+function FixedContentReadinessGrid({ summaries }: { summaries: FixedContentSummary[] }) {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-      {SECONDARY_CONTENT_DOMAINS.map((domain) => {
-        const Icon = domain.Icon
-        return (
-          <Link
-            key={domain.key}
-            href={domain.href}
-            className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60 hover:shadow-sm"
-          >
-            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
-              <Icon size={18} />
-            </span>
-            <span className="mt-4 block text-sm font-bold text-[#1E2C31]">{domain.title}</span>
-            <span className="mt-2 block text-xs leading-5 text-[#61767D]">{domain.detail}</span>
-          </Link>
-        )
-      })}
-    </div>
+    <section className="space-y-3">
+      <AdminSectionTitle title="固定内容发布就绪" detail="FAQ、文件下载、场景、Display、技术专题只展示前台可见的 published 内容；先处理橙色项。" />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+        {summaries.map((summary) => (
+          <FixedContentReadinessCard key={summary.domain.key} summary={summary} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function FixedContentReadinessCard({ summary }: { summary: FixedContentSummary }) {
+  const { domain } = summary
+  const Icon = domain.Icon
+  const toneClass =
+    summary.tone === 'orange'
+      ? 'border-orange-200 bg-orange-50/70 text-orange-700'
+      : summary.tone === 'blue'
+        ? 'border-[#D8E7E8] bg-[#F7FAFA] text-[#1889B6]'
+        : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  const issueText = summary.issues.length > 0 ? summary.issues.slice(0, 2).join(' / ') : '前台可见覆盖正常'
+
+  return (
+    <article className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${toneClass}`}>
+          <Icon size={18} />
+        </span>
+        <span className={`rounded-full px-2 py-1 text-[11px] font-bold ${toneClass}`}>
+          可见 {formatNumber(summary.renderable)}
+        </span>
+      </div>
+      <h3 className="mt-4 text-sm font-bold text-[#1E2C31]">{domain.title}</h3>
+      <p className="mt-2 min-h-10 text-xs leading-5 text-[#61767D]">{issueText}</p>
+      <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+        <SmallInlineStat label="总量" value={summary.total} />
+        <SmallInlineStat label="发布" value={summary.published} />
+        <SmallInlineStat label="草稿" value={summary.draft} />
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Link
+          href={domain.href}
+          className="inline-flex h-8 items-center rounded-md bg-[#1889B6] px-3 text-xs font-semibold text-white transition hover:bg-[#0F6F95]"
+        >
+          进入管理
+        </Link>
+        <Link
+          href={domain.previewHref}
+          className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#61767D] transition hover:border-[#1889B6] hover:text-[#1889B6]"
+        >
+          前台
+        </Link>
+      </div>
+    </article>
+  )
+}
+
+function SmallInlineStat({ label, value }: { label: string; value: number }) {
+  return (
+    <span className="rounded-md bg-[#F7FAFA] px-2 py-2">
+      <span className="block text-[11px] text-[#61767D]">{label}</span>
+      <span className="mt-1 block text-sm font-bold text-[#1E2C31]">{formatNumber(value)}</span>
+    </span>
   )
 }
 
@@ -758,9 +971,10 @@ export default async function AdminContentPage() {
     redirect('/admin/login?error=unauthorized')
   }
 
-  const [summary, missingProjectCoordinates] = await Promise.all([
+  const [summary, missingProjectCoordinates, fixedContentSummaries] = await Promise.all([
     safeLoad('content summary', () => getContentSummary(), EMPTY_DASHBOARD_SUMMARY),
     safeLoad('project missing coordinates', () => countProjectsMissingCoordinates(), 0),
+    safeLoad('fixed content summaries', () => getFixedContentSummaries(), []),
   ])
   const adminRole: AdminRole = role
   const isAdmin = adminRole === 'admin'
@@ -781,7 +995,7 @@ export default async function AdminContentPage() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-6">
           <ContentListWorkbench summary={summary} missingProjectCoordinates={missingProjectCoordinates} />
-          <ContentDomainGrid summary={summary} />
+          <ContentDomainGrid summary={summary} fixedContentSummaries={fixedContentSummaries} />
           <ActionMatrix />
           <WorkflowPanel />
           {isAdmin && <MaintenanceBlock />}
