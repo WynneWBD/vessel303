@@ -16,7 +16,7 @@ export async function generateMetadata() {
   return buildPageMetadata({ title, description, path: '/faq' })
 }
 
-const FAQ_CMS_TIMEOUT_MS = 5000
+const FAQ_CMS_TIMEOUT_MS = 12000
 
 function timeoutReject<T>(ms: number, label: string): Promise<T> {
   return new Promise((_, reject) => {

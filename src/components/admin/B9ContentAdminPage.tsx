@@ -1,8 +1,13 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import B9ContentManager from '@/components/admin/B9ContentManager'
 import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  Eye,
   FileArchive,
   FileQuestion,
   GalleryHorizontalEnd,
@@ -17,6 +22,8 @@ import {
 import {
   listB9ContentCategories,
   listB9ContentItems,
+  type B9ContentCategory,
+  type B9ContentItem,
   type B9ContentKind,
 } from '@/lib/b9-content-db'
 
@@ -117,6 +124,158 @@ function Metric({
   )
 }
 
+function getB9PreviewHref(kind: B9ContentKind): string {
+  if (kind === 'faq') return '/faq'
+  if (kind === 'media_file') return '/media-kit'
+  if (kind === 'scenario') return '/scenarios/tourism'
+  if (kind === 'display_slide') return '/display'
+  if (kind === 'innovation') return '/innovation/viie'
+  return '/'
+}
+
+function isPubliclyRenderableB9Item(
+  kind: B9ContentKind,
+  item: B9ContentItem,
+  visibleCategorySlugs: Set<string>,
+): boolean {
+  if (item.status !== 'published') return false
+  if (kind === 'faq' && visibleCategorySlugs.size > 0) {
+    return Boolean(item.category_slug && visibleCategorySlugs.has(item.category_slug))
+  }
+  if (kind === 'display_slide') return Boolean(item.cover_image_url?.trim())
+  return true
+}
+
+function B9ReadinessPanel({
+  copy,
+  rows,
+  categories,
+  count,
+}: {
+  copy: B9AdminCopy
+  rows: B9ContentItem[]
+  categories: B9ContentCategory[]
+  count: { draft: number; published: number; hidden: number }
+}) {
+  const previewHref = getB9PreviewHref(copy.kind)
+  const visibleCategorySlugs = new Set(
+    categories
+      .filter((category) => category.status === 'visible')
+      .map((category) => category.slug),
+  )
+  const renderableRows = rows.filter((item) => isPubliclyRenderableB9Item(copy.kind, item, visibleCategorySlugs))
+  const publishedButNotRenderable = rows.filter((item) => (
+    item.status === 'published' && !isPubliclyRenderableB9Item(copy.kind, item, visibleCategorySlugs)
+  ))
+  const fixedSlugMissing = copy.fixedSlugs?.filter((slug) => (
+    !rows.some((item) => item.slug === slug && isPubliclyRenderableB9Item(copy.kind, item, visibleCategorySlugs))
+  )) ?? []
+  const hasBlockingIssue = renderableRows.length === 0 || fixedSlugMissing.length > 0
+  const needsCategory = copy.allowCategories !== false && categories.length === 0
+  const publishedCoverageDetail = publishedButNotRenderable.length > 0
+    ? `${publishedButNotRenderable.length} 条 published 缺少前台必要字段，可能不会展示。`
+    : renderableRows.length > 0
+      ? '前台可读取并展示 published 内容。'
+      : '没有前台可见内容时，前台会显示空状态或静态兜底。'
+
+  return (
+    <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            {hasBlockingIssue ? (
+              <AlertTriangle size={18} className="text-[#E36F2C]" />
+            ) : (
+              <CheckCircle2 size={18} className="text-emerald-600" />
+            )}
+            <h2 className="text-xl font-bold text-[#1E2C31]">发布就绪与下一步动作</h2>
+          </div>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
+            固定内容只展示 published；草稿和 hidden 不进入前台。先处理阻断项，再打开前台复验。
+          </p>
+        </div>
+        <Link
+          href={previewHref}
+          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]"
+        >
+          <Eye size={14} />
+          前台预览
+        </Link>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <ReadinessAction
+          title="前台可见覆盖"
+          value={renderableRows.length > 0 ? `${renderableRows.length} 条` : '0 条'}
+          detail={publishedCoverageDetail}
+          href={renderableRows.length > 0 ? previewHref : '#b9-content-workbench'}
+          actionLabel={renderableRows.length > 0 ? '打开前台' : '补齐并发布'}
+          tone={renderableRows.length > 0 && publishedButNotRenderable.length === 0 ? 'green' : 'orange'}
+        />
+        <ReadinessAction
+          title="草稿收口"
+          value={`${count.draft} 条`}
+          detail={count.draft > 0 ? '草稿需要决定发布、继续补齐或保留内部。' : '暂无草稿积压。'}
+          href="#b9-content-workbench"
+          actionLabel={count.draft > 0 ? '查看草稿' : '进入列表'}
+          tone={count.draft > 0 ? 'orange' : 'green'}
+        />
+        <ReadinessAction
+          title="固定 slug"
+          value={copy.fixedSlugs?.length ? `${copy.fixedSlugs.length - fixedSlugMissing.length}/${copy.fixedSlugs.length}` : '不限制'}
+          detail={fixedSlugMissing.length > 0 ? `待发布：${fixedSlugMissing.join(' / ')}` : '固定路径覆盖正常。'}
+          href="#b9-content-workbench"
+          actionLabel="检查 slug"
+          tone={fixedSlugMissing.length > 0 ? 'orange' : 'green'}
+        />
+        <ReadinessAction
+          title="分类状态"
+          value={copy.allowCategories === false ? '不使用' : `${categories.length} 个`}
+          detail={needsCategory ? '当前没有分类，FAQ 等页面会按未分类列表展示。' : '分类配置可用于前台分组或后台筛选。'}
+          href="#b9-content-workbench"
+          actionLabel={needsCategory ? '创建分类' : '查看分类'}
+          tone={needsCategory ? 'blue' : 'green'}
+        />
+      </div>
+    </section>
+  )
+}
+
+function ReadinessAction({
+  title,
+  value,
+  detail,
+  href,
+  actionLabel,
+  tone,
+}: {
+  title: string
+  value: string
+  detail: string
+  href: string
+  actionLabel: string
+  tone: 'orange' | 'green' | 'blue'
+}) {
+  const toneClass =
+    tone === 'orange'
+      ? 'border-orange-100 bg-orange-50 text-orange-700'
+      : tone === 'blue'
+        ? 'border-[#D8E7E8] bg-[#F7FAFA] text-[#1889B6]'
+        : 'border-emerald-100 bg-emerald-50 text-emerald-700'
+
+  return (
+    <div className={`rounded-md border p-4 ${toneClass}`}>
+      <p className="text-xs font-semibold">{title}</p>
+      <p className="mt-2 text-2xl font-bold">{value}</p>
+      <p className="mt-2 min-h-10 text-xs leading-5">{detail}</p>
+      <Link href={href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold hover:underline">
+        {actionLabel}
+        <ArrowRight size={13} />
+      </Link>
+    </div>
+  )
+}
+
 export async function B9ContentAdminPage(copy: B9AdminCopy) {
   const session = await auth()
   if (!session?.user) redirect('/admin/login')
@@ -149,13 +308,16 @@ export async function B9ContentAdminPage(copy: B9AdminCopy) {
       activeItem={copy.activeItem}
     >
       <Hero copy={copy} count={count} />
-      <B9ContentManager
-        kind={copy.kind}
-        initialRows={rows}
-        initialCategories={categories}
-        allowCategories={copy.allowCategories}
-        fixedSlugs={copy.fixedSlugs}
-      />
+      <B9ReadinessPanel copy={copy} rows={rows} categories={categories} count={count} />
+      <div id="b9-content-workbench">
+        <B9ContentManager
+          kind={copy.kind}
+          initialRows={rows}
+          initialCategories={categories}
+          allowCategories={copy.allowCategories}
+          fixedSlugs={copy.fixedSlugs}
+        />
+      </div>
     </AdminSectionShell>
   )
 }
