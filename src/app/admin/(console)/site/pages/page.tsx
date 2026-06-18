@@ -671,14 +671,7 @@ function ContentReleaseLedger({ contracts }: { contracts: GovernanceContractStat
                 <td className="py-3 pr-4 align-top text-xs leading-5 text-[#61767D]">{metrics}</td>
                 <td className="py-3 pr-4 align-top text-xs text-[#61767D]">{formatDateTime(contract.metrics.latestUpdatedAt)}</td>
                 <td className="py-3 align-top">
-                  <div className="flex flex-wrap gap-2">
-                    <Link href={contractAdminHref(contract)} className="inline-flex h-8 items-center gap-1 rounded-md bg-[#1889B6] px-2.5 text-xs font-semibold text-white transition hover:bg-[#0F6F95]">
-                      后台 <ArrowRight size={12} />
-                    </Link>
-                    <Link href={contract.previewHref} className="inline-flex h-8 items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]">
-                      前台 <Eye size={12} />
-                    </Link>
-                  </div>
+                  <ContentSourceActionBar contract={contract} />
                 </td>
               </tr>
             ))}
@@ -701,13 +694,8 @@ function ContentReleaseLedger({ contracts }: { contracts: GovernanceContractStat
             <p className="mt-3 text-xs font-semibold text-[#1E2C31]">{signal}</p>
             <p className="mt-1 text-xs leading-5 text-[#61767D]">{contract.note}</p>
             <p className="mt-2 text-[11px] text-[#8A9EA4]">{metrics} · 最近 {formatDateTime(contract.metrics.latestUpdatedAt)}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link href={contractAdminHref(contract)} className="inline-flex h-8 items-center gap-1 rounded-md bg-[#1889B6] px-2.5 text-xs font-semibold text-white">
-                后台 <ArrowRight size={12} />
-              </Link>
-              <Link href={contract.previewHref} className="inline-flex h-8 items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#1E2C31]">
-                前台 <Eye size={12} />
-              </Link>
+            <div className="mt-3">
+              <ContentSourceActionBar contract={contract} />
             </div>
           </article>
         ))}
@@ -902,21 +890,8 @@ function ContractCard({ contract }: { contract: GovernanceContractStatus }) {
         </div>
       )}
 
-      <div className="mt-5 flex flex-wrap gap-2">
-        <Link
-          href={contractAdminHref(contract)}
-          className="inline-flex h-9 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95E22]"
-        >
-          进入后台
-          <ArrowRight size={14} />
-        </Link>
-        <Link
-          href={contract.previewHref}
-          className="inline-flex h-9 items-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]"
-        >
-          查看前台
-          <Eye size={14} />
-        </Link>
+      <div className="mt-5">
+        <ContentSourceActionBar contract={contract} />
       </div>
     </article>
   )
