@@ -738,7 +738,7 @@ function SourceSeoReleaseBridge({ seo }: { seo: SiteMetrics['seo'] }) {
       sourceType: 'product',
       missing: seo.productsMissing,
       href: '/admin/content/products/list?view=incomplete&issue=seo',
-      leadHref: '/admin/customers/leads?source_type=product',
+      leadHref: '/admin/customers/leads?source_type=product#product-source-lead-queue-handoff',
       detail: '产品 SEO 待补会影响目录和详情页搜索摘要，处理后回到来源健康台账复盘访问和线索。',
     },
     {
@@ -747,7 +747,7 @@ function SourceSeoReleaseBridge({ seo }: { seo: SiteMetrics['seo'] }) {
       sourceType: 'case',
       missing: seo.projectsMissing,
       href: '/admin/content/projects/list?view=incomplete',
-      leadHref: '/admin/customers/leads?source_type=case',
+      leadHref: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
       detail: '案例展示字段不足会削弱项目证明链，处理后回看案例来源访问、动作和线索承接。',
     },
     {
@@ -756,7 +756,7 @@ function SourceSeoReleaseBridge({ seo }: { seo: SiteMetrics['seo'] }) {
       sourceType: 'news',
       missing: seo.newsMissing,
       href: '/admin/content/news/list',
-      leadHref: '/admin/customers/leads?source_type=news',
+      leadHref: '/admin/status/leads#news-lead-path-bridge',
       detail: '新闻 SEO 待补会影响内容入口质量，处理后回看 news 来源动作和 Contact 线索归因。',
     },
   ]

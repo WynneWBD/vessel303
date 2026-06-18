@@ -756,9 +756,9 @@ function SourceSeoControlPanel() {
       tone: 'blue',
       actions: [
         { label: '总览', href: '/admin/site/conversion#source-contract-portfolio' },
-        { label: '产品队列', href: '/admin/customers/leads?source_type=product' },
-        { label: '案例队列', href: '/admin/customers/leads?source_type=case' },
-        { label: '新闻队列', href: '/admin/customers/leads?source_type=news' },
+        { label: '产品队列', href: '/admin/customers/leads?source_type=product#product-source-lead-queue-handoff' },
+        { label: '案例队列', href: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk' },
+        { label: '新闻队列', href: '/admin/status/leads#news-lead-path-bridge' },
       ],
     },
     {

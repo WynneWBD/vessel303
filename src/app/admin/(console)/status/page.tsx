@@ -1625,7 +1625,7 @@ function buildSourceSeoHealthRows({
       contentIssues: products.issues,
       contentHref: '/admin/content/products/list#product-source-contract',
       seoHref: '/admin/content/products/list?view=incomplete&issue=seo',
-      leadHref: '/admin/customers/leads?source_type=product',
+      leadHref: '/admin/customers/leads?source_type=product#product-source-lead-queue-handoff',
       conversionHref: '/admin/site/conversion#source-contract-portfolio',
     },
     {
@@ -1637,7 +1637,7 @@ function buildSourceSeoHealthRows({
       contentIssues: projects.issues,
       contentHref: '/admin/content/projects/list#case-source-contract',
       seoHref: '/admin/content/projects/list?view=incomplete#case-conversion-content-backfill-desk',
-      leadHref: '/admin/customers/leads?source_type=case',
+      leadHref: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
       conversionHref: '/admin/site/conversion#source-contract-portfolio',
     },
     {
@@ -1649,7 +1649,7 @@ function buildSourceSeoHealthRows({
       contentIssues: news.issues,
       contentHref: '/admin/content/news/list#news-source-seo-list-bridge',
       seoHref: '/admin/content/news/list#news-source-seo-list-bridge',
-      leadHref: '/admin/customers/leads?source_type=news',
+      leadHref: '/admin/status/leads#news-lead-path-bridge',
       conversionHref: '/admin/site/conversion#source-contract-portfolio',
     },
   ].map((row) => {
