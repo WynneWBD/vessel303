@@ -200,6 +200,14 @@ type ProductPriorityItem = {
   score: number
 }
 
+type ProductRowNextAction = {
+  label: string
+  detail: string
+  href: string
+  tone: 'blue' | 'green' | 'orange'
+  external?: boolean
+}
+
 type ProductProofBackflowItem = {
   product: ProductListRow
   issues: string[]
@@ -628,6 +636,12 @@ function issueClass(issue: string): string {
   return 'border-zinc-200 bg-zinc-50 text-zinc-600'
 }
 
+function productRowNextActionClass(tone: ProductRowNextAction['tone']): string {
+  if (tone === 'orange') return 'border-[#F2C6A7] bg-[#FFF7F0] text-[#B85D21] hover:border-[#E36F2C]/60 hover:text-[#E36F2C]'
+  if (tone === 'green') return 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-500'
+  return 'border-[#D8E7E8] bg-[#EAF6F8] text-[#1889B6] hover:border-[#1889B6]'
+}
+
 function sortIssues(issues: string[]): string[] {
   return [...issues].sort((a, b) => {
     const aIndex = PRIORITY_ISSUES.indexOf(a)
@@ -677,6 +691,118 @@ function getPriorityLabel(issues: string[]): string {
   if (issues.includes('缺关键词')) return '补关键词'
   if (issues.includes('缺关联产品')) return '补关联推荐'
   return '补运营字段'
+}
+
+function productEditHref(product: ProductListRow, anchor = 'publish-check'): string {
+  return `/admin/content/products/${product.id}/edit#${anchor}`
+}
+
+function getProductRowNextAction(product: ProductListRow, issues: string[]): ProductRowNextAction {
+  if (issues.includes('缺封面') || issues.includes('缺图库')) {
+    return {
+      label: '补素材',
+      detail: '先补封面和图库',
+      href: productEditHref(product, 'media'),
+      tone: 'orange',
+    }
+  }
+
+  if (issues.includes('未分类') || issues.includes('缺产品属性')) {
+    return {
+      label: '补分类属性',
+      detail: '影响筛选和目录承接',
+      href: productEditHref(product, 'attributes'),
+      tone: 'orange',
+    }
+  }
+
+  if (issues.includes('缺 SEO') || issues.includes('缺关键词')) {
+    return {
+      label: '补 SEO',
+      detail: '影响搜索和来源复盘',
+      href: productEditHref(product, 'seo'),
+      tone: 'orange',
+    }
+  }
+
+  if (
+    issues.includes('缺中文简介')
+    || issues.includes('缺英文简介')
+    || issues.includes('缺标签')
+    || issues.includes('缺亮点')
+  ) {
+    return {
+      label: '补基础内容',
+      detail: '完善中英文卖点',
+      href: productEditHref(product, 'content'),
+      tone: 'orange',
+    }
+  }
+
+  if (issues.includes('缺详情模块')) {
+    return {
+      label: '补详情模块',
+      detail: '补齐详情页结构',
+      href: productEditHref(product, 'details'),
+      tone: 'orange',
+    }
+  }
+
+  if (issues.includes('缺关联产品')) {
+    return {
+      label: '补关联推荐',
+      detail: '完善产品推荐承接',
+      href: productEditHref(product, 'relations'),
+      tone: 'orange',
+    }
+  }
+
+  if (issues.includes('缺买家资料')) {
+    return {
+      label: '补买家资料',
+      detail: '补齐下载或资源链接',
+      href: productEditHref(product, 'details'),
+      tone: 'orange',
+    }
+  }
+
+  if (
+    issues.includes('缺价格展示')
+    || issues.some((issue) => issue.includes('商务条款'))
+  ) {
+    return {
+      label: '补转化信息',
+      detail: '完善商务与推荐承接',
+      href: productEditHref(product, 'commercial'),
+      tone: 'orange',
+    }
+  }
+
+  if (issues.length > 0) {
+    return {
+      label: '处理缺项',
+      detail: '进入发布检查定位问题',
+      href: productEditHref(product, 'publish-check'),
+      tone: 'orange',
+    }
+  }
+
+  if (product.status === 'draft') {
+    return {
+      label: '发布前复核',
+      detail: '基础完整，进入发布检查',
+      href: productEditHref(product, 'publish-check'),
+      tone: 'blue',
+    }
+  }
+
+  return {
+    label: '复核公开页',
+    detail: '基础完整，查看前台展示',
+    href: productPreviewHref(product),
+    tone: 'green',
+    external: true,
+  }
 }
 
 function buildProductPriorityItems(rows: ProductListRow[]): ProductPriorityItem[] {
@@ -3339,6 +3465,7 @@ function ProductRow({ product }: { product: ProductListRow }) {
   const label = getCompletenessLabel(issues)
   const visibleIssues = issues.slice(0, 4)
   const hiddenIssueCount = Math.max(0, issues.length - visibleIssues.length)
+  const nextAction = getProductRowNextAction(product, issues)
   const attributeLabels = (product.attribute_labels_zh ?? []).slice(0, 2)
   const hiddenAttributeCount = Math.max(0, Number(product.attribute_option_count ?? 0) - attributeLabels.length)
   const markLabels = (product.mark_labels_zh ?? []).slice(0, 2)
@@ -3422,21 +3549,35 @@ function ProductRow({ product }: { product: ProductListRow }) {
         </div>
       </td>
       <td className="px-3 py-3">
-        <div className="flex flex-wrap gap-1.5">
-          {visibleIssues.length === 0 ? (
-            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-              基础内容完整
-            </span>
-          ) : (
-            visibleIssues.map((issue) => (
-              <span key={issue} className={`rounded-full border px-2 py-0.5 text-xs ${issueClass(issue)}`}>
-                {issue}
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-1.5">
+            {visibleIssues.length === 0 ? (
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                基础内容完整
               </span>
-            ))
-          )}
-          {hiddenIssueCount > 0 ? (
-            <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-500">+{hiddenIssueCount} 项</span>
-          ) : null}
+            ) : (
+              visibleIssues.map((issue) => (
+                <span key={issue} className={`rounded-full border px-2 py-0.5 text-xs ${issueClass(issue)}`}>
+                  {issue}
+                </span>
+              ))
+            )}
+            {hiddenIssueCount > 0 ? (
+              <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-500">+{hiddenIssueCount} 项</span>
+            ) : null}
+          </div>
+          <Link
+            href={nextAction.href}
+            target={nextAction.external ? '_blank' : undefined}
+            rel={nextAction.external ? 'noopener noreferrer' : undefined}
+            className={`inline-flex min-h-8 w-full items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition ${productRowNextActionClass(nextAction.tone)}`}
+          >
+            <span className="min-w-0">
+              <span className="block truncate">{nextAction.label}</span>
+              <span className="mt-0.5 block truncate text-[11px] font-medium opacity-75">{nextAction.detail}</span>
+            </span>
+            <ArrowRight size={13} className="shrink-0" />
+          </Link>
         </div>
       </td>
       <td className="px-3 py-3">
