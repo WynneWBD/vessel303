@@ -42,6 +42,20 @@ type ContentReleaseRow = {
   Icon: typeof STATUS_ICONS.AlertCircle
 }
 
+type ContentNextAction = {
+  key: string
+  priority: string
+  title: string
+  owner: string
+  status: string
+  evidence: string
+  acceptance: string
+  href: string
+  actionLabel: string
+  tone: ContentReleaseTone
+  Icon: typeof STATUS_ICONS.AlertCircle
+}
+
 type PublicDiscoveryHealthItem = {
   key: string
   label: string
@@ -116,6 +130,12 @@ export default async function AdminStatusContentPage() {
         </div>
 
         <section className="space-y-4">
+          <ContentNextActionBoard
+            items={contentItems}
+            totals={totals}
+            caseInquiryHealth={caseInquiryHealth}
+            seo={overview.site.seo}
+          />
           <CaseInquiryHealthPanel health={caseInquiryHealth} />
           <PublicDiscoveryHealthBoard
             products={overview.content.products}
@@ -172,6 +192,93 @@ export default async function AdminStatusContentPage() {
       </section>
     </StatusPageShell>
   )
+}
+
+function ContentNextActionBoard({
+  items,
+  totals,
+  caseInquiryHealth,
+  seo,
+}: {
+  items: ContentMetric[]
+  totals: ContentTotals
+  caseInquiryHealth: CaseInquiryHealth
+  seo: SeoMetrics
+}) {
+  const actions = buildContentNextActions(items, totals, caseInquiryHealth, seo)
+  const activeActions = actions.filter(isContentNextActionBlocking)
+  const highestPriority = actions.find(isContentNextActionBlocking)?.priority ?? 'OK'
+  const seoMissing = seo.productsMissing + seo.projectsMissing + seo.newsMissing
+
+  return (
+    <section id="content-next-actions" className="scroll-mt-24 space-y-4">
+      <SectionTitle
+        title="内容下一步动作"
+        detail="把内容缺项、SEO、案例承接和发布后复验变成运营优先级；本区只读，不保存、不发布、不改生产数据。"
+      />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
+          <MatrixSummary label="当前最高优先级" value={highestPriority} detail="按缺项、SEO、案例承接排序" warn={highestPriority !== 'OK'} />
+          <MatrixSummary label="待处理动作" value={activeActions.length} detail="P0 / P1 运营问题队列" warn={activeActions.length > 0} />
+          <MatrixSummary label="SEO 待补" value={seoMissing} detail="产品 / 案例 / 新闻 SEO 字段" warn={seoMissing > 0} />
+          <MatrixSummary label="案例承接弱" value={caseInquiryHealth.weak} detail="已发布但转化素材不足" warn={caseInquiryHealth.weak > 0} />
+        </div>
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+          {actions.map((action) => (
+            <ContentNextActionCard key={action.key} action={action} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function ContentNextActionCard({ action }: { action: ContentNextAction }) {
+  const Icon = action.Icon
+
+  return (
+    <div className="flex h-full flex-col gap-4 p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 gap-3">
+          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${contentReleaseToneClassName(action.tone)}`}>
+            <Icon size={18} />
+          </span>
+          <span className="min-w-0">
+            <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${contentReleaseBadgeClassName(action.tone)}`}>
+              {action.priority} · {contentReleaseLabel(action.tone)}
+            </span>
+            <h3 className="mt-2 text-base font-bold text-[#1E2C31]">{action.title}</h3>
+          </span>
+        </div>
+        <Link
+          href={action.href}
+          className="inline-flex h-8 shrink-0 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#E36F2C]/50 hover:text-[#E36F2C]"
+        >
+          {action.actionLabel}
+        </Link>
+      </div>
+
+      <div className="grid gap-3 text-xs leading-5 text-[#61767D] md:grid-cols-2">
+        <ActionFact label="负责人" value={action.owner} />
+        <ActionFact label="当前动作" value={action.status} />
+        <ActionFact label="证据" value={action.evidence} />
+        <ActionFact label="完成口径" value={action.acceptance} />
+      </div>
+    </div>
+  )
+}
+
+function ActionFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-[#E6EEEE] bg-[#F7FAFA] px-3 py-2">
+      <p className="font-semibold text-[#1E2C31]">{label}</p>
+      <p className="mt-1 text-[#61767D]">{value}</p>
+    </div>
+  )
+}
+
+function isContentNextActionBlocking(action: ContentNextAction) {
+  return action.tone === 'critical' || action.tone === 'warning'
 }
 
 function CaseInquiryHealthPanel({ health }: { health: CaseInquiryHealth }) {
@@ -364,6 +471,76 @@ function PublicDiscoveryAction({ href, label }: { href: string; label: string })
       {label}
     </Link>
   )
+}
+
+function buildContentNextActions(
+  items: ContentMetric[],
+  totals: ContentTotals,
+  caseInquiryHealth: CaseInquiryHealth,
+  seo: SeoMetrics,
+): ContentNextAction[] {
+  const issueItems = [...items].filter((item) => item.issues > 0).sort((a, b) => b.issues - a.issues)
+  const issueTarget = issueItems[0]
+  const seoMissing = seo.productsMissing + seo.projectsMissing + seo.newsMissing
+  const issueEvidence =
+    issueItems.length > 0
+      ? issueItems.map((item) => `${item.label} ${formatNumber(item.issues)}`).join(' / ')
+      : '产品、项目、新闻关键字段暂无显性缺口'
+
+  return [
+    {
+      key: 'content-field-gaps',
+      priority: totals.issues > 0 ? 'P0' : 'OK',
+      title: '补齐公开内容关键字段',
+      owner: '内容管理 / 全部',
+      status: totals.issues > 0 ? '先处理缺项最多的内容类型，再回到前台核对列表和详情。' : '保持巡检，发布新内容前继续走缺项检查。',
+      evidence: issueEvidence,
+      acceptance: '字段缺项清零；前台列表、详情、封面、正文和 CTA 正常展示。',
+      href: issueTarget?.issueHref ?? '/admin/status/content',
+      actionLabel: totals.issues > 0 ? '处理最高缺项' : '查看内容状态',
+      tone: totals.issues > 0 ? 'critical' : 'ready',
+      Icon: STATUS_ICONS.AlertCircle,
+    },
+    {
+      key: 'content-seo-gaps',
+      priority: seoMissing > 0 ? 'P1' : 'OK',
+      title: '补齐产品 / 案例 / 新闻 SEO',
+      owner: 'SEO / 内容运营',
+      status: seoMissing > 0 ? '优先补搜索标题、描述、slug 和可被搜索收录的摘要字段。' : 'SEO 缺项已归零，继续用 SEO 中心做发布前巡检。',
+      evidence: `产品 ${formatNumber(seo.productsMissing)} / 案例 ${formatNumber(seo.projectsMissing)} / 新闻 ${formatNumber(seo.newsMissing)}`,
+      acceptance: 'SEO 待补为 0；重点公开页发布后能在前台打开并具备标题和描述。',
+      href: '/admin/site/seo',
+      actionLabel: seoMissing > 0 ? '查看 SEO 中心' : '查看 SEO 状态',
+      tone: seoMissing > 0 ? 'warning' : 'ready',
+      Icon: STATUS_ICONS.SearchCheck,
+    },
+    {
+      key: 'case-conversion-weak',
+      priority: caseInquiryHealth.weak > 0 ? 'P1' : 'OK',
+      title: '处理案例发布转化弱',
+      owner: '案例内容 / 销售协同',
+      status: caseInquiryHealth.weak > 0 ? '补齐已发布案例的项目事实、图片、产品关联和询盘上下文。' : '已发布案例具备基础承接能力，继续关注新增案例。',
+      evidence: `询盘可承接 ${formatNumber(caseInquiryHealth.ready)} / 发布转化弱 ${formatNumber(caseInquiryHealth.weak)} / 草稿 ${formatNumber(caseInquiryHealth.draft)}`,
+      acceptance: '转化弱案例归零或有明确补齐原因；前台案例详情能支持客户询盘判断。',
+      href: caseInquiryHealth.weak > 0 ? '/admin/content/projects/list?view=case-conversion-weak' : '/admin/content/projects/list?status=published',
+      actionLabel: caseInquiryHealth.weak > 0 ? '处理弱案例' : '查看已发布案例',
+      tone: caseInquiryHealth.weak > 0 ? 'warning' : 'ready',
+      Icon: STATUS_ICONS.Globe2,
+    },
+    {
+      key: 'public-content-smoke',
+      priority: 'P3',
+      title: '发布后前台复验',
+      owner: '05 验收',
+      status: '内容调整或发布后，从站点页面台账逐个打开公开入口。',
+      evidence: '产品、案例、新闻和重点详情页入口由站点页面台账统一承接。',
+      acceptance: '前台页面返回 200；列表、详情、图片、按钮和来源链路可被用户正常使用。',
+      href: '/admin/site/pages',
+      actionLabel: '查看复验入口',
+      tone: 'review',
+      Icon: STATUS_ICONS.CheckCircle2,
+    },
+  ]
 }
 
 function buildContentReleaseRows(items: ContentMetric[], totals: ContentTotals): ContentReleaseRow[] {
