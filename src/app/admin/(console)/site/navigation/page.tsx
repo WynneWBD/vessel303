@@ -107,6 +107,10 @@ function formatDateTime(value: string | null | undefined): string {
   }).format(date)
 }
 
+function visualEditorModuleHref(moduleKey: string): string {
+  return `/admin/site/visual?module=${encodeURIComponent(`site:${moduleKey}`)}#visual-editor`
+}
+
 function moduleStatusClassName(pageModule: PageModuleRow): string {
   if (!pageModule.is_visible) return 'bg-zinc-50 text-zinc-600'
   if (pageModule.has_draft) return 'bg-orange-50 text-orange-700'
@@ -267,7 +271,7 @@ function buildNavigationReleaseLedgerRows(modules: PageModuleRow[]): NavigationR
           counts: `${visibleItems} 可见 / ${hiddenItems} 隐藏 / ${linkStats.total} 链接`,
           tone,
           updatedAt: pageModule.draft_updated_at ?? pageModule.updated_at,
-          href: `/admin/pages?module=site:${pageModule.module_key}`,
+          href: visualEditorModuleHref(pageModule.module_key),
           previewHref: '/',
         },
         score,
@@ -305,7 +309,7 @@ function buildNavigationPriorityItems(modules: PageModuleRow[], contract?: Gover
         key: `${pageModule.module_key}:warnings`,
         title: pageModule.title_zh || pageModule.title_en || pageModule.module_key,
         detail: warnings.slice(0, 2).join(' / '),
-        href: `/admin/pages?module=site:${pageModule.module_key}`,
+        href: visualEditorModuleHref(pageModule.module_key),
         score: 90 + warnings.length * 6,
         Icon: Link2,
       })
@@ -315,7 +319,7 @@ function buildNavigationPriorityItems(modules: PageModuleRow[], contract?: Gover
         key: `${pageModule.module_key}:draft`,
         title: pageModule.title_zh || pageModule.title_en || pageModule.module_key,
         detail: '当前模块有已保存草稿，发布前需要复核前台导航和页脚影响。',
-        href: `/admin/pages?module=site:${pageModule.module_key}`,
+        href: visualEditorModuleHref(pageModule.module_key),
         score: 70,
         Icon: FileText,
       })
@@ -325,7 +329,7 @@ function buildNavigationPriorityItems(modules: PageModuleRow[], contract?: Gover
         key: `${pageModule.module_key}:hidden`,
         title: pageModule.title_zh || pageModule.title_en || pageModule.module_key,
         detail: '模块当前隐藏，确认是否符合公开导航计划。',
-        href: `/admin/pages?module=site:${pageModule.module_key}`,
+        href: visualEditorModuleHref(pageModule.module_key),
         score: 40,
         Icon: LockKeyhole,
       })
@@ -566,7 +570,7 @@ function ModuleCard({ pageModule }: { pageModule: PageModuleRow }) {
           </p>
         </div>
         <Link
-          href={`/admin/pages?module=site:${pageModule.module_key}`}
+          href={visualEditorModuleHref(pageModule.module_key)}
           className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95E22]"
         >
           编辑模块
@@ -698,7 +702,7 @@ export default async function AdminSiteNavigationPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Link
-              href="/admin/pages?module=site:navbar"
+              href={visualEditorModuleHref('navbar')}
               className="inline-flex h-10 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-sm font-semibold text-white transition hover:bg-[#C95E22]"
             >
               编辑导航

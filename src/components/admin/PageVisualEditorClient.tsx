@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import {
   ArrowDown,
@@ -547,6 +548,24 @@ function filterEditableModules(modules: PageModuleRow[]) {
       }
       return a.page_key.localeCompare(b.page_key)
     })
+}
+
+function getInitialModuleSelection(modules: PageModuleRow[], requestedModuleId: string | null) {
+  const editableModules = filterEditableModules(modules)
+  const requestedModule = requestedModuleId
+    ? editableModules.find((pageModule) => moduleId(pageModule) === requestedModuleId)
+    : null
+  const fallbackModule = editableModules.find((pageModule) => moduleId(pageModule) === 'home:hero') ?? editableModules[0] ?? null
+  const selectedModule = requestedModule ?? fallbackModule
+
+  if (!selectedModule) {
+    return { pageKey: 'home' as PageKey, moduleId: 'home:hero' }
+  }
+
+  return {
+    pageKey: isPageKey(selectedModule.page_key) ? selectedModule.page_key : 'home',
+    moduleId: moduleId(selectedModule),
+  }
 }
 
 function isSafeHomeStructureModule(pageModule: PageStructureModule) {
@@ -1579,12 +1598,19 @@ export default function PageVisualEditorClient({
   currentAdminRole?: 'admin' | 'operator'
   maxUploadMb?: number
 }) {
+  const searchParams = useSearchParams()
+  const requestedModuleId = searchParams.get('module')
+  const initialSelectionRef = useRef<ReturnType<typeof getInitialModuleSelection> | null>(null)
+  if (!initialSelectionRef.current) {
+    initialSelectionRef.current = getInitialModuleSelection(initialModules, requestedModuleId)
+  }
+  const initialSelection = initialSelectionRef.current
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({})
   const [modules, setModules] = useState(() => filterEditableModules(initialModules).map(cloneModule))
   const [savedModules, setSavedModules] = useState(() => filterEditableModules(initialModules).map(cloneModule))
-  const [selectedPage, setSelectedPage] = useState<PageKey>('home')
-  const [selectedModuleId, setSelectedModuleId] = useState('home:hero')
+  const [selectedPage, setSelectedPage] = useState<PageKey>(initialSelection.pageKey)
+  const [selectedModuleId, setSelectedModuleId] = useState(initialSelection.moduleId)
   const [selectedField, setSelectedField] = useState<FieldSelection>({ itemId: null, field: null })
   const [locatedModules, setLocatedModules] = useState<Record<string, boolean>>({})
   const [highlightRect, setHighlightRect] = useState<HighlightRect | null>(null)
