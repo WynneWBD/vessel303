@@ -39,6 +39,7 @@ export function buildStatusBadges(overview: StatusOverview, role: AdminRole): St
   const siteIssues =
     overview.site.pages.total +
     overview.site.seo.missing +
+    overview.site.media.issueCount +
     (overview.site.media.bytes > 800 * 1024 * 1024 ? 1 : 0) +
     (role === 'admin' ? overview.site.configChecks.filter((item) => !item.ok).length : 0)
 

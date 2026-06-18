@@ -99,12 +99,12 @@ export default async function AdminStatusSitePage() {
             tone={site.seo.missing > 0 ? 'orange' : 'green'}
           />
           <MetricCard
-            title="媒体容量"
-            value={formatBytes(site.media.bytes)}
-            detail={`${formatNumber(site.media.count)} 个素材 / 单图上限 ${formatNumber(site.media.maxUploadMb)} MB`}
+            title="媒体风险"
+            value={site.media.issueCount}
+            detail={`${formatNumber(site.media.count)} 个素材 / ${formatBytes(site.media.bytes)} / 单图上限 ${formatNumber(site.media.maxUploadMb)} MB`}
             href="/admin/site/media"
             Icon={STATUS_ICONS.Package}
-            tone={site.media.bytes > 800 * 1024 * 1024 ? 'orange' : 'blue'}
+            tone={site.media.issueCount > 0 || site.media.bytes > 800 * 1024 * 1024 ? 'orange' : 'green'}
           />
           <MetricCard
             title="站点文件"
@@ -187,9 +187,10 @@ export default async function AdminStatusSitePage() {
             />
             <ActionCard
               title="管理媒体素材"
-              detail="查看素材数量、容量和上传配置。"
+              detail={`${formatNumber(site.media.issueCount)} 个风险素材；查看素材数量、容量和上传配置。`}
               href="/admin/site/media"
               Icon={STATUS_ICONS.Package}
+              primary={site.media.issueCount > 0}
             />
           </div>
         </section>
@@ -213,10 +214,13 @@ function SiteReleasePreflightBridge({
 }) {
   const filesOk = site.sitemapOk && site.robotsOk
   const configBlocked = role === 'admin' && configIssues > 0
+  const mediaStorageWarn = site.media.bytes > 800 * 1024 * 1024
+  const mediaBlocked = site.media.issueCount > 0 || mediaStorageWarn
   const openCount =
     (contentIssues > 0 ? 1 : 0) +
     (contentDrafts > 0 ? 1 : 0) +
     (site.seo.missing > 0 ? 1 : 0) +
+    (mediaBlocked ? 1 : 0) +
     (!filesOk ? 1 : 0) +
     (configBlocked ? 1 : 0)
   const items: ReleasePreflightItem[] = [
@@ -249,6 +253,16 @@ function SiteReleasePreflightBridge({
       actionLabel: filesOk ? '查看收录设置' : '检查站点文件',
       tone: filesOk && site.pages.total === 0 ? 'ready' : site.pages.total > 0 ? 'warning' : 'critical',
       Icon: STATUS_ICONS.Globe2,
+    },
+    {
+      key: 'media-health',
+      title: '素材健康',
+      value: site.media.issueCount > 0 ? `${formatNumber(site.media.issueCount)} 风险` : formatBytes(site.media.bytes),
+      detail: `${formatNumber(site.media.count)} 个素材；${mediaStorageWarn ? '容量偏高' : '容量可控'}；单图上限 ${formatNumber(site.media.maxUploadMb)} MB。`,
+      href: '/admin/site/media?view=issues',
+      actionLabel: mediaBlocked ? '处理素材风险' : '查看媒体库',
+      tone: site.media.issueCount > 0 ? 'warning' : mediaStorageWarn ? 'review' : 'ready',
+      Icon: STATUS_ICONS.Package,
     },
     {
       key: 'config-boundary',
@@ -295,7 +309,7 @@ function SiteReleasePreflightBridge({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-2 xl:grid-cols-6">
         {items.map((item) => (
           <ReleasePreflightCard key={item.key} item={item} />
         ))}
@@ -356,7 +370,8 @@ function ReleasePreflightCard({ item }: { item: ReleasePreflightItem }) {
 
 function buildSiteHealthRows(site: SiteMetrics, configIssues: number, role: AdminRole): SiteHealthRow[] {
   const filesOk = site.sitemapOk && site.robotsOk
-  const mediaWarn = site.media.bytes > 800 * 1024 * 1024
+  const mediaStorageWarn = site.media.bytes > 800 * 1024 * 1024
+  const mediaWarn = site.media.issueCount > 0 || mediaStorageWarn
 
   return [
     {
@@ -384,12 +399,12 @@ function buildSiteHealthRows(site: SiteMetrics, configIssues: number, role: Admi
     {
       key: 'media-storage',
       scope: '媒体',
-      title: '素材容量和上传上限',
-      value: formatBytes(site.media.bytes),
-      detail: `${formatNumber(site.media.count)} 个素材；单图上限 ${formatNumber(site.media.maxUploadMb)} MB`,
+      title: '素材风险、容量和上传上限',
+      value: site.media.issueCount > 0 ? `${formatNumber(site.media.issueCount)} 项` : formatBytes(site.media.bytes),
+      detail: `${formatNumber(site.media.count)} 个素材；容量 ${formatBytes(site.media.bytes)}；单图上限 ${formatNumber(site.media.maxUploadMb)} MB`,
       ok: !mediaWarn,
-      status: mediaWarn ? '容量偏高' : '可控',
-      href: '/admin/site/media',
+      status: site.media.issueCount > 0 ? '风险素材' : mediaStorageWarn ? '容量偏高' : '可控',
+      href: site.media.issueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media',
       actionLabel: '管理素材',
     },
     {
@@ -448,7 +463,8 @@ function buildSiteOperationRows(site: SiteMetrics, configIssues: number, role: A
   const filesOk = site.sitemapOk && site.robotsOk
   const pageDraftsOpen = site.pages.total > 0
   const seoOpen = site.seo.missing > 0
-  const mediaWarn = site.media.bytes > 800 * 1024 * 1024
+  const mediaStorageWarn = site.media.bytes > 800 * 1024 * 1024
+  const mediaWarn = site.media.issueCount > 0 || mediaStorageWarn
   const configOpen = role === 'admin' && configIssues > 0
 
   const rows: SiteOperationRow[] = [
@@ -498,13 +514,17 @@ function buildSiteOperationRows(site: SiteMetrics, configIssues: number, role: A
       key: 'media-governance',
       priority: mediaWarn ? 'P1' : 'P3',
       stage: '素材容量',
-      title: '媒体素材容量和上传上限',
+      title: '媒体素材风险和上传上限',
       owner: '网站管理 / 媒体库',
-      value: formatBytes(site.media.bytes),
-      evidence: `${formatNumber(site.media.count)} 个素材；单图上限 ${formatNumber(site.media.maxUploadMb)} MB。`,
-      impact: mediaWarn ? '媒体容量偏高，后续会影响素材管理和页面加载治理。' : '媒体容量处于当前预警线内。',
-      href: '/admin/site/media',
-      actionLabel: '管理素材',
+      value: site.media.issueCount > 0 ? `${formatNumber(site.media.issueCount)} 风险` : formatBytes(site.media.bytes),
+      evidence: `${formatNumber(site.media.count)} 个素材；容量 ${formatBytes(site.media.bytes)}；单图上限 ${formatNumber(site.media.maxUploadMb)} MB。`,
+      impact: site.media.issueCount > 0
+        ? '存在大原图或缺少前台派生图的素材，需要回到媒体库风险筛选处理。'
+        : mediaStorageWarn
+          ? '媒体容量偏高，后续会影响素材管理和页面加载治理。'
+          : '媒体风险和容量处于当前预警线内。',
+      href: site.media.issueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media',
+      actionLabel: site.media.issueCount > 0 ? '处理风险' : '管理素材',
       tone: mediaWarn ? 'warning' : 'ready',
       Icon: STATUS_ICONS.Package,
     },

@@ -45,6 +45,7 @@ export type MediaMetrics = {
   count: number
   bytes: number
   maxUploadMb: number
+  issueCount: number
 }
 
 export type SeoMetrics = {
@@ -135,7 +136,10 @@ const EMPTY_MEDIA: MediaMetrics = {
   count: 0,
   bytes: 0,
   maxUploadMb: 20,
+  issueCount: 0,
 }
+
+const FRONTEND_RISK_IMAGE_BYTES = 1572864
 
 const EMPTY_SEO: SeoMetrics = {
   total: 0,
@@ -225,6 +229,23 @@ export async function tableExists(tableName: string): Promise<boolean> {
     [tableName],
   )
   return Boolean(res.rows[0]?.table_name)
+}
+
+async function columnExists(tableName: string, columnName: string): Promise<boolean> {
+  const [schemaName, rawTableName] = tableName.includes('.')
+    ? tableName.split('.', 2)
+    : ['public', tableName]
+  const res = await pool.query<{ exists: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1
+       FROM information_schema.columns
+       WHERE table_schema = $1
+         AND table_name = $2
+         AND column_name = $3
+     ) AS exists`,
+    [schemaName, rawTableName, columnName],
+  )
+  return Boolean(res.rows[0]?.exists)
 }
 
 function toInt(value: unknown): number {
@@ -458,14 +479,35 @@ export async function loadMediaMetrics(): Promise<MediaMetrics> {
     return { ...EMPTY_MEDIA, maxUploadMb: mediaMaxUploadMb }
   }
 
-  const res = await pool.query<{ count: string; bytes: string }>(
-    `SELECT COUNT(*)::text AS count, COALESCE(SUM(size), 0)::text AS bytes
-     FROM uploads`,
-  )
+  const variantsReady = await columnExists('public.uploads', 'variants')
+  const variantsIssue = variantsReady
+    ? `OR variants IS NULL
+       OR variants = '{}'::jsonb
+       OR NOT (variants ? 'thumb')
+       OR NOT (variants ? 'card')
+       OR NOT (variants ? 'detail')`
+    : ''
+  const [res, issueRes] = await Promise.all([
+    pool.query<{ count: string; bytes: string }>(
+      `SELECT COUNT(*)::text AS count, COALESCE(SUM(size), 0)::text AS bytes
+       FROM uploads`,
+    ),
+    pool.query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count
+       FROM uploads
+       WHERE mime ILIKE 'image/%'
+         AND (
+           COALESCE(size, 0) > $1
+           ${variantsIssue}
+         )`,
+      [FRONTEND_RISK_IMAGE_BYTES],
+    ),
+  ])
   return {
     count: toInt(res.rows[0]?.count),
     bytes: toInt(res.rows[0]?.bytes),
     maxUploadMb: mediaMaxUploadMb,
+    issueCount: toInt(issueRes.rows[0]?.count),
   }
 }
 

@@ -92,6 +92,7 @@ export default async function AdminStatusPage() {
   const siteIssues =
     overview.site.pages.total +
     overview.site.seo.missing +
+    overview.site.media.issueCount +
     (overview.site.media.bytes > 800 * 1024 * 1024 ? 1 : 0) +
     (role === 'admin' ? overview.site.configChecks.filter((item) => !item.ok).length : 0)
   const queueTotal = overview.leads.new + contentTotals.issues + siteIssues + caseInquiryHealth.weak
