@@ -186,7 +186,7 @@ export const CONTENT_CONTRACTS: ContentContract[] = [
     adminHref: '/admin/content/news',
     previewHref: '/news',
     modulePageKey: 'news',
-    requiredModules: ['hero'],
+    requiredModules: ['hero', 'ui'],
     cmsTable: 'news',
     signals: ['image', 'cta', 'seo', 'source'],
     displayRule: '列表和详情内容来自 published 新闻。',

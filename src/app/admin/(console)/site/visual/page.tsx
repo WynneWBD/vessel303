@@ -53,6 +53,7 @@ const VISUAL_PAGE_META = [
   { key: 'media-kit', label: 'Media Kit', path: '/media-kit' },
   { key: 'scenarios', label: 'Scenarios', path: '/scenarios/tourism' },
   { key: 'innovation', label: 'Innovation', path: '/innovation/viie' },
+  { key: 'news', label: 'News', path: '/news' },
 ] as const
 
 type VisualPageKey = (typeof VISUAL_PAGE_META)[number]['key']
@@ -113,6 +114,8 @@ const EDITABLE_VISUAL_MODULE_IDS = [
   'media-kit:hero',
   'scenarios:inquiry-form',
   'innovation:inquiry-form',
+  'news:hero',
+  'news:ui',
 ]
 
 const EDITABLE_VISUAL_MODULE_ID_SET = new Set(EDITABLE_VISUAL_MODULE_IDS)

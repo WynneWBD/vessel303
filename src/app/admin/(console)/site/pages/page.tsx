@@ -128,13 +128,14 @@ const SOURCE_LABEL: Record<GovernanceSourceType, string> = {
   protected: '受保护专项',
 }
 
-const VISUAL_EDITOR_PAGE_KEYS = new Set(['home', 'products', 'cases', 'contact', 'site', 'about', 'global', 'faq', 'media-kit', 'scenarios', 'innovation'])
+const VISUAL_EDITOR_PAGE_KEYS = new Set(['home', 'products', 'cases', 'contact', 'site', 'about', 'global', 'faq', 'media-kit', 'scenarios', 'innovation', 'news'])
 
 const VISUAL_EDITOR_MODULE_KEYS_BY_PAGE: Partial<Record<string, string[]>> = {
   faq: ['hero'],
   'media-kit': ['hero'],
   scenarios: ['inquiry-form'],
   innovation: ['inquiry-form'],
+  news: ['hero', 'ui'],
 }
 
 function safeLoad<T>(label: string, loader: () => Promise<T>, fallback: T): Promise<T> {

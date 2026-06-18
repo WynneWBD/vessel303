@@ -10,6 +10,7 @@ export type PageModuleCatalogPage =
   | 'media-kit'
   | 'scenarios'
   | 'innovation'
+  | 'news'
   | 'all'
 
 export type PageModuleCatalogStatus = 'planned' | 'locked' | 'not_open'

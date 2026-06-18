@@ -72,6 +72,7 @@ type PageKey =
   | 'media-kit'
   | 'scenarios'
   | 'innovation'
+  | 'news'
 
 type PageMeta = {
   key: PageKey
@@ -126,6 +127,7 @@ const PAGES: PageMeta[] = [
   { key: 'media-kit', label: 'Media Kit', path: '/media-kit' },
   { key: 'scenarios', label: 'Scenarios', path: '/scenarios/tourism' },
   { key: 'innovation', label: 'Innovation', path: '/innovation/viie' },
+  { key: 'news', label: 'News', path: '/news' },
 ]
 
 const PAGE_KEY_SET = new Set<PageKey>(PAGES.map((page) => page.key))
@@ -155,6 +157,7 @@ const PAGE_LABELS = {
   'media-kit': 'Media Kit',
   scenarios: 'Scenarios',
   innovation: 'Innovation',
+  news: 'News',
 } satisfies Record<PageKey, string>
 
 const EDITABLE_MODULE_IDS = [
@@ -213,6 +216,8 @@ const EDITABLE_MODULE_IDS = [
   'media-kit:hero',
   'scenarios:inquiry-form',
   'innovation:inquiry-form',
+  'news:hero',
+  'news:ui',
 ]
 
 const EDITABLE_MODULE_ID_SET = new Set(EDITABLE_MODULE_IDS)
@@ -241,6 +246,7 @@ const CATALOG_PAGE_LABELS = {
   'media-kit': 'Media Kit',
   scenarios: 'Scenarios',
   innovation: 'Innovation',
+  news: 'News',
   all: 'All',
 } satisfies Record<PageModuleCatalogPage, string>
 
