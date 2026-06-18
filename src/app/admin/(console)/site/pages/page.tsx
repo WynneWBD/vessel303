@@ -128,6 +128,8 @@ const SOURCE_LABEL: Record<GovernanceSourceType, string> = {
   protected: '受保护专项',
 }
 
+const VISUAL_EDITOR_PAGE_KEYS = new Set(['home', 'products', 'cases', 'contact', 'site', 'about', 'global'])
+
 function safeLoad<T>(label: string, loader: () => Promise<T>, fallback: T): Promise<T> {
   return loader().catch((err) => {
     console.error(`[admin-site-pages] ${label} failed`, err)
@@ -250,7 +252,7 @@ function buildSourceOperationsRows(contracts: GovernanceContractStatus[]) {
       const issues = items.filter((contract) => contract.issueLevel === 'warning' || contract.issueLevel === 'notice').length
       const warnings = items.reduce((sum, contract) => sum + contract.metrics.contentWarnings.length, 0)
       const latestUpdatedAt = latestContractDate(items.map((contract) => contract.metrics.latestUpdatedAt))
-      const hrefs = Array.from(new Set(items.map((contract) => contract.adminHref).filter((href): href is string => Boolean(href))))
+      const hrefs = Array.from(new Set(items.map((contract) => contractAdminHref(contract))))
 
       return {
         sourceType,
@@ -308,6 +310,22 @@ type ContentSourceAction = {
   Icon: LucideIcon
   primary?: boolean
   preview?: boolean
+}
+
+function visualEditorModuleHref(pageKey: string, moduleKey: string): string {
+  return `/admin/site/visual?module=${encodeURIComponent(`${pageKey}:${moduleKey}`)}#visual-editor`
+}
+
+function contractVisualModuleHref(contract: GovernanceContractStatus): string | null {
+  if (contract.sourceType !== 'page_modules') return null
+  const pageKey = contract.modulePageKey
+  const moduleKey = contract.metrics.requiredMissing[0] ?? contract.requiredModules?.[0]
+  if (!pageKey || !moduleKey || !VISUAL_EDITOR_PAGE_KEYS.has(pageKey)) return null
+  return visualEditorModuleHref(pageKey, moduleKey)
+}
+
+function contractAdminHref(contract: GovernanceContractStatus): string {
+  return contractVisualModuleHref(contract) ?? contract.adminHref ?? '/admin/site/pages#content-source-route-tree'
 }
 
 function releaseLedgerTone(contract: GovernanceContractStatus): ContentReleaseLedgerTone {
@@ -387,7 +405,7 @@ function buildContentSourceTreeGroups(contracts: GovernanceContractStatus[]): Co
 }
 
 function contractPublishHref(contract: GovernanceContractStatus): string {
-  if (contract.sourceType === 'page_modules') return '/admin/site/visual#visual-editor'
+  if (contract.sourceType === 'page_modules') return contractAdminHref(contract)
   if (contract.sourceType === 'product_cms') return '/admin/content/products/list?status=draft#product-draft-recovery-readiness-desk'
   if (contract.sourceType === 'project_cms') return '/admin/content/projects/list?status=draft'
   if (contract.sourceType === 'news_cms') return '/admin/content/news/list?status=draft'
@@ -419,7 +437,7 @@ function buildContentSourceActions(contract: GovernanceContractStatus): ContentS
   return [
     {
       label: '编辑内容',
-      href: contract.adminHref ?? '/admin/site/pages#content-source-route-tree',
+      href: contractAdminHref(contract),
       Icon: FileText,
       primary: needsContent,
     },
@@ -642,11 +660,9 @@ function ContentReleaseLedger({ contracts }: { contracts: GovernanceContractStat
                 <td className="py-3 pr-4 align-top text-xs text-[#61767D]">{formatDateTime(contract.metrics.latestUpdatedAt)}</td>
                 <td className="py-3 align-top">
                   <div className="flex flex-wrap gap-2">
-                    {contract.adminHref ? (
-                      <Link href={contract.adminHref} className="inline-flex h-8 items-center gap-1 rounded-md bg-[#1889B6] px-2.5 text-xs font-semibold text-white transition hover:bg-[#0F6F95]">
-                        后台 <ArrowRight size={12} />
-                      </Link>
-                    ) : null}
+                    <Link href={contractAdminHref(contract)} className="inline-flex h-8 items-center gap-1 rounded-md bg-[#1889B6] px-2.5 text-xs font-semibold text-white transition hover:bg-[#0F6F95]">
+                      后台 <ArrowRight size={12} />
+                    </Link>
                     <Link href={contract.previewHref} className="inline-flex h-8 items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]">
                       前台 <Eye size={12} />
                     </Link>
@@ -674,11 +690,9 @@ function ContentReleaseLedger({ contracts }: { contracts: GovernanceContractStat
             <p className="mt-1 text-xs leading-5 text-[#61767D]">{contract.note}</p>
             <p className="mt-2 text-[11px] text-[#8A9EA4]">{metrics} · 最近 {formatDateTime(contract.metrics.latestUpdatedAt)}</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              {contract.adminHref ? (
-                <Link href={contract.adminHref} className="inline-flex h-8 items-center gap-1 rounded-md bg-[#1889B6] px-2.5 text-xs font-semibold text-white">
-                  后台 <ArrowRight size={12} />
-                </Link>
-              ) : null}
+              <Link href={contractAdminHref(contract)} className="inline-flex h-8 items-center gap-1 rounded-md bg-[#1889B6] px-2.5 text-xs font-semibold text-white">
+                后台 <ArrowRight size={12} />
+              </Link>
               <Link href={contract.previewHref} className="inline-flex h-8 items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#1E2C31]">
                 前台 <Eye size={12} />
               </Link>
@@ -778,7 +792,7 @@ function ContentSourceOperationsMatrix({ contracts }: { contracts: GovernanceCon
               priorityRows.map(({ contract, score }) => (
                 <Link
                   key={contract.key}
-                  href={contract.adminHref ?? contract.previewHref}
+                  href={contractAdminHref(contract)}
                   className="block rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-3 transition hover:border-[#1889B6]/60 hover:bg-white"
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -877,15 +891,13 @@ function ContractCard({ contract }: { contract: GovernanceContractStatus }) {
       )}
 
       <div className="mt-5 flex flex-wrap gap-2">
-        {contract.adminHref ? (
-          <Link
-            href={contract.adminHref}
-            className="inline-flex h-9 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95E22]"
-          >
-            进入后台
-            <ArrowRight size={14} />
-          </Link>
-        ) : null}
+        <Link
+          href={contractAdminHref(contract)}
+          className="inline-flex h-9 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95E22]"
+        >
+          进入后台
+          <ArrowRight size={14} />
+        </Link>
         <Link
           href={contract.previewHref}
           className="inline-flex h-9 items-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]"
