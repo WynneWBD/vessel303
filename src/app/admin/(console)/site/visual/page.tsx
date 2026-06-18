@@ -47,6 +47,8 @@ const VISUAL_PAGE_META = [
   { key: 'cases', label: 'Cases', path: '/cases' },
   { key: 'contact', label: 'Contact', path: '/contact' },
   { key: 'site', label: 'Site Shell', path: '/' },
+  { key: 'auth', label: 'Auth', path: '/login' },
+  { key: 'account', label: 'Account', path: '/account' },
   { key: 'about', label: 'About', path: '/about' },
   { key: 'global', label: 'Global', path: '/global' },
   { key: 'faq', label: 'FAQ', path: '/faq' },
@@ -59,7 +61,7 @@ const VISUAL_PAGE_META = [
 
 type VisualPageKey = (typeof VISUAL_PAGE_META)[number]['key']
 
-const VISUAL_EDITOR_COVERAGE_LABEL = 'Home / Products / Cases / Contact / Site Shell / About / Global / FAQ / Media Kit / Scenarios / Innovation / Display / News'
+const VISUAL_EDITOR_COVERAGE_LABEL = 'Home / Products / Cases / Contact / Site Shell / Auth / Account / About / Global / FAQ / Media Kit / Scenarios / Innovation / Display / News'
 
 const EDITABLE_VISUAL_MODULE_IDS = [
   'home:hero',
@@ -98,6 +100,12 @@ const EDITABLE_VISUAL_MODULE_IDS = [
   'site:footer-about',
   'site:footer-contact',
   'site:floating-contact',
+  'auth:shared',
+  'auth:login',
+  'auth:register',
+  'account:header',
+  'account:profile',
+  'account:password',
   'about:hero',
   'about:stats',
   'about:brand-story',

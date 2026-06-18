@@ -326,7 +326,7 @@ export const CONTENT_CONTRACTS: ContentContract[] = [
     owner: 'Auth / Account 文案模块',
     sourceType: 'page_modules',
     contentSource: 'page_modules:auth + page_modules:account',
-    adminHref: '/admin/pages?module=auth:login',
+    adminHref: '/admin/site/visual?module=auth%3Alogin#visual-editor',
     previewHref: '/login',
     modulePageKey: 'auth',
     modulePageKeys: ['auth', 'account'],

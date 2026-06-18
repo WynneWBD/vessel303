@@ -66,6 +66,8 @@ type PageKey =
   | 'cases'
   | 'contact'
   | 'site'
+  | 'auth'
+  | 'account'
   | 'about'
   | 'global'
   | 'faq'
@@ -122,6 +124,8 @@ const PAGES: PageMeta[] = [
   { key: 'cases', label: 'Cases', path: '/cases' },
   { key: 'contact', label: 'Contact', path: '/contact' },
   { key: 'site', label: 'Site Shell', path: '/' },
+  { key: 'auth', label: 'Auth', path: '/login' },
+  { key: 'account', label: 'Account', path: '/account' },
   { key: 'about', label: 'About', path: '/about' },
   { key: 'global', label: 'Global', path: '/global' },
   { key: 'faq', label: 'FAQ', path: '/faq' },
@@ -153,6 +157,8 @@ const PAGE_LABELS = {
   cases: '项目案例',
   contact: '联系入口',
   site: '导航 / 页脚',
+  auth: '登录 / 注册',
+  account: '账户中心',
   about: 'About',
   global: 'Global',
   faq: 'FAQ',
@@ -200,6 +206,12 @@ const EDITABLE_MODULE_IDS = [
   'site:footer-about',
   'site:footer-contact',
   'site:floating-contact',
+  'auth:shared',
+  'auth:login',
+  'auth:register',
+  'account:header',
+  'account:profile',
+  'account:password',
   'about:hero',
   'about:stats',
   'about:brand-story',
@@ -256,8 +268,8 @@ const CATALOG_PAGE_LABELS = {
   all: 'All',
 } satisfies Record<PageModuleCatalogPage, string>
 
-const VISUAL_EDITOR_COVERAGE_LABEL = 'Home / Products / Cases / Contact / Site Shell / About / Global / FAQ / Media Kit / Scenarios / Innovation / Display / News'
-const VISUAL_EDITOR_COVERAGE_DETAIL = '字段编辑覆盖 Home、Products、Cases、Contact、Site Shell、About、Global、FAQ、Media Kit、Scenarios、Innovation、Display、News；模块新增当前只开放 Home 安全插入区。'
+const VISUAL_EDITOR_COVERAGE_LABEL = 'Home / Products / Cases / Contact / Site Shell / Auth / Account / About / Global / FAQ / Media Kit / Scenarios / Innovation / Display / News'
+const VISUAL_EDITOR_COVERAGE_DETAIL = '字段编辑覆盖 Home、Products、Cases、Contact、Site Shell、Auth、Account、About、Global、FAQ、Media Kit、Scenarios、Innovation、Display、News；模块新增当前只开放 Home 安全插入区；Auth / Account 只开放客户可见文案，不改登录认证逻辑。'
 
 function catalogPagesLabel(pages: PageModuleCatalogPage[]) {
   return pages.map((page) => CATALOG_PAGE_LABELS[page]).join(' / ')
