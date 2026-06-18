@@ -1,6 +1,6 @@
 # vessel303 Codex 技术手册
 
-最后更新：2026-06-13
+最后更新：2026-06-18
 
 本文件是 Codex 在 vessel303 工作区的技术地图。行为纪律见 `AGENTS.md`；当前项目总控状态见 `C:\Users\Wynne\Desktop\vessel303\00_项目总控入口\vessel303_当前总控handoff.md`。
 
@@ -8,9 +8,9 @@
 
 - 官网：`https://www.vessel303.com`
 - 代码仓库：`C:\Users\Wynne\Desktop\vessel303\repo-git`
-- 当前循环：B345 已完成并上线；本次循环暂停，等待 Wynne 审核后再继续。
-- 最近功能批次：B345 / `ac8de68 feat(admin): add product source conversion followup handoff`
-- 最近功能生产验证 deployment：`dpl_UNUpSMaHzMTAARWQhmQHmDhaGbH7`
+- 当前循环：B370 已完成并上线；B371 正在做当前 handoff / CODEX 顶部状态收口。
+- 最近功能批次：B370 / `6010b48 fix(auth): localize login fallback copy`
+- 最近功能生产验证 deployment：`dpl_FeuMc145ECWCfMwkCUbCYMfL6Kqy`
 - 当前精确状态以 `00_项目总控入口/vessel303_当前总控handoff.md` 和 `vercel inspect https://www.vessel303.com` 为准。
 - 当前目标：前台对齐 `en.303vessel.cn` 的生产官网能力，后台对齐 `300.cn 后台` 的运营效率和数据分析心智。
 - 当前对照边界：`en.303vessel.cn` 当前由 `openresty` 响应，公开产品/案例路径只读 smoke 返回 403，后台路径返回 404；本仓库部署 smoke 以 `https://www.vessel303.com` / Vercel alias 为准。
