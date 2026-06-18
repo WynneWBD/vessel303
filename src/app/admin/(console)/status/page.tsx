@@ -77,6 +77,12 @@ type SourceSeoHealthRow = {
 
 type OperationalPriorityTone = 'critical' | 'warning' | 'review' | 'ready'
 
+type OperationalPriorityAction = {
+  href: string
+  label: string
+  primary?: boolean
+}
+
 type OperationalPriorityRow = {
   key: string
   priority: string
@@ -88,6 +94,7 @@ type OperationalPriorityRow = {
   impact: string
   href: string
   actionLabel: string
+  actions?: OperationalPriorityAction[]
   tone: OperationalPriorityTone
 }
 
@@ -435,6 +442,11 @@ function buildOperationalPriorityRows({
       impact: newLeads > 0 ? '新询盘未处理会直接影响采购机会和响应速度。' : '当前没有等待首次处理的新线索。',
       href: '/admin/customers/leads?status=new',
       actionLabel: newLeads > 0 ? '处理新线索' : '查看线索',
+      actions: [
+        { href: '/admin/customers/leads?status=new', label: newLeads > 0 ? '新线索' : '线索列表', primary: true },
+        { href: '/admin/status/leads#source-lead-quality-workdesk', label: '来源质量' },
+        { href: '/admin/customers/leads?source_type=product#product-source-lead-queue-handoff', label: '产品来源' },
+      ],
       tone: newLeads > 0 ? 'critical' : 'ready',
     },
     {
@@ -448,6 +460,11 @@ function buildOperationalPriorityRows({
       impact: staleFollowups > 0 ? '跟进断点会让询盘从可推进状态变成无人承接状态。' : '当前 active 线索没有超 7 天未更新断点。',
       href: '/admin/status/leads#case-lead-quality-followup-desk',
       actionLabel: staleFollowups > 0 ? '复核跟进' : '查看漏斗',
+      actions: [
+        { href: '/admin/status/leads#case-lead-quality-followup-desk', label: staleFollowups > 0 ? '跟进断点' : '跟进漏斗', primary: true },
+        { href: '/admin/customers/leads?attention=overdue', label: '超时线索' },
+        { href: '/admin/status/traffic#case-path-lead-backflow-desk', label: '路径回流' },
+      ],
       tone: staleFollowups > 0 ? 'critical' : 'ready',
     },
     {
@@ -461,6 +478,12 @@ function buildOperationalPriorityRows({
       impact: seoMissing > 0 ? 'SEO 缺项会影响搜索摘要、来源判断和内容到线索的闭环复盘。' : '已发布内容当前没有 SEO 缺项。',
       href: '/admin/status#source-seo-health',
       actionLabel: seoMissing > 0 ? '处理 SEO' : '查看来源',
+      actions: [
+        { href: '/admin/content/products/list?view=incomplete&issue=seo', label: '产品 SEO', primary: productsSeoMissing > 0 },
+        { href: '/admin/content/projects/list?view=incomplete', label: '案例字段', primary: productsSeoMissing === 0 && projectsSeoMissing > 0 },
+        { href: '/admin/content/news/list#news-source-seo-list-bridge', label: '新闻 SEO', primary: productsSeoMissing === 0 && projectsSeoMissing === 0 && newsSeoMissing > 0 },
+        { href: '/admin/status/leads#source-seo-lead-quality', label: '来源质量' },
+      ],
       tone: seoMissing > 0 ? 'warning' : 'ready',
     },
     {
@@ -474,6 +497,12 @@ function buildOperationalPriorityRows({
       impact: contentIssues > 0 ? '关键字段缺失会影响公开展示、搜索承接和列表筛选效率。' : '内容关键字段当前状态正常。',
       href: '/admin/status/content#public-discovery-health',
       actionLabel: contentIssues > 0 ? '补内容' : '查看内容',
+      actions: [
+        { href: '/admin/content/products/list?view=incomplete', label: '产品待补', primary: productIssues > 0 },
+        { href: '/admin/content/projects/list?view=incomplete', label: '案例待补', primary: productIssues === 0 && projectIssues > 0 },
+        { href: '/admin/content/news/list#news-source-seo-list-bridge', label: '新闻列表', primary: productIssues === 0 && projectIssues === 0 && newsIssues > 0 },
+        { href: '/admin/status/content#public-discovery-health', label: '内容健康' },
+      ],
       tone: contentIssues > 0 ? 'warning' : 'ready',
     },
     {
@@ -491,6 +520,11 @@ function buildOperationalPriorityRows({
           : '媒体风险和容量当前处于预警线内。',
       href: mediaIssueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media',
       actionLabel: mediaIssueCount > 0 ? '处理素材' : '查看媒体',
+      actions: [
+        { href: mediaIssueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media', label: mediaIssueCount > 0 ? '风险素材' : '媒体库', primary: true },
+        { href: '/admin/site/visual', label: '页面用图' },
+        { href: '/admin/status/site', label: '站点健康' },
+      ],
       tone: mediaIssueCount > 0 ? 'warning' : mediaStorageWarn ? 'review' : 'ready',
     },
     {
@@ -504,6 +538,11 @@ function buildOperationalPriorityRows({
       impact: pageDrafts > 0 ? '草稿未确认会造成后台编辑状态和线上页面预期不一致。' : '页面草稿已收口。',
       href: '/admin/site/visual',
       actionLabel: pageDrafts > 0 ? '处理草稿' : '查看编辑器',
+      actions: [
+        { href: '/admin/site/visual', label: pageDrafts > 0 ? 'Visual Editor' : '编辑器', primary: true },
+        { href: '/admin/site/pages', label: '页面结构' },
+        { href: '/admin/status/site', label: '发布健康' },
+      ],
       tone: pageDrafts > 0 ? 'warning' : 'ready',
     },
     {
@@ -517,6 +556,12 @@ function buildOperationalPriorityRows({
       impact: caseInquiryHealth.weak > 0 ? '案例证明页缺少询盘承接要素，会削弱客户从案例到联系的路径。' : '已发布案例询盘承接关键字段正常。',
       href: '/admin/content/projects/list?view=case-conversion-weak',
       actionLabel: caseInquiryHealth.weak > 0 ? '处理案例' : '查看案例',
+      actions: [
+        { href: '/admin/content/projects/list?view=case-conversion-weak', label: caseInquiryHealth.weak > 0 ? '弱承接案例' : '案例列表', primary: true },
+        { href: '/admin/content/projects/list#case-conversion-content-backfill-desk', label: '补位队列' },
+        { href: '/admin/status/traffic#case-path-lead-backflow-desk', label: '路径回流' },
+        { href: '/admin/site/conversion#case-followup-conversion-review-bridge', label: '转化复盘' },
+      ],
       tone: caseInquiryHealth.weak > 0 ? 'warning' : 'ready',
     },
     {
@@ -534,6 +579,11 @@ function buildOperationalPriorityRows({
           : '访问到线索路径当前有可读样本或暂无访问样本。',
       href: '/admin/status/traffic#traffic-to-lead-exception-desk',
       actionLabel: trafficActionGap ? '分诊流量' : '查看流量',
+      actions: [
+        { href: '/admin/status/traffic#traffic-to-lead-exception-desk', label: trafficActionGap ? '流量分诊' : '流量台账', primary: true },
+        { href: '/admin/status/leads#source-lead-quality-workdesk', label: '线索质量' },
+        { href: '/admin/site/conversion', label: '转化设置' },
+      ],
       tone: trafficActionGap ? 'warning' : trafficReview ? 'review' : 'ready',
     },
   ]
@@ -550,6 +600,10 @@ function buildOperationalPriorityRows({
       impact: '配置异常可能影响发信、存储、联系入口或上传闭环。',
       href: '/admin/site/settings',
       actionLabel: '查看设置',
+      actions: [
+        { href: '/admin/site/settings', label: '站点设置', primary: true },
+        { href: '/admin/status/site', label: '站点健康' },
+      ],
       tone: 'warning',
     })
   }
@@ -616,10 +670,11 @@ function OperationalPriorityLedger({ rows }: { rows: OperationalPriorityRow[] })
 }
 
 function OperationalPriorityRowView({ row }: { row: OperationalPriorityRow }) {
+  const actions = row.actions ?? [{ href: row.href, label: row.actionLabel, primary: true }]
+
   return (
-    <Link
-      href={row.href}
-      className={`group grid grid-cols-1 gap-3 px-4 py-4 text-sm transition hover:bg-[#F7FAFA] xl:grid-cols-[0.55fr_0.85fr_minmax(0,1.1fr)_0.7fr_minmax(0,1.6fr)_0.72fr] xl:items-center ${operationalPriorityRowClass(row.tone)}`}
+    <div
+      className={`grid grid-cols-1 gap-3 px-4 py-4 text-sm transition hover:bg-[#F7FAFA] xl:grid-cols-[0.55fr_0.85fr_minmax(0,1.1fr)_0.7fr_minmax(0,1.6fr)_0.72fr] xl:items-center ${operationalPriorityRowClass(row.tone)}`}
     >
       <div className="flex items-center gap-2">
         <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-bold ${operationalPriorityBadgeClass(row.tone)}`}>
@@ -639,10 +694,22 @@ function OperationalPriorityRowView({ row }: { row: OperationalPriorityRow }) {
         <p>{row.evidence}</p>
         <p className="font-semibold text-[#1E2C31]">{row.impact}</p>
       </div>
-      <span className="inline-flex min-h-8 w-fit items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition group-hover:border-[#E36F2C]/50 group-hover:text-[#E36F2C]">
-        {row.actionLabel}
-      </span>
-    </Link>
+      <div className="flex flex-wrap gap-2">
+        {actions.map((action) => (
+          <Link
+            key={`${row.key}:${action.href}:${action.label}`}
+            href={action.href}
+            className={`inline-flex min-h-8 w-fit items-center rounded-md border px-3 text-xs font-semibold transition ${
+              action.primary
+                ? 'border-[#1889B6] bg-[#EAF6F8] text-[#1889B6] hover:border-[#E36F2C]/60 hover:text-[#E36F2C]'
+                : 'border-[#D8E7E8] bg-white text-[#61767D] hover:border-[#1889B6] hover:text-[#1889B6]'
+            }`}
+          >
+            {action.label}
+          </Link>
+        ))}
+      </div>
+    </div>
   )
 }
 
