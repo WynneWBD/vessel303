@@ -280,8 +280,8 @@ function SiteReleasePreflightBridge({
     {
       key: 'public-smoke',
       title: '前台 smoke',
-      value: '6 入口',
-      detail: '发布后固定复验首页、产品、案例、新闻、sitemap 和 robots；后台保护由未登录跳转确认。',
+      value: '8 入口',
+      detail: '发布后固定复验首页、产品、案例、新闻、Contact、sitemap、robots 和后台登录保护。',
       href: '/',
       actionLabel: '打开首页',
       tone: 'review',
@@ -318,14 +318,17 @@ function SiteReleasePreflightBridge({
       <div className="border-t border-[#E6EEEE] bg-white px-5 py-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <p className="text-xs leading-5 text-[#61767D]">
-            手动 smoke 固定入口：`/`、`/products`、`/cases`、`/news`、`/sitemap.xml`、`/robots.txt`；后台页以未登录 302 到 `/admin/login` 作为保护验证。
+            手动 smoke 固定入口：`/`、`/products`、`/cases`、`/news`、`/contact`、`/sitemap.xml`、`/robots.txt`、`/admin/login`；后台页以未登录 302 到 `/admin/login` 作为保护验证。
           </p>
           <div className="flex flex-wrap gap-2">
+            <BridgeLink href="/" label="首页" />
             <BridgeLink href="/products" label="产品" />
             <BridgeLink href="/cases" label="案例" />
             <BridgeLink href="/news" label="新闻" />
+            <BridgeLink href="/contact" label="Contact" />
             <BridgeLink href="/sitemap.xml" label="sitemap" />
             <BridgeLink href="/robots.txt" label="robots" />
+            <BridgeLink href="/admin/login" label="后台登录" />
           </div>
         </div>
       </div>
