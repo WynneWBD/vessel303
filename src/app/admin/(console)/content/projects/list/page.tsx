@@ -140,6 +140,14 @@ type ProjectConversionReadiness = {
   className: string
 }
 
+type ProjectRowNextAction = {
+  label: string
+  detail: string
+  href: string
+  tone: 'blue' | 'green' | 'orange'
+  external?: boolean
+}
+
 type ActiveFilterChip = {
   label: string
   value: string
@@ -434,6 +442,102 @@ function completenessClass(label: string): string {
   if (label === '完整') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
   if (label === '待补素材') return 'border-orange-200 bg-orange-50 text-orange-700'
   return 'border-zinc-200 bg-zinc-50 text-zinc-600'
+}
+
+function projectRowNextActionClass(tone: ProjectRowNextAction['tone']): string {
+  if (tone === 'orange') return 'border-[#F2C6A7] bg-[#FFF7F0] text-[#B85D21] hover:border-[#E36F2C]/60 hover:text-[#E36F2C]'
+  if (tone === 'green') return 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-500'
+  return 'border-[#D8E7E8] bg-[#EAF6F8] text-[#1889B6] hover:border-[#1889B6]'
+}
+
+function projectEditHref(project: ProjectListRow, anchor = 'publish-check'): string {
+  return `/admin/content/projects/${project.id}/edit#${anchor}`
+}
+
+function projectPreviewHref(project: ProjectListRow): string {
+  return `/cases/${project.id}`
+}
+
+function getProjectRowNextAction(project: ProjectListRow, issues: string[]): ProjectRowNextAction {
+  if (issues.includes('缺封面') || issues.includes('缺图库')) {
+    return {
+      label: '补案例素材',
+      detail: '先补封面和图库',
+      href: projectEditHref(project, 'media'),
+      tone: 'orange',
+    }
+  }
+
+  if (issues.includes('缺坐标')) {
+    return {
+      label: '补 Global 坐标',
+      detail: project.status === 'published' ? '让已发布案例进入地图点位' : '补国家和经纬度，发布后可入图',
+      href: projectEditHref(project, 'global'),
+      tone: 'orange',
+    }
+  }
+
+  if (issues.includes('有坐标待发布')) {
+    return {
+      label: '发布前复核',
+      detail: '坐标已就绪，检查后发布',
+      href: projectEditHref(project, 'publish-check'),
+      tone: 'blue',
+    }
+  }
+
+  if (issues.includes('缺中文简介') || issues.includes('缺英文简介') || issues.includes('详情叙事偏短')) {
+    return {
+      label: '补案例叙事',
+      detail: '完善中英文证明内容',
+      href: projectEditHref(project, 'content'),
+      tone: 'orange',
+    }
+  }
+
+  if (issues.some((issue) => ['缺项目类型', '缺项目面积', '缺舱数', '缺产品型号'].includes(issue))) {
+    return {
+      label: '补项目事实',
+      detail: '补类型、面积、舱数和产品',
+      href: projectEditHref(project, 'params'),
+      tone: 'orange',
+    }
+  }
+
+  if (issues.includes('缺标签')) {
+    return {
+      label: '补检索标签',
+      detail: '完善筛选和内容归因',
+      href: projectEditHref(project, 'content'),
+      tone: 'orange',
+    }
+  }
+
+  if (issues.length > 0) {
+    return {
+      label: '处理缺项',
+      detail: '进入发布检查定位问题',
+      href: projectEditHref(project, 'publish-check'),
+      tone: 'orange',
+    }
+  }
+
+  if (project.status === 'draft') {
+    return {
+      label: '发布前复核',
+      detail: '基础完整，进入发布检查',
+      href: projectEditHref(project, 'publish-check'),
+      tone: 'blue',
+    }
+  }
+
+  return {
+    label: '复核案例页',
+    detail: '基础完整，查看前台展示',
+    href: projectPreviewHref(project),
+    tone: 'green',
+    external: true,
+  }
 }
 
 function getGlobalStatus(project: ProjectListRow): {
@@ -2002,6 +2106,7 @@ function ProjectRow({ project }: { project: ProjectListRow }) {
   const published = project.status === 'published'
   const globalStatus = getGlobalStatus(project)
   const conversionStatus = getCaseConversionReadiness(project, issues)
+  const nextAction = getProjectRowNextAction(project, issues)
   const imageCount = Array.isArray(project.images) ? project.images.length : 0
   const detailHref = `/cases/${project.id}`
   const caseInquiryHref = `${detailHref}#case-inquiry`
@@ -2062,23 +2167,37 @@ function ProjectRow({ project }: { project: ProjectListRow }) {
         </div>
       </td>
       <td className="px-4 py-3">
-        <div className="flex flex-wrap gap-1.5">
-          {visibleIssues.length === 0 ? (
-            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-              基础内容完整
-            </span>
-          ) : (
-            visibleIssues.map((issue) => (
-              <span key={issue} className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-600">
-                {issue}
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-1.5">
+            {visibleIssues.length === 0 ? (
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                基础内容完整
               </span>
-            ))
-          )}
-          {hiddenIssueCount > 0 && (
-            <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-500">
-              还有 {hiddenIssueCount} 项
+            ) : (
+              visibleIssues.map((issue) => (
+                <span key={issue} className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-600">
+                  {issue}
+                </span>
+              ))
+            )}
+            {hiddenIssueCount > 0 && (
+              <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-500">
+                还有 {hiddenIssueCount} 项
+              </span>
+            )}
+          </div>
+          <Link
+            href={nextAction.href}
+            target={nextAction.external ? '_blank' : undefined}
+            rel={nextAction.external ? 'noopener noreferrer' : undefined}
+            className={`inline-flex min-h-8 w-full items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition ${projectRowNextActionClass(nextAction.tone)}`}
+          >
+            <span className="min-w-0">
+              <span className="block truncate">{nextAction.label}</span>
+              <span className="mt-0.5 block truncate text-[11px] font-medium opacity-75">{nextAction.detail}</span>
             </span>
-          )}
+            <ArrowRight size={13} className="shrink-0" />
+          </Link>
         </div>
       </td>
       <td className="px-4 py-3">
