@@ -302,6 +302,14 @@ type ContentSourceTreeGroup = {
   publishedCount: number
 }
 
+type ContentSourceAction = {
+  label: string
+  href: string
+  Icon: LucideIcon
+  primary?: boolean
+  preview?: boolean
+}
+
 function releaseLedgerTone(contract: GovernanceContractStatus): ContentReleaseLedgerTone {
   if (contract.issueLevel === 'protected') return 'protected'
   if (contract.issueLevel === 'warning') return 'danger'
@@ -378,6 +386,104 @@ function buildContentSourceTreeGroups(contracts: GovernanceContractStatus[]): Co
     .sort((a, b) => b.issueCount - a.issueCount || a.group.localeCompare(b.group))
 }
 
+function contractPublishHref(contract: GovernanceContractStatus): string {
+  if (contract.sourceType === 'page_modules') return '/admin/site/visual#visual-editor'
+  if (contract.sourceType === 'product_cms') return '/admin/content/products/list?status=draft#product-draft-recovery-readiness-desk'
+  if (contract.sourceType === 'project_cms') return '/admin/content/projects/list?status=draft'
+  if (contract.sourceType === 'news_cms') return '/admin/content/news/list?status=draft'
+  if (contract.sourceType === 'b9_cms') return contract.adminHref ?? '/admin/content'
+  return contract.adminHref ?? '/admin/site/pages#content-source-route-tree'
+}
+
+function contractSeoHref(contract: GovernanceContractStatus): string {
+  if (contract.key === 'products') return '/admin/content/products/list?view=incomplete&issue=seo'
+  if (contract.key === 'cases') return '/admin/content/projects/list?view=incomplete'
+  if (contract.key === 'news') return '/admin/content/news/list'
+  return '/admin/site/seo'
+}
+
+function contractMediaHref(contract: GovernanceContractStatus): string {
+  if (contract.sourceType === 'product_cms') return '/admin/content/products/list?view=incomplete'
+  if (contract.sourceType === 'project_cms') return '/admin/content/projects/list?view=case-conversion-weak'
+  if (contract.sourceType === 'news_cms') return '/admin/content/news/list'
+  return '/admin/site/media#media-replacement-workbench'
+}
+
+function buildContentSourceActions(contract: GovernanceContractStatus): ContentSourceAction[] {
+  const needsContent = contract.issueLevel === 'warning' || contract.issueLevel === 'notice'
+  const needsSeo = contract.signals.includes('seo') && (
+    contract.issueLevel === 'warning' ||
+    contract.metrics.contentWarnings.some((warning) => warning.toLowerCase().includes('seo'))
+  )
+
+  return [
+    {
+      label: '编辑内容',
+      href: contract.adminHref ?? '/admin/site/pages#content-source-route-tree',
+      Icon: FileText,
+      primary: needsContent,
+    },
+    {
+      label: '预览前台',
+      href: contract.previewHref,
+      Icon: Eye,
+      preview: true,
+    },
+    {
+      label: '发布队列',
+      href: contractPublishHref(contract),
+      Icon: ListChecks,
+      primary: contract.metrics.draft + contract.metrics.draftModules > 0,
+    },
+    {
+      label: 'SEO 待补',
+      href: contractSeoHref(contract),
+      Icon: SearchCheck,
+      primary: needsSeo,
+    },
+    {
+      label: '素材引用',
+      href: contractMediaHref(contract),
+      Icon: ImageIcon,
+      primary: contract.signals.includes('image') && contract.metrics.hasImage === false && contract.issueLevel !== 'protected',
+    },
+  ]
+}
+
+function ContentSourceActionBar({
+  contract,
+  align = 'start',
+}: {
+  contract: GovernanceContractStatus
+  align?: 'start' | 'end'
+}) {
+  const actions = buildContentSourceActions(contract)
+
+  return (
+    <div className={`flex flex-wrap gap-2 ${align === 'end' ? 'xl:justify-end' : ''}`}>
+      {actions.map((action) => {
+        const Icon = action.Icon
+        return (
+          <Link
+            key={`${contract.key}-${action.label}`}
+            href={action.href}
+            target={action.preview ? '_blank' : undefined}
+            rel={action.preview ? 'noreferrer' : undefined}
+            className={`inline-flex min-h-8 items-center gap-1 rounded-md border px-2.5 text-xs font-semibold transition ${
+              action.primary
+                ? 'border-[#1889B6] bg-[#1889B6] text-white hover:bg-[#0F6F95]'
+                : 'border-[#D8E7E8] bg-white text-[#1E2C31] hover:border-[#1889B6]/60 hover:text-[#1889B6]'
+            }`}
+          >
+            <Icon size={12} />
+            <span>{action.label}</span>
+          </Link>
+        )
+      })}
+    </div>
+  )
+}
+
 function ContentSourceRouteTree({ contracts }: { contracts: GovernanceContractStatus[] }) {
   const groups = buildContentSourceTreeGroups(contracts)
   const pageCount = contracts.reduce((sum, contract) => sum + contract.paths.length, 0)
@@ -421,7 +527,7 @@ function ContentSourceRouteTree({ contracts }: { contracts: GovernanceContractSt
                 const hiddenCount = contract.metrics.hidden + contract.metrics.hiddenModules
 
                 return (
-                  <div key={contract.key} className="grid grid-cols-1 gap-3 bg-white px-4 py-4 xl:grid-cols-[1.25fr_1fr_1fr_1.15fr_0.85fr] xl:items-center">
+                  <div key={contract.key} className="grid grid-cols-1 gap-3 bg-white px-4 py-4 xl:grid-cols-[1.05fr_0.85fr_0.85fr_0.95fr_1.35fr] xl:items-center">
                     <div className="flex items-start gap-3">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
                         <Icon size={17} />
@@ -454,16 +560,7 @@ function ContentSourceRouteTree({ contracts }: { contracts: GovernanceContractSt
                       <p>{releaseLedgerSignal(contract)}</p>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 xl:justify-end">
-                      {contract.adminHref ? (
-                        <Link href={contract.adminHref} className="inline-flex h-8 items-center gap-1 rounded-md bg-[#1889B6] px-2.5 text-xs font-semibold text-white transition hover:bg-[#0F6F95]">
-                          后台 <ArrowRight size={12} />
-                        </Link>
-                      ) : null}
-                      <Link href={contract.previewHref} className="inline-flex h-8 items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-2.5 text-xs font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]">
-                        前台 <Eye size={12} />
-                      </Link>
-                    </div>
+                    <ContentSourceActionBar contract={contract} align="end" />
                   </div>
                 )
               })}

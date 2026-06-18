@@ -308,7 +308,7 @@ export const CONTENT_CONTRACTS: ContentContract[] = [
     owner: '站点模块',
     sourceType: 'page_modules',
     contentSource: 'page_modules:site + page_modules:auth + page_modules:account',
-    adminHref: '/admin/pages?module=site:navbar',
+    adminHref: '/admin/site/visual#visual-editor',
     previewHref: '/',
     modulePageKey: 'site',
     modulePageKeys: ['site', 'auth', 'account'],
