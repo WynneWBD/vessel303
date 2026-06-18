@@ -294,7 +294,7 @@ export const CONTENT_CONTRACTS: ContentContract[] = [
     adminHref: '/admin/site/visual',
     previewHref: '/contact',
     modulePageKey: 'contact',
-    requiredModules: ['hero', 'channels', 'form', 'source-context'],
+    requiredModules: ['hero', 'channels', 'form', 'source-context', 'faq-panel'],
     signals: ['cta', 'form', 'source', 'seo'],
     displayRule: 'B28 后 /contact 渲染 contact 已发布模块，联系表单写入 leads；来源提示从 source-context 模块读取；contactUrl 仅作为备用旧站入口。',
     hiddenRule: 'contact 模块不可用时只显示系统级安全状态，不自动跳旧站。',

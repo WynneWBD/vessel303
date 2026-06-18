@@ -31,7 +31,7 @@ export const PAGE_MODULE_PAGE_KEYS = [
 
 export const PAGE_MODULE_PUBLIC_CACHE_TAG = 'page-module-public'
 const PAGE_MODULE_PUBLIC_CACHE_SECONDS = 300
-const PAGE_MODULE_DEFAULTS_CACHE_VERSION = '2026-06-18-b361-display-shell-labels'
+const PAGE_MODULE_DEFAULTS_CACHE_VERSION = '2026-06-18-b363-contact-faq-panel'
 
 export type PageModulePageKey = (typeof PAGE_MODULE_PAGE_KEYS)[number]
 
@@ -2052,6 +2052,21 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     ],
     is_visible: true,
     sort_order: 35,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'contact:faq-panel',
+    page_key: 'contact',
+    module_key: 'faq-panel',
+    module_type: 'fixed-content',
+    title_zh: 'Procurement FAQ',
+    title_en: 'Procurement FAQ',
+    description_zh: 'Answers shown beside the contact form when published procurement FAQ items are available.',
+    description_en: 'Answers shown beside the contact form when published procurement FAQ items are available.',
+    items: [],
+    is_visible: true,
+    sort_order: 38,
     updated_at: '',
     updated_by_email: null,
   },
