@@ -174,9 +174,9 @@ const STATIC_SEO_PAGES: StaticSeoPage[] = [
   {
     title: 'News',
     path: '/news',
-    source: 'buildPageMetadata',
+    source: 'generateMetadata / page_modules:news',
     status: 'ready',
-    detail: '列表页已有完整页面 metadata；详情页优先读取新闻 SEO 字段。',
+    detail: '列表页 metadata 读取 news hero 已发布模块；详情页继续优先读取新闻 SEO 字段。',
     actionHref: '/news',
     Icon: Newspaper,
   },
@@ -185,7 +185,7 @@ const STATIC_SEO_PAGES: StaticSeoPage[] = [
     path: '/contact',
     source: 'buildPageMetadata / page_modules:contact',
     status: 'ready',
-    detail: '联系入口已有 metadata，但页面会读取 site_settings 后跳转到询盘入口。',
+    detail: '联系入口 metadata 和前台展示文案读取 contact 已发布模块；来源上下文继续留在 /contact 内处理。',
     actionHref: '/contact',
     Icon: ExternalLink,
   },
@@ -219,9 +219,9 @@ const STATIC_SEO_PAGES: StaticSeoPage[] = [
   {
     title: 'Display',
     path: '/display',
-    source: 'generateMetadata / display_slide',
+    source: 'generateMetadata / page_modules:display + display_slide',
     status: 'ready',
-    detail: '展示页 metadata 从已发布 display_slide 首条内容派生；不改变展示交互。',
+    detail: '展示页 metadata 优先读取 display hero 文案，再用已发布 display_slide 首图和 tagline 兜底。',
     actionHref: '/display',
     Icon: LayoutTemplate,
   },
@@ -237,11 +237,11 @@ const STATIC_SEO_PAGES: StaticSeoPage[] = [
   {
     title: 'Global',
     path: '/global',
-    source: '地图专项',
-    status: 'protected',
-    detail: '当前仅有基础 title；本轮不修改地图页 metadata、MapLibre、MapTiler 或 /api/map。',
+    source: 'generateMetadata / page_modules:global',
+    status: 'ready',
+    detail: 'Global metadata 读取 global hero 已发布模块；MapLibre、MapTiler、点位算法和 /api/map 仍保持受保护。',
     actionHref: '/global',
-    Icon: LockKeyhole,
+    Icon: Globe2,
   },
 ]
 
@@ -2078,7 +2078,7 @@ export default async function AdminSiteSeoPage() {
           <SummaryTile title="页面已完整" value={staticReady} detail="静态 / 列表页面" tone="green" Icon={Globe2} />
           <SummaryTile title="内容待补" value={missingTotal} detail="已发布内容缺 SEO 或派生字段" tone={missingTotal > 0 ? 'orange' : 'green'} Icon={SearchCheck} />
           <SummaryTile title="详情来源" value={products.published + news.published + projects.published} detail="已发布产品 / 新闻 / 案例" tone="blue" Icon={FileText} />
-          <SummaryTile title="保护项" value={protectedCount} detail="Global 暂不纳入 B17 底层改动" tone="gray" Icon={LockKeyhole} />
+          <SummaryTile title="页面保护项" value={protectedCount} detail="公开页面 metadata 已纳入；地图底层保护见下方边界" tone="gray" Icon={LockKeyhole} />
         </div>
       </AdminPageHero>
 

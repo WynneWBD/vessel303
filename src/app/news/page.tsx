@@ -2,12 +2,28 @@ import type { Metadata } from 'next'
 import { listPublishedNews } from '@/lib/news-db'
 import NewsListView from '@/components/NewsListView'
 import { getUploadVariantsByUrls, mapUploadImageUrl } from '@/lib/upload-image-variants'
-import { listPublishedPageModules } from '@/lib/page-modules-db'
+import { getPublishedPageModule, listPublishedPageModules } from '@/lib/page-modules-db'
+import { buildPageMetadata } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 300
 
-export const metadata: Metadata = {}
+export async function generateMetadata(): Promise<Metadata> {
+  const heroModule = await getPublishedPageModule('news', 'hero').catch((err) => {
+    console.error('[news/metadata] hero module load failed', err)
+    return null
+  })
+  const title = heroModule?.title_en || heroModule?.title_zh || ''
+  const description = heroModule?.description_en || heroModule?.description_zh || ''
+  if (!title || !description) return {}
+
+  return buildPageMetadata({
+    title,
+    description,
+    path: '/news',
+    image: heroModule?.items.find((item) => item.is_visible && item.image_url)?.image_url ?? null,
+  })
+}
 
 function isLikelyTestNews(item: {
   slug?: string | null
