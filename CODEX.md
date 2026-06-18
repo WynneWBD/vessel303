@@ -9,9 +9,9 @@
 - 官网：`https://www.vessel303.com`
 - 代码仓库：`C:\Users\Wynne\Desktop\vessel303\repo-git`
 - 当前循环：继续按 00 工作流诊断并优化后台运营能力；批次进度以当前 handoff 为准。
-- 最近功能批次：B380 / `0da5a13 feat(products): add row next actions`
-- 已记录生产验证：B380 / `dpl_FrPGwx3Q38a4Yn94WhbgKoiEE9jc`；最新 production deployment 以 `vercel inspect https://www.vessel303.com` 为准。
-- 当前精确状态以 `00_项目总控入口/vessel303_当前总控handoff.md` 和 `vercel inspect https://www.vessel303.com` 为准。
+- 最近功能批次：B382 / `981f433 feat(projects): add row next actions`
+- 已记录生产验证：B382 / `dpl_8rTX6kXVzV5VbisjEjKYAQzaKxiF`；最新 production deployment 以 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
+- 当前精确状态以 `00_项目总控入口/vessel303_当前总控handoff.md` 和 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
 - 当前目标：前台对齐 `en.303vessel.cn` 的生产官网能力，后台对齐 `300.cn 后台` 的运营效率和数据分析心智。
 - 当前对照边界：`en.303vessel.cn` 当前由 `openresty` 响应，公开产品/案例路径只读 smoke 返回 403，后台路径返回 404；本仓库部署 smoke 以 `https://www.vessel303.com` / Vercel alias 为准。
 
