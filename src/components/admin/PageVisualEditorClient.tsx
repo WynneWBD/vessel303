@@ -256,6 +256,9 @@ const CATALOG_PAGE_LABELS = {
   all: 'All',
 } satisfies Record<PageModuleCatalogPage, string>
 
+const VISUAL_EDITOR_COVERAGE_LABEL = 'Home / Products / Cases / Contact / Site Shell / About / Global / FAQ / Media Kit / Scenarios / Innovation / Display / News'
+const VISUAL_EDITOR_COVERAGE_DETAIL = '字段编辑覆盖 Home、Products、Cases、Contact、Site Shell、About、Global、FAQ、Media Kit、Scenarios、Innovation、Display、News；模块新增当前只开放 Home 安全插入区。'
+
 function catalogPagesLabel(pages: PageModuleCatalogPage[]) {
   return pages.map((page) => CATALOG_PAGE_LABELS[page]).join(' / ')
 }
@@ -413,7 +416,7 @@ function ModuleCatalogPanel({
             <span>模块库</span>
           </div>
           <p className="mt-1 max-w-4xl text-xs leading-5 text-[#8A8580]">
-            字段编辑覆盖 Home、Products、Cases、Contact、Site Shell、About、Global；模块新增当前只开放 Home 安全插入区。
+            {VISUAL_EDITOR_COVERAGE_DETAIL}
           </p>
         </div>
         <span className="inline-flex w-fit rounded-full bg-[#F5F2ED] px-3 py-1 text-xs font-medium text-[#6B625B]">
@@ -1291,7 +1294,7 @@ function buildVisualReleaseLedgerRows({
   return [
     {
       id: 'release-ledger-safe',
-      page: 'Home / Products / Cases / Contact / Site Shell / About / Global',
+      page: VISUAL_EDITOR_COVERAGE_LABEL,
       module: '全部受控模块',
       stage: '发布复核',
       signal: '当前无待处理',
@@ -2567,7 +2570,7 @@ export default function PageVisualEditorClient({
               页面模块运营台
             </h1>
             <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-              受控编辑 Home / Products / Cases / Contact / Site Shell / About / Global 的文字、链接、图片、条目顺序、模块显示状态和 Home 安全插入区结构草稿。保存草稿不影响前台，发布后才上线。
+              受控编辑 {VISUAL_EDITOR_COVERAGE_LABEL} 的文字、链接、图片、条目顺序、模块显示状态和 Home 安全插入区结构草稿。保存草稿不影响前台，发布后才上线。
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-1">

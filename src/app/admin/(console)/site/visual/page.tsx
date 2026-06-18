@@ -59,6 +59,8 @@ const VISUAL_PAGE_META = [
 
 type VisualPageKey = (typeof VISUAL_PAGE_META)[number]['key']
 
+const VISUAL_EDITOR_COVERAGE_LABEL = 'Home / Products / Cases / Contact / Site Shell / About / Global / FAQ / Media Kit / Scenarios / Innovation / Display / News'
+
 const EDITABLE_VISUAL_MODULE_IDS = [
   'home:hero',
   'home:credentials',
@@ -273,7 +275,7 @@ function VisualReleaseConsole({
   const rows: VisualConsoleRow[] = [
     {
       title: '页面编辑范围',
-      detail: '受控编辑 Home、Products、Cases、Contact、Site Shell、About、Global 的文字、链接、图片、条目顺序、显示状态、SEO 来源和 Home 安全插入区。',
+      detail: '受控编辑 Home、Products、Cases、Contact、Site Shell、About、Global、FAQ、Media Kit、Scenarios、Innovation、Display、News 的文字、链接、图片、条目顺序、显示状态、SEO 来源和 Home 安全插入区。',
       metric: `${formatNumber(editableModules.length)} 模块`,
       signal: `${formatNumber(hiddenModules)} 隐藏`,
       href: '#visual-editor',
@@ -346,7 +348,7 @@ function VisualReleaseConsole({
             {publishQueue > 0 ? `${formatNumber(publishQueue)} 项待复核` : '当前无待发布'}
           </span>
           <span className="inline-flex min-h-8 items-center rounded-md bg-[#EAF6F8] px-3 text-xs font-semibold text-[#1889B6]">
-            Home / Products / Cases / Contact / Site Shell / About / Global
+            {VISUAL_EDITOR_COVERAGE_LABEL}
           </span>
         </div>
       </div>
