@@ -155,7 +155,8 @@ const EMPTY_RECENT_SUMMARY: RecentContentSummary = {
 const STORAGE_WARNING_BYTES = 800 * 1024 * 1024
 
 const QUICK_ACTIONS: ActionItem[] = [
-  { label: '编辑网站', href: '/admin/site/visual', Icon: LayoutTemplate, primary: true },
+  { label: '优先级台账', href: '/admin/status#operations-priority-ledger', Icon: BarChart3, primary: true },
+  { label: '编辑网站', href: '/admin/site/visual', Icon: LayoutTemplate },
   { label: '发布产品', href: '/admin/content/products/new', Icon: Package },
   { label: '发布项目', href: '/admin/content/projects/new', Icon: MapPinned },
   { label: '发布新闻', href: '/admin/content/news/new', Icon: Newspaper },
@@ -565,7 +566,16 @@ function OperationsCommandPanel({
   configIssues: number
   isAdmin: boolean
 }) {
+  const openPrioritySignals = leadSummary.new + pageDraftCount + productIssueCount + mediaIssueCount + configIssues
   const cards = [
+    {
+      title: '优先级台账',
+      value: openPrioritySignals,
+      detail: '集中处理线索、内容、SEO、素材、草稿和转化异常。',
+      href: '/admin/status#operations-priority-ledger',
+      Icon: BarChart3,
+      tone: openPrioritySignals > 0 ? 'orange' : 'green',
+    },
     {
       title: '新线索优先',
       value: leadSummary.new,
@@ -863,12 +873,20 @@ function ControlMatrix({
   const contentDrafts = productSummary.draft + projectSummary.draft + newsSummary.draft
   const contentTotal = productSummary.total + projectSummary.total + newsSummary.total
   const recentTotal = recentSummary.products + recentSummary.projects + recentSummary.news
-  const priorityTodos = todos
+  const openTodos = todos
     .filter((item) => !item.ok)
     .sort((a, b) => (b.count ?? 0) - (a.count ?? 0) || a.title.localeCompare(b.title))
-    .slice(0, 5)
+  const priorityTodos = openTodos.slice(0, 5)
 
   const lanes: ControlLane[] = [
+    {
+      title: '优先级台账',
+      metric: formatNumber(openTodos.length),
+      detail: '跨线索、内容、SEO、素材、页面草稿和转化异常的集中处理入口',
+      href: '/admin/status#operations-priority-ledger',
+      Icon: BarChart3,
+      tone: openTodos.length > 0 ? 'orange' : 'green',
+    },
     {
       title: '线索响应',
       metric: `${formatNumber(leadSummary.new)} / ${formatNumber(leadSummary.total)}`,
@@ -932,7 +950,7 @@ function ControlMatrix({
           </p>
         </div>
         <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1889B6]">
-          入口统一 · 只读判断
+          台账接入 · 只读判断
         </span>
       </div>
 
@@ -977,6 +995,12 @@ function ControlMatrix({
               </p>
             )}
           </div>
+          <Link
+            href="/admin/status#operations-priority-ledger"
+            className="mt-3 inline-flex min-h-9 w-full items-center justify-center rounded-md border border-[#1889B6] bg-[#EAF6F8] px-3 text-xs font-bold text-[#1889B6] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
+          >
+            查看完整优先级台账
+          </Link>
         </aside>
       </div>
     </section>
