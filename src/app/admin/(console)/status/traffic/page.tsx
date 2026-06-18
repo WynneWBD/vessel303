@@ -2369,6 +2369,14 @@ function sourceStageTrafficRoute(key: string): { label: string; detail: string; 
     }
   }
 
+  if (key.startsWith('news:')) {
+    return {
+      label: '新闻入口',
+      detail: '新闻列表、详情与 Contact 承接来源合并看内容获客效率。',
+      tone: 'blue',
+    }
+  }
+
   return {
     label: '其他入口',
     detail: '保留来源阶段，等待更多样本后再拆分。',
