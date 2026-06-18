@@ -312,7 +312,7 @@ export const CONTENT_CONTRACTS: ContentContract[] = [
     previewHref: '/',
     modulePageKey: 'site',
     modulePageKeys: ['site', 'auth', 'account'],
-    requiredModules: ['navbar', 'ui-labels', 'footer-cta', 'footer-brand', 'footer-products', 'footer-company', 'footer-contact'],
+    requiredModules: ['navbar', 'ui-labels', 'footer-cta', 'footer-brand', 'footer-products', 'footer-company', 'footer-contact', 'floating-contact'],
     signals: ['navigation', 'footer', 'cta', 'source', 'contact', 'english'],
     displayRule: '全站导航、页脚、共用按钮和客户可见系统文案来自后台模块。',
     hiddenRule: '后台无配置时只显示最小系统壳，不显示业务宣传文案。',
