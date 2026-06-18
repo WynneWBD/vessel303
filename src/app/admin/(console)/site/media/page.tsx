@@ -455,7 +455,7 @@ function buildMediaReplacementLanes({
       action: referenceSummary.contentRefs + referenceSummary.pageRefs > 0
         ? '从内容来源中心判断 owner，再进入产品、案例、新闻或页面模块替换。'
         : '当前抽样未发现线上引用。',
-      href: '/admin/site/pages',
+      href: '/admin/site/pages#content-source-route-tree',
       Icon: Link2,
       tone: referenceSummary.contentRefs + referenceSummary.pageRefs > 0 ? 'blue' : 'gray',
     },
