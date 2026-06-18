@@ -16,6 +16,50 @@ import {
   type PublicPageModule,
 } from '@/lib/page-module-client';
 
+const AUTH_REGISTER_FALLBACK_MODULES: PublicPageModule[] = [
+  {
+    page_key: 'auth',
+    module_key: 'shared',
+    is_visible: true,
+    sort_order: 10,
+    items: [
+      {
+        id: 'brand',
+        href: '/',
+        label_zh: 'VESSEL',
+        label_en: 'VESSEL',
+        is_visible: true,
+        sort_order: 10,
+      },
+    ],
+  },
+  {
+    page_key: 'auth',
+    module_key: 'register',
+    title_zh: '注册',
+    title_en: 'Create account',
+    description_zh: '创建您的 VESSEL 账户。',
+    description_en: 'Create your VESSEL account.',
+    is_visible: true,
+    sort_order: 30,
+    items: [
+      { id: 'name-label', label_zh: '姓名', label_en: 'Name', is_visible: true, sort_order: 10 },
+      { id: 'name-placeholder', label_zh: '姓名占位', label_en: 'Name placeholder', value_zh: '您的姓名', value_en: 'Your name', is_visible: true, sort_order: 20 },
+      { id: 'email-label', label_zh: '邮箱', label_en: 'Email', is_visible: true, sort_order: 30 },
+      { id: 'email-placeholder', label_zh: '邮箱占位', label_en: 'Email placeholder', value_zh: 'name@example.com', value_en: 'name@example.com', is_visible: true, sort_order: 40 },
+      { id: 'password-label', label_zh: '密码', label_en: 'Password', is_visible: true, sort_order: 50 },
+      { id: 'password-placeholder', label_zh: '密码占位', label_en: 'Password placeholder', value_zh: '设置密码', value_en: 'Set password', is_visible: true, sort_order: 60 },
+      { id: 'google-button', label_zh: '使用 Google 注册', label_en: 'Continue with Google', is_visible: true, sort_order: 70 },
+      { id: 'divider', label_zh: '或', label_en: 'or', is_visible: true, sort_order: 80 },
+      { id: 'submit', label_zh: '注册', label_en: 'Create account', is_visible: true, sort_order: 90 },
+      { id: 'submitting', label_zh: '注册中', label_en: 'Creating account', is_visible: true, sort_order: 100 },
+      { id: 'error', label_zh: '注册失败，请稍后再试。', label_en: 'Registration failed. Please try again.', is_visible: true, sort_order: 110 },
+      { id: 'has-account', label_zh: '已有账户？', label_en: 'Already have an account?', is_visible: true, sort_order: 120 },
+      { id: 'login-link', href: '/login', label_zh: '登录', label_en: 'Sign in', is_visible: true, sort_order: 130 },
+    ],
+  },
+];
+
 export default function RegisterPage() {
   const { lang } = useLanguage();
   const router = useRouter();
@@ -34,7 +78,7 @@ export default function RegisterPage() {
     return () => controller.abort();
   }, []);
 
-  const modules = moduleMap(pageModules);
+  const modules = moduleMap(pageModules ?? AUTH_REGISTER_FALLBACK_MODULES);
   const registerModule = modules.get('register') ?? null;
   const sharedModule = modules.get('shared') ?? null;
   const title = moduleTitle(registerModule, lang);

@@ -89,6 +89,73 @@ function getApiError(data: AccountApiResponse, fallback: string) {
   return data.error ?? data.issues?.[0]?.message ?? fallback
 }
 
+const ACCOUNT_FALLBACK_MODULES: PublicPageModule[] = [
+  {
+    page_key: 'account',
+    module_key: 'header',
+    title_zh: '账户中心',
+    title_en: 'Account Center',
+    is_visible: true,
+    sort_order: 10,
+    items: [
+      { id: 'eyebrow', label_zh: '账户', label_en: 'Account', is_visible: true, sort_order: 10 },
+    ],
+  },
+  {
+    page_key: 'account',
+    module_key: 'profile',
+    title_zh: '资料',
+    title_en: 'Profile',
+    description_zh: '更新联系信息，方便项目沟通。',
+    description_en: 'Update contact information for project communication.',
+    is_visible: true,
+    sort_order: 20,
+    items: [
+      { id: 'name-label', label_zh: '姓名', label_en: 'Name', is_visible: true, sort_order: 10 },
+      { id: 'name-placeholder', label_zh: '姓名占位', label_en: 'Name placeholder', value_zh: '您的姓名', value_en: 'Your name', is_visible: true, sort_order: 20 },
+      { id: 'company-label', label_zh: '公司 / 机构', label_en: 'Company / Organization', is_visible: true, sort_order: 30 },
+      { id: 'company-placeholder', label_zh: '公司占位', label_en: 'Company placeholder', value_zh: '公司名称', value_en: 'Company name', is_visible: true, sort_order: 40 },
+      { id: 'country-label', label_zh: '国家 / 城市', label_en: 'Country / City', is_visible: true, sort_order: 50 },
+      { id: 'country-placeholder', label_zh: '国家占位', label_en: 'Country placeholder', value_zh: '项目所在国家或城市', value_en: 'Project country or city', is_visible: true, sort_order: 60 },
+      { id: 'phone-label', label_zh: '电话', label_en: 'Phone', is_visible: true, sort_order: 70 },
+      { id: 'phone-placeholder', label_zh: '电话占位', label_en: 'Phone placeholder', value_zh: '电话', value_en: 'Phone number', is_visible: true, sort_order: 80 },
+      { id: 'whatsapp-label', label_zh: 'WhatsApp', label_en: 'WhatsApp', is_visible: true, sort_order: 90 },
+      { id: 'whatsapp-placeholder', label_zh: 'WhatsApp 占位', label_en: 'WhatsApp placeholder', value_zh: 'WhatsApp', value_en: 'WhatsApp', is_visible: true, sort_order: 100 },
+      { id: 'language-label', label_zh: '首选语言', label_en: 'Preferred Language', is_visible: true, sort_order: 110 },
+      { id: 'language-empty', label_zh: '不指定', label_en: 'Not specified', is_visible: true, sort_order: 120 },
+      { id: 'language-zh', label_zh: '中文', label_en: 'Chinese', is_visible: true, sort_order: 130 },
+      { id: 'language-en', label_zh: '英文', label_en: 'English', is_visible: true, sort_order: 140 },
+      { id: 'save', label_zh: '保存资料', label_en: 'Save Profile', is_visible: true, sort_order: 150 },
+      { id: 'saving', label_zh: '保存中', label_en: 'Saving', is_visible: true, sort_order: 160 },
+      { id: 'success', label_zh: '资料已保存。', label_en: 'Profile saved.', is_visible: true, sort_order: 170 },
+      { id: 'load-error', label_zh: '资料加载失败，请稍后再试。', label_en: 'Profile failed to load. Please try again.', is_visible: true, sort_order: 180 },
+      { id: 'save-error', label_zh: '资料保存失败，请稍后再试。', label_en: 'Profile save failed. Please try again.', is_visible: true, sort_order: 190 },
+    ],
+  },
+  {
+    page_key: 'account',
+    module_key: 'password',
+    title_zh: '密码',
+    title_en: 'Password',
+    is_visible: true,
+    sort_order: 30,
+    items: [
+      { id: 'title-change', label_zh: '修改密码', label_en: 'Change password', is_visible: true, sort_order: 10 },
+      { id: 'title-set', label_zh: '设置密码', label_en: 'Set password', is_visible: true, sort_order: 20 },
+      { id: 'help-change', label_zh: '输入当前密码并设置新密码。', label_en: 'Enter current password and set a new one.', is_visible: true, sort_order: 30 },
+      { id: 'help-set', label_zh: '为您的账户设置密码。', label_en: 'Set a password for your account.', is_visible: true, sort_order: 40 },
+      { id: 'current-label', label_zh: '当前密码', label_en: 'Current Password', is_visible: true, sort_order: 50 },
+      { id: 'new-label', label_zh: '新密码', label_en: 'New Password', is_visible: true, sort_order: 60 },
+      { id: 'new-placeholder', label_zh: '新密码占位', label_en: 'New password placeholder', value_zh: '输入新密码', value_en: 'Enter new password', is_visible: true, sort_order: 70 },
+      { id: 'save', label_zh: '保存密码', label_en: 'Save Password', is_visible: true, sort_order: 80 },
+      { id: 'saving', label_zh: '保存中', label_en: 'Saving', is_visible: true, sort_order: 90 },
+      { id: 'set-success', label_zh: '密码已设置。', label_en: 'Password set.', is_visible: true, sort_order: 100 },
+      { id: 'change-success', label_zh: '密码已修改。', label_en: 'Password changed.', is_visible: true, sort_order: 110 },
+      { id: 'save-error', label_zh: '密码保存失败，请稍后再试。', label_en: 'Password save failed. Please try again.', is_visible: true, sort_order: 120 },
+    ],
+  },
+]
+
 function FieldLabel({
   htmlFor,
   children,
@@ -156,7 +223,7 @@ export default function AccountForms() {
     return () => controller.abort()
   }, [])
 
-  const modules = moduleMap(pageModules)
+  const modules = moduleMap(pageModules ?? ACCOUNT_FALLBACK_MODULES)
   const headerModule = modules.get('header') ?? null
   const profileModule = modules.get('profile') ?? null
   const passwordModule = modules.get('password') ?? null
