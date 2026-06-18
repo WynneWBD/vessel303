@@ -141,6 +141,17 @@ type LeadHandoffStep = {
   disabled?: boolean
 }
 
+type LeadNextAction = {
+  label: string
+  detail: string
+  suggestedStatus: LeadStatus
+  statusLabel: string
+  ownerLabel: string
+  notePlaceholder: string
+  saveLabel: string
+  tone: LeadPriorityTone
+}
+
 const ACTIVE_LEAD_STATUSES: LeadStatus[] = ['new', 'contacting', 'quoted']
 
 function statusBadgeClass(status: string) {
@@ -311,6 +322,78 @@ function getLeadGaps(lead: Lead) {
   if (!lead.company?.trim()) gaps.push('缺公司')
   if (!lead.message?.trim()) gaps.push('缺留言')
   return gaps
+}
+
+function getLeadNextAction(lead: Lead, statusOverride: LeadStatus = lead.status): LeadNextAction {
+  const missingProfile = !lead.phone?.trim() || !lead.company?.trim()
+  const unassigned = isActiveLeadStatus(statusOverride) && !lead.assigned_to?.trim()
+
+  if (statusOverride === 'new') {
+    return {
+      label: unassigned ? '分配负责人并启动首次响应' : '确认需求并进入跟进',
+      detail: missingProfile
+        ? '先确认联系方式、公司和来源，再把线索转入跟进中。'
+        : '确认客户需求、来源和负责人，完成首次响应后转入跟进中。',
+      suggestedStatus: 'contacting',
+      statusLabel: '建议阶段: 跟进中',
+      ownerLabel: unassigned ? '必须补负责人' : '负责人已存在',
+      notePlaceholder: '已完成首次响应；客户需求、预算、地区、产品兴趣如下...',
+      saveLabel: '保存下一步动作',
+      tone: 'critical',
+    }
+  }
+
+  if (statusOverride === 'contacting') {
+    return {
+      label: '补充跟进记录并明确下一次动作',
+      detail: missingProfile
+        ? '跟进时同步补齐电话或公司，方便销售继续接手。'
+        : '记录本次沟通结论、下一次联系时间和是否需要报价。',
+      suggestedStatus: 'contacting',
+      statusLabel: '建议阶段: 保持跟进中',
+      ownerLabel: unassigned ? '建议分配负责人' : '负责人已存在',
+      notePlaceholder: '本次沟通结论；下一次动作；预计时间；客户关注点...',
+      saveLabel: '保存跟进动作',
+      tone: 'active',
+    }
+  }
+
+  if (statusOverride === 'quoted') {
+    return {
+      label: '记录报价反馈并推进成交判断',
+      detail: '补充报价版本、客户反馈、决策人和下一次回访安排。',
+      suggestedStatus: 'quoted',
+      statusLabel: '建议阶段: 已报价',
+      ownerLabel: unassigned ? '建议分配负责人' : '负责人已存在',
+      notePlaceholder: '报价已发送；客户反馈；下一次回访时间；是否有成交风险...',
+      saveLabel: '保存报价回访',
+      tone: 'warning',
+    }
+  }
+
+  if (statusOverride === 'won') {
+    return {
+      label: '补齐成交归档说明',
+      detail: '记录成交产品、金额口径、项目背景和后续交付注意事项。',
+      suggestedStatus: 'won',
+      statusLabel: '建议阶段: 已成交',
+      ownerLabel: lead.assigned_to?.trim() ? '负责人已存在' : '可补归档负责人',
+      notePlaceholder: '成交归档：产品/项目、关键背景、后续交付注意事项...',
+      saveLabel: '保存归档说明',
+      tone: 'success',
+    }
+  }
+
+  return {
+    label: '补充关闭原因',
+    detail: '记录无效、重复、预算不符或暂不推进的原因，方便来源质量复盘。',
+    suggestedStatus: 'lost',
+    statusLabel: '建议阶段: 已废弃',
+    ownerLabel: lead.assigned_to?.trim() ? '负责人已存在' : '可补关闭负责人',
+    notePlaceholder: '关闭原因；是否重复；是否可后续再联系；来源质量判断...',
+    saveLabel: '保存关闭说明',
+    tone: 'muted',
+  }
 }
 
 function buildSourceBreakdown(leads: Lead[]) {
@@ -771,6 +854,7 @@ export default function LeadsClient({
                 const PriorityIcon = priority.Icon
                 const sourceInfo = describeLeadSource(lead.source)
                 const gaps = getLeadGaps(lead)
+                const nextAction = getLeadNextAction(lead)
 
                 return (
                   <tr
@@ -806,6 +890,9 @@ export default function LeadsClient({
                       </Badge>
                       <p className="mt-2 text-xs text-[#61767D]">
                         {lead.assigned_to ? `负责人 ${lead.assigned_to}` : '未分配负责人'}
+                      </p>
+                      <p className="mt-2 rounded-md border border-[#D8E7E8] bg-white px-2 py-1.5 text-[11px] font-semibold leading-4 text-[#1889B6]">
+                        下一步: {nextAction.label}
                       </p>
                     </td>
                     <td className="min-w-[220px] px-4 py-3">
@@ -852,7 +939,7 @@ export default function LeadsClient({
                     </td>
                     <td className="w-[96px] px-4 py-3">
                       <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#E36F2C]">
-                        查看 <ArrowUpRight size={12} />
+                        处理 <ArrowUpRight size={12} />
                       </span>
                     </td>
                   </tr>
@@ -1606,6 +1693,7 @@ function LeadDetailSheet({
   const sourceInfo = lead ? describeLeadSource(lead.source) : null
   const priority = lead ? getLeadPriority(lead) : null
   const gaps = lead ? getLeadGaps(lead) : []
+  const nextAction = lead ? getLeadNextAction(lead, status) : null
   const PriorityIcon = priority?.Icon ?? Mail
 
   return (
@@ -1653,6 +1741,12 @@ function LeadDetailSheet({
                       <p className="mt-1 text-xs leading-5 text-[#61767D]">
                         创建 {formatAge(lead.created_at)}前 / 更新 {formatAge(lead.updated_at)}前。保存只会更新状态、负责人和追加备注。
                       </p>
+                      {nextAction ? (
+                        <div className="mt-3 rounded-md border border-[#D8E7E8] bg-white px-3 py-2">
+                          <p className="text-xs font-bold text-[#1E2C31]">下一步动作: {nextAction.label}</p>
+                          <p className="mt-1 text-xs leading-5 text-[#61767D]">{nextAction.detail}</p>
+                        </div>
+                      ) : null}
                       <div className="mt-3 flex flex-wrap gap-1">
                         {gaps.length > 0 ? (
                           gaps.map((gap) => (
@@ -1714,43 +1808,83 @@ function LeadDetailSheet({
                 </div>
               </div>
 
-              {/* Status */}
-              <div>
-                <div className="text-xs text-[#61767D] mb-2">状态</div>
-                <Select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as LeadStatus)}
-                >
-                  {STATUS_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </Select>
-              </div>
+              {nextAction ? (
+                <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+                  <div className="border-b border-[#E6EEEE] px-4 py-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-sm font-bold text-[#1E2C31]">下一步动作</p>
+                        <p className="mt-1 text-xs leading-5 text-[#61767D]">
+                          把状态、负责人和处理说明一次保存；这里不删除线索，也不改客户原始提交内容。
+                        </p>
+                      </div>
+                      <Badge className={priorityBadgeClass(nextAction.tone)}>
+                        {nextAction.statusLabel}
+                      </Badge>
+                    </div>
+                  </div>
 
-              {/* Assigned to */}
-              <div>
-                <div className="text-xs text-[#61767D] mb-2">分配销售(邮箱)</div>
-                <Input
-                  type="email"
-                  placeholder="sales@example.com"
-                  value={assignedTo}
-                  onChange={(e) => setAssignedTo(e.target.value)}
-                />
-              </div>
+                  <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2">
+                    <div>
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold text-[#61767D]">更新阶段</span>
+                        {status !== nextAction.suggestedStatus ? (
+                          <button
+                            type="button"
+                            onClick={() => setStatus(nextAction.suggestedStatus)}
+                            className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]"
+                          >
+                            套用建议
+                          </button>
+                        ) : null}
+                      </div>
+                      <Select
+                        value={status}
+                        onChange={(e) => setStatus(e.target.value as LeadStatus)}
+                      >
+                        {STATUS_OPTIONS.map((o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </Select>
+                      <p className="mt-2 text-[11px] leading-4 text-[#8A9EA4]">{nextAction.detail}</p>
+                    </div>
+
+                    <div>
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold text-[#61767D]">分配负责人</span>
+                        <span className="text-[11px] font-semibold text-[#8A9EA4]">{nextAction.ownerLabel}</span>
+                      </div>
+                      <Input
+                        type="email"
+                        placeholder="sales@example.com"
+                        value={assignedTo}
+                        onChange={(e) => setAssignedTo(e.target.value)}
+                      />
+                      <p className="mt-2 text-[11px] leading-4 text-[#8A9EA4]">建议填写可接手跟进的邮箱或内部负责人标识。</p>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <div className="text-xs font-semibold text-[#61767D] mb-2">追加处理说明</div>
+                      <Textarea
+                        rows={4}
+                        placeholder={nextAction.notePlaceholder}
+                        value={noteAppend}
+                        onChange={(e) => setNoteAppend(e.target.value)}
+                      />
+                      <p className="mt-2 text-[11px] leading-4 text-[#8A9EA4]">
+                        保存后会把这段说明带时间戳追加到历史备注顶部。
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              ) : null}
 
               {/* Notes */}
               <div>
-                <div className="text-xs text-[#61767D] mb-2">追加备注</div>
-                <Textarea
-                  rows={3}
-                  placeholder="本次保存时会追加到备注顶部,带时间戳"
-                  value={noteAppend}
-                  onChange={(e) => setNoteAppend(e.target.value)}
-                />
                 {lead.notes && (
-                  <div className="mt-3">
+                  <div>
                     <div className="text-xs text-[#61767D] mb-2">历史备注</div>
                     <div className="rounded-md bg-[#F7FAFA] border border-[#D8E7E8] p-3 text-xs text-[#9AA9AD] whitespace-pre-wrap max-h-40 overflow-auto">
                       {lead.notes}
@@ -1773,7 +1907,7 @@ function LeadDetailSheet({
                 </Button>
               )}
               <Button size="sm" onClick={handleSave} disabled={saving}>
-                {saving ? '保存中…' : '保存'}
+                {saving ? '保存中…' : nextAction?.saveLabel ?? '保存'}
               </Button>
             </SheetFooter>
           </>
