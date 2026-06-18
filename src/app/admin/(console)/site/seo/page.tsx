@@ -1813,6 +1813,11 @@ function buildSeoWorkflowSteps({
   const manualSubmit = submissionItems.filter((item) => item.status === 'manual').length
   const readyFoundation = indexFoundationItems.filter((item) => item.status === 'ready').length
   const activePriority = priorityItems.filter((item) => item.tone === 'critical' || item.tone === 'warning').length
+  const firstContentGap = [
+    { label: '产品 SEO', summary: products },
+    { label: '新闻 SEO', summary: news },
+    { label: '案例派生 metadata', summary: projects },
+  ].find((item) => item.summary.missing > 0)
 
   return [
     {
@@ -1821,8 +1826,8 @@ function buildSeoWorkflowSteps({
       owner: '内容后台 / 产品、新闻、案例',
       metric: `${formatNumber(missingTotal)} 项`,
       detail: `${formatNumber(products.missing)} 个产品、${formatNumber(news.missing)} 篇新闻、${formatNumber(projects.missing)} 个案例需要先复核 SEO 字段或派生摘要。`,
-      action: missingTotal > 0 ? '进入产品 SEO 缺口筛选，先处理会影响搜索摘要的内容。' : '内容字段已具备提交前抽查条件。',
-      href: missingTotal > 0 ? '/admin/content/products/list?view=incomplete&issue=seo' : '/admin/site/seo#metadata-coverage',
+      action: firstContentGap ? `进入${firstContentGap.label}待补队列，先处理会影响搜索摘要的内容。` : '内容字段已具备提交前抽查条件。',
+      href: firstContentGap?.summary.href ?? '/admin/site/seo#metadata-coverage',
       Icon: FileText,
       tone: missingTotal > 0 ? 'critical' : 'ready',
     },
