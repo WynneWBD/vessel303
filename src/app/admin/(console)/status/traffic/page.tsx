@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import { CONVERSION_PATHS } from '@/lib/admin-conversion-paths'
 import {
   loadAnalyticsReadinessMetrics,
@@ -3313,6 +3314,15 @@ function ReadinessCard({ item, showAdminNote }: { item: AnalyticsReadinessItem; 
               {item.adminNote}
             </p>
           ) : null}
+          {item.href ? (
+            <Link
+              href={item.href}
+              className="mt-4 inline-flex h-9 items-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-bold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
+            >
+              {readinessActionLabel(item.state)}
+              <ArrowRight size={14} aria-hidden="true" />
+            </Link>
+          ) : null}
         </div>
         <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statePillClass(item.state)}`}>
           {stateLabel(item.state)}
@@ -3446,4 +3456,11 @@ function statePillClass(state: AnalyticsReadinessItem['state']): string {
   if (state === 'partial') return 'bg-[#EAF6F8] text-[#1889B6]'
   if (state === 'planned') return 'bg-[#FFF2E7] text-[#E36F2C]'
   return 'bg-[#F5F2ED] text-[#6B625B]'
+}
+
+function readinessActionLabel(state: AnalyticsReadinessItem['state']): string {
+  if (state === 'active') return '查看下钻'
+  if (state === 'partial') return '继续配置'
+  if (state === 'planned') return '进入接入入口'
+  return '查看上线前事项'
 }
