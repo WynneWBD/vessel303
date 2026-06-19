@@ -102,6 +102,11 @@ export type ActivityItem = {
   changedAt: string
 }
 
+function adminSearchHref(path: string, search: string): string {
+  const params = new URLSearchParams({ search })
+  return `${path}?${params.toString()}`
+}
+
 export type StatusOverview = {
   content: ContentMetrics
   leads: LeadMetrics
@@ -785,7 +790,7 @@ async function loadLeadActivity(): Promise<ActivityItem[]> {
     sourceLabel: '线索',
     title: firstText(row.name, row.company, row.email),
     detail: `线索状态：${row.status}`,
-    href: '/admin/customers/leads',
+    href: adminSearchHref('/admin/customers/leads', row.id),
     changedAt: row.changed_at,
   }))
 }
@@ -809,7 +814,7 @@ async function loadMediaActivity(): Promise<ActivityItem[]> {
     sourceLabel: '媒体',
     title: firstText(row.filename, row.mime, row.id),
     detail: '图片素材上传记录',
-    href: '/admin/site/media',
+    href: adminSearchHref('/admin/site/media', row.id),
     changedAt: row.changed_at,
   }))
 }

@@ -135,7 +135,7 @@ function buildWhere(filter: UploadFilter) {
   }
   if (filter.search) {
     params.push(`%${filter.search}%`)
-    conds.push(`u.filename ILIKE $${params.length}`)
+    conds.push(`(u.id::text ILIKE $${params.length} OR u.filename ILIKE $${params.length} OR u.blob_path ILIKE $${params.length})`)
   }
   if (filter.view === 'issues') {
     conds.push(`u.mime ILIKE 'image/%'`)

@@ -194,7 +194,7 @@ function buildWhere(filter: ListLeadsFilter) {
     params.push(`%${filter.search}%`)
     const i = params.length
     conds.push(
-      `(email ILIKE $${i} OR name ILIKE $${i} OR company ILIKE $${i} OR message ILIKE $${i})`,
+      `(id::text ILIKE $${i} OR email ILIKE $${i} OR name ILIKE $${i} OR company ILIKE $${i} OR message ILIKE $${i})`,
     )
   }
 
