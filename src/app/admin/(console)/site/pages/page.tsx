@@ -434,6 +434,9 @@ function contractSeoHref(contract: GovernanceContractStatus): string {
 }
 
 function contractMediaHref(contract: GovernanceContractStatus): string {
+  if (contract.sourceType === 'page_modules' && contract.issueLevel !== 'protected') {
+    return contractVisualModuleHref(contract) ?? contract.adminHref ?? '/admin/site/media#media-replacement-workbench'
+  }
   if (contract.sourceType === 'product_cms') return '/admin/content/products/list?view=incomplete'
   if (contract.sourceType === 'project_cms') return '/admin/content/projects/list?view=case-conversion-weak'
   if (contract.sourceType === 'news_cms') return '/admin/content/news/list'
