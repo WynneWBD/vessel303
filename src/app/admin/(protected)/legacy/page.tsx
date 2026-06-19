@@ -14,6 +14,7 @@ import {
   MapPinned,
   type LucideIcon,
 } from 'lucide-react'
+import { VISUAL_EDITOR_HOME_HERO_HREF } from '@/lib/admin-visual-links'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,52 +23,59 @@ type LegacyEntry = {
   description: string
   href: string
   Icon: LucideIcon
+  cta: string
   sensitive?: boolean
 }
 
 const legacyEntries: LegacyEntry[] = [
   {
-    title: '产品维护',
-    description: '旧产品 CMS 列表、新建、编辑、发布和下架。',
-    href: '/admin/products',
+    title: '产品运营',
+    description: '进入新版产品列表，处理完整度、分类、素材、SEO 和编辑复核。',
+    href: '/admin/content/products/list',
     Icon: Package,
+    cta: '进入产品运营',
   },
   {
-    title: '项目维护',
-    description: '旧项目案例 CMS 列表、新建、编辑和地图资料维护。',
-    href: '/admin/projects',
+    title: '项目案例',
+    description: '进入新版项目列表，处理案例内容、Global 入图、转化承接和编辑复核。',
+    href: '/admin/content/projects/list',
     Icon: MapPinned,
+    cta: '进入项目运营',
   },
   {
-    title: '新闻维护',
-    description: '旧新闻 CMS 列表、新建、编辑、发布和下架。',
-    href: '/admin/news',
+    title: '新闻运营',
+    description: '进入新版新闻列表，处理草稿、分类、SEO、定时复核和内容缺口。',
+    href: '/admin/content/news/list',
     Icon: Newspaper,
+    cta: '进入新闻运营',
   },
   {
-    title: '线索维护',
-    description: '旧线索列表、筛选、详情和导出。',
+    title: '线索处理',
+    description: '进入客户线索台，按来源、状态、阶段和关键词处理跟进队列。',
     href: '/admin/customers/leads',
     Icon: Inbox,
+    cta: '进入线索处理',
   },
   {
-    title: '媒体维护',
-    description: '旧媒体库、引用详情和上传入口。',
-    href: '/admin/media',
+    title: '媒体库',
+    description: '进入新版媒体库，处理素材搜索、引用详情、风险筛选和替换工作台。',
+    href: '/admin/site/media',
     Icon: ImageIcon,
+    cta: '进入媒体库',
   },
   {
-    title: '页面表单模式',
-    description: '旧页面模块表单编辑器；日常页面运营优先使用可视化编辑。',
-    href: '/admin/pages',
+    title: '可视化页面编辑',
+    description: '进入 Visual Editor 首屏模块；固定表单模式只作为管理员低频备用。',
+    href: VISUAL_EDITOR_HOME_HERO_HREF,
     Icon: LayoutTemplate,
-    sensitive: true,
+    cta: '进入可视化编辑',
   },
   {
     title: '用户与权限',
     description: '后台账号、角色、身份标记和禁用状态。',
     href: '/admin/users',
     Icon: ShieldCheck,
+    cta: '进入账号维护',
     sensitive: true,
   },
   {
@@ -75,6 +83,7 @@ const legacyEntries: LegacyEntry[] = [
     description: 'site_settings、配置状态和最近操作记录。',
     href: '/admin/settings',
     Icon: Settings,
+    cta: '进入站点设置',
     sensitive: true,
   },
 ]
@@ -97,13 +106,13 @@ function LegacyCard({ entry }: { entry: LegacyEntry }) {
               : 'border-[#E5DED4] bg-[#FAF7F2] text-[#8A8580]'
           }`}
         >
-          {entry.sensitive ? 'Admin only' : '维护入口'}
+          {entry.sensitive ? 'Admin only' : '2.0 入口'}
         </span>
       </div>
       <h2 className="mt-4 text-sm font-semibold text-[#2C2A28]">{entry.title}</h2>
       <p className="mt-2 min-h-10 text-xs leading-5 text-[#8A8580]">{entry.description}</p>
       <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-[#E36F2C]">
-        进入旧维护页
+        {entry.cta}
         <ArrowRight size={14} className="transition group-hover:translate-x-0.5" />
       </div>
     </Link>
@@ -123,16 +132,16 @@ export default async function LegacyAdminPage() {
           <div>
             <div className="flex items-center gap-2 text-sm font-semibold text-[#E36F2C]">
               <Wrench size={16} />
-              Legacy maintenance
+              Operations routing
             </div>
             <h1
               className="mt-3 text-2xl font-bold text-[#2C2A28]"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
             >
-              旧后台维护入口
+              维护与兼容入口
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-[#8A8580]">
-              这里仅用于当前官网数据维护、排障和开发回溯。日常运营请优先回到新版 2.0 控制台。
+              这里把常用内容、线索、媒体和页面运营入口优先指向新版 2.0 控制台。旧路由仍保留作兼容和低频排障。
               本页只是索引页，不迁移旧路由，也不触发任何保存、发布、上传或删除。
             </p>
           </div>

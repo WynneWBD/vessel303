@@ -36,7 +36,7 @@ const menuItems: MenuItem[] = [
   { label: '项目案例', href: '/admin/content/projects/list', Icon: MapPinned, title: '项目案例 Projects', group: 'daily' },
   { label: '媒体库', href: '/admin/site/media', Icon: ImageIcon, title: '媒体运营 Media', group: 'daily' },
   { label: '后台账号', href: '/admin/users', Icon: Users, title: '用户管理 Users', group: 'maintenance', superAdminOnly: true },
-  { label: '页面模块旧表单', href: '/admin/pages', Icon: LayoutTemplate, title: '页面模块旧表单 Pages', group: 'maintenance', superAdminOnly: true },
+  { label: '页面表单模式', href: '/admin/pages', Icon: LayoutTemplate, title: '页面表单模式 Pages', group: 'maintenance', superAdminOnly: true },
   { label: '站点设置', href: '/admin/settings', Icon: Settings, title: '站点设置 Settings', group: 'maintenance', superAdminOnly: true },
 ]
 
@@ -131,7 +131,7 @@ export default function AdminShell({
           <div className="rounded-md border border-[#D8E7E8] bg-white px-3 py-2">
             <div className="text-xs font-bold text-[#1E2C31]">旧维护壳层</div>
             <div className="mt-1 text-[11px] leading-4 text-[#61767D]">
-              日常运营入口已指向 2.0；旧表单仅用于低频维护。
+              日常运营入口已指向 2.0；表单模式仅用于低频维护。
             </div>
           </div>
         </div>
