@@ -344,6 +344,8 @@ function LeadsQueueConsole({
   const newsSource = sourceStatusSummary.find((source) => source.type === 'news')
   const newsTotal = newsSource?.total ?? 0
   const newsActive = newsSource ? newsSource.new + newsSource.contacting + newsSource.quoted : 0
+  const newsTopStage = sourceStageStatusSummary.find((source) => source.type === 'news')
+  const newsQueueHandoffHref = `${createLeadsHref(filters, { source_type: 'news', source_stage: 'all', status: 'all', page: 1 })}#news-source-lead-queue-handoff`
   const clearHref = createLeadsHref({
     status: 'all',
     inquiry_type: 'all',
@@ -414,17 +416,17 @@ function LeadsQueueConsole({
     {
       title: '新闻来源承接',
       detail: newsSource
-        ? `新闻列表或详情 CTA 已进入线索台账；当前新线索 ${formatNumber(newsSource.new)} 条，可回到线索状态桥复盘新闻路径、来源动作和后续产品/案例路径。`
-        : '新闻列表和详情 CTA 会通过 Contact 写入来源；有样本后可从线索状态桥、新闻来源面板和内容运营页回看内容转化。',
+        ? `新闻列表或详情 CTA 已进入线索台账；当前新线索 ${formatNumber(newsSource.new)} 条，可进入新闻来源队列复盘新闻路径、来源动作和后续产品/案例路径。`
+        : '新闻列表和详情 CTA 会通过 Contact 写入来源；有样本后可从新闻来源队列、线索状态桥、新闻来源面板和内容运营页回看内容转化。',
       metric: `${formatNumber(newsActive)} 活跃`,
       signal: newsPathMetric.leads > 0
         ? `${formatNumber(newsPathMetric.leads)} 路径线索`
         : `${formatAnalyticsPercent(newsPathMetric.conversionRate)} 转化`,
-      href: createLeadsHref(filters, { source_type: 'news', source_stage: 'all', status: 'all', page: 1 }),
+      href: newsQueueHandoffHref,
       Icon: FileText,
       tone: newsActive > 0 ? 'orange' : newsTotal > 0 ? 'blue' : newsPathMetric.views > 0 ? 'orange' : 'gray',
       actions: [
-        { label: '新闻线索', href: createLeadsHref(filters, { source_type: 'news', source_stage: 'all', status: 'all', page: 1 }), primary: newsActive > 0 },
+        { label: '新闻线索', href: newsQueueHandoffHref, primary: newsActive > 0 },
         { label: '状态桥', href: '/admin/status/leads#news-lead-path-bridge', primary: newsActive === 0 && newsTotal > 0 },
         { label: '来源面板', href: '/admin/status/traffic#news-source-handoff' },
         { label: '新闻运营', href: '/admin/content/news#news-operations-hub' },
@@ -445,7 +447,7 @@ function LeadsQueueConsole({
         {
           label: '线索筛选',
           value: 'source_type=news',
-          href: createLeadsHref(filters, { source_type: 'news', source_stage: 'all', status: 'all', page: 1 }),
+          href: newsQueueHandoffHref,
           tone: newsActive > 0 ? 'orange' : newsTotal > 0 ? 'blue' : 'gray',
         },
       ],
@@ -534,6 +536,20 @@ function LeadsQueueConsole({
         <LeadControlStat label="案例线索" value={`${formatNumber(caseTotal)} 条`} tone={caseActive > 0 ? 'orange' : caseTotal > 0 ? 'blue' : 'gray'} />
       </div>
 
+      <NewsSourceLeadQueueHandoffDesk
+        newsTotal={newsTotal}
+        newsActive={newsActive}
+        newsNew={newsSource?.new ?? 0}
+        newsContacting={newsSource?.contacting ?? 0}
+        newsQuoted={newsSource?.quoted ?? 0}
+        newsTopStage={newsTopStage}
+        newsPathMetric={newsPathMetric}
+        operationsSummary={operationsSummary}
+        activeFilterChips={activeFilterChips}
+        result={result}
+        filters={filters}
+      />
+
       <ProductSourceLeadQueueHandoffDesk
         productTotal={productTotal}
         productActive={productActive}
@@ -579,6 +595,155 @@ function LeadsQueueConsole({
         {rows.map((row) => (
           <LeadConsoleRowView key={row.title} row={row} />
         ))}
+      </div>
+    </section>
+  )
+}
+
+function NewsSourceLeadQueueHandoffDesk({
+  newsTotal,
+  newsActive,
+  newsNew,
+  newsContacting,
+  newsQuoted,
+  newsTopStage,
+  newsPathMetric,
+  operationsSummary,
+  activeFilterChips,
+  result,
+  filters,
+}: {
+  newsTotal: number
+  newsActive: number
+  newsNew: number
+  newsContacting: number
+  newsQuoted: number
+  newsTopStage: LeadSourceStageStatusSummary | undefined
+  newsPathMetric: AnalyticsConversionMetric
+  operationsSummary: LeadOperationsSummary
+  activeFilterChips: ActiveFilterChip[]
+  result: LeadsResult
+  filters: LeadFilterState
+}) {
+  const newsAllHref = createLeadsHref(filters, { source_type: 'news', source_stage: 'all', status: 'all', attention: 'all', page: 1 })
+  const newsActiveHref = createLeadsHref(filters, { source_type: 'news', source_stage: 'all', status: 'all', attention: 'active', page: 1 })
+  const newsOverdueHref = createLeadsHref(filters, { source_type: 'news', source_stage: 'all', status: 'all', attention: 'overdue', page: 1 })
+  const currentNewsHref = createLeadsHref(filters, { source_type: 'news', source_stage: 'all', page: 1 })
+  const pathActions = newsPathMetric.ctaClicks + newsPathMetric.formSubmits
+  const currentNewsView = filters.source_type === 'news'
+  const pathAttributionGap = pathActions > 0 && newsTotal === 0
+  const followupRisk = newsActive > 0 && operationsSummary.overdue > 0
+  const currentFilterSummary = activeFilterChips.length > 0
+    ? `${formatNumber(result.total)} filtered / ${formatNumber(result.leads.length)} on page`
+    : `${formatNumber(result.total)} all leads / ${formatNumber(result.leads.length)} on page`
+
+  const items: CaseLeadBackflowItem[] = [
+    {
+      label: 'News source queue',
+      value: `${formatNumber(newsTotal)} leads`,
+      detail: `source_type=news consolidated view. Active news leads ${formatNumber(newsActive)}, new ${formatNumber(newsNew)}.`,
+      href: newsAllHref,
+      cta: 'Open news source',
+      Icon: FileText,
+      tone: newsActive > 0 ? 'orange' : newsTotal > 0 ? 'blue' : 'gray',
+    },
+    {
+      label: 'Active follow-up',
+      value: `${formatNumber(newsActive)} active`,
+      detail: `new/contacting/quoted split: ${formatNumber(newsNew)} / ${formatNumber(newsContacting)} / ${formatNumber(newsQuoted)}.`,
+      href: newsActiveHref,
+      cta: 'Filter active leads',
+      Icon: Clock3,
+      tone: followupRisk || newsActive > 0 ? 'orange' : 'green',
+    },
+    {
+      label: 'News path bridge',
+      value: `${formatNumber(newsPathMetric.leads)} path leads`,
+      detail: `Path actions ${formatNumber(pathActions)}, conversion ${formatAnalyticsPercent(newsPathMetric.conversionRate)}. Review source quality before changing content.`,
+      href: '/admin/status/leads#news-lead-path-bridge',
+      cta: 'Review lead path',
+      Icon: UserRoundCheck,
+      tone: pathAttributionGap ? 'orange' : newsPathMetric.leads > 0 ? 'green' : 'blue',
+    },
+    {
+      label: 'Traffic source panel',
+      value: `${formatNumber(newsPathMetric.views)} views`,
+      detail: 'Use the traffic source panel to compare news list/detail CTA behavior with Contact form attribution.',
+      href: '/admin/status/traffic#news-source-handoff',
+      cta: 'Review traffic',
+      Icon: BarChart3,
+      tone: newsPathMetric.views > 0 && newsPathMetric.leads === 0 ? 'orange' : 'blue',
+    },
+    {
+      label: 'News SEO/content bridge',
+      value: newsTopStage?.label ?? 'News content',
+      detail: 'Return content and SEO gaps to the news list bridge, then verify whether source leads improve.',
+      href: '/admin/content/news/list#news-source-seo-list-bridge',
+      cta: 'Open news content',
+      Icon: SearchCheck,
+      tone: pathAttributionGap || newsActive > 0 ? 'orange' : 'blue',
+    },
+    {
+      label: 'Public news check',
+      value: '/news',
+      detail: 'Open the public news surface to verify list/detail CTAs from the visitor perspective.',
+      href: '/news',
+      cta: 'Open public news',
+      Icon: ExternalLink,
+      tone: 'blue',
+      external: true,
+    },
+  ]
+
+  return (
+    <section
+      id="news-source-lead-queue-handoff"
+      data-news-source-lead-queue-handoff="true"
+      className="border-b border-[#D8E7E8] bg-[#FBFDFD]"
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="border-l-4 border-[#1889B6] px-5 py-5">
+          <p className="text-xs font-bold uppercase text-[#1889B6]">B406 News Source Queue Handoff</p>
+          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">新闻来源线索处理队列承接</h2>
+          <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
+            将 `source_type=news` 线索筛选、活跃/超时队列、新闻路径桥、来源流量面板、新闻 SEO 内容桥和前台新闻入口放在同一只读承接层。这里只提供判断入口和筛选链接，不写入线索状态、不分配负责人、不删除、不导出。
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <CaseBackflowAction href={newsAllHref} Icon={FileText} label="新闻来源" primary={currentNewsView || newsActive > 0} />
+            <CaseBackflowAction href={newsActiveHref} Icon={Clock3} label="活跃线索" primary={newsActive > 0} />
+            <CaseBackflowAction href={newsOverdueHref} Icon={UserRoundX} label="超时队列" primary={followupRisk} />
+            <CaseBackflowAction href="/admin/status/leads#news-lead-path-bridge" Icon={UserRoundCheck} label="线索状态桥" />
+            <CaseBackflowAction href="/admin/status/traffic#news-source-handoff" Icon={BarChart3} label="来源路径" />
+            <CaseBackflowAction href="/admin/content/news/list#news-source-seo-list-bridge" Icon={SearchCheck} label="新闻 SEO" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 border-t border-[#E6EEEE] bg-white lg:border-l lg:border-t-0">
+          <CaseBackflowStat label="当前筛选" value={currentNewsView ? 'News' : formatNumber(activeFilterChips.length)} detail={currentFilterSummary} warn={activeFilterChips.length > 0} />
+          <CaseBackflowStat label="新闻来源" value={formatNumber(newsTotal)} detail={`活跃 ${formatNumber(newsActive)}`} warn={newsActive > 0} />
+          <CaseBackflowStat label="新/跟进" value={`${formatNumber(newsNew)} / ${formatNumber(newsContacting)}`} detail={`报价 ${formatNumber(newsQuoted)}`} warn={newsNew + newsContacting + newsQuoted > 0} />
+          <CaseBackflowStat label="路径动作" value={formatNumber(pathActions)} detail={`线索 ${formatNumber(newsPathMetric.leads)}`} warn={pathAttributionGap} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-3 xl:grid-cols-6">
+        {items.map((item) => (
+          <CaseBackflowCard key={item.label} item={item} />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-white md:grid-cols-4">
+        <CaseBackflowSnapshot label="当前新闻视图" value={currentNewsView ? '已聚焦' : '未聚焦'} detail={currentNewsView ? 'source_type=news' : '可一键切到新闻来源'} warn={!currentNewsView && newsActive > 0} />
+        <CaseBackflowSnapshot label="新闻超时入口" value={followupRisk ? '需查看' : '正常'} detail="attention=overdue + source_type=news" warn={followupRisk} />
+        <CaseBackflowSnapshot label="归因缺口" value={pathAttributionGap ? '有动作无线索' : '未触发'} detail={`${formatNumber(pathActions)} actions / ${formatNumber(newsTotal)} news leads`} warn={pathAttributionGap} />
+        <CaseBackflowSnapshot label="内容回流" value="B404" detail="新闻 SEO 与来源处理桥承接" />
+      </div>
+
+      <div className="flex flex-col gap-2 border-t border-[#E6EEEE] px-5 py-3 text-xs leading-5 text-[#61767D] sm:flex-row sm:items-center sm:justify-between">
+        <span>只读边界：本模块只生成筛选和回链，不改变线索、客户、新闻内容、发布、权限或任何生产数据。</span>
+        <a href={currentNewsHref} className="inline-flex items-center gap-1 font-semibold text-[#1889B6] hover:text-[#0F6F95]">
+          当前条件切到新闻来源
+          <ArrowRight size={13} />
+        </a>
       </div>
     </section>
   )
@@ -1208,6 +1373,7 @@ function getCustomerSideNav(summary: LeadDashboardSummary): AdminSideNavGroup[] 
     {
       title: '待处理',
       items: [
+        { key: 'news-source-queue-handoff', label: '新闻来源队列', href: '#news-source-lead-queue-handoff', Icon: FileText },
         { key: 'product-source-queue-handoff', label: '产品来源队列', href: '#product-source-lead-queue-handoff', Icon: ClipboardCheck },
         { key: 'product-ops-review', label: '产品线索复盘', href: '#product-lead-ops-review-desk', Icon: Package },
         { key: 'case-backflow', label: '案例回流', href: '#case-lead-content-backflow-desk', Icon: BadgeCheck },

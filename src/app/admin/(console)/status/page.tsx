@@ -1649,7 +1649,7 @@ function buildSourceSeoHealthRows({
       contentIssues: news.issues,
       contentHref: '/admin/content/news/list#news-source-seo-list-bridge',
       seoHref: '/admin/content/news/list#news-source-seo-list-bridge',
-      leadHref: '/admin/status/leads#news-lead-path-bridge',
+      leadHref: '/admin/customers/leads?source_type=news#news-source-lead-queue-handoff',
       conversionHref: '/admin/site/conversion#source-contract-portfolio',
     },
   ].map((row) => {

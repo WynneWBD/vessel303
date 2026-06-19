@@ -756,7 +756,7 @@ function SourceSeoReleaseBridge({ seo }: { seo: SiteMetrics['seo'] }) {
       sourceType: 'news',
       missing: seo.newsMissing,
       href: '/admin/content/news/list',
-      leadHref: '/admin/status/leads#news-lead-path-bridge',
+      leadHref: '/admin/customers/leads?source_type=news#news-source-lead-queue-handoff',
       detail: '新闻 SEO 待补会影响内容入口质量，处理后回看 news 来源动作和 Contact 线索归因。',
     },
   ]
