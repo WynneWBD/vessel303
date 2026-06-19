@@ -1759,7 +1759,7 @@ export default async function AdminContentProductEditPage({ params }: PageProps)
       label: '媒体上传受站点设置控制',
       detail: `当前上传上限 ${maxUploadMb} MB；图片上传进入媒体库，保存产品才回写引用。`,
       tone: 'neutral',
-      href: '/admin/site/media',
+      href: '/admin/site/media#media-replacement-workbench',
     },
   ]
 

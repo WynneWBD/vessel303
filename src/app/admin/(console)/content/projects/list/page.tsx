@@ -131,6 +131,7 @@ type ProjectPriorityItem = {
   project: ProjectListRow
   issues: string[]
   label: string
+  action: ProjectRowNextAction
   score: number
 }
 
@@ -427,6 +428,7 @@ function buildProjectPriorityItems(rows: ProjectListRow[]): ProjectPriorityItem[
         project,
         issues,
         label: getProjectPriorityLabel(project, issues),
+        action: getProjectRowNextAction(project, issues),
         score: getProjectPriorityScore(project, issues),
       }
     })
@@ -1337,8 +1339,8 @@ function CaseListInquiryConversionQueue({
       detail: priorityItems[0]
         ? `${priorityItems[0].project.name_zh || priorityItems[0].project.name_en || priorityItems[0].project.id} 需要 ${priorityItems[0].label}。`
         : '当前页没有高优先级缺口，可继续切换筛选范围。',
-      href: priorityItems[0] ? `/admin/content/projects/${priorityItems[0].project.id}/edit` : '/admin/content/projects/list',
-      cta: priorityItems[0] ? '编辑优先项' : '回列表',
+      href: priorityItems[0] ? priorityItems[0].action.href : '/admin/content/projects/list',
+      cta: priorityItems[0] ? priorityItems[0].action.label : '回列表',
       Icon: Pencil,
       tone: priorityItems[0] ? 'orange' : 'green',
     },
@@ -1402,7 +1404,7 @@ function CaseListInquiryConversionQueue({
             {priorityItems.map((item) => (
               <Link
                 key={item.project.id}
-                href={`/admin/content/projects/${item.project.id}/edit`}
+                href={item.action.href}
                 className="group min-h-[132px] px-4 py-4 transition hover:bg-[#F7FAFA]"
               >
                 <span className="flex items-start justify-between gap-3">
@@ -1420,7 +1422,7 @@ function CaseListInquiryConversionQueue({
                   ))}
                 </span>
                 <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6]">
-                  编辑案例
+                  {item.action.label}
                   <ArrowRight size={12} className="transition group-hover:translate-x-0.5" />
                 </span>
               </Link>
@@ -1901,7 +1903,7 @@ function ProjectOperationsMatrix({
             {priorityItems.map((item) => (
               <Link
                 key={item.project.id}
-                href={`/admin/content/projects/${item.project.id}/edit`}
+                href={item.action.href}
                 className="block px-4 py-3 transition hover:bg-[#F7FAFA]"
               >
                 <span className="flex items-start justify-between gap-3">
@@ -1929,6 +1931,7 @@ function ProjectOperationsMatrix({
                     </span>
                   ) : null}
                 </span>
+                <span className="mt-2 block text-xs font-semibold text-[#1889B6]">{item.action.detail}</span>
               </Link>
             ))}
           </div>

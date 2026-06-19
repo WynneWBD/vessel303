@@ -235,7 +235,7 @@ function NewProductPreflightPanel({
       label: '媒体准备',
       value: `${maxUploadMb} MB`,
       detail: '封面和图库会决定产品列表与详情页首屏质量；上传仍走媒体库。',
-      href: '/admin/site/media',
+      href: '/admin/site/media#media-replacement-workbench',
       Icon: ImageIcon,
       tone: maxUploadMb > 0 ? 'ready' : 'warning',
     },
@@ -889,7 +889,7 @@ export default async function AdminContentProductNewPage() {
       label: '图片上传立即进入媒体库',
       detail: `当前上传上限 ${maxUploadMb} MB；选择图片只回填表单，最终仍需保存产品才生效。`,
       tone: 'warning',
-      href: '/admin/site/media',
+      href: '/admin/site/media#media-replacement-workbench',
     },
     {
       label: '保存会写入产品数据',

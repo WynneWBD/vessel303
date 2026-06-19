@@ -1597,7 +1597,7 @@ function buildSourceSeoLeadQualityRows({
       contentIssues: news.issues,
       leadHref: '/admin/customers/leads?source_type=news',
       contentHref: '/admin/content/news#news-operations-hub',
-      seoHref: '/admin/content/news/list',
+      seoHref: '/admin/content/news/list?status=published&issue=seo#news-source-seo-list-bridge',
     }),
   ]
 }
