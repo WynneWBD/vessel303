@@ -16,6 +16,8 @@ export const dynamic = 'force-dynamic'
 
 export const metadata = { title: '站点健康 - 运营数据中心 - VESSEL' }
 
+const VISUAL_HOME_HERO_HREF = '/admin/site/visual?module=home%3Ahero#visual-editor'
+
 type SiteHealthRow = {
   key: string
   scope: string
@@ -86,7 +88,7 @@ export default async function AdminStatusSitePage() {
             title="页面草稿"
             value={site.pages.total}
             detail={`模块草稿 ${formatNumber(site.pages.moduleDrafts)} / 结构草稿 ${formatNumber(site.pages.structureDrafts)}`}
-            href="/admin/site/visual"
+            href={VISUAL_HOME_HERO_HREF}
             Icon={STATUS_ICONS.LayoutTemplate}
             tone={site.pages.total > 0 ? 'orange' : 'green'}
           />
@@ -174,7 +176,7 @@ export default async function AdminStatusSitePage() {
             <ActionCard
               title="处理页面草稿"
               detail={`${formatNumber(site.pages.total)} 个页面草稿等待确认。`}
-              href="/admin/site/visual"
+              href={VISUAL_HOME_HERO_HREF}
               Icon={STATUS_ICONS.LayoutTemplate}
               primary={site.pages.total > 0}
             />
@@ -385,7 +387,7 @@ function buildSiteHealthRows(site: SiteMetrics, configIssues: number, role: Admi
       detail: `模块草稿 ${formatNumber(site.pages.moduleDrafts)} / 结构草稿 ${formatNumber(site.pages.structureDrafts)}`,
       ok: site.pages.total === 0,
       status: site.pages.total > 0 ? '待确认' : '正常',
-      href: '/admin/site/visual',
+      href: VISUAL_HOME_HERO_HREF,
       actionLabel: '处理草稿',
     },
     {
@@ -494,7 +496,7 @@ function buildSiteOperationRows(site: SiteMetrics, configIssues: number, role: A
       value: `${formatNumber(site.pages.total)} 草稿`,
       evidence: `模块草稿 ${formatNumber(site.pages.moduleDrafts)} / 结构草稿 ${formatNumber(site.pages.structureDrafts)}。`,
       impact: pageDraftsOpen ? '草稿未确认会造成后台编辑状态和线上页面预期不一致。' : '页面草稿已收口。',
-      href: '/admin/site/visual',
+      href: VISUAL_HOME_HERO_HREF,
       actionLabel: pageDraftsOpen ? '处理草稿' : '查看编辑器',
       tone: pageDraftsOpen ? 'warning' : 'ready',
       Icon: STATUS_ICONS.LayoutTemplate,

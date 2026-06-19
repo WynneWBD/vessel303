@@ -36,6 +36,8 @@ export const dynamic = 'force-dynamic'
 
 export const metadata = { title: '网站管理 - VESSEL' }
 
+const VISUAL_HOME_HERO_HREF = '/admin/site/visual?module=home%3Ahero#visual-editor'
+
 type AdminRole = 'admin' | 'operator'
 
 type SiteApp = {
@@ -131,7 +133,7 @@ const SITE_APPS: SiteApp[] = [
   {
     title: '编辑网站',
     detail: '进入页面可视化编辑，按页面和模块管理内容。',
-    href: '/admin/site/visual',
+    href: VISUAL_HOME_HERO_HREF,
     Icon: LayoutTemplate,
   },
   {
@@ -211,7 +213,7 @@ const SITE_PUBLISH_APPS: SitePublishApp[] = [
   {
     title: '编辑页面草稿',
     detail: 'Home / About / Global 的受控模块先保存为草稿；发布前必须预览校对。',
-    href: '/admin/site/visual',
+    href: VISUAL_HOME_HERO_HREF,
     Icon: LayoutTemplate,
     action: '进入编辑',
   },
@@ -247,7 +249,7 @@ function getSiteSideNav({
         { key: 'navigation', label: '导航管理', href: '/admin/site/navigation', Icon: Navigation },
         { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },
         { key: 'settings', label: '网站信息', href: '/admin/site/settings', Icon: Settings },
-        { key: 'visual', label: '编辑网站', href: '/admin/site/visual', Icon: FileText },
+        { key: 'visual', label: '编辑网站', href: VISUAL_HOME_HERO_HREF, Icon: FileText },
         { key: 'drafts', label: '页面草稿', href: '#drafts', badge: pageDraftCount, Icon: CircleDashed },
         { key: 'b195', label: 'B195 队列', href: '#b195-queue', badge: b195AlertCount, Icon: ListChecks },
         { key: 'todo', label: '网站待办', href: '#todo', badge: todoCount, Icon: ListChecks },
@@ -370,7 +372,7 @@ function buildB195QueueItems({
       detail: pageDraftCount > 0
         ? '先预览页面草稿，再确认是否发布，避免运营内容直接进入前台。'
         : '页面编辑链路可继续保持巡检，下一步重点看公开页转化节奏。',
-      href: '/admin/site/visual',
+      href: VISUAL_HOME_HERO_HREF,
       action: '查看草稿',
       Icon: FileText,
       tone: pageDraftCount > 0 ? 'orange' : 'green',
@@ -450,7 +452,7 @@ function Hero({
       description="先看站点状态，再进入页面编辑、图片素材、SEO、转化和前台查看；Global 只做展示入口，不开放底层地图管理。"
       actions={
         <>
-          <AdminActionLink href="/admin/site/visual" Icon={LayoutTemplate} label="编辑网站" primary />
+          <AdminActionLink href={VISUAL_HOME_HERO_HREF} Icon={LayoutTemplate} label="编辑网站" primary />
           <AdminActionLink href="/admin/site/media#media-replacement-workbench" Icon={ImageIcon} label="管理图片" />
           <AdminActionLink href="/" Icon={Eye} label="查看主站" />
         </>
@@ -478,7 +480,7 @@ function Hero({
             title="页面草稿"
             value={pageDraftCount}
             detail={pageDraftCount > 0 ? '等待确认发布' : '暂无待发布草稿'}
-            href="/admin/site/visual"
+            href={VISUAL_HOME_HERO_HREF}
             Icon={FileText}
             tone={pageDraftCount > 0 ? 'orange' : 'green'}
           />
@@ -486,7 +488,7 @@ function Hero({
             title="可见模块"
             value={visibleModules}
             detail="Home / About / Global 已接入"
-            href="/admin/site/visual"
+            href={VISUAL_HOME_HERO_HREF}
             Icon={LayoutTemplate}
             tone="blue"
           />
@@ -547,11 +549,11 @@ function SiteOperationsConsole({
       detail: '受控模块、页面草稿、页面清单和可视化编辑',
       metric: `${visibleModules.toLocaleString('zh-CN')} 模块`,
       signal: `${pageDraftCount.toLocaleString('zh-CN')} 草稿`,
-      href: '/admin/site/visual',
+      href: VISUAL_HOME_HERO_HREF,
       Icon: LayoutTemplate,
       tone: pageDraftCount > 0 ? 'orange' : 'green',
       actions: [
-        { label: '可视化', href: '/admin/site/visual' },
+        { label: '可视化', href: VISUAL_HOME_HERO_HREF },
         { label: '页面清单', href: '/admin/site/pages#content-source-route-tree' },
         { label: '前台首页', href: '/' },
       ],
@@ -979,7 +981,7 @@ function TodoPanel({
     {
       title: '页面草稿',
       detail: pageDraftCount > 0 ? '有页面内容或结构草稿待确认' : '暂无页面草稿',
-      href: '/admin/site/visual',
+      href: VISUAL_HOME_HERO_HREF,
       ok: pageDraftCount === 0,
     },
     {

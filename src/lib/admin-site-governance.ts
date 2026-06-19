@@ -93,6 +93,8 @@ const EMPTY_METRICS: SourceMetrics = {
   contentWarnings: [],
 }
 
+const visualModuleHref = (moduleId: string) => `/admin/site/visual?module=${encodeURIComponent(moduleId)}#visual-editor`
+
 export const CONTENT_CONTRACTS: ContentContract[] = [
   {
     key: 'home',
@@ -102,7 +104,7 @@ export const CONTENT_CONTRACTS: ContentContract[] = [
     owner: '页面模块 / 站点配置',
     sourceType: 'page_modules',
     contentSource: 'page_modules:home + page_modules:site',
-    adminHref: '/admin/site/visual',
+    adminHref: visualModuleHref('home:hero'),
     previewHref: '/',
     modulePageKey: 'home',
     requiredModules: [
@@ -130,7 +132,7 @@ export const CONTENT_CONTRACTS: ContentContract[] = [
     owner: '页面模块',
     sourceType: 'page_modules',
     contentSource: 'page_modules:about',
-    adminHref: '/admin/site/visual',
+    adminHref: visualModuleHref('about:hero'),
     previewHref: '/about',
     modulePageKey: 'about',
     requiredModules: ['hero', 'stats', 'brand-story', 'factory', 'timeline', 'technologies', 'recognition-awards', 'partners', 'founder', 'services'],
@@ -291,7 +293,7 @@ export const CONTENT_CONTRACTS: ContentContract[] = [
     owner: '站点设置 / site 模块',
     sourceType: 'page_modules',
     contentSource: 'page_modules:contact + site backup settings',
-    adminHref: '/admin/site/visual',
+    adminHref: visualModuleHref('contact:form'),
     previewHref: '/contact',
     modulePageKey: 'contact',
     requiredModules: ['hero', 'channels', 'form', 'source-context', 'faq-panel', 'email'],
@@ -308,7 +310,7 @@ export const CONTENT_CONTRACTS: ContentContract[] = [
     owner: '站点模块',
     sourceType: 'page_modules',
     contentSource: 'page_modules:site + page_modules:auth + page_modules:account',
-    adminHref: '/admin/site/visual#visual-editor',
+    adminHref: visualModuleHref('site:navbar'),
     previewHref: '/',
     modulePageKey: 'site',
     modulePageKeys: ['site', 'auth', 'account'],
@@ -344,7 +346,7 @@ export const CONTENT_CONTRACTS: ContentContract[] = [
     owner: '04 地图专项',
     sourceType: 'page_modules',
     contentSource: 'page_modules:global + Map data / map APIs',
-    adminHref: '/admin/site/visual',
+    adminHref: visualModuleHref('global:hero'),
     previewHref: '/global',
     modulePageKey: 'global',
     requiredModules: ['hero', 'header', 'map-labels', 'detail-labels', 'cta-labels'],

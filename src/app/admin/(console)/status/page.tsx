@@ -39,6 +39,8 @@ export const dynamic = 'force-dynamic'
 
 export const metadata = { title: '运营数据中心 - VESSEL' }
 
+const VISUAL_HOME_HERO_HREF = '/admin/site/visual?module=home%3Ahero#visual-editor'
+
 type SharedTrafficMetric = {
   pageViews: number
   visitors: number
@@ -522,7 +524,7 @@ function buildOperationalPriorityRows({
       actionLabel: mediaIssueCount > 0 ? '处理素材' : '查看媒体',
       actions: [
         { href: mediaIssueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media#media-replacement-workbench', label: mediaIssueCount > 0 ? '风险素材' : '替换工作台', primary: true },
-        { href: '/admin/site/visual', label: '页面用图' },
+        { href: VISUAL_HOME_HERO_HREF, label: '页面用图' },
         { href: '/admin/status/site', label: '站点健康' },
       ],
       tone: mediaIssueCount > 0 ? 'warning' : mediaStorageWarn ? 'review' : 'ready',
@@ -536,10 +538,10 @@ function buildOperationalPriorityRows({
       metric: `${formatNumber(pageDrafts)} 个`,
       evidence: `页面模块和结构草稿合计 ${formatNumber(pageDrafts)} 个。`,
       impact: pageDrafts > 0 ? '草稿未确认会造成后台编辑状态和线上页面预期不一致。' : '页面草稿已收口。',
-      href: '/admin/site/visual',
+      href: VISUAL_HOME_HERO_HREF,
       actionLabel: pageDrafts > 0 ? '处理草稿' : '查看编辑器',
       actions: [
-        { href: '/admin/site/visual', label: pageDrafts > 0 ? 'Visual Editor' : '编辑器', primary: true },
+        { href: VISUAL_HOME_HERO_HREF, label: pageDrafts > 0 ? 'Visual Editor' : '编辑器', primary: true },
         { href: '/admin/site/pages#content-source-route-tree', label: '页面结构' },
         { href: '/admin/status/site', label: '发布健康' },
       ],

@@ -40,6 +40,8 @@ export const dynamic = 'force-dynamic'
 
 export const metadata = { title: '运营管理控制台 - VESSEL' }
 
+const VISUAL_HOME_HERO_HREF = '/admin/site/visual?module=home%3Ahero#visual-editor'
+
 type AdminRole = 'admin' | 'operator'
 
 type StatusSummary = {
@@ -156,7 +158,7 @@ const STORAGE_WARNING_BYTES = 800 * 1024 * 1024
 
 const QUICK_ACTIONS: ActionItem[] = [
   { label: '优先级台账', href: '/admin/status#operations-priority-ledger', Icon: BarChart3, primary: true },
-  { label: '编辑网站', href: '/admin/site/visual', Icon: LayoutTemplate },
+  { label: '编辑网站', href: VISUAL_HOME_HERO_HREF, Icon: LayoutTemplate },
   { label: '发布产品', href: '/admin/content/products/new', Icon: Package },
   { label: '发布项目', href: '/admin/content/projects/new', Icon: MapPinned },
   { label: '发布新闻', href: '/admin/content/news/new', Icon: Newspaper },
@@ -391,7 +393,7 @@ function buildTodos({
     {
       title: '页面草稿',
       detail: pageDraftCount > 0 ? '进入网站编辑器确认' : '暂无页面草稿',
-      href: '/admin/site/visual',
+      href: VISUAL_HOME_HERO_HREF,
       count: pageDraftCount,
       ok: pageDraftCount === 0,
     },
@@ -588,7 +590,7 @@ function OperationsCommandPanel({
       title: '内容缺口',
       value: productIssueCount + pageDraftCount,
       detail: `产品缺项 ${formatNumber(productIssueCount)} / 页面草稿 ${formatNumber(pageDraftCount)}。`,
-      href: productIssueCount > 0 ? '/admin/content/products/list?view=incomplete' : '/admin/site/visual',
+      href: productIssueCount > 0 ? '/admin/content/products/list?view=incomplete' : VISUAL_HOME_HERO_HREF,
       Icon: Package,
       tone: productIssueCount + pageDraftCount > 0 ? 'orange' : 'green',
     },
@@ -761,7 +763,7 @@ function OperationsLoopPanel({
       metric: formatNumber(contentRiskCount),
       signal: '影响展示',
       detail: `产品缺项 ${formatNumber(productIssueCount)}，页面草稿 ${formatNumber(pageDraftCount)}，素材风险 ${formatNumber(mediaIssueCount)}。`,
-      href: contentRiskCount > 0 ? '/admin/content/products/list?view=incomplete' : '/admin/site/visual',
+      href: contentRiskCount > 0 ? '/admin/content/products/list?view=incomplete' : VISUAL_HOME_HERO_HREF,
       Icon: Package,
       tone: contentRiskCount > 0 ? 'orange' : 'green',
     },
@@ -907,7 +909,7 @@ function ControlMatrix({
       title: '页面发布',
       metric: formatNumber(pageDraftCount),
       detail: '页面模块与结构草稿',
-      href: '/admin/site/visual',
+      href: VISUAL_HOME_HERO_HREF,
       Icon: LayoutTemplate,
       tone: pageDraftCount > 0 ? 'orange' : 'green',
     },
@@ -1108,11 +1110,11 @@ function ContentListWorkbench({
       draft: pageDraftCount,
       signal: pageDraftCount,
       signalLabel: '页面草稿',
-      href: '/admin/site/visual',
+      href: VISUAL_HOME_HERO_HREF,
       Icon: LayoutTemplate,
       tone: pageDraftCount > 0 ? 'orange' : 'green',
       actions: [
-        { label: '视觉编辑', href: '/admin/site/visual' },
+        { label: '视觉编辑', href: VISUAL_HOME_HERO_HREF },
         { label: '页面管理', href: '/admin/site/pages#content-source-route-tree' },
         { label: '网站管理', href: '/admin/site' },
       ],
@@ -1249,7 +1251,7 @@ function ContentCards({
           total={pageDraftCount}
           recent={pageDraftCount}
           draft={pageDraftCount}
-          href="/admin/site/visual"
+          href={VISUAL_HOME_HERO_HREF}
           action="编辑网站"
           Icon={LayoutTemplate}
           color="gray"
