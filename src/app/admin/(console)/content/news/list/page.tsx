@@ -60,6 +60,8 @@ type NewsPriorityItem = {
   item: NewsRow
   issues: string[]
   label: string
+  detail: string
+  href: string
   score: number
 }
 
@@ -299,9 +301,62 @@ function getNewsPriorityLabel(item: NewsRow, issues: string[]) {
   if (issues.includes('缺封面')) return '先补封面'
   if (issues.includes('缺中文正文') || issues.includes('缺英文正文')) return '补正文'
   if (isScheduledNews(item)) return '检查排期'
+  if (
+    issues.includes('缺中文标题')
+    || issues.includes('缺英文标题')
+    || issues.includes('缺中文摘要')
+    || issues.includes('缺英文摘要')
+  ) {
+    return '补标题摘要'
+  }
   if (issues.includes('缺 SEO')) return '补 SEO'
   if (issues.includes('未分类')) return '定分类'
+  if (item.status === 'draft') return '发布前复核'
   return '补内容字段'
+}
+
+function getNewsPriorityHref(item: NewsRow, issues: string[]) {
+  let anchor = '#publish-check'
+  if (issues.includes('缺封面')) {
+    anchor = '#media'
+  } else if (
+    issues.includes('缺中文正文')
+    || issues.includes('缺英文正文')
+  ) {
+    anchor = '#content'
+  } else if (isScheduledNews(item)) {
+    anchor = '#schedule'
+  } else if (
+    issues.includes('缺中文标题')
+    || issues.includes('缺英文标题')
+    || issues.includes('缺中文摘要')
+    || issues.includes('缺英文摘要')
+  ) {
+    anchor = '#content'
+  } else if (issues.includes('缺 SEO')) {
+    anchor = '#seo'
+  } else if (issues.includes('未分类')) {
+    anchor = '#taxonomy'
+  }
+  return `/admin/content/news/${item.id}/edit${anchor}`
+}
+
+function getNewsPriorityDetail(item: NewsRow, issues: string[]) {
+  if (issues.includes('缺封面')) return '进入展示素材分区'
+  if (issues.includes('缺中文正文') || issues.includes('缺英文正文')) return '进入正文编辑分区'
+  if (isScheduledNews(item)) return '进入排期复核分区'
+  if (
+    issues.includes('缺中文标题')
+    || issues.includes('缺英文标题')
+    || issues.includes('缺中文摘要')
+    || issues.includes('缺英文摘要')
+  ) {
+    return '进入标题摘要分区'
+  }
+  if (issues.includes('缺 SEO')) return '进入 SEO 字段分区'
+  if (issues.includes('未分类')) return '进入分类绑定分区'
+  if (item.status === 'draft') return '进入发布检查分区'
+  return '进入编辑页定位缺口'
 }
 
 function buildNewsPriorityItems(rows: NewsRow[]): NewsPriorityItem[] {
@@ -312,6 +367,8 @@ function buildNewsPriorityItems(rows: NewsRow[]): NewsPriorityItem[] {
         item,
         issues,
         label: getNewsPriorityLabel(item, issues),
+        detail: getNewsPriorityDetail(item, issues),
+        href: getNewsPriorityHref(item, issues),
         score: getNewsPriorityScore(item, issues),
       }
     })
@@ -1044,7 +1101,7 @@ function NewsOperationsMatrix({
             {priorityItems.map((entry) => (
               <Link
                 key={entry.item.id}
-                href={`/admin/content/news/${entry.item.id}/edit`}
+                href={entry.href}
                 className="block px-4 py-3 transition hover:bg-[#F7FAFA]"
               >
                 <span className="flex items-start justify-between gap-3">
@@ -1058,6 +1115,7 @@ function NewsOperationsMatrix({
                     {entry.label}
                   </span>
                 </span>
+                <span className="mt-1 block text-xs font-semibold text-[#1889B6]">{entry.detail}</span>
                 <span className="mt-2 flex flex-wrap gap-1.5">
                   {entry.issues.slice(0, 3).map((issue) => (
                     <span key={issue} className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] text-zinc-600">
