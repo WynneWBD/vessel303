@@ -805,7 +805,7 @@ export async function getMediaReferenceDetails(url: string): Promise<MediaRefere
       news: newsRes.rows.map((row) => ({
         id: row.id,
         title: firstText(row.title_zh, row.title_en, row.slug),
-        href: `/admin/news/${row.id}/edit`,
+        href: `/admin/content/news/${row.id}/edit`,
         fields: collectFields([
           [row.in_cover, '封面图'],
           [row.in_content_zh, '中文正文'],
@@ -815,7 +815,7 @@ export async function getMediaReferenceDetails(url: string): Promise<MediaRefere
       products: productsRes.rows.map((row) => ({
         id: row.id,
         title: firstText(row.name_cn, row.name_en, row.id),
-        href: `/admin/products/${row.id}/edit`,
+        href: `/admin/content/products/${row.id}/edit`,
         fields: collectFields([
           [row.in_cover, '封面图'],
           [row.in_gallery, '详情图库'],
@@ -834,7 +834,7 @@ export async function getMediaReferenceDetails(url: string): Promise<MediaRefere
       pages: pagesRes.rows.map((row) => ({
         id: row.id,
         title: firstText(row.title_zh, row.title_en, `${row.page_key}:${row.module_key}`),
-        href: `/admin/pages?module=${encodeURIComponent(`${row.page_key}:${row.module_key}`)}`,
+        href: visualEditorPageModuleHref(row.page_key, row.module_key),
         fields: ['页面模块图片'],
       })),
       pageDrafts: pageDraftsRes.map((row) => ({
