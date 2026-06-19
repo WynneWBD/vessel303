@@ -8,9 +8,9 @@
 
 - 官网：`https://www.vessel303.com`
 - 代码仓库：`C:\Users\Wynne\Desktop\vessel303\repo-git`
-- 当前循环：B410 已让近期变化台账中的线索/媒体记录按内部 ID 回流到对应后台列表搜索结果；继续按 00 工作流小步优化后台运营能力。
-- 最近功能批次：B410 / `0e3ea31 fix(admin): deep-link recent activity records`
-- 已记录生产验证：B410 / `dpl_474Y4gHhYV93Tx81BBJ7k3iPukMa`；最新 production deployment 以 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
+- 当前循环：B411 已把媒体引用详情里的旧新闻、产品和页面模块入口改为当前后台编辑器/Visual Editor 直达路径；继续按 00 工作流小步优化后台运营能力。
+- 最近功能批次：B411 / `a73279c fix(admin): route media references to current editors`
+- 已记录生产验证：B411 / `dpl_2zy375VPdxFauGwxwvYujiQWCLDx`；最新 production deployment 以 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
 - 当前精确状态以 `00_项目总控入口/vessel303_当前总控handoff.md` 和 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
 - 当前目标：前台对齐 `en.303vessel.cn` 的生产官网能力，后台对齐 `300.cn 后台` 的运营效率和数据分析心智。
 - 当前对照边界：`en.303vessel.cn` 当前由 `openresty` 响应，公开产品/案例路径只读 smoke 返回 403，后台路径返回 404；本仓库部署 smoke 以 `https://www.vessel303.com` / Vercel alias 为准。
