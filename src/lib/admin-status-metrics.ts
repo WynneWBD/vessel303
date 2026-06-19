@@ -380,8 +380,23 @@ async function loadNewsMetric(): Promise<ContentMetric> {
          WHERE NULLIF(BTRIM(COALESCE(title_zh, '')), '') IS NULL
             OR NULLIF(BTRIM(COALESCE(title_en, '')), '') IS NULL
             OR NULLIF(BTRIM(COALESCE(cover_image_url, '')), '') IS NULL
-            OR NULLIF(BTRIM(COALESCE(seo_title_en, seo_title_zh, '')), '') IS NULL
-            OR NULLIF(BTRIM(COALESCE(seo_description_en, seo_description_zh, '')), '') IS NULL
+            OR content_zh IS NULL
+            OR content_en IS NULL
+            OR content_zh IN (
+              '{}'::jsonb,
+              '[]'::jsonb,
+              'null'::jsonb,
+              '{"type":"doc","content":[]}'::jsonb
+            )
+            OR content_en IN (
+              '{}'::jsonb,
+              '[]'::jsonb,
+              'null'::jsonb,
+              '{"type":"doc","content":[]}'::jsonb
+            )
+            OR NULLIF(BTRIM(COALESCE(excerpt_zh, '')), '') IS NULL
+            OR NULLIF(BTRIM(COALESCE(excerpt_en, '')), '') IS NULL
+            OR category_id IS NULL
        )::text AS issues
      FROM news
      WHERE deleted_at IS NULL`,
@@ -396,7 +411,7 @@ async function loadNewsMetric(): Promise<ContentMetric> {
     recent30: toInt(row?.recent30),
     recent90: toInt(row?.recent90),
     issues: toInt(row?.issues),
-    issueHref: '/admin/content/news/list',
+    issueHref: '/admin/content/news/list?issue=content#news-list-priority',
   }
 }
 

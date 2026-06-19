@@ -2,7 +2,7 @@ import { unstable_cache } from 'next/cache'
 import { pool } from '@/lib/db'
 
 export type NewsStatus = 'draft' | 'published'
-export type NewsIssueFilter = 'seo'
+export type NewsIssueFilter = 'title' | 'cover' | 'body' | 'excerpt' | 'category' | 'content' | 'seo'
 export type NewsCategoryStatus = 'visible' | 'hidden'
 
 export interface NewsCategoryRow {
@@ -118,6 +118,37 @@ const NEWS_FROM = `
    AND c.deleted_at IS NULL
 `
 
+const NEWS_MISSING_TITLE_SQL = `(
+  NULLIF(BTRIM(COALESCE(n.title_zh, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(n.title_en, '')), '') IS NULL
+)`
+
+const NEWS_MISSING_COVER_SQL = `NULLIF(BTRIM(COALESCE(n.cover_image_url, '')), '') IS NULL`
+
+const NEWS_MISSING_BODY_SQL = `(
+  n.content_zh IS NULL
+  OR n.content_en IS NULL
+  OR n.content_zh IN (
+    '{}'::jsonb,
+    '[]'::jsonb,
+    'null'::jsonb,
+    '{"type":"doc","content":[]}'::jsonb
+  )
+  OR n.content_en IN (
+    '{}'::jsonb,
+    '[]'::jsonb,
+    'null'::jsonb,
+    '{"type":"doc","content":[]}'::jsonb
+  )
+)`
+
+const NEWS_MISSING_EXCERPT_SQL = `(
+  NULLIF(BTRIM(COALESCE(n.excerpt_zh, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(n.excerpt_en, '')), '') IS NULL
+)`
+
+const NEWS_MISSING_CATEGORY_SQL = `n.category_id IS NULL`
+
 const NEWS_MISSING_SEO_SQL = `(
   NULLIF(BTRIM(COALESCE(n.seo_title_zh, '')), '') IS NULL
   OR NULLIF(BTRIM(COALESCE(n.seo_title_en, '')), '') IS NULL
@@ -126,6 +157,20 @@ const NEWS_MISSING_SEO_SQL = `(
 )`
 
 function getNewsIssueCondition(issue?: NewsIssueFilter): string | null {
+  if (issue === 'title') return NEWS_MISSING_TITLE_SQL
+  if (issue === 'cover') return NEWS_MISSING_COVER_SQL
+  if (issue === 'body') return NEWS_MISSING_BODY_SQL
+  if (issue === 'excerpt') return NEWS_MISSING_EXCERPT_SQL
+  if (issue === 'category') return NEWS_MISSING_CATEGORY_SQL
+  if (issue === 'content') {
+    return `(
+      ${NEWS_MISSING_TITLE_SQL}
+      OR ${NEWS_MISSING_COVER_SQL}
+      OR ${NEWS_MISSING_BODY_SQL}
+      OR ${NEWS_MISSING_EXCERPT_SQL}
+      OR ${NEWS_MISSING_CATEGORY_SQL}
+    )`
+  }
   if (issue === 'seo') return NEWS_MISSING_SEO_SQL
   return null
 }

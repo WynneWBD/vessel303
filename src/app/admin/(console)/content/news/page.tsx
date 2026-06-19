@@ -361,8 +361,8 @@ function NewsSourceLeadOptimizationDesk({ stats }: { stats: NewsStats }) {
     {
       label: '内容待补',
       value: formatNumber(stats.incomplete),
-      detail: '缺标题、封面、摘要或正文的新闻会影响公开阅读和来源转化判断。',
-      href: '#todo',
+      detail: '缺标题、封面、摘要、正文或分类的新闻会影响公开阅读和来源转化判断。',
+      href: '/admin/content/news/list?issue=content#news-list-priority',
       cta: '处理待补内容',
       Icon: FileText,
       tone: stats.incomplete > 0 ? 'orange' : 'green',

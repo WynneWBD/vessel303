@@ -37,7 +37,7 @@ export const metadata = { title: '新闻列表 - VESSEL' }
 const LIMIT = 20
 const STATUSES = new Set(['draft', 'published'])
 const SCHEDULES = new Set(['scheduled'])
-const ISSUES = new Set(['seo'])
+const ISSUES = new Set(['title', 'cover', 'body', 'excerpt', 'category', 'content', 'seo'])
 
 type NewsListPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -142,6 +142,17 @@ function parseCount(value: string | undefined) {
   return parseInt(value ?? '0', 10)
 }
 
+function newsIssueFilterLabel(issue: NewsIssueFilter | '') {
+  if (issue === 'title') return '标题待补'
+  if (issue === 'cover') return '封面待补'
+  if (issue === 'body') return '正文待补'
+  if (issue === 'excerpt') return '摘要待补'
+  if (issue === 'category') return '分类待补'
+  if (issue === 'content') return '内容待补'
+  if (issue === 'seo') return 'SEO 待补'
+  return '全部缺口'
+}
+
 function createHref(filters: NewsFilterState, patch: Partial<NewsFilterState & { clearSearch: boolean }>, hash = '') {
   const next: NewsFilterState = {
     ...filters,
@@ -195,7 +206,7 @@ function buildActiveFilterChips(filters: NewsFilterState, categories: NewsCatego
   if (filters.issue) {
     chips.push({
       label: '缺口',
-      value: filters.issue === 'seo' ? 'SEO 待补' : filters.issue,
+      value: newsIssueFilterLabel(filters.issue),
       href: createHref(filters, { issue: '' }),
     })
   }
@@ -404,9 +415,9 @@ function NewsListControlStrip({
     },
     {
       label: '待补治理',
-      href: '/admin/content/news#todo',
+      href: createHref(filters, { status: '', schedule: '', issue: 'content' }, '#news-list-priority'),
       count: stats.incomplete,
-      active: false,
+      active: filters.issue === 'content',
     },
     {
       label: '缺 SEO',
@@ -588,8 +599,8 @@ function NewsListGovernancePanel({
       label: 'B283 处理焦点',
       value: contentIssueCount > 0 ? `${formatNumber(contentIssueCount)} 待补` : '已归零',
       detail: '把新闻列表缺项、SEO 待补和当前筛选样本放到同一处理入口。',
-      href: '#news-list-priority',
-      action: '查看优先级',
+      href: createHref(filters, { status: '', schedule: '', issue: 'content' }, '#news-list-priority'),
+      action: '筛内容待补',
       tone: contentIssueCount > 0 ? 'orange' : 'green',
     },
     {
@@ -915,7 +926,7 @@ function NewsOperationsMatrix({
       detail: '影响列表和详情首屏展示',
       count: issueSummary.cover,
       pageCount: countPageIssue(rows, (issues) => issues.includes('缺封面')),
-      href: '/admin/content/news#todo',
+      href: createHref(filters, { status: '', schedule: '', issue: 'cover' }, '#news-list-priority'),
     },
     {
       key: 'body',
@@ -923,7 +934,7 @@ function NewsOperationsMatrix({
       detail: '中英文正文缺失',
       count: issueSummary.body,
       pageCount: countPageIssue(rows, (issues) => issues.includes('缺中文正文') || issues.includes('缺英文正文')),
-      href: '/admin/content/news#todo',
+      href: createHref(filters, { status: '', schedule: '', issue: 'body' }, '#news-list-priority'),
     },
     {
       key: 'excerpt',
@@ -931,7 +942,7 @@ function NewsOperationsMatrix({
       detail: '中英文摘要缺失',
       count: issueSummary.excerpt,
       pageCount: countPageIssue(rows, (issues) => issues.includes('缺中文摘要') || issues.includes('缺英文摘要')),
-      href: '/admin/content/news#todo',
+      href: createHref(filters, { status: '', schedule: '', issue: 'excerpt' }, '#news-list-priority'),
     },
     {
       key: 'category',
@@ -939,7 +950,7 @@ function NewsOperationsMatrix({
       detail: '未绑定新闻分类',
       count: issueSummary.category,
       pageCount: countPageIssue(rows, (issues) => issues.includes('未分类')),
-      href: '/admin/content/news/categories',
+      href: createHref(filters, { status: '', schedule: '', issue: 'category' }, '#news-list-priority'),
     },
     {
       key: 'seo',

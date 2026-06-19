@@ -834,6 +834,12 @@ export default function NewsListClient({
             className="w-36"
           >
             <option value="">全部缺口</option>
+            <option value="content">内容待补</option>
+            <option value="title">缺标题</option>
+            <option value="cover">缺封面</option>
+            <option value="body">缺正文</option>
+            <option value="excerpt">缺摘要</option>
+            <option value="category">未分类</option>
             <option value="seo">缺 SEO</option>
           </Select>
           <Input

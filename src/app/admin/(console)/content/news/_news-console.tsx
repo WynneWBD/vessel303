@@ -80,6 +80,7 @@ const NEWS_INCOMPLETE_SQL = `(
   OR NULLIF(BTRIM(COALESCE(excerpt_en, '')), '') IS NULL
   OR ${MISSING_ZH_CONTENT_SQL}
   OR ${MISSING_EN_CONTENT_SQL}
+  OR category_id IS NULL
 )`
 
 const ACTIVE_NEWS_SQL = 'deleted_at IS NULL'

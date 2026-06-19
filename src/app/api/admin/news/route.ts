@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 
 const statusValues = ['draft', 'published'] as const
 const scheduleValues = ['scheduled'] as const
-const issueValues = ['seo'] as const
+const issueValues = ['title', 'cover', 'body', 'excerpt', 'category', 'content', 'seo'] as const
 
 function revalidateNewsPublicRoutes(slug?: string) {
   revalidateTag(NEWS_PUBLIC_CACHE_TAG, { expire: 0 })
