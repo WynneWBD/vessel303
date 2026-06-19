@@ -483,7 +483,7 @@ function buildOperationalPriorityRows({
       actions: [
         { href: '/admin/content/products/list?view=incomplete&issue=seo', label: '产品 SEO', primary: productsSeoMissing > 0 },
         { href: '/admin/content/projects/list?view=incomplete#case-conversion-content-backfill-desk', label: '案例字段', primary: productsSeoMissing === 0 && projectsSeoMissing > 0 },
-        { href: '/admin/content/news/list#news-source-seo-list-bridge', label: '新闻 SEO', primary: productsSeoMissing === 0 && projectsSeoMissing === 0 && newsSeoMissing > 0 },
+        { href: '/admin/content/news/list?status=published&issue=seo#news-source-seo-list-bridge', label: '新闻 SEO', primary: productsSeoMissing === 0 && projectsSeoMissing === 0 && newsSeoMissing > 0 },
         { href: '/admin/status/leads#source-seo-lead-quality', label: '来源质量' },
       ],
       tone: seoMissing > 0 ? 'warning' : 'ready',
@@ -1650,7 +1650,7 @@ function buildSourceSeoHealthRows({
       seoMissing: seo.newsMissing,
       contentIssues: news.issues,
       contentHref: '/admin/content/news/list#news-source-seo-list-bridge',
-      seoHref: '/admin/content/news/list#news-source-seo-list-bridge',
+      seoHref: '/admin/content/news/list?status=published&issue=seo#news-source-seo-list-bridge',
       leadHref: '/admin/customers/leads?source_type=news#news-source-lead-queue-handoff',
       conversionHref: '/admin/site/conversion#source-contract-portfolio',
     },

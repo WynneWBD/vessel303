@@ -5,6 +5,7 @@ import { AdminPageHero } from '@/components/admin/AdminUI'
 import NewsListClient from '@/components/admin/NewsListClient'
 import { pool } from '@/lib/db'
 import { listNews, listNewsCategories, type NewsCategoryRow, type NewsRow, type NewsStatus } from '@/lib/news-db'
+import type { NewsIssueFilter } from '@/lib/news-db'
 import {
   EMPTY_NEWS_STATS,
   NewsConsoleShell,
@@ -36,6 +37,7 @@ export const metadata = { title: '新闻列表 - VESSEL' }
 const LIMIT = 20
 const STATUSES = new Set(['draft', 'published'])
 const SCHEDULES = new Set(['scheduled'])
+const ISSUES = new Set(['seo'])
 
 type NewsListPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -46,6 +48,7 @@ type NewsScheduleFilter = '' | 'scheduled'
 type NewsFilterState = {
   status: NewsStatus | ''
   schedule: NewsScheduleFilter
+  issue: NewsIssueFilter | ''
   category: string
   search: string
   page: number
@@ -139,7 +142,7 @@ function parseCount(value: string | undefined) {
   return parseInt(value ?? '0', 10)
 }
 
-function createHref(filters: NewsFilterState, patch: Partial<NewsFilterState & { clearSearch: boolean }>) {
+function createHref(filters: NewsFilterState, patch: Partial<NewsFilterState & { clearSearch: boolean }>, hash = '') {
   const next: NewsFilterState = {
     ...filters,
     ...patch,
@@ -149,12 +152,14 @@ function createHref(filters: NewsFilterState, patch: Partial<NewsFilterState & {
 
   if (next.status) params.set('status', next.status)
   if (next.schedule) params.set('schedule', next.schedule)
+  if (next.issue) params.set('issue', next.issue)
   if (next.category) params.set('category', next.category)
   if (!patch.clearSearch && next.search) params.set('search', next.search)
   if (next.page > 1) params.set('page', String(next.page))
 
   const query = params.toString()
-  return query ? `/admin/content/news/list?${query}` : '/admin/content/news/list'
+  const href = query ? `/admin/content/news/list?${query}` : '/admin/content/news/list'
+  return `${href}${hash}`
 }
 
 function displayTitle(zh?: string | null, en?: string | null) {
@@ -184,6 +189,14 @@ function buildActiveFilterChips(filters: NewsFilterState, categories: NewsCatego
       label: '排期',
       value: '定时发布',
       href: createHref(filters, { schedule: '' }),
+    })
+  }
+
+  if (filters.issue) {
+    chips.push({
+      label: '缺口',
+      value: filters.issue === 'seo' ? 'SEO 待补' : filters.issue,
+      href: createHref(filters, { issue: '' }),
     })
   }
 
@@ -397,9 +410,9 @@ function NewsListControlStrip({
     },
     {
       label: '缺 SEO',
-      href: '/admin/content/news#news-operations-hub',
+      href: createHref(filters, { status: '', schedule: '', issue: 'seo' }, '#news-source-seo-list-bridge'),
       count: stats.missingSeo,
-      active: false,
+      active: filters.issue === 'seo',
     },
     {
       label: '来源 SEO',
@@ -583,8 +596,8 @@ function NewsListGovernancePanel({
       label: 'SEO 来源质量',
       value: formatNumber(issueSummary.seo),
       detail: '新闻 SEO 缺口直连 B282 来源线索质量桥，方便复核内容补齐后是否带来有效询盘。',
-      href: '/admin/status/leads#source-seo-lead-quality',
-      action: '看质量桥',
+      href: createHref(filters, { status: '', schedule: '', issue: 'seo' }, '#news-source-seo-list-bridge'),
+      action: '筛 SEO 待补',
       tone: issueSummary.seo > 0 ? 'orange' : 'green',
     },
     {
@@ -884,10 +897,12 @@ function NewsControlStat({ label, value, detail }: { label: string; value: strin
 }
 
 function NewsOperationsMatrix({
+  filters,
   stats,
   issueSummary,
   rows,
 }: {
+  filters: NewsFilterState
   stats: NewsStats
   issueSummary: NewsIssueSummary
   rows: NewsRow[]
@@ -932,7 +947,7 @@ function NewsOperationsMatrix({
       detail: '搜索标题或描述缺失',
       count: issueSummary.seo,
       pageCount: countPageIssue(rows, (issues) => issues.includes('缺 SEO')),
-      href: '/admin/content/news/list#news-source-seo-list-bridge',
+      href: createHref(filters, { status: '', schedule: '', issue: 'seo' }, '#news-source-seo-list-bridge'),
     },
     {
       key: 'scheduled',
@@ -1106,9 +1121,12 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
   const status = STATUSES.has(statusParam ?? '') ? statusParam as NewsStatus : undefined
   const scheduleParam = firstParam(sp.schedule)
   const schedule = SCHEDULES.has(scheduleParam ?? '') ? scheduleParam as 'scheduled' : undefined
+  const issueParam = firstParam(sp.issue)
+  const issue = ISSUES.has(issueParam ?? '') ? issueParam as NewsIssueFilter : undefined
   const filters: NewsFilterState = {
     status: status ?? '',
     schedule: schedule ?? '',
+    issue: issue ?? '',
     category: categoryId ? String(categoryId) : '',
     search,
     page,
@@ -1120,6 +1138,7 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
       search,
       categoryId,
       scheduledOnly: schedule === 'scheduled',
+      issue,
       limit: LIMIT,
       offset: (page - 1) * LIMIT,
     }).catch(() => ({
@@ -1176,7 +1195,7 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
           total={total}
           rowsCount={rows.length}
         />
-        <NewsOperationsMatrix stats={stats} issueSummary={issueSummary} rows={rows} />
+        <NewsOperationsMatrix filters={filters} stats={stats} issueSummary={issueSummary} rows={rows} />
         <section id="news-list-table" className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
           <NewsListClient
             initialRows={rows}

@@ -371,7 +371,7 @@ function NewsSourceLeadOptimizationDesk({ stats }: { stats: NewsStats }) {
       label: 'SEO 待补',
       value: formatNumber(stats.missingSeo),
       detail: '搜索标题或描述待补时，优先从新闻列表进入单篇编辑页补齐。',
-      href: '/admin/content/news/list#news-source-seo-list-bridge',
+      href: '/admin/content/news/list?issue=seo#news-source-seo-list-bridge',
       cta: '回到列表桥',
       Icon: SearchCheck,
       tone: stats.missingSeo > 0 ? 'orange' : 'green',

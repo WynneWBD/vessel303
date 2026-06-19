@@ -135,8 +135,8 @@ export default async function AdminStatusSitePage() {
             <SectionTitle title="SEO 缺项分布" detail="沿用现有站点 SEO 后台口径，数据中心只负责集中提醒。" />
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <SeoBox label="产品 SEO" value={site.seo.productsMissing} href="/admin/content/products/list?view=incomplete&issue=seo" />
-              <SeoBox label="新闻 SEO" value={site.seo.newsMissing} href="/admin/content/news/list" />
-              <SeoBox label="案例展示字段" value={site.seo.projectsMissing} href="/admin/content/projects/list?view=incomplete" />
+              <SeoBox label="新闻 SEO" value={site.seo.newsMissing} href="/admin/content/news/list?status=published&issue=seo#news-source-seo-list-bridge" />
+              <SeoBox label="案例展示字段" value={site.seo.projectsMissing} href="/admin/content/projects/list?view=incomplete#case-conversion-content-backfill-desk" />
             </div>
             <SourceSeoReleaseBridge seo={site.seo} />
           </section>
@@ -748,7 +748,7 @@ function SourceSeoReleaseBridge({ seo }: { seo: SiteMetrics['seo'] }) {
       label: '案例来源 SEO',
       sourceType: 'case',
       missing: seo.projectsMissing,
-      href: '/admin/content/projects/list?view=incomplete',
+      href: '/admin/content/projects/list?view=incomplete#case-conversion-content-backfill-desk',
       leadHref: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
       detail: '案例展示字段不足会削弱项目证明链，处理后回看案例来源访问、动作和线索承接。',
     },
@@ -757,7 +757,7 @@ function SourceSeoReleaseBridge({ seo }: { seo: SiteMetrics['seo'] }) {
       label: '新闻来源 SEO',
       sourceType: 'news',
       missing: seo.newsMissing,
-      href: '/admin/content/news/list',
+      href: '/admin/content/news/list?status=published&issue=seo#news-source-seo-list-bridge',
       leadHref: '/admin/customers/leads?source_type=news#news-source-lead-queue-handoff',
       detail: '新闻 SEO 待补会影响内容入口质量，处理后回看 news 来源动作和 Contact 线索归因。',
     },

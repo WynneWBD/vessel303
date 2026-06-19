@@ -4,12 +4,13 @@ import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
 import { listNews, createNews, getNewsCategoryById, isSlugTaken, NEWS_PUBLIC_CACHE_TAG } from '@/lib/news-db'
-import type { NewsStatus } from '@/lib/news-db'
+import type { NewsIssueFilter, NewsStatus } from '@/lib/news-db'
 
 export const dynamic = 'force-dynamic'
 
 const statusValues = ['draft', 'published'] as const
 const scheduleValues = ['scheduled'] as const
+const issueValues = ['seo'] as const
 
 function revalidateNewsPublicRoutes(slug?: string) {
   revalidateTag(NEWS_PUBLIC_CACHE_TAG, { expire: 0 })
@@ -52,12 +53,17 @@ export async function GET(req: NextRequest) {
   const categoryId = Number.isInteger(rawCategory) && rawCategory > 0 ? rawCategory : undefined
   const rawSchedule = sp.get('schedule')
   const scheduledOnly = scheduleValues.includes(rawSchedule as 'scheduled')
+  const rawIssue = sp.get('issue')
+  const issue = issueValues.includes(rawIssue as NewsIssueFilter)
+    ? (rawIssue as NewsIssueFilter)
+    : undefined
 
   const result = await listNews({
     status,
     search: sp.get('search') ?? undefined,
     categoryId,
     scheduledOnly,
+    issue,
     limit,
     offset,
   })

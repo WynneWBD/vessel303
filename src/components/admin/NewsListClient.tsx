@@ -48,7 +48,7 @@ type NewsItem = {
   updated_at: string
 }
 
-type Filters = { status: string; search: string; category: string; schedule: string }
+type Filters = { status: string; search: string; category: string; schedule: string; issue: string }
 type NewsCategoryOption = Pick<NewsCategoryRow, 'id' | 'slug' | 'title_zh' | 'title_en' | 'news_count'>
 type CompletenessLevel = '完整' | '可展示但待补充' | '待补素材'
 
@@ -590,7 +590,7 @@ function NewsReleaseLedger({
 export default function NewsListClient({
   initialRows,
   initialTotal,
-  initialFilters = { status: '', search: '', category: '', schedule: '' },
+  initialFilters = { status: '', search: '', category: '', schedule: '', issue: '' },
   initialPage = 1,
   initialCategories = [],
   basePath = '/admin/news',
@@ -624,6 +624,7 @@ export default function NewsListClient({
       if (f.status) sp.set('status', f.status)
       if (f.category) sp.set('category', f.category)
       if (f.schedule) sp.set('schedule', f.schedule)
+      if (f.issue) sp.set('issue', f.issue)
       if (f.search) sp.set('search', f.search)
       sp.set('page', String(p))
       sp.set('limit', String(LIMIT))
@@ -644,6 +645,7 @@ export default function NewsListClient({
     if (filters.status) sp.set('status', filters.status)
     if (filters.category) sp.set('category', filters.category)
     if (filters.schedule) sp.set('schedule', filters.schedule)
+    if (filters.issue) sp.set('issue', filters.issue)
     if (filters.search.trim()) sp.set('search', filters.search.trim())
     if (page > 1) sp.set('page', String(page))
     const query = sp.toString()
@@ -795,7 +797,7 @@ export default function NewsListClient({
             </button>
           ))}
         </div>
-        <div className="flex max-w-3xl flex-wrap items-center gap-3">
+        <div className="flex max-w-5xl flex-wrap items-center gap-3">
           <Select
             value={filters.status}
             onChange={(e) => handleFilterChange({ status: e.target.value, schedule: '' })}
@@ -826,12 +828,20 @@ export default function NewsListClient({
               </option>
             ))}
           </Select>
-        <Input
-          placeholder="搜索标题…"
-          value={filters.search}
-          onChange={(e) => handleFilterChange({ search: e.target.value })}
-          className="min-w-[180px] flex-1"
-        />
+          <Select
+            value={filters.issue}
+            onChange={(e) => handleFilterChange({ issue: e.target.value })}
+            className="w-36"
+          >
+            <option value="">全部缺口</option>
+            <option value="seo">缺 SEO</option>
+          </Select>
+          <Input
+            placeholder="搜索标题…"
+            value={filters.search}
+            onChange={(e) => handleFilterChange({ search: e.target.value })}
+            className="min-w-[180px] flex-1"
+          />
         </div>
       </div>
 

@@ -2,6 +2,7 @@ import { unstable_cache } from 'next/cache'
 import { pool } from '@/lib/db'
 
 export type NewsStatus = 'draft' | 'published'
+export type NewsIssueFilter = 'seo'
 export type NewsCategoryStatus = 'visible' | 'hidden'
 
 export interface NewsCategoryRow {
@@ -117,11 +118,24 @@ const NEWS_FROM = `
    AND c.deleted_at IS NULL
 `
 
+const NEWS_MISSING_SEO_SQL = `(
+  NULLIF(BTRIM(COALESCE(n.seo_title_zh, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(n.seo_title_en, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(n.seo_description_zh, '')), '') IS NULL
+  OR NULLIF(BTRIM(COALESCE(n.seo_description_en, '')), '') IS NULL
+)`
+
+function getNewsIssueCondition(issue?: NewsIssueFilter): string | null {
+  if (issue === 'seo') return NEWS_MISSING_SEO_SQL
+  return null
+}
+
 export async function listNews({
   status,
   search,
   categoryId,
   scheduledOnly,
+  issue,
   limit,
   offset,
 }: {
@@ -129,6 +143,7 @@ export async function listNews({
   search?: string
   categoryId?: number
   scheduledOnly?: boolean
+  issue?: NewsIssueFilter
   limit: number
   offset: number
 }) {
@@ -151,6 +166,10 @@ export async function listNews({
   if (scheduledOnly) {
     conds.push(`n.status = 'draft'`)
     conds.push(`n.scheduled_at IS NOT NULL`)
+  }
+  const issueCondition = getNewsIssueCondition(issue)
+  if (issueCondition) {
+    conds.push(issueCondition)
   }
 
   const where = `WHERE ${conds.join(' AND ')}`

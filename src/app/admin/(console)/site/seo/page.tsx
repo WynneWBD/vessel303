@@ -370,7 +370,7 @@ async function loadNewsSeoSummary(): Promise<ContentSeoSummary> {
     published: parseCount(row?.published),
     missing: parseCount(row?.missing),
     source: 'news SEO 字段',
-    href: '/admin/content/news/list#news-source-seo-list-bridge',
+    href: '/admin/content/news/list?status=published&issue=seo#news-source-seo-list-bridge',
   }
 }
 
@@ -1028,7 +1028,7 @@ function SeoConversionRepairPanel({
             看产品线索承接
           </Link>
           <Link
-            href="/admin/customers/leads?source_type=product"
+            href="/admin/customers/leads?source_type=product#product-source-lead-queue-handoff"
             className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
           >
             看产品线索队列
@@ -1040,13 +1040,13 @@ function SeoConversionRepairPanel({
             看案例路径分析
           </Link>
           <Link
-            href="/admin/customers/leads?source_type=case"
+            href="/admin/customers/leads?source_type=case#case-lead-content-backflow-desk"
             className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
           >
             看案例线索队列
           </Link>
           <Link
-            href="/admin/customers/leads?source_type=news"
+            href="/admin/customers/leads?source_type=news#news-source-lead-queue-handoff"
             className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
           >
             看新闻线索队列
@@ -1096,7 +1096,7 @@ function ProductSeoLifecycleBridge({ products }: { products: ContentSeoSummary }
       title: '产品线索复盘',
       value: 'Leads',
       detail: '查看 source_type=product 队列，确认搜索入口是否带来可跟进咨询。',
-      href: '/admin/customers/leads?source_type=product',
+      href: '/admin/customers/leads?source_type=product#product-source-lead-queue-handoff',
       Icon: Link2,
       tone: 'blue' as const,
     },
@@ -1119,7 +1119,7 @@ function ProductSeoLifecycleBridge({ products }: { products: ContentSeoSummary }
         <div className="flex flex-wrap gap-2">
           <CommandBridgeLink href="/admin/content/products#product-lifecycle" label="产品生命周期" primary />
           <CommandBridgeLink href={products.href} label="产品 SEO 待补" primary={hasMissing} />
-          <CommandBridgeLink href="/admin/customers/leads?source_type=product" label="产品线索" />
+          <CommandBridgeLink href="/admin/customers/leads?source_type=product#product-source-lead-queue-handoff" label="产品线索" />
         </div>
       </div>
       <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-2 xl:grid-cols-5">
@@ -1222,7 +1222,7 @@ function SeoOperationsCommandBridge({
       label: '产品 SEO',
       summary: products,
       href: products.href,
-      sourceHref: '/admin/customers/leads?source_type=product',
+      sourceHref: '/admin/customers/leads?source_type=product#product-source-lead-queue-handoff',
       detail: '先补产品详情 SEO 标题和描述，再回看产品线索队列。',
       Icon: Package,
     },
@@ -1230,7 +1230,7 @@ function SeoOperationsCommandBridge({
       label: '案例派生',
       summary: projects,
       href: projects.href,
-      sourceHref: '/admin/customers/leads?source_type=case',
+      sourceHref: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
       detail: '先补案例描述、封面和展示字段，再回看案例线索队列。',
       Icon: MapPinned,
     },
@@ -1238,7 +1238,7 @@ function SeoOperationsCommandBridge({
       label: '新闻 SEO',
       summary: news,
       href: news.href,
-      sourceHref: '/admin/customers/leads?source_type=news',
+      sourceHref: '/admin/customers/leads?source_type=news#news-source-lead-queue-handoff',
       detail: '先补新闻 SEO 标题、描述、摘要和正文，再回看新闻线索队列。',
       Icon: Newspaper,
     },
