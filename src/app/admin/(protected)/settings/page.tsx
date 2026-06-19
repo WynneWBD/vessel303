@@ -19,6 +19,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { ADMIN_EMAIL_WHITELIST } from '@/lib/admin-whitelist'
+import { visualEditorModuleHref } from '@/lib/admin-visual-links'
 import { pool } from '@/lib/db'
 import { countLeadsByStatus } from '@/lib/leads-db'
 import { countNewsByStatus } from '@/lib/news-db'
@@ -320,14 +321,19 @@ function formatTarget(targetType: string | null, targetId: string | null) {
   return targetId ? `${label} #${targetId}` : label
 }
 
+function adminSearchHref(path: string, search: string): string {
+  const params = new URLSearchParams({ search })
+  return `${path}?${params.toString()}`
+}
+
 function getTargetHref(targetType: string | null, targetId: string | null) {
   if (!targetType) return null
-  if (targetType === 'news' && targetId) return `/admin/content/news/${targetId}/edit`
-  if (targetType === 'product' && targetId) return `/admin/products/${targetId}/edit`
-  if (targetType === 'project' && targetId) return `/admin/content/projects/${targetId}/edit`
-  if (targetType === 'page_module' && targetId) return `/admin/pages?module=${encodeURIComponent(targetId)}`
-  if (targetType === 'lead') return '/admin/customers/leads'
-  if (targetType === 'upload') return '/admin/media'
+  if (targetType === 'news' && targetId) return `/admin/content/news/${encodeURIComponent(targetId)}/edit`
+  if (targetType === 'product' && targetId) return `/admin/content/products/${encodeURIComponent(targetId)}/edit`
+  if (targetType === 'project' && targetId) return `/admin/content/projects/${encodeURIComponent(targetId)}/edit`
+  if (targetType === 'page_module' && targetId) return visualEditorModuleHref(targetId)
+  if (targetType === 'lead') return targetId ? adminSearchHref('/admin/customers/leads', targetId) : '/admin/customers/leads'
+  if (targetType === 'upload') return targetId ? adminSearchHref('/admin/site/media', targetId) : '/admin/site/media'
   if (targetType === 'user') return '/admin/users'
   if (targetType === 'site_settings') return '/admin/settings'
   return null
