@@ -293,7 +293,7 @@ function VisualReleaseConsole({
       actions: [
         { label: '进入编辑器', href: '#visual-editor', primary: true },
         { label: '页面清单', href: '/admin/site/pages#content-source-route-tree' },
-        { label: '旧表单', href: '/admin/pages' },
+        { label: '表单模式', href: '/admin/pages' },
       ],
     },
     {

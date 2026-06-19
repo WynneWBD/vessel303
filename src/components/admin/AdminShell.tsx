@@ -86,7 +86,7 @@ export default function AdminShell({
     }))
     .filter((group) => group.items.length > 0)
   const current = visibleMenuItems.find((m) => isActive(pathname, m.href))
-  const headerTitle = current?.title ?? '旧后台维护 Legacy'
+  const headerTitle = current?.title ?? '高级维护 Maintenance'
 
   const badgeFor = (href: string): string | undefined => {
     if (href === '/admin/customers/leads' && leadBadge > 0) return clampBadge(leadBadge)
@@ -129,9 +129,9 @@ export default function AdminShell({
 
         <div className="border-b border-[#D8E7E8] bg-[#F3F7F7] px-4 py-3">
           <div className="rounded-md border border-[#D8E7E8] bg-white px-3 py-2">
-            <div className="text-xs font-bold text-[#1E2C31]">旧维护壳层</div>
+            <div className="text-xs font-bold text-[#1E2C31]">高级维护区</div>
             <div className="mt-1 text-[11px] leading-4 text-[#61767D]">
-              日常运营入口已指向 2.0；表单模式仅用于低频维护。
+              日常运营已进入 2.0；表单模式仅用于固定字段低频维护。
             </div>
           </div>
         </div>

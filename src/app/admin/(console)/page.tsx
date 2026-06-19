@@ -1517,7 +1517,7 @@ function MaintenanceBlock({
       <AdminSectionTitle title="维护中心" detail="管理员低频使用，不作为日常运营入口。" />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
         <MaintenanceLink title="高级维护" detail="集中入口" href="/admin/legacy" Icon={Wrench} />
-        <MaintenanceLink title="表单模式" detail="页面备用编辑" href="/admin/pages" Icon={FileText} />
+        <MaintenanceLink title="表单模式" detail="固定字段维护" href="/admin/pages" Icon={FileText} />
         <MaintenanceLink title="后台账号" detail={userStatusText(userSummary)} href="/admin/users" Icon={ShieldCheck} />
         <MaintenanceLink
           title="站点设置"

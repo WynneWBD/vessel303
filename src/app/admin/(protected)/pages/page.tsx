@@ -194,7 +194,7 @@ export default async function PagesAdminPage({ searchParams }: PagesAdminPagePro
       <AdminPageHero
         kicker="Controlled Modules"
         title="页面表单模式"
-        description="管理员维护固定页面模块、导航页脚和客户可见文案的备用入口。这里不是自由建站器，不开放自由 HTML / CSS / JavaScript。"
+        description="管理员在这里维护固定页面模块、导航页脚和客户可见文案。这里不是自由建站器，不开放自由 HTML / CSS / JavaScript。"
         actions={(
           <>
             <AdminActionLink href={VISUAL_EDITOR_HOME_HERO_HREF} Icon={LayoutTemplate} label="可视化编辑" primary />

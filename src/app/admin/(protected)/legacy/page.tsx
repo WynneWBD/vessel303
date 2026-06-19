@@ -65,7 +65,7 @@ const legacyEntries: LegacyEntry[] = [
   },
   {
     title: '可视化页面编辑',
-    description: '进入 Visual Editor 首屏模块；固定表单模式只作为管理员低频备用。',
+    description: '进入 Visual Editor 首屏模块；固定表单模式仅用于管理员低频维护。',
     href: VISUAL_EDITOR_HOME_HERO_HREF,
     Icon: LayoutTemplate,
     cta: '进入可视化编辑',
@@ -141,7 +141,7 @@ export default async function LegacyAdminPage() {
               维护与兼容入口
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-[#8A8580]">
-              这里把常用内容、线索、媒体和页面运营入口优先指向新版 2.0 控制台。旧路由仍保留作兼容和低频排障。
+              这里把常用内容、线索、媒体和页面运营入口优先指向新版 2.0 控制台。兼容路由仍保留作低频排障。
               本页只是索引页，不迁移旧路由，也不触发任何保存、发布、上传或删除。
             </p>
           </div>
