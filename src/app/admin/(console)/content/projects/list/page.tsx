@@ -2040,11 +2040,11 @@ function FilterPanel({ filters }: { filters: FilterState }) {
 
 function QuickActions() {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div id="project-publish-review" className="flex scroll-mt-24 flex-wrap gap-2">
       <AdminActionLink href="/admin/content/projects/new" Icon={Plus} label="新增项目" primary />
       <AdminActionLink href="/admin/content/projects/list?status=draft" Icon={FileText} label="查看草稿" />
       <AdminActionLink href="/admin/content/projects/list?status=published" Icon={CheckCircle2} label="查看已发布" />
-      <AdminActionLink href="/admin/projects" Icon={ListChecks} label="维护列表" />
+      <AdminActionLink href="/admin/content/projects/list?status=draft#project-publish-review" Icon={ListChecks} label="发布复核" />
     </div>
   )
 }

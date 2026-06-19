@@ -1221,14 +1221,14 @@ function ActionPanel() {
   const actions = [
     { label: '新增项目', detail: '使用新版项目新建页创建草稿', href: '/admin/content/projects/new', Icon: Plus },
     { label: '项目列表', detail: '查看项目状态、完整度和 Global 入图状态', href: '/admin/content/projects/list', Icon: ListChecks },
-    { label: '维护列表', detail: '发布、下架等操作仍在这里处理', href: '/admin/projects', Icon: ListChecks },
+    { label: '发布复核', detail: '进入新版草稿列表，再到编辑页发布检查区处理发布状态', href: '/admin/content/projects/list?status=draft#project-publish-review', Icon: CheckCircle2 },
     { label: '查看案例列表', detail: '查看前台 /cases 当前展示效果', href: '/cases', Icon: ExternalLink },
     { label: '查看 Global', detail: '只查看地图展示，不进入管理能力', href: '/global', Icon: Globe2 },
   ]
 
   return (
     <section className="space-y-4">
-      <SectionTitle title="常用入口" detail="新建和编辑已进入新版链路；发布、下架、删除等高风险操作仍在维护入口处理。" />
+      <SectionTitle title="常用入口" detail="新建、编辑和发布复核已进入新版链路；删除、恢复等高风险操作后续单独迁移。" />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         {actions.map((action) => (
           <Link
