@@ -8,9 +8,9 @@
 
 - 官网：`https://www.vessel303.com`
 - 代码仓库：`C:\Users\Wynne\Desktop\vessel303\repo-git`
-- 当前循环：B413 已把 `/admin/legacy` 旧维护索引中的常用内容、线索、媒体和页面编辑入口改为优先进入当前 2.0 控制台；继续按 00 工作流小步优化后台运营能力。
-- 最近功能批次：B413 / `3eaf8c6 fix(admin): route legacy index to current consoles`
-- 已记录生产验证：B413 / `dpl_4LdCQT7Nu5EcuyUe4BZmgWEEcV5q`；最新 production deployment 以 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
+- 当前循环：B414 已把项目案例 2.0 页面中仍指向旧 `/admin/projects` 的“维护列表”入口收口到新版项目列表发布复核路径；继续按 00 工作流小步优化后台运营能力。
+- 最近功能批次：B414 / `e49f459 fix(admin): route project publish review to current list`
+- 已记录生产验证：B414 / `dpl_G9DK42JgQCM4ba7WC8mdsYSqzFhT`；最新 production deployment 以 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
 - 当前精确状态以 `00_项目总控入口/vessel303_当前总控handoff.md` 和 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
 - 当前目标：前台对齐 `en.303vessel.cn` 的生产官网能力，后台对齐 `300.cn 后台` 的运营效率和数据分析心智。
 - 当前对照边界：`en.303vessel.cn` 当前由 `openresty` 响应，公开产品/案例路径只读 smoke 返回 403，后台路径返回 404；本仓库部署 smoke 以 `https://www.vessel303.com` / Vercel alias 为准。
