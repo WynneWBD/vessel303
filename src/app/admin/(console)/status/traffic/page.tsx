@@ -97,6 +97,12 @@ type CaseLoopTrafficCard = CasePathBackflowCard
 
 type ProductPathQualityCard = CasePathBackflowCard
 
+const PRODUCT_SOURCE_LEAD_QUEUE_HREF = '/admin/customers/leads?source_type=product#product-source-lead-queue-handoff'
+const CASE_SOURCE_LEAD_QUEUE_HREF = '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk'
+const CASE_SOURCE_FORM_QUEUE_HREF =
+  '/admin/customers/leads?source_type=case&source_stage=case%3Ainquiry_form#case-lead-content-backflow-desk'
+const NEWS_SOURCE_LEAD_QUEUE_HREF = '/admin/customers/leads?source_type=news#news-source-lead-queue-handoff'
+
 export default async function AdminStatusTrafficPage({ searchParams }: PageProps) {
   const sp = searchParams ? await searchParams : {}
   const activeRange = normalizeRange(sp.range)
@@ -435,7 +441,7 @@ function buildTrafficToLeadExceptionRows(
       metric: analytics.conversionPaths.products ?? emptyMetric,
       seoMissing: overview.site.seo.productsMissing,
       contentIssues: overview.content.products.issues,
-      leadHref: '/admin/customers/leads?source_type=product',
+      leadHref: PRODUCT_SOURCE_LEAD_QUEUE_HREF,
       pathHref: '#product-conversion-path',
       workdeskHref: '/admin/status/leads#source-lead-quality-workdesk',
       conversionHref: '/admin/site/conversion#seo-to-lead-conversion-review',
@@ -448,7 +454,7 @@ function buildTrafficToLeadExceptionRows(
       metric: analytics.conversionPaths.cases ?? emptyMetric,
       seoMissing: overview.site.seo.projectsMissing,
       contentIssues: overview.content.projects.issues,
-      leadHref: '/admin/customers/leads?source_type=case',
+      leadHref: CASE_SOURCE_LEAD_QUEUE_HREF,
       pathHref: '#case-inquiry-path',
       workdeskHref: '/admin/status/leads#source-lead-quality-workdesk',
       conversionHref: '/admin/site/conversion#seo-to-lead-conversion-review',
@@ -461,7 +467,7 @@ function buildTrafficToLeadExceptionRows(
       metric: analytics.conversionPaths.news ?? emptyMetric,
       seoMissing: overview.site.seo.newsMissing,
       contentIssues: overview.content.news.issues,
-      leadHref: '/admin/customers/leads?source_type=news',
+      leadHref: NEWS_SOURCE_LEAD_QUEUE_HREF,
       pathHref: '#news-source-handoff',
       workdeskHref: '/admin/status/leads#source-lead-quality-workdesk',
       conversionHref: '/admin/site/conversion#seo-to-lead-conversion-review',
@@ -598,7 +604,7 @@ function ProductPublishPathReviewHandoffDesk({
       label: '真实线索',
       value: formatNumber(metric.leads),
       detail: `产品路径转化率 ${formatAnalyticsPercent(metric.conversionRate)}。`,
-      href: '/admin/customers/leads?source_type=product',
+      href: PRODUCT_SOURCE_LEAD_QUEUE_HREF,
       tone: metric.leads > 0 ? 'green' : pathActions > 0 ? 'orange' : 'gray',
     },
     {
@@ -635,7 +641,7 @@ function ProductPublishPathReviewHandoffDesk({
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
           <TrafficTriageAction href="/admin/content/products/list#product-create-publish-queue-handoff" label="B341 队列" primary={contentGaps > 0} />
-          <TrafficTriageAction href="/admin/customers/leads?source_type=product" label="产品线索" primary={metric.leads > 0} />
+          <TrafficTriageAction href={PRODUCT_SOURCE_LEAD_QUEUE_HREF} label="产品线索" primary={metric.leads > 0} />
           <TrafficTriageAction href="/admin/site/conversion#conversion-ledger" label="转化复盘" />
         </div>
       </div>
@@ -690,7 +696,7 @@ function ProductPublishPathReviewHandoffDesk({
           <div className="mt-4 grid grid-cols-2 gap-2">
             <TrafficTriageAction href="/admin/content/products/list#product-create-publish-queue-handoff" label="B341 队列" compact primary={contentGaps > 0} />
             <TrafficTriageAction href="#product-conversion-path" label="路径分析" compact primary={needsPathReview} />
-            <TrafficTriageAction href="/admin/customers/leads?source_type=product" label="产品线索" compact />
+            <TrafficTriageAction href={PRODUCT_SOURCE_LEAD_QUEUE_HREF} label="产品线索" compact />
             <TrafficTriageAction href="/products" label="公开目录" compact />
           </div>
         </div>
@@ -771,7 +777,7 @@ function ProductPathQualityReviewDesk({
       label: '产品线索',
       value: formatNumber(metric.leads),
       detail: `source_type=product 动作 ${formatNumber(productSourceActions)}，转化率 ${formatAnalyticsPercent(metric.conversionRate)}。`,
-      href: '/admin/customers/leads?source_type=product',
+      href: PRODUCT_SOURCE_LEAD_QUEUE_HREF,
       tone: metric.leads > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
     },
     {
@@ -2417,14 +2423,14 @@ function NewsTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) 
       label: '来源动作',
       value: formatNumber(sourceActions),
       detail: `source_type=news 的 CTA / 联系 / 表单动作；路径动作合计 ${formatNumber(metric.ctaClicks)}。`,
-      href: '/admin/customers/leads?source_type=news',
+      href: NEWS_SOURCE_LEAD_QUEUE_HREF,
       tone: sourceActions > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
     },
     {
       label: '真实线索',
       value: formatNumber(metric.leads),
       detail: `新闻来源访问转化率 ${formatAnalyticsPercent(metric.conversionRate)}。`,
-      href: '/admin/customers/leads?source_type=news',
+      href: NEWS_SOURCE_LEAD_QUEUE_HREF,
       tone: metric.leads > 0 ? 'green' : sourceActions > 0 ? 'orange' : 'gray',
     },
     {
@@ -2471,7 +2477,7 @@ function NewsTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) 
       label: '后台筛选',
       value: 'source_type=news',
       detail: 'Contact 写入后进入新闻来源线索队列，便于运营按来源复盘。',
-      href: '/admin/customers/leads?source_type=news',
+      href: NEWS_SOURCE_LEAD_QUEUE_HREF,
       tone: metric.leads > 0 ? 'green' as const : sourceActions > 0 ? 'orange' as const : 'blue' as const,
     },
   ] satisfies Array<{
@@ -2491,7 +2497,7 @@ function NewsTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) 
     {
       label: '新闻线索队列',
       detail: '只看 source_type=news 的线索承接',
-      href: '/admin/customers/leads?source_type=news',
+      href: NEWS_SOURCE_LEAD_QUEUE_HREF,
       tone: metric.leads > 0 ? 'green' as const : sourceActions > 0 ? 'orange' as const : 'blue' as const,
     },
     {
@@ -2666,7 +2672,7 @@ function ProductTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard 
     {
       label: '产品线索队列',
       detail: '回到 B228 source_type=product',
-      href: '/admin/customers/leads?source_type=product',
+      href: PRODUCT_SOURCE_LEAD_QUEUE_HREF,
       tone: metric.leads > 0 ? 'green' as const : 'blue' as const,
     },
     {
@@ -2806,13 +2812,13 @@ function CaseInquiryTrafficPanel({
     {
       label: '案例线索队列',
       detail: '回到 B222 source_type=case',
-      href: '/admin/customers/leads?source_type=case',
+      href: CASE_SOURCE_LEAD_QUEUE_HREF,
       tone: metric.leads > 0 ? 'green' : 'blue',
     },
     {
       label: '案例表单线索',
       detail: '只看 case:inquiry_form 阶段',
-      href: '/admin/customers/leads?source_type=case&source_stage=case%3Ainquiry_form',
+      href: CASE_SOURCE_FORM_QUEUE_HREF,
       tone: metric.formSubmits > 0 ? 'green' : 'gray',
     },
     {
