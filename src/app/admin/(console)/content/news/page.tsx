@@ -845,9 +845,9 @@ function OperationBoundary() {
           </p>
         </div>
         <div>
-          <h2 className="text-sm font-bold text-[#1E2C31]">保留旧入口</h2>
+          <h2 className="text-sm font-bold text-[#1E2C31]">兼容边界</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
-            旧 /admin/news 继续作为维护备用，不影响现有编辑和 API。
+            新闻日常运营走当前 2.0 链路；旧兼容路由仅供管理员排障，不作为运营入口。
           </p>
         </div>
         <div>

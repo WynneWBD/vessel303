@@ -3747,7 +3747,7 @@ export default async function AdminContentProductsListPage({ searchParams }: Pag
       <AdminPageHero
         kicker="产品管理"
         title="产品列表"
-        description="按状态、系列和完整度快速找到要处理的产品；日常编辑进入新版编辑页，维护列表仅作为备用入口。"
+        description="按状态、系列和完整度快速找到要处理的产品；日常编辑、待补处理和发布复核都走当前列表或新版编辑页。"
         actions={<QuickActions />}
       />
 
