@@ -8,6 +8,7 @@ import {
   getSiteSettings,
   normalizeMediaMaxUploadMb,
 } from '@/lib/admin-settings-db'
+import { VISUAL_EDITOR_HOME_HERO_HREF } from '@/lib/admin-visual-links'
 import {
   emptyMediaReferenceSummary,
   listUploads,
@@ -240,7 +241,7 @@ function MediaOperationsConsole({
       actions: [
         { label: '全部素材', href: '/admin/site/media', primary: true },
         { label: 'WebP', href: createMediaHref(filters, { mime: 'webp', view: '', page: 1 }) },
-        { label: '视觉编辑', href: '/admin/site/visual' },
+        { label: '视觉编辑', href: VISUAL_EDITOR_HOME_HERO_HREF },
       ],
     },
     {
@@ -281,7 +282,7 @@ function MediaOperationsConsole({
       actions: [
         { label: '替换工作台', href: '#media-replacement-workbench', primary: referenceSummary.unused > 0 || referenceSummary.draftRefs > 0 },
         { label: '风险素材', href: createMediaHref(filters, { view: 'issues', page: 1 }) },
-        { label: '页面视觉', href: '/admin/site/visual' },
+        { label: '页面视觉', href: VISUAL_EDITOR_HOME_HERO_HREF },
       ],
     },
   ]
@@ -444,7 +445,7 @@ function buildMediaReplacementLanes({
       metric: `${formatNumber(referenceSummary.draftRefs)} 处`,
       detail: '草稿引用包含页面模块草稿、快照和结构草稿；发布前需要确认图片尺寸、替换路径和前台显示。',
       action: referenceSummary.draftRefs > 0 ? '进入页面视觉编辑器，按模块预览确认草稿图片。' : '当前抽样未发现草稿引用。',
-      href: '/admin/site/visual',
+      href: VISUAL_EDITOR_HOME_HERO_HREF,
       Icon: LayoutTemplate,
       tone: referenceSummary.draftRefs > 0 ? 'blue' : 'gray',
     },
@@ -543,7 +544,7 @@ function getSiteToolNav(uploadCount: number): AdminSideNavGroup[] {
     {
       title: '资源与页面',
       items: [
-        { key: 'visual', label: '编辑网站', href: '/admin/site/visual', Icon: Wrench },
+        { key: 'visual', label: '编辑网站', href: VISUAL_EDITOR_HOME_HERO_HREF, Icon: Wrench },
         { key: 'media', label: '图片素材', href: '/admin/site/media', badge: uploadCount, Icon: ImageIcon },
       ],
     },

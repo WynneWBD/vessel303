@@ -9,6 +9,7 @@ import {
   type GovernanceContractStatus,
   type GovernanceSourceType,
 } from '@/lib/admin-site-governance'
+import { VISUAL_EDITOR_HOME_HERO_HREF } from '@/lib/admin-visual-links'
 import {
   AlertTriangle,
   ArrowRight,
@@ -62,7 +63,7 @@ function getSitePagesSideNav({
         { key: 'navigation', label: '导航页脚', href: '/admin/site/navigation', Icon: Navigation },
         { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },
         { key: 'settings', label: '网站信息', href: '/admin/site/settings', Icon: Settings },
-        { key: 'visual', label: '编辑网站', href: '/admin/site/visual', Icon: FileText },
+        { key: 'visual', label: '编辑网站', href: VISUAL_EDITOR_HOME_HERO_HREF, Icon: FileText },
       ],
     },
     {
@@ -1012,7 +1013,7 @@ export default async function AdminSitePagesPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Link
-              href="/admin/site/visual"
+              href={VISUAL_EDITOR_HOME_HERO_HREF}
               className="inline-flex h-10 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-sm font-semibold text-white transition hover:bg-[#C95E22]"
             >
               <LayoutTemplate size={16} />

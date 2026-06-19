@@ -8,6 +8,7 @@ import {
   AdminPageHero,
   AdminSectionTitle,
 } from '@/components/admin/AdminUI'
+import { VISUAL_EDITOR_HOME_HERO_HREF } from '@/lib/admin-visual-links'
 import PageModulesClient from '@/components/admin/PageModulesClient'
 import {
   defaultSiteSettings,
@@ -57,7 +58,7 @@ function getFormModeSideNav(): AdminSideNavGroup[] {
       title: '网站运营',
       items: [
         { key: 'overview', label: '网站概览', href: '/admin/site', Icon: LayoutTemplate },
-        { key: 'visual', label: '可视化编辑', href: '/admin/site/visual', Icon: FileText },
+        { key: 'visual', label: '可视化编辑', href: VISUAL_EDITOR_HOME_HERO_HREF, Icon: FileText },
         { key: 'pages', label: '内容来源', href: '/admin/site/pages', Icon: ListChecks },
         { key: 'navigation', label: '导航页脚', href: '/admin/site/navigation', Icon: Navigation },
         { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },
@@ -196,7 +197,7 @@ export default async function PagesAdminPage({ searchParams }: PagesAdminPagePro
         description="管理员维护固定页面模块、导航页脚和客户可见文案的备用入口。这里不是自由建站器，不开放自由 HTML / CSS / JavaScript。"
         actions={(
           <>
-            <AdminActionLink href="/admin/site/visual" Icon={LayoutTemplate} label="可视化编辑" primary />
+            <AdminActionLink href={VISUAL_EDITOR_HOME_HERO_HREF} Icon={LayoutTemplate} label="可视化编辑" primary />
             <AdminActionLink href="/admin/site/pages" Icon={ListChecks} label="内容来源" />
           </>
         )}

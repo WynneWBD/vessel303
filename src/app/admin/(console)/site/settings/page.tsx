@@ -6,6 +6,7 @@ import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import { AdminActionLink, AdminMetricCard, AdminPageHero } from '@/components/admin/AdminUI'
 import { defaultSiteSettings } from '@/lib/admin-settings-db'
+import { VISUAL_EDITOR_HOME_HERO_HREF } from '@/lib/admin-visual-links'
 import { pool } from '@/lib/db'
 import { hasGoogleSiteVerificationToken } from '@/lib/google-site-verification'
 import {
@@ -151,7 +152,7 @@ function getSettingsSideNav(isAdmin: boolean): AdminSideNavGroup[] {
         { key: 'navigation', label: '导航管理', href: '/admin/site/navigation', Icon: Navigation },
         { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },
         { key: 'settings', label: '网站信息', href: '/admin/site/settings', Icon: Settings },
-        { key: 'visual', label: '编辑网站', href: '/admin/site/visual', Icon: FileText },
+        { key: 'visual', label: '编辑网站', href: VISUAL_EDITOR_HOME_HERO_HREF, Icon: FileText },
       ],
     },
     {

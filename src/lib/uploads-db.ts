@@ -1,4 +1,5 @@
 import { pool } from '@/lib/db'
+import { visualEditorPageHref, visualEditorPageModuleHref } from '@/lib/admin-visual-links'
 import { ensureUploadVariantsColumn } from '@/lib/upload-image-variants'
 import type { ImageVariants } from '@/lib/image-optimization'
 
@@ -839,7 +840,7 @@ export async function getMediaReferenceDetails(url: string): Promise<MediaRefere
       pageDrafts: pageDraftsRes.map((row) => ({
         id: row.id,
         title: firstText(row.title_zh, row.title_en, `${row.page_key}:${row.module_key}`),
-        href: '/admin/site/visual',
+        href: visualEditorPageModuleHref(row.page_key, row.module_key),
         fields: [
           '页面草稿引用',
           `${row.page_key}:${row.module_key}`,
@@ -849,7 +850,7 @@ export async function getMediaReferenceDetails(url: string): Promise<MediaRefere
       pageSnapshots: pageSnapshotsRes.map((row) => ({
         id: row.id,
         title: firstText(row.title_zh, row.title_en, `${row.page_key}:${row.module_key}`),
-        href: '/admin/site/visual',
+        href: visualEditorPageModuleHref(row.page_key, row.module_key),
         fields: [
           '历史快照引用',
           `${row.page_key}:${row.module_key}`,
@@ -859,7 +860,7 @@ export async function getMediaReferenceDetails(url: string): Promise<MediaRefere
       pageStructureDrafts: pageStructureDraftsRes.map((row) => ({
         id: row.id,
         title: `${row.page_key} 页面结构草稿`,
-        href: '/admin/site/visual',
+        href: visualEditorPageHref(row.page_key),
         fields: [
           '页面结构草稿引用',
           row.updated_by_email ? `操作人 ${row.updated_by_email}` : '操作人 未知',
@@ -868,7 +869,7 @@ export async function getMediaReferenceDetails(url: string): Promise<MediaRefere
       pageStructureSnapshots: pageStructureSnapshotsRes.map((row) => ({
         id: row.id,
         title: `${row.page_key} 页面结构快照`,
-        href: '/admin/site/visual',
+        href: visualEditorPageHref(row.page_key),
         fields: [
           '页面结构快照引用',
           row.created_by_email ? `操作人 ${row.created_by_email}` : '操作人 未知',

@@ -6,6 +6,7 @@ import {
   type ActivityItem,
   type StatusOverview,
 } from '@/lib/admin-status-metrics'
+import { VISUAL_EDITOR_HOME_HERO_HREF } from '@/lib/admin-visual-links'
 import {
   ActivityList,
   buildStatusBadges,
@@ -54,7 +55,7 @@ const ACTIVITY_SOURCE_META: Record<ActivityItem['source'], { label: string; href
   news: { label: '新闻', href: '/admin/content/news/list', detail: '新闻发布和草稿变化' },
   leads: { label: '线索', href: '/admin/customers/leads', detail: '客户线索状态或备注变化' },
   media: { label: '媒体', href: '/admin/site/media', detail: '图片素材上传或素材库变化' },
-  pages: { label: '页面草稿', href: '/admin/site/visual', detail: '页面模块或结构草稿变化' },
+  pages: { label: '页面草稿', href: VISUAL_EDITOR_HOME_HERO_HREF, detail: '页面模块或结构草稿变化' },
 }
 
 export default async function AdminStatusActivityPage() {
@@ -187,7 +188,7 @@ function buildActivityAuditRows({
       currentValue: `${formatActivityNumber(overview.site.pages.total)} 个草稿`,
       evidence: `近期页面变化 ${formatActivityNumber(pageActivityCount)} 条；模块 ${formatActivityNumber(overview.site.pages.moduleDrafts)} / 结构 ${formatActivityNumber(overview.site.pages.structureDrafts)}`,
       impact: '页面草稿需要在发布前复核导航、CTA、SEO 和前台 smoke。',
-      href: '/admin/site/visual',
+      href: VISUAL_EDITOR_HOME_HERO_HREF,
       actionLabel: '进入视觉管理',
       tone: overview.site.pages.total > 0 ? 'warning' : 'ready',
       Icon: STATUS_ICONS.LayoutTemplate,

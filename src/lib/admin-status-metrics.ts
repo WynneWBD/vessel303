@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { normalizeMediaMaxUploadMb } from '@/lib/admin-settings-db'
+import { visualEditorPageHref, visualEditorPageModuleHref } from '@/lib/admin-visual-links'
 import { pool } from '@/lib/db'
 import { hasGoogleSiteVerificationToken } from '@/lib/google-site-verification'
 
@@ -855,7 +856,7 @@ async function loadPageActivity(): Promise<ActivityItem[]> {
       sourceLabel: '页面',
       title: firstText(row.title_zh, row.title_en, `${row.page_key}:${row.module_key}`),
       detail: '页面模块草稿更新',
-      href: '/admin/site/visual',
+      href: visualEditorPageModuleHref(row.page_key, row.module_key),
       changedAt: row.changed_at,
     })),
     ...structureRes.rows.map((row) => ({
@@ -864,7 +865,7 @@ async function loadPageActivity(): Promise<ActivityItem[]> {
       sourceLabel: '页面',
       title: `${row.page_key} 页面结构草稿`,
       detail: '页面结构草稿更新',
-      href: '/admin/site/visual',
+      href: visualEditorPageHref(row.page_key),
       changedAt: row.changed_at,
     })),
   ]

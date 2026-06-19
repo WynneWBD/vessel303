@@ -8,6 +8,7 @@ import {
   getSiteSettings,
   normalizeMediaMaxUploadMb,
 } from '@/lib/admin-settings-db'
+import { VISUAL_EDITOR_HOME_HERO_HREF } from '@/lib/admin-visual-links'
 import {
   listDefaultPageModules,
   listPageModulesForVisualEditor,
@@ -505,7 +506,7 @@ function getSiteToolNav(): AdminSideNavGroup[] {
     {
       title: '资源与页面',
       items: [
-        { key: 'visual', label: '编辑网站', href: '/admin/site/visual', Icon: Wrench },
+        { key: 'visual', label: '编辑网站', href: VISUAL_EDITOR_HOME_HERO_HREF, Icon: Wrench },
         { key: 'media', label: '图片素材', href: '/admin/site/media', Icon: ImageIcon },
       ],
     },
