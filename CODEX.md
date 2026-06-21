@@ -1,6 +1,6 @@
 # vessel303 Codex 技术手册
 
-最后更新：2026-06-19
+最后更新：2026-06-21
 
 本文件是 Codex 在 vessel303 工作区的技术地图。行为纪律见 `AGENTS.md`；当前项目总控状态见 `C:\Users\Wynne\Desktop\vessel303\00_项目总控入口\vessel303_当前总控handoff.md`。
 
@@ -8,9 +8,9 @@
 
 - 官网：`https://www.vessel303.com`
 - 代码仓库：`C:\Users\Wynne\Desktop\vessel303\repo-git`
-- 当前循环：B421 已完成 5 节点循环收口，把项目优先处理、新闻 SEO 和产品媒体治理入口从泛列表改为直达对应工作台/编辑锚点，功能已上线；当前暂停等待 Wynne 下一步命令，不继续自动开新批次。
-- 最近功能批次：B421 / `511122f fix(admin): route operations queues to focused workbenches`
-- 已记录生产验证：B421 / `dpl_HBquu2qyttaLbw4tsbHRwXYQPReM`；最新 production deployment 以 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
+- 当前循环：B422 已把内容来源中心、内容状态页和访问统计页的发布/SEO/素材动作进一步改为直达对应队列或 SEO 锚点，功能已上线；当前暂停等待 Wynne 下一步命令，不继续自动开新批次。
+- 最近功能批次：B422 / `3230644 fix(admin): deepen content and seo operations links`
+- 已记录生产验证：B422 / `dpl_EVsWhq4duWVgRRtXUKuT3CgdUUfG`；最新 production deployment 以 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
 - 当前精确状态以 `00_项目总控入口/vessel303_当前总控handoff.md` 和 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
 - 当前目标：前台对齐 `en.303vessel.cn` 的生产官网能力，后台对齐 `300.cn 后台` 的运营效率和数据分析心智。
 - 当前对照边界：`en.303vessel.cn` 当前由 `openresty` 响应，公开产品/案例路径只读 smoke 返回 403，后台路径返回 404；本仓库部署 smoke 以 `https://www.vessel303.com` / Vercel alias 为准。
