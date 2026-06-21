@@ -420,16 +420,16 @@ function buildContentSourceTreeGroups(contracts: GovernanceContractStatus[]): Co
 function contractPublishHref(contract: GovernanceContractStatus): string {
   if (contract.sourceType === 'page_modules') return contractAdminHref(contract)
   if (contract.sourceType === 'product_cms') return '/admin/content/products/list?status=draft#product-draft-recovery-readiness-desk'
-  if (contract.sourceType === 'project_cms') return '/admin/content/projects/list?status=draft'
-  if (contract.sourceType === 'news_cms') return '/admin/content/news/list?status=draft'
+  if (contract.sourceType === 'project_cms') return '/admin/content/projects/list?status=draft#project-publish-review'
+  if (contract.sourceType === 'news_cms') return '/admin/content/news/list?status=draft#news-list-priority'
   if (contract.sourceType === 'b9_cms') return contract.adminHref ?? '/admin/content'
   return contract.adminHref ?? '/admin/site/pages#content-source-route-tree'
 }
 
 function contractSeoHref(contract: GovernanceContractStatus): string {
   if (contract.key === 'products') return '/admin/content/products/list?view=incomplete&issue=seo'
-  if (contract.key === 'cases') return '/admin/content/projects/list?view=incomplete'
-  if (contract.key === 'news') return '/admin/content/news/list'
+  if (contract.key === 'cases') return '/admin/content/projects/list?view=incomplete#case-conversion-content-backfill-desk'
+  if (contract.key === 'news') return '/admin/content/news/list?status=published&issue=seo#news-source-seo-list-bridge'
   return '/admin/site/seo'
 }
 
@@ -437,9 +437,9 @@ function contractMediaHref(contract: GovernanceContractStatus): string {
   if (contract.sourceType === 'page_modules' && contract.issueLevel !== 'protected') {
     return contractVisualModuleHref(contract) ?? contract.adminHref ?? '/admin/site/media#media-replacement-workbench'
   }
-  if (contract.sourceType === 'product_cms') return '/admin/content/products/list?view=incomplete'
-  if (contract.sourceType === 'project_cms') return '/admin/content/projects/list?view=case-conversion-weak'
-  if (contract.sourceType === 'news_cms') return '/admin/content/news/list'
+  if (contract.sourceType === 'product_cms') return '/admin/content/products/list?view=incomplete&issue=media'
+  if (contract.sourceType === 'project_cms') return '/admin/content/projects/list?view=case-conversion-weak#case-conversion-content-backfill-desk'
+  if (contract.sourceType === 'news_cms') return '/admin/content/news/list?issue=cover#news-list-priority'
   return '/admin/site/media#media-replacement-workbench'
 }
 

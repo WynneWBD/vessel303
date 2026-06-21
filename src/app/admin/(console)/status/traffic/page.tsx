@@ -1595,7 +1595,7 @@ function TrafficModuleStrip({
     { title: '线索转化分析', value: `${formatNumber(leads)} 条`, href: '/admin/site/conversion#conversion-ledger', detail: '进入下钻' },
     { title: '产品路径分析', value: `${formatNumber(productPathActions)} 动作`, href: '#product-conversion-path', detail: '回连产品闭环' },
     { title: '案例询盘路径', value: `${formatNumber(casePathActions)} 动作`, href: '#case-loop-traffic-quality-review-desk', detail: `弱案例 ${formatNumber(weakCases)}` },
-    { title: 'Google收录分析', value: readiness, href: '/admin/site/seo', detail: '进入下钻' },
+    { title: 'Google收录分析', value: readiness, href: '/admin/site/seo#search-console', detail: '进入下钻' },
   ]
 
   return (
@@ -1991,7 +1991,7 @@ function buildTrafficOperationsRows(
       value: analytics.available ? 'site_events 可读' : '事件表未就绪',
       evidence: `Top page：${topPage?.label ?? '暂无'}；本页不读取 GA / Search Console / Vercel Analytics API。`,
       nextAction: '看接入状态',
-      href: '/admin/site/seo',
+      href: '/admin/site/seo#search-console',
       tone: analytics.available ? 'ready' : 'watch',
     },
   ]

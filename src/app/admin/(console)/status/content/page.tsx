@@ -73,6 +73,13 @@ type PublicDiscoveryHealthItem = {
   tone: 'orange' | 'blue' | 'green'
 }
 
+function seoGapHref(seo: SeoMetrics): string {
+  if (seo.productsMissing > 0) return '/admin/content/products/list?view=incomplete&issue=seo'
+  if (seo.projectsMissing > 0) return '/admin/content/projects/list?view=incomplete#case-conversion-content-backfill-desk'
+  if (seo.newsMissing > 0) return '/admin/content/news/list?status=published&issue=seo#news-source-seo-list-bridge'
+  return '/admin/site/seo#metadata-coverage'
+}
+
 export default async function AdminStatusContentPage() {
   const { role, email } = await getStatusAccess()
   const [overview, caseInquiryHealth] = await Promise.all([
@@ -362,7 +369,7 @@ function PublicDiscoveryHealthBoard({
       publicHref: '/cases',
       contentHref: projects.issues > 0 ? projects.issueHref : '/admin/content/projects/list#case-source-contract',
       sourceHref: '/admin/status/leads#source-seo-lead-quality',
-      seoHref: '/admin/content/projects/list?view=incomplete',
+      seoHref: '/admin/content/projects/list?view=incomplete#case-conversion-content-backfill-desk',
       published: projects.published,
       draft: projects.draft,
       issues: projects.issues,
@@ -509,8 +516,8 @@ function buildContentNextActions(
       status: seoMissing > 0 ? '优先补搜索标题、描述、slug 和可被搜索收录的摘要字段。' : 'SEO 缺项已归零，继续用 SEO 中心做发布前巡检。',
       evidence: `产品 ${formatNumber(seo.productsMissing)} / 案例 ${formatNumber(seo.projectsMissing)} / 新闻 ${formatNumber(seo.newsMissing)}`,
       acceptance: 'SEO 待补为 0；重点公开页发布后能在前台打开并具备标题和描述。',
-      href: '/admin/site/seo',
-      actionLabel: seoMissing > 0 ? '查看 SEO 中心' : '查看 SEO 状态',
+      href: seoGapHref(seo),
+      actionLabel: seoMissing > 0 ? '处理 SEO 待补' : '查看 SEO 状态',
       tone: seoMissing > 0 ? 'warning' : 'ready',
       Icon: STATUS_ICONS.SearchCheck,
     },
