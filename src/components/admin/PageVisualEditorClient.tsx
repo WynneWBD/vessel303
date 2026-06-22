@@ -1669,6 +1669,7 @@ export default function PageVisualEditorClient({
   const initialSelection = initialSelectionRef.current
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({})
+  const initialWorkbenchScrollRef = useRef(false)
   const [modules, setModules] = useState(() => filterEditableModules(initialModules).map(cloneModule))
   const [savedModules, setSavedModules] = useState(() => filterEditableModules(initialModules).map(cloneModule))
   const [selectedPage, setSelectedPage] = useState<PageKey>(initialSelection.pageKey)
@@ -1808,13 +1809,21 @@ export default function PageVisualEditorClient({
     '可视化编辑器有未保存的草稿修改。离开此页会丢失这些修改，确定离开吗？',
   )
 
-  const scrollEditorIntoView = useCallback(() => {
-    document.getElementById('visual-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const scrollModuleWorkbenchIntoView = useCallback(() => {
+    const target = document.getElementById('visual-module-workbench') ?? document.getElementById('visual-editor')
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [])
 
   const syncSelectedModuleUrl = useCallback((id: string) => {
+    if (requestedModuleId === id) return
     router.replace(`/admin/site/visual?module=${encodeURIComponent(id)}#visual-editor`, { scroll: false })
-  }, [router])
+  }, [requestedModuleId, router])
+
+  useEffect(() => {
+    if (initialWorkbenchScrollRef.current || !requestedModuleId) return
+    initialWorkbenchScrollRef.current = true
+    window.setTimeout(scrollModuleWorkbenchIntoView, 120)
+  }, [requestedModuleId, scrollModuleWorkbenchIntoView])
 
   useEffect(() => {
     if (!requestedModuleId || requestedModuleId === activeModuleId) return
@@ -1828,8 +1837,8 @@ export default function PageVisualEditorClient({
     setLocatedModules({})
     setHighlightRect(null)
     setFrameLoaded(false)
-    window.setTimeout(scrollEditorIntoView, 0)
-  }, [activeModuleId, modules, requestedModuleId, scrollEditorIntoView])
+    window.setTimeout(scrollModuleWorkbenchIntoView, 0)
+  }, [activeModuleId, modules, requestedModuleId, scrollModuleWorkbenchIntoView])
 
   const updateLocatedModules = useCallback(() => {
     const doc = getIframeDocument(iframeRef.current)
@@ -2018,21 +2027,21 @@ export default function PageVisualEditorClient({
     setSelectedModuleId(id)
     setSelectedField({ itemId: null, field: null })
     syncSelectedModuleUrl(id)
-    window.setTimeout(scrollEditorIntoView, 0)
+    window.setTimeout(scrollModuleWorkbenchIntoView, 0)
 
     if (switchingPreviewRoute) {
       setFrameLoaded(false)
       setLocatedModules({})
       setHighlightRect(null)
     } else {
-      scrollModuleIntoView(id)
+      window.setTimeout(() => scrollModuleIntoView(id), 120)
       window.setTimeout(refreshFrameState, 0)
     }
   }, [
     activePreviewPath,
     currentPage,
     refreshFrameState,
-    scrollEditorIntoView,
+    scrollModuleWorkbenchIntoView,
     scrollModuleIntoView,
     selectedPage,
     syncSelectedModuleUrl,
@@ -3064,7 +3073,11 @@ export default function PageVisualEditorClient({
         </div>
       </section>
 
-      <div className="grid flex-1 grid-cols-1 gap-5 xl:grid-cols-[270px_minmax(0,1fr)_420px]">
+      <div
+        id="visual-module-workbench"
+        data-active-module-id={activeModuleId}
+        className="grid flex-1 scroll-mt-24 grid-cols-1 gap-5 xl:grid-cols-[270px_minmax(0,1fr)_420px]"
+      >
         <aside className="rounded-lg border border-[#E5DED4] bg-white">
           <div className="border-b border-[#E5DED4] px-4 py-3">
             <p className="text-sm font-semibold text-[#2C2A28]">可编辑模块</p>
