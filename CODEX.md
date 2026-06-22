@@ -8,9 +8,9 @@
 
 - 官网：`https://www.vessel303.com`
 - 代码仓库：`C:\Users\Wynne\Desktop\vessel303\repo-git`
-- 当前循环：B425 已在本地完成后台多页面同类 UI 问题循环返工，覆盖 `/admin`、`/admin/content`、`/admin/site`、`/admin/status`：压缩后台总控首屏，修复内容中心后续台账被限制在左列的问题，保留 `/admin/site` 站点运行台账与全宽后续区块，并把状态中心窄列排行/模块入口改为卡片式台账；叠加 B423/B424 后台 UI 优化，当前准备验证、提交、推送并上线。
-- 当前线上功能批次：B422 / `3230644 fix(admin): deepen content and seo operations links`
-- 已记录生产验证：B422 / `dpl_EVsWhq4duWVgRRtXUKuT3CgdUUfG`；最新 production deployment 以 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
+- 当前循环：B425 已上线，完成后台多页面同类 UI 问题循环返工，覆盖 `/admin`、`/admin/content`、`/admin/site`、`/admin/status`：压缩后台总控首屏，修复内容中心后续台账被限制在左列的问题，保留 `/admin/site` 站点运行台账与全宽后续区块，并把状态中心窄列排行/模块入口改为卡片式台账；叠加 B423/B424 后台 UI 优化。
+- 当前线上功能批次：B425 / `b42e870 feat(admin): tighten operations console UI`
+- 已记录生产验证：B425 / `dpl_9m6fycZSaKVGTyVuoTpL1BwAnT3v`；最新 production deployment 以 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
 - 当前精确状态以 `00_项目总控入口/vessel303_当前总控handoff.md` 和 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
 - 当前目标：前台对齐 `en.303vessel.cn` 的生产官网能力，后台对齐 `300.cn 后台` 的运营效率和数据分析心智。
 - 当前对照边界：`en.303vessel.cn` 当前由 `openresty` 响应，公开产品/案例路径只读 smoke 返回 403，后台路径返回 404；本仓库部署 smoke 以 `https://www.vessel303.com` / Vercel alias 为准。
