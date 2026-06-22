@@ -246,7 +246,7 @@ function MediaOperationsConsole({
     },
     {
       title: '风险队列',
-      detail: '只读聚合大原图、缺少前台派生图等素材风险，进入后逐项确认。',
+      detail: '集中查看大原图、缺少前台派生图等素材风险，进入后逐项确认。',
       metric: `${formatNumber(issueTotal)} 项`,
       signal: issueTotal > 0 ? '优先处理' : '当前正常',
       href: createMediaHref(filters, { view: 'issues', page: 1 }),
@@ -488,7 +488,7 @@ function MediaReplacementWorkbench({
           </div>
           <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">素材引用与替换工作台</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            对齐 300.cn 素材库的处理心智：先找风险原图，再判断未引用素材，发布前复核草稿引用，线上引用回到内容 owner 替换。
+            先找风险原图，再判断未引用素材；发布前复核草稿引用，线上引用回到内容维护入口替换。
           </p>
         </div>
         <span className={`inline-flex w-fit rounded-md px-3 py-2 text-xs font-bold ${activeLanes > 0 ? 'bg-[#EAF6F8] text-[#1889B6]' : 'bg-emerald-50 text-emerald-700'}`}>

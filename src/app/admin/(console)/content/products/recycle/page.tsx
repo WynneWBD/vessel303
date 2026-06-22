@@ -126,7 +126,7 @@ function Hero({ summary }: { summary: RecycleSummary }) {
           <p className="text-sm font-semibold text-[#1889B6]">产品管理</p>
           <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">产品回收站</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-            对照 300.cn 后台的“回收站”，已删除产品只允许恢复为草稿，不开放永久删除。
+            管理已删除产品，恢复后先进入草稿，再由运营复核是否重新发布。
           </p>
         </div>
         <form action="/admin/content/products/recycle" className="flex flex-wrap items-center gap-2">
@@ -280,7 +280,7 @@ function RecycleGovernancePanel({ summary }: { summary: RecycleSummary }) {
     },
     {
       label: '补齐路径',
-      value: '闭环',
+      value: '核查',
       detail: `当前公开产品 ${formatNumber(summary.products)} 个、已发布 ${formatNumber(summary.published)} 个；恢复后回到产品列表做批量治理。`,
       href: '/admin/content/products/list#product-batch-governance',
       cta: '打开批量治理',
@@ -294,9 +294,9 @@ function RecycleGovernancePanel({ summary }: { summary: RecycleSummary }) {
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">回收治理</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">误删保护到恢复草稿闭环</h2>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">误删保护与恢复草稿</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            回收站把误删保护、恢复草稿、产品补齐和批量治理串成同一条安全运营路径；本区只做只读统计和入口串联，不新增删除能力。
+            回收站用于查看误删风险、恢复草稿、产品补齐和批量治理状态，帮助运营判断恢复前后影响。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -339,36 +339,36 @@ function ProductRecycleProtectionPanel({ summary }: { summary: RecycleSummary })
 
   const cards: RecycleGovernanceCard[] = [
     {
-      label: 'B334 分类回补',
+      label: '分类回补',
       value: formatNumber(summary.visibleCategories),
       detail: '恢复后的草稿先回到分类治理，避免误删恢复后仍停留在未分类或空目录状态。',
       href: '/admin/content/products/categories#product-category-readiness-desk',
-      cta: '查看分类承接',
+      cta: '查看分类检查',
       tone: summary.visibleCategories > 0 ? 'green' : 'orange',
       Icon: Tags,
     },
     {
-      label: 'B333 品牌回补',
+      label: '品牌回补',
       value: formatNumber(summary.visibleBrands),
       detail: '恢复产品进入草稿后，应继续复核品牌归属和品牌素材，避免公开目录信任背书断层。',
       href: '/admin/content/products/brands#product-brand-readiness-desk',
-      cta: '查看品牌承接',
+      cta: '查看品牌归属',
       tone: summary.visibleBrands > 0 ? 'green' : 'orange',
       Icon: Package,
     },
     {
-      label: 'B332 标记回补',
+      label: '标记回补',
       value: formatNumber(summary.visibleMarks),
       detail: '误删恢复只解决数据找回；标记回补负责把产品重新接回运营分层和推荐复盘。',
       href: '/admin/content/products/marks#product-mark-readiness-desk',
-      cta: '查看标记承接',
+      cta: '查看运营标记',
       tone: summary.visibleMarks > 0 ? 'green' : 'orange',
       Icon: Tags,
     },
     {
       label: '恢复保护得分',
       value: `${protectionScore}/6`,
-      detail: '综合删前已发布、缺分类、分类/品牌/标记底座和草稿承接，判断恢复前后风险。',
+      detail: '综合删前已发布、缺分类、分类/品牌/标记底座和草稿状态，判断恢复前后风险。',
       href: '#recycle-list',
       cta: '复核待恢复项',
       tone: protectionScore >= 5 ? 'green' : 'orange',
@@ -393,7 +393,7 @@ function ProductRecycleProtectionPanel({ summary }: { summary: RecycleSummary })
     },
     {
       label: '03 对齐分类与品牌',
-      detail: '用 B334 分类承接和 B333 品牌承接复核恢复产品是否能回到正确目录和背书体系。',
+      detail: '用分类和品牌归属复核恢复产品是否能回到正确目录和背书体系。',
       href: '/admin/content/products/categories#product-category-readiness-desk',
       cta: '对齐分类',
       primary: summary.deletedUncategorizedOnPage > 0 || summary.visibleCategories === 0,
@@ -422,10 +422,10 @@ function ProductRecycleProtectionPanel({ summary }: { summary: RecycleSummary })
     >
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]">
         <div className="border-b border-[#E6EEEE] p-4 lg:border-b-0 lg:border-r">
-          <p className="text-xs font-bold uppercase text-[#1889B6]">B335 Recycle Protection</p>
-          <h2 className="mt-2 text-lg font-bold text-[#1E2C31]">回收站到恢复草稿保护承接</h2>
+          <p className="text-xs font-bold uppercase text-[#1889B6]">Recycle Protection</p>
+          <h2 className="mt-2 text-lg font-bold text-[#1E2C31]">回收站与恢复草稿保护</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-            把 B334 分类治理、B333 品牌承接、B332 标记承接、误删风险和恢复后草稿补齐串成同一条只读运营路径；本区不恢复产品、不永久删除、不批量操作。
+            汇总分类治理、品牌归属、运营标记、误删风险和恢复后草稿补齐，帮助运营判断是否需要恢复处理。
           </p>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
             <RecycleProtectionMetric

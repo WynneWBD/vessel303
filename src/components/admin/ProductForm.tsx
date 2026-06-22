@@ -183,7 +183,7 @@ const releaseIssueRoutes: Record<string, ReleaseIssueRoute> = {
   缺英文简介: {
     sectionId: 'content',
     severity: 'high',
-    detail: '英文简介面向海外客户，公开发布前应优先补齐。',
+    detail: '英文简介面向海外客户，上线前应优先补齐。',
   },
   缺标签: {
     sectionId: 'content',
@@ -1159,7 +1159,7 @@ function ProductFormSidebar({
         <div className="flex items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-bold text-[#1E2C31]">运营优先级</h3>
-            <p className="mt-1 text-xs leading-5 text-[#61767D]">按发布影响顺序处理，不改变保存规则。</p>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">按上线影响排序，先处理会影响展示和询盘的项目。</p>
           </div>
           <Badge className={issueCount > 0 ? 'border-[#F2C6A7] bg-[#FFF7F0] text-[#E36F2C] text-xs' : 'border-emerald-200 bg-emerald-50 text-emerald-700 text-xs'}>
             {issueCount > 0 ? `${issueCount} 项待处理` : '可复核'}
@@ -1205,7 +1205,7 @@ function ProductFormSidebar({
       <section className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-sm font-bold text-[#1E2C31]">发布就绪矩阵</h3>
-          <span className="text-xs font-semibold text-[#8A9EA4]">300 式核对</span>
+          <span className="text-xs font-semibold text-[#8A9EA4]">发布核对</span>
         </div>
         <div className="mt-3 grid grid-cols-1 gap-2">
           {readinessGroups.map((group) => (
@@ -1376,13 +1376,13 @@ function ProductFormClosurePanel({ links }: { links: ProductFormClosureLink[] })
     <div className="mt-4 rounded-md border border-[#D8E7E8] bg-white p-3">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h4 className="text-sm font-bold text-[#1E2C31]">经营闭环入口</h4>
+          <h4 className="text-sm font-bold text-[#1E2C31]">运营入口</h4>
           <p className="mt-1 text-xs leading-5 text-[#61767D]">
-            对齐 B234 发布复核台，把表单内检查接回内容、路径、SEO 和线索；这里只读跳转，不改变保存或发布规则。
+            从当前表单进入内容治理、路径分析、SEO 和产品线索队列。
           </p>
         </div>
         <span className="w-fit rounded-full border border-[#D8E7E8] bg-[#F7FAFA] px-2.5 py-1 text-xs font-semibold text-[#61767D]">
-          只读导航
+          快速入口
         </span>
       </div>
       <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
@@ -1479,7 +1479,7 @@ function ProductPublishApprovalSummary({
       key: 'operation-ownership',
       label: '运营归属',
       value: `${form.category_id ? 1 : 0}/${form.brand_id ? 1 : 0}/${form.mark_ids.length}`,
-      detail: '依次核对分类、品牌、筛选属性和运营标记，承接 B337/B336 的发布前治理。',
+      detail: '依次核对分类、品牌、筛选属性和运营标记。',
       href: '#attributes',
       tone: operationOwnershipReady ? 'ready' : 'warning',
       Icon: Package,
@@ -1496,12 +1496,12 @@ function ProductPublishApprovalSummary({
   ]
   const approvalLinks = [
     {
-      label: 'B337 单品检查',
+      label: '单品检查',
       href: editReadinessHref,
       detail: mode === 'edit' ? '回到恢复后发布前检查台' : '保存后进入单品检查台',
     },
     {
-      label: 'B336 草稿队列',
+      label: '草稿队列',
       href: draftQueueHref,
       detail: '回产品列表定位草稿补齐上下文',
     },
@@ -1520,10 +1520,10 @@ function ProductPublishApprovalSummary({
     >
       <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#E36F2C]">B338 Approval Summary</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#E36F2C]">发布确认</p>
           <h4 className="mt-1 text-sm font-bold text-[#1E2C31]">发布确认前审批摘要</h4>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-[#61767D]">
-            对齐 B337 恢复后发布前检查台，把保存状态、发布缺项、运营归属和询盘交接压缩到最终确认前；这里只读提示，不改变保存或发布规则。
+            提交前集中确认保存状态、发布缺项、运营归属和询盘交接。
           </p>
         </div>
         <span className={`w-fit rounded-full border px-2.5 py-1 text-xs font-semibold ${
@@ -1650,43 +1650,43 @@ export default function ProductForm({
   const hasSeoIssue = completeness.issues.includes('缺 SEO')
   const productFormClosureLinks: ProductFormClosureLink[] = [
     {
-      label: '单品经营闭环',
-      value: mode === 'edit' ? 'B234' : '保存后',
+      label: '单品运营',
+      value: mode === 'edit' ? '可查看' : '保存后',
       detail: mode === 'edit'
         ? '回到当前产品的内容、路径、SEO 与线索入口。'
-        : '新产品保存后会生成单品经营闭环入口。',
+        : '新产品保存后会出现单品运营入口。',
       href: mode === 'edit' && form.id ? `/admin/content/products/${form.id}/edit#product-edit-closure` : '#publish-check',
       tone: mode === 'edit' ? 'ready' : 'neutral',
       Icon: ListChecks,
     },
     {
-      label: '产品内容闭环',
-      value: 'B233',
-      detail: '查看产品总览里的内容缺口、SEO 待补和路径承接。',
+      label: '产品内容',
+      value: '内容治理',
+      detail: '查看产品总览里的内容缺口、SEO 待补和路径入口。',
       href: '/admin/content/products#content-closure',
       tone: 'neutral',
       Icon: Package,
     },
     {
       label: '产品路径分析',
-      value: 'B232',
+      value: '路径分析',
       detail: '查看产品访问、动作、表单和真实线索表现。',
       href: '/admin/status/traffic#product-conversion-path',
       tone: 'neutral',
       Icon: BarChart3,
     },
     {
-      label: 'SEO 修复闭环',
+      label: 'SEO 修复',
       value: hasSeoIssue ? '待补' : '已补齐',
-      detail: '从站点 SEO 中心回看产品 SEO 与转化修复闭环。',
+      detail: '从站点 SEO 中心回看产品 SEO 与转化待补项。',
       href: '/admin/site/seo#seo-conversion-closure',
       tone: hasSeoIssue ? 'warning' : 'ready',
       Icon: Sparkles,
     },
     {
       label: '产品线索队列',
-      value: 'B228',
-      detail: '进入 source_type=product 队列核对产品来源线索。',
+      value: '线索队列',
+      detail: '进入产品来源线索队列，核对询盘和跟进状态。',
       href: '/admin/customers/leads?source_type=product',
       tone: 'neutral',
       Icon: UsersRound,
@@ -2176,7 +2176,7 @@ export default function ProductForm({
               <div>
                 <h3 className="text-sm font-semibold text-[#1E2C31]">前台页面状态</h3>
                 <p className="mt-1 text-xs leading-relaxed text-[#61767D]">
-                  对照 300 产品后台的产品入口心智：产品卡片和相关产品默认打开官方前台页；CMS 通用详情页始终保留为内容兜底和运营核对入口。
+                  产品卡片和相关产品默认打开官方前台页；CMS 通用详情页保留为内容核对入口。
                 </p>
               </div>
               <Badge className="w-fit border-[#D8E7E8] bg-white text-[#1889B6] text-xs">
@@ -2344,7 +2344,7 @@ export default function ProductForm({
         <FormSection
           id="attributes"
           title="产品属性 / 筛选属性"
-          description="对照 300 属性模板；用于后台筛选和后续前台筛选底座，不影响当前前台产品详情展示。"
+          description="用于后台筛选和后续前台筛选配置，帮助运营统一产品属性口径。"
         >
           {attributeTemplates.length === 0 ? (
             <div className="rounded-md border border-dashed border-[#D8E7E8] bg-[#F7FAFA] px-4 py-5 text-sm text-[#61767D]">
@@ -2407,7 +2407,7 @@ export default function ProductForm({
             <div>
               <h3 className="text-sm font-semibold text-[#1E2C31]">运营标记 / 橱窗</h3>
               <p className="mt-1 text-xs leading-5 text-[#61767D]">
-                对照 300 的标记管理和橱窗管理；只影响后台运营归类和后续展示策略，不改变当前产品详情页排版。
+                管理产品标记和橱窗归类，用于前台推荐、筛选和后续运营分组。
               </p>
             </div>
             <div className="space-y-3">
@@ -3116,7 +3116,7 @@ export default function ProductForm({
         <FormSection
           id="publish-check"
           title="发布检查"
-          description="检查状态、完整度、分类、属性、SEO 和前台预览；这里只做提醒，不新增发布限制。"
+          description="检查状态、完整度、分类、属性、SEO 和前台预览，确认后再发布。"
         >
           <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-5">
             <div className="space-y-4">

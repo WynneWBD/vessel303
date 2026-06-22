@@ -91,7 +91,7 @@ const CATEGORY_CANDIDATES: CategoryCandidate[] = [
     title: '公司资讯',
     slug: 'company-news',
     purpose: '品牌动态、合作签约、工厂活动和企业公告。',
-    examples: '300.cn 后台常见分类之一，可承接公司动态类新闻。',
+    examples: '可承接公司动态类新闻。',
     status: '候选',
   },
   {
@@ -112,7 +112,7 @@ const CATEGORY_CANDIDATES: CategoryCandidate[] = [
     title: '行业观察',
     slug: 'industry-insights',
     purpose: '海外市场、模块化建筑、度假营地和行业趋势。',
-    examples: '可承接 300.cn 后台当前国际新闻 / 最新资讯里的行业内容。',
+    examples: '可承接国际新闻、最新资讯里的行业内容。',
     status: '候选',
   },
 ]
@@ -140,7 +140,7 @@ const FIELD_PLAN: FieldPlan[] = [
     field: 'news_categories.sort_order',
     type: 'INTEGER',
     owner: '新分类表',
-    note: '对应 300.cn 后台的排序心智；当前已开放排序输入，拖拽排序后续单独排期。',
+    note: '当前已开放排序输入，方便运营控制分类展示顺序。',
   },
   {
     field: 'news_categories.status',
@@ -158,7 +158,7 @@ const FIELD_PLAN: FieldPlan[] = [
 
 const STEP_PLAN: StepPlan[] = [
   {
-    title: '先加只读分类表',
+    title: '先加分类表',
     detail: '创建分类表和管理页，只显示分类、排序、状态，不马上要求每条新闻必须选分类。',
     Icon: Database,
   },
@@ -184,7 +184,7 @@ function Hero({ summary }: { summary: CategorySummary }) {
             <p className="text-sm font-semibold text-[#1889B6]">新闻运营</p>
             <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">新闻分类管理</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-              参照 300.cn 后台的所属分类和分类管理心智，分类表已支持新增、编辑、排序和显示 / 隐藏。
+              新闻分类支持新增、编辑、排序和显示 / 隐藏，用于统一新闻归类。
             </p>
           </div>
         </div>
@@ -253,9 +253,9 @@ function CategoryGovernancePanel({ summary }: { summary: CategorySummary }) {
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">分类治理</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻分类与内容归档闭环</h2>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻分类与内容归档</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            分类管理把 300.cn 后台的分类组织心智接到新闻列表、批量转分类、待补内容和发布复核；本区只做只读统计和入口串联，不改分类保存逻辑。
+            分类管理连接新闻列表、批量转分类、待补内容和发布复核。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -312,7 +312,7 @@ function CategorySourceConversionDesk({ summary }: { summary: CategorySummary })
   const items: CategorySourceConversionItem[] = [
     {
       label: '新闻列表队列',
-      value: 'B295',
+      value: '列表',
       detail: '从新闻列表来源转化处理队列进入当前筛选、分类缺口、SEO 缺口和线索承接复核。',
       href: '/admin/content/news/list#news-list-source-conversion-queue',
       cta: '看列表队列',
@@ -321,8 +321,8 @@ function CategorySourceConversionDesk({ summary }: { summary: CategorySummary })
     },
     {
       label: '新闻优化台',
-      value: 'B294',
-      detail: '回到新闻内容到来源线索优化台，统一看内容待补、SEO 待补和 source_type=news。',
+      value: '优化',
+      detail: '回到新闻内容到来源线索优化台，统一看内容待补、SEO 待补和新闻来源线索。',
       href: '/admin/content/news#news-source-lead-optimization-desk',
       cta: '看优化台',
       tone: 'green',
@@ -330,7 +330,7 @@ function CategorySourceConversionDesk({ summary }: { summary: CategorySummary })
     },
     {
       label: '流量异常分诊',
-      value: 'B293',
+      value: '流量',
       detail: '分类和 SEO 补齐后，回看新闻访问路径是否仍出现有访问无线索的异常。',
       href: '/admin/status/traffic#traffic-to-lead-exception-desk',
       cta: '看流量',
@@ -339,8 +339,8 @@ function CategorySourceConversionDesk({ summary }: { summary: CategorySummary })
     },
     {
       label: '来源线索处理',
-      value: 'B292',
-      detail: '按新闻来源线索质量处理台复核 source_type=news 的活跃状态、阶段和运营跟进。',
+      value: '线索',
+      detail: '按新闻来源线索质量处理台复核活跃状态、阶段和运营跟进。',
       href: '/admin/status/leads#source-lead-quality-workdesk',
       cta: '看线索处理',
       tone: 'blue',
@@ -348,7 +348,7 @@ function CategorySourceConversionDesk({ summary }: { summary: CategorySummary })
     },
     {
       label: '转化复盘',
-      value: 'B291',
+      value: '转化',
       detail: '把分类、内容、SEO 和新闻来源线索放回 SEO 到线索转化复盘里判断获客承接。',
       href: '/admin/site/conversion#seo-to-lead-conversion-review',
       cta: '看转化复盘',
@@ -357,8 +357,8 @@ function CategorySourceConversionDesk({ summary }: { summary: CategorySummary })
     },
     {
       label: '新闻线索队列',
-      value: 'source_type=news',
-      detail: '直接进入新闻来源线索队列；本页只做入口，不改变客户线索或分类数据。',
+      value: '新闻来源',
+      detail: '直接进入新闻来源线索队列。',
       href: '/admin/customers/leads?source_type=news',
       cta: '打开线索',
       tone: 'gray',
@@ -370,15 +370,15 @@ function CategorySourceConversionDesk({ summary }: { summary: CategorySummary })
     <section id="news-category-source-conversion-desk" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="border-l-4 border-[#E36F2C] px-4 py-4">
-          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B296 NEWS CATEGORY SOURCE CONVERSION</p>
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">News Category Source Conversion</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻分类到来源转化治理台</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把新闻分类管理、B295 新闻列表处理队列、B294 新闻优化台、B293 流量分诊、B292 来源线索处理和 B291 转化复盘连成一条只读治理链；先补未分类、内容和 SEO，再回看新闻来源线索承接。本区不新增保存、发布、隐藏、删除或线索写入能力。
+            把新闻分类管理、新闻列表处理队列、新闻优化台、流量分诊、来源线索处理和转化复盘连成一条治理链；先补未分类、内容和 SEO，再回看新闻来源线索。
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <PrimaryAction href="/admin/content/news/list#news-list-source-conversion-queue" Icon={ListChecks} label="B295 列表队列" primary />
-            <PrimaryAction href="/admin/content/news#news-source-lead-optimization-desk" Icon={Newspaper} label="B294 优化台" />
-            <PrimaryAction href="/admin/status/leads#source-lead-quality-workdesk" Icon={Link2} label="B292 线索处理" />
+            <PrimaryAction href="/admin/content/news/list#news-list-source-conversion-queue" Icon={ListChecks} label="列表队列" primary />
+            <PrimaryAction href="/admin/content/news#news-source-lead-optimization-desk" Icon={Newspaper} label="优化台" />
+            <PrimaryAction href="/admin/status/leads#source-lead-quality-workdesk" Icon={Link2} label="线索处理" />
             <PrimaryAction href="/admin/customers/leads?source_type=news" Icon={Link2} label="新闻线索" />
           </div>
         </div>
@@ -459,13 +459,13 @@ function ReferencePanel() {
   return (
     <section className="space-y-4">
       <SectionTitle
-        title="300.cn 后台对照结论"
-        detail="只读观察 300.cn 后台新闻资讯模块，没有保存、发布、上传或删除。"
+        title="分类管理状态"
+        detail="观察新闻资讯模块结构和字段。"
       />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <ReferenceCard
           title="列表字段"
-          detail="300.cn 后台创新故事列表包含发布状态、发布时间、创新故事分类、标题和操作。"
+          detail="新闻列表已包含发布状态、发布时间、分类、标题和操作入口。"
         />
         <ReferenceCard
           title="分类入口"
@@ -528,7 +528,7 @@ function FieldPlanTable() {
     <section className="space-y-4">
       <SectionTitle
         title="字段方案"
-        detail="后续如进入真实开发，应以 nullable 字段和非破坏式迁移开始。"
+        detail="后续字段应保持可回退、可补齐。"
       />
       <div className="overflow-x-auto rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="min-w-[860px]">
@@ -579,13 +579,13 @@ function BoundaryPanel() {
     <section className="rounded-md border border-dashed border-[#D8E7E8] bg-white/76 p-5">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div>
-          <h2 className="text-sm font-bold text-[#1E2C31]">本轮做什么</h2>
+          <h2 className="text-sm font-bold text-[#1E2C31]">当前可处理</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
             新增、编辑、排序和显示 / 隐藏新闻分类；隐藏不会物理删除分类，也不会改动已绑定新闻。
           </p>
         </div>
         <div>
-          <h2 className="text-sm font-bold text-[#1E2C31]">本轮不做什么</h2>
+          <h2 className="text-sm font-bold text-[#1E2C31]">注意事项</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
             不做分类物理删除，不批量回填旧新闻，不做批量转移，不改权限分级。
           </p>

@@ -535,7 +535,7 @@ function ContentSourceRouteTree({ contracts }: { contracts: GovernanceContractSt
           </p>
         </div>
         <span className="inline-flex w-fit rounded-full bg-[#F0F7F8] px-3 py-1 text-xs font-semibold text-[#1889B6]">
-          {contracts.length} 个来源合同 / {pageCount} 条前台路径
+          {contracts.length} 个内容来源 / {pageCount} 条前台路径
         </span>
       </div>
 
@@ -621,7 +621,7 @@ function ContentReleaseLedger({ contracts }: { contracts: GovernanceContractStat
             <span>页面发布治理台账</span>
           </div>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            按页面合同逐行看来源、状态、草稿、隐藏、内容提示和处理入口；先处理 warning / notice，再进入前台复验。
+            按页面逐行查看来源、状态、草稿、隐藏、内容提示和处理入口；先处理优先项，再进入前台复验。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -635,7 +635,7 @@ function ContentReleaseLedger({ contracts }: { contracts: GovernanceContractStat
         <table className="w-full min-w-[1080px] text-sm">
           <thead>
             <tr className="border-b border-[#E6EEEE] text-xs text-[#61767D]">
-              <th className="py-2 pr-4 text-left font-semibold">页面合同</th>
+              <th className="py-2 pr-4 text-left font-semibold">页面来源</th>
               <th className="py-2 pr-4 text-left font-semibold">来源 / owner</th>
               <th className="py-2 pr-4 text-left font-semibold">阶段</th>
               <th className="py-2 pr-4 text-left font-semibold">处理信号</th>
@@ -745,7 +745,7 @@ function ContentSourceOperationsMatrix({ contracts }: { contracts: GovernanceCon
               <thead>
                 <tr className="border-b border-[#E6EEEE] text-[#61767D]">
                   <th className="py-2 text-left font-medium">来源</th>
-                  <th className="py-2 text-right font-medium">合同</th>
+                  <th className="py-2 text-right font-medium">来源</th>
                   <th className="py-2 text-right font-medium">published</th>
                   <th className="py-2 text-right font-medium">草稿</th>
                   <th className="py-2 text-right font-medium">缺口</th>
@@ -790,7 +790,7 @@ function ContentSourceOperationsMatrix({ contracts }: { contracts: GovernanceCon
 
         <aside className="rounded-md border border-[#D8E7E8] bg-white p-4">
           <h3 className="text-sm font-bold text-[#1E2C31]">优先处理队列</h3>
-          <p className="mt-1 text-xs leading-5 text-[#61767D]">点击进入合同 owner，避免从前台猜内容来源。</p>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">点击进入维护入口，直接处理对应页面内容。</p>
           <div className="mt-3 space-y-2">
             {priorityRows.length > 0 ? (
               priorityRows.map(({ contract, score }) => (
@@ -815,7 +815,7 @@ function ContentSourceOperationsMatrix({ contracts }: { contracts: GovernanceCon
               ))
             ) : (
               <p className="rounded-md bg-[#F7FAFA] px-3 py-3 text-xs leading-5 text-[#61767D]">
-                当前没有 warning 或 notice 合同。
+                当前没有优先处理或复核项。
               </p>
             )}
           </div>
@@ -890,7 +890,7 @@ function ContractCard({ contract }: { contract: GovernanceContractStatus }) {
         </div>
       ) : (
         <div className="mt-4 rounded-md border border-emerald-100 bg-emerald-50/60 p-3 text-xs leading-5 text-emerald-700">
-          当前来源合同没有阻断项；发布前仍需按 05 流程做前台预览和线上核对。
+          当前来源没有阻断项；发布前仍需完成前台预览和线上核对。
         </div>
       )}
 
@@ -913,7 +913,7 @@ function InfoBlock({ label, value }: { label: string; value: string }) {
 function ContractMatrix({ contracts }: { contracts: GovernanceContractStatus[] }) {
   return (
     <section className="space-y-4">
-      <SectionTitle title="页面内容合同" detail="前台展示什么，由这里列出的后台 owner 和 published 内容决定；前台模板只负责展示。" />
+      <SectionTitle title="页面内容来源" detail="查看每个前台页面对应的后台维护入口、发布状态和内容缺口。" />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         {contracts.map((contract) => (
           <ContractCard key={contract.key} contract={contract} />
@@ -927,8 +927,8 @@ function GuardrailPanel() {
   const guardrails = [
     '前台不得新增客户可见业务文案、图片、CTA 或表单说明。',
     '后台无 published 内容时，前台隐藏对应模块，不显示代码 fallback。',
-    '公开页不得出现运营导览、对照 300、Codex、B 阶段号等内部词。',
-    'Global 只登记边界，不进入本轮页面内容治理。',
+    '公开页不得出现后台说明、内部编号或运营导览文字。',
+    'Global 入口按专项页面维护，本站点清单只做状态提示。',
   ]
 
   return (
@@ -1033,7 +1033,7 @@ export default async function AdminSitePagesPage() {
         </div>
 
         <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-6">
-          <SummaryTile title="内容合同" value={contracts.length} detail="公开页面和全站壳" Icon={Database} />
+          <SummaryTile title="内容来源" value={contracts.length} detail="公开页面和全站壳" Icon={Database} />
           <SummaryTile title="已闭合" value={okCount} detail="当前无质检提示" Icon={CheckCircle2} />
           <SummaryTile title="需关注" value={issueCount} detail="内容或 CTA 缺口" Icon={AlertTriangle} />
           <SummaryTile title="内部词提示" value={contentWarningCount} detail="published 内容风险" Icon={AlertTriangle} />

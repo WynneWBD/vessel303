@@ -96,7 +96,7 @@ function getSideNavGroups(summary: {
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', badge: summary.categories, Icon: Tags },
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', badge: summary.attributes, Icon: SlidersHorizontal },
         { key: 'marks', label: '标记管理', href: '/admin/content/products/marks', badge: summary.marks, Icon: Tags },
-        { key: 'mark-readiness', label: '标记承接', href: '#product-mark-readiness-desk', Icon: SearchCheck },
+        { key: 'mark-readiness', label: '标记检查', href: '#product-mark-readiness-desk', Icon: SearchCheck },
         { key: 'brands', label: '品牌管理', href: '/admin/content/products/brands', badge: summary.brands, Icon: Package },
         { key: 'filters', label: '筛选管理', href: '/admin/content/products/filters', badge: summary.filters, Icon: Filter },
         { key: 'showcases', label: '橱窗管理', href: '/admin/content/products/showcases', badge: summary.showcases, Icon: ListChecks },
@@ -172,7 +172,7 @@ export default async function AdminContentProductMarksPage() {
           <p className="text-sm font-semibold text-[#1889B6]">产品管理 / 运营归类</p>
           <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">标记管理</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-            对照 300.cn 后台的标记管理，先开放新增、编辑、显示/隐藏和产品批量打标，不做删除。
+            维护产品运营标记，支持新增、编辑、显示/隐藏和批量打标。
           </p>
         </div>
         <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-4">
@@ -227,9 +227,9 @@ function MarkGovernancePanel({ summary }: { summary: MarkSummary }) {
     {
       label: '推荐分层',
       value: formatNumber(summary.visibleShowcases),
-      detail: '标记先把产品分层，橱窗再承接重点推荐；两者一起服务公开产品发现和转化复盘。',
+      detail: '标记先把产品分层，橱窗再推荐重点款；两者一起服务公开产品发现和转化复盘。',
       href: '/admin/content/products/showcases#showcase-governance',
-      cta: '打开橱窗闭环',
+      cta: '打开橱窗推荐',
       tone: summary.visibleShowcases > 0 ? 'green' : 'blue',
       Icon: SearchCheck,
     },
@@ -240,9 +240,9 @@ function MarkGovernancePanel({ summary }: { summary: MarkSummary }) {
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">标记治理</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">运营标记到批量治理闭环</h2>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">运营标记与批量治理</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            标记把产品列表筛选、批量打标和橱窗推荐串成同一条运营归类路径；本区只做只读统计和入口串联，不改标记保存逻辑。
+            标记把产品列表筛选、批量打标和橱窗推荐串成同一条运营归类路径。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -251,7 +251,7 @@ function MarkGovernancePanel({ summary }: { summary: MarkSummary }) {
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
           >
             <Filter size={13} />
-            筛选闭环
+            筛选组
           </Link>
           <Link
             href="/admin/content/products/showcases#showcase-governance"
@@ -284,20 +284,20 @@ function ProductMarkReadinessPanel({ summary }: { summary: MarkSummary }) {
 
   const handoffCards: MarkGovernanceCard[] = [
     {
-      label: 'B331 橱窗承接',
+      label: '橱窗推荐',
       value: formatNumber(summary.visibleShowcases),
       detail: '先确认公开推荐和重点产品是否已有可见橱窗，再把同类产品归入稳定标记。',
       href: '/admin/content/products/showcases#product-showcase-readiness-desk',
-      cta: '查看橱窗承接',
+      cta: '查看橱窗推荐',
       tone: summary.visibleShowcases > 0 ? 'green' : 'orange',
       Icon: ListChecks,
     },
     {
-      label: 'B330 筛选承接',
+      label: '筛选组',
       value: formatNumber(summary.visibleFilters),
       detail: '用公开目录筛选组缩小候选产品，再进入列表做批量标记，减少误选和漏选。',
       href: '/admin/content/products/filters#product-filter-readiness-desk',
-      cta: '查看筛选承接',
+      cta: '查看筛选组',
       tone: summary.visibleFilters > 0 ? 'green' : 'orange',
       Icon: Filter,
     },
@@ -324,7 +324,7 @@ function ProductMarkReadinessPanel({ summary }: { summary: MarkSummary }) {
   const workflowSteps = [
     {
       label: '01 先从橱窗确认重点款',
-      detail: '看当前可见橱窗是否已经承接主推产品，避免标记只服务后台、不服务公开推荐。',
+      detail: '看当前可见橱窗是否已经包含主推产品，避免标记只服务后台、不服务公开推荐。',
       href: '/admin/content/products/showcases#product-showcase-readiness-desk',
       cta: summary.visibleShowcases > 0 ? '复核橱窗' : '补齐橱窗',
       primary: summary.visibleShowcases === 0,
@@ -360,10 +360,10 @@ function ProductMarkReadinessPanel({ summary }: { summary: MarkSummary }) {
     >
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]">
         <div className="border-b border-[#E6EEEE] p-4 lg:border-b-0 lg:border-r">
-          <p className="text-xs font-bold uppercase text-[#1889B6]">B332 Mark Readiness</p>
-          <h2 className="mt-2 text-lg font-bold text-[#1E2C31]">橱窗重点款到产品标记运营承接</h2>
+          <p className="text-xs font-bold uppercase text-[#1889B6]">Mark Readiness</p>
+          <h2 className="mt-2 text-lg font-bold text-[#1E2C31]">橱窗重点款与产品标记</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-            把 B331 橱窗重点款、B330 筛选承接、产品列表批量治理、空标记风险和产品路径复盘串成同一条只读运营路径；本区不保存标记、不批量打标、不发布产品。
+            汇总橱窗重点款、筛选组、产品列表批量治理、空标记风险和产品路径复盘，帮助运营判断标记是否可用。
           </p>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <MarkReadinessMetric
@@ -391,7 +391,7 @@ function ProductMarkReadinessPanel({ summary }: { summary: MarkSummary }) {
               tone={summary.visibleShowcases > 0 ? 'green' : 'orange'}
             />
             <MarkReadinessMetric
-              label="承接得分"
+              label="准备度"
               value={`${readinessScore}/5`}
               detail={readinessScore >= 4 ? '可进入复盘' : '先补运营底座'}
               tone={readinessScore >= 4 ? 'green' : 'orange'}

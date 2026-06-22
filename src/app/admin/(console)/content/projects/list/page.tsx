@@ -1110,7 +1110,7 @@ function CaseSourceContractPanel({
     },
     {
       label: '线索筛选',
-      value: 'source_type=case',
+      value: '案例来源',
       detail: '客户线索台按案例来源筛选，处理仍回到现有线索流程。',
       href: '/admin/customers/leads?source_type=case',
       Icon: SearchCheck,
@@ -1131,9 +1131,9 @@ function CaseSourceContractPanel({
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">Source Contract</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例来源承接合同</h2>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例来源线索</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            把公开案例列表、案例详情咨询、询盘表单、案例线索队列和转化复盘接成同一条只读路径；这里不新增表单、发布、Global 点位或线索状态规则。
+            把公开案例列表、案例详情咨询、询盘表单、案例线索队列和转化复盘接成同一条运营路径。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -1271,7 +1271,7 @@ function CaseListInquiryConversionQueue({
     {
       label: '案例询盘线索',
       value: formatNumber(casePathMetric.leads),
-      detail: `30 天动作 ${formatNumber(casePathMetric.ctaClicks)}，表单 ${formatNumber(casePathMetric.formSubmits)}；线索归到 source_type=case。`,
+      detail: `30 天动作 ${formatNumber(casePathMetric.ctaClicks)}，表单 ${formatNumber(casePathMetric.formSubmits)}；线索归到案例来源。`,
       href: '/admin/customers/leads?source_type=case',
       cta: '看案例线索',
       Icon: ListChecks,
@@ -1350,10 +1350,10 @@ function CaseListInquiryConversionQueue({
     <section id="case-list-inquiry-conversion-queue" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="grid grid-cols-1 border-l-4 border-[#E36F2C] lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="px-4 py-4">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">B300 Case Inquiry Queue</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">Case Inquiry Queue</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例列表到询盘转化处理队列</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把案例列表筛选、已发布案例池、发布转化弱项、`/cases` 前台路径、`source_type=case` 线索和 30 天路径转化数据集中到同屏处理。这里是只读队列，不改案例保存、发布、Global 点位或线索状态。
+            把案例列表筛选、已发布案例池、发布转化弱项、`/cases` 前台路径、案例来源线索和 30 天路径转化数据集中到同屏处理。
           </p>
         </div>
         <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] p-4 lg:border-l lg:border-t-0">
@@ -1473,15 +1473,15 @@ function CaseConversionContentBackfillDesk({
     })
     .slice(0, 4)
   const decision = summary.caseConversionWeak > 0 && casePathMetric.views > 0
-    ? `先把 ${formatNumber(summary.caseConversionWeak)} 个发布转化弱案例切回内容补位，再回 B307 复盘访问、动作、线索和跟进质量。`
+    ? `先把 ${formatNumber(summary.caseConversionWeak)} 个发布转化弱案例切回内容补位，再回转化复盘查看访问、动作、线索和跟进质量。`
     : summary.caseConversionWeak > 0
       ? `当前有 ${formatNumber(summary.caseConversionWeak)} 个发布转化弱案例，先从素材、叙事、项目事实和标签四类缺口补位。`
       : casePathMetric.leads > 0
         ? '案例来源已有线索且发布内容暂无内容型弱项，可从成交和跟进质量反推高价值案例。'
-        : '当前没有发布转化弱项，保持 B300 到 B307 的复盘入口可下钻，等待更多访问和线索样本。'
+        : '当前没有发布转化弱项，保持列表队列和转化复盘入口可下钻，等待更多访问和线索样本。'
   const reviewItems: CaseInquiryQueueItem[] = [
     {
-      label: 'B307 转化复盘',
+      label: '转化复盘',
       value: formatAnalyticsPercent(casePathMetric.conversionRate),
       detail: `回到案例跟进质量到转化复盘桥，复看访问 ${formatNumber(casePathMetric.views)}、动作 ${formatNumber(pathActions)}、线索 ${formatNumber(casePathMetric.leads)}。`,
       href: '/admin/site/conversion#case-followup-conversion-review-bridge',
@@ -1490,8 +1490,8 @@ function CaseConversionContentBackfillDesk({
       tone: casePathMetric.views > 0 ? 'blue' : 'gray',
     },
     {
-      label: 'B306 跟进分诊',
-      value: 'source_type=case',
+      label: '跟进分诊',
+      value: '案例来源',
       detail: '查看案例来源线索的跟进优先级，确认活跃线索是否需要先处理。',
       href: '/admin/status/leads#case-lead-quality-followup-desk',
       cta: '看跟进分诊',
@@ -1499,7 +1499,7 @@ function CaseConversionContentBackfillDesk({
       tone: casePathMetric.leads > 0 ? 'blue' : 'gray',
     },
     {
-      label: 'B305 路径回流',
+      label: '路径分析',
       value: formatNumber(pathActions),
       detail: `路径动作 ${formatNumber(pathActions)}，其中表单 ${formatNumber(casePathMetric.formSubmits)}；回看访问到线索回流缺口。`,
       href: '/admin/status/traffic#case-path-lead-backflow-desk',
@@ -1508,7 +1508,7 @@ function CaseConversionContentBackfillDesk({
       tone: pathActions > 0 ? 'orange' : casePathMetric.views > 0 ? 'blue' : 'gray',
     },
     {
-      label: 'B304 线索回流',
+      label: '案例线索',
       value: formatNumber(casePathMetric.leads),
       detail: '进入案例来源线索队列，核对内容缺口是否需要反向补到案例列表。',
       href: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
@@ -1517,16 +1517,16 @@ function CaseConversionContentBackfillDesk({
       tone: casePathMetric.leads > 0 ? 'green' : pathActions > 0 ? 'orange' : 'gray',
     },
     {
-      label: 'B303 案例总控',
+      label: '案例内容',
       value: formatNumber(summary.caseConversionWeak),
       detail: `发布转化弱 ${formatNumber(summary.caseConversionWeak)}，可承接案例 ${formatNumber(readyPublishedTotal)}。`,
       href: '/admin/content/projects#case-content-inquiry-command-center',
-      cta: '回案例总控',
+      cta: '回案例内容',
       Icon: MapPinned,
       tone: summary.caseConversionWeak > 0 ? 'orange' : 'green',
     },
     {
-      label: 'B300 弱项队列',
+      label: '弱项队列',
       value: formatNumber(pageWeakEntries.length),
       detail: `当前页发布 ${formatNumber(pagePublishedCount)}，转化弱 ${formatNumber(pageWeakEntries.length)}，可承接 ${formatNumber(pageReadyCount)}，草稿 ${formatNumber(pageDraftCount)}。`,
       href: createHref(filters, { status: '', view: 'case-conversion-weak' }),
@@ -1578,10 +1578,10 @@ function CaseConversionContentBackfillDesk({
     <section id="case-conversion-content-backfill-desk" className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="grid grid-cols-1 border-l-4 border-[#E36F2C] xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="px-4 py-4">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">B308 Content Backfill Desk</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">Content Backfill Desk</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例转化复盘到内容补位执行队列</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把 B307 转化复盘、B306 跟进分诊、B305 路径回流、B304 线索回流、B303 案例总控和 B300 弱案例队列收回到内容补位执行层；本区只读聚合和下钻，不保存、不发布、不改线索状态。
+            汇总转化复盘、跟进分诊、路径分析、案例线索、案例内容和弱案例队列，帮助运营处理内容补位。
           </p>
         </div>
         <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] p-4 xl:border-l xl:border-t-0">
@@ -1672,7 +1672,7 @@ function CaseConversionContentBackfillDesk({
           <div className="px-4 py-8 text-center">
             <CheckCircle2 className="mx-auto text-emerald-600" size={28} />
             <p className="mt-3 text-sm font-bold text-[#1E2C31]">当前页没有发布转化弱案例</p>
-            <p className="mt-1 text-xs leading-5 text-[#61767D]">可切到“发布转化弱”视图或回到 B307 查看转化复盘。</p>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">可切到“发布转化弱”视图或回到转化复盘。</p>
           </div>
         )}
       </div>
@@ -2383,7 +2383,7 @@ export default async function AdminContentProjectsListPage({ searchParams }: Pag
       <AdminPageHero
         kicker="项目案例"
         title="项目案例列表"
-        description="这里查看正式项目案例内容状态。Global 只显示地图入图状态，本轮不改地图底层和点位渲染。"
+        description="这里查看正式项目案例内容状态。Global 只显示地图入图状态。"
         actions={<QuickActions />}
       />
 

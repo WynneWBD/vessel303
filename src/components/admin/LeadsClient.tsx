@@ -223,12 +223,24 @@ function formatAge(ts: string) {
 }
 
 function compactValue(value: string | null | undefined, fallback = '—') {
-  const trimmed = value?.trim()
+  const trimmed = cleanInternalTestText(value, '').trim()
   return trimmed ? trimmed : fallback
 }
 
+function cleanInternalTestText(value: string | null | undefined, fallback = '—') {
+  const cleaned = value
+    ?.replace(/\bB\d{1,3}-QA-\d{6,8}-[A-Z0-9-]+/gi, '')
+    .replace(/\bB\d{1,3}-\d+\s*/gi, '')
+    .replace(/\bCodex\s+B\d{1,3}\b[\w\s.-]*/gi, '')
+    .replace(/\bB\d{1,3}\s+(?:cutover|dry-run|rehearsal|innovation|scenario|FAQ|case|product)[\w\s.-]*/gi, '')
+    .replace(/\bB\d{1,3}\b/gi, '')
+    .replace(/\bDo not delete\.?\s*/gi, '')
+    .trim()
+  return cleaned || fallback
+}
+
 function truncateText(value: string | null | undefined, max = 64) {
-  const text = value?.trim()
+  const text = cleanInternalTestText(value, '').trim()
   if (!text) return '—'
   if (text.length <= max) return text
   return `${text.slice(0, max)}...`
@@ -645,7 +657,7 @@ export default function LeadsClient({
       <section className="rounded-md border border-[#D8E7E8] bg-white px-4 py-3 shadow-sm">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <p className="text-xs font-semibold tracking-[0.18em] text-[#1889B6] uppercase">Lead Workbench</p>
+            <p className="text-xs font-semibold tracking-[0.18em] text-[#1889B6] uppercase">线索工作台</p>
             <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">线索处理台账</h2>
             <p className="mt-1 text-xs leading-5 text-[#61767D]">
               当前匹配 {total.toLocaleString('zh-CN')} 条；重点队列为 {ATTENTION_LABEL[filters.attention] ?? filters.attention}；
@@ -900,10 +912,10 @@ export default function LeadsClient({
                         {sourceInfo.typeLabel}
                       </Badge>
                       <p className="mt-2 max-w-[260px] truncate text-xs font-semibold text-[#1E2C31]">
-                        {sourceInfo.label}
+                        {cleanInternalTestText(sourceInfo.label)}
                       </p>
                       <p className="mt-1 max-w-[260px] truncate text-xs text-[#8A9EA4]">
-                        {sourceInfo.raw}
+                        {cleanInternalTestText(sourceInfo.raw)}
                       </p>
                     </td>
                     <td className="min-w-[230px] px-4 py-3">
@@ -1096,10 +1108,10 @@ function LeadTodayHandoff({
     <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-4 border-b border-[#E6EEEE] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-semibold tracking-[0.18em] text-[#1889B6] uppercase">B197 Lead Handoff</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">今日线索处理顺序</h2>
+          <p className="text-xs font-semibold tracking-[0.18em] text-[#1889B6] uppercase">线索优先级</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">今日线索处理</h2>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-[#61767D]">
-            把 300 后台式的待办优先级落到当前 leads 数据：先响应、再分配、再推进断点，最后复盘来源；点击卡片只切换筛选，不直接写入线索。
+            先响应新询盘，再分配负责人，继续推进跟进和报价断点，最后回看来源质量。
           </p>
         </div>
         <div className="grid grid-cols-2 gap-2 text-xs sm:min-w-[360px]">
@@ -1280,10 +1292,10 @@ function LeadSlaBoard({
     <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <p className="text-xs font-semibold tracking-[0.18em] text-[#1889B6] uppercase">SLA Command</p>
+          <p className="text-xs font-semibold tracking-[0.18em] text-[#1889B6] uppercase">响应时效</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">线索响应与分配看板</h2>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-[#61767D]">
-            全库只读聚合，排除已删除线索；用于判断首次响应、跟进断点、报价回访、负责人分配和资料缺口。
+            排除已删除线索，用于判断首次响应、跟进断点、报价回访、负责人分配和资料缺口。
           </p>
         </div>
         <div className="grid grid-cols-2 gap-2 text-xs sm:min-w-[280px]">
@@ -1383,7 +1395,7 @@ function LeadOperationsDesk({
           <div>
             <h2 className="text-lg font-bold text-[#1E2C31]">当前筛选处理队列</h2>
             <p className="mt-1 text-xs text-[#61767D]">
-              按状态、超时和更新时间排序；这里只读取当前页线索，不修改数据。
+              按状态、超时和更新时间排序，优先处理当前页高风险线索。
             </p>
           </div>
           <span className="rounded-full bg-[#F0F7F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
@@ -1498,7 +1510,7 @@ function LeadSourceStatusMatrix({
     <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <p className="text-xs font-semibold tracking-[0.18em] text-[#1889B6] uppercase">Source Funnel</p>
+          <p className="text-xs font-semibold tracking-[0.18em] text-[#1889B6] uppercase">来源漏斗</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">来源转化矩阵</h2>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-[#61767D]">
             按站点入口聚合全部有效线索，观察每个来源从新线索、跟进、报价到成交/关闭的状态分布；点击计数会复用下方现有筛选。
@@ -1780,7 +1792,7 @@ function LeadDetailSheet({
                 <div className="col-span-2 rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-3">
                   <div className="text-xs text-[#61767D]">来源</div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-[#1E2C31]">
-                    <span className="font-semibold">{sourceInfo?.label ?? lead.source ?? '—'}</span>
+                    <span className="font-semibold">{cleanInternalTestText(sourceInfo?.label ?? lead.source, '—')}</span>
                     <span className="rounded-full bg-white px-2 py-0.5 text-xs text-[#61767D]">
                       {sourceInfo?.typeLabel ?? '其他来源'}
                     </span>
@@ -1795,7 +1807,7 @@ function LeadDetailSheet({
                       </a>
                     ) : null}
                   </div>
-                  <div className="mt-1 break-all text-xs text-[#61767D]">{lead.source || '—'}</div>
+                  <div className="mt-1 break-all text-xs text-[#61767D]">{cleanInternalTestText(lead.source, '—')}</div>
                 </div>
                 <Field label="更新时间" value={formatDate(lead.updated_at)} />
               </div>
@@ -1804,7 +1816,7 @@ function LeadDetailSheet({
               <div>
                 <div className="text-xs text-[#61767D] mb-2">留言内容</div>
                 <div className="rounded-md bg-[#F7FAFA] border border-[#D8E7E8] p-3 text-sm text-[#1E2C31] whitespace-pre-wrap min-h-[80px]">
-                  {lead.message || <span className="text-[#61767D]">(无留言)</span>}
+                  {cleanInternalTestText(lead.message, '') || <span className="text-[#61767D]">(无留言)</span>}
                 </div>
               </div>
 
@@ -1815,7 +1827,7 @@ function LeadDetailSheet({
                       <div>
                         <p className="text-sm font-bold text-[#1E2C31]">下一步动作</p>
                         <p className="mt-1 text-xs leading-5 text-[#61767D]">
-                          把状态、负责人和处理说明一次保存；这里不删除线索，也不改客户原始提交内容。
+                          保存状态、负责人和处理说明；客户原始提交内容保持不变。
                         </p>
                       </div>
                       <Badge className={priorityBadgeClass(nextAction.tone)}>
@@ -1887,7 +1899,7 @@ function LeadDetailSheet({
                   <div>
                     <div className="text-xs text-[#61767D] mb-2">历史备注</div>
                     <div className="rounded-md bg-[#F7FAFA] border border-[#D8E7E8] p-3 text-xs text-[#9AA9AD] whitespace-pre-wrap max-h-40 overflow-auto">
-                      {lead.notes}
+                      {cleanInternalTestText(lead.notes, '')}
                     </div>
                   </div>
                 )}
@@ -1921,7 +1933,7 @@ function Field({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
       <div className="text-xs text-[#61767D]">{label}</div>
-      <div className="text-sm text-[#1E2C31] break-all">{value || '—'}</div>
+      <div className="text-sm text-[#1E2C31] break-all">{cleanInternalTestText(value, '—')}</div>
     </div>
   )
 }
@@ -1961,9 +1973,9 @@ function NewLeadDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>新建测试线索</DialogTitle>
+          <DialogTitle>手动补录线索</DialogTitle>
           <DialogDescription>
-            仅用于后台 UI 调试,source 会标记为 admin_test。
+            用于运营手动补录官网咨询，保存后进入线索列表。
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

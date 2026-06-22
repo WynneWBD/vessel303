@@ -155,7 +155,7 @@ export default async function AdminStatusPage() {
         <AdminPageHero
           kicker="Analytics / Operations"
           title="运营数据中心"
-          description="按专业后台的数据分析流程组织：先选站点和时间，再看汇总台账、趋势、行为路径、转化入口和处理队列。统计只读，不写业务数据。"
+          description="先选站点和时间，再看汇总、趋势、行为路径、转化入口和处理队列。"
           actions={
             <>
               <StatusPill ok={analytics.available} label={analytics.available ? '第一方事件可用' : '事件表未就绪'} />
@@ -226,7 +226,7 @@ export default async function AdminStatusPage() {
             />
 
             <section className="space-y-4">
-              <SectionTitle title="近期变化" detail="只读聚合最近内容和运营动作，不替代完整操作日志。" />
+              <SectionTitle title="近期变化" detail="查看最近内容和运营动作，完整记录请进入操作日志。" />
               <ActivityList items={overview.activity} />
             </section>
           </div>
@@ -280,15 +280,15 @@ function SourceSeoHealthLedger({
     <section id="source-seo-health" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-sm font-bold text-[#1E2C31]">B280 来源与 SEO 健康台账</h2>
+          <h2 className="text-sm font-bold text-[#1E2C31]">来源与 SEO 健康台账</h2>
           <p className="mt-1 text-xs text-[#61767D]">
-            把 B279 来源总控接入数据中心：产品、案例、新闻同时看访问、动作、线索、SEO 缺项和内容承接缺项。
+            产品、案例、新闻同时查看访问、动作、线索、SEO 缺项和内容承接缺项。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <StatusLink href="/admin/site#source-seo-control" label="站点总控" />
-          <StatusLink href="/admin/site/conversion#source-contract-portfolio" label="来源合同" />
-          <StatusLink href="/admin/site/seo#seo-conversion-closure" label="SEO 闭环" />
+          <StatusLink href="/admin/site#source-seo-control" label="站点来源" />
+          <StatusLink href="/admin/site/conversion#source-contract-portfolio" label="来源承接" />
+          <StatusLink href="/admin/site/seo#seo-conversion-closure" label="SEO 待补" />
         </div>
       </div>
 
@@ -303,7 +303,7 @@ function SourceSeoHealthLedger({
         <table className="w-full min-w-[980px] text-sm">
           <thead>
             <tr className="border-y border-[#E6EEEE] bg-white text-[#61767D]">
-              <th className="px-4 py-3 text-left font-medium">来源合同</th>
+              <th className="px-4 py-3 text-left font-medium">来源类型</th>
               <th className="px-4 py-3 text-right font-medium">访问</th>
               <th className="px-4 py-3 text-right font-medium">动作</th>
               <th className="px-4 py-3 text-right font-medium">线索</th>
@@ -321,7 +321,7 @@ function SourceSeoHealthLedger({
                   <Link href={row.conversionHref} className="font-semibold text-[#1E2C31] hover:text-[#1889B6]">
                     {row.label}
                   </Link>
-                  <div className="mt-1 text-xs text-[#8A9EA4]">source_type={row.sourceType}</div>
+                  <div className="mt-1 text-xs text-[#8A9EA4]">访问、动作、线索</div>
                 </td>
                 <td className="px-4 py-3 text-right font-semibold text-[#1E2C31]">{formatNumber(row.metric.views)}</td>
                 <td className="px-4 py-3 text-right text-[#61767D]">{formatNumber(sourceActions(row.metric))}</td>
@@ -477,7 +477,7 @@ function buildOperationalPriorityRows({
       owner: '网站管理 / SEO',
       metric: `${formatNumber(seoMissing)} 项`,
       evidence: `产品 ${formatNumber(productsSeoMissing)} / 案例 ${formatNumber(projectsSeoMissing)} / 新闻 ${formatNumber(newsSeoMissing)}。`,
-      impact: seoMissing > 0 ? 'SEO 缺项会影响搜索摘要、来源判断和内容到线索的闭环复盘。' : '已发布内容当前没有 SEO 缺项。',
+      impact: seoMissing > 0 ? 'SEO 缺项会影响搜索摘要、来源判断和内容到线索的路径复核。' : '已发布内容当前没有 SEO 缺项。',
       href: '/admin/status#source-seo-health',
       actionLabel: seoMissing > 0 ? '处理 SEO' : '查看来源',
       actions: [
@@ -575,7 +575,7 @@ function buildOperationalPriorityRows({
       metric: `${formatNumber(thirtyDays.leads)} 线索`,
       evidence: `30 天 PV ${formatNumber(thirtyDays.pageViews)}，动作 ${formatNumber(trafficActions)}，真实线索 ${formatNumber(thirtyDays.leads)}。`,
       impact: trafficActionGap
-        ? '已有访问和动作但没有线索，需要分诊入口、CTA、表单和 source_type 承接。'
+        ? '已有访问和动作但没有线索，需要分诊入口、CTA、表单和来源匹配。'
         : trafficReview
           ? '已有访问但线索样本不足，继续观察入口和落地页表现。'
           : '访问到线索路径当前有可读样本或暂无访问样本。',
@@ -599,7 +599,7 @@ function buildOperationalPriorityRows({
       owner: '网站设置',
       metric: `${formatNumber(configIssues)} 项`,
       evidence: `管理员可见配置检查异常 ${formatNumber(configIssues)} 项；不展示密钥内容。`,
-      impact: '配置异常可能影响发信、存储、联系入口或上传闭环。',
+      impact: '配置异常可能影响发信、存储、联系入口或上传流程。',
       href: '/admin/site/settings',
       actionLabel: '查看设置',
       actions: [
@@ -635,10 +635,10 @@ function OperationalPriorityLedger({ rows }: { rows: OperationalPriorityRow[] })
     <section id="operations-priority-ledger" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B375 Operations Priority Ledger</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Operations Priority</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">运营优先级台账</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把线索、内容、SEO、素材、页面草稿、案例转化和访问转化异常放进一张只读处理队列；运营从这里判断先做什么，再进入对应工作台。
+            把线索、内容、SEO、素材、页面草稿、案例转化和访问转化异常放进一张处理队列；运营从这里判断先做什么，再进入对应工作台。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -845,7 +845,7 @@ function AnalysisControlStrip({
           </span>
         </div>
         <div className="flex items-center border-t border-[#E6EEEE] px-4 py-3 text-xs text-[#61767D] xl:border-t-0 xl:border-l">
-          数据约每小时聚合；当前页只读。
+          数据约每小时聚合。
         </div>
       </div>
       <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-4 md:divide-x md:divide-y-0">
@@ -1716,7 +1716,7 @@ function buildSourceSeoHealthRows({
   return [
     {
       key: 'products',
-      label: '产品来源合同',
+      label: '产品来源承接',
       sourceType: 'product',
       metric: getConversionMetric(analytics, 'products'),
       seoMissing: seo.productsMissing,
@@ -1728,7 +1728,7 @@ function buildSourceSeoHealthRows({
     },
     {
       key: 'cases',
-      label: '案例来源合同',
+      label: '案例来源承接',
       sourceType: 'case',
       metric: getConversionMetric(analytics, 'cases'),
       seoMissing: seo.projectsMissing,
@@ -1740,7 +1740,7 @@ function buildSourceSeoHealthRows({
     },
     {
       key: 'news',
-      label: '新闻来源合同',
+      label: '新闻来源承接',
       sourceType: 'news',
       metric: getConversionMetric(analytics, 'news'),
       seoMissing: seo.newsMissing,

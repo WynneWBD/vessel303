@@ -77,19 +77,19 @@ const COPY: Record<ProductOperationKind, {
   marks: {
     title: '当前标记',
     createTitle: '新增标记',
-    description: '对照 300.cn 后台的标记管理，用于给产品打运营标签，不做物理删除。',
+    description: '维护产品运营标签，用于筛选、推荐和列表分组。',
     empty: '暂无标记',
   },
   brands: {
     title: '当前品牌',
     createTitle: '新增品牌',
-    description: '对照 300.cn 后台的品牌管理，用于维护产品品牌归属和品牌展示信息。',
+    description: '维护产品品牌归属和品牌展示信息。',
     empty: '暂无品牌',
   },
   filters: {
     title: '当前筛选组',
     createTitle: '新增筛选组',
-    description: '对照 300.cn 后台的筛选管理，把属性模板组合成运营筛选组，为后续前台筛选打底。',
+    description: '把属性模板组合成运营筛选组，为前台产品筛选准备数据。',
     empty: '暂无筛选组',
     relationTitle: '包含属性模板',
     relationHint: '选择后，该筛选组会引用这些属性模板。',
@@ -97,7 +97,7 @@ const COPY: Record<ProductOperationKind, {
   showcases: {
     title: '当前橱窗',
     createTitle: '新增橱窗',
-    description: '对照 300.cn 后台的橱窗管理，用于运营人员把重点产品编组成展示橱窗。',
+    description: '把重点产品编组成展示橱窗，便于前台推荐和专题展示。',
     empty: '暂无橱窗',
     relationTitle: '包含产品',
     relationHint: '选择后，产品会加入该橱窗。',

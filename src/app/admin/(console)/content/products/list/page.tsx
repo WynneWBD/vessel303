@@ -1687,7 +1687,7 @@ function ProductCreatePublishQueueHandoffPanel({
   const draftQueueHref = `${createHref(filters, { status: 'draft', view: 'incomplete', issue: '' })}#product-draft-recovery-readiness-desk`
   const stages: ProductSourceContract[] = [
     {
-      label: 'B340 总览流程',
+      label: '发布总览',
       value: 'overview',
       detail: '先回产品管理总览确认新建、审批、单品检查、草稿补齐和公开复盘全链路。',
       href: '/admin/content/products#product-create-publish-flow',
@@ -1695,7 +1695,7 @@ function ProductCreatePublishQueueHandoffPanel({
       tone: 'blue',
     },
     {
-      label: 'B339 新建草稿审批',
+      label: '新建草稿审批',
       value: 'new',
       detail: '新建前核对分类属性、媒体、关联推荐和发布影响边界。',
       href: '/admin/content/products/new#new-product-draft-approval-desk',
@@ -1703,7 +1703,7 @@ function ProductCreatePublishQueueHandoffPanel({
       tone: 'green',
     },
     {
-      label: 'B338 表单发布审批',
+      label: '表单发布审批',
       value: 'form',
       detail: '在产品表单发布检查区复核保存状态、发布缺项、运营归属和询盘交接。',
       href: '/admin/content/products/new#publish-check',
@@ -1711,7 +1711,7 @@ function ProductCreatePublishQueueHandoffPanel({
       tone: 'gray',
     },
     {
-      label: 'B336 草稿补齐队列',
+      label: '草稿补齐队列',
       value: formatNumber(summary.draft),
       detail: '回到当前列表锁定草稿缺项，把补齐动作落到筛选和编辑入口。',
       href: draftQueueHref,
@@ -1721,7 +1721,7 @@ function ProductCreatePublishQueueHandoffPanel({
     {
       label: '公开目录复盘',
       value: formatNumber(productPathMetric.views),
-      detail: '发布后回到公开产品目录和产品路径线索，确认转化承接是否闭环。',
+      detail: '发布后回到公开产品目录和产品路径线索，确认转化是否顺畅。',
       href: '/products',
       Icon: Package,
       tone: productPathMetric.leads > 0 ? 'green' : productPathMetric.views > 0 ? 'orange' : 'gray',
@@ -1777,10 +1777,10 @@ function ProductCreatePublishQueueHandoffPanel({
     >
       <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-bold text-[#E36F2C]">B341 Queue Handoff</p>
+          <p className="text-xs font-bold text-[#E36F2C]">Publish Queue</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新建到发布队列承接摘要</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            承接 B340 总览流程，把 B339 新建草稿审批、B338 表单发布审批、B336 草稿补齐和公开目录复盘落到产品列表筛选队列；本区只读，不保存、不发布、不批量更新。
+            汇总发布总览、新建草稿审批、表单发布审批、草稿补齐和公开目录复盘，帮助运营在产品列表里处理发布队列。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -1789,7 +1789,7 @@ function ProductCreatePublishQueueHandoffPanel({
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95D22]"
           >
             <BarChart3 size={13} />
-            B340 总览
+            发布总览
           </Link>
           <Link
             href={draftQueueHref}
@@ -1905,7 +1905,7 @@ function ProductOperationsMatrix({
             <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">运营矩阵</p>
             <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品运营处理矩阵</h2>
             <p className="mt-1 text-sm leading-6 text-[#61767D]">
-              先看全库发布、草稿和缺口，再按缺项队列进入下钻；队列数量来自全库只读统计，本页命中用于快速判断当前筛选结果。
+              先看全库发布、草稿和缺口，再按缺项队列进入下钻；当前页命中用于快速判断筛选结果。
             </p>
           </div>
           <Link
@@ -1999,7 +1999,7 @@ function ProductOperationsMatrix({
           >
             <span className="flex items-start justify-between gap-3">
               <span className="min-w-0">
-                <span className="block text-sm font-bold text-[#1E2C31]">产品 SEO 转化闭环</span>
+                <span className="block text-sm font-bold text-[#1E2C31]">产品 SEO 与转化</span>
                 <span className="mt-1 block text-xs leading-5 text-[#61767D]">
                   30 天产品路径访问 {formatNumber(productPathMetric.views)}，动作 {formatNumber(productPathMetric.ctaClicks)}，线索 {formatNumber(productPathMetric.leads)}
                 </span>
@@ -2022,7 +2022,7 @@ function ProductOperationsMatrix({
                 表单 {formatNumber(productPathMetric.formSubmits)}
               </span>
               <span className="inline-flex min-h-7 items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-2 text-[11px] font-semibold text-[#1889B6] transition group-hover:border-[#1889B6]">
-                看 SEO 闭环
+                查看 SEO
                 <ArrowRight size={12} />
               </span>
             </span>
@@ -2119,7 +2119,7 @@ function ProductFitProofBackflowPanel({
   }> = [
     {
       label: '前台产品目录',
-      detail: '核对 B315 场景筛选、产品卡片和询盘入口是否能承接当前后台字段。',
+      detail: '核对场景筛选、产品卡片和询盘入口是否能承接当前后台字段。',
       href: '/products',
       action: '打开前台',
       Icon: Package,
@@ -2159,7 +2159,7 @@ function ProductFitProofBackflowPanel({
           <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">Frontstage Feedback</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品适配-详情证明-询盘回流队列</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            把 B315/B316 的前台路径回流到后台只读检查：先看适配字段，再看详情证明，最后确认询盘交接。
+            把前台路径回到后台检查：先看适配字段，再看详情证明，最后确认询盘交接。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -2242,7 +2242,7 @@ function ProductFitProofBackflowPanel({
               <div className="min-w-0">
                 <h3 className="text-sm font-bold text-[#1E2C31]">本页回流优先队列</h3>
                 <p className="mt-1 text-xs leading-5 text-[#61767D]">
-                  已发布缺口优先；只提供预览、筛选和编辑入口，不自动保存内容。
+                  已发布缺口优先；从这里进入预览、筛选和编辑入口。
                 </p>
               </div>
               <span className="shrink-0 rounded-md bg-[#FFF2E7] px-2 py-1 text-xs font-bold text-[#E36F2C]">
@@ -2340,18 +2340,18 @@ function ProductLeadContentFeedbackDesk({
   const productActionCount = productPathMetric.ctaClicks + productPathMetric.formSubmits
   const contentSignal =
     productPathMetric.leads > 0
-      ? '已有产品线索，先用 B325/B324 看活跃队列和跟进风险，再回到本页补 SEO、买家资料、关联产品和商务条款。'
+      ? '已有产品线索，先看活跃队列和跟进风险，再回到本页补 SEO、买家资料、关联产品和商务条款。'
       : productActionCount > 0
-        ? '产品路径已有动作但线索样本不足，优先用 B323/B322 复盘转化断点，同时补齐当前页内容缺口。'
+        ? '产品路径已有动作但线索样本不足，优先复盘转化断点，同时补齐当前页内容缺口。'
         : productPathMetric.views > 0
-          ? '产品路径有访问但缺少动作和线索，先看 B322 流量质量，再处理产品列表里的搜索入口和询盘交接缺口。'
+          ? '产品路径有访问但缺少动作和线索，先看流量质量，再处理产品列表里的搜索入口和询盘交接缺口。'
           : pageContentGapCount > 0
             ? '当前页仍有内容缺口，先按本区队列补已发布产品和询盘交接字段，等待新的访问和线索样本。'
-            : '当前页暂无明显内容回流缺口，保留 B325/B324/B323/B322 入口用于新样本到来后的复盘。'
+            : '当前页暂无明显内容缺口，保留跟进、线索、转化和流量入口用于新样本到来后的复盘。'
   const priorityItems = buildProductProofBackflowItems(rows).slice(0, 4)
   const actionCards = [
     {
-      label: 'B325 跟进分诊',
+      label: '跟进分诊',
       value: `${formatNumber(productPathMetric.leads)} 线索`,
       detail: '从产品线索质量、表单阶段和跟进断点回看内容应补什么。',
       href: '/admin/status/leads#product-lead-quality-followup-desk',
@@ -2359,15 +2359,15 @@ function ProductLeadContentFeedbackDesk({
       tone: productPathMetric.leads > 0 ? 'orange' : 'blue',
     },
     {
-      label: 'B324 线索复盘',
+      label: '线索复盘',
       value: 'product 队列',
-      detail: '按 source_type=product 看产品线索、产品表单和 CTA 阶段。',
+      detail: '按产品来源查看产品线索、产品表单和 CTA 阶段。',
       href: '/admin/customers/leads?source_type=product#product-lead-ops-review-desk',
       Icon: BarChart3,
       tone: productPathMetric.leads > 0 ? 'orange' : 'blue',
     },
     {
-      label: 'B323 转化桥',
+      label: '转化路径',
       value: `${formatNumber(productActionCount)} 动作`,
       detail: '把产品生命周期、转化路径和线索状态放到同一张复盘表。',
       href: '/admin/site/conversion#product-lifecycle-conversion-bridge',
@@ -2399,10 +2399,10 @@ function ProductLeadContentFeedbackDesk({
     >
       <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B326 Lead Feedback</p>
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">Lead Feedback</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品线索到内容回流优先级</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            把 B325 跟进分诊、B324 产品线索复盘、B323 生命周期转化和 B322 流量质量回流到产品列表；本区只生成内容处理顺序和入口，不保存产品、不发布产品、不更新线索。
+            把跟进分诊、产品线索复盘、生命周期转化和流量质量回到产品列表，帮助运营判断该补哪些内容。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -2411,14 +2411,14 @@ function ProductLeadContentFeedbackDesk({
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95D22]"
           >
             <ListChecks size={13} />
-            B325 分诊
+            跟进分诊
           </Link>
           <Link
             href="/admin/site/conversion#product-lifecycle-conversion-bridge"
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
           >
             <BarChart3 size={13} />
-            B323 转化
+            转化路径
           </Link>
         </div>
       </div>
@@ -2556,7 +2556,7 @@ function ProductLeadContentFeedbackDesk({
             <div className="px-4 py-8 text-center">
               <CheckCircle2 className="mx-auto text-emerald-600" size={28} />
               <p className="mt-3 text-sm font-bold text-[#1E2C31]">当前页暂无内容回流缺口</p>
-              <p className="mt-1 text-xs leading-5 text-[#61767D]">可保留 B325/B324/B323 入口等待新的线索样本。</p>
+              <p className="mt-1 text-xs leading-5 text-[#61767D]">可保留跟进、线索和转化入口等待新的线索样本。</p>
             </div>
           )}
         </aside>
@@ -2591,21 +2591,21 @@ function ProductDraftRecoveryReadinessDesk({
   const draftRecoveryItems = buildProductDraftRecoveryItems(rows)
   const draftRecoverySignal =
     summary.deleted > 0 && summary.draft > 0
-      ? `回收站仍有 ${formatNumber(summary.deleted)} 个隔离产品，现有草稿 ${formatNumber(summary.draft)} 个；先从只读保护台确认来源，再在草稿列表补齐分类、品牌和标记。`
+      ? `回收站仍有 ${formatNumber(summary.deleted)} 个隔离产品，现有草稿 ${formatNumber(summary.draft)} 个；先确认来源，再在草稿列表补齐分类、品牌和标记。`
       : summary.draft > 0
         ? `当前有 ${formatNumber(summary.draft)} 个草稿，优先把分类、品牌、标记和前台搜索口径补齐，再进入发布前人工检查。`
         : '当前没有草稿压力，本区保留回收站保护、分类、品牌和标记入口，等待后续恢复或新建草稿进入队列。'
   const recoveryCards = [
     {
-      label: 'B335 恢复保护',
+      label: '恢复保护',
       value: `${formatNumber(summary.deleted)} 回收站`,
-      detail: '从回收站只读确认删除来源、恢复风险和隔离状态，不在本页执行恢复。',
+      detail: '从回收站确认删除来源、恢复风险和隔离状态。',
       href: '/admin/content/products/recycle#product-recycle-protection-desk',
       Icon: Archive,
       tone: summary.deleted > 0 ? 'orange' : 'green',
     },
     {
-      label: 'B334 分类治理',
+      label: '分类治理',
       value: `${formatNumber(issueSummary.category)} 未分类`,
       detail: '恢复或新建草稿先回到分类治理台，避免前台目录和筛选入口断层。',
       href: '/admin/content/products/categories#product-category-readiness-desk',
@@ -2613,7 +2613,7 @@ function ProductDraftRecoveryReadinessDesk({
       tone: issueSummary.category > 0 || pageMissingCategoryCount > 0 ? 'orange' : 'green',
     },
     {
-      label: 'B333 品牌承接',
+      label: '品牌归属',
       value: `${formatNumber(pageMissingBrandCount)} 本页`,
       detail: '草稿缺品牌时先核对品牌治理台，再回到编辑页绑定，避免品牌筛选空转。',
       href: '/admin/content/products/brands#product-brand-readiness-desk',
@@ -2621,7 +2621,7 @@ function ProductDraftRecoveryReadinessDesk({
       tone: pageMissingBrandCount > 0 ? 'orange' : 'blue',
     },
     {
-      label: 'B332 标记承接',
+      label: '运营标记',
       value: `${formatNumber(pageMissingMarkCount)} 本页`,
       detail: '草稿缺运营标记时先看标记治理台，保证精选、场景和运营分组可接管。',
       href: '/admin/content/products/marks#product-mark-readiness-desk',
@@ -2645,10 +2645,10 @@ function ProductDraftRecoveryReadinessDesk({
     >
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">B336 Draft Recovery</p>
+          <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">Draft Recovery</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">恢复后草稿补齐队列</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            把 B335 回收站保护后的草稿承接到产品列表，只读串联分类、品牌、标记、素材、SEO 和询盘交接缺口；本区不恢复、不保存、不发布产品。
+            汇总回收站保护后的草稿、分类、品牌、标记、素材、SEO 和询盘交接缺口，帮助运营补齐草稿。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -2872,7 +2872,7 @@ function ProductSourceContractPanel({
     },
     {
       label: '线索筛选',
-      value: 'source_type=product',
+      value: '产品来源',
       detail: '客户线索台按产品来源筛选，处理仍回到现有线索流程。',
       href: '/admin/customers/leads?source_type=product',
       Icon: BarChart3,
@@ -2885,9 +2885,9 @@ function ProductSourceContractPanel({
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">Source Contract</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品来源承接合同</h2>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品来源线索</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            把公开产品列表、产品详情、询盘表单、产品线索队列和转化复盘接成同一条只读路径；这里不新增表单、发布、价格或线索状态规则。
+            把公开产品列表、产品详情、询盘表单、产品线索队列和转化复盘放在同一条运营路径里。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -3033,7 +3033,7 @@ function ProductBatchGovernancePanel({
       Icon: Plus,
     },
     {
-      label: '产品内容闭环',
+      label: '产品内容',
       detail: '从内容总览回看公开目录、SEO、转化路径和产品线索承接。',
       href: '/admin/content/products#content-closure',
       Icon: Layers3,
@@ -3059,7 +3059,7 @@ function ProductBatchGovernancePanel({
           <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">批量治理</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品列表批量治理工作台</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            对照 300.cn 后台的列表处理心智，把公开产品目录筛选、内容缺口、批量分类标记、产品表单发布检查和转化复盘放进同一条操作路径；本区只提供入口和只读统计。
+            按产品列表处理习惯，把公开产品目录筛选、内容缺口、批量分类标记、产品表单发布检查和转化复盘放进同一条操作路径。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

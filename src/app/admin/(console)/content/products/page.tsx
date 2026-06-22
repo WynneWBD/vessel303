@@ -278,7 +278,7 @@ function getSideNavGroups(stats: ProductStats): AdminSideNavGroup[] {
         { key: 'products', label: '产品管理', href: '/admin/content/products', badge: stats.total, Icon: Package },
         { key: 'product-list', label: '产品列表', href: '/admin/content/products/list', Icon: ListChecks },
         { key: 'drafts', label: '草稿内容', href: '#drafts', badge: stats.draft, Icon: FileText },
-        { key: 'content-closure', label: '产品闭环', href: '#content-closure', Icon: BarChart3 },
+        { key: 'content-closure', label: '产品内容', href: '#content-closure', Icon: BarChart3 },
         { key: 'product-lifecycle', label: '生命周期', href: '#product-lifecycle', Icon: ClipboardCheck },
         { key: 'create-publish-flow', label: '新建到发布', href: '#product-create-publish-flow', Icon: ArrowRight },
         { key: 'todo', label: '待补内容', href: '#todo', badge: getTodoCount(stats), Icon: CircleDashed },
@@ -472,7 +472,7 @@ function getProductClosureEntries(stats: ProductStats): ProductClosureEntry[] {
   return [
     {
       label: '产品路径分析',
-      value: 'B232',
+      value: '路径',
       detail: '查看产品访问、动作、表单和真实线索表现。',
       href: '/admin/status/traffic#product-conversion-path',
       Icon: BarChart3,
@@ -480,14 +480,14 @@ function getProductClosureEntries(stats: ProductStats): ProductClosureEntry[] {
     },
     {
       label: '产品转化复盘',
-      value: 'B231',
+      value: '复盘',
       detail: '从转化中心回看产品路径、来源阶段和线索承接。',
       href: '/admin/site/conversion',
       Icon: SearchCheck,
       tone: 'green',
     },
     {
-      label: 'SEO 修复闭环',
+      label: 'SEO 待补',
       value: formatNumber(stats.missingSeo),
       detail: '先补产品 SEO，再回看产品路径转化质量。',
       href: '/admin/site/seo#seo-conversion-closure',
@@ -496,8 +496,8 @@ function getProductClosureEntries(stats: ProductStats): ProductClosureEntry[] {
     },
     {
       label: '产品线索队列',
-      value: 'B228',
-      detail: '进入 source_type=product 队列核对线索阶段。',
+      value: '线索',
+      detail: '进入产品来源队列核对线索阶段。',
       href: '/admin/customers/leads?source_type=product',
       Icon: UsersRound,
       tone: 'neutral',
@@ -511,7 +511,7 @@ function getProductLifecycleEntries(stats: ProductStats): ProductClosureEntry[] 
   return [
     {
       label: '新建预检',
-      value: 'B319',
+      value: '新建',
       detail: '创建前先准备适配字段、媒体证明、详情证明、搜索入口和询盘交接。',
       href: '/admin/content/products/new#new-product-closure',
       Icon: Plus,
@@ -520,15 +520,15 @@ function getProductLifecycleEntries(stats: ProductStats): ProductClosureEntry[] 
     {
       label: '列表回流队列',
       value: formatNumber(todoCount),
-      detail: '从 B317 队列按适配、证明和询盘缺口筛选待处理产品。',
+      detail: '从内容队列按适配、证明和询盘缺口筛选待处理产品。',
       href: '/admin/content/products/list#product-fit-proof-backflow',
       Icon: ListChecks,
       tone: todoCount > 0 ? 'orange' : 'green',
     },
     {
       label: '单篇编辑处理',
-      value: 'B318',
-      detail: '从产品列表进入单篇编辑页，按六个只读步骤定位字段。',
+      value: '编辑',
+      detail: '从产品列表进入单篇编辑页，按六个检查步骤定位字段。',
       href: '/admin/content/products/list?view=incomplete',
       Icon: Pencil,
       tone: 'neutral',
@@ -691,7 +691,7 @@ function TodoPanel({ stats }: { stats: ProductStats }) {
 
   return (
     <section id="todo" className="scroll-mt-24 space-y-4">
-      <SectionTitle title="待补内容" detail="按现有字段做只读统计，只提醒运营补齐，不改变发布规则。" />
+      <SectionTitle title="待补内容" detail="按现有字段统计缺口，提醒运营补齐。" />
       <div className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-3 2xl:grid-cols-10">
           {entries.map((entry) => (
@@ -739,7 +739,7 @@ function ProductContentClosurePanel({ stats }: { stats: ProductStats }) {
   const entries = getProductClosureEntries(stats)
   const sourceContracts: ProductClosureEntry[] = [
     {
-      label: '来源合同总览',
+      label: '来源总览',
       value: 'product:*',
       detail: '回到产品列表查看卡片 CTA、详情 CTA、询盘表单和线索筛选约定。',
       href: '/admin/content/products/list#product-source-contract',
@@ -776,8 +776,8 @@ function ProductContentClosurePanel({ stats }: { stats: ProductStats }) {
     <section id="content-closure" className="scroll-mt-24 space-y-4">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <SectionTitle
-          title="产品内容闭环"
-          detail="把产品内容待补、流量路径、SEO 修复和产品线索放在同一入口；这里只做只读导航，不改变产品或线索状态。"
+          title="产品内容处理"
+          detail="把产品内容待补、流量路径、SEO 待补和产品线索放在同一入口，方便运营判断优先级。"
         />
         <div className="flex flex-wrap gap-2">
           <PrimaryAction href="/admin/content/products/list?view=incomplete&issue=seo" Icon={Sparkles} label="产品 SEO 待补" />
@@ -812,11 +812,11 @@ function ProductLifecycleControlStrip({ stats }: { stats: ProductStats }) {
     >
       <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1889B6]">Lifecycle Control</p>
-          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">产品生命周期总控入口</h3>
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1889B6]">产品运营入口</p>
+          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">产品内容运营入口</h3>
         </div>
         <p className="max-w-3xl text-xs leading-5 text-[#61767D]">
-          把 B319 新建预检、B317 列表回流、B318 单篇编辑、公开目录和产品线索复盘串成同一条只读运营链路。
+          把新建预检、列表补齐、单篇编辑、公开目录和产品线索复盘串成同一条运营路径。
         </p>
       </div>
       <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-5">
@@ -833,7 +833,7 @@ function ProductCreatePublishFlowPanel({ stats }: { stats: ProductStats }) {
   const stages: ProductClosureEntry[] = [
     {
       label: '01 新建草稿审批',
-      value: 'B339',
+      value: '新建审批',
       detail: '先到新建页核对分类属性、媒体、关联推荐和发布影响边界，再保存草稿。',
       href: '/admin/content/products/new#new-product-draft-approval-desk',
       Icon: Plus,
@@ -841,7 +841,7 @@ function ProductCreatePublishFlowPanel({ stats }: { stats: ProductStats }) {
     },
     {
       label: '02 表单发布审批',
-      value: 'B338',
+      value: '发布审批',
       detail: '进入表单发布检查区，核对保存状态、发布缺项、运营归属和询盘交接。',
       href: '/admin/content/products/new#publish-check',
       Icon: SearchCheck,
@@ -849,7 +849,7 @@ function ProductCreatePublishFlowPanel({ stats }: { stats: ProductStats }) {
     },
     {
       label: '03 单品发布检查',
-      value: 'B337',
+      value: '单品检查',
       detail: '保存后回到单品编辑页做恢复后发布前检查和人工确认。',
       href: '/admin/content/products/list?status=draft',
       Icon: Pencil,
@@ -884,7 +884,7 @@ function ProductCreatePublishFlowPanel({ stats }: { stats: ProductStats }) {
     {
       label: '草稿库存',
       value: formatNumber(stats.draft),
-      detail: '草稿多时优先处理 B336 队列，减少发布前人工检查压力。',
+      detail: '草稿多时优先处理草稿补齐队列，减少发布前人工检查压力。',
       href: '/admin/content/products/list?status=draft#product-draft-recovery-readiness-desk',
       Icon: FileText,
       tone: stats.draft > 0 ? 'orange' : 'green',
@@ -907,11 +907,11 @@ function ProductCreatePublishFlowPanel({ stats }: { stats: ProductStats }) {
     >
       <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#E36F2C]">B340 Create To Publish</p>
-          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">新建到发布只读流程总览</h3>
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#E36F2C]">Create To Publish</p>
+          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">新建到发布流程总览</h3>
         </div>
         <p className="max-w-3xl text-xs leading-5 text-[#61767D]">
-          把 B339 新建草稿审批、B338 表单发布审批、B337 单品检查、B336 草稿补齐和公开目录复盘压缩到总览页；这里只做路径提示，不保存、不发布、不更新产品。
+          把新建草稿审批、表单发布审批、单品检查、草稿补齐和公开目录复盘压缩到总览页。
         </p>
       </div>
 
@@ -955,10 +955,10 @@ function ProductSourceContractStrip({ entries }: { entries: ProductClosureEntry[
       <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1889B6]">Source Contract</p>
-          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">产品来源承接合同</h3>
+          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">产品来源线索</h3>
         </div>
         <p className="max-w-3xl text-xs leading-5 text-[#61767D]">
-          对齐公开产品页的 Learn More / Appointment 心智，把产品卡片、详情 CTA、询盘表单和 source_type=product 线索队列放到同一条只读运营路径。
+          对齐公开产品页的 Learn More / Appointment 心智，把产品卡片、详情 CTA、询盘表单和产品来源线索队列放到同一条运营路径。
         </p>
       </div>
       <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
@@ -1114,7 +1114,7 @@ function PlanningPanel() {
         </span>
         <div>
           <h2 className="text-base font-bold text-[#1E2C31]">后续规划</h2>
-          <p className="mt-1 text-xs text-[#61767D]">对照 300 产品管理，分类、属性模板、回收站、低风险批量转分类和 SEO 已进入 B4；以下能力后续单独立项。</p>
+          <p className="mt-1 text-xs text-[#61767D]">分类、属性模板、回收站、批量转分类和 SEO 已有入口；以下能力后续单独立项。</p>
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">

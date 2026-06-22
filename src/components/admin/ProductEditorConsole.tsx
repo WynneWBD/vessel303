@@ -120,7 +120,7 @@ export default function ProductEditorConsole({
         <aside className="rounded-md border border-[#D8E7E8] bg-white">
           <div className="border-b border-[#E6EEEE] px-4 py-3">
             <h3 className="text-sm font-bold text-[#1E2C31]">发布影响信号</h3>
-            <p className="mt-1 text-xs text-[#61767D]">只读提示，不阻止保存或发布。</p>
+            <p className="mt-1 text-xs text-[#61767D]">提交前核对关键字段、前台预览和发布状态。</p>
           </div>
           <div className="divide-y divide-[#E6EEEE]">
             {signals.map((signal) => {

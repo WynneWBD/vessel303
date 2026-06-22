@@ -180,7 +180,7 @@ export default async function AdminContentProductShowcasesPage() {
           <p className="text-sm font-semibold text-[#1889B6]">产品管理 / 重点推荐</p>
           <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">橱窗管理</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-            对照 300.cn 后台的橱窗管理，先支持新增橱窗、编辑橱窗和绑定产品，不做删除。
+            管理橱窗名称、展示状态和绑定产品，用于前台重点推荐。
           </p>
         </div>
         <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-4">
@@ -236,7 +236,7 @@ function ShowcaseGovernancePanel({ summary }: { summary: ShowcaseSummary }) {
       value: formatNumber(summary.visibleFilters),
       detail: '旧站产品页强调筛选和搜索；后台先用筛选组发现产品，再把重点款沉淀到橱窗推荐。',
       href: '/admin/content/products/filters#filter-governance',
-      cta: '打开筛选闭环',
+      cta: '打开筛选组',
       tone: summary.visibleFilters > 0 ? 'green' : 'blue',
       Icon: Filter,
     },
@@ -247,9 +247,9 @@ function ShowcaseGovernancePanel({ summary }: { summary: ShowcaseSummary }) {
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">推荐治理</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">筛选发现到橱窗推荐闭环</h2>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">筛选发现到橱窗推荐</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            橱窗把产品筛选、批量治理和转化复盘串成同一条运营路径；本区只做只读统计和入口串联，不改橱窗保存逻辑。
+            从筛选组发现重点产品，再进入批量治理、橱窗配置和转化复盘。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -288,11 +288,11 @@ function ProductShowcaseReadinessPanel({ summary }: { summary: ShowcaseSummary }
   const readyScore = [hasVisibleShowcases, hasAssignedProducts, hasFilterBase, hasCandidateProducts, emptyShowcaseClear].filter(Boolean).length
   const cards: ShowcaseGovernanceCard[] = [
     {
-      label: 'B330 筛选承接',
+      label: '筛选组',
       value: formatNumber(summary.visibleFilters),
       detail: '先用筛选组和缺属性队列找到可推荐产品，再沉淀到橱窗。',
       href: '/admin/content/products/filters#product-filter-readiness-desk',
-      cta: '打开筛选承接',
+      cta: '打开筛选组',
       tone: hasFilterBase ? 'green' : 'orange',
       Icon: Filter,
     },
@@ -317,7 +317,7 @@ function ProductShowcaseReadinessPanel({ summary }: { summary: ShowcaseSummary }
     {
       label: '前台目录核对',
       value: '/products',
-      detail: '橱窗最终服务公开目录的重点推荐心智，本批只做后台承接，不改前台 UI。',
+      detail: '橱窗最终服务公开目录重点推荐，配置后需要核对前台展示。',
       href: '/products',
       cta: '查看目录',
       tone: hasVisibleShowcases ? 'green' : 'gray',
@@ -329,7 +329,7 @@ function ProductShowcaseReadinessPanel({ summary }: { summary: ShowcaseSummary }
       label: '01 先用筛选发现重点款',
       detail: hasFilterBase
         ? `当前有 ${formatNumber(summary.visibleFilters)} 个可见筛选组，可先从筛选组定位推荐候选。`
-        : '还没有可见筛选组，先回 B330 补筛选组承接。',
+        : '还没有可见筛选组，先补筛选组再配置橱窗。',
       href: '/admin/content/products/filters#product-filter-readiness-desk',
       Icon: Filter,
       primary: !hasFilterBase,
@@ -367,10 +367,10 @@ function ProductShowcaseReadinessPanel({ summary }: { summary: ShowcaseSummary }
     >
       <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B331 Showcase Readiness</p>
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">橱窗准备度</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">筛选发现到橱窗推荐运营承接</h2>
           <p className="mt-1 max-w-3xl text-sm leading-6 text-[#61767D]">
-            把 B330 筛选承接、产品列表批量治理、空橱窗风险、产品路径复盘和前台目录核对串成同一条只读运营路径；本区不保存橱窗、不发布产品、不改前台推荐 UI。
+            先处理筛选组、批量治理和空橱窗风险，再核对产品路径表现和前台目录展示。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -379,7 +379,7 @@ function ProductShowcaseReadinessPanel({ summary }: { summary: ShowcaseSummary }
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95D22]"
           >
             <Filter size={13} />
-            B330 筛选
+            筛选组
           </Link>
           <Link
             href="/admin/content/products/list#product-batch-governance"

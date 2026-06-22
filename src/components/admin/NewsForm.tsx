@@ -1191,7 +1191,7 @@ export default function NewsForm({
             </Badge>
           </div>
           <p className="mt-2 text-xs leading-relaxed text-[#6B6560]">
-            只做运营提示，不新增保存或发布限制。
+            发布前确认内容完整度、分类、SEO 和前台预览。
           </p>
           <NewsReleaseIssueLedger issues={releaseIssues} />
         </div>

@@ -793,7 +793,7 @@ function CaseConversionPanel({
     },
     {
       label: '线索筛选',
-      value: 'source_type=case',
+      value: '案例来源',
       detail: '客户线索台按案例来源筛选，处理仍回到现有线索流程。',
       href: '/admin/customers/leads?source_type=case',
       Icon: SearchCheck,
@@ -836,7 +836,7 @@ function CaseConversionPanel({
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#1889B6]">Case Inquiry Readiness</p>
           <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">案例咨询承接</h2>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-            对齐项目列表的“转化承接”判断：这里仅做只读提示，帮助运营定位会影响 `/cases/[id]#case-inquiry` 咨询承接的字段，不改变保存、发布和上传逻辑。
+            对齐项目列表的转化判断，帮助运营定位会影响 `/cases/[id]#case-inquiry` 咨询入口的字段。
           </p>
         </div>
         <div className="w-full max-w-sm rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-4">
@@ -906,10 +906,10 @@ function CaseSourceContractStrip({
       <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1889B6]">Source Contract</p>
-          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">当前案例来源承接合同</h3>
+          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">当前案例来源线索</h3>
         </div>
         <p className="max-w-3xl text-xs leading-5 text-[#61767D]">
-          把当前案例编辑、公开详情咨询、case 来源线索队列和路径分析接成同一条只读路径；这里不新增保存、发布、Global 点位或线索状态规则。
+          把当前案例编辑、公开详情咨询、案例来源线索队列和路径分析放到同一条运营路径。
         </p>
       </div>
       <div className="grid grid-cols-1 border-b border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
@@ -1012,12 +1012,12 @@ function CaseEditInquiryConversionReviewDesk({
         ? `素材、叙事或项目事实仍有缺口，优先处理：${nextIssue?.label ?? '表单字段'}。`
         : '素材、叙事和项目事实已通过当前入口级检查。',
       href: nextIssue?.href ?? '#case-conversion',
-      cta: conversionIssues.length > 0 ? '处理缺口' : '看承接合同',
+      cta: conversionIssues.length > 0 ? '处理缺口' : '看来源线索',
       Icon: SearchCheck,
       tone: conversionIssues.length > 0 ? 'orange' : 'green',
     },
     {
-      label: 'B300 列表队列',
+      label: '列表队列',
       value: '已回连',
       detail: '编辑完成后回到案例列表到询盘转化处理队列，继续按发布转化弱、前台路径和线索承接复盘。',
       href: '/admin/content/projects/list#case-list-inquiry-conversion-queue',
@@ -1027,7 +1027,7 @@ function CaseEditInquiryConversionReviewDesk({
     },
     {
       label: '线索承接',
-      value: 'source_type=case',
+      value: '案例来源',
       detail: '案例询盘仍回到现有客户线索台处理，本区只提供筛选入口，不写线索状态。',
       href: '/admin/customers/leads?source_type=case',
       cta: '看案例线索',
@@ -1077,7 +1077,7 @@ function CaseEditInquiryConversionReviewDesk({
     {
       label: '发布转化弱',
       value: conversionIssues.length > 0 ? '命中' : '未命中',
-      detail: '把单篇缺口回流到 B300 的发布转化弱筛选队列。',
+      detail: '把单篇缺口回到发布转化弱筛选队列。',
       href: '/admin/content/projects/list?view=case-conversion-weak#case-list-inquiry-conversion-queue',
       cta: '看弱项队列',
       Icon: AlertTriangle,
@@ -1085,7 +1085,7 @@ function CaseEditInquiryConversionReviewDesk({
     },
     {
       label: '保存边界',
-      value: '只读',
+      value: '查看',
       detail: '本台只做编辑前复核导航，不拦截保存，不触发发布，不修改案例或线索数据。',
       href: '#project-form',
       cta: '进入原表单',
@@ -1098,17 +1098,17 @@ function CaseEditInquiryConversionReviewDesk({
     <section id="case-edit-inquiry-conversion-review-desk" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="grid grid-cols-1 border-l-4 border-[#E36F2C] lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="px-4 py-4">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">B301 Case Edit Inquiry Review</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">Case Edit Inquiry Review</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例编辑到询盘转化复核台</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把当前单篇案例编辑、B300 列表处理队列、`/cases/[id]` 前台路径、内容缺口、Global 状态、`source_type=case` 线索和路径分析放到同屏复核。这里不改变保存、发布、Global 点位、表单提交或线索状态。
+            把当前单篇案例编辑、列表处理队列、`/cases/[id]` 前台路径、内容缺口、Global 状态、案例来源线索和路径分析放到同屏复核。
           </p>
         </div>
         <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] p-4 lg:border-l lg:border-t-0">
           <p className="text-xs font-bold text-[#61767D]">当前判断</p>
           <p className="mt-2 text-sm font-semibold leading-6 text-[#1E2C31]">
             {conversionIssues.length > 0
-              ? `先处理 ${conversionIssues.length} 项会影响询盘判断的内容缺口，再回 B300 列表队列。`
+              ? `先处理 ${conversionIssues.length} 项会影响询盘判断的内容缺口，再回列表队列。`
               : published
                 ? '当前案例可进入前台咨询锚点人工复核，并回看案例线索。'
                 : '当前案例仍是草稿，先完成发布检查再核查公开咨询路径。'}
@@ -1157,13 +1157,13 @@ function CaseEditBackfillConversionBridge({
   const factIssues = conversionIssues.filter((issue) => ['project-type', 'area', 'units', 'products'].includes(issue.key))
   const readyForReview = published && conversionIssues.length === 0
   const decision = conversionIssues.length > 0
-    ? `当前单篇仍有 ${conversionIssues.length} 个会削弱案例询盘判断的内容缺口，先按 B308 内容补位口径处理，再回 B307 复盘路径和跟进质量。`
+    ? `当前单篇仍有 ${conversionIssues.length} 个会削弱案例询盘判断的内容缺口，先按内容补位口径处理，再回转化复盘看路径和跟进质量。`
     : published
-      ? '当前单篇内容补位检查已通过，可回 B307 做转化复盘，并人工核查前台咨询锚点。'
-      : '当前单篇仍是草稿，先完成发布检查；发布后再进入 B307 转化复盘和前台咨询锚点核查。'
+      ? '当前单篇内容补位检查已通过，可回转化复盘，并人工核查前台咨询锚点。'
+      : '当前单篇仍是草稿，先完成发布检查；发布后再进入转化复盘和前台咨询锚点核查。'
   const reviewItems: CaseEditInquiryReviewItem[] = [
     {
-      label: 'B308 内容补位',
+      label: '内容补位',
       value: conversionIssues.length > 0 ? `${conversionIssues.length} 项缺口` : '已回补',
       detail: '从列表补位执行队列回到当前单篇，按素材、叙事、事实和标签处理内容缺口。',
       href: '/admin/content/projects/list?view=case-conversion-weak#case-conversion-content-backfill-desk',
@@ -1172,7 +1172,7 @@ function CaseEditBackfillConversionBridge({
       tone: conversionIssues.length > 0 ? 'orange' : 'green',
     },
     {
-      label: 'B307 转化复盘',
+      label: '转化复盘',
       value: readyForReview ? '可复盘' : published ? '待补后复盘' : '待发布',
       detail: '回到案例跟进质量到转化复盘桥，复看路径动作、案例来源线索和跟进质量。',
       href: '/admin/site/conversion#case-followup-conversion-review-bridge',
@@ -1181,11 +1181,11 @@ function CaseEditBackfillConversionBridge({
       tone: readyForReview ? 'green' : published ? 'orange' : 'gray',
     },
     {
-      label: 'B303 案例总控',
+      label: '案例内容',
       value: published ? '已发布' : '草稿',
-      detail: '回到案例内容到询盘转化总控台，确认当前案例在整体案例池中的承接位置。',
+      detail: '回到案例内容到询盘转化工作台，确认当前案例在整体案例池中的位置。',
       href: '/admin/content/projects#case-content-inquiry-command-center',
-      cta: '回案例总控',
+      cta: '回案例内容',
       Icon: MapPinned,
       tone: published ? 'blue' : 'gray',
     },
@@ -1194,9 +1194,9 @@ function CaseEditBackfillConversionBridge({
       value: nextIssue?.label ?? '无内容缺口',
       detail: nextIssue
         ? `优先定位到 ${nextIssue.label}，处理后再复核案例咨询承接。`
-        : '当前没有内容型询盘缺口，可进入咨询承接合同或前台锚点核查。',
+        : '当前没有内容型询盘缺口，可进入来源线索或前台锚点核查。',
       href: nextIssue?.href ?? '#case-conversion',
-      cta: nextIssue ? '定位缺口' : '看承接合同',
+      cta: nextIssue ? '定位缺口' : '看来源线索',
       Icon: SearchCheck,
       tone: nextIssue ? 'orange' : 'green',
     },
@@ -1241,8 +1241,8 @@ function CaseEditBackfillConversionBridge({
     },
     {
       label: '线索回看',
-      value: 'source_type=case',
-      detail: '当前单篇不写线索状态，只回到案例来源线索队列做人工对照。',
+      value: '案例来源',
+      detail: '回到案例来源线索队列做人工对照。',
       href: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
       cta: '看案例线索',
       Icon: CheckCircle2,
@@ -1264,10 +1264,10 @@ function CaseEditBackfillConversionBridge({
     <section id="case-edit-backfill-conversion-bridge" className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="grid grid-cols-1 border-l-4 border-[#E36F2C] lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="px-4 py-4">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">B309 Case Backfill Review</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">Case Backfill Review</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">单篇案例补位到转化复核桥</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把 B308 内容补位执行队列、B307 转化复盘、B303 案例总控和当前单篇编辑复核台收进同一个只读桥；本区只做定位和下钻，不自动保存、不发布、不改线索状态。
+            汇总内容补位执行队列、转化复盘、案例内容和当前单篇编辑复核台，帮助运营定位和下钻。
           </p>
         </div>
         <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] p-4 lg:border-l lg:border-t-0">
@@ -1291,7 +1291,7 @@ function CaseEditBackfillConversionBridge({
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Backfill Checklist</p>
             <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">当前单篇补位检查口径</h3>
-            <p className="mt-1 text-xs leading-5 text-[#61767D]">只按当前编辑页已有 readiness 结果下钻，不新增数据库写入或发布动作。</p>
+            <p className="mt-1 text-xs leading-5 text-[#61767D]">按当前编辑页已有检查结果下钻。</p>
           </div>
           <Link
             href={nextIssue?.href ?? '#case-conversion'}
@@ -1445,7 +1445,7 @@ function ProjectReadinessPanel({ readiness }: { readiness: ProjectEditorReadines
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#1889B6]">Publish Readiness</p>
           <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">案例发布就绪路线图</h2>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-            先处理公开案例页必需项，再处理 Global 入图提醒。这里是只读运营判断，不改变保存、发布、上传和权限逻辑。
+            先处理公开案例页必需项，再处理 Global 入图提醒。
           </p>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center text-xs sm:w-[420px]">

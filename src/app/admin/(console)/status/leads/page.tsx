@@ -60,6 +60,13 @@ const EMPTY_NEWS_PATH_METRIC: AnalyticsConversionMetric = {
   conversionRate: 0,
 }
 
+function sourceTypeLabel(type: string) {
+  if (type === 'product') return '产品来源'
+  if (type === 'case') return '案例来源'
+  if (type === 'news') return '新闻来源'
+  return type || '未标记来源'
+}
+
 type FunnelStepKey = (typeof FUNNEL_STEPS)[number]['key']
 
 type FunnelMatrixRow = {
@@ -192,10 +199,10 @@ export default async function AdminStatusLeadsPage() {
     >
       <section className="space-y-5">
         <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold text-[#1889B6]">B6-3 线索漏斗</p>
+          <p className="text-sm font-semibold text-[#1889B6]">线索漏斗</p>
           <h1 className="mt-2 text-2xl font-bold text-[#1E2C31]">从新线索到成交的运营状态</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-            统计来自现有 leads 表，只做状态聚合和入口分流，不新增 CRM、会员、订单或支付逻辑。
+            统计来自当前线索数据，用于查看状态、来源、响应和跟进优先级。
           </p>
         </div>
 
@@ -398,8 +405,8 @@ function SourceSeoLeadQualityBridge({
   return (
     <section className="space-y-4" id="source-seo-lead-quality">
       <SectionTitle
-        title="B282 来源线索与 SEO 质量桥"
-        detail="把 B280/B281 的来源与 SEO 健康结论接到线索质量矩阵：先判断来源线索是否积压，再看 SEO 和内容承接是否阻断后续转化。"
+        title="来源线索与 SEO 质量"
+        detail="先判断来源线索是否积压，再看 SEO 和内容是否影响后续转化。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
@@ -410,17 +417,17 @@ function SourceSeoLeadQualityBridge({
         </div>
 
         <div className="flex flex-wrap gap-2 border-b border-[#E6EEEE] px-5 py-4">
-          <SourceSeoBridgeLink href="/admin/status#source-seo-health" label="B280 健康台账" />
-          <SourceSeoBridgeLink href="/admin/status/site#source-seo-release-bridge" label="B281 站点接力" />
-          <SourceSeoBridgeLink href="/admin/site#source-seo-control" label="B279 网站总控" />
-          <SourceSeoBridgeLink href="/admin/site/conversion#source-contract-portfolio" label="来源合同总览" />
+          <SourceSeoBridgeLink href="/admin/status#source-seo-health" label="健康台账" />
+          <SourceSeoBridgeLink href="/admin/status/site#source-seo-release-bridge" label="站点复验" />
+          <SourceSeoBridgeLink href="/admin/site#source-seo-control" label="网站运营" />
+          <SourceSeoBridgeLink href="/admin/site/conversion#source-contract-portfolio" label="来源总览" />
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-xs text-[#61767D]">
-                <th className="min-w-44 px-5 py-3 text-left font-semibold">来源合同</th>
+                <th className="min-w-44 px-5 py-3 text-left font-semibold">来源类型</th>
                 <th className="px-4 py-3 text-right font-semibold">访问</th>
                 <th className="px-4 py-3 text-right font-semibold">动作</th>
                 <th className="px-4 py-3 text-right font-semibold">线索</th>
@@ -438,7 +445,7 @@ function SourceSeoLeadQualityBridge({
                     <Link href={row.leadHref} className="font-semibold text-[#1E2C31] hover:text-[#1889B6]">
                       {row.label}
                     </Link>
-                    <p className="mt-1 text-xs text-[#8A9EA4]">source_type={row.sourceType}</p>
+                    <p className="mt-1 text-xs text-[#8A9EA4]">来源：{sourceTypeLabel(row.sourceType)}</p>
                   </td>
                   <td className="px-4 py-4 text-right font-semibold text-[#1E2C31]">{formatNumber(row.metric.views)}</td>
                   <td className="px-4 py-4 text-right text-[#61767D]">{formatNumber(pathActions(row.metric))}</td>
@@ -517,21 +524,21 @@ function SourceLeadQualityWorkdesk({
   return (
     <section className="space-y-4" id="source-lead-quality-workdesk">
       <SectionTitle
-        title="B292 来源线索质量处理台"
-        detail="把 B291 SEO 到线索转化复盘、B282 来源质量、三类来源线索队列和发布前复核放到同一个只读处理入口；这里不改线索状态、不写数据库。"
+        title="来源线索质量处理台"
+        detail="把 SEO 转化、来源质量、产品/案例/新闻线索队列和发布复验放到同一个处理入口。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">Lead Source Quality Desk</p>
-            <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">来源线索处理顺序</h2>
+            <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">来源线索处理</h2>
             <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-              先处理产品 / 案例 / 新闻的活跃线索，再补 SEO 和内容承接，最后回到 B291 转化复盘看访问、动作和线索是否闭环。
+              先处理产品 / 案例 / 新闻的活跃线索，再补 SEO 和内容缺口，最后查看访问、动作和线索是否匹配。
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
-            <SourceSeoBridgeLink href="/admin/site/conversion#seo-to-lead-conversion-review" label="B291 转化复盘" />
-            <SourceSeoBridgeLink href="#source-seo-lead-quality" label="B282 来源质量" />
+            <SourceSeoBridgeLink href="/admin/site/conversion#seo-to-lead-conversion-review" label="转化复盘" />
+            <SourceSeoBridgeLink href="#source-seo-lead-quality" label="来源质量" />
             <SourceSeoBridgeLink href="/admin/status/site#site-release-preflight-bridge" label="发布前复核" />
           </div>
         </div>
@@ -600,13 +607,13 @@ function CaseLeadQualityFollowupDesk({
           : 'gray'
   const decision =
     caseActive > 0
-      ? `案例来源还有 ${formatNumber(caseActive)} 条活跃线索，先进入 case 活跃队列处理，再回到 B305/B304 复盘路径和内容来源。`
+      ? `案例来源还有 ${formatNumber(caseActive)} 条活跃线索，先进入案例活跃队列处理，再回看路径和内容来源。`
       : inquiryActive > 0
         ? `case:inquiry_form 还有 ${formatNumber(inquiryActive)} 条活跃线索，优先看表单阶段，避免高意向询盘沉没。`
         : followupRisk
           ? `全站存在 ${formatNumber(leads.staleFollowups)} 条超时跟进，先用 case + overdue 过滤核对案例线索是否受影响。`
           : actionGap
-            ? `案例路径已有 ${formatNumber(casePathMetric.ctaClicks)} 次动作但 leads 暂无 case 来源样本，先查 B305 路径回流和 B304 线索归因。`
+            ? `案例路径已有 ${formatNumber(casePathMetric.ctaClicks)} 次动作但暂无线索样本，先查路径归因和表单写入。`
             : trafficGap
               ? `案例路径已有 ${formatNumber(casePathMetric.views)} 次访问但暂无 case 来源线索，优先核对 CTA、表单成功和来源参数。`
               : caseTotal > 0
@@ -633,13 +640,13 @@ function CaseLeadQualityFollowupDesk({
       key: 'case-overdue',
       label: '跟进断点核对',
       value: leads.staleFollowups,
-      detail: '显示全站超时数；入口带 source_type=case + overdue 过滤核对。',
+      detail: '显示全站超时数；入口已带案例来源和超时过滤。',
       href: '/admin/customers/leads?source_type=case&attention=overdue',
       tone: followupRisk ? 'orange' : leads.staleFollowups > 0 ? 'blue' : 'green',
     },
     {
       key: 'case-path',
-      label: 'B305 路径回流',
+      label: '路径分析',
       value: casePathMetric.views,
       detail: `路径动作 ${formatNumber(casePathMetric.ctaClicks)} / 路径线索 ${formatNumber(casePathMetric.leads)}`,
       href: '/admin/status/traffic#case-path-lead-backflow-desk',
@@ -699,17 +706,17 @@ function CaseLeadQualityFollowupDesk({
       primary: inquiryActive > 0,
     },
     {
-      label: 'B304 回流台',
+      label: '案例线索',
       href: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
       primary: false,
     },
     {
-      label: 'B305 路径回流',
+      label: '路径分析',
       href: '/admin/status/traffic#case-path-lead-backflow-desk',
       primary: actionGap || trafficGap,
     },
     {
-      label: 'B303 案例总控',
+      label: '案例内容',
       href: '/admin/content/projects#case-content-inquiry-command-center',
       primary: false,
     },
@@ -718,16 +725,16 @@ function CaseLeadQualityFollowupDesk({
   return (
     <section className="space-y-4" id="case-lead-quality-followup-desk">
       <SectionTitle
-        title="B306 案例线索来源质量到跟进分诊台"
-        detail="把 B305 案例路径回流、B304 案例线索回流、case 来源队列、case:inquiry_form 阶段和跟进断点入口放到同屏；只读诊断，不直接更新线索状态。"
+        title="案例来源线索跟进台"
+        detail="把案例路径、案例线索、表单阶段和跟进断点入口放到同屏，方便运营分诊。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">Case Lead Follow-up Triage</p>
-            <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例来源线索处理顺序</h2>
+            <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例来源线索处理</h2>
             <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-              先看 case 来源活跃线索和表单阶段，再核对全站超时跟进风险，最后回到路径回流和案例内容总控；本区只生成处理顺序和入口，不保存备注、不改负责人、不改状态。
+              先看案例来源活跃线索和表单阶段，再核对全站超时跟进风险，最后回到路径分析和案例内容。
             </p>
           </div>
           <FunnelStatusBadge label={priority} tone={priorityTone} />
@@ -761,7 +768,7 @@ function CaseLeadQualityFollowupDesk({
               ))}
               {stageRows.length === 0 ? (
                 <div className="rounded-md border border-dashed border-[#D8E7E8] bg-[#FBFDFD] px-3 py-4 text-xs text-[#8A9EA4] md:col-span-2">
-                  暂无 case 来源阶段样本，先保留 B304/B305 和 case 队列入口等待新线索。
+                  暂无案例来源阶段样本，保留案例线索和路径入口等待新线索。
                 </div>
               ) : null}
             </div>
@@ -785,7 +792,7 @@ function SourceLeadQualityWorkdeskCard({ row }: { row: SourceLeadQualityWorkdesk
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm font-bold text-[#1E2C31]">{row.label}</p>
-            <p className="mt-1 text-xs text-[#8A9EA4]">source_type={row.sourceType}</p>
+            <p className="mt-1 text-xs text-[#8A9EA4]">来源：{sourceTypeLabel(row.sourceType)}</p>
           </div>
           <FunnelStatusBadge label={row.priority} tone={row.priorityTone} />
         </div>
@@ -874,7 +881,7 @@ function ProductPublishLeadQualityHandoffDesk({
           : 'gray'
   const decision =
     productActive > 0
-      ? `产品来源还有 ${formatNumber(productActive)} 条活跃线索，先进入 product 活跃队列，再回看 B342 路径复盘和 B341 发布队列。`
+      ? `产品来源还有 ${formatNumber(productActive)} 条活跃线索，先进入产品活跃队列，再回看路径复盘和发布队列。`
       : inquiryActive > 0
         ? `product:inquiry_form 还有 ${formatNumber(inquiryActive)} 条活跃线索，优先处理高意向表单阶段，再检查来源归因。`
         : followupRisk
@@ -882,16 +889,16 @@ function ProductPublishLeadQualityHandoffDesk({
           : pathAttributionGap
             ? `产品路径已有 ${formatNumber(pathActionCount)} 次动作但 leads 暂无 product 来源，先查表单成功、source_type 和来源阶段归因。`
             : trafficAttributionGap
-              ? `产品路径已有 ${formatNumber(productPathMetric.views)} 次访问但暂无 product 来源线索，先复核公开 CTA 与 B341 发布承接缺口。`
+              ? `产品路径已有 ${formatNumber(productPathMetric.views)} 次访问但暂无产品来源线索，先复核公开 CTA 与发布内容缺口。`
               : contentGaps > 0
-                ? `产品内容/SEO 还有 ${formatNumber(contentGaps)} 项缺口，先回 B341 队列补齐，再观察 B342 路径动作和线索质量。`
+                ? `产品内容/SEO 还有 ${formatNumber(contentGaps)} 项缺口，先回发布队列补齐，再观察路径动作和线索质量。`
                 : productTotal > 0
                   ? `已有 ${formatNumber(productTotal)} 条产品来源线索，成交占比 ${productWonRate}%，可以复盘发布内容与跟进质量。`
-                  : '当前产品路径到线索样本不足，保留 B342 流量复盘、B341 发布队列和 product 线索入口等待新样本。'
+                  : '当前产品路径到线索样本不足，保留流量复盘、发布队列和产品线索入口等待新样本。'
   const cards = [
     {
       key: 'traffic',
-      label: 'B342 路径复盘',
+      label: '路径复盘',
       value: productPathMetric.views,
       detail: `路径动作 ${formatNumber(pathActionCount)} / 路径线索 ${formatNumber(productPathMetric.leads)} / 转化 ${formatAnalyticsPercent(productPathMetric.conversionRate)}`,
       href: '/admin/status/traffic#product-publish-path-review-handoff',
@@ -899,7 +906,7 @@ function ProductPublishLeadQualityHandoffDesk({
     },
     {
       key: 'queue',
-      label: 'B341 发布队列',
+      label: '发布队列',
       value: contentGaps,
       detail: `产品内容缺口 ${formatNumber(products.issues)} / SEO 待补 ${formatNumber(seo.productsMissing)}。`,
       href: '/admin/content/products/list#product-create-publish-queue-handoff',
@@ -946,10 +953,10 @@ function ProductPublishLeadQualityHandoffDesk({
     tone: FunnelMatrixRow['statusTone']
   }>
   const actions = [
-    { label: 'product 活跃队列', href: '/admin/customers/leads?source_type=product&attention=active', primary: productActive > 0 },
-    { label: 'product 表单阶段', href: '/admin/customers/leads?source_type=product&source_stage=product%3Ainquiry_form', primary: inquiryActive > 0 },
-    { label: 'B342 路径复盘', href: '/admin/status/traffic#product-publish-path-review-handoff', primary: pathAttributionGap || trafficAttributionGap },
-    { label: 'B341 发布队列', href: '/admin/content/products/list#product-create-publish-queue-handoff', primary: contentGaps > 0 },
+    { label: '产品活跃队列', href: '/admin/customers/leads?source_type=product&attention=active', primary: productActive > 0 },
+    { label: '产品表单阶段', href: '/admin/customers/leads?source_type=product&source_stage=product%3Ainquiry_form', primary: inquiryActive > 0 },
+    { label: '路径复盘', href: '/admin/status/traffic#product-publish-path-review-handoff', primary: pathAttributionGap || trafficAttributionGap },
+    { label: '发布队列', href: '/admin/content/products/list#product-create-publish-queue-handoff', primary: contentGaps > 0 },
     { label: '转化复盘', href: '/admin/site/conversion#product-lifecycle-conversion-bridge', primary: false },
     { label: '产品路径桥', href: '#product-lead-path-bridge', primary: productStages.length > 0 },
   ]
@@ -961,16 +968,16 @@ function ProductPublishLeadQualityHandoffDesk({
       data-product-publish-lead-quality-handoff="true"
     >
       <SectionTitle
-        title="B343 产品发布路径到线索质量承接"
-        detail="把 B342 产品路径复盘、B341 发布队列、product 来源线索、表单阶段和跟进断点放到同一块只读线索面板；不保存备注、不改负责人、不改线索状态。"
+        title="产品发布路径与线索质量"
+        detail="把产品路径复盘、发布队列、产品来源线索、表单阶段和跟进断点放到同一块线索面板。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
-            <p className="text-xs font-bold text-[#E36F2C]">B343 Product Lead Quality Handoff</p>
+            <p className="text-xs font-bold text-[#E36F2C]">Product Lead Quality</p>
             <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">发布后产品线索质量判断</h2>
             <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-              运营先判断路径访问和产品来源线索是否对上，再处理 product 活跃队列、表单阶段和超时跟进；本区只读，不触碰线索数据。
+              运营先判断路径访问和产品来源线索是否对上，再处理产品活跃队列、表单阶段和超时跟进。
             </p>
           </div>
           <FunnelStatusBadge label={priority} tone={priorityTone} />
@@ -1008,7 +1015,7 @@ function ProductPublishLeadQualityHandoffDesk({
               ))}
               {productStages.length === 0 ? (
                 <div className="rounded-md border border-dashed border-[#D8E7E8] bg-[#FBFDFD] px-3 py-4 text-xs text-[#8A9EA4] md:col-span-3">
-                  暂无 product 来源阶段样本，先保留 B342、B341 和 product 线索队列入口。
+                  暂无产品来源阶段样本，保留路径复盘、发布队列和产品线索入口。
                 </div>
               ) : null}
             </div>
@@ -1075,18 +1082,18 @@ function ProductLeadQualityFollowupDesk({
           : 'gray'
   const decision =
     productActive > 0
-      ? `产品来源还有 ${formatNumber(productActive)} 条活跃线索，先进入 product 活跃队列处理，再回到 B324/B323 复盘产品路径和生命周期来源。`
+      ? `产品来源还有 ${formatNumber(productActive)} 条活跃线索，先进入产品活跃队列处理，再回看产品路径和内容来源。`
       : inquiryActive > 0
         ? `product:inquiry_form 还有 ${formatNumber(inquiryActive)} 条活跃线索，优先看产品表单阶段，避免高意向询盘沉没。`
         : followupRisk
           ? `全站存在 ${formatNumber(leads.staleFollowups)} 条超时跟进，先用 product + overdue 过滤核对产品线索是否受影响。`
           : actionGap
-            ? `产品路径已有 ${formatNumber(pathActionCount)} 次动作但 leads 暂无 product 来源样本，先查 B322 流量质量和 B324 线索归因。`
+            ? `产品路径已有 ${formatNumber(pathActionCount)} 次动作但暂无线索样本，先查流量质量和线索归因。`
             : trafficGap
               ? `产品路径已有 ${formatNumber(productPathMetric.views)} 次访问但暂无 product 来源线索，优先核对 CTA、表单成功和来源参数。`
               : productTotal > 0
                 ? `已有 ${formatNumber(productTotal)} 条产品来源线索，成交占比 ${productWonRate}%，适合复盘产品内容、SEO 和跟进质量。`
-                : '当前产品来源样本不足，保留 B324、B323、B322 和产品线索队列入口等待新样本。'
+                : '当前产品来源样本不足，保留产品线索、转化复盘、流量质量和线索队列入口等待新样本。'
   const cards = [
     {
       key: 'product-source',
@@ -1108,13 +1115,13 @@ function ProductLeadQualityFollowupDesk({
       key: 'product-overdue',
       label: '跟进断点核对',
       value: leads.staleFollowups,
-      detail: '显示全站超时数；入口带 source_type=product + overdue 过滤核对。',
+      detail: '显示全站超时数；入口已带产品来源和超时过滤。',
       href: '/admin/customers/leads?source_type=product&attention=overdue',
       tone: followupRisk ? 'orange' : leads.staleFollowups > 0 ? 'blue' : 'green',
     },
     {
       key: 'product-path',
-      label: 'B322 流量质量',
+      label: '流量质量',
       value: productPathMetric.views,
       detail: `路径动作 ${formatNumber(pathActionCount)} / 路径线索 ${formatNumber(productPathMetric.leads)}`,
       href: '/admin/status/traffic#product-path-quality-review-desk',
@@ -1184,22 +1191,22 @@ function ProductLeadQualityFollowupDesk({
       primary: inquiryActive > 0,
     },
     {
-      label: 'B324 线索复盘',
+      label: '线索复盘',
       href: '/admin/customers/leads?source_type=product#product-lead-ops-review-desk',
       primary: productActive > 0,
     },
     {
-      label: 'B323 转化复盘',
+      label: '转化复盘',
       href: '/admin/site/conversion#product-lifecycle-conversion-bridge',
       primary: false,
     },
     {
-      label: 'B322 流量质量',
+      label: '流量质量',
       href: '/admin/status/traffic#product-path-quality-review-desk',
       primary: actionGap || trafficGap,
     },
     {
-      label: 'B320 产品总控',
+      label: '产品内容',
       href: '/admin/content/products#product-lifecycle',
       primary: false,
     },
@@ -1208,16 +1215,16 @@ function ProductLeadQualityFollowupDesk({
   return (
     <section className="space-y-4" id="product-lead-quality-followup-desk" data-product-lead-quality-followup="true">
       <SectionTitle
-        title="B325 产品线索质量到跟进分诊台"
-        detail="把 B324 产品线索运营复盘、B323 产品生命周期转化、B322 产品流量质量、product 来源队列、product:inquiry_form 阶段和跟进断点入口放到同屏；只读诊断，不直接更新线索状态。"
+        title="产品来源线索跟进台"
+        detail="把产品线索复盘、产品转化、流量质量、来源队列、表单阶段和跟进断点入口放到同屏。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Product Lead Follow-up Triage</p>
-            <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品来源线索处理顺序</h2>
+            <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品来源线索处理</h2>
             <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-              先看 product 来源活跃线索和表单阶段，再核对全站超时跟进风险，最后回到 B324 线索复盘、B323 转化复盘、B322 流量质量和 B320 产品总控；本区只生成处理顺序和入口，不保存备注、不改负责人、不改状态。
+              先看产品来源活跃线索和表单阶段，再核对全站超时跟进风险，最后回到线索复盘、转化复盘、流量质量和产品内容。
             </p>
           </div>
           <FunnelStatusBadge label={priority} tone={priorityTone} />
@@ -1251,7 +1258,7 @@ function ProductLeadQualityFollowupDesk({
               ))}
               {stageRows.length === 0 ? (
                 <div className="rounded-md border border-dashed border-[#D8E7E8] bg-[#FBFDFD] px-3 py-4 text-xs text-[#8A9EA4] md:col-span-3">
-                  暂无 product 来源阶段样本，先保留 B324/B323/B322 和 product 队列入口等待新线索。
+                  暂无产品来源阶段样本，保留线索复盘、转化复盘、流量质量和产品队列入口等待新线索。
                 </div>
               ) : null}
             </div>
@@ -1406,7 +1413,7 @@ function buildLeadResponseRows(leads: LeadMetrics): LeadResponseRow[] {
       stage: '操作边界',
       title: '状态更新仍在客户线索页完成',
       owner: '系统边界',
-      metric: '只读',
+      metric: '查看',
       evidence: '本页只聚合 leads 指标和跳转入口，不直接保存状态、备注、负责人或删除线索。',
       impact: '避免数据中心变成第二套 CRM；所有写入继续走现有客户线索处理流程。',
       href: '/admin/customers/leads',
@@ -1427,7 +1434,7 @@ function LeadResponseOperationsLedger({ leads }: { leads: LeadMetrics }) {
     <section className="space-y-4">
       <SectionTitle
         title="线索响应处理台账"
-        detail="先处理首次响应、跟进断点和活跃商机，再进入客户线索页更新状态；本页只读，不直接写入线索数据。"
+        detail="先处理首次响应、跟进断点和活跃商机，再进入客户线索页更新状态。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
@@ -1744,8 +1751,8 @@ function buildSourceLeadQualityWorkdeskRows({
             : hasTrafficGap
               ? `近 30 天有 ${formatNumber(row.metric.views)} 次访问但无线索，优先核对 CTA、source 参数和 Contact 归因。`
               : row.total > 0
-                ? `已有 ${formatNumber(row.total)} 条来源线索，适合回到 B291 复盘访问、动作、线索和成交质量。`
-                : '当前样本不足，保持线索队列、内容入口和 B291 转化复盘可快速下钻。'
+                ? `已有 ${formatNumber(row.total)} 条来源线索，适合回看访问、动作、线索和成交质量。`
+                : '当前样本不足，保持线索队列、内容入口和转化复盘可快速下钻。'
       const stageHref =
         row.key === 'product'
           ? '#product-lead-path-bridge'
@@ -1787,8 +1794,8 @@ function LeadSourceQualityMatrix({ sourceStatusSummary }: { sourceStatusSummary:
   return (
     <section className="space-y-4" id="source-quality">
       <SectionTitle
-        title="B198 来源质量矩阵"
-        detail="把线索来源、活跃漏斗、成交结果和处理入口合在一张表，帮助判断公开站入口质量；本页只读，不直接改线索。"
+        title="来源质量矩阵"
+        detail="把线索来源、活跃漏斗、成交结果和处理入口合在一张表，帮助判断公开站入口质量。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
@@ -1829,7 +1836,7 @@ function LeadSourceQualityMatrix({ sourceStatusSummary }: { sourceStatusSummary:
                       <Link href={`/admin/customers/leads?source_type=${row.type}`} className="font-semibold text-[#1E2C31] hover:text-[#1889B6]">
                         {row.label}
                       </Link>
-                      <p className="mt-1 text-xs text-[#8A9EA4]">source_type={row.type}</p>
+                      <p className="mt-1 text-xs text-[#8A9EA4]">来源：{sourceTypeLabel(row.type)}</p>
                     </td>
                     <td className="px-4 py-4 text-right text-lg font-bold text-[#1E2C31]">{formatNumber(row.total)}</td>
                     <td className="px-4 py-4">
@@ -1931,8 +1938,8 @@ function ProductLeadPathBridge({
   return (
     <section className="space-y-4" id="product-lead-path-bridge">
       <SectionTitle
-        title="B229 产品路径与线索承接"
-        detail="把产品路径访问、路径动作、表单成功和 leads 表里的产品来源线索放到同一个只读数据中心视角；处理仍回到客户线索页。"
+        title="产品路径与线索"
+        detail="把产品路径访问、路径动作、表单成功和产品来源线索放到同一个数据中心视角；处理仍回到客户线索页。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
@@ -1960,7 +1967,7 @@ function ProductLeadPathBridge({
                     <Link href={row.href} className="font-semibold text-[#1E2C31] hover:text-[#1889B6]">
                       {row.label}
                     </Link>
-                    <p className="mt-1 text-xs text-[#8A9EA4]">只读下钻，不直接改状态</p>
+                    <p className="mt-1 text-xs text-[#8A9EA4]">点击查看线索状态</p>
                   </td>
                   <td className="px-4 py-4 text-right text-lg font-bold text-[#1E2C31]">{formatNumber(row.value)}</td>
                   <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">{row.detail}</td>
@@ -2058,8 +2065,8 @@ function CaseLeadPathBridge({
   return (
     <section className="space-y-4" id="case-lead-path-bridge">
       <SectionTitle
-        title="B223 案例路径与线索承接"
-        detail="把案例路径访问、路径动作、表单成功和 leads 表里的案例来源线索放到同一个只读数据中心视角；处理仍回到客户线索页。"
+        title="案例路径与线索"
+        detail="把案例路径访问、路径动作、表单成功和案例来源线索放到同一个数据中心视角；处理仍回到客户线索页。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
@@ -2087,7 +2094,7 @@ function CaseLeadPathBridge({
                     <Link href={row.href} className="font-semibold text-[#1E2C31] hover:text-[#1889B6]">
                       {row.label}
                     </Link>
-                    <p className="mt-1 text-xs text-[#8A9EA4]">只读下钻，不直接改状态</p>
+                    <p className="mt-1 text-xs text-[#8A9EA4]">点击查看线索状态</p>
                   </td>
                   <td className="px-4 py-4 text-right text-lg font-bold text-[#1E2C31]">{formatNumber(row.value)}</td>
                   <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">{row.detail}</td>
@@ -2197,7 +2204,7 @@ function NewsLeadPathBridge({
     },
     {
       label: '线索筛选',
-      value: 'source_type=news',
+      value: '新闻来源',
       detail: '运营在客户线索页按新闻来源筛选，处理动作仍回到线索队列。',
       href: '/admin/customers/leads?source_type=news',
       tone: newsActive > 0 ? 'orange' as const : newsTotal > 0 ? 'blue' as const : 'gray' as const,
@@ -2214,7 +2221,7 @@ function NewsLeadPathBridge({
     <section className="space-y-4" id="news-lead-path-bridge">
       <SectionTitle
         title="新闻来源与线索承接"
-        detail="把新闻路径访问、新闻来源动作、Contact source 合同和 leads 表里的 news 来源线索放到同一个只读数据中心视角；处理仍回到客户线索页。"
+        detail="把新闻路径访问、新闻来源动作、Contact 入口和新闻来源线索放到同一个数据中心视角；处理仍回到客户线索页。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
@@ -2227,9 +2234,9 @@ function NewsLeadPathBridge({
         <div className="border-b border-[#E6EEEE] bg-[#FBFDFD]">
           <div className="px-5 py-4">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">News Contact Source Contract</p>
-            <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">新闻 Contact 来源合同</h3>
+            <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">新闻 Contact 入口</h3>
             <p className="mt-1 max-w-4xl text-xs leading-5 text-[#61767D]">
-              对齐流量面板和转化中心的同一条链路：公开新闻阅读进入 Contact，Contact 写入后归入新闻来源线索队列；本区只读，不改线索状态。
+              公开新闻阅读进入 Contact，Contact 写入后归入新闻来源线索队列。
             </p>
           </div>
           <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] border-t border-[#E6EEEE] md:grid-cols-3 md:divide-x md:divide-y-0">
@@ -2266,7 +2273,7 @@ function NewsLeadPathBridge({
                     <Link href={row.href} className="font-semibold text-[#1E2C31] hover:text-[#1889B6]">
                       {row.label}
                     </Link>
-                    <p className="mt-1 text-xs text-[#8A9EA4]">只读下钻，不直接改状态</p>
+                    <p className="mt-1 text-xs text-[#8A9EA4]">点击查看线索状态</p>
                   </td>
                   <td className="px-4 py-4 text-right text-lg font-bold text-[#1E2C31]">{formatNumber(row.value)}</td>
                   <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">{row.detail}</td>
@@ -2383,8 +2390,8 @@ function LeadSourceStageMatrix({
   return (
     <section className="space-y-4" id="source-stage-quality">
       <SectionTitle
-        title="B201 来源阶段矩阵"
-        detail="在来源类型之上继续拆出产品与案例 CTA、表单等阶段；本页只读，处理动作仍回到客户线索页。"
+        title="来源阶段矩阵"
+        detail="在来源类型之上继续拆出产品与案例 CTA、表单等阶段；处理动作仍回到客户线索页。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
@@ -2430,7 +2437,7 @@ function LeadSourceStageMatrix({
                     </td>
                     <td className="px-4 py-4 text-xs leading-5 text-[#61767D]">
                       <span className="block font-semibold text-[#1E2C31]">{row.typeLabel}</span>
-                      <span className="mt-1 block">source_type={row.type}</span>
+                      <span className="mt-1 block">来源：{sourceTypeLabel(row.type)}</span>
                     </td>
                     <td className="px-4 py-4 text-right text-lg font-bold text-[#1E2C31]">{formatNumber(row.total)}</td>
                     <td className="px-4 py-4">
@@ -2567,7 +2574,7 @@ function LeadFunnelOperationsMatrix({ leads }: { leads: LeadMetrics }) {
 
   return (
     <section className="space-y-4">
-      <SectionTitle title="线索漏斗效率矩阵" detail="把状态数量、占比、异常判断和处理入口集中到一张表，数据中心只读，不直接改状态。" />
+      <SectionTitle title="线索漏斗效率矩阵" detail="把状态数量、占比、异常判断和处理入口集中到一张表，处理动作回到客户线索页。" />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-3">
           <FunnelSummary label="活跃漏斗" value={activePipeline} detail="新线索 + 跟进中 + 已报价" warn={activePipeline > 0} />

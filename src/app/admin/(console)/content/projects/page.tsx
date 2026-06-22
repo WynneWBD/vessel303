@@ -267,8 +267,8 @@ function getSideNavGroups(stats: ProjectStats): AdminSideNavGroup[] {
         { key: 'news', label: '新闻资讯', href: '/admin/content/news', Icon: Newspaper },
         { key: 'drafts', label: '草稿内容', href: '#drafts', badge: stats.draft, Icon: FileText },
         { key: 'todo', label: '待补内容', href: '#todo', badge: getTodoCount(stats), Icon: CircleDashed },
-        { key: 'case-command', label: '询盘总控台', href: '#case-content-inquiry-command-center', badge: getCaseInquiryWeakCount(stats), Icon: ClipboardCheck },
-        { key: 'case-loop', label: '闭环总控', href: '#case-creation-backfill-review-loop-center', badge: getCaseInquiryWeakCount(stats), Icon: BarChart3 },
+        { key: 'case-command', label: '询盘工作台', href: '#case-content-inquiry-command-center', badge: getCaseInquiryWeakCount(stats), Icon: ClipboardCheck },
+        { key: 'case-loop', label: '案例复盘', href: '#case-creation-backfill-review-loop-center', badge: getCaseInquiryWeakCount(stats), Icon: BarChart3 },
         { key: 'case-conversion', label: '咨询承接', href: '#case-conversion', badge: getCaseInquiryWeakCount(stats), Icon: ClipboardCheck },
         { key: 'checks', label: '发布前检查', href: '#checks', Icon: SearchCheck },
       ],
@@ -534,7 +534,7 @@ function TodoPanel({ stats }: { stats: ProjectStats }) {
 
   return (
     <section id="todo" className="scroll-mt-24 space-y-4">
-      <SectionTitle title="待补内容" detail="按正式案例页面需要的基础字段做只读统计，不把 Global 字段当成正式详情内容。" />
+      <SectionTitle title="待补内容" detail="按正式案例页面需要的基础字段统计，不把 Global 字段当成正式详情内容。" />
       <div className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-6">
           {entries.map((entry) => (
@@ -587,7 +587,7 @@ function CaseContentInquiryCommandCenter({
   const attentionSignals = stats.draft + weakCount + contentGapSignals
   const items: CaseContentCommandItem[] = [
     {
-      label: 'B302 创建预检',
+      label: '创建预检',
       value: stats.draft > 0 ? `${formatNumber(stats.draft)} 个草稿` : '创建前',
       detail: '新建前先看案例池缺口、列表队列、线索和路径数据，避免新草稿继续带入同类弱项。',
       href: '/admin/content/projects/new#case-creation-inquiry-preflight-desk',
@@ -596,7 +596,7 @@ function CaseContentInquiryCommandCenter({
       tone: stats.draft > 0 ? 'orange' : 'blue',
     },
     {
-      label: 'B301 编辑复核',
+      label: '编辑复核',
       value: weakCount > 0 ? `${formatNumber(weakCount)} 个弱项` : '可抽检',
       detail: '从列表进入单篇编辑页，用询盘复核台检查素材、双语叙事、项目事实和前台咨询锚点。',
       href: '/admin/content/projects/list?view=case-conversion-weak',
@@ -605,7 +605,7 @@ function CaseContentInquiryCommandCenter({
       tone: weakCount > 0 ? 'orange' : 'green',
     },
     {
-      label: 'B300 列表队列',
+      label: '列表队列',
       value: `${formatNumber(stats.total)} 个案例`,
       detail: '把全部、草稿、已发布、发布转化弱、Global 入图和内容缺口放回同一个列表处理面。',
       href: '/admin/content/projects/list#case-list-inquiry-conversion-queue',
@@ -625,8 +625,8 @@ function CaseContentInquiryCommandCenter({
     },
     {
       label: '案例线索队列',
-      value: 'source_type=case',
-      detail: '发布后的案例 CTA 和询盘表单回到客户线索台；这里不新增线索状态或处理规则。',
+      value: '案例来源',
+      detail: '发布后的案例 CTA 和询盘表单回到客户线索台。',
       href: '/admin/customers/leads?source_type=case',
       cta: '查看案例线索',
       Icon: ClipboardCheck,
@@ -647,14 +647,14 @@ function CaseContentInquiryCommandCenter({
     <section id="case-content-inquiry-command-center" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div className="border-l-4 border-[#E36F2C] px-5 py-5">
-          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B303 CASE CONTENT INQUIRY COMMAND</p>
-          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">案例内容到询盘转化总控台</h2>
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">Case Inquiry Command</p>
+          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">案例内容到询盘转化工作台</h2>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把 B302 创建预检、B301 编辑复核、B300 列表队列、前台 `/cases`、`source_type=case` 线索和路径分析合成一个只读总控层；运营先从这里判断该新建、补内容、看前台还是回线索，不改变保存、发布、Global 点位或线索状态。
+            汇总创建预检、编辑复核、列表队列、前台 `/cases`、案例来源线索和路径分析，帮助运营判断该新建、补内容、看前台还是回线索。
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <PrimaryAction href="/admin/content/projects/new#case-creation-inquiry-preflight-desk" Icon={Plus} label="B302 创建预检" primary />
-            <PrimaryAction href="/admin/content/projects/list#case-list-inquiry-conversion-queue" Icon={ListChecks} label="B300 列表队列" />
+            <PrimaryAction href="/admin/content/projects/new#case-creation-inquiry-preflight-desk" Icon={Plus} label="创建预检" primary />
+            <PrimaryAction href="/admin/content/projects/list#case-list-inquiry-conversion-queue" Icon={ListChecks} label="列表队列" />
             <PrimaryAction href="/admin/status/traffic#case-inquiry-path" Icon={BarChart3} label="路径分析" />
             <PrimaryAction href="/admin/customers/leads?source_type=case" Icon={ClipboardCheck} label="案例线索" />
           </div>
@@ -671,7 +671,7 @@ function CaseContentInquiryCommandCenter({
         <CaseCommandSnapshot label="可承接案例" value={formatNumber(stats.caseInquiryReady)} detail={`占已发布 ${stats.published > 0 ? Math.round((stats.caseInquiryReady / stats.published) * 100) : 0}%`} />
         <CaseCommandSnapshot label="发布转化弱" value={formatNumber(weakCount)} detail="优先回列表处理" warn={weakCount > 0} />
         <CaseCommandSnapshot label="路径动作" value={formatNumber(casePathMetric.ctaClicks)} detail={`表单 ${formatNumber(casePathMetric.formSubmits)}`} />
-        <CaseCommandSnapshot label="总控关注信号" value={formatNumber(attentionSignals)} detail="草稿 + 缺口 + 弱项" warn={attentionSignals > 0} />
+        <CaseCommandSnapshot label="关注信号" value={formatNumber(attentionSignals)} detail="草稿 + 缺口 + 弱项" warn={attentionSignals > 0} />
       </div>
 
       <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-2 xl:grid-cols-3">
@@ -700,7 +700,7 @@ function CaseCreationBackfillReviewLoopCenter({
     contentGapSignals > 0 || weakCount > 0
       ? {
           value: '先补后扩',
-          detail: '已有内容缺口或发布弱项时，新建前先回 B308/B309 处理旧案例，避免案例池继续堆积同类问题。',
+          detail: '已有内容缺口或发布弱项时，新建前先处理旧案例，避免案例池继续堆积同类问题。',
           tone: 'orange',
         }
       : stats.draft > 0
@@ -712,17 +712,17 @@ function CaseCreationBackfillReviewLoopCenter({
         : pathAttention > 0
           ? {
               value: '先查路径',
-              detail: '案例路径有访问但无新线索，应先看 B307/B305 路径复盘，再判断新增案例的内容重点。',
+              detail: '案例路径有访问但无新线索，应先看路径复盘，再判断新增案例的内容重点。',
               tone: 'orange',
             }
           : {
               value: '可扩案例',
-              detail: '当前案例池没有明显补位阻塞，可按 B310 创建预检桥继续增加高质量案例。',
+              detail: '当前案例池没有明显补位阻塞，可按创建预检继续增加高质量案例。',
               tone: 'green',
             }
   const loopItems: CaseContentCommandItem[] = [
     {
-      label: 'B310 创建预检桥',
+      label: '创建预检',
       value: stats.draft > 0 ? `${formatNumber(stats.draft)} 个草稿` : '新建入口',
       detail: '新建案例前先看补位缺口、路径表现和创建边界，保存后再回列表进入单篇复核。',
       href: '/admin/content/projects/new#case-creation-backfill-preflight-bridge',
@@ -731,7 +731,7 @@ function CaseCreationBackfillReviewLoopCenter({
       tone: stats.draft > 0 ? 'orange' : 'blue',
     },
     {
-      label: 'B309 单篇复核',
+      label: '单篇复核',
       value: weakCount > 0 ? `${formatNumber(weakCount)} 个弱项` : '抽检入口',
       detail: '从列表进入单篇编辑页，核查前台预览、内容缺口、询盘锚点和案例来源线索路径。',
       href: '/admin/content/projects/list?view=case-conversion-weak#case-conversion-content-backfill-desk',
@@ -740,7 +740,7 @@ function CaseCreationBackfillReviewLoopCenter({
       tone: weakCount > 0 ? 'orange' : 'green',
     },
     {
-      label: 'B308 内容补位',
+      label: '内容补位',
       value: `${formatNumber(contentGapSignals)} 个信号`,
       detail: '把封面、图库、双语简介、项目参数、产品型号和标签缺口放回同一条补位队列。',
       href: '/admin/content/projects/list#case-conversion-content-backfill-desk',
@@ -749,7 +749,7 @@ function CaseCreationBackfillReviewLoopCenter({
       tone: contentGapSignals > 0 ? 'orange' : 'green',
     },
     {
-      label: 'B307 转化复盘',
+      label: '转化复盘',
       value: formatAnalyticsPercent(casePathMetric.conversionRate),
       detail: `近 30 天访问 ${formatNumber(casePathMetric.views)}，动作 ${formatNumber(pathActions)}，线索 ${formatNumber(casePathMetric.leads)}。`,
       href: '/admin/site/conversion#case-followup-conversion-review-bridge',
@@ -758,18 +758,18 @@ function CaseCreationBackfillReviewLoopCenter({
       tone: casePathMetric.leads > 0 ? 'green' : casePathMetric.views > 0 ? 'orange' : 'blue',
     },
     {
-      label: 'B303 案例总控',
+      label: '案例内容',
       value: `${formatAnalyticsPercent(closureRate)} 可承接`,
       detail: `已发布 ${formatNumber(stats.published)}，可承接 ${formatNumber(stats.caseInquiryReady)}，这里不改发布状态。`,
       href: '#case-content-inquiry-command-center',
-      cta: '回到询盘总控',
+      cta: '回到询盘工作台',
       Icon: ClipboardCheck,
       tone: weakCount > 0 ? 'orange' : 'green',
     },
     {
-      label: '发布后闭环',
+      label: '发布后复盘',
       value: '/cases -> leads',
-      detail: '发布后从前台案例、路径动作、案例来源线索和内容回流继续复盘，不新增线索处理规则。',
+      detail: '发布后从前台案例、路径动作、案例来源线索和内容补齐继续复盘。',
       href: '/admin/status/traffic#case-inquiry-path',
       cta: '查看路径回流',
       Icon: ExternalLink,
@@ -781,27 +781,27 @@ function CaseCreationBackfillReviewLoopCenter({
     <section id="case-creation-backfill-review-loop-center" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="border-l-4 border-[#1889B6] px-5 py-5">
-          <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">B311 CASE LOOP COMMAND</p>
-          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">案例创建/补位/复核总控闭环台</h2>
+          <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">Case Review Command</p>
+          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">案例创建、补位与复核工作台</h2>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把 B310 创建预检桥、B309 单篇补位复核、B308 内容补位队列、B307 转化复盘和 B303 案例总控放到同一层；运营先判断该创建、该补位、该单篇复核还是该看路径复盘。本区只读，不保存、不发布、不上传、不改案例状态、不改线索状态。
+            汇总创建预检、单篇补位复核、内容补位队列、转化复盘和案例内容，帮助运营判断该创建、补位、单篇复核还是看路径复盘。
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <PrimaryAction href="/admin/content/projects/new#case-creation-backfill-preflight-bridge" Icon={Plus} label="B310 创建桥" primary />
-            <PrimaryAction href="/admin/content/projects/list#case-conversion-content-backfill-desk" Icon={ListChecks} label="B308 补位队列" />
-            <PrimaryAction href="/admin/content/projects/list?view=case-conversion-weak#case-conversion-content-backfill-desk" Icon={SearchCheck} label="B309 单篇复核" />
-            <PrimaryAction href="/admin/site/conversion#case-followup-conversion-review-bridge" Icon={BarChart3} label="B307 转化复盘" />
+            <PrimaryAction href="/admin/content/projects/new#case-creation-backfill-preflight-bridge" Icon={Plus} label="创建预检" primary />
+            <PrimaryAction href="/admin/content/projects/list#case-conversion-content-backfill-desk" Icon={ListChecks} label="补位队列" />
+            <PrimaryAction href="/admin/content/projects/list?view=case-conversion-weak#case-conversion-content-backfill-desk" Icon={SearchCheck} label="单篇复核" />
+            <PrimaryAction href="/admin/site/conversion#case-followup-conversion-review-bridge" Icon={BarChart3} label="转化复盘" />
           </div>
         </div>
         <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-5 py-5 lg:border-l lg:border-t-0">
           <span className={`inline-flex max-w-full items-center rounded-md border px-2.5 py-1 text-[11px] font-bold ${caseCommandToneClass(decision.tone)}`}>
             <span className="truncate">{decision.value}</span>
           </span>
-          <h3 className="mt-3 text-sm font-bold text-[#1E2C31]">总控判断</h3>
+          <h3 className="mt-3 text-sm font-bold text-[#1E2C31]">运营判断</h3>
           <p className="mt-1 text-xs leading-5 text-[#61767D]">{decision.detail}</p>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <div className="rounded-md border border-[#D8E7E8] bg-white p-3">
-              <p className="text-[11px] font-semibold text-[#61767D]">闭环关注</p>
+              <p className="text-[11px] font-semibold text-[#61767D]">复盘关注</p>
               <p className={`mt-1 text-xl font-bold ${loopAttentionSignals > 0 ? 'text-[#E36F2C]' : 'text-[#1E2C31]'}`}>{formatNumber(loopAttentionSignals)}</p>
               <p className="mt-1 text-xs text-[#61767D]">草稿 + 缺口 + 弱项</p>
             </div>
@@ -817,7 +817,7 @@ function CaseCreationBackfillReviewLoopCenter({
       <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-4">
         <CaseCommandSnapshot label="可承接率" value={formatAnalyticsPercent(closureRate)} detail={`${formatNumber(stats.caseInquiryReady)} / ${formatNumber(stats.published)}`} />
         <CaseCommandSnapshot label="内容补位信号" value={formatNumber(contentGapSignals)} detail={`${formatNumber(getTodoCount(stats))} 类待补`} warn={contentGapSignals > 0} />
-        <CaseCommandSnapshot label="发布弱案例" value={formatNumber(weakCount)} detail="回 B309 单篇复核" warn={weakCount > 0} />
+        <CaseCommandSnapshot label="发布弱案例" value={formatNumber(weakCount)} detail="回单篇复核" warn={weakCount > 0} />
         <CaseCommandSnapshot label="30 天线索" value={formatNumber(casePathMetric.leads)} detail={formatAnalyticsPercent(casePathMetric.conversionRate)} warn={casePathMetric.views > 0 && casePathMetric.leads === 0} />
       </div>
 
@@ -974,7 +974,7 @@ function CaseConversionPanel({
     },
     {
       label: '线索筛选',
-      value: 'source_type=case',
+      value: '案例来源',
       detail: '客户线索台按案例来源筛选，处理仍回到现有线索流程。',
       href: '/admin/customers/leads?source_type=case',
       Icon: ClipboardCheck,
@@ -1009,7 +1009,7 @@ function CaseConversionPanel({
             </span>
             <div>
               <h3 className="text-sm font-bold text-[#1E2C31]">承接链路</h3>
-              <p className="mt-1 text-xs leading-5 text-[#61767D]">从创建质量到发布后核查，不新增保存限制。</p>
+              <p className="mt-1 text-xs leading-5 text-[#61767D]">从创建质量到发布后核查。</p>
             </div>
           </div>
           <div className="mt-4 space-y-3">
@@ -1054,10 +1054,10 @@ function CaseSourceContractStrip({
       <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1889B6]">Source Contract</p>
-          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">案例来源承接合同</h3>
+          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">案例来源线索</h3>
         </div>
         <p className="max-w-3xl text-xs leading-5 text-[#61767D]">
-          对齐公开 Projects / cases 访问路径，把案例详情 CTA、询盘表单、source_type=case 线索队列和路径分析放到同一条只读运营路径。
+          对齐公开 Projects / cases 访问路径，把案例详情 CTA、询盘表单、案例来源线索队列和路径分析放到同一条运营路径。
         </p>
       </div>
       <div className="grid grid-cols-1 border-b border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
@@ -1176,7 +1176,7 @@ function GlobalStatusPanel({ stats }: { stats: ProjectStats }) {
         <GlobalMetric
           title="查看地图"
           value={stats.published - stats.missingCoordinates > 0 ? Math.max(0, stats.published - stats.missingCoordinates) : 0}
-          detail="仅查看展示效果，本轮不改地图能力"
+          detail="查看展示效果"
           href="/global"
           tone="green"
         />

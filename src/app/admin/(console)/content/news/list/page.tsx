@@ -653,7 +653,7 @@ function NewsListGovernancePanel({
   ]
   const sourceSeoBridgeCards: NewsSourceSeoBridgeItem[] = [
     {
-      label: 'B283 处理焦点',
+      label: '处理焦点',
       value: contentIssueCount > 0 ? `${formatNumber(contentIssueCount)} 待补` : '已归零',
       detail: '把新闻列表缺项、SEO 待补和当前筛选样本放到同一处理入口。',
       href: createHref(filters, { status: '', schedule: '', issue: 'content' }, '#news-list-priority'),
@@ -663,7 +663,7 @@ function NewsListGovernancePanel({
     {
       label: 'SEO 来源质量',
       value: formatNumber(issueSummary.seo),
-      detail: '新闻 SEO 缺口直连 B282 来源线索质量桥，方便复核内容补齐后是否带来有效询盘。',
+      detail: '新闻 SEO 缺口直连来源线索质量，方便复核内容补齐后是否带来有效询盘。',
       href: createHref(filters, { status: '', schedule: '', issue: 'seo' }, '#news-source-seo-list-bridge'),
       action: '筛 SEO 待补',
       tone: issueSummary.seo > 0 ? 'orange' : 'green',
@@ -671,7 +671,7 @@ function NewsListGovernancePanel({
     {
       label: '发布回看',
       value: formatNumber(rowsCount),
-      detail: '当前列表样本可回看 B281 发布桥，确认发布后的 SEO、来源和线索路径。',
+      detail: '当前列表样本可回看发布复验，确认发布后的 SEO、来源和线索路径。',
       href: '/admin/status/site#source-seo-release-bridge',
       action: '看发布桥',
       tone: 'blue',
@@ -679,7 +679,7 @@ function NewsListGovernancePanel({
     {
       label: '新闻线索',
       value: 'news',
-      detail: '用 source_type=news 进入线索队列，对照 en.303 新闻入口的访问和转化承接。',
+      detail: '进入新闻来源线索队列，对照 en.303 新闻入口的访问和转化。',
       href: '/admin/customers/leads?source_type=news',
       action: '看线索',
       tone: 'blue',
@@ -691,15 +691,15 @@ function NewsListGovernancePanel({
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px]">
         <div className="border-l-4 border-[#E36F2C] px-4 py-4">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">List Governance</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻列表治理闭环</h2>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻列表治理</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            将筛选视图、批量转分类、缺口优先级、发布台账、来源承接和运营总览收在同一入口，方便运营按列表完成“发现问题、筛选处理、编辑复核、回看获客、回到总览”的闭环。
+            将筛选视图、批量转分类、缺口优先级、发布台账、来源线索和运营总览收在同一入口，方便运营按列表完成发现、筛选、编辑、回看获客和回到总览。
           </p>
         </div>
         <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-4 py-4 lg:border-l lg:border-t-0">
           <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#8A9EA4]">Safety Boundary</p>
           <p className="mt-2 text-sm font-semibold leading-6 text-[#1E2C31]">
-            批量发布、批量删除、批量定时仍关闭；当前页只承接筛选、分类归档、单篇复核和只读来源下钻。
+            当前页用于筛选、分类归档、单篇复核和来源下钻。
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {sourceHandoffLinks.map((link) => (
@@ -735,7 +735,7 @@ function NewsListGovernancePanel({
       <div id="news-source-seo-list-bridge" className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-4 py-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B283 Source SEO Bridge</p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Source SEO Bridge</p>
             <h3 className="mt-1 text-base font-bold text-[#1E2C31]">新闻 SEO 与来源处理桥</h3>
             <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
               对照 en.303 新闻页的分类、搜索、摘要、详情和联系入口，把后台新闻列表的 SEO 缺口、内容缺项、发布回看和新闻线索队列合并成一条运营路径。
@@ -811,7 +811,7 @@ function NewsListSourceConversionQueue({
   const items: NewsListSourceConversionQueueItem[] = [
     {
       label: '新闻优化台',
-      value: 'B294',
+      value: '优化',
       detail: '回到新闻内容到来源线索优化台，统一看内容待补、SEO 待补和新闻来源线索承接。',
       href: '/admin/content/news#news-source-lead-optimization-desk',
       action: '看优化台',
@@ -820,7 +820,7 @@ function NewsListSourceConversionQueue({
     },
     {
       label: '流量分诊',
-      value: 'B293',
+      value: '流量',
       detail: '从新闻列表处理完缺口后，回看访问路径、新闻动作和“有访问无线索”异常。',
       href: '/admin/status/traffic#traffic-to-lead-exception-desk',
       action: '看流量',
@@ -829,8 +829,8 @@ function NewsListSourceConversionQueue({
     },
     {
       label: '来源线索处理',
-      value: 'B292',
-      detail: '按 source_type=news 复核新闻来源线索、活跃度、阶段和运营跟进质量。',
+      value: '线索',
+      detail: '复核新闻来源线索、活跃度、阶段和运营跟进质量。',
       href: '/admin/status/leads#source-lead-quality-workdesk',
       action: '看线索处理',
       Icon: Link2,
@@ -838,7 +838,7 @@ function NewsListSourceConversionQueue({
     },
     {
       label: '转化复盘',
-      value: 'B291',
+      value: '转化',
       detail: '把当前新闻列表筛选结果接入 SEO 到线索转化复盘，判断补内容后的获客承接。',
       href: '/admin/site/conversion#seo-to-lead-conversion-review',
       action: '看转化',
@@ -847,8 +847,8 @@ function NewsListSourceConversionQueue({
     },
     {
       label: '新闻线索队列',
-      value: 'source_type=news',
-      detail: '直接进入新闻来源线索队列；本页只做跳转，不改变线索状态或客户数据。',
+      value: '新闻来源',
+      detail: '直接进入新闻来源线索队列。',
       href: '/admin/customers/leads?source_type=news',
       action: '打开队列',
       Icon: Link2,
@@ -869,16 +869,16 @@ function NewsListSourceConversionQueue({
     <section id="news-list-source-conversion-queue" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="border-l-4 border-[#E36F2C] px-4 py-4">
-          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B295 NEWS LIST SOURCE CONVERSION QUEUE</p>
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">News List Source Conversion Queue</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻列表来源转化处理队列</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把当前新闻列表筛选、B294 新闻优化台、B293 流量分诊、B292 来源线索处理、B291 转化复盘和 `source_type=news` 线索队列接成一条处理链；先在列表补齐内容和 SEO，再回看新闻访问与线索承接。本区只读，不新增发布、删除、保存或线索写入能力。
+            把当前新闻列表筛选、新闻优化台、流量分诊、来源线索处理、转化复盘和新闻来源线索队列接成一条处理链；先在列表补齐内容和 SEO，再回看新闻访问与线索。
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <PrimaryAction href="/admin/content/news#news-source-lead-optimization-desk" Icon={Newspaper} label="B294 优化台" primary />
-            <PrimaryAction href="/admin/status/traffic#traffic-to-lead-exception-desk" Icon={SearchCheck} label="B293 流量分诊" />
-            <PrimaryAction href="/admin/status/leads#source-lead-quality-workdesk" Icon={Link2} label="B292 线索处理" />
-            <PrimaryAction href="/admin/site/conversion#seo-to-lead-conversion-review" Icon={ListChecks} label="B291 转化复盘" />
+            <PrimaryAction href="/admin/content/news#news-source-lead-optimization-desk" Icon={Newspaper} label="优化台" primary />
+            <PrimaryAction href="/admin/status/traffic#traffic-to-lead-exception-desk" Icon={SearchCheck} label="流量分诊" />
+            <PrimaryAction href="/admin/status/leads#source-lead-quality-workdesk" Icon={Link2} label="线索处理" />
+            <PrimaryAction href="/admin/site/conversion#seo-to-lead-conversion-review" Icon={ListChecks} label="转化复盘" />
           </div>
         </div>
         <div className="grid grid-cols-2 border-t border-[#E6EEEE] bg-[#FBFDFD] lg:border-l lg:border-t-0">

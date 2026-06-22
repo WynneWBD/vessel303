@@ -80,9 +80,9 @@ type SiteConsoleRow = {
   actions: Array<{ label: string; href: string }>
 }
 
-type B195QueueTone = 'blue' | 'green' | 'orange' | 'gray'
+type SiteQueueTone = 'blue' | 'green' | 'orange' | 'gray'
 
-type B195QueueItem = {
+type SiteQueueItem = {
   title: string
   owner: string
   status: string
@@ -90,7 +90,7 @@ type B195QueueItem = {
   href: string
   action: string
   Icon: LucideIcon
-  tone: B195QueueTone
+  tone: SiteQueueTone
 }
 
 type SourceSeoControlItem = {
@@ -100,7 +100,7 @@ type SourceSeoControlItem = {
   detail: string
   href: string
   Icon: LucideIcon
-  tone: B195QueueTone
+  tone: SiteQueueTone
   actions: Array<{ label: string; href: string }>
 }
 
@@ -142,7 +142,7 @@ const SITE_APPS: SiteApp[] = [
   },
   {
     title: '导航管理',
-    detail: '对照 300 管理导航，盘点前台主导航、行动按钮和页脚入口。',
+    detail: '盘点前台主导航、行动按钮和页脚入口。',
     href: '/admin/site/navigation',
     Icon: Navigation,
   },
@@ -154,7 +154,7 @@ const SITE_APPS: SiteApp[] = [
   },
   {
     title: '查看 Global',
-    detail: '查看前台地图展示，本阶段不开放地图底层管理。',
+    detail: '查看前台地图展示，地图底层配置由管理员维护。',
     href: '/global',
     Icon: MapPinned,
   },
@@ -174,13 +174,13 @@ const SITE_APPS: SiteApp[] = [
   },
   {
     title: 'SEO 检查',
-    detail: '对照 300 TDK 设置，查看页面和内容详情的 SEO 覆盖情况。',
+    detail: '查看页面和内容详情的 SEO 覆盖情况。',
     href: '/admin/site/seo',
     Icon: Globe2,
   },
   {
     title: '网站信息',
-    detail: '对照 300 网站信息、三方代码和搜索引擎连接，查看当前接管边界。',
+    detail: '查看网站信息、三方代码和搜索引擎连接状态。',
     href: '/admin/site/settings',
     Icon: Settings,
   },
@@ -249,7 +249,7 @@ function getSiteSideNav({
         { key: 'settings', label: '网站信息', href: '/admin/site/settings', Icon: Settings },
         { key: 'visual', label: '编辑网站', href: VISUAL_HOME_HERO_HREF, Icon: FileText },
         { key: 'drafts', label: '页面草稿', href: '#drafts', badge: pageDraftCount, Icon: CircleDashed },
-        { key: 'b195', label: 'B195 队列', href: '#b195-queue', badge: b195AlertCount, Icon: ListChecks },
+        { key: 'priority', label: '优先处理', href: '#priority-queue', badge: b195AlertCount, Icon: ListChecks },
         { key: 'todo', label: '网站待办', href: '#todo', badge: todoCount, Icon: ListChecks },
       ],
     },
@@ -351,7 +351,7 @@ function getConfigIssueCount(): number {
   return checks.filter((ok) => !ok).length
 }
 
-function buildB195QueueItems({
+function buildSitePriorityQueueItems({
   pageDraftCount,
   uploadBytes,
   configIssues,
@@ -361,11 +361,11 @@ function buildB195QueueItems({
   uploadBytes: number
   configIssues: number
   isAdmin: boolean
-}): B195QueueItem[] {
+}): SiteQueueItem[] {
   return [
     {
       title: '页面发布复核',
-      owner: '02_content_cms_workflow / 04_frontend_visual_system',
+      owner: '内容运营',
       status: pageDraftCount > 0 ? `${pageDraftCount.toLocaleString('zh-CN')} 个草稿` : '暂无草稿阻塞',
       detail: pageDraftCount > 0
         ? '先预览页面草稿，再确认是否发布，避免运营内容直接进入前台。'
@@ -377,7 +377,7 @@ function buildB195QueueItems({
     },
     {
       title: '素材风险视图',
-      owner: '06_assets_media_pipeline',
+      owner: '素材运营',
       status: uploadBytes > STORAGE_WARNING_BYTES ? '空间使用偏高' : formatBytes(uploadBytes),
       detail: '优先看大图、缺少派生图和引用关系，再决定是否进入素材治理；本队列不执行删除。',
       href: '/admin/site/media?view=issues',
@@ -386,9 +386,9 @@ function buildB195QueueItems({
       tone: uploadBytes > STORAGE_WARNING_BYTES ? 'orange' : 'blue',
     },
     {
-      title: '转化路径诊断',
-      owner: '01_public_site_conversion / 07_growth_analytics_seo',
-      status: '只读诊断',
+      title: '转化路径复核',
+      owner: '转化分析',
+      status: '待复核',
       detail: '把首页、产品、案例、联系表单和访问路径串起来看，判断公开页是否优于 en303 的获客路径。',
       href: '/admin/site/conversion',
       action: '查看转化路径',
@@ -397,7 +397,7 @@ function buildB195QueueItems({
     },
     {
       title: 'SEO 与收录准备',
-      owner: '07_growth_analytics_seo',
+      owner: 'SEO 运营',
       status: '内容缺口优先',
       detail: '先处理已发布产品、新闻、案例的 SEO 字段缺口，再做 Search Console 提交流程。',
       href: '/admin/site/seo',
@@ -407,12 +407,12 @@ function buildB195QueueItems({
     },
     {
       title: '网站信息边界',
-      owner: '08_security_production_guard / 03_admin_operations_center',
+      owner: '网站管理员',
       status: isAdmin
         ? configIssues > 0
           ? `${configIssues.toLocaleString('zh-CN')} 个配置项`
           : '关键配置就绪'
-        : '运营只读',
+        : '状态查看',
       detail: '站点信息、三方代码和搜索连接只做状态盘点；高风险配置仍走管理员设置和代码审查。',
       href: isAdmin ? '/admin/settings' : '/admin/site/settings',
       action: isAdmin ? '查看站点设置' : '查看网站信息',
@@ -420,10 +420,10 @@ function buildB195QueueItems({
       tone: configIssues > 0 && isAdmin ? 'orange' : 'gray',
     },
     {
-      title: 'Global 保护边界',
-      owner: '08_security_production_guard',
-      status: '只读查看',
-      detail: 'Global、MapLibre、MapTiler 和 /api/map 仍为保护链路，本批次只保留前台查看入口。',
+      title: 'Global 展示入口',
+      owner: '站点安全',
+      status: '前台查看',
+      detail: 'Global 地图保持前台展示入口，底层地图配置由管理员维护。',
       href: '/global',
       action: '查看 Global',
       Icon: MapPinned,
@@ -473,8 +473,8 @@ function Hero({
     },
     {
       title: '发布边界',
-      value: '只读',
-      detail: 'Global 只开放前台查看，不开放底层地图管理',
+      value: '受保护',
+      detail: 'Global 仅开放前台查看，底层地图配置由管理员维护',
       href: '/global',
       action: '查看 Global',
       Icon: MapPinned,
@@ -487,7 +487,7 @@ function Hero({
     href: string
     action: string
     Icon: LucideIcon
-    tone: B195QueueTone
+    tone: SiteQueueTone
   }>
 
   return (
@@ -571,7 +571,7 @@ function SiteHeroMetric({
     href: string
     action: string
     Icon: LucideIcon
-    tone: B195QueueTone
+    tone: SiteQueueTone
   }
 }) {
   const Icon = metric.Icon
@@ -645,7 +645,7 @@ function SiteOperationsConsole({
     {
       title: '转化路径',
       detail: '入口、CTA、表单、线索来源和运营数据诊断',
-      metric: '只读',
+      metric: '查看',
       signal: '诊断入口',
       href: '/admin/site/conversion',
       Icon: Link2,
@@ -659,7 +659,7 @@ function SiteOperationsConsole({
       title: 'SEO 与网站信息',
       detail: 'TDK、网站信息、三方代码、搜索引擎连接和环境边界',
       metric: '检查',
-      signal: isAdmin ? `${configIssues.toLocaleString('zh-CN')} 配置项` : '运营只读',
+      signal: isAdmin ? `${configIssues.toLocaleString('zh-CN')} 配置项` : '状态查看',
       href: '/admin/site/seo',
       Icon: SearchCheck,
       tone: configIssues > 0 && isAdmin ? 'orange' : 'blue',
@@ -739,21 +739,21 @@ function SiteConsoleRowView({ row }: { row: SiteConsoleRow }) {
   )
 }
 
-function queueToneClass(tone: B195QueueTone): string {
+function queueToneClass(tone: SiteQueueTone): string {
   if (tone === 'orange') return 'border-l-[#E36F2C] bg-[#FFF7F0]'
   if (tone === 'green') return 'border-l-emerald-500 bg-emerald-50/70'
   if (tone === 'gray') return 'border-l-[#8A9EA4] bg-[#F7FAFA]'
   return 'border-l-[#1889B6] bg-white'
 }
 
-function queueIconClass(tone: B195QueueTone): string {
+function queueIconClass(tone: SiteQueueTone): string {
   if (tone === 'orange') return 'bg-[#FFF2E7] text-[#E36F2C]'
   if (tone === 'green') return 'bg-emerald-50 text-emerald-700'
   if (tone === 'gray') return 'bg-[#F0F2F2] text-[#61767D]'
   return 'bg-[#EAF6F8] text-[#1889B6]'
 }
 
-function B195PriorityQueue({
+function SitePriorityQueue({
   pageDraftCount,
   uploadBytes,
   configIssues,
@@ -764,15 +764,15 @@ function B195PriorityQueue({
   configIssues: number
   isAdmin: boolean
 }) {
-  const items = buildB195QueueItems({ pageDraftCount, uploadBytes, configIssues, isAdmin })
+  const items = buildSitePriorityQueueItems({ pageDraftCount, uploadBytes, configIssues, isAdmin })
   const alertCount = items.filter((item) => item.tone === 'orange').length
 
   return (
-    <section id="b195-queue" className="scroll-mt-24 space-y-4">
+    <section id="priority-queue" className="scroll-mt-24 space-y-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <AdminSectionTitle
-          title="B195 优先级队列"
-          detail="把本轮未完成差距收成一个运营队列：先处理阻塞信号，再进入素材、转化、SEO 和网站信息复核。"
+          title="网站优先处理"
+          detail="先处理会影响发布、素材、转化、SEO 和网站信息的事项。"
         />
         <span className={`inline-flex w-fit rounded-md px-3 py-2 text-xs font-bold ${alertCount > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
           {alertCount > 0 ? `${alertCount} 项需优先处理` : '暂无阻塞项'}
@@ -781,14 +781,14 @@ function B195PriorityQueue({
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
         {items.map((item) => (
-          <B195QueueCard key={item.title} item={item} />
+          <SiteQueueCard key={item.title} item={item} />
         ))}
       </div>
     </section>
   )
 }
 
-function B195QueueCard({ item }: { item: B195QueueItem }) {
+function SiteQueueCard({ item }: { item: SiteQueueItem }) {
   const Icon = item.Icon
 
   return (
@@ -820,10 +820,10 @@ function B195QueueCard({ item }: { item: B195QueueItem }) {
 function SourceSeoControlPanel() {
   const items: SourceSeoControlItem[] = [
     {
-      title: '来源合同总览',
-      scope: 'B277',
+      title: '来源承接总览',
+      scope: '来源',
       status: '产品 / 案例 / 新闻',
-      detail: '把公开站三条主要获客来源集中成一张总账，先核对入口、source_type、阶段线索和路径复盘是否接上。',
+      detail: '按产品、案例、新闻查看入口、线索和访问路径是否接上。',
       href: '/admin/site/conversion#source-contract-portfolio',
       Icon: Link2,
       tone: 'blue',
@@ -835,15 +835,15 @@ function SourceSeoControlPanel() {
       ],
     },
     {
-      title: 'SEO 修复闭环',
-      scope: 'B278',
+      title: 'SEO 待补处理',
+      scope: 'SEO',
       status: '内容缺口优先',
-      detail: '从 SEO 待补回到来源合同总览，避免只补标题描述却没有检查对应线索和访问路径质量。',
+      detail: '先补标题、描述和展示字段，再回看线索和访问路径质量。',
       href: '/admin/site/seo#seo-conversion-closure',
       Icon: SearchCheck,
       tone: 'orange',
       actions: [
-        { label: '修复闭环', href: '/admin/site/seo#seo-conversion-closure' },
+        { label: 'SEO 处理', href: '/admin/site/seo#seo-conversion-closure' },
         { label: 'SEO 检查', href: '/admin/site/seo' },
         { label: '访问统计', href: '/admin/status/traffic' },
       ],
@@ -868,8 +868,8 @@ function SourceSeoControlPanel() {
     <section id="source-seo-control" className="scroll-mt-24 space-y-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <AdminSectionTitle
-          title="B279 来源与 SEO 总控"
-          detail="把 B277 来源合同和 B278 SEO 修复提升到网站管理首页，运营先看来源承接，再看搜索缺口和线索队列。"
+          title="来源与 SEO 工作台"
+          detail="先看来源承接，再看搜索缺口和线索队列。"
         />
         <Link
           href="/admin/site/conversion#source-contract-portfolio"
@@ -887,8 +887,8 @@ function SourceSeoControlPanel() {
       </div>
 
       <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] px-4 py-3 text-xs leading-5 text-[#61767D]">
-        <span className="font-bold text-[#1E2C31]">处理顺序：</span>
-        内容页承接是否完整 → SEO 是否可被搜索理解 → `source_type` 线索是否进入队列 → 访问路径是否能复盘。
+        <span className="font-bold text-[#1E2C31]">运营口径：</span>
+        先补内容页，再补 SEO，再查看来源线索和访问路径。
       </div>
     </section>
   )
@@ -955,7 +955,7 @@ function PublishGrid() {
     <section className="space-y-4">
       <AdminSectionTitle
         title="发布与更新"
-        detail="对照 300 后台，把产品、项目、新闻和页面草稿的主动动作收到网站管理首页。"
+        detail="把产品、项目、新闻和页面草稿的主动动作集中到网站管理首页。"
       />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         {SITE_PUBLISH_APPS.map((app) => {
@@ -1063,7 +1063,7 @@ function TodoPanel({
     },
     {
       title: 'Global Map',
-      detail: '本阶段只查看前台，不开放底层管理',
+      detail: '前台展示正常，底层地图配置由管理员维护',
       href: '/global',
       ok: true,
     },
@@ -1219,7 +1219,7 @@ export default async function AdminSitePage() {
         />
       </div>
       <SourceSeoControlPanel />
-      <B195PriorityQueue
+      <SitePriorityQueue
         pageDraftCount={pageDraftCount}
         uploadBytes={uploadBytes}
         configIssues={configIssues}

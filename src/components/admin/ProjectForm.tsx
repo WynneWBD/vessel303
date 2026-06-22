@@ -815,7 +815,7 @@ function ProjectFormSidebar({
           <div className="flex items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-bold text-[#1E2C31]">案例运营优先级</h3>
-              <p className="mt-1 text-xs leading-5 text-[#61767D]">先补正式展示，再看 Global 入图，不改变保存规则。</p>
+              <p className="mt-1 text-xs leading-5 text-[#61767D]">先补正式展示，再核对 Global 入图和前台预览。</p>
             </div>
             <Badge className={issueCount > 0 ? 'border-[#F2C6A7] bg-[#FFF7F0] text-[#E36F2C] text-xs' : 'border-emerald-200 bg-emerald-50 text-emerald-700 text-xs'}>
               {issueCount > 0 ? `${issueCount} 项待处理` : '可复核'}

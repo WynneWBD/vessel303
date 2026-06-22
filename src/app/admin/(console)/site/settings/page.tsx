@@ -99,7 +99,7 @@ const SITE_INFO_ITEMS: InfoItem[] = [
     owner: '/contact',
     keys: ['contactUrl'],
     state: 'active',
-    detail: 'B28 后 /contact 渲染已发布联系模块，表单写入 leads；contactUrl 仅作为旧站备份入口。',
+    detail: '/contact 已使用后台发布的联系模块，表单会进入线索列表；contactUrl 作为备用入口。',
     href: '/contact',
     Icon: ExternalLink,
   },
@@ -108,7 +108,7 @@ const SITE_INFO_ITEMS: InfoItem[] = [
     owner: 'site_settings',
     keys: ['salesEmail', 'salesPhone', 'whatsapp'],
     state: 'planned',
-    detail: '后台已有字段；本轮只盘点联系入口和线索路径，不把电话、邮箱、WhatsApp 改成自由配置。',
+    detail: '后台已有字段；用于核对电话、邮箱、WhatsApp 和线索路径是否一致。',
     href: '/admin/settings',
     Icon: Link2,
   },
@@ -135,7 +135,7 @@ const SITE_INFO_ITEMS: InfoItem[] = [
     owner: 'Global / 系统维护',
     keys: ['mapProvider', 'maintenanceMode', 'maintenanceNotice'],
     state: 'hold',
-    detail: '地图底层仍归 04；维护模式会影响前台访问，不在 B5 普通网站管理任务中开放。',
+    detail: '维护模式会影响前台访问；地图服务按专项入口核对。',
     href: '/global',
     Icon: MapPinned,
   },
@@ -278,7 +278,7 @@ function getSearchItems(): SearchItem[] {
       title: 'Robots',
       status: robotsReady ? 'public/robots.txt 已存在' : '缺失',
       state: robotsReady ? 'active' : 'planned',
-      detail: '当前 robots 已禁止 /admin 与 /api/admin；本轮不开放 Robots 后台保存。',
+      detail: '当前 robots 已保护后台和接口目录，可继续核对公开站点收录范围。',
       Icon: FileCode2,
     },
     {
@@ -301,7 +301,7 @@ function getSearchItems(): SearchItem[] {
       state: googleVerifyReady ? 'partial' : 'planned',
       detail: googleVerifyReady
         ? 'URL 前缀 Meta 验证标识已配置；线上首页会输出 google-site-verification，仍需在 Search Console 完成验证并提交 sitemap。'
-        : '等待 Search Console URL 前缀 Meta 验证标识；B17 只通过环境变量配置，不把 Google token 写入代码仓库。',
+        : '等待 Search Console URL 前缀 Meta 验证标识；配置完成后首页会输出验证 meta。',
       Icon: Plug,
     },
   ]
@@ -491,14 +491,14 @@ function SearchBoundaryCard({ item }: { item: SearchItem }) {
 
 function AlignmentPanel() {
   const items = [
-    '300 把网站信息、TDK、三方代码、搜索引擎连接放在网站基础设置和营销管理里。',
-    'vessel 先做状态入口：告诉运营哪些已接管、哪些待规划、哪些必须走专项。',
-    '三方代码和搜索提交都不做粘贴保存，后续必须走代码审查和 05 线上验证。',
+    '网站信息、TDK、三方代码和搜索引擎连接集中在站点设置中查看。',
+    '运营先看接管状态：已接管项可直接进入来源页，待规划项进入后续配置。',
+    '搜索提交和三方代码按专项入口处理，避免误贴脚本影响前台。',
   ]
 
   return (
     <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-      <SectionTitle title="300 对照边界" detail="本页只读学习 300 的站点设置心智，不复制高风险保存入口。" />
+      <SectionTitle title="站点基础设置" detail="集中查看网站信息、搜索连接和三方代码的当前状态。" />
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
         {items.map((item) => (
           <div key={item} className="rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-4">
@@ -583,7 +583,7 @@ function SettingsGovernanceLedger({
                         <ArrowRight size={13} />
                       </Link>
                     ) : (
-                      <span className="text-xs font-semibold text-[#8A9EA4]">只读状态</span>
+                      <span className="text-xs font-semibold text-[#8A9EA4]">状态记录</span>
                     )}
                   </td>
                 </tr>
@@ -688,14 +688,14 @@ export default async function AdminSiteSettingsPage() {
       role={adminRole}
       email={session.user.email}
       title="网站管理"
-      description="对照 300 网站信息、三方代码和搜索引擎连接，先做只读状态盘点。"
+      description="查看网站信息、三方代码和搜索引擎连接状态。"
       sideNavGroups={sideNavGroups}
       activeItem="settings"
     >
       <AdminPageHero
-        kicker="B5-5 网站信息"
-        title="网站信息与搜索边界"
-        description="将 300 的网站信息、三方代码和搜索引擎连接拆成可接管项、待规划项和受保护项，运营先看状态，不在这里保存高风险配置。"
+        kicker="网站信息"
+        title="网站信息与搜索设置"
+        description="集中查看网站信息、三方代码和搜索引擎连接的接管状态与处理入口。"
         actions={(
           <>
             <AdminActionLink href="/admin/settings" Icon={ArrowRight} label="管理员设置" primary />
@@ -713,7 +713,7 @@ export default async function AdminSiteSettingsPage() {
           />
           <SummaryTile title="已接管项" value={activeInfoCount} detail="联系入口 / 媒体限制" tone="green" Icon={CheckCircle2} />
           <SummaryTile title="搜索待补" value={plannedSearchCount} detail="Sitemap / 验证 / 提交" tone={plannedSearchCount > 0 ? 'orange' : 'green'} Icon={SearchCheck} />
-          <SummaryTile title="三方代码" value="只读" detail="不开放粘贴保存" tone="gray" Icon={Code2} />
+          <SummaryTile title="三方代码" value="待接入" detail="按专项入口处理" tone="gray" Icon={Code2} />
         </div>
       </AdminPageHero>
 
@@ -731,7 +731,7 @@ export default async function AdminSiteSettingsPage() {
       </section>
 
       <section className="space-y-4">
-        <SectionTitle title="第三方代码与搜索边界" detail="对照 300 的搜索引擎连接和优化工具，先记录状态，不做外部提交。" />
+        <SectionTitle title="第三方代码与搜索状态" detail="记录搜索引擎连接和优化工具状态，方便运营后续处理。" />
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           {searchItems.map((item) => (
             <SearchBoundaryCard key={item.title} item={item} />

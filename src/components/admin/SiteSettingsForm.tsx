@@ -108,7 +108,7 @@ const SETTING_FIELD_META: SettingFieldMeta[] = [
     group: 'Operations',
     label: '销售邮箱',
     impact: 'ops',
-    detail: '联系展示和后续邮件通知规划字段，不改变发信规则。',
+    detail: '用于联系展示和后续邮件通知配置核对。',
   },
   {
     key: 'salesPhone',
@@ -122,14 +122,14 @@ const SETTING_FIELD_META: SettingFieldMeta[] = [
     group: 'Operations',
     label: 'WhatsApp',
     impact: 'ops',
-    detail: '联系展示字段，不自动生成或发布新外链。',
+    detail: '用于核对联系展示字段和外链展示状态。',
   },
   {
     key: 'mediaMaxUploadMb',
     group: 'Media',
     label: '媒体上传上限 MB',
     impact: 'ops',
-    detail: '影响后台上传体验，不改变已上传素材。',
+    detail: '影响后台上传体验和单次素材大小提示。',
   },
   {
     key: 'mapProvider',
@@ -265,7 +265,7 @@ function SettingsChangeLedger({
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#E36F2C]">Change Ledger</p>
           <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">保存前变更清单</h3>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-[#61767D]">
-            保存前先核对字段、原值、新值和影响等级；这里只做可视化复核，不改变保存逻辑。
+            保存前先核对字段、原值、新值和影响等级。
           </p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-semibold">
@@ -284,7 +284,7 @@ function SettingsChangeLedger({
         <div className="mt-4 space-y-3">
           {sensitiveRows.length > 0 ? (
             <div className="rounded-md border border-[#F2C6A7] bg-[#FFF7F0] px-4 py-3 text-sm leading-6 text-[#B85D21]">
-              本次包含高风险配置：维护模式、地图服务或旧站入口变更。保存前必须确认它们没有越过本轮边界。
+              本次包含高风险配置：维护模式、地图服务或旧站入口变更。保存前必须确认前台访问和联系入口不会受影响。
             </div>
           ) : null}
           <div className="overflow-x-auto rounded-md border border-[#D8E7E8]">

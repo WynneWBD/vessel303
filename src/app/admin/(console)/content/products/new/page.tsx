@@ -216,8 +216,8 @@ function NewProductPreflightPanel({
 }) {
   const items: NewProductClosureItem[] = [
     {
-      label: '产品内容闭环',
-      value: 'B233',
+      label: '产品内容',
+      value: '内容',
       detail: '创建前先看产品总览里的内容缺口、SEO 待补和路径承接。',
       href: '/admin/content/products#content-closure',
       Icon: Package,
@@ -249,7 +249,7 @@ function NewProductPreflightPanel({
     },
     {
       label: '产品路径分析',
-      value: 'B232',
+      value: '路径',
       detail: '上线后回到路径分析看产品访问、动作、表单和真实线索。',
       href: '/admin/status/traffic#product-conversion-path',
       Icon: BarChart3,
@@ -316,15 +316,15 @@ function NewProductPreflightPanel({
       <span id="new-product-backflow-preflight" className="block scroll-mt-24" aria-hidden="true" />
       <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <p className="text-xs font-bold text-[#1889B6]">B319 新建前回流预检</p>
+          <p className="text-xs font-bold text-[#1889B6]">新建前预检</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">创建产品前先确认适配、证明、搜索和询盘资料</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-            承接 B317/B318 的产品回流路径，把新建前准备项放在同一屏；这里只读提示和跳转，不新增保存、发布或价格规则。
+            把产品列表和编辑页的内容缺口带到新建前准备项，便于运营一次性补齐资料。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <AdminActionLink href="/admin/content/products/list" Icon={ListChecks} label="产品列表" />
-          <AdminActionLink href="/admin/content/products#content-closure" Icon={Package} label="产品闭环总览" />
+          <AdminActionLink href="/admin/content/products#content-closure" Icon={Package} label="产品内容总览" />
         </div>
       </div>
       <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-3">
@@ -391,7 +391,7 @@ function NewProductLeadFeedbackPrepPanel({
   const readyCount = [taxonomyReady, mediaReady, relatedReady].filter(Boolean).length
   const feedbackCards: NewProductClosureItem[] = [
     {
-      label: 'B327 单品检查',
+      label: '单品检查',
       value: '保存后',
       detail: '产品保存为草稿后，回到单品编辑页检查发布缺项、询盘交接和前台路径。',
       href: '#publish-check',
@@ -399,7 +399,7 @@ function NewProductLeadFeedbackPrepPanel({
       tone: 'neutral',
     },
     {
-      label: 'B326 内容回流',
+      label: '内容补齐',
       value: '列表队列',
       detail: '先看产品列表的内容回流优先级，把线索反馈转成 SEO、商务和资料补齐顺序。',
       href: '/admin/content/products/list#product-content-lead-feedback-desk',
@@ -407,7 +407,7 @@ function NewProductLeadFeedbackPrepPanel({
       tone: 'neutral',
     },
     {
-      label: 'B325 跟进分诊',
+      label: '跟进分诊',
       value: '线索质量',
       detail: '从产品线索质量、表单阶段和跟进断点判断新产品需要补哪些买家判断材料。',
       href: '/admin/status/leads#product-lead-quality-followup-desk',
@@ -415,7 +415,7 @@ function NewProductLeadFeedbackPrepPanel({
       tone: 'neutral',
     },
     {
-      label: 'B324 线索复盘',
+      label: '线索复盘',
       value: 'product',
       detail: '进入 product 来源线索队列，对照客户问题、CTA 来源和运营跟进状态。',
       href: '/admin/customers/leads?source_type=product#product-lead-ops-review-desk',
@@ -452,21 +452,21 @@ function NewProductLeadFeedbackPrepPanel({
   const workflow = [
     {
       label: '01 看线索反馈',
-      detail: '先读 B325/B324，确认 product 来源线索卡在跟进、表单、CTA 还是内容证明。',
+      detail: '先看跟进和线索复盘，确认产品来源线索卡在跟进、表单、CTA 还是内容证明。',
       href: '/admin/status/leads#product-lead-quality-followup-desk',
       Icon: ListChecks,
       primary: false,
     },
     {
       label: '02 定内容缺口',
-      detail: '回 B326 看现有产品的内容回流队列，把缺口转成新产品的 SEO、商务和资料清单。',
+      detail: '回产品列表看现有内容补齐队列，把缺口转成新产品的 SEO、商务和资料清单。',
       href: '/admin/content/products/list#product-content-lead-feedback-desk',
       Icon: Package,
       primary: false,
     },
     {
       label: '03 准备新建资料',
-      detail: `按 B319 先准备分类属性、媒体、详情证明和询盘交接；当前准备底座 ${readyCount}/3。`,
+      detail: `先准备分类属性、媒体、详情证明和询盘交接；当前准备底座 ${readyCount}/3。`,
       href: '#new-product-closure',
       Icon: Layers3,
       primary: readyCount < 3,
@@ -488,22 +488,22 @@ function NewProductLeadFeedbackPrepPanel({
     >
       <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <p className="text-xs font-bold text-[#E36F2C]">B328 新建产品线索反馈与内容准备</p>
+          <p className="text-xs font-bold text-[#E36F2C]">新建产品线索反馈与内容准备</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">创建前先把线索反馈转成内容准备清单</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-            把 B327 单品检查、B326 内容回流、B325 跟进分诊和 B324 产品线索复盘前置到新建产品前；本区只做只读准备路径，不保存产品、不发布产品、不更新线索。
+            把单品检查、内容补齐、跟进分诊和产品线索复盘前置到新建产品前，帮助运营判断要补哪些资料。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <AdminActionLink href="/admin/content/products/list#product-content-lead-feedback-desk" Icon={Package} label="B326 回流" />
-          <AdminActionLink href="/admin/status/leads#product-lead-quality-followup-desk" Icon={ListChecks} label="B325 分诊" />
+          <AdminActionLink href="/admin/content/products/list#product-content-lead-feedback-desk" Icon={Package} label="内容补齐" />
+          <AdminActionLink href="/admin/status/leads#product-lead-quality-followup-desk" Icon={ListChecks} label="跟进分诊" />
         </div>
       </div>
 
       <div className="grid grid-cols-1 border-b border-[#E6EEEE] bg-[#F7FAFA] md:grid-cols-4">
         <NewProductFeedbackInfoCell label="准备底座" value={`${readyCount}/3`} detail="分类属性、媒体、关联池" tone={readyCount === 3 ? 'ready' : readyCount > 0 ? 'neutral' : 'warning'} />
-        <NewProductFeedbackInfoCell label="线索来源" value="product" detail="B325/B324 只读复盘" tone="neutral" />
-        <NewProductFeedbackInfoCell label="内容回流" value="B326" detail="列表优先级队列" tone="neutral" />
+        <NewProductFeedbackInfoCell label="线索来源" value="产品来源" detail="跟进与线索复盘" tone="neutral" />
+        <NewProductFeedbackInfoCell label="内容补齐" value="队列" detail="列表优先级队列" tone="neutral" />
         <NewProductFeedbackInfoCell label="保存影响" value="草稿" detail="未保存前不会公开展示" tone="ready" />
       </div>
 
@@ -595,7 +595,7 @@ function NewProductDraftApprovalPrepPanel({
   const readyCount = [taxonomyReady, mediaReady, relatedReady].filter(Boolean).length
   const approvalCards: NewProductClosureItem[] = [
     {
-      label: 'B338 发布审批摘要',
+      label: '发布审批摘要',
       value: '表单底部',
       detail: '填写后在发布检查区核对保存状态、发布缺项、运营归属和询盘交接。',
       href: '#publish-check',
@@ -603,7 +603,7 @@ function NewProductDraftApprovalPrepPanel({
       tone: 'neutral',
     },
     {
-      label: 'B337 单品检查',
+      label: '单品检查',
       value: '保存后',
       detail: '草稿保存后进入单品编辑页，再做恢复后发布前检查和人工确认。',
       href: '#publish-check',
@@ -611,7 +611,7 @@ function NewProductDraftApprovalPrepPanel({
       tone: 'neutral',
     },
     {
-      label: 'B328 线索反馈准备',
+      label: '线索反馈准备',
       value: '已前置',
       detail: '先把 product 来源线索问题转成 SEO、商务条款、资料和关联推荐准备项。',
       href: '#new-product-lead-feedback-desk',
@@ -619,7 +619,7 @@ function NewProductDraftApprovalPrepPanel({
       tone: 'ready',
     },
     {
-      label: 'B336 草稿补齐队列',
+      label: '草稿补齐队列',
       value: '保存后',
       detail: '保存为草稿后回到产品列表，进入草稿恢复和补齐队列继续治理。',
       href: '/admin/content/products/list?status=draft#product-draft-recovery-readiness-desk',
@@ -670,10 +670,10 @@ function NewProductDraftApprovalPrepPanel({
     >
       <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <p className="text-xs font-bold text-[#E36F2C]">B339 新建产品草稿审批准备</p>
+          <p className="text-xs font-bold text-[#E36F2C]">新建产品草稿审批准备</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">保存草稿前先对齐审批、补齐和回跳路径</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-            承接 B338 发布审批摘要、B337 单品检查、B336 草稿补齐和 B328 线索反馈准备；这里只做只读路径提示，不保存产品、不发布产品、不更新线索。
+            汇总发布审批摘要、单品检查、草稿补齐和线索反馈准备，帮助运营确认保存前资料是否完整。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -685,8 +685,8 @@ function NewProductDraftApprovalPrepPanel({
       <div className="grid grid-cols-1 border-b border-[#E6EEEE] bg-[#F7FAFA] md:grid-cols-4">
         <NewProductFeedbackInfoCell label="准备通过" value={`${readyCount}/3`} detail="分类属性、媒体、关联池" tone={readyCount === 3 ? 'ready' : readyCount > 0 ? 'neutral' : 'warning'} />
         <NewProductFeedbackInfoCell label="新建状态" value="草稿" detail="保存前不公开展示" tone="ready" />
-        <NewProductFeedbackInfoCell label="审批承接" value="B338" detail="表单底部只读摘要" tone="neutral" />
-        <NewProductFeedbackInfoCell label="补齐承接" value="B336" detail="保存后回列表治理" tone="neutral" />
+        <NewProductFeedbackInfoCell label="审批摘要" value="发布检查" detail="表单底部摘要" tone="neutral" />
+        <NewProductFeedbackInfoCell label="补齐入口" value="草稿队列" detail="保存后回列表治理" tone="neutral" />
       </div>
 
       <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] lg:grid-cols-[minmax(0,1fr)_420px] lg:divide-x lg:divide-y-0">
@@ -893,7 +893,7 @@ export default async function AdminContentProductNewPage() {
     },
     {
       label: '保存会写入产品数据',
-      detail: '本页不新增自动发布规则，点击保存或发布前仍由表单处理确认。',
+      detail: '点击保存或发布前仍由表单处理确认。',
       tone: 'warning',
       href: '#publish-check',
     },

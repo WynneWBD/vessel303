@@ -100,7 +100,7 @@ function getSideNavGroups(summary: {
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', badge: summary.attributes, Icon: SlidersHorizontal },
         { key: 'marks', label: '标记管理', href: '/admin/content/products/marks', badge: summary.marks, Icon: Tags },
         { key: 'brands', label: '品牌管理', href: '/admin/content/products/brands', badge: summary.brands, Icon: Package },
-        { key: 'brand-readiness', label: '品牌承接', href: '#product-brand-readiness-desk', Icon: SearchCheck },
+        { key: 'brand-readiness', label: '品牌归属', href: '#product-brand-readiness-desk', Icon: SearchCheck },
         { key: 'filters', label: '筛选管理', href: '/admin/content/products/filters', badge: summary.filters, Icon: Filter },
         { key: 'showcases', label: '橱窗管理', href: '/admin/content/products/showcases', badge: summary.showcases, Icon: ListChecks },
         { key: 'batch-governance', label: '批量治理', href: '/admin/content/products/list#product-batch-governance', Icon: ListChecks },
@@ -178,7 +178,7 @@ export default async function AdminContentProductBrandsPage() {
           <p className="text-sm font-semibold text-[#1889B6]">产品管理 / 品牌归属</p>
           <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">品牌管理</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-            对照 300.cn 后台的品牌管理，先开放品牌维护和产品品牌归属，不做品牌删除。
+            维护品牌信息和产品品牌归属，方便运营统一品牌展示。
           </p>
         </div>
         <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-4">
@@ -235,7 +235,7 @@ function BrandGovernancePanel({ summary }: { summary: BrandSummary }) {
       value: formatNumber(summary.visibleMarks),
       detail: `当前可见筛选组 ${formatNumber(summary.visibleFilters)} 个、可见橱窗 ${formatNumber(summary.visibleShowcases)} 个；品牌归属和运营标记一起支撑重点推荐。`,
       href: '/admin/content/products/marks#mark-governance',
-      cta: '打开标记闭环',
+      cta: '打开运营标记',
       tone: summary.visibleMarks > 0 ? 'green' : 'blue',
       Icon: Tags,
     },
@@ -246,9 +246,9 @@ function BrandGovernancePanel({ summary }: { summary: BrandSummary }) {
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">品牌治理</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">品牌归属到运营归类闭环</h2>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">品牌归属与运营归类</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            品牌把产品归属、列表筛选、运营标记和橱窗推荐串成同一条内容治理路径；本区只做只读统计和入口串联，不改品牌保存逻辑。
+            品牌把产品归属、列表筛选、运营标记和橱窗推荐串成同一条内容治理路径。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -291,20 +291,20 @@ function ProductBrandReadinessPanel({ summary }: { summary: BrandSummary }) {
 
   const handoffCards: BrandGovernanceCard[] = [
     {
-      label: 'B332 标记承接',
+      label: '运营标记',
       value: formatNumber(summary.visibleMarks),
       detail: '品牌先确定产品归属，标记再补运营分层，避免同一批产品在后台被多套口径重复治理。',
       href: '/admin/content/products/marks#product-mark-readiness-desk',
-      cta: '查看标记承接',
+      cta: '查看运营标记',
       tone: summary.visibleMarks > 0 ? 'green' : 'orange',
       Icon: Tags,
     },
     {
-      label: 'B331 橱窗承接',
+      label: '橱窗推荐',
       value: formatNumber(summary.visibleShowcases),
       detail: '主推品牌下的重点产品需要能进入橱窗推荐，公开目录才有清晰的客户发现路径。',
       href: '/admin/content/products/showcases#product-showcase-readiness-desk',
-      cta: '查看橱窗承接',
+      cta: '查看橱窗推荐',
       tone: summary.visibleShowcases > 0 ? 'green' : 'orange',
       Icon: ListChecks,
     },
@@ -367,10 +367,10 @@ function ProductBrandReadinessPanel({ summary }: { summary: BrandSummary }) {
     >
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]">
         <div className="border-b border-[#E6EEEE] p-4 lg:border-b-0 lg:border-r">
-          <p className="text-xs font-bold uppercase text-[#1889B6]">B333 Brand Readiness</p>
-          <h2 className="mt-2 text-lg font-bold text-[#1E2C31]">品牌归属到公开目录推荐承接</h2>
+          <p className="text-xs font-bold uppercase text-[#1889B6]">Brand Readiness</p>
+          <h2 className="mt-2 text-lg font-bold text-[#1E2C31]">品牌归属与公开目录推荐</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-            把 B332 产品标记承接、B331 橱窗重点款、产品列表批量治理、品牌 Logo 和公开产品目录核对串成同一条只读运营路径；本区不保存品牌、不批量归属、不发布产品。
+            汇总产品标记、橱窗重点款、产品列表批量治理、品牌 Logo 和公开产品目录核对，帮助运营判断品牌是否可用于前台推荐。
           </p>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <BrandReadinessMetric
@@ -398,7 +398,7 @@ function ProductBrandReadinessPanel({ summary }: { summary: BrandSummary }) {
               tone={missingLogo > 0 ? 'orange' : 'green'}
             />
             <BrandReadinessMetric
-              label="承接得分"
+              label="准备度"
               value={`${readinessScore}/5`}
               detail={readinessScore >= 4 ? '可进入目录复核' : '先补运营底座'}
               tone={readinessScore >= 4 ? 'green' : 'orange'}

@@ -73,6 +73,18 @@ function statusClass(status: NewsCategoryStatus) {
     : 'border-zinc-200 bg-zinc-50 text-zinc-600'
 }
 
+function cleanInternalTestText(value: string | null | undefined, fallback = '—') {
+  const cleaned = value
+    ?.replace(/\bB\d{1,3}-QA-\d{6,8}-[A-Z0-9-]+/gi, '')
+    .replace(/\bB\d{1,3}-\d+\s*/gi, '')
+    .replace(/\bCodex\s+B\d{1,3}\b[\w\s.-]*/gi, '')
+    .replace(/\bB\d{1,3}\s+(?:cutover|dry-run|rehearsal|innovation|scenario|FAQ|case|product)[\w\s.-]*/gi, '')
+    .replace(/\bB\d{1,3}\b/gi, '')
+    .replace(/\bDo not delete\.?\s*/gi, '')
+    .trim()
+  return cleaned || fallback
+}
+
 export default function NewsCategoryManagerClient({
   initialCategories,
 }: {
@@ -198,7 +210,7 @@ export default function NewsCategoryManagerClient({
       <div>
         <h2 className="text-xl font-bold text-[#1E2C31]">当前分类</h2>
         <p className="mt-1 text-sm text-[#61767D]">
-          来自 news_categories 表；支持新增、编辑、排序和显示 / 隐藏，不做物理删除。
+          支持新增、编辑、排序和显示 / 隐藏，隐藏后不会进入普通分类选择。
         </p>
       </div>
 
@@ -358,10 +370,10 @@ export default function NewsCategoryManagerClient({
                 ) : (
                   <>
                     <span>
-                      <span className="block font-semibold text-[#1E2C31]">{category.title_zh}</span>
+                      <span className="block font-semibold text-[#1E2C31]">{cleanInternalTestText(category.title_zh, '未命名分类')}</span>
                       <span className="mt-1 block text-[#1889B6]">{category.slug}</span>
                     </span>
-                    <span>{category.title_en}</span>
+                    <span>{cleanInternalTestText(category.title_en, 'Untitled category')}</span>
                     <span>{category.sort_order}</span>
                     <span>{category.news_count ?? 0}</span>
                     <span>
@@ -369,7 +381,7 @@ export default function NewsCategoryManagerClient({
                         {statusLabel(category.status)}
                       </span>
                     </span>
-                    <span className="leading-5">{category.description_zh ?? '暂无说明'}</span>
+                    <span className="leading-5">{cleanInternalTestText(category.description_zh, '暂无说明')}</span>
                     <span className="flex items-center gap-2">
                       <button
                         type="button"

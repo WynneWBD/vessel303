@@ -87,7 +87,7 @@ function Hero({
           <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-[#1889B6] text-white">
             <Icon size={21} />
           </span>
-          <p className="mt-5 text-sm font-semibold text-[#1889B6]">B9 固定内容 CMS</p>
+          <p className="mt-5 text-sm font-semibold text-[#1889B6]">固定内容管理</p>
           <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">{copy.heroTitle}</h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-[#61767D]">{copy.heroDetail}</p>
         </div>

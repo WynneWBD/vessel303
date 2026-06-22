@@ -96,7 +96,7 @@ function getSideNavGroups(summary: {
         { key: 'marks', label: '标记管理', href: '/admin/content/products/marks', badge: summary.marks, Icon: Tags },
         { key: 'brands', label: '品牌管理', href: '/admin/content/products/brands', badge: summary.brands, Icon: Package },
         { key: 'filters', label: '筛选管理', href: '/admin/content/products/filters', Icon: Filter },
-        { key: 'filter-readiness', label: '筛选承接', href: '#product-filter-readiness-desk', Icon: SearchCheck },
+        { key: 'filter-readiness', label: '筛选检查', href: '#product-filter-readiness-desk', Icon: SearchCheck },
         { key: 'showcases', label: '橱窗管理', href: '/admin/content/products/showcases', badge: summary.showcases, Icon: ListChecks },
         { key: 'batch-governance', label: '批量治理', href: '/admin/content/products/list#product-batch-governance', Icon: ListChecks },
         { key: 'recycle', label: '产品回收站', href: '/admin/content/products/recycle', badge: summary.deleted, Icon: Archive },
@@ -174,7 +174,7 @@ export default async function AdminContentProductFiltersPage() {
           <p className="text-sm font-semibold text-[#1889B6]">产品管理 / 公开筛选</p>
           <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">筛选管理</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-            对照 300.cn 后台的筛选管理，先把筛选组与属性模板关联起来，为公开产品目录的多组筛选准备数据。
+            把筛选组与属性模板关联起来，为公开产品目录的多组筛选准备数据。
           </p>
         </div>
         <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-4">
@@ -221,7 +221,7 @@ function FilterGovernancePanel({ summary }: { summary: FilterSummary }) {
       value: formatNumber(summary.linkedTemplates),
       detail: `筛选组已引用 ${formatNumber(summary.linkedTemplates)} 个属性模板；属性维护仍是筛选效率的前置条件。`,
       href: '/admin/content/products/attributes#attribute-governance',
-      cta: '打开属性闭环',
+      cta: '打开属性模板',
       tone: summary.linkedTemplates > 0 ? 'green' : 'blue',
       Icon: SlidersHorizontal,
     },
@@ -241,9 +241,9 @@ function FilterGovernancePanel({ summary }: { summary: FilterSummary }) {
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">筛选治理</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">公开产品筛选闭环</h2>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">公开产品筛选</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            筛选组把分类、属性和产品列表治理串成公开目录筛选能力；本区只做只读统计和入口串联，不改筛选组保存逻辑。
+            筛选组把分类、属性和产品列表治理串成公开目录筛选能力。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -252,7 +252,7 @@ function FilterGovernancePanel({ summary }: { summary: FilterSummary }) {
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
           >
             <Tags size={13} />
-            分类闭环
+            分类检查
           </Link>
           <Link
             href="/admin/content/products/list#product-batch-governance"
@@ -282,7 +282,7 @@ function ProductFilterReadinessPanel({ summary }: { summary: FilterSummary }) {
   const readyScore = [hasVisibleFilters, hasLinkedTemplates, hasCategoryBase, hasAttributeBase, emptyFilterClear].filter(Boolean).length
   const cards: FilterGovernanceCard[] = [
     {
-      label: 'B329 属性准备',
+      label: '属性准备',
       value: formatNumber(summary.visibleAttributes),
       detail: '先确认可见属性模板和选项稳定，再把模板接入筛选组。',
       href: '/admin/content/products/attributes#attribute-filter-readiness-desk',
@@ -293,9 +293,9 @@ function ProductFilterReadinessPanel({ summary }: { summary: FilterSummary }) {
     {
       label: '分类筛选底座',
       value: formatNumber(summary.categories),
-      detail: '分类决定公开目录的入口分组，筛选组再承接属性维度。',
+      detail: '分类决定公开目录的入口分组，筛选组再补齐属性维度。',
       href: '/admin/content/products/categories#category-governance',
-      cta: '打开分类闭环',
+      cta: '打开分类检查',
       tone: hasCategoryBase ? 'green' : 'orange',
       Icon: Tags,
     },
@@ -311,7 +311,7 @@ function ProductFilterReadinessPanel({ summary }: { summary: FilterSummary }) {
     {
       label: '前台产品目录',
       value: '/products',
-      detail: '筛选组最终服务公开产品目录，先只做数据承接，不改前台筛选 UI。',
+      detail: '筛选组最终服务公开产品目录，先确认数据是否足够支撑前台筛选。',
       href: '/products',
       cta: '查看目录',
       tone: hasVisibleFilters ? 'green' : 'gray',
@@ -323,7 +323,7 @@ function ProductFilterReadinessPanel({ summary }: { summary: FilterSummary }) {
       label: '01 属性模板先稳定',
       detail: hasAttributeBase
         ? `当前可见属性模板 ${formatNumber(summary.visibleAttributes)} 个，可作为筛选组选项来源。`
-        : '还没有可见属性模板，先回 B329 属性准备补模板和选项。',
+        : '还没有可见属性模板，先回属性准备补模板和选项。',
       href: '/admin/content/products/attributes#attribute-filter-readiness-desk',
       Icon: SlidersHorizontal,
       primary: !hasAttributeBase,
@@ -363,10 +363,10 @@ function ProductFilterReadinessPanel({ summary }: { summary: FilterSummary }) {
     >
       <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B330 Filter Readiness</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">属性模板到公开目录筛选组承接</h2>
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">Filter Readiness</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">属性模板与公开目录筛选组</h2>
           <p className="mt-1 max-w-3xl text-sm leading-6 text-[#61767D]">
-            把 B329 属性准备、分类治理、筛选组关联、缺属性产品队列和前台产品目录串成同一条只读路径；本区不保存筛选组、不改属性模板、不改前台筛选 UI。
+            汇总属性准备、分类治理、筛选组关联、缺属性产品队列和前台产品目录，帮助运营判断筛选是否可用。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -375,7 +375,7 @@ function ProductFilterReadinessPanel({ summary }: { summary: FilterSummary }) {
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95D22]"
           >
             <SlidersHorizontal size={13} />
-            B329 属性
+            属性准备
           </Link>
           <Link
             href="/admin/content/products/list?view=incomplete&issue=attributes"
@@ -392,7 +392,7 @@ function ProductFilterReadinessPanel({ summary }: { summary: FilterSummary }) {
         <FilterReadinessMetric label="引用模板" value={summary.linkedTemplates} detail={`可见属性 ${formatNumber(summary.visibleAttributes)}`} tone={hasLinkedTemplates ? 'green' : 'orange'} />
         <FilterReadinessMetric label="空筛选组" value={summary.emptyFilters} detail="未关联属性模板" tone={emptyFilterClear ? 'green' : 'orange'} />
         <FilterReadinessMetric label="分类底座" value={summary.categories} detail="目录入口来源" tone={hasCategoryBase ? 'green' : 'orange'} />
-        <FilterReadinessMetric label="承接得分" value={readyScore} detail="满分 5 项" tone={readyScore >= 4 ? 'green' : 'orange'} />
+        <FilterReadinessMetric label="准备度" value={readyScore} detail="满分 5 项" tone={readyScore >= 4 ? 'green' : 'orange'} />
       </div>
 
       <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] lg:grid-cols-[minmax(0,1fr)_390px] lg:divide-x lg:divide-y-0">
@@ -404,7 +404,7 @@ function ProductFilterReadinessPanel({ summary }: { summary: FilterSummary }) {
 
         <aside className="bg-[#FBFDFD]">
           <div className="border-b border-[#E6EEEE] px-5 py-4">
-            <h3 className="text-sm font-bold text-[#1E2C31]">筛选组承接顺序</h3>
+            <h3 className="text-sm font-bold text-[#1E2C31]">筛选组检查顺序</h3>
             <p className="mt-1 text-xs leading-5 text-[#61767D]">
               先稳定属性，再关联筛选组，最后回产品列表补产品属性。
             </p>

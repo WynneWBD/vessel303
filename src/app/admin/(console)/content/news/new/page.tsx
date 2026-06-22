@@ -75,7 +75,7 @@ function NewsCreationSourcePreflightDesk({
   const items: NewsCreationPreflightItem[] = [
     {
       label: '分类治理',
-      value: 'B296',
+      value: '分类',
       detail: '创建前先确认分类体系是否可承接新闻列表筛选、归档和来源转化复盘。',
       href: '/admin/content/news/categories#news-category-source-conversion-desk',
       cta: '看分类治理',
@@ -84,7 +84,7 @@ function NewsCreationSourcePreflightDesk({
     },
     {
       label: '列表处理队列',
-      value: 'B295',
+      value: '列表',
       detail: '新建草稿保存后进入新闻列表处理队列，按内容、SEO、分类和来源线索继续复核。',
       href: '/admin/content/news/list#news-list-source-conversion-queue',
       cta: '看列表队列',
@@ -93,8 +93,8 @@ function NewsCreationSourcePreflightDesk({
     },
     {
       label: '新闻优化台',
-      value: 'B294',
-      detail: '确认新新闻不会跳过内容待补、SEO 待补和 source_type=news 的运营复盘。',
+      value: '优化',
+      detail: '确认新新闻不会跳过内容待补、SEO 待补和新闻来源复盘。',
       href: '/admin/content/news#news-source-lead-optimization-desk',
       cta: '看优化台',
       tone: 'green',
@@ -102,7 +102,7 @@ function NewsCreationSourcePreflightDesk({
     },
     {
       label: '流量分诊',
-      value: 'B293',
+      value: '流量',
       detail: '发布后用新闻访问路径和来源动作判断是否有访问无线索或动作无线索。',
       href: '/admin/status/traffic#traffic-to-lead-exception-desk',
       cta: '看流量分诊',
@@ -111,8 +111,8 @@ function NewsCreationSourcePreflightDesk({
     },
     {
       label: '来源线索处理',
-      value: 'B292',
-      detail: '新闻创建应保持 Contact source 到 source_type=news 的回看路径稳定。',
+      value: '线索',
+      detail: '新闻创建应保持 Contact 来源到新闻来源线索的回看路径稳定。',
       href: '/admin/status/leads#source-lead-quality-workdesk',
       cta: '看线索处理',
       tone: 'blue',
@@ -121,7 +121,7 @@ function NewsCreationSourcePreflightDesk({
     {
       label: '创建安全边界',
       value: '草稿',
-      detail: '保存会创建新闻草稿；本预检台不新增保存、发布、删除、恢复或线索写入能力。',
+      detail: '保存会创建新闻草稿；发布前先确认分类、Slug、正文、封面和 SEO。',
       href: '#basic',
       cta: '进入基础信息',
       tone: 'gray',
@@ -133,15 +133,15 @@ function NewsCreationSourcePreflightDesk({
     <section id="news-creation-source-preflight-desk" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="border-l-4 border-[#E36F2C] px-4 py-4">
-          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B298 NEWS CREATION SOURCE PREFLIGHT</p>
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">News Creation Source Preflight</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻创建到来源转化预检台</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把新建新闻、B296 分类治理、B295 列表处理、B294 新闻优化、B293 流量分诊和 B292 来源线索处理串成创建前预检链；先确认分类、Slug、正文、封面和 SEO，再保存草稿。本区只读，不改变新闻保存和发布逻辑。
+            把新建新闻、分类治理、列表处理、新闻优化、流量分诊和来源线索处理串成创建前预检链；先确认分类、Slug、正文、封面和 SEO，再保存草稿。
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <PrimaryAction href="/admin/content/news/categories#news-category-source-conversion-desk" Icon={Tags} label="B296 分类治理" primary />
-            <PrimaryAction href="/admin/content/news/list#news-list-source-conversion-queue" Icon={ListChecks} label="B295 列表队列" />
-            <PrimaryAction href="/admin/content/news#news-source-lead-optimization-desk" Icon={Newspaper} label="B294 优化台" />
+            <PrimaryAction href="/admin/content/news/categories#news-category-source-conversion-desk" Icon={Tags} label="分类治理" primary />
+            <PrimaryAction href="/admin/content/news/list#news-list-source-conversion-queue" Icon={ListChecks} label="列表队列" />
+            <PrimaryAction href="/admin/content/news#news-source-lead-optimization-desk" Icon={Newspaper} label="优化台" />
             <PrimaryAction href="/admin/customers/leads?source_type=news" Icon={Link2} label="新闻线索" />
           </div>
         </div>

@@ -363,7 +363,7 @@ function CaseInquiryCreationPlan() {
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#1889B6]">Case Inquiry Creation Plan</p>
           <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">创建前的案例咨询承接</h2>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-            对齐编辑页和表单侧栏的“案例咨询承接”判断：新建阶段先保证保存后能进入正确编辑路径，再补齐发布后支撑 `/cases/[id]#case-inquiry` 的内容。这里不新增保存限制。
+            对齐编辑页和表单侧栏的案例咨询判断：新建阶段先保证保存后能进入正确编辑路径，再补齐发布后支撑 `/cases/[id]#case-inquiry` 的内容。
           </p>
         </div>
         <span className="inline-flex w-fit rounded-full border border-[#F2C6A7] bg-[#FFF7F0] px-3 py-1 text-xs font-bold text-[#E36F2C]">
@@ -401,14 +401,14 @@ function CaseInquiryCreationPlan() {
             <CheckCircle2 size={14} />
             保存后
           </div>
-          <p className="mt-1 text-xs leading-5 text-[#61767D]">进入新版项目编辑页，由 B210 的只读面板继续核查已保存数据。</p>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">进入新版项目编辑页，继续核查已保存数据。</p>
         </div>
         <div className="rounded-md border border-emerald-100 bg-emerald-50/70 p-3">
           <div className="flex items-center gap-2 text-xs font-bold text-emerald-700">
             <CheckCircle2 size={14} />
             表单中
           </div>
-          <p className="mt-1 text-xs leading-5 text-[#61767D]">由 B211 的右侧摘要按当前未保存输入实时判断咨询承接。</p>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">由右侧摘要按当前未保存输入实时判断咨询入口。</p>
         </div>
         <div className="rounded-md border border-[#F2C6A7] bg-[#FFF7F0] p-3">
           <div className="flex items-center gap-2 text-xs font-bold text-[#E36F2C]">
@@ -442,7 +442,7 @@ function CaseCreationInquiryPreflightDesk({
       tone: 'blue',
     },
     {
-      label: 'B300 列表队列',
+      label: '列表队列',
       value: `${formatNumber(weakCount)} 个弱项`,
       detail: '保存后新案例会回到列表队列，按发布转化弱、内容待补和 Global 状态继续复核。',
       href: '/admin/content/projects/list#case-list-inquiry-conversion-queue',
@@ -451,7 +451,7 @@ function CaseCreationInquiryPreflightDesk({
       tone: weakCount > 0 ? 'orange' : 'green',
     },
     {
-      label: 'B301 编辑复核',
+      label: '编辑复核',
       value: '保存后进入',
       detail: '新草稿保存后进入单篇编辑页，再用询盘复核台核查素材、叙事、事实和前台路径。',
       href: '/admin/content/projects/list?view=case-conversion-weak',
@@ -471,7 +471,7 @@ function CaseCreationInquiryPreflightDesk({
     },
     {
       label: '案例线索队列',
-      value: 'source_type=case',
+      value: '案例来源',
       detail: '发布后的案例咨询表单回到客户线索台；本区只做入口串联，不写线索状态。',
       href: '/admin/customers/leads?source_type=case',
       cta: '看案例线索',
@@ -489,8 +489,8 @@ function CaseCreationInquiryPreflightDesk({
     },
     {
       label: '创建安全边界',
-      value: '只读预检',
-      detail: '预检台不新增保存、发布、删除、Global 点位、认证、价格或线索写入规则。',
+      value: '预检',
+      detail: '预检台用于保存前检查内容、发布和线索入口。',
       href: '#basic',
       cta: '进入基础信息',
       Icon: ShieldCheck,
@@ -502,13 +502,13 @@ function CaseCreationInquiryPreflightDesk({
     <section id="case-creation-inquiry-preflight-desk" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div className="border-l-4 border-[#1889B6] px-4 py-4">
-          <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">B302 CASE CREATION INQUIRY PREFLIGHT</p>
+          <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">Case Creation Inquiry Preflight</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例创建到询盘转化预检台</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把新建案例、B301 编辑复核、B300 列表队列、前台 `/cases`、`source_type=case` 线索和 30 天路径数据放到创建前同屏预检；先确认案例身份、证明素材、咨询上下文和发布影响，再保存草稿。本区只读，不改变 ProjectForm 保存和发布逻辑。
+            把新建案例、编辑复核、列表队列、前台 `/cases`、案例来源线索和 30 天路径数据放到创建前同屏预检；先确认案例身份、证明素材、咨询上下文和发布影响，再保存草稿。
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <CaseCreationPreflightAction href="/admin/content/projects/list#case-list-inquiry-conversion-queue" Icon={ListChecks} label="B300 列表队列" primary />
+            <CaseCreationPreflightAction href="/admin/content/projects/list#case-list-inquiry-conversion-queue" Icon={ListChecks} label="列表队列" primary />
             <CaseCreationPreflightAction href="/admin/content/projects#case-conversion" Icon={ClipboardCheck} label="案例承接总览" />
             <CaseCreationPreflightAction href="/admin/status/traffic#case-inquiry-path" Icon={BarChart3} label="路径分析" />
             <CaseCreationPreflightAction href="/admin/customers/leads?source_type=case" Icon={Link2} label="案例线索" />
@@ -553,7 +553,7 @@ function CaseCreationBackfillPreflightBridge({
     backfillSignals > 0
       ? {
           value: `${formatNumber(backfillSignals)} 个信号`,
-          detail: '先按 B308/B309 的补位标准检查素材、双语叙事、参数和询盘锚点，再保存新案例。',
+      detail: '先按补位标准检查素材、双语叙事、参数和询盘锚点，再保存新案例。',
           tone: 'orange',
         }
       : casePathMetric.views > 0 && casePathMetric.leads === 0
@@ -570,12 +570,12 @@ function CaseCreationBackfillPreflightBridge({
             }
           : {
               value: '按基线创建',
-              detail: '暂无明显补位或路径信号，仍按 B302 的创建预检顺序完成基础、素材、内容和发布检查。',
+              detail: '暂无明显补位或路径信号，仍按创建预检顺序完成基础、素材、内容和发布检查。',
               tone: 'blue',
             }
   const bridgeItems: CaseCreationPreflightItem[] = [
     {
-      label: 'B309 单篇复核',
+      label: '单篇复核',
       value: '保存后进入',
       detail: '新案例保存后从列表进入单篇编辑页，用补位复核桥核对前台预览、内容缺口和线索路径。',
       href: '/admin/content/projects/list?view=case-conversion-weak#case-conversion-content-backfill-desk',
@@ -584,7 +584,7 @@ function CaseCreationBackfillPreflightBridge({
       tone: 'blue',
     },
     {
-      label: 'B308 内容补位',
+      label: '内容补位',
       value: `${formatNumber(stats.contentGap)} 个待补`,
       detail: '创建前参考已有待补字段，避免新草稿缺封面、图库、双语简介、参数或标签。',
       href: '/admin/content/projects/list#case-conversion-content-backfill-desk',
@@ -593,16 +593,16 @@ function CaseCreationBackfillPreflightBridge({
       tone: stats.contentGap > 0 ? 'orange' : 'green',
     },
     {
-      label: 'B303 案例总控',
+      label: '案例内容',
       value: `${formatAnalyticsPercent(readyRate)} 可承接`,
       detail: `已发布 ${formatNumber(stats.published)}，其中 ${formatNumber(stats.caseInquiryReady)} 个达到询盘承接基线。`,
       href: '/admin/content/projects#case-content-inquiry-command-center',
-      cta: '看案例总控',
+      cta: '看案例内容',
       Icon: ClipboardCheck,
       tone: weakCount > 0 ? 'orange' : 'green',
     },
     {
-      label: 'B302 创建预检',
+      label: '创建预检',
       value: '当前页',
       detail: '回到创建预检台核查案例身份、证明素材、咨询上下文和发布影响。',
       href: '#case-creation-inquiry-preflight-desk',
@@ -621,8 +621,8 @@ function CaseCreationBackfillPreflightBridge({
     },
     {
       label: '创建边界',
-      value: '只读桥接',
-      detail: '本区只提供复核顺序和入口，不新增自动保存、发布、上传、线索状态或权限规则。',
+      value: '复核入口',
+      detail: '本区提供复核顺序和入口。',
       href: '#basic',
       cta: '进入表单',
       Icon: ShieldCheck,
@@ -660,7 +660,7 @@ function CaseCreationBackfillPreflightBridge({
     {
       label: '发布后复盘',
       value: '/cases 路径',
-      detail: '发布后再从案例列表、详情页、询盘锚点和线索来源复核转化闭环。',
+      detail: '发布后再从案例列表、详情页、询盘锚点和线索来源复核转化。',
       href: '#publish-check',
       cta: '去发布检查',
       Icon: ExternalLink,
@@ -672,16 +672,16 @@ function CaseCreationBackfillPreflightBridge({
     <section id="case-creation-backfill-preflight-bridge" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="border-l-4 border-[#E36F2C] px-4 py-4">
-          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B310 CREATION BACKFILL BRIDGE</p>
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">Creation Backfill Bridge</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例创建到补位复核预检桥</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把当前新建页和 B309 单篇复核、B308 内容补位、B303 案例总控、B302 创建预检放到同一条只读链路里；创建前先看已有案例池的补位缺口和路径表现，保存后再回到列表与单篇复核继续闭环。本区不保存、不发布、不上传、不写线索状态。
+            把当前新建页和单篇复核、内容补位、案例内容、创建预检放到同一条路径里；创建前先看已有案例池的补位缺口和路径表现，保存后再回到列表与单篇复核。
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <CaseCreationPreflightAction href="/admin/content/projects/list#case-conversion-content-backfill-desk" Icon={ListChecks} label="B308 补位队列" primary />
-            <CaseCreationPreflightAction href="/admin/content/projects#case-content-inquiry-command-center" Icon={ClipboardCheck} label="B303 案例总控" />
-            <CaseCreationPreflightAction href="/admin/content/projects/list?view=case-conversion-weak#case-conversion-content-backfill-desk" Icon={Pencil} label="B309 单篇入口" />
-            <CaseCreationPreflightAction href="#case-creation-inquiry-preflight-desk" Icon={SearchCheck} label="B302 创建预检" />
+            <CaseCreationPreflightAction href="/admin/content/projects/list#case-conversion-content-backfill-desk" Icon={ListChecks} label="补位队列" primary />
+            <CaseCreationPreflightAction href="/admin/content/projects#case-content-inquiry-command-center" Icon={ClipboardCheck} label="案例内容" />
+            <CaseCreationPreflightAction href="/admin/content/projects/list?view=case-conversion-weak#case-conversion-content-backfill-desk" Icon={Pencil} label="单篇入口" />
+            <CaseCreationPreflightAction href="#case-creation-inquiry-preflight-desk" Icon={SearchCheck} label="创建预检" />
           </div>
         </div>
         <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-4 py-4 lg:border-l lg:border-t-0">
@@ -860,7 +860,7 @@ export default async function AdminContentProjectNewPage() {
     {
       label: '咨询承接',
       value: formatNumber(getCaseInquiryWeakCount(stats)),
-      detail: '发布转化弱案例会进入 B300 列表处理队列。',
+      detail: '发布转化弱案例会进入列表处理队列。',
       tone: getCaseInquiryWeakCount(stats) > 0 ? 'warning' : 'ready',
     },
   ]
@@ -891,7 +891,7 @@ export default async function AdminContentProjectNewPage() {
     },
     {
       label: '案例咨询从创建质量开始',
-      detail: '先从 B302 预检台看案例池缺口、列表队列、线索和路径数据，再进入表单填写。',
+      detail: '先从预检台看案例池缺口、列表队列、线索和路径数据，再进入表单填写。',
       tone: 'warning',
       href: '#case-creation-inquiry-preflight-desk',
     },

@@ -283,7 +283,7 @@ function Hero({ summary }: { summary: LeadSummary }) {
     <AdminPageHero
       kicker="Lead Operations"
       title="客户线索中心"
-      description="先处理新线索，再跟进报价、成交和关闭状态；本轮只做线索运营，不扩展订单、支付或会员价格体系。"
+      description="先处理新线索，再跟进报价、成交和关闭状态；订单、支付和会员价格在对应业务模块处理。"
       actions={
         <>
           <AdminActionLink href="/admin/customers/leads?status=new" Icon={Inbox} label="处理新线索" primary />
@@ -469,7 +469,7 @@ function MemberReserveCard() {
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">会员管理</h2>
           <p className="mt-1 text-xs leading-5 text-[#61767D]">
-            基础会员管理后续开放，本轮不提供会员操作。
+            基础会员信息暂作为查看入口，会员操作请进入对应业务模块处理。
           </p>
         </div>
       </div>
@@ -537,7 +537,7 @@ export default async function AdminCustomersPage() {
       role={adminRole}
       email={session.user.email}
       title="客户与线索"
-      description="处理新线索，并查看报价、成交和关闭状态。会员、订单和支付不在本轮范围。"
+      description="处理新线索，并查看报价、成交和关闭状态。会员、订单和支付请进入对应业务模块。"
       sideNavGroups={sideNavGroups}
       activeItem="overview"
     >

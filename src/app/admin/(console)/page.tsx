@@ -517,7 +517,7 @@ function Hero({
                 </p>
                 <h1 className="mt-1 text-2xl font-bold text-[#1E2C31] md:text-3xl">运营管理控制台</h1>
                 <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-                  一屏先看站点、内容、线索和素材，再进入优先级台账；后台 2.0 不承载自由建站器能力。
+                  一屏查看站点、内容、线索和素材，先处理今日最需要跟进的事项。
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -703,7 +703,7 @@ function OperationsCommandPanel({
     },
     {
       title: '数据分析',
-      value: '只读',
+      value: '查看',
       detail: '进入访问、来源、行为、落地页和转化诊断。',
       href: '/admin/status/traffic',
       Icon: BarChart3,
@@ -711,7 +711,7 @@ function OperationsCommandPanel({
     },
     {
       title: '转化路径',
-      value: '只读',
+      value: '查看',
       detail: '查看入口、CTA、表单和线索 source 匹配。',
       href: '/admin/site/conversion#conversion-ledger',
       Icon: LayoutTemplate,
@@ -741,7 +741,7 @@ function OperationsCommandPanel({
     <section className="space-y-4">
       <AdminSectionTitle
         title="今日指挥台"
-        detail="日常先处理线索、内容缺口和素材风险；数据分析与转化路径只读诊断，不直接写业务数据。"
+        detail="日常先处理线索、内容缺口和素材风险，再查看数据分析与转化路径。"
       />
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2 2xl:grid-cols-4">
         {cards.map((card) => (
@@ -819,7 +819,7 @@ function OperationsLoopPanel({
     {
       kicker: '01 Traffic',
       title: '访问诊断',
-      metric: '只读',
+      metric: '查看',
       signal: '入口 / 路径',
       detail: '先看 30 天访问、落地页、来源和行为，不把后台统计当业务事实写回。',
       href: '/admin/status/traffic',
@@ -869,7 +869,7 @@ function OperationsLoopPanel({
   ]
 
   const guardrails = [
-    { label: 'analytics', value: '一方只读' },
+    { label: 'analytics', value: '站内数据' },
     { label: 'leads', value: 'SLA 聚合' },
     { label: 'conversion', value: 'source 对照' },
     { label: 'content', value: 'published 驱动' },
@@ -882,9 +882,9 @@ function OperationsLoopPanel({
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">
             Operations Loop
           </p>
-          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">运营闭环作战台</h2>
+          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">运营作战台</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            首页先给出从访问、转化、线索 SLA、分配跟进到内容补齐的处理顺序，减少在多个后台页面之间来回猜入口。
+            按访问、转化、线索响应、分配跟进和内容补齐查看当前运营风险。
           </p>
         </div>
         <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
@@ -1045,13 +1045,13 @@ function ControlMatrix({
     <section className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-5 shadow-sm">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[#1E2C31]">总控运营矩阵</h2>
+          <h2 className="text-xl font-bold text-[#1E2C31]">运营总览</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
             把每日运营入口压成一张表：先判断线索、内容、页面、媒体和系统边界，再进入对应后台处理。
           </p>
         </div>
         <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1889B6]">
-          台账接入 · 只读判断
+          今日口径
         </span>
       </div>
 

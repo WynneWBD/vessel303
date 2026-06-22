@@ -98,7 +98,7 @@ export default async function AdminStatusContentPage() {
     >
       <section className="space-y-5">
         <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold text-[#1889B6]">B6-2 内容统计</p>
+          <p className="text-sm font-semibold text-[#1889B6]">内容统计</p>
           <h1 className="mt-2 text-2xl font-bold text-[#1E2C31]">产品 / 项目 / 新闻内容缺口</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
             聚合现有内容表的发布、草稿、近 7 / 30 / 90 天变化和关键字段缺项。这里不编辑内容，只把运营人员带回对应管理入口。
@@ -155,7 +155,7 @@ export default async function AdminStatusContentPage() {
         </section>
 
         <section className="space-y-4">
-          <SectionTitle title="内容类型" detail="每个卡片都链接回现有后台，不新增写入动作。" />
+          <SectionTitle title="内容类型" detail="每个卡片都链接到对应管理页，方便按类型处理。" />
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
             {contentItems.map((item) => (
               <ContentPanel key={item.key} item={item} />
@@ -221,7 +221,7 @@ function ContentNextActionBoard({
     <section id="content-next-actions" className="scroll-mt-24 space-y-4">
       <SectionTitle
         title="内容下一步动作"
-        detail="把内容缺项、SEO、案例承接和发布后复验变成运营优先级；本区只读，不保存、不发布、不改生产数据。"
+        detail="按内容缺项、SEO、案例询盘和发布后复验生成运营优先级。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
@@ -295,7 +295,7 @@ function CaseInquiryHealthPanel({ health }: { health: CaseInquiryHealth }) {
     <div>
       <SectionTitle
         title="案例询盘承接健康"
-        detail="把项目案例内容质量和前台询盘承接放到内容健康页；本区只读统计，不发布、不保存、不改线索。"
+        detail="集中查看项目案例内容质量、询盘承接和前台入口状态。"
       />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
@@ -402,8 +402,8 @@ function PublicDiscoveryHealthBoard({
   return (
     <section id="public-discovery-health" className="scroll-mt-24 space-y-4">
       <SectionTitle
-        title="公开发现与来源健康总览"
-        detail="把产品、案例、新闻三条公开内容线的前台入口、内容缺项、SEO 待补和来源复盘入口集中到内容健康页；本区只读，不发布、不保存、不改线索。"
+        title="公开入口与来源健康总览"
+        detail="集中查看产品、案例、新闻的前台入口、内容缺项、SEO 待补和来源表现。"
       />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <MatrixSummary label="公开内容线" value={items.length} detail="产品、案例、新闻" />
@@ -694,7 +694,7 @@ function ContentReleaseLedger({
     <div>
       <SectionTitle
         title="内容发布处理台账"
-        detail="按 300 后台的运营心智，把内容缺项、草稿、更新覆盖和发布后复验集中成可执行队列；本页不写入、不发布、不删除。"
+        detail="把内容缺项、草稿、更新覆盖和发布后复验集中成可执行队列。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
@@ -982,7 +982,7 @@ function ContentPanel({ item }: { item: ContentMetric }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-[#1E2C31]">{item.label}</h2>
-          <p className="mt-1 text-xs text-[#61767D]">只读统计，处理动作回到原管理页。</p>
+          <p className="mt-1 text-xs text-[#61767D]">查看统计，并进入对应管理页处理。</p>
         </div>
         <Link href={item.href} className="text-sm font-semibold text-[#1889B6] hover:text-[#E36F2C]">
           进入管理

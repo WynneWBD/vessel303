@@ -439,7 +439,7 @@ function ModuleCatalogPanel({
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_320px]">
         <div>
           <p className="text-xs font-semibold text-[#2C2A28]">可新增模块候选</p>
-          <p className="mt-1 text-xs leading-5 text-[#8A8580]">本轮只开放固定模板到 Home 结构草稿；其他页面先开放字段、条目、预览和发布。</p>
+          <p className="mt-1 text-xs leading-5 text-[#8A8580]">当前可把固定模板加入 Home 结构草稿；其他页面可编辑字段、条目、预览和发布。</p>
           <div className="mt-3 space-y-2">
             {PLANNED_PAGE_MODULE_CATALOG.map((item) => {
               const template = HOME_ADDABLE_PAGE_MODULE_TEMPLATES.find((entry) => entry.templateId === item.id)
@@ -1281,7 +1281,7 @@ function buildVisualReleaseLedgerRows({
         tone = 'review'
         stage = '隐藏复核'
         signal = '模块已隐藏'
-        detail = '当前模块不显示在前台，确认这符合本轮页面运营计划。'
+        detail = '当前模块不显示在前台，请确认是否符合页面运营安排。'
       }
 
       return {
@@ -3860,7 +3860,7 @@ export default function PageVisualEditorClient({
               当前草稿包含 <strong>{currentStructureDraft?.summary.moduleCount ?? 0}</strong> 个模块，
               <strong>{currentStructureDraft?.image_refs.length ?? 0}</strong> 个图片引用。
             </p>
-            <p className="text-[#B54318]">只有 admin 可以发布结构草稿；operator 可以创建和预览，但不建议直接发布结构变更。</p>
+            <p className="text-[#B54318]">请由管理员完成结构发布；编辑人员先完成创建、预览和内容核对。</p>
           </div>
         }
         confirmLabel="确认发布结构草稿"

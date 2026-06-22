@@ -94,7 +94,7 @@ function getSideNavGroups({
         { key: 'product-list', label: '产品列表', href: '/admin/content/products/list', Icon: ListChecks },
         { key: 'drafts', label: '草稿内容', href: '/admin/content/products/list?status=draft', badge: draft, Icon: FileText },
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', badge: categories, Icon: Tags },
-        { key: 'category-readiness', label: '分类承接', href: '#product-category-readiness-desk', Icon: SearchCheck },
+        { key: 'category-readiness', label: '分类检查', href: '#product-category-readiness-desk', Icon: SearchCheck },
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },
         { key: 'brands', label: '品牌管理', href: '/admin/content/products/brands', badge: brands, Icon: Package },
         { key: 'marks', label: '标记管理', href: '/admin/content/products/marks', badge: marks, Icon: Tags },
@@ -121,7 +121,7 @@ function Hero({ summary }: { summary: CategorySummary }) {
           <p className="text-sm font-semibold text-[#1889B6]">产品管理</p>
           <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">产品分类管理</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-            对照 300.cn 后台的“分类管理”，用于给产品列表、产品表单和批量转移提供统一分类。
+            维护产品统一分类，用于产品列表、产品表单和批量转移。
           </p>
         </div>
         <Link
@@ -227,7 +227,7 @@ function CategoryGovernancePanel({ summary }: { summary: CategorySummary }) {
     {
       label: '分类覆盖',
       value: formatNumber(summary.visibleCategories),
-      detail: `可见分类承接公开产品目录和后台批量转移；当前分类绑定产品 ${formatNumber(summary.assignedProducts)} 次。`,
+      detail: `可见分类用于公开产品目录和后台批量归类；当前分类绑定产品 ${formatNumber(summary.assignedProducts)} 次。`,
       href: '#category-manager',
       cta: '维护分类',
       tone: summary.visibleCategories > 0 ? 'green' : 'orange',
@@ -256,7 +256,7 @@ function CategoryGovernancePanel({ summary }: { summary: CategorySummary }) {
       value: formatNumber(summary.published),
       detail: '分类解决目录入口，属性解决筛选维度；两者一起支撑前台产品发现效率。',
       href: '/admin/content/products/attributes#attribute-governance',
-      cta: '打开属性闭环',
+      cta: '打开属性模板',
       tone: 'blue',
       Icon: SlidersHorizontal,
     },
@@ -267,9 +267,9 @@ function CategoryGovernancePanel({ summary }: { summary: CategorySummary }) {
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">分类治理</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品分类与公开目录闭环</h2>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品分类与公开目录</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            分类先解决产品目录入口和批量归类，再和属性模板一起形成公开产品筛选基础；本区只做只读统计和入口串联，不改分类保存逻辑。
+            分类先解决产品目录入口和批量归类，再和属性模板一起形成公开产品筛选基础。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -312,29 +312,29 @@ function ProductCategoryReadinessPanel({ summary }: { summary: CategorySummary }
 
   const handoffCards: CategoryGovernanceCard[] = [
     {
-      label: 'B333 品牌承接',
+      label: '品牌归属',
       value: formatNumber(summary.visibleBrands),
       detail: '分类先决定客户从哪个目录进入，品牌再提供产品归属和信任背书。',
       href: '/admin/content/products/brands#product-brand-readiness-desk',
-      cta: '查看品牌承接',
+      cta: '查看品牌归属',
       tone: summary.visibleBrands > 0 ? 'green' : 'orange',
       Icon: Package,
     },
     {
-      label: 'B332 标记承接',
+      label: '运营标记',
       value: formatNumber(summary.visibleMarks),
       detail: '分类解决目录入口，标记补运营分层，避免推荐和内部归类使用两套口径。',
       href: '/admin/content/products/marks#product-mark-readiness-desk',
-      cta: '查看标记承接',
+      cta: '查看运营标记',
       tone: summary.visibleMarks > 0 ? 'green' : 'orange',
       Icon: Tags,
     },
     {
-      label: 'B330 筛选承接',
+      label: '筛选组',
       value: formatNumber(summary.visibleFilters),
       detail: '分类和筛选组一起决定公开产品目录的第一层导航和第二层缩小范围。',
       href: '/admin/content/products/filters#product-filter-readiness-desk',
-      cta: '查看筛选承接',
+      cta: '查看筛选组',
       tone: summary.visibleFilters > 0 ? 'green' : 'orange',
       Icon: Filter,
     },
@@ -373,7 +373,7 @@ function ProductCategoryReadinessPanel({ summary }: { summary: CategorySummary }
     },
     {
       label: '04 对齐公开筛选',
-      detail: '用筛选组承接分类后的产品发现路径，避免客户只有目录入口却无法继续缩小范围。',
+      detail: '用筛选组补齐分类后的产品发现路径，避免客户只有目录入口却无法继续缩小范围。',
       href: '/admin/content/products/filters#product-filter-readiness-desk',
       cta: '对齐筛选',
       primary: summary.visibleFilters === 0,
@@ -395,10 +395,10 @@ function ProductCategoryReadinessPanel({ summary }: { summary: CategorySummary }
     >
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]">
         <div className="border-b border-[#E6EEEE] p-4 lg:border-b-0 lg:border-r">
-          <p className="text-xs font-bold uppercase text-[#1889B6]">B334 Category Readiness</p>
-          <h2 className="mt-2 text-lg font-bold text-[#1E2C31]">分类治理到公开产品发现承接</h2>
+          <p className="text-xs font-bold uppercase text-[#1889B6]">Category Readiness</p>
+          <h2 className="mt-2 text-lg font-bold text-[#1E2C31]">分类治理与公开产品发现</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-            把 B333 品牌承接、B332 标记承接、B330 筛选承接、产品列表批量分类和公开目录核对串成同一条只读运营路径；本区不保存分类、不批量转移、不发布产品。
+            汇总品牌归属、运营标记、筛选组、产品列表批量分类和公开目录核对，帮助运营判断分类是否能支撑前台查找。
           </p>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
             <CategoryReadinessMetric
@@ -420,7 +420,7 @@ function ProductCategoryReadinessPanel({ summary }: { summary: CategorySummary }
               tone={summary.visibleEmptyCategories > 0 ? 'orange' : 'green'}
             />
             <CategoryReadinessMetric
-              label="品牌承接"
+              label="品牌归属"
               value={formatNumber(summary.visibleBrands)}
               detail={`品牌总数 ${formatNumber(summary.brands)}`}
               tone={summary.visibleBrands > 0 ? 'green' : 'orange'}
@@ -432,7 +432,7 @@ function ProductCategoryReadinessPanel({ summary }: { summary: CategorySummary }
               tone={summary.visibleMarks > 0 && summary.visibleFilters > 0 ? 'green' : 'orange'}
             />
             <CategoryReadinessMetric
-              label="承接得分"
+              label="准备度"
               value={`${readinessScore}/6`}
               detail={readinessScore >= 5 ? '可进入目录复核' : '先补治理底座'}
               tone={readinessScore >= 5 ? 'green' : 'orange'}

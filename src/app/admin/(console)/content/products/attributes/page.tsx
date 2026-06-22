@@ -149,7 +149,7 @@ export default async function AdminContentProductAttributesPage() {
               </span>
             </div>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61767D]">
-              对照 300.cn 后台产品管理的属性模板能力，先建立产品属性组和选项；本阶段不做价格、订单、权限矩阵或前台筛选 UI。
+              对照产品管理的属性模板能力，先建立产品属性组和选项；价格、订单和权限在对应业务模块处理。
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -219,7 +219,7 @@ function AttributeGovernancePanel({ summary }: { summary: AttributeSummary }) {
     {
       label: '批量治理',
       value: formatNumber(summary.products),
-      detail: '把属性模板维护接回产品列表批量治理工作台，形成“模板 - 产品 - 公开筛选”闭环。',
+      detail: '把属性模板维护接回产品列表批量治理工作台，形成“模板 - 产品 - 公开筛选”的运营路径。',
       href: '/admin/content/products/list#product-batch-governance',
       cta: '打开治理台',
       tone: 'blue',
@@ -232,9 +232,9 @@ function AttributeGovernancePanel({ summary }: { summary: AttributeSummary }) {
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">属性治理</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">属性模板与产品筛选闭环</h2>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">属性模板与产品筛选</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            属性模板先服务后台产品录入和列表筛选，再沉淀成前台产品目录的筛选基础；本区只做只读判断和入口串联，不改模板保存逻辑。
+            属性模板先服务后台产品录入和列表筛选，再沉淀成前台产品目录的筛选基础。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -272,7 +272,7 @@ function AttributeFilterReadinessPanel({ summary }: { summary: AttributeSummary 
   const readyScore = [templateReady, optionReady, hiddenRiskCount === 0].filter(Boolean).length
   const cards: GovernanceCard[] = [
     {
-      label: 'B328 新建准备',
+      label: '新建准备',
       value: `${readyScore}/3`,
       detail: '回到新建产品前的线索反馈与内容准备区，把属性模板作为创建草稿前的筛选底座。',
       href: '/admin/content/products/new#new-product-lead-feedback-desk',
@@ -294,12 +294,12 @@ function AttributeFilterReadinessPanel({ summary }: { summary: AttributeSummary 
       value: '分类',
       detail: '分类解决目录入口，属性解决筛选维度；两者一起决定新产品能否被运营快速归档。',
       href: '/admin/content/products/categories#category-governance',
-      cta: '打开分类闭环',
+      cta: '打开分类检查',
       tone: 'blue',
       Icon: Tags,
     },
     {
-      label: '筛选组承接',
+      label: '筛选组',
       value: 'filters',
       detail: '属性模板稳定后再进入筛选管理，把模板组合成公开产品目录的筛选组。',
       href: '/admin/content/products/filters',
@@ -329,7 +329,7 @@ function AttributeFilterReadinessPanel({ summary }: { summary: AttributeSummary 
     },
     {
       label: '03 回新建页填写属性',
-      detail: '新建产品时按 B328 顺序先看线索反馈，再进入产品属性区选择模板和选项。',
+      detail: '新建产品前先看线索反馈，再进入产品属性区选择模板和选项。',
       href: '/admin/content/products/new#attributes',
       Icon: Plus,
       primary: false,
@@ -351,10 +351,10 @@ function AttributeFilterReadinessPanel({ summary }: { summary: AttributeSummary 
     >
       <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B329 Attribute Readiness</p>
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">Attribute Readiness</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">属性模板到新建产品筛选准备</h2>
           <p className="mt-1 max-w-3xl text-sm leading-6 text-[#61767D]">
-            把 B328 新建产品准备、B326 内容回流、分类联动和筛选组承接放到同一张只读检查表；本区不保存模板、不改选项、不发布产品。
+            汇总新建产品准备、内容补齐、分类联动和筛选组状态，帮助运营确认模板是否可用于产品录入。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -363,7 +363,7 @@ function AttributeFilterReadinessPanel({ summary }: { summary: AttributeSummary 
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95D22]"
           >
             <Plus size={13} />
-            B328 新建准备
+            新建准备
           </Link>
           <Link
             href="/admin/content/products/list?view=incomplete&issue=attributes"

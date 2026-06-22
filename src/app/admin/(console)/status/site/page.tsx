@@ -76,7 +76,7 @@ export default async function AdminStatusSitePage() {
     >
       <section className="space-y-5">
         <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold text-[#1889B6]">B6-4 站点健康</p>
+          <p className="text-sm font-semibold text-[#1889B6]">站点健康</p>
           <h1 className="mt-2 text-2xl font-bold text-[#1E2C31]">页面草稿、SEO、媒体和配置状态</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
             第一阶段只聚合现有建站数据，不接外部流量分析，不改 sitemap / robots 生成逻辑。
@@ -230,7 +230,7 @@ function SiteReleasePreflightBridge({
       key: 'content-health',
       title: '内容健康',
       value: `${formatNumber(contentIssues)} 缺项`,
-      detail: `B288 内容健康已汇总产品、案例、新闻公开发现链路；草稿 ${formatNumber(contentDrafts)} 个。`,
+      detail: `产品、案例、新闻公开内容已汇总；草稿 ${formatNumber(contentDrafts)} 个。`,
       href: '/admin/status/content#public-discovery-health',
       actionLabel: contentIssues > 0 || contentDrafts > 0 ? '复核内容健康' : '查看内容健康',
       tone: contentIssues > 0 ? 'critical' : contentDrafts > 0 ? 'warning' : 'ready',
@@ -272,7 +272,7 @@ function SiteReleasePreflightBridge({
       value: role === 'admin' ? `${formatNumber(configIssues)} 异常` : '受限',
       detail:
         role === 'admin'
-          ? `站点设置共有 ${formatNumber(site.configChecks.length)} 项配置检查；只读展示，不暴露密钥。`
+          ? `站点设置共有 ${formatNumber(site.configChecks.length)} 项配置检查；敏感值不在页面显示。`
           : 'operator 只看运营健康，不显示发信、存储等敏感配置详情。',
       href: role === 'admin' ? '/admin/site/settings' : '/admin/status/site',
       actionLabel: role === 'admin' ? '查看站点设置' : '留在健康页',
@@ -281,7 +281,7 @@ function SiteReleasePreflightBridge({
     },
     {
       key: 'public-smoke',
-      title: '前台 smoke',
+      title: '前台复验',
       value: '8 入口',
       detail: '发布后固定复验首页、产品、案例、新闻、Contact、sitemap、robots 和后台登录保护。',
       href: '/',
@@ -295,10 +295,10 @@ function SiteReleasePreflightBridge({
     <section id="site-release-preflight-bridge" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B289 Release Preflight</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Release Check</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">站点发布前复核桥</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把 B288 内容健康、B280/B282 来源 SEO 健康、站点文件、页面草稿、敏感配置可见性和前台 smoke 入口放到同一张发布前清单；本区只读，不保存、不发布、不改 sitemap / robots，也不展示任何密钥。
+            把内容健康、来源 SEO、站点文件、页面草稿、配置状态和前台复验入口放到同一张发布前清单。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -320,7 +320,7 @@ function SiteReleasePreflightBridge({
       <div className="border-t border-[#E6EEEE] bg-white px-5 py-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <p className="text-xs leading-5 text-[#61767D]">
-            手动 smoke 固定入口：`/`、`/products`、`/cases`、`/news`、`/contact`、`/sitemap.xml`、`/robots.txt`、`/admin/login`；后台页以未登录 302 到 `/admin/login` 作为保护验证。
+            发布后固定复验入口：`/`、`/products`、`/cases`、`/news`、`/contact`、`/sitemap.xml`、`/robots.txt`、`/admin/login`。
           </p>
           <div className="flex flex-wrap gap-2">
             <BridgeLink href="/" label="首页" />
@@ -544,7 +544,7 @@ function buildSiteOperationRows(site: SiteMetrics, configIssues: number, role: A
         role === 'admin'
           ? `${formatNumber(site.configChecks.length)} 项配置检查；异常 ${formatNumber(configIssues)} 项。`
           : 'operator 可查看运营统计，不展示发信、存储等敏感配置详情。',
-      impact: configOpen ? '配置异常会影响联系入口、上传或通知等运营闭环。' : '配置详情按角色边界展示。',
+      impact: configOpen ? '配置异常会影响联系入口、上传或通知等运营流程。' : '配置详情按角色边界展示。',
       href: role === 'admin' ? '/admin/site/settings' : '/admin/site',
       actionLabel: role === 'admin' ? '站点设置' : '查看网站',
       tone: role === 'admin' ? (configOpen ? 'warning' : 'ready') : 'restricted',
@@ -554,13 +554,13 @@ function buildSiteOperationRows(site: SiteMetrics, configIssues: number, role: A
       key: 'release-smoke',
       priority: 'P2',
       stage: '上线复验',
-      title: '公开入口 smoke',
-      owner: '数据中心 / 只读复验',
+      title: '公开入口复验',
+      owner: '数据中心 / 上线复验',
       value: '人工',
       evidence: '每批发布后固定复验首页、产品、案例、新闻、Contact、sitemap、robots 和后台登录保护。',
-      impact: '本页不自动抓取外部线上状态，只把上线后复验动作纳入运营队列。',
+      impact: '上线后复验动作已纳入运营队列，便于逐项核对。',
       href: '#site-release-preflight-bridge',
-      actionLabel: '查看 smoke 清单',
+      actionLabel: '查看复验清单',
       tone: 'review',
       Icon: STATUS_ICONS.ShieldCheck,
     },
@@ -591,7 +591,7 @@ function SiteOperationLedger({ rows }: { rows: SiteOperationRow[] }) {
           </div>
           <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">站点体检处理队列</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把页面草稿、SEO、站点文件、媒体、配置和上线 smoke 放进同一张运营台账，按影响优先级处理；这里只读聚合，不保存、不发布、不改 sitemap / robots。
+            把页面草稿、SEO、站点文件、媒体、配置和上线复验放进同一张运营台账，按影响优先级处理。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -768,16 +768,16 @@ function SourceSeoReleaseBridge({ seo }: { seo: SiteMetrics['seo'] }) {
     <section id="source-seo-release-bridge" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B281 Source SEO Bridge</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Source SEO</p>
           <h2 className="mt-1 text-sm font-bold text-[#1E2C31]">来源与 SEO 接力处理</h2>
           <p className="mt-1 text-xs leading-5 text-[#61767D]">
-            从站点健康页接到 B280 数据中心健康台账，再回到内容、SEO 和来源线索队列；本区只读，不保存、不发布。
+            从站点健康页查看来源 SEO，再回到内容、SEO 和来源线索队列。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <StatusPill ok={openRows === 0} label={openRows > 0 ? `${formatNumber(openRows)} 类待补` : '来源 SEO 正常'} />
-          <BridgeLink href="/admin/status#source-seo-health" label="B280 健康台账" />
-          <BridgeLink href="/admin/site#source-seo-control" label="B279 总控" />
+          <BridgeLink href="/admin/status#source-seo-health" label="健康台账" />
+          <BridgeLink href="/admin/site#source-seo-control" label="来源工作台" />
         </div>
       </div>
 
@@ -788,7 +788,7 @@ function SourceSeoReleaseBridge({ seo }: { seo: SiteMetrics['seo'] }) {
               <Link href={row.href} className="font-bold text-[#1E2C31] hover:text-[#1889B6]">
                 {row.label}
               </Link>
-              <p className="mt-1 text-xs text-[#8A9EA4]">source_type={row.sourceType}</p>
+              <p className="mt-1 text-xs text-[#8A9EA4]">来源线索</p>
             </div>
             <div className={`text-lg font-black ${row.missing > 0 ? 'text-[#E36F2C]' : 'text-emerald-700'}`}>
               {formatNumber(row.missing)}
@@ -797,7 +797,7 @@ function SourceSeoReleaseBridge({ seo }: { seo: SiteMetrics['seo'] }) {
             <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
               <BridgeLink href={row.href} label="处理内容" />
               <BridgeLink href={row.leadHref} label="看线索" />
-              <BridgeLink href="/admin/site/seo#seo-conversion-closure" label="SEO 闭环" />
+              <BridgeLink href="/admin/site/seo#seo-conversion-closure" label="SEO 待补" />
             </div>
           </div>
         ))}

@@ -206,7 +206,7 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
         </section>
 
         <section className="space-y-4">
-          <SectionTitle title="运营诊断" detail="把 300 后台式统计结果转成可处理提示；这里只提示风险，不自动改内容或线索状态。" />
+          <SectionTitle title="运营诊断" detail="把统计结果转成可处理提示，帮助运营判断内容和线索状态。" />
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
             {insights.map((item) => (
               <InsightCard key={item.key} item={item} />
@@ -290,15 +290,15 @@ function TrafficToLeadExceptionDesk({
     <section id="traffic-to-lead-exception-desk" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">B293 Traffic To Lead Triage</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">Traffic To Lead Triage</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">流量到线索异常分诊台</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把 B292 来源线索质量处理台、B291 转化复盘和产品 / 案例 / 新闻路径访问动作放到同一屏；先找有访问无线索、有动作无线索和 SEO/内容承接缺口。
+            把来源线索质量、转化复盘和产品 / 案例 / 新闻路径访问动作放到同一屏，先找有访问无线索、有动作无线索和 SEO/内容缺口。
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <TrafficTriageAction href="/admin/status/leads#source-lead-quality-workdesk" label="B292 线索处理" />
-          <TrafficTriageAction href="/admin/site/conversion#seo-to-lead-conversion-review" label="B291 转化复盘" />
+          <TrafficTriageAction href="/admin/status/leads#source-lead-quality-workdesk" label="线索处理" />
+          <TrafficTriageAction href="/admin/site/conversion#seo-to-lead-conversion-review" label="转化复盘" />
           <TrafficTriageAction href="/admin/site/seo#seo-operations-command-bridge" label="SEO 操作台" />
         </div>
       </div>
@@ -503,11 +503,11 @@ function buildTrafficToLeadExceptionRows(
         hasActionGap
           ? `近 30 天已有 ${formatNumber(row.metric.ctaClicks)} 次路径动作但暂无线索，先查表单成功、source 参数和线索归因。`
           : hasTrafficGap
-            ? `近 30 天已有 ${formatNumber(row.metric.views)} 次访问但暂无线索，先查 CTA 位置、移动端入口和 B292 线索处理台。`
+            ? `近 30 天已有 ${formatNumber(row.metric.views)} 次访问但暂无线索，先查 CTA 位置、移动端入口和线索处理台。`
             : openQuality > 0
               ? `SEO/内容还有 ${formatNumber(openQuality)} 个待补项，先补公开承接，再观察路径动作和线索质量。`
               : row.metric.leads > 0
-                ? `已有 ${formatNumber(row.metric.leads)} 条路径线索，回到 B291/B292 复盘来源质量和后续跟进。`
+                ? `已有 ${formatNumber(row.metric.leads)} 条路径线索，回看来源质量和后续跟进。`
                 : '当前访问、动作和线索样本不足，保持路径分析、转化复盘和线索队列可下钻。'
 
       return {
@@ -566,18 +566,18 @@ function ProductPublishPathReviewHandoffDesk({
           : 'gray'
   const handoffDecision =
     pathActions > 0 && metric.leads === 0
-      ? '产品路径已有动作但暂无线索，先回产品线索队列核对 source_type=product，再回 B341 队列检查已发布产品的内容缺口。'
+      ? '产品路径已有动作但暂无线索，先回产品线索队列核对来源，再回发布队列检查已发布产品的内容缺口。'
       : metric.views > 0 && pathActions === 0
-        ? '产品路径已有访问但动作不足，先复盘公开目录、详情 CTA 和发布后筛选承接，再回 B341 队列补齐发布缺口。'
+        ? '产品路径已有访问但动作不足，先复盘公开目录、详情 CTA 和发布后筛选，再回发布队列补齐缺口。'
         : contentGaps > 0
-          ? '产品内容或 SEO 仍有缺口，先回 B341 队列和产品列表筛选缺项，再观察路径动作和线索质量。'
+          ? '产品内容或 SEO 仍有缺口，先回发布队列和产品列表筛选缺项，再观察路径动作和线索质量。'
           : metric.leads > 0
-            ? '产品路径已有线索样本，可以回到 B341 队列和转化复盘确认哪些发布内容带来有效询盘。'
+            ? '产品路径已有线索样本，可以回到发布队列和转化复盘确认哪些发布内容带来有效询盘。'
             : '产品路径样本不足，先保留发布队列、公开目录和产品线索入口，等待真实访问样本。'
   const cards: ProductPathQualityCard[] = [
     {
       key: 'queue',
-      label: 'B341 发布队列',
+      label: '发布队列',
       value: `${formatNumber(productContent.published)} 已发布`,
       detail: `产品总数 ${formatNumber(productContent.total)}，发布占比 ${formatAnalyticsPercent(publishedRate)}。`,
       href: '/admin/content/products/list#product-create-publish-queue-handoff',
@@ -618,7 +618,7 @@ function ProductPublishPathReviewHandoffDesk({
     {
       key: 'public',
       label: '公开目录复盘',
-      value: topProductPages[0] ? `${formatNumber(topProductPages[0].value)} PV` : '只读入口',
+      value: topProductPages[0] ? `${formatNumber(topProductPages[0].value)} PV` : '查看入口',
       detail: topProductPages[0] ? `最高产品页：${topProductPages[0].label}` : '公开产品目录与详情页复验入口。',
       href: '/products',
       tone: metric.views > 0 ? 'blue' : 'gray',
@@ -633,14 +633,14 @@ function ProductPublishPathReviewHandoffDesk({
     >
       <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <p className="text-xs font-bold text-[#E36F2C]">B342 Product Publish Path Review</p>
+          <p className="text-xs font-bold text-[#E36F2C]">Product Publish Path Review</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品发布后路径复盘承接</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            承接 B341 新建到发布队列，把已发布产品、公开 /products 访问、路径动作、真实线索和内容缺口放到同一块复盘面板；本区只读，不写 analytics、不改线索、不保存或发布产品。
+            汇总已发布产品、公开 /products 访问、路径动作、真实线索和内容缺口，帮助运营判断下一步处理发布内容还是线索跟进。
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <TrafficTriageAction href="/admin/content/products/list#product-create-publish-queue-handoff" label="B341 队列" primary={contentGaps > 0} />
+          <TrafficTriageAction href="/admin/content/products/list#product-create-publish-queue-handoff" label="发布队列" primary={contentGaps > 0} />
           <TrafficTriageAction href={PRODUCT_SOURCE_LEAD_QUEUE_HREF} label="产品线索" primary={metric.leads > 0} />
           <TrafficTriageAction href="/admin/site/conversion#conversion-ledger" label="转化复盘" />
         </div>
@@ -680,7 +680,7 @@ function ProductPublishPathReviewHandoffDesk({
               ))
             ) : (
               <div className="rounded-md border border-dashed border-[#D8E7E8] bg-[#FBFDFD] px-3 py-4 text-xs text-[#8A9EA4] md:col-span-3">
-                暂无产品 Top Pages 样本，保留 B341 队列、公开目录和线索入口等待访问数据。
+                暂无产品 Top Pages 样本，保留发布队列、公开目录和线索入口等待访问数据。
               </div>
             )}
           </div>
@@ -689,12 +689,12 @@ function ProductPublishPathReviewHandoffDesk({
         <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:border-l xl:border-t-0">
           <p className="text-sm font-bold text-[#1E2C31]">运营回看顺序</p>
           <div className="mt-3 space-y-2 text-xs leading-5 text-[#61767D]">
-            <StatusLine ok={contentGaps === 0} label={`先回 B341 队列：内容/SEO 缺口 ${formatNumber(contentGaps)} 项。`} />
+            <StatusLine ok={contentGaps === 0} label={`先回发布队列：内容/SEO 缺口 ${formatNumber(contentGaps)} 项。`} />
             <StatusLine ok={pathActions > 0 || metric.views === 0} label={`再看公开路径动作：${formatNumber(pathActions)} 次。`} />
             <StatusLine ok={metric.leads > 0 || pathActions === 0} label={`最后看产品线索：${formatNumber(metric.leads)} 条。`} />
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <TrafficTriageAction href="/admin/content/products/list#product-create-publish-queue-handoff" label="B341 队列" compact primary={contentGaps > 0} />
+            <TrafficTriageAction href="/admin/content/products/list#product-create-publish-queue-handoff" label="发布队列" compact primary={contentGaps > 0} />
             <TrafficTriageAction href="#product-conversion-path" label="路径分析" compact primary={needsPathReview} />
             <TrafficTriageAction href={PRODUCT_SOURCE_LEAD_QUEUE_HREF} label="产品线索" compact />
             <TrafficTriageAction href="/products" label="公开目录" compact />
@@ -755,13 +755,13 @@ function ProductPathQualityReviewDesk({
           : 'gray'
   const decision =
     actionNoLead
-      ? '产品路径已有动作但无线索，先回产品线索队列核对 source_type=product，再从 B321 SEO 生命周期和 B320 产品生命周期检查承接页。'
+      ? '产品路径已有动作但无线索，先回产品线索队列核对来源，再从 SEO 和产品内容检查页面。'
       : pathNoAction
-        ? '产品路径有访问但动作不足，先查 /products 与详情页 CTA、参数和产品适配证明，再回 B317 队列补证明链。'
+        ? '产品路径有访问但动作不足，先查 /products 与详情页 CTA、参数和产品适配证明，再回内容队列补证明链。'
         : seoMissing > 0 || contentIssues > 0
-          ? '产品路径仍有 SEO 或内容缺口，优先回 B320/B321 处理公开承接，再观察路径动作和线索质量。'
+          ? '产品路径仍有 SEO 或内容缺口，优先回 SEO 和产品内容处理公开页面，再观察路径动作和线索质量。'
           : metric.leads > 0
-            ? '产品路径已有线索样本，可以回 B320 总控复盘哪些产品带来动作、线索和后续跟进。'
+            ? '产品路径已有线索样本，可以回产品内容区复盘哪些产品带来动作、线索和后续跟进。'
             : '产品路径样本不足，保留公开入口、生命周期、SEO 和线索入口，等待真实访问样本。'
   const cards: ProductPathQualityCard[] = [
     {
@@ -776,13 +776,13 @@ function ProductPathQualityReviewDesk({
       key: 'leads',
       label: '产品线索',
       value: formatNumber(metric.leads),
-      detail: `source_type=product 动作 ${formatNumber(productSourceActions)}，转化率 ${formatAnalyticsPercent(metric.conversionRate)}。`,
+      detail: `产品来源动作 ${formatNumber(productSourceActions)}，转化率 ${formatAnalyticsPercent(metric.conversionRate)}。`,
       href: PRODUCT_SOURCE_LEAD_QUEUE_HREF,
       tone: metric.leads > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
     },
     {
       key: 'lifecycle',
-      label: 'B320 生命周期',
+      label: '产品内容',
       value: `${formatNumber(contentIssues)} 缺口`,
       detail: `产品总数 ${formatNumber(productContent.total)}，已发布 ${formatNumber(productContent.published)}。`,
       href: '/admin/content/products#product-lifecycle',
@@ -790,7 +790,7 @@ function ProductPathQualityReviewDesk({
     },
     {
       key: 'seo',
-      label: 'B321 SEO 生命周期',
+      label: '产品 SEO',
       value: `${formatNumber(seoMissing)} 项`,
       detail: '回到产品 SEO 生命周期桥，核对标题、摘要、路径和公开承接。',
       href: '/admin/site/seo#product-seo-lifecycle-bridge',
@@ -798,7 +798,7 @@ function ProductPathQualityReviewDesk({
     },
     {
       key: 'proof',
-      label: 'B317 证明回流',
+      label: '证明补齐',
       value: `${formatNumber(qualitySignals)} 信号`,
       detail: '把流量质量问题回到产品证明、媒体、详情和询盘交接队列。',
       href: '/admin/content/products/list#product-fit-proof-backflow',
@@ -807,8 +807,8 @@ function ProductPathQualityReviewDesk({
     {
       key: 'front',
       label: '前台 /products',
-      value: topProductPages[0] ? `${formatNumber(topProductPages[0].value)} PV` : '只读入口',
-      detail: topProductPages[0] ? `当前最高产品页：${topProductPages[0].label}` : '公开产品列表与详情页只读复验入口。',
+      value: topProductPages[0] ? `${formatNumber(topProductPages[0].value)} PV` : '查看入口',
+      detail: topProductPages[0] ? `当前最高产品页：${topProductPages[0].label}` : '公开产品列表与详情页复验入口。',
       href: '/products',
       tone: metric.views > 0 ? 'blue' : 'gray',
     },
@@ -818,16 +818,16 @@ function ProductPathQualityReviewDesk({
     <section id="product-path-quality-review-desk" data-product-path-quality-review="true" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B322 Product Path Quality</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Product Path Quality</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品路径到生命周期质量复盘台</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把 B321 产品 SEO 生命周期、B320 产品生命周期、B317 证明回流、前台 /products 和产品线索队列放到同一条只读复盘链路；运营用它判断问题来自访问不足、动作不足、SEO/内容承接还是线索回流。本区不写埋点、不改线索、不发布产品。
+            汇总产品 SEO、产品内容、证明补齐、前台 /products 和产品线索队列，帮助运营判断问题来自访问不足、动作不足、SEO/内容还是线索跟进。
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <TrafficTriageAction href="/admin/content/products#product-lifecycle" label="B320 生命周期" primary />
-          <TrafficTriageAction href="/admin/site/seo#product-seo-lifecycle-bridge" label="B321 SEO" />
-          <TrafficTriageAction href="/admin/content/products/list#product-fit-proof-backflow" label="B317 回流队列" primary={qualitySignals > 0} />
+          <TrafficTriageAction href="/admin/content/products#product-lifecycle" label="产品内容" primary />
+          <TrafficTriageAction href="/admin/site/seo#product-seo-lifecycle-bridge" label="产品 SEO" />
+          <TrafficTriageAction href="/admin/content/products/list#product-fit-proof-backflow" label="证明补齐" primary={qualitySignals > 0} />
         </div>
       </div>
 
@@ -865,7 +865,7 @@ function ProductPathQualityReviewDesk({
               ))
             ) : (
               <div className="rounded-md border border-dashed border-[#D8E7E8] bg-[#FBFDFD] px-3 py-4 text-xs text-[#8A9EA4] md:col-span-3">
-                暂无产品 Top Pages 样本，先保留 /products、B320 和 B321 入口等待访问数据。
+                暂无产品 Top Pages 样本，先保留 /products、产品内容和产品 SEO 入口等待访问数据。
               </div>
             )}
           </div>
@@ -875,13 +875,13 @@ function ProductPathQualityReviewDesk({
           <p className="text-sm font-bold text-[#1E2C31]">建议回看顺序</p>
           <div className="mt-3 space-y-2 text-xs leading-5 text-[#61767D]">
             <StatusLine ok={!actionNoLead} label="先看产品线索队列：确认 product 来源动作是否转成真实线索。" />
-            <StatusLine ok={contentReadyRate >= 0.8} label={`再看 B320 产品生命周期：内容可承接率 ${formatAnalyticsPercent(contentReadyRate)}。`} />
-            <StatusLine ok={seoMissing === 0} label={`最后看 B321 SEO 生命周期：待补 SEO ${formatNumber(seoMissing)} 项。`} />
+            <StatusLine ok={contentReadyRate >= 0.8} label={`再看产品内容：内容可承接率 ${formatAnalyticsPercent(contentReadyRate)}。`} />
+            <StatusLine ok={seoMissing === 0} label={`最后看产品 SEO：待补 SEO ${formatNumber(seoMissing)} 项。`} />
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <TrafficTriageAction href="/admin/content/products/list?view=incomplete&issue=seo#product-fit-proof-backflow" label="B317 队列" compact primary={qualitySignals > 0} />
-            <TrafficTriageAction href="/admin/content/products/list" label="B318 编辑" compact />
-            <TrafficTriageAction href="/admin/content/products/new#new-product-backflow-preflight" label="B319 新建" compact />
+            <TrafficTriageAction href="/admin/content/products/list?view=incomplete&issue=seo#product-fit-proof-backflow" label="证明队列" compact primary={qualitySignals > 0} />
+            <TrafficTriageAction href="/admin/content/products/list" label="产品编辑" compact />
+            <TrafficTriageAction href="/admin/content/products/new#new-product-backflow-preflight" label="新建产品" compact />
             <TrafficTriageAction href="/admin/site/conversion#product-lifecycle-conversion-bridge" label="转化复盘" compact />
           </div>
         </div>
@@ -932,13 +932,13 @@ function CasePathLeadBackflowDesk({
           : 'gray'
   const decision =
     actionGap
-      ? '案例路径已有动作但无线索，先从 B304 回流台核对 case 来源线索，再查 case:inquiry_form 和表单成功事件。'
+      ? '案例路径已有动作但无线索，先从案例线索队列核对来源，再查表单成功事件。'
       : trafficGap
         ? '案例页面已有访问但动作不足，优先复核 /cases 与详情页 CTA、移动端入口和案例证明链。'
         : contentGap && metric.views > 0
-          ? '案例路径已有访问且仍有弱案例，先回到 B300 队列补齐发布承接，再观察路径动作。'
+          ? '案例路径已有访问且仍有弱案例，先回到弱案例队列补齐发布内容，再观察路径动作。'
           : metric.leads > 0
-            ? '案例路径已有真实线索样本，继续回到 B304 线索回流台和 B303 案例总控复盘内容来源。'
+            ? '案例路径已有真实线索样本，继续回到案例线索队列和案例内容复盘来源。'
             : '案例路径样本不足，保留前台入口、路径分析和线索回流入口，等待事件样本。'
   const cards: CasePathBackflowCard[] = [
     {
@@ -963,7 +963,7 @@ function CasePathLeadBackflowDesk({
       key: 'lead',
       label: '案例线索回流',
       value: formatNumber(metric.leads),
-      detail: `路径转化率 ${formatAnalyticsPercent(metric.conversionRate)}，回到 B304 线索回流台。`,
+      detail: `路径转化率 ${formatAnalyticsPercent(metric.conversionRate)}，回到案例线索队列。`,
       href: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
       tone: metric.leads > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
     },
@@ -978,26 +978,26 @@ function CasePathLeadBackflowDesk({
   ]
   const workbenchLinks = [
     {
-      label: 'B304 线索回流',
-      detail: '按 source_type=case 回看线索与内容缺口',
+      label: '案例线索',
+      detail: '查看案例来源线索与内容缺口',
       href: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
       tone: metric.leads > 0 ? 'green' : 'blue',
     },
     {
-      label: 'B303 案例总控',
-      detail: '回到案例内容到询盘转化总控',
+      label: '案例内容',
+      detail: '回到案例内容与询盘转化',
       href: '/admin/content/projects#case-content-inquiry-command-center',
       tone: 'blue',
     },
     {
-      label: 'B300 弱案例队列',
+      label: '弱案例队列',
       detail: `当前弱案例 ${formatNumber(health.weak)}`,
       href: '/admin/content/projects/list?view=case-conversion-weak#case-list-inquiry-conversion-queue',
       tone: health.weak > 0 ? 'orange' : 'green',
     },
     {
       label: '前台案例入口',
-      detail: '只读查看公开 /cases 承接路径',
+      detail: '查看公开 /cases 访问路径',
       href: '/cases',
       tone: metric.views > 0 ? 'green' : 'gray',
     },
@@ -1012,15 +1012,15 @@ function CasePathLeadBackflowDesk({
     <section id="case-path-lead-backflow-desk" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B305 Case Path Backflow</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Case Path Review</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例路径到线索回流诊断台</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把案例路径访问、来源阶段动作、B304 案例线索回流、B303 案例总控、B300 弱案例队列和前台 /cases 串成同屏只读链路；只做诊断和下钻，不写入埋点、不改线索状态、不发布内容。
+            汇总案例路径访问、来源阶段动作、案例线索、案例内容、弱案例队列和前台 /cases，帮助运营判断内容和线索是否匹配。
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <TrafficTriageAction href="/admin/customers/leads?source_type=case#case-lead-content-backflow-desk" label="B304 回流台" primary={actionGap} />
-          <TrafficTriageAction href="/admin/content/projects#case-content-inquiry-command-center" label="B303 总控" />
+          <TrafficTriageAction href="/admin/customers/leads?source_type=case#case-lead-content-backflow-desk" label="案例线索" primary={actionGap} />
+          <TrafficTriageAction href="/admin/content/projects#case-content-inquiry-command-center" label="案例内容" />
           <TrafficTriageAction href="/cases" label="前台 /cases" />
         </div>
       </div>
@@ -1131,18 +1131,18 @@ function CaseLoopTrafficQualityReviewDesk({
           : 'gray'
   const decision =
     actionNoLead
-      ? '案例路径已有动作但无线索，先回 B304 线索回流和 B307 转化复盘核对表单成功、source_type=case 与来源阶段。'
+      ? '案例路径已有动作但无线索，先回案例线索和转化复盘核对表单成功与来源阶段。'
       : pathNoAction
-        ? '案例路径有访问但动作不足，先从 B311 闭环总控回查内容证明链，再检查 /cases 与详情页 CTA 位置。'
+        ? '案例路径有访问但动作不足，先从案例内容回查证明链，再检查 /cases 与详情页 CTA 位置。'
         : health.weak > 0 && metric.views > 0
-          ? '案例路径已有访问且仍有弱案例，先回 B308/B309 补齐内容，再继续看流量质量。'
+          ? '案例路径已有访问且仍有弱案例，先补齐案例内容，再继续看流量质量。'
           : metric.leads > 0
-            ? '案例路径已有线索样本，可以回 B311 总控复盘哪些内容带来路径动作和真实线索。'
-            : '案例路径样本不足，保留公开入口、路径分析和内容总控入口，等待真实访问样本。'
+            ? '案例路径已有线索样本，可以回案例内容区复盘哪些内容带来路径动作和真实线索。'
+            : '案例路径样本不足，保留公开入口、路径分析和内容入口，等待真实访问样本。'
   const cards: CaseLoopTrafficCard[] = [
     {
       key: 'loop',
-      label: 'B311 闭环总控',
+      label: '案例内容',
       value: `${formatNumber(qualitySignals)} 信号`,
       detail: `弱案例 ${formatNumber(health.weak)}，可承接率 ${formatAnalyticsPercent(readyRate)}。`,
       href: '/admin/content/projects#case-creation-backfill-review-loop-center',
@@ -1150,7 +1150,7 @@ function CaseLoopTrafficQualityReviewDesk({
     },
     {
       key: 'conversion',
-      label: 'B307 转化复盘',
+      label: '转化复盘',
       value: formatAnalyticsPercent(metric.conversionRate),
       detail: `路径动作 ${formatNumber(pathActions)}，真实线索 ${formatNumber(metric.leads)}。`,
       href: '/admin/site/conversion#case-followup-conversion-review-bridge',
@@ -1158,7 +1158,7 @@ function CaseLoopTrafficQualityReviewDesk({
     },
     {
       key: 'backflow',
-      label: 'B305 路径回流',
+      label: '路径分析',
       value: `${formatNumber(metric.views)} PV`,
       detail: '回到案例路径到线索回流诊断台，查看访问、动作、线索和弱案例。',
       href: '#case-path-lead-backflow-desk',
@@ -1166,15 +1166,15 @@ function CaseLoopTrafficQualityReviewDesk({
     },
     {
       key: 'leads',
-      label: 'B304 线索回流',
+      label: '案例线索',
       value: formatNumber(metric.leads),
-      detail: '只读查看 source_type=case 线索队列，不改线索状态或负责人。',
+      detail: '查看案例来源线索队列。',
       href: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
       tone: metric.leads > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
     },
     {
       key: 'content',
-      label: 'B308 内容补位',
+      label: '内容补位',
       value: `${formatNumber(health.weak)} 弱`,
       detail: '把流量质量问题回到内容补位队列和单篇复核，不在流量页改内容。',
       href: '/admin/content/projects/list#case-conversion-content-backfill-desk',
@@ -1183,8 +1183,8 @@ function CaseLoopTrafficQualityReviewDesk({
     {
       key: 'front',
       label: '前台 /cases',
-      value: topCasePages[0] ? `${formatNumber(topCasePages[0].value)} PV` : '只读入口',
-      detail: topCasePages[0] ? `当前最高案例页：${topCasePages[0].label}` : '公开案例列表与详情页只读复验入口。',
+      value: topCasePages[0] ? `${formatNumber(topCasePages[0].value)} PV` : '查看入口',
+      detail: topCasePages[0] ? `当前最高案例页：${topCasePages[0].label}` : '公开案例列表与详情页复验入口。',
       href: '/cases',
       tone: metric.views > 0 ? 'blue' : 'gray',
     },
@@ -1194,16 +1194,16 @@ function CaseLoopTrafficQualityReviewDesk({
     <section id="case-loop-traffic-quality-review-desk" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">B312 Case Loop Traffic Quality</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例闭环到流量质量复盘台</h2>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">Case Traffic Quality</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例流量质量复盘台</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把 B311 闭环总控、B307 转化复盘、B305 案例路径回流、B304 案例线索回流和前台 /cases 放到同一条只读质量链路；运营用它判断流量问题来自访问不足、动作不足、线索回流还是内容承接。本区不写埋点、不改线索、不发布内容。
+            汇总案例内容、转化复盘、案例路径、案例线索和前台 /cases，帮助运营判断流量问题来自访问不足、动作不足、线索跟进还是内容质量。
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <TrafficTriageAction href="/admin/content/projects#case-creation-backfill-review-loop-center" label="B311 闭环总控" primary />
-          <TrafficTriageAction href="/admin/site/conversion#case-followup-conversion-review-bridge" label="B307 转化复盘" />
-          <TrafficTriageAction href="/admin/customers/leads?source_type=case#case-lead-content-backflow-desk" label="B304 回流台" />
+          <TrafficTriageAction href="/admin/content/projects#case-creation-backfill-review-loop-center" label="案例内容" primary />
+          <TrafficTriageAction href="/admin/site/conversion#case-followup-conversion-review-bridge" label="转化复盘" />
+          <TrafficTriageAction href="/admin/customers/leads?source_type=case#case-lead-content-backflow-desk" label="案例线索" />
         </div>
       </div>
 
@@ -1241,7 +1241,7 @@ function CaseLoopTrafficQualityReviewDesk({
               ))
             ) : (
               <div className="rounded-md border border-dashed border-[#D8E7E8] bg-[#FBFDFD] px-3 py-4 text-xs text-[#8A9EA4] md:col-span-3">
-                暂无案例 Top Pages 样本，先保留 /cases、B305 和 B311 入口等待访问数据。
+                暂无案例 Top Pages 样本，先保留 /cases、路径分析和案例内容入口等待访问数据。
               </div>
             )}
           </div>
@@ -1593,7 +1593,7 @@ function TrafficModuleStrip({
     { title: '落地页跳出分析', value: `${formatNumber(landingPages)} 页`, href: '#landing-analysis', detail: '进入下钻' },
     { title: '访问行为分析', value: `${formatNumber(actions)} 次`, href: '#behavior-analysis', detail: '进入下钻' },
     { title: '线索转化分析', value: `${formatNumber(leads)} 条`, href: '/admin/site/conversion#conversion-ledger', detail: '进入下钻' },
-    { title: '产品路径分析', value: `${formatNumber(productPathActions)} 动作`, href: '#product-conversion-path', detail: '回连产品闭环' },
+    { title: '产品路径分析', value: `${formatNumber(productPathActions)} 动作`, href: '#product-conversion-path', detail: '回看产品内容' },
     { title: '案例询盘路径', value: `${formatNumber(casePathActions)} 动作`, href: '#case-loop-traffic-quality-review-desk', detail: `弱案例 ${formatNumber(weakCases)}` },
     { title: 'Google收录分析', value: readiness, href: '/admin/site/seo#search-console', detail: '进入下钻' },
   ]
@@ -1784,7 +1784,7 @@ function TrafficOperationsLedger({
         <div>
           <h2 className="text-lg font-bold text-[#1E2C31]">访问分析处理台账</h2>
           <p className="mt-1 text-xs leading-5 text-[#61767D]">
-            按 300 后台常用分析顺序，把访问量、趋势、落地页、行为路径、来源归因和线索转化转成可下钻清单；本页只读，不写业务数据。
+            按运营常用分析顺序，把访问量、趋势、落地页、行为路径、来源归因和线索转化转成可下钻清单。
           </p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs">
@@ -1952,7 +1952,7 @@ function buildTrafficOperationsRows(
       item: '入口到第二步留存',
       value: secondStep ? formatAnalyticsPercent(secondStep.retainedRate) : '暂无路径',
       evidence: entryStep
-        ? `入口 ${formatNumber(entryStep.visits)} 次，第二步 ${formatNumber(secondStep?.visits ?? 0)} 次；只读匿名 session / visitor 聚合。`
+        ? `入口 ${formatNumber(entryStep.visits)} 次，第二步 ${formatNumber(secondStep?.visits ?? 0)} 次；匿名 session / visitor 聚合。`
         : '暂无足够 page_view 路径样本。',
       nextAction: '看行为路径',
       href: '#behavior-analysis',
@@ -2074,7 +2074,7 @@ function TrafficDrilldownWorkbench({
           <div>
             <h2 className="text-lg font-bold text-[#1E2C31]">下钻诊断工作台</h2>
             <p className="mt-1 text-xs text-[#61767D]">
-              先选时间口径，再按页面、落地页、来源和转化路径下钻；所有入口只读跳转。
+              先选时间口径，再按页面、落地页、来源和转化路径下钻。
             </p>
           </div>
           <span className="rounded-full bg-[#EAF6F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
@@ -2281,9 +2281,9 @@ function TrafficSourceStagePanel({ analytics }: { analytics: SiteAnalyticsDashbo
     <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <h2 className="text-lg font-bold text-[#1E2C31]">B207 公开站来源阶段复盘</h2>
+          <h2 className="text-lg font-bold text-[#1E2C31]">公开站来源阶段复盘</h2>
           <p className="mt-1 text-xs text-[#61767D]">
-            按近 30 天产品与案例 CTA、联系跳转和表单成功事件聚合来源阶段；Contact 承接型来源按原入口归类，不写入业务数据。
+            按近 30 天产品与案例 CTA、联系跳转和表单成功事件聚合来源阶段；Contact 来源按原入口归类。
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -2422,7 +2422,7 @@ function NewsTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) 
     {
       label: '来源动作',
       value: formatNumber(sourceActions),
-      detail: `source_type=news 的 CTA / 联系 / 表单动作；路径动作合计 ${formatNumber(metric.ctaClicks)}。`,
+      detail: `新闻来源 CTA / 联系 / 表单动作；路径动作合计 ${formatNumber(metric.ctaClicks)}。`,
       href: NEWS_SOURCE_LEAD_QUEUE_HREF,
       tone: sourceActions > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
     },
@@ -2454,7 +2454,7 @@ function NewsTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) 
     metric.views > 0 && sourceActions === 0
       ? '新闻已有阅读样本但暂无新闻来源动作，优先复核 news:*:contact_cta 是否带到 Contact。'
       : sourceActions > 0 && metric.leads === 0
-        ? '新闻已产生来源动作但暂无真实线索，继续观察 Contact 表单提交和 source_type=news 归因。'
+        ? '新闻已产生来源动作但暂无真实线索，继续观察 Contact 表单提交和新闻来源归因。'
         : metric.leads > 0
           ? '新闻来源已有真实线索样本，可继续复盘高阅读新闻与后续产品/案例承接。'
           : '新闻来源暂无足够样本，先保持公开新闻入口和后台内容运营链路可下钻。'
@@ -2475,7 +2475,7 @@ function NewsTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) 
     },
     {
       label: '后台筛选',
-      value: 'source_type=news',
+      value: '新闻来源',
       detail: 'Contact 写入后进入新闻来源线索队列，便于运营按来源复盘。',
       href: NEWS_SOURCE_LEAD_QUEUE_HREF,
       tone: metric.leads > 0 ? 'green' as const : sourceActions > 0 ? 'orange' as const : 'blue' as const,
@@ -2496,7 +2496,7 @@ function NewsTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) 
     },
     {
       label: '新闻线索队列',
-      detail: '只看 source_type=news 的线索承接',
+      detail: '查看新闻来源线索',
       href: NEWS_SOURCE_LEAD_QUEUE_HREF,
       tone: metric.leads > 0 ? 'green' as const : sourceActions > 0 ? 'orange' as const : 'blue' as const,
     },
@@ -2531,7 +2531,7 @@ function NewsTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) 
         <div>
           <h2 className="text-lg font-bold text-[#1E2C31]">新闻来源承接分析</h2>
           <p className="mt-1 text-xs text-[#61767D]">
-            把 B250 新闻阅读路径、B251 Contact source 承接和 B252 news 来源线索归因放在同屏；本区只读，不写新闻、不写线索。
+            汇总新闻阅读路径、Contact 来源和新闻来源线索归因，帮助运营判断新闻内容是否带来咨询。
           </p>
         </div>
         <span className="rounded-full bg-[#EAF6F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
@@ -2560,9 +2560,9 @@ function NewsTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) 
       <div className="border-t border-[#E6EEEE] bg-[#FBFDFD]">
         <div className="px-5 py-4">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">News Contact Source Contract</p>
-          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">新闻 Contact 来源合同</h3>
+          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">新闻 Contact 来源</h3>
           <p className="mt-1 max-w-4xl text-xs leading-5 text-[#61767D]">
-            对齐 300 后台式“入口 - 行为 - 线索 - 处理”阅读顺序，把公开新闻访问、Contact source 和新闻线索筛选收在同一块流量面板里。
+            按“入口 - 行为 - 线索 - 处理”的阅读顺序，把公开新闻访问、Contact 来源和新闻线索筛选收在同一块流量面板里。
           </p>
         </div>
         <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] border-t border-[#E6EEEE] md:grid-cols-3 md:divide-x md:divide-y-0">
@@ -2595,7 +2595,7 @@ function NewsTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard }) 
             </span>
             <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
             <span className="mt-2 inline-flex text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
-              进入闭环
+                查看详情
             </span>
           </Link>
         ))}
@@ -2637,7 +2637,7 @@ function ProductTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard 
     },
     {
       label: 'SEO 回修',
-      value: 'B230',
+      value: 'SEO',
       detail: '从产品 SEO 待补回看路径、表单和线索承接。',
       href: '/admin/site/seo#seo-conversion-closure',
       tone: 'blue',
@@ -2658,26 +2658,26 @@ function ProductTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard 
         : '产品路径暂无访问样本，先等待事件或从前台产品入口复验。'
   const closureLinks = [
     {
-      label: 'B231 产品复盘',
+      label: '产品复盘',
       detail: '回到转化中心产品路径复盘',
       href: '/admin/site/conversion#product-lifecycle-conversion-bridge',
       tone: 'blue' as const,
     },
     {
-      label: 'B229 线索承接',
+      label: '产品线索',
       detail: '看产品路径与线索承接',
       href: '/admin/status/leads#product-lead-path-bridge',
       tone: metric.leads > 0 ? 'green' as const : metric.views > 0 ? 'orange' as const : 'gray' as const,
     },
     {
       label: '产品线索队列',
-      detail: '回到 B228 source_type=product',
+      detail: '回到产品来源线索',
       href: PRODUCT_SOURCE_LEAD_QUEUE_HREF,
       tone: metric.leads > 0 ? 'green' as const : 'blue' as const,
     },
     {
       label: '产品 SEO 待补',
-      detail: '回到 B230 SEO 修复闭环',
+      detail: '回到 SEO 待补',
       href: '/admin/content/products/list?view=incomplete&issue=seo',
       tone: metric.views > 0 && metric.leads === 0 ? 'orange' as const : 'blue' as const,
     },
@@ -2694,7 +2694,7 @@ function ProductTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard 
         <div>
           <h2 className="text-lg font-bold text-[#1E2C31]">产品路径分析</h2>
           <p className="mt-1 text-xs text-[#61767D]">
-            把产品访问、路径动作、表单成功、真实线索和 SEO 修复入口放在同屏；本区只读，不写线索、不保存产品内容。
+            汇总产品访问、路径动作、表单成功、真实线索和 SEO 待补入口，帮助运营判断产品转化问题。
           </p>
         </div>
         <span className="rounded-full bg-[#EAF6F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
@@ -2732,7 +2732,7 @@ function ProductTrafficPanel({ analytics }: { analytics: SiteAnalyticsDashboard 
             </span>
             <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
             <span className="mt-2 inline-flex text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
-              进入闭环
+              查看详情
             </span>
           </Link>
         ))}
@@ -2805,13 +2805,13 @@ function CaseInquiryTrafficPanel({
   const closureLinks = [
     {
       label: '线索承接面板',
-      detail: '看 B223 案例路径与线索承接',
+      detail: '查看案例路径与线索',
       href: '/admin/status/leads#case-lead-path-bridge',
       tone: metric.leads > 0 ? 'green' : metric.views > 0 ? 'orange' : 'gray',
     },
     {
       label: '案例线索队列',
-      detail: '回到 B222 source_type=case',
+      detail: '回到案例来源线索',
       href: CASE_SOURCE_LEAD_QUEUE_HREF,
       tone: metric.leads > 0 ? 'green' : 'blue',
     },
@@ -2840,7 +2840,7 @@ function CaseInquiryTrafficPanel({
         <div>
           <h2 className="text-lg font-bold text-[#1E2C31]">案例询盘路径分析</h2>
           <p className="mt-1 text-xs text-[#61767D]">
-            把案例访问、路径动作、表单成功、真实线索和弱案例队列放在同屏；本区只读，不写线索、不发布内容。
+            汇总案例访问、路径动作、表单成功、真实线索和弱案例队列，帮助运营判断案例转化问题。
           </p>
         </div>
         <span className="rounded-full bg-[#EAF6F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
@@ -2878,7 +2878,7 @@ function CaseInquiryTrafficPanel({
             </span>
             <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
             <span className="mt-2 inline-flex text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
-              进入闭环
+              查看详情
             </span>
           </Link>
         ))}
@@ -3100,7 +3100,7 @@ function BehaviorPathBoard({ steps }: { steps: AnalyticsBehaviorStep[] }) {
           <h3 className="text-sm font-bold text-[#1E2C31]">访问路径流</h3>
           <p className="mt-1 text-xs text-[#61767D]">按匿名 session / visitor 的前 5 次页面访问聚合，显示路径节点、节点占比和跨步留存。</p>
         </div>
-        <span className="text-xs text-[#8A9EA4]">不是表单个人信息，不保存 IP。</span>
+        <span className="text-xs text-[#8A9EA4]">仅统计访问行为，不展示个人信息。</span>
       </div>
       <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-4 md:divide-x md:divide-y-0">
         <PathSummaryCell label="入口访问" value={`${formatNumber(entryVisits)} 次`} detail={visibleSteps[0]?.label ?? '入口页面'} />

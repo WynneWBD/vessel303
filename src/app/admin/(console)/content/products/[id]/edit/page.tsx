@@ -638,7 +638,7 @@ function buildProductEditBackflowSteps(product: CatalogProductRow): ProductEditB
     {
       key: 'detail-proof',
       label: '详情证明',
-      detail: '简介、亮点和详情模块承接 B316 产品详情证明桥，补足客户提交询盘前的判断证据。',
+      detail: '简介、亮点和详情模块补足客户提交询盘前的判断证据。',
       meta: `${visibleDetailModuleCount} 个可见详情模块`,
       href: '#details',
       tone: detailIssues.length > 0 ? 'warning' : 'ready',
@@ -718,7 +718,7 @@ function buildProductRecoveryPublishSteps(product: ProductEditProduct): ProductR
       value: published ? '已公开' : '草稿',
       detail: published
         ? '已发布产品保存会影响公开页，继续按缺口复核后再改。'
-        : '从 B336 草稿队列进入后，先确认来源、状态和发布前人工检查。',
+        : '从草稿队列进入后，先确认来源、状态和发布前人工检查。',
       href: published ? routeInfo.publicHref : '#publish-check',
       tone: statusIssues.length > 0 ? 'warning' : 'ready',
       issues: statusIssues,
@@ -758,7 +758,7 @@ function buildProductRecoveryPublishSteps(product: ProductEditProduct): ProductR
       key: 'manual-publish-check',
       label: '发布前人工确认',
       value: `${releaseIssues.length} 发布缺项`,
-      detail: '最后回到表单底部发布检查，不自动保存、不自动发布、不恢复产品。',
+      detail: '最后回到表单底部发布检查，确认后再保存或发布。',
       href: '#publish-check',
       tone: releaseIssues.length > 0 || !published ? 'warning' : 'ready',
       issues: releaseIssues.slice(0, 8),
@@ -791,7 +791,7 @@ function getSideNavGroups(product: CatalogProductRow): AdminSideNavGroup[] {
       title: '产品治理',
       items: [
         { key: 'product-edit-backflow-guide', label: '回流处理', href: '#product-edit-backflow-guide', Icon: ListChecks },
-        { key: 'product-edit-closure', label: '经营闭环', href: '#product-edit-closure', Icon: BarChart3 },
+        { key: 'product-edit-closure', label: '经营复盘', href: '#product-edit-closure', Icon: BarChart3 },
         { key: 'product-edit-lead-feedback', label: '线索回流', href: '#product-edit-lead-feedback-desk', Icon: UsersRound },
         { key: 'product-recovery-publish-readiness', label: '恢复发布检查', href: '#product-recovery-publish-readiness-desk', Icon: SearchCheck },
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
@@ -895,7 +895,7 @@ function ProductPublishReadinessPanel({
           <p className="text-xs font-bold text-[#1889B6]">发布复核</p>
           <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">发布影响复核台</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-            进入长表单前先复核公开影响、素材、双语内容、分类属性、SEO、商务信息和详情模块；这里只做运营提示，不新增保存或发布限制。
+            进入长表单前先复核公开影响、素材、双语内容、分类属性、SEO、商务信息和详情模块。
           </p>
         </div>
         <div className="grid grid-cols-3 border-t border-[#D8E7E8] bg-[#F7FAFA] lg:border-l lg:border-t-0">
@@ -988,10 +988,10 @@ function ProductEditBackflowGuidePanel({ product }: { product: CatalogProductRow
     >
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-bold text-[#1889B6]">B318 回流处理指引</p>
+          <p className="text-xs font-bold text-[#1889B6]">编辑处理指引</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">从产品列表回流到单篇编辑</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-            承接 B317 的产品适配-详情证明-询盘回流队列，把当前产品拆成六个只读处理步骤；这里不新增保存、发布或线索状态规则。
+            按产品适配、详情证明和询盘交接把当前产品拆成六个处理步骤。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -1004,10 +1004,10 @@ function ProductEditBackflowGuidePanel({ product }: { product: CatalogProductRow
       </div>
 
       <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
-        <BackflowInfoCell label="完成步骤" value={`${readySteps}/${steps.length}`} detail="按当前字段只读判断" tone={warningSteps.length > 0 ? 'warning' : 'ready'} />
+        <BackflowInfoCell label="完成步骤" value={`${readySteps}/${steps.length}`} detail="按当前字段判断" tone={warningSteps.length > 0 ? 'warning' : 'ready'} />
         <BackflowInfoCell label="待处理步骤" value={`${warningSteps.length}`} detail={warningSteps.length > 0 ? warningSteps.map((step) => step.label).join('、') : '当前没有待处理步骤'} tone={warningSteps.length > 0 ? 'warning' : 'ready'} />
         <BackflowInfoCell label="公开状态" value={published ? '已发布' : '草稿'} detail={published ? routeInfo.publicHref : '发布前不会公开展示'} tone={published ? 'warning' : 'neutral'} />
-        <BackflowInfoCell label="回流来源" value="B317" detail="后台产品列表只读队列" tone="neutral" />
+        <BackflowInfoCell label="来源入口" value="产品列表" detail="后台产品列表队列" tone="neutral" />
       </div>
 
       <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-3">
@@ -1086,8 +1086,8 @@ function buildProductEditClosureEntries(product: CatalogProductRow): ProductEdit
   return [
     {
       key: 'content-closure',
-      label: '内容闭环总览',
-      value: 'B233',
+      label: '内容总览',
+      value: '内容',
       detail: '回到产品管理首页查看内容缺口、SEO 待补和路径承接。',
       href: '/admin/content/products#content-closure',
       tone: 'neutral',
@@ -1096,7 +1096,7 @@ function buildProductEditClosureEntries(product: CatalogProductRow): ProductEdit
     {
       key: 'product-path',
       label: '产品路径分析',
-      value: 'B232',
+      value: '路径',
       detail: '查看产品路径访问、动作、表单和真实线索表现。',
       href: '/admin/status/traffic#product-conversion-path',
       tone: 'neutral',
@@ -1104,9 +1104,9 @@ function buildProductEditClosureEntries(product: CatalogProductRow): ProductEdit
     },
     {
       key: 'seo-closure',
-      label: 'SEO 修复闭环',
+      label: 'SEO 待补',
       value: seoComplete ? '已补齐' : '待补',
-      detail: '从站点 SEO 中心回看产品 SEO 与转化修复闭环。',
+      detail: '从站点 SEO 中心回看产品 SEO 与转化问题。',
       href: '/admin/site/seo#seo-conversion-closure',
       tone: seoComplete ? 'ready' : 'warning',
       Icon: Sparkles,
@@ -1114,8 +1114,8 @@ function buildProductEditClosureEntries(product: CatalogProductRow): ProductEdit
     {
       key: 'product-leads',
       label: '产品线索队列',
-      value: 'B228',
-      detail: '进入 source_type=product 队列核对产品来源线索。',
+      value: '线索',
+      detail: '进入产品来源队列核对产品来源线索。',
       href: '/admin/customers/leads?source_type=product',
       tone: 'neutral',
       Icon: UsersRound,
@@ -1130,7 +1130,7 @@ function ProductEditClosurePanel({ product }: { product: CatalogProductRow }) {
   const published = product.status === 'published'
   const sourceContracts: ProductEditSourceContract[] = [
     {
-      label: '合同总览',
+      label: '来源总览',
       value: 'product:*',
       detail: '回到产品列表查看产品来源阶段的完整承接约定。',
       href: '/admin/content/products/list#product-source-contract',
@@ -1168,15 +1168,15 @@ function ProductEditClosurePanel({ product }: { product: CatalogProductRow }) {
     <section id="product-edit-closure" className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <p className="text-xs font-bold text-[#1889B6]">B234 单品经营闭环</p>
+          <p className="text-xs font-bold text-[#1889B6]">单品经营复盘</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">当前产品的内容、路径、SEO 与线索入口</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-            把单个产品编辑动作接回 B233 产品内容闭环、B232 路径分析、B230 SEO 修复和 B228 产品线索；这里只做只读导航，不新增保存、发布或线索状态规则。
+            把单个产品编辑动作接回产品内容、路径分析、SEO 待补和产品线索，方便运营判断下一步处理入口。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <AdminActionLink href="/admin/content/products/list?view=incomplete&issue=seo" Icon={Sparkles} label="SEO 待补列表" />
-          <AdminActionLink href="/admin/content/products#content-closure" Icon={Package} label="产品闭环总览" />
+          <AdminActionLink href="/admin/content/products#content-closure" Icon={Package} label="产品内容总览" />
         </div>
       </div>
 
@@ -1213,16 +1213,16 @@ function ProductEditLeadFeedbackDesk({ product }: { product: CatalogProductRow }
   ])
   const leadFeedbackDecision =
     published && releaseIssues.length > 0
-      ? `当前产品已发布且还有 ${releaseIssues.length} 个发布缺项，先处理本页缺口，再回 B326 产品内容回流队列复盘。`
+      ? `当前产品已发布且还有 ${releaseIssues.length} 个发布缺项，先处理本页缺口，再回产品内容队列复盘。`
       : leadHandoffIssues.length > 0
         ? `当前产品还有 ${leadHandoffIssues.length} 个询盘交接缺口，优先补商务口径、关联产品和买家资料链接。`
         : !published
-          ? '当前产品仍是草稿，先按 B327 检查补齐内容，再进入表单底部发布检查。'
-          : '当前产品主要字段已具备，可通过 B325/B324 观察产品线索反馈，再决定是否继续优化内容。'
+          ? '当前产品仍是草稿，先按单品检查补齐内容，再进入表单底部发布检查。'
+          : '当前产品主要字段已具备，可通过跟进和线索复盘观察产品线索反馈，再决定是否继续优化内容。'
   const feedbackCards = [
     {
       key: 'b326-content-feedback',
-      label: 'B326 内容回流',
+      label: '内容补齐',
       value: releaseIssues.length > 0 ? `${releaseIssues.length} 缺项` : '可复盘',
       detail: '回到产品列表的内容回流优先级，用当前产品 ID 定位队列。',
       href: productSearchHref,
@@ -1231,7 +1231,7 @@ function ProductEditLeadFeedbackDesk({ product }: { product: CatalogProductRow }
     },
     {
       key: 'b325-followup-triage',
-      label: 'B325 跟进分诊',
+      label: '跟进分诊',
       value: '质量复盘',
       detail: '从产品线索质量、表单阶段和跟进断点判断当前产品是否需要补内容。',
       href: '/admin/status/leads#product-lead-quality-followup-desk',
@@ -1240,16 +1240,16 @@ function ProductEditLeadFeedbackDesk({ product }: { product: CatalogProductRow }
     },
     {
       key: 'b324-lead-review',
-      label: 'B324 线索复盘',
-      value: 'product',
-      detail: '进入 product 来源线索队列，查看产品表单、详情 CTA 和卡片 CTA 反馈。',
+      label: '线索复盘',
+      value: '产品来源',
+      detail: '进入产品来源线索队列，查看产品表单、详情 CTA 和卡片 CTA 反馈。',
       href: '/admin/customers/leads?source_type=product#product-lead-ops-review-desk',
       Icon: UsersRound,
       tone: 'neutral',
     },
     {
       key: 'b323-conversion-bridge',
-      label: 'B323 转化桥',
+      label: '转化路径',
       value: published ? '已公开' : '草稿',
       detail: '把产品生命周期、转化路径和产品线索状态放到同一张复盘表。',
       href: '/admin/site/conversion#product-lifecycle-conversion-bridge',
@@ -1260,7 +1260,7 @@ function ProductEditLeadFeedbackDesk({ product }: { product: CatalogProductRow }
   const workflow = [
     {
       label: '01 看线索反馈',
-      detail: '先打开 B325/B324，确认产品来源线索是否卡在跟进、表单或 CTA 阶段。',
+      detail: '先打开跟进和线索复盘，确认产品来源线索是否卡在跟进、表单或 CTA 阶段。',
       href: '/admin/status/leads#product-lead-quality-followup-desk',
       Icon: UsersRound,
       primary: false,
@@ -1276,7 +1276,7 @@ function ProductEditLeadFeedbackDesk({ product }: { product: CatalogProductRow }
     },
     {
       label: '03 回列表复盘',
-      detail: '回到 B326 产品内容回流优先级，和同页产品一起比较处理顺序。',
+      detail: '回到产品内容补齐优先级，和同页产品一起比较处理顺序。',
       href: productSearchHref,
       Icon: Layers3,
       primary: releaseIssues.length > 0,
@@ -1299,15 +1299,15 @@ function ProductEditLeadFeedbackDesk({ product }: { product: CatalogProductRow }
     >
       <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <p className="text-xs font-bold text-[#E36F2C]">B327 单品线索回流检查</p>
+          <p className="text-xs font-bold text-[#E36F2C]">单品线索检查</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">当前产品的线索反馈、内容缺口与发布前回流</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-            把 B326 产品内容回流、B325 跟进分诊、B324 产品线索复盘和 B323 转化桥沉到当前产品；本区只做只读判断和跳转，不保存产品、不发布产品、不更新线索。
+            把产品内容补齐、跟进分诊、产品线索复盘和转化路径沉到当前产品，帮助运营判断要补哪些字段。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <AdminActionLink href={productSearchHref} Icon={Package} label="B326 回流" />
-          <AdminActionLink href="/admin/status/leads#product-lead-quality-followup-desk" Icon={ListChecks} label="B325 分诊" />
+          <AdminActionLink href={productSearchHref} Icon={Package} label="内容补齐" />
+          <AdminActionLink href="/admin/status/leads#product-lead-quality-followup-desk" Icon={ListChecks} label="跟进分诊" />
         </div>
       </div>
 
@@ -1383,36 +1383,36 @@ function ProductRecoveryPublishReadinessDesk({ product }: { product: ProductEdit
   const productDraftQueueHref = `/admin/content/products/list?search=${encodeURIComponent(product.id)}#product-draft-recovery-readiness-desk`
   const recoverySignal =
     !published && warningSteps.length > 0
-      ? `当前产品仍是草稿，发布前还有 ${warningSteps.length} 个检查组待补；先回 B336 队列确认来源，再按本页锚点补字段。`
+      ? `当前产品仍是草稿，发布前还有 ${warningSteps.length} 个检查组待补；先回草稿队列确认来源，再按本页锚点补字段。`
       : published && warningSteps.length > 0
         ? `当前产品已发布但仍有 ${warningSteps.length} 个检查组待补；保存前先处理缺口，避免直接影响公开页。`
         : published
-          ? '当前产品已发布且关键检查组已通过，可继续用 B325/B324 观察产品线索反馈。'
+          ? '当前产品已发布且关键检查组已通过，可继续用跟进和线索复盘观察产品线索反馈。'
           : '当前草稿关键检查组已通过，最后仍需在表单底部发布检查中人工确认。'
   const supportLinks = [
     {
-      label: 'B336 草稿队列',
+      label: '草稿队列',
       detail: '回到产品列表的恢复后草稿补齐队列，用当前产品 ID 定位处理上下文。',
       href: productDraftQueueHref,
       Icon: ListChecks,
       tone: !published ? 'warning' : 'neutral',
     },
     {
-      label: 'B335 恢复保护',
-      detail: '只读核对回收站恢复保护台，确认不会在本页执行恢复或永久删除。',
+      label: '恢复保护',
+      detail: '核对回收站恢复保护台，确认来源和恢复风险。',
       href: '/admin/content/products/recycle#product-recycle-protection-desk',
       Icon: AlertTriangle,
       tone: 'neutral',
     },
     {
-      label: 'B334 分类治理',
+      label: '分类治理',
       detail: '分类缺失时回到分类治理台，再回编辑页绑定分类和属性。',
       href: '/admin/content/products/categories#product-category-readiness-desk',
       Icon: Layers3,
       tone: product.category_id ? 'ready' : 'warning',
     },
     {
-      label: 'B333 / B332 运营归属',
+      label: '运营归属',
       detail: '品牌或标记缺失时先看品牌、标记治理台，保证运营分组可接管。',
       href: product.brand_id ? '/admin/content/products/marks#product-mark-readiness-desk' : '/admin/content/products/brands#product-brand-readiness-desk',
       Icon: Tags,
@@ -1434,15 +1434,15 @@ function ProductRecoveryPublishReadinessDesk({ product }: { product: ProductEdit
     >
       <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-bold text-[#E36F2C]">B337 Recovery Publish Gate</p>
+          <p className="text-xs font-bold text-[#E36F2C]">Recovery Publish Gate</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">恢复后发布前检查台</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-            把 B336 草稿补齐队列落到当前产品编辑页：只读核对来源状态、分类品牌标记、素材详情、搜索询盘和发布前人工确认；本区不保存、不发布、不恢复产品。
+            把草稿补齐队列落到当前产品编辑页：核对来源状态、分类品牌标记、素材详情、搜索询盘和发布前人工确认。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <AdminActionLink href={productDraftQueueHref} Icon={ListChecks} label="B336 队列" />
-          <AdminActionLink href="/admin/content/products/recycle#product-recycle-protection-desk" Icon={AlertTriangle} label="B335 保护" />
+          <AdminActionLink href={productDraftQueueHref} Icon={ListChecks} label="草稿队列" />
+          <AdminActionLink href="/admin/content/products/recycle#product-recycle-protection-desk" Icon={AlertTriangle} label="恢复保护" />
           {published ? (
             <AdminActionLink href={routeInfo.publicHref} Icon={CheckCircle2} label="前台预览" external />
           ) : null}
@@ -1450,7 +1450,7 @@ function ProductRecoveryPublishReadinessDesk({ product }: { product: ProductEdit
       </div>
 
       <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
-        <BackflowInfoCell label="检查通过" value={`${readySteps}/${steps.length}`} detail="按当前保存字段只读判断" tone={warningSteps.length > 0 ? 'warning' : 'ready'} />
+        <BackflowInfoCell label="检查通过" value={`${readySteps}/${steps.length}`} detail="按当前保存字段判断" tone={warningSteps.length > 0 ? 'warning' : 'ready'} />
         <BackflowInfoCell label="待处理组" value={`${warningSteps.length}`} detail={warningSteps.length > 0 ? warningSteps.map((step) => step.label).join('、') : '关键检查组已通过'} tone={warningSteps.length > 0 ? 'warning' : 'ready'} />
         <BackflowInfoCell label="品牌 / 标记" value={`${product.brand_id ? 1 : 0}/${product.mark_ids.length}`} detail="品牌绑定 / 运营标记数量" tone={product.brand_id && product.mark_ids.length > 0 ? 'ready' : 'warning'} />
         <BackflowInfoCell label="橱窗归属" value={`${product.showcase_ids.length}`} detail="当前产品所在推荐橱窗数量" tone={product.showcase_ids.length > 0 ? 'ready' : 'neutral'} />
@@ -1474,7 +1474,7 @@ function ProductRecoveryPublishReadinessDesk({ product }: { product: ProductEdit
                     <step.Icon size={18} />
                   </span>
                   <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${readinessToneClass(step.tone)}`}>
-                    {step.tone === 'warning' ? '待处理' : step.tone === 'ready' ? '已具备' : '只读'}
+                    {step.tone === 'warning' ? '待处理' : step.tone === 'ready' ? '已具备' : '查看'}
                   </span>
                 </span>
                 <h3 className="mt-4 text-sm font-bold text-[#1E2C31]">{step.label}</h3>
@@ -1548,10 +1548,10 @@ function ProductEditSourceContractStrip({ contracts }: { contracts: ProductEditS
       <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1889B6]">Source Contract</p>
-          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">当前产品来源承接合同</h3>
+          <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">当前产品来源线索</h3>
         </div>
         <p className="max-w-3xl text-xs leading-5 text-[#61767D]">
-          对齐公开产品页的 Learn More / Appointment 路径，把单品编辑、公开详情、产品询盘和 source_type=product 线索队列放到同一条只读运营路径。
+          对齐公开产品页的 Learn More / Appointment 路径，把单品编辑、公开详情、产品询盘和产品来源线索队列放到同一条运营路径。
         </p>
       </div>
       <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
@@ -1592,7 +1592,7 @@ function ProductEditClosureCard({ entry }: { entry: ProductEditClosureEntry }) {
           <entry.Icon size={18} />
         </span>
         <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${readinessToneClass(entry.tone)}`}>
-          {entry.tone === 'warning' ? '待处理' : entry.tone === 'ready' ? '已完成' : '只读入口'}
+          {entry.tone === 'warning' ? '待处理' : entry.tone === 'ready' ? '已完成' : '查看入口'}
         </span>
       </div>
       <p className="mt-4 text-sm font-semibold text-[#61767D]">{entry.label}</p>

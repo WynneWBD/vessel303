@@ -295,7 +295,7 @@ function buildNavigationPriorityItems(modules: PageModuleRow[], contract?: Gover
   if (contract?.issues.length) {
     items.push({
       key: 'contract',
-      title: '内容合同质检',
+      title: '内容来源质检',
       detail: contract.issues.slice(0, 2).join(' / '),
       href: '/admin/site/pages#content-source-route-tree',
       score: 120,
@@ -359,17 +359,17 @@ function NavigationOperationsMatrix({
         <div>
           <h2 className="text-xl font-bold text-[#1E2C31]">导航运营矩阵</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            先看 Contact 闭环、内部链接、页脚模块和草稿风险，再进入固定模块编辑。
+            先看联系入口、内部链接、页脚模块和草稿风险，再进入固定模块编辑。
           </p>
         </div>
         <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1889B6]">
-          固定字段 · 非自由建站器
+          标准模块
         </span>
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
         <SummaryTile title="内部入口" value={linkStats.internal} detail={`可见链接 ${linkStats.total} 个`} Icon={Navigation} />
-        <SummaryTile title="Contact 闭环" value={linkStats.contact} detail={`${contactModules} 个联系/CTA 模块`} Icon={Link2} />
+        <SummaryTile title="联系入口" value={linkStats.contact} detail={`${contactModules} 个联系/CTA 模块`} Icon={Link2} />
         <SummaryTile title="外部入口" value={linkStats.external} detail="需确认是否为旧站备份或外部承接" Icon={ExternalLink} />
         <SummaryTile title="链接风险" value={invalidCount} detail="空链接、# 或脚本链接" Icon={AlertTriangle} />
       </div>
@@ -393,7 +393,7 @@ function NavigationOperationsMatrix({
 
         <aside className="rounded-md border border-[#D8E7E8] bg-white p-4">
           <h3 className="text-sm font-bold text-[#1E2C31]">优先处理队列</h3>
-          <p className="mt-1 text-xs leading-5 text-[#61767D]">按内容合同、链接质检、草稿和隐藏模块排序。</p>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">按内容来源、链接质检、草稿和隐藏模块排序。</p>
           <div className="mt-3 space-y-2">
             {priorityItems.length > 0 ? (
               priorityItems.map((item) => {
@@ -416,7 +416,7 @@ function NavigationOperationsMatrix({
               })
             ) : (
               <p className="rounded-md bg-[#F7FAFA] px-3 py-3 text-xs leading-5 text-[#61767D]">
-                当前没有链接质检、草稿或合同阻断项。
+                当前没有链接质检、草稿或来源阻断项。
               </p>
             )}
           </div>
@@ -437,7 +437,7 @@ function NavigationReleaseLedger({ modules }: { modules: PageModuleRow[] }) {
         <div>
           <h2 className="text-xl font-bold text-[#1E2C31]">导航发布治理台账</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            按链接风险、Contact 闭环、草稿、隐藏和外链复核排序；运营先处理台账，再进入固定模块编辑。
+            按链接风险、联系入口、草稿、隐藏和外链复核排序；运营先处理台账，再进入固定模块编辑。
           </p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-semibold">
@@ -628,7 +628,7 @@ function ContractStatusPanel({ contract }: { contract?: GovernanceContractStatus
         <div>
           <div className="flex items-center gap-2">
             {contract.issueLevel === 'ok' ? <CheckCircle2 size={18} className="text-emerald-600" /> : <AlertTriangle size={18} className="text-orange-600" />}
-            <h2 className="text-xl font-bold text-[#1E2C31]">导航 / 页脚内容合同</h2>
+            <h2 className="text-xl font-bold text-[#1E2C31]">导航 / 页脚内容来源</h2>
           </div>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">{contract.displayRule}</p>
         </div>
@@ -636,7 +636,7 @@ function ContractStatusPanel({ contract }: { contract?: GovernanceContractStatus
           href="/admin/site/pages"
           className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1E2C31] transition hover:border-[#1889B6]/60 hover:text-[#1889B6]"
         >
-          查看内容合同
+          查看内容来源
           <ArrowRight size={14} />
         </Link>
       </div>
@@ -736,7 +736,7 @@ export default async function AdminSiteNavigationPage() {
       <section className="space-y-4">
         <div>
           <h2 className="text-xl font-bold text-[#1E2C31]">后台配置模块</h2>
-          <p className="mt-1 text-sm text-[#61767D]">只显示后台 site 模块；每个模块的字段会直接影响前台导航、页脚或通用文案。</p>
+          <p className="mt-1 text-sm text-[#61767D]">显示导航、页脚和通用文案模块；修改发布后会影响前台对应位置。</p>
         </div>
         {modules.length === 0 ? (
           <div className="rounded-md border border-[#D8E7E8] bg-white p-8 text-center text-sm text-[#61767D]">
@@ -759,7 +759,7 @@ export default async function AdminSiteNavigationPage() {
           <div>
             <h2 className="text-base font-bold text-[#1E2C31]">导航保护线</h2>
             <p className="mt-2 text-sm leading-6 text-[#61767D]">
-              本页允许编辑固定位置、固定字段和排序；不开放自由建站器，不允许脚本链接，不做物理删除。隐藏和恢复通过模块状态完成。
+              本页管理固定位置、固定字段和排序；脚本链接会被视为风险，隐藏和恢复通过模块状态完成。
             </p>
           </div>
         </div>

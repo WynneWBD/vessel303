@@ -337,7 +337,7 @@ function NewsReadinessPanel({ readiness }: { readiness: NewsEditorReadiness }) {
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#1889B6]">Publish Readiness</p>
           <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">新闻发布就绪路线图</h2>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-            先把列表页发现的缺项落到单篇编辑处理路径：内容、分类排期、SEO、封面、发布影响和来源承接分开判断。这里是只读运营提示，不新增保存或发布限制。
+            先把列表页发现的缺项落到单篇编辑处理路径：内容、分类排期、SEO、封面、发布影响和来源线索分开判断。
           </p>
         </div>
         <div className="grid grid-cols-3 overflow-hidden rounded-md border border-[#D8E7E8] bg-[#F7FAFA] text-center text-xs">
@@ -445,7 +445,7 @@ function NewsReadinessPanel({ readiness }: { readiness: NewsEditorReadiness }) {
           <div className="mt-4 border-t border-[#D8E7E8] pt-4">
             <h4 className="text-sm font-bold text-[#1E2C31]">来源承接复核</h4>
             <p className="mt-2 text-xs leading-5 text-[#61767D]">
-              保存或发布前，可从新闻来源链路复看访问、质量桥、发布桥、列表桥、转化承接和 `source_type=news` 线索队列；本区只做只读下钻。
+              保存或发布前，可从新闻来源链路复看访问、质量、发布、列表、转化和新闻来源线索队列。
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               {NEWS_SOURCE_HANDOFF_LINKS.map((link) => (
@@ -530,7 +530,7 @@ function NewsEditSourceConversionReviewDesk({
   const workflowLinks: NewsEditSourceConversionCheckpoint[] = [
     {
       label: '创建预检',
-      value: 'B298',
+      value: '创建',
       detail: '回看新建新闻的分类、SEO、来源和发布前入口策略。',
       href: '/admin/content/news/new#news-creation-source-preflight-desk',
       cta: '看新建台',
@@ -539,8 +539,8 @@ function NewsEditSourceConversionReviewDesk({
     },
     {
       label: '回收保护',
-      value: 'B297',
-      detail: '误删、恢复、草稿复核和来源承接的只读安全链。',
+      value: '回收',
+      detail: '误删、恢复、草稿复核和来源线索的安全链。',
       href: '/admin/content/news/recycle#news-recycle-source-safety-desk',
       cta: '看回收台',
       tone: 'gray',
@@ -548,7 +548,7 @@ function NewsEditSourceConversionReviewDesk({
     },
     {
       label: '分类治理',
-      value: 'B296',
+      value: '分类',
       detail: '检查分类归档、列表处理、新闻优化和线索队列承接。',
       href: '/admin/content/news/categories#news-category-source-conversion-desk',
       cta: '看分类台',
@@ -557,7 +557,7 @@ function NewsEditSourceConversionReviewDesk({
     },
     {
       label: '列表队列',
-      value: 'B295',
+      value: '列表',
       detail: '把当前单篇复核结果回流到列表筛选和来源转化处理队列。',
       href: '/admin/content/news/list#news-list-source-conversion-queue',
       cta: '回列表',
@@ -566,7 +566,7 @@ function NewsEditSourceConversionReviewDesk({
     },
     {
       label: '内容优化',
-      value: 'B294',
+      value: '优化',
       detail: '从新闻内容缺项、SEO 待补和来源线索角度复看整体优化。',
       href: '/admin/content/news#news-source-lead-optimization-desk',
       cta: '看优化台',
@@ -575,7 +575,7 @@ function NewsEditSourceConversionReviewDesk({
     },
     {
       label: '流量分诊',
-      value: 'B293',
+      value: '流量',
       detail: '把新闻访问、来源动作和异常承接到流量分诊台。',
       href: '/admin/status/traffic#traffic-to-lead-exception-desk',
       cta: '看分诊',
@@ -584,8 +584,8 @@ function NewsEditSourceConversionReviewDesk({
     },
     {
       label: '来源线索',
-      value: 'B292',
-      detail: '进入 `source_type=news` 的来源线索质量处理和运营复盘。',
+      value: '线索',
+      detail: '进入新闻来源线索质量处理和运营复盘。',
       href: '/admin/status/leads#source-lead-quality-workdesk',
       cta: '看线索',
       tone: 'blue',
@@ -593,7 +593,7 @@ function NewsEditSourceConversionReviewDesk({
     },
     {
       label: '保存边界',
-      value: '只读',
+      value: '查看',
       detail: '本台只做编辑前复核导航，不拦截保存，不触发发布，不修改线索状态。',
       href: '#publish-check',
       cta: '看发布检查',
@@ -606,10 +606,10 @@ function NewsEditSourceConversionReviewDesk({
     <section id="news-edit-source-conversion-review-desk" className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm md:p-5">
       <div className="grid grid-cols-1 gap-4 border-b border-[#E6EEEE] pb-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">B299 News Edit Source Conversion</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">News Edit Source Conversion</p>
           <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">新闻编辑到来源转化复核台</h2>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把单篇新闻编辑、B298 创建预检、B297 回收保护、B296 分类治理、B295 列表队列、B294 新闻优化、B293 流量分诊和 B292 来源线索接到同一个只读复核台。这里不改变保存、发布、恢复或删除逻辑。
+            把单篇新闻编辑、创建预检、回收保护、分类治理、列表队列、新闻优化、流量分诊和来源线索接到同一个复核台。
           </p>
         </div>
         <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-3">
@@ -724,7 +724,7 @@ function NewsEditorSourceSeoPanel({
     },
     {
       label: '来源质量',
-      value: 'B282',
+      value: '来源',
       detail: '用来源线索质量桥复看新闻入口的访问、动作、线索和活跃漏斗。',
       href: '/admin/status/leads#source-seo-lead-quality',
       action: '看质量桥',
@@ -735,8 +735,8 @@ function NewsEditorSourceSeoPanel({
       label: '单篇队列',
       value: readiness.requiredIssueCount > 0 ? `${readiness.requiredIssueCount} 项` : '可复核',
       detail: readiness.nextIssue
-        ? `下一步：${readiness.nextIssue.label}。处理完再回 B283 列表桥。`
-        : '正式缺项已归零，可回列表桥和发布桥做只读复核。',
+        ? `下一步：${readiness.nextIssue.label}。处理完再回列表复核。`
+        : '正式缺项已归零，可回列表和发布复核。',
       href: readiness.nextIssue?.href ?? '/admin/content/news/list#news-source-seo-list-bridge',
       action: readiness.nextIssue ? '继续处理' : '回列表桥',
       tone: readiness.requiredIssueCount > 0 ? 'orange' : 'green',
@@ -748,17 +748,17 @@ function NewsEditorSourceSeoPanel({
     <section id="news-edit-source-seo-bridge" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">B284 News Edit Bridge</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">News Edit Bridge</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">单篇新闻来源 SEO 复核桥</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把当前新闻的公开路径、SEO 分类状态、B282 来源质量桥和 B283 列表处理桥放到编辑页上方，编辑完成后能直接回到列表和线索复盘。
+            把当前新闻的公开路径、SEO 分类状态、来源质量和列表处理放到编辑页上方，编辑完成后能直接回到列表和线索复盘。
           </p>
         </div>
         <Link
           href="/admin/content/news/list#news-source-seo-list-bridge"
           className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#EAF6F8]"
         >
-          回到 B283 列表桥
+          回到列表复核
           <ArrowRight size={13} />
         </Link>
       </div>
@@ -917,7 +917,7 @@ export default async function AdminContentNewsEditPage({ params }: PageProps) {
       Icon: Link2,
     },
     {
-      label: 'B283 列表桥已回连',
+      label: '列表复核已回连',
       detail: '单篇编辑完成后，可回到新闻列表的 SEO、内容缺项、发布回看和新闻线索处理桥。',
       tone: 'neutral',
       href: '/admin/content/news/list#news-source-seo-list-bridge',

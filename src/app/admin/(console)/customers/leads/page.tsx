@@ -414,10 +414,10 @@ function LeadsQueueConsole({
       ],
     },
     {
-      title: '新闻来源承接',
+      title: '新闻来源线索',
       detail: newsSource
-        ? `新闻列表或详情 CTA 已进入线索台账；当前新线索 ${formatNumber(newsSource.new)} 条，可进入新闻来源队列复盘新闻路径、来源动作和后续产品/案例路径。`
-        : '新闻列表和详情 CTA 会通过 Contact 写入来源；有样本后可从新闻来源队列、线索状态桥、新闻来源面板和内容运营页回看内容转化。',
+        ? `新闻列表或详情 CTA 已进入线索台账；当前新线索 ${formatNumber(newsSource.new)} 条，可进入新闻来源队列查看路径、动作和后续转化。`
+        : '新闻列表和详情 CTA 会进入 Contact 来源；有样本后可从新闻来源队列、线索状态、来源路径和内容运营页回看内容转化。',
       metric: `${formatNumber(newsActive)} 活跃`,
       signal: newsPathMetric.leads > 0
         ? `${formatNumber(newsPathMetric.leads)} 路径线索`
@@ -427,26 +427,26 @@ function LeadsQueueConsole({
       tone: newsActive > 0 ? 'orange' : newsTotal > 0 ? 'blue' : newsPathMetric.views > 0 ? 'orange' : 'gray',
       actions: [
         { label: '新闻线索', href: newsQueueHandoffHref, primary: newsActive > 0 },
-        { label: '状态桥', href: '/admin/status/leads#news-lead-path-bridge', primary: newsActive === 0 && newsTotal > 0 },
-        { label: '来源面板', href: '/admin/status/traffic#news-source-handoff' },
+        { label: '线索状态', href: '/admin/status/leads#news-lead-path-bridge', primary: newsActive === 0 && newsTotal > 0 },
+        { label: '来源路径', href: '/admin/status/traffic#news-source-handoff' },
         { label: '新闻运营', href: '/admin/content/news#news-operations-hub' },
       ],
       contracts: [
         {
-          label: '来源命名',
-          value: 'news:*',
+          label: '来源类型',
+          value: '新闻来源',
           href: '/admin/status/traffic#news-source-handoff',
           tone: 'blue',
         },
         {
-          label: 'Contact 承接',
+          label: 'Contact 入口',
           value: 'Contact',
           href: '/contact?source=news:list:contact_cta',
           tone: 'green',
         },
         {
           label: '线索筛选',
-          value: 'source_type=news',
+          value: '新闻来源',
           href: newsQueueHandoffHref,
           tone: newsActive > 0 ? 'orange' : newsTotal > 0 ? 'blue' : 'gray',
         },
@@ -639,56 +639,56 @@ function NewsSourceLeadQueueHandoffDesk({
 
   const items: CaseLeadBackflowItem[] = [
     {
-      label: 'News source queue',
-      value: `${formatNumber(newsTotal)} leads`,
-      detail: `source_type=news consolidated view. Active news leads ${formatNumber(newsActive)}, new ${formatNumber(newsNew)}.`,
+      label: '新闻来源线索',
+      value: `${formatNumber(newsTotal)} 条`,
+      detail: `活跃 ${formatNumber(newsActive)} 条，新线索 ${formatNumber(newsNew)} 条。`,
       href: newsAllHref,
-      cta: 'Open news source',
+      cta: '查看新闻来源',
       Icon: FileText,
       tone: newsActive > 0 ? 'orange' : newsTotal > 0 ? 'blue' : 'gray',
     },
     {
-      label: 'Active follow-up',
-      value: `${formatNumber(newsActive)} active`,
-      detail: `new/contacting/quoted split: ${formatNumber(newsNew)} / ${formatNumber(newsContacting)} / ${formatNumber(newsQuoted)}.`,
+      label: '活跃跟进',
+      value: `${formatNumber(newsActive)} 条`,
+      detail: `新线索 ${formatNumber(newsNew)}，跟进中 ${formatNumber(newsContacting)}，已报价 ${formatNumber(newsQuoted)}。`,
       href: newsActiveHref,
-      cta: 'Filter active leads',
+      cta: '筛选活跃线索',
       Icon: Clock3,
       tone: followupRisk || newsActive > 0 ? 'orange' : 'green',
     },
     {
-      label: 'News path bridge',
-      value: `${formatNumber(newsPathMetric.leads)} path leads`,
-      detail: `Path actions ${formatNumber(pathActions)}, conversion ${formatAnalyticsPercent(newsPathMetric.conversionRate)}. Review source quality before changing content.`,
+      label: '新闻路径',
+      value: `${formatNumber(newsPathMetric.leads)} 条线索`,
+      detail: `路径动作 ${formatNumber(pathActions)}，转化 ${formatAnalyticsPercent(newsPathMetric.conversionRate)}。`,
       href: '/admin/status/leads#news-lead-path-bridge',
-      cta: 'Review lead path',
+      cta: '查看线索路径',
       Icon: UserRoundCheck,
       tone: pathAttributionGap ? 'orange' : newsPathMetric.leads > 0 ? 'green' : 'blue',
     },
     {
-      label: 'Traffic source panel',
-      value: `${formatNumber(newsPathMetric.views)} views`,
-      detail: 'Use the traffic source panel to compare news list/detail CTA behavior with Contact form attribution.',
+      label: '来源路径',
+      value: `${formatNumber(newsPathMetric.views)} 次访问`,
+      detail: '查看新闻列表、详情 CTA 和 Contact 表单的来源表现。',
       href: '/admin/status/traffic#news-source-handoff',
-      cta: 'Review traffic',
+      cta: '查看来源路径',
       Icon: BarChart3,
       tone: newsPathMetric.views > 0 && newsPathMetric.leads === 0 ? 'orange' : 'blue',
     },
     {
-      label: 'News SEO/content bridge',
-      value: newsTopStage?.label ?? 'News content',
-      detail: 'Return content and SEO gaps to the news list bridge, then verify whether source leads improve.',
+      label: '新闻内容处理',
+      value: newsTopStage?.label ?? '待观察',
+      detail: '根据来源线索补齐新闻内容、SEO 和入口展示。',
       href: '/admin/content/news/list#news-source-seo-list-bridge',
-      cta: 'Open news content',
+      cta: '打开新闻内容',
       Icon: SearchCheck,
       tone: pathAttributionGap || newsActive > 0 ? 'orange' : 'blue',
     },
     {
-      label: 'Public news check',
+      label: '前台新闻核查',
       value: '/news',
-      detail: 'Open the public news surface to verify list/detail CTAs from the visitor perspective.',
+      detail: '从客户视角查看新闻列表、详情和咨询入口。',
       href: '/news',
-      cta: 'Open public news',
+      cta: '打开前台新闻',
       Icon: ExternalLink,
       tone: 'blue',
       external: true,
@@ -703,16 +703,16 @@ function NewsSourceLeadQueueHandoffDesk({
     >
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div className="border-l-4 border-[#1889B6] px-5 py-5">
-          <p className="text-xs font-bold uppercase text-[#1889B6]">B406 News Source Queue Handoff</p>
-          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">新闻来源线索处理队列承接</h2>
+          <p className="text-xs font-bold uppercase text-[#1889B6]">新闻来源线索</p>
+          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">新闻来源线索处理队列</h2>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-            将 `source_type=news` 线索筛选、活跃/超时队列、新闻路径桥、来源流量面板、新闻 SEO 内容桥和前台新闻入口放在同一只读承接层。这里只提供判断入口和筛选链接，不写入线索状态、不分配负责人、不删除、不导出。
+            把新闻来源线索、活跃/超时队列、来源路径、新闻 SEO 和前台新闻入口放在同一页，运营可直接筛选、查看路径并进入内容处理。
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <CaseBackflowAction href={newsAllHref} Icon={FileText} label="新闻来源" primary={currentNewsView || newsActive > 0} />
             <CaseBackflowAction href={newsActiveHref} Icon={Clock3} label="活跃线索" primary={newsActive > 0} />
             <CaseBackflowAction href={newsOverdueHref} Icon={UserRoundX} label="超时队列" primary={followupRisk} />
-            <CaseBackflowAction href="/admin/status/leads#news-lead-path-bridge" Icon={UserRoundCheck} label="线索状态桥" />
+            <CaseBackflowAction href="/admin/status/leads#news-lead-path-bridge" Icon={UserRoundCheck} label="线索状态" />
             <CaseBackflowAction href="/admin/status/traffic#news-source-handoff" Icon={BarChart3} label="来源路径" />
             <CaseBackflowAction href="/admin/content/news/list#news-source-seo-list-bridge" Icon={SearchCheck} label="新闻 SEO" />
           </div>
@@ -732,14 +732,14 @@ function NewsSourceLeadQueueHandoffDesk({
       </div>
 
       <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-white md:grid-cols-4">
-        <CaseBackflowSnapshot label="当前新闻视图" value={currentNewsView ? '已聚焦' : '未聚焦'} detail={currentNewsView ? 'source_type=news' : '可一键切到新闻来源'} warn={!currentNewsView && newsActive > 0} />
-        <CaseBackflowSnapshot label="新闻超时入口" value={followupRisk ? '需查看' : '正常'} detail="attention=overdue + source_type=news" warn={followupRisk} />
-        <CaseBackflowSnapshot label="归因缺口" value={pathAttributionGap ? '有动作无线索' : '未触发'} detail={`${formatNumber(pathActions)} actions / ${formatNumber(newsTotal)} news leads`} warn={pathAttributionGap} />
-        <CaseBackflowSnapshot label="内容回流" value="B404" detail="新闻 SEO 与来源处理桥承接" />
+        <CaseBackflowSnapshot label="当前新闻视图" value={currentNewsView ? '已聚焦' : '未聚焦'} detail={currentNewsView ? '新闻来源' : '可一键切到新闻来源'} warn={!currentNewsView && newsActive > 0} />
+        <CaseBackflowSnapshot label="新闻超时入口" value={followupRisk ? '需查看' : '正常'} detail="新闻超时线索" warn={followupRisk} />
+        <CaseBackflowSnapshot label="归因缺口" value={pathAttributionGap ? '有动作无线索' : '未触发'} detail={`${formatNumber(pathActions)} 个动作 / ${formatNumber(newsTotal)} 条新闻线索`} warn={pathAttributionGap} />
+        <CaseBackflowSnapshot label="内容处理" value="待处理" detail="新闻 SEO 与来源线索" />
       </div>
 
       <div className="flex flex-col gap-2 border-t border-[#E6EEEE] px-5 py-3 text-xs leading-5 text-[#61767D] sm:flex-row sm:items-center sm:justify-between">
-        <span>只读边界：本模块只生成筛选和回链，不改变线索、客户、新闻内容、发布、权限或任何生产数据。</span>
+        <span>当前页用于筛选和入口跳转；需要跟进时进入下方线索处理台。</span>
         <a href={currentNewsHref} className="inline-flex items-center gap-1 font-semibold text-[#1889B6] hover:text-[#0F6F95]">
           当前条件切到新闻来源
           <ArrowRight size={13} />
@@ -796,56 +796,56 @@ function ProductSourceLeadQueueHandoffDesk({
 
   const items: ProductLeadOpsItem[] = [
     {
-      label: 'Product source queue',
-      value: `${formatNumber(productTotal)} leads`,
-      detail: `source_type=product consolidated view. Active product leads ${formatNumber(productActive)}, new ${formatNumber(productNew)}.`,
+      label: '产品来源线索',
+      value: `${formatNumber(productTotal)} 条`,
+      detail: `活跃 ${formatNumber(productActive)} 条，新线索 ${formatNumber(productNew)} 条。`,
       href: productAllHref,
-      cta: 'Open product source',
+      cta: '查看产品来源',
       Icon: ClipboardCheck,
       tone: productActive > 0 ? 'orange' : productTotal > 0 ? 'blue' : 'gray',
     },
     {
-      label: 'Active follow-up',
-      value: `${formatNumber(productActive)} active`,
-      detail: `new/contacting/quoted split: ${formatNumber(productNew)} / ${formatNumber(productContacting)} / ${formatNumber(productQuoted)}.`,
+      label: '活跃跟进',
+      value: `${formatNumber(productActive)} 条`,
+      detail: `新线索 ${formatNumber(productNew)}，跟进中 ${formatNumber(productContacting)}，已报价 ${formatNumber(productQuoted)}。`,
       href: productActiveHref,
-      cta: 'Filter active leads',
+      cta: '筛选活跃线索',
       Icon: Clock3,
       tone: followupRisk || productActive > 0 ? 'orange' : 'green',
     },
     {
-      label: 'Product form stage',
-      value: `${formatNumber(productInquiryForm?.total ?? 0)} leads`,
-      detail: `product:inquiry_form active ${formatNumber(productFormActive)}. Use this to review product-detail form demand.`,
+      label: '产品表单',
+      value: `${formatNumber(productInquiryForm?.total ?? 0)} 条`,
+      detail: `表单活跃 ${formatNumber(productFormActive)} 条，用于查看产品详情页咨询需求。`,
       href: productFormHref,
-      cta: 'Open form leads',
+      cta: '查看表单线索',
       Icon: ListChecks,
       tone: productFormActive > 0 ? 'orange' : productInquiryForm ? 'blue' : 'gray',
     },
     {
-      label: 'Product CTA stage',
-      value: `${formatNumber(productCtaClick?.total ?? 0)} leads`,
-      detail: `product:cta_click active ${formatNumber(productCtaActive)}. Compare with product path clicks before changing content.`,
+      label: '产品 CTA',
+      value: `${formatNumber(productCtaClick?.total ?? 0)} 条`,
+      detail: `CTA 活跃 ${formatNumber(productCtaActive)} 条，可与产品路径点击一起查看。`,
       href: productCtaHref,
-      cta: 'Open CTA leads',
+      cta: '查看 CTA 线索',
       Icon: MousePointerClick,
       tone: productCtaActive > 0 ? 'orange' : productCtaClick ? 'blue' : productPathMetric.ctaClicks > 0 ? 'orange' : 'gray',
     },
     {
-      label: 'B343 lead quality',
-      value: `${formatNumber(productPathMetric.leads)} path leads`,
-      detail: `Path actions ${formatNumber(pathActions)}, conversion ${formatAnalyticsPercent(productPathMetric.conversionRate)}. Escalate attribution gaps before changing lead records.`,
+      label: '线索质量',
+      value: `${formatNumber(productPathMetric.leads)} 条线索`,
+      detail: `路径动作 ${formatNumber(pathActions)}，转化 ${formatAnalyticsPercent(productPathMetric.conversionRate)}。`,
       href: '/admin/status/leads#product-publish-lead-quality-handoff',
-      cta: 'Review B343',
+      cta: '查看质量',
       Icon: UserRoundCheck,
       tone: pathAttributionGap ? 'orange' : productPathMetric.leads > 0 ? 'green' : 'blue',
     },
     {
-      label: 'B342/B341 handoff',
-      value: productTopStage?.label ?? 'No stage yet',
-      detail: 'Traffic review and product publish queue remain the upstream read-only checks for weak product-source demand.',
+      label: '路径与发布',
+      value: productTopStage?.label ?? '待观察',
+      detail: '产品来源较弱时，回看路径数据并处理产品发布队列。',
       href: '/admin/status/traffic#product-publish-path-review-handoff',
-      cta: 'Review path',
+      cta: '查看路径',
       Icon: BarChart3,
       tone: pathAttributionGap || productPathMetric.views > 0 ? 'orange' : 'blue',
     },
@@ -859,18 +859,18 @@ function ProductSourceLeadQueueHandoffDesk({
     >
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div className="border-l-4 border-[#E36F2C] px-5 py-5">
-          <p className="text-xs font-bold uppercase text-[#C85F24]">B344 Product Source Queue Handoff</p>
-          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">产品来源线索处理队列承接</h2>
+          <p className="text-xs font-bold uppercase text-[#C85F24]">产品来源线索</p>
+          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">产品来源线索处理队列</h2>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-            将产品来源线索筛选、活跃/超时队列、产品表单、产品 CTA、B343 线索质量、B342 路径复盘和 B341 产品发布队列放在同一只读承接层。这里只提供判断入口和筛选链接，不写入线索状态、不分配负责人、不删除、不导出。
+            把产品来源线索、活跃/超时队列、产品表单、产品 CTA、路径质量和产品发布入口放在同一页，运营可直接筛选、查看路径并进入产品处理。
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <CaseBackflowAction href={productAllHref} Icon={ClipboardCheck} label="产品来源" primary={currentProductView || productActive > 0} />
             <CaseBackflowAction href={productActiveHref} Icon={Clock3} label="活跃线索" primary={productActive > 0} />
             <CaseBackflowAction href={productOverdueHref} Icon={UserRoundX} label="超时队列" primary={followupRisk} />
-            <CaseBackflowAction href="/admin/status/leads#product-publish-lead-quality-handoff" Icon={UserRoundCheck} label="B343 质量" />
-            <CaseBackflowAction href="/admin/status/traffic#product-publish-path-review-handoff" Icon={BarChart3} label="B342 路径" />
-            <CaseBackflowAction href="/admin/content/products/list#product-create-publish-queue-handoff" Icon={Package} label="B341 发布" />
+            <CaseBackflowAction href="/admin/status/leads#product-publish-lead-quality-handoff" Icon={UserRoundCheck} label="线索质量" />
+            <CaseBackflowAction href="/admin/status/traffic#product-publish-path-review-handoff" Icon={BarChart3} label="访问路径" />
+            <CaseBackflowAction href="/admin/content/products/list#product-create-publish-queue-handoff" Icon={Package} label="发布队列" />
           </div>
         </div>
         <div className="grid grid-cols-2 border-t border-[#E6EEEE] bg-white lg:border-l lg:border-t-0">
@@ -888,14 +888,14 @@ function ProductSourceLeadQueueHandoffDesk({
       </div>
 
       <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-white md:grid-cols-4">
-        <CaseBackflowSnapshot label="当前产品视图" value={currentProductView ? '已聚焦' : '未聚焦'} detail={currentProductView ? 'source_type=product' : '可一键切到产品来源'} warn={!currentProductView && productActive > 0} />
-        <CaseBackflowSnapshot label="产品超时入口" value={followupRisk ? '需查看' : '正常'} detail="attention=overdue + source_type=product" warn={followupRisk} />
-        <CaseBackflowSnapshot label="归因缺口" value={pathAttributionGap ? '有动作无线索' : '未触发'} detail={`${formatNumber(pathActions)} actions / ${formatNumber(productTotal)} product leads`} warn={pathAttributionGap} />
-        <CaseBackflowSnapshot label="上游发布" value="B341" detail="产品创建与发布队列承接" />
+        <CaseBackflowSnapshot label="当前产品视图" value={currentProductView ? '已聚焦' : '未聚焦'} detail={currentProductView ? '产品来源' : '可一键切到产品来源'} warn={!currentProductView && productActive > 0} />
+        <CaseBackflowSnapshot label="产品超时入口" value={followupRisk ? '需查看' : '正常'} detail="产品超时线索" warn={followupRisk} />
+        <CaseBackflowSnapshot label="归因缺口" value={pathAttributionGap ? '有动作无线索' : '未触发'} detail={`${formatNumber(pathActions)} 个动作 / ${formatNumber(productTotal)} 条产品线索`} warn={pathAttributionGap} />
+        <CaseBackflowSnapshot label="上游发布" value="发布队列" detail="产品创建与发布入口" />
       </div>
 
       <div className="flex flex-col gap-2 border-t border-[#E6EEEE] px-5 py-3 text-xs leading-5 text-[#61767D] sm:flex-row sm:items-center sm:justify-between">
-        <span>只读边界：本模块只生成筛选和回链，不改变线索、客户、产品、发布、权限或任何生产数据。</span>
+        <span>当前页用于筛选和入口跳转；需要跟进时进入下方线索处理台。</span>
         <a href={currentProductHref} className="inline-flex items-center gap-1 font-semibold text-[#1889B6] hover:text-[#0F6F95]">
           当前条件切到产品来源
           <ArrowRight size={13} />
@@ -967,16 +967,16 @@ function ProductLeadOpsReviewDesk({
       tone: (productCtaClick?.new ?? 0) > 0 ? 'orange' : productCtaClick ? 'blue' : productPathMetric.ctaClicks > 0 ? 'orange' : 'gray',
     },
     {
-      label: 'B323 转化复盘',
+      label: '转化复盘',
       value: '生命周期',
-      detail: '回到产品生命周期转化复盘桥，把线索状态、路径动作、SEO 生命周期和产品总控放在同一条判断链。',
+      detail: '查看产品线索、访问动作、SEO 和产品内容的整体表现。',
       href: '/admin/site/conversion#product-lifecycle-conversion-bridge',
-      cta: '回到 B323',
+      cta: '查看转化',
       Icon: MapPinned,
       tone: productActive > 0 || actionNoLeadSignal ? 'orange' : 'blue',
     },
     {
-      label: 'B322 流量质量',
+      label: '流量质量',
       value: formatAnalyticsPercent(productPathMetric.conversionRate),
       detail: `近 30 天产品访问 ${formatNumber(productPathMetric.views)}，动作 ${formatNumber(pathActions)}，线索 ${formatNumber(productPathMetric.leads)}。`,
       href: '/admin/status/traffic#product-path-quality-review-desk',
@@ -985,11 +985,11 @@ function ProductLeadOpsReviewDesk({
       tone: productPathMetric.leads > 0 ? 'green' : noLeadSignal ? 'orange' : 'blue',
     },
     {
-      label: 'B320 产品生命周期',
-      value: '内容回流',
-      detail: '线索少或咨询质量弱时，回到产品生命周期总控处理新建、编辑、SEO、证明和公开产品入口。',
+      label: '产品内容',
+      value: '内容处理',
+      detail: '线索少或咨询质量弱时，回到产品内容区处理新建、编辑、SEO、证明和公开入口。',
       href: '/admin/content/products#product-lifecycle',
-      cta: '回到产品总控',
+      cta: '处理产品内容',
       Icon: Package,
       tone: noLeadSignal || actionNoLeadSignal ? 'orange' : 'blue',
     },
@@ -999,16 +999,16 @@ function ProductLeadOpsReviewDesk({
     <section id="product-lead-ops-review-desk" data-product-lead-ops-review="true" className="border-b border-[#D8E7E8] bg-[#FBFDFD]">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="border-l-4 border-[#1889B6] px-5 py-5">
-          <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">B324 PRODUCT LEAD OPS REVIEW</p>
+          <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">产品线索复核</p>
           <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">产品线索运营复盘工作台</h2>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把 `source_type=product` 线索、产品表单阶段、产品 CTA 阶段、B323 转化复盘、B322 流量质量和 B320 产品生命周期串成只读运营链；这里不更新线索状态、不新增客户写入，也不改变产品保存、发布或权限规则。
+            把产品线索、产品表单、CTA、转化路径、流量质量和产品内容放在同一页，运营先判断线索来源，再进入跟进或内容处理。
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <CaseBackflowAction href={productAllHref} Icon={ClipboardCheck} label="产品线索" primary={productActive > 0} />
-            <CaseBackflowAction href="/admin/site/conversion#product-lifecycle-conversion-bridge" Icon={MapPinned} label="B323 转化" />
-            <CaseBackflowAction href="/admin/status/traffic#product-path-quality-review-desk" Icon={BarChart3} label="B322 流量" />
-            <CaseBackflowAction href="/admin/content/products#product-lifecycle" Icon={Package} label="B320 生命周期" />
+            <CaseBackflowAction href="/admin/site/conversion#product-lifecycle-conversion-bridge" Icon={MapPinned} label="转化路径" />
+            <CaseBackflowAction href="/admin/status/traffic#product-path-quality-review-desk" Icon={BarChart3} label="流量质量" />
+            <CaseBackflowAction href="/admin/content/products#product-lifecycle" Icon={Package} label="产品内容" />
           </div>
         </div>
         <div className="grid grid-cols-2 border-t border-[#E6EEEE] bg-white lg:border-l lg:border-t-0">
@@ -1027,13 +1027,13 @@ function ProductLeadOpsReviewDesk({
 
       <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-white md:grid-cols-4">
         <CaseBackflowSnapshot label="当前活跃" value={formatNumber(productActive)} detail="new + contacting + quoted" warn={productActive > 0} />
-        <CaseBackflowSnapshot label="产品表单" value={formatNumber(productInquiryForm?.total ?? 0)} detail="product:inquiry_form" />
+        <CaseBackflowSnapshot label="产品表单" value={formatNumber(productInquiryForm?.total ?? 0)} detail="产品详情表单" />
         <CaseBackflowSnapshot label="路径访问" value={formatNumber(productPathMetric.views)} detail="近 30 天访问" />
         <CaseBackflowSnapshot label="路径线索" value={formatNumber(productPathMetric.leads)} detail={`转化 ${formatAnalyticsPercent(productPathMetric.conversionRate)}`} warn={noLeadSignal} />
       </div>
 
       <div className="border-t border-[#E6EEEE] px-5 py-3 text-xs leading-5 text-[#61767D]">
-        安全边界：本工作台只做产品线索分诊和入口串联；真实跟进、状态更新、分配、导出和删除仍由下方现有线索处理台控制，且当前页面继续保持 `allowDelete={false}`。
+        当前工作台用于分诊和跳转；线索跟进、状态更新、分配和导出仍在下方线索处理台完成。
       </div>
     </section>
   )
@@ -1085,16 +1085,16 @@ function CaseLeadContentBackflowDesk({
       tone: (caseInquiryForm?.new ?? 0) > 0 ? 'orange' : caseInquiryForm ? 'blue' : 'gray',
     },
     {
-      label: 'B303 案例总控',
-      value: '内容回流',
-      detail: '把线索侧发现的问题回到案例总控台，判断是补内容、看前台、查路径还是回列表队列。',
+      label: '案例内容',
+      value: '内容处理',
+      detail: '把线索侧发现的问题回到案例内容区，判断是补内容、看前台、查路径还是回列表队列。',
       href: '/admin/content/projects#case-content-inquiry-command-center',
-      cta: '回到案例总控',
+      cta: '处理案例内容',
       Icon: MapPinned,
       tone: 'blue',
     },
     {
-      label: 'B300 弱案例队列',
+      label: '弱案例队列',
       value: '发布弱项',
       detail: '线索少或咨询质量弱时，回到案例列表处理发布转化弱、素材缺口和叙事缺口。',
       href: '/admin/content/projects/list#case-list-inquiry-conversion-queue',
@@ -1127,15 +1127,15 @@ function CaseLeadContentBackflowDesk({
     <section id="case-lead-content-backflow-desk" className="border-b border-[#D8E7E8] bg-[#FBFDFD]">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="border-l-4 border-[#E36F2C] px-5 py-5">
-          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">B304 CASE LEAD CONTENT BACKFLOW</p>
-          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">案例线索到内容回流工作台</h2>
+          <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">案例线索复核</p>
+          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">案例线索处理工作台</h2>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把 `source_type=case` 线索、案例表单阶段、B303 案例总控、B300 弱案例队列、路径分析和前台 `/cases` 串成只读回流链；这里不更新线索状态、不新增客户写入，也不改变案例保存、发布或权限规则。
+            把案例线索、案例表单、案例内容、弱案例队列、路径分析和前台案例入口放在同一页，运营可先判断来源质量，再进入跟进或内容处理。
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <CaseBackflowAction href={caseAllHref} Icon={ClipboardCheck} label="案例线索" primary={caseActive > 0} />
-            <CaseBackflowAction href="/admin/content/projects#case-content-inquiry-command-center" Icon={MapPinned} label="B303 总控" />
-            <CaseBackflowAction href="/admin/content/projects/list#case-list-inquiry-conversion-queue" Icon={ListChecks} label="B300 队列" />
+            <CaseBackflowAction href="/admin/content/projects#case-content-inquiry-command-center" Icon={MapPinned} label="案例内容" />
+            <CaseBackflowAction href="/admin/content/projects/list#case-list-inquiry-conversion-queue" Icon={ListChecks} label="弱案例队列" />
             <CaseBackflowAction href="/admin/status/traffic#case-inquiry-path" Icon={BarChart3} label="路径分析" />
           </div>
         </div>
@@ -1155,13 +1155,13 @@ function CaseLeadContentBackflowDesk({
 
       <div className="grid grid-cols-1 border-t border-[#E6EEEE] bg-white md:grid-cols-4">
         <CaseBackflowSnapshot label="当前活跃" value={formatNumber(caseActive)} detail="new + contacting + quoted" warn={caseActive > 0} />
-        <CaseBackflowSnapshot label="案例表单" value={formatNumber(caseInquiryForm?.total ?? 0)} detail="case:inquiry_form" />
+        <CaseBackflowSnapshot label="案例表单" value={formatNumber(caseInquiryForm?.total ?? 0)} detail="案例详情表单" />
         <CaseBackflowSnapshot label="路径访问" value={formatNumber(casePathMetric.views)} detail="近 30 天访问" />
         <CaseBackflowSnapshot label="路径线索" value={formatNumber(casePathMetric.leads)} detail={`转化 ${formatAnalyticsPercent(casePathMetric.conversionRate)}`} warn={noLeadSignal} />
       </div>
 
       <div className="border-t border-[#E6EEEE] px-5 py-3 text-xs leading-5 text-[#61767D]">
-        安全边界：本工作台只做运营分诊和入口串联；真实跟进、状态更新、分配、导出和删除仍由下方现有线索处理台控制，且当前页面继续保持 `allowDelete={false}`。
+        当前工作台用于分诊和跳转；线索跟进、状态更新、分配和导出仍在下方线索处理台完成。
       </div>
     </section>
   )
