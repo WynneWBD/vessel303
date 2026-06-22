@@ -4,9 +4,6 @@ import { auth } from '@/auth'
 import { AdminTopNav } from '@/components/admin/AdminTopNav'
 import {
   AdminActionLink,
-  AdminInfoCard,
-  AdminMetricCard,
-  AdminPageHero,
   AdminSectionTitle,
 } from '@/components/admin/AdminUI'
 import { pool } from '@/lib/db'
@@ -470,85 +467,187 @@ function Hero({
 }) {
   const draftTotal = productSummary.draft + projectSummary.draft + newsSummary.draft
   const contentTotal = productSummary.total + projectSummary.total + newsSummary.total
+  const metrics = [
+    {
+      title: '内容总量',
+      value: formatNumber(contentTotal),
+      detail: `草稿 ${formatNumber(draftTotal)} / 页面草稿 ${formatNumber(pageDraftCount)}`,
+      href: '#content',
+      action: '看内容台账',
+      Icon: Package,
+      tone: draftTotal + pageDraftCount > 0 ? 'orange' : 'blue',
+    },
+    {
+      title: '待处理线索',
+      value: formatNumber(leadSummary.new),
+      detail: `线索总量 ${formatNumber(leadSummary.total)}`,
+      href: '/admin/customers/leads?status=new',
+      action: '处理新线索',
+      Icon: Inbox,
+      tone: leadSummary.new > 0 ? 'orange' : 'green',
+    },
+    {
+      title: '媒体空间',
+      value: formatBytes(uploadBytes),
+      detail: uploadBytes > STORAGE_WARNING_BYTES ? '建议检查素材' : '状态正常',
+      href: '/admin/site/media#media-replacement-workbench',
+      action: '进素材台',
+      Icon: ImageIcon,
+      tone: uploadBytes > STORAGE_WARNING_BYTES ? 'orange' : 'green',
+    },
+  ] satisfies Array<{
+    title: string
+    value: string
+    detail: string
+    href: string
+    action: string
+    Icon: LucideIcon
+    tone: 'blue' | 'green' | 'orange'
+  }>
 
   return (
     <section id="overview" className="border-b border-[#D8E7E8] bg-[#F3F7F7]">
-      <div className="mx-auto w-full max-w-[1600px] px-4 py-6 lg:px-8">
-        <AdminPageHero
-          kicker="Operations Workbench"
-          title="运营管理控制台"
-          description="先看今日优先级，再进入内容、线索、素材和数据处理。这里是后台 2.0 的日常入口，不承载自由建站器能力。"
-          actions={QUICK_ACTIONS.map((action) => (
-            <AdminActionLink
-              key={action.label}
-              href={action.href}
-              Icon={action.Icon}
-              label={action.label}
-              primary={action.primary}
-            />
-          ))}
-        >
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr_1fr_1fr]">
-            <AdminInfoCard title="当前站点" detail="主站内容由后台 published 内容驱动。" Icon={ShieldCheck} tone="green">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <SiteChip label="主站域名" value="www.vessel303.com" href="https://www.vessel303.com" />
-                <SiteChip label="网站管理" value="页面、素材、状态" href="/admin/site" />
+      <div className="mx-auto w-full max-w-[1600px] px-4 py-4 lg:px-8">
+        <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+          <div className="border-l-4 border-[#1889B6] p-4 md:p-5">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">
+                  Operations Workbench
+                </p>
+                <h1 className="mt-1 text-2xl font-bold text-[#1E2C31] md:text-3xl">运营管理控制台</h1>
+                <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
+                  一屏先看站点、内容、线索和素材，再进入优先级台账；后台 2.0 不承载自由建站器能力。
+                </p>
               </div>
-            </AdminInfoCard>
-            <AdminMetricCard
-            title="内容总量"
-            value={contentTotal}
-            detail={`草稿 ${formatNumber(draftTotal)} / 页面 ${formatNumber(pageDraftCount)}`}
-            href="#content"
-            Icon={Package}
-            tone="blue"
-          />
-            <AdminMetricCard
-            title="待处理线索"
-            value={leadSummary.new}
-            detail={`线索总量 ${formatNumber(leadSummary.total)}`}
-            href="/admin/customers/leads?status=new"
-            Icon={Inbox}
-            tone={leadSummary.new > 0 ? 'orange' : 'green'}
-          />
-            <AdminMetricCard
-            title="媒体空间"
-            value={formatBytes(uploadBytes)}
-            detail={uploadBytes > STORAGE_WARNING_BYTES ? '建议检查素材' : '状态正常'}
-            href="/admin/site/media#media-replacement-workbench"
-            Icon={ImageIcon}
-            tone={uploadBytes > STORAGE_WARNING_BYTES ? 'orange' : 'green'}
-          />
+              <div className="flex flex-wrap gap-2">
+                {QUICK_ACTIONS.map((action) => (
+                  <AdminActionLink
+                    key={action.label}
+                    href={action.href}
+                    Icon={action.Icon}
+                    label={action.label}
+                    primary={action.primary}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.05fr)_minmax(560px,1fr)]">
+              <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-[#FBFDFD]">
+                <div className="grid grid-cols-[minmax(150px,1fr)_minmax(180px,1fr)_130px_140px] gap-3 border-b border-[#E6EEEE] px-4 py-2 text-xs font-bold text-[#61767D] max-lg:hidden">
+                  <span>运营对象</span>
+                  <span>当前口径</span>
+                  <span>状态</span>
+                  <span className="text-right">入口</span>
+                </div>
+                <OperationSiteLedgerRow
+                  title="当前站点"
+                  detail="主站内容由后台 published 内容驱动。"
+                  metric="www.vessel303.com"
+                  status="运营中"
+                  href="/admin/site"
+                  action="网站管理"
+                  Icon={ShieldCheck}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                {metrics.map((metric) => (
+                  <OperationHeroMetric key={metric.title} metric={metric} />
+                ))}
+              </div>
+            </div>
           </div>
-        </AdminPageHero>
+        </div>
       </div>
     </section>
   )
 }
 
-function SiteChip({
-  label,
-  value,
+function OperationSiteLedgerRow({
+  title,
+  detail,
+  metric,
+  status,
   href,
+  action,
+  Icon,
 }: {
-  label: string
-  value: string
+  title: string
+  detail: string
+  metric: string
+  status: string
   href: string
+  action: string
+  Icon: LucideIcon
 }) {
-  const external = href.startsWith('http')
-
   return (
     <Link
       href={href}
-      target={external ? '_blank' : undefined}
-      rel={external ? 'noreferrer' : undefined}
-      className="flex min-h-16 items-center justify-between gap-3 rounded-md border border-[#D8E7E8] bg-white px-4 py-3 transition hover:border-[#1889B6]/60"
+      className="grid grid-cols-1 gap-2 px-4 py-3 text-sm transition hover:bg-white lg:grid-cols-[minmax(150px,1fr)_minmax(180px,1fr)_130px_140px] lg:items-center"
     >
-      <span>
-        <span className="block text-xs text-[#61767D]">{label}</span>
-        <span className="mt-1 block text-sm font-semibold text-[#1E2C31]">{value}</span>
+      <span className="flex min-w-0 items-center gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
+          <Icon size={17} />
+        </span>
+        <span className="min-w-0">
+          <span className="block font-bold text-[#1E2C31]">{title}</span>
+          <span className="mt-0.5 block text-xs text-[#8A9EA4]">{detail}</span>
+        </span>
       </span>
-      <ArrowRight size={15} className="shrink-0 text-[#9FB0B4]" />
+      <span className="break-all text-xs font-semibold text-[#61767D]">{metric}</span>
+      <span className="w-fit rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700">
+        {status}
+      </span>
+      <span className="inline-flex items-center gap-1 text-xs font-bold text-[#1889B6] lg:justify-self-end">
+        {action}
+        <ArrowRight size={13} />
+      </span>
+    </Link>
+  )
+}
+
+function OperationHeroMetric({
+  metric,
+}: {
+  metric: {
+    title: string
+    value: string
+    detail: string
+    href: string
+    action: string
+    Icon: LucideIcon
+    tone: 'blue' | 'green' | 'orange'
+  }
+}) {
+  const Icon = metric.Icon
+  const toneClass =
+    metric.tone === 'orange'
+      ? 'bg-[#FFF2E7] text-[#E36F2C]'
+      : metric.tone === 'green'
+        ? 'bg-emerald-50 text-emerald-700'
+        : 'bg-[#EAF6F8] text-[#1889B6]'
+
+  return (
+    <Link
+      href={metric.href}
+      className="group grid min-h-[96px] grid-cols-[40px_minmax(0,1fr)] gap-3 rounded-md border border-[#D8E7E8] bg-white p-3 transition hover:border-[#1889B6]/60 hover:shadow-sm"
+    >
+      <span className={`flex h-10 w-10 items-center justify-center rounded-md ${toneClass}`}>
+        <Icon size={18} />
+      </span>
+      <span className="min-w-0">
+        <span className="flex items-start justify-between gap-3">
+          <span className="text-xs font-bold text-[#61767D]">{metric.title}</span>
+          <span className="shrink-0 text-xl font-black leading-none text-[#1E2C31]">{metric.value}</span>
+        </span>
+        <span className="mt-1 block text-xs leading-5 text-[#61767D]">{metric.detail}</span>
+        <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6] transition group-hover:text-[#0F6F95]">
+          {metric.action}
+          <ArrowRight size={13} />
+        </span>
+      </span>
     </Link>
   )
 }
@@ -644,7 +743,7 @@ function OperationsCommandPanel({
         title="今日指挥台"
         detail="日常先处理线索、内容缺口和素材风险；数据分析与转化路径只读诊断，不直接写业务数据。"
       />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-2 2xl:grid-cols-4">
         {cards.map((card) => (
           <CommandCard key={card.title} card={card} />
         ))}
@@ -676,20 +775,20 @@ function CommandCard({
   return (
     <Link
       href={card.href}
-      className="group flex min-h-32 items-start gap-4 rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60"
+      className="group flex min-h-24 items-center gap-3 rounded-md border border-[#D8E7E8] bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1889B6]/60"
     >
-      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${toneClass}`}>
-        <Icon size={19} />
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${toneClass}`}>
+        <Icon size={18} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center justify-between gap-3">
           <span className="text-sm font-bold text-[#1E2C31]">{card.title}</span>
-          <span className="text-lg font-black text-[#1E2C31]">
+          <span className="shrink-0 text-lg font-black text-[#1E2C31]">
             {typeof card.value === 'number' ? formatNumber(card.value) : card.value}
           </span>
         </span>
-        <span className="mt-2 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
-        <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#E36F2C]">
+        <span className="mt-1 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
+        <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#E36F2C]">
           进入处理
           <ArrowRight size={13} className="transition group-hover:translate-x-0.5" />
         </span>
@@ -1212,116 +1311,164 @@ function ContentCards({
   recentSummary: RecentContentSummary
   pageDraftCount: number
 }) {
+  const rows = [
+    {
+      title: '产品',
+      detail: '产品发布、草稿、待补和运营标记',
+      total: productSummary.total,
+      recent: recentSummary.products,
+      draft: productSummary.draft,
+      href: '/admin/content/products/new',
+      action: '发布产品',
+      Icon: Package,
+      tone: productSummary.draft > 0 ? 'orange' : 'blue',
+      recentLabel: '近 30 天',
+    },
+    {
+      title: '项目案例',
+      detail: '案例内容、坐标、图库和 Global 入图',
+      total: projectSummary.total,
+      recent: recentSummary.projects,
+      draft: projectSummary.draft,
+      href: '/admin/content/projects/new',
+      action: '发布项目',
+      Icon: MapPinned,
+      tone: projectSummary.draft > 0 ? 'orange' : 'green',
+      recentLabel: '近 30 天',
+    },
+    {
+      title: '新闻',
+      detail: '新闻标题、封面、正文、分类和 SEO',
+      total: newsSummary.total,
+      recent: recentSummary.news,
+      draft: newsSummary.draft,
+      href: '/admin/content/news/new',
+      action: '发布新闻',
+      Icon: Newspaper,
+      tone: newsSummary.draft > 0 ? 'orange' : 'blue',
+      recentLabel: '近 30 天',
+    },
+    {
+      title: '页面草稿',
+      detail: '页面模块草稿、结构草稿和视觉发布链路',
+      total: pageDraftCount,
+      recent: pageDraftCount,
+      draft: pageDraftCount,
+      href: VISUAL_HOME_HERO_HREF,
+      action: '编辑网站',
+      Icon: LayoutTemplate,
+      tone: pageDraftCount > 0 ? 'orange' : 'gray',
+      recentLabel: '待检查',
+    },
+  ] satisfies Array<{
+    title: string
+    detail: string
+    total: number
+    recent: number
+    draft: number
+    href: string
+    action: string
+    Icon: LucideIcon
+    tone: 'blue' | 'green' | 'orange' | 'gray'
+    recentLabel: string
+  }>
+
   return (
     <section id="content" className="space-y-4">
-      <AdminSectionTitle title="内容经营" detail="看总量、草稿和近 30 天新增。" />
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
-        <ContentStatCard
-          title="产品"
-          total={productSummary.total}
-          recent={recentSummary.products}
-          draft={productSummary.draft}
-          href="/admin/content/products/new"
-          action="发布产品"
-          Icon={Package}
-          color="blue"
-        />
-        <ContentStatCard
-          title="项目案例"
-          total={projectSummary.total}
-          recent={recentSummary.projects}
-          draft={projectSummary.draft}
-          href="/admin/content/projects/new"
-          action="发布项目"
-          Icon={MapPinned}
-          color="teal"
-        />
-        <ContentStatCard
-          title="新闻"
-          total={newsSummary.total}
-          recent={recentSummary.news}
-          draft={newsSummary.draft}
-          href="/admin/content/news/new"
-          action="发布新闻"
-          Icon={Newspaper}
-          color="orange"
-        />
-        <ContentStatCard
-          title="页面草稿"
-          total={pageDraftCount}
-          recent={pageDraftCount}
-          draft={pageDraftCount}
-          href={VISUAL_HOME_HERO_HREF}
-          action="编辑网站"
-          Icon={LayoutTemplate}
-          color="gray"
-          recentLabel="待检查"
-        />
+      <AdminSectionTitle title="内容经营指标台账" detail="把总量、草稿和近期变化压成一张表，减少首页重复卡片。" />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="hidden grid-cols-[190px_90px_100px_90px_minmax(0,1fr)_130px] gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 text-xs font-semibold text-[#61767D] lg:grid">
+          <span>内容线</span>
+          <span>总量</span>
+          <span>近期变化</span>
+          <span>草稿</span>
+          <span>运营口径</span>
+          <span className="text-right">处理入口</span>
+        </div>
+        <div className="divide-y divide-[#E6EEEE]">
+          {rows.map((row) => (
+            <ContentMetricLedgerRow key={row.title} row={row} />
+          ))}
+        </div>
       </div>
     </section>
   )
 }
 
-function ContentStatCard({
-  title,
-  total,
-  recent,
-  draft,
-  href,
-  action,
-  Icon,
-  color,
-  recentLabel = '近 30 天新增',
+function ContentMetricLedgerRow({
+  row,
 }: {
-  title: string
-  total: number
-  recent: number
-  draft: number
-  href: string
-  action: string
-  Icon: LucideIcon
-  color: 'blue' | 'teal' | 'orange' | 'gray'
-  recentLabel?: string
+  row: {
+    title: string
+    detail: string
+    total: number
+    recent: number
+    draft: number
+    href: string
+    action: string
+    Icon: LucideIcon
+    tone: 'blue' | 'green' | 'orange' | 'gray'
+    recentLabel: string
+  }
 }) {
-  const accent =
-    color === 'orange'
-      ? 'bg-[#FFF2E7] text-[#E36F2C]'
-      : color === 'teal'
-        ? 'bg-[#E7F7F4] text-[#159477]'
-        : color === 'gray'
-          ? 'bg-[#F0F2F2] text-[#61767D]'
-          : 'bg-[#EAF4FF] text-[#3078C8]'
+  const Icon = row.Icon
+  const toneClass = contentMetricToneClass(row.tone)
 
   return (
-    <Link
-      href={href}
-      className="group flex min-h-48 flex-col justify-between rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#E36F2C]/55"
-    >
-      <span className="flex items-start justify-between gap-4">
-        <span>
-          <span className="block text-sm text-[#61767D]">{title}</span>
-          <span className="mt-2 block text-4xl font-bold text-[#1E2C31]">{formatNumber(total)}</span>
+    <div className="grid grid-cols-1 gap-3 px-4 py-4 text-sm lg:grid-cols-[190px_90px_100px_90px_minmax(0,1fr)_130px] lg:items-center">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${toneClass}`}>
+          <Icon size={18} />
         </span>
-        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${accent}`}>
-          <Icon size={20} />
+        <span className="min-w-0">
+          <span className="block truncate font-bold text-[#1E2C31]">{row.title}</span>
+          <span className="mt-1 block truncate text-xs text-[#61767D]">{row.detail}</span>
         </span>
+      </div>
+      <InlineHomeStat label="总量" value={row.total} />
+      <InlineHomeStat label={row.recentLabel} value={row.recent} />
+      <InlineHomeStat label="草稿" value={row.draft} emphasize={row.draft > 0} />
+      <span>
+        <span className={`inline-flex w-fit rounded-md px-2 py-1 text-xs font-bold ${toneClass}`}>
+          {row.draft > 0 ? '草稿待收口' : '状态正常'}
+        </span>
+        <span className="mt-1 block text-xs leading-5 text-[#61767D]">{row.detail}</span>
       </span>
-      <span className="grid grid-cols-2 gap-3">
-        <span className="border-l border-[#D8E7E8] pl-3">
-          <span className="block text-xs text-[#61767D]">{recentLabel}</span>
-          <span className="mt-1 block text-lg font-semibold text-[#1E2C31]">{formatNumber(recent)}</span>
-        </span>
-        <span className="border-l border-[#D8E7E8] pl-3">
-          <span className="block text-xs text-[#61767D]">草稿</span>
-          <span className="mt-1 block text-lg font-semibold text-[#1E2C31]">{formatNumber(draft)}</span>
-        </span>
-      </span>
-      <span className="flex items-center justify-between border-t border-[#E6EEEE] pt-4 text-sm font-semibold text-[#E36F2C]">
-        {action}
-        <ArrowRight size={16} className="transition group-hover:translate-x-0.5" />
-      </span>
-    </Link>
+      <Link
+        href={row.href}
+        className="inline-flex h-8 w-fit items-center gap-1 rounded-md border border-[#1889B6]/25 bg-[#EAF6F8] px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] lg:justify-self-end"
+      >
+        {row.action}
+        <ArrowRight size={13} />
+      </Link>
+    </div>
   )
+}
+
+function InlineHomeStat({
+  label,
+  value,
+  emphasize = false,
+}: {
+  label: string
+  value: number
+  emphasize?: boolean
+}) {
+  return (
+    <span>
+      <span className="block text-[11px] text-[#8A9EA4] lg:hidden">{label}</span>
+      <span className={`font-bold ${emphasize ? 'text-[#E36F2C]' : 'text-[#1E2C31]'}`}>
+        {formatNumber(value)}
+      </span>
+    </span>
+  )
+}
+
+function contentMetricToneClass(tone: 'blue' | 'green' | 'orange' | 'gray') {
+  if (tone === 'orange') return 'bg-[#FFF2E7] text-[#E36F2C]'
+  if (tone === 'green') return 'bg-[#E7F7F4] text-[#159477]'
+  if (tone === 'gray') return 'bg-[#F0F2F2] text-[#61767D]'
+  return 'bg-[#EAF6F8] text-[#1889B6]'
 }
 
 function CustomerPanel({ leadSummary, role }: { leadSummary: LeadSummary; role: AdminRole }) {

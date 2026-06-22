@@ -678,11 +678,22 @@ function ContentDomainGrid({
 }) {
   return (
     <section id="drafts" className="scroll-mt-24 space-y-4">
-      <AdminSectionTitle title="内容经营" detail="按内容域查看总量、草稿和近 30 天新增。" />
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        {CONTENT_DOMAINS.map((domain) => (
-          <ContentDomainCard key={domain.key} domain={domain} summary={summary[domain.key]} />
-        ))}
+      <AdminSectionTitle title="核心内容运营台账" detail="产品、项目、新闻按发布状态和近期变化统一扫描，减少卡片跳读。" />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="hidden grid-cols-[190px_90px_90px_90px_100px_minmax(0,1fr)_170px] gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 text-xs font-semibold text-[#61767D] lg:grid">
+          <span>核心内容域</span>
+          <span>总量</span>
+          <span>已发布</span>
+          <span>草稿</span>
+          <span>近 30 天</span>
+          <span>运营口径</span>
+          <span className="text-right">处理入口</span>
+        </div>
+        <div className="divide-y divide-[#E6EEEE]">
+          {CONTENT_DOMAINS.map((domain) => (
+            <ContentDomainLedgerRow key={domain.key} domain={domain} summary={summary[domain.key]} />
+          ))}
+        </div>
       </div>
       <FixedContentReadinessGrid summaries={fixedContentSummaries} />
     </section>
@@ -692,45 +703,62 @@ function ContentDomainGrid({
 function FixedContentReadinessGrid({ summaries }: { summaries: FixedContentSummary[] }) {
   return (
     <section className="space-y-3">
-      <AdminSectionTitle title="固定内容发布就绪" detail="FAQ、文件下载、场景、Display、技术专题只展示前台可见的 published 内容；先处理橙色项。" />
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-        {summaries.map((summary) => (
-          <FixedContentReadinessCard key={summary.domain.key} summary={summary} />
-        ))}
+      <AdminSectionTitle title="固定内容运营台账" detail="FAQ、文件下载、场景、Display、技术专题按前台可见状态集中扫描；先处理橙色项。" />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="hidden grid-cols-[190px_90px_90px_90px_90px_90px_minmax(0,1fr)_150px] gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 text-xs font-semibold text-[#61767D] lg:grid">
+          <span>固定内容域</span>
+          <span>总量</span>
+          <span>前台可见</span>
+          <span>已发布</span>
+          <span>草稿</span>
+          <span>隐藏</span>
+          <span>状态判断</span>
+          <span>处理入口</span>
+        </div>
+        <div className="divide-y divide-[#E6EEEE]">
+          {summaries.map((summary) => (
+            <FixedContentReadinessRow key={summary.domain.key} summary={summary} />
+          ))}
+        </div>
       </div>
     </section>
   )
 }
 
-function FixedContentReadinessCard({ summary }: { summary: FixedContentSummary }) {
+function FixedContentReadinessRow({ summary }: { summary: FixedContentSummary }) {
   const { domain } = summary
   const Icon = domain.Icon
   const toneClass =
     summary.tone === 'orange'
-      ? 'border-orange-200 bg-orange-50/70 text-orange-700'
+      ? 'bg-orange-50 text-orange-700'
       : summary.tone === 'blue'
-        ? 'border-[#D8E7E8] bg-[#F7FAFA] text-[#1889B6]'
-        : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+        ? 'bg-[#EAF6F8] text-[#1889B6]'
+        : 'bg-emerald-50 text-emerald-700'
   const issueText = summary.issues.length > 0 ? summary.issues.slice(0, 2).join(' / ') : '前台可见覆盖正常'
 
   return (
-    <article className="rounded-md border border-[#D8E7E8] bg-white p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
+    <div className="grid grid-cols-1 gap-3 px-4 py-4 text-sm lg:grid-cols-[190px_90px_90px_90px_90px_90px_minmax(0,1fr)_150px] lg:items-center">
+      <div className="flex min-w-0 items-center gap-3">
         <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${toneClass}`}>
           <Icon size={18} />
         </span>
-        <span className={`rounded-full px-2 py-1 text-[11px] font-bold ${toneClass}`}>
-          可见 {formatNumber(summary.renderable)}
+        <span className="min-w-0">
+          <span className="block truncate font-bold text-[#1E2C31]">{domain.title}</span>
+          <span className="mt-1 block truncate text-xs text-[#61767D]">{domain.detail}</span>
         </span>
       </div>
-      <h3 className="mt-4 text-sm font-bold text-[#1E2C31]">{domain.title}</h3>
-      <p className="mt-2 min-h-10 text-xs leading-5 text-[#61767D]">{issueText}</p>
-      <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-        <SmallInlineStat label="总量" value={summary.total} />
-        <SmallInlineStat label="发布" value={summary.published} />
-        <SmallInlineStat label="草稿" value={summary.draft} />
-      </div>
-      <div className="mt-4 flex flex-wrap gap-2">
+      <InlineLedgerStat label="总量" value={summary.total} />
+      <InlineLedgerStat label="前台可见" value={summary.renderable} emphasize={summary.renderable === 0} />
+      <InlineLedgerStat label="已发布" value={summary.published} />
+      <InlineLedgerStat label="草稿" value={summary.draft} emphasize={summary.draft > 0} />
+      <InlineLedgerStat label="隐藏" value={summary.hidden} />
+      <span>
+        <span className={`inline-flex w-fit rounded-md px-2 py-1 text-xs font-bold ${toneClass}`}>
+          {summary.tone === 'orange' ? '待处理' : summary.tone === 'blue' ? '需复核' : '正常'}
+        </span>
+        <span className="mt-1 block text-xs leading-5 text-[#61767D]">{issueText}</span>
+      </span>
+      <span className="flex flex-wrap gap-2 lg:justify-end">
         <Link
           href={domain.href}
           className="inline-flex h-8 items-center rounded-md bg-[#1889B6] px-3 text-xs font-semibold text-white transition hover:bg-[#0F6F95]"
@@ -743,21 +771,31 @@ function FixedContentReadinessCard({ summary }: { summary: FixedContentSummary }
         >
           前台
         </Link>
-      </div>
-    </article>
+      </span>
+    </div>
   )
 }
 
-function SmallInlineStat({ label, value }: { label: string; value: number }) {
+function InlineLedgerStat({
+  label,
+  value,
+  emphasize = false,
+}: {
+  label: string
+  value: number
+  emphasize?: boolean
+}) {
   return (
-    <span className="rounded-md bg-[#F7FAFA] px-2 py-2">
-      <span className="block text-[11px] text-[#61767D]">{label}</span>
-      <span className="mt-1 block text-sm font-bold text-[#1E2C31]">{formatNumber(value)}</span>
+    <span>
+      <span className="block text-[11px] text-[#8A9EA4] lg:hidden">{label}</span>
+      <span className={`font-bold ${emphasize ? 'text-[#E36F2C]' : 'text-[#1E2C31]'}`}>
+        {formatNumber(value)}
+      </span>
     </span>
   )
 }
 
-function ContentDomainCard({
+function ContentDomainLedgerRow({
   domain,
   summary,
 }: {
@@ -771,76 +809,98 @@ function ContentDomainCard({
       : domain.tone === 'green'
         ? 'bg-[#E7F7F4] text-[#159477]'
         : 'bg-[#EAF4FF] text-[#3078C8]'
+  const draftTone = summary.draft > 0 ? 'orange' : 'green'
 
   return (
-    <div className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-4">
-        <span className={`flex h-11 w-11 items-center justify-center rounded-md ${accent}`}>
-          <Icon size={20} />
+    <div className="grid grid-cols-1 gap-3 px-4 py-4 text-sm lg:grid-cols-[190px_90px_90px_90px_100px_minmax(0,1fr)_170px] lg:items-center">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${accent}`}>
+          <Icon size={18} />
         </span>
+        <span className="min-w-0">
+          <span className="block truncate font-bold text-[#1E2C31]">{domain.title}</span>
+          <span className="mt-1 block truncate text-xs text-[#61767D]">{domain.detail}</span>
+        </span>
+      </div>
+      <InlineLedgerStat label="总量" value={summary.total} />
+      <InlineLedgerStat label="已发布" value={summary.published} />
+      <InlineLedgerStat label="草稿" value={summary.draft} emphasize={summary.draft > 0} />
+      <InlineLedgerStat label="近 30 天" value={summary.recent} />
+      <span>
+        <span className={`inline-flex w-fit rounded-md px-2 py-1 text-xs font-bold ${contentStatusToneClass(draftTone)}`}>
+          {summary.draft > 0 ? '草稿待收口' : '发布状态正常'}
+        </span>
+        <span className="mt-1 block text-xs leading-5 text-[#61767D]">{domain.detail}</span>
+      </span>
+      <span className="flex flex-wrap gap-2 lg:justify-end">
         <Link
           href={domain.newHref}
-          className="inline-flex h-9 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95E22]"
+          className="inline-flex h-8 items-center gap-1 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95E22]"
         >
-          <Plus size={14} />
+          <Plus size={13} />
           {domain.action}
         </Link>
-      </div>
-      <h2 className="mt-5 text-lg font-bold text-[#1E2C31]">{domain.title}</h2>
-      <p className="mt-2 min-h-10 text-sm leading-6 text-[#61767D]">{domain.detail}</p>
-      <div className="mt-5 grid grid-cols-3 gap-3">
-        <SmallStat label="总数" value={summary.total} />
-        <SmallStat label="草稿" value={summary.draft} />
-        <SmallStat label="近 30 天" value={summary.recent} />
-      </div>
-      <Link
-        href={domain.href}
-        className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#E36F2C]"
-      >
-        进入管理
-        <ArrowRight size={15} />
-      </Link>
+        <Link
+          href={domain.href}
+          className="inline-flex h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#61767D] transition hover:border-[#1889B6] hover:text-[#1889B6]"
+        >
+          进入管理
+        </Link>
+      </span>
     </div>
   )
 }
 
-function SmallStat({ label, value }: { label: string; value: number }) {
-  return (
-    <span className="rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-3">
-      <span className="block text-xs text-[#61767D]">{label}</span>
-      <span className="mt-1 block text-xl font-bold text-[#1E2C31]">{formatNumber(value)}</span>
-    </span>
-  )
+function contentStatusToneClass(tone: 'green' | 'orange') {
+  if (tone === 'orange') return 'bg-[#FFF2E7] text-[#C85F24]'
+  return 'bg-emerald-50 text-emerald-700'
 }
 
 function ActionMatrix() {
   const actions = [
-    { label: '产品管理', href: '/admin/content/products', Icon: Package },
-    { label: '项目案例', href: '/admin/content/projects', Icon: MapPinned },
-    { label: '新闻资讯', href: '/admin/content/news', Icon: Newspaper },
-    { label: 'FAQ', href: '/admin/content/faq', Icon: FileQuestion },
-    { label: '文件下载', href: '/admin/content/media-kit', Icon: FileArchive },
-    { label: '场景方案', href: '/admin/content/scenarios', Icon: Presentation },
-    { label: 'Display 展示', href: '/admin/content/display', Icon: GalleryHorizontalEnd },
-    { label: '技术专题', href: '/admin/content/innovation', Icon: Lightbulb },
+    { group: '核心 CMS', label: '产品管理', detail: '产品列表、草稿、待补、发布入口', href: '/admin/content/products', Icon: Package },
+    { group: '核心 CMS', label: '项目案例', detail: '案例列表、坐标、图库和 Global 入图', href: '/admin/content/projects', Icon: MapPinned },
+    { group: '核心 CMS', label: '新闻资讯', detail: '新闻列表、分类、排期和 SEO', href: '/admin/content/news', Icon: Newspaper },
+    { group: '固定内容', label: 'FAQ', detail: '常见问题分类、排序、发布和隐藏', href: '/admin/content/faq', Icon: FileQuestion },
+    { group: '固定内容', label: '文件下载', detail: 'Media Kit 文件和申请入口', href: '/admin/content/media-kit', Icon: FileArchive },
+    { group: '固定内容', label: '场景方案', detail: 'tourism / commercial / public 固定场景', href: '/admin/content/scenarios', Icon: Presentation },
+    { group: '固定内容', label: 'Display 展示', detail: '展示页橱窗和前台可见内容', href: '/admin/content/display', Icon: GalleryHorizontalEnd },
+    { group: '固定内容', label: '技术专题', detail: 'VI/IE、VIPC、VOLS 技术专题', href: '/admin/content/innovation', Icon: Lightbulb },
   ]
 
   return (
     <section className="space-y-4">
-      <AdminSectionTitle title="管理入口" detail="查看已有内容，继续筛选、编辑和发布。" />
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+      <AdminSectionTitle title="内容操作速查" detail="把管理入口压成一张表，按内容域进入对应列表、编辑和发布工作台。" />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="hidden grid-cols-[110px_180px_minmax(0,1fr)_96px] gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 text-xs font-semibold text-[#61767D] lg:grid">
+          <span>分组</span>
+          <span>入口</span>
+          <span>用途</span>
+          <span className="text-right">操作</span>
+        </div>
+        <div className="divide-y divide-[#E6EEEE]">
         {actions.map((action) => (
           <Link
             key={`${action.label}-${action.href}`}
             href={action.href}
-            className="flex min-h-16 items-center gap-3 rounded-md border border-[#D8E7E8] bg-white px-4 py-3 transition hover:-translate-y-0.5 hover:border-[#1889B6]/60 hover:shadow-sm"
+            className="grid grid-cols-1 gap-3 px-4 py-3 text-sm transition hover:bg-[#F7FAFA] lg:grid-cols-[110px_180px_minmax(0,1fr)_96px] lg:items-center"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
-              <action.Icon size={17} />
+            <span className="w-fit rounded-md bg-[#EAF6F8] px-2 py-1 text-[11px] font-bold text-[#1889B6]">
+              {action.group}
             </span>
-            <span className="text-sm font-semibold text-[#1E2C31]">{action.label}</span>
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#F0F7F8] text-[#1889B6]">
+                <action.Icon size={17} />
+              </span>
+              <span className="truncate font-bold text-[#1E2C31]">{action.label}</span>
+            </span>
+            <span className="text-xs leading-5 text-[#61767D]">{action.detail}</span>
+            <span className="text-xs font-semibold text-[#1889B6] lg:text-right">
+              进入管理
+            </span>
           </Link>
         ))}
+        </div>
       </div>
     </section>
   )
@@ -851,16 +911,18 @@ function WorkflowPanel() {
 
   return (
     <section className="space-y-4">
-      <AdminSectionTitle title="内容运营流程" />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+      <AdminSectionTitle title="内容发布链路" detail="保持固定字段编辑心智：先建草稿，再补字段，最后预览和发布。" />
+      <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+        <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-4 md:divide-x md:divide-y-0">
         {steps.map((step, index) => (
-          <div key={step} className="rounded-md border border-[#D8E7E8] bg-white p-4">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E36F2C] text-sm font-bold text-white">
+          <div key={step} className="flex min-h-16 items-center gap-3 px-4 py-3">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#E36F2C] text-sm font-bold text-white">
               {index + 1}
             </span>
-            <p className="mt-4 text-sm font-semibold text-[#1E2C31]">{step}</p>
+            <p className="text-sm font-semibold text-[#1E2C31]">{step}</p>
           </div>
         ))}
+        </div>
       </div>
     </section>
   )
@@ -993,16 +1055,14 @@ export default async function AdminContentPage() {
       activeItem="overview"
     >
       <Hero summary={summary} />
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-6">
-          <ContentListWorkbench summary={summary} missingProjectCoordinates={missingProjectCoordinates} />
-          <ContentDomainGrid summary={summary} fixedContentSummaries={fixedContentSummaries} />
-          <ActionMatrix />
-          <WorkflowPanel />
-          {isAdmin && <MaintenanceBlock />}
-        </div>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <ContentListWorkbench summary={summary} missingProjectCoordinates={missingProjectCoordinates} />
         <TodoPanel items={todos} />
       </div>
+      <ContentDomainGrid summary={summary} fixedContentSummaries={fixedContentSummaries} />
+      <ActionMatrix />
+      <WorkflowPanel />
+      {isAdmin && <MaintenanceBlock />}
     </AdminSectionShell>
   )
 }

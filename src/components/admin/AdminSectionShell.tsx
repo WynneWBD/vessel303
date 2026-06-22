@@ -79,18 +79,26 @@ export function AdminSideNav({
     (sum, group) => sum + group.items.filter((item) => item.planned).length,
     0,
   )
+  const actionableItemCount = visibleItemCount - plannedItemCount
 
   return (
     <aside className="lg:sticky lg:top-24 lg:self-start">
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="border-b border-[#E6EEEE] bg-[#FBFDFD] p-4">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">业务导航</p>
-          <h1 className="mt-2 text-lg font-bold text-[#1E2C31]">{title}</h1>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">业务导航</p>
+              <h1 className="mt-2 text-lg font-bold text-[#1E2C31]">{title}</h1>
+            </div>
+            <span className="shrink-0 rounded-md border border-[#D8E7E8] bg-white px-2 py-1 text-[11px] font-bold text-[#61767D]">
+              {role === 'admin' ? '管理员视图' : '运营视图'}
+            </span>
+          </div>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">{description}</p>
           <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
             <span className="rounded-md border border-[#D8E7E8] bg-white px-2 py-1.5">
-              <span className="block font-bold text-[#1E2C31]">{visibleItemCount}</span>
-              <span className="text-[#8A9EA4]">可用入口</span>
+              <span className="block font-bold text-[#1E2C31]">{actionableItemCount}</span>
+              <span className="text-[#8A9EA4]">可操作入口</span>
             </span>
             <span className="rounded-md border border-[#D8E7E8] bg-white px-2 py-1.5">
               <span className="block font-bold text-[#1E2C31]">{plannedItemCount}</span>
@@ -101,7 +109,12 @@ export function AdminSideNav({
         <nav className="space-y-4 p-3">
           {visibleGroups.map((group) => (
             <div key={group.title}>
-              <p className="px-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[#8A9EA4]">{group.title}</p>
+              <p className="flex items-center justify-between gap-3 px-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[#8A9EA4]">
+                <span>{group.title}</span>
+                <span className="rounded-full bg-[#F0F2F2] px-2 py-0.5 tracking-normal text-[#61767D]">
+                  {group.items.length}
+                </span>
+              </p>
               <div className="mt-2 space-y-1">
                 {group.items.map((item) => (
                   <AdminSideNavRow key={item.key} item={item} active={item.key === activeItem} />
@@ -156,14 +169,14 @@ function AdminSideNavRow({ item, active }: { item: AdminSideNavItem; active: boo
 
   if (!item.href || item.disabled || item.planned) {
     return (
-      <div className={className} aria-disabled="true">
+      <div className={className} aria-disabled="true" title={item.label}>
         {content}
       </div>
     )
   }
 
   return (
-    <Link href={item.href} className={className}>
+    <Link href={item.href} className={className} title={item.label}>
       {content}
     </Link>
   )

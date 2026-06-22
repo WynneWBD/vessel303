@@ -4,8 +4,6 @@ import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
 import {
   AdminActionLink,
-  AdminMetricCard,
-  AdminPageHero,
   AdminSectionTitle,
 } from '@/components/admin/AdminUI'
 import { pool } from '@/lib/db'
@@ -445,84 +443,157 @@ function Hero({
   uploadBytes: number
   visibleModules: number
 }) {
+  const metrics = [
+    {
+      title: '页面草稿',
+      value: pageDraftCount.toLocaleString('zh-CN'),
+      detail: pageDraftCount > 0 ? '等待确认发布' : '暂无待发布草稿',
+      href: VISUAL_HOME_HERO_HREF,
+      action: '处理草稿',
+      Icon: FileText,
+      tone: pageDraftCount > 0 ? 'orange' : 'green',
+    },
+    {
+      title: '可见模块',
+      value: visibleModules.toLocaleString('zh-CN'),
+      detail: 'Home / About / Global 已接入',
+      href: '/admin/site/pages#content-source-route-tree',
+      action: '看页面清单',
+      Icon: LayoutTemplate,
+      tone: 'blue',
+    },
+    {
+      title: '图片素材',
+      value: uploadCount.toLocaleString('zh-CN'),
+      detail: uploadBytes ? formatBytes(uploadBytes) : '暂无占用',
+      href: '/admin/site/media#media-replacement-workbench',
+      action: '进替换台',
+      Icon: ImageIcon,
+      tone: uploadBytes > STORAGE_WARNING_BYTES ? 'orange' : 'green',
+    },
+    {
+      title: '发布边界',
+      value: '只读',
+      detail: 'Global 只开放前台查看，不开放底层地图管理',
+      href: '/global',
+      action: '查看 Global',
+      Icon: MapPinned,
+      tone: 'gray',
+    },
+  ] satisfies Array<{
+    title: string
+    value: string
+    detail: string
+    href: string
+    action: string
+    Icon: LucideIcon
+    tone: B195QueueTone
+  }>
+
   return (
-    <AdminPageHero
-      kicker="Site Operations"
-      title="网站运营中心"
-      description="先看站点状态，再进入页面编辑、图片素材、SEO、转化和前台查看；Global 只做展示入口，不开放底层地图管理。"
-      actions={
-        <>
-          <AdminActionLink href={VISUAL_HOME_HERO_HREF} Icon={LayoutTemplate} label="编辑网站" primary />
-          <AdminActionLink href="/admin/site/media#media-replacement-workbench" Icon={ImageIcon} label="管理图片" />
-          <AdminActionLink href="/" Icon={Eye} label="查看主站" />
-        </>
-      }
-    >
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_1fr_1fr_1fr]">
-          <div className="rounded-md border border-white/70 bg-white/80 p-5 shadow-sm">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm text-[#61767D]">当前站点</p>
-                <p className="mt-2 text-2xl font-bold text-[#1E2C31]">运营中</p>
-              </div>
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                正常
-              </span>
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="border-l-4 border-[#1889B6] p-4 md:p-5">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">Site Operations</p>
+            <h1 className="mt-1 text-2xl font-bold text-[#1E2C31] md:text-3xl">网站运营中心</h1>
+            <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
+              一屏看清站点、页面、素材、SEO、转化和前台入口；Global 只做展示入口，不开放底层地图管理。
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <AdminActionLink href={VISUAL_HOME_HERO_HREF} Icon={LayoutTemplate} label="编辑网站" primary />
+            <AdminActionLink href="/admin/site/pages#content-source-route-tree" Icon={ListChecks} label="页面清单" />
+            <AdminActionLink href="/admin/site/media#media-replacement-workbench" Icon={ImageIcon} label="图片替换" />
+            <AdminActionLink href="/admin/site/seo" Icon={SearchCheck} label="SEO 检查" />
+            <AdminActionLink href="/" Icon={Eye} label="查看主站" />
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
+          <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-[#FBFDFD]">
+            <div className="grid grid-cols-[minmax(150px,1fr)_minmax(160px,1fr)_110px_120px] gap-3 border-b border-[#E6EEEE] px-4 py-2 text-xs font-bold text-[#61767D] max-lg:hidden">
+              <span>站点 / 页面</span>
+              <span>路径</span>
+              <span>状态</span>
+              <span className="text-right">入口</span>
             </div>
-            <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="divide-y divide-[#E6EEEE]">
               {SITE_DOMAINS.map((site) => (
-                <DomainCard key={site.title} site={site} />
+                <SiteDomainLedgerRow key={site.title} site={site} />
               ))}
             </div>
           </div>
-          <AdminMetricCard
-            id="drafts"
-            title="页面草稿"
-            value={pageDraftCount}
-            detail={pageDraftCount > 0 ? '等待确认发布' : '暂无待发布草稿'}
-            href={VISUAL_HOME_HERO_HREF}
-            Icon={FileText}
-            tone={pageDraftCount > 0 ? 'orange' : 'green'}
-          />
-          <AdminMetricCard
-            title="可见模块"
-            value={visibleModules}
-            detail="Home / About / Global 已接入"
-            href={VISUAL_HOME_HERO_HREF}
-            Icon={LayoutTemplate}
-            tone="blue"
-          />
-          <AdminMetricCard
-            title="图片素材"
-            value={uploadCount}
-            detail={uploadBytes ? formatBytes(uploadBytes) : '暂无占用'}
-            href="/admin/site/media#media-replacement-workbench"
-            Icon={ImageIcon}
-            tone={uploadBytes > STORAGE_WARNING_BYTES ? 'orange' : 'green'}
-          />
+
+          <div id="drafts" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {metrics.map((metric) => (
+              <SiteHeroMetric key={metric.title} metric={metric} />
+            ))}
+          </div>
+        </div>
       </div>
-    </AdminPageHero>
+    </section>
   )
 }
 
-function DomainCard({ site }: { site: SiteDomain }) {
+function SiteDomainLedgerRow({ site }: { site: SiteDomain }) {
   const external = site.href.startsWith('http')
   return (
     <Link
       href={site.href}
       target={external ? '_blank' : undefined}
       rel={external ? 'noreferrer' : undefined}
-      className="group flex min-h-20 flex-col justify-between rounded-md border border-[#D8E7E8] bg-white p-4 transition hover:border-[#1889B6]/60"
+      className="grid grid-cols-1 gap-2 px-4 py-3 text-sm transition hover:bg-white lg:grid-cols-[minmax(150px,1fr)_minmax(160px,1fr)_110px_120px] lg:items-center"
     >
-      <span className="flex items-center justify-between gap-3">
-        <span className="truncate text-sm font-semibold text-[#1E2C31]">{site.title}</span>
-        <span className="rounded-full bg-[#EAF6F8] px-2 py-1 text-[11px] font-semibold text-[#1889B6]">
-          {site.label}
-        </span>
+      <span className="min-w-0">
+        <span className="block font-bold text-[#1E2C31]">{site.title}</span>
+        <span className="mt-0.5 block text-xs text-[#8A9EA4]">前台可访问入口</span>
       </span>
-      <span className="mt-3 flex items-center justify-between gap-3 text-xs text-[#61767D]">
-        <span className="truncate">{site.domain}</span>
-        <Eye size={14} className="shrink-0 transition group-hover:text-[#E36F2C]" />
+      <span className="break-all text-xs font-semibold text-[#61767D]">{site.domain}</span>
+      <span className="w-fit rounded-full bg-[#EAF6F8] px-2 py-1 text-[11px] font-bold text-[#1889B6]">
+        {site.label}
+      </span>
+      <span className="inline-flex items-center gap-1 text-xs font-bold text-[#1889B6] lg:justify-self-end">
+        打开
+        <Eye size={13} />
+      </span>
+    </Link>
+  )
+}
+
+function SiteHeroMetric({
+  metric,
+}: {
+  metric: {
+    title: string
+    value: string
+    detail: string
+    href: string
+    action: string
+    Icon: LucideIcon
+    tone: B195QueueTone
+  }
+}) {
+  const Icon = metric.Icon
+
+  return (
+    <Link
+      href={metric.href}
+      className="group grid min-h-[86px] grid-cols-[40px_minmax(0,1fr)] gap-3 rounded-md border border-[#D8E7E8] bg-white p-3 transition hover:border-[#1889B6]/60 hover:shadow-sm"
+    >
+      <span className={`flex h-10 w-10 items-center justify-center rounded-md ${queueIconClass(metric.tone)}`}>
+        <Icon size={18} />
+      </span>
+      <span className="min-w-0">
+        <span className="flex items-start justify-between gap-3">
+          <span className="text-xs font-bold text-[#61767D]">{metric.title}</span>
+          <span className="shrink-0 text-xl font-black leading-none text-[#1E2C31]">{metric.value}</span>
+        </span>
+        <span className="mt-1 block text-xs leading-5 text-[#61767D]">{metric.detail}</span>
+        <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6] transition group-hover:text-[#0F6F95]">
+          {metric.action}
+          <ArrowRight size={13} />
+        </span>
       </span>
     </Link>
   )
@@ -1131,28 +1202,15 @@ export default async function AdminSitePage() {
         uploadBytes={uploadBytes}
         visibleModules={visibleModules}
       />
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-6">
-          <SiteOperationsConsole
-            pageDraftCount={pageDraftCount}
-            uploadCount={uploadCount}
-            uploadBytes={uploadBytes}
-            visibleModules={visibleModules}
-            configIssues={configIssues}
-            isAdmin={isAdmin}
-          />
-          <SourceSeoControlPanel />
-          <B195PriorityQueue
-            pageDraftCount={pageDraftCount}
-            uploadBytes={uploadBytes}
-            configIssues={configIssues}
-            isAdmin={isAdmin}
-          />
-          <PublishGrid />
-          <AppGrid role={adminRole} />
-          <WorkflowPanel />
-          {isAdmin && <MaintenanceBlock configIssues={configIssues} />}
-        </div>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <SiteOperationsConsole
+          pageDraftCount={pageDraftCount}
+          uploadCount={uploadCount}
+          uploadBytes={uploadBytes}
+          visibleModules={visibleModules}
+          configIssues={configIssues}
+          isAdmin={isAdmin}
+        />
         <TodoPanel
           pageDraftCount={pageDraftCount}
           uploadBytes={uploadBytes}
@@ -1160,6 +1218,17 @@ export default async function AdminSitePage() {
           isAdmin={isAdmin}
         />
       </div>
+      <SourceSeoControlPanel />
+      <B195PriorityQueue
+        pageDraftCount={pageDraftCount}
+        uploadBytes={uploadBytes}
+        configIssues={configIssues}
+        isAdmin={isAdmin}
+      />
+      <PublishGrid />
+      <AppGrid role={adminRole} />
+      <WorkflowPanel />
+      {isAdmin && <MaintenanceBlock configIssues={configIssues} />}
     </AdminSectionShell>
   )
 }

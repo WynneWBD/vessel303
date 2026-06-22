@@ -1,6 +1,6 @@
 # vessel303 Codex 技术手册
 
-最后更新：2026-06-21
+最后更新：2026-06-22
 
 本文件是 Codex 在 vessel303 工作区的技术地图。行为纪律见 `AGENTS.md`；当前项目总控状态见 `C:\Users\Wynne\Desktop\vessel303\00_项目总控入口\vessel303_当前总控handoff.md`。
 
@@ -8,8 +8,8 @@
 
 - 官网：`https://www.vessel303.com`
 - 代码仓库：`C:\Users\Wynne\Desktop\vessel303\repo-git`
-- 当前循环：B422 已把内容来源中心、内容状态页和访问统计页的发布/SEO/素材动作进一步改为直达对应队列或 SEO 锚点，功能已上线；当前暂停等待 Wynne 下一步命令，不继续自动开新批次。
-- 最近功能批次：B422 / `3230644 fix(admin): deepen content and seo operations links`
+- 当前循环：B425 已在本地完成后台多页面同类 UI 问题循环返工，覆盖 `/admin`、`/admin/content`、`/admin/site`、`/admin/status`：压缩后台总控首屏，修复内容中心后续台账被限制在左列的问题，保留 `/admin/site` 站点运行台账与全宽后续区块，并把状态中心窄列排行/模块入口改为卡片式台账；叠加 B423/B424 后台 UI 优化，当前准备验证、提交、推送并上线。
+- 当前线上功能批次：B422 / `3230644 fix(admin): deepen content and seo operations links`
 - 已记录生产验证：B422 / `dpl_EVsWhq4duWVgRRtXUKuT3CgdUUfG`；最新 production deployment 以 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
 - 当前精确状态以 `00_项目总控入口/vessel303_当前总控handoff.md` 和 `npx vercel inspect https://www.vessel303.com --scope vessel303` 为准。
 - 当前目标：前台对齐 `en.303vessel.cn` 的生产官网能力，后台对齐 `300.cn 后台` 的运营效率和数据分析心智。

@@ -1213,24 +1213,86 @@ function ConversionPathTable({
 }
 
 function RankWorkspace({ analytics }: { analytics: SiteAnalyticsDashboard }) {
+  const rows = buildRankLedgerRows(analytics)
+
   return (
-    <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex items-start justify-between gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3">
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">入口与来源排行</h2>
-          <p className="mt-1 text-xs text-[#61767D]">运营先看高访问页面、来源类型和高访问低动作入口。</p>
+          <p className="mt-1 text-xs text-[#61767D]">把 Top Pages、来源类型和落地页动作合并成一张排行台账，减少三列跳读。</p>
         </div>
         <Link href="/admin/status/traffic#landing-analysis" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
           落地页分析
         </Link>
       </div>
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <RankList title="Top Pages" rows={analytics.topPages} empty="暂无访问页面。" />
-        <RankList title="来源类型" rows={analytics.sourceTypes} empty="暂无来源事件。" formatLabel={sourceTypeLabel} />
-        <RankList title="落地页动作" rows={analytics.landingPages} empty="暂无落地页事件。" secondaryLabel="动作" />
+      <div className="divide-y divide-[#E6EEEE]">
+        {rows.length > 0 ? (
+          rows.map((row) => (
+            <Link
+              key={`${row.group}:${row.key}`}
+              href={row.href}
+              className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-4 py-3 text-sm transition hover:bg-[#F7FAFA]"
+            >
+              <span className="min-w-0">
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className={`w-fit rounded-md px-2 py-1 text-[11px] font-bold ${rankGroupToneClass(row.group)}`}>
+                    {row.group}
+                  </span>
+                  <span className="font-semibold text-[#1E2C31]" title={row.label}>{row.label}</span>
+                </span>
+                <span className="mt-1 block text-xs leading-5 text-[#61767D]">{row.detail}</span>
+              </span>
+              <span className="flex shrink-0 flex-col items-end justify-between gap-2">
+                <span className="font-black text-[#1889B6]">{formatNumber(row.value)}</span>
+                <span className="text-xs font-semibold text-[#61767D]">{row.secondary}</span>
+              </span>
+            </Link>
+          ))
+        ) : (
+          <div className="px-4 py-5 text-sm text-[#61767D]">暂无排行事件。</div>
+        )}
       </div>
     </section>
   )
+}
+
+function buildRankLedgerRows(analytics: SiteAnalyticsDashboard) {
+  const topPages = analytics.topPages.slice(0, 4).map((row) => ({
+    group: '页面',
+    key: `page:${row.key}`,
+    label: row.label,
+    value: row.value,
+    secondary: `${formatNumber(row.secondary ?? 0)} 访客`,
+    detail: 'Top Pages 访问排行',
+    href: `/admin/status/traffic#top-pages`,
+  }))
+  const sourceTypes = analytics.sourceTypes.slice(0, 4).map((row) => ({
+    group: '来源',
+    key: `source:${row.key}`,
+    label: sourceTypeLabel(row.key),
+    value: row.value,
+    secondary: row.secondary !== undefined ? `${formatNumber(row.secondary)} 访客` : '来源动作',
+    detail: '来源类型排行',
+    href: `/admin/status/traffic#source-analysis`,
+  }))
+  const landingPages = analytics.landingPages.slice(0, 4).map((row) => ({
+    group: '动作',
+    key: `landing:${row.key}`,
+    label: row.label,
+    value: row.value,
+    secondary: `${formatNumber(row.secondary ?? 0)} 动作`,
+    detail: '落地页动作排行',
+    href: `/admin/status/traffic#landing-analysis`,
+  }))
+
+  return [...topPages, ...sourceTypes, ...landingPages].sort((a, b) => b.value - a.value).slice(0, 8)
+}
+
+function rankGroupToneClass(group: string) {
+  if (group === '来源') return 'bg-[#F0EEFB] text-[#6B58C5]'
+  if (group === '动作') return 'bg-[#FFF2E7] text-[#C85F24]'
+  return 'bg-[#EAF6F8] text-[#1889B6]'
 }
 
 function ContentLedger({
@@ -1354,18 +1416,34 @@ function PriorityQueue({
       ok: thirtyDays.pageViews === 0 || thirtyDays.leads > 0,
     },
   ]
+  const openQueueItems = queue.filter((item) => !item.ok).length
 
   return (
     <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-      <div className="border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4">
-        <h2 className="text-sm font-bold text-[#1E2C31]">今日优先级</h2>
-        <p className="mt-1 text-xs text-[#61767D]">按影响运营效率的顺序排列。</p>
+      <div className="flex items-start justify-between gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4">
+        <div>
+          <h2 className="text-sm font-bold text-[#1E2C31]">今日优先级队列</h2>
+          <p className="mt-1 text-xs text-[#61767D]">按影响运营效率的顺序排列，一行判断当前值和处理入口。</p>
+        </div>
+        <span
+          className={`shrink-0 rounded-md px-2 py-1 text-xs font-bold ${
+            openQueueItems > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'
+          }`}
+        >
+          {openQueueItems > 0 ? `${formatNumber(openQueueItems)} 项待处理` : '状态正常'}
+        </span>
       </div>
       <div className="grid grid-cols-2 border-b border-[#E6EEEE]">
         <DeltaCell title="今日 PV" metric={todayComparison?.pageViews} />
         <DeltaCell title="今日线索" metric={todayComparison?.leads} />
         <DeltaCell title="30 天 PV" metric={thirtyComparison?.pageViews} />
         <DeltaCell title="30 天转化率" metric={thirtyComparison?.conversionRate} rate />
+      </div>
+      <div className="hidden grid-cols-[minmax(0,1fr)_86px_minmax(0,1.15fr)_52px] gap-3 border-b border-[#E6EEEE] bg-white px-4 py-2 text-xs font-semibold text-[#61767D] xl:grid">
+        <span>事项</span>
+        <span className="text-right">当前值</span>
+        <span>判断</span>
+        <span className="text-right">入口</span>
       </div>
       <div className="divide-y divide-[#E6EEEE]">
         {queue.map((item) => (
@@ -1391,30 +1469,39 @@ function ModuleEntryPanel({
 }) {
   const modules = [
     {
+      group: '访问',
       label: '网站访问统计',
       value: `${formatNumber(analytics.allTime.pageViews)} PV`,
       detail: '历史累计、最高日、趋势、Top Pages。',
       href: '/admin/status/traffic?range=30',
+      tone: 'blue',
     },
     {
+      group: '访问',
       label: '落地页跳出分析',
       value: `${formatNumber(analytics.landingPages.length)} 页`,
       detail: '识别高访问低动作入口页面。',
       href: '/admin/status/traffic#landing-analysis',
+      tone: analytics.landingPages.length > 0 ? 'blue' : 'gray',
     },
     {
+      group: '行为',
       label: '访问行为分析',
       value: `${formatNumber(analytics.behaviorSteps.reduce((sum, step) => sum + step.visits, 0))} 次`,
       detail: '入口、来源、动作和留存路径。',
       href: '/admin/status/traffic#behavior-analysis',
+      tone: analytics.behaviorSteps.length > 0 ? 'blue' : 'gray',
     },
     {
+      group: '转化',
       label: '线索转化分析',
       value: formatNumber(newLeads),
       detail: '进入客户线索和转化路径处理。',
       href: '/admin/site/conversion#conversion-ledger',
+      tone: newLeads > 0 ? 'orange' : 'green',
     },
     {
+      group: '转化',
       label: '案例转化健康',
       value: formatNumber(caseInquiryHealth.weak),
       detail:
@@ -1422,40 +1509,81 @@ function ModuleEntryPanel({
           ? `已发布 ${formatNumber(caseInquiryHealth.published)}，可承接 ${formatNumber(caseInquiryHealth.ready)}。`
           : '案例询盘承接字段正常。',
       href: '/admin/content/projects/list?view=case-conversion-weak',
+      tone: caseInquiryHealth.weak > 0 ? 'orange' : 'green',
     },
     {
+      group: 'SEO',
       label: 'Google收录分析',
       value: formatNumber(siteIssues),
       detail: '从 SEO 字段和站点文件状态进入。',
       href: '/admin/site/seo',
+      tone: siteIssues > 0 ? 'orange' : 'green',
     },
     {
+      group: '内容',
       label: '内容统计',
       value: formatNumber(contentIssues),
       detail: '产品、案例、新闻缺项治理。',
       href: '/admin/status/content',
+      tone: contentIssues > 0 ? 'orange' : 'green',
     },
-  ]
+  ] satisfies Array<{
+    group: string
+    label: string
+    value: string
+    detail: string
+    href: string
+    tone: 'blue' | 'green' | 'orange' | 'gray'
+  }>
+  const openModules = modules.filter((module) => module.tone === 'orange').length
 
   return (
-    <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-      <h2 className="text-sm font-bold text-[#1E2C31]">数据模块入口</h2>
-      <p className="mt-1 text-xs text-[#61767D]">按 300 后台常见分析路径保留清晰下钻。</p>
-      <div className="mt-4 grid grid-cols-1 gap-3">
+    <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
+      <div className="flex items-start justify-between gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4">
+        <div>
+          <h2 className="text-sm font-bold text-[#1E2C31]">数据模块台账</h2>
+          <p className="mt-1 text-xs text-[#61767D]">按 300 后台常见分析路径保留清晰下钻，一行判断当前模块值和处理入口。</p>
+        </div>
+        <span
+          className={`shrink-0 rounded-md px-2 py-1 text-xs font-bold ${
+            openModules > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'
+          }`}
+        >
+          {openModules > 0 ? `${formatNumber(openModules)} 项待看` : '状态正常'}
+        </span>
+      </div>
+      <div className="divide-y divide-[#E6EEEE]">
         {modules.map((module) => (
-          <Link key={module.label} href={module.href} className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] p-3 transition hover:border-[#1889B6]/60 hover:bg-white">
-            <span className="flex items-start justify-between gap-3">
-              <span className="min-w-0">
-                <span className="block text-sm font-semibold text-[#1E2C31]">{module.label}</span>
-                <span className="mt-1 block text-xs leading-5 text-[#61767D]">{module.detail}</span>
+          <Link
+            key={module.label}
+            href={module.href}
+            className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-4 py-3 text-sm transition hover:bg-[#F7FAFA]"
+          >
+            <span className="min-w-0">
+              <span className="flex flex-wrap items-center gap-2">
+                <span className={`w-fit rounded-md px-2 py-1 text-[11px] font-bold ${moduleToneClass(module.tone)}`}>
+                  {module.group}
+                </span>
+                <span className="font-semibold text-[#1E2C31]">{module.label}</span>
               </span>
-              <span className="shrink-0 text-sm font-black text-[#1889B6]">{module.value}</span>
+              <span className="mt-1 block text-xs leading-5 text-[#61767D]">{module.detail}</span>
+            </span>
+            <span className="flex shrink-0 flex-col items-end justify-between gap-2">
+              <span className="font-black text-[#1889B6]">{module.value}</span>
+              <span className="text-xs font-semibold text-[#1889B6]">进入</span>
             </span>
           </Link>
         ))}
       </div>
     </section>
   )
+}
+
+function moduleToneClass(tone: 'blue' | 'green' | 'orange' | 'gray') {
+  if (tone === 'orange') return 'bg-[#FFF2E7] text-[#C85F24]'
+  if (tone === 'green') return 'bg-emerald-50 text-emerald-700'
+  if (tone === 'blue') return 'bg-[#EAF6F8] text-[#1889B6]'
+  return 'bg-[#F0F2F2] text-[#61767D]'
 }
 
 function QueueRow({
@@ -1472,21 +1600,30 @@ function QueueRow({
   ok: boolean
 }) {
   return (
-    <Link href={href} className="flex gap-3 px-5 py-4 transition hover:bg-[#F7FAFA]">
-      <span
-        className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
-          ok ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FFF2E7] text-[#E36F2C]'
-        }`}
-      >
-        {ok ? <STATUS_ICONS.CheckCircle2 size={16} /> : <STATUS_ICONS.AlertCircle size={16} />}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center justify-between gap-3">
-          <span className="text-sm font-semibold text-[#1E2C31]">{label}</span>
-          <span className={`text-sm font-bold ${ok ? 'text-emerald-700' : 'text-[#E36F2C]'}`}>{formatNumber(value)}</span>
+    <Link
+      href={href}
+      className="grid grid-cols-1 gap-2 px-4 py-3 text-sm transition hover:bg-[#F7FAFA] xl:grid-cols-[minmax(0,1fr)_86px_minmax(0,1.15fr)_52px] xl:items-center xl:gap-3"
+    >
+      <span className="flex min-w-0 items-center gap-2">
+        <span
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
+            ok ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FFF2E7] text-[#E36F2C]'
+          }`}
+        >
+          {ok ? <STATUS_ICONS.CheckCircle2 size={16} /> : <STATUS_ICONS.AlertCircle size={16} />}
         </span>
-        <span className="mt-1 block text-xs leading-5 text-[#61767D]">{detail}</span>
+        <span className="min-w-0">
+          <span className="block truncate font-semibold text-[#1E2C31]">{label}</span>
+          <span className={`mt-1 inline-flex rounded-md px-2 py-0.5 text-[11px] font-bold ${ok ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FFF2E7] text-[#C85F24]'}`}>
+            {ok ? '正常' : '待处理'}
+          </span>
+        </span>
       </span>
+      <span className={`font-black ${ok ? 'text-emerald-700' : 'text-[#E36F2C]'} xl:text-right`}>
+        {formatNumber(value)}
+      </span>
+      <span className="text-xs leading-5 text-[#61767D]">{detail}</span>
+      <span className="text-xs font-semibold text-[#1889B6] xl:text-right">进入</span>
     </Link>
   )
 }
@@ -1538,47 +1675,6 @@ function FlowColumn({
               <div className="mt-1 text-xs font-bold text-[#1889B6]">
                 {percentKey === row.key ? `${formatNumber(row.value)}%` : formatNumber(row.value)}
               </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  )
-}
-
-function RankList({
-  title,
-  rows,
-  empty,
-  formatLabel,
-  secondaryLabel,
-}: {
-  title: string
-  rows: AnalyticsRankRow[]
-  empty: string
-  formatLabel?: (value: string) => string
-  secondaryLabel?: string
-}) {
-  const displayRows = rows.slice(0, 5)
-
-  return (
-    <div className="min-w-0">
-      <h3 className="text-xs font-semibold text-[#61767D]">{title}</h3>
-      <div className="mt-2 divide-y divide-[#E6EEEE] rounded-md border border-[#E6EEEE] bg-[#F7FAFA]">
-        {displayRows.length === 0 ? (
-          <div className="p-3 text-xs text-[#8A9EA4]">{empty}</div>
-        ) : (
-          displayRows.map((row) => (
-            <div key={row.key} className="flex items-start justify-between gap-3 px-3 py-2">
-              <span className="min-w-0">
-                <span className="block truncate text-xs font-semibold text-[#1E2C31]">
-                  {formatLabel ? formatLabel(row.key) : row.label}
-                </span>
-                {row.secondary !== undefined ? (
-                  <span className="mt-0.5 block text-[11px] text-[#8A9EA4]">{secondaryLabel ?? '访客'} {formatNumber(row.secondary)}</span>
-                ) : null}
-              </span>
-              <span className="shrink-0 text-xs font-bold text-[#1889B6]">{formatNumber(row.value)}</span>
             </div>
           ))
         )}
