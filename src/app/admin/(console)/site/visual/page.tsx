@@ -157,6 +157,7 @@ type VisualPageStat = {
   key: VisualPageKey
   label: string
   path: string
+  editorHref: string
   modules: number
   visible: number
   hidden: number
@@ -170,6 +171,20 @@ type VisualPageStat = {
 
 function visualModuleId(pageModule: Pick<PageModuleRow, 'page_key' | 'module_key'>): string {
   return `${pageModule.page_key}:${pageModule.module_key}`
+}
+
+function visualEditorModuleHref(moduleId: string): string {
+  return `/admin/site/visual?module=${encodeURIComponent(moduleId)}#visual-editor`
+}
+
+function pageEditorEntryHref(pageKey: VisualPageKey, pageModules: PageModuleRow[]): string {
+  const entryModuleId =
+    EDITABLE_VISUAL_MODULE_IDS.find((id) => (
+      id.startsWith(`${pageKey}:`) &&
+      pageModules.some((pageModule) => visualModuleId(pageModule) === id)
+    )) ?? (pageModules[0] ? visualModuleId(pageModules[0]) : null)
+
+  return entryModuleId ? visualEditorModuleHref(entryModuleId) : VISUAL_EDITOR_HOME_HERO_HREF
 }
 
 function isEditableVisualModule(pageModule: Pick<PageModuleRow, 'page_key' | 'module_key' | 'module_type'>): boolean {
@@ -243,6 +258,7 @@ function buildVisualPageStats({
 
     return {
       ...page,
+      editorHref: pageEditorEntryHref(page.key, pageModules),
       modules: pageModules.length,
       visible: pageModules.filter((pageModule) => pageModule.is_visible).length,
       hidden: pageModules.filter((pageModule) => !pageModule.is_visible).length,
@@ -287,11 +303,11 @@ function VisualReleaseConsole({
       detail: '受控编辑 Home、Products、Cases、Contact、Site Shell、About、Global、FAQ、Media Kit、Scenarios、Innovation、Display、News 的文字、链接、图片、条目顺序、显示状态、SEO 来源和 Home 安全插入区。',
       metric: `${formatNumber(editableModules.length)} 模块`,
       signal: `${formatNumber(hiddenModules)} 隐藏`,
-      href: '#visual-editor',
+      href: VISUAL_EDITOR_HOME_HERO_HREF,
       Icon: Monitor,
       tone: 'blue',
       actions: [
-        { label: '进入编辑器', href: '#visual-editor', primary: true },
+        { label: '进入编辑器', href: VISUAL_EDITOR_HOME_HERO_HREF, primary: true },
         { label: '页面清单', href: '/admin/site/pages#content-source-route-tree' },
         { label: '表单模式', href: '/admin/pages' },
       ],
@@ -301,11 +317,11 @@ function VisualReleaseConsole({
       detail: '已保存模块草稿和页面级结构草稿发布后会影响前台，发布前应先预览复核。',
       metric: `${formatNumber(publishQueue)} 待复核`,
       signal: publishQueue > 0 ? '需要处理' : '无待发布',
-      href: '#visual-editor',
+      href: VISUAL_EDITOR_HOME_HERO_HREF,
       Icon: Clock3,
       tone: publishQueue > 0 ? 'orange' : 'green',
       actions: [
-        { label: '预览复核', href: '#visual-editor', primary: publishQueue > 0 },
+        { label: '预览复核', href: VISUAL_EDITOR_HOME_HERO_HREF, primary: publishQueue > 0 },
         { label: '首页前台', href: '/' },
         { label: '产品前台', href: '/products' },
         { label: '联系前台', href: '/contact' },
@@ -316,11 +332,11 @@ function VisualReleaseConsole({
       detail: `结构草稿影响模块顺序、隐藏和安全新增；当前快照样本 ${formatNumber(snapshotCount)} 个。`,
       metric: `${formatNumber(activeStructureDrafts.length)} 草稿`,
       signal: staleStructureDrafts > 0 ? `${formatNumber(staleStructureDrafts)} 个过期` : '结构正常',
-      href: '#visual-editor',
+      href: VISUAL_EDITOR_HOME_HERO_HREF,
       Icon: Layers3,
       tone: staleStructureDrafts > 0 || activeStructureDrafts.length > 0 ? 'orange' : 'green',
       actions: [
-        { label: '结构区', href: '#visual-editor', primary: activeStructureDrafts.length > 0 },
+        { label: '结构区', href: VISUAL_EDITOR_HOME_HERO_HREF, primary: activeStructureDrafts.length > 0 },
         { label: '替换工作台', href: '/admin/site/media#media-replacement-workbench' },
       ],
     },
@@ -405,7 +421,7 @@ function VisualReleaseConsole({
                   {formatNumber(page.snapshots)} 个 · {formatNumber(page.imageSlots)} 媒体 · {formatNumber(page.links)} 链接
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <a href="#visual-editor" className="inline-flex min-h-8 items-center rounded-md border border-[#1889B6] bg-[#1889B6] px-3 text-xs font-semibold text-white hover:bg-[#0F6F95]">
+                  <a href={page.editorHref} className="inline-flex min-h-8 items-center rounded-md border border-[#1889B6] bg-[#1889B6] px-3 text-xs font-semibold text-white hover:bg-[#0F6F95]">
                     编辑
                   </a>
                   <a href={page.path} className="inline-flex min-h-8 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1E2C31] hover:border-[#1889B6] hover:text-[#1889B6]">
