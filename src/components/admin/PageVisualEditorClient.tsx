@@ -1806,6 +1806,32 @@ export default function PageVisualEditorClient({
     '可视化编辑器有未保存的草稿修改。离开此页会丢失这些修改，确定离开吗？',
   )
 
+  const scrollEditorIntoView = useCallback(() => {
+    document.getElementById('visual-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
+
+  const syncSelectedModuleUrl = useCallback((id: string) => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('module', id)
+    url.hash = 'visual-editor'
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
+  }, [])
+
+  useEffect(() => {
+    if (!requestedModuleId || requestedModuleId === activeModuleId) return
+
+    const requestedModule = modules.find((pageModule) => moduleId(pageModule) === requestedModuleId)
+    if (!requestedModule || !isPageKey(requestedModule.page_key)) return
+
+    setSelectedPage(requestedModule.page_key)
+    setSelectedModuleId(requestedModuleId)
+    setSelectedField({ itemId: null, field: null })
+    setLocatedModules({})
+    setHighlightRect(null)
+    setFrameLoaded(false)
+    window.setTimeout(scrollEditorIntoView, 0)
+  }, [activeModuleId, modules, requestedModuleId, scrollEditorIntoView])
+
   const updateLocatedModules = useCallback(() => {
     const doc = getIframeDocument(iframeRef.current)
     if (!doc) return
@@ -1978,12 +2004,23 @@ export default function PageVisualEditorClient({
     window.setTimeout(refreshFrameState, 350)
   }, [refreshFrameState])
 
-  const handleSelectModule = (pageModule: PageModuleRow) => {
+  const handleSelectModule = useCallback((pageModule: PageModuleRow) => {
+    if (!isPageKey(pageModule.page_key)) {
+      toast.error('该模块暂未接入视觉编辑器')
+      return
+    }
+
     const id = moduleId(pageModule)
-    const nextPreviewPath = previewPathForModule(currentPage.path, pageModule)
-    const switchingPreviewRoute = nextPreviewPath !== activePreviewPath
+    const nextPage = PAGES.find((page) => page.key === pageModule.page_key) ?? currentPage
+    const nextPreviewPath = previewPathForModule(nextPage.path, pageModule)
+    const switchingPage = pageModule.page_key !== selectedPage
+    const switchingPreviewRoute = switchingPage || nextPreviewPath !== activePreviewPath
+    setSelectedPage(pageModule.page_key)
     setSelectedModuleId(id)
     setSelectedField({ itemId: null, field: null })
+    syncSelectedModuleUrl(id)
+    window.setTimeout(scrollEditorIntoView, 0)
+
     if (switchingPreviewRoute) {
       setFrameLoaded(false)
       setLocatedModules({})
@@ -1992,7 +2029,15 @@ export default function PageVisualEditorClient({
       scrollModuleIntoView(id)
       window.setTimeout(refreshFrameState, 0)
     }
-  }
+  }, [
+    activePreviewPath,
+    currentPage,
+    refreshFrameState,
+    scrollEditorIntoView,
+    scrollModuleIntoView,
+    selectedPage,
+    syncSelectedModuleUrl,
+  ])
 
   const handleSelectPage = (pageKey: PageKey) => {
     const nextModule = modules.find((pageModule) => pageModule.page_key === pageKey)
