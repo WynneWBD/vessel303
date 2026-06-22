@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import {
   ArrowDown,
@@ -1658,6 +1658,7 @@ export default function PageVisualEditorClient({
   currentAdminRole?: 'admin' | 'operator'
   maxUploadMb?: number
 }) {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const requestedModuleId = searchParams.get('module')
   const initialSelectionRef = useRef<ReturnType<typeof getInitialModuleSelection> | null>(null)
@@ -1811,11 +1812,8 @@ export default function PageVisualEditorClient({
   }, [])
 
   const syncSelectedModuleUrl = useCallback((id: string) => {
-    const url = new URL(window.location.href)
-    url.searchParams.set('module', id)
-    url.hash = 'visual-editor'
-    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
-  }, [])
+    router.replace(`/admin/site/visual?module=${encodeURIComponent(id)}#visual-editor`, { scroll: false })
+  }, [router])
 
   useEffect(() => {
     if (!requestedModuleId || requestedModuleId === activeModuleId) return
