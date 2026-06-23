@@ -1700,6 +1700,7 @@ export default function PageVisualEditorClient({
   const [structurePublishConfirmOpen, setStructurePublishConfirmOpen] = useState(false)
   const [structureDiscardConfirmOpen, setStructureDiscardConfirmOpen] = useState(false)
   const [structureRestoreSnapshot, setStructureRestoreSnapshot] = useState<PageStructureSnapshotRow | null>(null)
+  const [advancedStructureOpen, setAdvancedStructureOpen] = useState(false)
 
   const currentPage = PAGES.find((page) => page.key === selectedPage) ?? PAGES[0]
   const currentStructureDraft = structureDrafts.find((draft) => draft.page_key === selectedPage) ?? null
@@ -1742,8 +1743,6 @@ export default function PageVisualEditorClient({
     : -1
   const activeItemToDeleteSummary = activeItemToDelete ? itemSummary(activeItemToDelete) : null
   const restoreSnapshotSummary = restoreSnapshot ? snapshotSummary(restoreSnapshot) : null
-  const selectedLocated = active ? locatedModules[activeModuleId] === true : false
-  const formEditorHref = active ? `/admin/pages?module=${activeModuleId}` : '/admin/pages'
   const activePreviewPath = useMemo(() => previewPathForModule(currentPage.path, active), [active, currentPage.path])
   const previewSrc = useMemo(() => buildPreviewSrc(activePreviewPath, previewVersion), [activePreviewPath, previewVersion])
   const currentPreviewModules = useMemo(
@@ -2630,12 +2629,12 @@ export default function PageVisualEditorClient({
       <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">Visual Operations</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">页面编辑</p>
             <h1 className="mt-2 text-2xl font-bold text-[#1E2C31] md:text-3xl">
-              页面模块运营台
+              可视化编辑
             </h1>
             <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-              受控编辑 {VISUAL_EDITOR_COVERAGE_LABEL} 的文字、链接、图片、条目顺序、模块显示状态和 Home 安全插入区结构草稿。保存草稿不影响前台，发布后才上线。
+              选择页面和模块，编辑文字、图片、链接、排序和显示状态。先保存草稿，再预览发布。
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2 rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-1">
@@ -2660,7 +2659,7 @@ export default function PageVisualEditorClient({
           <div className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Publish Desk</p>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">发布</p>
                 <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">发布状态</h2>
               </div>
               <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
@@ -2674,19 +2673,19 @@ export default function PageVisualEditorClient({
               <VisualStatusItem
                 label="当前页面"
                 value={currentPage.label}
-                detail={`${activePreviewPath} · ${currentPreviewModules.length}/${currentPageStats.moduleCount} 个当前预览模块`}
+                detail={activePreviewPath}
                 tone="gray"
               />
               <VisualStatusItem
                 label="当前模块"
                 value={readableModuleTitle(active)}
-                detail={activeHasSavedDraft ? '有已保存草稿，发布后影响前台。' : '当前使用线上版本。'}
+                detail={activeHasSavedDraft ? '有已保存草稿' : '当前使用线上版本'}
                 tone={activeHasSavedDraft ? 'orange' : 'green'}
               />
               <VisualStatusItem
                 label="预览设备"
                 value={currentPreviewDevice.label}
-                detail={frameLoaded ? '草稿预览已加载。' : '预览加载中。'}
+                detail={frameLoaded ? '已加载' : '加载中'}
                 tone={frameLoaded ? 'green' : 'gray'}
               />
             </div>
@@ -2741,30 +2740,44 @@ export default function PageVisualEditorClient({
           tone={totalPreflightIssues > 0 ? 'orange' : 'green'}
         />
         <VisualMetricCard
-          title="结构草稿"
+          title="页面结构"
           value={structureDraftCount}
-          detail="全站页面级结构草稿；新增结构仅 Home 开放"
+          detail="页面结构调整"
           Icon={Layers3}
           tone={structureDraftCount > 0 ? 'orange' : 'gray'}
         />
       </div>
 
-      <VisualOperationsMatrix
-        currentPage={currentPage}
-        currentPreviewPath={activePreviewPath}
-        currentPageStats={currentPageStats}
-        currentModules={currentPreviewModules}
-        allModules={modules}
-        pageStats={pageStats}
-        dirtyIds={dirtyIds}
-        locatedModules={locatedModules}
-        frameLoaded={frameLoaded}
-        structureDrafts={structureDrafts}
-        currentStructureDraft={currentStructureDraft}
-        onSelectModule={handleSelectModule}
-      />
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => setAdvancedStructureOpen((value) => !value)}
+        >
+          <Layers3 size={14} />
+          {advancedStructureOpen ? '收起高级设置' : '高级设置'}
+        </Button>
+      </div>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+      {advancedStructureOpen ? (
+        <div className="space-y-5">
+          <VisualOperationsMatrix
+            currentPage={currentPage}
+            currentPreviewPath={activePreviewPath}
+            currentPageStats={currentPageStats}
+            currentModules={currentPreviewModules}
+            allModules={modules}
+            pageStats={pageStats}
+            dirtyIds={dirtyIds}
+            locatedModules={locatedModules}
+            frameLoaded={frameLoaded}
+            structureDrafts={structureDrafts}
+            currentStructureDraft={currentStructureDraft}
+            onSelectModule={handleSelectModule}
+          />
+
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         {pageStats.map((page) => {
           const isActive = page.key === selectedPage
           return (
@@ -2806,16 +2819,16 @@ export default function PageVisualEditorClient({
             </button>
           )
         })}
-      </div>
+          </div>
 
-      <ModuleCatalogPanel
-        selectedPage={selectedPage}
-        currentStructureDraft={currentStructureDraft}
-        structureBusy={structureBusy}
-        onAddTemplate={addStructureModule}
-      />
+          <ModuleCatalogPanel
+            selectedPage={selectedPage}
+            currentStructureDraft={currentStructureDraft}
+            structureBusy={structureBusy}
+            onAddTemplate={addStructureModule}
+          />
 
-      <section className="rounded-lg border border-[#E5DED4] bg-white p-4">
+          <section className="rounded-lg border border-[#E5DED4] bg-white p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm font-semibold text-[#2C2A28]">
@@ -3071,17 +3084,18 @@ export default function PageVisualEditorClient({
             </div>
           </div>
         </div>
-      </section>
+          </section>
+        </div>
+      ) : null}
 
       <div
         id="visual-module-workbench"
         data-active-module-id={activeModuleId}
-        className="grid flex-1 scroll-mt-24 grid-cols-1 gap-5 xl:grid-cols-[270px_minmax(0,1fr)_420px]"
+        className="grid flex-1 scroll-mt-24 grid-cols-1 gap-5 xl:grid-cols-[260px_minmax(0,1fr)]"
       >
         <aside className="rounded-lg border border-[#E5DED4] bg-white">
           <div className="border-b border-[#E5DED4] px-4 py-3">
-            <p className="text-sm font-semibold text-[#2C2A28]">可编辑模块</p>
-            <p className="mt-1 text-xs text-[#8A8580]">点击模块会滚动并高亮预览区。</p>
+            <p className="text-sm font-semibold text-[#2C2A28]">模块</p>
           </div>
           <div className="p-2">
             {currentModules.map((pageModule) => {
@@ -3107,7 +3121,6 @@ export default function PageVisualEditorClient({
                   />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{pageModule.title_zh}</span>
-                    <span className="mt-1 block truncate font-mono text-[11px] text-[#8A8580]">{id}</span>
                     <span className="mt-2 flex flex-wrap gap-1">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] ${
                         located
@@ -3117,7 +3130,7 @@ export default function PageVisualEditorClient({
                             : 'bg-[#F5F2ED] text-[#8A8580]'
                       }`}
                       >
-                        {frameLoaded ? (located ? '已定位' : '未在预览中定位') : '检测中'}
+                        {frameLoaded ? (located ? '本页可见' : '本页未显示') : '加载中'}
                       </span>
                       {pageModule.is_visible ? (
                         <span className="inline-flex rounded-full bg-[#F5F2ED] px-2 py-0.5 text-[11px] text-[#6B625B]">
@@ -3151,14 +3164,15 @@ export default function PageVisualEditorClient({
           </div>
         </aside>
 
+        <div className="grid min-w-0 gap-5">
         <main className="min-w-0 rounded-lg border border-[#E5DED4] bg-white">
           <div className="flex flex-col gap-2 border-b border-[#E5DED4] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-2 text-sm font-medium text-[#2C2A28]">
               <Eye size={16} className="text-[#E36F2C]" />
-              <span>{currentPage.label} 草稿预览</span>
+              <span>{currentPage.label} 前台预览</span>
             </div>
             <div className="flex flex-wrap items-center justify-end gap-3">
-              <span className="text-xs text-[#8A8580]">{activePreviewPath} · 仅后台可见</span>
+              <span className="text-xs text-[#8A8580]">{activePreviewPath}</span>
               <div className="flex rounded-md border border-[#E5DED4] bg-[#F8F6F2] p-1">
                 {PREVIEW_DEVICES.map((device) => {
                   const Icon = device.icon
@@ -3200,7 +3214,7 @@ export default function PageVisualEditorClient({
             </div>
           </div>
 
-          <div className="h-[720px] overflow-auto bg-[#241F1B] p-4">
+          <div className="h-[780px] overflow-auto bg-[#241F1B] p-4">
             <div
               className="relative mx-auto h-full min-w-0 overflow-hidden bg-white"
               style={{
@@ -3239,7 +3253,7 @@ export default function PageVisualEditorClient({
             <p className="mt-1 text-xs text-[#8A8580]">只编辑当前模块已有字段。</p>
           </div>
 
-          <div className="max-h-[calc(100vh-14rem)] overflow-auto p-4">
+          <div className="p-4">
             <div className="flex flex-col gap-4">
               <div>
                 <p className="text-xs text-[#8A8580]">{pageLabel(active.page_key)} / {active.module_key}</p>
@@ -3264,18 +3278,6 @@ export default function PageVisualEditorClient({
                   </div>
                 ) : null}
               </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-md bg-[#FAF7F2] p-3">
-                  <p className="text-[#8A8580]">预览定位</p>
-                  <p className="mt-1 text-[#2C2A28]">{selectedLocated ? '已找到 DOM 标记' : '未找到 DOM 标记'}</p>
-                </div>
-                <div className="rounded-md bg-[#FAF7F2] p-3">
-                  <p className="text-[#8A8580]">接入状态</p>
-                  <p className="mt-1 text-[#2C2A28]">已接入 page_modules</p>
-                </div>
-              </div>
-
               <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -3323,7 +3325,7 @@ export default function PageVisualEditorClient({
                 ) : null}
                 {activeIsDraftAdded ? (
                   <p className="mt-2 text-xs text-[#E36F2C]">
-                    新增模块不能单独发布内容草稿；请由 admin 发布页面级结构草稿后上线。
+                    新增模块需要先发布页面结构后上线。
                   </p>
                 ) : null}
               </div>
@@ -3331,9 +3333,9 @@ export default function PageVisualEditorClient({
               <div className="rounded-md border border-[#E5DED4] bg-[#FAF7F2] p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-[#2C2A28]">发布前检查</p>
+                    <p className="text-sm font-semibold text-[#2C2A28]">发布提醒</p>
                     <p className="mt-1 text-xs leading-5 text-[#8A8580]">
-                      发布前用于提醒隐藏、空内容、缺图片、缺链接等明显风险，不会自动修改内容。
+                      检查隐藏、空内容、缺图片和缺链接。
                     </p>
                   </div>
                   <span className="rounded-full bg-white px-2 py-1 text-xs text-[#6B625B]">
@@ -3744,21 +3746,10 @@ export default function PageVisualEditorClient({
                   )
                 })}
               </div>
-
-              <Link
-                href={formEditorHref}
-                prefetch={false}
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-[#E5DED4] bg-white px-4 py-2.5 text-sm font-medium text-[#2C2A28] transition-colors hover:border-[#E36F2C] hover:text-[#E36F2C]"
-              >
-                去备用表单编辑器打开
-                <ArrowUpRight size={15} />
-              </Link>
-              <p className="text-xs leading-5 text-[#8A8580]">
-                备用表单编辑器仍是直接保存线上版本，运营测试建议优先使用本页草稿发布流程。
-              </p>
             </div>
           </div>
         </aside>
+        </div>
       </div>
 
       {activeHasUnsavedChanges ? (

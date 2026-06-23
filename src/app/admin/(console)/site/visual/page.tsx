@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/AdminSectionShell'
-import { AdminPageHero } from '@/components/admin/AdminUI'
 import PageVisualEditorClient from '@/components/admin/PageVisualEditorClient'
 import {
   defaultSiteSettings,
@@ -20,19 +19,13 @@ import {
 } from '@/lib/page-modules-db'
 import { isTemplateBackedPageModule } from '@/lib/page-module-templates'
 import {
-  ArrowRight,
-  Clock3,
-  Eye,
   Image as ImageIcon,
-  Layers3,
   LayoutTemplate,
   Link2,
   ListChecks,
-  Monitor,
   Navigation,
   SearchCheck,
   Settings,
-  type LucideIcon,
   Wrench,
 } from 'lucide-react'
 
@@ -61,8 +54,6 @@ const VISUAL_PAGE_META = [
 ] as const
 
 type VisualPageKey = (typeof VISUAL_PAGE_META)[number]['key']
-
-const VISUAL_EDITOR_COVERAGE_LABEL = 'Home / Products / Cases / Contact / Site Shell / Auth / Account / About / Global / FAQ / Media Kit / Scenarios / Innovation / Display / News'
 
 const EDITABLE_VISUAL_MODULE_IDS = [
   'home:hero',
@@ -136,23 +127,6 @@ const EDITABLE_VISUAL_MODULE_ID_SET = new Set(EDITABLE_VISUAL_MODULE_IDS)
 
 type VisualConsoleTone = 'blue' | 'green' | 'orange' | 'gray'
 
-type VisualConsoleAction = {
-  label: string
-  href: string
-  primary?: boolean
-}
-
-type VisualConsoleRow = {
-  title: string
-  detail: string
-  metric: string
-  signal: string
-  href: string
-  Icon: LucideIcon
-  tone: VisualConsoleTone
-  actions: VisualConsoleAction[]
-}
-
 type VisualPageStat = {
   key: VisualPageKey
   label: string
@@ -209,20 +183,6 @@ function formatShortDate(value: string | null | undefined): string {
   return `${month}/${day} ${hour}:${minute}`
 }
 
-function visualConsoleToneClass(tone: VisualConsoleTone): string {
-  if (tone === 'green') return 'border-l-emerald-500 bg-emerald-50'
-  if (tone === 'orange') return 'border-l-[#E36F2C] bg-[#FFF7F0]'
-  if (tone === 'gray') return 'border-l-[#8A9EA4] bg-[#F7FAFA]'
-  return 'border-l-[#1889B6] bg-[#F4FBFC]'
-}
-
-function visualConsoleSignalClass(tone: VisualConsoleTone): string {
-  if (tone === 'green') return 'bg-emerald-50 text-emerald-700'
-  if (tone === 'orange') return 'bg-[#FFF2E7] text-[#C85F24]'
-  if (tone === 'gray') return 'bg-[#EEF3F4] text-[#61767D]'
-  return 'bg-[#EAF6F8] text-[#1889B6]'
-}
-
 function countVisibleVisualSignals(modules: PageModuleRow[]) {
   return modules.reduce(
     (acc, pageModule) => {
@@ -276,125 +236,51 @@ function VisualReleaseConsole({
   modules,
   structureDrafts,
   structureSnapshots,
-  maxUploadMb,
 }: {
   modules: PageModuleRow[]
   structureDrafts: PageStructureDraftRow[]
   structureSnapshots: Record<VisualPageKey, PageStructureSnapshotRow[]>
-  maxUploadMb: number
 }) {
   const editableModules = modules.filter(isEditableVisualModule)
   const pageStats = buildVisualPageStats({ editableModules, structureDrafts, structureSnapshots })
   const draftModules = editableModules.filter((pageModule) => pageModule.has_draft).length
-  const hiddenModules = editableModules.filter((pageModule) => !pageModule.is_visible).length
   const activeStructureDrafts = structureDrafts.filter((draft) => draft.draft_status !== 'discarded')
-  const staleStructureDrafts = activeStructureDrafts.filter((draft) => draft.draft_status === 'stale').length
   const snapshotCount = Object.values(structureSnapshots).reduce((total, snapshots) => total + snapshots.length, 0)
   const signals = countVisibleVisualSignals(editableModules)
   const publishQueue = draftModules + activeStructureDrafts.length
-  const structureImageRefs = activeStructureDrafts.reduce(
-    (total, draft) => total + (draft.image_refs.length || draft.summary.imageCount),
-    0,
-  )
-
-  const rows: VisualConsoleRow[] = [
-    {
-      title: '页面编辑范围',
-      detail: '受控编辑 Home、Products、Cases、Contact、Site Shell、About、Global、FAQ、Media Kit、Scenarios、Innovation、Display、News 的文字、链接、图片、条目顺序、显示状态、SEO 来源和 Home 安全插入区。',
-      metric: `${formatNumber(editableModules.length)} 模块`,
-      signal: `${formatNumber(hiddenModules)} 隐藏`,
-      href: VISUAL_EDITOR_HOME_HERO_HREF,
-      Icon: Monitor,
-      tone: 'blue',
-      actions: [
-        { label: '进入编辑器', href: VISUAL_EDITOR_HOME_HERO_HREF, primary: true },
-        { label: '页面清单', href: '/admin/site/pages#content-source-route-tree' },
-        { label: '表单模式', href: '/admin/pages' },
-      ],
-    },
-    {
-      title: '发布队列',
-      detail: '已保存模块草稿和页面级结构草稿发布后会影响前台，发布前应先预览复核。',
-      metric: `${formatNumber(publishQueue)} 待复核`,
-      signal: publishQueue > 0 ? '需要处理' : '无待发布',
-      href: VISUAL_EDITOR_HOME_HERO_HREF,
-      Icon: Clock3,
-      tone: publishQueue > 0 ? 'orange' : 'green',
-      actions: [
-        { label: '预览复核', href: VISUAL_EDITOR_HOME_HERO_HREF, primary: publishQueue > 0 },
-        { label: '首页前台', href: '/' },
-        { label: '产品前台', href: '/products' },
-        { label: '联系前台', href: '/contact' },
-      ],
-    },
-    {
-      title: '结构草稿与快照',
-      detail: `结构草稿影响模块顺序、隐藏和安全新增；当前快照样本 ${formatNumber(snapshotCount)} 个。`,
-      metric: `${formatNumber(activeStructureDrafts.length)} 草稿`,
-      signal: staleStructureDrafts > 0 ? `${formatNumber(staleStructureDrafts)} 个过期` : '结构正常',
-      href: VISUAL_EDITOR_HOME_HERO_HREF,
-      Icon: Layers3,
-      tone: staleStructureDrafts > 0 || activeStructureDrafts.length > 0 ? 'orange' : 'green',
-      actions: [
-        { label: '结构区', href: VISUAL_EDITOR_HOME_HERO_HREF, primary: activeStructureDrafts.length > 0 },
-        { label: '替换工作台', href: '/admin/site/media#media-replacement-workbench' },
-      ],
-    },
-    {
-      title: '素材与链接信号',
-      detail: `可见模块含 ${formatNumber(signals.images)} 图、${formatNumber(signals.videos)} 视频、${formatNumber(signals.links)} 链接；上传上限 ${maxUploadMb} MB。`,
-      metric: `${formatNumber(signals.images + signals.videos)} 媒体`,
-      signal: `${formatNumber(structureImageRefs)} 结构引用`,
-      href: '/admin/site/media#media-replacement-workbench',
-      Icon: ImageIcon,
-      tone: 'gray',
-      actions: [
-        { label: '替换工作台', href: '/admin/site/media#media-replacement-workbench', primary: true },
-        { label: '风险素材', href: '/admin/site/media?view=issues' },
-      ],
-    },
-  ]
+  const mediaSignalLabel = `${formatNumber(signals.images + signals.videos)} / ${formatNumber(signals.links)}`
 
   return (
     <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
-      <div className="flex flex-col gap-4 border-b border-[#D8E7E8] p-5 xl:flex-row xl:items-start xl:justify-between">
+      <div className="flex flex-col gap-4 border-b border-[#D8E7E8] p-5 xl:flex-row xl:items-center xl:justify-between">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
-            <Eye size={15} />
-            Visual Release Desk
-          </div>
-          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">视觉编辑运营工作台</h2>
-          <p className="mt-1 max-w-4xl text-xs leading-5 text-[#61767D]">
-            先看页面范围、发布队列、结构草稿、快照、SEO 来源和素材信号，再进入编辑器保存、预览和发布。
-          </p>
+          <h2 className="text-xl font-bold text-[#1E2C31]">页面编辑</h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <a href={VISUAL_EDITOR_HOME_HERO_HREF} className="inline-flex min-h-9 items-center rounded-md border border-[#1889B6] bg-[#1889B6] px-4 text-xs font-semibold text-white hover:bg-[#0F6F95]">
+            进入编辑
+          </a>
+          <a href="/admin/site/media#media-replacement-workbench" className="inline-flex min-h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-4 text-xs font-semibold text-[#1E2C31] hover:border-[#1889B6] hover:text-[#1889B6]">
+            图片素材
+          </a>
           <span className={`inline-flex min-h-8 items-center rounded-md px-3 text-xs font-semibold ${publishQueue > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
             {publishQueue > 0 ? `${formatNumber(publishQueue)} 项待复核` : '当前无待发布'}
           </span>
-          <span className="inline-flex min-h-8 items-center rounded-md bg-[#EAF6F8] px-3 text-xs font-semibold text-[#1889B6]">
-            {VISUAL_EDITOR_COVERAGE_LABEL}
-          </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 border-b border-[#D8E7E8] md:grid-cols-4">
-        <VisualControlStat label="可编辑模块" value={`${formatNumber(editableModules.length)} 个`} />
+      <div className="grid grid-cols-1 border-b border-[#D8E7E8] md:grid-cols-5">
+        <VisualControlStat label="模块" value={`${formatNumber(editableModules.length)} 个`} />
         <VisualControlStat label="模块草稿" value={`${formatNumber(draftModules)} 个`} tone={draftModules > 0 ? 'orange' : 'green'} />
-        <VisualControlStat label="结构草稿" value={`${formatNumber(activeStructureDrafts.length)} 个`} tone={activeStructureDrafts.length > 0 ? 'orange' : 'green'} />
-        <VisualControlStat label="快照样本" value={`${formatNumber(snapshotCount)} 个`} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 p-5 xl:grid-cols-4">
-        {rows.map((row) => (
-          <VisualConsoleRowView key={row.title} row={row} />
-        ))}
+        <VisualControlStat label="页面结构" value={`${formatNumber(activeStructureDrafts.length)} 个`} tone={activeStructureDrafts.length > 0 ? 'orange' : 'green'} />
+        <VisualControlStat label="快照" value={`${formatNumber(snapshotCount)} 个`} />
+        <VisualControlStat label="媒体/链接" value={mediaSignalLabel} tone="gray" />
       </div>
 
       <div className="border-t border-[#D8E7E8] p-5">
         <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
           <ListChecks size={15} />
-          Page Queue
+          页面清单
         </div>
         <div className="overflow-hidden rounded-md border border-[#D8E7E8]">
           <div className="hidden grid-cols-[1.1fr_0.8fr_0.8fr_0.9fr_0.9fr_1fr] border-b border-[#D8E7E8] bg-[#F7FAFA] px-4 py-2 text-xs font-semibold text-[#61767D] md:grid">
@@ -453,56 +339,6 @@ function VisualControlStat({
         {value}
       </div>
     </div>
-  )
-}
-
-function VisualConsoleRowView({ row }: { row: VisualConsoleRow }) {
-  const Icon = row.Icon
-
-  return (
-    <article className={`flex h-full flex-col rounded-md border border-[#D8E7E8] border-l-4 p-4 ${visualConsoleToneClass(row.tone)}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${visualConsoleSignalClass(row.tone)}`}>
-            <Icon size={18} />
-          </span>
-          <div className="min-w-0">
-            <h3 className="truncate text-sm font-bold text-[#1E2C31]">{row.title}</h3>
-            <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#61767D]">{row.detail}</p>
-          </div>
-        </div>
-        <span className={`shrink-0 rounded-md px-2 py-1 text-[11px] font-bold ${visualConsoleSignalClass(row.tone)}`}>
-          {row.signal}
-        </span>
-      </div>
-
-      <div className="mt-5">
-        <div className="text-3xl font-bold text-[#1E2C31]">{row.metric}</div>
-        <a
-          href={row.href}
-          className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6] hover:text-[#0F6F95]"
-        >
-          进入处理
-          <ArrowRight size={14} />
-        </a>
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        {row.actions.map((action) => (
-          <a
-            key={action.label}
-            href={action.href}
-            className={`inline-flex min-h-8 items-center rounded-md border px-3 text-xs font-semibold ${
-              action.primary
-                ? 'border-[#1889B6] bg-[#1889B6] text-white hover:bg-[#0F6F95]'
-                : 'border-[#D8E7E8] bg-white text-[#1E2C31] hover:border-[#1889B6] hover:text-[#1889B6]'
-            }`}
-          >
-            {action.label}
-          </a>
-        ))}
-      </div>
-    </article>
   )
 }
 
@@ -571,20 +407,14 @@ export default async function SiteVisualEditorPage() {
       role={currentAdminRole}
       email={session.user.email}
       title="网站管理"
-      description="编辑受控页面模块。后台字段决定前台内容，保存草稿后再预览发布。"
+      description="编辑页面内容，保存草稿后预览发布。"
       sideNavGroups={getSiteToolNav()}
       activeItem="visual"
     >
-      <AdminPageHero
-        kicker="VISUAL EDITOR"
-        title="页面模块编辑"
-        description="这里是受控页面模块的预览发布入口。字段标注为显示到前台时，发布后会直接影响客户可见内容；仅后台说明不会进入前台。"
-      />
       <VisualReleaseConsole
         modules={modules}
         structureDrafts={structureDrafts}
         structureSnapshots={structureSnapshots}
-        maxUploadMb={maxUploadMb}
       />
       <div id="visual-editor">
         <PageVisualEditorClient
