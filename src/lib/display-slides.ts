@@ -2,6 +2,7 @@ import { listPublicB9ContentItems } from '@/lib/b9-content-db'
 import { getUploadVariantsByUrls, mapUploadImageUrl } from '@/lib/upload-image-variants'
 
 export type DisplaySlide = {
+  contentId?: number
   model: string
   gen: string
   tag: string
@@ -11,6 +12,7 @@ export type DisplaySlide = {
   features: string[]
   price: string
   image: string
+  imageSource?: string
   detailHref?: string
   detailLabel?: string
   consultHref?: string
@@ -41,6 +43,7 @@ export async function listPublicDisplaySlides() {
   const managedSlides = await listPublicB9ContentItems('display_slide')
   const slides = managedSlides
     .map((item): DisplaySlide => ({
+      contentId: item.id,
       model: item.title_en || item.title_zh || item.slug,
       gen: String(item.payload?.gen ?? item.summary_en ?? ''),
       tag: String(item.payload?.tag ?? item.summary_zh ?? ''),
@@ -50,6 +53,7 @@ export async function listPublicDisplaySlides() {
       features: compactList(item.body_zh || item.body_en),
       price: String(item.payload?.price ?? ''),
       image: item.cover_image_url || '',
+      imageSource: item.cover_image_url || '',
       detailHref: String(item.payload?.href ?? item.payload?.product_href ?? item.payload?.detail_href ?? '') || undefined,
       detailLabel: String(item.payload?.detail_label ?? '') || undefined,
       consultHref: String(item.payload?.consult_href ?? '') || undefined,

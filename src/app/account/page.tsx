@@ -6,10 +6,24 @@ import Navbar from '@/components/Navbar'
 
 export const dynamic = 'force-dynamic'
 
-export default async function AccountPage() {
-  const session = await auth()
+type AccountPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
+}
 
-  if (!session?.user) {
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value
+}
+
+export default async function AccountPage({ searchParams }: AccountPageProps) {
+  const [session, sp] = await Promise.all([
+    auth(),
+    searchParams
+      ? searchParams
+      : Promise.resolve<Record<string, string | string[] | undefined>>({}),
+  ])
+  const isVisualPreview = firstParam(sp.visualDraft) === '1'
+
+  if (!session?.user && !isVisualPreview) {
     redirect('/login?callbackUrl=/account')
   }
 
@@ -19,7 +33,7 @@ export default async function AccountPage() {
 
       <main className="flex-1 pt-28 pb-16 px-6">
         <div className="max-w-5xl mx-auto">
-          <AccountForms />
+          <AccountForms previewMode={isVisualPreview} />
         </div>
       </main>
 

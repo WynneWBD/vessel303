@@ -1,13 +1,25 @@
+'use client'
+
 /* eslint-disable @next/next/no-img-element -- 14KB static fallback; avoid the image optimizer while MapLibre loads. */
 import type { CSSProperties } from 'react'
-import { HQ_MARKER, SHOWCASE_MARKERS } from '@/data/showcaseMarkers'
-import { buildGlobalCmsLabels, type GlobalCmsLang, type GlobalPageModuleLike } from '@/lib/global-page-cms'
+import { HQ_MARKER, SHOWCASE_MARKERS, type ShowcaseMarker } from '@/data/showcaseMarkers'
+import {
+  buildGlobalCmsLabels,
+  globalItemAttrs,
+  globalModuleAttrs,
+  globalProjectPointAttrs,
+  type GlobalCmsLang,
+  type GlobalPageModuleLike,
+} from '@/lib/global-page-cms'
 
 type Props = {
   showLoading?: boolean
   loadingLabel?: string
   lang?: GlobalCmsLang
   pageModules?: GlobalPageModuleLike[]
+  markers?: ShowcaseMarker[]
+  editableMarkerIds?: string[]
+  onMarkerSelect?: (marker: ShowcaseMarker) => void
 }
 
 function clampPercent(value: number) {
@@ -27,12 +39,17 @@ export default function StaticGlobalMapPreview({
   loadingLabel,
   lang = 'en',
   pageModules,
+  markers = SHOWCASE_MARKERS,
+  editableMarkerIds = [],
+  onMarkerSelect,
 }: Props) {
   const labels = buildGlobalCmsLabels(pageModules, lang)
   const resolvedLoadingLabel = loadingLabel ?? labels.loadingLabel
+  const interactiveMarkers = Boolean(onMarkerSelect)
+  const editableMarkerIdSet = new Set(editableMarkerIds)
 
   return (
-    <div className="vessel-static-global-map" aria-hidden="true">
+    <div className="vessel-static-global-map" aria-hidden="true" {...globalModuleAttrs('map-labels')}>
       <div className="vessel-static-global-map__stage">
         <img
           src="/images/about/optimized/about_globalmap-01.jpg"
@@ -41,13 +58,32 @@ export default function StaticGlobalMapPreview({
           draggable={false}
         />
         <div className="vessel-static-global-map__pins">
-          {SHOWCASE_MARKERS.map((marker) => (
-            <span
-              key={marker.id}
-              className="vessel-static-global-map__pin"
-              style={markerStyle(marker.coordinates)}
-            />
-          ))}
+          {markers.map((marker) => {
+            const style = markerStyle(marker.coordinates)
+            const label = marker.name[lang] ?? marker.name.en
+            return interactiveMarkers ? (
+              <button
+                key={marker.id}
+                type="button"
+                className="vessel-static-global-map__pin vessel-static-global-map__pin--interactive"
+                style={style}
+                title={label}
+                aria-label={label}
+                data-visual-open-panel="global-project"
+                {...(editableMarkerIdSet.has(marker.id) ? globalProjectPointAttrs(marker.id, 'static-map-pin') : {})}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onMarkerSelect?.(marker)
+                }}
+              />
+            ) : (
+              <span
+                key={marker.id}
+                className="vessel-static-global-map__pin"
+                style={style}
+              />
+            )
+          })}
           <span
             className="vessel-static-global-map__pin vessel-static-global-map__pin--hq"
             style={markerStyle(HQ_MARKER.coordinates)}
@@ -59,7 +95,7 @@ export default function StaticGlobalMapPreview({
       {showLoading ? (
         <div className="vessel-static-global-map__loading">
           <span className="vessel-static-global-map__spinner" />
-          <span className="vessel-static-global-map__loading-label">{resolvedLoadingLabel}</span>
+          <span className="vessel-static-global-map__loading-label" {...globalItemAttrs('map-labels', 'loading', lang)}>{resolvedLoadingLabel}</span>
         </div>
       ) : null}
       <style>{`
@@ -100,6 +136,18 @@ export default function StaticGlobalMapPreview({
           border: 2px solid #FFFFFF;
           box-shadow: 0 5px 15px rgba(36, 31, 27, 0.24);
           transform: translate(-50%, -50%);
+        }
+        button.vessel-static-global-map__pin {
+          appearance: none;
+          padding: 0;
+          cursor: pointer;
+        }
+        .vessel-static-global-map__pin--interactive {
+          transition: transform 0.16s ease, box-shadow 0.16s ease;
+        }
+        .vessel-static-global-map__pin--interactive:hover {
+          box-shadow: 0 8px 22px rgba(36, 31, 27, 0.32);
+          transform: translate(-50%, -50%) scale(1.35);
         }
         .vessel-static-global-map__pin--hq {
           width: 14px;

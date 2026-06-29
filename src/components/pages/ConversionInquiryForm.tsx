@@ -43,6 +43,14 @@ type Props = {
   labels?: FormLabels
   labelsZh?: FormLabels
   labelsEn?: FormLabels
+  visualModuleId?: string
+}
+
+function visualLabelAttrs(itemId: string, lang: 'en' | 'zh') {
+  return {
+    'data-page-module-item': itemId,
+    'data-page-module-field': lang === 'zh' ? 'label_zh' : 'label_en',
+  }
 }
 
 const EMPTY_FORM: FormState = {
@@ -116,6 +124,7 @@ export default function ConversionInquiryForm({
   labels,
   labelsZh,
   labelsEn,
+  visualModuleId,
 }: Props) {
   const { lang } = useLanguage()
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
@@ -126,6 +135,8 @@ export default function ConversionInquiryForm({
   const title = lang === 'zh' ? titleZh : titleEn
   const description = lang === 'zh' ? descriptionZh : descriptionEn
   const activeLabels = lang === 'zh' ? labelsZh ?? labels : labelsEn ?? labels
+  const titleField = lang === 'zh' ? 'title_zh' : 'title_en'
+  const descriptionField = lang === 'zh' ? 'description_zh' : 'description_en'
   if (!hasFormLabels(activeLabels) || !title || !inquiryType.trim()) return null
 
   const update = (key: keyof FormState, value: string) => {
@@ -179,23 +190,25 @@ export default function ConversionInquiryForm({
     <form
       onSubmit={handleSubmit}
       className={`border border-[#DADDE1] bg-white ${compact ? 'p-5' : 'p-6 sm:p-7'}`}
+      data-page-module={visualModuleId}
+      data-page-module-field={titleField}
     >
-      <div className="mb-5">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#147C94]">{activeLabels.eyebrow}</p>
-        <h2 className="mt-2 text-2xl font-black tracking-normal text-[#1F2A31]">{title}</h2>
-        {description ? <p className="mt-2 text-sm leading-6 text-[#5C6670]">{description}</p> : null}
+      <div className="mb-5" data-page-module-field={titleField}>
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#147C94]" {...visualLabelAttrs('form-eyebrow', lang)}>{activeLabels.eyebrow}</p>
+        <h2 className="mt-2 text-2xl font-black tracking-normal text-[#1F2A31]" data-page-module-field={titleField}>{title}</h2>
+        {description ? <p className="mt-2 text-sm leading-6 text-[#5C6670]" data-page-module-field={descriptionField}>{description}</p> : null}
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field required name="name" autoComplete="name" label={activeLabels.name} value={form.name} onChange={(value) => update('name', value)} />
-        <Field required name="email" autoComplete="email" label={activeLabels.email} type="email" value={form.email} onChange={(value) => update('email', value)} />
-        <Field required name="phone" autoComplete="tel" label={activeLabels.phone} value={form.phone} onChange={(value) => update('phone', value)} />
-        <Field name="country" autoComplete="country-name" label={activeLabels.country} value={form.country} onChange={(value) => update('country', value)} />
-        <Field name="company" autoComplete="organization" label={activeLabels.company} value={form.company} onChange={(value) => update('company', value)} />
-        <Field name="quantity" autoComplete="off" label={activeLabels.quantity} value={form.quantity} onChange={(value) => update('quantity', value)} />
+        <Field required name="name" autoComplete="name" label={activeLabels.name} visualItemId="form-name" visualLang={lang} value={form.name} onChange={(value) => update('name', value)} />
+        <Field required name="email" autoComplete="email" label={activeLabels.email} visualItemId="form-email" visualLang={lang} type="email" value={form.email} onChange={(value) => update('email', value)} />
+        <Field required name="phone" autoComplete="tel" label={activeLabels.phone} visualItemId="form-phone" visualLang={lang} value={form.phone} onChange={(value) => update('phone', value)} />
+        <Field name="country" autoComplete="country-name" label={activeLabels.country} visualItemId="form-country" visualLang={lang} value={form.country} onChange={(value) => update('country', value)} />
+        <Field name="company" autoComplete="organization" label={activeLabels.company} visualItemId="form-company" visualLang={lang} value={form.company} onChange={(value) => update('company', value)} />
+        <Field name="quantity" autoComplete="off" label={activeLabels.quantity} visualItemId="form-quantity" visualLang={lang} value={form.quantity} onChange={(value) => update('quantity', value)} />
       </div>
 
-      <label className="mt-3 block text-sm font-semibold text-[#1F2A31]">
+      <label className="mt-3 block text-sm font-semibold text-[#1F2A31]" {...visualLabelAttrs('form-message', lang)}>
         {activeLabels.message}
         <textarea
           name="message"
@@ -203,6 +216,7 @@ export default function ConversionInquiryForm({
           rows={4}
           value={form.message}
           onChange={(event) => update('message', event.target.value)}
+          data-visual-open-panel="inquiry-message"
           className="mt-1 w-full resize-y border border-[#DADDE1] px-3 py-2 text-sm font-normal outline-none focus:border-[#147C94]"
         />
       </label>
@@ -211,6 +225,7 @@ export default function ConversionInquiryForm({
         type="submit"
         disabled={submitting}
         className="mt-4 inline-flex bg-[#E36F2C] px-5 py-3 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#C65F22] disabled:cursor-not-allowed disabled:opacity-60"
+        {...visualLabelAttrs(submitting ? 'form-submitting' : 'form-submit', lang)}
       >
         {submitting ? activeLabels.submitting : activeLabels.submit}
       </button>
@@ -226,6 +241,8 @@ function Field({
   type = 'text',
   autoComplete,
   required = false,
+  visualItemId,
+  visualLang,
   value,
   onChange,
 }: {
@@ -234,13 +251,15 @@ function Field({
   type?: string
   autoComplete?: string
   required?: boolean
+  visualItemId?: string
+  visualLang?: 'en' | 'zh'
   value: string
   onChange: (value: string) => void
 }) {
   if (!label) return null
 
   return (
-    <label className="text-sm font-semibold text-[#1F2A31]">
+    <label className="text-sm font-semibold text-[#1F2A31]" {...(visualItemId && visualLang ? visualLabelAttrs(visualItemId, visualLang) : {})}>
       {label} {required ? '*' : null}
       <input
         name={name}
@@ -250,6 +269,7 @@ function Field({
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        data-visual-open-panel="inquiry-field"
         className="mt-1 w-full border border-[#DADDE1] px-3 py-2 text-sm font-normal outline-none focus:border-[#147C94]"
       />
     </label>

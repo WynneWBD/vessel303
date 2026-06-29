@@ -49,6 +49,7 @@ const specItemSchema = z.object({
 })
 const detailModuleItemSchema = z.object({
   title: z.string().min(1).max(160),
+  href: z.string().max(500).optional(),
   body: z.string().max(800).optional(),
 })
 const detailModuleSchema = z.object({

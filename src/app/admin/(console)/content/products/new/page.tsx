@@ -72,7 +72,7 @@ const EDIT_SECTIONS: EditSection[] = [
   {
     key: 'commercial',
     title: '商务条款',
-    detail: '价格展示、300 风格贸易条款',
+    detail: '价格展示、贸易条款',
     href: '#commercial',
     Icon: FileText,
   },

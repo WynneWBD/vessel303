@@ -585,18 +585,18 @@ function CaseLeadQualityFollowupDesk({
   const followupRisk = leads.staleFollowups > 0 && caseActive > 0
   const priority =
     caseActive > 0
-      ? 'P0 活跃案例线索'
+      ? '活跃案例线索'
       : inquiryActive > 0
-        ? 'P0 表单阶段待处理'
+        ? '表单待处理'
         : followupRisk
-          ? 'P1 跟进断点核对'
+          ? '跟进断点'
           : actionGap
-            ? 'P1 动作无线索'
+            ? '动作无线索'
             : trafficGap
-              ? 'P1 访问无线索'
+              ? '访问无线索'
               : caseTotal > 0
-                ? 'P2 来源复盘'
-                : 'P3 等待样本'
+                ? '来源复盘'
+                : '等待样本'
   const priorityTone: FunnelMatrixRow['statusTone'] =
     caseActive > 0 || inquiryActive > 0 || followupRisk || actionGap || trafficGap
       ? 'orange'
@@ -857,20 +857,20 @@ function ProductPublishLeadQualityHandoffDesk({
   const followupRisk = leads.staleFollowups > 0 && productActive > 0
   const priority =
     productActive > 0
-      ? 'P0 产品线索待处理'
+      ? '产品线索待处理'
       : inquiryActive > 0
-        ? 'P0 表单阶段待处理'
+        ? '表单待处理'
         : followupRisk
-          ? 'P1 跟进断点'
+          ? '跟进断点'
           : pathAttributionGap
-            ? 'P1 路径动作未归因'
+            ? '路径动作未归因'
             : trafficAttributionGap
-              ? 'P1 访问未归因'
+              ? '访问未归因'
               : contentGaps > 0 && productPathMetric.views > 0
-                ? 'P1 发布承接缺口'
+                ? '发布承接缺口'
                 : productTotal > 0
-                  ? 'P2 质量复盘'
-                  : 'P3 等待样本'
+                  ? '质量复盘'
+                  : '等待样本'
   const priorityTone: FunnelMatrixRow['statusTone'] =
     productActive > 0 || inquiryActive > 0 || followupRisk || pathAttributionGap || trafficAttributionGap || (contentGaps > 0 && productPathMetric.views > 0)
       ? 'orange'
@@ -1060,18 +1060,18 @@ function ProductLeadQualityFollowupDesk({
   const followupRisk = leads.staleFollowups > 0 && productActive > 0
   const priority =
     productActive > 0
-      ? 'P0 活跃产品线索'
+      ? '活跃产品线索'
       : inquiryActive > 0
-        ? 'P0 表单阶段待处理'
+        ? '表单待处理'
         : followupRisk
-          ? 'P1 跟进断点核对'
+          ? '跟进断点'
           : actionGap
-            ? 'P1 动作无线索'
+            ? '动作无线索'
             : trafficGap
-              ? 'P1 访问无线索'
+              ? '访问无线索'
               : productTotal > 0
-                ? 'P2 来源复盘'
-                : 'P3 等待样本'
+                ? '来源复盘'
+                : '等待样本'
   const priorityTone: FunnelMatrixRow['statusTone'] =
     productActive > 0 || inquiryActive > 0 || followupRisk || actionGap || trafficGap
       ? 'orange'
@@ -1462,7 +1462,7 @@ function LeadResponseOperationsLedger({ leads }: { leads: LeadMetrics }) {
                   <tr key={row.key} className="align-top transition hover:bg-[#FBFDFD]">
                     <td className="px-5 py-4">
                       <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${leadResponseBadgeClass(row.tone)}`}>
-                        {row.priority}
+                        {leadResponsePriorityDisplay(row.priority)}
                       </span>
                       <p className="mt-2 text-xs font-semibold text-[#61767D]">{row.stage}</p>
                     </td>
@@ -1727,14 +1727,14 @@ function buildSourceLeadQualityWorkdeskRows({
       const hasTrafficGap = row.metric.views > 0 && row.total === 0
       const priority =
         row.active > 0
-          ? 'P0 处理线索'
+          ? '处理线索'
           : openQuality > 0
-            ? 'P1 补承接'
+            ? '补承接'
             : hasTrafficGap
-              ? 'P1 查归因'
+              ? '查归因'
               : row.total > 0
-                ? 'P2 复盘质量'
-                : 'P3 观察'
+                ? '复盘质量'
+                : '观察'
       const priorityTone: FunnelMatrixRow['statusTone'] =
         row.active > 0 || openQuality > 0 || hasTrafficGap
           ? 'orange'
@@ -2488,6 +2488,16 @@ function leadResponseBadgeClass(tone: LeadResponseTone): string {
   if (tone === 'warning') return 'border-[#E36F2C]/25 bg-[#FFF6EF] text-[#C75F18]'
   if (tone === 'review') return 'border-[#1889B6]/20 bg-[#EAF6F8] text-[#1889B6]'
   return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+}
+
+function leadResponsePriorityDisplay(priority: string): string {
+  if (priority === 'P0') return '高优先'
+  if (priority === 'P1') return '优先'
+  if (priority === 'P2') return '复核'
+  if (priority === 'P3') return '观察'
+  if (priority === 'OK') return '正常'
+  if (priority === 'HOLD') return '受限'
+  return priority
 }
 
 function pathActions(metric: AnalyticsConversionMetric) {

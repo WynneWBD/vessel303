@@ -154,7 +154,7 @@ const EMPTY_RECENT_SUMMARY: RecentContentSummary = {
 const STORAGE_WARNING_BYTES = 800 * 1024 * 1024
 
 const QUICK_ACTIONS: ActionItem[] = [
-  { label: '优先级台账', href: '/admin/status#operations-priority-ledger', Icon: BarChart3, primary: true },
+  { label: '待办中心', href: '/admin/status#operations-priority-ledger', Icon: BarChart3, primary: true },
   { label: '编辑网站', href: VISUAL_HOME_HERO_HREF, Icon: LayoutTemplate },
   { label: '发布产品', href: '/admin/content/products/new', Icon: Package },
   { label: '发布项目', href: '/admin/content/projects/new', Icon: MapPinned },
@@ -473,7 +473,7 @@ function Hero({
       value: formatNumber(contentTotal),
       detail: `草稿 ${formatNumber(draftTotal)} / 页面草稿 ${formatNumber(pageDraftCount)}`,
       href: '#content',
-      action: '看内容台账',
+      action: '看内容',
       Icon: Package,
       tone: draftTotal + pageDraftCount > 0 ? 'orange' : 'blue',
     },
@@ -517,7 +517,7 @@ function Hero({
                 </p>
                 <h1 className="mt-1 text-2xl font-bold text-[#1E2C31] md:text-3xl">运营管理控制台</h1>
                 <p className="mt-2 max-w-4xl text-sm leading-6 text-[#61767D]">
-                  一屏查看站点、内容、线索和素材，先处理今日最需要跟进的事项。
+                  站点、内容、线索和素材状态。
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -543,7 +543,7 @@ function Hero({
                 </div>
                 <OperationSiteLedgerRow
                   title="当前站点"
-                  detail="主站内容由后台 published 内容驱动。"
+                  detail="主站内容已接入后台。"
                   metric="www.vessel303.com"
                   status="运营中"
                   href="/admin/site"
@@ -670,17 +670,17 @@ function OperationsCommandPanel({
   const openPrioritySignals = leadSummary.new + pageDraftCount + productIssueCount + mediaIssueCount + configIssues
   const cards = [
     {
-      title: '优先级台账',
+      title: '待办中心',
       value: openPrioritySignals,
-      detail: '集中处理线索、内容、SEO、素材、草稿和转化异常。',
+      detail: '线索、内容、SEO、素材和页面。',
       href: '/admin/status#operations-priority-ledger',
       Icon: BarChart3,
       tone: openPrioritySignals > 0 ? 'orange' : 'green',
     },
     {
-      title: '新线索优先',
+      title: '新询盘',
       value: leadSummary.new,
-      detail: `线索总量 ${formatNumber(leadSummary.total)}，先处理首次响应。`,
+      detail: `线索总量 ${formatNumber(leadSummary.total)}，新询盘优先。`,
       href: '/admin/customers/leads?status=new',
       Icon: Inbox,
       tone: leadSummary.new > 0 ? 'orange' : 'green',
@@ -696,7 +696,7 @@ function OperationsCommandPanel({
     {
       title: '图片治理',
       value: mediaIssueCount,
-      detail: '检查大图、缺派生图和素材空间风险。',
+      detail: '大图、缩略图和素材空间。',
       href: '/admin/site/media?view=issues',
       Icon: ImageIcon,
       tone: mediaIssueCount > 0 ? 'orange' : 'green',
@@ -704,7 +704,7 @@ function OperationsCommandPanel({
     {
       title: '数据分析',
       value: '查看',
-      detail: '进入访问、来源、行为、落地页和转化诊断。',
+      detail: '查看访问、来源、落地页和转化表现。',
       href: '/admin/status/traffic',
       Icon: BarChart3,
       tone: 'blue',
@@ -712,7 +712,7 @@ function OperationsCommandPanel({
     {
       title: '转化路径',
       value: '查看',
-      detail: '查看入口、CTA、表单和线索 source 匹配。',
+      detail: '查看入口、CTA、表单和线索来源匹配。',
       href: '/admin/site/conversion#conversion-ledger',
       Icon: LayoutTemplate,
       tone: 'blue',
@@ -730,7 +730,7 @@ function OperationsCommandPanel({
     cards.push({
       title: '系统配置',
       value: configIssues,
-      detail: '仅管理员处理账号、密钥和站点设置。',
+      detail: '账号、密钥和站点设置。',
       href: '/admin/settings',
       Icon: Settings,
       tone: configIssues > 0 ? 'orange' : 'green',
@@ -741,7 +741,7 @@ function OperationsCommandPanel({
     <section className="space-y-4">
       <AdminSectionTitle
         title="今日指挥台"
-        detail="日常先处理线索、内容缺口和素材风险，再查看数据分析与转化路径。"
+        detail="线索、内容、素材和数据入口。"
       />
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2 2xl:grid-cols-4">
         {cards.map((card) => (
@@ -789,7 +789,7 @@ function CommandCard({
         </span>
         <span className="mt-1 block text-xs leading-5 text-[#61767D]">{card.detail}</span>
         <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#E36F2C]">
-          进入处理
+          打开
           <ArrowRight size={13} className="transition group-hover:translate-x-0.5" />
         </span>
       </span>
@@ -817,27 +817,27 @@ function OperationsLoopPanel({
 
   const steps: OperationsLoopStep[] = [
     {
-      kicker: '01 Traffic',
-      title: '访问诊断',
+      kicker: '访问',
+      title: '访问数据',
       metric: '查看',
       signal: '入口 / 路径',
-      detail: '先看 30 天访问、落地页、来源和行为，不把后台统计当业务事实写回。',
+      detail: '近 30 天访问、落地页、来源和行为。',
       href: '/admin/status/traffic',
       Icon: BarChart3,
       tone: 'blue',
     },
     {
-      kicker: '02 Conversion',
+      kicker: '转化',
       title: '转化路径',
       metric: formatNumber(activeLeadCount),
-      signal: '活跃链路',
-      detail: '核对入口、CTA、表单和 source 匹配，判断真实询盘是否接上内容。',
+      signal: '活跃路径',
+      detail: '入口、按钮、表单和线索来源。',
       href: '/admin/site/conversion#conversion-ledger',
       Icon: LayoutTemplate,
       tone: 'blue',
     },
     {
-      kicker: '03 Lead SLA',
+      kicker: '线索',
       title: '线索响应',
       metric: formatNumber(slaSummary.firstResponseOverdue),
       signal: '超 24h',
@@ -847,7 +847,7 @@ function OperationsLoopPanel({
       tone: slaSummary.firstResponseOverdue > 0 ? 'orange' : 'green',
     },
     {
-      kicker: '04 Assignment',
+      kicker: '分配',
       title: '分配跟进',
       metric: formatNumber(assignmentRiskCount),
       signal: '待推进',
@@ -857,7 +857,7 @@ function OperationsLoopPanel({
       tone: assignmentRiskCount > 0 ? 'orange' : 'green',
     },
     {
-      kicker: '05 Content',
+      kicker: '内容',
       title: '内容补齐',
       metric: formatNumber(contentRiskCount),
       signal: '影响展示',
@@ -869,10 +869,10 @@ function OperationsLoopPanel({
   ]
 
   const guardrails = [
-    { label: 'analytics', value: '站内数据' },
-    { label: 'leads', value: 'SLA 聚合' },
-    { label: 'conversion', value: 'source 对照' },
-    { label: 'content', value: 'published 驱动' },
+    { label: '访问', value: '站内数据' },
+    { label: '线索', value: '响应状态' },
+    { label: '转化', value: '来源对照' },
+    { label: '内容', value: '发布状态' },
   ]
 
   return (
@@ -880,11 +880,11 @@ function OperationsLoopPanel({
       <div className="flex flex-col gap-3 border-b border-[#E5EEF0] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">
-            Operations Loop
+            Operations
           </p>
-          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">运营作战台</h2>
+          <h2 className="mt-1 text-xl font-bold text-[#1E2C31]">运营看板</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            按访问、转化、线索响应、分配跟进和内容补齐查看当前运营风险。
+            访问、转化、线索和内容状态。
           </p>
         </div>
         <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
@@ -935,7 +935,7 @@ function OperationsLoopPanel({
                 <span className="mt-3 block text-xs leading-5 text-[#61767D]">{step.detail}</span>
               </span>
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#E36F2C]">
-                进入处理
+                打开
                 <ArrowRight size={13} className="transition group-hover:translate-x-0.5" />
               </span>
             </Link>
@@ -981,9 +981,9 @@ function ControlMatrix({
 
   const lanes: ControlLane[] = [
     {
-      title: '优先级台账',
+      title: '待办中心',
       metric: formatNumber(openTodos.length),
-      detail: '跨线索、内容、SEO、素材、页面草稿和转化异常的集中处理入口',
+      detail: '线索、内容、SEO、素材和页面草稿',
       href: '/admin/status#operations-priority-ledger',
       Icon: BarChart3,
       tone: openTodos.length > 0 ? 'orange' : 'green',
@@ -1007,7 +1007,7 @@ function ControlMatrix({
     {
       title: '页面发布',
       metric: formatNumber(pageDraftCount),
-      detail: '页面模块与结构草稿',
+      detail: '页面内容与布局',
       href: VISUAL_HOME_HERO_HREF,
       Icon: LayoutTemplate,
       tone: pageDraftCount > 0 ? 'orange' : 'green',
@@ -1021,7 +1021,7 @@ function ControlMatrix({
       tone: mediaIssueCount > 0 ? 'orange' : 'green',
     },
     {
-      title: '数据诊断',
+      title: '数据看板',
       metric: formatNumber(recentTotal),
       detail: '近 30 天内容变化',
       href: '/admin/status/traffic',
@@ -1032,9 +1032,9 @@ function ControlMatrix({
 
   if (isAdmin) {
     lanes.push({
-      title: '系统边界',
+      title: '系统设置',
       metric: formatNumber(configIssues),
-      detail: '环境配置待处理',
+      detail: '配置项',
       href: '/admin/settings',
       Icon: ShieldCheck,
       tone: configIssues > 0 ? 'orange' : 'green',
@@ -1047,7 +1047,7 @@ function ControlMatrix({
         <div>
           <h2 className="text-xl font-bold text-[#1E2C31]">运营总览</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把每日运营入口压成一张表：先判断线索、内容、页面、媒体和系统边界，再进入对应后台处理。
+            查看今日待办、内容发布、页面草稿、媒体素材和系统状态。
           </p>
         </div>
         <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1889B6]">
@@ -1058,9 +1058,9 @@ function ControlMatrix({
       <div className="mt-4 grid grid-cols-1 gap-3 2xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white">
           <div className="hidden gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 text-xs font-semibold text-[#61767D] md:grid md:grid-cols-[170px_130px_minmax(0,1fr)_110px] lg:grid-cols-[180px_150px_minmax(0,1fr)_120px]">
-            <span>运营链路</span>
+            <span>运营项</span>
             <span>当前信号</span>
-            <span>判断口径</span>
+            <span>状态</span>
             <span>入口</span>
           </div>
           {lanes.map((lane) => (
@@ -1069,8 +1069,8 @@ function ControlMatrix({
         </div>
 
         <aside className="rounded-md border border-[#D8E7E8] bg-white p-4">
-          <h3 className="text-sm font-bold text-[#1E2C31]">今日优先级</h3>
-          <p className="mt-1 text-xs leading-5 text-[#61767D]">来自右侧待办，只显示仍需处理的事项。</p>
+          <h3 className="text-sm font-bold text-[#1E2C31]">今日待办</h3>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">只显示需处理事项。</p>
           <div className="mt-3 space-y-2">
             {priorityTodos.length > 0 ? (
               priorityTodos.map((item) => (
@@ -1100,7 +1100,7 @@ function ControlMatrix({
             href="/admin/status#operations-priority-ledger"
             className="mt-3 inline-flex min-h-9 w-full items-center justify-center rounded-md border border-[#1889B6] bg-[#EAF6F8] px-3 text-xs font-bold text-[#1889B6] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
           >
-            查看完整优先级台账
+            查看全部待办
           </Link>
         </aside>
       </div>
@@ -1130,7 +1130,7 @@ function ControlMatrixRow({ lane }: { lane: ControlLane }) {
       <span className="font-bold text-[#1E2C31]">{lane.metric}</span>
       <span className="min-w-0 truncate text-[#61767D]">{lane.detail}</span>
       <Link href={lane.href} className="inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
-        进入处理
+        打开
         <ArrowRight size={13} />
       </Link>
     </div>
@@ -1204,7 +1204,7 @@ function ContentListWorkbench({
     },
     {
       title: '页面编辑',
-      detail: '页面模块草稿、结构草稿和站点视觉发布链路',
+      detail: '页面内容和布局',
       total: pageDraftCount,
       draft: pageDraftCount,
       signal: pageDraftCount,
@@ -1223,16 +1223,16 @@ function ContentListWorkbench({
   return (
     <section className="space-y-4">
       <AdminSectionTitle
-        title="内容列表工作台"
-        detail="产品、项目、新闻和页面的高频处理入口统一在这里，先扫数量和风险，再进对应列表。"
+        title="内容管理"
+        detail="集中管理产品、项目、新闻和页面草稿。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="hidden grid-cols-[210px_120px_120px_minmax(0,1fr)_190px] gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 text-xs font-semibold text-[#61767D] lg:grid">
           <span>内容线</span>
           <span>总量 / 草稿</span>
           <span>当前信号</span>
-          <span>处理入口</span>
-          <span>主工作台</span>
+          <span>操作入口</span>
+          <span>列表</span>
         </div>
         <div className="divide-y divide-[#E6EEEE]">
           {rows.map((row) => (
@@ -1291,7 +1291,7 @@ function ContentWorkbenchRowView({ row }: { row: ContentWorkbenchRow }) {
         href={row.href}
         className="inline-flex h-9 w-fit items-center gap-1 rounded-md border border-[#1889B6]/25 bg-[#EAF6F8] px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
       >
-        进入列表工作台
+        打开列表
         <ArrowRight size={13} />
       </Link>
     </div>
@@ -1350,7 +1350,7 @@ function ContentCards({
     },
     {
       title: '页面草稿',
-      detail: '页面模块草稿、结构草稿和视觉发布链路',
+      detail: '页面内容和布局',
       total: pageDraftCount,
       recent: pageDraftCount,
       draft: pageDraftCount,
@@ -1375,15 +1375,15 @@ function ContentCards({
 
   return (
     <section id="content" className="space-y-4">
-      <AdminSectionTitle title="内容经营指标台账" detail="把总量、草稿和近期变化压成一张表，减少首页重复卡片。" />
+      <AdminSectionTitle title="内容概览" detail="查看总量、草稿和近 30 天更新。" />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="hidden grid-cols-[190px_90px_100px_90px_minmax(0,1fr)_130px] gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 text-xs font-semibold text-[#61767D] lg:grid">
           <span>内容线</span>
           <span>总量</span>
           <span>近期变化</span>
           <span>草稿</span>
-          <span>运营口径</span>
-          <span className="text-right">处理入口</span>
+          <span>状态说明</span>
+          <span className="text-right">操作入口</span>
         </div>
         <div className="divide-y divide-[#E6EEEE]">
           {rows.map((row) => (
@@ -1545,8 +1545,8 @@ function StatusPanel({
         />
         <StatusLineCard
           title={isAdmin ? '配置状态' : '运营数据'}
-          value={isAdmin ? (configIssues > 0 ? '需处理' : '已配置') : '规划中'}
-          detail={isAdmin ? `${formatNumber(configIssues)} 项需处理` : '访问与转化后续接入'}
+          value={isAdmin ? (configIssues > 0 ? '需处理' : '已配置') : '可查看'}
+          detail={isAdmin ? `${formatNumber(configIssues)} 项需处理` : '查看访问与线索状态'}
           href={isAdmin ? '/admin/settings' : undefined}
           Icon={isAdmin ? Settings : BarChart3}
         />
@@ -1664,7 +1664,7 @@ function MaintenanceBlock({
       <AdminSectionTitle title="维护中心" detail="管理员低频使用，不作为日常运营入口。" />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
         <MaintenanceLink title="高级维护" detail="集中入口" href="/admin/legacy" Icon={Wrench} />
-        <MaintenanceLink title="表单模式" detail="固定字段维护" href="/admin/pages" Icon={FileText} />
+        <MaintenanceLink title="字段维护" detail="固定字段" href="/admin/pages" Icon={FileText} />
         <MaintenanceLink title="后台账号" detail={userStatusText(userSummary)} href="/admin/users" Icon={ShieldCheck} />
         <MaintenanceLink
           title="站点设置"

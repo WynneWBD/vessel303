@@ -74,6 +74,24 @@ function asForm(profile: AccountProfile): ProfileForm {
   }
 }
 
+const ACCOUNT_PREVIEW_PROFILE: AccountProfile = {
+  id: 'visual-preview',
+  email: 'preview@vessel303.com',
+  name: 'VESSEL Preview',
+  image: null,
+  role: 'user',
+  identity: null,
+  disabled: false,
+  created_at: '2026-01-01T00:00:00.000Z',
+  last_login_at: null,
+  company: 'VESSEL',
+  country: 'Singapore',
+  phone: '+65 0000 0000',
+  whatsapp: '+65 0000 0000',
+  preferred_language: 'en',
+  has_password: true,
+}
+
 type AccountApiResponse = {
   error?: string
   issues?: Array<{ message?: string }>
@@ -156,18 +174,49 @@ const ACCOUNT_FALLBACK_MODULES: PublicPageModule[] = [
   },
 ]
 
+function accountModuleAttrs(moduleKey: string) {
+  return { 'data-page-module': `account:${moduleKey}` }
+}
+
+function accountModuleFieldAttrs(moduleKey: string, field: 'title' | 'description', lang: 'en' | 'zh') {
+  return {
+    'data-page-module': `account:${moduleKey}`,
+    'data-page-module-field': field === 'title'
+      ? (lang === 'zh' ? 'title_zh' : 'title_en')
+      : (lang === 'zh' ? 'description_zh' : 'description_en'),
+  }
+}
+
+function accountItemFieldAttrs(
+  moduleKey: string,
+  itemId: string,
+  field: 'label' | 'value',
+  lang: 'en' | 'zh',
+) {
+  return {
+    'data-page-module': `account:${moduleKey}`,
+    'data-page-module-item': itemId,
+    'data-page-module-field': field === 'label'
+      ? (lang === 'zh' ? 'label_zh' : 'label_en')
+      : (lang === 'zh' ? 'value_zh' : 'value_en'),
+  }
+}
+
 function FieldLabel({
   htmlFor,
   children,
+  visualAttrs,
 }: {
   htmlFor: string
   children: ReactNode
+  visualAttrs?: Record<string, string>
 }) {
   if (!children) return null
   return (
     <label
       htmlFor={htmlFor}
       className="block text-[#8A8580] text-xs tracking-[0.16em] uppercase mb-1.5"
+      {...visualAttrs}
     >
       {children}
     </label>
@@ -196,7 +245,11 @@ function StatusMessage({
   )
 }
 
-export default function AccountForms() {
+type AccountFormsProps = {
+  previewMode?: boolean
+}
+
+export default function AccountForms({ previewMode = false }: AccountFormsProps) {
   const { lang } = useLanguage()
   const [pageModules, setPageModules] = useState<PublicPageModule[] | null>(null)
   const [profile, setProfile] = useState<AccountProfile | null>(null)
@@ -283,6 +336,14 @@ export default function AccountForms() {
     let cancelled = false
 
     async function loadProfile() {
+      if (previewMode) {
+        setProfile(ACCOUNT_PREVIEW_PROFILE)
+        setProfileForm(asForm(ACCOUNT_PREVIEW_PROFILE))
+        setProfileError('')
+        setLoading(false)
+        return
+      }
+
       setLoading(true)
       setProfileError('')
       try {
@@ -309,13 +370,13 @@ export default function AccountForms() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [previewMode])
 
   const accountHeader = useMemo(() => (
     labels.eyebrow || labels.title ? (
-      <div className="mb-8">
+      <div className="mb-8" {...accountModuleAttrs('header')}>
         {labels.eyebrow ? (
-          <p className="text-[#E36F2C] text-xs tracking-[0.35em] uppercase font-medium mb-3">
+          <p className="text-[#E36F2C] text-xs tracking-[0.35em] uppercase font-medium mb-3" {...accountItemFieldAttrs('header', 'eyebrow', 'label', lang)}>
             {labels.eyebrow}
           </p>
         ) : null}
@@ -323,13 +384,14 @@ export default function AccountForms() {
           <h1
             className="text-[#2C2A28] text-3xl sm:text-4xl font-black tracking-wider"
             style={{ fontFamily: 'DM Sans, sans-serif' }}
+            {...accountModuleFieldAttrs('header', 'title', lang)}
           >
             {labels.title}
           </h1>
         ) : null}
       </div>
     ) : null
-  ), [labels.eyebrow, labels.title])
+  ), [labels.eyebrow, labels.title, lang])
 
   function setProfileField(field: keyof ProfileForm, value: string) {
     setProfileForm((prev) => ({ ...prev, [field]: value }))
@@ -345,6 +407,11 @@ export default function AccountForms() {
 
   async function handleProfileSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    if (previewMode) {
+      setProfileError('')
+      setProfileSuccess(labels.profileSuccess)
+      return
+    }
     setSavingProfile(true)
     setProfileError('')
     setProfileSuccess('')
@@ -370,6 +437,11 @@ export default function AccountForms() {
 
   async function handlePasswordSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    if (previewMode) {
+      setPasswordError('')
+      setPasswordSuccess(labels.passwordChangeSuccess || labels.passwordSetSuccess)
+      return
+    }
     setSavingPassword(true)
     setPasswordError('')
     setPasswordSuccess('')
@@ -442,15 +514,15 @@ export default function AccountForms() {
       {accountHeader}
       <div className="grid lg:grid-cols-[1fr_320px] gap-6">
         {canRenderProfile ? (
-          <section className="bg-white border border-[#E5DED4] p-6 sm:p-8">
+          <section className="bg-white border border-[#E5DED4] p-6 sm:p-8" {...accountModuleAttrs('profile')}>
             <div className="flex flex-col gap-1 mb-6">
               {profileTitle ? (
-                <h2 className="text-[#2C2A28] text-lg font-bold tracking-wider">
+                <h2 className="text-[#2C2A28] text-lg font-bold tracking-wider" {...accountModuleFieldAttrs('profile', 'title', lang)}>
                   {profileTitle}
                 </h2>
               ) : null}
               {profileDescription ? (
-                <p className="text-[#8A8580] text-sm">{profileDescription}</p>
+                <p className="text-[#8A8580] text-sm" {...accountModuleFieldAttrs('profile', 'description', lang)}>{profileDescription}</p>
               ) : null}
               {profile.email ? (
                 <p className="text-[#8A8580] text-sm break-all">{profile.email}</p>
@@ -460,67 +532,72 @@ export default function AccountForms() {
             <form onSubmit={handleProfileSubmit} className="space-y-5">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <FieldLabel htmlFor="account-name">{labels.name}</FieldLabel>
+                  <FieldLabel htmlFor="account-name" visualAttrs={accountItemFieldAttrs('profile', 'name-label', 'label', lang)}>{labels.name}</FieldLabel>
                   <Input
                     id="account-name"
                     value={profileForm.name}
                     onChange={(e) => setProfileField('name', e.target.value)}
                     placeholder={labels.namePlaceholder}
+                    {...accountItemFieldAttrs('profile', 'name-placeholder', 'value', lang)}
                     maxLength={50}
                     autoComplete="name"
                     disabled={savingProfile}
                   />
                 </div>
                 <div>
-                  <FieldLabel htmlFor="account-company">{labels.company}</FieldLabel>
+                  <FieldLabel htmlFor="account-company" visualAttrs={accountItemFieldAttrs('profile', 'company-label', 'label', lang)}>{labels.company}</FieldLabel>
                   <Input
                     id="account-company"
                     value={profileForm.company}
                     onChange={(e) => setProfileField('company', e.target.value)}
                     placeholder={labels.companyPlaceholder}
+                    {...accountItemFieldAttrs('profile', 'company-placeholder', 'value', lang)}
                     maxLength={200}
                     autoComplete="organization"
                     disabled={savingProfile}
                   />
                 </div>
                 <div>
-                  <FieldLabel htmlFor="account-country">{labels.country}</FieldLabel>
+                  <FieldLabel htmlFor="account-country" visualAttrs={accountItemFieldAttrs('profile', 'country-label', 'label', lang)}>{labels.country}</FieldLabel>
                   <Input
                     id="account-country"
                     value={profileForm.country}
                     onChange={(e) => setProfileField('country', e.target.value)}
                     placeholder={labels.countryPlaceholder}
+                    {...accountItemFieldAttrs('profile', 'country-placeholder', 'value', lang)}
                     maxLength={100}
                     autoComplete="country-name"
                     disabled={savingProfile}
                   />
                 </div>
                 <div>
-                  <FieldLabel htmlFor="account-phone">{labels.phone}</FieldLabel>
+                  <FieldLabel htmlFor="account-phone" visualAttrs={accountItemFieldAttrs('profile', 'phone-label', 'label', lang)}>{labels.phone}</FieldLabel>
                   <Input
                     id="account-phone"
                     value={profileForm.phone}
                     onChange={(e) => setProfileField('phone', e.target.value)}
                     placeholder={labels.phonePlaceholder}
+                    {...accountItemFieldAttrs('profile', 'phone-placeholder', 'value', lang)}
                     maxLength={50}
                     autoComplete="tel"
                     disabled={savingProfile}
                   />
                 </div>
                 <div>
-                  <FieldLabel htmlFor="account-whatsapp">{labels.whatsapp}</FieldLabel>
+                  <FieldLabel htmlFor="account-whatsapp" visualAttrs={accountItemFieldAttrs('profile', 'whatsapp-label', 'label', lang)}>{labels.whatsapp}</FieldLabel>
                   <Input
                     id="account-whatsapp"
                     value={profileForm.whatsapp}
                     onChange={(e) => setProfileField('whatsapp', e.target.value)}
                     placeholder={labels.whatsappPlaceholder}
+                    {...accountItemFieldAttrs('profile', 'whatsapp-placeholder', 'value', lang)}
                     maxLength={80}
                     autoComplete="tel"
                     disabled={savingProfile}
                   />
                 </div>
                 <div>
-                  <FieldLabel htmlFor="account-language">{labels.language}</FieldLabel>
+                  <FieldLabel htmlFor="account-language" visualAttrs={accountItemFieldAttrs('profile', 'language-label', 'label', lang)}>{labels.language}</FieldLabel>
                   <Select
                     id="account-language"
                     value={profileForm.preferred_language}
@@ -529,9 +606,9 @@ export default function AccountForms() {
                     }
                     disabled={savingProfile}
                   >
-                    {labels.languageEmpty ? <option value="">{labels.languageEmpty}</option> : null}
-                    {labels.languageZh ? <option value="zh">{labels.languageZh}</option> : null}
-                    {labels.languageEn ? <option value="en">{labels.languageEn}</option> : null}
+                    {labels.languageEmpty ? <option value="" {...accountItemFieldAttrs('profile', 'language-empty', 'label', lang)}>{labels.languageEmpty}</option> : null}
+                    {labels.languageZh ? <option value="zh" {...accountItemFieldAttrs('profile', 'language-zh', 'label', lang)}>{labels.languageZh}</option> : null}
+                    {labels.languageEn ? <option value="en" {...accountItemFieldAttrs('profile', 'language-en', 'label', lang)}>{labels.languageEn}</option> : null}
                   </Select>
                 </div>
               </div>
@@ -544,7 +621,7 @@ export default function AccountForms() {
               ) : null}
 
               <div className="flex justify-end">
-                <Button type="submit" disabled={savingProfile}>
+                <Button type="submit" disabled={savingProfile} {...accountItemFieldAttrs('profile', savingProfile && labels.profileSaving ? 'saving' : 'save', 'label', lang)}>
                   {savingProfile && labels.profileSaving ? labels.profileSaving : labels.profileSave}
                 </Button>
               </div>
@@ -553,13 +630,23 @@ export default function AccountForms() {
         ) : null}
 
         {canRenderPassword ? (
-          <aside className="bg-[#241F1B] border border-[#3A302A] p-6 text-[#F5F2ED]">
+          <aside className="bg-[#241F1B] border border-[#3A302A] p-6 text-[#F5F2ED]" {...accountModuleAttrs('password')}>
             {passwordTitle ? (
-              <h2 className="text-base font-bold tracking-wider mb-2">
+              <h2
+                className="text-base font-bold tracking-wider mb-2"
+                {...accountItemFieldAttrs('password', passwordMode === 'change' ? 'title-change' : 'title-set', 'label', lang)}
+              >
                 {passwordTitle}
               </h2>
             ) : null}
-            {passwordHelp ? <p className="text-white/45 text-xs leading-5 mb-5">{passwordHelp}</p> : null}
+            {passwordHelp ? (
+              <p
+                className="text-white/45 text-xs leading-5 mb-5"
+                {...accountItemFieldAttrs('password', passwordMode === 'change' ? 'help-change' : 'help-set', 'label', lang)}
+              >
+                {passwordHelp}
+              </p>
+            ) : null}
 
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
               {passwordMode === 'change' && labels.currentPassword ? (
@@ -567,6 +654,7 @@ export default function AccountForms() {
                   <label
                     htmlFor="account-current-password"
                     className="block text-white/45 text-xs tracking-[0.16em] uppercase mb-1.5"
+                    {...accountItemFieldAttrs('password', 'current-label', 'label', lang)}
                   >
                     {labels.currentPassword}
                   </label>
@@ -588,6 +676,7 @@ export default function AccountForms() {
                 <label
                   htmlFor="account-new-password"
                   className="block text-white/45 text-xs tracking-[0.16em] uppercase mb-1.5"
+                  {...accountItemFieldAttrs('password', 'new-label', 'label', lang)}
                 >
                   {labels.newPassword}
                 </label>
@@ -598,6 +687,7 @@ export default function AccountForms() {
                   onChange={(e) => setPasswordField('newPassword', e.target.value)}
                   autoComplete="new-password"
                   placeholder={labels.newPasswordPlaceholder}
+                  {...accountItemFieldAttrs('password', 'new-placeholder', 'value', lang)}
                   disabled={savingPassword}
                   className="border-white/10 bg-white/5 text-white placeholder:text-white/25 focus:border-[#E36F2C]"
                 />
@@ -610,7 +700,7 @@ export default function AccountForms() {
                 <StatusMessage tone="success">{passwordSuccess}</StatusMessage>
               ) : null}
 
-              <Button type="submit" className="w-full" disabled={savingPassword}>
+              <Button type="submit" className="w-full" disabled={savingPassword} {...accountItemFieldAttrs('password', savingPassword && labels.passwordSaving ? 'saving' : 'save', 'label', lang)}>
                 {savingPassword && labels.passwordSaving ? labels.passwordSaving : labels.passwordSave}
               </Button>
             </form>

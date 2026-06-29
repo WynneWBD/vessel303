@@ -24,6 +24,7 @@ export type GlobalPageModuleLike = {
 type GlobalCmsTextSet = {
   seoTitle: string
   seoDescription: string
+  heroEyebrow: string
   headerTitle: string
   logoAlt: string
   countriesValue: string
@@ -67,10 +68,49 @@ type GlobalCmsTextSet = {
 
 export type GlobalCmsLabels = GlobalCmsTextSet
 
+export function globalModuleAttrs(moduleKey: string) {
+  return {
+    'data-page-module': `global:${moduleKey}`,
+    'data-page-key': 'global',
+    'data-module-key': moduleKey,
+  }
+}
+
+export function globalModuleFieldAttrs(moduleKey: string, field: 'title' | 'description', lang: GlobalCmsLang) {
+  return {
+    ...globalModuleAttrs(moduleKey),
+    'data-page-module-field': `${field}_${lang}`,
+  }
+}
+
+export function globalItemAttrs(
+  moduleKey: string,
+  itemId: string,
+  lang: GlobalCmsLang,
+  field: 'label' | 'content' | 'value' | 'image_url' | 'href' = 'label',
+) {
+  return {
+    ...globalModuleAttrs(moduleKey),
+    'data-page-module-item': itemId,
+    'data-page-module-field': field === 'image_url' || field === 'href' ? field : `${field}_${lang}`,
+  }
+}
+
+export function globalProjectPointAttrs(projectId: string, targetId: string) {
+  return {
+    'data-cms-edit-kind': 'project',
+    'data-cms-edit-title': 'Global 项目',
+    'data-cms-edit-field': '地图点位',
+    'data-cms-edit-url': `/admin/content/projects/${encodeURIComponent(projectId)}/edit#global`,
+    'data-cms-edit-id': `global-project-${projectId}-${targetId}`,
+  }
+}
+
 const FALLBACK_LABELS: Record<GlobalCmsLang, GlobalCmsTextSet> = {
   en: {
     seoTitle: 'Global Deployment Map | VESSEL',
     seoDescription: 'Explore VESSEL global project locations, published camp references, regional deployment signals, and project inquiry paths.',
+    heroEyebrow: 'Global Deployment',
     headerTitle: 'Global Map',
     logoAlt: 'VESSEL',
     countriesValue: '30+',
@@ -114,6 +154,7 @@ const FALLBACK_LABELS: Record<GlobalCmsLang, GlobalCmsTextSet> = {
   zh: {
     seoTitle: '全球项目地图 | VESSEL',
     seoDescription: '查看 VESSEL 全球项目地点、公开营地参考、区域部署信号和项目咨询路径。',
+    heroEyebrow: '全球部署',
     headerTitle: '全球项目地图',
     logoAlt: 'VESSEL 微宿',
     countriesValue: '30+',
@@ -203,6 +244,8 @@ export function buildGlobalCmsLabels(
   const detailLabels = moduleByKey(modules, 'detail-labels')
   const ctaLabels = moduleByKey(modules, 'cta-labels')
 
+  const heroLabel = (id: string, value: string) =>
+    localizedField(itemById(hero, id), lang, 'label', value)
   const headerLabel = (id: string, field: 'label' | 'content' | 'value', value: string) =>
     localizedField(itemById(header, id), lang, field, value)
   const mapLabel = (id: string, value: string) =>
@@ -219,6 +262,7 @@ export function buildGlobalCmsLabels(
   return {
     seoTitle: moduleTitle(hero, lang, fallback.seoTitle),
     seoDescription: moduleDescription(hero, lang, fallback.seoDescription),
+    heroEyebrow: heroLabel('eyebrow', fallback.heroEyebrow),
     headerTitle: moduleTitle(header, lang, fallback.headerTitle),
     logoAlt: headerLabel('logo-alt', 'label', fallback.logoAlt),
     countriesValue: headerLabel('countries', 'value', fallback.countriesValue),

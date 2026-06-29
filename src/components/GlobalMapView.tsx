@@ -7,7 +7,14 @@ import { SHOWCASE_MARKERS, type ShowcaseMarker } from '@/data/showcaseMarkers'
 import type { ShowcaseProject } from '@/data/showcaseProjects'
 import MapSkeleton from './MapSkeleton'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { buildGlobalCmsLabels, type GlobalCmsLabels, type GlobalPageModuleLike } from '@/lib/global-page-cms'
+import {
+  buildGlobalCmsLabels,
+  globalItemAttrs,
+  globalModuleAttrs,
+  type GlobalCmsLabels,
+  type GlobalCmsLang,
+  type GlobalPageModuleLike,
+} from '@/lib/global-page-cms'
 
 const GlobalMapDynamic = dynamic(() => import('./GlobalMapML'), {
   ssr: false,
@@ -52,6 +59,10 @@ const ProjectDetailDynamic = dynamic(loadProjectDetailModule, {
   ssr: false,
 })
 
+function visualOpenPanelAttrs(key: string) {
+  return { 'data-visual-open-panel': key }
+}
+
 function setCampParam(id: string | null) {
   if (typeof window === 'undefined') return
   const url = new URL(window.location.href)
@@ -67,7 +78,7 @@ function PanelLoadingPreview({
   onClose,
 }: {
   marker: ShowcaseMarker
-  lang: string
+  lang: GlobalCmsLang
   labels: GlobalCmsLabels
   onClose: () => void
 }) {
@@ -75,9 +86,7 @@ function PanelLoadingPreview({
   const markerName = marker.name[zh ? 'zh' : 'en'] ?? marker.name.en
   return (
     <div
-      data-page-module="global:map-labels"
-      data-page-key="global"
-      data-module-key="map-labels"
+      {...globalModuleAttrs('map-labels')}
       style={{
         height: '100%',
         background: '#F5F2ED',
@@ -91,6 +100,8 @@ function PanelLoadingPreview({
       <button
         onClick={onClose}
         aria-label={labels.closeLabel}
+        {...visualOpenPanelAttrs('global-panel-close')}
+        {...globalItemAttrs('map-labels', 'close', lang)}
         style={{
           position: 'absolute',
           top: 16,
@@ -138,6 +149,7 @@ function PanelLoadingPreview({
             textTransform: 'uppercase',
             fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",
           }}
+          {...globalItemAttrs('map-labels', 'panel-opening', lang)}
         >
           {labels.panelOpeningLabel}
         </div>
@@ -160,6 +172,7 @@ function PanelLoadingPreview({
             margin: 0,
             fontFamily: "var(--font-body), 'Inter', sans-serif",
           }}
+          {...globalItemAttrs('map-labels', 'panel-loading-body', lang, 'content')}
         >
           {labels.panelLoadingBody}
         </p>
@@ -180,11 +193,18 @@ export default function GlobalMapView({
   const [selectedProject, setSelectedProject] = useState<ShowcaseProject | null>(null)
   const [resetViewKey, setResetViewKey] = useState(0)
   const { lang } = useLanguage()
-  const labels = buildGlobalCmsLabels(pageModules, lang === 'zh' ? 'zh' : 'en')
+  const cmsLang: GlobalCmsLang = lang === 'zh' ? 'zh' : 'en'
+  const labels = buildGlobalCmsLabels(pageModules, cmsLang)
+  const searchParams = useSearchParams()
+  const visualDraftPreview = searchParams?.get('visualDraft') === '1'
   const panelOpen = selectedMarker !== null
   const detailRequestId = useRef(0)
   const mirroredUrlOnce = useRef(false)
   const cmsProjectById = useMemo(() => new Map(cmsProjects.map((p) => [p.id, p])), [cmsProjects])
+  const editableMarkerIds = useMemo(
+    () => (visualDraftPreview ? cmsProjects.map((project) => project.id) : []),
+    [cmsProjects, visualDraftPreview],
+  )
   const showcaseMarkers = useMemo<ShowcaseMarker[]>(() => {
     const cmsMarkers = cmsProjects.map((project) => ({
       id: project.id,
@@ -218,7 +238,6 @@ export default function GlobalMapView({
     setSelectedProject(project)
   }, [cmsProjectById])
 
-  const searchParams = useSearchParams()
   const hydratedOnce = useRef(false)
   useEffect(() => {
     if (hydratedOnce.current) return
@@ -263,12 +282,13 @@ export default function GlobalMapView({
   const flyTarget = selectedMarker
     ? [selectedMarker.coordinates[1], selectedMarker.coordinates[0]] as [number, number]
     : null
+  const selectedProjectEditable = Boolean(
+    visualDraftPreview && selectedProject && cmsProjectById.has(selectedProject.id),
+  )
 
   return (
     <div
-      data-page-module="global:map-labels"
-      data-page-key="global"
-      data-module-key="map-labels"
+      {...globalModuleAttrs('map-labels')}
       style={{
         position: 'relative',
         width: '100%',
@@ -280,6 +300,7 @@ export default function GlobalMapView({
     >
       <div
         style={{
+          position: 'relative',
           flexShrink: 0,
           width: panelOpen ? '30%' : '100%',
           height: '100%',
@@ -293,6 +314,7 @@ export default function GlobalMapView({
           resetViewKey={resetViewKey}
           lang={lang}
           showcaseMarkers={showcaseMarkers}
+          editableMarkerIds={editableMarkerIds}
           pageModules={pageModules}
         />
       </div>
@@ -315,6 +337,7 @@ export default function GlobalMapView({
           <ProjectDetailDynamic
             project={selectedProject}
             lang={lang}
+            editable={selectedProjectEditable}
             pageModules={pageModules}
             onClose={handleClose}
           />
@@ -322,7 +345,7 @@ export default function GlobalMapView({
           selectedMarker && (
             <PanelLoadingPreview
               marker={selectedMarker}
-              lang={lang}
+              lang={cmsLang}
               labels={labels}
               onClose={handleClose}
             />

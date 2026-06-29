@@ -5,7 +5,7 @@ import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import CatalogProductDetailContent from '@/components/pages/CatalogProductDetailContent'
-import type { CatalogProduct } from '@/lib/products'
+import { catalogProducts, type CatalogProduct } from '@/lib/products'
 import {
   getPublicCatalogProductByDetailSlug,
   getPublicCatalogProductBySlug,
@@ -19,7 +19,7 @@ import {
   type UploadVariantMap,
 } from '@/lib/upload-image-variants'
 import { buildPageMetadata } from '@/lib/seo'
-import { listPublishedPageModules } from '@/lib/page-modules-db'
+import { listDefaultPageModules, listPublishedPageModules } from '@/lib/page-modules-db'
 import { sanitizePublicCatalogProduct } from '@/lib/product-public-content'
 
 const FIXED_DETAIL_SLUG = 'v9-gen6'
@@ -49,6 +49,11 @@ function applyCatalogProductImageVariants(product: CatalogProduct, variantsByUrl
   }
 }
 
+function getStaticCatalogProductBySlug(slug: string) {
+  const key = slug.trim()
+  return catalogProducts.find((product) => product.id === key || product.detailSlug === key) ?? null
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const product = await getFixedDetailProduct().catch(() => undefined)
   if (!product) return {}
@@ -65,8 +70,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 async function getFixedDetailProduct() {
   return (
-    (await getPublicCatalogProductByDetailSlug(FIXED_DETAIL_SLUG)) ||
-    (await getPublicCatalogProductBySlug(FIXED_PRODUCT_ID))
+    (await getPublicCatalogProductByDetailSlug(FIXED_DETAIL_SLUG).catch(() => null)) ||
+    (await getPublicCatalogProductBySlug(FIXED_PRODUCT_ID).catch(() => null)) ||
+    getStaticCatalogProductBySlug(FIXED_DETAIL_SLUG) ||
+    getStaticCatalogProductBySlug(FIXED_PRODUCT_ID)
   )
 }
 
@@ -80,7 +87,7 @@ export default async function V9Gen6Page() {
   const [relatedProducts, attributeLabels, pageModules] = await Promise.all([
     listPublicRelatedCatalogProducts(product.related_product_ids, product.id).catch(() => []),
     listProductAttributeLabelsForProduct(product.id).catch(() => []),
-    listPublishedPageModules('products').catch(() => []),
+    listPublishedPageModules('products').catch(() => listDefaultPageModules('products')),
   ])
   const imageVariants = await getUploadVariantsByUrls([
     ...catalogProductImageUrls(product),

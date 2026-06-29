@@ -55,7 +55,7 @@ const ACTIVITY_SOURCE_META: Record<ActivityItem['source'], { label: string; href
   news: { label: '新闻', href: '/admin/content/news/list', detail: '新闻发布和草稿变化' },
   leads: { label: '线索', href: '/admin/customers/leads', detail: '客户线索状态或备注变化' },
   media: { label: '媒体', href: '/admin/site/media', detail: '图片素材上传或素材库变化' },
-  pages: { label: '页面草稿', href: VISUAL_EDITOR_HOME_HERO_HREF, detail: '页面模块或结构草稿变化' },
+  pages: { label: '页面草稿', href: VISUAL_EDITOR_HOME_HERO_HREF, detail: '页面内容或布局草稿变化' },
 }
 
 export default async function AdminStatusActivityPage() {
@@ -183,11 +183,11 @@ function buildActivityAuditRows({
       key: 'page-draft-audit',
       priority: overview.site.pages.total > 0 ? 'P1' : 'OK',
       stage: '页面草稿',
-      title: '页面模块与结构草稿',
+      title: '页面内容与布局草稿',
       owner: '网站管理',
       currentValue: `${formatActivityNumber(overview.site.pages.total)} 个草稿`,
       evidence: `近期页面变化 ${formatActivityNumber(pageActivityCount)} 条；模块 ${formatActivityNumber(overview.site.pages.moduleDrafts)} / 结构 ${formatActivityNumber(overview.site.pages.structureDrafts)}`,
-      impact: '页面草稿需要在发布前复核导航、CTA、SEO 和前台 smoke。',
+      impact: '页面草稿发布前检查导航、按钮、SEO 和前台显示。',
       href: VISUAL_EDITOR_HOME_HERO_HREF,
       actionLabel: '进入视觉管理',
       tone: overview.site.pages.total > 0 ? 'warning' : 'ready',
@@ -211,11 +211,11 @@ function buildActivityAuditRows({
       key: 'public-smoke-audit',
       priority: 'P3',
       stage: '发布后复验',
-      title: '前台入口 smoke 清单',
-      owner: '05 验收',
+      title: '前台入口复查',
+      owner: '网站运营',
       currentValue: '人工复验',
-      evidence: '每批发布后检查 /、/products、/cases、/news、/global 和后台登录保护。',
-      impact: '避免后台变化已上线，但公开列表、详情页、地图例外或登录保护出现回归。',
+      evidence: '发布后检查 /、/products、/cases、/news、/global 和后台登录保护。',
+      impact: '确认公开列表、详情页、地图和登录保护正常。',
       href: '/',
       actionLabel: '打开首页',
       tone: 'review',
@@ -227,13 +227,13 @@ function buildActivityAuditRows({
       stage: '审计边界',
       title: canOpenAdminLogs ? '完整操作日志入口' : '完整操作日志需管理员查看',
       owner: '系统设置',
-      currentValue: canOpenAdminLogs ? 'admin_logs' : '变化样本',
+      currentValue: canOpenAdminLogs ? '操作日志' : '变化样本',
       evidence: canOpenAdminLogs
-        ? '系统设置页已读取 admin_logs 最近管理员操作，可进入日志查看详情。'
-        : '本页聚合 created_at / updated_at；完整 admin_logs 仅 admin 可见。',
+        ? '系统设置页可查看最近管理员操作。'
+        : '本页显示近期业务变化；完整操作日志仅 admin 可见。',
       impact: canOpenAdminLogs
-        ? '近期变化用于运营复盘，管理员日志用于追踪后台保存、发布和配置变更。'
-        : 'operator 先用近期变化判断业务影响，涉及管理员日志时交由 admin 复核。',
+        ? '用于追踪后台保存、发布和配置变更。'
+        : 'operator 可先查看近期变化，管理员再复核日志。',
       href: canOpenAdminLogs ? '/admin/settings#admin-logs' : '/admin/status/activity',
       actionLabel: canOpenAdminLogs ? '查看管理员日志' : '查看当前样本',
       tone: 'review',
@@ -260,12 +260,12 @@ function ActivityAuditLedger({
   return (
     <section className="space-y-4">
       <SectionTitle
-        title="变更审计处理台账"
-        detail="把最近变化、线索、内容缺项、页面草稿、媒体资产和发布后复验合并成运营审计队列；管理员可跳转到操作日志。"
+        title="变更审计"
+        detail="查看最近变化、线索、内容缺项、页面草稿、媒体资产和前台复查。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
-          <AuditSummary label="待关注项" value={activeRows.length} detail="含复盘、优先和阻塞项" warn={blockingRows.length > 0} />
+          <AuditSummary label="待关注项" value={activeRows.length} detail="优先项和阻塞项" warn={blockingRows.length > 0} />
           <AuditSummary label="阻塞/优先" value={blockingRows.length} detail="线索、缺项、页面草稿" warn={blockingRows.length > 0} />
           <AuditSummary label="变化样本" value={activity.length} detail="最近 32 条聚合" />
           <AuditSummary label="来源模块" value={groups.length} detail="产品、案例、新闻、线索、媒体、页面" />
@@ -289,7 +289,7 @@ function ActivityAuditLedger({
                   <tr key={row.key} className="align-top transition hover:bg-[#FBFDFD]">
                     <td className="px-5 py-4">
                       <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${activityAuditBadgeClass(row.tone)}`}>
-                        {row.priority}
+                        {activityPriorityDisplay(row.priority)}
                       </span>
                       <p className="mt-2 text-xs font-semibold text-[#61767D]">{row.stage}</p>
                     </td>
@@ -362,6 +362,16 @@ function activityAuditBadgeClass(tone: ActivityAuditTone): string {
   if (tone === 'warning') return 'border-[#E36F2C]/25 bg-[#FFF6EF] text-[#C75F18]'
   if (tone === 'review') return 'border-[#1889B6]/20 bg-[#EAF6F8] text-[#1889B6]'
   return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+}
+
+function activityPriorityDisplay(priority: string): string {
+  if (priority === 'P0') return '高优先'
+  if (priority === 'P1') return '优先'
+  if (priority === 'P2') return '复核'
+  if (priority === 'P3') return '观察'
+  if (priority === 'OK') return '正常'
+  if (priority === 'HOLD') return '受限'
+  return priority
 }
 
 function buildActivitySourceGroups(items: ActivityItem[]): ActivitySourceGroup[] {

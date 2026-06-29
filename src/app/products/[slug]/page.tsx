@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import type { CatalogProduct } from '@/lib/products';
+import { catalogProducts, type CatalogProduct } from '@/lib/products';
 import {
   getPublicCatalogProductBySlug,
   listProductAttributeLabelsForProduct,
@@ -19,7 +19,7 @@ import {
   type UploadVariantMap,
 } from '@/lib/upload-image-variants';
 import { buildPageMetadata } from '@/lib/seo';
-import { listPublishedPageModules } from '@/lib/page-modules-db';
+import { listDefaultPageModules, listPublishedPageModules } from '@/lib/page-modules-db';
 import { getCatalogProductPublicHref } from '@/lib/product-public-routes';
 import { sanitizePublicCatalogProduct } from '@/lib/product-public-content';
 
@@ -47,6 +47,11 @@ function applyCatalogProductImageVariants(product: CatalogProduct, variantsByUrl
   };
 }
 
+function getStaticCatalogProductBySlug(slug: string) {
+  const key = slug.trim();
+  return catalogProducts.find((product) => product.id === key || product.detailSlug === key) ?? null;
+}
+
 export async function generateStaticParams() {
   const catalogRows = await listPublishedCatalogProductsUncached().catch((err) => {
     console.error('[products/static-params] catalog db unavailable', err);
@@ -66,7 +71,7 @@ export async function generateMetadata({
   const { slug } = await params;
 
   // Catalog product path.
-  const catalogProduct = await getPublicCatalogProductBySlug(slug).catch(() => undefined);
+  const catalogProduct = await getPublicCatalogProductBySlug(slug).catch(() => null) ?? getStaticCatalogProductBySlug(slug);
   if (catalogProduct) {
     const title = catalogProduct.seo_title_en
       || catalogProduct.seo_title_zh
@@ -98,8 +103,8 @@ export default async function ProductDetailPage({
   // ── 1. Catalog product path. ─────
   const catalogProduct = await getPublicCatalogProductBySlug(slug).catch((err) => {
       console.error('[products/detail] catalog db unavailable', err);
-      return undefined;
-    });
+      return null;
+    }) ?? getStaticCatalogProductBySlug(slug);
   if (catalogProduct) {
     const [relatedProducts, attributeLabels, pageModules] = await Promise.all([
       listPublicRelatedCatalogProducts(catalogProduct.related_product_ids, catalogProduct.id).catch((err) => {
@@ -112,7 +117,7 @@ export default async function ProductDetailPage({
       }),
       listPublishedPageModules('products').catch((err) => {
         console.error('[products/detail] load product page modules failed', err);
-        return [];
+        return listDefaultPageModules('products');
       }),
     ]);
     const imageVariants = await getUploadVariantsByUrls([

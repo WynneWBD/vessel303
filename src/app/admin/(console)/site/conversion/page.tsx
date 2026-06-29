@@ -49,8 +49,8 @@ type ConversionLeadSourceType = Exclude<LeadSourceType, 'all'>
 const STATUS_META: Record<ConversionPathStatus, { label: string; className: string }> = {
   lead: { label: '进入线索', className: 'border-emerald-200 bg-emerald-50 text-emerald-700' },
   external: { label: '外部联系', className: 'border-sky-200 bg-sky-50 text-sky-700' },
-  partial: { label: '部分追踪', className: 'border-orange-200 bg-orange-50 text-orange-700' },
-  review: { label: '待复核', className: 'border-slate-200 bg-slate-50 text-slate-600' },
+  partial: { label: '追踪待补', className: 'border-orange-200 bg-orange-50 text-orange-700' },
+  review: { label: '需确认', className: 'border-slate-200 bg-slate-50 text-slate-600' },
 }
 
 type ConversionPriorityTone = 'critical' | 'warning' | 'ready' | 'muted'
@@ -133,8 +133,8 @@ function getConversionPriority(
 ): ConversionPriority {
   if (item.status === 'review') {
     return {
-      label: 'P0 待复核',
-      detail: '路径状态仍未确认，需要先核对前台入口和后台维护边界。',
+      label: '优先确认',
+      detail: '路径状态未确认，先核对前台入口和后台维护位置。',
       score: 90,
       tone: 'critical',
       Icon: AlertTriangle,
@@ -143,8 +143,8 @@ function getConversionPriority(
 
   if (item.status === 'partial') {
     return {
-      label: metric.views > 0 ? 'P1 补追踪' : 'P2 补规则',
-      detail: '当前只记录来源参数或外部承接，建议优先核对是否需要表单或更完整事件。',
+      label: metric.views > 0 ? '补追踪' : '补规则',
+      detail: '当前只记录来源参数或外部联系，建议核对是否需要表单或事件。',
       score: metric.views > 0 ? 72 : 48,
       tone: 'warning',
       Icon: MousePointerClick,
@@ -153,8 +153,8 @@ function getConversionPriority(
 
   if (item.status === 'external') {
     return {
-      label: 'P1 外部承接',
-      detail: '入口不完全进入新站线索链路，需要确认是否为故意保留。',
+      label: '外部联系',
+      detail: '入口没有完全进入新站线索列表，需要确认是否保留。',
       score: metric.views > 0 ? 68 : 42,
       tone: 'warning',
       Icon: Route,
@@ -163,7 +163,7 @@ function getConversionPriority(
 
   if (metric.views > 0 && metric.ctaClicks === 0 && metric.leads === 0) {
     return {
-      label: 'P1 有访问无动作',
+      label: '有访问无动作',
       detail: '30 天有访问但没有捕捉到 CTA 或线索，建议检查按钮位置、移动端和事件埋点。',
       score: 64,
       tone: 'warning',
@@ -173,8 +173,8 @@ function getConversionPriority(
 
   if (metric.ctaClicks > 0 && metric.leads === 0) {
     return {
-      label: 'P1 有动作无线索',
-      detail: '30 天有 CTA / 表单动作但没有对应线索，建议核对 source 和表单提交链路。',
+      label: '有动作无线索',
+      detail: '30 天有 CTA / 表单动作但没有对应线索，建议核对来源和表单提交。',
       score: 62,
       tone: 'warning',
       Icon: AlertTriangle,
@@ -192,8 +192,8 @@ function getConversionPriority(
   }
 
   return {
-    label: '链路可用',
-    detail: '访问、动作或线索链路已有样本，按常规频率复核。',
+    label: '路径可用',
+    detail: '访问、动作或线索已有样本，按常规频率查看。',
     score: 12,
     tone: 'ready',
     Icon: CheckCircle2,
@@ -278,33 +278,33 @@ function buildConversionHandoffItems({
   return [
     {
       title: '优先处理转化缺口',
-      owner: '01_public_site_conversion / 07_growth_analytics_seo',
+      owner: '网站运营',
       status: attentionCount > 0 ? `${attentionCount} 条待处理` : '暂无高优先级缺口',
       detail: attentionCount > 0
-        ? '先看待复核、部分追踪、外部承接，以及有访问但没有动作的入口。'
+        ? '先看需确认、待完善、外部联系，以及有访问但没有动作的入口。'
         : '当前入口按 30 天数据没有高优先级缺口，继续观察访问与线索变化。',
       href: '#conversion-ledger',
-      action: '查看路径总表',
+      action: '查看路径清单',
       Icon: ListChecks,
       tone: attentionCount > 0 ? 'orange' : 'green',
     },
     {
       title: '线索来源处理',
-      owner: '03_admin_operations_center / 11_operator_customer_experience',
+      owner: '线索运营',
       status: activeLeadCount > 0 ? `${activeLeadCount} 条进行中` : `${totalLeads} 条真实线索`,
-      detail: '把来源类型和线索状态放在同一张表，运营可以直接进入新线索、跟进中和报价中的来源队列。',
+      detail: '按产品、案例、新闻查看线索状态，直接进入新线索、跟进中和报价中的列表。',
       href: '/admin/customers/leads',
       action: '进入线索列表',
       Icon: TrendingUp,
       tone: activeLeadCount > 0 ? 'orange' : 'blue',
     },
     {
-      title: '事件口径复核',
-      owner: '07_growth_analytics_seo / 05_backend_api_data',
+      title: '事件追踪',
+      owner: '数据运营',
       status: actionTotal > 0 ? `${actionTotal} 次动作` : `${totalViews} 次访问`,
       detail: noActionCount > 0
-        ? `${noActionCount} 条路径有访问但无动作，优先核对 CTA 位置、source 规则和事件记录。`
-        : '事件、表单和线索口径已有样本，可回到访问统计看时间趋势。',
+        ? `${noActionCount} 条路径有访问但无动作，优先核对按钮位置和事件记录。`
+        : '事件、表单和线索已有样本，可回到访问统计看时间趋势。',
       href: '/admin/status/traffic?range=30',
       action: '查看访问统计',
       Icon: BarChart3,
@@ -312,9 +312,9 @@ function buildConversionHandoffItems({
     },
     {
       title: '内容入口回填',
-      owner: '02_content_cms_workflow / 03_admin_operations_center',
-      status: nonFullCaptureCount > 0 ? `${nonFullCaptureCount} 条非完整链路` : '全部进入线索链路',
-      detail: '部分追踪或外部承接不是直接错误，但需要确认是否继续保留，避免旧站或外部入口吞掉新站线索。',
+      owner: '内容运营',
+      status: nonFullCaptureCount > 0 ? `${nonFullCaptureCount} 条待完善` : '全部进入线索列表',
+      detail: '待完善或外部联系不是错误，但需要确认是否继续保留。',
       href: '/admin/content',
       action: '查看内容入口',
       Icon: FileText,
@@ -330,9 +330,9 @@ function getSideNav(): AdminSideNavGroup[] {
       items: [
         { key: 'overview', label: '网站概览', href: '/admin/site', Icon: LayoutTemplate },
         { key: 'conversion', label: '转化路径', href: '/admin/site/conversion', Icon: Link2 },
-        { key: 'product-source-conversion-followup', label: '产品来源复盘', href: '/admin/site/conversion#product-source-conversion-followup-handoff', Icon: CheckCircle2 },
+        { key: 'product-source-conversion-followup', label: '产品线索', href: '/admin/site/conversion#product-source-conversion-followup-handoff', Icon: CheckCircle2 },
         { key: 'product-lifecycle-conversion', label: '产品生命周期转化', href: '/admin/site/conversion#product-lifecycle-conversion-bridge', Icon: Route },
-        { key: 'case-followup-conversion', label: '案例跟进复盘', href: '/admin/site/conversion#case-followup-conversion-review-bridge', Icon: TrendingUp },
+        { key: 'case-followup-conversion', label: '案例跟进', href: '/admin/site/conversion#case-followup-conversion-review-bridge', Icon: TrendingUp },
         { key: 'pages', label: '页面清单', href: '/admin/site/pages', Icon: ListChecks },
         { key: 'navigation', label: '导航管理', href: '/admin/site/navigation', Icon: Navigation },
         { key: 'seo', label: 'SEO 检查', href: '/admin/site/seo', Icon: SearchCheck },
@@ -340,7 +340,7 @@ function getSideNav(): AdminSideNavGroup[] {
       ],
     },
     {
-      title: '处理入口',
+      title: '常用入口',
       items: [
         { key: 'leads', label: '线索 2.0', href: '/admin/customers/leads', Icon: CheckCircle2 },
         { key: 'content', label: '内容管理', href: '/admin/content', Icon: FileText },
@@ -406,15 +406,15 @@ export default async function AdminSiteConversionPage() {
       role={role as AdminRole}
       email={session.user.email}
       title="入口与线索路径盘点"
-      description="集中查看前台入口、后台维护位置、CTA 去向、移动端与图片比例复核状态和线索 source 规则。"
+      description="查看访问、CTA、表单和线索。"
       sideNavGroups={getSideNav()}
       activeItem="conversion"
     >
       <div className="space-y-6">
         <AdminPageHero
           kicker="Conversion Operations"
-          title="转化路径运营台"
-          description="按访问、CTA、表单、线索和追踪完整度判断先处理哪条前台入口。"
+          title="转化路径"
+          description="按 30 天数据查看入口表现和待处理项。"
         />
         <ConversionHandoffStrip
           orderedPaths={orderedPaths}
@@ -478,9 +478,9 @@ export default async function AdminSiteConversionPage() {
           totalLeads={totalLeads}
         />
         <section className="grid grid-cols-1 gap-4 md:grid-cols-4">
-          <StatCard label="已进入线索" value={capturedCount} detail="表单会写入 leads 并可在 2.0 处理" />
-          <StatCard label="部分追踪" value={partialCount} detail="主要是 CTA 来源参数或外部承接" />
-          <StatCard label="外部承接" value={externalCount} detail="/contact 主路径写入 leads；仅旧站备份或外部入口计入这里" />
+          <StatCard label="已进入线索" value={capturedCount} detail="表单提交后可在线索列表处理" />
+          <StatCard label="追踪待补" value={partialCount} detail="主要是 CTA 来源参数或外部联系" />
+          <StatCard label="外部联系" value={externalCount} detail="/contact 主路径写入线索；旧站或外部入口计入这里" />
           <StatCard label="30 天真实转化" value={totalLeads} detail={`访问 ${totalViews}，转化率 ${formatAnalyticsPercent(totalViews > 0 ? totalLeads / totalViews : 0)}；已排除测试线索 ${excludedTestLeads}`} />
         </section>
 
@@ -520,9 +520,7 @@ export default async function AdminSiteConversionPage() {
         <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
           <div className="border-b border-[#E6EEEE] px-5 py-4">
             <h2 className="text-lg font-bold text-[#1E2C31]">关键转化入口结果</h2>
-            <p className="mt-1 text-sm text-[#61767D]">
-              按处理优先级排序；这里不是自由导航编辑器，只做路径核对、事件样本、后台入口和缺口提示。
-            </p>
+            <p className="mt-1 text-sm text-[#61767D]">按优先级排序。</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1180px] text-sm">
@@ -575,7 +573,7 @@ export default async function AdminSiteConversionPage() {
                         <div className="mt-1">动作 {metric.ctaClicks} / 表单 {metric.formSubmits}</div>
                         <div className="mt-1">线索 {metric.leads} / {formatAnalyticsPercent(metric.conversionRate)}</div>
                       </td>
-                      <td className="max-w-[260px] px-4 py-4 font-mono text-xs text-[#1E2C31]">{item.sourceRule}</td>
+                      <td className="max-w-[260px] px-4 py-4 text-xs text-[#1E2C31]">{conversionPathSourceLabel(item)}</td>
                       <td className="px-4 py-4">
                         <Link href={item.adminHref} className="inline-flex items-center gap-1 text-[#E36F2C] hover:underline">
                           管理入口 <ArrowRight size={13} />
@@ -642,11 +640,11 @@ function ConversionHandoffStrip({
         <div>
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
             <Route size={15} />
-            Conversion Review
+            Conversion
           </div>
-          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">转化运营交接条</h2>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">转化处理清单</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            先把路径缺口、线索处理、事件口径和内容入口分给对应角色，再进入下方详细表格复核。
+            查看路径缺口、线索处理、事件追踪和内容入口。
           </p>
         </div>
         <span className={`inline-flex w-fit rounded-md px-3 py-2 text-xs font-bold ${alertCount > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
@@ -738,9 +736,9 @@ function SeoToLeadConversionReviewPanel({
   const rows: SeoToLeadReviewRow[] = [
     rowFor({
       key: 'product',
-      title: '产品 SEO 到产品线索',
+      title: '产品搜索与线索',
       routeLabel: 'Products / Product Details / Contact',
-      detail: '先补产品详情 SEO 标题、描述和公开入口，再回看产品线索队列是否有真实来源承接。',
+      detail: '先完善产品详情标题、描述和公开入口，再查看产品线索。',
       seoHref: '/admin/site/seo#seo-operations-command-bridge',
       publicHref: '/products',
       contentHref: '/admin/content/products/list?view=incomplete&issue=seo',
@@ -751,9 +749,9 @@ function SeoToLeadConversionReviewPanel({
     }),
     rowFor({
       key: 'case',
-      title: '案例 SEO 到案例询盘',
+      title: '案例搜索与询盘',
       routeLabel: 'Cases / Case Details / Inquiry',
-      detail: '先补案例描述、封面和展示字段，再回看案例路径样本与案例来源线索。',
+      detail: '先完善案例描述、封面和展示内容，再回看案例访问与线索。',
       seoHref: '/admin/site/seo#seo-operations-command-bridge',
       publicHref: '/cases',
       contentHref: '/admin/content/projects/list?view=incomplete',
@@ -764,9 +762,9 @@ function SeoToLeadConversionReviewPanel({
     }),
     rowFor({
       key: 'news',
-      title: '新闻 SEO 到新闻来源',
+      title: '新闻搜索与线索',
       routeLabel: 'News / Article / Contact',
-      detail: '先补新闻 SEO 标题、描述、摘要和正文，再回看新闻阅读入口与新闻来源线索队列。',
+      detail: '先完善新闻标题、描述、摘要和正文，再查看新闻线索。',
       seoHref: '/admin/site/seo#seo-operations-command-bridge',
       publicHref: '/news#news-discovery-console',
       contentHref: '/admin/content/news#news-public-discovery-bridge',
@@ -784,24 +782,24 @@ function SeoToLeadConversionReviewPanel({
     <section id="seo-to-lead-conversion-review" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">SEO To Lead Review</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">SEO 到线索转化复盘</h2>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#E36F2C]">SEO & Leads</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">SEO 到线索</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            汇总 SEO 操作台、发布前复核、来源线索质量和产品 / 案例 / 新闻转化路径，帮助运营判断先补 SEO、内容还是线索跟进。
+            汇总 SEO、发布检查、线索质量和产品 / 案例 / 新闻转化路径。
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <SeoToLeadReviewAction href="/admin/site/seo#seo-operations-command-bridge" label="SEO 操作台" />
-          <SeoToLeadReviewAction href="/admin/status/site#site-release-preflight-bridge" label="发布前复核" />
-          <SeoToLeadReviewAction href="/admin/status/leads#source-seo-lead-quality" label="来源质量" />
+          <SeoToLeadReviewAction href="/admin/site/seo#seo-operations-command-bridge" label="SEO 检查" />
+          <SeoToLeadReviewAction href="/admin/status/site#site-release-preflight-bridge" label="发布检查" />
+          <SeoToLeadReviewAction href="/admin/status/leads#source-seo-lead-quality" label="线索质量" />
         </div>
       </div>
 
       <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
-        <SourceContractPortfolioStat label="SEO 接力路径" value={rows.length} detail="产品 / 案例 / 新闻" />
+        <SourceContractPortfolioStat label="SEO 转化路径" value={rows.length} detail="产品 / 案例 / 新闻" />
         <SourceContractPortfolioStat label="路径动作" value={reviewActions} detail="CTA + 表单动作" />
-        <SourceContractPortfolioStat label="来源线索" value={reviewLeads} detail={`活跃 ${activeLeads.toLocaleString('zh-CN')}`} />
-        <SourceContractPortfolioStat label="复盘入口" value={3} detail="SEO / 发布 / 来源质量" />
+        <SourceContractPortfolioStat label="线索数量" value={reviewLeads} detail={`活跃 ${activeLeads.toLocaleString('zh-CN')}`} />
+        <SourceContractPortfolioStat label="查看入口" value={3} detail="SEO / 发布 / 线索质量" />
       </div>
 
       <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] xl:grid-cols-3 xl:divide-x xl:divide-y-0">
@@ -819,7 +817,7 @@ function SeoToLeadReviewCard({ row }: { row: SeoToLeadReviewRow }) {
   const statusLabel = row.leadTotal > 0
     ? '已有来源线索'
     : actionCount > 0
-      ? '有动作待承接'
+      ? '有动作待入线索'
       : row.metric.views > 0
         ? '有访问待推动'
         : '待积累样本'
@@ -854,15 +852,15 @@ function SeoToLeadReviewCard({ row }: { row: SeoToLeadReviewRow }) {
         <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${toneClass}`}>
           {statusLabel}
         </span>
-        <span className="text-[11px] text-[#8A9EA4]">来源：{getLeadSourceTypeLabel(row.key)}</span>
+        <span className="text-[11px] text-[#8A9EA4]">线索来源：{getLeadSourceTypeLabel(row.key)}</span>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2">
-        <SeoToLeadReviewAction href={row.seoHref} label="补 SEO" compact />
+        <SeoToLeadReviewAction href={row.seoHref} label="完善 SEO" compact />
         <SeoToLeadReviewAction href={row.publicHref} label="看前台" compact external />
         <SeoToLeadReviewAction href={row.contentHref} label="内容处理" compact />
-        <SeoToLeadReviewAction href={row.qualityHref} label="来源质量" compact />
-        <SeoToLeadReviewAction href={row.leadHref} label="线索队列" compact />
+        <SeoToLeadReviewAction href={row.qualityHref} label="线索质量" compact />
+        <SeoToLeadReviewAction href={row.leadHref} label="线索列表" compact />
       </div>
     </div>
   )
@@ -933,14 +931,14 @@ function ConversionControlStrip({
             </Link>
           </span>
           <span className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 text-xs font-semibold text-[#61767D] md:text-sm">
-            数据源：site_events + leads
+            数据源：访问行为 + 线索记录
           </span>
           <span className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-[#FBFDFD] px-3 text-xs font-semibold text-[#61767D] md:text-sm">
-            Contact 承接来源已按原入口归类
+            Contact 来源已按原入口归类
           </span>
         </div>
         <div className="flex items-center border-t border-[#E6EEEE] px-4 py-3 text-xs text-[#61767D] xl:border-t-0 xl:border-l">
-          用于分析路径和线索状态，处理动作回到对应工作台。
+          用于分析路径和线索状态，具体处理回到对应页面。
         </div>
       </div>
       <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-5 md:divide-x md:divide-y-0">
@@ -1015,7 +1013,7 @@ function SourceContractPortfolioPanel({
       title: '产品来源',
       routeLabel: 'Products / Learn More / Appointment',
       sourceRule: '产品来源',
-      stageRule: 'catalog_card_cta / cta_click / inquiry_form',
+      stageRule: '产品列表、产品详情和咨询表单',
       metric: productPathMetric,
       contentHref: '/admin/content/products/list#product-source-contract',
       leadHref: '/admin/customers/leads?source_type=product',
@@ -1027,7 +1025,7 @@ function SourceContractPortfolioPanel({
       title: '案例来源',
       routeLabel: 'Projects / Cases / #case-inquiry',
       sourceRule: '案例来源',
-      stageRule: 'case:cta_click / case:inquiry_form',
+      stageRule: '案例详情按钮和案例咨询表单',
       metric: casePathMetric,
       contentHref: '/admin/content/projects/list#case-source-contract',
       leadHref: '/admin/customers/leads?source_type=case',
@@ -1039,7 +1037,7 @@ function SourceContractPortfolioPanel({
       title: '新闻来源',
       routeLabel: 'Blog / View Details / Contact',
       sourceRule: '新闻来源',
-      stageRule: 'news:*:contact_cta',
+      stageRule: '新闻详情页和联系按钮',
       metric: newsPathMetric,
       contentHref: '/admin/content/news#news-operations-hub',
       leadHref: '/admin/customers/leads?source_type=news',
@@ -1056,10 +1054,10 @@ function SourceContractPortfolioPanel({
     <section id="source-contract-portfolio" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Source Portfolio</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Lead Sources</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">来源总览</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把公开站 Products / Projects / Blog 三条主要获客路径合并成一张运营总账：看入口访问、动作、线索、阶段数量和内容维护入口。
+            汇总产品、案例、新闻三条主要获客路径：查看访问、动作、线索和内容入口。
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
@@ -1081,10 +1079,10 @@ function SourceContractPortfolioPanel({
       </div>
 
       <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
-        <SourceContractPortfolioStat label="来源路径访问" value={totalContractViews} detail="产品 / 案例 / 新闻 30 天样本" />
-        <SourceContractPortfolioStat label="来源路径动作" value={totalContractActions} detail="CTA + 表单动作" />
-        <SourceContractPortfolioStat label="来源线索" value={totalContractLeads} detail={`活跃 ${activeContractLeads.toLocaleString('zh-CN')}`} />
-        <SourceContractPortfolioStat label="来源阶段" value={rows.reduce((sum, row) => sum + row.stageKinds, 0)} detail="已归类数量" />
+        <SourceContractPortfolioStat label="路径访问" value={totalContractViews} detail="产品 / 案例 / 新闻 30 天样本" />
+        <SourceContractPortfolioStat label="路径动作" value={totalContractActions} detail="CTA + 表单动作" />
+        <SourceContractPortfolioStat label="线索数量" value={totalContractLeads} detail={`活跃 ${activeContractLeads.toLocaleString('zh-CN')}`} />
+        <SourceContractPortfolioStat label="入口类型" value={rows.reduce((sum, row) => sum + row.stageKinds, 0)} detail="已归类数量" />
       </div>
 
       <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] xl:grid-cols-3 xl:divide-x xl:divide-y-0">
@@ -1145,18 +1143,18 @@ function SourceContractPortfolioCard({ row }: { row: SourceContractPortfolioRow 
       </div>
 
       <div className="mt-4 space-y-2">
-        <p className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2 font-mono text-[11px] leading-5 text-[#1E2C31]">
+        <p className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2 text-[11px] leading-5 text-[#1E2C31]">
           {row.sourceRule}
         </p>
-        <p className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2 font-mono text-[11px] leading-5 text-[#61767D]">
+        <p className="rounded-md border border-[#E6EEEE] bg-[#FBFDFD] px-3 py-2 text-[11px] leading-5 text-[#61767D]">
           {row.stageRule}
         </p>
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
-        <SourceContractAction href={row.contentHref} label="内容入口" />
-        <SourceContractAction href={row.leadHref} label="线索队列" />
-        <SourceContractAction href={row.pathHref} label="路径复盘" />
+        <SourceContractAction href={row.contentHref} label="查看内容" />
+        <SourceContractAction href={row.leadHref} label="线索列表" />
+        <SourceContractAction href={row.pathHref} label="路径查看" />
       </div>
     </div>
   )
@@ -1199,26 +1197,26 @@ function CaseInquiryConversionPanel({
     },
     {
       label: '线索查看',
-      detail: '看案例路径与 leads 漏斗质量桥接',
+      detail: '查看案例路径与线索质量',
       href: '/admin/status/leads#case-lead-path-bridge',
       tone: casePathMetric.leads > 0 ? 'green' as const : casePathMetric.views > 0 ? 'orange' as const : 'gray' as const,
     },
     {
       label: '案例线索',
-      detail: '进入案例来源线索队列',
+      detail: '进入案例线索列表',
       href: '/admin/customers/leads?source_type=case',
       tone: casePathMetric.leads > 0 ? 'green' as const : 'blue' as const,
     },
     {
       label: '案例表单线索',
-      detail: '只看 case:inquiry_form 阶段',
+      detail: '只看案例咨询表单线索',
       href: '/admin/customers/leads?source_type=case&source_stage=case%3Ainquiry_form',
       tone: casePathMetric.formSubmits > 0 ? 'green' as const : 'gray' as const,
     },
   ]
   const cards = [
     {
-      label: '询盘可承接',
+      label: '询盘可用',
       value: summary.ready,
       detail: '已发布且素材、叙事、项目事实和标签完整',
       href: '/admin/content/projects/list?status=published',
@@ -1242,7 +1240,7 @@ function CaseInquiryConversionPanel({
       tone: casePathMetric.leads > 0 ? 'green' as const : casePathMetric.views > 0 ? 'orange' as const : 'gray' as const,
     },
     {
-      label: '草稿待承接',
+      label: '草稿待发布',
       value: summary.draft,
       detail: '草稿阶段不会进入前台案例咨询锚点',
       href: '/admin/content/projects/list?status=draft',
@@ -1264,7 +1262,7 @@ function CaseInquiryConversionPanel({
       <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Case Inquiry Conversion</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例询盘承接</h2>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">案例询盘</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
             汇总项目案例内容质量和前台询盘入口，帮助运营判断案例是否影响询盘转化。
           </p>
@@ -1281,7 +1279,7 @@ function CaseInquiryConversionPanel({
             href="/admin/status/leads#case-lead-path-bridge"
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
           >
-            线索承接
+            线索来源
             <ArrowRight size={13} />
           </Link>
           <Link
@@ -1347,31 +1345,31 @@ function CaseFollowupConversionReviewBridge({
   const weakContent = summary.weak > 0 && casePathMetric.views > 0
 
   const priority = caseActive > 0
-    ? { label: 'P0 跟进质量', tone: 'orange' as const, Icon: AlertTriangle }
+    ? { label: '优先处理跟进', tone: 'orange' as const, Icon: AlertTriangle }
     : inquiryActive > 0
-      ? { label: 'P0 表单阶段', tone: 'orange' as const, Icon: FileText }
+      ? { label: '优先处理表单', tone: 'orange' as const, Icon: FileText }
       : actionNoLead
-        ? { label: 'P1 动作无线索', tone: 'orange' as const, Icon: MousePointerClick }
+        ? { label: '有动作无线索', tone: 'orange' as const, Icon: MousePointerClick }
         : trafficNoLead
-          ? { label: 'P1 访问无线索', tone: 'orange' as const, Icon: BarChart3 }
+          ? { label: '有访问无线索', tone: 'orange' as const, Icon: BarChart3 }
           : weakContent
-            ? { label: 'P1 内容补位', tone: 'orange' as const, Icon: Route }
+            ? { label: '内容补齐', tone: 'orange' as const, Icon: Route }
             : caseTotal > 0
-              ? { label: 'P2 转化复盘', tone: 'blue' as const, Icon: TrendingUp }
-              : { label: 'P3 等待样本', tone: 'gray' as const, Icon: ShieldCheck }
+              ? { label: '查看转化', tone: 'blue' as const, Icon: TrendingUp }
+              : { label: '等待样本', tone: 'gray' as const, Icon: ShieldCheck }
   const PriorityIcon = priority.Icon
   const decision = caseActive > 0
-    ? '案例来源仍有活跃线索，先处理跟进质量，再回本区复盘路径、成交和内容补位。'
+    ? '案例来源仍有活跃线索，先处理跟进质量，再回本区查看路径、成交和内容补位。'
     : inquiryActive > 0
-      ? 'case:inquiry_form 阶段仍有活跃线索，优先处理表单询盘，再复盘案例内容和路径来源。'
+      ? '案例咨询表单仍有活跃线索，优先处理表单询盘，再查看案例内容和路径来源。'
       : actionNoLead
         ? '案例路径已有动作但线索库暂无案例来源样本，回路径分析和案例线索核对来源归因和表单写入。'
         : trafficNoLead
-          ? '案例路径已有访问但暂无 case 来源线索，先检查公开案例 CTA、移动端入口和弱案例承接。'
+          ? '案例路径已有访问但暂无 case 来源线索，先检查公开案例 CTA、移动端入口和弱案例内容。'
           : weakContent
             ? '案例内容仍有转化弱项，优先回案例内容和弱案例队列补齐素材、叙事、项目事实和标签。'
             : caseTotal > 0
-              ? '案例来源已有线索样本，可把成交率、跟进状态和高访问案例放到同一轮复盘。'
+              ? '案例来源已有线索样本，可把成交率、跟进状态和高访问案例放到同一轮查看。'
               : '案例路径和线索样本仍少，先保持案例内容、路径和线索入口可用，等待更多真实访问。'
   const cards = [
     {
@@ -1401,7 +1399,7 @@ function CaseFollowupConversionReviewBridge({
     {
       label: '案例内容',
       value: summary.weak,
-      detail: `已发布 ${summary.published} / 可承接 ${summary.ready} / 可承接率 ${formatAnalyticsPercent(readyRate)}`,
+      detail: `已发布 ${summary.published} / 询盘可用 ${summary.ready} / 可用率 ${formatAnalyticsPercent(readyRate)}`,
       href: '/admin/content/projects#case-content-inquiry-command-center',
       Icon: Route,
       tone: summary.weak > 0 ? 'orange' as const : summary.ready > 0 ? 'green' as const : 'gray' as const,
@@ -1440,7 +1438,7 @@ function CaseFollowupConversionReviewBridge({
     },
     {
       label: '案例线索',
-      detail: '进入案例来源线索队列',
+      detail: '进入案例线索列表',
       href: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
       tone: caseTotal > 0 ? 'green' as const : 'gray' as const,
     },
@@ -1472,10 +1470,8 @@ function CaseFollowupConversionReviewBridge({
             <TrendingUp size={15} />
             Case Followup To Conversion Review
           </div>
-          <h2 className="mt-2 text-lg font-bold text-[#1E2C31]">案例跟进质量到转化复盘桥</h2>
-          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            汇总跟进分诊、路径分析、案例线索和案例内容，帮助运营判断案例转化问题来自跟进、路径还是内容。
-          </p>
+          <h2 className="mt-2 text-lg font-bold text-[#1E2C31]">案例跟进与转化</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">查看跟进、路径、线索和案例内容。</p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
           <span className={`inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-xs font-bold ${caseInquiryToneClass(priority.tone)}`}>
@@ -1504,10 +1500,8 @@ function CaseFollowupConversionReviewBridge({
             </p>
           </div>
           <div className="rounded-md border border-[#D8E7E8] bg-white px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#8A9EA4]">处理范围</p>
-            <p className="mt-2 text-xs leading-5 text-[#61767D]">
-              本区用于判断和下钻；内容保存、线索状态、发布动作和价格规则分别回到对应工作台处理。
-            </p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#8A9EA4]">相关入口</p>
+            <p className="mt-2 text-xs leading-5 text-[#61767D]">内容、线索和发布在对应页面处理。</p>
           </div>
         </div>
       </div>
@@ -1529,7 +1523,7 @@ function CaseFollowupConversionReviewBridge({
               <span className="flex items-start justify-between gap-3">
                 <span className="min-w-0">
                   <span className="block text-sm font-bold text-[#1E2C31]">{row.label}</span>
-                  <span className="mt-1 block font-mono text-[11px] text-[#8A9EA4]">{row.key}</span>
+                  <span className="mt-1 block text-[11px] text-[#8A9EA4]">入口：{row.label}</span>
                 </span>
                 <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${caseInquiryToneClass(tone)}`}>
                   <Icon size={18} />
@@ -1562,7 +1556,7 @@ function CaseFollowupConversionReviewBridge({
             </span>
             <span className="mt-2 block min-h-10 text-xs leading-5 text-[#61767D]">{item.detail}</span>
             <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
-              进入复盘
+              查看
               <ArrowRight size={12} />
             </span>
           </Link>
@@ -1598,14 +1592,14 @@ function ProductSourceConversionFollowupHandoff({
   const visitNoAction = productPathMetric.views > 0 && pathActions === 0
   const followupPriority =
     attributionGap
-      ? 'P0 动作无线索'
+      ? '有动作无线索'
       : productActive > 0
-        ? 'P1 活跃跟进'
+        ? '活跃跟进'
         : visitNoAction
-          ? 'P1 访问无动作'
+          ? '访问无动作'
           : productTotal > 0 || productPathMetric.leads > 0
-            ? 'P2 样本复盘'
-            : 'P3 等待样本'
+            ? '查看样本'
+            : '等待样本'
   const followupTone: 'green' | 'orange' | 'gray' | 'blue' =
     attributionGap || productActive > 0 || visitNoAction
       ? 'orange'
@@ -1616,18 +1610,18 @@ function ProductSourceConversionFollowupHandoff({
           : 'gray'
   const decision =
     attributionGap
-      ? '产品路径已有 CTA 或表单动作，但线索库还没有产品来源样本。优先回产品来源队列和线索质量核对来源、阶段与表单成功事件。'
+      ? '产品路径已有按钮或表单动作，但还没有产品线索样本。优先回产品线索列表和线索质量页核对来源与表单成功事件。'
       : productActive > 0
-        ? '产品来源已有活跃线索。先在来源队列确认活跃/超时，再回到本页判断这些线索对应的产品路径、SEO 入口和内容是否需要补强。'
+        ? '产品来源已有活跃线索。先在线索列表确认活跃/超时，再回到本页判断这些线索对应的产品路径、SEO 入口和内容是否需要补强。'
         : visitNoAction
-          ? '产品路径已有访问但动作不足。先回路径复盘看 CTA、表单和产品入口，再回发布队列和产品内容检查证明素材和公开目录。'
+          ? '产品路径已有访问但动作不足。先回路径查看按钮、表单和产品入口，再回发布列表和产品内容检查证明素材和公开目录。'
           : productTotal > 0 || productPathMetric.leads > 0
             ? '产品来源已有样本，可继续用转化页追踪路径动作、表单阶段和后续跟进质量。'
-            : '产品来源暂时缺少足够样本，保持来源队列、线索质量、路径和发布入口可下钻，等待真实访问与询盘。'
+            : '产品来源暂时缺少足够样本，保持线索列表、线索质量、路径和发布入口可下钻，等待真实访问与询盘。'
 
   const cards = [
     {
-      label: '产品来源队列',
+      label: '产品线索列表',
       value: productTotal,
       detail: `活跃 ${productActive.toLocaleString('zh-CN')} / 新 ${productNew.toLocaleString('zh-CN')} / 报价 ${productQuoted.toLocaleString('zh-CN')}`,
       href: '/admin/customers/leads?source_type=product#product-source-lead-queue-handoff',
@@ -1667,9 +1661,9 @@ function ProductSourceConversionFollowupHandoff({
       tone: productPathMetric.leads > 0 || productTotal > 0 ? 'green' as const : productPathMetric.views > 0 ? 'orange' as const : 'blue' as const,
     },
     {
-      label: '发布队列',
+      label: '发布列表',
       value: 'Publish',
-      detail: '产品来源转化弱时回到新建、补齐、发布、SEO 和公开目录入口，不直接改线索数据。',
+      detail: '产品转化弱时回到新建、补齐、发布、SEO 和公开目录入口，不直接改线索数据。',
       href: '/admin/content/products/list#product-create-publish-queue-handoff',
       Icon: ShieldCheck,
       tone: visitNoAction || attributionGap ? 'orange' as const : 'blue' as const,
@@ -1678,15 +1672,15 @@ function ProductSourceConversionFollowupHandoff({
 
   const followupLinks = [
     {
-      label: '来源队列',
+      label: '线索列表',
       href: '/admin/customers/leads?source_type=product#product-source-lead-queue-handoff',
-      detail: '先看 product 来源线索、活跃/超时、表单和 CTA 阶段。',
+      detail: '先看产品线索、活跃/超时、表单和按钮动作。',
       tone: productActive > 0 ? 'orange' as const : 'blue' as const,
     },
     {
       label: '线索质量',
       href: '/admin/status/leads#product-publish-lead-quality-handoff',
-      detail: '再核对产品发布路径到线索质量承接，确认归因和跟进断点。',
+      detail: '再核对产品发布路径到线索质量，确认归因和跟进断点。',
       tone: attributionGap ? 'orange' as const : 'blue' as const,
     },
     {
@@ -1696,9 +1690,9 @@ function ProductSourceConversionFollowupHandoff({
       tone: attributionGap || visitNoAction ? 'orange' as const : 'blue' as const,
     },
     {
-      label: '发布队列',
+      label: '发布列表',
       href: '/admin/content/products/list#product-create-publish-queue-handoff',
-      detail: '内容、证明、SEO 或发布承接弱时回产品发布队列处理。',
+      detail: '内容、证明、SEO 或发布较弱时回产品发布列表处理。',
       tone: 'blue' as const,
     },
   ]
@@ -1712,16 +1706,16 @@ function ProductSourceConversionFollowupHandoff({
       <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs font-bold uppercase text-[#C85F24]">Product Source Conversion Follow-up</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品来源线索到转化复盘承接</h2>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品来源与转化</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            汇总产品来源线索队列、线索质量、路径复盘、产品生命周期转化和发布队列，帮助运营判断下一步该回队列、看质量、看路径还是补产品发布内容。
+            汇总产品线索、线索质量、路径表现、产品生命周期和发布列表。
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <SeoToLeadReviewAction href="/admin/customers/leads?source_type=product#product-source-lead-queue-handoff" label="来源队列" />
+          <SeoToLeadReviewAction href="/admin/customers/leads?source_type=product#product-source-lead-queue-handoff" label="线索列表" />
           <SeoToLeadReviewAction href="/admin/status/leads#product-publish-lead-quality-handoff" label="线索质量" />
           <SeoToLeadReviewAction href="/admin/status/traffic#product-publish-path-review-handoff" label="路径分析" />
-          <SeoToLeadReviewAction href="/admin/content/products/list#product-create-publish-queue-handoff" label="发布队列" />
+          <SeoToLeadReviewAction href="/admin/content/products/list#product-create-publish-queue-handoff" label="发布列表" />
         </div>
       </div>
 
@@ -1742,7 +1736,7 @@ function ProductSourceConversionFollowupHandoff({
           <p className="mt-3 text-sm leading-6 text-[#61767D]">{decision}</p>
         </div>
         <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 lg:border-l lg:border-t-0">
-          <p className="text-sm font-bold text-[#1E2C31]">复盘顺序</p>
+          <p className="text-sm font-bold text-[#1E2C31]">建议动作</p>
           <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
             {followupLinks.map((item) => (
               <Link key={item.label} href={item.href} className="group rounded-md border border-[#D8E7E8] bg-white px-3 py-3 transition hover:border-[#1889B6] hover:bg-[#F7FAFA]">
@@ -1751,7 +1745,7 @@ function ProductSourceConversionFollowupHandoff({
                 </span>
                 <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
                 <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
-                  进入复盘
+                  查看
                   <ArrowRight size={12} />
                 </span>
               </Link>
@@ -1781,25 +1775,25 @@ function ProductConversionClosurePanel({
   const closureLinks = [
     {
       label: 'SEO 待补',
-      detail: '从产品 SEO 待补回看路径与线索承接',
+      detail: '从产品 SEO 待补回看路径与线索',
       href: '/admin/site/seo#seo-conversion-closure',
       tone: 'blue' as const,
     },
     {
       label: '产品线索',
-      detail: '看产品路径与 leads 漏斗质量桥接',
+      detail: '查看产品路径与线索质量',
       href: '/admin/status/leads#product-lead-path-bridge',
       tone: productPathMetric.leads > 0 ? 'green' as const : productPathMetric.views > 0 ? 'orange' as const : 'gray' as const,
     },
     {
       label: '产品线索',
-      detail: '进入产品来源线索队列',
+      detail: '进入产品线索列表',
       href: '/admin/customers/leads?source_type=product',
       tone: productActive > 0 ? 'orange' as const : productTotal > 0 ? 'blue' as const : 'gray' as const,
     },
     {
       label: '产品表单线索',
-      detail: '只看 product:inquiry_form 阶段',
+      detail: '只看产品咨询表单线索',
       href: '/admin/customers/leads?source_type=product&source_stage=product%3Ainquiry_form',
       tone: inquiryForm && inquiryForm.total > 0 ? 'green' as const : 'gray' as const,
     },
@@ -1822,7 +1816,7 @@ function ProductConversionClosurePanel({
       tone: productActive > 0 ? 'orange' as const : productTotal > 0 ? 'blue' as const : 'gray' as const,
     },
     {
-      label: '产品表单阶段',
+      label: '产品表单线索',
       value: inquiryForm?.total ?? 0,
       detail: `新 ${inquiryForm?.new ?? 0} / 跟进 ${inquiryForm?.contacting ?? 0} / 报价 ${inquiryForm?.quoted ?? 0}`,
       href: '/admin/customers/leads?source_type=product&source_stage=product%3Ainquiry_form',
@@ -1838,9 +1832,9 @@ function ProductConversionClosurePanel({
       tone: ctaClick && ctaClick.new + ctaClick.contacting + ctaClick.quoted > 0 ? 'orange' as const : ctaClick && ctaClick.total > 0 ? 'blue' as const : 'gray' as const,
     },
     {
-      label: '产品 SEO 回修',
+      label: '产品 SEO 待完善',
       value: 'SEO',
-      detail: `产品阶段 ${productStages.length} 类；从 SEO 待补回到路径与线索质量复盘。`,
+      detail: `产品入口 ${productStages.length} 类；从 SEO 待补回到路径与线索质量。`,
       href: '/admin/site/seo#seo-conversion-closure',
       Icon: SearchCheck,
       tone: 'blue' as const,
@@ -1851,11 +1845,9 @@ function ProductConversionClosurePanel({
     <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Product Conversion Closure</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品路径复盘</h2>
-          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            汇总产品路径数据、产品来源线索、产品阶段线索和 SEO 待补入口，帮助运营判断产品转化问题。
-          </p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Product Conversion</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品路径</h2>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">查看产品访问、表单、线索和 SEO 待补。</p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
           <Link
@@ -1869,7 +1861,7 @@ function ProductConversionClosurePanel({
             href="/admin/status/leads#product-lead-path-bridge"
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6] hover:bg-[#F0F7F8]"
           >
-            线索承接
+            线索来源
             <ArrowRight size={13} />
           </Link>
           <Link
@@ -1889,7 +1881,7 @@ function ProductConversionClosurePanel({
       <div className="grid grid-cols-1 gap-3 border-t border-[#E6EEEE] px-5 py-4 md:grid-cols-2 xl:grid-cols-4">
         {closureLinks.map((item) => (
           <Link
-            key={item.label}
+            key={`${item.label}-${item.href}`}
             href={item.href}
             className="group rounded-md border border-[#D8E7E8] bg-white px-3 py-3 transition hover:border-[#1889B6] hover:bg-[#F7FAFA]"
           >
@@ -1921,18 +1913,18 @@ function NewsConversionHandoffPanel({
   const closureLinks = [
     {
       label: '线索状态桥',
-      detail: '复盘新闻路径、来源动作和线索状态',
+      detail: '查看新闻路径、来源动作和线索状态',
       href: '/admin/status/leads#news-lead-path-bridge',
       tone: newsActive > 0 ? 'orange' as const : newsTotal > 0 ? 'blue' as const : 'gray' as const,
     },
     {
       label: '来源面板',
-      detail: '回看新闻访问、来源动作和内容承接',
+      detail: '回看新闻访问、来源动作和内容状态',
       href: '/admin/status/traffic#news-source-handoff',
       tone: newsPathMetric.views > 0 ? 'blue' as const : 'gray' as const,
     },
     {
-      label: '新闻线索队列',
+      label: '新闻线索列表',
       detail: '进入新闻来源线索',
       href: '/admin/customers/leads?source_type=news',
       tone: newsActive > 0 ? 'orange' as const : newsTotal > 0 ? 'blue' as const : 'gray' as const,
@@ -1945,7 +1937,7 @@ function NewsConversionHandoffPanel({
     },
     {
       label: '公开新闻入口',
-      detail: '查看前台 /news 阅读与 Contact 承接路径',
+      detail: '查看前台 /news 阅读与 Contact 路径',
       href: '/news',
       tone: newsPathMetric.views > 0 ? 'green' as const : 'blue' as const,
     },
@@ -1978,7 +1970,7 @@ function NewsConversionHandoffPanel({
     {
       label: '内容运营入口',
       value: 'News',
-      detail: '回到新闻发布、分类治理、SEO 待补和列表运营。',
+      detail: '回到新闻发布、分类管理、SEO 待补和列表运营。',
       href: '/admin/content/news#news-operations-hub',
       Icon: FileText,
       tone: 'blue' as const,
@@ -1986,7 +1978,7 @@ function NewsConversionHandoffPanel({
     {
       label: '前台新闻入口',
       value: '/news',
-      detail: '新闻详情不嵌入表单，通过 Contact source 承接线索归因。',
+      detail: '新闻详情不嵌入表单，通过 Contact 来源记录线索归因。',
       href: '/news',
       Icon: ExternalLink,
       tone: 'blue' as const,
@@ -2002,17 +1994,17 @@ function NewsConversionHandoffPanel({
       tone: 'blue' as const,
     },
     {
-      label: 'Contact 承接',
+      label: 'Contact 来源',
       value: 'Contact',
-      detail: '新闻阅读页不嵌表单，统一带 source 参数进入 Contact 主表单。',
+      detail: '新闻阅读页不嵌表单，统一带来源参数进入 Contact 主表单。',
       href: '/contact?source=news:list:contact_cta',
       Icon: Link2,
       tone: 'green' as const,
     },
     {
       label: '后台筛选',
-      value: 'news leads',
-      detail: 'Contact 写入后归入新闻来源线索，运营从新闻线索队列复核。',
+      value: '新闻线索',
+      detail: 'Contact 提交后归入新闻线索，运营从新闻线索列表查看。',
       href: '/admin/customers/leads?source_type=news',
       Icon: ShieldCheck,
       tone: newsTotal > 0 ? 'green' as const : 'blue' as const,
@@ -2020,21 +2012,21 @@ function NewsConversionHandoffPanel({
   ]
   const decision =
     newsPathMetric.views > 0 && newsPathMetric.ctaClicks === 0
-      ? '新闻已有访问但暂无来源动作，优先回到新闻来源面板复核 news:*:contact_cta 是否带到 Contact。'
+      ? '新闻已有访问但暂无来源动作，优先回到新闻来源面板确认 news:*:contact_cta 是否带到 Contact。'
       : newsPathMetric.ctaClicks > 0 && newsTotal === 0
         ? '新闻已有来源动作但线索库暂无新闻来源样本，继续观察 Contact 表单提交与新闻来源归因。'
         : newsTotal > 0
-          ? '新闻来源已有线索样本，可结合新闻运营总览复盘高阅读内容和后续产品/案例承接。'
-          : '新闻来源暂无足够样本，先保持新闻运营入口、公开入口和线索队列可下钻。'
+          ? '新闻来源已有线索样本，可结合新闻运营总览查看高阅读内容和后续产品/案例入口。'
+          : '新闻来源暂无足够样本，先保持新闻运营入口、公开入口和线索列表可下钻。'
 
   return (
     <section id="news-conversion-handoff" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">新闻来源线索</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻来源承接</h2>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻来源</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            汇总新闻来源面板、线索状态和新闻线索队列，帮助运营复核新闻阅读到 Contact 咨询的路径。
+            汇总新闻来源、线索状态和新闻线索列表，查看新闻阅读到 Contact 咨询的路径。
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
@@ -2081,7 +2073,7 @@ function NewsConversionHandoffPanel({
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">News Contact Source</p>
           <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">新闻 Contact 来源</h3>
           <p className="mt-1 max-w-4xl text-xs leading-5 text-[#61767D]">
-            对齐公开新闻页的 Blog / View Details / Contact 阅读路径：运营在这里确认来源命名、Contact 承接和后台新闻线索筛选是否在同一条链路内。
+            对齐公开新闻页的 Blog / View Details / Contact 阅读路径：运营在这里确认来源命名、Contact 入口和后台新闻线索筛选是否一致。
           </p>
         </div>
         <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] border-t border-[#E6EEEE] md:grid-cols-3 md:divide-x md:divide-y-0">
@@ -2140,14 +2132,14 @@ function ProductLifecycleConversionBridge({
   const hasVisitNoAction = productPathMetric.views > 0 && pathActions === 0
   const priority =
     hasActionNoLead
-      ? 'P0 动作未入库'
+      ? '动作未入库'
       : hasVisitNoAction
-        ? 'P1 访问未动作'
+        ? '访问未动作'
         : productActive > 0
-          ? 'P1 活跃跟进'
+          ? '活跃跟进'
           : productPathMetric.leads > 0 || productTotal > 0
-            ? 'P2 样本复盘'
-            : 'P3 等待样本'
+            ? '查看样本'
+            : '等待样本'
   const priorityTone: 'green' | 'orange' | 'gray' | 'blue' =
     hasActionNoLead || hasVisitNoAction || productActive > 0
       ? 'orange'
@@ -2158,14 +2150,14 @@ function ProductLifecycleConversionBridge({
           : 'gray'
   const decision =
     hasActionNoLead
-      ? '产品路径已有动作但线索库没有产品来源样本，先回流量质量复盘和产品线索队列核对来源、阶段与表单成功事件。'
+      ? '产品路径已有动作但线索库没有产品来源样本，先回流量质量和产品线索列表核对来源与表单成功事件。'
       : hasVisitNoAction
-        ? '产品路径已有访问但动作不足，先回产品内容和证明队列复核详情证明、CTA 位置和询盘交接。'
-        : productActive > 0
-          ? '产品来源已有活跃线索，优先用转化复盘确认这些线索对应哪条产品路径、SEO 入口和后续跟进状态。'
+        ? '产品路径已有访问但动作不足，先回产品内容和证明列表确认详情证明、按钮位置和询盘入口。'
+      : productActive > 0
+          ? '产品来源已有活跃线索，优先确认这些线索对应哪条产品路径、SEO 入口和后续跟进状态。'
           : productPathMetric.leads > 0 || productTotal > 0
             ? '产品转化已有样本，继续观察流量质量和产品 SEO 是否推动更多有效产品线索。'
-            : '产品转化样本不足，保留生命周期、SEO、流量质量、线索队列和前台入口，等待真实访问与询盘样本。'
+            : '产品转化样本不足，保留生命周期、SEO、流量质量、线索列表和前台入口，等待真实访问与询盘样本。'
   const cards = [
     {
       label: '流量质量',
@@ -2178,7 +2170,7 @@ function ProductLifecycleConversionBridge({
     {
       label: '产品 SEO',
       value: formatAnalyticsPercent(productPathMetric.conversionRate),
-      detail: '从产品 SEO 生命周期桥回看标题、描述、公开路径和线索承接。',
+      detail: '从产品 SEO 生命周期查看标题、描述、公开路径和线索来源。',
       href: '/admin/site/seo#product-seo-lifecycle-bridge',
       Icon: SearchCheck,
       tone: productPathMetric.leads > 0 ? 'green' as const : productPathMetric.views > 0 ? 'orange' as const : 'blue' as const,
@@ -2192,7 +2184,7 @@ function ProductLifecycleConversionBridge({
       tone: stageActive > 0 ? 'orange' as const : productStages.length > 0 ? 'blue' as const : 'gray' as const,
     },
     {
-      label: '产品线索队列',
+      label: '产品线索列表',
       value: productTotal,
       detail: `活跃 ${productActive.toLocaleString('zh-CN')} / 新 ${productSource?.new ?? 0} / 报价 ${productSource?.quoted ?? 0}。`,
       href: '/admin/customers/leads?source_type=product',
@@ -2200,9 +2192,9 @@ function ProductLifecycleConversionBridge({
       tone: productActive > 0 ? 'orange' as const : productTotal > 0 ? 'green' as const : 'gray' as const,
     },
     {
-      label: '产品表单阶段',
+      label: '产品表单线索',
       value: inquiryForm?.total ?? 0,
-      detail: `product:inquiry_form 活跃 ${(inquiryForm ? inquiryForm.new + inquiryForm.contacting + inquiryForm.quoted : 0).toLocaleString('zh-CN')}。`,
+      detail: `表单活跃 ${(inquiryForm ? inquiryForm.new + inquiryForm.contacting + inquiryForm.quoted : 0).toLocaleString('zh-CN')}。`,
       href: '/admin/customers/leads?source_type=product&source_stage=product%3Ainquiry_form',
       Icon: FileText,
       tone: inquiryForm && inquiryForm.total > 0 ? 'green' as const : productPathMetric.formSubmits > 0 ? 'orange' as const : 'gray' as const,
@@ -2210,7 +2202,7 @@ function ProductLifecycleConversionBridge({
     {
       label: '产品详情 CTA',
       value: ctaClick?.total ?? 0,
-      detail: `product:cta_click 活跃 ${(ctaClick ? ctaClick.new + ctaClick.contacting + ctaClick.quoted : 0).toLocaleString('zh-CN')}。`,
+      detail: `按钮活跃 ${(ctaClick ? ctaClick.new + ctaClick.contacting + ctaClick.quoted : 0).toLocaleString('zh-CN')}。`,
       href: '/admin/customers/leads?source_type=product&source_stage=product%3Acta_click',
       Icon: MousePointerClick,
       tone: ctaClick && ctaClick.total > 0 ? 'green' as const : productPathMetric.ctaClicks > 0 ? 'orange' as const : 'gray' as const,
@@ -2218,14 +2210,14 @@ function ProductLifecycleConversionBridge({
   ]
   const actionLinks = [
     {
-      label: '质量复盘',
+      label: '质量查看',
       detail: '回到流量页看产品访问、动作、线索、SEO 和生命周期质量判断。',
       href: '/admin/status/traffic#product-path-quality-review-desk',
       tone: priorityTone,
     },
     {
       label: '产品 SEO',
-      detail: '回到 SEO 页核对产品 SEO 修复入口和公开承接。',
+      detail: '回到 SEO 页核对产品 SEO 修复入口和公开内容。',
       href: '/admin/site/seo#product-seo-lifecycle-bridge',
       tone: 'blue' as const,
     },
@@ -2236,8 +2228,8 @@ function ProductLifecycleConversionBridge({
       tone: 'blue' as const,
     },
     {
-      label: '证明队列',
-      detail: '回到列表队列处理证明、媒体、详情和询盘交接缺口。',
+      label: '证明列表',
+      detail: '回到列表处理证明、媒体、详情和询盘入口缺口。',
       href: '/admin/content/products/list#product-fit-proof-backflow',
       tone: hasVisitNoAction || hasActionNoLead ? 'orange' as const : 'blue' as const,
     },
@@ -2248,7 +2240,7 @@ function ProductLifecycleConversionBridge({
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">产品转化路径</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品生命周期转化复盘桥</h2>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品生命周期转化</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
             汇总产品路径质量、产品 SEO、产品内容、证明队列和产品线索状态，帮助运营判断产品转化问题来自访问、动作、SEO/内容还是线索跟进。
           </p>
@@ -2277,7 +2269,7 @@ function ProductLifecycleConversionBridge({
           <p className="mt-3 text-sm leading-6 text-[#61767D]">{decision}</p>
         </div>
         <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 lg:border-l lg:border-t-0">
-          <p className="text-sm font-bold text-[#1E2C31]">处理顺序</p>
+          <p className="text-sm font-bold text-[#1E2C31]">建议动作</p>
           <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
             {actionLinks.map((item) => (
               <Link key={item.label} href={item.href} className="group rounded-md border border-[#D8E7E8] bg-white px-3 py-3 transition hover:border-[#1889B6] hover:bg-[#F7FAFA]">
@@ -2286,7 +2278,7 @@ function ProductLifecycleConversionBridge({
                 </span>
                 <span className="mt-2 block text-xs leading-5 text-[#61767D]">{item.detail}</span>
                 <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6] group-hover:text-[#E36F2C]">
-                  进入复盘
+                  查看
                   <ArrowRight size={12} />
                 </span>
               </Link>
@@ -2471,7 +2463,7 @@ function ConversionPathFlow({
         />
         <ConversionFlowColumn
           title="4. 处理队列"
-          detail="优先看待复核、部分追踪和外部承接。"
+          detail="优先看需确认、追踪待补和外部联系。"
           value={attentionRows.length}
           valueLabel="待处理"
           Icon={ListChecks}
@@ -2594,9 +2586,9 @@ function LeadSourceMatrix({
     <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <h2 className="text-lg font-bold text-[#1E2C31]">来源线索处理矩阵</h2>
+          <h2 className="text-lg font-bold text-[#1E2C31]">来源线索</h2>
           <p className="mt-1 text-xs text-[#61767D]">
-            把 30 天转化路径样本和线索库来源状态放在同一张表，运营可以直接跳到对应来源队列处理。
+            按来源查看 30 天访问、动作和线索状态，直接进入对应线索列表。
           </p>
         </div>
         <Link href="/admin/customers/leads" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
@@ -2690,7 +2682,7 @@ function SourceStageConversionMatrix({
           : active > 0
             ? '待处理线索'
             : (lead?.total ?? 0) > 0
-              ? '已有承接'
+              ? '已有线索'
               : '等待样本'
 
       return {
@@ -2720,9 +2712,9 @@ function SourceStageConversionMatrix({
     <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <h2 className="text-lg font-bold text-[#1E2C31]">公开站来源阶段矩阵</h2>
+          <h2 className="text-lg font-bold text-[#1E2C31]">公开站入口类型</h2>
           <p className="mt-1 text-xs text-[#61767D]">
-            把访问统计里的产品与案例阶段动作和线索库里的来源阶段状态放在同一张表；Contact 承接型来源也按原产品/案例入口归类，判断哪类入口需要优先跟进或核对 source。
+            把产品与案例入口动作和线索状态放在同一张表，判断哪类入口需要优先跟进。
           </p>
         </div>
         <Link href="/admin/status/traffic?range=30" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
@@ -2731,16 +2723,16 @@ function SourceStageConversionMatrix({
       </div>
 
       {rows.length === 0 ? (
-        <div className="p-5 text-sm text-[#61767D]">暂无公开站来源阶段动作或阶段线索样本。</div>
+        <div className="p-5 text-sm text-[#61767D]">暂无公开站入口动作或线索样本。</div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1120px] text-sm">
             <thead>
               <tr className="border-b border-[#E6EEEE] bg-white text-[#61767D]">
-                <th className="px-5 py-3 text-left font-medium">来源阶段</th>
+                <th className="px-5 py-3 text-left font-medium">入口类型</th>
                 <th className="px-4 py-3 text-right font-medium">30 天动作</th>
                 <th className="px-4 py-3 text-right font-medium">动作占比</th>
-                <th className="px-4 py-3 text-right font-medium">阶段线索</th>
+                <th className="px-4 py-3 text-right font-medium">线索</th>
                 <th className="px-4 py-3 text-right font-medium">新 / 跟进 / 报价</th>
                 <th className="px-4 py-3 text-right font-medium">成交 / 关闭</th>
                 <th className="px-4 py-3 text-left font-medium">判断</th>
@@ -2752,7 +2744,7 @@ function SourceStageConversionMatrix({
                 <tr key={row.key} className="border-b border-[#E6EEEE] last:border-0">
                   <td className="px-5 py-4">
                     <div className="font-semibold text-[#1E2C31]">{row.label}</div>
-                    <div className="mt-1 font-mono text-[11px] text-[#8A9EA4]">{row.key}</div>
+                    <div className="mt-1 text-[11px] text-[#8A9EA4]">点击右侧查看对应线索</div>
                   </td>
                   <td className="px-4 py-4 text-right font-bold text-[#1889B6]">{row.actions.toLocaleString('zh-CN')}</td>
                   <td className="px-4 py-4 text-right text-[#61767D]">{formatAnalyticsPercent(row.actionShare)}</td>
@@ -2770,7 +2762,7 @@ function SourceStageConversionMatrix({
                   </td>
                   <td className="px-5 py-4 text-right">
                     <Link href={row.href} className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
-                      查看阶段线索
+                      查看线索
                     </Link>
                   </td>
                 </tr>
@@ -2812,15 +2804,15 @@ function ConversionPathLedger({
     <section id="conversion-ledger" className="scroll-mt-24 overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <h2 className="text-lg font-bold text-[#1E2C31]">转化路径口径总表</h2>
+          <h2 className="text-lg font-bold text-[#1E2C31]">转化路径清单</h2>
           <p className="mt-1 text-xs leading-5 text-[#61767D]">
-            对齐 300 后台的先看表格再下钻心智：路径、source 规则、访问、动作、表单、线索和处理入口放在同一张表里。
+            查看路径、访问、动作、表单、线索和操作入口。
           </p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-semibold">
           <span className="rounded-full bg-[#F0F7F8] px-2.5 py-1 text-[#1889B6]">30 天窗口</span>
           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">排除测试线索</span>
-          <span className="rounded-full bg-[#FFF2E7] px-2.5 py-1 text-[#E36F2C]">复验配置</span>
+          <span className="rounded-full bg-[#FFF2E7] px-2.5 py-1 text-[#E36F2C]">待处理优先</span>
         </div>
       </div>
       <div className="overflow-x-auto">
@@ -2829,7 +2821,7 @@ function ConversionPathLedger({
             <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
               <th className="px-4 py-3 text-left font-medium">序号</th>
               <th className="px-4 py-3 text-left font-medium">入口 / 状态</th>
-              <th className="px-4 py-3 text-left font-medium">source 规则</th>
+              <th className="px-4 py-3 text-left font-medium">入口来源</th>
               <th className="px-4 py-3 text-right font-medium">访问</th>
               <th className="px-4 py-3 text-right font-medium">访问占比</th>
               <th className="px-4 py-3 text-right font-medium">动作 / 表单</th>
@@ -2844,7 +2836,7 @@ function ConversionPathLedger({
               const statusMeta = STATUS_META[item.status]
               return (
                 <tr key={item.key} className="border-b border-[#E6EEEE] last:border-0">
-                  <td className="px-4 py-3 font-mono text-xs text-[#8A9EA4]">{rank.toString().padStart(2, '0')}</td>
+                  <td className="px-4 py-3 text-xs text-[#8A9EA4]">{rank.toString().padStart(2, '0')}</td>
                   <td className="px-4 py-3">
                     <div className="font-semibold text-[#1E2C31]">{item.area}</div>
                     <span className={`mt-2 inline-flex rounded-full border px-2 py-1 text-[11px] font-semibold ${statusMeta.className}`}>
@@ -2852,8 +2844,8 @@ function ConversionPathLedger({
                     </span>
                   </td>
                   <td className="max-w-[280px] px-4 py-3">
-                    <div className="truncate font-mono text-xs text-[#1E2C31]" title={item.sourceRule}>
-                      {item.sourceRule}
+                    <div className="truncate text-xs text-[#1E2C31]" title={conversionPathSourceLabel(item)}>
+                      {conversionPathSourceLabel(item)}
                     </div>
                     <div className="mt-1 text-[11px] text-[#8A9EA4]">{item.leadCapture}</div>
                   </td>
@@ -2901,26 +2893,26 @@ function ConversionHealthMatrix({
     <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-2 border-b border-[#E6EEEE] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <h2 className="text-lg font-bold text-[#1E2C31]">转化链路健康矩阵</h2>
+          <h2 className="text-lg font-bold text-[#1E2C31]">转化路径健康</h2>
           <p className="mt-1 text-xs text-[#61767D]">
-            按链路状态聚合访问、动作、表单、线索和缺口数量，先判断是入口配置问题、追踪问题还是线索承接问题。
+            按路径状态汇总访问、动作、表单、线索和缺口数量。
           </p>
         </div>
         <span className="inline-flex w-fit rounded-full bg-[#F0F7F8] px-3 py-1 text-xs font-semibold text-[#1889B6]">
-          数据汇总 · 配置复验
+          数据汇总 · 配置检查
         </span>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[980px] text-sm">
           <thead>
             <tr className="border-b border-[#E6EEEE] bg-[#F7FAFA] text-[#61767D]">
-              <th className="px-5 py-3 text-left font-medium">链路状态</th>
+              <th className="px-5 py-3 text-left font-medium">路径状态</th>
               <th className="px-4 py-3 text-right font-medium">路径数</th>
               <th className="px-4 py-3 text-right font-medium">30 天访问</th>
               <th className="px-4 py-3 text-right font-medium">动作 / 表单 / 线索</th>
               <th className="px-4 py-3 text-right font-medium">动作率 / 线索率</th>
               <th className="px-4 py-3 text-left font-medium">当前缺口</th>
-              <th className="px-5 py-3 text-left font-medium">处理入口</th>
+              <th className="px-5 py-3 text-left font-medium">操作入口</th>
             </tr>
           </thead>
           <tbody>
@@ -2948,7 +2940,7 @@ function ConversionHealthMatrix({
                   <td className="px-4 py-4">
                     <p className={`text-sm font-bold ${gapTone}`}>{row.gaps} 个需处理</p>
                     <p className="mt-1 text-xs leading-5 text-[#61767D]">
-                      {row.noAction} 条路径有访问但无动作；优先核对 CTA 位置、source 规则和表单事件。
+                      {row.noAction} 条路径有访问但无动作；优先核对按钮位置和表单事件。
                     </p>
                   </td>
                   <td className="px-5 py-4">
@@ -3012,10 +3004,8 @@ function ConversionCommandBoard({
       <div className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="flex flex-col gap-2 border-b border-[#E6EEEE] px-5 py-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-lg font-bold text-[#1E2C31]">转化处理队列</h2>
-            <p className="mt-1 text-xs text-[#61767D]">
-              先处理追踪不完整、有访问无动作、有动作无线索的入口；需要调整时进入对应页面。
-            </p>
+            <h2 className="text-lg font-bold text-[#1E2C31]">待处理转化入口</h2>
+            <p className="mt-1 text-xs text-[#61767D]">按 30 天数据排序。</p>
           </div>
           <span className="rounded-full bg-[#F0F7F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">
             30 天窗口
@@ -3075,7 +3065,7 @@ function ConversionCommandBoard({
       <aside className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="border-b border-[#E6EEEE] px-5 py-4">
           <h2 className="text-lg font-bold text-[#1E2C31]">路径表现</h2>
-          <p className="mt-1 text-xs text-[#61767D]">基于第一方 `site_events` 与 `leads` 聚合。</p>
+          <p className="mt-1 text-xs text-[#61767D]">基于最近 30 天访问、动作和线索数据。</p>
         </div>
         <div className="grid grid-cols-2 gap-3 p-5">
           <ConversionMiniMetric label="访问" value={totalViews} detail="30 天 PV 样本" Icon={BarChart3} />
@@ -3133,10 +3123,8 @@ function ConversionFunnelMatrix({
     <section className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <h2 className="text-lg font-bold text-[#1E2C31]">转化漏斗效率矩阵</h2>
-          <p className="mt-1 text-xs text-[#61767D]">
-            按路径查看访问占比、动作率、表单率和线索率；用于决定先优化哪条入口，不直接改配置。
-          </p>
+          <h2 className="text-lg font-bold text-[#1E2C31]">转化漏斗效率</h2>
+          <p className="mt-1 text-xs text-[#61767D]">按路径查看访问占比、动作率、表单率和线索率。</p>
         </div>
         <Link href="/admin/status/traffic?range=30" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
           回到网站访问统计
@@ -3161,8 +3149,8 @@ function ConversionFunnelMatrix({
               <tr key={item.key} className="border-b border-[#E6EEEE] last:border-0">
                 <td className="px-5 py-3">
                   <div className="font-semibold text-[#1E2C31]">{item.area}</div>
-                  <div className="mt-1 max-w-[280px] truncate font-mono text-[11px] text-[#8A9EA4]" title={item.sourceRule}>
-                    {item.sourceRule}
+                  <div className="mt-1 max-w-[280px] truncate text-[11px] text-[#8A9EA4]" title={conversionPathSourceLabel(item)}>
+                    {conversionPathSourceLabel(item)}
                   </div>
                 </td>
                 <td className="px-4 py-3 text-right font-bold text-[#1E2C31]">{metric.views.toLocaleString('zh-CN')}</td>
@@ -3220,6 +3208,14 @@ function conversionPathSourceType(key: string): ConversionLeadSourceType {
   if (key === 'news') return 'news'
   if (key === 'contact' || key === 'navbar' || key === 'display') return 'contact'
   return 'other'
+}
+
+function conversionPathSourceLabel(item: ConversionPathItem) {
+  if (item.key === 'navbar') return '导航与页脚联系'
+  if (item.key === 'display') return '展厅联系入口'
+  if (item.key === 'contact') return '联系页表单'
+  if (item.key === 'news') return '新闻联系入口'
+  return getLeadSourceTypeLabel(conversionPathSourceType(item.key))
 }
 
 function sumConversionMetrics(

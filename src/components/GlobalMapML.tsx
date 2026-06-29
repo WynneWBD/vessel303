@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Map as MaptilerMap,
   Language,
@@ -14,7 +14,14 @@ import '@maptiler/sdk/dist/maptiler-sdk.css'
 import { CAMPS } from '@/data/camps'
 import { SHOWCASE_MARKERS, HQ_MARKER, type ShowcaseMarker } from '@/data/showcaseMarkers'
 import StaticGlobalMapPreview from './StaticGlobalMapPreview'
-import type { GlobalPageModuleLike } from '@/lib/global-page-cms'
+import {
+  buildGlobalCmsLabels,
+  globalItemAttrs,
+  globalModuleAttrs,
+  globalProjectPointAttrs,
+  type GlobalCmsLang,
+  type GlobalPageModuleLike,
+} from '@/lib/global-page-cms'
 
 // The real MapTiler API key now lives on the edge proxy (see src/app/api/map/
 // [...path]/route.ts). Setting the SDK's apiKey to a placeholder stops it from
@@ -282,6 +289,7 @@ interface Props {
   resetViewKey?: number  // increment to fly back to global default view
   lang?: string
   showcaseMarkers?: ShowcaseMarker[]
+  editableMarkerIds?: string[]
   pageModules?: GlobalPageModuleLike[]
   previewMode?: boolean
 }
@@ -294,6 +302,7 @@ export default function GlobalMapML({
   resetViewKey,
   lang,
   showcaseMarkers = SHOWCASE_MARKERS,
+  editableMarkerIds = [],
   pageModules = [],
   previewMode = false,
 }: Props) {
@@ -323,6 +332,9 @@ export default function GlobalMapML({
   useEffect(() => { onMapReadyRef.current = onMapReady }, [onMapReady])
 
   const isZh = lang === 'zh'
+  const cmsLang: GlobalCmsLang = isZh ? 'zh' : 'en'
+  const labels = buildGlobalCmsLabels(pageModules, cmsLang)
+  const editableMarkerIdSet = useMemo(() => new Set(editableMarkerIds), [editableMarkerIds])
 
   // ── Initialize map (once) ─────────────────────────────────────────────
   useEffect(() => {
@@ -482,10 +494,16 @@ export default function GlobalMapML({
         const pin = document.createElement('div')
         pin.className = 'vessel-showcase-pin'
         pin.title = marker.name.en
+        if (editableMarkerIdSet.has(marker.id)) {
+          pin.setAttribute('data-visual-open-panel', 'global-project')
+          Object.entries(globalProjectPointAttrs(marker.id, 'map-pin')).forEach(([key, value]) => {
+            pin.setAttribute(key, value)
+          })
+        }
         wrap.appendChild(pin)
         showcasePins.push(pin)
 
-        if (previewMode) {
+        if (previewMode && !editableMarkerIdSet.has(marker.id)) {
           pin.style.cursor = 'default'
         } else {
           pin.addEventListener('click', (ev) => {
@@ -701,10 +719,11 @@ export default function GlobalMapML({
         const pin = document.createElement('div')
         pin.className = 'vessel-showcase-pin'
         pin.title = marker.name.en
+        if (editableMarkerIdSet.has(marker.id)) pin.setAttribute('data-visual-open-panel', 'global-project')
         wrap.appendChild(pin)
         showcasePins.push(pin)
 
-        if (previewMode) {
+        if (previewMode && !editableMarkerIdSet.has(marker.id)) {
           pin.style.cursor = 'default'
         } else {
           pin.addEventListener('click', (ev) => {
@@ -759,7 +778,7 @@ export default function GlobalMapML({
       map.remove()
       mapRef.current = null
     }
-  }, [previewMode, showcaseMarkers])
+  }, [cmsLang, editableMarkerIdSet, previewMode, showcaseMarkers])
 
   // ── Language switching ────────────────────────────────────────────────
   useEffect(() => {
@@ -815,19 +834,23 @@ export default function GlobalMapML({
   }, [resetViewKey])
 
   const zh = isZh
-  const errorTitle = zh ? '地图加载失败' : 'MAP LOAD FAILED'
-  const errorBody =
-    loadError === 'init-failed'
-      ? zh
-        ? '当前浏览器或显卡不支持 WebGL 加速渲染，地图无法显示。请尝试在系统浏览器（Chrome / Safari）中打开本页面。'
-        : 'Your browser or GPU does not support WebGL2. Please open this page in Chrome or Safari instead.'
-      : zh
-      ? '地图样式加载出错。请稍后重试。'
-      : 'Map style failed to load. Please retry shortly.'
+  const errorTitle = labels.mapErrorTitle
+  const errorBody = loadError === 'init-failed'
+    ? labels.mapInitErrorBody
+    : labels.mapStyleErrorBody
 
   return (
-    <div style={{ position: 'relative', height: '100%', width: '100%', background: '#F5F2ED', pointerEvents: previewMode ? 'none' : 'auto' }}>
-      <StaticGlobalMapPreview lang={zh ? 'zh' : 'en'} pageModules={pageModules} />
+    <div
+      style={{ position: 'relative', height: '100%', width: '100%', background: '#F5F2ED', pointerEvents: previewMode ? 'none' : 'auto' }}
+      {...globalModuleAttrs('map-labels')}
+    >
+      <StaticGlobalMapPreview
+        lang={zh ? 'zh' : 'en'}
+        pageModules={pageModules}
+        markers={showcaseMarkers}
+        editableMarkerIds={editableMarkerIds}
+        onMarkerSelect={previewMode ? undefined : (marker) => onShowcaseSelectRef.current?.(marker)}
+      />
       <div
         ref={containerRef}
         style={{
@@ -837,6 +860,7 @@ export default function GlobalMapML({
           width: '100%',
           background: 'transparent',
           opacity: mapReady && !loadError ? 1 : 0,
+          pointerEvents: mapReady && !loadError ? 'auto' : 'none',
           transition: 'opacity 320ms ease-out',
         }}
       />
@@ -864,14 +888,16 @@ export default function GlobalMapML({
             <div style={{
               color: '#2C2A28', fontSize: 14, fontWeight: 600, letterSpacing: '0.08em',
               fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",
-            }}>{errorTitle}</div>
+            }} {...globalItemAttrs('map-labels', 'map-error-title', cmsLang)}>{errorTitle}</div>
             <div style={{
               color: '#6B625B', fontSize: 12, lineHeight: 1.6,
               fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",
-            }}>{errorBody}</div>
+            }} {...globalItemAttrs('map-labels', loadError === 'init-failed' ? 'map-init-error-body' : 'map-style-error-body', cmsLang, 'content')}>{errorBody}</div>
             {loadError !== 'init-failed' && (
               <button
                 onClick={() => { if (typeof window !== 'undefined') window.location.reload() }}
+                data-visual-open-panel="global-map-retry"
+                {...globalItemAttrs('map-labels', 'map-retry', cmsLang)}
                 style={{
                   marginTop: 4,
                   padding: '8px 22px',
@@ -881,7 +907,7 @@ export default function GlobalMapML({
                   fontFamily: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif",
                 }}
               >
-                {zh ? '重新加载' : 'RETRY'}
+                {labels.mapRetryLabel}
               </button>
             )}
           </div>

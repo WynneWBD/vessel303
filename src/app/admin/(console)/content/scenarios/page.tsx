@@ -14,7 +14,7 @@ export default function AdminScenariosContentPage() {
     allowCategories: false,
     fixedSlugs: ['tourism', 'commercial', 'public'],
     heroTitle: 'Scenarios 固定内容管理',
-    heroDetail: '只开放固定 slug 的标题、简介、参数、流程、推荐产品、关联案例和 CTA，不开放随意新增场景页。',
+    heroDetail: '维护场景页标题、简介、参数、流程、推荐产品、关联案例和 CTA。',
     Icon: Presentation,
   })
 }

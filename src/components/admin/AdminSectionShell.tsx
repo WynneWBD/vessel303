@@ -27,6 +27,7 @@ export function AdminSectionShell({
   description,
   sideNavGroups,
   activeItem,
+  wide = false,
   children,
 }: {
   topNavActive: AdminTopNavActive
@@ -36,12 +37,17 @@ export function AdminSectionShell({
   description: string
   sideNavGroups: AdminSideNavGroup[]
   activeItem: string
+  wide?: boolean
   children: ReactNode
 }) {
+  const layoutClassName = wide
+    ? 'grid w-full max-w-none grid-cols-1 gap-3 px-3 py-3 lg:grid-cols-[204px_minmax(0,1fr)]'
+    : 'mx-auto grid w-full max-w-[1600px] grid-cols-1 gap-5 px-4 py-6 lg:grid-cols-[252px_minmax(0,1fr)] lg:px-8'
+
   return (
     <main className="min-h-screen bg-[#F3F7F7] text-[#1E2C31]" style={{ fontFamily: 'Inter, sans-serif' }}>
       <AdminTopNav active={topNavActive} role={role} email={email} />
-      <div className="mx-auto grid w-full max-w-[1600px] grid-cols-1 gap-5 px-4 py-6 lg:grid-cols-[252px_minmax(0,1fr)] lg:px-8">
+      <div className={layoutClassName}>
         <AdminSideNav
           title={title}
           description={description}
@@ -71,40 +77,26 @@ export function AdminSideNav({
   const visibleGroups = groups
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => !item.adminOnly || role === 'admin'),
+      items: group.items.filter((item) => (!item.adminOnly || role === 'admin') && !item.planned),
     }))
     .filter((group) => group.items.length > 0)
-  const visibleItemCount = visibleGroups.reduce((sum, group) => sum + group.items.length, 0)
-  const plannedItemCount = visibleGroups.reduce(
-    (sum, group) => sum + group.items.filter((item) => item.planned).length,
+  const actionableItemCount = visibleGroups.reduce(
+    (sum, group) => sum + group.items.filter((item) => !item.disabled).length,
     0,
   )
-  const actionableItemCount = visibleItemCount - plannedItemCount
 
   return (
     <aside className="lg:sticky lg:top-24 lg:self-start">
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="border-b border-[#E6EEEE] bg-[#FBFDFD] p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">业务导航</p>
-              <h1 className="mt-2 text-lg font-bold text-[#1E2C31]">{title}</h1>
-            </div>
-            <span className="shrink-0 rounded-md border border-[#D8E7E8] bg-white px-2 py-1 text-[11px] font-bold text-[#61767D]">
-              {role === 'admin' ? '管理员视图' : '运营视图'}
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1889B6]">业务导航</p>
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <h1 className="min-w-0 truncate text-lg font-bold text-[#1E2C31]">{title}</h1>
+            <span className="shrink-0 rounded-full bg-[#EAF6F8] px-2 py-0.5 text-[11px] font-bold text-[#1889B6]">
+              {actionableItemCount}
             </span>
           </div>
-          <p className="mt-2 text-xs leading-5 text-[#61767D]">{description}</p>
-          <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-            <span className="rounded-md border border-[#D8E7E8] bg-white px-2 py-1.5">
-              <span className="block font-bold text-[#1E2C31]">{actionableItemCount}</span>
-              <span className="text-[#8A9EA4]">可操作入口</span>
-            </span>
-            <span className="rounded-md border border-[#D8E7E8] bg-white px-2 py-1.5">
-              <span className="block font-bold text-[#1E2C31]">{plannedItemCount}</span>
-              <span className="text-[#8A9EA4]">规划入口</span>
-            </span>
-          </div>
+          <span className="sr-only">{description}</span>
         </div>
         <nav className="space-y-4 p-3">
           {visibleGroups.map((group) => (
@@ -149,11 +141,6 @@ function AdminSideNavRow({ item, active }: { item: AdminSideNavItem; active: boo
           }`}
         >
           {item.badge}
-        </span>
-      )}
-      {item.planned && (
-        <span className="shrink-0 rounded-full bg-[#F0F2F2] px-2 py-0.5 text-[11px] font-semibold text-[#8A9EA4]">
-          规划中
         </span>
       )}
     </>

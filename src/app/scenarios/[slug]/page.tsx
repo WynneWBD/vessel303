@@ -5,7 +5,11 @@ import {
   getPublicB9ContentItem,
   listPublicB9ContentItems,
 } from '@/lib/b9-content-db'
-import { listPublishedPageModules } from '@/lib/page-modules-db'
+import {
+  getDefaultB9ContentItem,
+  withDefaultB9ContentItems,
+} from '@/lib/b9-content-defaults'
+import { listDefaultPageModules, listPublishedPageModules } from '@/lib/page-modules-db'
 import { buildPageMetadata } from '@/lib/seo'
 
 export const revalidate = 300
@@ -18,10 +22,11 @@ function isScenarioSlug(value: string): value is ScenarioSlug {
 }
 
 async function loadScenario(slug: ScenarioSlug) {
-  return getPublicB9ContentItem('scenario', slug).catch((err) => {
+  const row = await getPublicB9ContentItem('scenario', slug).catch((err) => {
     console.error(`[scenarios/${slug}] CMS load failed`, err)
     return null
   })
+  return row ?? getDefaultB9ContentItem('scenario', slug)
 }
 
 export function generateStaticParams() {
@@ -58,13 +63,13 @@ export default async function ScenarioPage({
 
   const [scenario, scenarios, pageModules] = await Promise.all([
     loadScenario(slug),
-    listPublicB9ContentItems('scenario').catch((err) => {
+    listPublicB9ContentItems('scenario').then((rows) => withDefaultB9ContentItems('scenario', rows)).catch((err) => {
       console.error('[scenarios] related CMS load failed', err)
-      return []
+      return withDefaultB9ContentItems('scenario', [])
     }),
     listPublishedPageModules('scenarios').catch((err) => {
       console.error('[scenarios] page modules load failed', err)
-      return []
+      return listDefaultPageModules('scenarios')
     }),
   ])
   if (!scenario) notFound()

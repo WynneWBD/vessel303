@@ -16,6 +16,7 @@ type TitleBody = { title: string; body: string; step?: string }
 type RelatedCase = { name: string; location?: string; body?: string; href?: string }
 type ProductLink = { label: string; href?: string }
 type PublicLang = 'zh' | 'en'
+type VisualEditAttrs = Record<string, string | number | undefined>
 
 type Props = {
   scenario: B9ContentItem
@@ -50,6 +51,55 @@ function payloadValue(row: B9ContentItem, key: string, lang: PublicLang): unknow
 function payloadText(row: B9ContentItem, key: string, lang: PublicLang) {
   const value = asString(payloadValue(row, key, lang))
   return lang === 'en' ? stripEnglishFallback(value) : value
+}
+
+function payloadPatchKey(row: B9ContentItem, key: string, lang: PublicLang) {
+  const localizedKey = `${key}${lang === 'en' ? 'En' : 'Zh'}`
+  if (row.payload?.[localizedKey] !== undefined) return `payload.${localizedKey}`
+  if (row.payload?.[key] !== undefined) return `payload.${key}`
+  return null
+}
+
+function scenarioEditHref(row: B9ContentItem) {
+  return `/admin/content/scenarios?search=${encodeURIComponent(row.slug)}#b9-content-workbench`
+}
+
+function scenarioVisualModuleAttrs(moduleId: 'scenarios:content' | 'scenarios:inquiry-form' = 'scenarios:content') {
+  const moduleKey = moduleId.split(':')[1]
+  return {
+    'data-page-module': moduleId,
+    'data-page-key': 'scenarios',
+    'data-module-key': moduleKey,
+  }
+}
+
+function scenarioEditAttrs(row: B9ContentItem, options: {
+  id: string
+  field: string
+  value?: string | null
+  patchKey?: string | null
+  input?: 'text' | 'textarea' | 'image'
+  maxLength?: number
+  required?: boolean
+  nullable?: boolean
+}): VisualEditAttrs {
+  const attrs: VisualEditAttrs = {
+    'data-cms-edit-url': scenarioEditHref(row),
+    'data-cms-edit-kind': 'content',
+    'data-cms-edit-title': '场景内容',
+    'data-cms-edit-field': options.field,
+    'data-cms-edit-id': `scenario-${row.id}-${options.id}`,
+    'data-cms-edit-value': options.value ?? '',
+    'data-cms-edit-input': options.input ?? 'text',
+  }
+  if (row.id > 0 && options.patchKey) {
+    attrs['data-cms-edit-api-url'] = `/api/admin/site-content/${row.id}`
+    attrs['data-cms-edit-patch-key'] = options.patchKey
+  }
+  if (options.maxLength) attrs['data-cms-edit-max-length'] = options.maxLength
+  if (options.required) attrs['data-cms-edit-required'] = '1'
+  if (options.nullable) attrs['data-cms-edit-nullable'] = '1'
+  return attrs
 }
 
 function payloadArray(row: B9ContentItem, key: string, lang: PublicLang) {
@@ -142,15 +192,23 @@ function ScenarioHero({
   title,
   titleGold,
   subtitle,
+  labelAttrs,
+  titleAttrs,
+  titleGoldAttrs,
+  subtitleAttrs,
 }: {
   label?: string
   title: string
   titleGold?: string
   subtitle?: string
+  labelAttrs?: VisualEditAttrs
+  titleAttrs?: VisualEditAttrs
+  titleGoldAttrs?: VisualEditAttrs
+  subtitleAttrs?: VisualEditAttrs
 }) {
   return (
     <>
-      <section className="relative overflow-hidden bg-[#241F1B] pb-20 pt-32">
+      <section className="relative overflow-hidden bg-[#241F1B] pb-20 pt-32" {...scenarioVisualModuleAttrs()}>
         <div className="hero-grid pointer-events-none absolute inset-0 opacity-60" />
         <div
           className="pointer-events-none absolute inset-0"
@@ -160,17 +218,17 @@ function ScenarioHero({
         <div className="absolute left-6 top-24 h-10 w-10 border-l border-t border-[#E36F2C]/25" />
         <div className="absolute right-6 top-24 h-10 w-10 border-r border-t border-[#E36F2C]/25" />
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {label ? <div className="mb-4 text-xs font-medium uppercase tracking-[0.3em] text-[#E36F2C]">{label}</div> : null}
+          {label ? <div className="mb-4 text-xs font-medium uppercase tracking-[0.3em] text-[#E36F2C]" {...labelAttrs}>{label}</div> : null}
           <h1 className="mb-4 text-3xl font-black leading-tight sm:text-4xl lg:text-5xl">
-            <span className="text-white">{title}</span>
+            <span className="text-white" {...titleAttrs}>{title}</span>
             {titleGold ? (
               <>
                 <br />
-                <span className="text-gold-gradient">{titleGold}</span>
+                <span className="text-gold-gradient" {...titleGoldAttrs}>{titleGold}</span>
               </>
             ) : null}
           </h1>
-          {subtitle ? <p className="max-w-2xl text-sm leading-relaxed tracking-wide text-white/45 sm:text-base">{subtitle}</p> : null}
+          {subtitle ? <p className="max-w-2xl text-sm leading-relaxed tracking-wide text-white/45 sm:text-base" {...subtitleAttrs}>{subtitle}</p> : null}
           <div className="mt-8 h-0.5 w-16 bg-gradient-to-r from-[#E36F2C] to-transparent" />
         </div>
       </section>
@@ -268,18 +326,93 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
     sourcePrefix: itemText(moduleItemById(inquiryModule, 'form-source-prefix'), 'label', 'en'),
     companyPrefix: itemText(moduleItemById(inquiryModule, 'form-company-prefix'), 'label', 'en'),
   }
+  const titleAttrs = scenarioEditAttrs(scenario, {
+    id: `title-${lang}`,
+    field: lang === 'zh' ? '中文标题' : '英文标题',
+    value: title,
+    patchKey: lang === 'zh' ? 'title_zh' : 'title_en',
+    maxLength: 240,
+    required: true,
+  })
+  const labelAttrs = scenarioEditAttrs(scenario, {
+    id: `label-${lang}`,
+    field: lang === 'zh' ? '中文标签' : '英文标签',
+    value: label,
+    patchKey: payloadPatchKey(scenario, 'label', lang),
+    maxLength: 120,
+  })
+  const titleGoldAttrs = scenarioEditAttrs(scenario, {
+    id: `title-gold-${lang}`,
+    field: lang === 'zh' ? '中文强调标题' : '英文强调标题',
+    value: titleGold,
+    patchKey: payloadPatchKey(scenario, 'titleGold', lang),
+    maxLength: 160,
+  })
+  const subtitleAttrs = scenarioEditAttrs(scenario, {
+    id: `hero-tagline-${lang}`,
+    field: lang === 'zh' ? '中文副标题' : '英文副标题',
+    value: subtitle,
+    patchKey: payloadPatchKey(scenario, 'heroTagline', lang) ?? (lang === 'zh' ? 'summary_zh' : 'summary_en'),
+    input: 'textarea',
+    maxLength: 4000,
+  })
+  const introAttrs = scenarioEditAttrs(scenario, {
+    id: `intro-${lang}`,
+    field: lang === 'zh' ? '中文正文' : '英文正文',
+    value: intro,
+    patchKey: lang === 'zh'
+      ? (scenario.body_zh ? 'body_zh' : 'summary_zh')
+      : (scenario.body_en ? 'body_en' : 'summary_en'),
+    input: 'textarea',
+    maxLength: 20000,
+  })
+  const coverAttrs = scenarioEditAttrs(scenario, {
+    id: 'cover-image',
+    field: '封面图片',
+    value: scenario.cover_image_url,
+    patchKey: 'cover_image_url',
+    input: 'image',
+    maxLength: 1000,
+    nullable: true,
+  })
+  const contactLabelAttrs = scenarioEditAttrs(scenario, {
+    id: `contact-label-${lang}`,
+    field: lang === 'zh' ? '中文按钮文字' : '英文按钮文字',
+    value: contactLabel,
+    patchKey: lang === 'zh' ? 'cta_label_zh' : 'cta_label_en',
+    maxLength: 120,
+  })
+  const contactHrefAttrs = scenarioEditAttrs(scenario, {
+    id: 'contact-href',
+    field: lang === 'zh' ? '按钮链接' : 'CTA link',
+    value: scenario.cta_href || scenarioCtaHref,
+    patchKey: 'cta_href',
+    maxLength: 1000,
+    nullable: true,
+  })
 
   return (
     <main className="bg-[#FAF7F2] text-[#2C2A28]">
       <Navbar />
 
-      {title ? <ScenarioHero label={label} title={title} titleGold={titleGold} subtitle={subtitle} /> : null}
+      {title ? (
+        <ScenarioHero
+          label={label}
+          title={title}
+          titleGold={titleGold}
+          subtitle={subtitle}
+          labelAttrs={labelAttrs}
+          titleAttrs={titleAttrs}
+          titleGoldAttrs={titleGoldAttrs}
+          subtitleAttrs={subtitleAttrs}
+        />
+      ) : null}
 
       {(intro || specs.length > 0 || scenario.cover_image_url) ? (
-        <section className="border-b border-[#E5DED4] py-12 sm:py-16">
+        <section className="border-b border-[#E5DED4] py-12 sm:py-16" {...scenarioVisualModuleAttrs()}>
           <div className="mx-auto grid max-w-7xl grid-cols-1 items-start gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12 lg:px-8">
             <div>
-              {intro ? <p className="mb-8 text-base leading-loose text-[#6B625B]">{intro}</p> : null}
+              {intro ? <p className="mb-8 text-base leading-loose text-[#6B625B]" {...introAttrs}>{intro}</p> : null}
               {specs.length > 0 ? (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   {specs.map((spec) => (
@@ -295,7 +428,7 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
             </div>
             <aside className="space-y-4">
               {scenario.cover_image_url ? (
-                <div className="relative aspect-[4/3] overflow-hidden bg-[#E5DED4]">
+                <div className="relative aspect-[4/3] overflow-hidden bg-[#E5DED4]" {...coverAttrs}>
                   <ProtectedImage
                     src={scenario.cover_image_url}
                     alt={title}
@@ -320,6 +453,7 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
                         key={item.href}
                         href={item.href}
                         data-scenario-route-card="true"
+                        data-visual-open-panel="scenario-route-card"
                         className="group flex min-h-[76px] items-center gap-3 border border-[#E5DED4] bg-[#FAF7F2] px-4 py-3 text-left transition hover:border-[#E36F2C] hover:text-[#C85A1F]"
                       >
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#E5DED4] text-[#B66A3A]">
@@ -341,7 +475,7 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
       ) : null}
 
       {sections.map((section) => (
-        <section key={section.key} className="border-b border-[#E5DED4] bg-[#F5F2ED] py-16">
+        <section key={section.key} className="border-b border-[#E5DED4] bg-[#F5F2ED] py-16" {...scenarioVisualModuleAttrs()}>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {(section.label || section.title) ? (
               <div className="mb-10 text-center">
@@ -376,13 +510,14 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
       ))}
 
       {products.length > 0 ? (
-        <section className="border-b border-[#E5DED4] bg-[#F5F2ED] py-14">
+        <section className="border-b border-[#E5DED4] bg-[#F5F2ED] py-14" {...scenarioVisualModuleAttrs()}>
           <div className="mx-auto flex max-w-7xl flex-wrap justify-center gap-3 px-4 sm:gap-4 sm:px-6 lg:px-8">
             {products.map((product) => product.href ? (
               <Link prefetch={false}
                 key={product.label}
                 href={product.href}
                 data-scenario-product-link="true"
+                data-visual-open-panel="scenario-product-link"
                 className="inline-flex min-h-11 items-center justify-center border border-[#E5DED4] px-6 py-3 text-sm tracking-wider text-[#6B625B] transition-all hover:border-[#E36F2C]/50 hover:text-[#E36F2C]"
               >
                 {product.label}
@@ -401,12 +536,12 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
       ) : null}
 
       {cases.length > 0 ? (
-        <section className="border-b border-[#E5DED4] py-16">
+        <section className="border-b border-[#E5DED4] py-16" {...scenarioVisualModuleAttrs()}>
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-5 px-4 sm:px-6 md:grid-cols-3 lg:px-8">
             {cases.map((item) => (
               <article key={item.name} data-scenario-case-card="true" className="border border-[#E5DED4] bg-white p-5">
                 {item.href ? (
-                  <Link prefetch={false} href={item.href} className="font-bold tracking-wider text-[#2C2A28] hover:text-[#E36F2C]">
+                  <Link prefetch={false} href={item.href} data-visual-open-panel="scenario-case-link" className="font-bold tracking-wider text-[#2C2A28] hover:text-[#E36F2C]">
                     {item.name}
                   </Link>
                 ) : (
@@ -421,12 +556,13 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
       ) : null}
 
       {relatedScenarios.length > 0 ? (
-        <section className="py-14">
+        <section className="py-14" {...scenarioVisualModuleAttrs()}>
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-5 px-4 sm:px-6 md:grid-cols-2 lg:px-8">
             {relatedScenarios.map((item) => (
               <Link prefetch={false}
                 key={item.slug}
                 href={`/scenarios/${item.slug}`}
+                data-visual-open-panel="scenario-related-card"
                 className="group border border-[#E5DED4] bg-white p-6 transition-all hover:border-[#E36F2C]/30"
               >
                 <h2 className="font-bold tracking-wider text-[#2C2A28] transition-colors group-hover:text-[#E36F2C]">
@@ -442,7 +578,7 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
       ) : null}
 
       {(formTitleZh && formTitleEn) ? (
-        <section className="border-t border-[#E5DED4] bg-[#F5F2ED] py-14">
+        <section className="border-t border-[#E5DED4] bg-[#F5F2ED] py-14" {...scenarioVisualModuleAttrs('scenarios:inquiry-form')}>
           <div className="mx-auto max-w-3xl px-4">
             <ConversionInquiryForm
               source={`scenario:${scenario.slug}:inquiry_form`}
@@ -454,19 +590,23 @@ export default function ScenarioPageContent({ scenario, scenarios, pageModules }
               descriptionZh={formDescriptionZh}
               labelsZh={inquiryLabelsZh}
               labelsEn={inquiryLabelsEn}
+              visualModuleId="scenarios:inquiry-form"
             />
           </div>
         </section>
       ) : null}
 
       {(contactLabel && scenarioCtaHref) ? (
-        <section className="border-t border-[#E5DED4] bg-[#F5F2ED] px-4 py-10 text-center">
+        <section className="border-t border-[#E5DED4] bg-[#F5F2ED] px-4 py-10 text-center" {...scenarioVisualModuleAttrs('scenarios:inquiry-form')}>
           <Link prefetch={false}
             href={scenarioCtaHref}
             className="inline-flex min-h-11 items-center justify-center px-8 py-3 text-sm font-bold tracking-wider text-white transition-colors"
             style={{ background: accentColor }}
+            {...contactHrefAttrs}
           >
-            {contactLabel}
+            <span {...contactLabelAttrs}>
+              {contactLabel}
+            </span>
           </Link>
         </section>
       ) : null}

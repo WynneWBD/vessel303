@@ -26,6 +26,7 @@ type Props = {
   value: string
   maxUploadMb: number
   onChange: (url: string) => void
+  commitLabel?: string
 }
 
 const BYTES_PER_MB = 1024 * 1024
@@ -58,7 +59,12 @@ function buildBlobPath(file: File) {
   return `uploads/${y}/${m}/${crypto.randomUUID()}-${safe}`
 }
 
-export default function PageModuleImagePicker({ value, maxUploadMb, onChange }: Props) {
+export default function PageModuleImagePicker({
+  value,
+  maxUploadMb,
+  onChange,
+  commitLabel = '保存当前模块',
+}: Props) {
   const [open, setOpen] = useState(false)
   const [images, setImages] = useState<MediaItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -94,7 +100,7 @@ export default function PageModuleImagePicker({ value, maxUploadMb, onChange }: 
   const handlePick = (url: string) => {
     onChange(url)
     setOpen(false)
-    toast.success('已回填图片 URL，保存当前模块后生效')
+    toast.success(`已选择图片，点击“${commitLabel}”后生效`)
   }
 
   const uploadFile = async (file: File) => {
@@ -119,7 +125,7 @@ export default function PageModuleImagePicker({ value, maxUploadMb, onChange }: 
       })
       onChange(blob.url)
       setOpen(false)
-      toast.success('图片已上传并回填，保存当前模块后生效')
+      toast.success(`图片已上传并回填，点击“${commitLabel}”后生效`)
       setTimeout(() => {
         void loadImages()
       }, 1500)
@@ -183,12 +189,12 @@ export default function PageModuleImagePicker({ value, maxUploadMb, onChange }: 
       {!value ? (
         <div className="flex items-center gap-2 rounded-md border border-dashed border-[#E5DED4] bg-white px-3 py-2 text-xs text-[#8A8580]">
           <ImageIcon size={14} />
-          当前没有图片，可选择、上传或手动填写 URL。
+          当前没有图片，可选择、上传或手动粘贴图片地址。
         </div>
       ) : null}
 
       <p className="text-[11px] leading-5 text-[#8A8580]">
-        最大 {uploadLimitMb} MB。这里只回填 URL，点击“保存当前模块”后才会更新前台。
+        单张不超过 {uploadLimitMb} MB。选择或上传后，点击“{commitLabel}”生效。
       </p>
 
       <Dialog
@@ -200,7 +206,7 @@ export default function PageModuleImagePicker({ value, maxUploadMb, onChange }: 
       >
         <DialogContent className="flex max-h-[80vh] max-w-3xl flex-col">
           <DialogHeader>
-            <DialogTitle>选择页面模块图片</DialogTitle>
+            <DialogTitle>选择页面内容图片</DialogTitle>
             <DialogDescription>从图片库选择一张图片，点击后会回填到当前图片项。</DialogDescription>
           </DialogHeader>
 
@@ -237,7 +243,7 @@ export default function PageModuleImagePicker({ value, maxUploadMb, onChange }: 
           ) : images.length === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-3 py-12 text-center">
               <p className="text-sm text-[#8A8580]">图片库暂无图片</p>
-              <p className="text-xs text-[#8A8580]">可以直接上传新图，上传成功后会自动回填。</p>
+              <p className="text-xs text-[#8A8580]">可以直接上传新图，上传成功后会自动选中。</p>
               <Button type="button" size="sm" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
                 {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                 上传新图

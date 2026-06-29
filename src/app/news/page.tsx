@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { listPublishedNews } from '@/lib/news-db'
 import NewsListView from '@/components/NewsListView'
 import { getUploadVariantsByUrls, mapUploadImageUrl } from '@/lib/upload-image-variants'
-import { getPublishedPageModule, listPublishedPageModules } from '@/lib/page-modules-db'
+import { getDefaultPageModule, getPublishedPageModule, listDefaultPageModules, listPublishedPageModules } from '@/lib/page-modules-db'
 import { buildPageMetadata } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
@@ -13,15 +13,16 @@ export async function generateMetadata(): Promise<Metadata> {
     console.error('[news/metadata] hero module load failed', err)
     return null
   })
-  const title = heroModule?.title_en || heroModule?.title_zh || ''
-  const description = heroModule?.description_en || heroModule?.description_zh || ''
+  const safeHeroModule = heroModule ?? getDefaultPageModule('news', 'hero')
+  const title = safeHeroModule?.title_en || safeHeroModule?.title_zh || ''
+  const description = safeHeroModule?.description_en || safeHeroModule?.description_zh || ''
   if (!title || !description) return {}
 
   return buildPageMetadata({
     title,
     description,
     path: '/news',
-    image: heroModule?.items.find((item) => item.is_visible && item.image_url)?.image_url ?? null,
+    image: safeHeroModule?.items.find((item) => item.is_visible && item.image_url)?.image_url ?? null,
   })
 }
 
@@ -54,6 +55,7 @@ export default async function NewsPage() {
   })
   const displayRows = credibleRows.map((item) => ({
     ...item,
+    cover_image_source_url: item.cover_image_url,
     cover_image_url: mapUploadImageUrl(item.cover_image_url, imageVariants, 'card') || item.cover_image_url,
   }))
   const pageModules = await listPublishedPageModules('news').catch((err) => {
@@ -61,5 +63,6 @@ export default async function NewsPage() {
     return []
   })
 
-  return <NewsListView rows={displayRows} pageModules={pageModules} />
+  const safePageModules = pageModules.length > 0 ? pageModules : listDefaultPageModules('news')
+  return <NewsListView rows={displayRows} pageModules={safePageModules} />
 }

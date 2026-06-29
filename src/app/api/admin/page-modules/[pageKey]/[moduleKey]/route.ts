@@ -5,7 +5,7 @@ import { requireAdmin } from '@/lib/auth-check'
 import { logAdminAction } from '@/lib/leads-db'
 import {
   createPageModuleSnapshot,
-  getPageModule,
+  getPageModuleWithDefault,
   isPageModulePageKey,
   PAGE_MODULE_PUBLIC_CACHE_TAG,
   pageModuleInputChanged,
@@ -58,7 +58,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  const pageModule = await getPageModule(pageKey, moduleKey)
+  const pageModule = await getPageModuleWithDefault(pageKey, moduleKey)
   if (!pageModule) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   return NextResponse.json({ data: pageModule })
@@ -88,7 +88,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     )
   }
 
-  const before = await getPageModule(pageKey, moduleKey)
+  const before = await getPageModuleWithDefault(pageKey, moduleKey)
   if (before && pageModuleInputChanged(before, parsed.data)) {
     await createPageModuleSnapshot(before, admin.id)
     await prunePageModuleSnapshots(pageKey, moduleKey)

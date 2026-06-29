@@ -1,30 +1,23 @@
 import type { Metadata } from "next";
-import { DM_Sans, Inter } from "next/font/google";
 import { Suspense } from "react";
+import "@fontsource/dm-sans/300.css";
+import "@fontsource/dm-sans/400.css";
+import "@fontsource/dm-sans/500.css";
+import "@fontsource/dm-sans/700.css";
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/500.css";
 import "./globals.css";
 import ImageProtection from "@/components/ImageProtection";
 import SiteAnalyticsTracker from "@/components/SiteAnalyticsTracker";
 import FloatingContact from "@/components/FloatingContact";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SiteModulesProvider } from "@/contexts/SiteModulesContext";
+import VisualEditorPreviewBridge from "@/components/VisualEditorPreviewBridge";
+import VisualEditorPreviewBridgeScript from "@/components/VisualEditorPreviewBridgeScript";
 import { getGoogleSiteVerificationToken } from "@/lib/google-site-verification";
 import { getStoredSiteSettings, type SiteSettings } from "@/lib/admin-settings-db";
-import { listPublishedPageModules } from "@/lib/page-modules-db";
+import { listDefaultPageModules, listPublishedPageModules } from "@/lib/page-modules-db";
 import { SITE_URL } from "@/lib/seo";
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
-  variable: "--font-heading",
-  display: "swap",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-body",
-  display: "swap",
-});
 
 const googleSiteVerification = getGoogleSiteVerificationToken();
 
@@ -81,20 +74,25 @@ export default async function RootLayout({
 }>) {
   const siteModules = await listPublishedPageModules('site').catch((err) => {
     console.error('[layout] site modules unavailable', err);
-    return [];
+    return listDefaultPageModules('site');
   });
+  const safeSiteModules = siteModules.length > 0 ? siteModules : listDefaultPageModules('site');
 
   return (
-    <html lang="en" className={`h-full antialiased ${dmSans.variable} ${inter.variable}`}>
+    <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-[#F5F2ED]">
         <LanguageProvider>
-          <SiteModulesProvider initialModules={siteModules}>
+          <SiteModulesProvider initialModules={safeSiteModules}>
             {children}
             <FloatingContact />
           </SiteModulesProvider>
         </LanguageProvider>
         <Suspense fallback={null}>
           <SiteAnalyticsTracker />
+        </Suspense>
+        <VisualEditorPreviewBridgeScript />
+        <Suspense fallback={null}>
+          <VisualEditorPreviewBridge />
         </Suspense>
         <ImageProtection />
       </body>

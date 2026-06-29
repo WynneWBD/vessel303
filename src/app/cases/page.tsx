@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import CasesPageContent from '@/components/pages/CasesPageContent'
 import { listPublishedProjectCases } from '@/lib/project-cases-db'
+import { staticProjectCases } from '@/lib/project-cases-static'
 import { getUploadVariantsByUrls, mapUploadImageUrl } from '@/lib/upload-image-variants'
-import { getPublishedPageModule, listPublishedPageModules } from '@/lib/page-modules-db'
+import { getDefaultPageModule, getPublishedPageModule, listDefaultPageModules, listPublishedPageModules } from '@/lib/page-modules-db'
 import { mapCaseStaticImageUrl } from '@/lib/case-static-image-variants'
 import { buildPageMetadata } from '@/lib/seo'
 
@@ -14,22 +15,23 @@ export async function generateMetadata(): Promise<Metadata> {
     return null
   })
 
-  const title = heroModule?.title_en || heroModule?.title_zh || ''
-  const description = heroModule?.description_en || heroModule?.description_zh || ''
+  const safeHeroModule = heroModule ?? getDefaultPageModule('cases', 'hero')
+  const title = safeHeroModule?.title_en || safeHeroModule?.title_zh || ''
+  const description = safeHeroModule?.description_en || safeHeroModule?.description_zh || ''
   if (!title || !description) return {}
 
   return buildPageMetadata({
     title,
     description,
     path: '/cases',
-    image: heroModule?.items.find((item) => item.is_visible && item.image_url)?.image_url ?? null,
+    image: safeHeroModule?.items.find((item) => item.is_visible && item.image_url)?.image_url ?? null,
   })
 }
 
 export default async function CasesPage() {
   const cases = await listPublishedProjectCases().catch((err) => {
     console.error('[cases] project case db unavailable', err)
-    return []
+    return staticProjectCases
   })
   const imageVariants = await getUploadVariantsByUrls(cases.map((item) => item.cover_image_url)).catch((err) => {
     console.error('[cases] load case image variants failed', err)
@@ -41,7 +43,7 @@ export default async function CasesPage() {
   }))
   const pageModules = await listPublishedPageModules('cases').catch((err) => {
     console.error('[cases] page modules unavailable', err)
-    return []
+    return listDefaultPageModules('cases')
   })
 
   return <CasesPageContent cases={displayCases} pageModules={pageModules} />

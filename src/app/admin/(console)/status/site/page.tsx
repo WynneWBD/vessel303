@@ -79,7 +79,7 @@ export default async function AdminStatusSitePage() {
           <p className="text-sm font-semibold text-[#1889B6]">站点健康</p>
           <h1 className="mt-2 text-2xl font-bold text-[#1E2C31]">页面草稿、SEO、媒体和配置状态</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-            第一阶段只聚合现有建站数据，不接外部流量分析，不改 sitemap / robots 生成逻辑。
+            当前聚合建站状态、站点信息、SEO 入口和页面检查结果。
           </p>
         </div>
 
@@ -87,7 +87,7 @@ export default async function AdminStatusSitePage() {
           <MetricCard
             title="页面草稿"
             value={site.pages.total}
-            detail={`模块草稿 ${formatNumber(site.pages.moduleDrafts)} / 结构草稿 ${formatNumber(site.pages.structureDrafts)}`}
+            detail={`内容草稿 ${formatNumber(site.pages.moduleDrafts)} / 布局草稿 ${formatNumber(site.pages.structureDrafts)}`}
             href={VISUAL_HOME_HERO_HREF}
             Icon={STATUS_ICONS.LayoutTemplate}
             tone={site.pages.total > 0 ? 'orange' : 'green'}
@@ -262,13 +262,13 @@ function SiteReleasePreflightBridge({
       value: site.media.issueCount > 0 ? `${formatNumber(site.media.issueCount)} 风险` : formatBytes(site.media.bytes),
       detail: `${formatNumber(site.media.count)} 个素材；${mediaStorageWarn ? '容量偏高' : '容量可控'}；单图上限 ${formatNumber(site.media.maxUploadMb)} MB。`,
       href: mediaBlocked ? '/admin/site/media?view=issues' : '/admin/site/media#media-replacement-workbench',
-      actionLabel: mediaBlocked ? '处理素材风险' : '替换工作台',
+      actionLabel: mediaBlocked ? '处理素材风险' : '素材管理',
       tone: site.media.issueCount > 0 ? 'warning' : mediaStorageWarn ? 'review' : 'ready',
       Icon: STATUS_ICONS.Package,
     },
     {
       key: 'config-boundary',
-      title: role === 'admin' ? '配置边界' : '配置可见性',
+      title: role === 'admin' ? '站点配置' : '配置状态',
       value: role === 'admin' ? `${formatNumber(configIssues)} 异常` : '受限',
       detail:
         role === 'admin'
@@ -296,9 +296,9 @@ function SiteReleasePreflightBridge({
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Release Check</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">站点发布前复核桥</h2>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">站点发布检查</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把内容健康、来源 SEO、站点文件、页面草稿、配置状态和前台复验入口放到同一张发布前清单。
+            查看内容、SEO、站点文件、页面草稿、配置状态和前台复验。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -384,7 +384,7 @@ function buildSiteHealthRows(site: SiteMetrics, configIssues: number, role: Admi
       scope: '页面',
       title: '页面草稿收口',
       value: formatNumber(site.pages.total),
-      detail: `模块草稿 ${formatNumber(site.pages.moduleDrafts)} / 结构草稿 ${formatNumber(site.pages.structureDrafts)}`,
+      detail: `内容草稿 ${formatNumber(site.pages.moduleDrafts)} / 布局草稿 ${formatNumber(site.pages.structureDrafts)}`,
       ok: site.pages.total === 0,
       status: site.pages.total > 0 ? '待确认' : '正常',
       href: VISUAL_HOME_HERO_HREF,
@@ -410,7 +410,7 @@ function buildSiteHealthRows(site: SiteMetrics, configIssues: number, role: Admi
       ok: !mediaWarn,
       status: site.media.issueCount > 0 ? '风险素材' : mediaStorageWarn ? '容量偏高' : '可控',
       href: site.media.issueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media#media-replacement-workbench',
-      actionLabel: site.media.issueCount > 0 ? '处理风险' : '替换工作台',
+      actionLabel: site.media.issueCount > 0 ? '处理风险' : '素材管理',
     },
     {
       key: 'site-files',
@@ -464,6 +464,16 @@ function siteOperationLabel(tone: SiteOperationTone): string {
   return '正常'
 }
 
+function siteOperationPriorityDisplay(priority: string): string {
+  if (priority === 'P0') return '高优先'
+  if (priority === 'P1') return '优先'
+  if (priority === 'P2') return '复核'
+  if (priority === 'P3') return '观察'
+  if (priority === 'OK') return '正常'
+  if (priority === 'HOLD') return '受限'
+  return priority
+}
+
 function buildSiteOperationRows(site: SiteMetrics, configIssues: number, role: AdminRole): SiteOperationRow[] {
   const filesOk = site.sitemapOk && site.robotsOk
   const pageDraftsOpen = site.pages.total > 0
@@ -491,10 +501,10 @@ function buildSiteOperationRows(site: SiteMetrics, configIssues: number, role: A
       key: 'page-draft-release',
       priority: pageDraftsOpen ? 'P1' : 'P3',
       stage: '发布收口',
-      title: '页面模块 / 结构草稿',
+      title: '页面内容 / 布局草稿',
       owner: '网站管理 / 可视化编辑',
       value: `${formatNumber(site.pages.total)} 草稿`,
-      evidence: `模块草稿 ${formatNumber(site.pages.moduleDrafts)} / 结构草稿 ${formatNumber(site.pages.structureDrafts)}。`,
+      evidence: `内容草稿 ${formatNumber(site.pages.moduleDrafts)} / 布局草稿 ${formatNumber(site.pages.structureDrafts)}。`,
       impact: pageDraftsOpen ? '草稿未确认会造成后台编辑状态和线上页面预期不一致。' : '页面草稿已收口。',
       href: VISUAL_HOME_HERO_HREF,
       actionLabel: pageDraftsOpen ? '处理草稿' : '查看编辑器',
@@ -529,7 +539,7 @@ function buildSiteOperationRows(site: SiteMetrics, configIssues: number, role: A
           ? '媒体容量偏高，后续会影响素材管理和页面加载治理。'
           : '媒体风险和容量处于当前预警线内。',
       href: site.media.issueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media#media-replacement-workbench',
-      actionLabel: site.media.issueCount > 0 ? '处理风险' : '替换工作台',
+      actionLabel: site.media.issueCount > 0 ? '处理风险' : '素材管理',
       tone: mediaWarn ? 'warning' : 'ready',
       Icon: STATUS_ICONS.Package,
     },
@@ -587,7 +597,7 @@ function SiteOperationLedger({ rows }: { rows: SiteOperationRow[] }) {
         <div>
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
             <STATUS_ICONS.ListChecks size={15} />
-            Site Operations Ledger
+            站点处理台账
           </div>
           <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">站点体检处理队列</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
@@ -624,7 +634,7 @@ function SiteOperationLedger({ rows }: { rows: SiteOperationRow[] }) {
             >
               <div className="flex items-center gap-2">
                 <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-bold ${siteOperationBadgeClassName(row.tone)}`}>
-                  {row.priority}
+                  {siteOperationPriorityDisplay(row.priority)}
                 </span>
                 <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ${siteOperationBadgeClassName(row.tone)}`}>
                   {siteOperationLabel(row.tone)}
@@ -741,7 +751,7 @@ function SourceSeoReleaseBridge({ seo }: { seo: SiteMetrics['seo'] }) {
       missing: seo.productsMissing,
       href: '/admin/content/products/list?view=incomplete&issue=seo',
       leadHref: '/admin/customers/leads?source_type=product#product-source-lead-queue-handoff',
-      detail: '产品 SEO 待补会影响目录和详情页搜索摘要，处理后回到来源健康台账复盘访问和线索。',
+      detail: '产品 SEO 待补会影响目录和详情页搜索摘要。',
     },
     {
       key: 'case',
@@ -750,7 +760,7 @@ function SourceSeoReleaseBridge({ seo }: { seo: SiteMetrics['seo'] }) {
       missing: seo.projectsMissing,
       href: '/admin/content/projects/list?view=incomplete#case-conversion-content-backfill-desk',
       leadHref: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
-      detail: '案例展示字段不足会削弱项目证明链，处理后回看案例来源访问、动作和线索承接。',
+      detail: '案例展示字段不足会影响项目证明和线索质量。',
     },
     {
       key: 'news',
@@ -769,15 +779,15 @@ function SourceSeoReleaseBridge({ seo }: { seo: SiteMetrics['seo'] }) {
       <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Source SEO</p>
-          <h2 className="mt-1 text-sm font-bold text-[#1E2C31]">来源与 SEO 接力处理</h2>
+          <h2 className="mt-1 text-sm font-bold text-[#1E2C31]">来源与 SEO</h2>
           <p className="mt-1 text-xs leading-5 text-[#61767D]">
-            从站点健康页查看来源 SEO，再回到内容、SEO 和来源线索队列。
+            查看来源、SEO、内容和线索状态。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <StatusPill ok={openRows === 0} label={openRows > 0 ? `${formatNumber(openRows)} 类待补` : '来源 SEO 正常'} />
           <BridgeLink href="/admin/status#source-seo-health" label="健康台账" />
-          <BridgeLink href="/admin/site#source-seo-control" label="来源工作台" />
+          <BridgeLink href="/admin/site#source-seo-control" label="来源数据" />
         </div>
       </div>
 

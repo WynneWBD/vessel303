@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import MediaKitPageContent from '@/components/pages/MediaKitPageContent'
 import { listPublicB9ContentItems } from '@/lib/b9-content-db'
-import { getPublishedPageModule, listPublishedPageModules } from '@/lib/page-modules-db'
+import { getDefaultPageModule, getPublishedPageModule, listDefaultPageModules, listPublishedPageModules } from '@/lib/page-modules-db'
 import { buildPageMetadata } from '@/lib/seo'
 
 export const revalidate = 300
@@ -14,7 +14,7 @@ async function loadMediaKitHeroModule() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const heroModule = await loadMediaKitHeroModule()
+  const heroModule = (await loadMediaKitHeroModule()) ?? getDefaultPageModule('media-kit', 'hero')
   const title = heroModule?.title_en || heroModule?.title_zh || ''
   const description = heroModule?.description_en || heroModule?.description_zh || ''
   if (!title || !description) return {}
@@ -38,5 +38,6 @@ export default async function MediaKitPage() {
     }),
   ])
 
-  return <MediaKitPageContent initialResources={resources} initialPageModules={pageModules} />
+  const safePageModules = pageModules.length > 0 ? pageModules : listDefaultPageModules('media-kit')
+  return <MediaKitPageContent initialResources={resources} initialPageModules={safePageModules} />
 }

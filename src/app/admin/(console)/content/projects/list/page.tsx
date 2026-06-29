@@ -841,7 +841,7 @@ function getSideNavGroups(summary: ProjectSummary): AdminSideNavGroup[] {
       ],
     },
     {
-      title: '后续规划',
+      title: '运营维护',
       items: [
         { key: 'project-new', label: '新增项目', href: '/admin/content/projects/new', Icon: Plus },
         { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },

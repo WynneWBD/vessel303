@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { ImageIcon } from 'lucide-react';
 import ProtectedImage from '@/components/ProtectedImage';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -99,14 +100,14 @@ function useReveal(threshold = 0.1) {
 }
 
 function Reveal({
-  children, delay = 0, className = '', from = 'bottom',
+  children, delay = 0, className = '', from = 'bottom', ...props
 }: {
   children: React.ReactNode; delay?: number; className?: string; from?: 'bottom' | 'left' | 'right' | 'none';
-}) {
+} & Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'style'>) {
   const { ref, visible } = useReveal();
   const translateMap = { bottom: 'translateY(28px)', left: 'translateX(-28px)', right: 'translateX(28px)', none: 'none' };
   return (
-    <div ref={ref} className={className} style={{
+    <div {...props} ref={ref} className={className} style={{
       opacity: visible ? 1 : 0,
       transform: visible ? 'translate(0)' : translateMap[from],
       transition: `opacity 0.65s ease ${delay}ms, transform 0.65s ease ${delay}ms`,
@@ -233,6 +234,55 @@ function moduleTitleText(pageModule: RemotePageModule | null, zh: boolean) {
   return cleanAboutModuleTitle((zh ? pageModule?.title_zh : pageModule?.title_en) || '');
 }
 
+function subscribeVisualDraftPreview() {
+  return () => undefined;
+}
+
+function getVisualDraftPreviewSnapshot() {
+  return typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('visualDraft') === '1';
+}
+
+function getVisualDraftPreviewServerSnapshot() {
+  return false;
+}
+
+function useVisualDraftPreview() {
+  return useSyncExternalStore(
+    subscribeVisualDraftPreview,
+    getVisualDraftPreviewSnapshot,
+    getVisualDraftPreviewServerSnapshot,
+  );
+}
+
+function visualOpenPanelAttrs(key: string) {
+  return { 'data-visual-open-panel': key };
+}
+
+function VisualImageEditButton({
+  itemId,
+  label = '编辑图片',
+  className = 'left-3 top-3',
+}: {
+  itemId: string;
+  label?: string;
+  className?: string;
+}) {
+  const visualDraftPreview = useVisualDraftPreview();
+  if (!visualDraftPreview || !itemId) return null;
+
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      className={`absolute ${className} z-30 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-black/45 text-white shadow-[0_12px_28px_rgba(0,0,0,0.24)] backdrop-blur-sm transition hover:border-[#E36F2C] hover:bg-[#E36F2C] focus:outline-none focus:ring-2 focus:ring-[#E36F2C] focus:ring-offset-2 focus:ring-offset-transparent`}
+      data-page-module-item={itemId}
+      data-page-module-field="image_url"
+    >
+      <ImageIcon aria-hidden="true" className="h-4 w-4" />
+    </button>
+  );
+}
+
 export default function AboutPageContent({
   initialModules = null,
 }: {
@@ -240,6 +290,7 @@ export default function AboutPageContent({
 }) {
   const { lang } = useLanguage();
   const zh = lang === 'zh';
+  const visualDraftPreview = useVisualDraftPreview();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeTech, setActiveTech] = useState<Tech | null>(null);
   const pageModules = useAboutPageModules(initialModules);
@@ -269,6 +320,12 @@ export default function AboutPageContent({
   const partnerItems = moduleItems(partnersModule);
   const showHero = visibleResolvedModule(dynamicModules, 'hero');
   const heroImage = optimizedAboutImage(itemById(heroItems, 'about-hero-image')?.image_url || '');
+  const heroEyebrowText = localText(itemById(heroItems, 'about-hero-eyebrow'), zh, '')
+    || (visualDraftPreview ? (zh ? '添加关于我们眉标' : 'Add about eyebrow') : '');
+  const heroHeadlineText = localText(itemById(heroItems, 'about-hero-headline'), zh, '')
+    || (visualDraftPreview ? (zh ? '添加关于我们标题' : 'Add about headline') : '');
+  const heroSubtitleText = localText(itemById(heroItems, 'about-hero-subtitle'), zh, '')
+    || (visualDraftPreview ? (zh ? '添加关于我们说明' : 'Add about subtitle') : '');
   const storyImage = optimizedAboutImage(itemById(storyItems, 'story-image')?.image_url || '');
   const storyBadge = itemById(storyItems, 'story-badge');
   const showStats = visibleResolvedModule(dynamicModules, 'stats');
@@ -332,10 +389,11 @@ export default function AboutPageContent({
   const showFounder = visibleResolvedModule(dynamicModules, 'founder');
   const founderPhoto = optimizedAboutImage(itemById(founderItems, 'founder-photo')?.image_url || '');
   const founderTags = ['founder-tag-01', 'founder-tag-02', 'founder-tag-03']
-    .map((id) => {
-      return localText(itemById(founderItems, id), zh, '');
-    })
-    .filter(Boolean);
+    .map((id) => ({
+      id,
+      label: localText(itemById(founderItems, id), zh, ''),
+    }))
+    .filter((item) => Boolean(item.label));
   const showServices = visibleResolvedModule(dynamicModules, 'services');
   const serviceCards = hasModuleItemArray(servicesModule)
     ? serviceModuleItems
@@ -388,54 +446,76 @@ export default function AboutPageContent({
     {
       visible: showBrandStory,
       id: 'brand-story',
+      moduleId: 'about:brand-story',
+      moduleKey: 'brand-story',
       href: '#brand-story',
       label: moduleTitleText(brandStoryModule, zh) || localText(itemById(storyItems, 'story-kicker'), zh, ''),
     },
     {
       visible: showFactory,
       id: 'factory',
+      moduleId: 'about:factory',
+      moduleKey: 'factory',
       href: '#factory',
       label: moduleTitleText(factoryModule, zh) || localText(itemById(factoryItems, 'factory-kicker'), zh, ''),
     },
     {
       visible: showTimeline && timelineEntries.length > 0,
       id: 'timeline',
+      moduleId: 'about:timeline',
+      moduleKey: 'timeline',
       href: '#timeline',
       label: moduleTitleText(timelineModule, zh) || localText(itemById(timelineItems, 'timeline-kicker'), zh, ''),
     },
     {
       visible: showTechnologies && technologyCards.length > 0,
       id: 'technologies',
+      moduleId: 'about:technologies',
+      moduleKey: 'technologies',
       href: '#technologies',
       label: moduleTitleText(technologiesModule, zh) || localText(itemById(techModuleItems, 'tech-kicker'), zh, ''),
     },
     {
       visible: showRecognitionAwards && awards.length > 0,
       id: 'certifications',
+      moduleId: 'about:recognition-awards',
+      moduleKey: 'recognition-awards',
       href: '#certifications',
       label: moduleTitleText(recognitionAwardsModule, zh),
     },
     {
       visible: showPartners && partnerImages.length > 0,
       id: 'partners',
+      moduleId: 'about:partners',
+      moduleKey: 'partners',
       href: '#partners',
       label: moduleTitleText(partnersModule, zh) || localText(itemById(partnerItems, 'partners-kicker'), zh, ''),
     },
     {
       visible: showFounder,
       id: 'founder',
+      moduleId: 'about:founder',
+      moduleKey: 'founder',
       href: '#founder',
       label: moduleTitleText(founderModule, zh) || localText(itemById(founderItems, 'founder-section-kicker'), zh, ''),
     },
     {
       visible: showServices && serviceCards.length > 0,
       id: 'services',
+      moduleId: 'about:services',
+      moduleKey: 'services',
       href: '#services',
       label: moduleTitleText(servicesModule, zh) || localText(itemById(serviceModuleItems, 'services-kicker'), zh, ''),
     },
   ]
     .filter((item) => item.visible && item.label)
-    .map((item) => ({ id: item.id, href: item.href, label: item.label }));
+    .map((item) => ({
+      id: item.id,
+      moduleId: item.moduleId,
+      moduleKey: item.moduleKey,
+      href: item.href,
+      label: item.label,
+    }));
 
   const openTech = (tech: Tech) => {
     setActiveTech(tech);
@@ -454,6 +534,8 @@ export default function AboutPageContent({
         data-page-module="about:hero"
         data-page-key="about"
         data-module-key="hero"
+        data-page-module-item="about-hero-image"
+        data-page-module-field="image_url"
       >
         {heroImage ? (
           <Image
@@ -470,14 +552,19 @@ export default function AboutPageContent({
             data-page-module-field="image_url"
           />
         ) : null}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#241F1B] via-[#241F1B]/50 to-[#241F1B]/10" />
-        <div className="relative z-10 max-w-6xl mx-auto px-6 pb-16 w-full">
+        <VisualImageEditButton itemId="about-hero-image" label={zh ? '编辑首屏图片' : 'Edit hero image'} className="left-4 top-24" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#241F1B] via-[#241F1B]/50 to-[#241F1B]/10" />
+        <div
+          className="relative z-10 max-w-6xl mx-auto px-6 pb-16 w-full"
+          data-page-module-item="about-hero-headline"
+          data-page-module-field={zh ? 'label_zh' : 'label_en'}
+        >
           <p
             className="text-[#E36F2C] text-xs tracking-[0.4em] uppercase font-medium mb-5"
             data-page-module-item="about-hero-eyebrow"
             data-page-module-field={zh ? 'label_zh' : 'label_en'}
           >
-            {localText(itemById(heroItems, 'about-hero-eyebrow'), zh, '')}
+            {heroEyebrowText}
           </p>
           <h1
             className="text-4xl sm:text-7xl lg:text-8xl font-bold text-white leading-[1.05] tracking-tight mb-5 break-words"
@@ -485,18 +572,14 @@ export default function AboutPageContent({
             data-page-module-item="about-hero-headline"
             data-page-module-field={zh ? 'label_zh' : 'label_en'}
           >
-            {localText(itemById(heroItems, 'about-hero-headline'), zh, '')}
+            {heroHeadlineText}
           </h1>
           <p
             className="text-white/60 text-lg sm:text-xl max-w-xl leading-relaxed"
             data-page-module-item="about-hero-subtitle"
             data-page-module-field={zh ? 'label_zh' : 'label_en'}
           >
-            {localText(
-              itemById(heroItems, 'about-hero-subtitle'),
-              zh,
-              '',
-            )}
+            {heroSubtitleText}
           </p>
         </div>
       </section>
@@ -516,6 +599,10 @@ export default function AboutPageContent({
                   key={item.id}
                   href={item.href}
                   className="whitespace-nowrap border-b border-transparent pb-1 transition-colors hover:border-[#E36F2C] hover:text-[#F5F2ED] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#E36F2C]"
+                  data-page-module={item.moduleId}
+                  data-page-key="about"
+                  data-module-key={item.moduleKey}
+                  data-page-module-field={zh ? 'title_zh' : 'title_en'}
                 >
                   {item.label}
                 </a>
@@ -537,7 +624,13 @@ export default function AboutPageContent({
           <div className="max-w-6xl mx-auto px-6">
             <div className="grid grid-cols-3 lg:grid-cols-6 divide-x divide-[#E5E0DA]">
               {aboutStats.map((s, i) => (
-                <Reveal key={`${s.value}-${i}`} delay={i * 50} className="py-8 px-4 text-center">
+                <Reveal
+                  key={`${s.value}-${i}`}
+                  delay={i * 50}
+                  className="py-8 px-4 text-center"
+                  data-page-module-item={s.id}
+                  data-page-module-field={zh ? 'value_zh' : 'value_en'}
+                >
                   <div
                     className="text-2xl sm:text-3xl font-bold text-[#E36F2C] mb-1"
                     style={{ fontFamily: 'DM Sans, sans-serif' }}
@@ -572,7 +665,10 @@ export default function AboutPageContent({
       >
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
           <div>
-            <Reveal>
+            <Reveal
+              data-page-module-item="story-heading"
+              data-page-module-field={zh ? 'label_zh' : 'label_en'}
+            >
               <p
                 className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3"
                 data-page-module-item="story-kicker"
@@ -593,7 +689,11 @@ export default function AboutPageContent({
                 )}
               </h2>
             </Reveal>
-            <Reveal delay={100}>
+            <Reveal
+              delay={100}
+              data-page-module-item={storyParagraphs[0]?.id}
+              data-page-module-field={zh ? 'content_zh' : 'content_en'}
+            >
               <div
                 className="space-y-5 text-[#241F1B]/70 text-base leading-relaxed"
                 style={{ fontFamily: 'Inter, sans-serif' }}
@@ -628,6 +728,7 @@ export default function AboutPageContent({
                 className="object-cover"
                 unoptimized={!canUseNextImageOptimization(storyImage)}
               />
+              <VisualImageEditButton itemId="story-image" label={zh ? '编辑品牌故事图片' : 'Edit story image'} />
             </div>
             {/* stat badge */}
             <div className="absolute -bottom-5 -left-5 bg-[#E36F2C] text-white px-6 py-4 shadow-xl">
@@ -664,7 +765,11 @@ export default function AboutPageContent({
         data-module-key="factory"
       >
         <div className="max-w-6xl mx-auto">
-          <Reveal className="mb-12">
+          <Reveal
+            className="mb-12"
+            data-page-module-item="factory-heading"
+            data-page-module-field={zh ? 'label_zh' : 'label_en'}
+          >
             <p
               className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3"
               data-page-module-item="factory-kicker"
@@ -706,6 +811,7 @@ export default function AboutPageContent({
                 data-page-module-field="image_url"
               >
                 <ProtectedImage src={factoryHeroImage} alt={localText(itemById(factoryItems, 'factory-image-hero'), zh, '')} fill sizes="(min-width: 1024px) 1152px, 100vw" className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" />
+                <VisualImageEditButton itemId="factory-image-hero" label={zh ? '编辑工厂主图' : 'Edit factory hero image'} />
               </div>
             </Reveal>
             ) : null}
@@ -719,6 +825,7 @@ export default function AboutPageContent({
                     data-page-module-field="image_url"
                   >
                     <ProtectedImage src={item.src} alt={localText(itemById(factoryItems, item.id), zh, '')} fill sizes="(min-width: 1024px) 576px, 50vw" className="object-cover group-hover:scale-105 transition-transform duration-700" containerClassName="group" />
+                    <VisualImageEditButton itemId={item.id} label={zh ? '编辑工厂图片' : 'Edit factory image'} />
                   </div>
                 </Reveal>
               ))}
@@ -739,7 +846,11 @@ export default function AboutPageContent({
         data-module-key="timeline"
       >
         <div className="max-w-6xl mx-auto">
-          <Reveal className="mb-14">
+          <Reveal
+            className="mb-14"
+            data-page-module-item="timeline-heading"
+            data-page-module-field={zh ? 'label_zh' : 'label_en'}
+          >
             <p
               className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3"
               data-page-module-item="timeline-kicker"
@@ -763,6 +874,7 @@ export default function AboutPageContent({
                 <div
                   className={`grid sm:grid-cols-[120px_1fr] gap-0 border-t border-[#E5E0DA] py-7 group ${i === timelineEntries.length - 1 ? 'border-b' : ''}`}
                   data-page-module-item={item.id}
+                  data-page-module-field={zh ? 'content_zh' : 'content_en'}
                 >
                   <div className="flex items-start pt-1">
                     <span
@@ -799,7 +911,11 @@ export default function AboutPageContent({
         data-module-key="technologies"
       >
         <div className="max-w-4xl mx-auto">
-          <Reveal className="mb-12">
+          <Reveal
+            className="mb-12"
+            data-page-module-item="tech-heading"
+            data-page-module-field={zh ? 'label_zh' : 'label_en'}
+          >
             <p
               className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-4"
               data-page-module-item="tech-kicker"
@@ -834,8 +950,10 @@ export default function AboutPageContent({
                 <button
                   type="button"
                   onClick={() => openTech(item.tech)}
+                  {...visualOpenPanelAttrs('about-technology-card')}
                   className="group w-full flex items-start gap-5 py-8 border-b border-[#E5E0DA] text-left hover:bg-[#EDE8E0]/50 transition-colors duration-200 px-2"
                   data-page-module-item={item.id}
+                  data-page-module-field={zh ? 'label_zh' : 'label_en'}
                 >
                   <span className="shrink-0 w-2.5 h-2.5 rounded-full bg-[#E36F2C] mt-2.5" />
                   <div className="flex-1 min-w-0">
@@ -866,17 +984,31 @@ export default function AboutPageContent({
 
       {/* ── S8 Certifications ────────────────────────────────── */}
       {showRecognitionAwards && awards.length > 0 ? (
-      <section id="certifications" className="bg-[#241F1B] py-24 px-6" style={{ order: 40_000 }}>
+      <section
+        id="certifications"
+        className="bg-[#241F1B] py-24 px-6"
+        style={{ order: moduleVisualOrder(dynamicModules, 'recognition-awards', ABOUT_ORDER_GROUPS.preCertifications, 70) }}
+        data-page-module="about:recognition-awards"
+        data-page-key="about"
+        data-module-key="recognition-awards"
+      >
         <div className="max-w-6xl mx-auto">
-          <Reveal className="mb-12">
+          <Reveal
+            className="mb-12"
+            data-page-module-field={zh ? 'title_zh' : 'title_en'}
+          >
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <h2
                 className="text-4xl sm:text-5xl font-bold text-[#F5F2ED]"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
+                data-page-module-field={zh ? 'title_zh' : 'title_en'}
               >
                 {zh ? recognitionAwardsModule?.title_zh : recognitionAwardsModule?.title_en}
               </h2>
-              <p className="text-[#8A8580] text-sm max-w-xs leading-relaxed">
+              <p
+                className="text-[#8A8580] text-sm max-w-xs leading-relaxed"
+                data-page-module-field={zh ? 'description_zh' : 'description_en'}
+              >
                 {zh ? recognitionAwardsModule?.description_zh : recognitionAwardsModule?.description_en}
               </p>
             </div>
@@ -893,8 +1025,9 @@ export default function AboutPageContent({
                 <div
                   className="bg-white p-3 min-h-full overflow-hidden group flex flex-col gap-3"
                   data-page-module-item={award.id}
+                  data-page-module-field={zh ? 'label_zh' : 'label_en'}
                 >
-                  <div className="relative aspect-[3/4]">
+                  <div className="relative aspect-[3/4]" data-page-module-field="image_url">
                     <Image
                       src={optimizedAboutImage(award.src)}
                       alt={zh ? award.zh : award.en}
@@ -906,6 +1039,7 @@ export default function AboutPageContent({
                       unoptimized={!canUseNextImageOptimization(optimizedAboutImage(award.src))}
                       data-page-module-field="image_url"
                     />
+                    <VisualImageEditButton itemId={award.id} label={zh ? '编辑认证图片' : 'Edit award image'} />
                   </div>
                   <p
                     className="text-[#8A8580] text-xs leading-snug text-center min-h-[2.5rem] flex items-center justify-center"
@@ -932,7 +1066,11 @@ export default function AboutPageContent({
         data-module-key="partners"
       >
         <div className="max-w-6xl mx-auto">
-          <Reveal className="mb-12">
+          <Reveal
+            className="mb-12"
+            data-page-module-item="partners-heading"
+            data-page-module-field={zh ? 'label_zh' : 'label_en'}
+          >
             <p
               className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3"
               data-page-module-item="partners-kicker"
@@ -981,6 +1119,7 @@ export default function AboutPageContent({
                     className="object-contain p-3"
                     unoptimized={!canUseNextImageOptimization(partner.src)}
                   />
+                  <VisualImageEditButton itemId={partner.id} label={zh ? '编辑伙伴图片' : 'Edit partner image'} />
                 </div>
               </Reveal>
             ))}
@@ -1000,7 +1139,11 @@ export default function AboutPageContent({
         data-module-key="founder"
       >
         <div className="max-w-6xl mx-auto">
-          <Reveal className="mb-12">
+          <Reveal
+            className="mb-12"
+            data-page-module-item="founder-section-heading"
+            data-page-module-field={zh ? 'label_zh' : 'label_en'}
+          >
             <p
               className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3"
               data-page-module-item="founder-section-kicker"
@@ -1019,7 +1162,12 @@ export default function AboutPageContent({
           </Reveal>
 
           {/* Founder */}
-          <Reveal delay={100} className={`${founderPhoto ? 'grid lg:grid-cols-[256px_1fr]' : 'grid'} gap-10 items-start`}>
+          <Reveal
+            delay={100}
+            className={`${founderPhoto ? 'grid lg:grid-cols-[256px_1fr]' : 'grid'} gap-10 items-start`}
+            data-page-module-item="founder-name"
+            data-page-module-field={zh ? 'label_zh' : 'label_en'}
+          >
             {founderPhoto ? (
             <div
               className="w-64 h-64 rounded-full overflow-hidden shrink-0 mx-auto lg:mx-0 relative"
@@ -1036,6 +1184,7 @@ export default function AboutPageContent({
                 className="object-cover object-top"
                 unoptimized={!canUseNextImageOptimization(founderPhoto)}
               />
+              <VisualImageEditButton itemId="founder-photo" label={zh ? '编辑创始人照片' : 'Edit founder photo'} />
             </div>
             ) : null}
             <div className="pt-2">
@@ -1074,14 +1223,14 @@ export default function AboutPageContent({
                 )}
               </p>
               <div className="flex flex-wrap gap-2">
-                {founderTags.map((tag, index) => (
+                {founderTags.map((tag) => (
                   <span
-                    key={`${tag}-${index}`}
+                    key={tag.id}
                     className="text-xs px-3 py-1.5 border border-[#3A302A] text-[#8A8580] tracking-wider"
-                    data-page-module-item={`founder-tag-${String(index + 1).padStart(2, '0')}`}
+                    data-page-module-item={tag.id}
                     data-page-module-field={zh ? 'label_zh' : 'label_en'}
                   >
-                    {tag}
+                    {tag.label}
                   </span>
                 ))}
               </div>
@@ -1102,7 +1251,11 @@ export default function AboutPageContent({
         data-module-key="services"
       >
         <div className="max-w-6xl mx-auto">
-          <Reveal className="mb-12">
+          <Reveal
+            className="mb-12"
+            data-page-module-item="services-heading"
+            data-page-module-field={zh ? 'label_zh' : 'label_en'}
+          >
             <p
               className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-3"
               data-page-module-item="services-kicker"
@@ -1125,7 +1278,8 @@ export default function AboutPageContent({
               <Reveal key={`${s.id}-${i}`} delay={i * 80}>
                 <div
                   className="border border-[#E5E0DA] bg-white p-8 flex flex-col gap-5 h-full hover:border-[#E36F2C]/40 hover:shadow-sm transition-all"
-                  data-page-module-item={`service-${String(i + 1).padStart(2, '0')}`}
+                  data-page-module-item={s.id}
+                  data-page-module-field={zh ? 'label_zh' : 'label_en'}
                 >
                   <span
                     className="text-4xl font-bold text-[#E36F2C]/20"
@@ -1168,9 +1322,14 @@ export default function AboutPageContent({
                     href={cta.href}
                     className={className}
                     data-page-module-item={cta.id}
-                    data-page-module-field={zh ? 'label_zh' : 'label_en'}
+                    data-page-module-field="href"
                   >
-                    {cta.label}
+                    <span
+                      data-page-module-item={cta.id}
+                      data-page-module-field={zh ? 'label_zh' : 'label_en'}
+                    >
+                      {cta.label}
+                    </span>
                   </Link>
                 );
               })}

@@ -6,10 +6,16 @@ import {
   listPublicProductAttributeTemplatesWithOptions,
   listPublicProductCategories,
 } from '@/lib/product-catalog-db';
+import { catalogProducts } from '@/lib/products';
 import ProductsPageContent from '@/components/pages/ProductsPageContent';
 import { getUploadVariantsByUrls, mapUploadImageUrl } from '@/lib/upload-image-variants';
 import { buildPageMetadata } from '@/lib/seo';
-import { getPublishedPageModule, listPublishedPageModules } from '@/lib/page-modules-db';
+import {
+  getDefaultPageModule,
+  getPublishedPageModule,
+  listDefaultPageModules,
+  listPublishedPageModules,
+} from '@/lib/page-modules-db';
 import { sanitizePublicCatalogProduct } from '@/lib/product-public-content';
 
 export const revalidate = 300;
@@ -26,8 +32,9 @@ export async function generateMetadata(): Promise<Metadata> {
     console.error('[products/metadata] load page module failed', err);
     return null;
   });
-  const title = productsMetadataTitle(heroModule?.title_en || heroModule?.title_zh || '');
-  const description = heroModule?.description_en || heroModule?.description_zh || '';
+  const safeHeroModule = heroModule ?? getDefaultPageModule('products', 'hero');
+  const title = productsMetadataTitle(safeHeroModule?.title_en || safeHeroModule?.title_zh || '');
+  const description = safeHeroModule?.description_en || safeHeroModule?.description_zh || '';
   if (!title || !description) return {};
   return buildPageMetadata({ title, description, path: '/products' });
 }
@@ -73,7 +80,7 @@ export default async function ProductsPage({
   const filters = normalizeFilters(searchParams ? await searchParams : undefined);
   const catalogRowsPromise = listPublishedCatalogProductCards().catch((err) => {
     console.error('[products] catalog db unavailable', err);
-    return [];
+    return catalogProducts;
   });
   const categoriesPromise = listPublicProductCategories().catch((err) => {
     console.error('[products] load categories failed', err);
@@ -85,7 +92,7 @@ export default async function ProductsPage({
   });
   const pageModulesPromise = listPublishedPageModules('products').catch((err) => {
     console.error('[products] load page modules failed', err);
-    return [];
+    return listDefaultPageModules('products');
   });
 
   const [catalogRows, categories, attributeTemplates, pageModules] = await Promise.all([

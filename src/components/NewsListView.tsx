@@ -1,12 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ProtectedImage from '@/components/ProtectedImage'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { buildContactHref } from '@/lib/site-links'
+import { buildContactHref, normalizeSiteHref } from '@/lib/site-links'
 import { format, parseISO } from 'date-fns'
 import { Search, X } from 'lucide-react'
 import {
@@ -26,6 +26,7 @@ type NewsItem = {
   excerpt_zh: string | null
   excerpt_en: string | null
   cover_image_url: string | null
+  cover_image_source_url?: string | null
   category_slug: string | null
   category_title_zh: string | null
   category_title_en: string | null
@@ -46,6 +47,84 @@ function categoryKey(item: NewsItem) {
   return item.category_slug || item.category_title_en || item.category_title_zh || 'uncategorized'
 }
 
+function subscribeVisualDraftPreview() {
+  return () => undefined
+}
+
+function getVisualDraftPreviewSnapshot() {
+  return typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('visualDraft') === '1'
+}
+
+function getVisualDraftPreviewServerSnapshot() {
+  return false
+}
+
+function useVisualDraftPreview() {
+  return useSyncExternalStore(
+    subscribeVisualDraftPreview,
+    getVisualDraftPreviewSnapshot,
+    getVisualDraftPreviewServerSnapshot,
+  )
+}
+
+type VisualAttrs = Record<`data-${string}`, string>
+
+function newsModuleFieldAttrs(moduleKey: 'hero' | 'ui', itemId: string | null, field: string): VisualAttrs {
+  const attrs: VisualAttrs = {
+    'data-page-module': `news:${moduleKey}`,
+    'data-page-key': 'news',
+    'data-module-key': moduleKey,
+    'data-page-module-field': field,
+  }
+  if (itemId) attrs['data-page-module-item'] = itemId
+  return attrs
+}
+
+function newsLabelAttrs(moduleKey: 'hero' | 'ui', itemId: string, lang: 'en' | 'zh') {
+  return newsModuleFieldAttrs(moduleKey, itemId, lang === 'zh' ? 'label_zh' : 'label_en')
+}
+
+function newsCmsEditAttrs({
+  newsId,
+  field,
+  patchKey,
+  targetId,
+  search,
+  value,
+  input = 'text',
+  maxLength,
+  required = false,
+  nullable = false,
+}: {
+  newsId: number
+  field: string
+  patchKey: string
+  targetId: string
+  search: string
+  value: string
+  input?: 'text' | 'textarea' | 'image'
+  maxLength?: number
+  required?: boolean
+  nullable?: boolean
+}): VisualAttrs {
+  const safeSearch = search.trim() || String(newsId)
+  return {
+    'data-cms-edit-kind': 'news',
+    'data-cms-edit-title': '新闻内容',
+    'data-cms-edit-field': field,
+    'data-cms-edit-url': `/admin/content/news/${newsId}/edit`,
+    'data-cms-edit-id': `news-${newsId}-${targetId}`,
+    'data-cms-edit-value': value,
+    'data-cms-edit-api-url': `/api/admin/news/${newsId}`,
+    'data-cms-edit-patch-key': patchKey,
+    'data-cms-edit-input': input,
+    'data-cms-edit-max-length': String(maxLength ?? (input === 'textarea' ? 500 : 300)),
+    'data-cms-edit-required': required ? '1' : '0',
+    'data-cms-edit-nullable': nullable ? '1' : '0',
+    'data-cms-edit-search': safeSearch,
+  }
+}
+
 export default function NewsListView({
   rows,
   pageModules,
@@ -54,22 +133,34 @@ export default function NewsListView({
   pageModules: PublicPageModule[]
 }) {
   const { lang } = useLanguage()
+  const visualDraftPreview = useVisualDraftPreview()
   const [query, setQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState('all')
   const modules = moduleMap(pageModules)
   const heroModule = modules.get('hero') ?? null
   const uiModule = modules.get('ui') ?? null
+  const zh = lang === 'zh'
   const heroEyebrow = itemLabel(itemById(heroModule, 'eyebrow'), lang)
   const heroTitle = moduleTitle(heroModule, lang)
   const heroDescription = moduleDescription(heroModule, lang)
+  const heroEyebrowText = heroEyebrow || (visualDraftPreview ? (zh ? '添加新闻页眉标' : 'Add news eyebrow') : '')
+  const heroTitleText = heroTitle || (visualDraftPreview ? (zh ? '添加新闻页标题' : 'Add news page title') : '')
+  const heroDescriptionText = heroDescription || (visualDraftPreview ? (zh ? '添加新闻页说明' : 'Add news page description') : '')
   const readMoreLabel = itemLabel(itemById(uiModule, 'read-more'), lang)
-  const showHero = heroModule?.is_visible !== false && (heroEyebrow || heroTitle || heroDescription)
-  const zh = lang === 'zh'
-  const categoryLabels = Array.from(new Set(
-    rows
-      .map((item) => (zh ? item.category_title_zh || item.category_title_en : item.category_title_en || item.category_title_zh))
-      .filter((value): value is string => Boolean(value?.trim())),
-  ))
+  const searchPlaceholder = itemLabel(itemById(uiModule, 'search-placeholder'), lang) || (zh ? '搜索标题、摘要或分类' : 'Search title, summary, or category')
+  const allFilterLabel = itemLabel(itemById(uiModule, 'filter-all'), lang) || (zh ? '全部' : 'All')
+  const resetLabel = itemLabel(itemById(uiModule, 'filter-reset'), lang) || (zh ? '重置' : 'Reset')
+  const resultLabel = itemLabel(itemById(uiModule, 'filter-results'), lang) || (zh ? '结果' : 'Results')
+  const noMatchTitle = itemLabel(itemById(uiModule, 'empty-filter-title'), lang) || (zh ? '没有匹配的新闻' : 'No matching updates')
+  const noMatchBody = itemLabel(itemById(uiModule, 'empty-filter-body'), lang) || (
+    zh ? '可以清空搜索和分类，或直接查看产品、案例与咨询入口。' : 'Clear the search and category filters, or continue to products, cases, and inquiry.'
+  )
+  const clearFiltersLabel = itemLabel(itemById(uiModule, 'clear-filters'), lang) || (zh ? '清空筛选' : 'Clear filters')
+  const noNewsTitle = itemLabel(itemById(uiModule, 'empty-public-title'), lang) || (zh ? '暂无公开新闻' : 'No public news yet')
+  const noNewsBody = itemLabel(itemById(uiModule, 'empty-public-body'), lang) || (
+    zh ? '可以先查看产品目录、项目案例，或直接提交采购需求。' : 'You can explore products, review project cases, or start an inquiry with the team.'
+  )
+  const showHero = heroModule?.is_visible !== false && (heroEyebrow || heroTitle || heroDescription || visualDraftPreview)
   const categoryOptions = useMemo(() => {
     const map = new Map<string, string>()
     rows.forEach((item) => {
@@ -103,41 +194,19 @@ export default function NewsListView({
     setQuery('')
     setActiveCategory('all')
   }
-  const latestDate = rows[0]?.published_at ? formatNewsDate(rows[0].published_at, lang) : ''
   const contactHref = buildContactHref('news:list:contact_cta')
-  const conversionStats = [
-    {
-      label: zh ? '已发布动态' : 'Published updates',
-      value: rows.length.toLocaleString(zh ? 'zh-CN' : 'en-US'),
-      detail: zh ? '精选公开内容' : 'Curated public updates',
-    },
-    {
-      label: zh ? '内容分类' : 'Content categories',
-      value: categoryLabels.length.toLocaleString(zh ? 'zh-CN' : 'en-US'),
-      detail: categoryLabels.slice(0, 2).join(' / ') || (zh ? '持续归档中' : 'Continuing archive'),
-    },
-    {
-      label: zh ? '最近更新' : 'Latest update',
-      value: latestDate || '--',
-      detail: zh ? '按发布时间排序' : 'Sorted by publish date',
-    },
-  ]
+  const newsPathLink = (itemId: string, fallbackHref: string, fallbackLabel: string) => {
+    const item = itemById(uiModule, itemId)
+    return {
+      itemId,
+      href: normalizeSiteHref(item?.href, fallbackHref),
+      label: itemLabel(item, lang) || fallbackLabel,
+    }
+  }
   const pathLinks = [
-    {
-      href: '/products',
-      label: zh ? '查看产品' : 'Explore products',
-      detail: zh ? '从动态回到产品目录' : 'Move from updates to product options',
-    },
-    {
-      href: '/cases',
-      label: zh ? '项目案例' : 'Project cases',
-      detail: zh ? '对照交付场景' : 'Compare delivery scenarios',
-    },
-    {
-      href: contactHref,
-      label: zh ? '提交需求' : 'Start inquiry',
-      detail: zh ? '团队按新闻阅读路径跟进' : 'Let the team follow up from the news path',
-    },
+    newsPathLink('path-products', '/products', zh ? '查看产品' : 'Explore products'),
+    newsPathLink('path-cases', '/cases', zh ? '项目案例' : 'Project cases'),
+    newsPathLink('path-contact', contactHref, zh ? '提交需求' : 'Start inquiry'),
   ]
 
   return (
@@ -145,14 +214,14 @@ export default function NewsListView({
       <Navbar />
 
       {showHero ? (
-        <section className="relative border-b border-[#E36F2C]/20 bg-[#241F1B] pb-16 pt-32">
+        <section className="relative border-b border-[#E36F2C]/20 bg-[#241F1B] pb-16 pt-32" data-page-module="news:hero">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            {heroEyebrow ? (
-              <p className="mb-3 text-xs uppercase tracking-[0.2em] text-[#E36F2C]">
-                {heroEyebrow}
+            {heroEyebrowText ? (
+              <p className="mb-3 text-xs uppercase tracking-[0.2em] text-[#E36F2C]" {...newsLabelAttrs('hero', 'eyebrow', lang)}>
+                {heroEyebrowText}
               </p>
             ) : null}
-            {heroTitle ? (
+            {heroTitleText ? (
               <h1
                 className="text-[#F5F2ED]"
                 style={{
@@ -162,114 +231,54 @@ export default function NewsListView({
                   letterSpacing: '-0.02em',
                   lineHeight: 1.1,
                 }}
+                {...newsModuleFieldAttrs('hero', null, lang === 'zh' ? 'title_zh' : 'title_en')}
               >
-                {heroTitle}
+                {heroTitleText}
               </h1>
             ) : null}
-            {heroDescription ? (
-              <p className="mt-4 max-w-xl text-sm text-[#C9BEB4]">
-                {heroDescription}
+            {heroDescriptionText ? (
+              <p className="mt-4 max-w-xl text-sm text-[#C9BEB4]" {...newsModuleFieldAttrs('hero', null, lang === 'zh' ? 'description_zh' : 'description_en')}>
+                {heroDescriptionText}
               </p>
             ) : null}
           </div>
         </section>
       ) : null}
 
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mb-8 overflow-hidden rounded-md border border-[#E5DED4] bg-white shadow-sm">
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="border-l-4 border-[#E36F2C] px-4 py-5 sm:px-5">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#E36F2C]">
-                {zh ? '新闻阅读路径' : 'News reading path'}
-              </p>
-              <h2 className="mt-2 text-xl font-bold text-[#2C2A28]">
-                {zh ? '从动态了解产品、案例与采购咨询' : 'Move from updates to products, cases, and inquiry'}
-              </h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-[#6B6560]">
-                {zh
-                  ? '按分类、封面、摘要和发布时间帮助访客快速判断下一步应该查看产品、案例还是直接提交需求。'
-                  : 'Scan categories, covers, summaries, and publish timing before moving to products, cases, or inquiry.'}
-              </p>
-            </div>
-            <div className="grid grid-cols-3 border-t border-[#E5DED4] bg-[#FBF8F3] lg:border-l lg:border-t-0">
-              {conversionStats.map((stat) => (
-                <div key={stat.label} className="min-w-0 border-r border-[#E5DED4] px-3 py-4 last:border-r-0">
-                  <p className="truncate text-[11px] font-semibold text-[#8A8580]">{stat.label}</p>
-                  <p className="mt-1 truncate text-lg font-bold text-[#2C2A28]">{stat.value}</p>
-                  <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-[#6B6560]">{stat.detail}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="grid grid-cols-1 border-t border-[#E5DED4] md:grid-cols-3">
-            {pathLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                prefetch={false}
-                className="group min-h-[92px] border-b border-[#E5DED4] px-4 py-4 transition hover:bg-[#FFF7F0] md:border-b-0 md:border-r last:border-r-0"
-              >
-                <span className="block text-sm font-bold text-[#2C2A28] transition group-hover:text-[#E36F2C]">{item.label}</span>
-                <span className="mt-1 block text-xs leading-5 text-[#6B6560]">{item.detail}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <section id="news-discovery-console" className="mb-6 overflow-hidden rounded-md border border-[#E5DED4] bg-white shadow-sm">
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_260px]">
-            <div className="border-l-4 border-[#1889B6] px-4 py-4 sm:px-5">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1889B6]">
-                {zh ? '新闻发现' : 'News discovery'}
-              </p>
-              <h2 className="mt-2 text-lg font-bold text-[#2C2A28]">
-                {zh ? '按关键词和分类快速定位内容' : 'Find updates by keyword and category'}
-              </h2>
-              <p className="mt-1 max-w-3xl text-sm leading-6 text-[#6B6560]">
-                {zh
-                  ? '对照 en.303 Blog 的阅读方式，先筛选主题，再进入详情或提交咨询。'
-                  : 'Mirror the en.303 Blog reading flow: filter the topic first, then open the article or start an inquiry.'}
-              </p>
-            </div>
-            <div className="border-t border-[#E5DED4] bg-[#FBF8F3] px-4 py-4 lg:border-l lg:border-t-0">
-              <p className="text-xs font-semibold text-[#8A8580]">{zh ? '当前结果' : 'Current result'}</p>
-              <p className="mt-1 text-2xl font-bold text-[#2C2A28]">
-                {filteredRows.length.toLocaleString(zh ? 'zh-CN' : 'en-US')}
-              </p>
-              <p className="mt-1 text-xs leading-5 text-[#6B6560]">
-                {zh ? `共 ${rows.length.toLocaleString('zh-CN')} 条公开动态` : `From ${rows.length.toLocaleString('en-US')} public updates`}
-              </p>
-            </div>
-          </div>
-          <div className="border-t border-[#E5DED4] px-4 py-4 sm:px-5">
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)_auto] lg:items-start">
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <section id="news-discovery-console" className="mb-6 rounded-md border border-[#E5DED4] bg-white px-4 py-4 shadow-sm sm:px-5">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)_auto_auto] lg:items-start">
               <label className="relative block">
                 <span className="sr-only">{zh ? '搜索新闻' : 'Search news'}</span>
                 <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8A8580]" />
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder={zh ? '搜索标题、摘要或分类' : 'Search title, summary, or category'}
+                  placeholder={searchPlaceholder}
                   className="min-h-11 w-full rounded-md border border-[#E5DED4] bg-[#FAF7F2] pl-10 pr-3 text-sm outline-none transition placeholder:text-[#9B9288] focus:border-[#1889B6] focus:bg-white"
+                  data-visual-open-panel="news-search"
+                  {...newsLabelAttrs('ui', 'search-placeholder', lang)}
                 />
               </label>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => setActiveCategory('all')}
+                  data-visual-open-panel="news-filter"
                   className={`min-h-10 rounded-md border px-3 text-xs font-bold transition ${
                     activeCategory === 'all'
                       ? 'border-[#1889B6] bg-[#EAF6F8] text-[#1889B6]'
                       : 'border-[#E5DED4] bg-[#FAF7F2] text-[#6B6560] hover:border-[#1889B6] hover:text-[#1889B6]'
                   }`}
                 >
-                  {zh ? '全部' : 'All'}
+                  <span {...newsLabelAttrs('ui', 'filter-all', lang)}>{allFilterLabel}</span>
                 </button>
                 {categoryOptions.map((category) => (
                   <button
                     key={category.key}
                     type="button"
                     onClick={() => setActiveCategory(category.key)}
+                    data-visual-open-panel="news-filter"
                     className={`min-h-10 rounded-md border px-3 text-xs font-bold transition ${
                       activeCategory === category.key
                         ? 'border-[#1889B6] bg-[#EAF6F8] text-[#1889B6]'
@@ -284,13 +293,16 @@ export default function NewsListView({
                 type="button"
                 onClick={resetDiscovery}
                 disabled={!hasActiveDiscovery}
+                data-visual-open-panel="news-reset"
                 className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-md border border-[#E5DED4] bg-white px-3 text-xs font-bold text-[#6B6560] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-[#E5DED4] disabled:hover:text-[#6B6560]"
               >
                 <X size={14} />
-                {zh ? '重置' : 'Reset'}
+                <span {...newsLabelAttrs('ui', 'filter-reset', lang)}>{resetLabel}</span>
               </button>
+              <div className="inline-flex min-h-10 items-center justify-center rounded-md bg-[#FAF7F2] px-3 text-xs font-bold text-[#6B6560]">
+                <span {...newsLabelAttrs('ui', 'filter-results', lang)}>{resultLabel}</span>&nbsp;{filteredRows.length.toLocaleString(zh ? 'zh-CN' : 'en-US')} / {rows.length.toLocaleString(zh ? 'zh-CN' : 'en-US')}
+              </div>
             </div>
-          </div>
         </section>
 
         {filteredRows.length > 0 ? (
@@ -300,15 +312,47 @@ export default function NewsListView({
               const excerpt = lang === 'zh' ? item.excerpt_zh : item.excerpt_en
               const category = zh ? item.category_title_zh || item.category_title_en : item.category_title_en || item.category_title_zh
               const dateStr = formatNewsDate(item.published_at, lang)
+              const titleAttrs = newsCmsEditAttrs({
+                newsId: item.id,
+                field: lang === 'zh' ? '新闻标题（中文）' : 'News title',
+                patchKey: lang === 'zh' ? 'title_zh' : 'title_en',
+                targetId: `title-${lang}`,
+                search: title,
+                value: title,
+                required: true,
+              })
+              const excerptAttrs = newsCmsEditAttrs({
+                newsId: item.id,
+                field: lang === 'zh' ? '新闻摘要（中文）' : 'News excerpt',
+                patchKey: lang === 'zh' ? 'excerpt_zh' : 'excerpt_en',
+                targetId: `excerpt-${lang}`,
+                search: title,
+                value: excerpt ?? '',
+                input: 'textarea',
+                maxLength: 500,
+                nullable: true,
+              })
+              const coverAttrs = newsCmsEditAttrs({
+                newsId: item.id,
+                field: '新闻封面',
+                patchKey: 'cover_image_url',
+                targetId: 'cover-image',
+                search: title,
+                value: item.cover_image_source_url ?? item.cover_image_url ?? '',
+                input: 'image',
+                maxLength: 1000,
+                nullable: true,
+              })
 
               return (
                 <Link prefetch={false}
                   key={item.id}
                   href={`/news/${item.slug}`}
+                  data-visual-open-panel="news-card"
                   className="group flex flex-col overflow-hidden rounded-lg border border-[#E5DED4] bg-white transition-all duration-300 hover:border-[#E36F2C]/40 hover:shadow-[0_18px_50px_rgba(44,42,40,0.10)]"
                 >
                   {item.cover_image_url ? (
-                    <div className="relative h-48 shrink-0 overflow-hidden bg-[#FAF7F2]">
+                    <div className="relative h-48 shrink-0 overflow-hidden bg-[#FAF7F2]" {...coverAttrs}>
                       <ProtectedImage
                         src={item.cover_image_url}
                         alt={title}
@@ -335,18 +379,19 @@ export default function NewsListView({
                       <h2
                         className="line-clamp-2 font-semibold leading-snug text-[#2C2A28] transition-colors group-hover:text-[#E36F2C]"
                         style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 16 }}
+                        {...titleAttrs}
                       >
                         {title}
                       </h2>
                     ) : null}
                     {excerpt ? (
-                      <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-[#8A8580]">
+                      <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-[#8A8580]" {...excerptAttrs}>
                         {excerpt}
                       </p>
                     ) : null}
                     {readMoreLabel ? (
                       <div className="mt-auto flex items-center gap-1.5 pt-2 text-xs text-[#E36F2C]/60 transition-colors group-hover:text-[#E36F2C]">
-                        <span>{readMoreLabel}</span>
+                        <span {...newsLabelAttrs('ui', 'read-more', lang)}>{readMoreLabel}</span>
                         <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
@@ -359,33 +404,35 @@ export default function NewsListView({
           </div>
         ) : rows.length > 0 ? (
           <div className="rounded-md border border-dashed border-[#E5DED4] bg-white px-5 py-12 text-center">
-            <h2 className="text-lg font-bold text-[#2C2A28]">{zh ? '没有匹配的新闻' : 'No matching updates'}</h2>
-            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[#6B6560]">
-              {zh ? '可以清空搜索和分类，或直接查看产品、案例与咨询入口。' : 'Clear the search and category filters, or continue to products, cases, and inquiry.'}
+            <h2 className="text-lg font-bold text-[#2C2A28]" {...newsLabelAttrs('ui', 'empty-filter-title', lang)}>{noMatchTitle}</h2>
+            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[#6B6560]" {...newsLabelAttrs('ui', 'empty-filter-body', lang)}>
+              {noMatchBody}
             </p>
             <button
               type="button"
               onClick={resetDiscovery}
+              data-visual-open-panel="news-reset"
               className="mt-5 inline-flex min-h-10 items-center rounded-md border border-[#E5DED4] bg-[#FAF7F2] px-4 text-sm font-semibold text-[#2C2A28] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
             >
-              {zh ? '清空筛选' : 'Clear filters'}
+              <span {...newsLabelAttrs('ui', 'clear-filters', lang)}>{clearFiltersLabel}</span>
             </button>
           </div>
         ) : (
           <div className="rounded-md border border-dashed border-[#E5DED4] bg-white px-5 py-12 text-center">
-            <h2 className="text-lg font-bold text-[#2C2A28]">{zh ? '暂无公开新闻' : 'No public news yet'}</h2>
-            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[#6B6560]">
-              {zh ? '可以先查看产品目录、项目案例，或直接提交采购需求。' : 'You can explore products, review project cases, or start an inquiry with the team.'}
+            <h2 className="text-lg font-bold text-[#2C2A28]" {...newsLabelAttrs('ui', 'empty-public-title', lang)}>{noNewsTitle}</h2>
+            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[#6B6560]" {...newsLabelAttrs('ui', 'empty-public-body', lang)}>
+              {noNewsBody}
             </p>
             <div className="mt-5 flex flex-wrap justify-center gap-2">
               {pathLinks.map((item) => (
                 <Link
-                  key={item.href}
+                  key={item.itemId}
                   href={item.href}
                   prefetch={false}
                   className="inline-flex min-h-10 items-center rounded-md border border-[#E5DED4] bg-[#FAF7F2] px-4 text-sm font-semibold text-[#2C2A28] transition hover:border-[#E36F2C]/60 hover:text-[#E36F2C]"
+                  {...newsModuleFieldAttrs('ui', item.itemId, 'href')}
                 >
-                  {item.label}
+                  <span {...newsLabelAttrs('ui', item.itemId, lang)}>{item.label}</span>
                 </Link>
               ))}
             </div>

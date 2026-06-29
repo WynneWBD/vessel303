@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getOptionalAdmin } from '@/lib/auth-check'
 import {
+  getDefaultPageModule,
   getPublishedPageModule,
   isPageModulePageKey,
+  listDefaultPageModules,
   listPublishedPageModules,
   getPageModuleForPreview,
   listPageModulesForPreview,
@@ -48,9 +50,17 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     console.error(includeDraft ? '[page-modules] preview modules unavailable' : '[page-modules] public modules unavailable', err)
 
     if (moduleKey) {
-      return NextResponse.json({ data: null, previewDraft: includeDraft })
+      return NextResponse.json({
+        data: getDefaultPageModule(pageKey, moduleKey),
+        previewDraft: includeDraft,
+        fallback: 'default',
+      })
     }
 
-    return NextResponse.json({ data: [], previewDraft: includeDraft })
+    return NextResponse.json({
+      data: listDefaultPageModules(pageKey).filter((pageModule) => pageModule.is_visible),
+      previewDraft: includeDraft,
+      fallback: 'default',
+    })
   }
 }

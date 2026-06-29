@@ -58,6 +58,34 @@ const AUTH_FALLBACK_MODULES: PublicPageModule[] = [
   },
 ];
 
+function authModuleAttrs(moduleKey: string) {
+  return { 'data-page-module': `auth:${moduleKey}` };
+}
+
+function authModuleFieldAttrs(moduleKey: string, field: 'title' | 'description', lang: 'en' | 'zh') {
+  return {
+    'data-page-module': `auth:${moduleKey}`,
+    'data-page-module-field': field === 'title'
+      ? (lang === 'zh' ? 'title_zh' : 'title_en')
+      : (lang === 'zh' ? 'description_zh' : 'description_en'),
+  };
+}
+
+function authItemFieldAttrs(
+  moduleKey: string,
+  itemId: string,
+  field: 'label' | 'value',
+  lang: 'en' | 'zh',
+) {
+  return {
+    'data-page-module': `auth:${moduleKey}`,
+    'data-page-module-item': itemId,
+    'data-page-module-field': field === 'label'
+      ? (lang === 'zh' ? 'label_zh' : 'label_en')
+      : (lang === 'zh' ? 'value_zh' : 'value_en'),
+  };
+}
+
 function LoginForm() {
   const { lang } = useLanguage();
   const router = useRouter();
@@ -124,16 +152,29 @@ function LoginForm() {
   }
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-md" {...authModuleAttrs('login')}>
       {(brandLabel || title || subtitle) ? (
         <div className="mb-10 text-center">
           {brandLabel && brand?.href ? (
             <Link href={brand.href} className="inline-block">
-              <span className="text-xs font-bold uppercase tracking-[0.4em] text-[#E36F2C]">{brandLabel}</span>
+              <span
+                className="text-xs font-bold uppercase tracking-[0.4em] text-[#E36F2C]"
+                {...authItemFieldAttrs('shared', 'brand', 'label', lang)}
+              >
+                {brandLabel}
+              </span>
             </Link>
           ) : null}
-          {title ? <h1 className="mt-3 text-2xl font-black tracking-wider text-[#2C2A28]">{title}</h1> : null}
-          {subtitle ? <p className="mt-1 text-sm tracking-wider text-[#8A7D74]">{subtitle}</p> : null}
+          {title ? (
+            <h1 className="mt-3 text-2xl font-black tracking-wider text-[#2C2A28]" {...authModuleFieldAttrs('login', 'title', lang)}>
+              {title}
+            </h1>
+          ) : null}
+          {subtitle ? (
+            <p className="mt-1 text-sm tracking-wider text-[#8A7D74]" {...authModuleFieldAttrs('login', 'description', lang)}>
+              {subtitle}
+            </p>
+          ) : null}
         </div>
       ) : null}
 
@@ -143,6 +184,7 @@ function LoginForm() {
             <button
               onClick={handleGoogle}
               className="mb-6 flex w-full items-center justify-center gap-3 border border-[#E5DED4] py-3 text-sm tracking-wider text-[#6B625B] transition-all duration-200 hover:border-[#E36F2C]/50 hover:text-[#E36F2C]"
+              {...authItemFieldAttrs('login', 'google-button', 'label', lang)}
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -157,14 +199,14 @@ function LoginForm() {
           {dividerLabel ? (
             <div className="mb-6 flex items-center gap-3">
               <div className="h-px flex-1 bg-[#E5DED4]" />
-              <span className="text-xs tracking-wider text-[#C4B9AB]">{dividerLabel}</span>
+              <span className="text-xs tracking-wider text-[#C4B9AB]" {...authItemFieldAttrs('login', 'divider', 'label', lang)}>{dividerLabel}</span>
               <div className="h-px flex-1 bg-[#E5DED4]" />
             </div>
           ) : null}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-xs tracking-wider text-[#8A7D74]">{emailLabel}</label>
+              <label className="mb-1.5 block text-xs tracking-wider text-[#8A7D74]" {...authItemFieldAttrs('login', 'email-label', 'label', lang)}>{emailLabel}</label>
               <input
                 type="email"
                 value={email}
@@ -172,12 +214,13 @@ function LoginForm() {
                 required
                 autoComplete="email"
                 placeholder={emailPlaceholder}
+                {...authItemFieldAttrs('login', 'email-placeholder', 'value', lang)}
                 className="w-full border border-[#E5DED4] bg-[#FAF7F2] px-4 py-3 text-sm tracking-wider text-[#2C2A28] outline-none transition-colors placeholder:text-[#C4B9AB] focus:border-[#E36F2C]/60"
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs tracking-wider text-[#8A7D74]">{passwordLabel}</label>
+              <label className="mb-1.5 block text-xs tracking-wider text-[#8A7D74]" {...authItemFieldAttrs('login', 'password-label', 'label', lang)}>{passwordLabel}</label>
               <input
                 type="password"
                 value={password}
@@ -185,6 +228,7 @@ function LoginForm() {
                 required
                 autoComplete="current-password"
                 placeholder={passwordPlaceholder}
+                {...authItemFieldAttrs('login', 'password-placeholder', 'value', lang)}
                 className="w-full border border-[#E5DED4] bg-[#FAF7F2] px-4 py-3 text-sm tracking-wider text-[#2C2A28] outline-none transition-colors placeholder:text-[#C4B9AB] focus:border-[#E36F2C]/60"
               />
             </div>
@@ -199,6 +243,7 @@ function LoginForm() {
               type="submit"
               disabled={loading}
               className="mt-2 w-full bg-[#E36F2C] py-3 text-sm font-bold tracking-wider text-white transition-colors hover:bg-[#C85A1F] disabled:opacity-50"
+              {...authItemFieldAttrs('login', loading && submittingLabel ? 'submitting' : 'submit', 'label', lang)}
             >
               {loading && submittingLabel ? submittingLabel : submitLabel}
             </button>
@@ -208,9 +253,11 @@ function LoginForm() {
 
       {noAccountLabel && registerLabel ? (
         <p className="mt-6 text-center text-sm tracking-wider text-[#8A7D74]">
+          <span {...authItemFieldAttrs('login', 'no-account', 'label', lang)}>
           {noAccountLabel}{' '}
+          </span>
           <Link href="/register" className="text-[#E36F2C] transition-colors hover:text-[#C85A1F]">
-            {registerLabel}
+            <span {...authItemFieldAttrs('login', 'register-link', 'label', lang)}>{registerLabel}</span>
           </Link>
         </p>
       ) : null}

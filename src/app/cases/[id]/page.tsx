@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import CaseDetailPageContent from '@/components/pages/CaseDetailPageContent'
 import { getPublishedProjectCaseById, listPublishedProjectCases, type ProjectCaseRow } from '@/lib/project-cases-db'
+import { staticProjectCases } from '@/lib/project-cases-static'
 import { buildPageMetadata } from '@/lib/seo'
 import {
   collectImageUrls,
@@ -9,7 +10,7 @@ import {
   mapUploadImageUrl,
   type UploadVariantMap,
 } from '@/lib/upload-image-variants'
-import { listPublishedPageModules } from '@/lib/page-modules-db'
+import { listDefaultPageModules, listPublishedPageModules } from '@/lib/page-modules-db'
 import { mapCaseStaticImageUrl } from '@/lib/case-static-image-variants'
 
 export const revalidate = 300
@@ -21,9 +22,14 @@ type Props = {
 export async function generateStaticParams() {
   const cases = await listPublishedProjectCases().catch((err) => {
     console.error('[cases/static-params] project case db unavailable', err)
-    return []
+    return staticProjectCases
   })
   return cases.map((project) => ({ id: project.id }))
+}
+
+function getStaticProjectCaseById(id: string) {
+  const key = id.trim()
+  return staticProjectCases.find((project) => project.id === key) ?? null
 }
 
 function caseImageUrls(project: ProjectCaseRow) {
@@ -73,13 +79,13 @@ async function loadPublishedProjectCase(id: string): Promise<ProjectCaseRow | nu
     return null
   })
 
-  return project
+  return project ?? getStaticProjectCaseById(id)
 }
 
 async function loadRelatedProjectCases(project: ProjectCaseRow): Promise<ProjectCaseRow[]> {
   const cases = await listPublishedProjectCases().catch((err) => {
     console.error('[cases/detail] related project cases db unavailable', err)
-    return []
+    return staticProjectCases
   })
   return cases
     .filter((item) => item.id !== project.id)
@@ -120,7 +126,7 @@ export default async function CaseDetailPage({ params }: Props) {
     loadRelatedProjectCases(project),
     listPublishedPageModules('cases').catch((err) => {
       console.error('[cases/detail] load case page modules failed', err)
-      return []
+      return listDefaultPageModules('cases')
     }),
   ])
   const imageVariants = await getUploadVariantsByUrls([

@@ -280,14 +280,14 @@ function SourceSeoHealthLedger({
     <section id="source-seo-health" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-sm font-bold text-[#1E2C31]">来源与 SEO 健康台账</h2>
+          <h2 className="text-sm font-bold text-[#1E2C31]">来源与 SEO</h2>
           <p className="mt-1 text-xs text-[#61767D]">
-            产品、案例、新闻同时查看访问、动作、线索、SEO 缺项和内容承接缺项。
+            查看产品、案例、新闻的访问、动作、线索、SEO 和内容缺项。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <StatusLink href="/admin/site#source-seo-control" label="站点来源" />
-          <StatusLink href="/admin/site/conversion#source-contract-portfolio" label="来源承接" />
+          <StatusLink href="/admin/site/conversion#source-contract-portfolio" label="来源质量" />
           <StatusLink href="/admin/site/seo#seo-conversion-closure" label="SEO 待补" />
         </div>
       </div>
@@ -296,7 +296,7 @@ function SourceSeoHealthLedger({
         <SourceSeoStat label="来源访问" value={totalViews} detail="产品 + 案例 + 新闻" />
         <SourceSeoStat label="来源动作" value={totalActions} detail="CTA / 联系 / 表单" />
         <SourceSeoStat label="真实线索" value={totalLeads} detail="三类来源汇总" />
-        <SourceSeoStat label="待补项" value={totalOpenItems} detail="SEO + 内容承接" warn={totalOpenItems > 0} />
+        <SourceSeoStat label="待补项" value={totalOpenItems} detail="SEO + 内容" warn={totalOpenItems > 0} />
       </div>
 
       <div className="overflow-x-auto">
@@ -459,7 +459,7 @@ function buildOperationalPriorityRows({
       owner: '客户与线索',
       metric: `${formatNumber(staleFollowups)} 条`,
       evidence: `active 线索超过 7 天未更新 ${formatNumber(staleFollowups)} 条。`,
-      impact: staleFollowups > 0 ? '跟进断点会让询盘从可推进状态变成无人承接状态。' : '当前 active 线索没有超 7 天未更新断点。',
+      impact: staleFollowups > 0 ? '跟进断点会让询盘长期无人处理。' : '当前 active 线索没有超 7 天未更新断点。',
       href: '/admin/status/leads#case-lead-quality-followup-desk',
       actionLabel: staleFollowups > 0 ? '复核跟进' : '查看漏斗',
       actions: [
@@ -477,7 +477,7 @@ function buildOperationalPriorityRows({
       owner: '网站管理 / SEO',
       metric: `${formatNumber(seoMissing)} 项`,
       evidence: `产品 ${formatNumber(productsSeoMissing)} / 案例 ${formatNumber(projectsSeoMissing)} / 新闻 ${formatNumber(newsSeoMissing)}。`,
-      impact: seoMissing > 0 ? 'SEO 缺项会影响搜索摘要、来源判断和内容到线索的路径复核。' : '已发布内容当前没有 SEO 缺项。',
+      impact: seoMissing > 0 ? 'SEO 缺项会影响搜索摘要、来源判断和线索质量。' : '已发布内容当前没有 SEO 缺项。',
       href: '/admin/status#source-seo-health',
       actionLabel: seoMissing > 0 ? '处理 SEO' : '查看来源',
       actions: [
@@ -496,7 +496,7 @@ function buildOperationalPriorityRows({
       owner: '内容管理',
       metric: `${formatNumber(contentIssues)} 项`,
       evidence: `产品 ${formatNumber(productIssues)} / 案例 ${formatNumber(projectIssues)} / 新闻 ${formatNumber(newsIssues)}。`,
-      impact: contentIssues > 0 ? '关键字段缺失会影响公开展示、搜索承接和列表筛选效率。' : '内容关键字段当前状态正常。',
+      impact: contentIssues > 0 ? '关键字段缺失会影响公开展示、搜索和列表筛选效率。' : '内容关键字段当前状态正常。',
       href: '/admin/status/content#public-discovery-health',
       actionLabel: contentIssues > 0 ? '补内容' : '查看内容',
       actions: [
@@ -523,7 +523,7 @@ function buildOperationalPriorityRows({
       href: mediaIssueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media#media-replacement-workbench',
       actionLabel: mediaIssueCount > 0 ? '处理素材' : '查看媒体',
       actions: [
-        { href: mediaIssueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media#media-replacement-workbench', label: mediaIssueCount > 0 ? '风险素材' : '替换工作台', primary: true },
+        { href: mediaIssueCount > 0 ? '/admin/site/media?view=issues' : '/admin/site/media#media-replacement-workbench', label: mediaIssueCount > 0 ? '风险素材' : '素材管理', primary: true },
         { href: VISUAL_HOME_HERO_HREF, label: '页面用图' },
         { href: '/admin/status/site', label: '站点健康' },
       ],
@@ -533,10 +533,10 @@ function buildOperationalPriorityRows({
       key: 'page-drafts',
       priority: pageDrafts > 0 ? 'P1' : 'OK',
       stage: '发布收口',
-      title: '页面模块 / 结构草稿',
-      owner: '网站管理 / Visual Editor',
+      title: '页面内容 / 布局草稿',
+      owner: '网站管理 / 可视化编辑',
       metric: `${formatNumber(pageDrafts)} 个`,
-      evidence: `页面模块和结构草稿合计 ${formatNumber(pageDrafts)} 个。`,
+      evidence: `页面内容和布局草稿合计 ${formatNumber(pageDrafts)} 个。`,
       impact: pageDrafts > 0 ? '草稿未确认会造成后台编辑状态和线上页面预期不一致。' : '页面草稿已收口。',
       href: VISUAL_HOME_HERO_HREF,
       actionLabel: pageDrafts > 0 ? '处理草稿' : '查看编辑器',
@@ -551,18 +551,18 @@ function buildOperationalPriorityRows({
       key: 'case-conversion',
       priority: caseInquiryHealth.weak > 0 ? 'P1' : 'OK',
       stage: '案例转化',
-      title: '已发布案例询盘承接弱',
-      owner: '案例内容 / 转化',
+      title: '已发布案例转化弱',
+      owner: '案例内容',
       metric: `${formatNumber(caseInquiryHealth.weak)} 个`,
-      evidence: `已发布 ${formatNumber(caseInquiryHealth.published)}，可承接 ${formatNumber(caseInquiryHealth.ready)}，待补 ${formatNumber(caseInquiryHealth.weak)}。`,
-      impact: caseInquiryHealth.weak > 0 ? '案例证明页缺少询盘承接要素，会削弱客户从案例到联系的路径。' : '已发布案例询盘承接关键字段正常。',
+      evidence: `已发布 ${formatNumber(caseInquiryHealth.published)}，可询盘 ${formatNumber(caseInquiryHealth.ready)}，待补 ${formatNumber(caseInquiryHealth.weak)}。`,
+      impact: caseInquiryHealth.weak > 0 ? '案例证明页缺少询盘信息，会削弱客户从案例到联系的路径。' : '已发布案例询盘信息正常。',
       href: '/admin/content/projects/list?view=case-conversion-weak',
       actionLabel: caseInquiryHealth.weak > 0 ? '处理案例' : '查看案例',
       actions: [
-        { href: '/admin/content/projects/list?view=case-conversion-weak', label: caseInquiryHealth.weak > 0 ? '弱承接案例' : '案例列表', primary: true },
+        { href: '/admin/content/projects/list?view=case-conversion-weak', label: caseInquiryHealth.weak > 0 ? '转化弱案例' : '案例列表', primary: true },
         { href: '/admin/content/projects/list#case-conversion-content-backfill-desk', label: '补位队列' },
         { href: '/admin/status/traffic#case-path-lead-backflow-desk', label: '路径回流' },
-        { href: '/admin/site/conversion#case-followup-conversion-review-bridge', label: '转化复盘' },
+        { href: '/admin/site/conversion#case-followup-conversion-review-bridge', label: '转化路径' },
       ],
       tone: caseInquiryHealth.weak > 0 ? 'warning' : 'ready',
     },
@@ -635,10 +635,10 @@ function OperationalPriorityLedger({ rows }: { rows: OperationalPriorityRow[] })
     <section id="operations-priority-ledger" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-[#D8E7E8] bg-[#FBFDFD] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Operations Priority</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">运营优先级台账</h2>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Operations</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">运营优先级</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把线索、内容、SEO、素材、页面草稿、案例转化和访问转化异常放进一张处理队列；运营从这里判断先做什么，再进入对应工作台。
+            查看线索、内容、SEO、素材、页面草稿、案例转化和访问异常。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -680,7 +680,7 @@ function OperationalPriorityRowView({ row }: { row: OperationalPriorityRow }) {
     >
       <div className="flex items-center gap-2">
         <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-bold ${operationalPriorityBadgeClass(row.tone)}`}>
-          {row.priority}
+          {operationalPriorityDisplay(row.priority)}
         </span>
         <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ${operationalPriorityBadgeClass(row.tone)}`}>
           {operationalPriorityLabel(row.tone)}
@@ -727,6 +727,16 @@ function operationalPriorityBadgeClass(tone: OperationalPriorityTone): string {
   if (tone === 'warning') return 'bg-[#EAF6F8] text-[#1889B6]'
   if (tone === 'review') return 'bg-[#F0EEFB] text-[#6B58C5]'
   return 'bg-emerald-50 text-emerald-700'
+}
+
+function operationalPriorityDisplay(priority: string): string {
+  if (priority === 'P0') return '高优先'
+  if (priority === 'P1') return '优先'
+  if (priority === 'P2') return '复核'
+  if (priority === 'P3') return '观察'
+  if (priority === 'OK') return '正常'
+  if (priority === 'HOLD') return '受限'
+  return priority
 }
 
 function operationalPriorityLabel(tone: OperationalPriorityTone): string {
@@ -913,7 +923,7 @@ function TrafficLedger({
       <div className="flex flex-col gap-2 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">访问与转化台账</h2>
-          <p className="mt-1 text-xs text-[#61767D]">按 300 后台的常用口径把访问、动作、线索、转化率和测试排除放到同一张表。</p>
+          <p className="mt-1 text-xs text-[#61767D]">集中查看访问、动作、线索、转化率和测试排除。</p>
         </div>
         <Link href="/admin/status/traffic?range=30" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
           进入网站访问统计
@@ -1065,7 +1075,7 @@ function BehaviorPanel({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">访问行为路径</h2>
-          <p className="mt-1 text-xs text-[#61767D]">按 300 后台常见路径心智，把入口页面、行为步骤、留存率和转化诊断放在同屏判断。</p>
+          <p className="mt-1 text-xs text-[#61767D]">查看入口页面、行为步骤、留存率和转化提示。</p>
         </div>
         <Link href="/admin/status/traffic#behavior-analysis" className="text-xs font-semibold text-[#1889B6] hover:text-[#E36F2C]">
           行为分析
@@ -1396,8 +1406,8 @@ function PriorityQueue({
       value: caseInquiryHealth.weak,
       detail:
         caseInquiryHealth.weak > 0
-          ? `已发布案例 ${formatNumber(caseInquiryHealth.published)} 个，其中 ${formatNumber(caseInquiryHealth.weak)} 个待补询盘承接要素。`
-          : `已发布案例 ${formatNumber(caseInquiryHealth.published)} 个，询盘承接关键字段正常。`,
+          ? `已发布案例 ${formatNumber(caseInquiryHealth.published)} 个，其中 ${formatNumber(caseInquiryHealth.weak)} 个待补询盘信息。`
+          : `已发布案例 ${formatNumber(caseInquiryHealth.published)} 个，询盘信息正常。`,
       href: '/admin/content/projects/list?view=case-conversion-weak',
       ok: caseInquiryHealth.weak === 0,
     },
@@ -1506,8 +1516,8 @@ function ModuleEntryPanel({
       value: formatNumber(caseInquiryHealth.weak),
       detail:
         caseInquiryHealth.weak > 0
-          ? `已发布 ${formatNumber(caseInquiryHealth.published)}，可承接 ${formatNumber(caseInquiryHealth.ready)}。`
-          : '案例询盘承接字段正常。',
+          ? `已发布 ${formatNumber(caseInquiryHealth.published)}，可询盘 ${formatNumber(caseInquiryHealth.ready)}。`
+          : '案例询盘信息正常。',
       href: '/admin/content/projects/list?view=case-conversion-weak',
       tone: caseInquiryHealth.weak > 0 ? 'orange' : 'green',
     },
@@ -1542,7 +1552,7 @@ function ModuleEntryPanel({
       <div className="flex items-start justify-between gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4">
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">数据模块台账</h2>
-          <p className="mt-1 text-xs text-[#61767D]">按 300 后台常见分析路径保留清晰下钻，一行判断当前模块值和处理入口。</p>
+          <p className="mt-1 text-xs text-[#61767D]">一行查看当前模块状态和处理入口。</p>
         </div>
         <span
           className={`shrink-0 rounded-md px-2 py-1 text-xs font-bold ${
@@ -1716,7 +1726,7 @@ function buildSourceSeoHealthRows({
   return [
     {
       key: 'products',
-      label: '产品来源承接',
+      label: '产品来源质量',
       sourceType: 'product',
       metric: getConversionMetric(analytics, 'products'),
       seoMissing: seo.productsMissing,
@@ -1728,7 +1738,7 @@ function buildSourceSeoHealthRows({
     },
     {
       key: 'cases',
-      label: '案例来源承接',
+      label: '案例来源质量',
       sourceType: 'case',
       metric: getConversionMetric(analytics, 'cases'),
       seoMissing: seo.projectsMissing,
@@ -1740,7 +1750,7 @@ function buildSourceSeoHealthRows({
     },
     {
       key: 'news',
-      label: '新闻来源承接',
+      label: '新闻来源质量',
       sourceType: 'news',
       metric: getConversionMetric(analytics, 'news'),
       seoMissing: seo.newsMissing,

@@ -629,11 +629,11 @@ function NewsListGovernancePanel({
       action: '查看台账',
     },
     {
-      label: '来源承接',
+      label: '新闻线索',
       value: '6 入口',
-      detail: '状态桥、质量桥、发布桥、来源面板、转化承接和新闻线索已回连',
+      detail: '状态、质量、发布、来源和线索入口',
       href: '/admin/status/leads#source-seo-lead-quality',
-      action: '看质量桥',
+      action: '看线索质量',
     },
     {
       label: '运营总览',
@@ -644,18 +644,18 @@ function NewsListGovernancePanel({
     },
   ]
   const sourceHandoffLinks = [
-    { label: '状态桥', href: '/admin/status/leads#news-lead-path-bridge' },
-    { label: '质量桥', href: '/admin/status/leads#source-seo-lead-quality' },
-    { label: '发布桥', href: '/admin/status/site#source-seo-release-bridge' },
+    { label: '线索状态', href: '/admin/status/leads#news-lead-path-bridge' },
+    { label: '线索质量', href: '/admin/status/leads#source-seo-lead-quality' },
+    { label: '发布检查', href: '/admin/status/site#source-seo-release-bridge' },
     { label: '来源面板', href: '/admin/status/traffic#news-source-handoff' },
-    { label: '转化承接', href: '/admin/site/conversion#news-conversion-handoff' },
+    { label: '转化路径', href: '/admin/site/conversion#news-conversion-handoff' },
     { label: '新闻线索', href: '/admin/customers/leads?source_type=news' },
   ]
   const sourceSeoBridgeCards: NewsSourceSeoBridgeItem[] = [
     {
       label: '处理焦点',
       value: contentIssueCount > 0 ? `${formatNumber(contentIssueCount)} 待补` : '已归零',
-      detail: '把新闻列表缺项、SEO 待补和当前筛选样本放到同一处理入口。',
+      detail: '查看新闻缺项、SEO 待补和当前筛选结果。',
       href: createHref(filters, { status: '', schedule: '', issue: 'content' }, '#news-list-priority'),
       action: '筛内容待补',
       tone: contentIssueCount > 0 ? 'orange' : 'green',
@@ -663,7 +663,7 @@ function NewsListGovernancePanel({
     {
       label: 'SEO 来源质量',
       value: formatNumber(issueSummary.seo),
-      detail: '新闻 SEO 缺口直连来源线索质量，方便复核内容补齐后是否带来有效询盘。',
+      detail: '查看新闻 SEO 缺项和线索质量。',
       href: createHref(filters, { status: '', schedule: '', issue: 'seo' }, '#news-source-seo-list-bridge'),
       action: '筛 SEO 待补',
       tone: issueSummary.seo > 0 ? 'orange' : 'green',
@@ -671,15 +671,15 @@ function NewsListGovernancePanel({
     {
       label: '发布回看',
       value: formatNumber(rowsCount),
-      detail: '当前列表样本可回看发布复验，确认发布后的 SEO、来源和线索路径。',
+      detail: '复查发布后的 SEO、来源和线索路径。',
       href: '/admin/status/site#source-seo-release-bridge',
-      action: '看发布桥',
+      action: '看发布检查',
       tone: 'blue',
     },
     {
       label: '新闻线索',
       value: 'news',
-      detail: '进入新闻来源线索队列，对照 en.303 新闻入口的访问和转化。',
+      detail: '进入新闻来源线索队列，查看访问后的咨询与跟进质量。',
       href: '/admin/customers/leads?source_type=news',
       action: '看线索',
       tone: 'blue',
@@ -735,10 +735,10 @@ function NewsListGovernancePanel({
       <div id="news-source-seo-list-bridge" className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-4 py-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">Source SEO Bridge</p>
-            <h3 className="mt-1 text-base font-bold text-[#1E2C31]">新闻 SEO 与来源处理桥</h3>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">News SEO</p>
+            <h3 className="mt-1 text-base font-bold text-[#1E2C31]">新闻 SEO 与来源</h3>
             <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-              对照 en.303 新闻页的分类、搜索、摘要、详情和联系入口，把后台新闻列表的 SEO 缺口、内容缺项、发布回看和新闻线索队列合并成一条运营路径。
+              查看 SEO 缺项、内容缺项、发布检查和新闻线索。
             </p>
           </div>
           <Link
@@ -812,7 +812,7 @@ function NewsListSourceConversionQueue({
     {
       label: '新闻优化台',
       value: '优化',
-      detail: '回到新闻内容到来源线索优化台，统一看内容待补、SEO 待补和新闻来源线索承接。',
+      detail: '查看内容待补、SEO 待补和新闻来源线索。',
       href: '/admin/content/news#news-source-lead-optimization-desk',
       action: '看优化台',
       Icon: Newspaper,
@@ -828,9 +828,9 @@ function NewsListSourceConversionQueue({
       tone: openIssues > 0 ? 'orange' : 'blue',
     },
     {
-      label: '来源线索处理',
+      label: '来源线索',
       value: '线索',
-      detail: '复核新闻来源线索、活跃度、阶段和运营跟进质量。',
+      detail: '查看新闻来源线索、阶段和跟进质量。',
       href: '/admin/status/leads#source-lead-quality-workdesk',
       action: '看线索处理',
       Icon: Link2,
@@ -839,7 +839,7 @@ function NewsListSourceConversionQueue({
     {
       label: '转化复盘',
       value: '转化',
-      detail: '把当前新闻列表筛选结果接入 SEO 到线索转化复盘，判断补内容后的获客承接。',
+      detail: '查看当前筛选结果的 SEO 和线索转化。',
       href: '/admin/site/conversion#seo-to-lead-conversion-review',
       action: '看转化',
       Icon: ListChecks,
@@ -1229,7 +1229,7 @@ export default async function AdminContentNewsListPage({ searchParams }: NewsLis
       <AdminPageHero
         kicker="新闻运营"
         title="新闻列表"
-        description="筛选、预览、编辑和删除新闻内容；单篇定时字段和定时筛选已开放，批量定时、批量发布和批量删除继续后置。"
+        description="筛选、预览、编辑和管理新闻内容。"
         actions={(
           <>
             <PrimaryAction href="/admin/content/news/new" Icon={Plus} label="新增新闻" primary />

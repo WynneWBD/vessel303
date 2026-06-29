@@ -10,6 +10,12 @@ export type CatalogCardItemKey =
   | 'showRegion'
   | 'showPrice'
 
+export type CatalogCardItemSource = {
+  listKey: 'items_en' | 'items_cn'
+  index: number
+  value: string
+}
+
 export function isProductCatalogCardModule(module: Pick<CatalogDetailModule, 'id'> | null | undefined) {
   return module?.id === PRODUCT_CATALOG_CARD_MODULE_ID
 }
@@ -27,9 +33,25 @@ function findModuleItem(items: CatalogDetailModuleItem[] | undefined, key: Catal
   return (items ?? []).find((item) => normalizeKey(item.title) === normalizedKey)
 }
 
+function findModuleItemIndex(items: CatalogDetailModuleItem[] | undefined, key: CatalogCardItemKey) {
+  const normalizedKey = normalizeKey(key)
+  return (items ?? []).findIndex((item) => normalizeKey(item.title) === normalizedKey) ?? -1
+}
+
 function itemValue(items: CatalogDetailModuleItem[] | undefined, key: CatalogCardItemKey) {
   const item = findModuleItem(items, key)
   return String(item?.body ?? '').trim()
+}
+
+function itemSource(
+  items: CatalogDetailModuleItem[] | undefined,
+  key: CatalogCardItemKey,
+  listKey: CatalogCardItemSource['listKey'],
+): CatalogCardItemSource | null {
+  const index = findModuleItemIndex(items, key)
+  if (index < 0) return null
+  const value = String(items?.[index]?.body ?? '').trim()
+  return value ? { listKey, index, value } : null
 }
 
 export function catalogCardItemValue(
@@ -41,6 +63,17 @@ export function catalogCardItemValue(
   const primary = lang === 'en' ? module.items_en : module.items_cn
   const fallback = lang === 'en' ? module.items_cn : module.items_en
   return itemValue(primary, key) || itemValue(fallback, key)
+}
+
+export function catalogCardItemSource(
+  module: CatalogDetailModule | null | undefined,
+  key: CatalogCardItemKey,
+  lang: 'en' | 'zh',
+) {
+  if (!module) return null
+  const primaryKey = lang === 'en' ? 'items_en' : 'items_cn'
+  const fallbackKey = lang === 'en' ? 'items_cn' : 'items_en'
+  return itemSource(module[primaryKey], key, primaryKey) || itemSource(module[fallbackKey], key, fallbackKey)
 }
 
 export function catalogCardFlag(

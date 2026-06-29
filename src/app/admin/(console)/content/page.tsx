@@ -355,7 +355,7 @@ async function loadFixedContentSummary(domain: SecondaryContentDomain): Promise<
   const issues: string[] = []
 
   if (renderable === 0) issues.push('前台可见内容为 0')
-  if (publishedButHidden > 0) issues.push(`${publishedButHidden} 条 published 缺前台必要字段`)
+  if (publishedButHidden > 0) issues.push(`${publishedButHidden} 条已发布内容缺少前台必要信息`)
   if (fixedMissing.length > 0) issues.push(`固定 slug 待发布：${fixedMissing.join(' / ')}`)
   if (draft > 0) issues.push(`${draft} 条草稿待收口`)
 
@@ -446,7 +446,7 @@ function getContentSideNav(summary: ContentDashboardSummary): AdminSideNavGroup[
       ],
     },
     {
-      title: '后续规划',
+      title: '运营维护',
       items: [
         { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },
         { key: 'recycle', label: '回收站', planned: true, Icon: Archive },
@@ -499,10 +499,10 @@ function Hero({ summary }: { summary: ContentDashboardSummary }) {
   const totals = getTotals(summary)
 
   return (
-    <AdminPageHero
-      kicker="Content Operations"
-      title="内容经营中心"
-      description="先看内容状态，再发布产品、项目和新闻；核心 CMS 与固定内容入口保持同一套编辑心智。"
+      <AdminPageHero
+        kicker="Content Operations"
+        title="内容管理"
+        description="管理产品、案例、新闻和固定页面内容。"
       actions={
         <>
           <AdminActionLink href="/admin/content/products/new" Icon={Package} label="发布产品" primary />
@@ -518,7 +518,7 @@ function Hero({ summary }: { summary: ContentDashboardSummary }) {
           <AdminMetricCard
             title="内容域"
             value={CONTENT_DOMAINS.length + SECONDARY_CONTENT_DOMAINS.length}
-            detail="核心 CMS + 固定内容"
+            detail="核心内容 + 固定页面"
             Icon={LayoutTemplate}
             tone="blue"
           />
@@ -537,7 +537,7 @@ function ContentListWorkbench({
   const rows: ContentWorkbenchRow[] = [
     {
       title: '产品列表',
-      detail: '产品发布、草稿、内容缺项和运营标记',
+      detail: '发布、草稿、缺项、标签',
       total: summary.products.total,
       draft: summary.products.draft,
       recent: summary.products.recent,
@@ -555,7 +555,7 @@ function ContentListWorkbench({
     },
     {
       title: '项目案例',
-      detail: '项目草稿、封面图库、坐标和 Global 入图',
+      detail: '草稿、封面、图库、地图',
       total: summary.projects.total,
       draft: summary.projects.draft,
       recent: summary.projects.recent,
@@ -573,7 +573,7 @@ function ContentListWorkbench({
     },
     {
       title: '新闻列表',
-      detail: '新闻草稿、分类、排期、正文和 SEO',
+      detail: '草稿、分类、排期、SEO',
       total: summary.news.total,
       draft: summary.news.draft,
       recent: summary.news.recent,
@@ -594,8 +594,8 @@ function ContentListWorkbench({
   return (
     <section className="space-y-4">
       <AdminSectionTitle
-        title="内容处理工作台"
-        detail="先进入列表处理，再按草稿、待补、坐标、排期等筛选推进。"
+        title="内容列表"
+        detail="按类型查看数量和入口。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="hidden grid-cols-[200px_120px_120px_120px_minmax(0,1fr)_170px] gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 text-xs font-semibold text-[#61767D] lg:grid">
@@ -603,8 +603,8 @@ function ContentListWorkbench({
           <span>总量 / 草稿</span>
           <span>近 30 天</span>
           <span>当前信号</span>
-          <span>处理入口</span>
-          <span>列表工作台</span>
+          <span>筛选</span>
+          <span>管理</span>
         </div>
         <div className="divide-y divide-[#E6EEEE]">
           {rows.map((row) => (
@@ -662,7 +662,7 @@ function ContentWorkbenchRowView({ row }: { row: ContentWorkbenchRow }) {
         href={row.href}
         className="inline-flex h-9 w-fit items-center gap-1 rounded-md border border-[#1889B6]/25 bg-[#EAF6F8] px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
       >
-        进入列表
+        打开列表
         <ArrowRight size={13} />
       </Link>
     </div>
@@ -678,7 +678,7 @@ function ContentDomainGrid({
 }) {
   return (
     <section id="drafts" className="scroll-mt-24 space-y-4">
-      <AdminSectionTitle title="核心内容运营台账" detail="产品、项目、新闻按发布状态和近期变化统一扫描，减少卡片跳读。" />
+      <AdminSectionTitle title="核心内容" detail="产品、案例、新闻状态。" />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="hidden grid-cols-[190px_90px_90px_90px_100px_minmax(0,1fr)_170px] gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 text-xs font-semibold text-[#61767D] lg:grid">
           <span>核心内容域</span>
@@ -686,7 +686,7 @@ function ContentDomainGrid({
           <span>已发布</span>
           <span>草稿</span>
           <span>近 30 天</span>
-          <span>运营口径</span>
+          <span>状态</span>
           <span className="text-right">处理入口</span>
         </div>
         <div className="divide-y divide-[#E6EEEE]">
@@ -703,7 +703,7 @@ function ContentDomainGrid({
 function FixedContentReadinessGrid({ summaries }: { summaries: FixedContentSummary[] }) {
   return (
     <section className="space-y-3">
-      <AdminSectionTitle title="固定内容运营台账" detail="FAQ、文件下载、场景、Display、技术专题按前台可见状态集中扫描；先处理橙色项。" />
+      <AdminSectionTitle title="固定内容" detail="FAQ、下载、场景、Display、技术专题状态。" />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="hidden grid-cols-[190px_90px_90px_90px_90px_90px_minmax(0,1fr)_150px] gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 text-xs font-semibold text-[#61767D] lg:grid">
           <span>固定内容域</span>
@@ -712,7 +712,7 @@ function FixedContentReadinessGrid({ summaries }: { summaries: FixedContentSumma
           <span>已发布</span>
           <span>草稿</span>
           <span>隐藏</span>
-          <span>状态判断</span>
+          <span>状态</span>
           <span>处理入口</span>
         </div>
         <div className="divide-y divide-[#E6EEEE]">
@@ -734,7 +734,7 @@ function FixedContentReadinessRow({ summary }: { summary: FixedContentSummary })
       : summary.tone === 'blue'
         ? 'bg-[#EAF6F8] text-[#1889B6]'
         : 'bg-emerald-50 text-emerald-700'
-  const issueText = summary.issues.length > 0 ? summary.issues.slice(0, 2).join(' / ') : '前台可见覆盖正常'
+  const issueText = summary.issues.length > 0 ? summary.issues.slice(0, 2).join(' / ') : '状态正常'
 
   return (
     <div className="grid grid-cols-1 gap-3 px-4 py-4 text-sm lg:grid-cols-[190px_90px_90px_90px_90px_90px_minmax(0,1fr)_150px] lg:items-center">
@@ -858,24 +858,24 @@ function contentStatusToneClass(tone: 'green' | 'orange') {
 
 function ActionMatrix() {
   const actions = [
-    { group: '核心 CMS', label: '产品管理', detail: '产品列表、草稿、待补、发布入口', href: '/admin/content/products', Icon: Package },
-    { group: '核心 CMS', label: '项目案例', detail: '案例列表、坐标、图库和 Global 入图', href: '/admin/content/projects', Icon: MapPinned },
-    { group: '核心 CMS', label: '新闻资讯', detail: '新闻列表、分类、排期和 SEO', href: '/admin/content/news', Icon: Newspaper },
+    { group: '核心内容', label: '产品管理', detail: '产品列表、草稿、待补、发布入口', href: '/admin/content/products', Icon: Package },
+    { group: '核心内容', label: '项目案例', detail: '案例列表、坐标、图库和地图', href: '/admin/content/projects', Icon: MapPinned },
+    { group: '核心内容', label: '新闻资讯', detail: '新闻列表、分类、排期和 SEO', href: '/admin/content/news', Icon: Newspaper },
     { group: '固定内容', label: 'FAQ', detail: '常见问题分类、排序、发布和隐藏', href: '/admin/content/faq', Icon: FileQuestion },
     { group: '固定内容', label: '文件下载', detail: 'Media Kit 文件和申请入口', href: '/admin/content/media-kit', Icon: FileArchive },
-    { group: '固定内容', label: '场景方案', detail: 'tourism / commercial / public 固定场景', href: '/admin/content/scenarios', Icon: Presentation },
-    { group: '固定内容', label: 'Display 展示', detail: '展示页橱窗和前台可见内容', href: '/admin/content/display', Icon: GalleryHorizontalEnd },
-    { group: '固定内容', label: '技术专题', detail: 'VI/IE、VIPC、VOLS 技术专题', href: '/admin/content/innovation', Icon: Lightbulb },
+    { group: '固定内容', label: '场景方案', detail: '场景页面内容', href: '/admin/content/scenarios', Icon: Presentation },
+    { group: '固定内容', label: 'Display 展示', detail: '展示页内容', href: '/admin/content/display', Icon: GalleryHorizontalEnd },
+    { group: '固定内容', label: '技术专题', detail: '技术专题页面', href: '/admin/content/innovation', Icon: Lightbulb },
   ]
 
   return (
     <section className="space-y-4">
-      <AdminSectionTitle title="内容操作速查" detail="把管理入口压成一张表，按内容域进入对应列表、编辑和发布工作台。" />
+      <AdminSectionTitle title="内容入口" detail="按内容类型进入管理。" />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="hidden grid-cols-[110px_180px_minmax(0,1fr)_96px] gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 text-xs font-semibold text-[#61767D] lg:grid">
           <span>分组</span>
           <span>入口</span>
-          <span>用途</span>
+          <span>内容</span>
           <span className="text-right">操作</span>
         </div>
         <div className="divide-y divide-[#E6EEEE]">
@@ -911,7 +911,7 @@ function WorkflowPanel() {
 
   return (
     <section className="space-y-4">
-      <AdminSectionTitle title="内容发布链路" detail="保持固定字段编辑心智：先建草稿，再补字段，最后预览和发布。" />
+      <AdminSectionTitle title="发布流程" detail="新建、补内容、预览、发布。" />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-4 md:divide-x md:divide-y-0">
         {steps.map((step, index) => (
@@ -950,7 +950,7 @@ function TodoPanel({ items }: { items: TodoItem[] }) {
           <div>
             <h2 className="text-sm font-bold text-[#1E2C31]">发布前检查</h2>
             <p className="mt-1 text-xs leading-5 text-[#61767D]">
-              发布前会提示关键缺失项，已发布内容也可继续补充。
+              缺失项会在编辑页提示。
             </p>
           </div>
         </div>
@@ -992,7 +992,7 @@ function MaintenanceBlock() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-base font-bold text-[#1E2C31]">管理设置</h2>
-          <p className="mt-1 text-xs text-[#61767D]">仅管理员使用，内容运营优先使用上方入口。</p>
+          <p className="mt-1 text-xs text-[#61767D]">管理员入口。</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <MaintenanceLink href="/admin/settings" label="站点设置" Icon={Settings} />

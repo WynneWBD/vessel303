@@ -1383,7 +1383,7 @@ function getCustomerSideNav(summary: LeadDashboardSummary): AdminSideNavGroup[] 
       ],
     },
     {
-      title: '后续规划',
+      title: '客户维护',
       items: [
         { key: 'customer-files', label: '客户档案', planned: true, Icon: Users },
         { key: 'members', label: '会员管理', planned: true, adminOnly: true, Icon: UserRoundCheck },

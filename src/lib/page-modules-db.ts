@@ -31,7 +31,7 @@ export const PAGE_MODULE_PAGE_KEYS = [
 
 export const PAGE_MODULE_PUBLIC_CACHE_TAG = 'page-module-public'
 const PAGE_MODULE_PUBLIC_CACHE_SECONDS = 300
-const PAGE_MODULE_DEFAULTS_CACHE_VERSION = '2026-06-18-b363-contact-faq-panel'
+const PAGE_MODULE_DEFAULTS_CACHE_VERSION = '2026-06-28-b432-contact-canvas-filter'
 
 export type PageModulePageKey = (typeof PAGE_MODULE_PAGE_KEYS)[number]
 
@@ -285,7 +285,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     module_type: 'fixed-content',
     title_zh: '首页首屏',
     title_en: 'Homepage Hero',
-    description_zh: '首页首屏标题、说明、轮播图和按钮。这个模块已接入前台，可以直接影响首页首屏展示。',
+    description_zh: '首页首屏标题、说明、轮播图和按钮。',
     description_en: 'Hero title, intro, background image, and calls to action.',
     items: [
       {
@@ -378,7 +378,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     module_type: 'stats',
     title_zh: '首页数据区',
     title_en: 'Homepage Stats',
-    description_zh: '首页首屏下方核心数据。这个模块已接入前台，可以直接影响首页数据条展示。',
+    description_zh: '首页首屏下方核心数据。',
     description_en: 'Key statistics shown below the homepage hero.',
     items: [
       {
@@ -429,7 +429,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     sortOrder: 22,
     titleZh: '首页产品入口',
     titleEn: 'VESSEL Product Systems',
-    descriptionZh: '展示重点产品系列、产品入口和咨询入口。这个模块已接入前台，后台发布后会影响首页产品展示。',
+    descriptionZh: '展示重点产品系列、产品入口和咨询入口。',
     descriptionEn: 'Controlled homepage product entries, catalog links, and inquiry paths.',
     items: [
       {
@@ -947,10 +947,10 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     module_type: 'fixed-content',
     title_zh: '首页技术体系',
     title_en: 'Homepage Technology',
-    description_zh: '首页三大技术卡片与说明文案。当前先作为模块化 CMS 规划项，后续逐步接入前台。',
+    description_zh: '首页三大技术卡片与说明文案。',
     description_en: 'Technology cards and supporting copy on the homepage.',
     items: [],
-    is_visible: true,
+    is_visible: false,
     sort_order: 30,
     updated_at: '',
     updated_by_email: null,
@@ -1043,7 +1043,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
         value_en: 'Catalog',
         label_zh: '已发布产品',
         label_en: 'Published products',
-        content_zh: '后台发布的产品进入正式目录。',
+        content_zh: '已发布产品进入正式目录。',
         content_en: 'Published products appear in the live catalog.',
         is_visible: true,
         sort_order: 10,
@@ -1154,27 +1154,59 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
         is_visible: true,
         sort_order: 30,
       },
+    ],
+    is_visible: false,
+    sort_order: 10,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'faq:list',
+    page_key: 'faq',
+    module_key: 'list',
+    module_type: 'fixed-content',
+    title_zh: 'FAQ 列表',
+    title_en: 'FAQ list',
+    description_zh: 'FAQ 分类筛选、空状态和已发布问答内容入口。',
+    description_en: 'FAQ filters, empty state, and published question entries.',
+    items: [
       {
         id: 'all-categories-label',
         label_zh: '全部',
         label_en: 'All',
         is_visible: true,
-        sort_order: 40,
+        sort_order: 10,
       },
       {
         id: 'empty-state',
         label_zh: '当前分类暂无已发布问题。',
         label_en: 'No published questions are available in this category.',
         is_visible: true,
-        sort_order: 50,
+        sort_order: 20,
       },
+    ],
+    is_visible: true,
+    sort_order: 20,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'faq:inquiry-form',
+    page_key: 'faq',
+    module_key: 'inquiry-form',
+    module_type: 'form',
+    title_zh: '提交项目问题',
+    title_en: 'Send your question',
+    description_zh: '请填写您的项目背景和问题，团队会按 FAQ 来源跟进。',
+    description_en: 'Share your project context and question so the team can follow up from the FAQ source.',
+    items: [
       {
         id: 'contact-cta',
         href: '/contact?source=faq:general:contact_cta',
         label_zh: '联系我们',
         label_en: 'Contact VESSEL',
         is_visible: true,
-        sort_order: 60,
+        sort_order: 10,
       },
       {
         id: 'secondary-cta',
@@ -1182,41 +1214,25 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
         label_zh: '查看产品',
         label_en: 'View Products',
         is_visible: true,
-        sort_order: 70,
+        sort_order: 20,
       },
-      {
-        id: 'inquiry-title',
-        label_zh: '提交项目问题',
-        label_en: 'Send your question',
-        is_visible: true,
-        sort_order: 80,
-      },
-      {
-        id: 'inquiry-description',
-        content_zh: '请填写您的项目背景和问题，团队会按 FAQ 来源跟进。',
-        content_en: 'Share your project context and question so the team can follow up from the FAQ source.',
-        label_zh: 'FAQ 咨询说明',
-        label_en: 'FAQ inquiry note',
-        is_visible: true,
-        sort_order: 90,
-      },
-      { id: 'form-eyebrow', label_zh: '项目咨询', label_en: 'Project Inquiry', is_visible: true, sort_order: 100 },
-      { id: 'form-name', label_zh: '姓名', label_en: 'Name', is_visible: true, sort_order: 110 },
-      { id: 'form-email', label_zh: '邮箱', label_en: 'Email', is_visible: true, sort_order: 120 },
-      { id: 'form-phone', label_zh: '电话 / WhatsApp', label_en: 'Phone / WhatsApp', is_visible: true, sort_order: 130 },
-      { id: 'form-country', label_zh: '国家 / 城市', label_en: 'Country / City', is_visible: true, sort_order: 140 },
-      { id: 'form-company', label_zh: '公司 / 机构', label_en: 'Company / Organization', is_visible: true, sort_order: 150 },
-      { id: 'form-quantity', label_zh: '预计数量', label_en: 'Expected Quantity', is_visible: true, sort_order: 160 },
-      { id: 'form-message', label_zh: '问题或项目需求', label_en: 'Question or Project Requirements', is_visible: true, sort_order: 170 },
-      { id: 'form-submit', label_zh: '提交咨询', label_en: 'Submit Inquiry', is_visible: true, sort_order: 180 },
-      { id: 'form-submitting', label_zh: '提交中', label_en: 'Submitting', is_visible: true, sort_order: 190 },
-      { id: 'form-success', label_zh: '已收到，我们会按该页面来源跟进。', label_en: 'Received. The team will follow up from this page source.', is_visible: true, sort_order: 200 },
-      { id: 'form-error', label_zh: '提交失败，请稍后再试。', label_en: 'Submission failed. Please try again.', is_visible: true, sort_order: 210 },
-      { id: 'form-source-prefix', label_zh: '来源', label_en: 'Source', is_visible: true, sort_order: 220 },
-      { id: 'form-company-prefix', label_zh: '公司', label_en: 'Company', is_visible: true, sort_order: 230 },
+      { id: 'form-eyebrow', label_zh: '项目咨询', label_en: 'Project Inquiry', is_visible: true, sort_order: 30 },
+      { id: 'form-name', label_zh: '姓名', label_en: 'Name', is_visible: true, sort_order: 40 },
+      { id: 'form-email', label_zh: '邮箱', label_en: 'Email', is_visible: true, sort_order: 50 },
+      { id: 'form-phone', label_zh: '电话 / WhatsApp', label_en: 'Phone / WhatsApp', is_visible: true, sort_order: 60 },
+      { id: 'form-country', label_zh: '国家 / 城市', label_en: 'Country / City', is_visible: true, sort_order: 70 },
+      { id: 'form-company', label_zh: '公司 / 机构', label_en: 'Company / Organization', is_visible: true, sort_order: 80 },
+      { id: 'form-quantity', label_zh: '预计数量', label_en: 'Expected Quantity', is_visible: true, sort_order: 90 },
+      { id: 'form-message', label_zh: '问题或项目需求', label_en: 'Question or Project Requirements', is_visible: true, sort_order: 100 },
+      { id: 'form-submit', label_zh: '提交咨询', label_en: 'Submit Inquiry', is_visible: true, sort_order: 110 },
+      { id: 'form-submitting', label_zh: '提交中', label_en: 'Submitting', is_visible: true, sort_order: 120 },
+      { id: 'form-success', label_zh: '已收到，我们会按该页面来源跟进。', label_en: 'Received. The team will follow up from this page source.', is_visible: true, sort_order: 130 },
+      { id: 'form-error', label_zh: '提交失败，请稍后再试。', label_en: 'Submission failed. Please try again.', is_visible: true, sort_order: 140 },
+      { id: 'form-source-prefix', label_zh: '来源', label_en: 'Source', is_visible: true, sort_order: 150 },
+      { id: 'form-company-prefix', label_zh: '公司', label_en: 'Company', is_visible: true, sort_order: 160 },
     ],
     is_visible: true,
-    sort_order: 10,
+    sort_order: 30,
     updated_at: '',
     updated_by_email: null,
   },
@@ -1301,7 +1317,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
       { id: 'snapshot-title', label_zh: '先判断型号，再进入详情', label_en: 'Evaluate the model before scrolling', is_visible: true, sort_order: 140 },
       { id: 'technical-check', label_zh: '技术参数', label_en: 'Technical check', is_visible: true, sort_order: 150 },
       { id: 'view-all', label_zh: '查看全部', label_en: 'View all', is_visible: true, sort_order: 160 },
-      { id: 'specs-empty', label_zh: '补齐 CMS 技术参数后，这里会展示关键规格。', label_en: 'Technical parameters will appear here after the CMS fields are completed.', is_visible: true, sort_order: 170 },
+      { id: 'specs-empty', label_zh: '补齐技术参数后，这里会展示关键规格。', label_en: 'Technical parameters will appear here once completed.', is_visible: true, sort_order: 170 },
       { id: 'inquiry-path', label_zh: '咨询入口', label_en: 'Inquiry path', is_visible: true, sort_order: 180 },
       { id: 'bridge-eyebrow', label_zh: '证明到询盘路径', label_en: 'Proof-to-inquiry bridge', is_visible: true, sort_order: 190 },
       { id: 'bridge-title', label_zh: '先看证明、对比适配，再提交型号咨询。', label_en: 'Review proof, compare fit, then send the model inquiry.', is_visible: true, sort_order: 200 },
@@ -1327,9 +1343,9 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
       { id: 'unit-signals', label_zh: '项信号', label_en: 'signals', is_visible: true, sort_order: 400 },
       { id: 'fit-pending', label_zh: '适配信息待补', label_en: 'Fit pending', is_visible: true, sort_order: 410 },
       { id: 'bridge-buyer-resources', label_zh: '买家资料', label_en: 'Buyer resources', is_visible: true, sort_order: 420 },
-      { id: 'bridge-buyer-resources-detail', label_zh: '如有文件、买家说明或资料模块，可先查看。', label_en: 'Check files, buyer notes or supporting modules when available.', is_visible: true, sort_order: 430 },
+      { id: 'bridge-buyer-resources-detail', label_zh: '如有文件或买家说明，可先查看。', label_en: 'Check files and buyer notes when available.', is_visible: true, sort_order: 430 },
       { id: 'unit-resource-modules', label_zh: '个模块', label_en: 'modules', is_visible: true, sort_order: 440 },
-      { id: 'no-resource-module', label_zh: '暂无资料模块', label_en: 'No resource module', is_visible: true, sort_order: 450 },
+      { id: 'no-resource-module', label_zh: '暂无资料', label_en: 'No resource yet', is_visible: true, sort_order: 450 },
       { id: 'bridge-related-options', label_zh: '相关选择', label_en: 'Related options', is_visible: true, sort_order: 460 },
       { id: 'bridge-related-options-detail', label_zh: '提交需求前可对比相近型号。', label_en: 'Compare nearby models before sending the request.', is_visible: true, sort_order: 470 },
       { id: 'unit-related-models', label_zh: '个型号', label_en: 'models', is_visible: true, sort_order: 480 },
@@ -1717,53 +1733,78 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
         is_visible: true,
         sort_order: 10,
       },
+    ],
+    is_visible: true,
+    sort_order: 10,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'media-kit:resources',
+    page_key: 'media-kit',
+    module_key: 'resources',
+    module_type: 'fixed-content',
+    title_zh: '可申请资源',
+    title_en: 'Available Assets',
+    description_zh: '媒体资料页资源列表标题和资源卡片入口。',
+    description_en: 'Resource list heading and asset card entry points on the Media Kit page.',
+    items: [
+      {
+        id: 'resource-cta',
+        label_zh: '申请访问',
+        label_en: 'Request access',
+        is_visible: true,
+        sort_order: 10,
+      },
+    ],
+    is_visible: true,
+    sort_order: 20,
+    updated_at: '',
+    updated_by_email: null,
+  },
+  {
+    id: 'media-kit:form',
+    page_key: 'media-kit',
+    module_key: 'form',
+    module_type: 'form',
+    title_zh: '申请资料',
+    title_en: 'Request materials',
+    description_zh: '填写用途后提交，团队会按需求回复可用资料。',
+    description_en: 'Submit your intended use and the team will respond with suitable materials.',
+    items: [
       {
         id: 'form-title',
         label_zh: '申请资料',
         label_en: 'Request materials',
         is_visible: true,
-        sort_order: 20,
+        sort_order: 10,
       },
       {
         id: 'form-description',
         label_zh: '填写用途后提交，团队会按需求回复可用资料。',
         label_en: 'Submit your intended use and the team will respond with suitable materials.',
         is_visible: true,
-        sort_order: 30,
+        sort_order: 20,
       },
-      {
-        id: 'resource-heading',
-        label_zh: '可申请资源',
-        label_en: 'Available Assets',
-        is_visible: true,
-        sort_order: 40,
-      },
-      {
-        id: 'resource-cta',
-        label_zh: '申请访问',
-        label_en: 'Request access',
-        is_visible: true,
-        sort_order: 50,
-      },
-      { id: 'label-name', label_zh: '姓名', label_en: 'Name', is_visible: true, sort_order: 60 },
-      { id: 'label-email', label_zh: '邮箱', label_en: 'Email', is_visible: true, sort_order: 70 },
-      { id: 'label-phone', label_zh: '电话 / WhatsApp', label_en: 'Phone / WhatsApp', is_visible: true, sort_order: 80 },
-      { id: 'label-company', label_zh: '公司 / 机构', label_en: 'Company / Organization', is_visible: true, sort_order: 90 },
-      { id: 'label-country', label_zh: '国家 / 城市', label_en: 'Country / City', is_visible: true, sort_order: 100 },
-      { id: 'label-use-case', label_zh: '资料用途', label_en: 'Asset Use Case', is_visible: true, sort_order: 110 },
-      { id: 'label-message', label_zh: '补充说明', label_en: 'Additional Notes', is_visible: true, sort_order: 120 },
-      { id: 'submit', label_zh: '提交资料申请', label_en: 'Submit Media Request', is_visible: true, sort_order: 130 },
-      { id: 'submitting', label_zh: '提交中', label_en: 'Submitting', is_visible: true, sort_order: 140 },
-      { id: 'success-title', label_zh: '已收到资料申请', label_en: 'Media Request Received', is_visible: true, sort_order: 150 },
-      { id: 'success-body', label_zh: '团队会按您的用途回复可用资料。', label_en: 'The team will respond with suitable assets for your use case.', is_visible: true, sort_order: 160 },
-      { id: 'error-body', label_zh: '提交失败，请稍后再试。', label_en: 'Submission failed. Please try again.', is_visible: true, sort_order: 170 },
-      { id: 'use-case-press', value_en: 'press', value_zh: 'press', label_zh: '媒体报道', label_en: 'Press Coverage', is_visible: true, sort_order: 180 },
-      { id: 'use-case-proposal', value_en: 'proposal', value_zh: 'proposal', label_zh: '项目提案', label_en: 'Project Proposal', is_visible: true, sort_order: 190 },
-      { id: 'use-case-channel', value_en: 'channel', value_zh: 'channel', label_zh: '渠道介绍', label_en: 'Channel Introduction', is_visible: true, sort_order: 200 },
-      { id: 'use-case-research', value_en: 'research', value_zh: 'research', label_zh: '研究参考', label_en: 'Research Reference', is_visible: true, sort_order: 210 },
+      { id: 'label-name', label_zh: '姓名', label_en: 'Name', is_visible: true, sort_order: 30 },
+      { id: 'label-email', label_zh: '邮箱', label_en: 'Email', is_visible: true, sort_order: 40 },
+      { id: 'label-phone', label_zh: '电话 / WhatsApp', label_en: 'Phone / WhatsApp', is_visible: true, sort_order: 50 },
+      { id: 'label-company', label_zh: '公司 / 机构', label_en: 'Company / Organization', is_visible: true, sort_order: 60 },
+      { id: 'label-country', label_zh: '国家 / 城市', label_en: 'Country / City', is_visible: true, sort_order: 70 },
+      { id: 'label-use-case', label_zh: '资料用途', label_en: 'Asset Use Case', is_visible: true, sort_order: 80 },
+      { id: 'label-message', label_zh: '补充说明', label_en: 'Additional Notes', is_visible: true, sort_order: 90 },
+      { id: 'submit', label_zh: '提交资料申请', label_en: 'Submit Media Request', is_visible: true, sort_order: 100 },
+      { id: 'submitting', label_zh: '提交中', label_en: 'Submitting', is_visible: true, sort_order: 110 },
+      { id: 'success-title', label_zh: '已收到资料申请', label_en: 'Media Request Received', is_visible: true, sort_order: 120 },
+      { id: 'success-body', label_zh: '团队会按您的用途回复可用资料。', label_en: 'The team will respond with suitable assets for your use case.', is_visible: true, sort_order: 130 },
+      { id: 'error-body', label_zh: '提交失败，请稍后再试。', label_en: 'Submission failed. Please try again.', is_visible: true, sort_order: 140 },
+      { id: 'use-case-press', value_en: 'press', value_zh: 'press', label_zh: '媒体报道', label_en: 'Press Coverage', is_visible: true, sort_order: 150 },
+      { id: 'use-case-proposal', value_en: 'proposal', value_zh: 'proposal', label_zh: '项目提案', label_en: 'Project Proposal', is_visible: true, sort_order: 160 },
+      { id: 'use-case-channel', value_en: 'channel', value_zh: 'channel', label_zh: '渠道介绍', label_en: 'Channel Introduction', is_visible: true, sort_order: 170 },
+      { id: 'use-case-research', value_en: 'research', value_zh: 'research', label_zh: '研究参考', label_en: 'Research Reference', is_visible: true, sort_order: 180 },
     ],
     is_visible: true,
-    sort_order: 10,
+    sort_order: 30,
     updated_at: '',
     updated_by_email: null,
   },
@@ -1806,6 +1847,237 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
         label_en: 'Read more',
         is_visible: true,
         sort_order: 10,
+      },
+      {
+        id: 'search-placeholder',
+        label_zh: '搜索标题、摘要或分类',
+        label_en: 'Search title, summary, or category',
+        is_visible: true,
+        sort_order: 20,
+      },
+      {
+        id: 'filter-all',
+        label_zh: '全部',
+        label_en: 'All',
+        is_visible: true,
+        sort_order: 30,
+      },
+      {
+        id: 'filter-reset',
+        label_zh: '重置',
+        label_en: 'Reset',
+        is_visible: true,
+        sort_order: 40,
+      },
+      {
+        id: 'filter-results',
+        label_zh: '结果',
+        label_en: 'Results',
+        is_visible: true,
+        sort_order: 50,
+      },
+      {
+        id: 'empty-filter-title',
+        label_zh: '没有匹配的新闻',
+        label_en: 'No matching updates',
+        is_visible: true,
+        sort_order: 60,
+      },
+      {
+        id: 'empty-filter-body',
+        label_zh: '可以清空搜索和分类，或直接查看产品、案例与咨询入口。',
+        label_en: 'Clear the search and category filters, or continue to products, cases, and inquiry.',
+        is_visible: true,
+        sort_order: 70,
+      },
+      {
+        id: 'clear-filters',
+        label_zh: '清空筛选',
+        label_en: 'Clear filters',
+        is_visible: true,
+        sort_order: 80,
+      },
+      {
+        id: 'empty-public-title',
+        label_zh: '暂无公开新闻',
+        label_en: 'No public news yet',
+        is_visible: true,
+        sort_order: 90,
+      },
+      {
+        id: 'empty-public-body',
+        label_zh: '可以先查看产品目录、项目案例，或直接提交采购需求。',
+        label_en: 'You can explore products, review project cases, or start an inquiry with the team.',
+        is_visible: true,
+        sort_order: 100,
+      },
+      {
+        id: 'path-products',
+        href: SITE_PRODUCTS_HREF,
+        label_zh: '查看产品',
+        label_en: 'Explore products',
+        is_visible: true,
+        sort_order: 110,
+      },
+      {
+        id: 'path-cases',
+        href: '/cases',
+        label_zh: '项目案例',
+        label_en: 'Project cases',
+        is_visible: true,
+        sort_order: 120,
+      },
+      {
+        id: 'path-contact',
+        href: `${SITE_CONTACT_HREF}?source=news:list:contact_cta`,
+        label_zh: '提交需求',
+        label_en: 'Start inquiry',
+        is_visible: true,
+        sort_order: 130,
+      },
+      {
+        id: 'detail-hero-cta',
+        label_zh: '带着这篇动态咨询',
+        label_en: 'Inquire from this update',
+        is_visible: true,
+        sort_order: 140,
+      },
+      {
+        id: 'detail-continue-eyebrow',
+        label_zh: '继续阅读',
+        label_en: 'Continue reading',
+        is_visible: true,
+        sort_order: 150,
+      },
+      {
+        id: 'detail-continue-title',
+        label_zh: '从这篇动态继续浏览新闻与相关主题',
+        label_en: 'Keep browsing updates and related topics',
+        is_visible: true,
+        sort_order: 160,
+      },
+      {
+        id: 'detail-continue-body',
+        label_zh: '继续查看上一篇、下一篇和相关动态，也可以进入产品、案例或咨询路径。',
+        label_en: 'Continue to newer, older, and related updates, or move into products, cases, and inquiry.',
+        is_visible: true,
+        sort_order: 170,
+      },
+      {
+        id: 'detail-reading-path',
+        label_zh: '阅读路径',
+        label_en: 'Reading path',
+        is_visible: true,
+        sort_order: 180,
+      },
+      {
+        id: 'detail-reading-path-note',
+        label_zh: '可继续打开的新闻入口',
+        label_en: 'News entries available from here',
+        is_visible: true,
+        sort_order: 190,
+      },
+      {
+        id: 'detail-newer',
+        label_zh: '更新一篇',
+        label_en: 'Newer update',
+        is_visible: true,
+        sort_order: 200,
+      },
+      {
+        id: 'detail-older',
+        label_zh: '上一篇',
+        label_en: 'Older update',
+        is_visible: true,
+        sort_order: 210,
+      },
+      {
+        id: 'detail-related-title',
+        label_zh: '相关新闻',
+        label_en: 'Related news',
+        is_visible: true,
+        sort_order: 220,
+      },
+      {
+        id: 'detail-related-back',
+        href: '/news#news-discovery-console',
+        label_zh: '回到新闻发现',
+        label_en: 'Back to discovery',
+        is_visible: true,
+        sort_order: 230,
+      },
+      {
+        id: 'detail-next-eyebrow',
+        label_zh: '下一步路径',
+        label_en: 'Next step',
+        is_visible: true,
+        sort_order: 240,
+      },
+      {
+        id: 'detail-next-title',
+        label_zh: '把新闻线索转成产品、案例或采购咨询',
+        label_en: 'Turn this update into product, case, or inquiry context',
+        is_visible: true,
+        sort_order: 250,
+      },
+      {
+        id: 'detail-next-body',
+        label_zh: '如果这篇动态与你的项目相关，可以继续查看产品目录和交付案例，或直接把需求提交给团队。',
+        label_en: 'If this update is relevant to your project, continue to product lines, delivery cases, or submit an inquiry to the team.',
+        is_visible: true,
+        sort_order: 260,
+      },
+      {
+        id: 'detail-step-products',
+        href: SITE_PRODUCTS_HREF,
+        label_zh: '查看相关产品',
+        label_en: 'Explore products',
+        is_visible: true,
+        sort_order: 270,
+      },
+      {
+        id: 'detail-step-products-body',
+        label_zh: '回到产品目录，对照型号与配置。',
+        label_en: 'Review product lines and configurations.',
+        is_visible: true,
+        sort_order: 280,
+      },
+      {
+        id: 'detail-step-cases',
+        href: '/cases',
+        label_zh: '查看项目案例',
+        label_en: 'View project cases',
+        is_visible: true,
+        sort_order: 290,
+      },
+      {
+        id: 'detail-step-cases-body',
+        label_zh: '用真实项目判断场景适配。',
+        label_en: 'Use project references to compare scenarios.',
+        is_visible: true,
+        sort_order: 300,
+      },
+      {
+        id: 'detail-step-contact',
+        label_zh: '提交采购需求',
+        label_en: 'Start inquiry',
+        is_visible: true,
+        sort_order: 310,
+      },
+      {
+        id: 'detail-step-contact-body',
+        label_zh: '团队按这篇动态跟进采购背景。',
+        label_en: 'Let the team follow up from this article context.',
+        is_visible: true,
+        sort_order: 320,
+      },
+      {
+        id: 'detail-back-list',
+        href: '/news',
+        label_zh: '返回新闻列表',
+        label_en: 'Back to news',
+        is_visible: true,
+        sort_order: 330,
       },
     ],
     is_visible: true,
@@ -1914,6 +2186,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     description_zh: 'Share your country, project scenario, quantity, and timeline so the team can route your inquiry to the right contact.',
     description_en: 'Share your country, project scenario, quantity, and timeline so the team can route your inquiry to the right contact.',
     items: [
+      { id: 'hero-image', image_url: '/images/hero/homepage_banner-01.jpg', label_zh: '联系页首屏背景图', label_en: 'Contact hero background', is_visible: true, sort_order: 5 },
       { id: 'eyebrow', label_zh: 'Project Inquiry', label_en: 'Project Inquiry', is_visible: true, sort_order: 10 },
       { id: 'primary-cta', href: '/contact?source=contact:hero_primary', label_zh: 'Send Inquiry', label_en: 'Send Inquiry', is_visible: true, sort_order: 20 },
       { id: 'secondary-cta', href: '/products', label_zh: 'View Products', label_en: 'View Products', is_visible: true, sort_order: 30 },
@@ -2060,12 +2333,12 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     page_key: 'contact',
     module_key: 'faq-panel',
     module_type: 'fixed-content',
-    title_zh: 'Procurement FAQ',
+    title_zh: '采购 FAQ',
     title_en: 'Procurement FAQ',
-    description_zh: 'Answers shown beside the contact form when published procurement FAQ items are available.',
+    description_zh: '联系表单旁展示的常见采购问题。仅在 FAQ 内容可用时显示。',
     description_en: 'Answers shown beside the contact form when published procurement FAQ items are available.',
     items: [],
-    is_visible: true,
+    is_visible: false,
     sort_order: 38,
     updated_at: '',
     updated_by_email: null,
@@ -2092,16 +2365,16 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     page_key: 'contact',
     module_key: 'email',
     module_type: 'fixed-content',
-    title_zh: 'Contact email copy',
+    title_zh: '邮件确认文案',
     title_en: 'Contact email copy',
-    description_zh: 'Customer confirmation email copy for contact inquiries.',
+    description_zh: '提交咨询后发送给客户的确认邮件文案。',
     description_en: 'Customer confirmation email copy for contact inquiries.',
     items: [
       { id: 'confirmation-subject', label_zh: 'We received your VESSEL inquiry', label_en: 'We received your VESSEL inquiry', is_visible: true, sort_order: 10 },
       { id: 'confirmation-greeting', label_zh: 'Thank you for contacting VESSEL.', label_en: 'Thank you for contacting VESSEL.', is_visible: true, sort_order: 20 },
       { id: 'confirmation-body', label_zh: 'Your inquiry has been saved and the team will review your project information.', label_en: 'Your inquiry has been saved and the team will review your project information.', is_visible: true, sort_order: 30 },
     ],
-    is_visible: true,
+    is_visible: false,
     sort_order: 50,
     updated_at: '',
     updated_by_email: null,
@@ -2451,7 +2724,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     module_type: 'fixed-content',
     title_zh: '关于我们 · 首屏',
     title_en: 'About · Hero',
-    description_zh: '关于我们首屏标题、说明和背景图。这个模块已接入前台，可以直接影响 /about 首屏展示。',
+    description_zh: '关于我们首屏标题、说明和背景图。',
     description_en: 'Hero title, intro, and background image on the About page.',
     items: [
       {
@@ -2496,7 +2769,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     module_type: 'stats',
     title_zh: '关于我们 · 数据条',
     title_en: 'About · Stats',
-    description_zh: '关于我们首屏下方核心数据。这个模块已接入前台，可以直接影响 /about 数据条展示。',
+    description_zh: '关于我们首屏下方核心数据。',
     description_en: 'Key statistics below the About hero.',
     items: [
       {
@@ -2566,7 +2839,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     module_type: 'fixed-content',
     title_zh: '关于我们 · 品牌故事',
     title_en: 'About · Brand Story',
-    description_zh: '关于我们品牌故事区。这个模块已接入前台，可以直接影响 /about 品牌介绍展示。',
+    description_zh: '关于我们品牌故事区。',
     description_en: 'Brand story section on the About page.',
     items: [
       {
@@ -2640,7 +2913,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     module_type: 'gallery-with-captions',
     title_zh: '关于我们 · 智造实力',
     title_en: 'About · Manufacturing',
-    description_zh: '关于我们智造实力区。这个模块已接入前台，可以直接影响 /about 工厂标题、说明和图片。',
+    description_zh: '关于我们智造实力区。',
     description_en: 'Manufacturing section on the About page.',
     items: [
       {
@@ -2717,7 +2990,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     module_type: 'list',
     title_zh: '关于我们 · 品牌历程',
     title_en: 'About · Timeline',
-    description_zh: '关于我们品牌历程区。这个模块已接入前台，可以直接影响 /about 时间线展示。',
+    description_zh: '关于我们品牌历程区。',
     description_en: 'Timeline section on the About page.',
     items: [
       {
@@ -2835,7 +3108,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     module_type: 'list',
     title_zh: '关于我们 · 三大技术',
     title_en: 'About · Technologies',
-    description_zh: '关于我们三大技术区。这个模块已接入前台，可以直接影响 /about 技术列表展示。',
+    description_zh: '关于我们三大技术区。',
     description_en: 'Technology systems shown on the About page.',
     items: [
       {
@@ -2905,7 +3178,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     module_type: 'gallery-with-captions',
     title_zh: '关于我们 · 奖项荣誉',
     title_en: 'About · Awards',
-    description_zh: '关于我们认证荣誉区的奖杯/证书图片标题。这个模块已接入前台，可以直接影响 /about 展示。',
+    description_zh: '关于我们认证荣誉区的奖杯/证书图片标题。',
     description_en: 'Award and recognition image captions shown on the About page.',
     items: [
       {
@@ -3025,7 +3298,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     module_type: 'gallery',
     title_zh: '关于我们 · 合作伙伴',
     title_en: 'About · Partners',
-    description_zh: '关于我们合作伙伴区。这个模块已接入前台，可以直接影响 /about 合作伙伴展示。',
+    description_zh: '关于我们合作伙伴区。',
     description_en: 'Partner logo gallery on the About page.',
     items: [
       {
@@ -3073,7 +3346,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     module_type: 'fixed-content',
     title_zh: '关于我们 · 创始人',
     title_en: 'About · Founder',
-    description_zh: '关于我们创始人区。这个模块已接入前台，可以直接影响 /about 创始人展示。',
+    description_zh: '关于我们创始人区。',
     description_en: 'Founder section on the About page.',
     items: [
       {
@@ -3162,7 +3435,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     module_type: 'list',
     title_zh: '关于我们 · 服务体系',
     title_en: 'About · Services',
-    description_zh: '关于我们三大服务体系。这个模块已接入前台，可以直接影响 /about 服务卡片展示。',
+    description_zh: '关于我们三大服务体系。',
     description_en: 'Three service systems shown on the About page.',
     items: [
       {
@@ -3329,33 +3602,39 @@ function normalizeItems(value: unknown): PageModuleItem[] {
 function shouldAppendMissingDefaultItems(row: PageModuleRow) {
   return (
     (row.page_key === 'products' && row.module_key === 'ui-labels') ||
+    (row.page_key === 'news' && row.module_key === 'ui') ||
+    (row.page_key === 'faq' && ['hero', 'list', 'inquiry-form'].includes(row.module_key)) ||
+    (row.page_key === 'media-kit' && ['hero', 'resources', 'form'].includes(row.module_key)) ||
     (row.page_key === 'about' && row.module_key === 'services') ||
+    (row.page_key === 'contact' && row.module_key === 'hero') ||
     (row.page_key === 'site' && row.module_key === 'ui-labels')
   )
 }
 
-function normalizeRow(row: DbPageModuleRow): PageModuleRow {
-  const normalized = {
-    ...row,
-    items: normalizeItems(row.items),
-  }
+function appendMissingDefaultItems(row: PageModuleRow): PageModuleRow {
+  if (!shouldAppendMissingDefaultItems(row)) return row
 
-  if (!shouldAppendMissingDefaultItems(normalized)) return normalized
+  const fallback = getDefaultPageModule(row.page_key, row.module_key)
+  if (!fallback) return row
 
-  const fallback = getDefaultPageModule(normalized.page_key, normalized.module_key)
-  if (!fallback) return normalized
-
-  const existingIds = new Set(normalized.items.map((item) => item.id))
+  const existingIds = new Set(row.items.map((item) => item.id))
   const missingItems = fallback.items
     .filter((item) => !existingIds.has(item.id))
     .map((item) => ({ ...item }))
 
-  if (missingItems.length === 0) return normalized
+  if (missingItems.length === 0) return row
 
   return {
-    ...normalized,
-    items: [...normalized.items, ...missingItems].sort((a, b) => a.sort_order - b.sort_order),
+    ...row,
+    items: [...row.items, ...missingItems].sort((a, b) => a.sort_order - b.sort_order),
   }
+}
+
+function normalizeRow(row: DbPageModuleRow): PageModuleRow {
+  return appendMissingDefaultItems({
+    ...row,
+    items: normalizeItems(row.items),
+  })
 }
 
 function shouldPreserveLegacyPublishedHref(row: PageModuleRow) {
@@ -3377,13 +3656,13 @@ function normalizePublishedRow(row: DbPageModuleRow): PageModuleRow {
 }
 
 function normalizeDraftRow(row: DbPageModuleDraftRow): PageModuleRow {
-  return {
+  return appendMissingDefaultItems({
     ...row,
     items: normalizeItems(row.items),
     has_draft: true,
     draft_updated_at: row.updated_at,
     draft_updated_by_email: row.updated_by_email,
-  }
+  })
 }
 
 function normalizeSnapshotRow(row: DbPageModuleSnapshotRow): PageModuleSnapshotRow {
@@ -3963,6 +4242,14 @@ export async function getPageModule(pageKey: string, moduleKey: string): Promise
   return res.rows[0] ? normalizeRow(res.rows[0]) : null
 }
 
+export async function getPageModuleWithDefault(pageKey: string, moduleKey: string): Promise<PageModuleRow | null> {
+  const pageModule = await getPageModule(pageKey, moduleKey)
+  if (pageModule) return pageModule
+
+  const fallback = getDefaultPageModule(pageKey, moduleKey)
+  return fallback ? clonePageModule(fallback) : null
+}
+
 async function loadPublishedPageModules(pageKey?: string): Promise<PageModuleRow[]> {
   await ensurePageModulesSchema()
   const params: string[] = []
@@ -4177,7 +4464,7 @@ export async function getPageModuleForPreview(
     if (draft) return draft
   }
 
-  return getPageModule(pageKey, moduleKey)
+  return getPageModuleWithDefault(pageKey, moduleKey)
 }
 
 export async function listPageModulesForPreview(
@@ -4192,12 +4479,23 @@ export async function listPageModulesForPreview(
       const moduleDrafts = await listPageModuleDrafts(pageKey)
       const draftsByKey = new Map(moduleDrafts.map((draft) => [draft.module_key, draft]))
 
+      const removedModuleKeys = new Set(
+        structureDraft.modules
+          .filter((module) => module.status === 'removed')
+          .map((module) => module.moduleKey),
+      )
       const modules = structureDraft.modules
         .filter((module) => module.status !== 'removed')
         .map((module) => {
           const contentSource = draftsByKey.get(module.moduleKey) ?? liveByKey.get(module.moduleKey)
           return structureModuleToPageModule(pageKey, module, contentSource)
         })
+      const existingModuleKeys = new Set(modules.map((module) => module.module_key))
+      for (const liveModule of liveModules) {
+        if (existingModuleKeys.has(liveModule.module_key)) continue
+        if (removedModuleKeys.has(liveModule.module_key)) continue
+        modules.push(clonePageModule(liveModule))
+      }
 
       return modules
         .sort((a, b) => a.sort_order - b.sort_order || a.module_key.localeCompare(b.module_key))
@@ -4845,7 +5143,7 @@ export async function savePageModuleDraft(
   const structureDraftModule = structureDraft?.modules.find((module) => module.moduleKey === moduleKey)
   const moduleType = moduleTypeOverride ?? live?.module_type ?? fallback?.module_type ?? structureDraftModule?.moduleType ?? 'fixed-content'
   const id = live?.id ?? fallback?.id ?? `${pageKey}:${moduleKey}`
-  const baseUpdatedAt = live?.updated_at || null
+  const baseUpdatedAt = live?.updated_at || fallback?.updated_at || null
 
   await pool.query(
     `INSERT INTO page_module_drafts (
@@ -4886,11 +5184,12 @@ export async function savePageModuleDraft(
   const draft = await getPageModuleDraft(pageKey, moduleKey)
   if (!draft) return null
 
+  const liveStateSource = live ?? fallback
   return {
     ...draft,
     live_updated_at: live?.updated_at ?? null,
     live_updated_by_email: live?.updated_by_email ?? null,
-    live_state: live ? pageModuleToLiveState(live) : null,
+    live_state: liveStateSource ? pageModuleToLiveState(liveStateSource) : null,
   }
 }
 
@@ -5095,7 +5394,7 @@ export async function restorePageModuleSnapshot(
   const snapshot = await getPageModuleSnapshot(snapshotId)
   if (!snapshot || snapshot.page_key !== pageKey || snapshot.module_key !== moduleKey) return null
 
-  const current = await getPageModule(pageKey, moduleKey)
+  const current = await getPageModuleWithDefault(pageKey, moduleKey)
   if (current) {
     await createPageModuleSnapshot(current, adminId)
   }
@@ -5134,10 +5433,12 @@ export async function publishPageModuleDraft(
   if (!draft) return null
 
   const live = await getPageModule(pageKey, moduleKey)
+  const fallback = getDefaultPageModule(pageKey, moduleKey)
+  const liveBaseline = live ?? fallback
   const input = pageModuleToInput(draft)
 
-  if (live && pageModuleInputChanged(live, input)) {
-    await createPageModuleSnapshot(live, adminId)
+  if (liveBaseline && pageModuleInputChanged(liveBaseline, input)) {
+    await createPageModuleSnapshot(liveBaseline, adminId)
   }
 
   const published = await updatePageModule(pageKey, moduleKey, input, adminId)

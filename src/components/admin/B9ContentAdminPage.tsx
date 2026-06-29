@@ -39,6 +39,7 @@ type B9AdminCopy = {
   heroTitle: string
   heroDetail: string
   Icon: LucideIcon
+  initialSearch?: string
 }
 
 const CONTENT_NAV: AdminSideNavGroup[] = [
@@ -316,6 +317,7 @@ export async function B9ContentAdminPage(copy: B9AdminCopy) {
           initialCategories={categories}
           allowCategories={copy.allowCategories}
           fixedSlugs={copy.fixedSlugs}
+          initialSearch={copy.initialSearch}
         />
       </div>
     </AdminSectionShell>

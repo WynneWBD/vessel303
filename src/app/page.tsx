@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import HomePageContent from '@/components/pages/HomePageContent'
-import { getPublishedPageModule, listPublishedPageModules, type PageModuleItem } from '@/lib/page-modules-db'
+import { getPublishedPageModule, listDefaultPageModules, listPublishedPageModules, type PageModuleItem } from '@/lib/page-modules-db'
 import { buildPageMetadata } from '@/lib/seo'
 
 export const revalidate = 300
@@ -37,8 +37,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   const pageModules = await listPublishedPageModules('home').catch((err) => {
     console.error('[home] page modules load failed', err)
-    return []
+    return listDefaultPageModules('home')
   })
 
-  return <HomePageContent initialModules={pageModules} />
+  return <HomePageContent initialModules={pageModules.length > 0 ? pageModules : listDefaultPageModules('home')} />
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { ChevronDown, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import ProtectedImage from '@/components/ProtectedImage';
@@ -20,9 +20,12 @@ import {
   type PublicPageModuleItem,
 } from '@/lib/page-module-client';
 import {
+  PRODUCT_CATALOG_CARD_MODULE_ID,
   catalogCardFlag,
+  catalogCardItemSource,
   catalogCardItemValue,
   findProductCatalogCardModule,
+  type CatalogCardItemKey,
 } from '@/lib/product-card-settings';
 import type { ProductAttributeTemplateWithOptions, ProductCategoryRow } from '@/lib/product-catalog-db';
 import type { CatalogProduct } from '@/lib/products';
@@ -50,6 +53,21 @@ type ProductListLabels = {
   paginationNext: string;
 };
 
+type VisualAttrs = Record<string, string>;
+type ProductCmsEditOptions = {
+  patchKey?: string;
+  objectKey?: string;
+  objectPath?: string;
+  arrayIndex?: number;
+  input?: 'text' | 'textarea' | 'image' | 'number' | 'select';
+  selectOptions?: Array<{ value: string; label: string }>;
+  maxLength?: number;
+  required?: boolean;
+  nullable?: boolean;
+  value?: string | null;
+  displaySuffix?: string;
+};
+
 interface Props {
   products: CatalogProduct[];
   pageSize: number;
@@ -60,6 +78,21 @@ interface Props {
 }
 
 const PRODUCT_CARD_IMAGE_SIZES = '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px';
+
+function visualOpenPanelAttrs(key: string): VisualAttrs {
+  return { 'data-visual-open-panel': key };
+}
+
+function withVisualDraftHref(href: string, visualDraftPreview: boolean) {
+  if (!visualDraftPreview || !href.startsWith('/') || href.startsWith('//')) return href;
+
+  const [pathWithQuery, hash = ''] = href.split('#');
+  const [path, query = ''] = pathWithQuery.split('?');
+  const params = new URLSearchParams(query);
+  params.set('visualDraft', '1');
+  const nextQuery = params.toString();
+  return `${path}${nextQuery ? `?${nextQuery}` : ''}${hash ? `#${hash}` : ''}`;
+}
 
 function buildHref(filters: DirectoryFilters, patch: Partial<DirectoryFilters>) {
   const next = { ...filters, ...patch };
@@ -119,9 +152,164 @@ function localizedText(en: string | null | undefined, zh: string | null | undefi
   return (lang === 'en' ? en : zh)?.trim() || (lang === 'en' ? zh : en)?.trim() || '';
 }
 
+function productTypeLabel(productType: CatalogProduct['productType'], lang: 'en' | 'zh') {
+  const values: Record<CatalogProduct['productType'], { en: string; zh: string }> = {
+    compact: { en: 'Compact model', zh: '紧凑型' },
+    standard: { en: 'Standard model', zh: '标准型' },
+    luxury: { en: 'Flagship model', zh: '旗舰型' },
+  };
+  return values[productType][lang];
+}
+
+function productTypeEditOptions(lang: 'en' | 'zh'): ProductCmsEditOptions['selectOptions'] {
+  return [
+    { value: 'compact', label: productTypeLabel('compact', lang) },
+    { value: 'standard', label: productTypeLabel('standard', lang) },
+    { value: 'luxury', label: productTypeLabel('luxury', lang) },
+  ];
+}
+
 function rawItemById(pageModule: PublicPageModule | null | undefined, id: string) {
   if (!pageModule || pageModule.is_visible === false || !Array.isArray(pageModule.items)) return null;
   return pageModule.items.find((item) => item.id === id) ?? null;
+}
+
+function productVisualAttrs(moduleKey: string, itemId: string, field: string): VisualAttrs {
+  return {
+    'data-page-module': `products:${moduleKey}`,
+    'data-page-key': 'products',
+    'data-module-key': moduleKey,
+    'data-page-module-item': itemId,
+    'data-page-module-field': field,
+  };
+}
+
+function productModuleFieldAttrs(moduleKey: string, field: string): VisualAttrs {
+  return {
+    'data-page-module': `products:${moduleKey}`,
+    'data-page-key': 'products',
+    'data-module-key': moduleKey,
+    'data-page-module-field': field,
+  };
+}
+
+function productLabelAttrs(moduleKey: string, itemId: string, lang: 'en' | 'zh'): VisualAttrs {
+  return productVisualAttrs(moduleKey, itemId, lang === 'zh' ? 'label_zh' : 'label_en');
+}
+
+function productContentAttrs(moduleKey: string, itemId: string, lang: 'en' | 'zh'): VisualAttrs {
+  return productVisualAttrs(moduleKey, itemId, lang === 'zh' ? 'content_zh' : 'content_en');
+}
+
+function productValueAttrs(moduleKey: string, itemId: string, lang: 'en' | 'zh'): VisualAttrs {
+  return productVisualAttrs(moduleKey, itemId, lang === 'zh' ? 'value_zh' : 'value_en');
+}
+
+function subscribeVisualDraftPreview() {
+  return () => undefined;
+}
+
+function getVisualDraftPreviewSnapshot() {
+  return typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('visualDraft') === '1';
+}
+
+function getVisualDraftPreviewServerSnapshot() {
+  return false;
+}
+
+function useVisualDraftPreview() {
+  return useSyncExternalStore(
+    subscribeVisualDraftPreview,
+    getVisualDraftPreviewSnapshot,
+    getVisualDraftPreviewServerSnapshot,
+  );
+}
+
+function productCmsEditAttrs(
+  productId: string,
+  section: string,
+  field: string,
+  targetId: string,
+  options: ProductCmsEditOptions = {},
+): VisualAttrs {
+  const attrs: VisualAttrs = {
+    'data-cms-edit-kind': 'product',
+    'data-cms-edit-title': '产品内容',
+    'data-cms-edit-field': field,
+    'data-cms-edit-url': `/admin/content/products/${encodeURIComponent(productId)}/edit#${section}`,
+    'data-cms-edit-id': `product-${productId}-${targetId}`,
+  };
+
+  if (options.patchKey) {
+    attrs['data-cms-edit-api-url'] = `/api/admin/products/${encodeURIComponent(productId)}`;
+    attrs['data-cms-edit-patch-key'] = options.patchKey;
+    attrs['data-cms-edit-input'] = options.input ?? 'text';
+    if (options.objectKey) attrs['data-cms-edit-object-key'] = options.objectKey;
+    if (options.objectPath) attrs['data-cms-edit-object-path'] = options.objectPath;
+    if (options.arrayIndex != null) attrs['data-cms-edit-array-index'] = String(options.arrayIndex);
+  }
+  if (options.maxLength != null) attrs['data-cms-edit-max-length'] = String(options.maxLength);
+  if (options.required) attrs['data-cms-edit-required'] = '1';
+  if (options.nullable) attrs['data-cms-edit-nullable'] = '1';
+  if (options.value != null) attrs['data-cms-edit-value'] = options.value;
+  if (options.selectOptions?.length) attrs['data-cms-edit-options'] = JSON.stringify(options.selectOptions);
+  if (options.displaySuffix) attrs['data-cms-edit-display-suffix'] = options.displaySuffix;
+
+  return attrs;
+}
+
+function catalogCardModuleIndex(product: CatalogProduct) {
+  return (product.detail_modules ?? []).findIndex((module) => module.id === PRODUCT_CATALOG_CARD_MODULE_ID);
+}
+
+function catalogCardModuleFieldEditOptions(
+  product: CatalogProduct,
+  objectPath: string,
+  value: string | null | undefined,
+  options: Omit<ProductCmsEditOptions, 'patchKey' | 'arrayIndex' | 'objectPath' | 'value'> = {},
+): ProductCmsEditOptions {
+  const index = catalogCardModuleIndex(product);
+  if (index < 0) return {};
+  return {
+    ...options,
+    patchKey: 'detail_modules',
+    arrayIndex: index,
+    objectPath,
+    value: value ?? '',
+  };
+}
+
+function catalogCardItemEditOptions(
+  product: CatalogProduct,
+  cardModule: ReturnType<typeof findProductCatalogCardModule>,
+  key: CatalogCardItemKey,
+  lang: 'en' | 'zh',
+  options: Omit<ProductCmsEditOptions, 'patchKey' | 'arrayIndex' | 'objectPath' | 'value'> = {},
+): ProductCmsEditOptions {
+  const source = catalogCardItemSource(cardModule, key, lang);
+  if (!source) return {};
+  return catalogCardModuleFieldEditOptions(
+    product,
+    `${source.listKey}.${source.index}.body`,
+    source.value,
+    options,
+  );
+}
+
+function productTaxonomyEditAttrs(
+  kind: 'category' | 'attribute-template' | 'attribute-option',
+  id: string | number,
+  title: string,
+  field: string,
+  url: string,
+): VisualAttrs {
+  return {
+    'data-cms-edit-kind': 'product-taxonomy',
+    'data-cms-edit-title': title,
+    'data-cms-edit-field': field,
+    'data-cms-edit-url': url,
+    'data-cms-edit-id': `product-${kind}-${id}`,
+  };
 }
 
 function parseConfigFlag(value: string, fallback: boolean) {
@@ -214,25 +402,34 @@ function ProductsHero({
   breadcrumbCurrent: string;
 }) {
   const { lang } = useLanguage();
+  const visualDraftPreview = useVisualDraftPreview();
   if (!pageModule || pageModule.is_visible === false) return null;
 
-  const title = moduleTitle(pageModule, lang);
-  const description = moduleDescription(pageModule, lang);
+  const rawTitle = moduleTitle(pageModule, lang);
+  const rawDescription = moduleDescription(pageModule, lang);
+  const title = rawTitle || (visualDraftPreview ? fallbackCopy(lang, 'Add product page headline', '添加产品页标题') : '');
+  const description = rawDescription || (visualDraftPreview ? fallbackCopy(lang, 'Add product page intro', '添加产品页说明') : '');
   const primaryCta = itemById(pageModule, 'primary-cta');
   const secondaryCta = itemById(pageModule, 'secondary-cta');
   const routeNote = itemById(pageModule, 'route-note');
-  const featuredLabel = itemLabel(itemById(pageModule, 'featured-label'), lang);
+  const featuredLabel = itemLabel(itemById(pageModule, 'featured-label'), lang)
+    || (visualDraftPreview ? fallbackCopy(lang, 'Featured product', '推荐产品') : '');
   const heroImage = itemById(pageModule, 'hero-image');
-  const primaryLabel = itemLabel(primaryCta, lang);
-  const secondaryLabel = itemLabel(secondaryCta, lang);
-  const primaryHref = displayHref(primaryCta?.href);
-  const secondaryHref = displayHref(secondaryCta?.href);
-  const routeNoteLabel = itemLabel(routeNote, lang);
-  const routeNoteBody = itemContent(routeNote, lang);
-  const heroImageLabel = itemLabel(heroImage, lang);
+  const primaryLabel = itemLabel(primaryCta, lang)
+    || (visualDraftPreview && primaryCta ? fallbackCopy(lang, 'Contact sales', '联系顾问') : '');
+  const secondaryLabel = itemLabel(secondaryCta, lang)
+    || (visualDraftPreview && secondaryCta ? fallbackCopy(lang, 'View cases', '查看案例') : '');
+  const primaryHref = displayHref(primaryCta?.href) || (visualDraftPreview && primaryCta ? '/contact' : '');
+  const secondaryHref = displayHref(secondaryCta?.href) || (visualDraftPreview && secondaryCta ? '/cases' : '');
+  const routeNoteLabel = itemLabel(routeNote, lang)
+    || (visualDraftPreview && routeNote ? fallbackCopy(lang, 'Catalog note', '目录提示') : '');
+  const routeNoteBody = itemContent(routeNote, lang)
+    || (visualDraftPreview && routeNote ? fallbackCopy(lang, 'Add browsing or inquiry guidance.', '添加浏览或咨询提示。') : '');
+  const heroImageLabel = itemLabel(heroImage, lang)
+    || (visualDraftPreview && heroImage ? fallbackCopy(lang, 'Hero image', '首屏图片') : '');
   const heroImageHref = displayHref(heroImage?.href);
   const heroImageSrc = heroImage?.image_url?.trim() || '';
-  const hasHeroCopy = title || description || primaryLabel || secondaryLabel || routeNoteLabel || routeNoteBody || heroImageSrc;
+  const hasHeroCopy = title || description || primaryLabel || secondaryLabel || routeNoteLabel || routeNoteBody || heroImageSrc || visualDraftPreview;
   if (!hasHeroCopy) return null;
 
   const media = heroImageSrc ? (
@@ -243,11 +440,13 @@ function ProductsHero({
       priority
       className="object-cover"
       sizes="(max-width: 1024px) 100vw, 640px"
-      data-page-module-item="hero-image"
-      data-page-module-field="image_url"
+      {...productVisualAttrs('hero', 'hero-image', 'image_url')}
     />
   ) : (
-    <div className="flex h-full min-h-[280px] items-center justify-center bg-[#E7E7E7] text-sm font-bold uppercase text-[#888]">
+    <div
+      className="flex h-full min-h-[280px] items-center justify-center bg-[#E7E7E7] text-sm font-bold uppercase text-[#888]"
+      {...productVisualAttrs('hero', 'hero-image', 'image_url')}
+    >
       {heroImageLabel || 'VESSEL'}
     </div>
   );
@@ -262,17 +461,28 @@ function ProductsHero({
       <div className="mx-auto grid max-w-[1600px] gap-10 px-4 pb-12 sm:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(440px,0.7fr)] lg:px-0 lg:pb-16">
         <div className="flex min-w-0 flex-col justify-center">
           <div className="mb-8 text-sm text-[#555]">
-            <Link prefetch={false} href="/" className="hover:text-[#E97936]">
+            <Link
+              prefetch={false}
+              href="/"
+              className="hover:text-[#E97936]"
+              {...productLabelAttrs('ui-labels', 'breadcrumb-home-label', lang)}
+            >
               {breadcrumbHome}
             </Link>
             <span className="mx-2 text-[#B7B7B7]">/</span>
-            <span>{breadcrumbCurrent}</span>
+            <span
+              {...productLabelAttrs('hero', 'breadcrumb-current', lang)}
+            >
+              {breadcrumbCurrent}
+            </span>
           </div>
 
           {title ? (
             <h1
-              className="max-w-[880px] break-words font-[family-name:var(--font-heading)] text-4xl font-black leading-tight tracking-normal text-[#1F1F1F] sm:text-5xl lg:text-[58px]"
-              data-page-module-field={`title_${lang}`}
+              className={`max-w-[880px] break-words font-[family-name:var(--font-heading)] text-4xl font-black leading-tight tracking-normal sm:text-5xl lg:text-[58px] ${
+                rawTitle ? 'text-[#1F1F1F]' : 'text-[#A79E96]'
+              }`}
+              {...productModuleFieldAttrs('hero', `title_${lang}`)}
             >
               {title}
             </h1>
@@ -280,8 +490,8 @@ function ProductsHero({
 
           {description ? (
             <p
-              className="mt-5 max-w-[760px] text-base leading-8 text-[#555] sm:text-lg"
-              data-page-module-field={`description_${lang}`}
+              className={`mt-5 max-w-[760px] text-base leading-8 sm:text-lg ${rawDescription ? 'text-[#555]' : 'text-[#9A928A]'}`}
+              {...productModuleFieldAttrs('hero', `description_${lang}`)}
             >
               {description}
             </p>
@@ -293,10 +503,9 @@ function ProductsHero({
                 prefetch={false}
                 href={primaryHref}
                 className="inline-flex min-h-11 items-center justify-center rounded bg-[#E97936] px-6 text-sm font-bold text-white transition hover:bg-[#CA6228]"
-                data-page-module-item="primary-cta"
-                data-page-module-field={`label_${lang}`}
+                {...productLabelAttrs('hero', 'primary-cta', lang)}
               >
-                {primaryLabel}
+                <span>{primaryLabel}</span>
               </Link>
             ) : null}
             {secondaryLabel && secondaryHref ? (
@@ -304,10 +513,9 @@ function ProductsHero({
                 prefetch={false}
                 href={secondaryHref}
                 className="inline-flex min-h-11 items-center justify-center rounded border border-[#D8D8D8] bg-white px-6 text-sm font-bold text-[#333] transition hover:border-[#E97936] hover:text-[#E97936]"
-                data-page-module-item="secondary-cta"
-                data-page-module-field={`label_${lang}`}
+                {...productLabelAttrs('hero', 'secondary-cta', lang)}
               >
-                {secondaryLabel}
+                <span>{secondaryLabel}</span>
               </Link>
             ) : null}
           </div>
@@ -317,14 +525,13 @@ function ProductsHero({
               {routeNoteLabel ? (
                 <p
                   className="font-bold uppercase tracking-[0.08em] text-[#E97936]"
-                  data-page-module-item="route-note"
-                  data-page-module-field={`label_${lang}`}
+                  {...productLabelAttrs('hero', 'route-note', lang)}
                 >
                   {routeNoteLabel}
                 </p>
               ) : null}
               {routeNoteBody ? (
-                <p data-page-module-item="route-note" data-page-module-field={`content_${lang}`}>
+                <p {...productContentAttrs('hero', 'route-note', lang)}>
                   {routeNoteBody}
                 </p>
               ) : null}
@@ -344,8 +551,7 @@ function ProductsHero({
             {featuredLabel ? (
               <p
                 className="text-xs font-bold uppercase tracking-[0.18em] text-white/75"
-                data-page-module-item="featured-label"
-                data-page-module-field={`label_${lang}`}
+                {...productLabelAttrs('hero', 'featured-label', lang)}
               >
                 {featuredLabel}
               </p>
@@ -353,8 +559,7 @@ function ProductsHero({
             {heroImageLabel ? (
               <p
                 className="mt-2 text-2xl font-black uppercase leading-tight"
-                data-page-module-item="hero-image"
-                data-page-module-field={`label_${lang}`}
+                {...productLabelAttrs('hero', 'hero-image', lang)}
               >
                 {heroImageLabel}
               </p>
@@ -365,8 +570,15 @@ function ProductsHero({
 
       <div className="border-y border-[#EEEEEE] bg-[#FAFAFA]">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-8 gap-y-2 px-4 py-4 text-sm text-[#666] sm:px-6 lg:px-0">
-          <span className="font-semibold text-[#222]">{breadcrumbCurrent}</span>
-          <span>{totalLabel}: {totalProducts}</span>
+          <span
+            className="font-semibold text-[#222]"
+            {...productLabelAttrs('hero', 'breadcrumb-current', lang)}
+          >
+            {breadcrumbCurrent}
+          </span>
+          <span>
+            <span {...productLabelAttrs('ui-labels', 'catalog-total-label', lang)}>{totalLabel}</span>: {totalProducts}
+          </span>
         </div>
       </div>
     </section>
@@ -375,6 +587,7 @@ function ProductsHero({
 
 function ProductsHighlights({ pageModule }: { pageModule: PublicPageModule | null }) {
   const { lang } = useLanguage();
+  const visualDraftPreview = useVisualDraftPreview();
   const items = visibleItems(pageModule);
   if (!pageModule || pageModule.is_visible === false || items.length === 0) return null;
 
@@ -388,35 +601,39 @@ function ProductsHighlights({ pageModule }: { pageModule: PublicPageModule | nul
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-0">
         <div className="grid gap-4 md:grid-cols-3">
           {items.map((item) => {
-            const value = itemValue(item, lang);
-            const label = itemLabel(item, lang);
-            const content = itemContent(item, lang);
+            const rawValue = itemValue(item, lang);
+            const rawLabel = itemLabel(item, lang);
+            const rawContent = itemContent(item, lang);
+            const value = rawValue || (visualDraftPreview ? fallbackCopy(lang, 'Metric', '数字') : '');
+            const label = rawLabel || (visualDraftPreview ? fallbackCopy(lang, 'Add selling point', '添加卖点标题') : '');
+            const content = rawContent || (visualDraftPreview ? fallbackCopy(lang, 'Add supporting copy.', '添加卖点说明。') : '');
             if (!value && !label && !content) return null;
             return (
-              <div key={item.id} className="border-l-4 border-[#E97936] bg-white px-5 py-5 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
+              <div
+                key={item.id}
+                className="border-l-4 border-[#E97936] bg-white px-5 py-5 shadow-[0_10px_30px_rgba(0,0,0,0.06)]"
+                data-page-module-item={item.id}
+              >
                 {value ? (
                   <p
-                    className="text-xs font-black uppercase tracking-[0.16em] text-[#E97936]"
-                    data-page-module-item={item.id}
-                    data-page-module-field={`value_${lang}`}
+                    className={`text-xs font-black uppercase tracking-[0.16em] ${rawValue ? 'text-[#E97936]' : 'text-[#BC9278]'}`}
+                    {...productValueAttrs('highlights', item.id, lang)}
                   >
                     {value}
                   </p>
                 ) : null}
                 {label ? (
                   <h2
-                    className="mt-2 text-lg font-black leading-snug text-[#222]"
-                    data-page-module-item={item.id}
-                    data-page-module-field={`label_${lang}`}
+                    className={`mt-2 text-lg font-black leading-snug ${rawLabel ? 'text-[#222]' : 'text-[#A79E96]'}`}
+                    {...productLabelAttrs('highlights', item.id, lang)}
                   >
                     {label}
                   </h2>
                 ) : null}
                 {content ? (
                   <p
-                    className="mt-2 text-sm leading-6 text-[#666]"
-                    data-page-module-item={item.id}
-                    data-page-module-field={`content_${lang}`}
+                    className={`mt-2 text-sm leading-6 ${rawContent ? 'text-[#666]' : 'text-[#9A928A]'}`}
+                    {...productContentAttrs('highlights', item.id, lang)}
                   >
                     {content}
                   </p>
@@ -435,21 +652,26 @@ function FilterRow({
   active,
   label,
   count,
+  labelAttrs,
+  visualDraftPreview,
 }: {
   href: string;
   active: boolean;
   label: string;
   count?: number | null;
+  labelAttrs?: VisualAttrs;
+  visualDraftPreview: boolean;
 }) {
   return (
     <Link
       prefetch={false}
-      href={href}
+      href={withVisualDraftHref(href, visualDraftPreview)}
       className={`flex min-h-10 items-center justify-between gap-3 border-t border-[#E9E9E9] px-4 text-[15px] transition ${
         active ? 'bg-[#FFF3EC] font-semibold text-[#E57A3C]' : 'bg-white text-[#333] hover:bg-[#F8F8F8] hover:text-[#E57A3C]'
       }`}
+      {...visualOpenPanelAttrs('products-filter-row')}
     >
-      <span className="min-w-0 truncate">{label}</span>
+      <span className="min-w-0 truncate" {...labelAttrs}>{label}</span>
       {formatCount(count) ? <span className="shrink-0 text-xs text-[#999]">{formatCount(count)}</span> : null}
     </Link>
   );
@@ -462,6 +684,7 @@ function Sidebar({
   contactModule,
   totalProducts,
   labels,
+  visualDraftPreview,
 }: {
   categories: DirectoryCategory[];
   attributeTemplates: ProductAttributeTemplateWithOptions[];
@@ -469,6 +692,7 @@ function Sidebar({
   contactModule: PublicPageModule | null;
   totalProducts: number;
   labels: ProductListLabels;
+  visualDraftPreview: boolean;
 }) {
   const { lang } = useLanguage();
   const headline = itemLabel(itemById(contactModule, 'headline'), lang);
@@ -482,7 +706,10 @@ function Sidebar({
   return (
     <aside className="space-y-8">
       <div className="overflow-hidden bg-white shadow-[0_16px_44px_rgba(0,0,0,0.08)]">
-        <div className="bg-[#E97936] px-5 py-5 text-[22px] font-black leading-tight text-white">
+        <div
+          className="bg-[#E97936] px-5 py-5 text-[22px] font-black leading-tight text-white"
+          {...productLabelAttrs('ui-labels', 'category-heading', lang)}
+        >
           {labels.sidebarTitle}
         </div>
         <FilterRow
@@ -490,11 +717,16 @@ function Sidebar({
           active={!filters.category && !filters.attribute}
           label={labels.allCategories}
           count={totalProducts}
+          labelAttrs={productLabelAttrs('ui-labels', 'all-categories-label', lang)}
+          visualDraftPreview={visualDraftPreview}
         />
         {categories.length > 0 ? (
           <details className="group border-t border-[#E9E9E9]" open={Boolean(filters.category)}>
-            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 bg-white px-4 text-[15px] text-[#222] transition hover:text-[#E97936] [&::-webkit-details-marker]:hidden">
-              <span>{labels.defaultCategoryGroup}</span>
+            <summary
+              className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 bg-white px-4 text-[15px] text-[#222] transition hover:text-[#E97936] [&::-webkit-details-marker]:hidden"
+              {...visualOpenPanelAttrs('products-filter-group')}
+            >
+              <span {...productLabelAttrs('ui-labels', 'default-category-group', lang)}>{labels.defaultCategoryGroup}</span>
               <ChevronDown className="h-4 w-4 shrink-0 text-[#999] transition group-open:rotate-180" aria-hidden="true" />
             </summary>
             <div>
@@ -508,6 +740,14 @@ function Sidebar({
                     active={filters.category === String(category.id)}
                     label={label}
                     count={category.product_count}
+                    labelAttrs={productTaxonomyEditAttrs(
+                      'category',
+                      category.id,
+                      '产品分类',
+                      lang === 'zh' ? '中文分类名称' : '英文分类名称',
+                      '/admin/content/products/categories',
+                    )}
+                    visualDraftPreview={visualDraftPreview}
                   />
                 );
               })}
@@ -525,11 +765,25 @@ function Sidebar({
           if (!templateTitle && visibleOptions.length === 0) return null;
           const open = visibleOptions.some((option) => filters.attribute === String(option.id));
           const fallbackTitle = labels.attributeGroups[index] || templateTitle;
+          const templateLabelAttrs = templateTitle
+            ? productTaxonomyEditAttrs(
+                'attribute-template',
+                template.id,
+                '产品属性组',
+                lang === 'zh' ? '中文属性组名称' : '英文属性组名称',
+                '/admin/content/products/attributes',
+              )
+            : productLabelAttrs('ui-labels', `attribute-group-0${index + 1}`, lang);
 
           return (
             <details key={template.id} className="group border-t border-[#E9E9E9]" open={open}>
-              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 bg-white px-4 text-[15px] text-[#222] transition hover:text-[#E97936] [&::-webkit-details-marker]:hidden">
-                <span>{templateTitle || fallbackTitle}</span>
+              <summary
+                className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 bg-white px-4 text-[15px] text-[#222] transition hover:text-[#E97936] [&::-webkit-details-marker]:hidden"
+                {...visualOpenPanelAttrs('products-filter-group')}
+              >
+                <span {...templateLabelAttrs}>
+                  {templateTitle || fallbackTitle}
+                </span>
                 <ChevronDown className="h-4 w-4 shrink-0 text-[#999] transition group-open:rotate-180" aria-hidden="true" />
               </summary>
               <div>
@@ -540,6 +794,14 @@ function Sidebar({
                     active={filters.attribute === String(option.id)}
                     label={option.displayLabel}
                     count={option.product_count}
+                    labelAttrs={productTaxonomyEditAttrs(
+                      'attribute-option',
+                      option.id,
+                      '产品属性选项',
+                      lang === 'zh' ? '中文属性选项' : '英文属性选项',
+                      '/admin/content/products/attributes',
+                    )}
+                    visualDraftPreview={visualDraftPreview}
                   />
                 ))}
               </div>
@@ -558,8 +820,7 @@ function Sidebar({
           {contactTitle ? (
             <div
               className="bg-[#E97936] px-5 py-5 text-[22px] font-black text-white"
-              data-page-module-item="eyebrow"
-              data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+              {...productLabelAttrs('contact-card', 'eyebrow', lang)}
             >
               {contactTitle}
             </div>
@@ -568,14 +829,13 @@ function Sidebar({
             {headline ? (
               <p
                 className="font-semibold text-[#222]"
-                data-page-module-item="headline"
-                data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                {...productLabelAttrs('contact-card', 'headline', lang)}
               >
                 {headline}
               </p>
             ) : null}
             {body ? (
-              <p data-page-module-item="body" data-page-module-field={lang === 'zh' ? 'content_zh' : 'content_en'}>
+              <p {...productContentAttrs('contact-card', 'body', lang)}>
                 {body}
               </p>
             ) : null}
@@ -584,10 +844,9 @@ function Sidebar({
                 prefetch={false}
                 href={ctaHref}
                 className="inline-flex min-h-10 items-center justify-center bg-[#E97936] px-5 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#CA6228]"
-                data-page-module-item="primary-cta"
-                data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                {...productLabelAttrs('contact-card', 'primary-cta', lang)}
               >
-                {ctaLabel}
+                <span>{ctaLabel}</span>
               </Link>
             ) : null}
           </div>
@@ -607,20 +866,68 @@ function ProductCard({
   labels: Pick<ProductListLabels, 'priceEmpty' | 'cardPriceEyebrow' | 'modelDetail' | 'imagePlaceholder'>;
 }) {
   const { lang } = useLanguage();
+  const visualDraftPreview = useVisualDraftPreview();
   const cardModule = findProductCatalogCardModule(product.detail_modules);
   const name = localizedText(product.name_en, product.name_cn, lang) || product.id;
+  const nameFieldValue = lang === 'en' ? product.name_en : product.name_cn;
   const subtitle = [product.productSeries, product.gen].filter(Boolean).join(' ');
+  const description = localizedText(product.description_en, product.description_cn, lang);
+  const descriptionFieldValue = lang === 'en' ? product.description_en ?? '' : product.description_cn ?? '';
+  const showDescription = Boolean(description) || visualDraftPreview;
+  const configurationTier = productTypeLabel(product.productType, lang);
   const usePosterLayer = cardMode === 'poster' && cardModule?.is_visible !== false;
   const showArea = catalogCardFlag(cardModule, 'showArea', true);
   const showRegion = catalogCardFlag(cardModule, 'showRegion', true);
   const showPrice = catalogCardFlag(cardModule, 'showPrice', true);
-  const area = showArea ? (catalogCardItemValue(cardModule, 'area', lang) || productAreaLabel(product)) : '';
-  const cardPriceOverride = cardPriceText((lang === 'en' ? cardModule?.body_en : cardModule?.body_cn)?.trim() || '');
+  const areaOverride = catalogCardItemValue(cardModule, 'area', lang);
+  const productAreaNumberText = formatAreaNumber(product.area);
+  const productAreaText = productAreaLabel(product);
+  const area = showArea ? (areaOverride || productAreaText) : '';
+  const areaEditOptions: ProductCmsEditOptions = areaOverride
+    ? catalogCardItemEditOptions(product, cardModule, 'area', lang, {
+        maxLength: 40,
+        required: true,
+      })
+    : productAreaNumberText
+      ? { patchKey: 'area', input: 'number', value: productAreaNumberText, required: true, displaySuffix: 'm²' }
+      : product.size
+        ? { patchKey: 'size', maxLength: 40, value: product.size, required: true }
+        : {};
+  const cardPriceField = lang === 'en' ? 'body_en' : 'body_cn';
+  const cardPriceFieldValue = (lang === 'en' ? cardModule?.body_en : cardModule?.body_cn)?.trim() || '';
+  const cardPriceOverride = cardPriceText(cardPriceFieldValue);
+  const productPriceFieldValue = lang === 'en' ? product.price_display_en ?? '' : product.price_display_zh ?? '';
   const price = showPrice
     ? (cardPriceOverride || cardPriceText(productPrice(product, lang)))
     : '';
-  const seriesLabel = catalogCardItemValue(cardModule, 'model', lang)
+  const priceIsProductField = Boolean(price && !cardPriceOverride);
+  const priceEditOptions: ProductCmsEditOptions = priceIsProductField
+    ? {
+        patchKey: lang === 'zh' ? 'price_display_zh' : 'price_display_en',
+        maxLength: 160,
+        nullable: true,
+        value: productPriceFieldValue,
+      }
+    : cardPriceOverride
+      ? catalogCardModuleFieldEditOptions(product, cardPriceField, cardPriceFieldValue, {
+          maxLength: 160,
+          nullable: true,
+        })
+      : {};
+  const seriesOverride = catalogCardItemValue(cardModule, 'model', lang);
+  const seriesLabel = seriesOverride
     || (product.productSeries ? `${product.productSeries} ${product.gen}`.trim() : 'VESSEL');
+  const seriesEditOptions: ProductCmsEditOptions = seriesOverride
+    ? catalogCardItemEditOptions(product, cardModule, 'model', lang, {
+        maxLength: 80,
+        required: true,
+      })
+    : {
+        patchKey: 'gen',
+        maxLength: 40,
+        required: true,
+        value: product.gen,
+      };
   const cardRegion = showRegion
     ? localizedText(cardModule?.title_en, cardModule?.title_cn, lang)
       || product.category_title_en
@@ -628,20 +935,61 @@ function ProductCard({
       || product.productSeries
       || 'VESSEL'
     : '';
+  const cardRegionEditOptions: ProductCmsEditOptions = cardModule
+    ? catalogCardModuleFieldEditOptions(
+        product,
+        lang === 'en' ? 'title_en' : 'title_cn',
+        cardRegion,
+        { maxLength: lang === 'en' ? 220 : 180 },
+      )
+    : {};
   const posterImage = cardModule?.image_url?.trim() || '';
   const imageSrc = usePosterLayer ? (posterImage || product.image) : (product.image || posterImage);
-  const priceEyebrow = catalogCardItemValue(cardModule, 'priceEyebrow', lang)
+  const imageEditOptions: ProductCmsEditOptions = imageSrc === posterImage && posterImage
+    ? catalogCardModuleFieldEditOptions(product, 'image_url', posterImage, {
+        input: 'image',
+        maxLength: 500,
+        required: true,
+      })
+    : imageSrc === product.image
+      ? {
+          patchKey: 'image',
+          input: 'image',
+          maxLength: 500,
+          required: true,
+          value: product.image,
+        }
+      : {};
+  const imageEditAttrs = productCmsEditAttrs(product.id, 'media', '产品图片', `catalog-card-${product.id}-image`, (
+    imageEditOptions
+  ));
+  const priceEyebrowOverride = catalogCardItemValue(cardModule, 'priceEyebrow', lang);
+  const priceEyebrow = priceEyebrowOverride
     || labels.cardPriceEyebrow
     || fallbackCopy(lang, 'Starting from', '完整交付价');
-
+  const priceEyebrowAttrs = priceEyebrowOverride
+    ? productCmsEditAttrs(
+        product.id,
+        'details',
+        '价格小标题',
+        `catalog-card-${product.id}-price-eyebrow`,
+        catalogCardItemEditOptions(product, cardModule, 'priceEyebrow', lang, {
+          maxLength: 80,
+          required: true,
+        }),
+      )
+    : productLabelAttrs('ui-labels', 'card-price-eyebrow', lang);
   return (
-    <article className="group overflow-hidden rounded-[8px] bg-white p-7 shadow-[0_18px_46px_rgba(0,0,0,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_58px_rgba(0,0,0,0.14)]">
+    <article
+      className="group overflow-hidden rounded-[8px] bg-white p-7 shadow-[0_18px_46px_rgba(0,0,0,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_58px_rgba(0,0,0,0.14)]"
+    >
       <Link
         prefetch={false}
         href={productHref(product)}
         className={`relative block aspect-square overflow-hidden bg-[#E8E8E8] ${
           usePosterLayer ? 'border-[5px] border-[#E97936]' : 'border border-[#ECECEC]'
         }`}
+        {...imageEditAttrs}
       >
         {imageSrc ? (
           <ProtectedImage
@@ -653,7 +1001,10 @@ function ProductCard({
             sizes={PRODUCT_CARD_IMAGE_SIZES}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[#E8E8E8] text-sm font-semibold text-[#999]">
+          <div
+            className="flex h-full w-full items-center justify-center bg-[#E8E8E8] text-sm font-semibold text-[#999]"
+            {...productLabelAttrs('ui-labels', 'image-placeholder', lang)}
+          >
             {labels.imagePlaceholder}
           </div>
         )}
@@ -661,38 +1012,78 @@ function ProductCard({
           <>
             <div className="absolute inset-0 bg-gradient-to-b from-black/28 via-transparent to-black/28" />
             {cardRegion ? (
-              <div className="absolute left-0 top-0 max-w-[72%] bg-[#E97936] px-4 py-2 text-[15px] font-black uppercase leading-tight tracking-[0.03em] text-white">
+              <div
+                className="absolute left-0 top-0 max-w-[72%] bg-[#E97936] px-4 py-2 text-[15px] font-black uppercase leading-tight tracking-[0.03em] text-white"
+                {...productCmsEditAttrs(product.id, cardModule ? 'details' : 'attributes', '产品区域/分类', `catalog-card-${product.id}-region`, cardRegionEditOptions)}
+              >
                 {cardRegion}
               </div>
             ) : null}
             {area ? (
-              <div className="absolute right-3 top-3 rounded-sm bg-white px-4 py-1 text-[18px] font-black leading-none text-[#E97936] shadow-sm">
+              <div
+                className="absolute right-3 top-3 rounded-sm bg-white px-4 py-1 text-[18px] font-black leading-none text-[#E97936] shadow-sm"
+                {...productCmsEditAttrs(product.id, cardModule ? 'details' : 'basic', '产品面积', `catalog-card-${product.id}-area`, areaEditOptions)}
+              >
                 {area}
               </div>
             ) : null}
-            <div className="absolute left-5 right-5 top-[36%] text-center text-[20px] font-black uppercase leading-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]">
+            <div
+              className="absolute left-5 right-5 top-[36%] text-center text-[20px] font-black uppercase leading-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]"
+              {...productCmsEditAttrs(product.id, cardModule ? 'details' : 'basic', '产品代际', `catalog-card-${product.id}-series`, seriesEditOptions)}
+            >
               {seriesLabel}
             </div>
             {showPrice ? (
               <div className="absolute bottom-0 right-0 min-w-[52%] rounded-tl-[48px] bg-[#E97936] px-5 py-3 text-right text-white">
                 <div className="text-[10px] font-bold uppercase tracking-[0.1em] opacity-90">
-                  {price ? priceEyebrow : labels.modelDetail}
+                  {price ? (
+                    <span {...priceEyebrowAttrs}>{priceEyebrow}</span>
+                  ) : (
+                    <span {...productLabelAttrs('ui-labels', 'model-detail-label', lang)}>{labels.modelDetail}</span>
+                  )}
                 </div>
                 <div className="mt-1 text-[20px] font-black leading-none">
-                  {price || labels.priceEmpty || fallbackCopy(lang, 'Open', '查看')}
+                  {price ? (
+                    <span
+                      {...productCmsEditAttrs(
+                        product.id,
+                        priceIsProductField ? 'commercial' : 'details',
+                        '价格展示',
+                        `catalog-card-${product.id}-price`,
+                        priceEditOptions,
+                      )}
+                    >
+                      {price}
+                    </span>
+                  ) : (
+                    <span {...productLabelAttrs('ui-labels', 'card-price-empty', lang)}>
+                      {labels.priceEmpty || fallbackCopy(lang, 'Open', '查看')}
+                    </span>
+                  )}
                 </div>
               </div>
             ) : null}
           </>
         ) : (
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 via-black/12 to-transparent px-5 pb-5 pt-16">
-            <div className="text-[18px] font-black uppercase leading-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]">
+            <div
+              className="text-[18px] font-black uppercase leading-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]"
+              {...productCmsEditAttrs(product.id, cardModule ? 'details' : 'basic', '产品代际', `catalog-card-${product.id}-series`, seriesEditOptions)}
+            >
               {seriesLabel}
             </div>
             {[cardRegion, area].filter(Boolean).length > 0 ? (
               <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-white/85">
-                {cardRegion ? <span>{cardRegion}</span> : null}
-                {area ? <span>{area}</span> : null}
+                {cardRegion ? (
+                  <span {...productCmsEditAttrs(product.id, cardModule ? 'details' : 'attributes', '产品区域/分类', `catalog-card-${product.id}-region`, cardRegionEditOptions)}>
+                    {cardRegion}
+                  </span>
+                ) : null}
+                {area ? (
+                  <span {...productCmsEditAttrs(product.id, cardModule ? 'details' : 'basic', '产品面积', `catalog-card-${product.id}-area`, areaEditOptions)}>
+                    {area}
+                  </span>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -702,10 +1093,58 @@ function ProductCard({
         prefetch={false}
         href={productHref(product)}
         className="mt-5 block min-h-[56px] text-center text-[17px] font-medium leading-7 text-[#222] transition hover:text-[#E97936]"
+        {...productCmsEditAttrs(product.id, 'basic', lang === 'zh' ? '中文产品名称' : '英文产品名称', `catalog-card-${product.id}-name`, {
+          patchKey: lang === 'zh' ? 'name_cn' : 'name_en',
+          maxLength: 220,
+          required: true,
+          value: nameFieldValue,
+        })}
       >
         {name}
       </Link>
-      {subtitle ? <p className="mt-2 text-center text-xs uppercase tracking-[0.12em] text-[#999]">{subtitle}</p> : null}
+      <div className="mt-2 flex justify-center">
+        <span
+          className="inline-flex max-w-full items-center justify-center rounded-full border border-[#E9E2DB] bg-[#FAF7F2] px-2.5 py-1 text-center text-[11px] font-bold uppercase tracking-[0.08em] text-[#A55B2A]"
+          {...productCmsEditAttrs(product.id, 'attributes', '配置档位', `catalog-card-${product.id}-product-type`, {
+            patchKey: 'productType',
+            input: 'select',
+            required: true,
+            value: product.productType,
+            selectOptions: productTypeEditOptions(lang),
+          })}
+        >
+          {configurationTier}
+        </span>
+      </div>
+      {subtitle ? (
+        <p
+          className="mt-2 text-center text-xs uppercase tracking-[0.12em] text-[#999]"
+          {...productCmsEditAttrs(product.id, 'basic', '产品代际', `catalog-card-${product.id}-subtitle`, {
+            patchKey: 'gen',
+            maxLength: 40,
+            required: true,
+            value: product.gen,
+          })}
+        >
+          {subtitle}
+        </p>
+      ) : null}
+      {showDescription ? (
+        <p
+          className={`mx-auto mt-3 line-clamp-3 max-w-[28rem] text-center text-[13px] leading-6 ${
+            description ? 'text-[#666]' : 'text-[#B7AEA4]'
+          }`}
+          {...productCmsEditAttrs(product.id, 'content', lang === 'zh' ? '中文产品简介' : '英文产品简介', `catalog-card-${product.id}-description`, {
+            patchKey: lang === 'zh' ? 'description_cn' : 'description_en',
+            input: 'textarea',
+            maxLength: 1800,
+            nullable: true,
+            value: descriptionFieldValue,
+          })}
+        >
+          {description || fallbackCopy(lang, 'Add product summary', '添加产品简介')}
+        </p>
+      ) : null}
     </article>
   );
 }
@@ -715,12 +1154,15 @@ function Pagination({
   currentPage,
   totalPages,
   labels,
+  visualDraftPreview,
 }: {
   filters: DirectoryFilters;
   currentPage: number;
   totalPages: number;
   labels: Pick<ProductListLabels, 'paginationPrevious' | 'paginationNext'>;
+  visualDraftPreview: boolean;
 }) {
+  const { lang } = useLanguage();
   if (totalPages <= 1) return null;
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1).slice(0, 8);
 
@@ -728,32 +1170,41 @@ function Pagination({
     <nav className="mt-10 flex flex-wrap items-center justify-center gap-2">
       <Link
         prefetch={false}
-        href={buildHref(filters, { page: Math.max(1, currentPage - 1) })}
+        href={withVisualDraftHref(buildHref(filters, { page: Math.max(1, currentPage - 1) }), visualDraftPreview)}
         aria-label={labels.paginationPrevious}
         className="flex h-10 min-w-10 items-center justify-center rounded bg-white px-3 text-sm font-semibold text-[#666] shadow-sm transition hover:bg-[#E97936] hover:text-white"
+        {...visualOpenPanelAttrs('products-pagination')}
       >
+        <span className="sr-only" {...productLabelAttrs('ui-labels', 'pagination-previous', lang)}>
+          {labels.paginationPrevious}
+        </span>
         <ChevronLeft className="h-4 w-4" aria-hidden="true" />
       </Link>
       {pages.map((page) => (
         <Link
           prefetch={false}
           key={page}
-          href={buildHref(filters, { page })}
+          href={withVisualDraftHref(buildHref(filters, { page }), visualDraftPreview)}
           className={`flex h-10 min-w-10 items-center justify-center rounded px-3 text-sm font-semibold shadow-sm transition ${
             page === currentPage
               ? 'bg-[#E97936] text-white'
               : 'bg-white text-[#666] hover:bg-[#E97936] hover:text-white'
           }`}
+          {...visualOpenPanelAttrs('products-pagination')}
         >
           {page}
         </Link>
       ))}
       <Link
         prefetch={false}
-        href={buildHref(filters, { page: Math.min(totalPages, currentPage + 1) })}
+        href={withVisualDraftHref(buildHref(filters, { page: Math.min(totalPages, currentPage + 1) }), visualDraftPreview)}
         aria-label={labels.paginationNext}
         className="flex h-10 min-w-10 items-center justify-center rounded bg-white px-3 text-sm font-semibold text-[#666] shadow-sm transition hover:bg-[#E97936] hover:text-white"
+        {...visualOpenPanelAttrs('products-pagination')}
       >
+        <span className="sr-only" {...productLabelAttrs('ui-labels', 'pagination-next', lang)}>
+          {labels.paginationNext}
+        </span>
         <ChevronRight className="h-4 w-4" aria-hidden="true" />
       </Link>
     </nav>
@@ -769,6 +1220,7 @@ export default function ProductsPageContent({
   initialFilters,
 }: Props) {
   const { lang } = useLanguage();
+  const visualDraftPreview = useVisualDraftPreview();
   const modules = moduleMap(pageModules);
   const heroModule = modules.get('hero') ?? null;
   const highlightsModule = modules.get('highlights') ?? null;
@@ -850,7 +1302,7 @@ export default function ProductsPageContent({
       />
       <ProductsHighlights pageModule={highlightsModule} />
 
-      <section className="pb-16 pt-10" data-page-module="products:catalog" data-page-key="products">
+      <section className="pb-16 pt-10">
         <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-0">
         <div className={`grid gap-10 lg:gap-14 ${showSidebar ? 'lg:grid-cols-[340px_minmax(0,1fr)]' : ''}`}>
           {showSidebar ? (
@@ -860,6 +1312,7 @@ export default function ProductsPageContent({
               filters={filters}
               contactModule={contactModule}
               totalProducts={products.length}
+              visualDraftPreview={visualDraftPreview}
               labels={{
                 sidebarTitle: uiLabels.sidebarTitle,
                 allCategories: uiLabels.allCategories,
@@ -891,22 +1344,30 @@ export default function ProductsPageContent({
                 {uiLabels.pageTitle}
               </h1>
               {showSearch ? (
-                <form action="/products" className="flex w-full max-w-[568px] overflow-hidden bg-white shadow-sm">
+                <form
+                  action="/products"
+                  className="flex w-full max-w-[568px] overflow-hidden bg-white shadow-sm"
+                  data-page-module="products:ui-labels"
+                  data-page-key="products"
+                  data-module-key="ui-labels"
+                  {...visualOpenPanelAttrs('products-search-form')}
+                >
                   <input type="hidden" name="category" value={filters.category} />
                   <input type="hidden" name="attribute" value={filters.attribute} />
+                  {visualDraftPreview ? <input type="hidden" name="visualDraft" value="1" /> : null}
                   <input
                     name="q"
                     defaultValue={filters.q}
                     placeholder={uiLabels.searchPlaceholder}
                     className="min-h-10 min-w-0 flex-1 border border-[#E2E2E2] border-r-0 px-4 text-center text-sm text-[#333] outline-none placeholder:text-[#A7A7A7]"
-                    data-page-module-item="search-placeholder"
-                    data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                    {...productLabelAttrs('ui-labels', 'search-placeholder', lang)}
+                    {...visualOpenPanelAttrs('products-search-input')}
                   />
                   <button
                     type="submit"
                     className="inline-flex min-h-10 w-[160px] shrink-0 items-center justify-center gap-2 bg-[#E97936] px-7 text-sm font-semibold text-white transition hover:bg-[#CA6228]"
-                    data-page-module-item="search-button"
-                    data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                    {...productLabelAttrs('ui-labels', 'search-button', lang)}
+                    {...visualOpenPanelAttrs('products-search-submit')}
                   >
                     <Search className="h-4 w-4" aria-hidden="true" />
                     <span>{uiLabels.searchButton}</span>
@@ -924,26 +1385,48 @@ export default function ProductsPageContent({
 
             {activeFilters.length > 0 ? (
               <div className="mb-7 flex flex-wrap items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-[0.12em] text-[#777]">{uiLabels.activeFilters}</span>
+                <span
+                  className="text-xs font-bold uppercase tracking-[0.12em] text-[#777]"
+                  {...productLabelAttrs('ui-labels', 'active-filters-label', lang)}
+                >
+                  {uiLabels.activeFilters}
+                </span>
                 {activeFilters.map((item) => (
                   <Link
                     prefetch={false}
                     key={item.key}
-                    href={removeFilterHref(item.key)}
+                    href={withVisualDraftHref(removeFilterHref(item.key), visualDraftPreview)}
                     aria-label={`${uiLabels.clearFilter} ${item.label}: ${item.value}`}
                     className="inline-flex min-h-8 items-center gap-2 rounded bg-white px-3 text-xs font-semibold text-[#333] shadow-sm transition hover:text-[#E97936]"
+                    {...visualOpenPanelAttrs('products-active-filter')}
                   >
-                    <span className="text-[#888]">{item.label}</span>
+                    <span
+                      className="text-[#888]"
+                      {...productLabelAttrs(
+                        'ui-labels',
+                        item.key === 'q'
+                          ? 'query-filter-label'
+                          : item.key === 'category'
+                            ? 'category-filter-label'
+                            : 'attribute-filter-label',
+                        lang,
+                      )}
+                    >
+                      {item.label}
+                    </span>
                     <span>{item.value}</span>
                     <X className="h-3 w-3" aria-hidden="true" />
                   </Link>
                 ))}
                 <Link
                   prefetch={false}
-                  href="/products"
+                  href={withVisualDraftHref('/products', visualDraftPreview)}
                   className="inline-flex min-h-8 items-center rounded bg-[#E97936] px-3 text-xs font-bold text-white transition hover:bg-[#CA6228]"
+                  {...visualOpenPanelAttrs('products-clear-filters')}
                 >
-                  {uiLabels.clearFilter}
+                  <span {...productLabelAttrs('ui-labels', 'clear-filter-label', lang)}>
+                    {uiLabels.clearFilter}
+                  </span>
                 </Link>
               </div>
             ) : null}
@@ -952,21 +1435,34 @@ export default function ProductsPageContent({
               <div className="mb-7">
                 <Link
                   prefetch={false}
-                  href="/products"
+                  href={withVisualDraftHref('/products', visualDraftPreview)}
                   className="inline-flex min-h-9 items-center rounded bg-white px-4 text-sm font-semibold text-[#666] shadow-sm transition hover:text-[#E97936]"
+                  {...visualOpenPanelAttrs('products-reset-filters')}
                 >
-                  {uiLabels.resetButton}
+                  <span {...productLabelAttrs('ui-labels', 'reset-button', lang)}>
+                    {uiLabels.resetButton}
+                  </span>
                 </Link>
               </div>
             ) : null}
 
             {pageProducts.length === 0 ? (
-              <div className="rounded-[8px] bg-white px-8 py-20 text-center text-sm text-[#777] shadow-[0_18px_46px_rgba(0,0,0,0.08)]">
-                <p className="font-semibold text-[#222]">{uiLabels.emptyState}</p>
-                <p className="mt-2">{uiLabels.emptyStateBody}</p>
+              <div
+                className="rounded-[8px] bg-white px-8 py-20 text-center text-sm text-[#777] shadow-[0_18px_46px_rgba(0,0,0,0.08)]"
+                data-page-module="products:ui-labels"
+                data-page-key="products"
+                data-module-key="ui-labels"
+              >
+                <p className="font-semibold text-[#222]" {...productLabelAttrs('ui-labels', 'empty-state', lang)}>{uiLabels.emptyState}</p>
+                <p className="mt-2" {...productLabelAttrs('ui-labels', 'empty-state-body', lang)}>{uiLabels.emptyStateBody}</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-x-8 gap-y-9 sm:grid-cols-2 xl:grid-cols-3">
+              <div
+                className="grid grid-cols-1 gap-x-8 gap-y-9 sm:grid-cols-2 xl:grid-cols-3"
+                data-page-module="products:ui-labels"
+                data-page-key="products"
+                data-module-key="ui-labels"
+              >
                 {pageProducts.map((product) => (
                   <ProductCard
                     key={product.id}
@@ -991,6 +1487,7 @@ export default function ProductsPageContent({
                 paginationPrevious: uiLabels.paginationPrevious,
                 paginationNext: uiLabels.paginationNext,
               }}
+              visualDraftPreview={visualDraftPreview}
             />
           </div>
         </div>

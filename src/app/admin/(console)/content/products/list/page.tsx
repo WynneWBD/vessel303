@@ -1446,7 +1446,7 @@ function getSideNavGroups(summary: ProductSummary): AdminSideNavGroup[] {
       ],
     },
     {
-      title: '后续规划',
+      title: '运营维护',
       items: [
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', Icon: Tags },
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', Icon: SlidersHorizontal },

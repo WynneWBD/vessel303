@@ -5,7 +5,6 @@ import { AdminSectionShell, type AdminSideNavGroup } from '@/components/admin/Ad
 import {
   CONTENT_CONTRACTS,
   loadGovernanceContractStatuses,
-  type ContentContractSignal,
   type GovernanceContractStatus,
   type GovernanceSourceType,
 } from '@/lib/admin-site-governance'
@@ -34,9 +33,7 @@ import {
   Presentation,
   SearchCheck,
   Settings,
-  ShieldCheck,
   Sparkles,
-  Wrench,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -48,10 +45,8 @@ type AdminRole = 'admin' | 'operator'
 
 function getSitePagesSideNav({
   issueCount,
-  isAdmin,
 }: {
   issueCount: number
-  isAdmin: boolean
 }): AdminSideNavGroup[] {
   return [
     {
@@ -77,14 +72,6 @@ function getSitePagesSideNav({
         { key: 'media', label: '图片素材', href: '/admin/site/media', Icon: ImageIcon },
       ],
     },
-    {
-      title: '高级维护',
-      items: [
-        { key: 'form-mode', label: '表单模式', href: '/admin/pages', adminOnly: true, Icon: Wrench },
-        { key: 'admin-settings', label: '站点设置', href: '/admin/settings', adminOnly: true, Icon: Settings },
-        { key: 'legacy', label: '维护入口', href: '/admin/legacy', adminOnly: true, Icon: ShieldCheck },
-      ].filter((item) => isAdmin || !item.adminOnly),
-    },
   ]
 }
 
@@ -105,28 +92,14 @@ const PAGE_ICON: Record<string, LucideIcon> = {
   global: Globe2,
 }
 
-const SIGNAL_LABEL: Record<ContentContractSignal, string> = {
-  image: '图片',
-  cta: 'CTA',
-  form: '表单',
-  seo: 'SEO',
-  navigation: '导航',
-  footer: '页脚',
-  source: '来源',
-  english: 'English',
-  contact: 'Contact',
-  downloads: 'Downloads',
-  'commercial-proof': 'Commercial proof',
-}
-
 const SOURCE_LABEL: Record<GovernanceSourceType, string> = {
-  page_modules: '页面模块',
-  product_cms: '产品 CMS',
-  project_cms: '案例 CMS',
-  news_cms: '新闻 CMS',
-  b9_cms: '固定内容 CMS',
+  page_modules: '页面内容',
+  product_cms: '产品内容',
+  project_cms: '案例内容',
+  news_cms: '新闻内容',
+  b9_cms: '固定内容',
   site_settings: '站点设置',
-  protected: '受保护专项',
+  protected: '仅查看',
 }
 
 const VISUAL_EDITOR_PAGE_KEYS = new Set(['home', 'products', 'cases', 'contact', 'site', 'auth', 'account', 'about', 'global', 'faq', 'media-kit', 'scenarios', 'innovation', 'display', 'news'])
@@ -172,7 +145,7 @@ function latestContractDate(values: Array<string | null | undefined>): string | 
 function levelLabel(level: GovernanceContractStatus['issueLevel']): string {
   if (level === 'ok') return '已闭合'
   if (level === 'warning') return '需补内容'
-  if (level === 'protected') return '受保护'
+  if (level === 'protected') return '仅查看'
   return '需关注'
 }
 
@@ -195,24 +168,6 @@ function issueIcon(level: GovernanceContractStatus['issueLevel']) {
   if (level === 'protected') return <LockKeyhole size={16} className="text-[#6B625B]" />
   if (level === 'warning') return <AlertTriangle size={16} className="text-orange-600" />
   return <CircleDashed size={16} className="text-[#1889B6]" />
-}
-
-function MetricPill({ label, value }: { label: string; value: number | string }) {
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-[#F5F8F8] px-2.5 py-1 text-xs font-medium text-[#61767D]">
-      <span className="font-bold text-[#1E2C31]">{value}</span>
-      {label}
-    </span>
-  )
-}
-
-function SectionTitle({ title, detail }: { title: string; detail?: string }) {
-  return (
-    <div>
-      <h2 className="text-xl font-bold text-[#1E2C31]">{title}</h2>
-      {detail && <p className="mt-1 text-sm text-[#61767D]">{detail}</p>}
-    </div>
-  )
 }
 
 function SummaryTile({
@@ -356,17 +311,17 @@ function releaseLedgerToneClass(tone: ContentReleaseLedgerTone): string {
 }
 
 function releaseLedgerStage(contract: GovernanceContractStatus): string {
-  if (contract.issueLevel === 'protected') return '专项边界'
+  if (contract.issueLevel === 'protected') return '仅查看'
   if (contract.issueLevel === 'warning') return '先补内容'
-  if (contract.issueLevel === 'notice') return '运营复核'
-  if (contract.metrics.draft + contract.metrics.draftModules > 0) return '草稿巡检'
-  return '常规巡检'
+  if (contract.issueLevel === 'notice') return '需确认'
+  if (contract.metrics.draft + contract.metrics.draftModules > 0) return '草稿待发布'
+  return '正常'
 }
 
 function releaseLedgerSignal(contract: GovernanceContractStatus): string {
   if (contract.issueLevel === 'protected') return contract.protectedReason ?? '不在本页修改'
   if (contract.issues.length > 0) return contract.issues[0]
-  if (contract.metrics.draft + contract.metrics.draftModules > 0) return '存在草稿或模块草稿'
+  if (contract.metrics.draft + contract.metrics.draftModules > 0) return '存在待发布草稿'
   return '当前无阻断项'
 }
 
@@ -390,7 +345,7 @@ function buildContentReleaseLedgerRows(contracts: GovernanceContractStatus[]): C
         stage: releaseLedgerStage(contract),
         signal: releaseLedgerSignal(contract),
         detail: contract.note,
-        metrics: `published ${contract.metrics.published} · 草稿 ${draftCount} · hidden ${hiddenCount} · 提示 ${contentWarnings}`,
+        metrics: `已发布 ${contract.metrics.published} · 草稿 ${draftCount} · 隐藏 ${hiddenCount} · 提示 ${contentWarnings}`,
         score,
       }
     })
@@ -449,12 +404,13 @@ function buildContentSourceActions(contract: GovernanceContractStatus): ContentS
     contract.issueLevel === 'warning' ||
     contract.metrics.contentWarnings.some((warning) => warning.toLowerCase().includes('seo'))
   )
+  const visualHref = contractVisualModuleHref(contract)
 
   return [
     {
-      label: '编辑内容',
-      href: contractAdminHref(contract),
-      Icon: FileText,
+      label: visualHref ? '可视化编辑' : '编辑内容',
+      href: visualHref ?? contractAdminHref(contract),
+      Icon: visualHref ? LayoutTemplate : FileText,
       primary: needsContent,
     },
     {
@@ -464,7 +420,7 @@ function buildContentSourceActions(contract: GovernanceContractStatus): ContentS
       preview: true,
     },
     {
-      label: '发布队列',
+      label: '待发布',
       href: contractPublishHref(contract),
       Icon: ListChecks,
       primary: contract.metrics.draft + contract.metrics.draftModules > 0,
@@ -528,10 +484,10 @@ function ContentSourceRouteTree({ contracts }: { contracts: GovernanceContractSt
         <div>
           <div className="flex items-center gap-2 text-sm font-bold text-[#1E2C31]">
             <GalleryHorizontalEnd size={16} className="text-[#1889B6]" />
-            <span>前台内容来源栏目树</span>
+            <span>前台页面与内容来源</span>
           </div>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            按页面和栏目组织来源、路径、published、草稿、处理状态和编辑入口；运营从这里判断前台内容应该去哪个后台维护。
+            按页面查看内容来源、前台路径、发布状态、草稿和编辑入口。
           </p>
         </div>
         <span className="inline-flex w-fit rounded-full bg-[#F0F7F8] px-3 py-1 text-xs font-semibold text-[#1889B6]">
@@ -546,11 +502,11 @@ function ContentSourceRouteTree({ contracts }: { contracts: GovernanceContractSt
               <div>
                 <h3 className="text-base font-bold text-[#1E2C31]">{group.group}</h3>
                 <p className="mt-1 text-xs text-[#61767D]">
-                  published {group.publishedCount} · 草稿 {group.draftCount} · 需关注 {group.issueCount}
+                  已发布 {group.publishedCount} · 草稿 {group.draftCount} · 需关注 {group.issueCount}
                 </p>
               </div>
               <span className={`inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${group.issueCount > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
-                {group.issueCount > 0 ? '待处理' : '已闭合'}
+                {group.issueCount > 0 ? '待处理' : '正常'}
               </span>
             </div>
 
@@ -586,7 +542,7 @@ function ContentSourceRouteTree({ contracts }: { contracts: GovernanceContractSt
 
                     <div className="text-xs leading-5 text-[#61767D]">
                       <p className="font-semibold text-[#1E2C31]">{contract.owner}</p>
-                      <p>published {contract.metrics.published} · 草稿 {draftCount} · hidden {hiddenCount}</p>
+                      <p>已发布 {contract.metrics.published} · 草稿 {draftCount} · 隐藏 {hiddenCount}</p>
                     </div>
 
                     <div className="text-xs leading-5 text-[#61767D]">
@@ -618,16 +574,16 @@ function ContentReleaseLedger({ contracts }: { contracts: GovernanceContractStat
         <div>
           <div className="flex items-center gap-2 text-sm font-bold text-[#1E2C31]">
             <ListChecks size={16} className="text-[#1889B6]" />
-            <span>页面发布治理台账</span>
+            <span>页面发布清单</span>
           </div>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            按页面逐行查看来源、状态、草稿、隐藏、内容提示和处理入口；先处理优先项，再进入前台复验。
+            按页面查看来源、状态、草稿、隐藏、内容提示和编辑入口。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <span className="rounded-full bg-[#FDE9DF] px-2.5 py-1 text-xs font-semibold text-[#B54318]">优先 {dangerCount}</span>
-          <span className="rounded-full bg-[#EAF6F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">复核 {reviewCount}</span>
-          <span className="rounded-full bg-[#F5F2ED] px-2.5 py-1 text-xs font-semibold text-[#6B625B]">受保护 {protectedCount}</span>
+          <span className="rounded-full bg-[#FDE9DF] px-2.5 py-1 text-xs font-semibold text-[#B54318]">重点 {dangerCount}</span>
+          <span className="rounded-full bg-[#EAF6F8] px-2.5 py-1 text-xs font-semibold text-[#1889B6]">需确认 {reviewCount}</span>
+          <span className="rounded-full bg-[#F5F2ED] px-2.5 py-1 text-xs font-semibold text-[#6B625B]">仅查看 {protectedCount}</span>
         </div>
       </div>
 
@@ -636,9 +592,9 @@ function ContentReleaseLedger({ contracts }: { contracts: GovernanceContractStat
           <thead>
             <tr className="border-b border-[#E6EEEE] text-xs text-[#61767D]">
               <th className="py-2 pr-4 text-left font-semibold">页面来源</th>
-              <th className="py-2 pr-4 text-left font-semibold">来源 / owner</th>
+              <th className="py-2 pr-4 text-left font-semibold">来源 / 负责人</th>
               <th className="py-2 pr-4 text-left font-semibold">阶段</th>
-              <th className="py-2 pr-4 text-left font-semibold">处理信号</th>
+              <th className="py-2 pr-4 text-left font-semibold">处理建议</th>
               <th className="py-2 pr-4 text-left font-semibold">指标</th>
               <th className="py-2 pr-4 text-left font-semibold">最近更新</th>
               <th className="py-2 text-left font-semibold">入口</th>
@@ -720,33 +676,33 @@ function ContentSourceOperationsMatrix({ contracts }: { contracts: GovernanceCon
     <section className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-5 shadow-sm">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[#1E2C31]">内容来源运营矩阵</h2>
+          <h2 className="text-xl font-bold text-[#1E2C31]">内容来源分布</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            先按来源类型看 published、草稿、缺口和内部词提示，再进入对应后台 owner 处理。
+            按来源类型查看已发布、草稿、缺口和内容提示。
           </p>
         </div>
         <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1889B6]">
-          {warningContracts} 个 warning / {noticeContracts} 个 notice / {contentWarnings} 个内容提示
+          {warningContracts} 个优先 / {noticeContracts} 个需确认 / {contentWarnings} 个内容提示
         </span>
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
-        <SummaryTile title="published 来源" value={publishedTotal} detail="来自页面模块、CMS 和站点设置" Icon={Database} />
-        <SummaryTile title="需优先处理" value={priorityRows.length} detail="按 warning、notice、内容提示排序" Icon={AlertTriangle} />
-        <SummaryTile title="来源类型" value={sourceRows.length} detail="当前已登记的后台来源" Icon={ListChecks} />
-        <SummaryTile title="受保护边界" value={contracts.filter((contract) => contract.issueLevel === 'protected').length} detail="Global 等专项不在此页修改" Icon={LockKeyhole} />
+        <SummaryTile title="已发布内容" value={publishedTotal} detail="来自页面、产品、案例和新闻" Icon={Database} />
+        <SummaryTile title="需优先处理" value={priorityRows.length} detail="按内容缺口和提示排序" Icon={AlertTriangle} />
+        <SummaryTile title="内容来源" value={sourceRows.length} detail="当前可进入的后台入口" Icon={ListChecks} />
+        <SummaryTile title="仅查看" value={contracts.filter((contract) => contract.issueLevel === 'protected').length} detail="Global 等专项页面" Icon={LockKeyhole} />
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="rounded-md border border-[#D8E7E8] bg-white p-4">
-          <h3 className="text-sm font-bold text-[#1E2C31]">来源类型分布</h3>
+          <h3 className="text-sm font-bold text-[#1E2C31]">内容来源分布</h3>
           <div className="mt-3 overflow-x-auto">
             <table className="w-full min-w-[760px] text-sm">
               <thead>
                 <tr className="border-b border-[#E6EEEE] text-[#61767D]">
                   <th className="py-2 text-left font-medium">来源</th>
-                  <th className="py-2 text-right font-medium">来源</th>
-                  <th className="py-2 text-right font-medium">published</th>
+                  <th className="py-2 text-right font-medium">数量</th>
+                  <th className="py-2 text-right font-medium">已发布</th>
                   <th className="py-2 text-right font-medium">草稿</th>
                   <th className="py-2 text-right font-medium">缺口</th>
                   <th className="py-2 text-right font-medium">内容提示</th>
@@ -789,11 +745,11 @@ function ContentSourceOperationsMatrix({ contracts }: { contracts: GovernanceCon
         </div>
 
         <aside className="rounded-md border border-[#D8E7E8] bg-white p-4">
-          <h3 className="text-sm font-bold text-[#1E2C31]">优先处理队列</h3>
-          <p className="mt-1 text-xs leading-5 text-[#61767D]">点击进入维护入口，直接处理对应页面内容。</p>
+          <h3 className="text-sm font-bold text-[#1E2C31]">重点事项</h3>
+          <p className="mt-1 text-xs leading-5 text-[#61767D]">点击进入对应页面，直接处理内容。</p>
           <div className="mt-3 space-y-2">
             {priorityRows.length > 0 ? (
-              priorityRows.map(({ contract, score }) => (
+              priorityRows.map(({ contract }) => (
                 <Link
                   key={contract.key}
                   href={contractAdminHref(contract)}
@@ -809,144 +765,17 @@ function ContentSourceOperationsMatrix({ contracts }: { contracts: GovernanceCon
                     </span>
                   </div>
                   <p className="mt-2 text-xs leading-5 text-[#61767D]">
-                    {contract.issues[0] ?? contract.note} / score {score}
+                    {contract.issues[0] ?? contract.note}
                   </p>
                 </Link>
               ))
             ) : (
               <p className="rounded-md bg-[#F7FAFA] px-3 py-3 text-xs leading-5 text-[#61767D]">
-                当前没有优先处理或复核项。
+                当前没有待处理事项。
               </p>
             )}
           </div>
         </aside>
-      </div>
-    </section>
-  )
-}
-
-function ContractCard({ contract }: { contract: GovernanceContractStatus }) {
-  const Icon = PAGE_ICON[contract.key] ?? FileText
-  const { metrics } = contract
-
-  return (
-    <article className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[#EAF6F8] text-[#1889B6]">
-            <Icon size={20} />
-          </span>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-base font-bold text-[#1E2C31]">{contract.title}</h3>
-              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${levelClassName(contract.issueLevel)}`}>
-                {issueIcon(contract.issueLevel)}
-                {levelLabel(contract.issueLevel)}
-              </span>
-              <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${sourceClassName(contract.sourceType)}`}>
-                {SOURCE_LABEL[contract.sourceType]}
-              </span>
-            </div>
-            <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{contract.paths.join(' / ')}</p>
-            <p className="mt-3 text-sm leading-6 text-[#61767D]">{contract.note}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
-        <InfoBlock label="后台 owner" value={contract.owner} />
-        <InfoBlock label="内容来源" value={contract.contentSource} />
-        <InfoBlock label="展示规则" value={contract.displayRule} />
-        <InfoBlock label="隐藏规则" value={contract.hiddenRule} />
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        <MetricPill label="published" value={metrics.published} />
-        <MetricPill label="draft" value={metrics.draft} />
-        <MetricPill label="hidden" value={metrics.hidden} />
-        <MetricPill label="可见模块" value={metrics.visibleModules} />
-        <MetricPill label="模块草稿" value={metrics.draftModules} />
-        <MetricPill label="最近更新" value={formatDateTime(metrics.latestUpdatedAt)} />
-      </div>
-
-      {contract.signals.length > 0 ? (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {contract.signals.map((signal) => (
-            <span key={signal} className="rounded-full border border-[#D8E7E8] bg-white px-2.5 py-1 text-xs font-semibold text-[#61767D]">
-              {SIGNAL_LABEL[signal]}
-            </span>
-          ))}
-        </div>
-      ) : null}
-
-      {contract.issues.length > 0 ? (
-        <div className="mt-4 rounded-md border border-orange-100 bg-orange-50/60 p-3">
-          <p className="text-xs font-bold text-orange-700">质检提示</p>
-          <ul className="mt-2 space-y-1 text-xs leading-5 text-orange-700">
-            {contract.issues.map((issue) => (
-              <li key={issue}>- {issue}</li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <div className="mt-4 rounded-md border border-emerald-100 bg-emerald-50/60 p-3 text-xs leading-5 text-emerald-700">
-          当前来源没有阻断项；发布前仍需完成前台预览和线上核对。
-        </div>
-      )}
-
-      <div className="mt-5">
-        <ContentSourceActionBar contract={contract} />
-      </div>
-    </article>
-  )
-}
-
-function InfoBlock({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-[#F7FAFA] px-3 py-2 text-xs leading-5">
-      <span className="font-semibold text-[#8A9EA4]">{label}</span>
-      <span className="ml-2 text-[#1E2C31]">{value}</span>
-    </div>
-  )
-}
-
-function ContractMatrix({ contracts }: { contracts: GovernanceContractStatus[] }) {
-  return (
-    <section className="space-y-4">
-      <SectionTitle title="页面内容来源" detail="查看每个前台页面对应的后台维护入口、发布状态和内容缺口。" />
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        {contracts.map((contract) => (
-          <ContractCard key={contract.key} contract={contract} />
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function GuardrailPanel() {
-  const guardrails = [
-    '前台不得新增客户可见业务文案、图片、CTA 或表单说明。',
-    '后台无 published 内容时，前台隐藏对应模块，不显示代码 fallback。',
-    '公开页不得出现后台说明、内部编号或运营导览文字。',
-    'Global 入口按专项页面维护，本站点清单只做状态提示。',
-  ]
-
-  return (
-    <section className="rounded-md border border-dashed border-[#D8E7E8] bg-white/75 p-5">
-      <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#F5F2ED] text-[#6B625B]">
-          <LockKeyhole size={18} />
-        </span>
-        <div>
-          <h2 className="text-base font-bold text-[#1E2C31]">公开内容质检硬规则</h2>
-          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-4">
-            {guardrails.map((item) => (
-              <p key={item} className="rounded-md bg-white px-3 py-2 text-xs leading-5 text-[#61767D]">
-                {item}
-              </p>
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   )
@@ -992,7 +821,6 @@ export default async function AdminSitePagesPage() {
   const contentWarningCount = contracts.reduce((sum, contract) => sum + contract.metrics.contentWarnings.length, 0)
   const sideNavGroups = getSitePagesSideNav({
     issueCount,
-    isAdmin: adminRole === 'admin',
   })
 
   return (
@@ -1001,17 +829,17 @@ export default async function AdminSitePagesPage() {
       role={adminRole}
       email={session.user.email}
       title="网站管理"
-      description="前台内容来源中心：运营先看 owner、来源、状态和缺口，再进入对应后台编辑发布。"
+      description="按页面查看前台路径、发布状态、草稿、内容提示和编辑入口。"
       sideNavGroups={sideNavGroups}
       activeItem="pages"
     >
       <section className="rounded-md border border-[#D8E7E8] bg-[linear-gradient(135deg,#F3FBFC_0%,#FFFFFF_58%,#FFF4E9_100%)] p-5 shadow-sm md:p-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-sm font-semibold text-[#1889B6]">公开内容质检</p>
+            <p className="text-sm font-semibold text-[#1889B6]">页面内容</p>
             <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">前台内容来源中心</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-              这里把每个公开页面、导航页脚、表单文案和内容 CMS 归到后台 owner。运营改稿、隐藏、发布和前台同步验证都从这里进入，不再把前台当编辑场景。
+              查看每个公开页面、导航页脚、表单文案和内容来源。运营改稿、隐藏、发布和前台验证都从这里进入。
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -1020,7 +848,7 @@ export default async function AdminSitePagesPage() {
               className="inline-flex h-10 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-sm font-semibold text-white transition hover:bg-[#C95E22]"
             >
               <LayoutTemplate size={16} />
-              页面模块
+              页面内容
             </Link>
             <Link
               href="/admin/site/navigation"
@@ -1036,17 +864,15 @@ export default async function AdminSitePagesPage() {
           <SummaryTile title="内容来源" value={contracts.length} detail="公开页面和全站壳" Icon={Database} />
           <SummaryTile title="已闭合" value={okCount} detail="当前无质检提示" Icon={CheckCircle2} />
           <SummaryTile title="需关注" value={issueCount} detail="内容或 CTA 缺口" Icon={AlertTriangle} />
-          <SummaryTile title="内部词提示" value={contentWarningCount} detail="published 内容风险" Icon={AlertTriangle} />
-          <SummaryTile title="受保护" value={protectedCount} detail="Global 等专项边界" Icon={LockKeyhole} />
-          <SummaryTile title="published" value={publishedCount} detail={`草稿 ${draftCount}`} Icon={CircleDashed} />
+          <SummaryTile title="内容提示" value={contentWarningCount} detail="已发布内容风险" Icon={AlertTriangle} />
+          <SummaryTile title="仅查看" value={protectedCount} detail="Global 等专项页面" Icon={LockKeyhole} />
+          <SummaryTile title="已发布" value={publishedCount} detail={`草稿 ${draftCount}`} Icon={CircleDashed} />
         </div>
       </section>
 
-      <GuardrailPanel />
       <ContentSourceRouteTree contracts={contracts} />
       <ContentReleaseLedger contracts={contracts} />
       <ContentSourceOperationsMatrix contracts={contracts} />
-      <ContractMatrix contracts={contracts} />
     </AdminSectionShell>
   )
 }

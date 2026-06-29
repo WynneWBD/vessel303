@@ -39,7 +39,10 @@ const itemSchema = z.object({
 
 function revalidateKind(kind: B9ContentKind) {
   revalidateTag(B9_PUBLIC_CACHE_TAG, 'max')
-  if (kind === 'faq') revalidatePath('/faq')
+  if (kind === 'faq') {
+    revalidatePath('/faq')
+    revalidatePath('/contact')
+  }
   if (kind === 'media_file') revalidatePath('/media-kit')
   if (kind === 'scenario') revalidatePath('/scenarios/[slug]', 'page')
   if (kind === 'display_slide') revalidatePath('/display')

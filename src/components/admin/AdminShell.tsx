@@ -29,19 +29,19 @@ type MenuItem = {
 }
 
 const menuItems: MenuItem[] = [
-  { label: '2.0 控制台', href: '/admin', Icon: LayoutDashboard, title: '2.0 控制台 Dashboard', group: 'daily' },
-  { label: '线索处理', href: '/admin/customers/leads', Icon: Inbox, title: '线索运营 Leads', group: 'daily' },
-  { label: '新闻运营', href: '/admin/content/news/list', Icon: Newspaper, title: '新闻运营 News', group: 'daily' },
-  { label: '产品运营', href: '/admin/content/products/list', Icon: Package, title: '产品运营 Products', group: 'daily' },
-  { label: '项目案例', href: '/admin/content/projects/list', Icon: MapPinned, title: '项目案例 Projects', group: 'daily' },
-  { label: '媒体库', href: '/admin/site/media', Icon: ImageIcon, title: '媒体运营 Media', group: 'daily' },
-  { label: '后台账号', href: '/admin/users', Icon: Users, title: '用户管理 Users', group: 'maintenance', superAdminOnly: true },
-  { label: '页面表单模式', href: '/admin/pages', Icon: LayoutTemplate, title: '页面表单模式 Pages', group: 'maintenance', superAdminOnly: true },
-  { label: '站点设置', href: '/admin/settings', Icon: Settings, title: '站点设置 Settings', group: 'maintenance', superAdminOnly: true },
+  { label: '工作台', href: '/admin', Icon: LayoutDashboard, title: '工作台', group: 'daily' },
+  { label: '线索处理', href: '/admin/customers/leads', Icon: Inbox, title: '线索运营', group: 'daily' },
+  { label: '新闻运营', href: '/admin/content/news/list', Icon: Newspaper, title: '新闻运营', group: 'daily' },
+  { label: '产品运营', href: '/admin/content/products/list', Icon: Package, title: '产品运营', group: 'daily' },
+  { label: '项目案例', href: '/admin/content/projects/list', Icon: MapPinned, title: '项目案例', group: 'daily' },
+  { label: '媒体库', href: '/admin/site/media', Icon: ImageIcon, title: '媒体库', group: 'daily' },
+  { label: '后台账号', href: '/admin/users', Icon: Users, title: '用户管理', group: 'maintenance', superAdminOnly: true },
+  { label: '页面维护', href: '/admin/pages', Icon: LayoutTemplate, title: '页面维护', group: 'maintenance', superAdminOnly: true },
+  { label: '站点设置', href: '/admin/settings', Icon: Settings, title: '站点设置', group: 'maintenance', superAdminOnly: true },
 ]
 
 const MENU_GROUP_LABELS = {
-  daily: '日常运营 2.0',
+  daily: '日常运营',
   maintenance: '高级维护',
 } satisfies Record<MenuItem['group'], string>
 
@@ -86,7 +86,7 @@ export default function AdminShell({
     }))
     .filter((group) => group.items.length > 0)
   const current = visibleMenuItems.find((m) => isActive(pathname, m.href))
-  const headerTitle = current?.title ?? '高级维护 Maintenance'
+  const headerTitle = current?.title ?? '后台管理'
 
   const badgeFor = (href: string): string | undefined => {
     if (href === '/admin/customers/leads' && leadBadge > 0) return clampBadge(leadBadge)
@@ -128,11 +128,8 @@ export default function AdminShell({
         </div>
 
         <div className="border-b border-[#D8E7E8] bg-[#F3F7F7] px-4 py-3">
-          <div className="rounded-md border border-[#D8E7E8] bg-white px-3 py-2">
-            <div className="text-xs font-bold text-[#1E2C31]">高级维护区</div>
-            <div className="mt-1 text-[11px] leading-4 text-[#61767D]">
-              日常运营已进入 2.0；表单模式仅用于固定字段低频维护。
-            </div>
+          <div className="rounded-md border border-[#D8E7E8] bg-white px-3 py-2 text-xs font-bold text-[#1E2C31]">
+            运营后台
           </div>
         </div>
 
@@ -205,7 +202,7 @@ export default function AdminShell({
           ))}
         </nav>
 
-        {/* Logout */}
+        {/* Account actions */}
         <div className="p-3" style={{ borderTop: '1px solid #D8E7E8' }}>
           <div className="mb-3 rounded-md border border-[#D8E7E8] bg-[#F3F7F7] px-3 py-2">
             <div className="text-xs font-semibold text-[#1E2C31]">
@@ -226,7 +223,7 @@ export default function AdminShell({
               }}
             >
               <LogOut size={16} />
-              Logout
+              退出
             </button>
           </form>
         </div>

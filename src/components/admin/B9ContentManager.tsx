@@ -42,7 +42,7 @@ const KIND_COPY: Record<B9ContentKind, ManagerCopy> = {
     summaryEnLabel: '英文摘要',
     bodyZhLabel: '中文答案',
     bodyEnLabel: '英文答案',
-    payloadHelp: 'FAQ 一般不需要 JSON。可留空 {}。',
+    payloadHelp: '高级配置通常无需修改。',
   },
   media_file: {
     itemLabel: '文件下载',
@@ -52,7 +52,7 @@ const KIND_COPY: Record<B9ContentKind, ManagerCopy> = {
     summaryEnLabel: '英文资源说明',
     bodyZhLabel: '中文使用说明',
     bodyEnLabel: '英文使用说明',
-    payloadHelp: '可填 {"type":"press","requiresLead":true}，用于后续资源分组。',
+    payloadHelp: '高级配置通常无需修改。',
     fileLabel: '文件或资源链接',
   },
   scenario: {
@@ -63,8 +63,7 @@ const KIND_COPY: Record<B9ContentKind, ManagerCopy> = {
     summaryEnLabel: '英文副标题',
     bodyZhLabel: '中文简介',
     bodyEnLabel: '英文简介',
-    payloadHelp:
-      '固定 slug: tourism / commercial / public。可填 specs、features、process、recommendedProducts、cases、accentColor。',
+    payloadHelp: '高级配置通常无需修改。',
   },
   display_slide: {
     itemLabel: 'Display 展示',
@@ -74,7 +73,7 @@ const KIND_COPY: Record<B9ContentKind, ManagerCopy> = {
     summaryEnLabel: '英文代次',
     bodyZhLabel: '中文特性，每行一条',
     bodyEnLabel: '英文展示文案',
-    payloadHelp: '可填 {"size":"38.8㎡","capacity":"2-4 people","price":"Inquire for pricing"}。',
+    payloadHelp: '高级配置通常无需修改。',
     fileLabel: '展示图链接',
   },
   innovation: {
@@ -85,7 +84,7 @@ const KIND_COPY: Record<B9ContentKind, ManagerCopy> = {
     summaryEnLabel: '英文专题摘要',
     bodyZhLabel: '中文正文',
     bodyEnLabel: '英文正文',
-    payloadHelp: '固定 slug: viie / vipc / vols。可填 {"sections":[{"title_zh":"","title_en":"","body_zh":"","body_en":""}]}。',
+    payloadHelp: '高级配置通常无需修改。',
   },
 }
 
@@ -145,6 +144,17 @@ function getPreviewHref(kind: B9ContentKind, item: B9ContentItem): string | null
   return null
 }
 
+const CONTENT_STATUS_LABELS: Record<B9ContentStatus, string> = {
+  draft: '草稿',
+  published: '已发布',
+  hidden: '已隐藏',
+}
+
+const CATEGORY_STATUS_LABELS: Record<B9CategoryStatus, string> = {
+  visible: '显示中',
+  hidden: '已隐藏',
+}
+
 type EditableItem = {
   id: number | null
   kind: B9ContentKind
@@ -180,19 +190,21 @@ export default function B9ContentManager({
   initialCategories,
   allowCategories = true,
   fixedSlugs = [],
+  initialSearch = '',
 }: {
   kind: B9ContentKind
   initialRows: B9ContentItem[]
   initialCategories: B9ContentCategory[]
   allowCategories?: boolean
   fixedSlugs?: string[]
+  initialSearch?: string
 }) {
   const copy = KIND_COPY[kind]
   const [rows, setRows] = useState(initialRows)
   const [categories, setCategories] = useState(initialCategories)
   const [mode, setMode] = useState<Mode>('content')
   const [editing, setEditing] = useState<EditableItem>(() => emptyItem(kind))
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchTerm, setSearchTerm] = useState(initialSearch)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [categoryDraft, setCategoryDraft] = useState<EditableCategory>({
     slug: '',
@@ -275,7 +287,7 @@ export default function B9ContentManager({
         throw new Error('payload must be an object')
       }
     } catch {
-      toast.error('JSON 配置格式不正确')
+      toast.error('高级配置格式不正确')
       return
     }
 
@@ -283,7 +295,7 @@ export default function B9ContentManager({
       const required = [item.slug, item.title_zh, item.title_en]
       if (kind === 'faq') required.push(item.body_zh, item.body_en)
       if (required.some((value) => !String(value ?? '').trim())) {
-        toast.error('发布前必须补齐 slug、中英文标题和必填正文')
+        toast.error('发布前必须补齐路径/内容标识、中英文标题和必填正文')
         return
       }
     }
@@ -332,7 +344,7 @@ export default function B9ContentManager({
 
   const saveCategory = async () => {
     if (!categoryDraft.slug || !categoryDraft.title_zh || !categoryDraft.title_en) {
-      toast.error('分类 slug 和中英文标题必填')
+      toast.error('分类路径和中英文标题必填')
       return
     }
     setSaving(true)
@@ -384,21 +396,21 @@ export default function B9ContentManager({
             <Input
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="搜索 slug、标题、分类"
+              placeholder="搜索路径、标题、分类"
               className="pl-9"
             />
           </label>
           <Select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}>
             <option value="all">全部状态 ({statusCounts.all})</option>
-            <option value="published">published ({statusCounts.published})</option>
-            <option value="draft">draft ({statusCounts.draft})</option>
-            <option value="hidden">hidden ({statusCounts.hidden})</option>
+            <option value="published">{CONTENT_STATUS_LABELS.published} ({statusCounts.published})</option>
+            <option value="draft">{CONTENT_STATUS_LABELS.draft} ({statusCounts.draft})</option>
+            <option value="hidden">{CONTENT_STATUS_LABELS.hidden} ({statusCounts.hidden})</option>
           </Select>
         </div>
 
         <div className="mt-5 overflow-hidden rounded-md border border-[#E6EEEE]">
           {sortedRows.length === 0 ? (
-            <div className="p-8 text-center text-sm text-[#61767D]">暂无符合条件的 CMS 内容；前台只展示 published 内容。</div>
+            <div className="p-8 text-center text-sm text-[#61767D]">暂无符合条件的内容；前台只展示已发布内容。</div>
           ) : (
             <div className="divide-y divide-[#E6EEEE]">
               {sortedRows.map((item) => {
@@ -416,7 +428,7 @@ export default function B9ContentManager({
                       </span>
                     </button>
                     <Badge className={item.status === 'published' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : item.status === 'hidden' ? 'border-zinc-200 bg-zinc-50 text-zinc-600' : 'border-orange-200 bg-orange-50 text-orange-700'}>
-                      {item.status}
+                      {CONTENT_STATUS_LABELS[item.status]}
                     </Badge>
                     <span className="flex flex-wrap items-center gap-2 text-xs">
                       <button
@@ -459,7 +471,7 @@ export default function B9ContentManager({
             </div>
 
             <div className="rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-3 text-xs leading-5 text-[#61767D]">
-              标注为“显示到前台”的字段会直接进入公开页面；JSON 配置仅用于固定模板读取，不允许写自由 HTML/CSS。
+              只维护会展示给客户的内容。保存后请预览并核对前台效果。
             </div>
 
             <Button type="button" className="w-full" disabled={saving} onClick={() => saveItem(readEditingForm())} data-testid="b9-save-content-top">
@@ -468,7 +480,7 @@ export default function B9ContentManager({
 
             {fixedSlugs.length > 0 && (
               <div>
-                <label className="mb-1 block text-xs font-semibold text-[#61767D]">固定 slug</label>
+                <label className="mb-1 block text-xs font-semibold text-[#61767D]">固定路径</label>
                 <Select value={editing.slug} onChange={(e) => updateEditing('slug', e.target.value)}>
                   <option value="">选择或手动填写</option>
                   {fixedSlugs.map((slug) => <option key={slug} value={slug}>{slug}</option>)}
@@ -476,7 +488,7 @@ export default function B9ContentManager({
               </div>
             )}
 
-            <Field label="Slug（显示到前台路径或内容标识）">
+            <Field label="页面路径/内容标识">
               <Input data-b9-field="slug" value={editing.slug} onChange={(e) => updateEditing('slug', e.target.value)} placeholder="faq-price" />
             </Field>
 
@@ -525,7 +537,7 @@ export default function B9ContentManager({
               <Field label="CTA 链接（显示到前台）"><Input data-b9-field="cta_href" value={editing.cta_href} onChange={(e) => updateEditing('cta_href', e.target.value)} /></Field>
             </div>
 
-            <Field label="JSON 配置（固定模板字段，不是自由 HTML）">
+            <Field label="高级配置">
               <Textarea data-b9-field="payloadText" rows={5} value={editing.payloadText} onChange={(e) => updateEditing('payloadText', e.target.value)} />
               <p className="mt-1 text-xs leading-5 text-[#8A9EA4]">{copy.payloadHelp}</p>
             </Field>
@@ -533,9 +545,9 @@ export default function B9ContentManager({
             <div className="grid grid-cols-2 gap-3">
               <Field label="状态">
                 <Select data-b9-field="status" value={editing.status} onChange={(e) => updateEditing('status', e.target.value as B9ContentStatus)}>
-                  <option value="draft">draft</option>
-                  <option value="published">published</option>
-                  <option value="hidden">hidden</option>
+                  <option value="draft">{CONTENT_STATUS_LABELS.draft}</option>
+                  <option value="published">{CONTENT_STATUS_LABELS.published}</option>
+                  <option value="hidden">{CONTENT_STATUS_LABELS.hidden}</option>
                 </Select>
               </Field>
               <Field label="排序">
@@ -550,7 +562,7 @@ export default function B9ContentManager({
         ) : (
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-[#1E2C31]">分类管理</h2>
-            <Field label="Slug"><Input value={categoryDraft.slug} onChange={(e) => setCategoryDraft((c) => ({ ...c, slug: e.target.value }))} /></Field>
+            <Field label="分类路径"><Input value={categoryDraft.slug} onChange={(e) => setCategoryDraft((c) => ({ ...c, slug: e.target.value }))} /></Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="中文标题"><Input value={categoryDraft.title_zh} onChange={(e) => setCategoryDraft((c) => ({ ...c, title_zh: e.target.value }))} /></Field>
               <Field label="英文标题"><Input value={categoryDraft.title_en} onChange={(e) => setCategoryDraft((c) => ({ ...c, title_en: e.target.value }))} /></Field>
@@ -558,8 +570,8 @@ export default function B9ContentManager({
             <div className="grid grid-cols-2 gap-3">
               <Field label="状态">
                 <Select value={categoryDraft.status} onChange={(e) => setCategoryDraft((c) => ({ ...c, status: e.target.value as B9CategoryStatus }))}>
-                  <option value="visible">visible</option>
-                  <option value="hidden">hidden</option>
+                  <option value="visible">{CATEGORY_STATUS_LABELS.visible}</option>
+                  <option value="hidden">{CATEGORY_STATUS_LABELS.hidden}</option>
                 </Select>
               </Field>
               <Field label="排序"><Input type="number" value={categoryDraft.sort_order} onChange={(e) => setCategoryDraft((c) => ({ ...c, sort_order: Number(e.target.value) }))} /></Field>
@@ -587,7 +599,7 @@ export default function B9ContentManager({
                     <span className="block font-semibold text-[#1E2C31]">{cat.title_zh}</span>
                     <span className="text-xs text-[#61767D]">{cat.slug}</span>
                   </span>
-                  <Badge>{cat.status}</Badge>
+                  <Badge>{CATEGORY_STATUS_LABELS[cat.status]}</Badge>
                 </button>
               ))}
             </div>

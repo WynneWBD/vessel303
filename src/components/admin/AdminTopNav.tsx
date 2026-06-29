@@ -36,7 +36,7 @@ type QuickNavItem = {
 const VISUAL_HOME_HERO_HREF = '/admin/site/visual?module=home%3Ahero#visual-editor'
 
 const NAV_ITEMS: NavItem[] = [
-  { key: 'overview', label: '工作台', href: '/admin', Icon: Home },
+  { key: 'overview', label: '概况', href: '/admin', Icon: Home },
   { key: 'site', label: '网站管理', href: '/admin/site', Icon: LayoutTemplate },
   { key: 'content', label: '内容管理', href: '/admin/content', Icon: FileText },
   { key: 'customers', label: '客户线索', href: '/admin/customers', Icon: Inbox },
@@ -45,7 +45,7 @@ const NAV_ITEMS: NavItem[] = [
 ]
 
 const QUICK_NAV_ITEMS: QuickNavItem[] = [
-  { label: '优先级台账', href: '/admin/status#operations-priority-ledger', Icon: BarChart3 },
+  { label: '待办中心', href: '/admin/status#operations-priority-ledger', Icon: BarChart3 },
   { label: '编辑首页', href: VISUAL_HOME_HERO_HREF, Icon: LayoutTemplate },
   { label: '产品列表', href: '/admin/content/products/list', Icon: Package },
   { label: 'SEO 待补', href: '/admin/site/seo#seo-conversion-closure', Icon: SearchCheck },
@@ -108,7 +108,7 @@ export function AdminTopNav({
       <div className="hidden border-t border-white/10 bg-[#145F7B] lg:block">
         <div className="mx-auto flex h-10 w-full max-w-[1600px] items-center gap-3 px-4 lg:px-8">
           <span className="shrink-0 text-[11px] font-bold uppercase tracking-[0.16em] text-white/58">
-            高频处理
+            常用入口
           </span>
           <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
             {visibleQuickNav.map((item) => (

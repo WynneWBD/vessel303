@@ -101,7 +101,7 @@ export default async function AdminStatusContentPage() {
           <p className="text-sm font-semibold text-[#1889B6]">内容统计</p>
           <h1 className="mt-2 text-2xl font-bold text-[#1E2C31]">产品 / 项目 / 新闻内容缺口</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-            聚合现有内容表的发布、草稿、近 7 / 30 / 90 天变化和关键字段缺项。这里不编辑内容，只把运营人员带回对应管理入口。
+            查看发布、草稿、近期变化和内容缺项。
           </p>
         </div>
 
@@ -115,7 +115,7 @@ export default async function AdminStatusContentPage() {
           <MetricCard
             title="字段缺项"
             value={totals.issues}
-            detail="封面、图库、中英文文本、SEO 或项目坐标等关键展示字段。"
+            detail="封面、图库、文案、SEO 和坐标。"
             Icon={STATUS_ICONS.AlertCircle}
             tone={totals.issues > 0 ? 'orange' : 'green'}
           />
@@ -129,7 +129,7 @@ export default async function AdminStatusContentPage() {
           <MetricCard
             title="草稿待处理"
             value={totals.draft}
-            detail="优先处理即将发布或已进入运营排期的草稿。"
+            detail="待检查或待发布的草稿。"
             href="/admin/content"
             Icon={STATUS_ICONS.Newspaper}
             tone={totals.draft > 0 ? 'orange' : 'green'}
@@ -155,7 +155,7 @@ export default async function AdminStatusContentPage() {
         </section>
 
         <section className="space-y-4">
-          <SectionTitle title="内容类型" detail="每个卡片都链接到对应管理页，方便按类型处理。" />
+          <SectionTitle title="内容类型" detail="按类型查看状态和入口。" />
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
             {contentItems.map((item) => (
               <ContentPanel key={item.key} item={item} />
@@ -164,7 +164,7 @@ export default async function AdminStatusContentPage() {
         </section>
 
         <section className="space-y-4">
-          <SectionTitle title="处理入口" detail="按运营优先级进入已有列表或编辑流程。" />
+          <SectionTitle title="处理入口" detail="按优先级打开对应列表。" />
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             <ActionCard
               title="处理产品缺项"
@@ -220,15 +220,15 @@ function ContentNextActionBoard({
   return (
     <section id="content-next-actions" className="scroll-mt-24 space-y-4">
       <SectionTitle
-        title="内容下一步动作"
-        detail="按内容缺项、SEO、案例询盘和发布后复验生成运营优先级。"
+        title="内容待办"
+        detail="按缺项、SEO、案例询盘和发布检查排序。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
-          <MatrixSummary label="当前最高优先级" value={highestPriority} detail="按缺项、SEO、案例承接排序" warn={highestPriority !== 'OK'} />
-          <MatrixSummary label="待处理动作" value={activeActions.length} detail="P0 / P1 运营问题队列" warn={activeActions.length > 0} />
+          <MatrixSummary label="当前优先级" value={contentPriorityDisplay(highestPriority)} detail="缺项 / SEO / 案例" warn={highestPriority !== 'OK'} />
+          <MatrixSummary label="待处理" value={activeActions.length} detail="需要处理的项目" warn={activeActions.length > 0} />
           <MatrixSummary label="SEO 待补" value={seoMissing} detail="产品 / 案例 / 新闻 SEO 字段" warn={seoMissing > 0} />
-          <MatrixSummary label="案例承接弱" value={caseInquiryHealth.weak} detail="已发布但转化素材不足" warn={caseInquiryHealth.weak > 0} />
+          <MatrixSummary label="案例转化弱" value={caseInquiryHealth.weak} detail="已发布但转化素材不足" warn={caseInquiryHealth.weak > 0} />
         </div>
         <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] lg:grid-cols-2 lg:divide-x lg:divide-y-0">
           {actions.map((action) => (
@@ -252,7 +252,7 @@ function ContentNextActionCard({ action }: { action: ContentNextAction }) {
           </span>
           <span className="min-w-0">
             <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${contentReleaseBadgeClassName(action.tone)}`}>
-              {action.priority} · {contentReleaseLabel(action.tone)}
+              {contentPriorityDisplay(action.priority)} · {contentReleaseLabel(action.tone)}
             </span>
             <h3 className="mt-2 text-base font-bold text-[#1E2C31]">{action.title}</h3>
           </span>
@@ -294,14 +294,14 @@ function CaseInquiryHealthPanel({ health }: { health: CaseInquiryHealth }) {
   return (
     <div>
       <SectionTitle
-        title="案例询盘承接健康"
-        detail="集中查看项目案例内容质量、询盘承接和前台入口状态。"
+        title="案例询盘状态"
+        detail="查看案例内容质量、询盘信息和前台入口。"
       />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
-          title="询盘可承接"
+          title="可询盘案例"
           value={health.ready}
-          detail={`已发布案例承接率 ${readyRate}%`}
+          detail={`已发布案例占比 ${readyRate}%`}
           href="/admin/content/projects/list?status=published"
           Icon={STATUS_ICONS.CheckCircle2}
           tone={health.ready > 0 ? 'green' : 'gray'}
@@ -315,9 +315,9 @@ function CaseInquiryHealthPanel({ health }: { health: CaseInquiryHealth }) {
           tone={health.weak > 0 ? 'orange' : 'green'}
         />
         <MetricCard
-          title="草稿待承接"
+          title="草稿待完善"
           value={health.draft}
-          detail="草稿发布前先补齐案例咨询上下文"
+          detail="发布前补齐案例咨询信息"
           href="/admin/content/projects/list?status=draft"
           Icon={STATUS_ICONS.FileText}
           tone={health.draft > 0 ? 'orange' : 'green'}
@@ -407,7 +407,7 @@ function PublicDiscoveryHealthBoard({
       />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <MatrixSummary label="公开内容线" value={items.length} detail="产品、案例、新闻" />
-        <MatrixSummary label="可承接线路" value={`${publicReadyCount}/${items.length}`} detail="有已发布内容且无内容/SEO 缺项" />
+        <MatrixSummary label="可公开内容" value={`${publicReadyCount}/${items.length}`} detail="已发布且无内容 / SEO 缺项" />
         <MatrixSummary label="内容缺项" value={products.issues + projects.issues + news.issues} detail="三类公开内容关键字段" warn={products.issues + projects.issues + news.issues > 0} />
         <MatrixSummary label="SEO 待补" value={seoContentMissing} detail="产品、案例、新闻 SEO 字段" warn={seoContentMissing > 0} />
       </div>
@@ -498,11 +498,11 @@ function buildContentNextActions(
     {
       key: 'content-field-gaps',
       priority: totals.issues > 0 ? 'P0' : 'OK',
-      title: '补齐公开内容关键字段',
-      owner: '内容管理 / 全部',
-      status: totals.issues > 0 ? '先处理缺项最多的内容类型，再回到前台核对列表和详情。' : '保持巡检，发布新内容前继续走缺项检查。',
+      title: '补齐公开内容',
+      owner: '内容管理',
+      status: totals.issues > 0 ? '先处理缺项最多的内容类型。' : '暂无内容缺项。',
       evidence: issueEvidence,
-      acceptance: '字段缺项清零；前台列表、详情、封面、正文和 CTA 正常展示。',
+      acceptance: '缺项清零；前台列表、详情、封面和按钮正常展示。',
       href: issueTarget?.issueHref ?? '/admin/status/content',
       actionLabel: totals.issues > 0 ? '处理最高缺项' : '查看内容状态',
       tone: totals.issues > 0 ? 'critical' : 'ready',
@@ -512,10 +512,10 @@ function buildContentNextActions(
       key: 'content-seo-gaps',
       priority: seoMissing > 0 ? 'P1' : 'OK',
       title: '补齐产品 / 案例 / 新闻 SEO',
-      owner: 'SEO / 内容运营',
-      status: seoMissing > 0 ? '优先补搜索标题、描述、slug 和可被搜索收录的摘要字段。' : 'SEO 缺项已归零，继续用 SEO 中心做发布前巡检。',
+      owner: 'SEO',
+      status: seoMissing > 0 ? '补搜索标题、描述、slug 和摘要。' : 'SEO 缺项已归零。',
       evidence: `产品 ${formatNumber(seo.productsMissing)} / 案例 ${formatNumber(seo.projectsMissing)} / 新闻 ${formatNumber(seo.newsMissing)}`,
-      acceptance: 'SEO 待补为 0；重点公开页发布后能在前台打开并具备标题和描述。',
+      acceptance: 'SEO 待补为 0；公开页标题和描述完整。',
       href: seoGapHref(seo),
       actionLabel: seoMissing > 0 ? '处理 SEO 待补' : '查看 SEO 状态',
       tone: seoMissing > 0 ? 'warning' : 'ready',
@@ -524,11 +524,11 @@ function buildContentNextActions(
     {
       key: 'case-conversion-weak',
       priority: caseInquiryHealth.weak > 0 ? 'P1' : 'OK',
-      title: '处理案例发布转化弱',
-      owner: '案例内容 / 销售协同',
-      status: caseInquiryHealth.weak > 0 ? '补齐已发布案例的项目事实、图片、产品关联和询盘上下文。' : '已发布案例具备基础承接能力，继续关注新增案例。',
-      evidence: `询盘可承接 ${formatNumber(caseInquiryHealth.ready)} / 发布转化弱 ${formatNumber(caseInquiryHealth.weak)} / 草稿 ${formatNumber(caseInquiryHealth.draft)}`,
-      acceptance: '转化弱案例归零或有明确补齐原因；前台案例详情能支持客户询盘判断。',
+      title: '处理案例转化弱',
+      owner: '案例内容',
+      status: caseInquiryHealth.weak > 0 ? '补齐项目事实、图片、产品关联和询盘信息。' : '已发布案例状态正常。',
+      evidence: `可询盘 ${formatNumber(caseInquiryHealth.ready)} / 转化弱 ${formatNumber(caseInquiryHealth.weak)} / 草稿 ${formatNumber(caseInquiryHealth.draft)}`,
+      acceptance: '转化弱案例归零或有明确原因。',
       href: caseInquiryHealth.weak > 0 ? '/admin/content/projects/list?view=case-conversion-weak' : '/admin/content/projects/list?status=published',
       actionLabel: caseInquiryHealth.weak > 0 ? '处理弱案例' : '查看已发布案例',
       tone: caseInquiryHealth.weak > 0 ? 'warning' : 'ready',
@@ -538,10 +538,10 @@ function buildContentNextActions(
       key: 'public-content-smoke',
       priority: 'P3',
       title: '发布后前台复验',
-      owner: '05 验收',
-      status: '内容调整或发布后，从站点页面台账逐个打开公开入口。',
-      evidence: '产品、案例、新闻和重点详情页入口由站点页面台账统一承接。',
-      acceptance: '前台页面返回 200；列表、详情、图片、按钮和来源链路可被用户正常使用。',
+      owner: '网站运营',
+      status: '内容调整或发布后，打开公开入口复查。',
+      evidence: '产品、案例、新闻和重点详情页入口。',
+      acceptance: '前台页面、图片和按钮正常展示。',
       href: '/admin/site/pages#content-source-route-tree',
       actionLabel: '查看复验入口',
       tone: 'review',
@@ -582,7 +582,7 @@ function buildContentReleaseRows(items: ContentMetric[], totals: ContentTotals):
       owner: '内容管理 / 全部',
       value: totals.issues > 0 ? `${formatNumber(totals.issues)} 个缺项` : '无缺项',
       evidence: issueEvidence,
-      impact: '影响前台展示、SEO 摘要、案例地图和询盘转化判断。',
+      impact: '影响前台展示、SEO、地图和询盘判断。',
       href: issueTarget?.issueHref ?? '/admin/status/content',
       actionLabel: totals.issues > 0 ? '处理最高缺项' : '查看内容状态',
       tone: totals.issues > 0 ? 'critical' : 'ready',
@@ -596,7 +596,7 @@ function buildContentReleaseRows(items: ContentMetric[], totals: ContentTotals):
       owner: '内容运营',
       value: totals.draft > 0 ? `${formatNumber(totals.draft)} 个草稿` : '无草稿积压',
       evidence: draftEvidence,
-      impact: '决定是否进入发布、继续补素材，或保持内部草稿。',
+      impact: '决定发布、补素材或保留草稿。',
       href: draftTarget?.draftHref ?? '/admin/content',
       actionLabel: totals.draft > 0 ? '查看草稿队列' : '进入内容管理',
       tone: totals.draft > 0 ? 'warning' : 'ready',
@@ -610,7 +610,7 @@ function buildContentReleaseRows(items: ContentMetric[], totals: ContentTotals):
       owner: '运营复盘',
       value: staleItems.length > 0 ? `${formatNumber(staleItems.length)} 类无更新` : `${formatNumber(totals.recent30)} 条变化`,
       evidence: staleEvidence,
-      impact: '用于判断产品、案例、新闻是否需要补充新素材或新证明点。',
+      impact: '判断是否需要补充新素材。',
       href: '/admin/content',
       actionLabel: '查看内容入口',
       tone: staleItems.length > 0 ? 'review' : 'ready',
@@ -620,13 +620,13 @@ function buildContentReleaseRows(items: ContentMetric[], totals: ContentTotals):
       key: 'product-release',
       priority: product && product.issues > 0 ? 'P1' : 'P3',
       stage: '产品目录',
-      title: '产品页展示完整度',
+      title: '产品页完整度',
       owner: '产品内容',
       value: product ? `${formatNumber(product.published)} 已发布 / ${formatNumber(product.issues)} 缺项` : '无产品数据',
       evidence: product
         ? `草稿 ${formatNumber(product.draft)} / 近 30 天变化 ${formatNumber(product.recent30)}`
         : '产品表暂无可读数据',
-      impact: '产品图片、图库、中英文名称和 SEO 字段直接影响询盘前的判断效率。',
+      impact: '影响客户询盘前的判断。',
       href: product?.issues ? product.issueHref : product?.href ?? '/admin/content/products',
       actionLabel: product?.issues ? '处理产品缺项' : '进入产品管理',
       tone: product && product.issues > 0 ? 'warning' : 'review',
@@ -636,13 +636,13 @@ function buildContentReleaseRows(items: ContentMetric[], totals: ContentTotals):
       key: 'project-release',
       priority: project && project.issues > 0 ? 'P1' : 'P3',
       stage: '项目案例',
-      title: '案例证明链完整度',
+      title: '案例完整度',
       owner: '案例内容',
       value: project ? `${formatNumber(project.published)} 已发布 / ${formatNumber(project.issues)} 缺项` : '无案例数据',
       evidence: project
         ? `草稿 ${formatNumber(project.draft)} / 近 30 天变化 ${formatNumber(project.recent30)}`
         : '案例表暂无可读数据',
-      impact: '案例封面、图库、坐标和产品型号会影响海外客户对交付能力的判断。',
+      impact: '影响客户对交付能力的判断。',
       href: project?.issues ? project.issueHref : project?.href ?? '/admin/content/projects',
       actionLabel: project?.issues ? '处理案例缺项' : '进入案例管理',
       tone: project && project.issues > 0 ? 'warning' : 'review',
@@ -658,7 +658,7 @@ function buildContentReleaseRows(items: ContentMetric[], totals: ContentTotals):
       evidence: news
         ? `缺项 ${formatNumber(news.issues)} / 近 30 天变化 ${formatNumber(news.recent30)}`
         : '新闻表暂无可读数据',
-      impact: '新闻内容是品牌动态和搜索补充信号，优先避免草稿长期停留。',
+      impact: '避免新闻草稿长期停留。',
       href: news?.issues ? news.issueHref : news?.draft ? news.draftHref : news?.href ?? '/admin/content/news',
       actionLabel: news?.issues ? '处理新闻缺项' : news?.draft ? '查看新闻草稿' : '进入新闻管理',
       tone: news && (news.issues > 0 || news.draft > 0) ? 'review' : 'ready',
@@ -668,13 +668,13 @@ function buildContentReleaseRows(items: ContentMetric[], totals: ContentTotals):
       key: 'public-smoke',
       priority: 'P3',
       stage: '发布后复验',
-      title: '前台内容入口 smoke',
-      owner: '05 验收',
+      title: '前台内容复查',
+      owner: '网站运营',
       value: '人工复验',
-      evidence: '发布后回到站点健康 8 入口 smoke 清单，再抽检 /products、/cases、/news 与重点详情页。',
-      impact: '避免只打开产品目录却漏掉案例、新闻、Contact、sitemap、robots 和后台登录保护。',
+      evidence: '发布后抽检 /products、/cases、/news 与重点详情页。',
+      impact: '确认前台内容入口正常。',
       href: '/admin/status/site#site-release-preflight-bridge',
-      actionLabel: '查看 smoke 清单',
+      actionLabel: '查看复查清单',
       tone: 'review',
       Icon: STATUS_ICONS.SearchCheck,
     },
@@ -698,7 +698,7 @@ function ContentReleaseLedger({
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-5 py-4 md:grid-cols-4">
-          <MatrixSummary label="最高优先级" value={totals.issues > 0 ? 'P0' : totals.draft > 0 ? 'P1' : 'OK'} detail="按缺项、草稿、更新覆盖排序" warn={totals.issues > 0} />
+          <MatrixSummary label="最高优先级" value={contentPriorityDisplay(totals.issues > 0 ? 'P0' : totals.draft > 0 ? 'P1' : 'OK')} detail="按缺项、草稿、更新覆盖排序" warn={totals.issues > 0} />
           <MatrixSummary label="待处理缺项" value={totals.issues} detail="产品 / 项目 / 新闻关键字段" warn={totals.issues > 0} />
           <MatrixSummary label="待收口草稿" value={totals.draft} detail="进入发布排期前先确认素材" warn={totals.draft > 0} />
           <MatrixSummary label="复验入口" value="3+" detail="产品、案例、新闻与重点详情页" />
@@ -722,7 +722,7 @@ function ContentReleaseLedger({
                   <tr key={row.key} className="align-top transition hover:bg-[#FBFDFD]">
                     <td className="px-5 py-4">
                       <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${contentReleaseBadgeClassName(row.tone)}`}>
-                        {row.priority}
+                        {contentPriorityDisplay(row.priority)}
                       </span>
                       <p className="mt-2 text-xs font-semibold text-[#61767D]">{row.stage}</p>
                     </td>
@@ -775,6 +775,16 @@ function contentReleaseBadgeClassName(tone: ContentReleaseTone): string {
   return 'border-emerald-200 bg-emerald-50 text-emerald-700'
 }
 
+function contentPriorityDisplay(priority: string): string {
+  if (priority === 'P0') return '高优先'
+  if (priority === 'P1') return '优先'
+  if (priority === 'P2') return '复核'
+  if (priority === 'P3') return '观察'
+  if (priority === 'OK') return '正常'
+  if (priority === 'HOLD') return '受限'
+  return priority
+}
+
 function contentReleaseLabel(tone: ContentReleaseTone): string {
   if (tone === 'critical') return '立即处理'
   if (tone === 'warning') return '优先处理'
@@ -786,7 +796,7 @@ function getContentDecision(item: ContentMetric): ContentDecision {
   if (item.issues > 0) {
     return {
       label: '优先补齐字段',
-      detail: '关键展示字段缺失会影响前台展示、SEO 或案例地图承接。',
+      detail: '关键展示信息缺失会影响前台展示、SEO 或地图。',
       tone: 'orange',
       href: item.issueHref,
       actionLabel: '处理缺项',

@@ -360,7 +360,7 @@ function getSideNavGroups(project: ProjectCaseRow): AdminSideNavGroup[] {
       })),
     },
     {
-      title: '后续规划',
+      title: '运营维护',
       items: [
         { key: 'project-new', label: '新增项目', href: '/admin/content/projects/new', Icon: FileText },
         { key: 'case-edit-inquiry', label: '询盘复核台', href: '#case-edit-inquiry-conversion-review-desk', Icon: ListChecks },

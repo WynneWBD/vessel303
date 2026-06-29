@@ -22,7 +22,6 @@ import {
   LayoutTemplate,
   Link2,
   ListChecks,
-  LockKeyhole,
   MapPinned,
   Navigation,
   Newspaper,
@@ -30,8 +29,6 @@ import {
   Plug,
   SearchCheck,
   Settings,
-  ShieldCheck,
-  Wrench,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -87,28 +84,28 @@ const EXPECTED_SETTING_KEYS = Object.keys(defaultSiteSettings)
 const SITE_INFO_ITEMS: InfoItem[] = [
   {
     title: '品牌名称与默认 SEO',
-    owner: 'site_settings',
+    owner: '网站信息',
     keys: ['siteNameZh', 'siteNameEn', 'seoTitleZh', 'seoTitleEn', 'seoDescriptionZh', 'seoDescriptionEn'],
     state: 'partial',
-    detail: '字段已在后台设置保存，但前台默认 metadata 接管需要按页面逐步验证，避免覆盖已有页面文案。',
+    detail: '已保存品牌名称、默认标题和默认描述；公开页面会优先使用各页面自己的文案。',
     href: '/admin/settings',
     Icon: Globe2,
   },
   {
     title: '联系入口',
-    owner: '/contact',
+    owner: '联系页',
     keys: ['contactUrl'],
     state: 'active',
-    detail: '/contact 已使用后台发布的联系模块，表单会进入线索列表；contactUrl 作为备用入口。',
+    detail: '联系页和表单已进入线索列表；备用联系入口用于核对跳转是否正确。',
     href: '/contact',
     Icon: ExternalLink,
   },
   {
     title: '销售联系方式',
-    owner: 'site_settings',
+    owner: '销售联系方式',
     keys: ['salesEmail', 'salesPhone', 'whatsapp'],
     state: 'planned',
-    detail: '后台已有字段；用于核对电话、邮箱、WhatsApp 和线索路径是否一致。',
+    detail: '用于核对电话、邮箱、WhatsApp 和线索路径是否一致。',
     href: '/admin/settings',
     Icon: Link2,
   },
@@ -117,16 +114,16 @@ const SITE_INFO_ITEMS: InfoItem[] = [
     owner: '媒体库 / 上传组件',
     keys: ['mediaMaxUploadMb'],
     state: 'active',
-    detail: '媒体上传上限已作为后台设置基线使用；真实上传 / 删除测试继续单独验收。',
+    detail: '用于限制图片素材上传大小。',
     href: '/admin/site/media',
     Icon: ImageIcon,
   },
   {
     title: '旧产品入口',
-    owner: 'site_settings',
+    owner: '产品入口',
     keys: ['productsLegacyUrl'],
     state: 'planned',
-    detail: '适合后续统一接管旧 303vessel.cn 产品入口，但需要先确认是否继续外跳旧站。',
+    detail: '用于核对旧站产品入口是否仍需保留。',
     href: '/admin/content/products',
     Icon: Package,
   },
@@ -135,13 +132,13 @@ const SITE_INFO_ITEMS: InfoItem[] = [
     owner: 'Global / 系统维护',
     keys: ['mapProvider', 'maintenanceMode', 'maintenanceNotice'],
     state: 'hold',
-    detail: '维护模式会影响前台访问；地图服务按专项入口核对。',
+    detail: '维护模式会影响前台访问；地图服务单独核对。',
     href: '/global',
     Icon: MapPinned,
   },
 ]
 
-function getSettingsSideNav(isAdmin: boolean): AdminSideNavGroup[] {
+function getSettingsSideNav(): AdminSideNavGroup[] {
   return [
     {
       title: '网站运营',
@@ -163,21 +160,6 @@ function getSettingsSideNav(isAdmin: boolean): AdminSideNavGroup[] {
         { key: 'news', label: '新闻资讯', href: '/admin/content/news', Icon: Newspaper },
         { key: 'media', label: '图片素材', href: '/admin/site/media', Icon: ImageIcon },
       ],
-    },
-    {
-      title: '后续规划',
-      items: [
-        { key: 'third-party', label: '第三方代码', planned: true, Icon: Code2 },
-        { key: 'search-submit', label: '搜索提交', planned: true, Icon: Plug },
-      ],
-    },
-    {
-      title: '高级维护',
-      items: [
-        { key: 'form-mode', label: '表单模式', href: '/admin/pages', adminOnly: true, Icon: Wrench },
-        { key: 'admin-settings', label: '站点设置', href: '/admin/settings', adminOnly: true, Icon: Settings },
-        { key: 'legacy', label: '维护入口', href: '/admin/legacy', adminOnly: true, Icon: ShieldCheck },
-      ].filter((item) => isAdmin || !item.adminOnly),
     },
   ]
 }
@@ -248,9 +230,9 @@ function formatDateTime(value: string | null): string {
 }
 
 function stateLabel(state: ReadinessState): string {
-  if (state === 'active') return '已接管'
-  if (state === 'partial') return '部分接管'
-  if (state === 'planned') return '待规划'
+  if (state === 'active') return '已启用'
+  if (state === 'partial') return '部分启用'
+  if (state === 'planned') return '待设置'
   return '暂缓'
 }
 
@@ -278,21 +260,21 @@ function getSearchItems(): SearchItem[] {
       title: 'Robots',
       status: robotsReady ? 'public/robots.txt 已存在' : '缺失',
       state: robotsReady ? 'active' : 'planned',
-      detail: '当前 robots 已保护后台和接口目录，可继续核对公开站点收录范围。',
+      detail: 'Robots 已存在，可继续核对公开站点收录范围。',
       Icon: FileCode2,
     },
     {
       title: 'Sitemap',
-      status: sitemapReady ? 'public/sitemap.xml 已存在' : sitemapRouteReady ? 'app/sitemap.ts 已接管' : '待补',
+      status: sitemapReady || sitemapRouteReady ? 'Sitemap 已生成' : '待补',
       state: sitemapReady || sitemapRouteReady ? 'active' : 'planned',
-      detail: 'robots 已引用 sitemap.xml；当前只生成站点地图，不在本页直接提交搜索引擎。',
+      detail: '站点地图用于帮助搜索引擎发现公开页面。',
       Icon: SearchCheck,
     },
     {
       title: 'Google Analytics / Tag Manager',
       status: `${configuredLabel(gaReady)} / ${configuredLabel(gtmReady)}`,
       state: gaReady || gtmReady ? 'partial' : 'planned',
-      detail: '当前不开放第三方代码粘贴框；统计脚本接入需走代码审查，避免注入风险。',
+      detail: '统计工具暂未开放给运营直接粘贴；需要接入时由管理员配置。',
       Icon: Code2,
     },
     {
@@ -300,8 +282,8 @@ function getSearchItems(): SearchItem[] {
       status: configuredLabel(googleVerifyReady),
       state: googleVerifyReady ? 'partial' : 'planned',
       detail: googleVerifyReady
-        ? 'URL 前缀 Meta 验证标识已配置；线上首页会输出 google-site-verification，仍需在 Search Console 完成验证并提交 sitemap。'
-        : '等待 Search Console URL 前缀 Meta 验证标识；配置完成后首页会输出验证 meta。',
+        ? '验证标识已配置；仍需在 Search Console 完成验证并提交 sitemap。'
+        : '等待 Search Console 验证标识。',
       Icon: Plug,
     },
   ]
@@ -333,11 +315,11 @@ function buildSettingsGovernanceRows(snapshot: SettingSnapshot, searchItems: Sea
 
     if (item.state === 'hold') {
       tone = 'hold'
-      stage = '专项暂缓'
+      stage = '暂缓处理'
     } else if (!complete && item.state === 'active') {
       tone = 'warning'
-      stage = '字段缺口'
-      signal = `缺少字段：${missing.join(', ')}`
+      stage = '信息缺失'
+      signal = `有 ${missing.length} 项信息未配置`
     } else if (item.state === 'planned' || item.state === 'partial') {
       tone = 'review'
     }
@@ -348,7 +330,7 @@ function buildSettingsGovernanceRows(snapshot: SettingSnapshot, searchItems: Sea
       owner: item.owner,
       stage,
       signal,
-      coverage: `${present}/${item.keys.length} 字段`,
+      coverage: `${present}/${item.keys.length} 项`,
       tone,
       href: item.href,
       Icon: item.Icon,
@@ -363,7 +345,7 @@ function buildSettingsGovernanceRows(snapshot: SettingSnapshot, searchItems: Sea
     return {
       key: `search:${item.title}`,
       title: item.title,
-      owner: '搜索 / 三方代码边界',
+      owner: '搜索与统计',
       stage: stateLabel(item.state),
       signal: item.detail,
       coverage: item.status,
@@ -443,8 +425,7 @@ function SiteInfoCard({
         )}
       </div>
       <div className="mt-5 rounded-md border border-[#E6EEEE] bg-[#F7FAFA] px-3 py-2 text-xs text-[#61767D]">
-        字段覆盖：<span className="font-bold text-[#1E2C31]">{present}</span> / {item.keys.length}
-        <span className="ml-2 text-[#8A9EA4]">{item.keys.join(', ')}</span>
+        信息完整度：<span className="font-bold text-[#1E2C31]">{present}</span> / {item.keys.length}
       </div>
       {item.href ? (
         <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#1889B6]">
@@ -489,28 +470,6 @@ function SearchBoundaryCard({ item }: { item: SearchItem }) {
   )
 }
 
-function AlignmentPanel() {
-  const items = [
-    '网站信息、TDK、三方代码和搜索引擎连接集中在站点设置中查看。',
-    '运营先看接管状态：已接管项可直接进入来源页，待规划项进入后续配置。',
-    '搜索提交和三方代码按专项入口处理，避免误贴脚本影响前台。',
-  ]
-
-  return (
-    <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-      <SectionTitle title="站点基础设置" detail="集中查看网站信息、搜索连接和三方代码的当前状态。" />
-      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-        {items.map((item) => (
-          <div key={item} className="rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-4">
-            <CheckCircle2 size={18} className="text-emerald-600" />
-            <p className="mt-3 text-sm leading-6 text-[#1E2C31]">{item}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
-}
-
 function SettingsGovernanceLedger({
   snapshot,
   searchItems,
@@ -527,15 +486,12 @@ function SettingsGovernanceLedger({
     <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[#1E2C31]">网站信息治理台账</h2>
-          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把网站信息、搜索、三方代码和受保护配置统一排成处理清单；运营先看接管阶段和字段覆盖，再进入来源页。
-          </p>
+          <h2 className="text-xl font-bold text-[#1E2C31]">网站信息清单</h2>
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-semibold">
           <span className="rounded-full bg-[#FFF2E7] px-3 py-1 text-[#E36F2C]">优先 {warningCount}</span>
           <span className="rounded-full bg-[#EAF6F8] px-3 py-1 text-[#1889B6]">复核 {reviewCount}</span>
-          <span className="rounded-full bg-[#F5F2ED] px-3 py-1 text-[#6B625B]">暂缓 {holdCount}</span>
+          <span className="rounded-full bg-[#F5F2ED] px-3 py-1 text-[#6B625B]">待处理 {holdCount}</span>
         </div>
       </div>
 
@@ -543,10 +499,10 @@ function SettingsGovernanceLedger({
         <table className="min-w-full divide-y divide-[#E6EEEE] text-left text-sm">
           <thead className="bg-[#F7FAFA] text-xs font-bold uppercase tracking-wide text-[#8A9EA4]">
             <tr>
-              <th className="px-5 py-3">项目 / owner</th>
+              <th className="px-5 py-3">项目</th>
               <th className="px-4 py-3">阶段</th>
-              <th className="px-4 py-3">处理信号</th>
-              <th className="px-4 py-3">字段 / 状态</th>
+              <th className="px-4 py-3">处理事项</th>
+              <th className="px-4 py-3">状态</th>
               <th className="px-5 py-3 text-right">入口</th>
             </tr>
           </thead>
@@ -629,34 +585,6 @@ function SettingsGovernanceLedger({
   )
 }
 
-function GuardrailPanel() {
-  const guardrails = [
-    '不开放第三方 HTML / JS 代码粘贴保存，避免注入和线上事故。',
-    '不提交搜索引擎、不修改 DNS / 域名绑定、不改 Robots 后台保存。',
-    '不修改 /global、MapLibre、MapTiler、/api/map、支付、订单或会员能力。',
-  ]
-
-  return (
-    <section className="rounded-md border border-dashed border-[#D8E7E8] bg-white/75 p-5">
-      <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#F5F2ED] text-[#6B625B]">
-          <LockKeyhole size={18} />
-        </span>
-        <div>
-          <h2 className="text-base font-bold text-[#1E2C31]">网站信息保护线</h2>
-          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">
-            {guardrails.map((item) => (
-              <p key={item} className="rounded-md bg-white px-3 py-2 text-xs leading-5 text-[#61767D]">
-                {item}
-              </p>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 export default async function AdminSiteSettingsPage() {
   const session = await auth()
   if (!session?.user) {
@@ -680,7 +608,7 @@ export default async function AdminSiteSettingsPage() {
   const searchItems = getSearchItems()
   const activeInfoCount = SITE_INFO_ITEMS.filter((item) => item.state === 'active').length
   const plannedSearchCount = searchItems.filter((item) => item.state === 'planned').length
-  const sideNavGroups = getSettingsSideNav(adminRole === 'admin')
+  const sideNavGroups = getSettingsSideNav()
 
   return (
     <AdminSectionShell
@@ -688,14 +616,14 @@ export default async function AdminSiteSettingsPage() {
       role={adminRole}
       email={session.user.email}
       title="网站管理"
-      description="查看网站信息、三方代码和搜索引擎连接状态。"
+      description="查看网站信息、搜索和统计状态。"
       sideNavGroups={sideNavGroups}
       activeItem="settings"
     >
       <AdminPageHero
         kicker="网站信息"
         title="网站信息与搜索设置"
-        description="集中查看网站信息、三方代码和搜索引擎连接的接管状态与处理入口。"
+        description="集中查看网站信息、搜索和统计工具状态。"
         actions={(
           <>
             <AdminActionLink href="/admin/settings" Icon={ArrowRight} label="管理员设置" primary />
@@ -705,24 +633,22 @@ export default async function AdminSiteSettingsPage() {
       >
         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
           <SummaryTile
-            title="设置字段"
+            title="基础信息"
             value={`${snapshot.storedCount}/${snapshot.expectedCount}`}
-            detail={snapshot.tableReady ? `最近更新 ${formatDateTime(snapshot.lastUpdatedAt)}` : 'site_settings 未读取'}
+            detail={snapshot.tableReady ? `最近更新 ${formatDateTime(snapshot.lastUpdatedAt)}` : '设置未读取'}
             tone={snapshot.missingKeys.length > 0 ? 'orange' : 'green'}
             Icon={Settings}
           />
-          <SummaryTile title="已接管项" value={activeInfoCount} detail="联系入口 / 媒体限制" tone="green" Icon={CheckCircle2} />
+          <SummaryTile title="已启用项" value={activeInfoCount} detail="联系入口 / 媒体限制" tone="green" Icon={CheckCircle2} />
           <SummaryTile title="搜索待补" value={plannedSearchCount} detail="Sitemap / 验证 / 提交" tone={plannedSearchCount > 0 ? 'orange' : 'green'} Icon={SearchCheck} />
-          <SummaryTile title="三方代码" value="待接入" detail="按专项入口处理" tone="gray" Icon={Code2} />
+          <SummaryTile title="统计工具" value="待设置" detail="管理员配置" tone="gray" Icon={Code2} />
         </div>
       </AdminPageHero>
-
-      <AlignmentPanel />
 
       <SettingsGovernanceLedger snapshot={snapshot} searchItems={searchItems} />
 
       <section className="space-y-4">
-        <SectionTitle title="网站信息接管" detail="字段是否存在只做状态展示；真实保存仍走 admin-only 站点设置页。" />
+        <SectionTitle title="网站信息" />
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           {SITE_INFO_ITEMS.map((item) => (
             <SiteInfoCard key={item.title} item={item} snapshot={snapshot} />
@@ -731,7 +657,7 @@ export default async function AdminSiteSettingsPage() {
       </section>
 
       <section className="space-y-4">
-        <SectionTitle title="第三方代码与搜索状态" detail="记录搜索引擎连接和优化工具状态，方便运营后续处理。" />
+        <SectionTitle title="搜索与统计" />
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           {searchItems.map((item) => (
             <SearchBoundaryCard key={item.title} item={item} />
@@ -739,7 +665,6 @@ export default async function AdminSiteSettingsPage() {
         </div>
       </section>
 
-      <GuardrailPanel />
     </AdminSectionShell>
   )
 }

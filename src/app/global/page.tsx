@@ -6,7 +6,7 @@ import MapSkeleton from '@/components/MapSkeleton'
 import { buildGlobalCmsLabels } from '@/lib/global-page-cms'
 import { listPublishedProjectCases } from '@/lib/project-cases-db'
 import { projectCaseToShowcaseProject } from '@/lib/project-cases-global'
-import { listPublishedPageModules } from '@/lib/page-modules-db'
+import { listDefaultPageModules, listPublishedPageModules } from '@/lib/page-modules-db'
 import type { ShowcaseProject } from '@/data/showcaseProjects'
 
 export const dynamic = 'force-dynamic'
@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic'
 async function loadGlobalPageModules() {
   return listPublishedPageModules('global').catch((err) => {
     console.warn('[global] page modules unavailable', err)
-    return []
+    return listDefaultPageModules('global')
   })
 }
 

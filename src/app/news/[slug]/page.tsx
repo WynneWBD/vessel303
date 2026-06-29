@@ -7,6 +7,7 @@ import Link from '@tiptap/extension-link'
 import type { JSONContent } from '@tiptap/core'
 import NewsDetailView from '@/components/NewsDetailView'
 import { buildPageMetadata } from '@/lib/seo'
+import { listDefaultPageModules, listPublishedPageModules } from '@/lib/page-modules-db'
 import {
   extractImageSrcsFromHtml,
   getUploadVariantsByUrls,
@@ -148,25 +149,36 @@ export default async function NewsSlugPage({
   })
   const displayNews = {
     ...news,
+    cover_image_source_url: news.cover_image_url,
     cover_image_url: mapUploadImageUrl(news.cover_image_url, imageVariants, 'detail') || news.cover_image_url,
   }
   const mapListItem = (item: NewsListItem | null) => item
     ? {
         ...item,
+        cover_image_source_url: item.cover_image_url,
         cover_image_url: mapUploadImageUrl(item.cover_image_url, imageVariants, 'card') || item.cover_image_url,
       }
     : null
+  const isMappedListItem = (
+    item: ReturnType<typeof mapListItem>,
+  ): item is Exclude<ReturnType<typeof mapListItem>, null> => Boolean(item)
   const displayHtmlZh = replaceImageSrcsInHtml(htmlZh, imageVariants, 'detail')
   const displayHtmlEn = replaceImageSrcsInHtml(htmlEn, imageVariants, 'detail')
+  const pageModules = await listPublishedPageModules('news').catch((err) => {
+    console.error('[news/detail] page modules unavailable', err)
+    return []
+  })
+  const safePageModules = pageModules.length > 0 ? pageModules : listDefaultPageModules('news')
 
   return (
     <NewsDetailView
       news={displayNews}
       htmlZh={displayHtmlZh}
       htmlEn={displayHtmlEn}
-      relatedNews={fallbackRelatedRows.map((item) => mapListItem(item)).filter((item): item is NewsListItem => Boolean(item))}
+      relatedNews={fallbackRelatedRows.map((item) => mapListItem(item)).filter(isMappedListItem)}
       previousNews={mapListItem(previousReadable)}
       nextNews={mapListItem(nextReadable)}
+      pageModules={safePageModules}
     />
   )
 }

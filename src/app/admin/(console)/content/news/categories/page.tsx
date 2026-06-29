@@ -558,7 +558,7 @@ function FieldPlanTable() {
 function RolloutPlan() {
   return (
     <section className="space-y-4">
-      <SectionTitle title="后续落地顺序" detail="分类新增、编辑、隐藏和批量转分类已开放；前台分类筛选和拖拽排序后续单独排期。" />
+      <SectionTitle title="分类维护" detail="分类新增、编辑、隐藏和批量转分类已开放。" />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         {STEP_PLAN.map((step) => (
           <div key={step.title} className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">

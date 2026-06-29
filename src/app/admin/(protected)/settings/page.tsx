@@ -108,7 +108,7 @@ const ACTION_LABELS: Record<string, string> = {
   'project.create': '新建项目案例',
   'project.update': '更新项目案例',
   'project.delete': '删除项目案例',
-  'page_module.update': '更新页面模块',
+  'page_module.update': '更新页面内容',
   'settings.update': '保存后台设置',
   create_upload: '上传媒体',
   delete_upload: '删除媒体',
@@ -125,7 +125,7 @@ const TARGET_LABELS: Record<string, string> = {
   news: '新闻',
   product: '产品',
   project: '项目',
-  page_module: '页面模块',
+  page_module: '页面内容',
   site_settings: '站点设置',
   upload: '媒体',
   user: '用户',
@@ -142,7 +142,7 @@ const SETTINGS_TAKEOVER_ITEMS: SettingsTakeoverItem[] = [
     title: '媒体上传限制',
     fields: 'mediaMaxUploadMb',
     state: 'active',
-    detail: '媒体库、页面模块、产品图片上传限制已按后台设置读取；真实上传仍需单独授权验收。',
+    detail: '媒体库、页面内容和产品图片上传限制已按后台设置读取；真实上传仍需单独授权验收。',
   },
   {
     title: '品牌与 SEO 默认值',
@@ -154,7 +154,7 @@ const SETTINGS_TAKEOVER_ITEMS: SettingsTakeoverItem[] = [
     title: '销售联系方式',
     fields: 'salesEmail, salesPhone, whatsapp',
     state: 'planned',
-    detail: '建议先确认展示位置、邮件收件逻辑和隐私边界；B12 只收口 CTA 路径，不开放自由配置。',
+    detail: '确认展示位置、收件邮箱和隐私边界后，再统一接入前台联系入口。',
   },
   {
     title: '产品旧站入口',
@@ -821,7 +821,7 @@ export default async function SettingsPage() {
       label: 'Vercel Blob',
       value: maskConfigured(process.env.BLOB_READ_WRITE_TOKEN),
       state: process.env.BLOB_READ_WRITE_TOKEN ? 'ok' : 'warning',
-      detail: '生产环境由 Vercel 自动注入，本地没有也可正常开发部分页面',
+      detail: '用于媒体上传和图片素材管理；生产环境由托管平台注入。',
     },
     {
       label: 'MapTiler Key',
@@ -987,7 +987,7 @@ export default async function SettingsPage() {
               <KeyRound size={18} className="text-[#E36F2C]" />
               关键链路
             </CardTitle>
-            <CardDescription>后台继续开发时优先守住这些链路。</CardDescription>
+            <CardDescription>这些链路影响前台联系、图片、地图和跳转。</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
             <LinkRow icon={Mail} title="联系邮件" text="Resend API 配置后，联系表单和资料包请求才能稳定发信。" />

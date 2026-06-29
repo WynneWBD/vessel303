@@ -284,7 +284,7 @@ function getSideNavGroups(stats: ProjectStats): AdminSideNavGroup[] {
       ],
     },
     {
-      title: '后续规划',
+      title: '运营维护',
       items: [
         { key: 'taxonomy', label: '分类与标签', planned: true, Icon: Tags },
         { key: 'recycle', label: '回收站', planned: true, Icon: Archive },
@@ -1228,7 +1228,7 @@ function ActionPanel() {
 
   return (
     <section className="space-y-4">
-      <SectionTitle title="常用入口" detail="新建、编辑和发布复核已进入新版链路；删除、恢复等高风险操作后续单独迁移。" />
+      <SectionTitle title="常用入口" detail="新建、编辑、发布复核和前台查看入口集中在这里。" />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         {actions.map((action) => (
           <Link
@@ -1286,8 +1286,8 @@ function PlanningPanel() {
           <ClipboardCheck size={18} />
         </span>
         <div>
-          <h2 className="text-base font-bold text-[#1E2C31]">后续规划</h2>
-          <p className="mt-1 text-xs text-[#61767D]">新版列表、新建、编辑、正式案例详情页和案例询盘入口已开放；后续重点回到分类、回收站与内容素材补齐。</p>
+          <h2 className="text-base font-bold text-[#1E2C31]">运营维护</h2>
+          <p className="mt-1 text-xs text-[#61767D]">列表、新建、编辑、案例详情和询盘入口已集中到新版链路。</p>
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">

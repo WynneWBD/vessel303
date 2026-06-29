@@ -293,7 +293,7 @@ function getSideNavGroups(stats: ProductStats): AdminSideNavGroup[] {
       ],
     },
     {
-      title: '后续规划',
+      title: '运营维护',
       items: [
         { key: 'taxonomy', label: '分类管理', href: '/admin/content/products/categories', badge: stats.categories, Icon: Tags },
         { key: 'attributes', label: '属性模板', href: '/admin/content/products/attributes', badge: stats.attributes, Icon: SlidersHorizontal },
@@ -1113,8 +1113,8 @@ function PlanningPanel() {
           <ClipboardCheck size={18} />
         </span>
         <div>
-          <h2 className="text-base font-bold text-[#1E2C31]">后续规划</h2>
-          <p className="mt-1 text-xs text-[#61767D]">分类、属性模板、回收站、批量转分类和 SEO 已有入口；以下能力后续单独立项。</p>
+          <h2 className="text-base font-bold text-[#1E2C31]">运营维护</h2>
+          <p className="mt-1 text-xs text-[#61767D]">分类、属性、品牌、筛选、橱窗、回收站和 SEO 检查入口集中在这里。</p>
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">

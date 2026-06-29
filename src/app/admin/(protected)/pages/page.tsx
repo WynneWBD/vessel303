@@ -33,7 +33,7 @@ import {
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: '页面表单模式 - VESSEL' }
+export const metadata = { title: '备用编辑 - VESSEL' }
 
 type AdminRole = 'admin'
 
@@ -69,7 +69,7 @@ function getFormModeSideNav(): AdminSideNavGroup[] {
     {
       title: '高级维护',
       items: [
-        { key: 'form-mode', label: '页面表单模式', href: '/admin/pages', Icon: Wrench },
+        { key: 'form-mode', label: '备用编辑', href: '/admin/pages', Icon: Wrench },
         { key: 'site-settings', label: '站点设置', href: '/admin/settings', Icon: Settings },
         { key: 'users', label: '后台账号', href: '/admin/users', Icon: ShieldCheck },
         { key: 'legacy', label: '维护入口', href: '/admin/legacy', Icon: LockKeyhole },
@@ -97,25 +97,25 @@ function FormModeConsole({
   return (
     <section className="space-y-4">
       <AdminSectionTitle
-        title="维护模式任务台"
-        detail="这里只做固定模块字段维护；日常页面运营优先走可视化编辑和内容来源中心。"
+        title="备用编辑"
+        detail="按页面修改文字、图片、链接和显示状态。"
       />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-        <AdminMetricCard title="页面域" value={formatNumber(pageCount)} detail="已登记 page_key 数量" Icon={LayoutTemplate} tone="blue" />
-        <AdminMetricCard title="可见模块" value={formatNumber(visibleModules)} detail={`总模块 ${formatNumber(modules.length)}`} Icon={FileText} tone="green" />
-        <AdminMetricCard title="模块草稿" value={formatNumber(draftModules)} detail="保存后需按前台影响复核" Icon={AlertTriangle} tone={draftModules > 0 ? 'orange' : 'green'} />
-        <AdminMetricCard title="素材字段" value={formatNumber(imageSlots)} detail={`可见条目 ${formatNumber(visibleItems)} / 上传上限 ${maxUploadMb} MB`} Icon={ImageIcon} tone="gray" />
+        <AdminMetricCard title="页面数量" value={formatNumber(pageCount)} detail="已接入页面" Icon={LayoutTemplate} tone="blue" />
+        <AdminMetricCard title="可见内容区" value={formatNumber(visibleModules)} detail={`总数 ${formatNumber(modules.length)}`} Icon={FileText} tone="green" />
+        <AdminMetricCard title="内容草稿" value={formatNumber(draftModules)} detail="保存后需按前台影响复核" Icon={AlertTriangle} tone={draftModules > 0 ? 'orange' : 'green'} />
+        <AdminMetricCard title="素材内容" value={formatNumber(imageSlots)} detail={`可见条目 ${formatNumber(visibleItems)} / 上传上限 ${maxUploadMb} MB`} Icon={ImageIcon} tone="gray" />
       </div>
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] bg-[#FBFDFD] px-4 py-3 text-xs font-semibold text-[#61767D] md:grid-cols-[180px_1fr_160px]">
-          <span>处理顺序</span>
-          <span>判断标准</span>
+          <span>事项</span>
+          <span>当前操作</span>
           <span>入口</span>
         </div>
         {[
-          ['1. 先定位页面域', '从左侧 page_key 分组进入，只处理当前模块，不跨模块批量覆盖。', '#form-editor'],
-          ['2. 再看显示状态', '标注为显示到前台的模块和条目会影响公开页面；隐藏用于下架，不做物理删除。', '#form-editor'],
-          ['3. 保存后复核前台', '保存当前模块后，到对应前台页面和内容来源中心核对展示结果。', '/admin/site/pages'],
+          ['选择页面内容', '按页面和内容区找到需要修改的内容。', '#form-editor'],
+          ['编辑内容', '修改文案、图片、链接或显示状态。', '#form-editor'],
+          ['复核前台', '保存后回到可视化编辑或前台页面检查效果。', '/admin/site/pages'],
         ].map(([title, detail, href]) => (
           <div key={title} className="grid grid-cols-1 gap-3 border-b border-[#E6EEEE] px-4 py-3 text-sm last:border-0 md:grid-cols-[180px_1fr_160px] md:items-center">
             <span className="font-bold text-[#1E2C31]">{title}</span>
@@ -133,9 +133,9 @@ function FormModeConsole({
 
 function GuardrailPanel() {
   const guardrails = [
-    '不是自由建站器：只能维护固定页面、固定模块和固定字段。',
-    '不开放自由 HTML / CSS / JavaScript，不复制 300 的自由 DOM 能力。',
-    '不做物理删除；隐藏、保存和发布必须按页面预览结果复核。',
+    '只修改已接入的页面内容。',
+    '日常改文案、图片、链接和显示状态优先使用可视化编辑。',
+    '隐藏、保存和发布前先预览前台效果。',
   ]
 
   return (
@@ -145,7 +145,7 @@ function GuardrailPanel() {
           <LockKeyhole size={18} />
         </span>
         <div>
-          <h2 className="text-base font-bold text-[#1E2C31]">表单模式保护线</h2>
+          <h2 className="text-base font-bold text-[#1E2C31]">发布前确认</h2>
           <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">
             {guardrails.map((item) => (
               <p key={item} className="rounded-md bg-white px-3 py-2 text-xs leading-5 text-[#61767D]">
@@ -186,15 +186,15 @@ export default async function PagesAdminPage({ searchParams }: PagesAdminPagePro
       topNavActive="site"
       role={adminRole}
       email={session.user.email}
-      title="高级维护"
-      description="页面表单模式只用于固定模块字段维护；日常运营优先使用可视化编辑。"
+      title="备用编辑"
+      description="可视化编辑之外的表单入口。"
       sideNavGroups={getFormModeSideNav()}
       activeItem="form-mode"
     >
       <AdminPageHero
-        kicker="Controlled Modules"
-        title="页面表单模式"
-        description="管理员在这里维护固定页面模块、导航页脚和客户可见文案。这里不是自由建站器，不开放自由 HTML / CSS / JavaScript。"
+        kicker="Site content"
+        title="备用编辑"
+        description="按页面维护前台文字、图片、链接和显示状态。"
         actions={(
           <>
             <AdminActionLink href={VISUAL_EDITOR_HOME_HERO_HREF} Icon={LayoutTemplate} label="可视化编辑" primary />

@@ -232,7 +232,7 @@ function MediaOperationsConsole({
   const rows: MediaConsoleRow[] = [
     {
       title: '素材资产库',
-      detail: `承接产品、案例、新闻和页面模块图片；单文件上限 ${maxUploadMb} MB。`,
+      detail: `用于产品、案例、新闻和页面内容图片；单文件上限 ${maxUploadMb} MB。`,
       metric: `${formatNumber(allTotal)} 张`,
       signal: `${formatBytes(bytes)} 存储`,
       href: '/admin/site/media',
@@ -280,7 +280,7 @@ function MediaOperationsConsole({
       Icon: Layers,
       tone: referenceSummary.unused > 0 ? 'orange' : 'green',
       actions: [
-        { label: '替换工作台', href: '#media-replacement-workbench', primary: referenceSummary.unused > 0 || referenceSummary.draftRefs > 0 },
+        { label: '图片替换', href: '#media-replacement-workbench', primary: referenceSummary.unused > 0 || referenceSummary.draftRefs > 0 },
         { label: '风险素材', href: createMediaHref(filters, { view: 'issues', page: 1 }) },
         { label: '页面视觉', href: VISUAL_EDITOR_HOME_HERO_HREF },
       ],
@@ -295,9 +295,9 @@ function MediaOperationsConsole({
             <HardDrive size={15} />
             Asset Operations
           </div>
-          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">素材运营控制台</h2>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">图片素材管理</h2>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-[#61767D]">
-            先看素材总量、风险队列、当前筛选和引用抽样，再进入上传、筛选和详情处理。
+            查看素材总量、风险素材、当前筛选和引用情况。
           </p>
         </div>
 
@@ -383,7 +383,7 @@ function MediaConsoleRowView({ row }: { row: MediaConsoleRow }) {
           href={row.href}
           className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#1889B6] hover:text-[#0F6F95]"
         >
-          进入处理
+          打开
           <ArrowRight size={14} />
         </a>
       </div>
@@ -424,7 +424,7 @@ function buildMediaReplacementLanes({
       title: '先处理大图和缺变体',
       metric: `${formatNumber(issueTotal)} 项`,
       detail: `单文件上限 ${maxUploadMb} MB；前台建议优先使用 thumb / card / detail 派生图，避免直接引用大原图。`,
-      action: issueTotal > 0 ? '进入风险素材筛选，逐张确认是否需要重新生成派生图或替换引用。' : '当前没有命中的风险素材。',
+      action: issueTotal > 0 ? '打开风险素材筛选，逐张确认是否需要替换。' : '当前没有风险素材。',
       href: createMediaHref(filters, { view: 'issues', page: 1 }),
       Icon: AlertCircle,
       tone: issueTotal > 0 ? 'orange' : 'green',
@@ -433,8 +433,8 @@ function buildMediaReplacementLanes({
       stage: '2. 未引用素材',
       title: '识别可归档或待绑定素材',
       metric: `${formatNumber(referenceSummary.unused)} / ${formatNumber(referenceSummary.sampled)}`,
-      detail: '按当前页抽样统计素材引用情况；未引用不等于可删除，只代表需要判断来源、用途和是否等待上架。',
-      action: referenceSummary.unused > 0 ? '从当前素材列表打开详情，确认来源和用途，再决定是否绑定到页面或保留。' : '当前抽样素材均有引用。',
+      detail: '按当前页抽样统计素材引用情况；未引用素材需要确认用途。',
+      action: referenceSummary.unused > 0 ? '打开素材详情，确认用途后再处理。' : '当前抽样素材均有引用。',
       href: createMediaHref(filters, { page: 1 }),
       Icon: ImageOff,
       tone: referenceSummary.unused > 0 ? 'orange' : 'green',
@@ -443,7 +443,7 @@ function buildMediaReplacementLanes({
       stage: '3. 草稿引用',
       title: '先看草稿再发布',
       metric: `${formatNumber(referenceSummary.draftRefs)} 处`,
-      detail: '草稿引用包含页面模块草稿、快照和结构草稿；发布前需要确认图片尺寸、替换路径和前台显示。',
+      detail: '发布前确认草稿图片尺寸、替换路径和前台显示。',
       action: referenceSummary.draftRefs > 0 ? '进入页面视觉编辑器，按模块预览确认草稿图片。' : '当前抽样未发现草稿引用。',
       href: VISUAL_EDITOR_HOME_HERO_HREF,
       Icon: LayoutTemplate,
@@ -451,11 +451,11 @@ function buildMediaReplacementLanes({
     },
     {
       stage: '4. 线上引用',
-      title: '按内容 owner 回源替换',
+      title: '按内容位置替换',
       metric: `${formatNumber(referenceSummary.contentRefs + referenceSummary.pageRefs)} 处`,
-      detail: `内容引用 ${formatNumber(referenceSummary.contentRefs)}，页面模块引用 ${formatNumber(referenceSummary.pageRefs)}；不要在素材库里猜前台位置。`,
+      detail: `内容引用 ${formatNumber(referenceSummary.contentRefs)}，页面内容引用 ${formatNumber(referenceSummary.pageRefs)}。`,
       action: referenceSummary.contentRefs + referenceSummary.pageRefs > 0
-        ? '从内容来源中心判断 owner，再进入产品、案例、新闻或页面模块替换。'
+        ? '查看内容来源，再进入产品、案例、新闻或页面内容替换。'
         : '当前抽样未发现线上引用。',
       href: '/admin/site/pages#content-source-route-tree',
       Icon: Link2,
@@ -486,13 +486,13 @@ function MediaReplacementWorkbench({
             <Wrench size={15} />
             Replacement Routing
           </div>
-          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">素材引用与替换工作台</h2>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">图片引用与替换</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            先找风险原图，再判断未引用素材；发布前复核草稿引用，线上引用回到内容维护入口替换。
+            查看风险原图、未引用素材、草稿引用和线上引用位置。
           </p>
         </div>
         <span className={`inline-flex w-fit rounded-md px-3 py-2 text-xs font-bold ${activeLanes > 0 ? 'bg-[#EAF6F8] text-[#1889B6]' : 'bg-emerald-50 text-emerald-700'}`}>
-          {activeLanes > 0 ? `${formatNumber(activeLanes)} 条处理路线` : '暂无处理路线'}
+          {activeLanes > 0 ? `${formatNumber(activeLanes)} 个入口` : '暂无待处理'}
         </span>
       </div>
 
@@ -518,7 +518,7 @@ function MediaReplacementWorkbench({
               <p className="mt-3 flex-1 text-xs leading-5 text-[#61767D]">{lane.detail}</p>
               <p className="mt-3 text-xs font-semibold leading-5 text-[#1E2C31]">{lane.action}</p>
               <span className="mt-4 inline-flex h-8 w-fit items-center gap-1 rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6]">
-                进入处理 <ArrowRight size={13} />
+                打开 <ArrowRight size={13} />
               </span>
             </a>
           )
@@ -546,12 +546,6 @@ function getSiteToolNav(uploadCount: number): AdminSideNavGroup[] {
       items: [
         { key: 'visual', label: '编辑网站', href: VISUAL_EDITOR_HOME_HERO_HREF, Icon: Wrench },
         { key: 'media', label: '图片素材', href: '/admin/site/media', badge: uploadCount, Icon: ImageIcon },
-      ],
-    },
-    {
-      title: '高级维护',
-      items: [
-        { key: 'form-mode', label: '表单模式', href: '/admin/pages', adminOnly: true, Icon: Wrench },
       ],
     },
   ]
@@ -623,7 +617,7 @@ export default async function SiteMediaPage({
       <AdminPageHero
         kicker="MEDIA CENTER"
         title="图片素材"
-        description="这里承接前台产品、案例、新闻、页面模块和 Media Kit 的图片素材。运营上传后优先生成缩略图，前台页面按场景读取小图，原图继续保留作为资产。"
+        description="管理前台产品、案例、新闻、页面内容和 Media Kit 的图片素材。上传后自动生成缩略图，前台按场景读取小图。"
       />
       <MediaOperationsConsole
         filters={mediaFilters}

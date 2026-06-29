@@ -35,11 +35,41 @@ type Section = {
   body_zh?: string
   body_en?: string
 }
+type VisualEditAttrs = Record<string, string | number | undefined>
 
 function getSections(payload: Record<string, unknown>): Section[] {
   const value = payload.sections
   if (!Array.isArray(value)) return []
   return value.filter((item): item is Section => Boolean(item) && typeof item === 'object')
+}
+
+function innovationEditAttrs(row: InnovationRow, slug: string, options: {
+  id: string
+  field: string
+  value?: string | null
+  patchKey?: string | null
+  input?: 'text' | 'textarea'
+  maxLength?: number
+  required?: boolean
+  nullable?: boolean
+}): VisualEditAttrs {
+  const attrs: VisualEditAttrs = {
+    'data-cms-edit-url': `/admin/content/innovation?search=${encodeURIComponent(slug)}#b9-content-workbench`,
+    'data-cms-edit-kind': 'content',
+    'data-cms-edit-title': '技术专题',
+    'data-cms-edit-field': options.field,
+    'data-cms-edit-id': `innovation-${row.id}-${options.id}`,
+    'data-cms-edit-value': options.value ?? '',
+    'data-cms-edit-input': options.input ?? 'text',
+  }
+  if (row.id > 0 && options.patchKey) {
+    attrs['data-cms-edit-api-url'] = `/api/admin/site-content/${row.id}`
+    attrs['data-cms-edit-patch-key'] = options.patchKey
+  }
+  if (options.maxLength) attrs['data-cms-edit-max-length'] = options.maxLength
+  if (options.required) attrs['data-cms-edit-required'] = '1'
+  if (options.nullable) attrs['data-cms-edit-nullable'] = '1'
+  return attrs
 }
 
 export default function InnovationCmsBlock({
@@ -114,24 +144,104 @@ export default function InnovationCmsBlock({
   ]
   const modules = moduleMap(pageModules)
   const inquiryModule = modules.get('inquiry-form') ?? null
-  const inquiryTitle = moduleTitle(inquiryModule, lang)
-  const inquiryType = itemLabel(itemById(inquiryModule, 'inquiry-type'), lang)
+  const fallbackLabels: FormLabels = zh
+    ? {
+        eyebrow: '项目咨询',
+        name: '姓名',
+        email: '邮箱',
+        phone: '电话 / WhatsApp',
+        country: '国家 / 地区',
+        company: '公司 / 项目方',
+        quantity: '预计数量',
+        message: '项目需求',
+        submit: '提交需求',
+        submitting: '提交中...',
+        success: '已收到需求，我们会尽快跟进。',
+        error: '提交失败，请稍后重试或通过其他方式联系。',
+        sourcePrefix: '来源',
+        companyPrefix: '公司',
+      }
+    : {
+        eyebrow: 'Project Inquiry',
+        name: 'Name',
+        email: 'Email',
+        phone: 'Phone / WhatsApp',
+        country: 'Country / Region',
+        company: 'Company / Project Owner',
+        quantity: 'Estimated Quantity',
+        message: 'Project Requirements',
+        submit: 'Send Inquiry',
+        submitting: 'Sending...',
+        success: 'Received. The team will follow up soon.',
+        error: 'Submission failed. Please try again later or contact us another way.',
+        sourcePrefix: 'Source',
+        companyPrefix: 'Company',
+      }
+  const fallbackInquiryTitleZh = '提交技术专题需求'
+  const fallbackInquiryTitleEn = 'Send Technology Project Requirements'
+  const fallbackInquiryDescriptionZh = '填写国家、项目场景、数量和时间计划，团队将按技术专题来源跟进。'
+  const fallbackInquiryDescriptionEn = 'Share country, project scenario, quantity, and schedule so the team can follow up with innovation context.'
+  const fallbackInquiryTitle = zh ? fallbackInquiryTitleZh : fallbackInquiryTitleEn
+  const inquiryTitle = moduleTitle(inquiryModule, lang) || fallbackInquiryTitle
+  const inquiryType = itemLabel(itemById(inquiryModule, 'inquiry-type'), lang) || 'Innovation Inquiry'
   const formLabels: FormLabels = {
-    eyebrow: itemLabel(itemById(inquiryModule, 'form-eyebrow'), lang),
-    name: itemLabel(itemById(inquiryModule, 'form-name'), lang),
-    email: itemLabel(itemById(inquiryModule, 'form-email'), lang),
-    phone: itemLabel(itemById(inquiryModule, 'form-phone'), lang),
-    country: itemLabel(itemById(inquiryModule, 'form-country'), lang),
-    company: itemLabel(itemById(inquiryModule, 'form-company'), lang),
-    quantity: itemLabel(itemById(inquiryModule, 'form-quantity'), lang),
-    message: itemLabel(itemById(inquiryModule, 'form-message'), lang),
-    submit: itemLabel(itemById(inquiryModule, 'form-submit'), lang),
-    submitting: itemLabel(itemById(inquiryModule, 'form-submitting'), lang),
-    success: itemLabel(itemById(inquiryModule, 'form-success'), lang),
-    error: itemLabel(itemById(inquiryModule, 'form-error'), lang),
-    sourcePrefix: itemLabel(itemById(inquiryModule, 'form-source-prefix'), lang),
-    companyPrefix: itemLabel(itemById(inquiryModule, 'form-company-prefix'), lang),
+    eyebrow: itemLabel(itemById(inquiryModule, 'form-eyebrow'), lang) || fallbackLabels.eyebrow,
+    name: itemLabel(itemById(inquiryModule, 'form-name'), lang) || fallbackLabels.name,
+    email: itemLabel(itemById(inquiryModule, 'form-email'), lang) || fallbackLabels.email,
+    phone: itemLabel(itemById(inquiryModule, 'form-phone'), lang) || fallbackLabels.phone,
+    country: itemLabel(itemById(inquiryModule, 'form-country'), lang) || fallbackLabels.country,
+    company: itemLabel(itemById(inquiryModule, 'form-company'), lang) || fallbackLabels.company,
+    quantity: itemLabel(itemById(inquiryModule, 'form-quantity'), lang) || fallbackLabels.quantity,
+    message: itemLabel(itemById(inquiryModule, 'form-message'), lang) || fallbackLabels.message,
+    submit: itemLabel(itemById(inquiryModule, 'form-submit'), lang) || fallbackLabels.submit,
+    submitting: itemLabel(itemById(inquiryModule, 'form-submitting'), lang) || fallbackLabels.submitting,
+    success: itemLabel(itemById(inquiryModule, 'form-success'), lang) || fallbackLabels.success,
+    error: itemLabel(itemById(inquiryModule, 'form-error'), lang) || fallbackLabels.error,
+    sourcePrefix: itemLabel(itemById(inquiryModule, 'form-source-prefix'), lang) || fallbackLabels.sourcePrefix,
+    companyPrefix: itemLabel(itemById(inquiryModule, 'form-company-prefix'), lang) || fallbackLabels.companyPrefix,
   }
+  const titleAttrs = innovationEditAttrs(row, slug, {
+    id: `title-${lang}`,
+    field: zh ? '中文标题' : '英文标题',
+    value: title,
+    patchKey: zh ? 'title_zh' : 'title_en',
+    maxLength: 240,
+    required: true,
+  })
+  const summaryAttrs = innovationEditAttrs(row, slug, {
+    id: `summary-${lang}`,
+    field: zh ? '中文摘要' : '英文摘要',
+    value: summary,
+    patchKey: zh ? 'summary_zh' : 'summary_en',
+    input: 'textarea',
+    maxLength: 4000,
+    nullable: true,
+  })
+  const bodyAttrs = innovationEditAttrs(row, slug, {
+    id: `body-${lang}`,
+    field: zh ? '中文正文' : '英文正文',
+    value: body,
+    patchKey: zh ? 'body_zh' : 'body_en',
+    input: 'textarea',
+    maxLength: 20000,
+    nullable: true,
+  })
+  const ctaLabelAttrs = innovationEditAttrs(row, slug, {
+    id: `cta-label-${lang}`,
+    field: zh ? '中文按钮文字' : '英文按钮文字',
+    value: ctaLabel,
+    patchKey: zh ? 'cta_label_zh' : 'cta_label_en',
+    maxLength: 120,
+    nullable: true,
+  })
+  const ctaHrefAttrs = innovationEditAttrs(row, slug, {
+    id: 'cta-href',
+    field: zh ? '按钮链接' : 'CTA link',
+    value: row.cta_href || primaryHref,
+    patchKey: 'cta_href',
+    maxLength: 1000,
+    nullable: true,
+  })
 
   return (
     <section className="border-y border-[#E5DED4] bg-white">
@@ -141,9 +251,9 @@ export default function InnovationCmsBlock({
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#B66A3A]">
               {zh ? '技术专题' : 'Innovation Topic'}
             </p>
-            <h1 className="mt-3 text-3xl font-bold text-[#2C2A28] md:text-4xl">{title}</h1>
-            {summary && <p className="mt-4 max-w-3xl text-sm leading-7 text-[#6B625B]">{summary}</p>}
-            {body && <p className="mt-6 max-w-4xl whitespace-pre-line text-sm leading-7 text-[#2C2A28]/75">{body}</p>}
+            <h1 className="mt-3 text-3xl font-bold text-[#2C2A28] md:text-4xl" {...titleAttrs}>{title}</h1>
+            {summary && <p className="mt-4 max-w-3xl text-sm leading-7 text-[#6B625B]" {...summaryAttrs}>{summary}</p>}
+            {body && <p className="mt-6 max-w-4xl whitespace-pre-line text-sm leading-7 text-[#2C2A28]/75" {...bodyAttrs}>{body}</p>}
           </div>
 
           <nav
@@ -161,6 +271,7 @@ export default function InnovationCmsBlock({
                     key={item.href}
                     href={item.href}
                     data-innovation-route-card="true"
+                    data-visual-open-panel="innovation-route-card"
                     className="group flex min-h-[76px] items-center gap-3 border border-[#E5DED4] bg-white px-4 py-3 text-left transition hover:border-[#E36F2C] hover:text-[#C85A1F]"
                   >
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#E5DED4] text-[#B66A3A]">
@@ -202,24 +313,26 @@ export default function InnovationCmsBlock({
           <Link prefetch={false}
             href={primaryHref}
             className="mt-8 inline-flex items-center gap-2 bg-[#E36F2C] px-6 py-3 text-sm font-semibold tracking-wider text-white transition hover:bg-[#C85A1F]"
+            {...ctaHrefAttrs}
           >
-            <span>{ctaLabel}</span>
+            <span {...ctaLabelAttrs}>{ctaLabel}</span>
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         )}
 
         {inquiryTitle ? (
-          <div className="mt-10">
+          <div className="mt-10" data-page-module="innovation:inquiry-form">
             <ConversionInquiryForm
               source={`innovation:${slug}:inquiry_form`}
               inquiryType={inquiryType}
               model={title}
-              titleEn={inquiryModule?.title_en ?? ''}
-              titleZh={inquiryModule?.title_zh ?? ''}
-              descriptionEn={inquiryModule?.description_en ?? ''}
-              descriptionZh={inquiryModule?.description_zh ?? ''}
+              titleEn={inquiryModule?.title_en ?? fallbackInquiryTitleEn}
+              titleZh={inquiryModule?.title_zh ?? fallbackInquiryTitleZh}
+              descriptionEn={inquiryModule?.description_en ?? fallbackInquiryDescriptionEn}
+              descriptionZh={inquiryModule?.description_zh ?? fallbackInquiryDescriptionZh}
               labels={formLabels}
               compact
+              visualModuleId="innovation:inquiry-form"
             />
           </div>
         ) : null}

@@ -102,14 +102,22 @@ export default function FloatingContact() {
       : {};
     const body = variant === 'desktop' ? (
       <>
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center bg-[#2F3032] text-white">
+        <span
+          className="flex h-11 w-11 shrink-0 items-center justify-center bg-[#2F3032] text-white"
+          data-page-module-item={item.id}
+          data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+        >
           <Icon aria-hidden="true" className="h-4 w-4" />
         </span>
-        <span className={`pointer-events-none invisible absolute right-full top-1/2 mr-2 -translate-y-1/2 border border-white/10 bg-[#2F3032]/96 px-3 py-2 text-left opacity-0 shadow-[0_16px_40px_rgba(15,23,42,0.2)] backdrop-blur-md transition group-hover:visible group-hover:opacity-100 group-focus-visible:visible group-focus-visible:opacity-100 group-focus-within:visible group-focus-within:opacity-100 ${item.image ? 'w-48' : 'min-w-44'}`}>
-          <span className="block truncate text-xs font-black uppercase tracking-[0.14em]">{item.label}</span>
-          {content ? <span className="mt-0.5 block truncate text-[11px] opacity-65">{content}</span> : null}
+        <span
+          className={`pointer-events-none invisible absolute right-full top-1/2 mr-2 -translate-y-1/2 border border-white/10 bg-[#2F3032]/96 px-3 py-2 text-left opacity-0 shadow-[0_16px_40px_rgba(15,23,42,0.2)] backdrop-blur-md transition group-hover:visible group-hover:opacity-100 group-focus-visible:visible group-focus-visible:opacity-100 group-focus-within:visible group-focus-within:opacity-100 ${item.image ? 'w-48' : 'min-w-44'}`}
+          data-page-module-item={item.id}
+          data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+        >
+          <span className="block truncate text-xs font-black uppercase tracking-[0.14em]" data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}>{item.label}</span>
+          {content ? <span className="mt-0.5 block truncate text-[11px] opacity-65" data-page-module-field={item.content ? (lang === 'zh' ? 'content_zh' : 'content_en') : (lang === 'zh' ? 'value_zh' : 'value_en')}>{content}</span> : null}
           {showDesktopImage ? (
-            <span className="mt-3 block bg-white p-2">
+            <span className="mt-3 block bg-white p-2" data-page-module-item={item.id} data-page-module-field="image_url">
               <Image
                 src={item.image}
                 alt={content ? `${item.label} ${content}` : item.label}
@@ -117,6 +125,7 @@ export default function FloatingContact() {
                 height={150}
                 className="h-[150px] w-[150px] object-contain"
                 unoptimized
+                data-page-module-field="image_url"
               />
             </span>
           ) : null}
@@ -124,8 +133,14 @@ export default function FloatingContact() {
       </>
     ) : (
       <>
-        <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
-        <span className="truncate text-xs font-black uppercase tracking-[0.12em]">{item.label}</span>
+        <span
+          className="inline-flex shrink-0"
+          data-page-module-item={item.id}
+          data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+        >
+          <Icon aria-hidden="true" className="h-4 w-4" />
+        </span>
+        <span className="truncate text-xs font-black uppercase tracking-[0.12em]" data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}>{item.label}</span>
       </>
     );
 
@@ -140,6 +155,8 @@ export default function FloatingContact() {
           type="button"
           className={className}
           aria-label={content ? `${item.label} ${content}` : item.label}
+          data-page-module-item={item.id}
+          data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
           {...desktopInteractionProps}
         >
           {body}
@@ -155,6 +172,8 @@ export default function FloatingContact() {
         rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
         className={className}
         aria-label={content ? `${item.label} ${content}` : item.label}
+        data-page-module-item={item.id}
+        data-page-module-field="href"
         {...desktopInteractionProps}
       >
         {body}
@@ -166,6 +185,8 @@ export default function FloatingContact() {
         prefetch={false}
         className={className}
         aria-label={content ? `${item.label} ${content}` : item.label}
+        data-page-module-item={item.id}
+        data-page-module-field="href"
         {...desktopInteractionProps}
       >
         {body}
@@ -181,6 +202,7 @@ export default function FloatingContact() {
         data-page-module="site:floating-contact"
         data-page-key="site"
         data-module-key="floating-contact"
+        data-page-module-field={lang === 'zh' ? 'title_zh' : 'title_en'}
       >
         {items.map((item) => renderAction(item, 'desktop'))}
       </div>
@@ -192,6 +214,7 @@ export default function FloatingContact() {
         data-page-module="site:floating-contact"
         data-page-key="site"
         data-module-key="floating-contact"
+        data-page-module-field={lang === 'zh' ? 'title_zh' : 'title_en'}
       >
         {items.slice(0, 3).map((item) => renderAction(item, 'mobile'))}
       </div>

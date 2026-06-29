@@ -14,7 +14,7 @@ export default function AdminInnovationContentPage() {
     allowCategories: false,
     fixedSlugs: ['viie', 'vipc', 'vols'],
     heroTitle: 'Innovation 固定专题管理',
-    heroDetail: '只开放固定专题的文本、图文段落、参数和 CTA，不开放自由 HTML/CSS，保证专题页视觉结构稳定。',
+    heroDetail: '维护固定专题的文本、图文段落、参数和 CTA。',
     Icon: Lightbulb,
   })
 }

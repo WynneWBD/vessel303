@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type MouseEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import LanguageToggle from './LanguageToggle';
@@ -42,10 +42,58 @@ function ModelNavLabel({ link }: { link: NavLink }) {
         height={34}
         className="h-[18px] w-auto max-w-[58px] object-contain"
         unoptimized
+        data-page-module-item={link.id}
+        data-page-module-field="image_url"
       />
       {suffix ? <span>{suffix}</span> : !prefix ? <span>{link.label}</span> : null}
     </span>
   );
+}
+
+function isVisualDraftPreview() {
+  return typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('visualDraft') === '1';
+}
+
+function visibleSelectionText(element: Element | null) {
+  if (!element) return null;
+  if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) return element.value.trim() || null;
+  if (element instanceof HTMLImageElement) return element.alt.trim() || element.src || null;
+  const text = element.textContent ? element.textContent.replace(/\s+/g, ' ').trim() : '';
+  return text || element.getAttribute('aria-label') || element.getAttribute('title');
+}
+
+function sendVisualSelectionFromNavbar(event: MouseEvent<HTMLElement>) {
+  if (!isVisualDraftPreview()) return;
+
+  const target = event.target instanceof Element ? event.target : null;
+  const editableElement = target?.closest('[data-page-module-field],[data-page-module-item]') as HTMLElement | null;
+  if (!target || !editableElement) return;
+
+  const moduleElement = target.closest('[data-page-module]') as HTMLElement | null;
+  const itemElement = target.closest('[data-page-module-item]') as HTMLElement | null;
+  const fieldElement = target.closest('[data-page-module-field]') as HTMLElement | null;
+  const moduleId = moduleElement?.dataset.pageModule ?? null;
+  if (!moduleId) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  const payload = {
+    type: 'vessel303:visual-editor-select',
+    moduleId,
+    itemId: itemElement?.dataset.pageModuleItem ?? null,
+    field: fieldElement?.dataset.pageModuleField ?? itemElement?.dataset.pageModuleField ?? null,
+    text: visibleSelectionText(fieldElement ?? itemElement ?? editableElement),
+  };
+
+  const parentWindow = window.parent as Window & {
+    __vessel303VisualEditorSelectFromPreview?: (data: unknown) => void;
+  };
+  if (typeof parentWindow.__vessel303VisualEditorSelectFromPreview === 'function') {
+    parentWindow.__vessel303VisualEditorSelectFromPreview(payload);
+    return;
+  }
+  window.parent.postMessage(payload, window.location.origin);
 }
 
 export default function Navbar() {
@@ -123,12 +171,19 @@ export default function Navbar() {
       data-page-module="site:navbar"
       data-page-key="site"
       data-module-key="navbar"
+      onClickCapture={sendVisualSelectionFromNavbar}
     >
       <div className="relative mx-auto max-w-[1420px] px-5 sm:px-8 lg:px-10">
         <div className="flex h-16 items-center justify-between lg:h-[92px]">
 
           {logoSrc && logoHref ? (
-            <Link href={logoHref} prefetch={false} className="flex shrink-0 items-center">
+            <Link
+              href={logoHref}
+              prefetch={false}
+              className="flex shrink-0 items-center"
+              data-page-module-item="logo"
+              data-page-module-field="href"
+            >
               <Image
                 src={logoSrc}
                 alt={logoAlt}
@@ -138,6 +193,8 @@ export default function Navbar() {
                 className="h-7 w-auto max-w-[176px] sm:h-8 sm:max-w-[210px] lg:h-[28px] lg:max-w-[220px]"
                 priority
                 unoptimized
+                data-page-module-item="logo"
+                data-page-module-field="image_url"
               />
             </Link>
           ) : null}
@@ -150,8 +207,16 @@ export default function Navbar() {
                   href={link.href}
                   prefetch={false}
                   className="relative block whitespace-nowrap py-2 text-[14px] font-medium text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.32)] transition-colors duration-200 hover:text-white"
+                  data-page-module-item={link.id}
+                  data-page-module-field="href"
                 >
-                  {link.id.startsWith('nav-model-') ? <ModelNavLabel link={link} /> : link.label}
+                  <span
+                    className="inline-flex min-h-8 items-center"
+                    data-page-module-item={link.id}
+                    data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                  >
+                    {link.id.startsWith('nav-model-') ? <ModelNavLabel link={link} /> : link.label}
+                  </span>
                   <span className="absolute bottom-0 left-0 h-px w-0 bg-white transition-all duration-200 group-hover:w-full" />
                 </Link>
               </div>
@@ -198,8 +263,16 @@ export default function Navbar() {
                   prefetch={false}
                   className="block text-white/70 hover:text-[#E36F2C] text-sm py-3 px-2 border-b border-white/5 transition-colors tracking-wider"
                   onClick={() => setIsOpen(false)}
+                  data-page-module-item={link.id}
+                  data-page-module-field="href"
                 >
-                  {link.label}
+                  <span
+                    className="block"
+                    data-page-module-item={link.id}
+                    data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                  >
+                    {link.label}
+                  </span>
                 </Link>
                 {link.id === 'nav-products' && modelLinks.length > 0 ? (
                   <div className="grid grid-cols-2 gap-2 border-b border-white/5 px-2 py-3">
@@ -210,6 +283,8 @@ export default function Navbar() {
                         prefetch={false}
                         className="flex min-h-14 items-center gap-2 border border-white/10 bg-white/[0.03] px-2 py-2 text-white/75"
                         onClick={() => setIsOpen(false)}
+                        data-page-module-item={model.id}
+                        data-page-module-field="href"
                       >
                         {model.imageUrl ? (
                           <span className="relative h-10 w-12 shrink-0 overflow-hidden bg-white/5">
@@ -220,13 +295,15 @@ export default function Navbar() {
                               sizes="48px"
                               className="object-cover"
                               unoptimized
+                              data-page-module-item={model.id}
+                              data-page-module-field="image_url"
                             />
                           </span>
                         ) : null}
                         <span className="min-w-0">
-                          <span className="block truncate text-xs font-semibold tracking-wide">{model.label}</span>
+                          <span className="block truncate text-xs font-semibold tracking-wide" data-page-module-item={model.id} data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}>{model.label}</span>
                           {model.content ? (
-                            <span className="mt-0.5 block truncate text-[11px] text-white/45">{model.content}</span>
+                            <span className="mt-0.5 block truncate text-[11px] text-white/45" data-page-module-item={model.id} data-page-module-field={lang === 'zh' ? 'content_zh' : 'content_en'}>{model.content}</span>
                           ) : null}
                         </span>
                       </Link>
@@ -247,8 +324,16 @@ export default function Navbar() {
                       ? 'inline-flex min-h-11 items-center justify-center bg-[#241F1B] px-4 text-center text-sm font-semibold tracking-wider text-white border border-white/60'
                       : 'inline-flex min-h-11 items-center justify-center bg-transparent px-4 text-center text-sm tracking-wider text-white/80 border border-white/25'}
                     onClick={() => setIsOpen(false)}
+                    data-page-module-item={link.id}
+                    data-page-module-field="href"
                   >
-                    {link.label}
+                    <span
+                      className="inline-flex min-h-8 items-center"
+                      data-page-module-item={link.id}
+                      data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                    >
+                      {link.label}
+                    </span>
                   </Link>
                 ))}
               </div>

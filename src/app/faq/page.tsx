@@ -1,7 +1,7 @@
 import FaqView, { type FaqCategoryView, type FaqItemView } from '@/components/FaqView'
 import { listPublicB9ContentCategories, listPublicB9ContentItems } from '@/lib/b9-content-db'
 import { buildPageMetadata } from '@/lib/seo'
-import { getPublishedPageModule, listPublishedPageModules } from '@/lib/page-modules-db'
+import { getDefaultPageModule, getPublishedPageModule, listDefaultPageModules, listPublishedPageModules } from '@/lib/page-modules-db'
 
 export const revalidate = 300
 
@@ -10,8 +10,9 @@ export async function generateMetadata() {
     console.error('[faq/metadata] load page module failed', err)
     return null
   })
-  const title = heroModule?.title_en || heroModule?.title_zh || ''
-  const description = heroModule?.description_en || heroModule?.description_zh || ''
+  const safeHeroModule = heroModule ?? getDefaultPageModule('faq', 'hero')
+  const title = safeHeroModule?.title_en || safeHeroModule?.title_zh || ''
+  const description = safeHeroModule?.description_en || safeHeroModule?.description_zh || ''
   if (!title || !description) return {}
   return buildPageMetadata({ title, description, path: '/faq' })
 }
@@ -44,6 +45,7 @@ async function loadFaqContent(): Promise<{ categories: FaqCategoryView[]; items:
     const categoryKeys = new Set(mappedCategories.map((cat) => cat.key))
     const items = rows.map((item) => ({
       id: `cms-${item.id}`,
+      contentId: item.id,
       category: item.category_slug && categoryKeys.has(item.category_slug) ? item.category_slug : '',
       question_zh: item.title_zh,
       question_en: item.title_en,
@@ -66,5 +68,6 @@ export default async function FaqPage() {
       return []
     }),
   ])
-  return <FaqView categories={categories} items={items} initialPageModules={pageModules} />
+  const safePageModules = pageModules.length > 0 ? pageModules : listDefaultPageModules('faq')
+  return <FaqView categories={categories} items={items} initialPageModules={safePageModules} />
 }

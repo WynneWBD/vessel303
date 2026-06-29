@@ -1,3 +1,14 @@
+export type ShowcaseProjectImageSource = {
+  patchKey: 'cover_image_url' | 'images'
+  arrayIndex?: number
+}
+
+export type ShowcaseProjectGlobalSources = {
+  amenities?: boolean
+  transport?: Partial<Record<'en' | 'zh', boolean>>
+  nearby?: Partial<Record<'en' | 'zh', boolean>>
+}
+
 export interface ShowcaseProject {
   id: string
   name: { en: string; zh: string }
@@ -23,6 +34,8 @@ export interface ShowcaseProject {
     zh: Array<{ name: string; distance: string }>
   }
   images: string[]
+  cmsImageSources?: ShowcaseProjectImageSource[]
+  cmsGlobalSources?: ShowcaseProjectGlobalSources
 }
 
 export const SHOWCASE_PROJECTS: ShowcaseProject[] = [

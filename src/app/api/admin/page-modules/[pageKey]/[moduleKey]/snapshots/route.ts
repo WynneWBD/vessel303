@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth-check'
-import { getPageModule, isPageModulePageKey, listPageModuleSnapshots } from '@/lib/page-modules-db'
+import { getPageModuleWithDefault, isPageModulePageKey, listPageModuleSnapshots } from '@/lib/page-modules-db'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  const pageModule = await getPageModule(pageKey, moduleKey)
+  const pageModule = await getPageModuleWithDefault(pageKey, moduleKey)
   if (!pageModule) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const limit = Number(req.nextUrl.searchParams.get('limit') ?? 20)

@@ -122,7 +122,7 @@ const STATUS_CARDS: StatusCardConfig[] = [
 const ACTIONS: ActionItem[] = [
   {
     label: '处理新线索',
-    detail: '进入新线索列表，优先跟进询盘。',
+    detail: '新询盘优先。',
     href: '/admin/customers/leads?status=new',
     Icon: Inbox,
     primary: true,
@@ -176,7 +176,7 @@ function getCustomerSideNav(summary: LeadSummary): AdminSideNavGroup[] {
       ],
     },
     {
-      title: '后续规划',
+      title: '客户维护',
       items: [
         { key: 'customer-files', label: '客户档案', planned: true, Icon: Users },
         { key: 'members', label: '会员管理', planned: true, adminOnly: true, Icon: UserRoundCheck },
@@ -280,10 +280,10 @@ function buildTodos(summary: LeadSummary): TodoItem[] {
 
 function Hero({ summary }: { summary: LeadSummary }) {
   return (
-    <AdminPageHero
-      kicker="Lead Operations"
-      title="客户线索中心"
-      description="先处理新线索，再跟进报价、成交和关闭状态；订单、支付和会员价格在对应业务模块处理。"
+      <AdminPageHero
+        kicker="Lead Operations"
+        title="客户线索中心"
+        description="处理新询盘，查看跟进、报价、成交和关闭。"
       actions={
         <>
           <AdminActionLink href="/admin/customers/leads?status=new" Icon={Inbox} label="处理新线索" primary />
@@ -419,7 +419,7 @@ function TodoPanel({ items, isAdmin }: { items: TodoItem[]; isAdmin: boolean }) 
       <section id="todo" className="scroll-mt-24 rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="border-b border-[#E6EEEE] px-5 py-4">
           <h2 className="text-lg font-bold text-[#1E2C31]">待处理事项</h2>
-          <p className="mt-1 text-xs text-[#61767D]">优先处理橙色提示项。</p>
+          <p className="mt-1 text-xs text-[#61767D]">只显示需要处理的事项。</p>
         </div>
         <div className="divide-y divide-[#E6EEEE]">
           {items.map((item) => (
@@ -469,7 +469,7 @@ function MemberReserveCard() {
         <div>
           <h2 className="text-sm font-bold text-[#1E2C31]">会员管理</h2>
           <p className="mt-1 text-xs leading-5 text-[#61767D]">
-            基础会员信息暂作为查看入口，会员操作请进入对应业务模块处理。
+            会员信息查看入口。
           </p>
         </div>
       </div>
@@ -483,7 +483,7 @@ function MaintenanceBlock() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-base font-bold text-[#1E2C31]">管理设置</h2>
-          <p className="mt-1 text-xs text-[#61767D]">仅管理员使用，客户运营优先使用上方入口。</p>
+          <p className="mt-1 text-xs text-[#61767D]">管理员入口。</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <MaintenanceLink href="/admin/settings" label="站点设置" Icon={Settings} />
@@ -537,7 +537,7 @@ export default async function AdminCustomersPage() {
       role={adminRole}
       email={session.user.email}
       title="客户与线索"
-      description="处理新线索，并查看报价、成交和关闭状态。会员、订单和支付请进入对应业务模块。"
+      description="处理新线索，查看报价、成交和关闭状态。"
       sideNavGroups={sideNavGroups}
       activeItem="overview"
     >

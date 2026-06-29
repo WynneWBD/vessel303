@@ -1,7 +1,9 @@
 'use client'
 
+import { useSyncExternalStore } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { ImageIcon } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ConversionInquiryForm, { type FormLabels } from '@/components/pages/ConversionInquiryForm'
@@ -24,6 +26,8 @@ type Props = {
   pageModules: PublicPageModule[]
   purchaseFaqItems: Array<{
     id: string
+    content_id: number
+    slug: string
     question_zh: string
     question_en: string
     answer_zh: string
@@ -149,8 +153,93 @@ function isDirectContactHref(href: string | undefined) {
   )
 }
 
+function faqCmsEditAttrs({
+  contentId,
+  field,
+  patchKey,
+  targetId,
+  search,
+  value,
+  input = 'text',
+  maxLength,
+  required = false,
+  nullable = false,
+}: {
+  contentId: number
+  field: string
+  patchKey: string
+  targetId: string
+  search: string
+  value: string
+  input?: 'text' | 'textarea'
+  maxLength?: number
+  required?: boolean
+  nullable?: boolean
+}) {
+  const safeSearch = search.trim() || String(contentId)
+  return {
+    'data-cms-edit-kind': 'site-content',
+    'data-cms-edit-title': 'FAQ 内容',
+    'data-cms-edit-field': field,
+    'data-cms-edit-url': `/admin/content/faq?search=${encodeURIComponent(safeSearch)}#b9-content-workbench`,
+    'data-cms-edit-id': `site-content-faq-${contentId}-${targetId}`,
+    'data-cms-edit-value': value,
+    'data-cms-edit-api-url': `/api/admin/site-content/${contentId}`,
+    'data-cms-edit-patch-key': patchKey,
+    'data-cms-edit-input': input,
+    'data-cms-edit-max-length': String(maxLength ?? (input === 'textarea' ? 20000 : 240)),
+    'data-cms-edit-required': required ? '1' : '0',
+    'data-cms-edit-nullable': nullable ? '1' : '0',
+  }
+}
+
+function subscribeVisualDraftPreview() {
+  return () => undefined
+}
+
+function getVisualDraftPreviewSnapshot() {
+  return typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('visualDraft') === '1'
+}
+
+function getVisualDraftPreviewServerSnapshot() {
+  return false
+}
+
+function useVisualDraftPreview() {
+  return useSyncExternalStore(
+    subscribeVisualDraftPreview,
+    getVisualDraftPreviewSnapshot,
+    getVisualDraftPreviewServerSnapshot,
+  )
+}
+
+function VisualImageEditButton({
+  itemId,
+  label = '编辑图片',
+}: {
+  itemId?: string | null
+  label?: string
+}) {
+  const visualDraftPreview = useVisualDraftPreview()
+  if (!visualDraftPreview || !itemId) return null
+
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      className="absolute left-4 top-24 z-30 inline-flex h-9 items-center gap-1.5 rounded-md border border-white/75 bg-black/55 px-3 text-white shadow-[0_12px_28px_rgba(0,0,0,0.24)] backdrop-blur-sm transition hover:border-[#E36F2C] hover:bg-[#E36F2C] focus:outline-none focus:ring-2 focus:ring-[#E36F2C] focus:ring-offset-2 focus:ring-offset-transparent"
+      data-page-module-item={itemId}
+      data-page-module-field="image_url"
+    >
+      <ImageIcon aria-hidden="true" className="h-4 w-4" />
+      <span className="text-xs font-semibold">图片</span>
+    </button>
+  )
+}
+
 export default function ContactPageContent({ pageModules, purchaseFaqItems, initialSource = null }: Props) {
   const { lang } = useLanguage()
+  const visualDraftPreview = useVisualDraftPreview()
   const modules = moduleMap(pageModules)
   const heroModule = modules.get('hero') ?? null
   const channelsModule = modules.get('channels') ?? null
@@ -162,11 +251,15 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
   const context = sourceContext(initialSource, lang, sourceContextModule)
   const contextEyebrow = itemLabel(itemById(sourceContextModule, 'context-eyebrow'), lang) || (lang === 'zh' ? '咨询来源' : 'Inquiry context')
 
-  const heroTitle = moduleTitle(heroModule, lang)
-  const heroDescription = moduleDescription(heroModule, lang)
-  const heroEyebrow = itemLabel(itemById(heroModule, 'eyebrow'), lang)
+  const heroTitle = moduleTitle(heroModule, lang) || (visualDraftPreview && heroModule ? (lang === 'zh' ? '联系 VESSEL' : 'Contact VESSEL') : '')
+  const heroDescription = moduleDescription(heroModule, lang) || (visualDraftPreview && heroModule ? (lang === 'zh' ? '补充联系页首屏说明。' : 'Add the contact hero description.') : '')
+  const heroEyebrow = itemLabel(itemById(heroModule, 'eyebrow'), lang) || (visualDraftPreview && heroModule ? (lang === 'zh' ? '联系我们' : 'Contact') : '')
   const primaryCta = itemById(heroModule, 'primary-cta')
   const secondaryCta = itemById(heroModule, 'secondary-cta')
+  const primaryCtaLabel = itemLabel(primaryCta, lang) || (visualDraftPreview && primaryCta ? (lang === 'zh' ? '提交咨询' : 'Send inquiry') : '')
+  const primaryCtaHref = primaryCta?.href || (visualDraftPreview && primaryCta ? '#contact-form' : '')
+  const secondaryCtaLabel = itemLabel(secondaryCta, lang) || (visualDraftPreview && secondaryCta ? (lang === 'zh' ? '查看产品' : 'View products') : '')
+  const secondaryCtaHref = secondaryCta?.href || (visualDraftPreview && secondaryCta ? '/products' : '')
   const heroItems = visibleItems(heroModule)
   const heroImages = heroItems.filter((item) => item.image_url)
   const heroPrimaryImage = heroImages[0] ?? null
@@ -178,9 +271,11 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
   const formInquiryType = itemLabel(itemById(formModule, 'inquiry-type'), lang)
   const formModel = itemLabel(itemById(formModule, 'form-model'), lang)
   const formLabels = formLabelsFromModule(formModule, lang)
-  const backupTitle = moduleTitle(backupModule, lang)
-  const backupDescription = moduleDescription(backupModule, lang)
+  const backupTitle = moduleTitle(backupModule, lang) || (visualDraftPreview && backupModule ? (lang === 'zh' ? '备用联系方式' : 'Backup contact') : '')
+  const backupDescription = moduleDescription(backupModule, lang) || (visualDraftPreview && backupModule ? (lang === 'zh' ? '补充无法提交表单时的备用联系说明。' : 'Add backup contact instructions for visitors who cannot submit the form.') : '')
   const backupLink = itemById(backupModule, 'legacy-contact')
+  const backupLinkLabel = itemLabel(backupLink, lang) || (visualDraftPreview && backupLink ? (lang === 'zh' ? '联系团队' : 'Contact team') : '')
+  const backupLinkHref = backupLink?.href || (visualDraftPreview && backupLink ? '/contact' : '')
   const hasBackupContent = Boolean(backupModule?.is_visible !== false && (backupTitle || backupDescription || backupLink))
   const faqPanelTitle = moduleTitle(faqPanelModule, lang)
   const faqPanelDescription = moduleDescription(faqPanelModule, lang)
@@ -218,9 +313,13 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                 data-page-module-field="image_url"
               />
             ) : null}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#17120F] via-[#17120F]/85 to-[#17120F]/30" />
+            <VisualImageEditButton itemId={heroPrimaryImage?.id} label={lang === 'zh' ? '编辑联系页首屏图片' : 'Edit contact hero image'} />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#17120F] via-[#17120F]/85 to-[#17120F]/30" />
             <div className="relative mx-auto grid max-w-7xl gap-8 px-4 py-20 sm:py-24 lg:min-h-[560px] lg:grid-cols-[minmax(0,1fr)_380px] lg:items-end lg:py-16">
-              <div className="max-w-4xl">
+              <div
+                className="max-w-4xl"
+                data-page-module-field={lang === 'zh' ? 'title_zh' : 'title_en'}
+              >
                 {heroEyebrow ? (
                   <p
                     className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-[#E36F2C]"
@@ -247,24 +346,34 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                   </p>
                 ) : null}
                 <div className="mt-7 flex flex-wrap gap-3">
-                  {primaryCta && itemLabel(primaryCta, lang) && primaryCta.href ? (
+                  {primaryCta && primaryCtaLabel && primaryCtaHref ? (
                     <Link prefetch={false}
-                      href={normalizeSiteHref(primaryCta.href)}
+                      href={normalizeSiteHref(primaryCtaHref)}
                       className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-6 py-3 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#C85A1F]"
                       data-page-module-item="primary-cta"
-                      data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                      data-page-module-field="href"
                     >
-                      {itemLabel(primaryCta, lang)}
+                      <span
+                        data-page-module-item="primary-cta"
+                        data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                      >
+                        {primaryCtaLabel}
+                      </span>
                     </Link>
                   ) : null}
-                  {secondaryCta && itemLabel(secondaryCta, lang) && secondaryCta.href ? (
+                  {secondaryCta && secondaryCtaLabel && secondaryCtaHref ? (
                     <Link prefetch={false}
-                      href={normalizeSiteHref(secondaryCta.href, '/products')}
+                      href={normalizeSiteHref(secondaryCtaHref, '/products')}
                       className="inline-flex min-h-11 items-center justify-center border border-white/25 px-6 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-white/80 transition hover:border-[#E36F2C] hover:text-[#E36F2C]"
                       data-page-module-item="secondary-cta"
-                      data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                      data-page-module-field="href"
                     >
-                      {itemLabel(secondaryCta, lang)}
+                      <span
+                        data-page-module-item="secondary-cta"
+                        data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                      >
+                        {secondaryCtaLabel}
+                      </span>
                     </Link>
                   ) : null}
                 </div>
@@ -275,7 +384,12 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                       const content = itemContent(item, lang)
                       if (!value && !content) return null
                       return (
-                        <div key={item.id} className="border border-white/15 bg-black/20 p-4 backdrop-blur-sm" data-page-module-item={item.id}>
+                        <div
+                          key={item.id}
+                          className="border border-white/15 bg-black/20 p-4 backdrop-blur-sm"
+                          data-page-module-item={item.id}
+                          data-page-module-field={itemValue(item, lang) ? (lang === 'zh' ? 'value_zh' : 'value_en') : (lang === 'zh' ? 'label_zh' : 'label_en')}
+                        >
                           {value ? <div className="text-lg font-black text-white" data-page-module-field={itemValue(item, lang) ? (lang === 'zh' ? 'value_zh' : 'value_en') : (lang === 'zh' ? 'label_zh' : 'label_en')}>{value}</div> : null}
                           {content ? <div className="mt-1 text-xs leading-5 text-white/65" data-page-module-field={lang === 'zh' ? 'content_zh' : 'content_en'}>{content}</div> : null}
                         </div>
@@ -312,7 +426,12 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                         </>
                       )
                       return (
-                        <div key={item.id} className="border-b border-white/10 pb-3 last:border-0 last:pb-0" data-page-module-item={item.id}>
+                        <div
+                          key={item.id}
+                          className="border-b border-white/10 pb-3 last:border-0 last:pb-0"
+                          data-page-module-item={item.id}
+                          data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                        >
                           {isDirectContactHref(item.href)
                             ? <a href={item.href} className="block rounded-sm px-2 py-1 transition hover:bg-white/10 hover:text-[#E36F2C]" data-page-module-field="href">{body}</a>
                             : body}
@@ -337,6 +456,7 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                       data-page-module="contact:faq-panel"
                       data-page-key="contact"
                       data-module-key="faq-panel"
+                      data-page-module-field={lang === 'zh' ? 'title_zh' : 'title_en'}
                     >
                       <div className="border-b border-[#E5E0DA] pb-5">
                         {faqPanelTitle ? (
@@ -362,10 +482,44 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                             const question = lang === 'zh' ? item.question_zh : item.question_en
                             const answer = lang === 'zh' ? item.answer_zh : item.answer_en
                             if (!question || !answer) return null
+                            const faqSearch = item.slug || question
+                            const questionPatchKey = lang === 'zh' ? 'title_zh' : 'title_en'
+                            const answerPatchKey = lang === 'zh' ? 'body_zh' : 'body_en'
+                            const questionEditAttrs = faqCmsEditAttrs({
+                              contentId: item.content_id,
+                              field: 'FAQ 问题',
+                              patchKey: questionPatchKey,
+                              targetId: 'question',
+                              search: faqSearch,
+                              value: question,
+                              maxLength: 240,
+                              required: true,
+                            })
+                            const answerEditAttrs = faqCmsEditAttrs({
+                              contentId: item.content_id,
+                              field: 'FAQ 答案',
+                              patchKey: answerPatchKey,
+                              targetId: 'answer',
+                              search: faqSearch,
+                              value: answer,
+                              input: 'textarea',
+                              maxLength: 20000,
+                              nullable: true,
+                            })
                             return (
-                              <article key={item.id} className="py-4">
-                                <h3 className="text-base font-black leading-snug text-[#1F2A31]">{question}</h3>
-                                <p className="mt-2 text-sm leading-7 text-[#5C6670]">{answer}</p>
+                              <article key={item.id} className="py-4" {...questionEditAttrs}>
+                                <h3
+                                  className="text-base font-black leading-snug text-[#1F2A31]"
+                                  {...questionEditAttrs}
+                                >
+                                  {question}
+                                </h3>
+                                <p
+                                  className="mt-2 text-sm leading-7 text-[#5C6670]"
+                                  {...answerEditAttrs}
+                                >
+                                  {answer}
+                                </p>
                               </article>
                             )
                           })}
@@ -380,6 +534,7 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                       data-page-module="contact:backup"
                       data-page-key="contact"
                       data-module-key="backup"
+                      data-page-module-field={lang === 'zh' ? 'title_zh' : 'title_en'}
                     >
                       {backupTitle ? (
                         <div className="text-sm font-bold text-[#1F2A31]" data-page-module-field={lang === 'zh' ? 'title_zh' : 'title_en'}>
@@ -391,16 +546,21 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                           {backupDescription}
                         </p>
                       ) : null}
-                      {backupLink?.href && itemLabel(backupLink, lang) ? (
+                      {backupLink && backupLinkHref && backupLinkLabel ? (
                         <a
-                          href={backupLink.href}
+                          href={backupLinkHref}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="mt-4 inline-flex text-sm font-bold text-[#E36F2C] hover:text-[#C85A1F]"
                           data-page-module-item="legacy-contact"
-                          data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                          data-page-module-field="href"
                         >
-                          {itemLabel(backupLink, lang)}
+                          <span
+                            data-page-module-item="legacy-contact"
+                            data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                          >
+                            {backupLinkLabel}
+                          </span>
                         </a>
                       ) : null}
                     </div>
@@ -419,6 +579,8 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                     data-page-module="contact:source-context"
                     data-page-key="contact"
                     data-module-key="source-context"
+                    data-page-module-item={context.itemId}
+                    data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
                   >
                     <p
                       className="text-xs font-bold uppercase tracking-[0.16em] text-[#147C94]"
@@ -461,6 +623,7 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                   descriptionEn={formModule.description_en ?? ''}
                   descriptionZh={formModule.description_zh ?? ''}
                   labels={formLabels}
+                  visualModuleId="contact:form"
                 />
               </div>
             </div>
@@ -475,10 +638,44 @@ export default function ContactPageContent({ pageModules, purchaseFaqItems, init
                   const question = lang === 'zh' ? item.question_zh : item.question_en
                   const answer = lang === 'zh' ? item.answer_zh : item.answer_en
                   if (!question || !answer) return null
+                  const faqSearch = item.slug || question
+                  const questionPatchKey = lang === 'zh' ? 'title_zh' : 'title_en'
+                  const answerPatchKey = lang === 'zh' ? 'body_zh' : 'body_en'
+                  const questionEditAttrs = faqCmsEditAttrs({
+                    contentId: item.content_id,
+                    field: 'FAQ 问题',
+                    patchKey: questionPatchKey,
+                    targetId: 'question-secondary',
+                    search: faqSearch,
+                    value: question,
+                    maxLength: 240,
+                    required: true,
+                  })
+                  const answerEditAttrs = faqCmsEditAttrs({
+                    contentId: item.content_id,
+                    field: 'FAQ 答案',
+                    patchKey: answerPatchKey,
+                    targetId: 'answer-secondary',
+                    search: faqSearch,
+                    value: answer,
+                    input: 'textarea',
+                    maxLength: 20000,
+                    nullable: true,
+                  })
                   return (
-                    <article key={item.id} className="border border-[#DADDE1] bg-[#FAFBFB] p-5">
-                      <h3 className="text-base font-black leading-snug text-[#1F2A31]">{question}</h3>
-                      <p className="mt-3 text-sm leading-7 text-[#5C6670]">{answer}</p>
+                    <article key={item.id} className="border border-[#DADDE1] bg-[#FAFBFB] p-5" {...questionEditAttrs}>
+                      <h3
+                        className="text-base font-black leading-snug text-[#1F2A31]"
+                        {...questionEditAttrs}
+                      >
+                        {question}
+                      </h3>
+                      <p
+                        className="mt-3 text-sm leading-7 text-[#5C6670]"
+                        {...answerEditAttrs}
+                      >
+                        {answer}
+                      </p>
                     </article>
                   )
                 })}

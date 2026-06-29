@@ -5,6 +5,7 @@ import { requireAdmin } from '@/lib/auth-check'
 import {
   assertB9ContentKind,
   B9_PUBLIC_CACHE_TAG,
+  getB9ContentItemById,
   upsertB9ContentItem,
   type B9ContentKind,
 } from '@/lib/b9-content-db'
@@ -35,7 +36,10 @@ const itemSchema = z.object({
 
 function revalidateKind(kind: B9ContentKind) {
   revalidateTag(B9_PUBLIC_CACHE_TAG, 'max')
-  if (kind === 'faq') revalidatePath('/faq')
+  if (kind === 'faq') {
+    revalidatePath('/faq')
+    revalidatePath('/contact')
+  }
   if (kind === 'media_file') revalidatePath('/media-kit')
   if (kind === 'scenario') revalidatePath('/scenarios/[slug]', 'page')
   if (kind === 'display_slide') revalidatePath('/display')
@@ -58,6 +62,28 @@ function validateFixedScope(kind: B9ContentKind, slug: string) {
     return `${kind} only allows fixed slug: ${allowed.join(', ')}`
   }
   return null
+}
+
+export async function GET(_req: NextRequest, ctx: Ctx) {
+  const admin = await requireAdmin()
+  if (admin instanceof Response) return admin
+
+  const { id } = await ctx.params
+  const itemId = Number(id)
+  if (!Number.isInteger(itemId) || itemId <= 0) {
+    return NextResponse.json({ error: 'Invalid content id' }, { status: 400 })
+  }
+
+  try {
+    const item = await getB9ContentItemById(itemId)
+    if (!item) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json({ data: item })
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Failed to load content' },
+      { status: 500 },
+    )
+  }
 }
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {

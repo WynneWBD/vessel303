@@ -36,6 +36,7 @@ type MediaKitResource = {
 
 type ResourceEntry = {
   id: number;
+  source: MediaKitResource;
   title: string;
   summary: string | null;
   ctaLabel: string | null;
@@ -43,6 +44,79 @@ type ResourceEntry = {
   previewUrl: string | null;
   fileKind: string;
 };
+
+type VisualAttrs = Record<`data-${string}`, string>;
+
+function mediaKitModuleFieldAttrs(moduleKey: 'hero' | 'resources' | 'form', itemId: string | null, field: string): VisualAttrs {
+  const attrs: VisualAttrs = {
+    'data-page-module': `media-kit:${moduleKey}`,
+    'data-page-key': 'media-kit',
+    'data-module-key': moduleKey,
+    'data-page-module-field': field,
+  };
+  if (itemId) attrs['data-page-module-item'] = itemId;
+  return attrs;
+}
+
+function mediaKitHeroFieldAttrs(itemId: string | null, field: string) {
+  return mediaKitModuleFieldAttrs('hero', itemId, field);
+}
+
+function mediaKitHeroLabelAttrs(itemId: string, lang: 'en' | 'zh') {
+  return mediaKitHeroFieldAttrs(itemId, lang === 'zh' ? 'label_zh' : 'label_en');
+}
+
+function mediaKitResourcesFieldAttrs(itemId: string | null, field: string) {
+  return mediaKitModuleFieldAttrs('resources', itemId, field);
+}
+
+function mediaKitFormFieldAttrs(itemId: string | null, field: string) {
+  return mediaKitModuleFieldAttrs('form', itemId, field);
+}
+
+function mediaKitFormLabelAttrs(itemId: string, lang: 'en' | 'zh') {
+  return mediaKitFormFieldAttrs(itemId, lang === 'zh' ? 'label_zh' : 'label_en');
+}
+
+function mediaKitCmsEditAttrs({
+  contentId,
+  field,
+  patchKey,
+  targetId,
+  search,
+  value,
+  input = 'text',
+  maxLength,
+  required = false,
+  nullable = false,
+}: {
+  contentId: number;
+  field: string;
+  patchKey: string;
+  targetId: string;
+  search: string;
+  value: string;
+  input?: 'text' | 'textarea';
+  maxLength?: number;
+  required?: boolean;
+  nullable?: boolean;
+}): VisualAttrs {
+  const safeSearch = search.trim() || String(contentId);
+  return {
+    'data-cms-edit-kind': 'site-content',
+    'data-cms-edit-title': '媒体资料',
+    'data-cms-edit-field': field,
+    'data-cms-edit-url': `/admin/content/media-kit?search=${encodeURIComponent(safeSearch)}#b9-content-workbench`,
+    'data-cms-edit-id': `site-content-media-kit-${contentId}-${targetId}`,
+    'data-cms-edit-value': value,
+    'data-cms-edit-api-url': `/api/admin/site-content/${contentId}`,
+    'data-cms-edit-patch-key': patchKey,
+    'data-cms-edit-input': input,
+    'data-cms-edit-max-length': String(maxLength ?? (input === 'textarea' ? 4000 : 240)),
+    'data-cms-edit-required': required ? '1' : '0',
+    'data-cms-edit-nullable': nullable ? '1' : '0',
+  };
+}
 
 export default function MediaKitPageContent({
   initialResources = [],
@@ -55,16 +129,18 @@ export default function MediaKitPageContent({
   const [status, setStatus] = useState<Status>('idle');
   const [resources, setResources] = useState<MediaKitResource[]>(initialResources);
   const [pageModules, setPageModules] = useState<PublicPageModule[] | null>(initialPageModules);
+  const [visualDraftPreview, setVisualDraftPreview] = useState(false);
   const modules = moduleMap(pageModules);
   const heroModule = modules.get('hero') ?? null;
   const formModule = modules.get('form') ?? heroModule;
+  const resourcesModule = modules.get('resources') ?? heroModule;
   const heroEyebrow = itemLabel(itemById(heroModule, 'eyebrow'), lang);
   const heroTitle = moduleTitle(heroModule, lang);
   const heroDescription = moduleDescription(heroModule, lang);
   const formTitle = itemLabel(itemById(formModule, 'form-title'), lang) || moduleTitle(formModule, lang);
   const formDescription = itemLabel(itemById(formModule, 'form-description'), lang) || moduleDescription(formModule, lang);
-  const resourceHeading = itemLabel(itemById(heroModule, 'resource-heading'), lang);
-  const resourceCta = itemLabel(itemById(heroModule, 'resource-cta'), lang);
+  const resourceHeading = moduleTitle(resourcesModule, lang) || itemLabel(itemById(resourcesModule, 'resource-heading'), lang);
+  const resourceCta = itemLabel(itemById(resourcesModule, 'resource-cta'), lang);
   const labels = {
     name: itemLabel(itemById(formModule, 'label-name'), lang),
     email: itemLabel(itemById(formModule, 'label-email'), lang),
@@ -107,6 +183,7 @@ export default function MediaKitPageContent({
         : resource.cta_label_en || resource.cta_label_zh;
       return {
         id: resource.id,
+        source: resource,
         title,
         summary,
         ctaLabel,
@@ -118,6 +195,11 @@ export default function MediaKitPageContent({
     .filter((resource) => resource.title || resource.summary || resource.href || resource.previewUrl);
   const featuredResource = resourceEntries[0] ?? null;
   const secondaryResources = resourceEntries.slice(1);
+  const showResourcesPanel = Boolean(resourceHeading && (resourceEntries.length > 0 || visualDraftPreview));
+
+  useEffect(() => {
+    setVisualDraftPreview(new URLSearchParams(window.location.search).get('visualDraft') === '1');
+  }, []);
 
   useEffect(() => {
     if (Array.isArray(initialPageModules) && Array.isArray(initialResources)) return;
@@ -185,10 +267,10 @@ export default function MediaKitPageContent({
       <Navbar />
 
       {/* Hero */}
-      <section className="bg-[#241F1B] px-4 pb-12 pt-28 sm:px-6 sm:pb-16">
+      <section className="bg-[#241F1B] px-4 pb-12 pt-28 sm:px-6 sm:pb-16" data-page-module="media-kit:hero">
         <div className="max-w-5xl mx-auto">
           {heroEyebrow ? (
-            <p className="text-[#E36F2C] text-xs tracking-[0.35em] uppercase font-medium mb-4">
+            <p className="text-[#E36F2C] text-xs tracking-[0.35em] uppercase font-medium mb-4" {...mediaKitHeroLabelAttrs('eyebrow', lang)}>
               {heroEyebrow}
             </p>
           ) : null}
@@ -196,12 +278,13 @@ export default function MediaKitPageContent({
             <h1
               className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#F5F2ED] leading-tight mb-6"
               style={{ fontFamily: 'DM Sans, sans-serif' }}
+              {...mediaKitHeroFieldAttrs(null, lang === 'zh' ? 'title_zh' : 'title_en')}
             >
               {heroTitle}
             </h1>
           ) : null}
           {heroDescription ? (
-            <p className="text-[#C4B9AB] text-sm sm:text-base leading-relaxed max-w-3xl">
+            <p className="text-[#C4B9AB] text-sm sm:text-base leading-relaxed max-w-3xl" {...mediaKitHeroFieldAttrs(null, lang === 'zh' ? 'description_zh' : 'description_en')}>
               {heroDescription}
             </p>
           ) : null}
@@ -210,40 +293,57 @@ export default function MediaKitPageContent({
 
       {/* Resource center + request form */}
       <section id="request-form" className="flex-1 px-4 py-12 sm:px-6 sm:py-16">
-        <div className={`mx-auto grid max-w-7xl gap-8 ${resourceEntries.length > 0 && canRenderForm ? 'lg:grid-cols-[minmax(0,1fr)_390px]' : ''}`}>
-          {resourceEntries.length > 0 && resourceHeading ? (
-            <section className="min-w-0">
-              <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-5">
+        <div className={`mx-auto grid max-w-7xl gap-8 ${showResourcesPanel && canRenderForm ? 'lg:grid-cols-[minmax(0,1fr)_390px]' : ''}`}>
+          {showResourcesPanel ? (
+            <section className="min-w-0" data-page-module="media-kit:resources">
+              <p className="text-[#E36F2C] text-xs tracking-[0.3em] uppercase font-medium mb-5" {...mediaKitResourcesFieldAttrs(null, lang === 'zh' ? 'title_zh' : 'title_en')}>
                 {resourceHeading}
               </p>
               <div className="space-y-5">
                 {featuredResource ? (
-                  <FeaturedResourceCard resource={featuredResource} resourceCta={resourceCta} />
+                  <FeaturedResourceCard resource={featuredResource} resourceCta={resourceCta} lang={lang} />
                 ) : null}
                 {secondaryResources.length > 0 ? (
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {secondaryResources.map((resource) => (
-                      <ResourceCard key={resource.id} resource={resource} resourceCta={resourceCta} />
+                      <ResourceCard key={resource.id} resource={resource} resourceCta={resourceCta} lang={lang} />
                     ))}
+                  </div>
+                ) : null}
+                {resourceEntries.length === 0 && visualDraftPreview ? (
+                  <div className="border border-dashed border-[#C4B9AB] bg-white px-5 py-8 text-sm text-[#6B625B]">
+                    <p {...mediaKitResourcesFieldAttrs(null, lang === 'zh' ? 'description_zh' : 'description_en')}>
+                      {lang === 'zh' ? '暂无媒体资料' : 'No media resources yet'}
+                    </p>
+                    {resourceCta ? (
+                      <p
+                        className="mt-3 inline-flex min-h-10 items-center border border-[#E5DED4] px-4 text-xs font-semibold uppercase tracking-[0.16em] text-[#2C2A28]"
+                        {...mediaKitResourcesFieldAttrs('resource-cta', lang === 'zh' ? 'label_zh' : 'label_en')}
+                      >
+                        {resourceCta}
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
             </section>
           ) : null}
 
-          <aside className={resourceEntries.length > 0 ? 'lg:sticky lg:top-24 lg:self-start' : 'max-w-3xl'}>
+          <aside className={showResourcesPanel ? 'lg:sticky lg:top-24 lg:self-start' : 'max-w-3xl'}>
           {canRenderForm ? (
             <div>
               {formTitle ? (
                 <h2
                   className="text-2xl sm:text-3xl font-bold text-[#2C2A28] mb-3"
                   style={{ fontFamily: 'DM Sans, sans-serif' }}
+                  data-page-module="media-kit:form"
+                  {...mediaKitFormLabelAttrs('form-title', lang)}
                 >
                   {formTitle}
                 </h2>
               ) : null}
               {formDescription ? (
-                <p className="text-[#8A8580] text-sm mb-8 leading-relaxed">
+                <p className="text-[#8A8580] text-sm mb-8 leading-relaxed" data-page-module="media-kit:form" {...mediaKitFormLabelAttrs('form-description', lang)}>
                   {formDescription}
                 </p>
               ) : null}
@@ -262,23 +362,24 @@ export default function MediaKitPageContent({
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="grid sm:grid-cols-2 gap-4">
-                    <Field label={labels.name} name="name" required />
-                    <Field label={labels.email} name="email" type="email" required />
+                    <Field label={labels.name} name="name" visualAttrs={mediaKitFormLabelAttrs('label-name', lang)} required />
+                    <Field label={labels.email} name="email" type="email" visualAttrs={mediaKitFormLabelAttrs('label-email', lang)} required />
                   </div>
                   <div className="grid sm:grid-cols-2 gap-4">
-                    <Field label={labels.phone} name="phone" required />
-                    <Field label={labels.company} name="company" required />
+                    <Field label={labels.phone} name="phone" visualAttrs={mediaKitFormLabelAttrs('label-phone', lang)} required />
+                    <Field label={labels.company} name="company" visualAttrs={mediaKitFormLabelAttrs('label-company', lang)} required />
                   </div>
-                  <Field label={labels.country} name="country" required />
+                  <Field label={labels.country} name="country" visualAttrs={mediaKitFormLabelAttrs('label-country', lang)} required />
 
                   <div>
-                    <label className="block text-[#2C2A28]/70 text-xs tracking-wider uppercase mb-2 font-medium">
+                    <label className="block text-[#2C2A28]/70 text-xs tracking-wider uppercase mb-2 font-medium" {...mediaKitFormLabelAttrs('label-use-case', lang)}>
                       {labels.useCase} <span className="text-[#E36F2C]">*</span>
                     </label>
                     <select
                       name="useCase"
                       required
                       defaultValue=""
+                      data-visual-open-panel="media-kit-use-case"
                       className="w-full border border-[#E5E0DA] bg-white px-4 py-3 text-sm text-[#2C2A28] focus:outline-none focus:border-[#E36F2C]"
                     >
                       <option value="" disabled />
@@ -290,12 +391,13 @@ export default function MediaKitPageContent({
 
                   {labels.message ? (
                     <div>
-                      <label className="block text-[#2C2A28]/70 text-xs tracking-wider uppercase mb-2 font-medium">
+                      <label className="block text-[#2C2A28]/70 text-xs tracking-wider uppercase mb-2 font-medium" {...mediaKitFormLabelAttrs('label-message', lang)}>
                         {labels.message}
                       </label>
                       <textarea
                         name="message"
                         rows={4}
+                        data-visual-open-panel="media-kit-message"
                         className="w-full border border-[#E5E0DA] bg-white px-4 py-3 text-sm text-[#2C2A28] focus:outline-none focus:border-[#E36F2C] resize-y"
                       />
                     </div>
@@ -309,6 +411,8 @@ export default function MediaKitPageContent({
                     type="submit"
                     disabled={status === 'submitting'}
                     className="inline-flex min-h-12 w-full items-center justify-center bg-[#E36F2C] px-10 py-4 text-sm font-semibold tracking-wider text-white transition-colors hover:bg-[#C85A1F] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                    data-page-module="media-kit:form"
+                    {...mediaKitFormLabelAttrs(status === 'submitting' && labels.submitting ? 'submitting' : 'submit', lang)}
                   >
                     {status === 'submitting' && labels.submitting ? labels.submitting : labels.submit}
                   </button>
@@ -350,24 +454,80 @@ function getResourceKind(href: string) {
 function ResourceCard({
   resource,
   resourceCta,
+  lang,
 }: {
   resource: ResourceEntry;
   resourceCta: string;
+  lang: 'en' | 'zh';
 }) {
+  const titleAttrs = mediaKitCmsEditAttrs({
+    contentId: resource.id,
+    field: lang === 'zh' ? '资料标题（中文）' : 'Asset title',
+    patchKey: lang === 'zh' ? 'title_zh' : 'title_en',
+    targetId: `title-${lang}`,
+    search: resource.title,
+    value: resource.title,
+    required: true,
+  });
+  const summaryAttrs = mediaKitCmsEditAttrs({
+    contentId: resource.id,
+    field: lang === 'zh' ? '资料说明（中文）' : 'Asset summary',
+    patchKey: lang === 'zh' ? 'summary_zh' : 'summary_en',
+    targetId: `summary-${lang}`,
+    search: resource.title,
+    value: resource.summary ?? '',
+    input: 'textarea',
+    nullable: true,
+  });
+  const ctaAttrs = mediaKitCmsEditAttrs({
+    contentId: resource.id,
+    field: lang === 'zh' ? '申请按钮文案（中文）' : 'CTA label',
+    patchKey: lang === 'zh' ? 'cta_label_zh' : 'cta_label_en',
+    targetId: `cta-label-${lang}`,
+    search: resource.title,
+    value: resource.ctaLabel || resourceCta || resource.title,
+    maxLength: 120,
+    nullable: true,
+  });
+  const hrefAttrs = mediaKitCmsEditAttrs({
+    contentId: resource.id,
+    field: lang === 'zh' ? '申请按钮链接' : 'CTA link',
+    patchKey: 'cta_href',
+    targetId: 'cta-href',
+    search: resource.title,
+    value: resource.source.cta_href || resource.href,
+    maxLength: 1000,
+    nullable: true,
+  });
+  const previewPatchKey = resource.source.cover_image_url ? 'cover_image_url' : 'file_url';
+  const previewValue = previewPatchKey === 'cover_image_url'
+    ? resource.source.cover_image_url ?? ''
+    : resource.source.file_url ?? '';
+  const previewAttrs = mediaKitCmsEditAttrs({
+    contentId: resource.id,
+    field: previewPatchKey === 'cover_image_url' ? '封面图片' : '资源文件',
+    patchKey: previewPatchKey,
+    targetId: previewPatchKey,
+    search: resource.title,
+    value: previewValue,
+    maxLength: 1000,
+    nullable: true,
+  });
+
   return (
     <article className="flex min-h-[21rem] flex-col overflow-hidden border border-[#E5DED4] bg-white shadow-[0_18px_60px_rgba(44,42,40,0.08)]">
-      <ResourcePreview title={resource.title} previewUrl={resource.previewUrl} fileKind={resource.fileKind} />
+      <ResourcePreview title={resource.title} previewUrl={resource.previewUrl} fileKind={resource.fileKind} editAttrs={previewAttrs} />
       <div className="flex flex-1 flex-col justify-between p-5">
         <div>
-          {resource.title ? <h3 className="text-base font-bold leading-snug text-[#2C2A28]">{resource.title}</h3> : null}
+          {resource.title ? <h3 className="text-base font-bold leading-snug text-[#2C2A28]" {...titleAttrs}>{resource.title}</h3> : null}
           {resource.summary ? (
-            <p className="mt-3 text-xs leading-6 text-[#6B625B]">
+            <p className="mt-3 text-xs leading-6 text-[#6B625B]" {...summaryAttrs}>
               {resource.summary}
             </p>
           ) : null}
         </div>
         {resource.href ? (
-          <ResourceLink href={resource.href} label={resource.ctaLabel || resourceCta || resource.title} />
+          <ResourceLink href={resource.href} label={resource.ctaLabel || resourceCta || resource.title} editAttrs={ctaAttrs} hrefEditAttrs={hrefAttrs} />
         ) : null}
       </div>
     </article>
@@ -377,29 +537,85 @@ function ResourceCard({
 function FeaturedResourceCard({
   resource,
   resourceCta,
+  lang,
 }: {
   resource: ResourceEntry;
   resourceCta: string;
+  lang: 'en' | 'zh';
 }) {
+  const titleAttrs = mediaKitCmsEditAttrs({
+    contentId: resource.id,
+    field: lang === 'zh' ? '资料标题（中文）' : 'Asset title',
+    patchKey: lang === 'zh' ? 'title_zh' : 'title_en',
+    targetId: `title-${lang}`,
+    search: resource.title,
+    value: resource.title,
+    required: true,
+  });
+  const summaryAttrs = mediaKitCmsEditAttrs({
+    contentId: resource.id,
+    field: lang === 'zh' ? '资料说明（中文）' : 'Asset summary',
+    patchKey: lang === 'zh' ? 'summary_zh' : 'summary_en',
+    targetId: `summary-${lang}`,
+    search: resource.title,
+    value: resource.summary ?? '',
+    input: 'textarea',
+    nullable: true,
+  });
+  const ctaAttrs = mediaKitCmsEditAttrs({
+    contentId: resource.id,
+    field: lang === 'zh' ? '申请按钮文案（中文）' : 'CTA label',
+    patchKey: lang === 'zh' ? 'cta_label_zh' : 'cta_label_en',
+    targetId: `cta-label-${lang}`,
+    search: resource.title,
+    value: resource.ctaLabel || resourceCta || resource.title,
+    maxLength: 120,
+    nullable: true,
+  });
+  const hrefAttrs = mediaKitCmsEditAttrs({
+    contentId: resource.id,
+    field: lang === 'zh' ? '申请按钮链接' : 'CTA link',
+    patchKey: 'cta_href',
+    targetId: 'cta-href',
+    search: resource.title,
+    value: resource.source.cta_href || resource.href,
+    maxLength: 1000,
+    nullable: true,
+  });
+  const previewPatchKey = resource.source.cover_image_url ? 'cover_image_url' : 'file_url';
+  const previewValue = previewPatchKey === 'cover_image_url'
+    ? resource.source.cover_image_url ?? ''
+    : resource.source.file_url ?? '';
+  const previewAttrs = mediaKitCmsEditAttrs({
+    contentId: resource.id,
+    field: previewPatchKey === 'cover_image_url' ? '封面图片' : '资源文件',
+    patchKey: previewPatchKey,
+    targetId: previewPatchKey,
+    search: resource.title,
+    value: previewValue,
+    maxLength: 1000,
+    nullable: true,
+  });
+
   return (
     <article className="overflow-hidden border border-[#D8CEC0] bg-white shadow-[0_24px_80px_rgba(44,42,40,0.12)]">
       <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
-        <ResourcePreview title={resource.title} previewUrl={resource.previewUrl} fileKind={resource.fileKind} variant="featured" />
+        <ResourcePreview title={resource.title} previewUrl={resource.previewUrl} fileKind={resource.fileKind} variant="featured" editAttrs={previewAttrs} />
         <div className="flex min-h-[18rem] flex-col justify-between p-6 sm:p-7">
           <div>
             {resource.title ? (
-              <h3 className="text-2xl font-black leading-tight text-[#2C2A28] sm:text-3xl">
+              <h3 className="text-2xl font-black leading-tight text-[#2C2A28] sm:text-3xl" {...titleAttrs}>
                 {resource.title}
               </h3>
             ) : null}
             {resource.summary ? (
-              <p className="mt-4 text-sm leading-7 text-[#6B625B]">
+              <p className="mt-4 text-sm leading-7 text-[#6B625B]" {...summaryAttrs}>
                 {resource.summary}
               </p>
             ) : null}
           </div>
           {resource.href ? (
-            <ResourceLink href={resource.href} label={resource.ctaLabel || resourceCta || resource.title} />
+            <ResourceLink href={resource.href} label={resource.ctaLabel || resourceCta || resource.title} editAttrs={ctaAttrs} hrefEditAttrs={hrefAttrs} />
           ) : null}
         </div>
       </div>
@@ -407,7 +623,17 @@ function FeaturedResourceCard({
   );
 }
 
-function ResourceLink({ href, label }: { href: string; label: string }) {
+function ResourceLink({
+  href,
+  label,
+  editAttrs,
+  hrefEditAttrs,
+}: {
+  href: string;
+  label: string;
+  editAttrs?: VisualAttrs;
+  hrefEditAttrs?: VisualAttrs;
+}) {
   if (!href || !label) return null;
   return (
     <a
@@ -415,8 +641,11 @@ function ResourceLink({ href, label }: { href: string; label: string }) {
       target={isExternalHref(href) ? '_blank' : undefined}
       rel={isExternalHref(href) ? 'noopener noreferrer' : undefined}
       className="mt-5 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#E36F2C] hover:text-[#C85A1F]"
+      {...hrefEditAttrs}
     >
-      {label}
+      <span {...editAttrs}>
+        {label}
+      </span>
       <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
     </a>
   );
@@ -427,11 +656,13 @@ function ResourcePreview({
   previewUrl,
   fileKind,
   variant = 'card',
+  editAttrs,
 }: {
   title: string;
   previewUrl: string | null;
   fileKind: string;
   variant?: 'card' | 'featured';
+  editAttrs?: VisualAttrs;
 }) {
   const previewClassName = variant === 'featured'
     ? 'group relative min-h-[18rem] overflow-hidden bg-[#211D19] lg:min-h-full'
@@ -439,7 +670,7 @@ function ResourcePreview({
 
   if (previewUrl) {
     return (
-      <div className={previewClassName}>
+      <div className={previewClassName} {...editAttrs}>
         <ProtectedImage
           src={previewUrl}
           alt={title}
@@ -456,7 +687,7 @@ function ResourcePreview({
   }
 
   return (
-    <div className={`${variant === 'featured' ? 'min-h-[18rem] lg:min-h-full' : 'aspect-[4/3]'} flex items-center justify-center bg-[#2C2A28] text-[#F5F2ED]`}>
+    <div className={`${variant === 'featured' ? 'min-h-[18rem] lg:min-h-full' : 'aspect-[4/3]'} flex items-center justify-center bg-[#2C2A28] text-[#F5F2ED]`} {...editAttrs}>
       <div className="flex flex-col items-center gap-3">
         <FileText aria-hidden="true" className="h-9 w-9 text-[#E36F2C]" />
         <span className="text-xs font-semibold uppercase tracking-[0.22em]">{fileKind}</span>
@@ -470,21 +701,24 @@ function Field({
   name,
   type = 'text',
   required = false,
+  visualAttrs,
 }: {
   label: string;
   name: string;
   type?: string;
   required?: boolean;
+  visualAttrs?: VisualAttrs;
 }) {
   return (
     <div>
-      <label className="block text-[#2C2A28]/70 text-xs tracking-wider uppercase mb-2 font-medium">
+      <label className="block text-[#2C2A28]/70 text-xs tracking-wider uppercase mb-2 font-medium" {...visualAttrs}>
         {label} {required && <span className="text-[#E36F2C]">*</span>}
       </label>
       <input
         type={type}
         name={name}
         required={required}
+        data-visual-open-panel="media-kit-field"
         className="w-full border border-[#E5E0DA] bg-white px-4 py-3 text-sm text-[#2C2A28] focus:outline-none focus:border-[#E36F2C]"
       />
     </div>

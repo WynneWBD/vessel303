@@ -64,6 +64,8 @@ function FooterSocialLink({ item }: { item: PublicPageModuleItem }) {
     <span
       className="inline-flex h-[35px] w-[35px] items-center justify-center rounded-full bg-[#E36F2C] text-white transition hover:bg-[#F2A36E]"
       title={label}
+      data-page-module-item={item.id}
+      data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
     >
       <FooterSocialIcon itemId={item.id} />
       <span className="sr-only">{label}</span>
@@ -71,7 +73,11 @@ function FooterSocialLink({ item }: { item: PublicPageModuleItem }) {
   );
 
   if (!rawHref) {
-    return <span>{content}</span>;
+    return (
+      <span data-page-module-item={item.id} data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}>
+        {content}
+      </span>
+    );
   }
 
   if (isExternalActionHref(rawHref)) {
@@ -81,6 +87,8 @@ function FooterSocialLink({ item }: { item: PublicPageModuleItem }) {
         target={rawHref.startsWith('http') ? '_blank' : undefined}
         rel={rawHref.startsWith('http') ? 'noopener noreferrer' : undefined}
         aria-label={label}
+        data-page-module-item={item.id}
+        data-page-module-field="href"
       >
         {content}
       </a>
@@ -88,7 +96,13 @@ function FooterSocialLink({ item }: { item: PublicPageModuleItem }) {
   }
 
   return (
-    <Link href={rawHref} prefetch={false} aria-label={label}>
+    <Link
+      href={rawHref}
+      prefetch={false}
+      aria-label={label}
+      data-page-module-item={item.id}
+      data-page-module-field="href"
+    >
       {content}
     </Link>
   );
@@ -105,6 +119,7 @@ function FooterLinkList({ module }: { module: PublicPageModule | null }) {
       data-page-module={`${module.page_key ?? 'site'}:${module.module_key}`}
       data-page-key={module.page_key ?? 'site'}
       data-module-key={module.module_key}
+      data-page-module-field={lang === 'zh' ? 'title_zh' : 'title_en'}
     >
       {title ? (
         <h4 className="mb-5 text-xs font-semibold uppercase tracking-[0.25em] text-white" data-page-module-field={lang === 'zh' ? 'title_zh' : 'title_en'}>{title}</h4>
@@ -113,7 +128,11 @@ function FooterLinkList({ module }: { module: PublicPageModule | null }) {
         {items.map((item) => {
           const href = normalizeSiteHref(item.href, '');
           return (
-            <li key={item.id} data-page-module-item={item.id}>
+            <li
+              key={item.id}
+              data-page-module-item={item.id}
+              data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+            >
               {isExternalActionHref(href) ? (
                 <a
                   href={href}
@@ -202,6 +221,7 @@ export default function Footer() {
           data-page-module="site:footer-cta"
           data-page-key="site"
           data-module-key="footer-cta"
+          data-page-module-field={lang === 'zh' ? 'title_zh' : 'title_en'}
         >
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:px-6 md:flex-row lg:px-8">
             <div>
@@ -225,12 +245,18 @@ export default function Footer() {
                       rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
                       className={className}
                       data-page-module-item={item.id}
-                      data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                      data-page-module-field="href"
                     >
-                      {label}
+                      <span data-page-module-item={item.id} data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}>
+                        {label}
+                      </span>
                     </a>
                   ) : (
-                    <Link key={item.id} href={href} prefetch={false} className={className} data-page-module-item={item.id} data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}>{label}</Link>
+                    <Link key={item.id} href={href} prefetch={false} className={className} data-page-module-item={item.id} data-page-module-field="href">
+                      <span data-page-module-item={item.id} data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}>
+                        {label}
+                      </span>
+                    </Link>
                   );
                 })}
               </div>
@@ -247,11 +273,17 @@ export default function Footer() {
               data-page-module="site:footer-brand"
               data-page-key="site"
               data-module-key="footer-brand"
+              data-page-module-field={lang === 'zh' ? 'description_zh' : 'description_en'}
             >
               <div className="mb-4">
                 {brandLogoSrc ? (
                   brandLogoHref ? (
-                    <Link href={brandLogoHref} prefetch={false}>
+                    <Link
+                      href={brandLogoHref}
+                      prefetch={false}
+                      data-page-module-item="logo"
+                      data-page-module-field="href"
+                    >
                       <Image
                         src={brandLogoSrc}
                         alt={brandLogoAlt}
@@ -303,9 +335,11 @@ export default function Footer() {
                         rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
                           className="block hover:text-[#E36F2C]"
                           data-page-module-item={item.id}
-                          data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                          data-page-module-field="href"
                         >
-                        {label}
+                        <span data-page-module-item={item.id} data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}>
+                          {label}
+                        </span>
                       </a>
                     );
                   }
@@ -331,6 +365,7 @@ export default function Footer() {
               data-page-module="site:footer-contact"
               data-page-key="site"
               data-module-key="footer-contact"
+              data-page-module-field={lang === 'zh' ? 'title_zh' : 'title_en'}
             >
               {moduleTitle(contact, lang) ? (
                 <h4 className="mb-5 text-xs font-semibold uppercase tracking-[0.25em] text-white" data-page-module-field={lang === 'zh' ? 'title_zh' : 'title_en'}>
@@ -345,13 +380,18 @@ export default function Footer() {
                   const href = item.href ? normalizeSiteHref(item.href, '') : '';
                   const body = (
                     <>
-                      <span className="text-sm text-white/55">{label}</span>
-                      {content ? <span className="mt-0.5 block text-xs text-white/25">{content}</span> : null}
+                      <span className="text-sm text-white/55" data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}>{label}</span>
+                      {content ? <span className="mt-0.5 block text-xs text-white/25" data-page-module-field={lang === 'zh' ? 'content_zh' : 'content_en'}>{content}</span> : null}
                     </>
                   );
 
                   return (
-                    <li key={item.id} className="text-xs leading-relaxed text-white/40" data-page-module-item={item.id}>
+                    <li
+                      key={item.id}
+                      className="text-xs leading-relaxed text-white/40"
+                      data-page-module-item={item.id}
+                      data-page-module-field={lang === 'zh' ? 'label_zh' : 'label_en'}
+                    >
                       {href && isExternalActionHref(href) ? (
                         <a
                           href={href}

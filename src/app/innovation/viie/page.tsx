@@ -3,16 +3,18 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import InnovationCmsBlock from '@/components/tech/InnovationCmsBlock'
 import { getPublicB9ContentItem } from '@/lib/b9-content-db'
+import { getDefaultB9ContentItem } from '@/lib/b9-content-defaults'
 import { listPublishedPageModules } from '@/lib/page-modules-db'
 import { buildPageMetadata } from '@/lib/seo'
 
 export const revalidate = 300
 
 async function loadInnovationContent() {
-  return getPublicB9ContentItem('innovation', 'viie').catch((err) => {
+  const row = await getPublicB9ContentItem('innovation', 'viie').catch((err) => {
     console.error('[innovation/viie] content load failed', err)
     return null
   })
+  return row ?? getDefaultB9ContentItem('innovation', 'viie')
 }
 
 export async function generateMetadata(): Promise<Metadata> {

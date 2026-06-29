@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -116,6 +116,98 @@ function localizedList(zh: boolean, zhValues: string[], enValues: string[]) {
 
 function moduleLabel(pageModule: PublicPageModule | null, id: string, lang: 'en' | 'zh', en: string, zh: string) {
   return itemLabel(itemById(pageModule, id), lang) || (lang === 'zh' ? zh : en)
+}
+
+function visualLabelAttrs(itemId: string, lang: 'en' | 'zh') {
+  return {
+    'data-page-module': 'cases:detail-labels',
+    'data-page-key': 'cases',
+    'data-module-key': 'detail-labels',
+    'data-page-module-item': itemId,
+    'data-page-module-field': lang === 'zh' ? 'label_zh' : 'label_en',
+  }
+}
+
+function visualOpenPanelAttrs(key: string) {
+  return { 'data-visual-open-panel': key }
+}
+
+function heroItemAttrs(itemId: string, lang: 'en' | 'zh') {
+  return {
+    'data-page-module': 'cases:hero',
+    'data-page-key': 'cases',
+    'data-module-key': 'hero',
+    'data-page-module-item': itemId,
+    'data-page-module-field': lang === 'zh' ? 'label_zh' : 'label_en',
+  }
+}
+
+function heroModuleFieldAttrs(field: 'title' | 'description', lang: 'en' | 'zh') {
+  return {
+    'data-page-module': 'cases:hero',
+    'data-page-key': 'cases',
+    'data-module-key': 'hero',
+    'data-page-module-field': `${field}_${lang}`,
+  }
+}
+
+type CaseCmsEditOptions = {
+  patchKey?: string
+  input?: 'text' | 'textarea' | 'image'
+  arrayIndex?: number
+  maxLength?: number
+  required?: boolean
+  nullable?: boolean
+  value?: string | null
+}
+
+function caseCmsEditAttrs(
+  caseId: string,
+  section: 'basic' | 'media' | 'content' | 'params' | 'publish-check' | 'global',
+  field: string,
+  targetId: string,
+  options: CaseCmsEditOptions = {},
+) {
+  const attrs: Record<string, string> = {
+    'data-cms-edit-kind': 'project',
+    'data-cms-edit-title': '案例内容',
+    'data-cms-edit-field': field,
+    'data-cms-edit-url': `/admin/content/projects/${encodeURIComponent(caseId)}/edit#${section}`,
+    'data-cms-edit-id': `project-${caseId}-${targetId}`,
+  }
+
+  if (options.patchKey) {
+    attrs['data-cms-edit-api-url'] = `/api/admin/projects/${encodeURIComponent(caseId)}`
+    attrs['data-cms-edit-patch-key'] = options.patchKey
+    attrs['data-cms-edit-input'] = options.input ?? 'text'
+  }
+  if (options.arrayIndex != null) attrs['data-cms-edit-array-index'] = String(options.arrayIndex)
+  if (options.maxLength != null) attrs['data-cms-edit-max-length'] = String(options.maxLength)
+  if (options.required) attrs['data-cms-edit-required'] = '1'
+  if (options.nullable) attrs['data-cms-edit-nullable'] = '1'
+  if (options.value != null) attrs['data-cms-edit-value'] = options.value
+
+  return attrs
+}
+
+function subscribeVisualDraftPreview() {
+  return () => undefined
+}
+
+function getVisualDraftPreviewSnapshot() {
+  return typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('visualDraft') === '1'
+}
+
+function getVisualDraftPreviewServerSnapshot() {
+  return false
+}
+
+function useVisualDraftPreview() {
+  return useSyncExternalStore(
+    subscribeVisualDraftPreview,
+    getVisualDraftPreviewSnapshot,
+    getVisualDraftPreviewServerSnapshot,
+  )
 }
 
 function buildCaseListLabels(pageModule: PublicPageModule | null, lang: 'en' | 'zh'): CaseListLabels {
@@ -308,30 +400,39 @@ function CaseCommandPanel({
   const hasActiveFilter = activeType !== ALL_FILTER || activeTag !== ALL_FILTER
   const quickTypes = typeOptions.slice(0, 4)
   const quickTags = tagOptions.slice(0, 6)
+  const visualLang = zh ? 'zh' : 'en'
   const statItems = [
     {
       label: labels.publishedCases,
       value: cases.length,
       detail: labels.publishedCasesDetail,
       Icon: ShieldCheck,
+      labelItemId: 'list-published-cases',
+      detailItemId: 'list-published-cases-detail',
     },
     {
       label: labels.matchingNow,
       value: filteredCases.length,
       detail: labels.matchingNowDetail,
       Icon: Search,
+      labelItemId: 'list-matching-now',
+      detailItemId: 'list-matching-now-detail',
     },
     {
       label: labels.productReferences,
       value: productCount,
       detail: labels.productReferencesDetail,
       Icon: Layers3,
+      labelItemId: 'list-product-references',
+      detailItemId: 'list-product-references-detail',
     },
     {
       label: labels.projectLocations,
       value: locationCount,
       detail: labels.projectLocationsDetail,
       Icon: MapPin,
+      labelItemId: 'list-project-locations',
+      detailItemId: 'list-project-locations-detail',
     },
   ]
 
@@ -339,19 +440,22 @@ function CaseCommandPanel({
     <section
       className="mb-5 border border-[#E5DED4] bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-5"
       data-case-command-panel="true"
+      data-page-module="cases:detail-labels"
+      data-page-key="cases"
+      data-module-key="detail-labels"
     >
       <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.45fr)]">
         <div className="min-w-0">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[#1889B6]">
+              <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[#1889B6]" {...visualLabelAttrs('list-case-control', visualLang)}>
                 <BarChart3 size={15} strokeWidth={2.4} aria-hidden="true" />
                 {labels.caseControl}
               </p>
-              <h2 className="mt-2 text-2xl font-black leading-tight text-[#2C2A28] sm:text-3xl">
+              <h2 className="mt-2 text-2xl font-black leading-tight text-[#2C2A28] sm:text-3xl" {...visualLabelAttrs('list-case-control-title', visualLang)}>
                 {labels.caseControlTitle}
               </h2>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-[#6B6560]">
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-[#6B6560]" {...visualLabelAttrs('list-case-control-body', visualLang)}>
                 {labels.caseControlBody}
               </p>
             </div>
@@ -360,6 +464,8 @@ function CaseCommandPanel({
                 type="button"
                 className="inline-flex min-h-10 items-center gap-2 border border-[#E5DED4] bg-[#FAF7F2] px-3 text-xs font-bold uppercase tracking-[0.1em] text-[#5F5A55] transition-colors hover:border-[#E36F2C]/45 hover:text-[#2C2A28]"
                 onClick={onReset}
+                {...visualOpenPanelAttrs('cases-reset-filters')}
+                {...visualLabelAttrs('list-reset', visualLang)}
               >
                 <RotateCcw size={14} strokeWidth={2.4} aria-hidden="true" />
                 {labels.reset}
@@ -368,34 +474,34 @@ function CaseCommandPanel({
           </div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {statItems.map(({ label, value, detail, Icon }) => (
+            {statItems.map(({ label, value, detail, Icon, labelItemId, detailItemId }) => (
               <div key={label} className="border border-[#E5DED4] bg-[#FAF7F2] p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]">{label}</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]" {...visualLabelAttrs(labelItemId, visualLang)}>{label}</p>
                   <Icon size={16} strokeWidth={2.4} className="text-[#1889B6]" aria-hidden="true" />
                 </div>
                 <p className="mt-3 text-3xl font-black leading-none text-[#2C2A28]">{value}</p>
-                <p className="mt-2 text-xs leading-5 text-[#6B6560]">{detail}</p>
+                <p className="mt-2 text-xs leading-5 text-[#6B6560]" {...visualLabelAttrs(detailItemId, visualLang)}>{detail}</p>
               </div>
             ))}
           </div>
         </div>
 
         <aside className="min-w-0 border border-[#E5DED4] bg-[#FAF7F2] p-4">
-          <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[#2C2A28]">
+          <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[#2C2A28]" {...visualLabelAttrs('list-high-signal-filters', visualLang)}>
             <Filter size={15} strokeWidth={2.4} aria-hidden="true" />
             {labels.highSignalFilters}
           </p>
           <div className="mt-3 border border-[#E5DED4] bg-white px-3 py-2 text-xs leading-5 text-[#6B6560]">
-            <span className="font-black text-[#2C2A28]">{labels.currentRoute}: </span>
+            <span className="font-black text-[#2C2A28]" {...visualLabelAttrs('list-current-route', visualLang)}>{labels.currentRoute}: </span>
             {activeTypeLabel || activeTagLabel
               ? [activeTypeLabel, activeTagLabel].filter(Boolean).join(' / ')
-              : labels.allPublishedCases}
+              : <span {...visualLabelAttrs('list-all-published-cases', visualLang)}>{labels.allPublishedCases}</span>}
           </div>
 
           {quickTypes.length > 0 ? (
             <div className="mt-4">
-              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]">{labels.projectType}</p>
+              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]" {...visualLabelAttrs('fact-type', visualLang)}>{labels.projectType}</p>
               <div className="flex flex-wrap gap-2">
                 {quickTypes.map((option) => (
                   <button
@@ -404,6 +510,7 @@ function CaseCommandPanel({
                     aria-pressed={activeType === option.key}
                     className={filterButtonClass(activeType === option.key)}
                     onClick={() => onTypeChange(option.key)}
+                    {...visualOpenPanelAttrs('cases-type-filter')}
                   >
                     <CountedFilterLabel label={option.label} count={option.count} />
                   </button>
@@ -414,7 +521,7 @@ function CaseCommandPanel({
 
           {quickTags.length > 0 ? (
             <div className="mt-4">
-              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]">{labels.caseTags}</p>
+              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]" {...visualLabelAttrs('list-case-tags', visualLang)}>{labels.caseTags}</p>
               <div className="flex flex-wrap gap-2">
                 {quickTags.map((option) => (
                   <button
@@ -423,6 +530,7 @@ function CaseCommandPanel({
                     aria-pressed={activeTag === option.key}
                     className={filterButtonClass(activeTag === option.key)}
                     onClick={() => onTagChange(option.key)}
+                    {...visualOpenPanelAttrs('cases-tag-filter')}
                   >
                     <CountedFilterLabel label={option.label} count={option.count} />
                   </button>
@@ -434,7 +542,7 @@ function CaseCommandPanel({
           <div className="mt-5 grid gap-2 border-t border-[#E5DED4] pt-4 text-xs leading-5 text-[#6B6560]">
             <p className="flex items-start gap-2">
               <Globe2 size={14} strokeWidth={2.4} className="mt-0.5 shrink-0 text-[#1889B6]" aria-hidden="true" />
-              <span>{labels.locationProductNote}</span>
+              <span {...visualLabelAttrs('list-location-product-note', visualLang)}>{labels.locationProductNote}</span>
             </p>
           </div>
         </aside>
@@ -447,10 +555,12 @@ function CaseProofPathPanel({
   cases,
   filteredCases,
   labels,
+  lang,
 }: {
   cases: ProjectCaseRow[]
   filteredCases: ProjectCaseRow[]
   labels: CaseListLabels
+  lang: 'en' | 'zh'
 }) {
   const profiles = filteredCases.map(caseProofProfile)
   const proofReadyCount = profiles.filter((profile) => profile.hasInquiryContext && profile.imageCount > 0).length
@@ -467,52 +577,71 @@ function CaseProofPathPanel({
       value: filteredCases.length,
       detail: `${labels.visibleCasesDetailPrefix} ${cases.length}`,
       Icon: ShieldCheck,
+      labelItemId: 'list-visible-cases',
+      detailItemId: 'list-visible-cases-detail-prefix',
     },
     {
       label: labels.proofReady,
       value: proofReadyCount,
       detail: labels.proofReadyDetail,
       Icon: CheckCircle2,
+      labelItemId: 'list-proof-ready',
+      detailItemId: 'list-proof-ready-detail',
     },
     {
       label: labels.imageProof,
       value: galleryCount,
       detail: labels.imageProofDetail,
       Icon: ImageIcon,
+      labelItemId: 'list-image-proof',
+      detailItemId: 'list-image-proof-detail',
     },
     {
       label: labels.productReferences,
       value: productCount,
       detail: labels.proofProductReferencesDetail,
       Icon: Package,
+      labelItemId: 'list-product-references',
+      detailItemId: 'list-proof-product-references-detail',
     },
   ]
   const routeSteps = [
     {
       label: labels.scenario,
       detail: labels.scenarioDetail,
+      labelItemId: 'list-scenario',
+      detailItemId: 'list-scenario-detail',
     },
     {
       label: labels.proof,
       detail: labels.proofDetail,
+      labelItemId: 'list-proof',
+      detailItemId: 'list-proof-detail',
     },
     {
       label: labels.inquiry,
       detail: labels.inquiryDetail,
+      labelItemId: 'list-inquiry',
+      detailItemId: 'list-inquiry-detail',
     },
   ]
 
   return (
-    <section className="mb-5 overflow-hidden border border-[#D8E7E8] bg-white shadow-sm">
+    <section
+      className="mb-5 overflow-hidden border border-[#D8E7E8] bg-white shadow-sm"
+      data-page-module="cases:detail-labels"
+      data-page-key="cases"
+      data-module-key="detail-labels"
+    >
       <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="border-l-4 border-[#1889B6] px-4 py-4 sm:px-5">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#1889B6]">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#1889B6]" {...visualLabelAttrs('list-proof-density', lang)}>
             {labels.caseProofDensity}
           </p>
-          <h2 className="mt-2 text-2xl font-black leading-tight text-[#2C2A28] sm:text-3xl">
+          <h2 className="mt-2 text-2xl font-black leading-tight text-[#2C2A28] sm:text-3xl" {...visualLabelAttrs('list-proof-density-title', lang)}>
             {labels.proofDensityTitle}
           </h2>
-          <p className="mt-3 max-w-4xl text-sm leading-6 text-[#6B6560]">
+          <p className="mt-3 max-w-4xl text-sm leading-6 text-[#6B6560]" {...visualLabelAttrs('list-proof-density-body', lang)}>
             {labels.proofDensityBody}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -520,6 +649,7 @@ function CaseProofPathPanel({
               prefetch={false}
               href={strongestCaseHref}
               className="inline-flex min-h-10 items-center justify-center gap-2 border border-[#E36F2C] bg-[#E36F2C] px-3 text-xs font-black uppercase tracking-[0.12em] text-white transition-colors hover:border-[#C95E22] hover:bg-[#C95E22]"
+              {...visualLabelAttrs('list-open-proof-rich-case', lang)}
             >
               {labels.openProofRichCase}
               <ArrowRight size={15} strokeWidth={2.4} aria-hidden="true" />
@@ -529,6 +659,7 @@ function CaseProofPathPanel({
               href={strongestInquiryHref}
               data-analytics-cta="true"
               className="inline-flex min-h-10 items-center justify-center gap-2 border border-[#2C2A28] bg-[#2C2A28] px-3 text-xs font-black uppercase tracking-[0.12em] text-white transition-colors hover:border-[#1889B6] hover:bg-[#1889B6]"
+              {...visualLabelAttrs('list-start-case-inquiry', lang)}
             >
               <MessageSquareText size={15} strokeWidth={2.4} aria-hidden="true" />
               {labels.startCaseInquiry}
@@ -537,7 +668,7 @@ function CaseProofPathPanel({
         </div>
 
         <aside className="border-t border-[#E6EEEE] bg-[#F7FAFA] px-4 py-4 sm:px-5 lg:border-l lg:border-t-0">
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#2C2A28]">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#2C2A28]" {...visualLabelAttrs('list-buyer-decision-path', lang)}>
             {labels.buyerDecisionPath}
           </p>
           <div className="mt-3 space-y-2">
@@ -547,8 +678,8 @@ function CaseProofPathPanel({
                   {index + 1}
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-xs font-black uppercase tracking-[0.12em] text-[#2C2A28]">{step.label}</span>
-                  <span className="mt-1 block text-xs leading-5 text-[#6B6560]">{step.detail}</span>
+                  <span className="block text-xs font-black uppercase tracking-[0.12em] text-[#2C2A28]" {...visualLabelAttrs(step.labelItemId, lang)}>{step.label}</span>
+                  <span className="mt-1 block text-xs leading-5 text-[#6B6560]" {...visualLabelAttrs(step.detailItemId, lang)}>{step.detail}</span>
                 </span>
               </div>
             ))}
@@ -557,14 +688,14 @@ function CaseProofPathPanel({
       </div>
 
       <div className="grid grid-cols-1 border-t border-[#E6EEEE] md:grid-cols-2 xl:grid-cols-4">
-        {statItems.map(({ label, value, detail, Icon }) => (
+        {statItems.map(({ label, value, detail, Icon, labelItemId, detailItemId }) => (
           <div key={label} className="min-w-0 border-b border-[#E6EEEE] px-4 py-4 md:border-r xl:border-b-0 xl:last:border-r-0">
             <div className="flex items-center justify-between gap-3">
-              <p className="truncate text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]" title={label}>{label}</p>
+              <p className="truncate text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]" title={label} {...visualLabelAttrs(labelItemId, lang)}>{label}</p>
               <Icon size={16} strokeWidth={2.4} className="shrink-0 text-[#1889B6]" aria-hidden="true" />
             </div>
             <p className="mt-2 text-3xl font-black leading-none text-[#2C2A28]">{value}</p>
-            <p className="mt-2 text-xs leading-5 text-[#6B6560]">{detail}</p>
+            <p className="mt-2 text-xs leading-5 text-[#6B6560]" {...visualLabelAttrs(detailItemId, lang)}>{detail}</p>
           </div>
         ))}
       </div>
@@ -619,6 +750,7 @@ export default function CasesPageContent({
   )
   const hasFilters = typeOptions.length > 1 || tagOptions.length > 1
   const hasActiveFilter = activeType !== ALL_FILTER || activeTag !== ALL_FILTER
+  const visualDraftPreview = useVisualDraftPreview()
 
   return (
     <main className="bg-[#FAF7F2] text-[#2C2A28]">
@@ -633,17 +765,17 @@ export default function CasesPageContent({
         >
           <div className="mx-auto max-w-7xl">
             {heroEyebrow ? (
-              <p className="mb-4 text-xs font-medium uppercase tracking-[0.3em] text-[#E36F2C]">
+              <p className="mb-4 text-xs font-medium uppercase tracking-[0.3em] text-[#E36F2C]" {...heroItemAttrs('eyebrow', lang)}>
                 {heroEyebrow}
               </p>
             ) : null}
             {heroTitle ? (
-              <h1 className="max-w-4xl text-4xl font-black leading-tight text-[#F5F2ED] sm:text-5xl">
+              <h1 className="max-w-4xl text-4xl font-black leading-tight text-[#F5F2ED] sm:text-5xl" {...heroModuleFieldAttrs('title', lang)}>
                 {heroTitle}
               </h1>
             ) : null}
             {heroDescription ? (
-              <p className="mt-5 max-w-3xl text-sm leading-7 text-[#C9BEB4]">
+              <p className="mt-5 max-w-3xl text-sm leading-7 text-[#C9BEB4]" {...heroModuleFieldAttrs('description', lang)}>
                 {heroDescription}
               </p>
             ) : null}
@@ -652,7 +784,12 @@ export default function CasesPageContent({
       ) : null}
 
       {cases.length > 0 ? (
-        <section className="mx-auto max-w-[1500px] px-4 py-8 sm:px-6 lg:px-8">
+        <section
+          className="mx-auto max-w-[1500px] px-4 py-8 sm:px-6 lg:px-8"
+          data-page-module="cases:detail-labels"
+          data-page-key="cases"
+          data-module-key="detail-labels"
+        >
           <CaseCommandPanel
             cases={cases}
             filteredCases={filteredCases}
@@ -674,6 +811,7 @@ export default function CasesPageContent({
             cases={cases}
             filteredCases={filteredCases}
             labels={labels}
+            lang={lang}
           />
 
           {hasFilters ? (
@@ -682,13 +820,14 @@ export default function CasesPageContent({
                 <div className="min-w-0 flex-1 space-y-4">
                   {typeOptions.length > 1 ? (
                     <div className="grid gap-2 sm:grid-cols-[128px_minmax(0,1fr)] sm:items-start">
-                      <p className="pt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]">{typeFilterLabel}</p>
+                      <p className="pt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]" {...visualLabelAttrs('list-type-filter', lang)}>{typeFilterLabel}</p>
                       <div className="flex flex-wrap gap-2">
                         <button
                           type="button"
                           aria-pressed={activeType === ALL_FILTER}
                           className={filterButtonClass(activeType === ALL_FILTER)}
                           onClick={() => setActiveType(ALL_FILTER)}
+                          {...visualOpenPanelAttrs('cases-type-filter')}
                         >
                           <CountedFilterLabel label={allTypeLabel} count={cases.length} />
                         </button>
@@ -699,6 +838,7 @@ export default function CasesPageContent({
                             aria-pressed={activeType === option.key}
                             className={filterButtonClass(activeType === option.key)}
                             onClick={() => setActiveType(option.key)}
+                            {...visualOpenPanelAttrs('cases-type-filter')}
                           >
                             <CountedFilterLabel label={option.label} count={option.count} />
                           </button>
@@ -709,13 +849,14 @@ export default function CasesPageContent({
 
                   {tagOptions.length > 1 ? (
                     <div className="grid gap-2 sm:grid-cols-[128px_minmax(0,1fr)] sm:items-start">
-                      <p className="pt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]">{tagFilterLabel}</p>
+                      <p className="pt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#8A8580]" {...visualLabelAttrs('list-tags-filter', lang)}>{tagFilterLabel}</p>
                       <div className="flex flex-wrap gap-2">
                         <button
                           type="button"
                           aria-pressed={activeTag === ALL_FILTER}
                           className={filterButtonClass(activeTag === ALL_FILTER)}
                           onClick={() => setActiveTag(ALL_FILTER)}
+                          {...visualOpenPanelAttrs('cases-tag-filter')}
                         >
                           <CountedFilterLabel label={allTagLabel} count={cases.length} />
                         </button>
@@ -726,6 +867,7 @@ export default function CasesPageContent({
                             aria-pressed={activeTag === option.key}
                             className={filterButtonClass(activeTag === option.key)}
                             onClick={() => setActiveTag(option.key)}
+                            {...visualOpenPanelAttrs('cases-tag-filter')}
                           >
                             <CountedFilterLabel label={option.label} count={option.count} />
                           </button>
@@ -747,6 +889,8 @@ export default function CasesPageContent({
                         setActiveType(ALL_FILTER)
                         setActiveTag(ALL_FILTER)
                       }}
+                      {...visualOpenPanelAttrs('cases-reset-filters')}
+                      {...visualLabelAttrs('list-reset', lang)}
                     >
                       <RotateCcw size={14} strokeWidth={2.4} aria-hidden="true" />
                       {resetLabel}
@@ -764,7 +908,13 @@ export default function CasesPageContent({
               const location = localizedText(zh, item.location_zh, item.location_en)
               const type = localizedText(zh, item.project_type_zh, item.project_type_en)
               const desc = localizedText(zh, item.description_zh, item.description_en)
+              const descFallback = lang === 'zh' ? '添加案例简介' : 'Add case summary'
               const tags = localizedList(zh, item.tags_zh, item.tags_en)
+              const namePatchKey = lang === 'zh' ? 'name_zh' : 'name_en'
+              const locationPatchKey = lang === 'zh' ? 'location_zh' : 'location_en'
+              const typePatchKey = lang === 'zh' ? 'project_type_zh' : 'project_type_en'
+              const descriptionPatchKey = lang === 'zh' ? 'description_zh' : 'description_en'
+              const tagPatchKey = lang === 'zh' ? 'tags_zh' : 'tags_en'
               const proofProfile = caseProofProfile(item)
               const proofTone = caseProofTone(proofProfile)
               const proofToneClass =
@@ -780,24 +930,91 @@ export default function CasesPageContent({
                     ? labels.reviewProof
                     : labels.basicProof
               const facts = [
-                { label: itemLabel(itemById(detailLabelsModule, 'fact-type'), lang), value: type },
-                { label: itemLabel(itemById(detailLabelsModule, 'fact-location'), lang), value: location },
-                { label: itemLabel(itemById(detailLabelsModule, 'fact-investment'), lang), value: item.investment_display },
-                { label: itemLabel(itemById(detailLabelsModule, 'fact-products'), lang), value: item.products },
-                { label: itemLabel(itemById(detailLabelsModule, 'fact-units'), lang), value: item.units_display },
-                { label: itemLabel(itemById(detailLabelsModule, 'fact-area'), lang), value: item.area_display },
+                {
+                  label: itemLabel(itemById(detailLabelsModule, 'fact-type'), lang),
+                  value: type,
+                  editAttrs: caseCmsEditAttrs(item.id, 'basic', '项目类型', 'fact-type', {
+                    patchKey: typePatchKey,
+                    maxLength: 160,
+                    value: type,
+                  }),
+                },
+                {
+                  label: itemLabel(itemById(detailLabelsModule, 'fact-location'), lang),
+                  value: location,
+                  editAttrs: caseCmsEditAttrs(item.id, 'params', '项目地点', 'fact-location', {
+                    patchKey: locationPatchKey,
+                    maxLength: 220,
+                    required: true,
+                    value: location,
+                  }),
+                },
+                {
+                  label: itemLabel(itemById(detailLabelsModule, 'fact-investment'), lang),
+                  value: item.investment_display,
+                  editAttrs: caseCmsEditAttrs(item.id, 'params', '投资信息', 'fact-investment', {
+                    patchKey: 'investment_display',
+                    maxLength: 120,
+                    value: item.investment_display,
+                  }),
+                },
+                {
+                  label: itemLabel(itemById(detailLabelsModule, 'fact-products'), lang),
+                  value: item.products,
+                  editAttrs: caseCmsEditAttrs(item.id, 'params', '关联产品', 'fact-products', {
+                    patchKey: 'products',
+                    maxLength: 260,
+                    value: item.products,
+                  }),
+                },
+                {
+                  label: itemLabel(itemById(detailLabelsModule, 'fact-units'), lang),
+                  value: item.units_display,
+                  editAttrs: caseCmsEditAttrs(item.id, 'params', '舱数', 'fact-units', {
+                    patchKey: 'units_display',
+                    maxLength: 80,
+                    value: item.units_display,
+                  }),
+                },
+                {
+                  label: itemLabel(itemById(detailLabelsModule, 'fact-area'), lang),
+                  value: item.area_display,
+                  editAttrs: caseCmsEditAttrs(item.id, 'params', '项目面积', 'fact-area', {
+                    patchKey: 'area_display',
+                    maxLength: 80,
+                    value: item.area_display,
+                  }),
+                },
               ].filter((fact) => fact.label && fact.value)
               const featured = index === 0
               const caseHref = `/cases/${item.id}`
               const caseInquiryHref = `${caseHref}#case-inquiry`
+              const coverEditAttrs = caseCmsEditAttrs(item.id, 'media', '案例封面', 'cover-image', {
+                patchKey: 'cover_image_url',
+                input: 'image',
+                maxLength: 500,
+                nullable: true,
+                value: item.cover_image_url,
+              })
 
               return (
                 <article
                   key={item.id}
-                  className={`group flex min-h-full flex-col overflow-hidden border border-[#E5DED4] bg-white transition-all duration-300 hover:-translate-y-0.5 hover:border-[#E36F2C]/35 hover:shadow-[0_24px_60px_rgba(44,42,40,0.10)] ${featured ? 'xl:col-span-2' : ''}`}
+                  className={`group relative flex min-h-full flex-col overflow-hidden border border-[#E5DED4] bg-white transition-all duration-300 hover:-translate-y-0.5 hover:border-[#E36F2C]/35 hover:shadow-[0_24px_60px_rgba(44,42,40,0.10)] ${featured ? 'xl:col-span-2' : ''}`}
+                  {...caseCmsEditAttrs(item.id, 'basic', '案例标题', 'card-shell', {
+                    patchKey: namePatchKey,
+                    maxLength: 220,
+                    required: true,
+                    value: name,
+                  })}
                 >
                   {item.cover_image_url ? (
-                    <Link prefetch={false} href={caseHref} className="block">
+                    <Link
+                      prefetch={false}
+                      href={caseHref}
+                      className="block"
+                      {...coverEditAttrs}
+                    >
                       <div className={`relative overflow-hidden bg-[#E5DED4] ${featured ? 'aspect-[16/9] md:aspect-[21/10]' : 'aspect-[4/3]'}`}>
                         <ProtectedImage
                           src={item.cover_image_url}
@@ -814,6 +1031,11 @@ export default function CasesPageContent({
                           {type ? (
                             <span
                               className="bg-[#E36F2C] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white"
+                              {...caseCmsEditAttrs(item.id, 'basic', '项目类型', 'project-type', {
+                                patchKey: typePatchKey,
+                                maxLength: 160,
+                                value: type,
+                              })}
                             >
                               {type}
                             </span>
@@ -826,10 +1048,17 @@ export default function CasesPageContent({
                         </div>
                         {tags.length > 0 ? (
                           <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-2">
-                            {tags.slice(0, featured ? 4 : 2).map((tag) => (
+                            {tags.slice(0, featured ? 4 : 2).map((tag, tagIndex) => (
                               <span
                                 key={tag}
                                 className="border border-white/25 bg-white/14 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-white backdrop-blur"
+                                {...caseCmsEditAttrs(item.id, 'content', '案例标签', `tag-${tagIndex}`, {
+                                  patchKey: tagPatchKey,
+                                  arrayIndex: tagIndex,
+                                  maxLength: 50,
+                                  required: true,
+                                  value: tag,
+                                })}
                               >
                                 {tag}
                               </span>
@@ -839,47 +1068,91 @@ export default function CasesPageContent({
                       </div>
                     </Link>
                   ) : (
-                    <Link prefetch={false} href={caseHref} className={`block bg-[#E5DED4] ${featured ? 'aspect-[16/9] md:aspect-[21/10]' : 'aspect-[4/3]'}`} />
+                    <Link
+                      prefetch={false}
+                      href={caseHref}
+                      className={`block bg-[#E5DED4] ${featured ? 'aspect-[16/9] md:aspect-[21/10]' : 'aspect-[4/3]'}`}
+                      {...coverEditAttrs}
+                    />
                   )}
 
                   <div className="flex flex-1 flex-col p-5 sm:p-6">
                     {name ? (
                       <h2 className={`${featured ? 'text-2xl sm:text-3xl' : 'text-xl'} font-black leading-tight text-[#2C2A28]`}>
-                        <Link prefetch={false} href={caseHref} className="transition-colors hover:text-[#E36F2C]">
+                        <Link
+                          prefetch={false}
+                          href={caseHref}
+                          className="transition-colors hover:text-[#E36F2C]"
+                          {...caseCmsEditAttrs(item.id, 'basic', '案例标题', 'name', {
+                            patchKey: namePatchKey,
+                            maxLength: 220,
+                            required: true,
+                            value: name,
+                          })}
+                        >
                           {name}
                         </Link>
                       </h2>
                     ) : null}
                     {location ? (
-                      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#8A8580]">
+                      <p
+                        className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#8A8580]"
+                        {...caseCmsEditAttrs(item.id, 'params', '项目地点', 'location', {
+                          patchKey: locationPatchKey,
+                          maxLength: 220,
+                          required: true,
+                          value: location,
+                        })}
+                      >
                         {location}
                       </p>
                     ) : null}
-                    {desc ? (
-                      <p className={`mt-4 text-sm leading-6 text-[#6B6560] ${featured ? 'line-clamp-3' : 'line-clamp-2'}`}>{desc}</p>
+                    {desc || visualDraftPreview ? (
+                      <p
+                        className={`mt-4 text-sm leading-6 text-[#6B6560] ${featured ? 'line-clamp-3' : 'line-clamp-2'}`}
+                        {...caseCmsEditAttrs(item.id, 'content', '案例简介', 'description', {
+                          patchKey: descriptionPatchKey,
+                          input: 'textarea',
+                          maxLength: 6000,
+                          nullable: true,
+                          value: desc,
+                        })}
+                      >
+                        {desc || descFallback}
+                      </p>
                     ) : null}
                     <div className="mt-5 grid grid-cols-2 gap-2 border-t border-[#E5DED4] pt-4 sm:grid-cols-4">
                       <div className={`col-span-2 min-w-0 border px-3 py-2 sm:col-span-1 ${proofToneClass}`}>
-                        <span className="block truncate text-[10px] font-black uppercase tracking-[0.12em]" title={proofLabel}>{proofLabel}</span>
+                        <span
+                          className="block truncate text-[10px] font-black uppercase tracking-[0.12em]"
+                          title={proofLabel}
+                          {...visualLabelAttrs(proofTone === 'ready' ? 'list-proof-ready' : proofTone === 'review' ? 'list-review-proof' : 'list-basic-proof', lang)}
+                        >
+                          {proofLabel}
+                        </span>
                         <span className="mt-1 block text-sm font-black leading-5">{proofProfile.proofScore}</span>
                       </div>
                       <div className="min-w-0 border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-2 text-[#2C2A28]">
-                        <span className="block truncate text-[10px] font-black uppercase tracking-[0.12em] text-[#8A8580]">{labels.gallery}</span>
+                        <span className="block truncate text-[10px] font-black uppercase tracking-[0.12em] text-[#8A8580]" {...visualLabelAttrs('gallery-title', lang)}>{labels.gallery}</span>
                         <span className="mt-1 block text-sm font-black leading-5">{proofProfile.imageCount}</span>
                       </div>
                       <div className="min-w-0 border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-2 text-[#2C2A28]">
-                        <span className="block truncate text-[10px] font-black uppercase tracking-[0.12em] text-[#8A8580]">{labels.facts}</span>
+                        <span className="block truncate text-[10px] font-black uppercase tracking-[0.12em] text-[#8A8580]" {...visualLabelAttrs('list-facts', lang)}>{labels.facts}</span>
                         <span className="mt-1 block text-sm font-black leading-5">{proofProfile.factCount}/5</span>
                       </div>
                       <div className="min-w-0 border border-[#D8E7E8] bg-[#F7FAFA] px-3 py-2 text-[#2C2A28]">
-                        <span className="block truncate text-[10px] font-black uppercase tracking-[0.12em] text-[#8A8580]">{labels.products}</span>
+                        <span className="block truncate text-[10px] font-black uppercase tracking-[0.12em] text-[#8A8580]" {...visualLabelAttrs('fact-products', lang)}>{labels.products}</span>
                         <span className="mt-1 block text-sm font-black leading-5">{proofProfile.productsCount}</span>
                       </div>
                     </div>
                     {facts.length > 0 ? (
                       <div className={`mt-6 grid gap-2 border-t border-[#E5DED4] pt-5 ${featured ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
                         {facts.slice(0, featured ? 6 : 4).map((fact, factIndex) => (
-                          <div key={`${fact.label}-${factIndex}`} className="min-w-0 border border-[#E5DED4] bg-[#FAF7F2] px-3 py-2">
+                          <div
+                            key={`${fact.label}-${factIndex}`}
+                            className="min-w-0 border border-[#E5DED4] bg-[#FAF7F2] px-3 py-2"
+                            {...fact.editAttrs}
+                          >
                             <span className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9A8F86]">{fact.label}</span>
                             <span className="mt-1 block text-sm font-bold leading-5 text-[#2C2A28]">{fact.value}</span>
                           </div>
@@ -891,6 +1164,7 @@ export default function CasesPageContent({
                         prefetch={false}
                         href={caseHref}
                         className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[#E36F2C] transition-transform duration-300 hover:translate-x-1"
+                        {...visualLabelAttrs('list-open-case', lang)}
                       >
                         {openCaseLabel}
                         <ArrowRight size={18} strokeWidth={2.4} aria-hidden="true" />
@@ -900,6 +1174,7 @@ export default function CasesPageContent({
                         href={caseInquiryHref}
                         data-analytics-cta="true"
                         className="inline-flex min-h-10 items-center justify-center border border-[#2C2A28] bg-[#2C2A28] px-3 text-xs font-black uppercase tracking-[0.12em] text-white transition-colors hover:border-[#E36F2C] hover:bg-[#E36F2C]"
+                        {...visualLabelAttrs('list-case-inquiry', lang)}
                       >
                         {caseInquiryLabel}
                       </Link>

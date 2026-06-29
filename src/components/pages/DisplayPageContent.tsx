@@ -16,6 +16,7 @@ import {
 } from '@/lib/page-module-client';
 
 type DisplayContentRow = DisplaySlide & {
+  id?: number;
   title_zh?: string;
   title_en?: string;
   summary_zh?: string | null;
@@ -25,6 +26,8 @@ type DisplayContentRow = DisplaySlide & {
   cover_image_url?: string | null;
   payload?: Record<string, unknown>;
 };
+
+type VisualAttrs = Record<`data-${string}`, string>;
 
 const INTERVAL = 5000;
 const DISPLAY_CONTACT_HREF = buildContactHref('display:showcase-contact');
@@ -68,6 +71,7 @@ function mapDisplayRow(row: DisplayContentRow): DisplaySlide | null {
   if (!model || !image) return null;
 
   return {
+    contentId: row.contentId ?? row.id,
     model,
     gen: row.gen || asText(payload.gen) || row.summary_en || '',
     tag: row.tag || asText(payload.tag) || row.summary_zh || '',
@@ -79,6 +83,7 @@ function mapDisplayRow(row: DisplayContentRow): DisplaySlide | null {
       : asTextArray(payload.features).concat(textLines(row.body_zh || row.body_en)).slice(0, 3),
     price: row.price || asText(payload.price),
     image,
+    imageSource: row.imageSource || row.image || row.cover_image_url || '',
     detailHref: normalizeSiteHref(row.detailHref || asText(payload.href) || asText(payload.product_href) || asText(payload.detail_href), SITE_PRODUCTS_HREF) || undefined,
     detailLabel: row.detailLabel || asText(payload.detail_label),
     consultHref: normalizeDisplayContactHref(row.consultHref || asText(payload.consult_href)) || undefined,
@@ -91,21 +96,82 @@ function normalizeDisplayContactHref(href: string | null | undefined) {
   return normalized === '/contact' ? DISPLAY_CONTACT_HREF : normalized;
 }
 
-function DisplayTopNav({ copy }: { copy: DisplayCopy }) {
+function displayModuleFieldAttrs(moduleKey: 'hero' | 'ui', itemId: string | null, field: string): VisualAttrs {
+  const attrs: VisualAttrs = {
+    'data-page-module': `display:${moduleKey}`,
+    'data-page-key': 'display',
+    'data-module-key': moduleKey,
+    'data-page-module-field': field,
+  };
+  if (itemId) attrs['data-page-module-item'] = itemId;
+  return attrs;
+}
+
+function displayLabelAttrs(moduleKey: 'hero' | 'ui', itemId: string, lang: 'en' | 'zh') {
+  return displayModuleFieldAttrs(moduleKey, itemId, lang === 'zh' ? 'label_zh' : 'label_en');
+}
+
+function displayCmsEditAttrs({
+  contentId,
+  field,
+  patchKey,
+  targetId,
+  search,
+  value,
+  input = 'text',
+  maxLength,
+  required = false,
+  nullable = false,
+}: {
+  contentId: number;
+  field: string;
+  patchKey: string;
+  targetId: string;
+  search: string;
+  value: string;
+  input?: 'text' | 'textarea';
+  maxLength?: number;
+  required?: boolean;
+  nullable?: boolean;
+}): VisualAttrs {
+  const safeSearch = search.trim() || String(contentId);
+  return {
+    'data-cms-edit-kind': 'site-content',
+    'data-cms-edit-title': 'Display 展示',
+    'data-cms-edit-field': field,
+    'data-cms-edit-url': `/admin/content/display?search=${encodeURIComponent(safeSearch)}#b9-content-workbench`,
+    'data-cms-edit-id': `site-content-display-${contentId}-${targetId}`,
+    'data-cms-edit-value': value,
+    'data-cms-edit-api-url': `/api/admin/site-content/${contentId}`,
+    'data-cms-edit-patch-key': patchKey,
+    'data-cms-edit-input': input,
+    'data-cms-edit-max-length': String(maxLength ?? (input === 'textarea' ? 20000 : 240)),
+    'data-cms-edit-required': required ? '1' : '0',
+    'data-cms-edit-nullable': nullable ? '1' : '0',
+  };
+}
+
+function DisplayTopNav({ copy, lang }: { copy: DisplayCopy; lang: 'en' | 'zh' }) {
   return (
-    <header className="absolute left-4 right-4 top-4 z-40 flex flex-wrap items-center justify-between gap-3 border border-white/12 bg-[#241F1B]/55 px-4 py-3 text-white shadow-2xl shadow-black/20 backdrop-blur md:left-6 md:right-6 md:px-5">
-      <Link prefetch={false} href="/" className="text-sm font-black uppercase tracking-[0.24em] text-white">
+    <header className="absolute left-4 right-4 top-4 z-40 flex flex-wrap items-center justify-between gap-3 border border-white/12 bg-[#241F1B]/55 px-4 py-3 text-white shadow-2xl shadow-black/20 backdrop-blur md:left-6 md:right-6 md:px-5" data-page-module="display:hero">
+      <Link prefetch={false} href="/" className="text-sm font-black uppercase tracking-[0.24em] text-white" {...displayLabelAttrs('hero', 'nav-brand', lang)}>
         {copy.brand}
       </Link>
       <nav aria-label="Display page navigation" className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
-        <Link prefetch={false} href={copy.productsHref} className="min-h-9 px-3 py-2 transition hover:text-white">
-          {copy.products}
+        <Link prefetch={false} href={copy.productsHref} className="min-h-9 px-3 py-2 transition hover:text-white" {...displayModuleFieldAttrs('hero', 'nav-products', 'href')}>
+          <span {...displayLabelAttrs('hero', 'nav-products', lang)}>
+            {copy.products}
+          </span>
         </Link>
-        <Link prefetch={false} href={copy.casesHref} className="min-h-9 px-3 py-2 transition hover:text-white">
-          {copy.cases}
+        <Link prefetch={false} href={copy.casesHref} className="min-h-9 px-3 py-2 transition hover:text-white" {...displayModuleFieldAttrs('hero', 'nav-cases', 'href')}>
+          <span {...displayLabelAttrs('hero', 'nav-cases', lang)}>
+            {copy.cases}
+          </span>
         </Link>
-        <Link prefetch={false} href={copy.contactHref} className="min-h-9 bg-[#E36F2C] px-3 py-2 text-white transition hover:bg-[#C95E22]">
-          {copy.contact}
+        <Link prefetch={false} href={copy.contactHref} className="min-h-9 bg-[#E36F2C] px-3 py-2 text-white transition hover:bg-[#C95E22]" {...displayModuleFieldAttrs('hero', 'nav-contact', 'href')}>
+          <span {...displayLabelAttrs('hero', 'nav-contact', lang)}>
+            {copy.contact}
+          </span>
         </Link>
       </nav>
     </header>
@@ -236,9 +302,9 @@ export default function DisplayPageContent({
   if (!slide) {
     return (
       <div className="relative min-h-screen bg-[#241F1B] text-white">
-        <DisplayTopNav copy={copy} />
+        <DisplayTopNav copy={copy} lang={lang} />
         <div className="flex min-h-screen items-center justify-center px-6 text-center">
-          <p className="max-w-xl text-sm font-semibold uppercase tracking-[0.18em] text-white/65">{copy.emptyState}</p>
+          <p className="max-w-xl text-sm font-semibold uppercase tracking-[0.18em] text-white/65" {...displayLabelAttrs('ui', 'empty-state', lang)}>{copy.emptyState}</p>
         </div>
       </div>
     );
@@ -250,6 +316,62 @@ export default function DisplayPageContent({
   const detailLabel = slide.detailLabel || copy.detailCta;
   const consultHref = normalizeDisplayContactHref(slide.consultHref);
   const consultLabel = slide.consultLabel || copy.consultCta;
+  const slideTitleAttrs = slide.contentId ? displayCmsEditAttrs({
+    contentId: slide.contentId,
+    field: lang === 'zh' ? '展示标题（中文）' : 'Display title',
+    patchKey: lang === 'zh' ? 'title_zh' : 'title_en',
+    targetId: `title-${lang}`,
+    search: slide.model,
+    value: slide.model,
+    required: true,
+  }) : undefined;
+  const slideTaglineAttrs = slide.contentId ? displayCmsEditAttrs({
+    contentId: slide.contentId,
+    field: lang === 'zh' ? '展示说明（中文）' : 'Display tagline',
+    patchKey: lang === 'zh' ? 'body_zh' : 'body_en',
+    targetId: `body-${lang}`,
+    search: slide.model,
+    value: slide.tagline,
+    input: 'textarea',
+    nullable: true,
+  }) : undefined;
+  const slideImageAttrs = slide.contentId ? displayCmsEditAttrs({
+    contentId: slide.contentId,
+    field: '展示主图',
+    patchKey: 'cover_image_url',
+    targetId: 'cover-image',
+    search: slide.model,
+    value: slide.imageSource || slide.image,
+    maxLength: 1000,
+    nullable: true,
+  }) : undefined;
+  const displayPayloadAttrs = (
+    payloadKey: string,
+    field: string,
+    value: string,
+    targetId: string,
+  ) => slide.contentId ? displayCmsEditAttrs({
+    contentId: slide.contentId,
+    field,
+    patchKey: `payload.${payloadKey}`,
+    targetId,
+    search: slide.model,
+    value,
+    nullable: true,
+  }) : undefined;
+  const slideGenAttrs = displayPayloadAttrs('gen', lang === 'zh' ? '代际标签' : 'Generation label', slide.gen, 'payload-gen');
+  const slideTagAttrs = displayPayloadAttrs('tag', lang === 'zh' ? '场景标签' : 'Scenario label', slide.tag, 'payload-tag');
+  const slideSizeAttrs = displayPayloadAttrs('size', lang === 'zh' ? '面积规格' : 'Size label', slide.size, 'payload-size');
+  const slideCapacityAttrs = displayPayloadAttrs('capacity', lang === 'zh' ? '容量说明' : 'Capacity label', slide.capacity, 'payload-capacity');
+  const slidePriceAttrs = displayPayloadAttrs('price', lang === 'zh' ? '价格展示' : 'Price label', slide.price, 'payload-price');
+  const detailButtonAttrs = slide.detailLabel
+    ? displayPayloadAttrs('detail_label', lang === 'zh' ? '详情按钮文案' : 'Detail button label', slide.detailLabel, 'payload-detail-label')
+    : displayLabelAttrs('ui', 'detail-cta', lang);
+  const consultButtonAttrs = slide.consultLabel
+    ? displayPayloadAttrs('consult_label', lang === 'zh' ? '咨询按钮文案' : 'Inquiry button label', slide.consultLabel, 'payload-consult-label')
+    : displayLabelAttrs('ui', 'consult-cta', lang);
+  const detailHrefAttrs = displayPayloadAttrs('detail_href', lang === 'zh' ? '详情按钮链接' : 'Detail button link', detailHref, 'payload-detail-href');
+  const consultHrefAttrs = displayPayloadAttrs('consult_href', lang === 'zh' ? '咨询按钮链接' : 'Inquiry button link', consultHref, 'payload-consult-href');
 
   return (
     <div
@@ -257,9 +379,9 @@ export default function DisplayPageContent({
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      <DisplayTopNav copy={copy} />
+      <DisplayTopNav copy={copy} lang={lang} />
 
-      <div className="absolute inset-0 transition-opacity duration-700" style={{ opacity: transitioning ? 0 : 1 }}>
+      <div className="absolute inset-0 transition-opacity duration-700" style={{ opacity: transitioning ? 0 : 1 }} {...slideImageAttrs}>
         <Image
           key={slide.image + slide.model}
           src={slide.image}
@@ -278,12 +400,12 @@ export default function DisplayPageContent({
         {(slide.gen || slide.tag) ? (
           <div className="mb-5 flex items-center gap-3">
             {slide.gen ? (
-              <span className="border border-[#E36F2C]/50 px-3 py-1 text-xs font-bold uppercase tracking-[0.32em] text-[#E36F2C]">
+              <span className="border border-[#E36F2C]/50 px-3 py-1 text-xs font-bold uppercase tracking-[0.32em] text-[#E36F2C]" {...slideGenAttrs}>
                 {slide.gen}
               </span>
             ) : null}
             {slide.tag ? (
-              <span className="text-xs uppercase tracking-[0.24em] text-white/45">
+              <span className="text-xs uppercase tracking-[0.24em] text-white/45" {...slideTagAttrs}>
                 {slide.tag}
               </span>
             ) : null}
@@ -291,19 +413,19 @@ export default function DisplayPageContent({
         ) : null}
 
         <div className="mb-5 flex flex-wrap items-end gap-4">
-          <h1 className="text-6xl font-black leading-none tracking-tight text-white sm:text-8xl lg:text-[12rem]">
+          <h1 className="text-6xl font-black leading-none tracking-tight text-white sm:text-8xl lg:text-[12rem]" {...slideTitleAttrs}>
             {slide.model}
           </h1>
           {(slide.size || slide.capacity) ? (
             <div className="mb-2">
-              {slide.size ? <div className="text-2xl font-black tracking-wider text-[#E36F2C] sm:text-4xl">{slide.size}</div> : null}
-              {slide.capacity ? <div className="mt-1 text-xs tracking-[0.24em] text-white/45 sm:text-sm">{slide.capacity}</div> : null}
+              {slide.size ? <div className="text-2xl font-black tracking-wider text-[#E36F2C] sm:text-4xl" {...slideSizeAttrs}>{slide.size}</div> : null}
+              {slide.capacity ? <div className="mt-1 text-xs tracking-[0.24em] text-white/45 sm:text-sm" {...slideCapacityAttrs}>{slide.capacity}</div> : null}
             </div>
           ) : null}
         </div>
 
         {slide.tagline ? (
-          <p className="mb-8 max-w-2xl text-base font-light leading-8 tracking-[0.08em] text-white/72 sm:text-xl">
+          <p className="mb-8 max-w-2xl text-base font-light leading-8 tracking-[0.08em] text-white/72 sm:text-xl" {...slideTaglineAttrs}>
             {slide.tagline}
           </p>
         ) : null}
@@ -343,13 +465,17 @@ export default function DisplayPageContent({
         </div>
 
         <div className="flex flex-col items-end gap-3">
-          {slide.price ? <div className="text-2xl font-black tracking-wider text-[#E36F2C]">{slide.price}</div> : null}
+          {slide.price ? <div className="text-2xl font-black tracking-wider text-[#E36F2C]" {...slidePriceAttrs}>{slide.price}</div> : null}
           <div className="flex flex-wrap justify-end gap-2">
-            <Link prefetch={false} href={detailHref} className="inline-flex min-h-10 items-center border border-white/30 bg-white/12 px-4 text-xs font-bold uppercase tracking-[0.18em] text-white backdrop-blur transition hover:border-[#E36F2C] hover:bg-[#E36F2C]">
-              {detailLabel}
+            <Link prefetch={false} href={detailHref} className="inline-flex min-h-10 items-center border border-white/30 bg-white/12 px-4 text-xs font-bold uppercase tracking-[0.18em] text-white backdrop-blur transition hover:border-[#E36F2C] hover:bg-[#E36F2C]" {...detailHrefAttrs}>
+              <span {...detailButtonAttrs}>
+                {detailLabel}
+              </span>
             </Link>
-            <Link prefetch={false} href={consultHref} className="inline-flex min-h-10 items-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.18em] text-white transition hover:bg-[#C95E22]">
-              {consultLabel}
+            <Link prefetch={false} href={consultHref} className="inline-flex min-h-10 items-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.18em] text-white transition hover:bg-[#C95E22]" {...consultHrefAttrs}>
+              <span {...consultButtonAttrs}>
+                {consultLabel}
+              </span>
             </Link>
           </div>
         </div>

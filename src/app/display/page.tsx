@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import DisplayPageContent from '@/components/pages/DisplayPageContent'
 import { listPublicDisplaySlides } from '@/lib/display-slides'
-import { listPublishedPageModules, type PageModuleRow } from '@/lib/page-modules-db'
+import { getDefaultPageModule, listDefaultPageModules, listPublishedPageModules, type PageModuleRow } from '@/lib/page-modules-db'
 import { buildPageMetadata } from '@/lib/seo'
 
 export const revalidate = 300
@@ -26,7 +26,7 @@ function findModule(modules: PageModuleRow[], moduleKey: string) {
 
 export async function generateMetadata(): Promise<Metadata> {
   const [slides, pageModules] = await Promise.all([loadDisplaySlides(), loadDisplayPageModules()])
-  const heroModule = findModule(pageModules, 'hero')
+  const heroModule = findModule(pageModules, 'hero') ?? getDefaultPageModule('display', 'hero')
   const firstSlide = slides.find((slide) => slide.model && slide.tagline)
   const title = heroModule?.title_en || heroModule?.title_zh || 'VESSEL Product Display'
   const description = heroModule?.description_en || heroModule?.description_zh || firstSlide?.tagline || ''
@@ -42,5 +42,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function DisplayPage() {
   const [slides, pageModules] = await Promise.all([loadDisplaySlides(), loadDisplayPageModules()])
-  return <DisplayPageContent initialSlides={slides} initialPageModules={pageModules} />
+  const safePageModules = pageModules.length > 0 ? pageModules : listDefaultPageModules('display')
+  return <DisplayPageContent initialSlides={slides} initialPageModules={safePageModules} />
 }

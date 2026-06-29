@@ -201,7 +201,7 @@ function OperationsHub({ stats }: { stats: NewsStats }) {
     {
       label: '列表矩阵',
       value: formatNumber(stats.total),
-      detail: `已发布 ${formatNumber(stats.published)} 条，草稿 ${formatNumber(stats.draft)} 条；进入新闻列表处理筛选、批量转分类和单篇编辑。`,
+      detail: `已发布 ${formatNumber(stats.published)} 条，草稿 ${formatNumber(stats.draft)} 条。`,
       href: '/admin/content/news/list',
       cta: '打开新闻列表',
       tone: 'blue',
@@ -210,7 +210,7 @@ function OperationsHub({ stats }: { stats: NewsStats }) {
     {
       label: '分类治理',
       value: '已接入',
-      detail: '分类管理已接回新闻列表筛选、批量转分类、待补内容和分类管理器。',
+      detail: '分类、筛选和批量归类。',
       href: '/admin/content/news/categories#news-category-governance',
       cta: '查看分类治理',
       tone: 'green',
@@ -219,7 +219,7 @@ function OperationsHub({ stats }: { stats: NewsStats }) {
     {
       label: '回收安全',
       value: formatNumber(stats.deleted),
-      detail: '回收站只恢复为草稿，不开放永久删除；恢复后继续回到内容复核和发布检查。',
+      detail: '回收内容可恢复为草稿。',
       href: '/admin/content/news/recycle#news-recycle-governance',
       cta: '查看回收站',
       tone: stats.deleted > 0 ? 'orange' : 'green',
@@ -228,7 +228,7 @@ function OperationsHub({ stats }: { stats: NewsStats }) {
     {
       label: '定时复核',
       value: formatNumber(stats.scheduled),
-      detail: '定时字段用于记录计划发布时间；自动执行、失败重试和批量定时仍单独排期。',
+      detail: '计划发布时间和待发布内容。',
       href: '/admin/content/news/list?schedule=scheduled',
       cta: '查看定时草稿',
       tone: stats.scheduled > 0 ? 'blue' : 'neutral',
@@ -244,26 +244,26 @@ function OperationsHub({ stats }: { stats: NewsStats }) {
       Icon: SearchCheck,
     },
     {
-      label: '来源承接',
-      value: '已回连',
-      detail: '线索状态、来源面板、转化复盘和新闻来源线索队列已串联，便于从内容运营回看获客效果。',
+      label: '新闻线索',
+      value: '可查看',
+      detail: '查看新闻带来的线索和来源。',
       href: '/admin/status/leads#news-lead-path-bridge',
-      cta: '打开状态桥',
+      cta: '打开线索状态',
       tone: 'blue',
       Icon: Link2,
     },
   ]
   const sourceContracts: SourceContractItem[] = [
     {
-      label: '来源命名',
-      value: 'news:*',
-      detail: '新闻列表、详情和 CTA 统一落到新闻来源命名，便于流量面板聚合。',
+      label: '新闻来源',
+      value: '新闻',
+      detail: '新闻列表、详情和按钮访问统一归入新闻来源。',
       href: '/admin/status/traffic#news-source-handoff',
       Icon: SearchCheck,
       tone: 'blue',
     },
     {
-      label: 'Contact 承接',
+      label: 'Contact 表单',
       value: 'Contact',
       detail: '公开站新闻 CTA 先回到 Contact 表单。',
       href: '/contact?source=news:list:contact_cta',
@@ -273,15 +273,15 @@ function OperationsHub({ stats }: { stats: NewsStats }) {
     {
       label: '线索筛选',
       value: '新闻来源',
-      detail: '进入客户线索台时直接筛选新闻来源，方便运营处理和复盘。',
+      detail: '直接查看新闻来源线索。',
       href: '/admin/customers/leads?source_type=news',
       Icon: ListChecks,
       tone: 'orange',
     },
     {
-      label: '复盘路径',
-      value: '状态桥',
-      detail: '回看新闻访问、转化和线索状态，形成内容获客复盘。',
+      label: '线索状态',
+      value: '状态',
+      detail: '查看新闻访问、转化和线索状态。',
       href: '/admin/status/leads#news-lead-path-bridge',
       Icon: Link2,
       tone: 'blue',
@@ -295,15 +295,15 @@ function OperationsHub({ stats }: { stats: NewsStats }) {
           <p className="text-xs font-bold tracking-[0.08em] text-[#1889B6]">运营总览</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻运营总览</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            把新闻列表矩阵、分类治理、回收安全、定时复核、SEO 待补和新闻来源线索集中到一屏，可下钻到状态、来源、转化复盘和新闻线索队列。
+            查看新闻列表、分类、回收站、定时内容、SEO 待补和新闻线索。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <PrimaryAction href="/admin/content/news/list" Icon={ListChecks} label="新闻列表" primary />
           <PrimaryAction href="/admin/content/news/categories#news-category-governance" Icon={Tags} label="分类治理" />
-          <PrimaryAction href="/admin/status/leads#news-lead-path-bridge" Icon={Link2} label="状态桥" />
-          <PrimaryAction href="/admin/status/traffic#news-source-handoff" Icon={SearchCheck} label="来源面板" />
-          <PrimaryAction href="/admin/site/conversion#news-conversion-handoff" Icon={Link2} label="转化承接" />
+          <PrimaryAction href="/admin/status/leads#news-lead-path-bridge" Icon={Link2} label="线索状态" />
+          <PrimaryAction href="/admin/status/traffic#news-source-handoff" Icon={SearchCheck} label="来源数据" />
+          <PrimaryAction href="/admin/site/conversion#news-conversion-handoff" Icon={Link2} label="转化路径" />
           <PrimaryAction href="/admin/customers/leads?source_type=news" Icon={ListChecks} label="新闻线索" />
         </div>
       </div>
@@ -372,7 +372,7 @@ function NewsSourceLeadOptimizationDesk({ stats }: { stats: NewsStats }) {
       value: formatNumber(stats.missingSeo),
       detail: '搜索标题或描述待补时，优先从新闻列表进入单篇编辑页补齐。',
       href: '/admin/content/news/list?issue=seo#news-source-seo-list-bridge',
-      cta: '回到列表桥',
+      cta: '打开新闻列表',
       Icon: SearchCheck,
       tone: stats.missingSeo > 0 ? 'orange' : 'green',
     },
@@ -383,9 +383,9 @@ function NewsSourceLeadOptimizationDesk({ stats }: { stats: NewsStats }) {
       <div className="flex flex-col gap-3 border-l-4 border-[#E36F2C] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-bold tracking-[0.08em] text-[#E36F2C]">News Source Lead Optimization</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻内容到来源线索优化台</h2>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">新闻线索优化</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            把流量分诊、来源线索处理、SEO 到线索转化复盘和新闻内容待补集中到一屏；先补公开内容和 SEO，再回看新闻阅读、Contact 来源和新闻来源线索。
+            查看流量、线索、SEO、待补内容和新闻来源。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -398,7 +398,7 @@ function NewsSourceLeadOptimizationDesk({ stats }: { stats: NewsStats }) {
 
       <div className="grid grid-cols-1 border-y border-[#E6EEEE] bg-[#FBFDFD] md:grid-cols-4">
         <NewsOptimizationStat label="已发布新闻" value={formatNumber(stats.published)} detail="公开 /news 可见样本" />
-        <NewsOptimizationStat label="内容待补" value={formatNumber(stats.incomplete)} detail="影响阅读承接" warn={stats.incomplete > 0} />
+        <NewsOptimizationStat label="内容待补" value={formatNumber(stats.incomplete)} detail="影响阅读" warn={stats.incomplete > 0} />
         <NewsOptimizationStat label="SEO 待补" value={formatNumber(stats.missingSeo)} detail="影响搜索和预览" warn={stats.missingSeo > 0} />
         <NewsOptimizationStat label="新闻来源" value="Contact" detail="Contact -> 新闻来源线索" />
       </div>
@@ -533,29 +533,29 @@ function PublicNewsBridge({ stats }: { stats: NewsStats }) {
       tone: 'blue',
     },
     {
-      label: '详情续航',
+      label: '详情阅读',
       value: '详情',
-      detail: '新闻详情页已接继续阅读和返回发现路径；先从已发布列表确认可公开样本，再做详情验收。',
+      detail: '查看已发布新闻详情。',
       href: '/admin/content/news/list?status=published',
       cta: '查已发布样本',
       Icon: Newspaper,
       tone: stats.published > 0 ? 'green' : 'orange',
     },
     {
-      label: '列表桥',
+      label: '新闻列表',
       value: '列表',
-      detail: '后台列表已把内容缺项、SEO、分类和新闻来源线索回看合到同一个操作面。',
+      detail: '处理内容缺项、SEO、分类和新闻线索。',
       href: '/admin/content/news/list#news-source-seo-list-bridge',
-      cta: '回到列表桥',
+      cta: '打开新闻列表',
       Icon: ListChecks,
       tone: 'green',
     },
     {
       label: '来源质量',
       value: '来源',
-      detail: '从新闻阅读来源回看线索质量，避免只看访问量不看可跟进价值。',
+      detail: '查看新闻来源线索质量。',
       href: '/admin/status/leads#source-seo-lead-quality',
-      cta: '查看质量桥',
+      cta: '查看线索质量',
       Icon: Link2,
       tone: 'blue',
     },
@@ -565,21 +565,21 @@ function PublicNewsBridge({ stats }: { stats: NewsStats }) {
     <section id="news-public-discovery-bridge" className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-l-4 border-[#20B486] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-bold tracking-[0.08em] text-[#159477]">PUBLIC NEWS BRIDGE</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">公开新闻发现与阅读桥</h2>
+          <p className="text-xs font-bold tracking-[0.08em] text-[#159477]">PUBLIC NEWS</p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">公开新闻展示</h2>
           <p className="mt-1 text-sm leading-6 text-[#61767D]">
-            对齐 en.303vessel.cn Blog 的分类、搜索、列表摘要和详情浏览链路，把前台发现、详情续航、后台列表和来源质量放到同一个后台入口里。
+            查看新闻展示、详情阅读、列表管理和线索来源。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <PrimaryAction href="/news#news-discovery-console" Icon={SearchCheck} label="前台发现" primary />
           <PrimaryAction href="/admin/content/news/list?status=published" Icon={Newspaper} label="已发布样本" />
-          <PrimaryAction href="/admin/content/news/list#news-source-seo-list-bridge" Icon={ListChecks} label="列表桥" />
+          <PrimaryAction href="/admin/content/news/list#news-source-seo-list-bridge" Icon={ListChecks} label="新闻列表" />
         </div>
       </div>
       <div className="border-t border-[#E6EEEE] bg-[#FBFDFD] px-4 py-4">
         <p className="text-xs leading-5 text-[#61767D]">
-          当前后台统计：已发布 {formatNumber(stats.published)} 条，待补内容 {formatNumber(stats.incomplete)} 条，缺 SEO 字段 {formatNumber(stats.missingSeo)} 条。优先补齐可公开样本，再回看新闻发现、详情续航和新闻来源线索质量。
+          已发布 {formatNumber(stats.published)} 条，待补内容 {formatNumber(stats.incomplete)} 条，缺 SEO 字段 {formatNumber(stats.missingSeo)} 条。
         </p>
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           {items.map((item) => (
@@ -721,9 +721,9 @@ function OperationRoadmap({ stats }: { stats: NewsStats }) {
   const plans: OperationPlan[] = [
     {
       title: '分类管理',
-      status: '已接入',
-      detail: '新闻列表已接入所属分类和分类管理。',
-      evidence: '已新增 news_categories 和 news.category_id，表单保存与列表筛选已接入。',
+      status: '可用',
+      detail: '新闻列表支持所属分类和分类管理。',
+      evidence: '可在分类页维护分类，并在新闻列表中按分类筛选。',
       next: '查看分类治理面板，确认分类覆盖、隐藏状态、未分类缺口和批量转分类入口。',
       href: '/admin/content/news/categories#news-category-governance',
       Icon: Tags,
@@ -733,8 +733,8 @@ function OperationRoadmap({ stats }: { stats: NewsStats }) {
       title: '回收站',
       status: `${formatNumber(stats.deleted)} 条`,
       detail: '现有删除是软删除，前台和列表已经排除 deleted_at 不为空的新闻。',
-      evidence: '已提供回收站列表和恢复为草稿能力，恢复不会直接重新发布到前台。',
-      next: '进入回收治理面板检查已删除新闻；永久删除、批量恢复和权限分级后续单独排期。',
+      evidence: '回收站支持查看已删除新闻，并可恢复为草稿。',
+      next: '进入回收治理面板检查已删除新闻；高风险删除动作保持管理员审核。',
       href: '/admin/content/news/recycle#news-recycle-governance',
       Icon: Archive,
       tone: 'green',
@@ -742,9 +742,9 @@ function OperationRoadmap({ stats }: { stats: NewsStats }) {
     {
       title: '批量操作',
       status: '低风险',
-      detail: '批量发布、定时任务、置顶、状态转移、回收和翻译能力按后续批次进入。',
-      evidence: '新闻列表已开放低风险的批量转分类；发布、删除、定时任务和状态批改仍保持禁用。',
-      next: '进入新闻列表选择内容后转移分类；高风险批量写入等权限分级后再开放。',
+      detail: '当前开放批量转分类，发布和删除类动作保持单篇处理。',
+      evidence: '新闻列表可选择多篇内容并批量转移分类。',
+      next: '进入新闻列表选择内容后转移分类；发布、删除等高风险动作继续逐篇确认。',
       href: '/admin/content/news/list',
       Icon: ListChecks,
       tone: 'orange',
@@ -752,9 +752,9 @@ function OperationRoadmap({ stats }: { stats: NewsStats }) {
     {
       title: '定时发布',
       status: `${formatNumber(stats.scheduled)} 条`,
-      detail: '已新增 scheduled_at 字段和后台筛选入口，用于记录单篇新闻的计划发布时间。',
-      evidence: '表单可保存 / 清除计划发布时间；列表可筛选定时发布草稿，前台仍只展示已发布新闻。',
-      next: '自动执行器、失败重试和批量定时任务后续单独排期，避免运营误以为排期后已自动上线。',
+      detail: '可记录单篇新闻的计划发布时间，并在列表中筛选。',
+      evidence: '表单可保存或清除计划发布时间；前台仍只展示已发布新闻。',
+      next: '定时内容发布前仍需人工复核，避免误发布。',
       href: '/admin/content/news/list?schedule=scheduled',
       Icon: CalendarClock,
       tone: 'blue',
@@ -763,8 +763,8 @@ function OperationRoadmap({ stats }: { stats: NewsStats }) {
       title: 'SEO 字段治理',
       status: `${formatNumber(stats.missingSeo)} 条待补`,
       detail: '新闻详情页支持单独控制搜索标题和描述。',
-      evidence: '已新增单篇新闻 SEO 标题和 SEO 描述字段，前台详情页 metadata 会优先读取 SEO 字段。',
-      next: '进入新闻编辑页，在“SEO 字段”区域维护搜索标题和描述；关键词和批量 SEO 后续单独排期。',
+      evidence: '单篇新闻可维护 SEO 标题和 SEO 描述。',
+      next: '进入新闻编辑页，在“SEO 字段”区域维护搜索标题和描述。',
       href: '/admin/content/news/list',
       Icon: SearchCheck,
       tone: 'green',
@@ -774,7 +774,7 @@ function OperationRoadmap({ stats }: { stats: NewsStats }) {
   return (
     <section id="b3-3-plan" className="scroll-mt-24 space-y-4">
       <SectionTitle
-        title="新闻运营能力规划"
+        title="新闻运营状态"
         detail="集中查看分类、回收站、批量操作、定时发布和 SEO 状态。"
       />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
@@ -839,21 +839,21 @@ function OperationBoundary() {
     <section className="rounded-md border border-dashed border-[#D8E7E8] bg-white/76 p-5">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div>
-          <h2 className="text-sm font-bold text-[#1E2C31]">已接入能力</h2>
+          <h2 className="text-sm font-bold text-[#1E2C31]">当前可用</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
             新闻运营总览、公开入口、详情续航、状态筛选、待补提醒、分类治理、回收安全、定时复核和 SEO 治理入口。
           </p>
         </div>
         <div>
-          <h2 className="text-sm font-bold text-[#1E2C31]">兼容边界</h2>
+          <h2 className="text-sm font-bold text-[#1E2C31]">管理入口</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
-            新闻日常运营走当前 2.0 链路；旧兼容路由仅供管理员排障，不作为运营入口。
+            新闻日常运营使用当前入口；管理员维护入口只用于低频处理。
           </p>
         </div>
         <div>
-          <h2 className="text-sm font-bold text-[#1E2C31]">后续再做</h2>
+          <h2 className="text-sm font-bold text-[#1E2C31]">高风险操作</h2>
           <p className="mt-2 text-xs leading-5 text-[#61767D]">
-            永久删除、批量发布 / 删除、定时自动执行器、批量 SEO 和权限分级单独排期。
+            永久删除、批量发布、批量删除和权限类操作继续保持管理员审核。
           </p>
         </div>
       </div>

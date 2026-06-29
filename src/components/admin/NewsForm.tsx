@@ -1258,7 +1258,7 @@ export default function NewsForm({
             <div>
               <label className="text-sm font-medium text-[#2C2A28]">定时发布</label>
               <p className="mt-1 text-xs leading-5 text-[#6B6560]">
-                计划发布时间会先保存到单篇新闻，并在列表里形成定时队列；自动执行器后续单独上线。
+                计划发布时间会保存到单篇新闻，并在列表里显示定时队列。
               </p>
             </div>
             <Badge className="border-sky-200 bg-sky-50 text-xs text-sky-700">

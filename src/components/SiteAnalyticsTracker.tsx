@@ -17,17 +17,19 @@ export default function SiteAnalyticsTracker() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const lastPageKey = useRef<string | null>(null)
+  const isVisualDraftPreview = searchParams.get('visualDraft') === '1'
 
   useEffect(() => {
-    if (!pathname || pathname.startsWith('/admin') || pathname.startsWith('/api')) return
+    if (!pathname || pathname.startsWith('/admin') || pathname.startsWith('/api') || isVisualDraftPreview) return
     const pageKey = `${pathname}?${searchParams.toString()}`
     if (lastPageKey.current === pageKey) return
     lastPageKey.current = pageKey
     trackSiteEvent('page_view', { path: pathname })
-  }, [pathname, searchParams])
+  }, [isVisualDraftPreview, pathname, searchParams])
 
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
+      if (new URLSearchParams(window.location.search).get('visualDraft') === '1') return
       const target = event.target
       if (!(target instanceof Element)) return
       const anchor = target.closest('a[href]')

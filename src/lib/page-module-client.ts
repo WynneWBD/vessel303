@@ -40,6 +40,20 @@ export function moduleMap(modules: PublicPageModule[] | null | undefined) {
   return new Map((modules ?? []).map((pageModule) => [pageModule.module_key, pageModule]))
 }
 
+export function operatorFacingText(value: string | null | undefined) {
+  return String(value ?? '')
+    .replace(/。?这个模块已接入前台，可以直接影响[^。]*。?/g, '')
+    .replace(/。?这个模块已接入前台，后台发布后会影响[^。]*。?/g, '')
+    .replace(/后台发布的产品进入正式目录。?/g, '已发布产品进入正式目录。')
+    .replace(/补齐\s*CMS\s*技术参数后/g, '补齐技术参数后')
+    .replace(/Technical parameters will appear here after the CMS fields are completed\./g, 'Technical parameters will appear here once completed.')
+    .replace(/supporting modules/gi, 'supporting files')
+    .replace(/No resource module/g, 'No resource yet')
+    .replace(/资料模块/g, '资料')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
 export function visibleItems(pageModule: PublicPageModule | null | undefined) {
   if (!pageModule || pageModule.is_visible === false || !Array.isArray(pageModule.items)) return []
   return [...pageModule.items]
@@ -53,27 +67,27 @@ export function itemById(pageModule: PublicPageModule | null | undefined, id: st
 
 export function moduleTitle(pageModule: PublicPageModule | null | undefined, lang: PublicLang) {
   if (!pageModule || pageModule.is_visible === false) return ''
-  return (lang === 'zh' ? pageModule.title_zh : pageModule.title_en) || ''
+  return operatorFacingText(lang === 'zh' ? pageModule.title_zh : pageModule.title_en)
 }
 
 export function moduleDescription(pageModule: PublicPageModule | null | undefined, lang: PublicLang) {
   if (!pageModule || pageModule.is_visible === false) return ''
-  return (lang === 'zh' ? pageModule.description_zh : pageModule.description_en) || ''
+  return operatorFacingText(lang === 'zh' ? pageModule.description_zh : pageModule.description_en)
 }
 
 export function itemLabel(item: PublicPageModuleItem | null | undefined, lang: PublicLang) {
   if (!item || item.is_visible === false) return ''
-  return (lang === 'zh' ? item.label_zh : item.label_en) || ''
+  return operatorFacingText(lang === 'zh' ? item.label_zh : item.label_en)
 }
 
 export function itemContent(item: PublicPageModuleItem | null | undefined, lang: PublicLang) {
   if (!item || item.is_visible === false) return ''
-  return (lang === 'zh' ? item.content_zh : item.content_en) || ''
+  return operatorFacingText(lang === 'zh' ? item.content_zh : item.content_en)
 }
 
 export function itemValue(item: PublicPageModuleItem | null | undefined, lang: PublicLang) {
   if (!item || item.is_visible === false) return ''
-  return (lang === 'zh' ? item.value_zh : item.value_en) || ''
+  return operatorFacingText(lang === 'zh' ? item.value_zh : item.value_en)
 }
 
 export async function fetchPublicPageModules(pageKey: string, signal?: AbortSignal) {

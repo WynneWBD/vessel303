@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ImageIcon, Pause, Play } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { buildNextImageFallbackSrc, inferNextImageFallbackWidth } from '@/lib/image-optimization';
+import { operatorFacingText } from '@/lib/page-module-client';
 import { normalizeSiteHref } from '@/lib/site-links';
 import {
   isResolvedPageModuleVisible,
@@ -127,33 +128,33 @@ function localizedLabel(item: HomeModuleItem | undefined, lang: Lang, _fallback:
   void _fallback;
   if (!item) return '';
   if (!item.is_visible) return '';
-  return (lang === 'zh' ? item.label_zh : item.label_en) || '';
+  return operatorFacingText(lang === 'zh' ? item.label_zh : item.label_en);
 }
 
 function localizedValue(item: HomeModuleItem | undefined, lang: Lang, _fallback: string) {
   void _fallback;
   if (!item) return '';
   if (!item.is_visible) return '';
-  return (lang === 'zh' ? item.value_zh : item.value_en) || '';
+  return operatorFacingText(lang === 'zh' ? item.value_zh : item.value_en);
 }
 
 function localizedContent(item: HomeModuleItem | undefined, lang: Lang, _fallback: string) {
   void _fallback;
   if (!item) return '';
   if (!item.is_visible) return '';
-  return (lang === 'zh' ? item.content_zh : item.content_en) || '';
+  return operatorFacingText(lang === 'zh' ? item.content_zh : item.content_en);
 }
 
 function localizedModuleTitle(pageModule: HomePageModule | null, lang: Lang, _fallback: string) {
   void _fallback;
   if (!pageModule) return '';
-  return (lang === 'zh' ? pageModule.title_zh : pageModule.title_en) || '';
+  return operatorFacingText(lang === 'zh' ? pageModule.title_zh : pageModule.title_en);
 }
 
 function localizedModuleDescription(pageModule: HomePageModule | null, lang: Lang, _fallback: string) {
   void _fallback;
   if (!pageModule) return '';
-  return (lang === 'zh' ? pageModule.description_zh : pageModule.description_en) || '';
+  return operatorFacingText(lang === 'zh' ? pageModule.description_zh : pageModule.description_en);
 }
 
 function externalLinkProps(href: string) {
@@ -167,6 +168,73 @@ function externalLinkProps(href: string) {
 function displayHref(href: string | null | undefined) {
   const value = String(href ?? '').trim();
   return value ? normalizeSiteHref(value, '') : '';
+}
+
+function moduleHrefAttrs(itemId: string) {
+  return {
+    'data-page-module-item': itemId,
+    'data-page-module-field': 'href',
+  };
+}
+
+function moduleLabelAttrs(itemId: string, lang: Lang) {
+  return {
+    'data-page-module-item': itemId,
+    'data-page-module-field': `label_${lang}`,
+  };
+}
+
+function visualOpenPanelAttrs(key: string) {
+  return { 'data-visual-open-panel': key };
+}
+
+function EditableModuleLink({
+  href,
+  itemId,
+  labelItemId = itemId,
+  lang,
+  className,
+  children,
+}: {
+  href: string;
+  itemId: string;
+  hrefItemId?: string;
+  labelItemId?: string;
+  lang: Lang;
+  className: string;
+  children: string;
+}) {
+  return (
+    <Link
+      prefetch={false}
+      href={href}
+      {...externalLinkProps(href)}
+      className={className}
+      {...moduleHrefAttrs(itemId)}
+    >
+      <span {...moduleLabelAttrs(labelItemId, lang)}>{children}</span>
+    </Link>
+  );
+}
+
+function subscribeVisualDraftPreview() {
+  return () => undefined;
+}
+
+function getVisualDraftPreviewSnapshot() {
+  return typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('visualDraft') === '1';
+}
+
+function getVisualDraftPreviewServerSnapshot() {
+  return false;
+}
+
+function useVisualDraftPreview() {
+  return useSyncExternalStore(
+    subscribeVisualDraftPreview,
+    getVisualDraftPreviewSnapshot,
+    getVisualDraftPreviewServerSnapshot,
+  );
 }
 
 // ─── Hero ────────────────────────────────────────────────
@@ -188,6 +256,7 @@ function optimizedHeroImageUrl(imageUrl: string) {
 
 function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const { lang } = useLanguage();
+  const visualDraftPreview = useVisualDraftPreview();
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const items = useMemo(() => sortModuleItems(pageModule), [pageModule]);
@@ -222,6 +291,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const activeHeadline = headline || moduleHeadline || activeSlide?.headline;
   const activeSubtitle = subtitle || moduleSubtitle || activeSlide?.subtitle;
   const activePrimaryHref = activeSlide?.href || primaryHref;
+  const activePrimaryHrefItem = activeSlide?.href ? activeSlide.id : 'hero-primary-cta';
   const activeTaglineItem = activeSlide?.eyebrow ? activeSlide.id : 'hero-tagline';
   const activeTaglineField = activeSlide?.eyebrow ? `value_${lang}` : `label_${lang}`;
   const activeHeadlineItem = headline ? 'hero-headline' : (moduleHeadline ? undefined : activeSlide?.id);
@@ -233,12 +303,13 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
   const playLabel = lang === 'zh' ? '播放' : 'Play';
   useEffect(() => {
     if (heroSlides.length === 0) return;
+    if (visualDraftPreview) return;
     if (isPaused) return;
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % heroSlides.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, [heroSlides.length, isPaused]);
+  }, [heroSlides.length, isPaused, visualDraftPreview]);
 
   if (!pageModule || !pageModule.is_visible || heroSlides.length === 0 || !activeHeadline) return null;
 
@@ -264,6 +335,18 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
           data-page-module-item={activeSlide.id}
           data-page-module-field="image_url"
         />
+      ) : null}
+      {visualDraftPreview && activeSlide ? (
+        <button
+          type="button"
+          aria-label={lang === 'zh' ? '编辑首屏图片' : 'Edit hero image'}
+          className="absolute left-4 top-24 z-30 inline-flex h-9 items-center gap-1.5 rounded-md border border-white/75 bg-black/55 px-3 text-white shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-sm transition hover:border-[#E36F2C] hover:bg-[#E36F2C] focus:outline-none focus:ring-2 focus:ring-[#E36F2C] focus:ring-offset-2 focus:ring-offset-transparent"
+          data-page-module-item={activeSlide.id}
+          data-page-module-field="image_url"
+        >
+          <ImageIcon aria-hidden="true" className="h-4 w-4" />
+          <span className="text-xs font-semibold">{lang === 'zh' ? '图片' : 'Image'}</span>
+        </button>
       ) : null}
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(18,30,44,0.18)_0%,rgba(18,30,44,0.08)_24%,rgba(5,12,18,0.14)_100%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0)_0%,rgba(0,0,0,0.08)_42%,rgba(0,0,0,0.34)_100%)]" />
@@ -305,15 +388,15 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
 
           {primaryLabel && activePrimaryHref ? (
             <div className="flex flex-col justify-center gap-3 sm:flex-row sm:items-center">
-              <Link prefetch={false}
+              <EditableModuleLink
                 href={activePrimaryHref}
-                {...externalLinkProps(activePrimaryHref)}
                 className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/88 px-8 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#172231]"
-                data-page-module-item="hero-primary-cta"
-                data-page-module-field={`label_${lang}`}
+                itemId="hero-primary-cta"
+                hrefItemId={activePrimaryHrefItem}
+                lang={lang}
               >
                 {primaryLabel}
-              </Link>
+              </EditableModuleLink>
             </div>
           ) : null}
 
@@ -329,6 +412,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
           <button
             type="button"
             onClick={() => setCurrent(nextImage)}
+            {...visualOpenPanelAttrs('home-hero-slide-preview')}
             className="relative overflow-hidden border border-white/72 bg-white/8 text-left shadow-[0_24px_62px_rgba(0,0,0,0.24)] transition hover:border-white"
             style={{ height: 132, width: 262 }}
           >
@@ -340,6 +424,8 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
                 sizes="262px"
                 overrideSrc={buildNextImageFallbackSrc(previewSlide.src, 640)}
                 className="object-cover"
+                data-page-module-item={previewSlide.id}
+                data-page-module-field="image_url"
               />
             ) : null}
             <span className="sr-only">{previewSlide?.headline || previewSlide?.eyebrow || 'Next slide preview'}</span>
@@ -347,6 +433,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
           <button
             type="button"
             onClick={() => setCurrent((prev) => (prev + 1) % heroSlides.length)}
+            {...visualOpenPanelAttrs('home-hero-next-slide')}
             className="inline-flex items-center justify-center gap-3 border border-white/72 bg-black/10 px-5 text-[17px] font-semibold uppercase tracking-[0.04em] text-white backdrop-blur-[1px] transition hover:bg-white/12 focus:outline-none focus:ring-2 focus:ring-white/70"
             style={{ height: 132, width: 132 }}
           >
@@ -357,6 +444,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
             type="button"
             onClick={() => setIsPaused((value) => !value)}
             aria-pressed={isPaused}
+            {...visualOpenPanelAttrs('home-hero-play-toggle')}
             className="inline-flex items-center justify-center border border-white/72 bg-black/10 text-white backdrop-blur-[1px] transition hover:bg-white/12 focus:outline-none focus:ring-2 focus:ring-white/70"
             style={{ height: 132, width: 48 }}
           >
@@ -381,6 +469,7 @@ function HeroSection({ pageModule }: { pageModule: HomePageModule | null }) {
               type="button"
               onClick={() => setCurrent(index)}
               aria-current={index === activeImage ? 'true' : undefined}
+              {...visualOpenPanelAttrs('home-hero-slide-dot')}
               className={`h-1.5 w-8 transition-colors focus:outline-none focus:ring-2 focus:ring-white/70 focus:ring-offset-2 focus:ring-offset-[#172231] ${index === activeImage ? 'bg-white' : 'bg-white/32 hover:bg-white/58'}`}
             >
               <span className="sr-only">{slide.headline || slide.eyebrow || String(index + 1)}</span>
@@ -563,26 +652,24 @@ function CtaModuleSection({ pageModule }: { pageModule: HomePageModule | null })
         {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           {primaryLabel && primaryHref ? (
-            <Link prefetch={false}
+            <EditableModuleLink
               href={primaryHref}
-              {...externalLinkProps(primaryHref)}
               className="bg-[#E36F2C] text-white px-10 py-4 text-sm tracking-wider hover:bg-[#C85A1F] transition-colors"
-              data-page-module-item="primary-cta"
-              data-page-module-field={`label_${lang}`}
+              itemId="primary-cta"
+              lang={lang}
             >
               {primaryLabel}
-            </Link>
+            </EditableModuleLink>
           ) : null}
           {secondaryLabel && secondaryHref ? (
-            <Link prefetch={false}
+            <EditableModuleLink
               href={secondaryHref}
-              {...externalLinkProps(secondaryHref)}
               className="border border-white/25 text-white/80 px-10 py-4 text-sm tracking-wider hover:border-white/60 transition-colors"
-              data-page-module-item="secondary-cta"
-              data-page-module-field={`label_${lang}`}
+              itemId="secondary-cta"
+              lang={lang}
             >
               {secondaryLabel}
-            </Link>
+            </EditableModuleLink>
           ) : null}
           </div>
         ) : null}
@@ -706,7 +793,14 @@ function ProductShowcaseSection({ pageModule }: { pageModule: HomePageModule | n
               );
 
               return card.href ? (
-                <Link prefetch={false} key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                <Link
+                  prefetch={false}
+                  key={card.id}
+                  href={card.href}
+                  {...externalLinkProps(card.href)}
+                  {...moduleHrefAttrs(card.id)}
+                  className="block h-full"
+                >
                   {content}
                 </Link>
               ) : (
@@ -719,26 +813,24 @@ function ProductShowcaseSection({ pageModule }: { pageModule: HomePageModule | n
         {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
           <div className="mt-6 flex flex-wrap gap-3">
             {primaryLabel && primaryHref ? (
-              <Link prefetch={false}
+              <EditableModuleLink
                 href={primaryHref}
-                {...externalLinkProps(primaryHref)}
                 className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C85A1F]"
-                data-page-module-item="primary-cta"
-                data-page-module-field={`label_${lang}`}
+                itemId="primary-cta"
+                lang={lang}
               >
                 {primaryLabel}
-              </Link>
+              </EditableModuleLink>
             ) : null}
             {secondaryLabel && secondaryHref ? (
-              <Link prefetch={false}
+              <EditableModuleLink
                 href={secondaryHref}
-                {...externalLinkProps(secondaryHref)}
                 className="inline-flex min-h-11 items-center justify-center border border-[#241F1B]/20 px-5 text-sm font-bold uppercase tracking-[0.12em] text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]"
-                data-page-module-item="secondary-cta"
-                data-page-module-field={`label_${lang}`}
+                itemId="secondary-cta"
+                lang={lang}
               >
                 {secondaryLabel}
-              </Link>
+              </EditableModuleLink>
             ) : null}
           </div>
         ) : null}
@@ -865,7 +957,14 @@ function SalesGridSection({ pageModule }: { pageModule: HomePageModule | null })
               );
 
               return card.href ? (
-                <Link prefetch={false} key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                <Link
+                  prefetch={false}
+                  key={card.id}
+                  href={card.href}
+                  {...externalLinkProps(card.href)}
+                  {...moduleHrefAttrs(card.id)}
+                  className="block h-full"
+                >
                   {cardContent}
                 </Link>
               ) : (
@@ -878,26 +977,24 @@ function SalesGridSection({ pageModule }: { pageModule: HomePageModule | null })
         {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
           <div className="mt-9 flex flex-wrap gap-3">
             {primaryLabel && primaryHref ? (
-              <Link prefetch={false}
+              <EditableModuleLink
                 href={primaryHref}
-                {...externalLinkProps(primaryHref)}
                 className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C85A1F]"
-                data-page-module-item="primary-cta"
-                data-page-module-field={`label_${lang}`}
+                itemId="primary-cta"
+                lang={lang}
               >
                 {primaryLabel}
-              </Link>
+              </EditableModuleLink>
             ) : null}
             {secondaryLabel && secondaryHref ? (
-              <Link prefetch={false}
+              <EditableModuleLink
                 href={secondaryHref}
-                {...externalLinkProps(secondaryHref)}
                 className={`${isProjectProof ? 'border-white/24 text-white/78 hover:border-white/60' : 'border-[#241F1B]/20 text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]'} inline-flex min-h-11 items-center justify-center border px-5 text-sm font-bold uppercase tracking-[0.12em]`}
-                data-page-module-item="secondary-cta"
-                data-page-module-field={`label_${lang}`}
+                itemId="secondary-cta"
+                lang={lang}
               >
                 {secondaryLabel}
-              </Link>
+              </EditableModuleLink>
             ) : null}
           </div>
         ) : null}
@@ -907,6 +1004,7 @@ function SalesGridSection({ pageModule }: { pageModule: HomePageModule | null })
 }
 
 type HomepageVisualCard = {
+  id?: string;
   title: string;
   image: string;
   video: string;
@@ -916,10 +1014,12 @@ type HomepageVisualCard = {
 function LazyHomepageVideo({
   src,
   poster,
+  itemId,
   className,
 }: {
   src: string;
   poster?: string;
+  itemId?: string;
   className: string;
 }) {
   const ref = useRef<HTMLVideoElement | null>(null);
@@ -956,6 +1056,7 @@ function LazyHomepageVideo({
       playsInline
       preload="none"
       className={className}
+      data-page-module-item={itemId}
       data-page-module-field="video_url"
     />
   );
@@ -972,7 +1073,22 @@ function HomepageVisualCardMedia({
   className: string;
   sizes: string;
 }) {
+  const visualDraftPreview = useVisualDraftPreview();
+  const { lang } = useLanguage();
   const videoClassName = className.includes('absolute') ? className : `absolute inset-0 h-full w-full ${className}`;
+  const mediaEditField = card.video ? 'video_url' : 'image_url';
+  const mediaEditButton = visualDraftPreview && card.id ? (
+    <button
+      type="button"
+      aria-label="编辑媒体"
+      className="absolute right-3 top-3 z-30 inline-flex h-9 items-center gap-1.5 rounded-md border border-white/75 bg-black/55 px-3 text-white shadow-[0_12px_28px_rgba(0,0,0,0.24)] backdrop-blur-sm transition hover:border-[#E36F2C] hover:bg-[#E36F2C] focus:outline-none focus:ring-2 focus:ring-[#E36F2C] focus:ring-offset-2 focus:ring-offset-transparent"
+      data-page-module-item={card.id}
+      data-page-module-field={mediaEditField}
+    >
+      <ImageIcon aria-hidden="true" className="h-4 w-4" />
+      <span className="text-xs font-semibold">{lang === 'zh' ? '媒体' : 'Media'}</span>
+    </button>
+  ) : null;
 
   if (card.video) {
     return (
@@ -980,32 +1096,39 @@ function HomepageVisualCardMedia({
         <LazyHomepageVideo
           src={card.video}
           poster={card.videoPoster || card.image || undefined}
+          itemId={card.id}
           className={videoClassName}
         />
         {card.videoPoster ? (
           <span
             aria-hidden="true"
             hidden
+            data-page-module-item={card.id}
             data-page-module-field="video_poster_url"
             data-page-module-value={card.videoPoster}
           />
         ) : null}
+        {mediaEditButton}
       </>
     );
   }
 
   if (card.image) {
     return (
-      <Image
-        src={card.image}
-        alt={card.title || altFallback}
-        fill
-        loading="lazy"
-        className={className}
-        sizes={sizes}
-        overrideSrc={buildNextImageFallbackSrc(card.image, inferNextImageFallbackWidth(sizes))}
-        data-page-module-field="image_url"
-      />
+      <>
+        <Image
+          src={card.image}
+          alt={card.title || altFallback}
+          fill
+          loading="lazy"
+          className={className}
+          sizes={sizes}
+          overrideSrc={buildNextImageFallbackSrc(card.image, inferNextImageFallbackWidth(sizes))}
+          data-page-module-item={card.id}
+          data-page-module-field="image_url"
+        />
+        {mediaEditButton}
+      </>
     );
   }
 
@@ -1109,6 +1232,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
               {cards.map((card, index) => {
                 const isWideCard = index === 0 || (index === 3 && cards.length === 4);
                 const cardPrimaryHref = card.href || primaryHref;
+                const cardPrimaryHrefItem = card.href ? card.id : 'primary-cta';
                 const productCard = (
                   <article
                     className="group relative flex overflow-hidden bg-[#DCD5CC]"
@@ -1160,11 +1284,10 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                           <Link prefetch={false}
                             href={cardPrimaryHref}
                             {...externalLinkProps(cardPrimaryHref)}
+                            {...moduleHrefAttrs(cardPrimaryHrefItem)}
                             className="inline-flex items-center gap-2 font-medium transition hover:text-[#E36F2C]"
-                            data-page-module-item="primary-cta"
-                            data-page-module-field={`label_${lang}`}
                           >
-                            <span>{primaryLabel}</span>
+                            <span {...moduleLabelAttrs('primary-cta', lang)}>{primaryLabel}</span>
                             <ChevronRight aria-hidden="true" className="h-4 w-4 transition group-hover:translate-x-1" />
                           </Link>
                         ) : null}
@@ -1172,11 +1295,10 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                           <Link prefetch={false}
                             href={secondaryHref}
                             {...externalLinkProps(secondaryHref)}
+                            {...moduleHrefAttrs('secondary-cta')}
                             className="inline-flex items-center gap-2 font-medium transition hover:text-[#E36F2C]"
-                            data-page-module-item="secondary-cta"
-                            data-page-module-field={`label_${lang}`}
                           >
-                            <span>{secondaryLabel}</span>
+                            <span {...moduleLabelAttrs('secondary-cta', lang)}>{secondaryLabel}</span>
                             <ChevronRight aria-hidden="true" className="h-4 w-4" />
                           </Link>
                         ) : null}
@@ -1213,6 +1335,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
             const previousCard = cards[(index - 1 + cards.length) % cards.length];
             const nextCard = cards[(index + 1) % cards.length];
             const cardPrimaryHref = card.href || primaryHref;
+            const cardPrimaryHrefItem = card.href ? card.id : 'primary-cta';
 
             return (
               <article
@@ -1283,22 +1406,20 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                         <Link prefetch={false}
                           href={cardPrimaryHref}
                           {...externalLinkProps(cardPrimaryHref)}
+                          {...moduleHrefAttrs(cardPrimaryHrefItem)}
                           className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/76 px-7 text-sm font-medium text-white transition hover:bg-white hover:text-[#11100E]"
-                          data-page-module-item="primary-cta"
-                          data-page-module-field={`label_${lang}`}
                         >
-                          {primaryLabel}
+                          <span {...moduleLabelAttrs('primary-cta', lang)}>{primaryLabel}</span>
                         </Link>
                       ) : null}
                       {secondaryLabel && secondaryHref ? (
                         <Link prefetch={false}
                           href={secondaryHref}
                           {...externalLinkProps(secondaryHref)}
+                          {...moduleHrefAttrs('secondary-cta')}
                           className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/76 px-7 text-sm font-medium text-white transition hover:bg-white hover:text-[#11100E]"
-                          data-page-module-item="secondary-cta"
-                          data-page-module-field={`label_${lang}`}
                         >
-                          {secondaryLabel}
+                          <span {...moduleLabelAttrs('secondary-cta', lang)}>{secondaryLabel}</span>
                         </Link>
                       ) : null}
                     </div>
@@ -1309,6 +1430,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                   <>
                     <a
                       href={`#home-model-${previousCard.id}`}
+                      {...visualOpenPanelAttrs('home-model-previous')}
                       className="absolute left-3 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center border border-white/70 text-white transition hover:bg-white hover:text-[#11100E] md:inline-flex"
                       aria-label="Previous model"
                     >
@@ -1316,6 +1438,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                     </a>
                     <a
                       href={`#home-model-${nextCard.id}`}
+                      {...visualOpenPanelAttrs('home-model-next')}
                       className="absolute right-3 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center border border-white/70 text-white transition hover:bg-white hover:text-[#11100E] md:inline-flex"
                       aria-label="Next model"
                     >
@@ -1326,6 +1449,7 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                         <a
                           key={dotCard.id}
                           href={`#home-model-${dotCard.id}`}
+                          {...visualOpenPanelAttrs('home-model-dot')}
                           className={`h-2 rounded-full transition ${dotIndex === index ? 'w-10 bg-white' : 'w-2 bg-white/45 hover:bg-white/80'}`}
                           aria-label={`Open model ${dotIndex + 1}`}
                         />
@@ -1440,7 +1564,14 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                 );
 
                 return card.href ? (
-                  <Link prefetch={false} key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                  <Link
+                    prefetch={false}
+                    key={card.id}
+                    href={card.href}
+                    {...externalLinkProps(card.href)}
+                    {...moduleHrefAttrs(card.id)}
+                    className="block h-full"
+                  >
                     {innovationCard}
                   </Link>
                 ) : (
@@ -1455,26 +1586,24 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
           {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
             <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
               {primaryLabel && primaryHref ? (
-                <Link prefetch={false}
+                <EditableModuleLink
                   href={primaryHref}
-                  {...externalLinkProps(primaryHref)}
                   className="inline-flex min-h-10 items-center justify-center bg-[#E36F2C] px-4 text-sm font-bold text-white hover:bg-[#C85A1F]"
-                  data-page-module-item="primary-cta"
-                  data-page-module-field={`label_${lang}`}
+                  itemId="primary-cta"
+                  lang={lang}
                 >
                   {primaryLabel}
-                </Link>
+                </EditableModuleLink>
               ) : null}
               {secondaryLabel && secondaryHref ? (
-                <Link prefetch={false}
+                <EditableModuleLink
                   href={secondaryHref}
-                  {...externalLinkProps(secondaryHref)}
                   className="inline-flex min-h-10 items-center justify-center border border-[#241F1B]/20 px-4 text-sm font-bold text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]"
-                  data-page-module-item="secondary-cta"
-                  data-page-module-field={`label_${lang}`}
+                  itemId="secondary-cta"
+                  lang={lang}
                 >
                   {secondaryLabel}
-                </Link>
+                </EditableModuleLink>
               ) : null}
             </div>
           ) : null}
@@ -1585,7 +1714,14 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                 );
 
                 return card.href ? (
-                  <Link prefetch={false} key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                  <Link
+                    prefetch={false}
+                    key={card.id}
+                    href={card.href}
+                    {...externalLinkProps(card.href)}
+                    {...moduleHrefAttrs(card.id)}
+                    className="block h-full"
+                  >
                     {scenarioTile}
                   </Link>
                 ) : (
@@ -1600,26 +1736,24 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
           {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
               {primaryLabel && primaryHref ? (
-                <Link prefetch={false}
+                <EditableModuleLink
                   href={primaryHref}
-                  {...externalLinkProps(primaryHref)}
                   className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold text-white hover:bg-[#C85A1F]"
-                  data-page-module-item="primary-cta"
-                  data-page-module-field={`label_${lang}`}
+                  itemId="primary-cta"
+                  lang={lang}
                 >
                   {primaryLabel}
-                </Link>
+                </EditableModuleLink>
               ) : null}
               {secondaryLabel && secondaryHref ? (
-                <Link prefetch={false}
+                <EditableModuleLink
                   href={secondaryHref}
-                  {...externalLinkProps(secondaryHref)}
                   className="inline-flex min-h-11 items-center justify-center border border-[#241F1B]/20 px-5 text-sm font-bold text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]"
-                  data-page-module-item="secondary-cta"
-                  data-page-module-field={`label_${lang}`}
+                  itemId="secondary-cta"
+                  lang={lang}
                 >
                   {secondaryLabel}
-                </Link>
+                </EditableModuleLink>
               ) : null}
             </div>
           ) : null}
@@ -1704,26 +1838,24 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                 {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
                   <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                     {primaryLabel && primaryHref ? (
-                      <Link prefetch={false}
+                      <EditableModuleLink
                         href={primaryHref}
-                        {...externalLinkProps(primaryHref)}
                         className="inline-flex min-h-11 items-center justify-center bg-[#E36F2C] px-5 text-sm font-bold text-white hover:bg-[#C85A1F]"
-                        data-page-module-item="primary-cta"
-                        data-page-module-field={`label_${lang}`}
+                        itemId="primary-cta"
+                        lang={lang}
                       >
                         {primaryLabel}
-                      </Link>
+                      </EditableModuleLink>
                     ) : null}
                     {secondaryLabel && secondaryHref ? (
-                      <Link prefetch={false}
+                      <EditableModuleLink
                         href={secondaryHref}
-                        {...externalLinkProps(secondaryHref)}
                         className="inline-flex min-h-11 items-center justify-center border border-white/24 px-5 text-sm font-bold text-white/78 hover:border-white/60 hover:text-white"
-                        data-page-module-item="secondary-cta"
-                        data-page-module-field={`label_${lang}`}
+                        itemId="secondary-cta"
+                        lang={lang}
                       >
                         {secondaryLabel}
-                      </Link>
+                      </EditableModuleLink>
                     ) : null}
                   </div>
                 ) : null}
@@ -1782,7 +1914,14 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                       );
 
                       return card.href ? (
-                        <Link prefetch={false} key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block">
+                        <Link
+                          prefetch={false}
+                          key={card.id}
+                          href={card.href}
+                          {...externalLinkProps(card.href)}
+                          {...moduleHrefAttrs(card.id)}
+                          className="block"
+                        >
                           {futureTile}
                         </Link>
                       ) : (
@@ -1883,7 +2022,13 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
               );
 
               return featuredCard.href ? (
-                <Link prefetch={false} href={featuredCard.href} {...externalLinkProps(featuredCard.href)} className="block h-full">
+                <Link
+                  prefetch={false}
+                  href={featuredCard.href}
+                  {...externalLinkProps(featuredCard.href)}
+                  {...moduleHrefAttrs(featuredCard.id)}
+                  className="block h-full"
+                >
                   {featuredArticle}
                 </Link>
               ) : featuredArticle;
@@ -1937,7 +2082,14 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
                   );
 
                   return card.href ? (
-                    <Link prefetch={false} key={card.id} href={card.href} {...externalLinkProps(card.href)} className="block h-full">
+                    <Link
+                      prefetch={false}
+                      key={card.id}
+                      href={card.href}
+                      {...externalLinkProps(card.href)}
+                      {...moduleHrefAttrs(card.id)}
+                      className="block h-full"
+                    >
                       {compactArticle}
                     </Link>
                   ) : (
@@ -1952,26 +2104,24 @@ function HomepageVisualSection({ pageModule }: { pageModule: HomePageModule | nu
         {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             {primaryLabel && primaryHref ? (
-              <Link prefetch={false}
+              <EditableModuleLink
                 href={primaryHref}
-                {...externalLinkProps(primaryHref)}
                 className="inline-flex min-h-12 items-center justify-center bg-[#E36F2C] px-7 text-sm font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C85A1F]"
-                data-page-module-item="primary-cta"
-                data-page-module-field={`label_${lang}`}
+                itemId="primary-cta"
+                lang={lang}
               >
                 {primaryLabel}
-              </Link>
+              </EditableModuleLink>
             ) : null}
             {secondaryLabel && secondaryHref ? (
-              <Link prefetch={false}
+              <EditableModuleLink
                 href={secondaryHref}
-                {...externalLinkProps(secondaryHref)}
                 className={`${isDark ? 'border-white/24 text-white/78 hover:border-white/60' : 'border-[#241F1B]/20 text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]'} inline-flex min-h-12 items-center justify-center border px-7 text-sm font-bold uppercase tracking-[0.12em]`}
-                data-page-module-item="secondary-cta"
-                data-page-module-field={`label_${lang}`}
+                itemId="secondary-cta"
+                lang={lang}
               >
                 {secondaryLabel}
-              </Link>
+              </EditableModuleLink>
             ) : null}
           </div>
         ) : null}
@@ -2034,26 +2184,24 @@ function ContactBandSection({ pageModule }: { pageModule: HomePageModule | null 
         {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
             {primaryLabel && primaryHref ? (
-              <Link prefetch={false}
+              <EditableModuleLink
                 href={primaryHref}
-                {...externalLinkProps(primaryHref)}
                 className="inline-flex min-h-12 items-center justify-center bg-white px-6 text-sm font-bold uppercase tracking-[0.12em] text-[#241F1B] hover:bg-[#F5F2ED]"
-                data-page-module-item="primary-cta"
-                data-page-module-field={`label_${lang}`}
+                itemId="primary-cta"
+                lang={lang}
               >
                 {primaryLabel}
-              </Link>
+              </EditableModuleLink>
             ) : null}
             {secondaryLabel && secondaryHref ? (
-              <Link prefetch={false}
+              <EditableModuleLink
                 href={secondaryHref}
-                {...externalLinkProps(secondaryHref)}
                 className="inline-flex min-h-12 items-center justify-center border border-white/45 px-6 text-sm font-bold uppercase tracking-[0.12em] text-white hover:border-white"
-                data-page-module-item="secondary-cta"
-                data-page-module-field={`label_${lang}`}
+                itemId="secondary-cta"
+                lang={lang}
               >
                 {secondaryLabel}
-              </Link>
+              </EditableModuleLink>
             ) : null}
           </div>
         ) : null}
@@ -2234,11 +2382,15 @@ function BackendOperatingProofSection({ pageModule }: { pageModule: HomePageModu
                   className="object-cover"
                   sizes={index === 0 ? '(max-width: 768px) 100vw, 48vw' : '(max-width: 768px) 100vw, 26vw'}
                   overrideSrc={buildNextImageFallbackSrc(item.image_url, index === 0 ? 1200 : 750)}
+                  data-page-module-item={item.id}
                   data-page-module-field="image_url"
                 />
                 {localizedLabel(item, lang, '') ? (
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#241F1B]/75 to-transparent p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75">
+                    <p
+                      className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75"
+                      data-page-module-field={`label_${lang}`}
+                    >
                       {localizedLabel(item, lang, '')}
                     </p>
                   </div>
@@ -2251,26 +2403,24 @@ function BackendOperatingProofSection({ pageModule }: { pageModule: HomePageModu
         {((primaryLabel && primaryHref) || (secondaryLabel && secondaryHref)) ? (
           <div className="mt-8 flex flex-wrap gap-2">
             {primaryLabel && primaryHref ? (
-              <Link prefetch={false}
+              <EditableModuleLink
                 href={primaryHref}
-                {...externalLinkProps(primaryHref)}
                 className="inline-flex min-h-10 items-center justify-center bg-[#E36F2C] px-4 text-xs font-bold uppercase tracking-[0.12em] text-white hover:bg-[#C85A1F]"
-                data-page-module-item="primary-cta"
-                data-page-module-field={`label_${lang}`}
+                itemId="primary-cta"
+                lang={lang}
               >
                 {primaryLabel}
-              </Link>
+              </EditableModuleLink>
             ) : null}
             {secondaryLabel && secondaryHref ? (
-              <Link prefetch={false}
+              <EditableModuleLink
                 href={secondaryHref}
-                {...externalLinkProps(secondaryHref)}
                 className="inline-flex min-h-10 items-center justify-center border border-[#241F1B]/20 px-4 text-xs font-bold uppercase tracking-[0.12em] text-[#241F1B]/75 hover:border-[#E36F2C] hover:text-[#E36F2C]"
-                data-page-module-item="secondary-cta"
-                data-page-module-field={`label_${lang}`}
+                itemId="secondary-cta"
+                lang={lang}
               >
                 {secondaryLabel}
-              </Link>
+              </EditableModuleLink>
             ) : null}
           </div>
         ) : null}

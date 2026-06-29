@@ -1,16 +1,27 @@
 import type { ShowcaseMarker } from '@/data/showcaseMarkers'
-import type { ShowcaseProject } from '@/data/showcaseProjects'
+import type { ShowcaseProject, ShowcaseProjectImageSource } from '@/data/showcaseProjects'
 import type { ProjectCaseRow } from '@/lib/project-cases-static'
 
 const FALLBACK_IMAGE = '/images/projects/guangdong-huizhou/image-01.jpg'
 
-function uniqueImageUrls(urls: Array<string | null | undefined>) {
+function buildProjectImages(project: ProjectCaseRow) {
   const seen = new Set<string>()
-  return urls.filter((url): url is string => {
+  const images: string[] = []
+  const cmsImageSources: ShowcaseProjectImageSource[] = []
+  const pushImage = (url: string | null | undefined, source: ShowcaseProjectImageSource) => {
     if (!url || seen.has(url)) return false
     seen.add(url)
+    images.push(url)
+    cmsImageSources.push(source)
     return true
+  }
+
+  pushImage(project.cover_image_url, { patchKey: 'cover_image_url' })
+  project.images.forEach((url, index) => {
+    pushImage(url, { patchKey: 'images', arrayIndex: index })
   })
+
+  return { images, cmsImageSources }
 }
 
 function fallbackAmenities(project: ProjectCaseRow): ShowcaseProject['amenities'] {
@@ -83,10 +94,13 @@ export function projectCaseToMarker(project: ProjectCaseRow): ShowcaseMarker | n
 
 export function projectCaseToShowcaseProject(project: ProjectCaseRow): ShowcaseProject | null {
   if (project.longitude == null || project.latitude == null) return null
-  const images = uniqueImageUrls([
-    project.cover_image_url,
-    ...project.images,
-  ])
+  const { images, cmsImageSources } = buildProjectImages(project)
+  const hasProjectImages = images.length > 0
+  const hasGlobalAmenities = project.global_amenities.length > 0
+  const hasGlobalTransportZh = project.global_transport_zh.length > 0
+  const hasGlobalTransportEn = project.global_transport_en.length > 0
+  const hasGlobalNearbyZh = project.global_nearby_zh.length > 0
+  const hasGlobalNearbyEn = project.global_nearby_en.length > 0
 
   return {
     id: project.id,
@@ -103,19 +117,31 @@ export function projectCaseToShowcaseProject(project: ProjectCaseRow): ShowcaseP
       en: project.description_en || project.description_zh,
       zh: project.description_zh || project.description_en,
     },
-    amenities: project.global_amenities.length > 0 ? project.global_amenities : fallbackAmenities(project),
-    transport: project.global_transport_zh.length > 0 || project.global_transport_en.length > 0
+    amenities: hasGlobalAmenities ? project.global_amenities : fallbackAmenities(project),
+    transport: hasGlobalTransportZh || hasGlobalTransportEn
       ? {
-          en: project.global_transport_en.length > 0 ? project.global_transport_en : project.global_transport_zh,
-          zh: project.global_transport_zh.length > 0 ? project.global_transport_zh : project.global_transport_en,
+          en: hasGlobalTransportEn ? project.global_transport_en : project.global_transport_zh,
+          zh: hasGlobalTransportZh ? project.global_transport_zh : project.global_transport_en,
         }
       : fallbackTransport(project),
-    nearby: project.global_nearby_zh.length > 0 || project.global_nearby_en.length > 0
+    nearby: hasGlobalNearbyZh || hasGlobalNearbyEn
       ? {
-          en: project.global_nearby_en.length > 0 ? project.global_nearby_en : project.global_nearby_zh,
-          zh: project.global_nearby_zh.length > 0 ? project.global_nearby_zh : project.global_nearby_en,
+          en: hasGlobalNearbyEn ? project.global_nearby_en : project.global_nearby_zh,
+          zh: hasGlobalNearbyZh ? project.global_nearby_zh : project.global_nearby_en,
         }
       : fallbackNearby(project),
-    images: images.length > 0 ? images : [FALLBACK_IMAGE],
+    images: hasProjectImages ? images : [FALLBACK_IMAGE],
+    cmsImageSources: hasProjectImages ? cmsImageSources : undefined,
+    cmsGlobalSources: {
+      amenities: hasGlobalAmenities,
+      transport: {
+        en: hasGlobalTransportEn,
+        zh: hasGlobalTransportZh,
+      },
+      nearby: {
+        en: hasGlobalNearbyEn,
+        zh: hasGlobalNearbyZh,
+      },
+    },
   }
 }

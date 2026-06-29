@@ -49,18 +49,8 @@ function pageLabel(pageKey: string) {
 
 function moduleStatus(pageModule: PageModuleRow) {
   if (['products', 'cases', 'news', 'media-kit', 'faq', 'scenarios', 'innovation', 'display', 'contact', 'auth', 'account', 'site'].includes(pageModule.page_key)) return '客户可见内容'
-  if (pageModule.module_key === 'hero') return '已接入前台'
-  if (pageModule.module_key === 'credentials') return '已接入前台'
-  if (pageModule.module_key === 'stats') return '已接入前台'
-  if (pageModule.module_key === 'brand-story') return '已接入前台'
-  if (pageModule.module_key === 'factory') return '已接入前台'
-  if (pageModule.module_key === 'timeline') return '已接入前台'
-  if (pageModule.module_key === 'technologies') return '已接入前台'
-  if (pageModule.module_key === 'founder') return '已接入前台'
-  if (pageModule.module_key === 'services') return '已接入前台'
-  if (pageModule.module_key === 'recognition-awards') return '已接入前台'
-  if (pageModule.module_key === 'partners') return '已接入前台'
-  return '规划中'
+  if (pageModule.is_visible) return '页面展示'
+  return '隐藏'
 }
 
 function cloneModule(pageModule: PageModuleRow): PageModuleRow {
@@ -169,7 +159,7 @@ export default function PageModulesClient({
       if (nextUrl.origin !== currentUrl.origin) return
       if (nextUrl.pathname === currentUrl.pathname && nextUrl.search === currentUrl.search) return
 
-      const ok = window.confirm('页面模块有未保存修改。离开此页会丢失这些修改，确定离开吗？')
+      const ok = window.confirm('页面内容有未保存修改。离开此页会丢失这些修改，确定离开吗？')
       if (!ok) {
         event.preventDefault()
         event.stopPropagation()
@@ -299,7 +289,7 @@ export default function PageModulesClient({
       const saved = data.data as PageModuleRow
       setModules((prev) => prev.map((pageModule) => (pageModule.id === saved.id ? cloneModule(saved) : pageModule)))
       setSavedModules((prev) => prev.map((pageModule) => (pageModule.id === saved.id ? cloneModule(saved) : pageModule)))
-      toast.success('页面模块已保存')
+      toast.success('页面内容已保存')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '保存失败')
     } finally {
@@ -310,7 +300,7 @@ export default function PageModulesClient({
   if (!active) {
     return (
       <div className="rounded-lg border border-dashed border-[#E5DED4] bg-white p-12 text-center text-[#8A8580]">
-        暂无页面模块
+        暂无页面内容
       </div>
     )
   }
@@ -319,25 +309,25 @@ export default function PageModulesClient({
     <div className={`flex flex-col gap-6 ${activeHasUnsavedChanges ? 'pb-24' : ''}`}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-xs tracking-[0.18em] uppercase text-[#E36F2C]">Controlled Modules</p>
+          <p className="text-xs tracking-[0.18em] uppercase text-[#E36F2C]">Website Content</p>
           <h1 className="mt-2 text-2xl font-bold text-[#2C2A28]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-            页面模块
+            页面内容
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#8A8580]">
-            用受控模块管理客户可见文字、图片、按钮、链接、表单说明和导航页脚。前台只展示后台已保存并处于显示状态的内容，不在代码里补业务文案。
+            集中维护前台展示的文字、图片、按钮和链接。保存后到前台核对效果。
           </p>
         </div>
         <div className="flex flex-col items-start gap-2 lg:items-end">
           {hasAnyUnsavedChanges ? (
             <p className="text-xs text-[#E36F2C]">
-              {dirtyIds.size} 个模块有未保存修改，当前按钮只保存正在编辑的模块。
+              {dirtyIds.size} 处页面内容有未保存修改
             </p>
           ) : (
             <p className="text-xs text-[#8A8580]">当前没有未保存修改</p>
           )}
           <Button type="button" size="sm" disabled={saving} onClick={save}>
             <Save size={15} />
-            {saving ? '保存中' : activeHasUnsavedChanges ? '保存当前模块' : '已保存'}
+            {saving ? '保存中' : activeHasUnsavedChanges ? '保存当前内容' : '已保存'}
           </Button>
         </div>
       </div>
@@ -392,7 +382,7 @@ export default function PageModulesClient({
           <div className="flex flex-col gap-3 border-b border-[#E5DED4] px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs text-[#8A8580]">
-                {pageLabel(active.page_key)} / {active.module_key} / {moduleStatus(active)}
+                {pageLabel(active.page_key)} / {moduleStatus(active)}
               </p>
               <h2 className="mt-1 text-lg font-semibold text-[#2C2A28]">{active.title_zh}</h2>
             </div>
@@ -404,15 +394,15 @@ export default function PageModulesClient({
 
           <div className="grid grid-cols-1 gap-5 p-5 xl:grid-cols-2">
             <label className="flex flex-col gap-2">
-              <span className="text-xs font-medium text-[#8A8580]">中文模块名（显示到前台）</span>
+              <span className="text-xs font-medium text-[#8A8580]">中文标题</span>
               <Input value={active.title_zh} onChange={(e) => patchActive({ title_zh: e.target.value })} />
             </label>
             <label className="flex flex-col gap-2">
-              <span className="text-xs font-medium text-[#8A8580]">英文模块名（显示到前台）</span>
+              <span className="text-xs font-medium text-[#8A8580]">英文标题</span>
               <Input value={active.title_en} onChange={(e) => patchActive({ title_en: e.target.value })} />
             </label>
             <label className="flex flex-col gap-2">
-              <span className="text-xs font-medium text-[#8A8580]">中文说明（显示到前台）</span>
+              <span className="text-xs font-medium text-[#8A8580]">中文说明</span>
               <Textarea
                 className="min-h-[92px]"
                 value={active.description_zh}
@@ -420,7 +410,7 @@ export default function PageModulesClient({
               />
             </label>
             <label className="flex flex-col gap-2">
-              <span className="text-xs font-medium text-[#8A8580]">英文说明（显示到前台）</span>
+              <span className="text-xs font-medium text-[#8A8580]">英文说明</span>
               <Textarea
                 className="min-h-[92px]"
                 value={active.description_en}
@@ -434,9 +424,7 @@ export default function PageModulesClient({
               <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-[#2C2A28]">图片与文字项</p>
-                  <p className="mt-1 text-xs text-[#8A8580]">
-                    这些字段会直接显示到前台。隐藏项目用于下架展示，不做物理删除；图片可以从图片库选择、直接上传或粘贴 URL。
-                  </p>
+                  <p className="mt-1 text-xs text-[#8A8580]">维护后保存，并到前台核对展示效果。</p>
                 </div>
                 <Button type="button" size="sm" variant="outline" onClick={addItem}>
                   <Plus size={14} />
@@ -593,7 +581,7 @@ export default function PageModulesClient({
             </div>
           ) : (
             <div className="border-t border-[#E5DED4] px-5 py-10 text-sm text-[#8A8580]">
-              这个模块暂未接入具体字段。你可以先新增项目作为内容结构；保存后前台只会按后台字段显示，不会使用代码补业务文案。
+              当前页面暂无内容。
               <div className="mt-4">
                 <Button type="button" size="sm" variant="outline" onClick={addItem}>
                   <Plus size={14} />
@@ -608,14 +596,12 @@ export default function PageModulesClient({
         <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-[#E5DED4] bg-[#FFFFFF]/95 px-6 py-4 shadow-[0_-8px_24px_rgba(44,42,40,0.08)] backdrop-blur">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-sm font-semibold text-[#2C2A28]">当前页面模块有未保存修改</p>
-              <p className="mt-1 text-xs text-[#8A8580]">
-                选择图片或修改文字后，需要点击保存当前模块才会更新前台。
-              </p>
+              <p className="text-sm font-semibold text-[#2C2A28]">当前页面内容有未保存修改</p>
+              <p className="mt-1 text-xs text-[#8A8580]">保存后再到前台核对效果。</p>
             </div>
             <Button type="button" disabled={saving} onClick={save}>
               <Save size={15} />
-              {saving ? '保存中' : '保存当前模块'}
+              {saving ? '保存中' : '保存当前内容'}
             </Button>
           </div>
         </div>

@@ -1341,7 +1341,7 @@ function MediaOperationsPanel({
         </div>
         <div className="mt-3 grid grid-cols-1 gap-2">
           <MediaOperationRow label="内容引用" value={`${referenceSummary.contentRefs} 处`} tone={referenceSummary.contentRefs > 0 ? 'blue' : 'gray'} />
-          <MediaOperationRow label="页面模块引用" value={`${referenceSummary.pageRefs} 处`} tone={referenceSummary.pageRefs > 0 ? 'blue' : 'gray'} />
+          <MediaOperationRow label="页面内容引用" value={`${referenceSummary.pageRefs} 处`} tone={referenceSummary.pageRefs > 0 ? 'blue' : 'gray'} />
           <MediaOperationRow label="草稿/快照引用" value={`${referenceSummary.draftRefs} 处`} tone={referenceSummary.draftRefs > 0 ? 'orange' : 'gray'} />
           <MediaOperationRow label="采样上限" value={`${referenceSummary.sampled} 张`} tone="gray" />
         </div>
@@ -1759,7 +1759,7 @@ function MediaDetailSheet({
                   {refs.pages > 0 && (
                     <span className="text-[#61767D]">
                       {' '}
-                      · 页面模块 {refs.pages} 条
+                      · 页面内容 {refs.pages} 条
                     </span>
                   )}
                   {refs.pageDrafts > 0 && (
@@ -1777,7 +1777,7 @@ function MediaDetailSheet({
                   {refs.pageStructureDrafts > 0 && (
                     <span className="text-[#61767D]">
                       {' '}
-                      · 页面结构草稿 {refs.pageStructureDrafts} 条
+                      · 布局草稿 {refs.pageStructureDrafts} 条
                     </span>
                   )}
                   {refs.pageStructureSnapshots > 0 && (
@@ -1807,7 +1807,7 @@ function MediaDetailSheet({
                       items={refs.items.projects}
                     />
                     <ReferenceSourceList
-                      label="页面模块"
+                      label="页面内容"
                       count={refs.pages}
                       items={refs.items.pages}
                     />
@@ -1822,7 +1822,7 @@ function MediaDetailSheet({
                       items={refs.items.pageSnapshots}
                     />
                     <ReferenceSourceList
-                      label="页面结构草稿引用"
+                      label="布局草稿引用"
                       count={refs.pageStructureDrafts}
                       items={refs.items.pageStructureDrafts}
                     />

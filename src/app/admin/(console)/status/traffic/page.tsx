@@ -233,7 +233,7 @@ export default async function AdminStatusTrafficPage({ searchParams }: PageProps
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
           <section id="landing-analysis" className="space-y-4">
-            <SectionTitle title="落地页跳出分析" detail="先用同一路径内页面访问和后续动作判断高访问低动作页面；精确跳出率需要会话级链路后续单独接入。" />
+            <SectionTitle title="落地页表现" detail="用访问、动作和线索数据定位高访问低动作页面。" />
             <RankTable rows={analytics.landingPages} empty="暂无落地页事件。" valueLabel="访问" secondaryLabel="动作" />
           </section>
 
@@ -483,14 +483,14 @@ function buildTrafficToLeadExceptionRows(
       const sourceActions = sourceActionsFor(row.key)
       const priority =
         hasActionGap
-          ? 'P0 动作无线索'
+          ? '动作无线索'
           : hasTrafficGap
-            ? 'P1 访问无线索'
+            ? '访问无线索'
             : openQuality > 0
-              ? 'P1 承接待补'
+              ? '承接待补'
               : row.metric.leads > 0
-                ? 'P2 复盘质量'
-                : 'P3 观察'
+                ? '复盘质量'
+                : '观察'
       const tone: TrafficToLeadExceptionRow['tone'] =
         hasActionGap || hasTrafficGap || openQuality > 0
           ? 'orange'
@@ -737,14 +737,14 @@ function ProductPathQualityReviewDesk({
   const contentReadyRate = productContent.total > 0 ? Math.max(0, (productContent.total - contentIssues) / productContent.total) : 0
   const priority =
     actionNoLead
-      ? 'P0 动作无线索'
+      ? '动作无线索'
       : pathNoAction
-        ? 'P1 访问未动作'
+        ? '访问未动作'
         : (seoMissing > 0 || contentIssues > 0) && metric.views > 0
-          ? 'P1 承接缺口'
+          ? '承接缺口'
           : metric.leads > 0
-            ? 'P2 样本复盘'
-            : 'P3 等待样本'
+            ? '样本复盘'
+            : '等待样本'
   const priorityTone: ProductPathQualityCard['tone'] =
     actionNoLead || pathNoAction || ((seoMissing > 0 || contentIssues > 0) && metric.views > 0)
       ? 'orange'
@@ -914,14 +914,14 @@ function CasePathLeadBackflowDesk({
   const contentGap = health.weak > 0
   const priority =
     actionGap
-      ? 'P0 动作无线索'
+      ? '动作无线索'
       : trafficGap
-        ? 'P1 访问未动作'
+        ? '访问未动作'
         : contentGap && metric.views > 0
-          ? 'P1 内容承接'
+          ? '内容承接'
           : metric.leads > 0
-            ? 'P2 复盘样本'
-            : 'P3 等待样本'
+            ? '复盘样本'
+            : '等待样本'
   const priorityTone: CasePathBackflowCard['tone'] =
     actionGap || trafficGap || (contentGap && metric.views > 0)
       ? 'orange'
@@ -1113,14 +1113,14 @@ function CaseLoopTrafficQualityReviewDesk({
   const qualitySignals = health.weak + (trafficNoLead ? 1 : 0) + (actionNoLead ? 1 : 0)
   const priority =
     actionNoLead
-      ? 'P0 动作无线索'
+      ? '动作无线索'
       : pathNoAction
-        ? 'P1 访问未动作'
+        ? '访问未动作'
         : health.weak > 0 && metric.views > 0
-          ? 'P1 内容质量'
+          ? '内容质量'
           : metric.leads > 0
-            ? 'P2 样本复盘'
-            : 'P3 等待样本'
+            ? '样本复盘'
+            : '等待样本'
   const priorityTone: CaseLoopTrafficCard['tone'] =
     actionNoLead || pathNoAction || (health.weak > 0 && metric.views > 0)
       ? 'orange'
@@ -1385,7 +1385,7 @@ function TrafficAnalysisConsole({
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <SectionTitle
           title="网站访问统计工作台"
-          detail="按 300 后台式流程组织：先看统计表和趋势，再看 Top 页面、落地页、来源和下钻入口。"
+          detail="先看统计表和趋势，再看 Top 页面、落地页、来源和下钻入口。"
         />
         <div className="flex flex-wrap gap-2 text-xs">
           <span className="rounded-md border border-[#D8E7E8] bg-white px-3 py-2 font-semibold text-[#1E2C31]">

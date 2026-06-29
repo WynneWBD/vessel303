@@ -28,8 +28,6 @@ import {
   Package,
   SearchCheck,
   Settings,
-  ShieldCheck,
-  Wrench,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -53,7 +51,7 @@ type NavigationReleaseLedgerRow = {
   previewHref: string
 }
 
-function getNavigationSideNav(isAdmin: boolean): AdminSideNavGroup[] {
+function getNavigationSideNav(): AdminSideNavGroup[] {
   return [
     {
       title: '网站运营',
@@ -75,14 +73,6 @@ function getNavigationSideNav(isAdmin: boolean): AdminSideNavGroup[] {
         { key: 'news', label: '新闻资讯', href: '/admin/content/news', Icon: Newspaper },
         { key: 'media', label: '图片素材', href: '/admin/site/media', Icon: ImageIcon },
       ],
-    },
-    {
-      title: '高级维护',
-      items: [
-        { key: 'form-mode', label: '表单模式', href: '/admin/pages', adminOnly: true, Icon: Wrench },
-        { key: 'admin-settings', label: '站点设置', href: '/admin/settings', adminOnly: true, Icon: Settings },
-        { key: 'legacy', label: '维护入口', href: '/admin/legacy', adminOnly: true, Icon: ShieldCheck },
-      ].filter((item) => isAdmin || !item.adminOnly),
     },
   ]
 }
@@ -119,9 +109,9 @@ function moduleStatusClassName(pageModule: PageModuleRow): string {
 }
 
 function moduleStatusLabel(pageModule: PageModuleRow): string {
-  if (!pageModule.is_visible) return 'hidden'
+  if (!pageModule.is_visible) return '已隐藏'
   if (pageModule.has_draft) return '有草稿'
-  return 'published'
+  return '已发布'
 }
 
 function getModuleRole(moduleKey: string): string {
@@ -129,7 +119,7 @@ function getModuleRole(moduleKey: string): string {
   if (moduleKey === 'ui-labels') return '通用按钮与表单文案'
   if (moduleKey.startsWith('footer')) return '页脚区域'
   if (moduleKey.includes('contact') || moduleKey.includes('cta')) return '联系入口'
-  return '站点模块'
+  return '站点内容区'
 }
 
 function getLinkWarnings(pageModule: PageModuleRow): string[] {
@@ -246,20 +236,20 @@ function buildNavigationReleaseLedgerRows(modules: PageModuleRow[]): NavigationR
         signal = warnings.slice(0, 2).join(' / ')
       } else if (missingContact) {
         tone = 'warning'
-        stage = '联系入口复核'
-        signal = '联系/CTA 模块没有指向 /contact 或旧 303 联系页的可见入口。'
+        stage = '联系入口确认'
+        signal = '联系按钮没有指向 /contact 或旧 303 联系页的可见入口。'
       } else if (pageModule.has_draft) {
         tone = 'warning'
         stage = '草稿待发布'
-        signal = '已保存草稿会影响全站导航或页脚，发布前需要复核前台。'
+        signal = '已保存草稿会影响全站导航或页脚，发布前需要预览前台。'
       } else if (!pageModule.is_visible) {
         tone = 'review'
-        stage = '隐藏复核'
-        signal = '模块当前隐藏，确认是否符合公开导航计划。'
+        stage = '隐藏确认'
+        signal = '当前内容区已隐藏，请确认是否符合公开导航计划。'
       } else if (linkStats.external > 0) {
         tone = 'review'
-        stage = '外链复核'
-        signal = `包含 ${linkStats.external} 个外部入口，确认是否为旧站备份或外部承接。`
+        stage = '外链确认'
+        signal = `包含 ${linkStats.external} 个外部入口，确认是否仍需保留。`
       }
 
       return {
@@ -319,7 +309,7 @@ function buildNavigationPriorityItems(modules: PageModuleRow[], contract?: Gover
       items.push({
         key: `${pageModule.module_key}:draft`,
         title: pageModule.title_zh || pageModule.title_en || pageModule.module_key,
-        detail: '当前模块有已保存草稿，发布前需要复核前台导航和页脚影响。',
+        detail: '当前内容区有已保存草稿，发布前需要预览导航和页脚。',
         href: visualEditorModuleHref(pageModule.module_key),
         score: 70,
         Icon: FileText,
@@ -329,7 +319,7 @@ function buildNavigationPriorityItems(modules: PageModuleRow[], contract?: Gover
       items.push({
         key: `${pageModule.module_key}:hidden`,
         title: pageModule.title_zh || pageModule.title_en || pageModule.module_key,
-        detail: '模块当前隐藏，确认是否符合公开导航计划。',
+        detail: '当前内容区已隐藏，请确认是否符合公开导航计划。',
         href: visualEditorModuleHref(pageModule.module_key),
         score: 40,
         Icon: LockKeyhole,
@@ -357,34 +347,31 @@ function NavigationOperationsMatrix({
     <section className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-5 shadow-sm">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[#1E2C31]">导航运营矩阵</h2>
-          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            先看联系入口、内部链接、页脚模块和草稿风险，再进入固定模块编辑。
-          </p>
+          <h2 className="text-xl font-bold text-[#1E2C31]">导航概览</h2>
         </div>
         <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1889B6]">
-          标准模块
+          固定区域
         </span>
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
-        <SummaryTile title="内部入口" value={linkStats.internal} detail={`可见链接 ${linkStats.total} 个`} Icon={Navigation} />
-        <SummaryTile title="联系入口" value={linkStats.contact} detail={`${contactModules} 个联系/CTA 模块`} Icon={Link2} />
-        <SummaryTile title="外部入口" value={linkStats.external} detail="需确认是否为旧站备份或外部承接" Icon={ExternalLink} />
+        <SummaryTile title="站内入口" value={linkStats.internal} detail={`可见链接 ${linkStats.total} 个`} Icon={Navigation} />
+        <SummaryTile title="联系入口" value={linkStats.contact} detail={`${contactModules} 个联系按钮`} Icon={Link2} />
+        <SummaryTile title="外部入口" value={linkStats.external} detail="需确认是否保留" Icon={ExternalLink} />
         <SummaryTile title="链接风险" value={invalidCount} detail="空链接、# 或脚本链接" Icon={AlertTriangle} />
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="rounded-md border border-[#D8E7E8] bg-white p-4">
-          <h3 className="text-sm font-bold text-[#1E2C31]">模块角色分布</h3>
+          <h3 className="text-sm font-bold text-[#1E2C31]">区域分布</h3>
           <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
-            <InfoPill label="site 模块" value={modules.length} />
-            <InfoPill label="页脚模块" value={footerModules} />
-            <InfoPill label="联系模块" value={contactModules} />
-            <InfoPill label="模块草稿" value={modules.filter((pageModule) => pageModule.has_draft).length} />
+            <InfoPill label="站点区域" value={modules.length} />
+            <InfoPill label="页脚区域" value={footerModules} />
+            <InfoPill label="联系入口" value={contactModules} />
+            <InfoPill label="内容草稿" value={modules.filter((pageModule) => pageModule.has_draft).length} />
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
-            <InfoPill label="内部链接" value={linkStats.internal} />
+            <InfoPill label="站内链接" value={linkStats.internal} />
             <InfoPill label="Contact" value={linkStats.contact} />
             <InfoPill label="外部链接" value={linkStats.external} />
             <InfoPill label="无效链接" value={invalidCount} />
@@ -392,8 +379,7 @@ function NavigationOperationsMatrix({
         </div>
 
         <aside className="rounded-md border border-[#D8E7E8] bg-white p-4">
-          <h3 className="text-sm font-bold text-[#1E2C31]">优先处理队列</h3>
-          <p className="mt-1 text-xs leading-5 text-[#61767D]">按内容来源、链接质检、草稿和隐藏模块排序。</p>
+          <h3 className="text-sm font-bold text-[#1E2C31]">重点事项</h3>
           <div className="mt-3 space-y-2">
             {priorityItems.length > 0 ? (
               priorityItems.map((item) => {
@@ -416,7 +402,7 @@ function NavigationOperationsMatrix({
               })
             ) : (
               <p className="rounded-md bg-[#F7FAFA] px-3 py-3 text-xs leading-5 text-[#61767D]">
-                当前没有链接质检、草稿或来源阻断项。
+                当前没有需要优先处理的链接或草稿。
               </p>
             )}
           </div>
@@ -435,15 +421,12 @@ function NavigationReleaseLedger({ modules }: { modules: PageModuleRow[] }) {
     <section className="rounded-md border border-[#D8E7E8] bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-[#E6EEEE] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[#1E2C31]">导航发布治理台账</h2>
-          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            按链接风险、联系入口、草稿、隐藏和外链复核排序；运营先处理台账，再进入固定模块编辑。
-          </p>
+          <h2 className="text-xl font-bold text-[#1E2C31]">导航发布清单</h2>
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-semibold">
           <span className="rounded-full bg-orange-50 px-3 py-1 text-orange-700">优先 {urgentCount}</span>
-          <span className="rounded-full bg-[#EAF6F8] px-3 py-1 text-[#1889B6]">复核 {reviewCount}</span>
-          <span className="rounded-full bg-[#F7FAFA] px-3 py-1 text-[#61767D]">模块 {rows.length}</span>
+          <span className="rounded-full bg-[#EAF6F8] px-3 py-1 text-[#1889B6]">需确认 {reviewCount}</span>
+          <span className="rounded-full bg-[#F7FAFA] px-3 py-1 text-[#61767D]">内容区 {rows.length}</span>
         </div>
       </div>
 
@@ -451,9 +434,9 @@ function NavigationReleaseLedger({ modules }: { modules: PageModuleRow[] }) {
         <table className="min-w-full divide-y divide-[#E6EEEE] text-left text-sm">
           <thead className="bg-[#F7FAFA] text-xs font-bold uppercase tracking-wide text-[#8A9EA4]">
             <tr>
-              <th className="px-5 py-3">模块 / 角色</th>
+              <th className="px-5 py-3">内容区 / 位置</th>
               <th className="px-4 py-3">阶段</th>
-              <th className="px-4 py-3">处理信号</th>
+              <th className="px-4 py-3">处理事项</th>
               <th className="px-4 py-3">计数</th>
               <th className="px-4 py-3">最近更新</th>
               <th className="px-5 py-3 text-right">入口</th>
@@ -465,7 +448,7 @@ function NavigationReleaseLedger({ modules }: { modules: PageModuleRow[] }) {
                 <td className="px-5 py-4">
                   <div className="min-w-0">
                     <p className="font-bold text-[#1E2C31]">{row.module.title_zh || row.module.title_en || row.module.module_key}</p>
-                    <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">site:{row.module.module_key} / {row.role}</p>
+                    <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{row.role}</p>
                   </div>
                 </td>
                 <td className="px-4 py-4">
@@ -506,7 +489,7 @@ function NavigationReleaseLedger({ modules }: { modules: PageModuleRow[] }) {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-bold text-[#1E2C31]">{row.module.title_zh || row.module.title_en || row.module.module_key}</p>
-                <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">site:{row.module.module_key} / {row.role}</p>
+                <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{row.role}</p>
               </div>
               <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-bold ${navigationReleaseLedgerBadgeClass(row.tone)}`}>
                 {row.stage}
@@ -565,16 +548,16 @@ function ModuleCard({ pageModule }: { pageModule: PageModuleRow }) {
               {getModuleRole(pageModule.module_key)}
             </span>
           </div>
-          <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">site:{pageModule.module_key} / {pageModule.module_type}</p>
+          <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{getModuleRole(pageModule.module_key)}</p>
           <p className="mt-3 text-sm leading-6 text-[#61767D]">
-            {pageModule.description_zh || pageModule.description_en || '该模块由后台字段控制前台导航、页脚、通用 CTA 或客户可见文案。'}
+            {pageModule.description_zh || pageModule.description_en || '修改后会影响前台对应的导航、页脚、按钮或客户可见文案。'}
           </p>
         </div>
         <Link
           href={visualEditorModuleHref(pageModule.module_key)}
           className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md bg-[#E36F2C] px-3 text-xs font-semibold text-white transition hover:bg-[#C95E22]"
         >
-          编辑模块
+          编辑
           <ArrowRight size={14} />
         </Link>
       </div>
@@ -588,14 +571,14 @@ function ModuleCard({ pageModule }: { pageModule: PageModuleRow }) {
 
       <div className="mt-4 overflow-hidden rounded-md border border-[#E6EEEE]">
         {pageModule.items.length === 0 ? (
-          <p className="p-3 text-xs text-[#61767D]">暂无条目；前台不会凭代码补业务入口。</p>
+          <p className="p-3 text-xs text-[#61767D]">暂无条目；前台不会显示额外入口。</p>
         ) : (
           <div className="divide-y divide-[#E6EEEE]">
             {pageModule.items.slice(0, 8).map((item) => (
               <div key={item.id} className="grid grid-cols-1 gap-2 p-3 text-xs md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_80px]">
                 <span className="min-w-0 truncate font-semibold text-[#1E2C31]">{item.label_zh || item.label_en || item.id}</span>
                 <span className="min-w-0 truncate text-[#61767D]">{item.href || '无链接'}</span>
-                <span className={item.is_visible ? 'text-emerald-700' : 'text-zinc-500'}>{item.is_visible ? 'visible' : 'hidden'}</span>
+                <span className={item.is_visible ? 'text-emerald-700' : 'text-zinc-500'}>{item.is_visible ? '可见' : '隐藏'}</span>
               </div>
             ))}
           </div>
@@ -676,7 +659,7 @@ export default async function AdminSiteNavigationPage() {
     }, [] as PageModuleRow[]),
   ])
   const siteContract = contracts.find((contract) => contract.key === 'site-shell')
-  const sideNavGroups = getNavigationSideNav(adminRole === 'admin')
+  const sideNavGroups = getNavigationSideNav()
   const visibleModuleCount = modules.filter((item) => item.is_visible).length
   const draftCount = modules.filter((item) => item.has_draft).length
   const linkWarningCount = modules.reduce((sum, item) => sum + getLinkWarnings(item).length, 0)
@@ -688,7 +671,7 @@ export default async function AdminSiteNavigationPage() {
       role={adminRole}
       email={session.user.email}
       title="网站管理"
-      description="导航、页脚和通用文案从后台 site 模块读取；前台只按 published 配置展示。"
+      description="管理前台导航、页脚、按钮文案和联系入口。"
       sideNavGroups={sideNavGroups}
       activeItem="navigation"
     >
@@ -697,9 +680,6 @@ export default async function AdminSiteNavigationPage() {
           <div>
             <p className="text-sm font-semibold text-[#1889B6]">导航页脚公开质检</p>
             <h1 className="mt-2 text-3xl font-bold text-[#1E2C31] md:text-4xl">导航 / 页脚 / 通用文案</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#61767D]">
-              顶部导航、页脚栏目、通用 CTA 和客户可见系统文案都归入后台 site/auth/account 模块。运营在后台改稿和发布，前台不再用代码预设业务入口。
-            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Link
@@ -720,9 +700,9 @@ export default async function AdminSiteNavigationPage() {
         </div>
 
         <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-4">
-          <SummaryTile title="site 模块" value={modules.length} detail={`${visibleModuleCount} 个可见`} Icon={Navigation} />
+          <SummaryTile title="站点区域" value={modules.length} detail={`${visibleModuleCount} 个可见`} Icon={Navigation} />
           <SummaryTile title="可见条目" value={visibleItemCount} detail="导航、页脚和 CTA" Icon={ListChecks} />
-          <SummaryTile title="模块草稿" value={draftCount} detail="发布前需复核" Icon={FileText} />
+          <SummaryTile title="内容草稿" value={draftCount} detail="发布前需预览" Icon={FileText} />
           <SummaryTile title="链接提示" value={linkWarningCount} detail="空链接或无效链接" Icon={AlertTriangle} />
         </div>
       </section>
@@ -735,12 +715,11 @@ export default async function AdminSiteNavigationPage() {
 
       <section className="space-y-4">
         <div>
-          <h2 className="text-xl font-bold text-[#1E2C31]">后台配置模块</h2>
-          <p className="mt-1 text-sm text-[#61767D]">显示导航、页脚和通用文案模块；修改发布后会影响前台对应位置。</p>
+          <h2 className="text-xl font-bold text-[#1E2C31]">可编辑内容区</h2>
         </div>
         {modules.length === 0 ? (
           <div className="rounded-md border border-[#D8E7E8] bg-white p-8 text-center text-sm text-[#61767D]">
-            暂无 site 模块。前台会保持最小系统壳，不显示业务宣传入口。
+            暂无可编辑内容区。
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
@@ -751,19 +730,6 @@ export default async function AdminSiteNavigationPage() {
         )}
       </section>
 
-      <section className="rounded-md border border-dashed border-[#D8E7E8] bg-white/75 p-5">
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#F5F2ED] text-[#6B625B]">
-            <LockKeyhole size={18} />
-          </span>
-          <div>
-            <h2 className="text-base font-bold text-[#1E2C31]">导航保护线</h2>
-            <p className="mt-2 text-sm leading-6 text-[#61767D]">
-              本页管理固定位置、固定字段和排序；脚本链接会被视为风险，隐藏和恢复通过模块状态完成。
-            </p>
-          </div>
-        </div>
-      </section>
     </AdminSectionShell>
   )
 }

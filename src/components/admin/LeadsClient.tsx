@@ -186,6 +186,16 @@ function priorityBadgeClass(tone: LeadPriorityTone) {
   }
 }
 
+function priorityDisplay(priority: string) {
+  if (priority === 'P0') return '高优先'
+  if (priority === 'P1') return '优先'
+  if (priority === 'P2') return '复核'
+  if (priority === 'P3') return '观察'
+  if (priority === 'OK') return '正常'
+  if (priority === 'HOLD') return '受限'
+  return priority
+}
+
 function sourceBadgeClass(type: string) {
   switch (type) {
     case 'product':
@@ -253,7 +263,7 @@ function getLeadPriority(lead: Lead): LeadPriority {
   if (lead.status === 'new') {
     if (createdHours >= 24) {
       return {
-        label: 'P0 超时新线索',
+        label: '超时新线索',
         detail: '新线索超过 24 小时未转入跟进',
         score: 50,
         tone: 'critical',
@@ -261,7 +271,7 @@ function getLeadPriority(lead: Lead): LeadPriority {
       }
     }
     return {
-      label: 'P0 首次响应',
+      label: '首次响应',
       detail: '确认需求、来源和负责人',
       score: 45,
       tone: 'critical',
@@ -272,7 +282,7 @@ function getLeadPriority(lead: Lead): LeadPriority {
   if (lead.status === 'contacting') {
     if (updatedHours >= 24 * 7) {
       return {
-        label: 'P1 跟进断点',
+        label: '跟进断点',
         detail: '跟进中超过 7 天未更新',
         score: 40,
         tone: 'warning',
@@ -280,7 +290,7 @@ function getLeadPriority(lead: Lead): LeadPriority {
       }
     }
     return {
-      label: 'P1 持续跟进',
+      label: '持续跟进',
       detail: '保持沟通并补充备注',
       score: 32,
       tone: 'active',
@@ -291,7 +301,7 @@ function getLeadPriority(lead: Lead): LeadPriority {
   if (lead.status === 'quoted') {
     if (updatedHours >= 24 * 7) {
       return {
-        label: 'P2 报价回访',
+        label: '报价回访',
         detail: '报价后超过 7 天未更新',
         score: 30,
         tone: 'warning',
@@ -299,7 +309,7 @@ function getLeadPriority(lead: Lead): LeadPriority {
       }
     }
     return {
-      label: 'P2 等待反馈',
+      label: '等待反馈',
       detail: '关注客户报价反馈',
       score: 24,
       tone: 'active',
@@ -1145,7 +1155,7 @@ function LeadTodayHandoff({
               <span className="flex items-start justify-between gap-3">
                 <span>
                   <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-bold ${priorityBadgeClass(step.tone)}`}>
-                    {step.priority}
+                    {priorityDisplay(step.priority)}
                   </span>
                   <span className="mt-3 block text-sm font-bold text-[#1E2C31]">{step.title}</span>
                 </span>
@@ -1458,7 +1468,7 @@ function LeadOperationsDesk({
         <div className="grid grid-cols-2 gap-3 p-5">
           <LeadDeskMetric label="活跃漏斗" value={activePipeline} detail="新线索+跟进+报价" Icon={ListChecks} />
           <LeadDeskMetric label="当前匹配" value={total} detail="筛选后的总数" Icon={MessageSquareText} />
-          <LeadDeskMetric label="超时队列" value={operationsSummary.overdue} detail={`当前页 P0 ${pageP0} 条`} Icon={AlertTriangle} tone="orange" />
+          <LeadDeskMetric label="超时队列" value={operationsSummary.overdue} detail={`当前页高优先 ${pageP0} 条`} Icon={AlertTriangle} tone="orange" />
           <LeadDeskMetric label="未分配" value={operationsSummary.unassignedActive} detail={`当前页 ${pageUnassigned} 条`} Icon={UserRoundCheck} tone="blue" />
         </div>
         <div className="border-t border-[#E6EEEE] px-5 py-4">

@@ -27,7 +27,6 @@ import {
   SearchCheck,
   Settings,
   ShieldCheck,
-  Wrench,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -122,7 +121,7 @@ const STATIC_SEO_PAGES: StaticSeoPage[] = [
   {
     title: '全站默认',
     path: 'layout.tsx',
-    source: 'Root metadata',
+    source: '全站默认',
     status: 'ready',
     detail: '已有默认 title、description、keywords、OG、Twitter 和 favicon 设置。',
     Icon: Globe2,
@@ -130,7 +129,7 @@ const STATIC_SEO_PAGES: StaticSeoPage[] = [
   {
     title: '首页',
     path: '/',
-    source: 'Root metadata',
+    source: '全站默认',
     status: 'ready',
     detail: '首页沿用全站默认 TDK 和社交分享图，是当前品牌主入口。',
     actionHref: '/',
@@ -139,114 +138,114 @@ const STATIC_SEO_PAGES: StaticSeoPage[] = [
   {
     title: 'About',
     path: '/about',
-    source: 'generateMetadata / page_modules:about',
+    source: '页面内容',
     status: 'ready',
-    detail: 'About metadata 读取 about hero 已发布模块；展示内容仍由 About client 模板和已发布模块渲染。',
+    detail: '关于我们页面已有 SEO 标题和描述。',
     actionHref: '/about',
     Icon: FileText,
   },
   {
     title: 'Products',
     path: '/products',
-    source: 'generateMetadata / page_modules:products',
+    source: '页面内容',
     status: 'ready',
-    detail: '产品列表页 metadata 读取 products hero 已发布模块；当模块标题过泛时使用产品目录语义兜底。',
+    detail: '产品列表页已有 SEO 标题和描述。',
     actionHref: '/products',
     Icon: Package,
   },
   {
     title: 'V9 Gen6 固定精品页',
     path: '/products/v9-gen6',
-    source: 'buildPageMetadata',
+    source: '页面内容',
     status: 'ready',
-    detail: '固定精品产品页已有 canonical、OG 和 Twitter，并已纳入 sitemap 固定路径。',
+    detail: '固定精品产品页已纳入 sitemap。',
     actionHref: '/products/v9-gen6',
     Icon: Package,
   },
   {
     title: 'Cases',
     path: '/cases',
-    source: 'buildPageMetadata',
+    source: '案例内容',
     status: 'ready',
-    detail: '列表页已有完整页面 metadata；详情页由案例名称、描述和封面派生。',
+    detail: '案例列表页已有 SEO 信息；详情页使用案例名称、描述和封面。',
     actionHref: '/cases',
     Icon: MapPinned,
   },
   {
     title: 'News',
     path: '/news',
-    source: 'generateMetadata / page_modules:news',
+    source: '页面内容',
     status: 'ready',
-    detail: '列表页 metadata 读取 news hero 已发布模块；详情页继续优先读取新闻 SEO 字段。',
+    detail: '新闻列表页已有 SEO 信息；详情页优先使用新闻 SEO 标题和描述。',
     actionHref: '/news',
     Icon: Newspaper,
   },
   {
     title: 'Contact',
     path: '/contact',
-    source: 'buildPageMetadata / page_modules:contact',
+    source: '页面内容',
     status: 'ready',
-    detail: '联系入口 metadata 和前台展示文案读取 contact 已发布模块；来源上下文继续留在 /contact 内处理。',
+    detail: '联系页已有 SEO 信息和前台展示文案。',
     actionHref: '/contact',
     Icon: ExternalLink,
   },
   {
     title: 'FAQ',
     path: '/faq',
-    source: 'buildPageMetadata',
+    source: '页面内容',
     status: 'ready',
-    detail: '常见问题页已有 metadata，并继续由 FAQ CMS 优先、静态内容兜底。',
+    detail: '常见问题页已有 SEO 信息。',
     actionHref: '/faq',
     Icon: FileText,
   },
   {
     title: 'Media Kit',
     path: '/media-kit',
-    source: 'generateMetadata / page_modules:media-kit',
+    source: '页面内容',
     status: 'ready',
-    detail: '媒体资源申请页 metadata 读取 media-kit hero 已发布模块。',
+    detail: '媒体资源申请页已有 SEO 信息。',
     actionHref: '/media-kit',
     Icon: FileText,
   },
   {
     title: 'Scenarios',
     path: '/scenarios/*',
-    source: 'generateMetadata',
+    source: '场景内容',
     status: 'ready',
-    detail: 'tourism、commercial、public 三个固定场景页已有 canonical、OG、Twitter，并进入 sitemap。',
+    detail: '三个固定场景页已进入 sitemap。',
     actionHref: '/scenarios/tourism',
     Icon: LayoutTemplate,
   },
   {
     title: 'Display',
     path: '/display',
-    source: 'generateMetadata / page_modules:display + display_slide',
+    source: '页面内容 / 展示素材',
     status: 'ready',
-    detail: '展示页 metadata 优先读取 display hero 文案，再用已发布 display_slide 首图和 tagline 兜底。',
+    detail: '展示页已有 SEO 信息和分享图。',
     actionHref: '/display',
     Icon: LayoutTemplate,
   },
   {
     title: 'Innovation',
     path: '/innovation/viie|vipc|vols',
-    source: 'generateMetadata / b9_content:innovation',
+    source: '专题内容',
     status: 'ready',
-    detail: '三个技术专题页已有独立 title、description、canonical、OG 和 Twitter。',
+    detail: '三个专题页已有独立 SEO 标题和描述。',
     actionHref: '/innovation/viie',
     Icon: FileText,
   },
   {
     title: 'Global',
     path: '/global',
-    source: 'generateMetadata / page_modules:global',
+    source: '页面内容',
     status: 'ready',
-    detail: 'Global metadata 读取 global hero 已发布模块；MapLibre、MapTiler、点位算法和 /api/map 仍保持受保护。',
+    detail: 'Global 页面已有 SEO 信息；当前仅做展示和收录检查。',
     actionHref: '/global',
     Icon: Globe2,
   },
 ]
 
-function getSeoSideNav(isAdmin: boolean): AdminSideNavGroup[] {
+function getSeoSideNav(): AdminSideNavGroup[] {
   return [
     {
       title: '网站运营',
@@ -269,20 +268,6 @@ function getSeoSideNav(isAdmin: boolean): AdminSideNavGroup[] {
         { key: 'news', label: '新闻资讯', href: '/admin/content/news', Icon: Newspaper },
         { key: 'media', label: '图片素材', href: '/admin/site/media', Icon: ImageIcon },
       ],
-    },
-    {
-      title: '后续规划',
-      items: [
-        { key: 'third-party', label: '第三方代码', planned: true, Icon: Settings },
-      ],
-    },
-    {
-      title: '高级维护',
-      items: [
-        { key: 'form-mode', label: '表单模式', href: '/admin/pages', adminOnly: true, Icon: Wrench },
-        { key: 'admin-settings', label: '站点设置', href: '/admin/settings', adminOnly: true, Icon: Settings },
-        { key: 'legacy', label: '维护入口', href: '/admin/legacy', adminOnly: true, Icon: ShieldCheck },
-      ].filter((item) => isAdmin || !item.adminOnly),
     },
   ]
 }
@@ -311,7 +296,7 @@ async function tableExists(tableName: string): Promise<boolean> {
 }
 
 async function loadProductSeoSummary(): Promise<ContentSeoSummary> {
-  if (!(await tableExists('public.product_catalog'))) return { ...EMPTY_CONTENT_SUMMARY, source: 'product_catalog' }
+  if (!(await tableExists('public.product_catalog'))) return { ...EMPTY_CONTENT_SUMMARY, source: '产品内容' }
   const res = await pool.query<{
     total: string
     published: string
@@ -337,13 +322,13 @@ async function loadProductSeoSummary(): Promise<ContentSeoSummary> {
     total: parseCount(row?.total),
     published: parseCount(row?.published),
     missing: parseCount(row?.missing),
-    source: 'product_catalog SEO 字段',
+    source: '产品内容',
     href: '/admin/content/products/list?view=incomplete&issue=seo',
   }
 }
 
 async function loadNewsSeoSummary(): Promise<ContentSeoSummary> {
-  if (!(await tableExists('public.news'))) return { ...EMPTY_CONTENT_SUMMARY, source: 'news' }
+  if (!(await tableExists('public.news'))) return { ...EMPTY_CONTENT_SUMMARY, source: '新闻内容' }
   const res = await pool.query<{
     total: string
     published: string
@@ -369,13 +354,13 @@ async function loadNewsSeoSummary(): Promise<ContentSeoSummary> {
     total: parseCount(row?.total),
     published: parseCount(row?.published),
     missing: parseCount(row?.missing),
-    source: 'news SEO 字段',
+    source: '新闻内容',
     href: '/admin/content/news/list?status=published&issue=seo#news-source-seo-list-bridge',
   }
 }
 
 async function loadProjectSeoSummary(): Promise<ContentSeoSummary> {
-  if (!(await tableExists('public.project_cases'))) return { ...EMPTY_CONTENT_SUMMARY, source: 'project_cases' }
+  if (!(await tableExists('public.project_cases'))) return { ...EMPTY_CONTENT_SUMMARY, source: '案例内容' }
   const res = await pool.query<{
     total: string
     published: string
@@ -400,7 +385,7 @@ async function loadProjectSeoSummary(): Promise<ContentSeoSummary> {
     total: parseCount(row?.total),
     published: parseCount(row?.published),
     missing: parseCount(row?.missing),
-    source: 'project_cases 派生 metadata',
+    source: '案例内容',
     href: '/admin/content/projects/list?view=incomplete#case-conversion-content-backfill-desk',
   }
 }
@@ -413,7 +398,7 @@ function statusLabel(status: SeoStatus): string {
   if (status === 'ready') return '完整'
   if (status === 'partial') return '基础'
   if (status === 'derived') return '派生'
-  return '受保护'
+  return '仅查看'
 }
 
 function statusClassName(status: SeoStatus): string {
@@ -425,8 +410,8 @@ function statusClassName(status: SeoStatus): string {
 
 function indexStatusLabel(status: IndexStatus): string {
   if (status === 'ready') return '已就绪'
-  if (status === 'protected') return '受保护'
-  return '待接入'
+  if (status === 'protected') return '仅查看'
+  return '待处理'
 }
 
 function indexStatusClassName(status: IndexStatus): string {
@@ -446,17 +431,17 @@ function loadIndexFoundationItems(): IndexFoundationItem[] {
       title: 'Robots',
       status: robotsReady ? 'ready' : 'waiting',
       detail: robotsReady
-        ? 'robots.txt 已存在，继续禁止 /admin/ 与 /api/admin/，公开页面允许抓取。'
-        : 'robots.txt 缺失，需要先补公开抓取和后台禁止规则。',
+        ? 'robots.txt 已存在，公开页面允许抓取，管理后台不参与收录。'
+        : 'robots.txt 缺失，需要先补公开页面抓取和后台不收录规则。',
       Icon: ShieldCheck,
     },
     {
       title: 'Sitemap',
       status: sitemapStaticReady || sitemapRouteReady ? 'ready' : 'waiting',
       detail: sitemapRouteReady
-        ? 'app/sitemap.ts 已生成公开主路径、published 产品、案例和新闻，并补入固定场景与精品产品页。'
+        ? 'sitemap 已包含公开主路径、已发布产品、案例、新闻、固定场景和精品产品页。'
         : sitemapStaticReady
-          ? 'public/sitemap.xml 已存在；后续仍建议统一回 app/sitemap.ts 生成。'
+          ? 'sitemap 文件已存在；后续建议继续保持自动更新。'
           : 'sitemap 缺失，Search Console 接入前需要补齐。',
       Icon: ListChecks,
     },
@@ -471,7 +456,7 @@ function loadIndexFoundationItems(): IndexFoundationItem[] {
     {
       title: 'Global 地图',
       status: 'protected',
-      detail: '确认 Global 地图的索引边界和公开展示状态。',
+      detail: '确认 Global 展示页的公开访问和收录状态。',
       Icon: LockKeyhole,
     },
   ]
@@ -504,34 +489,34 @@ function buildSeoPriorityItems({
 }): SeoPriorityItem[] {
   const contentItems: SeoPriorityItem[] = [
     {
-      title: '产品详情 SEO 字段',
+      title: '产品详情 SEO 信息',
       owner: '内容管理 / 产品',
       count: products.missing,
       detail: products.missing > 0
         ? '已发布产品仍有 SEO 标题或描述缺项，优先影响产品详情页搜索摘要质量。'
-        : '已发布产品暂无 SEO 字段缺项。',
+        : '已发布产品暂无 SEO 信息缺项。',
       href: products.href,
       Icon: Package,
       tone: products.missing > 0 ? 'critical' : 'ready',
     },
     {
-      title: '新闻详情 SEO 字段',
+      title: '新闻详情 SEO 信息',
       owner: '内容管理 / 新闻',
       count: news.missing,
       detail: news.missing > 0
         ? '已发布新闻仍有 SEO 标题或描述缺项，优先补齐会影响外部搜索展示的文章。'
-        : '已发布新闻暂无 SEO 字段缺项。',
+        : '已发布新闻暂无 SEO 信息缺项。',
       href: news.href,
       Icon: Newspaper,
       tone: news.missing > 0 ? 'critical' : 'ready',
     },
     {
-      title: '案例详情派生字段',
+      title: '案例详情 SEO 信息',
       owner: '内容管理 / 项目案例',
       count: projects.missing,
       detail: projects.missing > 0
-        ? '已发布案例缺描述或封面，会影响详情页 metadata 派生质量。'
-        : '已发布案例派生 metadata 基础字段完整。',
+        ? '已发布案例缺描述或封面，会影响搜索摘要质量。'
+        : '已发布案例 SEO 基础信息完整。',
       href: projects.href,
       Icon: MapPinned,
       tone: projects.missing > 0 ? 'critical' : 'ready',
@@ -652,38 +637,38 @@ function SeoReadinessOverviewTable({
     Icon: LucideIcon
   }> = [
     {
-      title: '内容 SEO 字段',
+      title: '内容 SEO 信息',
       owner: '内容管理 / 产品、新闻、案例',
       metric: `${formatNumber(missingTotal)} 缺口 / ${formatNumber(publishedTotal)} 已发布`,
-      status: missingTotal > 0 ? '待补字段' : '字段完整',
+      status: missingTotal > 0 ? '待补信息' : '信息完整',
       detail: contentRows.map((row) => `${row.label} ${row.summary.missing}`).join(' · '),
       href: firstContentGap?.summary.href ?? products.href,
       tone: missingTotal > 0 ? 'critical' : 'ready',
       Icon: SearchCheck,
     },
     {
-      title: '页面 metadata 覆盖',
-      owner: '公开页面 / generateMetadata',
+      title: '页面 SEO 覆盖',
+      owner: '公开页面',
       metric: `${formatNumber(staticReady)} / ${formatNumber(STATIC_SEO_PAGES.length)} 页面组`,
-      status: protectedCount > 0 ? `${formatNumber(protectedCount)} 个保护边界` : '全部公开',
-      detail: '覆盖首页、产品、案例、新闻、FAQ、媒体资源、场景、展示和技术专题。',
+      status: protectedCount > 0 ? `${formatNumber(protectedCount)} 个仅查看项` : '全部公开',
+      detail: '覆盖首页、产品、案例、新闻、FAQ、媒体资源、场景、展示和专题页面。',
       href: '#metadata-coverage',
       tone: 'ready',
       Icon: Globe2,
     },
     {
       title: 'Robots 与 Sitemap',
-      owner: '收录基础 / 文件与动态路由',
+      owner: '收录基础',
       metric: `${robots ? indexStatusLabel(robots.status) : '未知'} / ${sitemap ? indexStatusLabel(sitemap.status) : '未知'}`,
-      status: foundationWaiting > 0 ? `${formatNumber(foundationWaiting)} 项待接入` : '基础就绪',
-      detail: '只检查 robots.txt 与 sitemap 路径是否具备，不执行提交或写入。',
+      status: foundationWaiting > 0 ? `${formatNumber(foundationWaiting)} 项待处理` : '基础就绪',
+      detail: '检查 robots.txt 与 sitemap 是否具备。',
       href: '#search-console',
       tone: foundationWaiting > 0 ? 'warning' : 'ready',
       Icon: ListChecks,
     },
     {
       title: 'Search Console 验证',
-      owner: 'Google URL 前缀 / 环境变量',
+      owner: 'Search Console',
       metric: searchConsole ? indexStatusLabel(searchConsole.status) : '未知',
       status: searchConsole?.status === 'ready' ? '可提交 sitemap' : '等待 token',
       detail: searchConsole?.detail ?? '未读取到 Search Console 基础状态。',
@@ -693,20 +678,20 @@ function SeoReadinessOverviewTable({
     },
     {
       title: '当前优先处理项',
-      owner: firstAction?.owner ?? 'SEO 处理优先级',
+      owner: firstAction?.owner ?? 'SEO 优先级',
       metric: `${formatNumber(priorityItems.filter((item) => item.tone === 'critical' || item.tone === 'warning').length)} 项`,
       status: firstAction?.title ?? '暂无高优先级',
-      detail: firstAction?.detail ?? '当前只剩保护边界和已就绪项。',
+      detail: firstAction?.detail ?? '当前只剩仅查看页面和已就绪项。',
       href: firstAction?.href,
       tone: firstAction?.tone ?? 'ready',
       Icon: ArrowRight,
     },
     {
-      title: 'Global 保护边界',
-      owner: '地图页 / 不进入本批 SEO 改动',
-      metric: '受保护',
-      status: '不改地图底层',
-      detail: '本批不修改 /global、MapLibre、MapTiler 或 /api/map，只保留索引边界说明。',
+      title: 'Global 地图状态',
+      owner: 'Global 页面',
+      metric: '仅查看',
+      status: '检查前台展示',
+      detail: 'Global 展示只做可访问和收录状态检查。',
       href: '/global',
       tone: 'protected',
       Icon: LockKeyhole,
@@ -719,12 +704,9 @@ function SeoReadinessOverviewTable({
         <div>
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
             <SearchCheck size={15} />
-            Index Readiness
+            收录状态
           </div>
           <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">收录准备总览表</h2>
-          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            按 SEO 操作顺序，先集中判断内容字段、页面 metadata、Robots、Sitemap、Search Console 和重点页面状态。
-          </p>
         </div>
         <span className={`inline-flex w-fit rounded-md px-3 py-2 text-xs font-bold ${missingTotal + foundationWaiting > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
           {missingTotal + foundationWaiting > 0 ? `${formatNumber(missingTotal + foundationWaiting)} 项需处理` : '收录准备就绪'}
@@ -733,7 +715,7 @@ function SeoReadinessOverviewTable({
 
       <div className="hidden grid-cols-[1.15fr_1fr_0.85fr_0.95fr_1.35fr_0.55fr] border-b border-[#D8E7E8] bg-[#F7FAFA] px-5 py-2 text-xs font-semibold text-[#61767D] xl:grid">
         <span>检查项</span>
-        <span>归属</span>
+        <span>位置</span>
         <span>指标</span>
         <span>状态</span>
         <span>说明</span>
@@ -821,13 +803,10 @@ function SeoOperationsMatrix({
     <section className="rounded-md border border-[#D8E7E8] bg-[#F7FAFA] p-5 shadow-sm">
       <div className="flex flex-col gap-2 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[#1E2C31]">SEO 运营矩阵</h2>
-          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            先看内容缺口、索引基础、页面 metadata 覆盖和保护边界，再进入来源后台补字段或做 Search Console 接入。
-          </p>
+          <h2 className="text-xl font-bold text-[#1E2C31]">SEO 概览</h2>
         </div>
         <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1889B6]">
-          检查 · 批量写入关闭
+          检查模式
         </span>
       </div>
 
@@ -835,28 +814,28 @@ function SeoOperationsMatrix({
         <SeoMatrixCell
           title="内容 SEO 缺口"
           value={missingTotal}
-          detail={`${publishedTotal} 个已发布详情来源；缺口只回来源后台补字段`}
+          detail={`${publishedTotal} 个已发布详情`}
           tone={missingTotal > 0 ? 'orange' : 'green'}
           Icon={SearchCheck}
         />
         <SeoMatrixCell
           title="索引基础"
           value={`${foundationReady}/${indexFoundationItems.length}`}
-          detail={`${foundationWaiting} 个待接入；包括 Robots、Sitemap、Search Console`}
+          detail={`${foundationWaiting} 个待处理`}
           tone={foundationWaiting > 0 ? 'orange' : 'green'}
           Icon={ListChecks}
         />
         <SeoMatrixCell
-          title="页面 metadata"
+          title="页面 SEO"
           value={staticReady}
-          detail={`${STATIC_SEO_PAGES.length} 个公开页面组；${staticProtected} 个受保护边界`}
+          detail={`${STATIC_SEO_PAGES.length} 个公开页面组；${staticProtected} 个仅查看项`}
           tone="blue"
           Icon={Globe2}
         />
         <SeoMatrixCell
           title="当前处理项"
           value={activePriorityCount}
-        detail="来自 SEO 处理优先级，运营按队列逐项处理"
+          detail="按优先级逐项处理"
           tone={activePriorityCount > 0 ? 'orange' : 'green'}
           Icon={ArrowRight}
         />
@@ -948,7 +927,7 @@ function SeoConversionRepairPanel({
       tone: news.missing > 0 ? 'orange' as const : 'green' as const,
     },
     {
-      title: '案例派生待补',
+      title: '案例 SEO 待补',
       value: projects.missing,
       detail: `已发布案例 ${formatNumber(projects.published)} 个；描述和封面同时影响 SEO 摘要与询盘说服力。`,
       href: projects.href,
@@ -966,7 +945,7 @@ function SeoConversionRepairPanel({
     {
       title: '线索承接复盘',
       value: '案例',
-      detail: '把案例路径、线索来源和处理队列合并复盘，避免只补 SEO 不看线索质量。',
+      detail: '查看案例路径和线索质量。',
       href: '/admin/status/leads#case-lead-path-bridge',
       Icon: SearchCheck,
       tone: 'blue' as const,
@@ -974,7 +953,7 @@ function SeoConversionRepairPanel({
     {
       title: '产品线索承接',
       value: '产品',
-      detail: '把产品路径、产品阶段线索和活跃队列合并复盘，避免只补产品 SEO 不看询盘质量。',
+      detail: '查看产品路径和询盘质量。',
       href: '/admin/status/leads#product-lead-path-bridge',
       Icon: SearchCheck,
       tone: 'blue' as const,
@@ -985,7 +964,6 @@ function SeoConversionRepairPanel({
     <section className="space-y-4" id="seo-conversion-closure">
       <SectionTitle
         title="SEO 与来源修复"
-        detail="把搜索增长、内容缺口和来源总览放在同一条运营链路里：先补可被搜索理解的内容，再回到转化与线索面板验证来源质量。"
       />
       <div className="overflow-hidden rounded-md border border-[#D8E7E8] bg-white shadow-sm">
         <div className="grid grid-cols-1 divide-y divide-[#E6EEEE] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-6">
@@ -1031,7 +1009,7 @@ function SeoConversionRepairPanel({
             href="/admin/customers/leads?source_type=product#product-source-lead-queue-handoff"
             className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
           >
-            看产品线索队列
+            看产品线索列表
           </Link>
           <Link
             href="/admin/status/traffic#case-inquiry-path"
@@ -1043,13 +1021,13 @@ function SeoConversionRepairPanel({
             href="/admin/customers/leads?source_type=case#case-lead-content-backflow-desk"
             className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
           >
-            看案例线索队列
+            看案例线索列表
           </Link>
           <Link
             href="/admin/customers/leads?source_type=news#news-source-lead-queue-handoff"
             className="inline-flex h-9 items-center rounded-md border border-[#D8E7E8] bg-white px-3 text-xs font-semibold text-[#1889B6] transition hover:border-[#1889B6]"
           >
-            看新闻线索队列
+            看新闻线索列表
           </Link>
         </div>
       </div>
@@ -1079,7 +1057,7 @@ function ProductSeoLifecycleBridge({ products }: { products: ContentSeoSummary }
     {
       title: '公开产品目录',
       value: '/products',
-      detail: '核对前台产品适配筛选、详情证明桥和询盘入口是否能承接 SEO 流量。',
+      detail: '核对前台产品筛选、详情证明内容和询盘入口是否能承接 SEO 流量。',
       href: '/products',
       Icon: ExternalLink,
       tone: 'blue' as const,
@@ -1095,7 +1073,7 @@ function ProductSeoLifecycleBridge({ products }: { products: ContentSeoSummary }
     {
       title: '产品线索复盘',
       value: 'Leads',
-      detail: '查看产品来源队列，确认搜索入口是否带来可跟进咨询。',
+      detail: '查看产品线索列表，确认搜索入口是否带来可跟进咨询。',
       href: '/admin/customers/leads?source_type=product#product-source-lead-queue-handoff',
       Icon: Link2,
       tone: 'blue' as const,
@@ -1113,7 +1091,7 @@ function ProductSeoLifecycleBridge({ products }: { products: ContentSeoSummary }
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">产品 SEO 处理</p>
           <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">产品生命周期 SEO 修复入口</h2>
           <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把产品内容运营、公开产品路径、产品 SEO 待补和产品线索复盘放到 SEO 页顶部，便于运营判断下一步处理入口。
+            查看产品 SEO、公开路径和线索入口。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -1174,36 +1152,36 @@ function SeoOperationsCommandBridge({
   const foundationWaiting = indexFoundationItems.filter((item) => item.status === 'waiting').length
   const commandItems: SeoOperationsBridgeItem[] = [
     {
-      title: '发布前复核',
-      value: '发布复验',
-      detail: `回到站点发布前复核，统一看内容健康、站点文件、配置边界和前台复验；当前收录基础待接入 ${formatNumber(foundationWaiting)} 项。`,
+      title: '发布检查',
+      value: '发布检查',
+      detail: `当前收录基础待处理 ${formatNumber(foundationWaiting)} 项。`,
       href: '/admin/status/site#site-release-preflight-bridge',
-      actionLabel: '打开复核桥',
+      actionLabel: '打开检查',
       Icon: ShieldCheck,
       tone: foundationWaiting > 0 ? 'orange' : 'green',
     },
     {
       title: 'SEO 待补',
       value: '修复',
-      detail: `产品、案例、新闻合计 ${formatNumber(missingTotal)} 个 SEO 或派生字段待补；先处理内容，再回到来源和线索复盘。`,
+      detail: `产品、案例、新闻合计 ${formatNumber(missingTotal)} 项待补。`,
       href: '#seo-conversion-closure',
       actionLabel: '查看修复',
       Icon: SearchCheck,
       tone: missingTotal > 0 ? 'orange' : 'green',
     },
     {
-      title: '来源健康台账',
+      title: '线索来源健康',
       value: '健康',
-      detail: '从 SEO 操作回到产品、案例、新闻来源健康总账，核对访问、动作、线索、SEO 待补和内容缺项。',
+      detail: '查看产品、案例、新闻入口健康。',
       href: '/admin/status#source-seo-health',
-      actionLabel: '打开健康台账',
+      actionLabel: '查看入口健康',
       Icon: ListChecks,
       tone: 'blue',
     },
     {
-      title: '来源线索质量',
+      title: '线索质量',
       value: '线索',
-      detail: '复核 SEO 修复后的线索质量，避免只补搜索字段，不看可跟进线索、活跃线索和来源阶段。',
+      detail: '查看搜索入口带来的可跟进线索。',
       href: '/admin/status/leads#source-seo-lead-quality',
       actionLabel: '查看质量',
       Icon: Link2,
@@ -1223,15 +1201,15 @@ function SeoOperationsCommandBridge({
       summary: products,
       href: products.href,
       sourceHref: '/admin/customers/leads?source_type=product#product-source-lead-queue-handoff',
-      detail: '先补产品详情 SEO 标题和描述，再回看产品线索队列。',
+      detail: '补产品详情 SEO 标题和描述。',
       Icon: Package,
     },
     {
-      label: '案例派生',
+      label: '案例 SEO',
       summary: projects,
       href: projects.href,
       sourceHref: '/admin/customers/leads?source_type=case#case-lead-content-backflow-desk',
-      detail: '先补案例描述、封面和展示字段，再回看案例线索队列。',
+      detail: '补案例描述和封面。',
       Icon: MapPinned,
     },
     {
@@ -1239,7 +1217,7 @@ function SeoOperationsCommandBridge({
       summary: news,
       href: news.href,
       sourceHref: '/admin/customers/leads?source_type=news#news-source-lead-queue-handoff',
-      detail: '先补新闻 SEO 标题、描述、摘要和正文，再回看新闻线索队列。',
+      detail: '补新闻 SEO 标题、描述、摘要和正文。',
       Icon: Newspaper,
     },
   ]
@@ -1249,14 +1227,11 @@ function SeoOperationsCommandBridge({
       <div className="flex flex-col gap-3 border-l-4 border-[#1889B6] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">SEO 处理入口</p>
-          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">SEO 操作台接力入口</h2>
-          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把发布前复核、SEO 待补、来源健康台账、来源线索质量和三类内容待补集中在 SEO 页顶部，方便运营从一个入口处理。
-          </p>
+          <h2 className="mt-1 text-lg font-bold text-[#1E2C31]">SEO 处理入口</h2>
         </div>
         <div className="flex flex-wrap gap-2">
-          <CommandBridgeLink href="/admin/status/site#site-release-preflight-bridge" label="发布前复核" primary />
-          <CommandBridgeLink href="/admin/status#source-seo-health" label="来源健康" />
+          <CommandBridgeLink href="/admin/status/site#site-release-preflight-bridge" label="发布检查" primary />
+          <CommandBridgeLink href="/admin/status#source-seo-health" label="入口健康" />
           <CommandBridgeLink href="/admin/status/leads#source-seo-lead-quality" label="线索质量" />
         </div>
       </div>
@@ -1270,11 +1245,11 @@ function SeoOperationsCommandBridge({
       <div className="border-t border-[#E6EEEE] bg-white px-5 py-4">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#1889B6]">内容待补队列</p>
-            <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">三类内容 SEO 待补队列</h3>
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#1889B6]">内容待补</p>
+            <h3 className="mt-1 text-sm font-bold text-[#1E2C31]">三类内容 SEO 待补</h3>
           </div>
           <p className="max-w-3xl text-xs leading-5 text-[#61767D]">
-            先回来源后台补字段，再回来源线索队列看质量；不要在网站管理里批量覆盖内容事实。
+            内容补齐后查看线索质量。
           </p>
         </div>
         <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-3">
@@ -1420,7 +1395,7 @@ function IndexFoundationPanel({ items }: { items: IndexFoundationItem[] }) {
     <section id="search-console" className="space-y-4">
       <SectionTitle
         title="索引基础与 Search Console 接入清单"
-        detail="跟踪网站地图、Robots、TDK 设置、URL 前缀验证、sitemap 提交和后续索引观察。"
+        detail="检查 sitemap、robots 和 Search Console。"
       />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
         {items.map((item) => {
@@ -1481,7 +1456,6 @@ function ContentSeoCard({
           </span>
           <div>
             <h3 className="text-base font-bold text-[#1E2C31]">{title}</h3>
-            <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{summary.source}</p>
             <p className="mt-3 text-sm leading-6 text-[#61767D]">{detail}</p>
           </div>
         </div>
@@ -1523,7 +1497,7 @@ function MetricPill({
 }
 
 function seoActionLabel(item: SeoPriorityItem): string {
-  if (!item.href) return '记录边界'
+  if (!item.href) return '记录状态'
   if (item.title.includes('产品')) return '处理产品'
   if (item.title.includes('新闻')) return '处理新闻'
   if (item.title.includes('案例')) return '处理案例'
@@ -1532,16 +1506,16 @@ function seoActionLabel(item: SeoPriorityItem): string {
 }
 
 function seoStageLabel(item: SeoPriorityItem): string {
-  if (item.tone === 'critical') return '内容字段'
+  if (item.tone === 'critical') return '内容信息'
   if (item.tone === 'warning') return '收录接入'
-  if (item.tone === 'protected') return '保护边界'
+  if (item.tone === 'protected') return '仅查看页面'
   return '已就绪'
 }
 
 function submissionStatusLabel(status: SeoSubmissionStatus): string {
-  if (status === 'ready') return '可复验'
+  if (status === 'ready') return '可检查'
   if (status === 'manual') return '待人工提交'
-  if (status === 'protected') return '保护边界'
+  if (status === 'protected') return '仅查看页面'
   return '待补齐'
 }
 
@@ -1571,11 +1545,11 @@ function buildSeoSubmissionItems({
 
   return [
     {
-      stage: '抓取边界',
-      title: 'Robots 公开 / 后台边界',
+      stage: '抓取规则',
+      title: 'Robots 公开页面',
       evidence: robots?.detail ?? '未读取到 robots 检查结果。',
       action: robots?.status === 'ready'
-        ? '提交前复验 /robots.txt，确认后台和接口仍禁止抓取。'
+        ? '提交前检查 /robots.txt，确认管理后台仍不参与收录。'
         : '先补齐 robots.txt，再进入 sitemap 提交流程。',
       href: '/robots.txt',
       Icon: ShieldCheck,
@@ -1586,7 +1560,7 @@ function buildSeoSubmissionItems({
       title: '动态 sitemap 输出',
       evidence: sitemap?.detail ?? '未读取到 sitemap 检查结果。',
       action: sitemap?.status === 'ready'
-        ? '提交前复验 /sitemap.xml，抽查公开路径和详情页是否存在。'
+        ? '提交前检查 /sitemap.xml，抽查公开路径和详情页是否存在。'
         : '先恢复 sitemap 输出，再进入 Search Console。',
       href: '/sitemap.xml',
       Icon: ListChecks,
@@ -1605,7 +1579,7 @@ function buildSeoSubmissionItems({
     {
       stage: '内容门槛',
       title: '详情页 SEO 缺项',
-      evidence: `${formatNumber(products.missing)} 个产品、${formatNumber(news.missing)} 篇新闻、${formatNumber(projects.missing)} 个案例仍需复核。`,
+      evidence: `${formatNumber(products.missing)} 个产品、${formatNumber(news.missing)} 篇新闻、${formatNumber(projects.missing)} 个案例仍需完善。`,
       action: missingTotal > 0
         ? '先回内容后台补齐会影响搜索摘要的缺项，再提交重点详情页。'
         : '内容侧已具备提交前抽检条件。',
@@ -1614,10 +1588,10 @@ function buildSeoSubmissionItems({
       status: missingTotal > 0 ? 'blocked' : 'ready',
     },
     {
-      stage: '保护边界',
+      stage: '仅查看页面',
       title: 'Global 地图纳入',
-      evidence: '确认 /global 是否可访问和是否出现在 sitemap 边界，地图底层由管理员维护。',
-      action: '继续按保护项复验，不把地图底层纳入 SEO 批量改造。',
+      evidence: '确认 /global 是否可访问、是否出现在 sitemap。',
+      action: '继续按仅查看页面检查，不在这里修改 Global 展示。',
       href: '/global',
       Icon: LockKeyhole,
       status: 'protected',
@@ -1634,12 +1608,9 @@ function SeoActionLedger({ items }: { items: SeoPriorityItem[] }) {
         <div>
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
             <ListChecks size={15} />
-            Action Ledger
+            处理清单
           </div>
-          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">SEO 处理台账</h2>
-          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把内容 SEO、收录基础和保护边界放在一张表里，按影响级别下钻到来源后台。
-          </p>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">SEO 处理清单</h2>
         </div>
         <span className={`inline-flex w-fit rounded-md px-3 py-2 text-xs font-bold ${activeCount > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
           {activeCount > 0 ? `${formatNumber(activeCount)} 项待处理` : '暂无高优先级'}
@@ -1650,7 +1621,7 @@ function SeoActionLedger({ items }: { items: SeoPriorityItem[] }) {
         <span>阶段</span>
         <span>事项</span>
         <span>数量</span>
-        <span>处理说明</span>
+        <span>备注</span>
         <span>入口</span>
       </div>
 
@@ -1720,12 +1691,9 @@ function SeoSubmissionLedger({ items }: { items: SeoSubmissionItem[] }) {
         <div>
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
             <SearchCheck size={15} />
-            Submission Readiness
+            提交清单
           </div>
-          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">索引提交前复核台账</h2>
-          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            把网站地图、Robots、站点验证、内容缺项和重点页面状态收成提交前清单，方便运营完成提交前确认。
-          </p>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">索引提交前清单</h2>
         </div>
         <div className="flex flex-wrap gap-2">
           <span className={`inline-flex w-fit rounded-md px-3 py-2 text-xs font-bold ${blockedCount > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
@@ -1739,7 +1707,7 @@ function SeoSubmissionLedger({ items }: { items: SeoSubmissionItem[] }) {
 
       <div className="hidden grid-cols-[0.8fr_1.05fr_minmax(0,1.8fr)_minmax(0,1.55fr)_0.75fr] border-b border-[#D8E7E8] bg-[#F7FAFA] px-5 py-2 text-xs font-semibold text-[#61767D] xl:grid">
         <span>阶段</span>
-        <span>复核项</span>
+        <span>检查项</span>
         <span>当前证据</span>
         <span>下一步</span>
         <span>状态</span>
@@ -1763,7 +1731,7 @@ function SeoSubmissionLedger({ items }: { items: SeoSubmissionItem[] }) {
               </div>
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold text-[#1E2C31]">{item.title}</p>
-                <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{item.href ? '可打开复验' : '状态记录'}</p>
+                <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{item.href ? '可打开检查' : '状态记录'}</p>
               </div>
               <p className="text-xs leading-5 text-[#61767D]">{item.evidence}</p>
               <p className="text-xs leading-5 text-[#1E2C31]">{item.action}</p>
@@ -1817,27 +1785,27 @@ function buildSeoWorkflowSteps({
   const firstContentGap = [
     { label: '产品 SEO', summary: products },
     { label: '新闻 SEO', summary: news },
-    { label: '案例派生 metadata', summary: projects },
+    { label: '案例 SEO', summary: projects },
   ].find((item) => item.summary.missing > 0)
 
   return [
     {
       stage: '1. 内容补齐',
       title: '先补详情页 TDK 缺口',
-      owner: '内容后台 / 产品、新闻、案例',
+      owner: '产品、新闻、案例',
       metric: `${formatNumber(missingTotal)} 项`,
-      detail: `${formatNumber(products.missing)} 个产品、${formatNumber(news.missing)} 篇新闻、${formatNumber(projects.missing)} 个案例需要先复核 SEO 字段或派生摘要。`,
-      action: firstContentGap ? `进入${firstContentGap.label}待补队列，先处理会影响搜索摘要的内容。` : '内容字段已具备提交前抽查条件。',
+      detail: `${formatNumber(products.missing)} 个产品、${formatNumber(news.missing)} 篇新闻、${formatNumber(projects.missing)} 个案例需要补 SEO 信息。`,
+      action: firstContentGap ? `进入${firstContentGap.label}待补，先处理会影响搜索摘要的内容。` : '内容信息已具备提交前抽查条件。',
       href: firstContentGap?.summary.href ?? '/admin/site/seo#metadata-coverage',
       Icon: FileText,
       tone: missingTotal > 0 ? 'critical' : 'ready',
     },
     {
       stage: '2. 抓取基础',
-      title: '复验 robots / sitemap / verification',
+      title: '检查 robots / sitemap / verification',
       owner: '站点设置 / SEO 检查',
       metric: `${formatNumber(readyFoundation)} / ${formatNumber(indexFoundationItems.length)}`,
-      detail: `提交前必须确认 robots、sitemap、站点验证和公开路径都处于可复验状态；当前阻塞 ${formatNumber(foundationBlocked)} 项。`,
+      detail: `提交前必须确认 robots、sitemap、站点验证和公开路径都处于可检查状态；当前阻塞 ${formatNumber(foundationBlocked)} 项。`,
       action: foundationBlocked > 0 ? '先处理阻塞项，再进入人工提交。' : '打开 sitemap 和 robots 做最后抽查。',
       href: '/admin/site/seo#submission-readiness',
       Icon: SearchCheck,
@@ -1848,8 +1816,8 @@ function buildSeoWorkflowSteps({
       title: 'Search Console 提交与记录',
       owner: '运营人工',
       metric: `${formatNumber(manualSubmit)} 项`,
-      detail: '当前后台生成提交前证据和操作路径，运营可据此进入 Search Console 人工提交。',
-      action: manualSubmit > 0 ? '由运营人工提交 sitemap，并把复查口径留在本页台账。' : '当前无人工提交动作。',
+      detail: '进入 Search Console 人工提交 sitemap。',
+      action: manualSubmit > 0 ? '由运营人工提交 sitemap。' : '当前无人工提交动作。',
       href: '/admin/site/seo#submission-readiness',
       Icon: ShieldCheck,
       tone: manualSubmit > 0 ? 'warning' : 'ready',
@@ -1857,10 +1825,10 @@ function buildSeoWorkflowSteps({
     {
       stage: '4. 提交后复查',
       title: '把收录问题回流到内容来源',
-      owner: 'SEO / 内容 / 页面模块',
+      owner: 'SEO / 内容',
       metric: `${formatNumber(activePriority)} 项`,
-      detail: '提交后若出现未收录、摘要不对或重点页缺点击，按优先处理队列回到具体 owner，不在前台硬改模板。',
-      action: activePriority > 0 ? '按优先队列处理并复验前台路径。' : '维持常规周检。重点关注产品详情、案例详情和 Contact 转化路径。',
+      detail: '提交后若出现未收录、摘要不对或重点页缺点击，回到对应内容编辑入口处理。',
+      action: activePriority > 0 ? '按优先项处理并检查前台路径。' : '维持常规周检。',
       href: '/admin/site/seo#metadata-coverage',
       Icon: ListChecks,
       tone: activePriority > 0 ? 'warning' : 'ready',
@@ -1877,15 +1845,12 @@ function SeoSubmissionWorkflowBoard({ steps }: { steps: SeoWorkflowStep[] }) {
         <div>
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1889B6]">
             <ListChecks size={15} />
-            Submit / Review Workflow
+            提交步骤
           </div>
-          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">SEO 提交与复查工作流</h2>
-          <p className="mt-1 max-w-4xl text-sm leading-6 text-[#61767D]">
-            SEO 处理顺序：先补内容字段，再复验抓取基础，由人工提交，最后把搜索问题回到对应内容维护入口。
-          </p>
+          <h2 className="mt-2 text-xl font-bold text-[#1E2C31]">SEO 提交与复查</h2>
         </div>
         <span className={`inline-flex w-fit rounded-md px-3 py-2 text-xs font-bold ${blockers > 0 ? 'bg-[#FFF2E7] text-[#C85F24]' : 'bg-emerald-50 text-emerald-700'}`}>
-          {blockers > 0 ? `${formatNumber(blockers)} 个步骤需处理` : '提交流程可复验'}
+          {blockers > 0 ? `${formatNumber(blockers)} 个步骤需处理` : '提交流程可检查'}
         </span>
       </div>
 
@@ -1946,7 +1911,7 @@ function StaticSeoCard({ page }: { page: StaticSeoPage }) {
                 {statusLabel(page.status)}
               </span>
             </div>
-            <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{page.path} / {page.source}</p>
+            <p className="mt-1 text-xs font-semibold text-[#8A9EA4]">{page.path}</p>
             <p className="mt-3 text-sm leading-6 text-[#61767D]">{page.detail}</p>
           </div>
         </div>
@@ -1970,57 +1935,6 @@ function StaticSeoCard({ page }: { page: StaticSeoPage }) {
   )
 }
 
-function AlignmentPanel() {
-  const items = [
-    'SEO 优化从准备状态推进到 Search Console URL 前缀 Meta 验证。',
-    '产品、新闻、FAQ、场景和技术专题继续回到各自 CMS 或固定页面来源维护，不做批量 TDK 写入。',
-    '当前接入 URL 前缀验证和 sitemap 提交；索引覆盖、查询词和 Google API 数据读取作为后续数据项。',
-  ]
-
-  return (
-    <section className="rounded-md border border-[#D8E7E8] bg-white p-5 shadow-sm">
-      <SectionTitle title="SEO 设置说明" detail="网站地图、Robots、TDK 设置和辅助收录集中在本页核对。" />
-      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-        {items.map((item) => (
-          <div key={item} className="rounded-md border border-[#E6EEEE] bg-[#F7FAFA] p-4">
-            <CheckCircle2 size={18} className="text-emerald-600" />
-            <p className="mt-3 text-sm leading-6 text-[#1E2C31]">{item}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function GuardrailPanel() {
-  const guardrails = [
-    '不开放批量 TDK、关键词堆叠、自动生成、结构化标签保存或自定义 meta 保存。',
-    '验证标识由环境配置管理，避免误贴到页面内容。',
-    '不接 Google API、不读取 Search Console 数据；sitemap 提交由 Search Console 后台完成。',
-    '不修改 /global、MapLibre、MapTiler、/api/map 或任何地图底层逻辑。',
-  ]
-
-  return (
-    <section className="rounded-md border border-dashed border-[#D8E7E8] bg-white/75 p-5">
-      <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#F5F2ED] text-[#6B625B]">
-          <LockKeyhole size={18} />
-        </span>
-        <div>
-          <h2 className="text-base font-bold text-[#1E2C31]">SEO 修改保护线</h2>
-          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">
-            {guardrails.map((item) => (
-              <p key={item} className="rounded-md bg-white px-3 py-2 text-xs leading-5 text-[#61767D]">
-                {item}
-              </p>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 export default async function AdminSiteSeoPage() {
   const session = await auth()
   if (!session?.user) {
@@ -2036,24 +1950,24 @@ export default async function AdminSiteSeoPage() {
   const [products, news, projects] = await Promise.all([
     safeLoad('load product SEO summary', loadProductSeoSummary, {
       ...EMPTY_CONTENT_SUMMARY,
-      source: 'product_catalog SEO 字段',
+      source: '产品内容',
       href: '/admin/content/products',
     }),
     safeLoad('load news SEO summary', loadNewsSeoSummary, {
       ...EMPTY_CONTENT_SUMMARY,
-      source: 'news SEO 字段',
+      source: '新闻内容',
       href: '/admin/content/news',
     }),
     safeLoad('load project SEO summary', loadProjectSeoSummary, {
       ...EMPTY_CONTENT_SUMMARY,
-      source: 'project_cases 派生 metadata',
+      source: '案例内容',
       href: '/admin/content/projects',
     }),
   ])
   const staticReady = STATIC_SEO_PAGES.filter((page) => page.status === 'ready').length
   const protectedCount = STATIC_SEO_PAGES.filter((page) => page.status === 'protected').length
   const missingTotal = products.missing + news.missing + projects.missing
-  const sideNavGroups = getSeoSideNav(adminRole === 'admin')
+  const sideNavGroups = getSeoSideNav()
   const indexFoundationItems = loadIndexFoundationItems()
   const priorityItems = buildSeoPriorityItems({ products, news, projects, indexFoundationItems })
   const submissionItems = buildSeoSubmissionItems({ products, news, projects, indexFoundationItems })
@@ -2065,14 +1979,14 @@ export default async function AdminSiteSeoPage() {
       role={adminRole}
       email={session.user.email}
       title="网站管理"
-      description="集中检查 metadata、sitemap、robots 和 Search Console URL 前缀验证状态。"
+      description="集中检查页面 SEO、Sitemap、Robots 和 Search Console 状态。"
       sideNavGroups={sideNavGroups}
       activeItem="seo"
     >
       <AdminPageHero
-        kicker="Search Console 接入"
+        kicker="SEO 检查"
         title="SEO / 收录准备中心"
-        description="集中查看页面 metadata、sitemap、robots、内容 SEO 缺项和 Search Console 验证状态，让运营判断 Google 是否可抓取、是否具备验证和提交条件。"
+        description="集中查看页面 SEO、Sitemap、Robots、内容缺口和 Search Console 验证状态。"
         actions={(
           <>
             <AdminActionLink href="/admin/content/products/list?view=incomplete&issue=seo" Icon={ArrowRight} label="产品 SEO 待补" primary />
@@ -2082,9 +1996,9 @@ export default async function AdminSiteSeoPage() {
       >
         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
           <SummaryTile title="页面已完整" value={staticReady} detail="静态 / 列表页面" tone="green" Icon={Globe2} />
-          <SummaryTile title="内容待补" value={missingTotal} detail="已发布内容缺 SEO 或派生字段" tone={missingTotal > 0 ? 'orange' : 'green'} Icon={SearchCheck} />
+          <SummaryTile title="内容待补" value={missingTotal} detail="已发布内容缺 SEO 信息" tone={missingTotal > 0 ? 'orange' : 'green'} Icon={SearchCheck} />
           <SummaryTile title="详情来源" value={products.published + news.published + projects.published} detail="已发布产品 / 新闻 / 案例" tone="blue" Icon={FileText} />
-          <SummaryTile title="页面保护项" value={protectedCount} detail="公开页面 metadata 已纳入；地图底层保护见下方边界" tone="gray" Icon={LockKeyhole} />
+          <SummaryTile title="仅查看项" value={protectedCount} detail="Global 展示检查" tone="gray" Icon={LockKeyhole} />
         </div>
       </AdminPageHero>
 
@@ -2107,8 +2021,6 @@ export default async function AdminSiteSeoPage() {
         priorityItems={priorityItems}
       />
 
-      <AlignmentPanel />
-
       <SeoOperationsMatrix
         products={products}
         news={news}
@@ -2126,31 +2038,31 @@ export default async function AdminSiteSeoPage() {
       <IndexFoundationPanel items={indexFoundationItems} />
 
       <section id="metadata-coverage" className="space-y-4">
-        <SectionTitle title="内容详情 SEO" detail="运营补字段时回到来源后台，不在网站管理里批量写入。" />
+        <SectionTitle title="内容详情 SEO" />
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <ContentSeoCard
             title="产品详情"
             summary={products}
-            detail="产品详情页 metadata 优先读取产品 SEO 标题和描述；缺字段时用产品名称和参数兜底。"
+            detail="产品详情页优先使用产品 SEO 标题和描述。"
             Icon={Package}
           />
           <ContentSeoCard
             title="新闻详情"
             summary={news}
-            detail="新闻详情页 metadata 优先读取新闻 SEO 标题和描述；缺字段时用标题和摘要兜底。"
+            detail="新闻详情页优先使用新闻 SEO 标题和描述。"
             Icon={Newspaper}
           />
           <ContentSeoCard
             title="项目案例详情"
             summary={projects}
-            detail="案例详情页暂时从项目名称、描述和封面派生 metadata。"
+            detail="案例详情页使用项目名称、描述和封面。"
             Icon={MapPinned}
           />
         </div>
       </section>
 
       <section className="space-y-4">
-        <SectionTitle title="页面 metadata 与 sitemap 覆盖" detail="核对 TDK 设置和网站地图，让运营知道每个公开页面是否具备基础收录条件。" />
+        <SectionTitle title="页面 SEO 与 Sitemap" />
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           {STATIC_SEO_PAGES.map((page) => (
             <StaticSeoCard key={`${page.path}-${page.title}`} page={page} />
@@ -2158,7 +2070,6 @@ export default async function AdminSiteSeoPage() {
         </div>
       </section>
 
-      <GuardrailPanel />
     </AdminSectionShell>
   )
 }

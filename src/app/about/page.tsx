@@ -1,6 +1,12 @@
 import type { Metadata } from 'next'
 import AboutPageContent from '@/components/pages/AboutPageContent'
-import { getPublishedPageModule, listPublishedPageModules, type PageModuleItem } from '@/lib/page-modules-db'
+import {
+  getDefaultPageModule,
+  getPublishedPageModule,
+  listDefaultPageModules,
+  listPublishedPageModules,
+  type PageModuleItem,
+} from '@/lib/page-modules-db'
 import { buildPageMetadata } from '@/lib/seo'
 
 export const revalidate = 300
@@ -8,14 +14,14 @@ export const revalidate = 300
 async function loadAboutHeroModule() {
   return getPublishedPageModule('about', 'hero').catch((err) => {
     console.error('[about/metadata] hero module load failed', err)
-    return null
+    return getDefaultPageModule('about', 'hero')
   })
 }
 
 async function loadAboutPageModules() {
   return listPublishedPageModules('about').catch((err) => {
     console.error('[about] page modules load failed', err)
-    return []
+    return listDefaultPageModules('about').filter((pageModule) => pageModule.is_visible)
   })
 }
 
