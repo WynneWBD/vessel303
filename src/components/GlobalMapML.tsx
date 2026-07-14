@@ -5,8 +5,6 @@ import {
   Map as MaptilerMap,
   Language,
   Marker,
-  NavigationControl,
-  ScaleControl,
   Popup,
   config as maptilerConfig,
 } from '@maptiler/sdk'
@@ -314,6 +312,7 @@ export default function GlobalMapML({
   const prevFlyKey = useRef('')
   const prevResetKey = useRef(resetViewKey ?? 0)
   const isZhRef = useRef(lang === 'zh')
+  const previousIsZhRef = useRef(lang === 'zh')
   const mapReadySignaled = useRef(false)
   const [mapReady, setMapReady] = useState(false)
   // 'init-failed' = MaptilerMap constructor threw (e.g. WebGL2 unsupported);
@@ -340,6 +339,10 @@ export default function GlobalMapML({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
     mapReadySignaled.current = false
+    const resetStateTimer = window.setTimeout(() => {
+      setMapReady(false)
+      setLoadError(null)
+    }, 0)
 
     const cssId = 'vessel-mapml-css'
     if (!document.getElementById(cssId)) {
@@ -357,12 +360,15 @@ export default function GlobalMapML({
     try {
       map = new MaptilerMap({
         container: containerRef.current,
-        style: STYLE_URL,
+        style: new URL(STYLE_URL, window.location.origin).href,
         center: previewMode ? [35, 18] : isZhRef.current ? [105, 30] : [10, 20],
         zoom: previewMode ? 1.55 : isZhRef.current ? 3 : 2,
         minZoom: previewMode ? 1.2 : 1.5,
         maxZoom: 16,
         interactive: !previewMode,
+        navigationControl: previewMode ? false : 'top-left',
+        geolocateControl: previewMode ? false : 'top-right',
+        scaleControl: previewMode ? false : 'bottom-left',
         renderWorldCopies: false,
         transformRequest: PROXY_TRANSFORM,
         // Render CJK characters using the device's system font instead of
@@ -630,9 +636,6 @@ export default function GlobalMapML({
           onMapClickRef.current?.()
         })
 
-        // ── Map controls ──────────────────────────────────────────────────
-        map.addControl(new NavigationControl({ showCompass: false }), 'top-left')
-        map.addControl(new ScaleControl({ unit: 'metric' }), 'bottom-left')
       }
 
       requestMapUsableProbe()
@@ -773,33 +776,52 @@ export default function GlobalMapML({
 
     return () => {
       disposed = true
+      window.clearTimeout(resetStateTimer)
       if (basemapProbeFrame !== null) window.cancelAnimationFrame(basemapProbeFrame)
       ro.disconnect()
       map.remove()
       mapRef.current = null
     }
-  }, [cmsLang, editableMarkerIdSet, previewMode, showcaseMarkers])
+  }, [editableMarkerIdSet, previewMode, showcaseMarkers])
 
   // ── Language switching ────────────────────────────────────────────────
   useEffect(() => {
     isZhRef.current = isZh
+    if (previousIsZhRef.current === isZh) return
+    previousIsZhRef.current = isZh
+
     const map = mapRef.current
-    if (!map) return
-    const apply = () => {
-      map.setLanguage(isZh ? Language.CHINESE : Language.ENGLISH)
-      applyTaiwanLabelOverride(map, isZh)
-      if (hqLabelRef.current) {
-        hqLabelRef.current.textContent = isZh ? HQ.labelZh : HQ.labelEn
-      }
-      const hqPopup = hqPopupRef.current
-      if (hqPopup?.isOpen()) {
-        const name = isZh ? HQ_MARKER.name.zh : HQ_MARKER.name.en
-        const addr = isZh ? HQ_MARKER.location.zh : HQ_MARKER.location.en
-        hqPopup.setHTML(`<div class="vessel-hq-popup-name">${name}</div><div class="vessel-hq-popup-addr">${addr}</div>`)
-      }
+    if (!map || !map.loaded()) return
+
+    let fallbackTimer: number | null = null
+    let revealed = false
+    const revealMap = () => {
+      if (revealed) return
+      revealed = true
+      if (fallbackTimer !== null) window.clearTimeout(fallbackTimer)
+      setMapReady(true)
     }
-    if (map.loaded()) apply()
-    else map.once('load', apply)
+    const hideMapTimer = window.setTimeout(() => setMapReady(false), 0)
+    fallbackTimer = window.setTimeout(revealMap, 5000)
+    map.once('idle', revealMap)
+
+    map.setLanguage(isZh ? Language.CHINESE : Language.ENGLISH)
+    applyTaiwanLabelOverride(map, isZh)
+    if (hqLabelRef.current) {
+      hqLabelRef.current.textContent = isZh ? HQ.labelZh : HQ.labelEn
+    }
+    const hqPopup = hqPopupRef.current
+    if (hqPopup?.isOpen()) {
+      const name = isZh ? HQ_MARKER.name.zh : HQ_MARKER.name.en
+      const addr = isZh ? HQ_MARKER.location.zh : HQ_MARKER.location.en
+      hqPopup.setHTML(`<div class="vessel-hq-popup-name">${name}</div><div class="vessel-hq-popup-addr">${addr}</div>`)
+    }
+
+    return () => {
+      window.clearTimeout(hideMapTimer)
+      if (fallbackTimer !== null) window.clearTimeout(fallbackTimer)
+      map.off('idle', revealMap)
+    }
   }, [isZh])
 
   // ── FlyTo showcase project ────────────────────────────────────────────
@@ -844,13 +866,15 @@ export default function GlobalMapML({
       style={{ position: 'relative', height: '100%', width: '100%', background: '#F5F2ED', pointerEvents: previewMode ? 'none' : 'auto' }}
       {...globalModuleAttrs('map-labels')}
     >
-      <StaticGlobalMapPreview
-        lang={zh ? 'zh' : 'en'}
-        pageModules={pageModules}
-        markers={showcaseMarkers}
-        editableMarkerIds={editableMarkerIds}
-        onMarkerSelect={previewMode ? undefined : (marker) => onShowcaseSelectRef.current?.(marker)}
-      />
+      {(!mapReady || loadError) && (
+        <StaticGlobalMapPreview
+          lang={zh ? 'zh' : 'en'}
+          pageModules={pageModules}
+          markers={showcaseMarkers}
+          editableMarkerIds={editableMarkerIds}
+          onMarkerSelect={previewMode ? undefined : (marker) => onShowcaseSelectRef.current?.(marker)}
+        />
+      )}
       <div
         ref={containerRef}
         style={{
