@@ -1569,7 +1569,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
       { id: 'logo-alt', label_zh: 'VESSEL 微宿', label_en: 'VESSEL', is_visible: true, sort_order: 10 },
       { id: 'countries', value_zh: '30+', value_en: '30+', label_zh: '国家/地区', label_en: 'Countries', is_visible: true, sort_order: 20 },
       { id: 'camps', value_zh: '300+', value_en: '300+', label_zh: '营地', label_en: 'Camps', is_visible: true, sort_order: 30 },
-      { id: 'devices', value_zh: '2000+', value_en: '2000+', label_zh: '设备', label_en: 'Devices', is_visible: true, sort_order: 40 },
+      { id: 'devices', value_zh: '3000+', value_en: '3000+', label_zh: '设备', label_en: 'Devices', is_visible: true, sort_order: 40 },
       { id: 'language-en', label_zh: 'EN', label_en: 'EN', is_visible: true, sort_order: 50 },
       { id: 'language-zh', label_zh: '中', label_en: 'ZH', is_visible: true, sort_order: 60 },
     ],
