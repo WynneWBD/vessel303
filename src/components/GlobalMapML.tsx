@@ -356,11 +356,13 @@ export default function GlobalMapML({
     // (older Android WeChat browser, hardware-accelerated mode disabled,
     // some restricted WebViews). Catch so we can show a fallback instead
     // of leaving the user staring at a forever spinner.
+    const initialIsZh = isZhRef.current
     let map: MaptilerMap
     try {
       map = new MaptilerMap({
         container: containerRef.current,
         style: new URL(STYLE_URL, window.location.origin).href,
+        language: initialIsZh ? Language.CHINESE : Language.ENGLISH,
         center: previewMode ? [35, 18] : isZhRef.current ? [105, 30] : [10, 20],
         zoom: previewMode ? 1.55 : isZhRef.current ? 3 : 2,
         minZoom: previewMode ? 1.2 : 1.5,
@@ -564,8 +566,15 @@ export default function GlobalMapML({
 
     map.on('load', () => {
       // ── Language ──────────────────────────────────────────────────────
-      map.setLanguage(isZhRef.current ? Language.CHINESE : Language.ENGLISH)
+      // Catch language changes made while the initial style was still loading.
+      if (isZhRef.current !== initialIsZh) {
+        map.setLanguage(isZhRef.current ? Language.CHINESE : Language.ENGLISH)
+      }
       applyTaiwanLabelOverride(map, isZhRef.current)
+      // The SDK can rewrite labels until its first idle after initial load.
+      map.once('idle', () => {
+        if (!disposed) applyTaiwanLabelOverride(map, isZhRef.current)
+      })
 
       // ── Regular camp GeoJSON ──────────────────────────────────────────
       const campFeatures: GeoJSON.Feature<GeoJSON.Point>[] = CAMPS.map((camp, i) => ({

@@ -30,7 +30,10 @@ function loadProjectDetailModule() {
 }
 
 function loadShowcaseProjectsModule() {
-  showcaseProjectsModulePromise ??= import('@/data/showcaseProjects')
+  showcaseProjectsModulePromise ??= import('@/data/showcaseProjects').catch((error: unknown) => {
+    showcaseProjectsModulePromise = null
+    throw error
+  })
   return showcaseProjectsModulePromise
 }
 
@@ -192,6 +195,7 @@ export default function GlobalMapView({
   const [selectedMarker, setSelectedMarker] = useState<ShowcaseMarker | null>(null)
   const [selectedProject, setSelectedProject] = useState<ShowcaseProject | null>(null)
   const [resetViewKey, setResetViewKey] = useState(0)
+  const [mapReady, setMapReady] = useState(false)
   const { lang } = useLanguage()
   const cmsLang: GlobalCmsLang = lang === 'zh' ? 'zh' : 'en'
   const labels = buildGlobalCmsLabels(pageModules, cmsLang)
@@ -218,24 +222,40 @@ export default function GlobalMapView({
     ]
   }, [cmsProjects])
 
-  useEffect(() => {
-    return scheduleIdlePreload(() => {
-      void loadProjectDetailModule()
-      void loadShowcaseProjectsModule()
-    })
+  const handleMapReady = useCallback(() => {
+    setMapReady(true)
   }, [])
+
+  useEffect(() => {
+    if (!mapReady) return
+
+    return scheduleIdlePreload(() => {
+      void Promise.all([
+        loadProjectDetailModule(),
+        loadShowcaseProjectsModule(),
+      ]).catch((error: unknown) => {
+        console.warn('[GlobalMap] Detail preload failed; retry on selection', error)
+      })
+    })
+  }, [mapReady])
 
   const loadProjectDetails = useCallback(async (markerId: string, requestId: number) => {
     const cmsProject = cmsProjectById.get(markerId)
-    if (cmsProject) {
+    try {
+      const [, project] = await Promise.all([
+        loadProjectDetailModule(),
+        cmsProject
+          ? Promise.resolve(cmsProject)
+          : loadShowcaseProjectsModule().then(({ SHOWCASE_PROJECTS }) => (
+            SHOWCASE_PROJECTS.find((p) => p.id === markerId) ?? null
+          )),
+      ])
       if (requestId !== detailRequestId.current) return
-      setSelectedProject(cmsProject)
-      return
+      setSelectedProject(project)
+    } catch (error: unknown) {
+      if (requestId !== detailRequestId.current) return
+      console.warn('[GlobalMap] Detail load failed; retry on selection', error)
     }
-    const { SHOWCASE_PROJECTS } = await loadShowcaseProjectsModule()
-    if (requestId !== detailRequestId.current) return
-    const project = SHOWCASE_PROJECTS.find((p) => p.id === markerId) ?? null
-    setSelectedProject(project)
   }, [cmsProjectById])
 
   const hydratedOnce = useRef(false)
@@ -310,6 +330,7 @@ export default function GlobalMapView({
         <GlobalMapDynamic
           onShowcaseSelect={handleShowcaseSelect}
           onMapClick={handleClose}
+          onMapReady={handleMapReady}
           flyTarget={flyTarget}
           resetViewKey={resetViewKey}
           lang={lang}
