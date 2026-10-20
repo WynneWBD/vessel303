@@ -31,7 +31,7 @@ export const PAGE_MODULE_PAGE_KEYS = [
 
 export const PAGE_MODULE_PUBLIC_CACHE_TAG = 'page-module-public'
 const PAGE_MODULE_PUBLIC_CACHE_SECONDS = 300
-const PAGE_MODULE_DEFAULTS_CACHE_VERSION = '2026-07-14-global-devices-3000'
+const PAGE_MODULE_DEFAULTS_CACHE_VERSION = '2026-10-20-global-countries-40'
 
 export type PageModulePageKey = (typeof PAGE_MODULE_PAGE_KEYS)[number]
 
@@ -1567,7 +1567,7 @@ export const DEFAULT_PAGE_MODULES: PageModuleRow[] = [
     description_en: 'Top brand, title, statistics, and language labels for the Global map.',
     items: [
       { id: 'logo-alt', label_zh: 'VESSEL 微宿', label_en: 'VESSEL', is_visible: true, sort_order: 10 },
-      { id: 'countries', value_zh: '30+', value_en: '30+', label_zh: '国家/地区', label_en: 'Countries', is_visible: true, sort_order: 20 },
+      { id: 'countries', value_zh: '40+', value_en: '40+', label_zh: '国家/地区', label_en: 'Countries', is_visible: true, sort_order: 20 },
       { id: 'camps', value_zh: '300+', value_en: '300+', label_zh: '营地', label_en: 'Camps', is_visible: true, sort_order: 30 },
       { id: 'devices', value_zh: '3000+', value_en: '3000+', label_zh: '设备', label_en: 'Devices', is_visible: true, sort_order: 40 },
       { id: 'language-en', label_zh: 'EN', label_en: 'EN', is_visible: true, sort_order: 50 },
